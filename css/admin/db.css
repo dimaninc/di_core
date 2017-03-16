@@ -1,0 +1,90 @@
+.db-errors-console {
+	display: none;
+	border: 1px solid #999;
+	background: #ddc;
+	padding: 10px;
+	border-radius: 10px;
+	text-align: left;
+	margin: 20px;
+}
+
+table.db-list {
+	margin: 15px 0;
+	border-collapse: collapse;
+}
+
+table.db-list tbody tr td {
+	padding: 10px 0;
+	border: 1px solid #FFF;
+	width: 350px;
+	background: #DFDFD0;
+	text-align: center;
+	vertical-align: bottom;
+}
+
+.dump-settings {
+	margin-bottom: 10px;
+}
+
+/* view sql */
+
+[data-name="view-sql"] {
+	left: 100px;
+	right: 100px;
+	top: 50px;
+	bottom: 50px;
+	margin: 0;
+}
+
+[data-name="view-sql"] .scroller {
+	overflow: auto;
+	height: 100%;
+}
+
+[data-name="view-sql"] code {
+	white-space: pre;
+}
+
+/* db-dump-rows */
+
+table.db-dump-rows {
+	border-collapse: collapse;
+}
+
+table.db-dump-rows tbody tr td {
+	text-align: left;
+	padding: 5px;
+	border: 1px solid #777;
+	font-size: 12px;
+}
+
+table.db-dump-rows tbody tr:nth-child(even) td {
+	background: #eee;
+}
+
+table.db-dump-rows tbody tr td small {
+	font-size: 10px;
+}
+
+table.db-dump-rows tbody tr[data-format="gz"] td button[data-action="view"] {
+	display: none;
+}
+
+table.db-dump-rows tbody[data-folder-id="2"] tr td button[data-action="delete"] {
+    display: none;
+}
+
+table.db-dump-rows tbody tr.subfolder td,
+table.db-dump-rows tbody[data-folder-id] tr:first-child td {
+    background: #DFDFD0;
+}
+
+table.db-dump-rows tbody tr.subfolder td {
+    padding-left: 20px;
+}
+
+/* upload */
+
+iframe[name="upload_container"] {
+	display: none;
+}

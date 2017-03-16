@@ -1,0 +1,466 @@
+<?php
+
+use diCore\Helper\ArrayHelper;
+
+class diAdminList
+{
+	/** @var diNiceTable */
+	private $T;
+
+	/** @var diAdminBasePage */
+	private $AdminPage;
+
+	/** @var array */
+	private $columnsAr;
+
+	/** @var bool */
+	private $columnsInited = false;
+
+	/** @var array */
+	private $printParts;
+
+	/** @var array */
+	private $htmlAr;
+
+	/** @var array */
+	private $replaceAr;
+
+	/** @var diModel */
+	private $curModel;
+
+	/** @var array */
+	private $options;
+
+	public function __construct(diAdminBasePage $AdminPage, $options = [])
+	{
+		$this->AdminPage = $AdminPage;
+
+		$this->htmlAr = [
+			"head" => "",
+			"body" => "",
+			"foot" => "",
+		];
+
+		$this->options = extend([
+			"showControlPanel" => false,
+			"showHeader" => true,
+			"formBasePath" => null,
+		], $options);
+
+		$this->printParts = array_keys($this->htmlAr);
+
+		$this->T = new diNiceTable($this->getAdminPage()->getTable(),
+			$this->getAdminPage()->getPagesNavy(false),
+			$this->getAdminPage()->getLanguage()
+		);
+
+		if ($this->options['formBasePath'])
+		{
+			$this->T->setFormPathBase($this->options['formBasePath']);
+		}
+	}
+
+	protected function getAdminPage()
+	{
+		return $this->AdminPage;
+	}
+
+	public function getOption($name)
+	{
+		return isset($this->options[$name]) ? $this->options[$name] : null;
+	}
+
+	public function getTable()
+	{
+		return $this->T->getTable();
+	}
+
+	public function addColumns($ar)
+	{
+		$this->columnsAr = extend($this->columnsAr, $ar);
+
+		return $this;
+	}
+
+	public function columnExists($name)
+	{
+		return isset($this->columnsAr[$name]);
+	}
+
+	/**
+	 * @param string|array $names
+	 * @param string|array $attr
+	 * @param mixed|null $value
+	 * @return $this
+	 */
+	public function setColumnAttr($names, $attr, $value = null)
+	{
+		if (!is_array($names))
+		{
+			$names = [$names];
+		}
+
+		foreach ($names as $name)
+		{
+			if (!$this->columnExists($name))
+			{
+				$this->columnsAr[$name] = [];
+			}
+
+			if (!is_array($this->columnsAr[$name]))
+			{
+				$this->columnsAr[$name] = [
+					"title" => $this->columnsAr[$name],
+				];
+			}
+
+			if (!is_array($attr))
+			{
+				$attr = [
+					$attr => $value,
+				];
+			}
+
+			$this->columnsAr[$name] = extend($this->columnsAr[$name], $attr);
+		}
+
+		return $this;
+	}
+
+	public function removeColumn($names)
+	{
+		if (!is_array($names))
+		{
+			$names = [$names];
+		}
+
+		foreach ($names as $name)
+		{
+			if (isset($this->columnsAr[$name]))
+			{
+				unset($this->columnsAr[$name]);
+			}
+		}
+
+		return $this;
+	}
+
+	public function replaceColumn($name, array $newColumns)
+	{
+		$this
+			->insertColumnsBefore($name, $newColumns)
+			->removeColumn($name);
+
+		return $this;
+	}
+
+	public function renameColumn($name, $newName)
+	{
+		$this
+			->insertColumnsBefore($name, [$newName => $this->columnsAr[$name]])
+			->removeColumn($name);
+
+		return $this;
+	}
+
+	public function insertColumnsBefore($name, array $newColumns)
+	{
+		$this->columnsAr = ArrayHelper::addItemsToAssocArrayBeforeKey($this->columnsAr, $name, $newColumns);
+
+		return $this;
+	}
+
+	public function insertColumnsAfter($name, array $newColumns)
+	{
+		$this->columnsAr = ArrayHelper::addItemsToAssocArrayAfterKey($this->columnsAr, $name, $newColumns);
+
+		return $this;
+	}
+
+	public function getFieldTitle($name)
+	{
+		return $this->getAdminPage()->doesFieldExist($name)
+			? $this->getAdminPage()->getFieldProperty($name, "title")
+			: null;
+	}
+
+	private function initColumns()
+	{
+		foreach ($this->columnsAr as $name => $properties)
+		{
+		    if (is_string($properties) && $properties)
+		    {
+			    $properties = [
+				    "title" => $properties,
+			    ];
+		    }
+
+			$p = extend([
+				"title" => $this->getFieldTitle($name),
+				"attrs" => [],
+				"headAttrs" => [],
+			], $properties);
+
+			$this->T->addColumn($p["title"], array_merge($p["attrs"], $p["headAttrs"]));
+		}
+
+		$this->columnsInited = true;
+
+		return $this;
+	}
+
+	private function prepareReplaceAr()
+	{
+		$this->replaceAr = [];
+
+		foreach ($this->getCurRec() as $k => $v)
+		{
+			$this->replaceAr["%".$k."%"] = $v;
+		}
+
+		return $this;
+	}
+
+	private function replaceValues($s)
+	{
+		return str_replace(array_keys($this->replaceAr), array_values($this->replaceAr), $s);
+	}
+
+	private function buildHref($href)
+	{
+		if (is_array($href))
+		{
+		    if (!isset($href["method"]))
+		    {
+		    	$href["method"] = "list";
+		    }
+
+			$href = diAdminBase::getPageUri($href["module"], $href["method"], $href["params"]);
+		}
+
+		return $href;
+	}
+
+	protected function setCurRec($r)
+	{
+		$this->curModel = $r instanceof diModel
+			? $r
+			: diModel::createForTableNoStrict($this->getTable(), $r);
+
+		return $this;
+	}
+
+	public function getCurRec()
+	{
+		return $this->getCurModel()->get();
+	}
+
+	public function getCurModel()
+	{
+		return $this->curModel;
+	}
+
+	public function addRow($r)
+	{
+		if (!$this->columnsInited)
+	    {
+	    	$this->initColumns();
+	    }
+
+		$this->setCurRec($r);
+
+	    $this->prepareReplaceAr();
+
+		$html = "";
+
+		$html .= $this->T->openRow($r);
+
+		foreach ($this->columnsAr as $name => $properties)
+		{
+			if ($name == "id")
+			{
+				$html .= $this->T->idCell(true, false, false);
+			}
+			elseif ($name == "_checkbox" || $name == '#checkbox')
+			{
+				$p = extend([
+					'active' => true,
+				], $properties);
+
+				if (is_callable($p["active"]))
+				{
+					$p["active"] = $p["active"]($this->getCurModel(), $name);
+				}
+
+				$html .= $this->T->idCell(false, $p['active'], false);
+			}
+			elseif ($name == "_expand" || $name == '#expand')
+			{
+				$p = extend([
+					'active' => true,
+				], $properties);
+
+				if (is_callable($p["active"]))
+				{
+					$p["active"] = $p["active"]($this->getCurModel(), $name);
+				}
+
+				$html .= $this->T->idCell(false, false, $p['active']);
+			}
+			elseif (substr($name, 0, 1) == "#")
+			{
+				$name = substr($name, 1);
+				$isToggle = diCMS::isFieldToggle($name);
+				$method = camelize(($isToggle ? "toggle" : $name) . "_btn_cell");
+
+				switch ($name)
+				{
+					case "create":
+						$p = extend([
+							"maxLevelNum" => null,
+							"hrefSuffix" => null,
+						], $properties);
+
+						$html .= $this->T->$method($p["maxLevelNum"], $p["hrefSuffix"]);
+						break;
+
+					case "href":
+						$p = extend([
+							"href" => null,
+						], $properties);
+
+						if ($p["href"] === null)
+						{
+							$p["href"] = $this->getCurModel()->getHref();
+						}
+						else
+						{
+							if (is_callable($p["href"]))
+							{
+								$p["href"] = $p["href"]($this->getCurModel(), $name);
+							}
+
+							$p["href"] = $this->replaceValues($p["href"]);
+						}
+
+						$html .= $this->T->hrefCell($p["href"]);
+						break;
+
+					case "manage":
+						$p = extend([
+							"href" => null,
+							"icon" => null,
+						], $properties);
+
+						$html .= $this->T->$method($this->replaceValues($this->buildHref($p["href"])), $p["icon"]);
+						break;
+
+					default:
+						$p = extend([
+							"active" => true,
+							"href" => "",
+							"onclick" => "",
+						], $properties);
+
+						if (is_callable($p["active"]))
+						{
+							$p["active"] = $p["active"]($this->getCurModel(), $name);
+						}
+
+						$p["href"] = $this->replaceValues($p["href"]);
+						$p["onclick"] = $this->replaceValues($p["onclick"]);
+
+						$html .= $isToggle
+							? $this->T->$method($name, $p["active"])
+							: ($p["active"] ? $this->T->$method($p) : $this->T->emptyBtnCell());
+						break;
+				}
+			}
+			else
+			{
+				$p = extend([
+					"bodyAttrs" => [],
+				], $properties);
+
+				$method = empty($properties["noLink"]) && empty($properties["noHref"]) ? "textLinkCell" : "textCell";
+
+				if (empty($properties["value"]))
+				{
+					$value = "%" . $name . "%";
+				}
+				else
+				{
+					$value = $properties["value"];
+
+					if (is_callable($value))
+					{
+						$value = $value($this->getCurModel(), $name, $this);
+					}
+				}
+
+				$value = $this->replaceValues($value);
+
+				if (!isset($p["bodyAttrs"]["data-field"]))
+				{
+					$p["bodyAttrs"]["data-field"] = $name;
+				}
+
+				$html .= $this->T->$method($value, $p["bodyAttrs"]);
+			}
+		}
+
+		$html .= $this->T->closeRow();
+
+		$this->htmlAr["body"] .= $html;
+
+		return $this;
+	}
+
+	public function setPrintParts($what = ["head", "body"])
+	{
+		if (!is_array($what))
+		{
+			$what = explode(",", $what);
+		}
+
+		$this->printParts = $what;
+
+		return $this;
+	}
+
+	private function wrap($html)
+	{
+		return
+			$this->T->openTable($this->getOption("showHeader") ? diNiceTable::PRINT_HEADLINE : diNiceTable::NO_HEADLINE) .
+			$html .
+			$this->T->closeTable();
+	}
+
+	public function getHtml()
+	{
+		$this->getAdminPage()->getTpl()
+			->assign([
+				"LIST_CONTROL_PANEL" => "",
+			]);
+
+		if ($this->getOption("showControlPanel"))
+		{
+			$this->getAdminPage()->getTpl()
+				->assign([
+					"TABLE" => $this->getAdminPage()->getTable(),
+				])
+				->process("list_control_panel");
+		}
+
+		$html = "";
+
+		foreach ($this->printParts as $what)
+		{
+			$html .= $this->htmlAr[$what];
+		}
+
+		$html = $this->wrap($html);
+
+		return $html;
+	}
+}

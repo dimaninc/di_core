@@ -1,0 +1,55 @@
+/**
+  * adding a sprite
+  */
+sprite(sprite, horizontal = none, vertical = none)
+   width sprite[2]
+   height sprite[3]
+   background url("/_core/i/admin/buttons.png?" + $admin-buttons-timestamp) sprite[0] sprite[1] no-repeat;
+
+   if horizontal is center
+      margin-left (@width / -2)
+      left 50%
+   else if horizontal is left
+      left 0
+   else if horizontal is right
+      right 0
+
+   if vertical is center
+      margin-top (@height / -2)
+      top 50%
+   else if vertical is top
+      top
+   else if vertical is bottom
+      bottom 0
+
+stripe(even = #fff, odd = #eee)
+	tr
+		background-color odd
+		&.even
+		&:nth-child(even)
+			background-color even
+
+bg-gradient(origin, colors...)
+	firstColor = colors[0]
+
+	colors = join(', ', colors)
+	colors = unquote(colors)
+
+	background-color firstColor
+	background-image linear-gradient(origin, colors)
+
+placeholder()
+	&::-webkit-input-placeholder
+		{block}
+	&:-moz-placeholder
+		{block}
+	&::-moz-placeholder
+		{block}
+	&:-ms-input-placeholder
+		{block}
+
+ellipsis($nowrap = true)
+	text-overflow ellipsis
+	overflow hidden
+	if $nowrap
+		white-space nowrap

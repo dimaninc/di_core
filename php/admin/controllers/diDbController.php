@@ -1,0 +1,638 @@
+<?php
+
+class diDbController extends diBaseAdminController
+{
+	private $file;
+	private $folder;
+	private $folderId;
+
+	const CHMOD_FILE = 0664;
+
+	const FOLDER_LOCAL = 1;
+	const FOLDER_CORE_SQL = 2;
+
+	public static $foldersIdsAr = array(
+		self::FOLDER_LOCAL,
+		self::FOLDER_CORE_SQL,
+	);
+
+	public function __construct()
+	{
+	    parent::__construct();
+
+		$this->file = diRequest::get("file", "");
+		$this->folderId = diRequest::get("folderId", 1);
+		$this->folder = $this->getFolderById($this->folderId);
+	}
+
+	/**
+	 * @param $id integer
+	 * @return string
+	 * @throws Exception
+	 */
+	public static function getFolderById($id)
+	{
+		switch ($id)
+		{
+			case self::FOLDER_LOCAL:
+				return static::getDumpsFolder();
+
+			case self::FOLDER_CORE_SQL:
+				return static::getCoreSqlFolder();
+
+			default:
+				throw new Exception("Undefined folder id#$id");
+		}
+	}
+
+	public static function getDumpsFolder()
+	{
+		return diPaths::fileSystem() . "_admin/db/dump/";
+	}
+
+	public static function getCoreSqlFolder()
+	{
+		return dirname(dirname(dirname(dirname(__FILE__)))) . "/sql/";
+	}
+
+	public function deleteAction()
+	{
+	    $ar = array(
+	    	"file" => $this->file,
+	    	"ok" => false,
+	    );
+
+		if ($this->file)
+		{
+			$fn = $this->folder.$this->file;
+
+			if (is_file($fn))
+			{
+				unlink($fn);
+
+				$ar["ok"] = true;
+			}
+		}
+
+		print_json($ar);
+	}
+
+	public function downloadAction()
+	{
+		$headers = diRequest::get("headers", 1);
+
+		if ($headers)
+		{
+			header("Content-Type: application/download");
+			header("Content-Disposition: attachment; filename=\"$this->file\"");
+			header("Content-Length: " . filesize($this->folder . $this->file));
+			header("Pragma: no-cache");
+			header("Expires: 0");
+		}
+
+		readfile($this->folder.$this->file);
+	}
+
+	/**
+	 * @param $db diDB
+	 * @return array
+	 */
+	public static function getTablesList($db)
+	{
+		$ar = [
+			"tablesForSelectAr" => [],
+			"totalSize" => 0,
+			"totalIndexSize" => 0,
+		];
+
+		$table_rs = $db->q("SHOW TABLE STATUS");
+		while ($table_r = $db->fetch($table_rs))
+		{
+			$size = size_in_bytes($table_r->Data_length);
+			$idx_size = size_in_bytes($table_r->Index_length);
+
+			$ar["totalSize"] += $table_r->Data_length;
+			$ar["totalIndexSize"] += $table_r->Index_length;
+
+			$rows = "";
+
+			if ($table_r->Data_length === null)
+			{
+				if ($table_r->Comment == "VIEW")
+				{
+					$size_str = " [view]";
+				}
+				else
+				{
+					$size_str = " [DAMAGED!]";
+				}
+			}
+			else
+			{
+				$size_str = ", $size (+index: $idx_size)";
+
+				$rows = ", $table_r->Rows rows";
+			}
+
+			$ar["tablesForSelectAr"][$table_r->Name] = "{$table_r->Name}{$size_str}{$rows}";
+		}
+
+		return $ar;
+	}
+
+	public function tablesAction()
+	{
+		print_json(self::getTablesList($this->getDb()));
+	}
+
+	public function uploadAction()
+	{
+		$ar = [
+			"ok" => false,
+			"code" => 0,
+			"text" => "",
+		];
+
+		if (
+			isset($_FILES["dump"]) &&
+			trim($_FILES["dump"]["name"]) != "" &&
+			$_FILES["dump"]["size"] &&
+			in_array(strtolower(get_file_ext($_FILES["dump"]["name"])), array("gz", "sql"))
+			)
+		{
+			$fn = $this->folder.$_FILES["dump"]["name"];
+
+			if (move_uploaded_file($_FILES["dump"]["tmp_name"], $fn))
+			{
+			    $ar["ok"] = 1;
+			}
+			else
+			{
+				$ar["text"] = "Unable to copy {$_FILES["dump"]["tmp_name"]} � $fn";
+			}
+
+			$ar = array_merge($ar, $this->getDumpInfo($fn));
+		}
+		else
+		{
+			$ar["code"] = $_FILES["dump"]["error"];
+		}
+
+		print_json($ar);
+	}
+
+	private function prepareString($s)
+	{
+		for ($i = 0; $i < count($s); $i++)
+		{
+			$s[$i] = addslashes($s[$i]);
+			$s[$i] = str_replace("\r\n", "\\r\\n", $s[$i]);
+			$s[$i] = str_replace("\r", "\\r", $s[$i]);
+			$s[$i] = str_replace("\n", "\\n", $s[$i]);
+		}
+
+		return $s;
+	}
+
+	private function tryToFlush(&$fp, &$sql, $compress, $len = 2500000)
+	{
+		if (strlen($sql) > $len)
+		{
+			$bytesWritten = $compress ? gzwrite($fp, $sql) : fwrite($fp, $sql);
+
+			$sql = "";
+
+			if (!$compress)
+			{
+				fflush($fp);
+			}
+		}
+	}
+
+	public function createAction()
+	{
+		$table_case_sensitivity = false;
+		$table_case_sensitivity_str = $table_case_sensitivity ? "cs" : "ci";
+
+		$compress = diRequest::get("compress", 0);
+		$drops = diRequest::get("drops", 0);
+		$creates = diRequest::get("creates", 0);
+		$fields = diRequest::get("fields", 0);
+		$data = diRequest::get("data", 0);
+		$multiple = diRequest::get("multiple", 0);
+		$system = diRequest::get("system", 0);
+
+		if (!function_exists('gzopen'))
+		{
+			$compress = 0;
+		}
+
+		$fn = preg_replace('/[^A-Za-z0-9_\-\(\)\!]/', "", $this->file);
+		if (!$fn)
+		{
+			$fn = $this->getDb()->getDatabase();
+		}
+
+		$tablesAr = explode(",", diRequest::get("tables", ""));
+		$tablesList = join(" ", $tablesAr);
+
+		$date_fn_format = "Y_m_d__H_i_s";
+		$date_sql_comment = "Y/m/d H:i:s";
+
+		$filename = $this->folder.$fn."__dump_".date($date_fn_format).".sql";
+		if ($compress)
+		{
+			$filename .= ".gz";
+		}
+
+		$ar = [
+			"ok" => false,
+			"system" => false,
+			"text" => "",
+			"format" => get_file_ext($filename),
+			"file" => basename($filename),
+			"name" => $fn,
+		];
+
+		// trying to exec system command
+		if ($system)
+		{
+			$command_suffix = $compress ? " | gzip" : "";
+
+			$command = "mysqldump --host=".$this->getDb()->getHost()." --user=".$this->getDb()->getUsername().
+				" --password=".$this->getDb()->getPassword()." --opt --skip-extended-insert ".$this->getDb()->getDatabase().
+				" {$tablesList} {$command_suffix} > $filename";
+
+			system($command, $a);
+
+			if (!$a)
+			{
+				$ar["ok"] = true;
+				$ar["system"] = true;
+
+				return $ar;
+			}
+		}
+		//
+
+		$dt = date($date_sql_comment);
+
+		$a = self::getTablesList($this->getDb());
+		$allTablesAr = array_keys($a["tablesForSelectAr"]);
+		unset($a);
+
+		if (!$tablesAr)
+		{
+			$tablesAr = $allTablesAr;
+		}
+
+		$fp = $compress ? gzopen($filename, "w9") : fopen($filename, "w");
+		if (!$fp)
+		{
+			throw new Exception("Unable to create db dump $filename");
+		}
+
+		$sql = <<<EOF
+# [diCMS] database backup
+# http://www.cadr25.ru
+#
+# Database: {$this->getDb()->getDatabase()}
+# Database Server: {$this->getDb()->getHost()}
+#
+# Backup Date: {$dt}
+
+EOF;
+
+		foreach ($tablesAr as $table)
+		{
+			if (!in_array($table, $allTablesAr))
+			{
+				continue;
+			}
+
+			if ($drops)
+			{
+				$sql .= "DROP TABLE IF EXISTS `".$table."`;\n";
+			}
+
+			if ($creates)
+			{
+				$sql .= "CREATE TABLE `".$table."` (\n";
+
+				$fieldsAr = array();
+				$createFieldsAr = array();
+
+				$rs = $this->getDb()->q("SHOW FIELDS FROM ".$table);
+				while($r = $this->getDb()->fetch($rs))
+				{
+					if ($r->Default != NULL)
+					{
+						if (!in_array($r->Default, array("CURRENT_TIMESTAMP")))
+						{
+							$r->Default = "'$r->Default'";
+						}
+					}
+
+					$name = $r->Field;
+					$type = $r->Type;
+					$null = $r->Null == "YES" ? "" : " NOT NULL";
+					$def  = $r->Default != NULL ? " DEFAULT ".$r->Default."" : "";
+					$xtra = ($r->Extra) ? " ".$r->Extra : "";
+
+					$fieldsAr[$r->Field] = $r->Type;
+					$createFieldsAr[] = "\t`".$name."` ".$type.$null.$def.$xtra;
+				}
+
+				$sql .= join(",\n", $createFieldsAr);
+				unset($createFieldsAr);
+
+				// get keys list
+				$indexAr = array();
+
+				$rs_keys = $this->getDb()->q("SHOW KEYS FROM `$table`");
+				while ($r_key = $this->getDb()->fetch($rs_keys))
+				{
+					$key_name = $r_key->Key_name;
+
+					if ($key_name != "PRIMARY" && $r_key->Non_unique == 0)
+					{
+						$key_name = "UNIQUE|".$key_name;
+					}
+
+					if (!isset($indexAr[$key_name]) || !is_array($indexAr[$key_name]))
+					{
+						$indexAr[$key_name] = array();
+					}
+
+					$indexAr[$key_name][] = $r_key->Column_name;
+				}
+
+				$engine = substr($table, 0, 13) == "search_index_" ? "MyISAM" : "InnoDB";
+
+				// get each key info
+				foreach ($indexAr as $key_name => $columns)
+				{
+					$sql .= ",\n";
+					$col_names = "`".join("`,`", $columns)."`";
+
+					$prefix = "";
+
+					foreach ($columns as $_c)
+					{
+						foreach ($fieldsAr as $field => $type)
+						{
+							if (strtolower($field) == strtolower($_c) && strtolower($type) == "text")
+							{
+								$prefix = "FULLTEXT ";
+								$engine = "MyISAM";
+
+								break(2);
+							}
+						}
+					}
+
+					if ($key_name == "PRIMARY")
+					{
+						$sql .= "\tPRIMARY KEY ($col_names)";
+					}
+					else
+					{
+						if (substr($key_name, 0, 6) == "UNIQUE")
+						{
+							$key_name = substr($key_name, 7);
+						}
+
+						$sql .= "\t".$prefix."KEY `$key_name`($col_names)";
+					}
+				}
+
+				$sql .= "\n) ENGINE=$engine DEFAULT CHARSET=".strtolower(DIENCODING)." COLLATE=".strtolower(DIENCODING)."_general_{$table_case_sensitivity_str};\n\n";
+			}
+
+			if ($data)
+			{
+				$rs = $this->getDb()->rs($table);
+				$rc = $this->getDb()->count($rs);
+
+				if ($fields && empty($fieldsAr))
+				{
+					$r = $this->getDb()->fetch($rs);
+
+					foreach ($r as $Field => $Value)
+					{
+						$fieldsAr[$Field] = 1;
+					}
+
+					$this->getDb()->reset($rs);
+				}
+
+				$fieldsListString = $fields && $fieldsAr ? "(".join(",", array_keys($fieldsAr)).")" : "";
+
+				if ($multiple && $rc)
+				{
+					$sql .= "INSERT INTO `{$table}`{$fieldsListString} VALUES";
+				}
+
+				$end_symbol = $multiple ? "," : ";";
+
+				for ($j = 0; $j < $rc; $j++)
+				{
+					$r = $this->getDb()->fetch_array($rs);
+
+					if (!$multiple)
+					{
+						$sql .= "INSERT INTO `{$table}`{$fieldsListString} VALUES";
+					}
+
+					if ($j == $rc - 1)
+					{
+						$end_symbol = ";";
+					}
+
+					$sql .= "('".join("','", $this->prepareString(array_values($r)))."'){$end_symbol}\n";
+
+					$this->tryToFlush($fp, $sql, $compress);
+				}
+
+				$sql .= "\n";
+			}
+		}
+
+		$this->tryToFlush($fp, $sql, $compress, 0);
+
+		$compress ? gzclose($fp) : fclose($fp);
+
+		chmod($filename, self::CHMOD_FILE);
+
+		$ar["ok"] = true;
+		$ar = array_merge($ar, $this->getDumpInfo($filename));
+
+		return $ar;
+	}
+
+	private function getDumpInfo($filename)
+	{
+		return [
+			"size" => filesize($filename),
+			"format" => get_file_ext($filename),
+			"file" => basename($filename),
+		];
+	}
+
+	private function checkTimeout($time, $timeout)
+	{
+		return utime() - $time >= $timeout;
+	}
+
+	public function restoreAction()
+	{
+		$startTime = utime();
+		$maxTimeout = 200;
+		$startFrom = false;
+
+		// comments
+		$sql_comments = ["#", "--"];
+		$max_line_length = 65536;
+		$ending = ';';
+
+		$fn = $this->file;
+		$start_from = diRequest::get("start_from", 0);
+
+		if (!$fn)
+		{
+			throw new Exception("No file defined");
+		}
+
+		$ffn = $this->folder.$fn;
+
+		$is_gz = get_file_ext($fn) == "gz";
+		$fopen_func = $is_gz ? "gzopen" : "fopen";
+		$fgets_func = $is_gz ? "gzgets" : "fgets";
+		$fclose_func = $is_gz ? "gzclose" : "fclose";
+		$ftell_func = $is_gz ? "gztell" : "ftell";
+		$fseek_func = $is_gz ? "gzseek" : "fseek";
+
+		$errorsAr = [];
+
+		if (is_file($ffn) && $file = $fopen_func($ffn, "r"))
+		{
+			simple_debug("starting $fn from $start_from", "db-restore");
+
+			if ($start_from)
+			{
+				$fseek_func($file, $start_from);
+			}
+
+			$line_counter = 0;
+
+			$in_quotes = false;
+			$query = "";
+
+			while ($line = $fgets_func($file, $max_line_length))
+			{
+				$line = str_replace("\r\n", "\n", $line);
+				$line = str_replace("\r", "\n", $line);
+				$line = trim($line);
+
+				if (!$in_quotes)
+				{
+					$to_skip_line = false;
+
+					reset($sql_comments);
+
+					foreach($sql_comments as $sql_c)
+					{
+						if (!$line || substr($line, 0, strlen($sql_c)) == $sql_c)
+						{
+							$to_skip_line = true;
+							break;
+						}
+					}
+
+					if ($to_skip_line)
+					{
+						$line_counter++;
+
+						continue;
+					}
+				}
+
+				$line_deslashed = str_replace("\\\\", "", $line);
+
+				$quotes_cc = substr_count($line_deslashed, "'") - substr_count($line_deslashed, "\\'");
+				if ($quotes_cc % 2 != 0)
+				{
+					$in_quotes = !$in_quotes;
+				}
+
+				if ($query)
+				{
+					$query .= "\n";
+				}
+				$query .= $line;
+
+				/*
+				if (strtoupper(substr($line, 0, 9)) == 'DELIMITER')
+				{
+					$ending = trim(substr($line, 10));
+				}
+				*/
+
+				$lineTerminated = substr($line, -1) == ';' && $ending == ';';
+
+				if ($lineTerminated && !$in_quotes)
+				{
+					if (substr($query, 0, 12) == "/*!40101 SET")
+					{
+						// skipping this trash
+						$query = "";
+					}
+					elseif (substr($query, -23) == "DEFAULT CHARSET=latin1;")
+					{
+						$query = substr($query, 0, -7) . DIENCODING . ";";
+					}
+
+					$this->getDb()->resetLog();
+
+					if ($query && !$this->getDb()->q($query))
+					{
+						$errorsAr[] =
+							"Line: " . $line_counter . "\n" .
+							"Unable to execute query \"$query\"\n" .
+							"Error: " . join("", $this->getDb()->getLog()) . "";
+					}
+
+					simple_debug("line executed: $line_counter", "db-restore");
+
+					$query = "";
+				}
+
+				$line_counter++;
+
+				if ($this->checkTimeout($startTime, $maxTimeout))
+				{
+					$startFrom = $ftell_func($file);
+
+					break;
+				}
+			}
+
+			$fclose_func($file);
+		}
+		else
+		{
+			$errorsAr[] = "Unable to open file ".$this->folder.$fn;
+		}
+
+		$ar = [
+			"ok" => !count($errorsAr),
+			"errors" => $errorsAr,
+			"file" => $fn,
+			"startFrom" => $startFrom,
+		];
+
+		$ar = array_merge($ar, $this->getTablesList($this->getDb()));
+
+		print_json($ar);
+	}
+}

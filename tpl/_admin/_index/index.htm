@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+
+{HEAD}
+
+<body>
+
+<div class="admin-layout">
+
+	<div class="logo">diCMS {XX_VERSION}</div>
+	<div class="head-auth-info">{ADMIN_LOGIN} <i>{ADMIN_LEVEL_STR}</i></div>
+	<a href="/" class="head-href go-to-face" target="_blank">{LANG.GO_TO_SITE}</a>
+	<a href="{LOGOUT_HREF}" class="head-href logout">{LANG.SIGN_OUT}</a>
+	<div class="site-title">{SITE_TITLE}</div>
+
+	<div class="nav">
+		<div class="above_lm">{LANG.MAIN_MENU}</div>
+		<ul class="left-menu">{LEFT_MENU}</ul>
+	</div>
+
+	<div class="content">
+		{EXPAND_COLLAPSE_BLOCK}
+
+		<div class="caption">
+			<b>{CAPTION}</b>
+			<span class="buttons">{CAPTION_BUTTONS}</span>
+		</div>
+
+		{PAGE}
+	</div>
+
+</div>
+
+{FOOTER}
+
+</body>
+</html>

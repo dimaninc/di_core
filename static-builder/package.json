@@ -1,0 +1,25 @@
+{
+  "name": "diCMS.admin",
+  "version": "0.0.1",
+  "description": "diCMS static builder",
+  "main": "index.html",
+  "author": "dimaninc",
+  "license": "none",
+  "devDependencies": {
+    "gulp": "~3.3.1",
+    "gulp-concat": "~2.1.7",
+    "gulp-csso": "~0.1.7",
+    "gulp-imagemin": "~0.1.4",
+    "gulp-myth": "~0.1.0",
+    "gulp-rename": ">=1.0.0",
+    "gulp-stylus": "0.0.9",
+    "gulp-uglify": "~0.1.0",
+    "tiny-lr": "0.0.5"
+  },
+  "dependencies": {
+    "coffee-script": "^1.8.0",
+    "gulp-bower-files": "^0.2.7",
+    "gulp-gh-pages": "^0.3.4",
+    "gulp.spritesmith": "^1.4.0"
+  }
+}

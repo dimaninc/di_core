@@ -1,0 +1,312 @@
+.nicetable-button {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -30px -90px no-repeat;
+}
+.nicetable-button[data-action="accepted"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -28px 0px no-repeat;
+}
+.nicetable-button[data-action="accepted"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -178px -120px no-repeat;
+}
+.nicetable-button[data-action="activated"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -58px 0px no-repeat;
+}
+.nicetable-button[data-action="activated"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") 0px -30px no-repeat;
+}
+.nicetable-button[data-action="active"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -30px -30px no-repeat;
+}
+.nicetable-button[data-action="active"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -88px 0px no-repeat;
+}
+.nicetable-button[data-action="banner"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -88px -30px no-repeat;
+}
+.nicetable-button[data-action="banner"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") 0px -60px no-repeat;
+}
+.nicetable-button[data-action="comments"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -30px -60px no-repeat;
+}
+.nicetable-button[data-action="comments"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -60px -60px no-repeat;
+}
+.nicetable-button[data-action="create"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -118px 0px no-repeat;
+}
+.nicetable-button[data-action="del"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -118px -30px no-repeat;
+}
+.nicetable-button[data-action="down"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -118px -60px no-repeat;
+}
+.nicetable-button[data-action="edit"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") 0px -90px no-repeat;
+}
+.nicetable-button[data-action="empty"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -30px -90px no-repeat;
+}
+.nicetable-button[data-action="en_visible"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -60px -90px no-repeat;
+}
+.nicetable-button[data-action="en_visible"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -90px -90px no-repeat;
+}
+.nicetable-button[data-action="hit"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -148px 0px no-repeat;
+}
+.nicetable-button[data-action="hit"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -148px -30px no-repeat;
+}
+.nicetable-button[data-action="hot"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -148px -60px no-repeat;
+}
+.nicetable-button[data-action="hot"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -148px -90px no-repeat;
+}
+.nicetable-button[data-action="mail"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") 0px -120px no-repeat;
+}
+.nicetable-button[data-action="manage"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -30px -120px no-repeat;
+}
+.nicetable-button[data-action="moderated"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -60px -120px no-repeat;
+}
+.nicetable-button[data-action="moderated"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -90px -120px no-repeat;
+}
+.nicetable-button[data-action="new"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -120px -120px no-repeat;
+}
+.nicetable-button[data-action="new"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -178px 0px no-repeat;
+}
+.nicetable-button[data-action="opened"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -178px -30px no-repeat;
+}
+.nicetable-button[data-action="opened"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -178px -60px no-repeat;
+}
+.nicetable-button[data-action="pic"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -178px -90px no-repeat;
+}
+.nicetable-button[data-action="play"] {
+  width: 28px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") 0px 0px no-repeat;
+}
+.nicetable-button[data-action="price"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") 0px -150px no-repeat;
+}
+.nicetable-button[data-action="print"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -30px -150px no-repeat;
+}
+.nicetable-button[data-action="recommended"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -60px -150px no-repeat;
+}
+.nicetable-button[data-action="recommended"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -90px -150px no-repeat;
+}
+.nicetable-button[data-action="reply"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -120px -150px no-repeat;
+}
+.nicetable-button[data-action="reply"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -150px -150px no-repeat;
+}
+.nicetable-button[data-action="rollback"] {
+  width: 29px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -208px 0px no-repeat;
+}
+.nicetable-button[data-action="to_show_content"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") 0px -180px no-repeat;
+}
+.nicetable-button[data-action="to_show_content"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -30px -180px no-repeat;
+}
+.nicetable-button[data-action="top"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -60px -180px no-repeat;
+}
+.nicetable-button[data-action="top"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -90px -180px no-repeat;
+}
+.nicetable-button[data-action="up"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -120px -180px no-repeat;
+}
+.nicetable-button[data-action="video"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -150px -180px no-repeat;
+}
+.nicetable-button[data-action="visible"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -180px -180px no-repeat;
+}
+.nicetable-button[data-action="visible"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -237px 0px no-repeat;
+}
+.nicetable-button[data-action="visible_2nd_bottom"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -237px -30px no-repeat;
+}
+.nicetable-button[data-action="visible_2nd_bottom"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -237px -60px no-repeat;
+}
+.nicetable-button[data-action="visible_bottom"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -237px -90px no-repeat;
+}
+.nicetable-button[data-action="visible_bottom"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -237px -120px no-repeat;
+}
+.nicetable-button[data-action="visible_left"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -237px -150px no-repeat;
+}
+.nicetable-button[data-action="visible_left"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -237px -180px no-repeat;
+}
+.nicetable-button[data-action="visible_logged_in"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") 0px -210px no-repeat;
+}
+.nicetable-button[data-action="visible_logged_in"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -30px -210px no-repeat;
+}
+.nicetable-button[data-action="visible_right"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -60px -210px no-repeat;
+}
+.nicetable-button[data-action="visible_right"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -90px -210px no-repeat;
+}
+.nicetable-button[data-action="visible_top"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -120px -210px no-repeat;
+}
+.nicetable-button[data-action="visible_top"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -150px -210px no-repeat;
+}
+.nicetable-button[data-action="winner"][data-state="0"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -180px -210px no-repeat;
+}
+.nicetable-button[data-action="winner"][data-state="1"] {
+  width: 30px;
+  height: 30px;
+  background: url("/_core/i/admin/buttons.png?1488189708300") -210px -210px no-repeat;
+}
+.nicetable-button {
+  display: inline-block;
+  cursor: pointer;
+}
+.nicetable-button[data-action="empty"] {
+  cursor: default;
+}

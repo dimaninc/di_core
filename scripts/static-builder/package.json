@@ -1,0 +1,25 @@
+{
+  "name": "PROJECT NAME",
+  "version": "0.0.2",
+  "description": "PROJECT NAME",
+  "main": "index.html",
+  "author": "dimaninc",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "coffee-script": "^1.10.0",
+    "gulp": "^3.9.1",
+    "gulp-bower-files": "^0.2.7",
+    "gulp-concat": "^2.6.0",
+    "gulp-csso": "^1.0.1",
+    "gulp-gh-pages": "^0.5.4",
+    "gulp-imagemin": "^2.4.0",
+    "gulp-myth": "^1.1.0",
+    "gulp-rename": "^1.2.2",
+    "gulp-stylus": "^2.3.0",
+    "gulp-uglify": "^1.5.3",
+    "gulp.spritesmith": "^6.2.0",
+    "nib": "^1.1.0",
+    "tiny-lr": "^0.2.1"
+  }
+}

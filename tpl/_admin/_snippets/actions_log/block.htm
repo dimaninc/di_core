@@ -1,0 +1,46 @@
+<ul class="mini-tabs" data-purpose="tabs">
+	<li data-tab="actions-log">История изменений</li>
+	<li data-tab="comments">Комментарии (<span data-purpose="comments-count"></span>)</li>
+</ul>
+
+<ul class="mini-pages" data-purpose="tab-pages">
+	<li data-tab="actions-log"></li>
+	<li data-tab="comments" data-type="{I_TYPE}" data-id="{I_ID}" data-template="admin-snippet"></li>
+</ul>
+
+<script type="text/javascript">
+	$(function() {
+		var $id = $('form input:hidden[name="id"]'),
+			id = parseInt($id.val()),
+			$container = $('.diadminform-row[data-field="{I_FIELD}"] .value .static'),
+			Tabs;
+
+		if (id)
+		{
+			Tabs = new diTabs({
+				$tabsContainer: $container.find('ul.mini-tabs'),
+				$pagesContainer: $container.find('ul[data-purpose="tab-pages"]')
+			});
+
+			new diActionsLog({
+				targetType: '{I_TABLE}',
+				targetId: id,
+				$container: $container.find('ul[data-purpose="tab-pages"] li[data-tab="actions-log"]')
+			});
+
+			var Comments = new diComments({
+				$container: $container.find('ul[data-purpose="tab-pages"] li[data-tab="comments"]'),
+				loadOnInit: true,
+				submitOnCtrlEnter: true,
+				afterWork: function(action, response) {
+					$('[data-purpose="comments-count"]').html(response.total_count);
+
+					if (response.total_count > 0)
+					{
+						Tabs.select('comments');
+					}
+				}
+			});
+		}
+	});
+</script>

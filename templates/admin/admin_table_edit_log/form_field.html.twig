@@ -1,0 +1,27 @@
+{% if records|length > 0 %}
+	<ul class="table-edit-log">
+	{% for rec in records %}
+		<li>
+			<div class="author">
+				<b>{{ admins[rec['admin_id']]['login'] }}</b>
+				<i>{{ rec['created_at_date'] }} {{ rec['created_at_time'] }}</i>
+			</div>
+			<table>
+				{% for field, value in rec.getOldValues() %}
+					<tr>
+						<th colspan="4">{{ field }}</th>
+					</tr>
+					<tr>
+						<td>{{ value }}</td>
+						<td>&raquo;</td>
+						<td>{{ rec.getNewValues(field) }}</td>
+						<td>{{ rec.getDataDiff(field)|raw }}</td>
+					</tr>
+				{% endfor %}
+			</table>
+		</li>
+	{% endfor %}
+	</ul>
+{% else %}
+	<div>История изменений пуста</div>
+{% endif %}

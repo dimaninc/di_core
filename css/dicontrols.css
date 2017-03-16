@@ -1,0 +1,67 @@
+/* dicontrols */
+
+input[type="checkbox"].direal,input[type="radio"].direal {
+	display: none;
+}
+
+input[type="checkbox"].direal + label,input[type="radio"].direal + label {
+	position: relative;
+	top: -4px;
+}
+
+.diradio,.dicheckbox {
+	position: relative;
+	width: 16px;
+	height: 16px;
+	border-radius: 2px;
+
+	background: #fff;
+	box-shadow: inset 0 0 5px 0px rgba(0,0,0,.6);
+
+	display: inline-block;
+	cursor: pointer;
+}
+
+.diradio {
+	border-radius: 8px;
+}
+
+.dicheckbox:not(.checked):not(.disabled):hover,
+.diradio:not(.checked):not(.disabled):hover {
+	box-shadow: inset 0 0 5px 0px rgba(0,0,0,.8);
+}
+
+.dicheckbox:not(.checked):not(.disabled):active,
+.diradio:not(.checked):not(.disabled):active {
+	box-shadow: inset 0 0 5px 0px rgba(0,0,0,1);
+}
+
+.dicheckbox.checked,
+.diradio.checked {
+}
+
+.dicheckbox.checked:after,
+.diradio.checked:after {
+	content: '\2713';
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	text-align: center;
+	font-size: 16px;
+	line-height: 16px;
+}
+
+.diradio.checked:after {
+	content: '\2022';
+}
+
+.dicheckbox.disabled,
+.diradio.disabled {
+    cursor: default;
+	background: #ccc;
+}
+
+.diradio.disabled.checked {
+}

@@ -1,0 +1,15 @@
+<script type="text/javascript">
+	$(function() {
+		var $f  = $('select[name="folder"]'),
+			$new = $('.diadminform-row[data-field="folder"] .input-suffix');
+
+		function toggle()
+		{
+			$new.toggle($f.val() === '*');
+		}
+
+		$f.on('change blur focus click', toggle);
+
+		toggle();
+	});
+</script>

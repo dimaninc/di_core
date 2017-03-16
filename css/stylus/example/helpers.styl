@@ -1,0 +1,117 @@
+sprite(sprite, horizontal = none, vertical = none, fn = "sprite")
+	width sprite[2]
+	height sprite[3]
+	background-image url("/i/" + fn + ".png?" + $sprite-timestamp)
+	background-position sprite[0] sprite[1]
+	background-repeat no-repeat
+
+	if horizontal is center
+		margin-left (@width / -2)
+		left 50%
+	else if horizontal is left
+		left 0
+	else if horizontal is right
+		right 0
+
+	if vertical is center
+		margin-top (@height / -2)
+		top 50%
+	else if vertical is top
+		top 0
+	else if vertical is bottom
+		bottom 0
+
+stripe(even = #fff, odd = #eee)
+	tr
+		background-color odd
+		&.even
+		&:nth-child(even)
+			background-color even
+
+bg-gradient(origin, colors...)
+	firstColor = colors[0]
+
+	colors = join(', ', colors)
+	colors = unquote(colors)
+
+	background-color firstColor
+	background-image linear-gradient(origin, colors)
+
+placeholder()
+	&::-webkit-input-placeholder
+		{block}
+	&:-moz-placeholder
+		{block}
+	&::-moz-placeholder
+		{block}
+	&:-ms-input-placeholder
+		{block}
+
+ellipsis($nowrap = true)
+	text-overflow ellipsis
+	overflow hidden
+	if $nowrap
+		white-space nowrap
+
+ul-norm()
+	list-style none
+	margin 0
+	padding 0
+
+clearing-after(what = both)
+	$what = what
+	zoom 1
+	&:after
+		content ''
+		display block
+		height 0
+		line-height 0
+		font-size 0
+		clear $what
+
+triangle(width = 10px, height = 10px, direction = 'bottom', color = #000)
+	// Base triangle styles
+	width 0
+	height 0
+	background 0
+	border-style solid
+
+	// Styles for each direction
+	directions = {
+		top: {
+			border-width: 0 (width * .5) height (width * .5),
+			border-color: transparent transparent color transparent
+		},
+		topRight: {
+			border-width: 0 width height 0,
+			border-color: transparent color transparent transparent
+		},
+		right: {
+			border-width: (height * .5) 0 (height *.5) width,
+			border-color: transparent transparent transparent color
+		},
+		bottomRight: {
+			border-width: 0 0 height width,
+			border-color: transparent transparent color transparent
+		},
+		bottom: {
+			border-width: height (width * .5) 0 (width * .5),
+			border-color: color transparent transparent transparent
+		},
+		bottomLeft: {
+			border-width: width 0 0 height,
+			border-color: transparent transparent transparent color
+		},
+		left: {
+			border-width: (height * .5) width (height * .5) 0,
+			border-color: transparent color transparent transparent
+		},
+		topLeft: {
+			border-width: height width 0 0,
+			border-color: color transparent transparent transparent
+		}
+	}
+
+	// Mixin styles for passed direction
+	styles = directions[direction]
+	{styles}

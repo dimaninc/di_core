@@ -1,0 +1,54 @@
+/* dynamic pics/files */
+
+.dynamic-add {
+    margin: 10px 0 5px 0;
+}
+
+.dynamic-row {
+    margin: 0 0 5px 0;
+    border: 1px solid #aaa;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.dynamic-row:hover {
+    background: #ffe;
+}
+
+.dynamic-row div.m {
+    margin: 10px 0;
+}
+
+.dynamic-row .remove {
+    float: right;
+}
+
+.dynamic-row .diaf_clear {
+    clear: right;
+}
+
+/* lines inside dynamic rows */
+
+.dynamic-row ul.line {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.dynamic-row ul.line li {
+    display: inline-block;
+    margin: 5px 15px 5px 0;
+}
+
+.dynamic-row ul.line li:last-child {
+    margin-right: 0;
+}
+
+.dynamic-row ul.line li.full-width {
+    display: block;
+}
+
+.dynamic-row ul.line li.full-width textarea,
+.dynamic-row ul.line li.full-width input {
+    width: 90%;
+}

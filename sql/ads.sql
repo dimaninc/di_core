@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS ads(
+  id bigint auto_increment,
+  block_id bigint,
+  category_id bigint default '0',
+  title varchar(255),
+  content text,
+  href varchar(255),
+  onclick varchar(255) default '',
+  button_color varchar(10) default '',
+  transition tinyint default '0',
+  transition_style tinyint default '0',
+  duration_of_show int default '-1',
+  duration_of_change int default '-1',
+  pic varchar(40) default '',
+  pic_w int(4) default '0',
+  pic_h int(4) default '0',
+  visible tinyint default '1',
+  order_num bigint,
+  date timestamp default CURRENT_TIMESTAMP,
+  key idx(block_id,category_id,visible,order_num),
+  primary key(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;

@@ -1,0 +1,72 @@
+/* configuration */
+
+.configuration div[data-tab] {
+	margin: 0 24px;
+}
+
+.configuration .grid {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+.configuration .grid tbody tr td {
+	width: 50%;
+	padding: 5px;
+	border: 1px solid #fff;
+	background: #dfdfd0;
+	font-size: 12px;
+}
+
+.configuration .grid tbody tr td:first-child {
+	text-align: right;
+	vertical-align: top;
+	padding-top: 8px;
+}
+
+.configuration .grid tbody tr:nth-child(even) td {
+	background: #e7e7e0;
+}
+
+.configuration .grid tbody tr:hover td {
+	background: #f3f3f3;
+}
+
+.configuration .grid tbody tr td input[type="text"],
+.configuration .grid tbody tr td textarea {
+	width: 90%;
+}
+
+.configuration .grid tbody tr td textarea {
+	height: 90px;
+}
+
+.configuration .grid tbody tr td label {
+	display: block;
+}
+
+.configuration .grid .file-info {
+	background: rgba(255, 255, 255, .5);
+	padding: 10px;
+	text-align: center;
+	margin-top: 5px;
+}
+
+.configuration .grid .uploaded-pic {
+}
+
+.configuration .grid .uploaded-pic img {
+	max-width: 100%;
+	max-height: 300px;
+	cursor: zoom-in;
+}
+
+.configuration .grid .uploaded-pic.zoomed {
+	width: 550px;
+	overflow-x: auto;
+}
+
+.configuration .grid .uploaded-pic.zoomed img {
+	max-width: none;
+	max-height: none;
+	cursor: zoom-out;
+}

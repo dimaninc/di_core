@@ -1,0 +1,16 @@
+<form name="comment_form" action="" method="post" class="comments-form">
+
+	<input type="hidden" name="action" value="add" />
+	<input type="hidden" name="target_type" value="{COMMENT_TARGET_TYPE}" />
+	<input type="hidden" name="target_id" value="{COMMENT_TARGET_ID}" />
+	<input type="hidden" name="parent" value="{COMMENT_PARENT}" />
+	<input type="hidden" name="l" value="{SITE_LANGUAGE}" id="l" />
+
+	<div class="comment-submit-block">
+		<button type="submit">Отправить</button>
+		<span class="loading-ico"></span>
+	</div>
+
+	<div><textarea name="content" rows="3" onkeypress="return check_ctrl_enter(event, this.form);"></textarea></div>
+
+</form>

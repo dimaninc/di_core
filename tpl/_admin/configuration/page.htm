@@ -1,0 +1,29 @@
+<link href="../_core/css/admin/configuration.css" rel="stylesheet" type="text/css">
+<script type="text/javascript" src="../_core/js/admin/diConfiguration.js"></script>
+
+{SAVED_MESSAGE}
+
+<div class="diadminform_tabs"><ul data-purpose="tabs">{HEAD_TAB_ROWS}</ul></div>
+
+<div class="new_admin_block configuration">
+
+<form action="{WORKER_URI}" method="post" enctype="multipart/form-data">
+
+	<div data-purpose="tab-pages">
+	{TAB_PAGES}
+	</div>
+
+	<div class="submit-block">
+		<button type="submit">Сохранить</button>
+		<button type="button" data-purpose="cancel">Закрыть</button>
+	</div>
+
+</form>
+
+</div>
+
+<script type="text/javascript">
+$(function() {
+	new diConfiguration();
+});
+</script>

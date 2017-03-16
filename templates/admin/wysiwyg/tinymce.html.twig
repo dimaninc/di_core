@@ -1,0 +1,25 @@
+<script type="text/javascript" src="/_core/vendor/tinymce/tinymce.min.js"></script>
+<script type="text/javascript">
+{% block tinymce_init %}
+tinymce.init({
+    selector: '.diadminform-row .value .wysiwyg textarea',
+	height: '350px',
+	convert_urls: false,
+    //relative_urls: false,
+    //remove_script_host: false,
+    image_advtab: true,
+    content_css: '/_admin/_static/css/wysiwyg.css',
+    plugins: [
+        'advlist autolink lists link image charmap print preview anchor',
+        'searchreplace visualblocks code fullscreen',
+        'responsivefilemanager insertdatetime media table contextmenu paste',
+        ''
+    ],
+    toolbar: '| responsivefilemanager | insertfile undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image',
+    {% if extra_wysiwyg_settings %}{{ extra_wysiwyg_settings|raw }}{% endif %}
+    external_filemanager_path: '/_core/vendor/responsive_filemanager/',
+    filemanager_title: 'File Manager',
+    external_plugins: {'filemanager': 'plugins/responsivefilemanager/plugin.min.js'}
+});
+{% endblock %}
+</script>

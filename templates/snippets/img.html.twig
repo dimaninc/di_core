@@ -1,0 +1,9 @@
+{% set anchor = false %}
+{% if img.href %}
+{% set anchor = true %}
+<a href="{{ img.href }}"{% if img.target %} target="{{ img.target }}"{% endif %}>
+{% endif %}
+<img src="{{ img.src }}"{% if img.width %} width="{{ img.width }}"{% endif %}{% if img.height %} height="{{ img.height }}"{% endif %}{% if img.alt %} alt="{{ img.alt }}"{% endif %}{% if img.class %} class="{{ img.class }}"{% endif %}>
+{% if anchor %}
+</a>
+{% endif %}

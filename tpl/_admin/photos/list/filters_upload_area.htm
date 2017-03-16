@@ -1,0 +1,99 @@
+<div class="upload-area">
+	<div class="caption">Загрузить в текущий альбом</div>
+</div>
+
+<div class="progress-box">
+</div>
+
+<script type="text/javascript" src="/_core/js/vendor/fileUpload/SimpleAjaxUploader.js"></script>
+
+<script type="text/javascript">
+	$(function() {
+		var uploader,
+			baseUrl = '/_core/php/admin/workers/photos/';
+
+		function getUploaderUrl()
+		{
+			return baseUrl + 'upload/?album_id=' + $('select[name="album_id"]').val();
+		}
+
+		function getProgressUrl()
+		{
+			return baseUrl + 'progress/';
+		}
+
+		function initUploader()
+		{
+			uploader = new ss.SimpleUpload({
+				//dropzone: $('.filter-block .upload-area'),
+				button: $('.filter-block .upload-area'),
+				url: getUploaderUrl(),
+				responseType: 'json',
+				multiple: true,
+				allowedExtensions: ['jpg', 'jpeg', 'png', 'gif'],
+				name: 'pic',
+				debug: false,
+				progressUrl: getProgressUrl(),
+				onSubmit: function(filename, response) {
+					// Create the elements of our progress bar
+					var progress = document.createElement('div'), // container for progress bar
+						bar = document.createElement('div'), // actual progress bar
+						fileSize = document.createElement('div'), // container for upload file size
+						wrapper = document.createElement('div'), // container for this progress bar
+						name = document.createElement('div'),
+						progressBox = $('.progress-box').get(0); // on page container for progress bars
+
+					// Assign each element its corresponding class
+					progress.className = 'progress progress-striped active';
+					bar.className = 'bar progress-bar';
+					fileSize.className = 'size';
+					wrapper.className = 'wrapper';
+					name.className = 'name';
+					name.innerHTML = filename;
+
+					// Assemble the progress bar and add it to the page
+					progress.appendChild(bar);
+					wrapper.appendChild(fileSize);
+					wrapper.appendChild(name);
+					wrapper.appendChild(progress);
+					progressBox.appendChild(wrapper); // just an element on the page to hold the progress bars
+
+					// Assign roles to the elements of the progress bar
+					this.setProgressBar(bar); // will serve as the actual progress bar
+					this.setFileSizeBox(fileSize); // display file size beside progress bar
+					this.setProgressContainer(wrapper); // designate the containing div to be removed after upload
+				},
+				onComplete: function(filename, response) {
+					if (!response)
+					{
+						alert(filename + ' upload failed');
+
+						return false;
+					}
+
+					var method = response.direction > 0 ? 'append' : 'prepend';
+
+					$('ul.admin-grid')[method](response.html);
+
+					if (response.success)
+					{
+						console.log('uploaded', filename);
+					}
+					else
+					{
+						console.log(response.msg);
+					}
+				}
+			});
+		}
+
+		initUploader();
+
+		$('select[name="album_id"]').on('change', function() {
+			uploader.setOptions({
+				url: getUploaderUrl()
+			});
+		});
+
+	});
+</script>

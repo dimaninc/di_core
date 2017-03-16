@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS banners(
+  id int not null auto_increment,
+  lng varchar(2) default 'ru',
+  place varchar(15) default 'left',
+  title varchar(255) default '',
+  href varchar(255) default '',
+  href_target varchar(20) default '',
+  pic varchar(255) default '',
+  pic_w int default '0',
+  pic_h int default '0',
+  pic_t int default '0',
+  date1 datetime,
+  date2 datetime,
+  visible tinyint default '1',
+  views_count bigint default '0',
+  clicks_count bigint default '0',
+  last_view_date datetime default NULL,
+  order_num int default '0',
+  key visible(visible),
+  key b1(place,date1,date2,visible,last_view_date,order_num),
+  primary key(id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
