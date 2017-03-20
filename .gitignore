@@ -1,3 +1,6 @@
 /.svn
 /!!!
 /static-builder/node_modules
+composer.lock
+.DS_Store
+.idea

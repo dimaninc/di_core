@@ -1,0 +1,24 @@
+{
+    "name": "dimaninc/di_core",
+    "description": "dimaninc core library",
+    "keywords": ["baggio"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Dmitry Petrov",
+            "email": "dimaninc@gmail.com"
+        }
+    ],
+    "type": "library",
+    "require": {
+		"php": ">=5.4"
+    },
+	"require-dev": {
+		"phpunit/phpunit": "5.2.*"
+    },
+	"autoload": {
+        "psr-4": {
+            "diCore\\": "php/src/diCore"
+        }
+    }
+}
