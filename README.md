@@ -1,0 +1,2 @@
+dimaninc Core library
+=========================

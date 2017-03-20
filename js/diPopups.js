@@ -23,11 +23,18 @@ var diPopups = function() {
 		}
 
 		events[id][eventName] = callback;
+
+		return this;
 	};
 
 	this.fireEvent = function(id, eventName) {
 		if (typeof events[id] != 'undefined' && typeof events[id][eventName] != 'undefined') {
-			events[id][eventName]();
+			events[id][eventName]({
+				name: eventName,
+				id: id,
+				element: this.getPopupElement(id),
+				diPopup: this
+			});
 		}
 	};
 
@@ -51,28 +58,19 @@ var diPopups = function() {
 		this.e.$bg.fadeOut();
 	};
 
+	this.getPopupElement = function(id) {
+		return typeof this.$e_ar[id] != 'undefined'
+			? this.$e_ar[id]
+			: $();
+	};
+
 	function realShow(id) {
-		self.$e_ar[id].fadeIn();
-		//self.$e_ar[id].css('opacity', 0).show();
-
+		self.getPopupElement(id).fadeIn();
 		self.update_position(id);
-
-		/*
-		self.$e_ar[id].animate({
-			opacity: 1
-		});
-		*/
 	}
 
 	function realHide(id) {
-		self.$e_ar[id].fadeOut();
-		/*
-		self.$e_ar[id].animate({
-			opacity: 0
-		}, function() {
-			$(this).hide();
-		});
-		*/
+		self.getPopupElement(id).fadeOut();
 	}
 
 	this.show = function(name, _opts/* or showBackground */) {
@@ -81,6 +79,7 @@ var diPopups = function() {
 			content: null,
 			afterUpdatePosition: null
 		};
+		var $e = this.getPopupElement(name);
 
 		if (typeof _opts == 'object') {
 			opts = $.extend(opts, _opts);
@@ -94,10 +93,15 @@ var diPopups = function() {
 					name: name
 				}, opts));
 			}
+		} else if (opts.content) {
+			this.setContent({
+				name: name,
+				content: opts.content
+			});
 		}
 
-		if (this.$e_ar[name].data('detach') && !this.$e_ar[name].parent().is('body')) {
-			$(document.body).append(this.$e_ar[name].detach());
+		if ($e.data('detach') && !$e.parent().is('body')) {
+			$(document.body).append($e.detach());
 		}
 
 		this.checkCloseButton(name);
@@ -110,7 +114,7 @@ var diPopups = function() {
 			this.show_bg();
 		}
 
-		this.$e_ar[name].children('input[type="text"]:visible,textarea:visible').eq(0).focus();
+		$e.children('input[type="text"]:visible,textarea:visible').eq(0).focus();
 
 		this.fireEvent(name, 'show');
 
@@ -140,6 +144,7 @@ var diPopups = function() {
 		options = $.extend({
 			name: null,
 			content: null,
+			showCloseButton: true,
 			afterUpdatePosition: null
 		}, options);
 
@@ -150,6 +155,8 @@ var diPopups = function() {
 			.attr('data-type', 'dipopup')
 			.data('name', options.name)
 			.attr('data-name', options.name)
+			.attr('data-no-close', !options.showCloseButton)
+			.data('no-close', !options.showCloseButton)
 			.data('after-update-position', options.afterUpdatePosition)
 			.html(options.content)
 			.appendTo(document.body);
@@ -186,7 +193,7 @@ var diPopups = function() {
 			}
 		}
 
-		this.$e_ar[options.name].html(options.content);
+		this.getPopupElement(options.name).html(options.content);
 
 		this
 			.checkCloseButton(options.name)
