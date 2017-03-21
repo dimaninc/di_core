@@ -126,129 +126,11 @@ class diLib
 	const workerPrefix = "/_core/php/workers/";
 	const workerAdminPrefix = "/_core/php/admin/workers/";
 
-	// list of _core classes
-	static public $classesAr = [
-		"diAdmin",
-		"diAdminBase",
-		"diAdminBasePage",
-		"diAdminCaption",
+	/** @deprecated */
+	static public $classesAr = [];
 
-		"diAdBlocksPage",
-		"diAdminsPage",
-		"diAdminTasksPage",
-		"diDbPage",
-		"diConfigurationPage",
-		"diLoginPage",
-		"diNewsPage",
-
-		"diDbController",
-		"diConfigurationController",
-
-		"diAdminUser",
-		"diBaseAdminController",
-
-		"diActionsLog",
-		"diAdminFilters",
-		"diAdminForm",
-		"diAdminList",
-		"diAdminSubmit",
-		"diAds",
-		"diBanners",
-		"diBaseController",
-		"diCMS",
-		"diCurrentCMS",
-		"diConfiguration",
-		"diDB",
-		"diDynamicRows",
-		"diEmail",
-		"diFonts",
-		"diForm",
-		"diFormErrors",
-		"diFTP",
-		"diImage",
-		"diMailQueue",
-		"diModel",
-		"diNiceTable",
-		"diPagesNavy",
-		"diPropertyInheritance",
-		"diRequest",
-		"diSearch",
-		"diSearcher",
-		"diSelect",
-		"diSvnUpdater",
-
-		"FastTemplate",
-	];
-
-	static public $classPropertiesAr = [
-		"diAdminBase" => [
-			"location" => self::pathCoreAdmin,
-		],
-
-		"diAdminBasePage" => [
-			"location" => self::pathCoreAdmin,
-		],
-
-		"diBaseAdminController" => [
-			"location" => self::pathCoreAdmin,
-		],
-
-		"diAdminUser" => [
-			"location" => self::pathCoreAdmin,
-		],
-
-		"diAdminCaption" => [
-			"location" => self::pathCoreAdmin,
-		],
-
-		"diAdBlocksPage" => [
-			"location" => self::pathCoreAdminPages,
-		],
-
-		"diAdsPage" => [
-			"location" => self::pathCoreAdminPages,
-		],
-
-		"diAdminsPage" => [
-			"location" => self::pathCoreAdminPages,
-		],
-
-		"diConfigurationPage" => [
-			"location" => self::pathCoreAdminPages,
-		],
-
-		"diDbPage" => [
-			"location" => self::pathCoreAdminPages,
-		],
-
-		"diLoginPage" => [
-			"location" => self::pathCoreAdminPages,
-		],
-
-		"diNewsPage" => [
-			"location" => self::pathCoreAdminPages,
-		],
-
-		"diAdminTasksPage" => [
-			"location" => self::pathCoreAdminPages,
-		],
-
-		"diAdmin" => [
-			"location" => self::pathProjectAdminLib,
-		],
-
-		"diDbController" => [
-			"location" => self::pathCoreAdminControllers,
-		],
-
-		"diConfigurationController" => [
-			"location" => self::pathCoreAdminControllers,
-		],
-
-		"diCurrentCMS" => [
-			"location" => self::pathProjectLib,
-		],
-	];
+	/** @deprecated */
+	static public $classPropertiesAr = [];
 
 	public static function registerNamespace($namespaces)
 	{
@@ -468,8 +350,18 @@ class diLib
 
 	static public function getClassFilename($className, $subFolder = "")
 	{
-	    $root = $_SERVER["DOCUMENT_ROOT"];
+	    $root = $_SERVER['DOCUMENT_ROOT'];
 		$path = null;
+		$libSubFolderProcessor = null;
+
+		if (!is_dir($root . self::$libPathsAr[self::pathCoreSources]))
+		{
+			$root = dirname($root);
+
+			$libSubFolderProcessor = function($subFolder) {
+				return preg_replace("#^/_core#", '/vendor/dimaninc/di_core', $subFolder);
+			};
+		}
 
 		// new format, listed
 		if (self::has($className))
@@ -506,6 +398,11 @@ class diLib
 					$libSubFolders = array_merge($libSubFolders, self::$libSubFolders[$folderId]);
 				}
 
+				if ($libSubFolderProcessor)
+				{
+					$folderPath = $libSubFolderProcessor($folderPath);
+				}
+
 				foreach ($libSubFolders as $libSubFolder)
 				{
 					if ($libSubFolder)
@@ -513,7 +410,7 @@ class diLib
 						$libSubFolder .= '/';
 					}
 
-					if (is_file($root . $folderPath . $libSubFolder . $className . ".php"))
+					if (is_file($root . $folderPath . $libSubFolder . $className . '.php'))
 					{
 						$subFolder = $libSubFolder;
 						$path = $folderPath;
@@ -526,7 +423,7 @@ class diLib
 			// old format
 			if (!$path)
 			{
-				$className = "_class_" . strtolower($className);
+				$className = '_class_' . strtolower($className);
 				$path = self::$libPathsAr[self::pathOldLib];
 			}
 		}
@@ -536,7 +433,7 @@ class diLib
 			$subFolder .= '/';
 		}
 
-		$fullFn = $root . $path . $subFolder . $className . ".php";
+		$fullFn = $root . $path . $subFolder . $className . '.php';
 
 		if (!is_file($fullFn))
 		{
@@ -573,7 +470,7 @@ class diLib
 
 			foreach ($ar as $k => $v)
 			{
-				if (in_array($k, array("class_name", "path_prefix")))
+				if (in_array($k, ["class_name", "path_prefix"]))
 				{
 					continue;
 				}
