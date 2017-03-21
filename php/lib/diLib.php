@@ -139,7 +139,6 @@ class diLib
 		"diDbPage",
 		"diConfigurationPage",
 		"diLoginPage",
-		"diMailQueuePage",
 		"diNewsPage",
 
 		"diDbController",
@@ -226,10 +225,6 @@ class diLib
 			"location" => self::pathCoreAdminPages,
 		],
 
-		"diMailQueuePage" => [
-			"location" => self::pathCoreAdminPages,
-		],
-
 		"diNewsPage" => [
 			"location" => self::pathCoreAdminPages,
 		],
@@ -272,11 +267,11 @@ class diLib
 	{
 		return array_merge(self::$projectNamespaces, self::$coreNamespaces);
 	}
-	
+
 	public static function getFirstNamespace()
 	{
 		$ns = static::getAllNamespaces();
-		
+
 		return isset($ns[0]) ? $ns[0] : null;
 	}
 
