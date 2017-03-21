@@ -1,4 +1,8 @@
 <?php
+
+use diCore\Base\CMS;
+use diCore\Data\Config;
+
 abstract class diAdminBase
 {
 	const SUBFOLDER = "_admin";
@@ -327,8 +331,8 @@ abstract class diAdminBase
 	public static function getAdminTpl()
 	{
 		$tpl = new FastTemplate(
-			diPaths::fileSystem() . "_admin/_tpl",
-			diPaths::fileSystem() . "_admin/_inc/cache/tpl_cache.php",
+			Config::getOldTplFolder() . "_admin/_tpl",
+			Config::getCacheFolder() . "_admin/_inc/cache/tpl_cache.php",
 			FastTemplate::PLACE_ADMIN
 		);
 
@@ -855,7 +859,7 @@ abstract class diAdminBase
 					"<b>Настройки</b>" => [
 						"module" => "configuration",
 					],
-					"Обновить кеш<br />" . diCMS::getTemplatesCacheModificationDateTime() => [
+					"Обновить кеш<br />" . CMS::getTemplatesCacheModificationDateTime() => [
 						"link" => diLib::getAdminWorkerPath("cache", "rebuild") . "?back=" . urlencode(diRequest::server("REQUEST_URI")),
 					],
 				],

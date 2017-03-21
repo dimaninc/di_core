@@ -6,17 +6,19 @@
  * Time: 16:38
  */
 
+use diCore\Base\CMS;
+
 abstract class diModule
 {
-	/** @var diCurrentCMS */
+	/** @var CMS */
 	private $Z;
 
-	public function __construct(diCMS $Z)
+	public function __construct(CMS $Z)
 	{
 		$this->Z = $Z;
 	}
 
-	public static function create(diCMS $Z)
+	public static function create(CMS $Z)
 	{
 		/** @var diModule $o */
 		$o = new static($Z);
@@ -27,7 +29,7 @@ abstract class diModule
 
 		if (!method_exists($o, $m))
 		{
-			throw new Exception("Class " . get_class($o) . " doesn't have '$m' method");
+			throw new \Exception("Class " . get_class($o) . " doesn't have '$m' method");
 		}
 
 		if ($o->$beforeM())
@@ -37,7 +39,7 @@ abstract class diModule
 
 		$o->$afterM();
 
-		if ($o->getTwig()->has(diTwig::TOKEN_FOR_PAGE))
+		if ($o->getTwig()->has(\diTwig::TOKEN_FOR_PAGE))
 		{
 			$o->getTpl()
 				->assign([
@@ -67,7 +69,7 @@ abstract class diModule
 	}
 
 	/**
-	 * @return diCurrentCMS
+	 * @return CMS
 	 */
 	public function getZ()
 	{

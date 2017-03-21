@@ -1,35 +1,38 @@
 <?php
-
 /**
  * Created by PhpStorm.
  * User: dimaninc
- * Date: 10.03.2016
- * Time: 17:52
+ * Date: 21.03.2017
+ * Time: 19:42
  */
-class diCommonPaths
+
+namespace diCore\Data;
+
+
+class Paths
 {
 	const PROTOCOL = null; // got from $_SERVER
 	const DOMAIN = null; // got from $_SERVER
 
 	public static function fileSystem($target = null, $endingSlashNeeded = true, $field = null)
 	{
-		return diRequest::server("DOCUMENT_ROOT") . ($endingSlashNeeded ? '/' : '');
+		return \diRequest::server('DOCUMENT_ROOT') . ($endingSlashNeeded ? '/' : '');
 	}
 
 	public static function http($target = null, $endingSlashNeeded = true, $field = null)
 	{
-		return "";
+		return '';
 	}
 
 	public static function domain()
 	{
-		return static::DOMAIN ?: diRequest::server("HTTP_HOST");
+		return static::DOMAIN ?: \diRequest::domain();
 	}
 
 	public static function defaultHttp()
 	{
-		$protocol = static::PROTOCOL ?: (diRequest::isHttps() ? "https" : "http");
+		$protocol = static::PROTOCOL ?: (\diRequest::isHttps() ? 'https' : 'http');
 
-		return $protocol . "://" . static::domain();
+		return $protocol . '://' . static::domain();
 	}
 }

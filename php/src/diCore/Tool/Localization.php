@@ -9,16 +9,17 @@
 namespace diCore\Tool;
 
 use diCore\Entity\Localization\Model;
+use diCore\Base\CMS;
 
 class Localization
 {
-	const DEFAULT_LANGUAGE = "ru";
+	const DEFAULT_LANGUAGE = 'ru';
 
 	protected static $cache = [];
 
 	protected static function getCurrentLanguage()
 	{
-		/** @var $Z \diCMS */
+		/** @var $Z CMS */
 		global $Z;
 
 		return !empty($Z)

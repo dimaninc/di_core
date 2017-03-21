@@ -151,42 +151,19 @@ $prepare_word_trans_table = [
 /** @deprecated */
 function get_absolute_path($target = null)
 {
-	/** @var diCommonPaths $className */
-	$className = class_exists("diPaths") ? "diPaths" : "diCommonPaths";
+	/** @var \diCore\Data\Paths $className */
+	$className = \diLib::getChildClass(\diCore\Data\Paths::class);
 
 	return $className::fileSystem($target);
-
-	/*
-	global $engine;
-
-	if ($target == "i")
-	{
-		if ($engine["domain"] == "designer")
-			return "Z:/home/designer/i/";
-		else
-			return "/i/";
-	}
-
-	return $_SERVER["DOCUMENT_ROOT"]."/";
-	*/
 }
 
 /** @deprecated */
 function get_http_path($target = null)
 {
-	/** @var diCommonPaths $className */
-	$className = class_exists("diPaths") ? "diPaths" : "diCommonPaths";
+	/** @var \diCore\Data\Paths $className */
+	$className = \diLib::getChildClass(\diCore\Data\Paths::class);
 
 	return $className::http($target);
-
-	/*
-	global $engine;
-
-	if ($target == "i")
-		return "http://i.{$engine["domain"]}/";
-
-	return "";
-	*/
 }
 
 function get_pics_folder($table)

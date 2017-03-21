@@ -1,5 +1,8 @@
 <?php
 
+use diCore\Base\CMS;
+use diCore\Entity\Content\Model;
+
 /**
  * Created by PhpStorm.
  * User: dimaninc
@@ -11,12 +14,12 @@ class diBreadCrumbs
 	/**
 	 * @var array
 	 */
-	protected $elements = array();
+	protected $elements = [];
 
-	protected $skippedContentTypes = array("virtual", "logged_in_menu");
+	protected $skippedContentTypes = ["virtual", "logged_in_menu"];
 
 	/**
-	 * @var diCMS
+	 * @var CMS
 	 */
 	private $Z;
 
@@ -24,7 +27,7 @@ class diBreadCrumbs
 
 	private $divider = " / ";
 
-	public function __construct(diCMS $Z)
+	public function __construct(CMS $Z)
 	{
 		$this->Z = $Z;
 
@@ -32,7 +35,7 @@ class diBreadCrumbs
 	}
 
 	/**
-	 * @return diCMS
+	 * @return CMS
 	 */
 	protected function getZ()
 	{
@@ -46,7 +49,7 @@ class diBreadCrumbs
 
 	public function reset()
 	{
-		$this->elements = array();
+		$this->elements = [];
 
 		return $this;
 	}
@@ -67,7 +70,7 @@ class diBreadCrumbs
 			$this->setDivider($this->getTpl()->parse("top_title_divider"));
 		}
 
-		/** @var diContentModel $m */
+		/** @var Model $m */
 		foreach ($this->getZ()->getContentFamily()->get() as $m)
 		{
 			if (in_array($m->getType(), $this->skippedContentTypes))
@@ -75,11 +78,11 @@ class diBreadCrumbs
 				continue;
 			}
 
-			$this->add(array(
+			$this->add([
 				"href" => $this->hrefNeeded($m) ? $m->getHref() : null,
 				"hrefPrefixNeeded" => false,
 				"model" => $m,
-			));
+			]);
 		}
 
 		return $this;
@@ -101,9 +104,9 @@ class diBreadCrumbs
 
 		$m = $this->getZ()->getContentFamily()->getMemberByLevel($index);
 
-		$this->update($index, array(
+		$this->update($index, [
 			"href" => $m->getHref(),
-		));
+		]);
 
 		return $this;
 	}
@@ -122,7 +125,7 @@ class diBreadCrumbs
 
 	public function add($titleOrElement, $href = "", $class = "", $word_wrap = false)
 	{
-		$element = extend(array(
+		$element = extend([
 			"title" => null,
 			"href" => null,
 			"hrefPrefixNeeded" => true,
@@ -130,13 +133,13 @@ class diBreadCrumbs
 			"wordWrap" => false,
 			"position" => -1,
 			"model" => diModel::create($this->type),
-		), !is_array($titleOrElement)
-			? array(
+		], !is_array($titleOrElement)
+			? [
 				"title" => $titleOrElement,
 				"href" => $href,
 				"class" => $class,
 				"wordWrap" => $word_wrap,
-			)
+			]
 			: $titleOrElement
 		);
 
@@ -166,12 +169,12 @@ class diBreadCrumbs
 			$element["title"] = trim(word_wrap($element["title"], diConfiguration::get("page_title_word_max_len"), " "));
 		}
 
-		array_splice($this->elements, $element["position"], 0, array($element));
+		array_splice($this->elements, $element["position"], 0, [$element]);
 
 		return $this;
 	}
 
-	public function update($index, $options = array())
+	public function update($index, $options = [])
 	{
 		if ($index < 0)
 		{
@@ -188,22 +191,22 @@ class diBreadCrumbs
 
 	public function finish()
 	{
-		$ar = array();
+		$ar = [];
 
 		foreach ($this->elements as $element)
 		{
 			$ar[] = $this->getTpl()
-				->assign(array(
+				->assign([
 					"TITLE" => $element["title"],
 					"HREF" => ($element["hrefPrefixNeeded"] ? $this->getZ()->getLanguageHrefPrefix() : "") . $element["href"],
 					"CLASS" => $element["class"],
-				), "TT_")
+				], "TT_")
 				->parse("TOP_TITLE_ELEMENT", $element["href"] ? "top_title_href" : "top_title_nohref");
 		}
 
-		$this->getTpl()->assign(array(
+		$this->getTpl()->assign([
 			"TOP_TITLE" => join($this->divider, $ar),
-		));
+		]);
 
 		if ($this->getZ()->needToPrintBreadCrumbs())
 		{

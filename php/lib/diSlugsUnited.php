@@ -6,6 +6,8 @@
  * Time: 12:07
  */
 
+use diCore\Base\CMS;
+
 class diSlugsUnited
 {
 	private $targetType;
@@ -33,7 +35,7 @@ class diSlugsUnited
 		}
 	}
 
-	public static function emulateRealHref(diSlugModel $s, diCMS $Z)
+	public static function emulateRealHref(diSlugModel $s, CMS $Z)
 	{
 	}
 

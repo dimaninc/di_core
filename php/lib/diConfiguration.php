@@ -41,7 +41,7 @@ class diConfiguration
 	private $otherTabName = "_other";
 	private $otherTabTitle = "Прочее";
 
-	public static $data = array();
+	public static $data = [];
 	public static $cacheLoaded = false;
 
 	public function __construct()
@@ -91,15 +91,22 @@ class diConfiguration
 		return self::$folder;
 	}
 
+	protected function getFullCacheFilename()
+	{
+		$folder = \diCore\Data\Config::getConfigurationFolder();
+
+		return $folder . $this->cacheFilename;
+	}
+
 	public function loadCache()
 	{
-		@include diPaths::fileSystem() . $this->cacheFilename;
+		@include $this->getFullCacheFilename();
 
 		if (!self::$cacheLoaded)
 		{
 			$this->getAllFromDB();
 			$this->updateCache();
-			include diPaths::fileSystem() . $this->cacheFilename;
+			include $this->getFullCacheFilename();
 		}
 
 		return $this;
@@ -445,8 +452,8 @@ class diConfiguration
 
 		$cache_file .= $this->phpFooter();
 
-		file_put_contents(diPaths::fileSystem() . $this->cacheFilename, $cache_file);
-		chmod(diPaths::fileSystem() . $this->cacheFilename, $this->fileChmod);
+		file_put_contents($this->getFullCacheFilename(), $cache_file);
+		chmod($this->getFullCacheFilename(), $this->fileChmod);
 
 		return $this;
 	}

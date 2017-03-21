@@ -297,7 +297,14 @@ class diLib
 			return $class;
 		}
 
-		return camelize('di_' . $basicName);
+		$class = camelize('di_' . $basicName);
+
+		if (self::exists($class))
+		{
+			return $class;
+		}
+
+		return $parentFullClassName;
 	}
 
 	static public function getWorkerPath($controller = null, $action = null, $paramsAr = null, $options = [])

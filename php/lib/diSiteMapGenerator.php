@@ -6,6 +6,8 @@
  * Time: 16:43
  */
 
+use diCore\Entity\Content\Model;
+
 class diSiteMapGenerator
 {
 	protected static $className = "diCustomSiteMapGenerator";
@@ -170,7 +172,7 @@ class diSiteMapGenerator
 		return $this;
 	}
 
-	public static function isContentRowSkipped(diContentModel $model)
+	public static function isContentRowSkipped(Model $model)
 	{
 		return in_array($model->getType(), static::$skippedContentTypes) ||
 			in_array($model->getType(), static::$customSkippedContentTypes) ||
@@ -183,7 +185,6 @@ class diSiteMapGenerator
 		{
 			case "content":
 				return static::isContentRowSkipped($model);
-				break;
 		}
 
 		return false;

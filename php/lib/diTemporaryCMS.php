@@ -6,7 +6,10 @@
  * Date: 06.09.2016
  * Time: 22:00
  */
-class diTemporaryCMS extends diCMS
+
+use diCore\Base\CMS;
+
+class diTemporaryCMS extends CMS
 {
 	function define_templates()
 	{
