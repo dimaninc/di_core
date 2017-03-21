@@ -1,4 +1,7 @@
 <?php
+
+use diCore\Base\CMS;
+
 class diAds
 {
 	const TEMPLATE_NAME = 'snippets/ad_block';
@@ -18,30 +21,28 @@ class diAds
 	const ORDER_IN_ORDER = 0;
 	const ORDER_RANDOM = 1;
 
-	static $adTransitionsAr = array(
+	static $adTransitionsAr = [
 		self::TRANSITION_DEFAULT => "По умолчанию",
 		self::TRANSITION_CROSS_FADE => "Проявление (crossfade)",
 		self::TRANSITION_SLIDE_L2R => "Скроллинг (слева направо)",
 		self::TRANSITION_SLIDE_R2L => "Скроллинг (справа налево)",
 		self::TRANSITION_SLIDE_T2B => "Скроллинг (сверху вниз)",
 		self::TRANSITION_SLIDE_B2T => "Скроллинг (снизу вверх)",
-	);
+	];
 
-
-	static $adTransitionStylesAr = array(
+	static $adTransitionStylesAr = [
 		self::TRANSITION_STYLE_DEFAULT => "По умолчанию",
 		self::TRANSITION_STYLE_BOTH_SLIDING => "Новый слайд вытесняет старый",
 		self::TRANSITION_STYLE_ONLY_NEW_SLIDING => "Новый слайд наезжает на старый",
-	);
+	];
 
-
-	static $adSlidesOrdersAr = array(
+	static $adSlidesOrdersAr = [
 		self::ORDER_IN_ORDER => "По порядку",
 		self::ORDER_RANDOM => "В случайном порядке",
-	);
+	];
 
 	/**
-	 * @var diCMS
+	 * @var CMS
 	 */
 	private $Z;
 
@@ -50,7 +51,7 @@ class diAds
 	 */
 	private $ads;
 
-	public function __construct(diCMS $Z)
+	public function __construct(CMS $Z)
 	{
 		$this->Z = $Z;
 	}
@@ -161,7 +162,7 @@ class diAds
 			: "";
 	}
 
-	public static function printBlock($blockId, $token = null, diCMS $CMS = null)
+	public static function printBlock($blockId, $token = null, CMS $CMS = null)
 	{
 		global $Z;
 
@@ -170,7 +171,7 @@ class diAds
 		return $a->render($blockId, $token);
 	}
 
-	public static function incutBlocks($content, diCMS $Z = null)
+	public static function incutBlocks($content, CMS $Z = null)
 	{
 		$ar1 = $ar2 = [];
 

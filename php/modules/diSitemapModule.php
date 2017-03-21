@@ -6,6 +6,8 @@
  * Time: 18:13
  */
 
+use diCore\Entity\Content\Model;
+
 class diSitemapModule extends diModule
 {
 	protected function defineTemplates()
@@ -20,12 +22,12 @@ class diSitemapModule extends diModule
 		return $this;
 	}
 
-	protected function isContentRowSkipped(diContentModel $model)
+	protected function isContentRowSkipped(Model $model)
 	{
 		return diSiteMapGenerator::isContentRowSkipped($model);
 	}
 
-	protected function printChildRows(diContentModel $model)
+	protected function printChildRows(Model $model)
 	{
 		return $this;
 	}
@@ -34,7 +36,7 @@ class diSitemapModule extends diModule
 	{
 		$this->defineTemplates();
 
-		/** @var diContentModel $page */
+		/** @var Model $page */
 		foreach ($this->getZ()->tables["content"] as $id => $page)
 		{
 			if ($this->isContentRowSkipped($page))
@@ -48,7 +50,7 @@ class diSitemapModule extends diModule
 		}
 	}
 
-	protected function printSubRow(diModel $m, diContentModel $page = null, $printLink = true)
+	protected function printSubRow(diModel $m, Model $page = null, $printLink = true)
 	{
 		$this->getTpl()->assign($m->getTemplateVars(), "M_");
 

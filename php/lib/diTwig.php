@@ -1,6 +1,7 @@
 <?php
 
 use diCore\Helper\FileSystemHelper;
+use diCore\Data\Config;
 
 /**
  * Wrapper for Twig template engine
@@ -45,7 +46,7 @@ class diTwig
 		$this->loader = new Twig_Loader_Filesystem(static::wrapPaths($this->getPaths()));
 
 		$this->Twig = new Twig_Environment($this->loader, extend([
-			'cache' => diPaths::fileSystem() . static::CACHE_FOLDER,
+			'cache' => Config::getCacheFolder() . static::CACHE_FOLDER,
 			'auto_reload' => diCurrentCMS::ignoreCaches(),
 		], $options));
 	}
@@ -74,7 +75,7 @@ class diTwig
 	{
 		return array_merge([
 			'',
-			'../_core/templates',
+			Config::getTwigCorePath(),
 		], $this->getCustomPaths());
 	}
 
@@ -87,7 +88,7 @@ class diTwig
 
 		foreach ($paths as &$path)
 		{
-			$path = diPaths::fileSystem() . static::TEMPLATES_FOLDER . ($path ? '/' . $path : '');
+			$path = Config::getTemplatesFolder() . static::TEMPLATES_FOLDER . ($path ? '/' . $path : '');
 		}
 
 		return $paths;
@@ -250,7 +251,7 @@ class diTwig
 
 	public static function flushCache()
 	{
-		$dir = diPaths::fileSystem() . self::CACHE_FOLDER;
+		$dir = Config::getCacheFolder() . self::CACHE_FOLDER;
 
 		FileSystemHelper::delTree($dir, false);
 	}

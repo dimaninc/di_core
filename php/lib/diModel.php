@@ -6,6 +6,8 @@
  * Time: 18:51
  */
 
+use diCore\Base\CMS;
+
 class diModel implements \ArrayAccess
 {
 	const MAX_PREVIEWS_COUNT = 3;
@@ -331,7 +333,7 @@ class diModel implements \ArrayAccess
 
 	protected static function __getLanguage()
 	{
-		/** @var diCMS $Z */
+		/** @var CMS $Z */
 		global $Z;
 		/** @var diAdmin $X */
 		global $X;
@@ -920,7 +922,7 @@ class diModel implements \ArrayAccess
 		{
 			$lang = static::__getLanguage();
 		}
-		elseif (is_object($lang) && $lang instanceof diCMS)
+		elseif (is_object($lang) && $lang instanceof CMS)
 		{
 			$lang = $lang->getLanguage();
 		}

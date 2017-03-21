@@ -1,5 +1,8 @@
 <?php
 
+use diCore\Base\CMS;
+use diCore\Entity\Content\Model;
+
 /**
  * Created by PhpStorm.
  * User: dimaninc
@@ -10,21 +13,21 @@ class diContentFamily
 {
 	protected $table = "content";
 
-	/** @var diContentModel */
+	/** @var Model */
 	private $model;
 
 	/** @var array */
 	private $family = [];
 
-	/** @var diCMS */
+	/** @var CMS */
 	private $Z;
 
 	private static $childClassName = "diCustomContentFamily";
 
 	/**
-	 * @param diCMS $Z
+	 * @param CMS $Z
 	 */
-	public function __construct(diCMS $Z)
+	public function __construct(CMS $Z)
 	{
 		$this->Z = $Z;
 
@@ -32,10 +35,10 @@ class diContentFamily
 	}
 
 	/**
-	 * @param diCMS $Z
+	 * @param CMS $Z
 	 * @return mixed
 	 */
-	public static function create(diCMS $Z)
+	public static function create(CMS $Z)
 	{
 		$className = diLib::exists(self::$childClassName)
 			? self::$childClassName
@@ -47,7 +50,7 @@ class diContentFamily
 	}
 
 	/**
-	 * @return diContentModel
+	 * @return Model
 	 */
 	public function getModel()
 	{
@@ -57,7 +60,7 @@ class diContentFamily
 	/**
 	 * @return diContentFamily
 	 */
-	public function setModel(diContentModel $model)
+	public function setModel(Model $model)
 	{
 		$this->model = $model;
 
@@ -66,7 +69,7 @@ class diContentFamily
 
 	/**
 	 * @param int|null $level
-	 * @return array|diContentModel
+	 * @return array|Model
 	 */
 	public function get($level = null)
 	{
@@ -80,11 +83,11 @@ class diContentFamily
 
 	/**
 	 * @param $id
-	 * @return diContentModel
+	 * @return Model
 	 */
 	public function getMemberById($id)
 	{
-		/** @var diContentModel $content */
+		/** @var Model $content */
 		foreach ($this->family as $content)
 		{
 			if ($content->getId() == $id)
@@ -98,7 +101,7 @@ class diContentFamily
 
 	/**
 	 * @param $level
-	 * @return diContentModel
+	 * @return Model
 	 */
 	public function getMemberByLevel($level)
 	{
@@ -128,7 +131,7 @@ class diContentFamily
 	}
 
 	/**
-	 * @return diContentModel
+	 * @return Model
 	 * @throws Exception
 	 */
 	private function getEmptyModel()
@@ -163,7 +166,7 @@ class diContentFamily
 		$parent = $this->getModel()->getParent();
 		while (isset($this->getZ()->tables[$this->table][$parent]))
 		{
-			/** @var diContentModel $m */
+			/** @var Model $m */
 			$m = $this->getZ()->tables[$this->table][$parent];
 
 			$this->family[$m->getLevelNum()] = $m;
@@ -183,7 +186,7 @@ class diContentFamily
 	{
 		/**
 		 * @var int $id
-		 * @var diContentModel $content
+		 * @var Model $content
 		 */
 		foreach ($this->getZ()->tables[$this->table] as $id => $content)
 		{

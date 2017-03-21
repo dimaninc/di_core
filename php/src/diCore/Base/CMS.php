@@ -2,7 +2,9 @@
 
 namespace diCore\Base;
 
+use diCore\Data\Config;
 use diCore\Data\Types;
+use diCore\Entity\Content\Model;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 
@@ -204,11 +206,11 @@ abstract class CMS
 			$this->content_table => [],
 		];
 
-		$this->tpl_dir = $tpl_dir ?: $_SERVER["DOCUMENT_ROOT"] . "/" . static::TPL_DIR;
-		$this->tpl_cache_php = $tpl_cache_php ?: $_SERVER["DOCUMENT_ROOT"] . "/" . static::TPL_CACHE_PHP;
+		$this->tpl_dir = $tpl_dir ?: Config::getOldTplFolder() . static::TPL_DIR;
+		$this->tpl_cache_php = $tpl_cache_php ?: Config::getOldTplFolder() . static::TPL_CACHE_PHP;
 
-		$this->tables_cache_fn_ar[$this->content_table] = $tables_cache_fn_ar ?: $_SERVER["DOCUMENT_ROOT"] . "/" . static::TABLES_CONTENT_CACHE_PHP;
-		$this->ct_cache_fn_ar[$this->content_table] = $ct_cache_fn_ar ?: $_SERVER["DOCUMENT_ROOT"] . "/" . static::TABLES_CONTENT_CLEAN_TITLES_PHP;
+		$this->tables_cache_fn_ar[$this->content_table] = $tables_cache_fn_ar ?: Config::getCacheFolder() . static::TABLES_CONTENT_CACHE_PHP;
+		$this->ct_cache_fn_ar[$this->content_table] = $ct_cache_fn_ar ?: Config::getCacheFolder() . static::TABLES_CONTENT_CLEAN_TITLES_PHP;
 
 		$this->protocol = \diRequest::protocol();
 	}
@@ -324,7 +326,7 @@ abstract class CMS
 	}
 
 	/**
-	 * @return \diContentModel
+	 * @return Model
 	 */
 	public function getContentModel()
 	{
@@ -1745,7 +1747,7 @@ abstract class CMS
 		$ct_rows = "";
 
 		$col = \diCollection::createForTable($this->content_table)->orderBy('order_num');
-		/** @var \diContentModel $model */
+		/** @var Model $model */
 		foreach ($col as $model)
 		{
 			$cache_file .= "\$this->tables['{$this->content_table}']['{$model->getId()}'] = " .
@@ -1903,7 +1905,7 @@ abstract class CMS
 	 * Returns content model by id
 	 *
 	 * @param $id
-	 * @return \diContentModel
+	 * @return Model
 	 */
 	public function getModelById($id)
 	{
@@ -1914,12 +1916,12 @@ abstract class CMS
 	 * Returns content model by type
 	 *
 	 * @param $type
-	 * @return \diContentModel
+	 * @return Model
 	 */
 	public function getModelByType($type)
 	{
 		/**
-		 * @var \diContentModel $m
+		 * @var Model $m
 		 */
 		foreach ($this->getCachedContentCollection() as $m)
 		{
@@ -1934,7 +1936,7 @@ abstract class CMS
 
 	public function getChildren($parent)
 	{
-		if (!$parent instanceof \diContentModel)
+		if (!$parent instanceof Model)
 		{
 			$parent = $this->getModelById($parent);
 		}
@@ -1947,7 +1949,7 @@ abstract class CMS
 		}
 
 		/**
-		 * @var \diContentModel $m
+		 * @var Model $m
 		 */
 		foreach ($this->getCachedContentCollection() as $m)
 		{
@@ -1962,7 +1964,7 @@ abstract class CMS
 
 	/**
 	 * @param $parent
-	 * @return \diContentModel
+	 * @return Model
 	 */
 	public function getFirstChild($parent)
 	{
@@ -1978,7 +1980,7 @@ abstract class CMS
 
 	/**
 	 * @param $parent
-	 * @return \diContentModel
+	 * @return Model
 	 */
 	public function getFirstVisibleChild($parent, $field = "visible")
 	{
@@ -1986,7 +1988,7 @@ abstract class CMS
 
 		/**
 		 * @var int $id
-		 * @var \diContentModel $m
+		 * @var Model $m
 		 */
 		foreach ($ar as $m)
 		{
@@ -2120,10 +2122,10 @@ abstract class CMS
   }
 
 	/**
-	 * @param \diContentModel $model
+	 * @param Model $model
 	 * @return bool
 	 */
-	protected function isContentPageSelected(\diContentModel $model)
+	protected function isContentPageSelected(Model $model)
 	{
 		return $model->getId() == $this->getContentModel()->getId();
 	}
@@ -2131,10 +2133,10 @@ abstract class CMS
 	/**
 	 * Override this if to_show_content is used
 	 *
-	 * @param \diContentModel $model
-	 * @return \diContentModel
+	 * @param Model $model
+	 * @return Model
 	 */
-	protected function getRealContentModel(\diContentModel $model)
+	protected function getRealContentModel(Model $model)
 	{
 		/*
 		if ($model->getLevelNum() == 0 && !$model->hasToShowContent())
@@ -2152,10 +2154,10 @@ abstract class CMS
 	}
 
 	/**
-	 * @param \diContentModel $model
+	 * @param Model $model
 	 * @return CMS
 	 */
-	public function assignMenuData(\diContentModel $model)
+	public function assignMenuData(Model $model)
 	{
 		$this->getTpl()
 			->assign($model->getTemplateVarsExtended(), "MENU_")

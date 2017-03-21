@@ -2,6 +2,8 @@
 
 use diCore\Helper\StringHelper;
 use diCore\Helper\ArrayHelper;
+use diCore\Base\CMS;
+use diCore\Data\Config;
 
 class diBaseController
 {
@@ -310,7 +312,10 @@ class diBaseController
 
 	protected function initWebTpl()
 	{
-		$this->tpl = new FastTemplate(diPaths::fileSystem() . diCMS::TPL_DIR, diPaths::fileSystem() . diCMS::TPL_CACHE_PHP);
+		$this->tpl = new FastTemplate(
+			Config::getOldTplFolder() . CMS::TPL_DIR,
+			Config::getCacheFolder() . CMS::TPL_CACHE_PHP
+		);
 		$this->tpl
 			->no_strict()
 			->load_cache();

@@ -1,6 +1,7 @@
 <?php
 
 use diCore\Helper\ArrayHelper;
+use diCore\Base\CMS;
 
 class diAdminList
 {
@@ -310,7 +311,7 @@ class diAdminList
 			elseif (substr($name, 0, 1) == "#")
 			{
 				$name = substr($name, 1);
-				$isToggle = diCMS::isFieldToggle($name);
+				$isToggle = CMS::isFieldToggle($name);
 				$method = camelize(($isToggle ? "toggle" : $name) . "_btn_cell");
 
 				switch ($name)

@@ -5,6 +5,9 @@
 	some additions (c) by dimaninc 2015
 */
 
+use diCore\Data\Config;
+use diCore\Base\CMS;
+
 class FastTemplate
 {
 	const PLACE_WEB = 1;
@@ -58,7 +61,10 @@ class FastTemplate
 	 */
 	public static function createForWeb()
 	{
-		$tpl = new FastTemplate(diPaths::fileSystem() . diCMS::TPL_DIR, diPaths::fileSystem() . diCMS::TPL_CACHE_PHP);
+		$tpl = new FastTemplate(
+			Config::getOldTplFolder() . CMS::TPL_DIR,
+			Config::getCacheFolder() . CMS::TPL_CACHE_PHP
+		);
 		$tpl
 			->no_strict()
 			->load_cache()
@@ -99,7 +105,7 @@ class FastTemplate
 	{
 		return !empty($this->TEMPLATES[$templatePath]);
 	}
-	
+
 	public function assigned($token)
 	{
 		return !!$this->getAssigned($token);
@@ -139,11 +145,11 @@ class FastTemplate
 		switch ($this->place)
 		{
 			case self::PLACE_WEB:
-				$core_basedir = diLib::getRoot()."/tpl/web/";
+				$core_basedir = diLib::getRoot() . "/tpl/web/";
 				break;
 
 			case self::PLACE_ADMIN:
-				$core_basedir = diLib::getRoot()."/tpl/_admin/";
+				$core_basedir = diLib::getRoot() . "/tpl/_admin/";
 				break;
 
 			default:
