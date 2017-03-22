@@ -361,7 +361,11 @@ class diLib
 		$path = null;
 		$libSubFolderProcessor = null;
 
-		if (!is_dir($root . self::$libPathsAr[self::pathCoreSources]))
+		if (
+			!is_dir($root . self::$libPathsAr[self::pathCoreSources]) ||
+			is_link($root . self::$libPathsAr[self::pathCoreSources]) ||
+			readlink($root . self::$libPathsAr[self::pathCoreSources]) != $root . self::$libPathsAr[self::pathCoreSources]
+		   )
 		{
 			$root = dirname($root);
 

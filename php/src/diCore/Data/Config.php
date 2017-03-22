@@ -17,6 +17,11 @@ class Config
 	const LOCATION_BEYOND = 1;
 
 	const Location = self::LOCATION_HTDOCS;
+	
+	private static $databaseDumpPaths = [
+		self::LOCATION_HTDOCS => '_admin/db/dump/',
+		self::LOCATION_BEYOND => 'db/dump/',
+	];
 
 	private static $class;
 
@@ -30,12 +35,33 @@ class Config
 		return self::$class;
 	}
 
+	final public static function getLocation()
+	{
+		/** @var Config $class */
+		$class = self::getClass();
+
+		return $class::Location;
+	}
+
 	final public static function getConfigurationFolder()
 	{
 		/** @var Config $class */
 		$class = self::getClass();
 
 		return $class::__getConfigurationFolder();
+	}
+
+	final public static function getDatabaseDumpFolder()
+	{
+		/** @var Config $class */
+		$class = self::getClass();
+
+		return $class::__getDatabaseDumpFolder();
+	}
+
+	final public static function getDatabaseDumpPath()
+	{
+		return static::getDatabaseDumpFolder() . static::$databaseDumpPaths[static::getLocation()];
 	}
 
 	final public static function getOldTplFolder()
@@ -46,12 +72,12 @@ class Config
 		return $class::__getOldTplFolder();
 	}
 
-	final public static function getTemplatesFolder()
+	final public static function getTemplateFolder()
 	{
 		/** @var Config $class */
 		$class = self::getClass();
 
-		return $class::__getTemplatesFolder();
+		return $class::__getTemplateFolder();
 	}
 
 	final public static function getCacheFolder()
@@ -75,12 +101,17 @@ class Config
 		return static::__getPhpFolder();
 	}
 
+	public static function __getDatabaseDumpFolder()
+	{
+		return static::__getPhpFolder();
+	}
+
 	public static function __getOldTplFolder()
 	{
 		return static::__getPhpFolder();
 	}
 
-	public static function __getTemplatesFolder()
+	public static function __getTemplateFolder()
 	{
 		return static::__getPhpFolder();
 	}
