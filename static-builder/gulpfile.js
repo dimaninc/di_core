@@ -81,10 +81,11 @@ gulp.task('stylus-sprite', function() {
         components = item.name.split("-");
         spriteCall = "sprite $admin-buttons-" + item.name + "\n";
         if (components.length > 1) {
-          buttons += ("  &[data-action=\"" + components[0] + "\"][data-state=\"" + components[1] + "\"]\n    ") + spriteCall;
+          buttons += "  &[data-action=\"" + components[0] + "\"][data-state=\"" + components[1] + "\"]\n    ";
         } else {
-          buttons += ("  &[data-action=\"" + item.name + "\"]\n    ") + spriteCall;
+          buttons += "  &[data-action=\"" + item.name + "\"]\n    ";
         }
+        buttons += spriteCall;
       }
       return vars + "\n" + buttons;
     }

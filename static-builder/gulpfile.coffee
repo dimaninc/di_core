@@ -16,9 +16,9 @@ rootFolder = './../'
 fullPath = (path) ->
     neg = ''
 
-    if (path.substr(0, 1) == '!')
+    if path.substr(0, 1) is '!'
         neg = '!'
-        path = path.substr(1)
+        path = path.substr 1
 
     neg + rootFolder + path
 
@@ -76,9 +76,11 @@ gulp.task 'stylus-sprite', ->
                     spriteCall = "sprite $admin-buttons-#{item.name}\n"
 
                     if components.length > 1
-                        buttons += "  &[data-action=\"#{components[0]}\"][data-state=\"#{components[1]}\"]\n    "+spriteCall
+                        buttons += "  &[data-action=\"#{components[0]}\"][data-state=\"#{components[1]}\"]\n    "
                     else
-                        buttons += "  &[data-action=\"#{item.name}\"]\n    "+spriteCall
+                        buttons += "  &[data-action=\"#{item.name}\"]\n    "
+
+                    buttons += spriteCall
 
                 return vars + "\n" + buttons
         .on 'error', console.log
@@ -90,29 +92,29 @@ gulp.task 'stylus-sprite', ->
 
 # stylus to css
 gulp.task 'stylus', ->
-    gulp.src fullPath(stylusFn)
-        .pipe(stylus(use: ['nib']))
+    gulp.src fullPath stylusFn
+        .pipe stylus use: ['nib']
         .on 'error', console.log
-            .pipe gulp.dest(fullPath(stylusFolder))
+            .pipe gulp.dest fullPath stylusFolder
 
     true
 
 # css concat
 gulp.task 'css-concat', ->
     gulp.src cssFiles.map (f) -> fullPath(f)
-        .pipe(concat(cssOutput))
+        .pipe concat cssOutput
         .on 'error', console.log
-            .pipe gulp.dest(fullPath(cssFolder))
+            .pipe gulp.dest fullPath cssFolder
 
     true
 
 # css minify
 gulp.task 'css-min', ->
-    gulp.src fullPath(cssFolder + cssOutput)
+    gulp.src fullPath cssFolder + cssOutput
         .pipe csso()
         .on 'error', console.log
-            .pipe(rename({suffix: '.min'}))
-            .pipe gulp.dest(fullPath(cssFolder))
+            .pipe rename suffix: '.min'
+            .pipe gulp.dest fullPath cssFolder
 
     true
 
