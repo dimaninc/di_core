@@ -1,0 +1,7 @@
+{% macro js(globals, name) %}
+	<script type="text/javascript" charset="utf-8" src="{{ globals['asset_locations']['js'] ~ name ~ globals['_tech']['static_timestamp'] }}"></script>
+{% endmacro %}
+
+{% macro style(globals, name) %}
+	<link rel="stylesheet" type="text/css" charset="utf-8" href="{{ globals['asset_locations']['css'] ~ name ~ globals['_tech']['static_timestamp'] }}">
+{% endmacro %}

@@ -389,6 +389,31 @@ class diLib
 		return self::$location;
 	}
 
+	public static function getAssetLocations()
+	{
+		switch (self::getLocation())
+		{
+			case self::LOCATION_BEYOND:
+				return [
+					'css' => '/assets/styles/_core/',
+					'fonts' => '/assets/fonts/',
+					'images' => '/assets/images/_core/',
+					'js' => '/assets/js/_core/',
+					'vendor' => '/assets/vendor/'
+				];
+
+			default:
+			case self::LOCATION_HTDOCS:
+				return [
+					'css' => '/_core/css/',
+					'fonts' => '/_core/fonts/',
+					'images' => '/_core/i/',
+					'js' => '/_core/js/',
+					'vendor' => '/_core/vendor/'
+				];
+		}
+	}
+
 	static public function getClassFilename($className, $subFolder = "")
 	{
 	    $root = $_SERVER['DOCUMENT_ROOT'];

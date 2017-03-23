@@ -256,30 +256,36 @@ abstract class diAdminBase
 			: '';
 	}
 
+	private function getTemplateVariables()
+	{
+		return [
+			"html_base" => "{$this->protocol}://{$_SERVER["HTTP_HOST"]}/" . self::SUBFOLDER . "/",
+			"current_uri" => diRequest::server("REQUEST_URI"),
+
+			"logout_href" => diLib::getAdminWorkerPath("admin_auth", "logout") . "?back=" . urlencode(diRequest::server("REQUEST_URI")),
+
+			"current_year" => date("Y"),
+			"page_title" => $this->getPageTitle(),
+			"site_title" => $this->getSiteTitle(),
+
+			"xx_version" => $this->getVersion(),
+
+			"xx_path" => $this->getPath(),
+			"xx_module" => $this->getModule(),
+			"xx_table" => $this->getTable(),
+			"xx_id" => $this->getId(),
+
+			"expand_collapse_block" => "",
+
+			'static_timestamp' => $this->getStaticTimestampEnding(),
+		];
+	}
+
 	private function assignTplBase()
 	{
 		$this->getTpl()
-			->assign([
-				"HTML_BASE" => "{$this->protocol}://{$_SERVER["HTTP_HOST"]}/" . self::SUBFOLDER . "/",
-				"CURRENT_URI" => diRequest::server("REQUEST_URI"),
-
-				"LOGOUT_HREF" => diLib::getAdminWorkerPath("admin_auth", "logout") . "?back=" . urlencode(diRequest::server("REQUEST_URI")),
-
-				"CURRENT_YEAR" => date("Y"),
-				"PAGE_TITLE" => $this->getPageTitle(),
-				"SITE_TITLE" => $this->getSiteTitle(),
-
-				"XX_VERSION" => $this->getVersion(),
-
-				"XX_PATH" => $this->getPath(),
-				"XX_MODULE" => $this->getModule(),
-				"XX_TABLE" => $this->getTable(),
-				"XX_ID" => $this->getId(),
-
-				"EXPAND_COLLAPSE_BLOCK" => "",
-
-				'STATIC_TIMESTAMP' => $this->getStaticTimestampEnding(),
-			])
+			->assign($this->getTemplateVariables())
+			->assign(\diLib::getAssetLocations(), 'ASSET_LOCATIONS.')
 			->assign(static::getVocabulary(), 'LANG.')
 			->assign($this->getAdminModel()->getTemplateVars(), "ADMIN_");
 
@@ -302,6 +308,12 @@ abstract class diAdminBase
 		if ($this->Twig === null)
 		{
 			$this->Twig = diTwig::create($this->twigCreateOptions);
+			$this->Twig->assign([
+				'_tech' => $this->getTemplateVariables(),
+				'lang' => static::getVocabulary(),
+				'admin' => $this->getAdminModel(),
+				'asset_locations' => \diLib::getAssetLocations(),
+			]);
 		}
 
 		return $this->Twig;
@@ -343,7 +355,6 @@ abstract class diAdminBase
 			->load_cache()
 			->define("`_index", [
 				"index",
-				"head",
 
 				"expand_collapse_block",
 				"footer",
@@ -715,7 +726,12 @@ abstract class diAdminBase
 	{
 		$this->printWysiwygHeadScript();
 
-		$this->getTpl()->process("head");
+		$this->getTpl()
+			->assign([
+				'head' => $this->getTwig()->parse('admin/_index/head', [
+					'wysiwyg_head_script' => $this->getTpl()->getAssigned('WYSIWYG_HEAD_SCRIPT'),
+				]),
+			]);
 
 		return $this;
 	}
