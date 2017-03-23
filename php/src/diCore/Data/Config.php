@@ -8,19 +8,15 @@
 
 namespace diCore\Data;
 
-
 use diCore\Helper\StringHelper;
 
 class Config
 {
-	const LOCATION_HTDOCS = 0;
-	const LOCATION_BEYOND = 1;
+	protected static $location = \diLib::LOCATION_HTDOCS;
 
-	const Location = self::LOCATION_HTDOCS;
-	
 	private static $databaseDumpPaths = [
-		self::LOCATION_HTDOCS => '_admin/db/dump/',
-		self::LOCATION_BEYOND => 'db/dump/',
+		\diLib::LOCATION_HTDOCS => '_admin/db/dump/',
+		\diLib::LOCATION_BEYOND => 'db/dump/',
 	];
 
 	private static $class;
@@ -40,7 +36,7 @@ class Config
 		/** @var Config $class */
 		$class = self::getClass();
 
-		return $class::Location;
+		return $class::$location;
 	}
 
 	final public static function getConfigurationFolder()
@@ -123,26 +119,26 @@ class Config
 
 	public static function __getTwigCorePath()
 	{
-		switch (static::Location)
+		switch (static::getLocation())
 		{
-			case self::LOCATION_BEYOND:
+			case \diLib::LOCATION_BEYOND:
 				return '../vendor/dimaninc/di_core/templates';
 
 			default:
-			case self::LOCATION_HTDOCS:
+			case \diLib::LOCATION_HTDOCS:
 				return '../_core/templates';
 		}
 	}
 
 	public static function __getPhpFolder()
 	{
-		switch (static::Location)
+		switch (static::getLocation())
 		{
-			case self::LOCATION_BEYOND:
+			case \diLib::LOCATION_BEYOND:
 				return StringHelper::slash(dirname(Paths::fileSystem()));
 
 			default:
-			case self::LOCATION_HTDOCS:
+			case \diLib::LOCATION_HTDOCS:
 				return Paths::fileSystem();
 		}
 	}
