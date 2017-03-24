@@ -1,5 +1,7 @@
 <?php
 
+use diCore\Data\Config;
+
 class diDbController extends diBaseAdminController
 {
 	private $file;
@@ -11,10 +13,10 @@ class diDbController extends diBaseAdminController
 	const FOLDER_LOCAL = 1;
 	const FOLDER_CORE_SQL = 2;
 
-	public static $foldersIdsAr = array(
+	public static $foldersIdsAr = [
 		self::FOLDER_LOCAL,
 		self::FOLDER_CORE_SQL,
-	);
+	];
 
 	public function __construct()
 	{
@@ -47,7 +49,7 @@ class diDbController extends diBaseAdminController
 
 	public static function getDumpsFolder()
 	{
-		return diPaths::fileSystem() . "_admin/db/dump/";
+		return Config::getDatabaseDumpPath();
 	}
 
 	public static function getCoreSqlFolder()
@@ -312,22 +314,22 @@ EOF;
 
 			if ($drops)
 			{
-				$sql .= "DROP TABLE IF EXISTS `".$table."`;\n";
+				$sql .= "DROP TABLE IF EXISTS `$table`;\n";
 			}
 
 			if ($creates)
 			{
-				$sql .= "CREATE TABLE `".$table."` (\n";
+				$sql .= "CREATE TABLE `$table` (\n";
 
 				$fieldsAr = array();
 				$createFieldsAr = array();
 
-				$rs = $this->getDb()->q("SHOW FIELDS FROM ".$table);
+				$rs = $this->getDb()->q("SHOW FIELDS FROM `$table`");
 				while($r = $this->getDb()->fetch($rs))
 				{
 					if ($r->Default != NULL)
 					{
-						if (!in_array($r->Default, array("CURRENT_TIMESTAMP")))
+						if (!in_array($r->Default, ["CURRENT_TIMESTAMP"]))
 						{
 							$r->Default = "'$r->Default'";
 						}
@@ -406,7 +408,7 @@ EOF;
 					}
 				}
 
-				$sql .= "\n) ENGINE=$engine DEFAULT CHARSET=".strtolower(DIENCODING)." COLLATE=".strtolower(DIENCODING)."_general_{$table_case_sensitivity_str};\n\n";
+				$sql .= "\n)\nENGINE=$engine\nDEFAULT CHARSET=" . strtolower(DIENCODING) . "\nCOLLATE=" . strtolower(DIENCODING) . "_general_{$table_case_sensitivity_str};\n\n";
 			}
 
 			if ($data)

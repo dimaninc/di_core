@@ -1,6 +1,6 @@
 <?php
-require "../functions.php";
-require $_SERVER["DOCUMENT_ROOT"] . "/_cfg/common.php";
+require dirname(dirname(__FILE__)) . '/functions.php';
+require \diCore\Data\Config::getConfigurationFolder() . '_cfg/common.php';
 
 try {
 	diBaseController::autoCreate();

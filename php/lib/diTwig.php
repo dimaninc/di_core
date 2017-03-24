@@ -88,7 +88,7 @@ class diTwig
 
 		foreach ($paths as &$path)
 		{
-			$path = Config::getTemplatesFolder() . static::TEMPLATES_FOLDER . ($path ? '/' . $path : '');
+			$path = Config::getTemplateFolder() . static::TEMPLATES_FOLDER . ($path ? '/' . $path : '');
 		}
 
 		return $paths;

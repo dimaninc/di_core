@@ -1,4 +1,4 @@
-<script type="text/javascript" src="/_core/vendor/tinymce/tinymce.min.js"></script>
+<script type="text/javascript" src="{{ asset_locations['vendor'] }}tinymce/tinymce.min.js"></script>
 <script type="text/javascript">
 {% block tinymce_init %}
 tinymce.init({
@@ -17,7 +17,7 @@ tinymce.init({
     ],
     toolbar: '| responsivefilemanager | insertfile undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image',
     {% if extra_wysiwyg_settings %}{{ extra_wysiwyg_settings|raw }}{% endif %}
-    external_filemanager_path: '/_core/vendor/responsive_filemanager/',
+    external_filemanager_path: '{{ asset_locations['vendor'] }}responsive_filemanager/',
     filemanager_title: 'File Manager',
     external_plugins: {'filemanager': 'plugins/responsivefilemanager/plugin.min.js'}
 });

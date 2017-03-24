@@ -18,6 +18,15 @@ class diLib
 {
 	const AUTOLOAD = true;
 
+	const LOCATION_HTDOCS = 0;
+	const LOCATION_BEYOND = 1;
+
+	private static $location = null;
+	private static $locationMarkers = [
+		self::LOCATION_HTDOCS => ['_core', 'php', 'lib'],
+		self::LOCATION_BEYOND => ['vendor', 'dimaninc', 'di_core', 'php', 'lib'],
+	];
+
 	const SIMPLE_CLASS = 0;
 	const MODULE = 1;
 	const MODEL = 2;
@@ -355,19 +364,72 @@ class diLib
 		return $location ? self::$libPathsAr[$location] : null;
 	}
 
+	public static function getLocation()
+	{
+		if (self::$location === null)
+		{
+			foreach (self::$locationMarkers as $locationId => $markerAr)
+			{
+				$marker = DIRECTORY_SEPARATOR . join(DIRECTORY_SEPARATOR, $markerAr) . DIRECTORY_SEPARATOR;
+
+				if (strpos(__FILE__, $marker) !== false)
+				{
+					self::$location = $locationId;
+
+					break;
+				}
+			}
+		}
+
+		if (self::$location === null)
+		{
+			throw new Exception('Unknown diCore location: ' . __FILE__);
+		}
+
+		return self::$location;
+	}
+
+	public static function getAssetLocations()
+	{
+		switch (self::getLocation())
+		{
+			case self::LOCATION_BEYOND:
+				return [
+					'css' => '/assets/styles/_core/',
+					'fonts' => '/assets/fonts/',
+					'images' => '/assets/images/_core/',
+					'js' => '/assets/js/_core/',
+					'vendor' => '/assets/vendor/'
+				];
+
+			default:
+			case self::LOCATION_HTDOCS:
+				return [
+					'css' => '/_core/css/',
+					'fonts' => '/_core/fonts/',
+					'images' => '/_core/i/',
+					'js' => '/_core/js/',
+					'vendor' => '/_core/vendor/'
+				];
+		}
+	}
+
 	static public function getClassFilename($className, $subFolder = "")
 	{
 	    $root = $_SERVER['DOCUMENT_ROOT'];
 		$path = null;
 		$libSubFolderProcessor = null;
 
-		if (!is_dir($root . self::$libPathsAr[self::pathCoreSources]))
+		switch (self::getLocation())
 		{
-			$root = dirname($root);
+			case self::LOCATION_BEYOND:
+				$root = dirname($root);
 
-			$libSubFolderProcessor = function($subFolder) {
-				return preg_replace("#^/_core#", '/vendor/dimaninc/di_core', $subFolder);
-			};
+				$libSubFolderProcessor = function($subFolder) {
+					return preg_replace("#^/_core#", '/vendor/dimaninc/di_core', $subFolder);
+				};
+
+				break;
 		}
 
 		// new format, listed

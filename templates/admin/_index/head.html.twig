@@ -1,0 +1,71 @@
+{% import 'admin/_macro/head.html.twig' as head %}
+{% set jsFiles = [
+	'jquery.min.js',
+	'jquery-ui.min.js',
+	'di.js',
+	'functions.js',
+
+	'jquery/jquery.dicontrols.js',
+	'jquery/jquery.jcarousel.min.js',
+	'jquery/jquery.caret.js',
+	'jquery/jquery.cookie.js',
+
+	'diComments.js',
+	'diPopups.js',
+	'diTabs.js',
+
+	'admin/diNiceTable.js',
+	'admin/diAdminBase.js',
+	'admin/diAdminForm.js',
+	'admin/diAdminFilters.js',
+	'admin/diAdminListControlPanel.js',
+	'admin/diDynamicRows.js',
+	'admin/diActionsLog.js',
+	'admin/diAdminConsole.js',
+	'admin/common.js',
+
+	'vendor/cookies.js',
+	'diCalendar.js',
+] %}
+{% set cssFiles = [
+	'admin/styles.css',
+	'admin/diactionslog.css',
+	'admin/diadminform.css',
+	'admin/diadminfilters.css',
+	'admin/didynamic.css',
+	'admin/dinicetable.css',
+	'admin/menu.css',
+	'admin/tabs.css',
+	'admin/grid.css',
+	'stylus/buttons.css',
+
+	'admin/dicalendar.css',
+	'dicontrols.css',
+	'dipopups.css',
+
+	'jquery/jquery-ui.min.css',
+] %}
+<head>
+	<title>{{ _tech['page_title'] }}</title>
+	<base href="{{ _tech['html_base'] }}">
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+	<link rel="icon" type="image/png" href="{{ asset_locations['images'] }}admin/icon.png">
+
+	{% for name in jsFiles %}
+		{{ head.js(_context, name) }}
+	{% endfor %}
+
+	<script type="text/javascript" charset="utf-8" src="{{ asset_locations['vendor'] }}colorPicker/js/colorpicker.js"></script>
+	<link rel="stylesheet" type="text/css" href="{{ asset_locations['vendor'] }}colorPicker/css/colorpicker.css">
+
+	{{ wysiwyg_head_script|raw }}
+
+	{% for name in cssFiles %}
+		{{ head.style(_context, name) }}
+	{% endfor %}
+
+	<!-- project's files -->
+	<script type="text/javascript" charset="utf-8" src="_static/js/local.js{{ _tech['static_timestamp'] }}"></script>
+	<link rel="stylesheet" type="text/css" href="_static/css/local.css{{ _tech['static_timestamp'] }}">
+</head>

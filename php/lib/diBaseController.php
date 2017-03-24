@@ -162,11 +162,13 @@ class diBaseController
 
 	protected static function getFullQueryRoute()
 	{
-		return diRequest::server('REQUEST_URI');
+		return \diRequest::requestUri();
 	}
 
 	protected static function getQueryRouteAr($pathBeginning = null)
 	{
+		//$pathBeginning = $pathBeginning ?: Config::getApiQueryPrefix();
+
 		if ($pathBeginning)
 		{
 			$paramsStr = static::getFullQueryRoute();
