@@ -629,7 +629,7 @@ function dierror($text, $status = DIE_FATAL)
   $host = gethostbyaddr($ip);
   $r = isset($_SERVER["HTTP_REFERER"]) ? $_SERVER["HTTP_REFERER"] : "";
 
-  $f = fopen("{$_SERVER["DOCUMENT_ROOT"]}/log/".date("Y_m_d")."-errors.txt", "a");
+  $f = fopen(getLogFolder() . "log/".date("Y_m_d")."-errors.txt", "a");
   fputs($f, date("d.m.Y H:i:s").", $ip ($host), uri: {$_SERVER["REQUEST_URI"]}, ref: $r, agent: {$_SERVER["HTTP_USER_AGENT"]}\n$text\n\n");
   fclose($f);
   //
@@ -1154,16 +1154,26 @@ function dierror2($text, $module = "")
   if ($module)
     $module = "[$module]";
 
-  $f = fopen("{$_SERVER["DOCUMENT_ROOT"]}/log/".date("Y_m_d")."-errors.txt", "a");
+  $f = fopen(getLogFolder() . "log/".date("Y_m_d")."-errors.txt", "a");
   fputs($f, date("d.m.Y H:i:s")." $module $ip ($host), uri: {$_SERVER["REQUEST_URI"]}, agent: {$_SERVER["HTTP_USER_AGENT"]}\n$text\n\n");
   fclose($f);
 
   die("$text");
 }
 
+function getLogFolder()
+{
+	if (class_exists(\diCore\Data\Config::class))
+	{
+		return \diCore\Data\Config::getLogFolder();
+	}
+
+	return $_SERVER['DOCUMENT_ROOT'] . '/';
+}
+
 function simple_debug($message, $module = "", $fnSuffix = "")
 {
-	$fn = "{$_SERVER["DOCUMENT_ROOT"]}/log/debug/".date("Y_m_d").$fnSuffix.".txt";
+	$fn = getLogFolder() . "log/debug/".date("Y_m_d").$fnSuffix.".txt";
 
 	if ($module)
 	{
@@ -1179,7 +1189,7 @@ function simple_debug($message, $module = "", $fnSuffix = "")
 
 function var_debug()
 {
-	$fn = "{$_SERVER["DOCUMENT_ROOT"]}/log/debug/".date("Y_m_d").".txt";
+	$fn = getLogFolder() . "log/debug/".date("Y_m_d").".txt";
 
 	$f = fopen($fn, "a");
 	fputs($f, date("[d.m.Y H:i:s] ").var_export(func_get_args(), true)."\n");
@@ -1190,7 +1200,7 @@ function var_debug()
 
 function cron_debug($script)
 {
-	$fn = "{$_SERVER["DOCUMENT_ROOT"]}/log/cron/".date("Y_m_d").".txt";
+	$fn = getLogFolder() . "log/cron/".date("Y_m_d").".txt";
 
 	$f = fopen($fn, "a");
 	fputs($f, date("[d.m.Y H:i:s]")." {$script}\n");

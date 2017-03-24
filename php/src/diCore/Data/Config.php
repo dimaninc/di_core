@@ -12,6 +12,8 @@ use diCore\Helper\StringHelper;
 
 class Config
 {
+	const apiQueryPrefix = null;
+
 	protected static $location = \diLib::LOCATION_HTDOCS;
 
 	private static $databaseDumpPaths = [
@@ -36,7 +38,20 @@ class Config
 		/** @var Config $class */
 		$class = self::getClass();
 
+		if ($class == self::class)
+		{
+			$class::$location = \diLib::getLocation();
+		}
+
 		return $class::$location;
+	}
+
+	final public static function getApiQueryPrefix()
+	{
+		/** @var Config $class */
+		$class = self::getClass();
+
+		return $class::apiQueryPrefix;
 	}
 
 	final public static function getConfigurationFolder()
@@ -84,6 +99,14 @@ class Config
 		return $class::__getCacheFolder();
 	}
 
+	final public static function getLogFolder()
+	{
+		/** @var Config $class */
+		$class = self::getClass();
+
+		return $class::__getLogFolder();
+	}
+
 	final public static function getTwigCorePath()
 	{
 		/** @var Config $class */
@@ -113,6 +136,11 @@ class Config
 	}
 
 	public static function __getCacheFolder()
+	{
+		return static::__getPhpFolder();
+	}
+
+	public static function __getLogFolder()
 	{
 		return static::__getPhpFolder();
 	}
