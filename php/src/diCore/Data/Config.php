@@ -54,6 +54,14 @@ class Config
 		return $class::apiQueryPrefix;
 	}
 
+	final public static function getSourcesFolder()
+	{
+		/** @var Config $class */
+		$class = self::getClass();
+
+		return $class::__getPhpFolder();
+	}
+
 	final public static function getConfigurationFolder()
 	{
 		/** @var Config $class */

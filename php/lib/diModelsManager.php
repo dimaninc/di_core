@@ -8,6 +8,7 @@
 
 use diCore\Helper\StringHelper;
 use diCore\Helper\FileSystemHelper;
+use diCore\Data\Config;
 
 class diModelsManager
 {
@@ -131,15 +132,15 @@ EOF;
 
 			$fn = $this->getModelFilename($className);
 
-			if (is_file(diPaths::fileSystem() . $fn))
+			if (is_file(Config::getSourcesFolder() . $fn))
 			{
 				throw new \Exception("Model $fn already exists");
 			}
 
-			FileSystemHelper::createTree(diPaths::fileSystem(), dirname($fn));
+			FileSystemHelper::createTree(Config::getSourcesFolder(), dirname($fn));
 
-			file_put_contents(diPaths::fileSystem() . $fn, $contents);
-			chmod(diPaths::fileSystem() . $fn, self::fileChmod);
+			file_put_contents(Config::getSourcesFolder() . $fn, $contents);
+			chmod(Config::getSourcesFolder() . $fn, self::fileChmod);
 		}
 
 		if ($collectionNeeded)
@@ -167,15 +168,15 @@ EOF;
 
 			$fn = $this->getCollectionFilename($collectionClassName);
 
-			if (is_file(diPaths::fileSystem() . $fn))
+			if (is_file(Config::getSourcesFolder() . $fn))
 			{
 				throw new Exception("Collection $fn already exists");
 			}
 
-			FileSystemHelper::createTree(diPaths::fileSystem(), dirname($fn));
+			FileSystemHelper::createTree(Config::getSourcesFolder(), dirname($fn));
 
-			file_put_contents(diPaths::fileSystem() . $fn, $contents);
-			chmod(diPaths::fileSystem() . $fn, self::fileChmod);
+			file_put_contents(Config::getSourcesFolder() . $fn, $contents);
+			chmod(Config::getSourcesFolder() . $fn, self::fileChmod);
 		}
 	}
 

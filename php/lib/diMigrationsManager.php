@@ -1,5 +1,7 @@
 <?php
 
+use diCore\Data\Config;
+
 class diMigrationsManager
 {
 	const logTable = "di_migrations_log";
@@ -43,7 +45,7 @@ class diMigrationsManager
 
 	protected function initFolder()
 	{
-		self::$localFolder = diPaths::fileSystem() . self::defaultFolder;
+		self::$localFolder = Config::getSourcesFolder() . self::defaultFolder;
 
 		return $this;
 	}
