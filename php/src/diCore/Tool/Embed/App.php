@@ -8,6 +8,8 @@
 
 namespace diCore\Tool\Embed;
 
+use diCore\Helper\ArrayHelper;
+
 class App
 {
 	use \diSingleton;
@@ -61,7 +63,7 @@ class App
 		/** @var Helper $class */
 		$class = $this->getModeHelperClass();
 
-		$_GET = \diArrayHelper::filterByKey($_GET, [], array_merge(
+		$_GET = ArrayHelper::filterByKey($_GET, [], array_merge(
 			[App::QUERY_PARAM],
 			$class::getQueryParamsToRemove()
 		));

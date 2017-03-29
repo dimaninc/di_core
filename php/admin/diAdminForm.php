@@ -1618,7 +1618,7 @@ EOF;
 
 			if ($this->getWysiwygVendor() == self::wysiwygCK)
 			{
-				$this->inputs[$field] .= "<script>var editor_$field = CKEDITOR.replace('$field');CKFinder.SetupCKEditor(editor_$field, { BasePath : '/_admin/ckfinder/', RememberLastFolder : false });</script>";
+				$this->inputs[$field] .= "<script type='text/javascript'>var editor_$field = CKEDITOR.replace('$field'); CKFinder.SetupCKEditor(editor_$field, {BasePath: '/_admin/ckfinder/', RememberLastFolder : false});</script>";
 			}
 		}
 
