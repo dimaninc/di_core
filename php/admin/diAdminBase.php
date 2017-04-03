@@ -118,6 +118,9 @@ abstract class diAdminBase
 	protected $caption;
 	protected $forceShowExpandCollapse = false;
 
+	/** @var callable|null */
+	private $headPrinter = null;
+
 	private $uriParams = [];
 
 	public function __construct($mode = null)
@@ -724,13 +727,24 @@ abstract class diAdminBase
 
 	public function printHead()
 	{
-		$this->printWysiwygHeadScript();
+		if ($this->hasHeadPrinter())
+		{
+			$cb = $this->getHeadPrinter();
+
+			$head = $cb($this);
+		}
+		else
+		{
+			$this->printWysiwygHeadScript();
+
+			$head = $this->getTwig()->parse('admin/_index/head', [
+				'wysiwyg_head_script' => $this->getTpl()->getAssigned('WYSIWYG_HEAD_SCRIPT'),
+			]);
+		}
 
 		$this->getTpl()
 			->assign([
-				'head' => $this->getTwig()->parse('admin/_index/head', [
-					'wysiwyg_head_script' => $this->getTpl()->getAssigned('WYSIWYG_HEAD_SCRIPT'),
-				]),
+				'head' => $head,
 			]);
 
 		return $this;
@@ -1016,5 +1030,32 @@ abstract class diAdminBase
 	public function currentMethodExists()
 	{
 		return $this->methodExists($this->getModule(), $this->getMethod());
+	}
+
+	/**
+	 * @return boolean
+	 */
+	public function hasHeadPrinter()
+	{
+		return $this->headPrinter && is_callable($this->headPrinter);
+	}
+
+	/**
+	 * @return callable|null
+	 */
+	public function getHeadPrinter()
+	{
+		return $this->headPrinter;
+	}
+
+	/**
+	 * @param null $headPrinter
+	 * @return $this
+	 */
+	public function setHeadPrinter($headPrinter)
+	{
+		$this->headPrinter = $headPrinter;
+
+		return $this;
 	}
 }

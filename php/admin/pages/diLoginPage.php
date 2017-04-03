@@ -31,6 +31,10 @@ class diLoginPage extends diAdminBasePage
 
 	public function renderForm()
 	{
+		$this->getAdmin()->setHeadPrinter(function(\diAdmin $A) {
+			return $A->getTwig()->parse('admin/_index/head_of_login', []);
+		});
+
 		$this->getTpl()
 			->define("`login/form", [
 				"index",

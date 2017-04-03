@@ -15,7 +15,7 @@ tinymce.init({
         'responsivefilemanager insertdatetime media table contextmenu paste',
         ''
     ],
-    toolbar: '| responsivefilemanager | insertfile undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image',
+    toolbar: '| insertfile undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link responsivefilemanager', // image
     {% if extra_wysiwyg_settings %}{{ extra_wysiwyg_settings|raw }}{% endif %}
     external_filemanager_path: '{{ asset_locations['vendor'] }}responsive_filemanager/',
     filemanager_title: 'File Manager',
