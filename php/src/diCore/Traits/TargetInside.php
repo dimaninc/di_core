@@ -23,6 +23,9 @@ namespace diCore\Traits;
  */
 trait TargetInside
 {
+	/** @var \diModel */
+	private $target;
+
 	/**
 	 * @param TargetInside $model
 	 * @return bool
@@ -34,5 +37,15 @@ trait TargetInside
 			$this->hasTargetId() &&
 			$this->getTargetType() == $model->getTargetType() &&
 			$this->getTargetId() == $model->getTargetId();
+	}
+
+	public function getTargetModel()
+	{
+		if (!$this->target)
+		{
+			$this->target = \diModel::create($this->getTargetType(), $this->getTargetId());
+		}
+
+		return $this->target;
 	}
 }

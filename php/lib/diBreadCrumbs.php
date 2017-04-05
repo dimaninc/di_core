@@ -27,6 +27,11 @@ class diBreadCrumbs
 
 	private $divider = " / ";
 
+    /**
+     * @var callable|null
+     */
+    private $titleGetter = null;
+
 	public function __construct(CMS $Z)
 	{
 		$this->Z = $Z;
@@ -46,6 +51,13 @@ class diBreadCrumbs
 	{
 		return $this->getZ()->getTpl();
 	}
+
+    public function setTitleGetter(callable $getter)
+    {
+        $this->titleGetter = $getter;
+
+        return $this;
+    }
 
 	public function reset()
 	{
@@ -189,6 +201,16 @@ class diBreadCrumbs
 		return $this;
 	}
 
+    public function getTitleOfElement($element)
+    {
+        if ($cb = $this->titleGetter)
+        {
+            return $cb($element);
+        }
+
+        return $element['title'];
+    }
+
 	public function finish()
 	{
 		$ar = [];
@@ -197,7 +219,7 @@ class diBreadCrumbs
 		{
 			$ar[] = $this->getTpl()
 				->assign([
-					"TITLE" => $element["title"],
+					"TITLE" => $this->getTitleOfElement($element),
 					"HREF" => ($element["hrefPrefixNeeded"] ? $this->getZ()->getLanguageHrefPrefix() : "") . $element["href"],
 					"CLASS" => $element["class"],
 				], "TT_")

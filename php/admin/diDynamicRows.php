@@ -1008,6 +1008,7 @@ EOF;
 			$imgTag = '';
 			$ff_w = $ff_h = null;
 			$ff_s = filesize($f);
+			$previewWithText = false;
 
 			if (diSwiffy::is($f))
 			{
@@ -1049,7 +1050,9 @@ EOF;
 
 			if ($imgTag)
 			{
-				$imgTag = "<div class=\"container\">$imgTag</div>";
+				$additionalClassName = $previewWithText ? "text" : "embed";
+
+				$imgTag = "<div class='container {$additionalClassName}'>$imgTag</div>";
 			}
 		}
 		else

@@ -77,6 +77,7 @@ var diPopups = function() {
 		var opts = {
 			showBackground: true,
 			content: null,
+			positioning: true,
 			afterUpdatePosition: null
 		};
 		var $e = this.getPopupElement(name);
@@ -145,6 +146,7 @@ var diPopups = function() {
 			name: null,
 			content: null,
 			showCloseButton: true,
+			positioning: true,
 			afterUpdatePosition: null
 		}, options);
 
@@ -158,6 +160,8 @@ var diPopups = function() {
 			.attr('data-no-close', !options.showCloseButton)
 			.data('no-close', !options.showCloseButton)
 			.data('after-update-position', options.afterUpdatePosition)
+			.data('positioning', options.positioning)
+			.attr('data-positioning', options.positioning)
 			.html(options.content)
 			.appendTo(document.body);
 
