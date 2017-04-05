@@ -9,24 +9,36 @@
 class diContentTypesBasic
 {
 	protected static $basicTypes = [
-		"home" => [
-			"title"	=> "Заглавная страница",
-			"logged_in" => false,
-			//"possible_get_params" => [],
+		'ru' => [
+			"home" => [
+				"title" => "Заглавная страница",
+				"logged_in" => false,
+				//"possible_get_params" => [],
+			],
+			"href" => "Ссылка",
+			"user" => "Текстовый раздел",
 		],
-		"href" => "Ссылка",
-		"user" => "Текстовый раздел",
+
+		'en' => [
+			"home" => [
+				"title" => "Homepage",
+				"logged_in" => false,
+				//"possible_get_params" => [],
+			],
+			"href" => "Link",
+			"user" => "Text page",
+		],
 	];
 
 	protected static $types = [];
 
 	private static $cachedTypes = null;
 
-	public static function get()
+	public static function get($language = 'ru')
 	{
 		if (self::$cachedTypes === null)
 		{
-			self::$cachedTypes = extend(static::$basicTypes, static::$types);
+			self::$cachedTypes = extend(static::$basicTypes[$language], static::$types);
 
 			foreach (self::$cachedTypes as $type => &$settings)
 			{

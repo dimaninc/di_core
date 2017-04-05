@@ -105,7 +105,7 @@ class diContentPage extends diAdminBasePage
 			$this->getForm()->setHiddenInput("parent");
 		}
 
-		$typesAr = diContentTypes::get();
+		$typesAr = \diContentTypes::get($this->getLanguage());
 		array_walk($typesAr, function (&$opts, $type) {
 			$opts = "{$opts["title"]} ({$type}.php)";
 		});
@@ -149,7 +149,7 @@ class diContentPage extends diAdminBasePage
 				"type" => "string",
 				"title" => "Тип",
 				"default" => "user",
-				"values" => array_keys(diContentTypes::get()),
+				"values" => array_keys(\diContentTypes::get($this->getLanguage())),
 			],
 
 			"menu_title" => [
