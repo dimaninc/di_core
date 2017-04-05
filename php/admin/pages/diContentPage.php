@@ -90,8 +90,12 @@ class diContentPage extends diAdminBasePage
 	{
 		$h = new diHierarchyContentTable();
 
+		$parents = $this->getId()
+			? $h->getParentsAr($this->getId())
+			: $h->getParentsArByParentId($this->getId());
+
 		$parentsAr = [];
-		foreach ($h->getParentsAr($this->getId()) as $parent_r)
+		foreach ($parents as $parent_r)
 		{
 			$parentsAr[] = strip_tags($parent_r->title);
 		}
@@ -223,12 +227,14 @@ class diContentPage extends diAdminBasePage
 				"flags" => ["hidden"],
 			],
 
+			/*
 			"show_links" => [
 				"type" => "string",
 				"title" => "Блок со ссылками",
 				"default" => "nothing",
 				"flags" => ["hidden"],
 			],
+			*/
 
 			"background_color" => [
 				"type" => "string",
