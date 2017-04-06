@@ -938,6 +938,7 @@ abstract class CMS
 		{
 			$this->Twig->assign([
 				'content_page' => $this->getContentModel(),
+				'content_pages' => $this->getCachedContentCollection(),
 			]);
 		}
 
