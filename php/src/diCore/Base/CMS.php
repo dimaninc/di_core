@@ -269,7 +269,7 @@ abstract class CMS
 		else
 		{
 			$z_ct_ar = [];
-			include $_SERVER["DOCUMENT_ROOT"] . "/" . static::TABLES_CONTENT_CLEAN_TITLES_PHP;
+			include Config::getConfigurationFolder() . '/' . static::TABLES_CONTENT_CLEAN_TITLES_PHP;
 
 			return $z_ct_ar;
 		}
@@ -317,12 +317,12 @@ abstract class CMS
 
 	public static function getTemplatesCacheModificationDateTime()
 	{
-		$fn = \diRequest::server("DOCUMENT_ROOT") . "/" . static::TPL_CACHE_PHP;
+		$fn = Config::getCacheFolder() . '/' . static::TPL_CACHE_PHP;
 		$ft = is_file($fn) ? filemtime($fn) : null;
 
 		return $ft
-			? \diDateTime::format("d.m.Y H:i", $ft)
-			: "---";
+			? \diDateTime::format('d.m.Y H:i', $ft)
+			: '---';
 	}
 
 	/**

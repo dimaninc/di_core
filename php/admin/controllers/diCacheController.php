@@ -1,7 +1,5 @@
 <?php
 
-use diCore\Helper\StringHelper;
-
 class diCacheController extends diBaseAdminController
 {
 	public function rebuildAction()
