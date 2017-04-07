@@ -6,6 +6,8 @@
  * Time: 0:29
  */
 
+use diCore\Data\Config;
+
 class diFonts
 {
 	const CHMOD_FILE = 0664;
@@ -21,7 +23,7 @@ class diFonts
 
 	public static function getCssFilename()
 	{
-		return diPaths::fileSystem() . self::CACHE_FILENAME;
+		return Config::getAssetSourcesFolder() . self::CACHE_FILENAME;
 	}
 
 	public static function storeToCss()

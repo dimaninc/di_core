@@ -13,6 +13,7 @@ use diCore\Helper\StringHelper;
 class Config
 {
 	const apiQueryPrefix = null;
+	const folderForAssets = '';
 
 	protected static $location = \diLib::LOCATION_HTDOCS;
 
@@ -115,6 +116,14 @@ class Config
 		return $class::__getLogFolder();
 	}
 
+	final public static function getAssetSourcesFolder()
+	{
+		/** @var Config $class */
+		$class = self::getClass();
+
+		return $class::__getAssetSourcesFolder();
+	}
+
 	final public static function getTwigCorePath()
 	{
 		/** @var Config $class */
@@ -151,6 +160,11 @@ class Config
 	public static function __getLogFolder()
 	{
 		return static::__getPhpFolder();
+	}
+
+	public static function __getAssetSourcesFolder()
+	{
+		return static::__getPhpFolder() . static::folderForAssets;
 	}
 
 	public static function __getTwigCorePath()
