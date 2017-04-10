@@ -75,6 +75,8 @@ class diModel implements \ArrayAccess
 	protected $validationNeeded = true;
 	protected $validationErrors = [];
 
+	private $insertOrUpdateAllowed = false;
+
 	/**
 	 * @param null|array|object $ar
 	 * @param null|string $table
@@ -1381,7 +1383,22 @@ class diModel implements \ArrayAccess
 			return $this;
 		}
 
-		if ($this->getId() && ($this->idAutoIncremented || (!$this->idAutoIncremented && $this->getOrigId())))
+		if ($this->isInsertOrUpdateAllowed())
+		{
+			$result = $this->getDb()->insert_or_update($this->getTable(), $ar);
+
+			$this->disallowInsertOrUpdate();
+
+			if (!$result)
+			{
+				$e = new diDatabaseException("Unable to insert/update " . get_class($this) . " in DB: " .
+					join("\n", $this->getDb()->getLog()));
+				$e->setErrors($this->getDb()->getLog());
+
+				throw $e;
+			}
+		}
+		elseif ($this->getId() && ($this->idAutoIncremented || (!$this->idAutoIncremented && $this->getOrigId())))
 		{
 			$result = $this->getDb()->update($this->getTable(), $ar, "WHERE `{$this->getIdFieldName()}` = '{$this->getId()}'");
 
@@ -1795,5 +1812,24 @@ class diModel implements \ArrayAccess
 		}
 
 		return "[\n" . $s . "]\n";
+	}
+
+	public function allowInsertOrUpdate()
+	{
+		$this->insertOrUpdateAllowed = true;
+
+		return $this;
+	}
+
+	public function disallowInsertOrUpdate()
+	{
+		$this->insertOrUpdateAllowed = false;
+
+		return $this;
+	}
+
+	public function isInsertOrUpdateAllowed()
+	{
+		return $this->insertOrUpdateAllowed;
 	}
 }
