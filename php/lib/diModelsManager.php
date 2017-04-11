@@ -187,7 +187,11 @@ EOF;
 			return $table;
 		}
 
-		if (substr($table, -1) == "s" && substr($table, -2) != "ss")
+		if (substr($table, -3) == 'ies')
+		{
+			$table = substr($table, 0, -3) . 'y';
+		}
+		elseif (substr($table, -1) == "s" && substr($table, -2) != "ss")
 		{
 			$table = substr($table, 0, -1);
 		}
