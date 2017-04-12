@@ -10,12 +10,14 @@ tinymce.init({
     image_advtab: true,
     content_css: '/_admin/_static/css/wysiwyg.css',
     plugins: [
-        'advlist autolink lists link image charmap print preview anchor',
+        'advlist autolink lists link image charmap print preview anchor textcolor',
         'searchreplace visualblocks code fullscreen',
         'responsivefilemanager insertdatetime media table contextmenu paste',
         ''
     ],
-    toolbar: '| insertfile undo redo | styleselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link responsivefilemanager', // image
+    toolbar: '| insertfile undo redo | styleselect | bold italic | forecolor backcolor | ' +
+        'alignleft aligncenter alignright alignjustify | ' +
+        'bullist numlist outdent indent | link responsivefilemanager', // image
     {% if extra_wysiwyg_settings %}{{ extra_wysiwyg_settings|raw }}{% endif %}
     external_filemanager_path: '{{ asset_locations['vendor'] }}responsive_filemanager/',
     filemanager_title: 'File Manager',
