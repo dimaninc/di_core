@@ -152,12 +152,18 @@ class Localization extends \diAdminBasePage
 				"type" => "text",
 				"title" => "Значение (RUS)",
 				"default" => "",
+				'options' => [
+					'rows' => 3,
+				],
 			],
 
 			"en_value" => [
 				"type" => "text",
 				"title" => "Значение (ENG)",
 				"default" => "",
+				'options' => [
+					'rows' => 3,
+				],
 			],
 		];
 	}
