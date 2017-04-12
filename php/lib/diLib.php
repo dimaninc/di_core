@@ -283,9 +283,20 @@ class diLib
 		//return dirname($namespace);
 	}
 
+	public static function childNamespace($namespace)
+	{
+		$x = strrpos($namespace, '\\');
+
+		return $x === false
+			? ''
+			: substr($namespace, $x + 1);
+
+		//return basename($namespace);
+	}
+
 	public static function getChildClass($parentFullClassName, $customClassName = null)
 	{
-		$basicName = $customClassName ?: basename($parentFullClassName);
+		$basicName = $customClassName ?: self::childNamespace($parentFullClassName);
 		$subNamespace = self::parentNamespace($parentFullClassName);
 		$subNamespace = preg_replace('/^[^\\\\]+\\\\/', '\\', $subNamespace);
 
