@@ -123,6 +123,12 @@ table.dinicetable tr.headline:hover>td {
 background: #fff;
 }
 
+table.dinicetable tr td .anchor {
+	display: block;
+	position: absolute;
+	top: 0;
+}
+
 table.dinicetable tr td .lite {
 font-weight: normal;
 font-size: 11px;

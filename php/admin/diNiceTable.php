@@ -60,6 +60,8 @@ class diNiceTable
 	const NO_HEADLINE = 0;
 	const PRINT_HEADLINE = 1;
 
+	const ROW_ANCHOR_PREFIX = 'row';
+
 	/**
 	 * @var diPagesNavy
 	 */
@@ -151,6 +153,11 @@ class diNiceTable
 	public function getLanguage()
 	{
 		return $this->lng;
+	}
+
+	public static function getRowAnchorName($id)
+	{
+		return self::ROW_ANCHOR_PREFIX . $id;
 	}
 
 	protected function setRowRec($r)
@@ -261,7 +268,8 @@ class diNiceTable
 
 		if (!$this->anchorPlaced)
 		{
-			$anchor = "<a name=\"r{$this->getRowModel()->getId()}\"></a>";
+			$anchorName = self::getRowAnchorName($this->getRowModel()->getId());
+			$anchor = "<a name='{$anchorName}' class='anchor'></a>";
 
 			$text = $anchor . $text;
 

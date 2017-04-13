@@ -999,15 +999,27 @@ abstract class diAdminBasePage
 		return $ar;
 	}
 
+	protected function useAnchorInRedirectAfterSubmitUrl()
+	{
+		return true;
+	}
+
+	protected function getRedirectAfterSubmitUrl()
+	{
+		$anchor = $this->useAnchorInRedirectAfterSubmitUrl()
+			? '#' . \diNiceTable::getRowAnchorName($this->getId())
+			: '';
+
+		return diAdminBase::getPageUri(
+			$this->getBasePath(),
+			'list',
+			$this->getQueryParamsForRedirectAfterSubmit()
+		) . $anchor;
+	}
+
 	protected function redirectAfterSubmit()
 	{
-		$this->redirectTo(
-			diAdminBase::getPageUri(
-				$this->getBasePath(),
-				"list",
-				$this->getQueryParamsForRedirectAfterSubmit()
-			) . "#r" . $this->getId()
-		);
+		$this->redirectTo($this->getRedirectAfterSubmitUrl());
 
 		return $this;
 	}
