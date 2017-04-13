@@ -78,6 +78,8 @@ var diPopups = function() {
 			showBackground: true,
 			content: null,
 			positioning: true,
+			positioningX: true,
+			positioningY: true,
 			afterUpdatePosition: null
 		};
 		var $e = this.getPopupElement(name);
@@ -147,6 +149,8 @@ var diPopups = function() {
 			content: null,
 			showCloseButton: true,
 			positioning: true,
+			positioningX: true,
+			positioningY: true,
 			afterUpdatePosition: null
 		}, options);
 
@@ -162,6 +166,10 @@ var diPopups = function() {
 			.data('after-update-position', options.afterUpdatePosition)
 			.data('positioning', options.positioning)
 			.attr('data-positioning', options.positioning)
+			.data('positioning-x', options.positioningX)
+			.attr('data-positioning-x', options.positioningX)
+			.data('positioning-y', options.positioningY)
+			.attr('data-positioning-y', options.positioningY)
 			.html(options.content)
 			.appendTo(document.body);
 
@@ -218,11 +226,11 @@ var diPopups = function() {
 
 			var properties = {};
 
-			if (!this.$e_ar[id].data('manual-x')) {
+			if (!this.$e_ar[id].data('manual-x') && this.$e_ar[id].data('positioning-x')) {
 				properties.marginLeft = this.$e_ar[id].outerWidth() / -2;
 			}
 
-			if (!this.$e_ar[id].data('manual-y')) {
+			if (!this.$e_ar[id].data('manual-y') && this.$e_ar[id].data('positioning-y')) {
 				properties.marginTop = this.$e_ar[id].outerHeight() / -2;
 			}
 
