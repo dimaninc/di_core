@@ -59,7 +59,7 @@ var diPopups = function() {
 	};
 
 	this.getPopupElement = function(id) {
-		return typeof this.$e_ar[id] != 'undefined'
+		return this.exists(id)
 			? this.$e_ar[id]
 			: $();
 	};

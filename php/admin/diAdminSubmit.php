@@ -1567,7 +1567,11 @@ function diasSaveDynamicPic($F, $tableOrSubmit, $what, &$ar, $pics_folder)
 		);
 
 		$bigWM = $Submit->getWatermarkOptionsFor($field, diAdminSubmit::IMAGE_TYPE_BIG);
-		$I->make_thumb_or_copy(DI_THUMB_FIT, $big_fn, 10000, 10000, false, $bigWM["name"], $bigWM["x"], $bigWM["y"]);
+		$I->make_thumb_or_copy(DI_THUMB_FIT, $big_fn,
+			diConfiguration::safeGet($table . '_big_width', 10000),
+			diConfiguration::safeGet($table . '_big_height', 10000),
+			false,
+			$bigWM["name"], $bigWM["x"], $bigWM["y"]);
 		$I->close();
 
 		if ($mode == "uploading")
