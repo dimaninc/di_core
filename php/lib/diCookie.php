@@ -27,20 +27,20 @@ class diCookie
 		}
 		else
 		{
-			$options = array(
+			$options = [
 				"expire" => $optionsOrDate,
 				"path" => $path,
 				"domain" => $domain,
-			);
+			];
 		}
 
-		$options = extend(array(
+		$options = extend([
 			"expire" => null,
 			"path" => $path,
 			"domain" => $domain,
 			"secure" => null,
 			"httpOnly" => null,
-		), $options);
+		], $options);
 
 		if ($options["expire"] !== null)
 		{
@@ -89,7 +89,7 @@ class diCookie
 	 * @param null $domain
 	 * @param array $options
 	 */
-	public static function remove($name, $path = null, $domain = null, $options = array())
+	public static function remove($name, $path = null, $domain = null, $options = [])
 	{
 		if (static::DEBUG)
 		{

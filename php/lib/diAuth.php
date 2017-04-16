@@ -169,7 +169,10 @@ class diAuth
 
 	protected function getDomainForCookie()
 	{
-		return diCookie::getDomainForAll();
+		/** @var diCookie $className */
+		$className = static::COOKIE_PROVIDER;
+
+		return $className::getDomainForAll();
 	}
 
 	protected function rememberUser()
@@ -177,9 +180,9 @@ class diAuth
 		return diRequest::post(static::POST_REMEMBER_FIELD, "") || diCookie::get(static::COOKIE_REMEMBER);
 	}
 
-	protected function needToStoreCookies()
+	protected function needToStoreCookies($force = false)
 	{
-		return in_array($this->authSource, [self::SOURCE_POST, self::SOURCE_COOKIE]);
+		return $force || in_array($this->authSource, [self::SOURCE_POST, self::SOURCE_COOKIE]);
 	}
 
 	private function setCookie($name, $value = null, $date = null, $path = null, $domain = null)
@@ -202,7 +205,7 @@ class diAuth
 
 	private function storeCookies($remember = false)
 	{
-		if ($this->reallyAuthorized() && $this->needToStoreCookies())
+		if ($this->reallyAuthorized() && $this->needToStoreCookies($remember))
 		{
 			$cookieTime = strtotime($this->rememberUser() || $remember ? static::COOKIE_LIFE_TIME_REMEMBERED : static::COOKIE_LIFE_TIME_GUEST);
 
