@@ -1396,7 +1396,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		if ($this->sqlParts['where'])
 		{
-			return "WHERE " . join(" AND ", array_map(function($val) {
+			return "WHERE " . join(" AND ", array_filter(array_map(function($val) {
 				$value = $val['value'];
 
 				if (!empty($val['options']['manual']))
@@ -1414,9 +1414,11 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 				{
 					if (is_array($value))
 					{
-					    $value = '(' . join(',', array_map(function($v) {
-						    return $this->getDb()->escapeValue($v);
-					    }, $value)) . ')';
+					    $value = count($value)
+							? '(' . join(',', array_map(function($v) {
+						    		return $this->getDb()->escapeValue($v);
+					    		}, $value)) . ')'
+							: null;
 					}
 					else
 					{
@@ -1424,11 +1426,41 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 					}
 				}
 
+				if (is_array($val['value']))
+				{
+					if (count($val['value']))
+					{
+						switch ($val['operator'])
+						{
+							case '=':
+								$val['operator'] = 'in';
+								break;
+
+							case '!=':
+								$val['operator'] = 'not in';
+								break;
+						}
+					}
+					else
+					{
+						switch (trim(strtolower($val['operator'])))
+						{
+							case '=':
+							case 'in':
+								return '1 = 0';
+
+							case '!=':
+							case 'not in':
+								return null;
+						}
+					}
+				}
+
 				return
 					$this->getDb()->escapeField($val['field']) .
 					' ' . $val['operator'] . ' ' .
 					$value;
-			}, $this->sqlParts['where']));
+			}, $this->sqlParts['where'])));
 		}
 
 		return null;

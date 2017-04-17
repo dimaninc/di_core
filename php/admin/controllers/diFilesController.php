@@ -1,5 +1,7 @@
 <?php
 
+use diCore\Helper\StringHelper;
+
 class diFilesController extends diBaseAdminController
 {
 	public function rebuildDynamicPicsAction()
@@ -8,9 +10,9 @@ class diFilesController extends diBaseAdminController
 		$field = $this->param(1);
 		$id = $this->param(2);
 
-		$redirect = diRequest::get('redirect', 0);
+		$redirect = \diRequest::get('redirect', 0);
 
-		$ar = diAdminSubmit::rebuildDynamicPics($module, $field, $id);
+		$ar = \diAdminSubmit::rebuildDynamicPics($module, $field, $id);
 
 		if ($redirect)
 		{
@@ -31,13 +33,13 @@ class diFilesController extends diBaseAdminController
 	public function delAction()
 	{
 		$ok = false;
-		$table = diDB::_in($this->param(0));
+		$table = StringHelper::in($this->param(0));
 		$id  = (int)$this->param(1);
-		$field = diDB::_in($this->param(2));
+		$field = StringHelper::in($this->param(2));
 
-		$redirect = diRequest::get('redirect', 1);
+		$redirect = \diRequest::get('redirect', 1);
 
-		$model = diModel::createForTableNoStrict($table, $id, "id");
+		$model = \diModel::createForTableNoStrict($table, $id, "id");
 
 		if ($model->exists() && $model->has($field))
 		{
@@ -52,27 +54,27 @@ class diFilesController extends diBaseAdminController
 		if ($redirect)
 		{
 			$this->redirect();
+
+			return null;
 		}
-		else
-		{
-			$this->defaultResponse([
-				"ok" => $ok,
-			]);
-		}
+
+		return [
+			'ok' => $ok,
+		];
 	}
 
 	public function delDynamicAction()
 	{
 		$ok = false;
-		$table = diDB::_in($this->param(0)); // todo: make a check if the model belongs to $table#$id
+		$table = StringHelper::in($this->param(0)); // todo: make a check if the model belongs to $table#$id
 		$id  = (int)$this->param(1);
-		$subTable = diDB::_in($this->param(2));
-		$field = diDB::_in($this->param(3));
+		$subTable = StringHelper::in($this->param(2));
+		$field = StringHelper::in($this->param(3));
 		$subId  = (int)$this->param(4);
 
-		$redirect = diRequest::get('redirect', 1);
+		$redirect = \diRequest::get('redirect', 1);
 
-		$model = diModel::createForTableNoStrict($subTable, $subId, "id");
+		$model = \diModel::createForTableNoStrict($subTable, $subId, "id");
 
 		if ($model->exists() && $model->has($field))
 		{
@@ -87,17 +89,17 @@ class diFilesController extends diBaseAdminController
 		if ($redirect)
 		{
 			$this->redirect();
+			
+			return null;
 		}
-		else
-		{
-			$this->defaultResponse([
-				'ok' => $ok,
-				'table' => $table,
-				'id' => $id,
-				'subTable' => $subTable,
-				'field' => $field,
-				'subId' => $subId,
-			]);
-		}
+
+		return [
+			'ok' => $ok,
+			'table' => $table,
+			'id' => $id,
+			'subTable' => $subTable,
+			'field' => $field,
+			'subId' => $subId,
+		];
 	}
 }

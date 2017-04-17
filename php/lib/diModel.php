@@ -1562,9 +1562,9 @@ class diModel implements \ArrayAccess
 			}
 		}
 
-		if ($this->getTable() != "dipics")
+		if ($field === null && $this->getTable() != "dipics")
 		{
-			\diDynamicPicCollection::createByTarget($this->getTable(), $this->getId())
+			\diCore\Entity\DynamicPic\Collection::createByTarget($this->getTable(), $this->getId())
 				->hardDestroy();
 		}
 

@@ -1,6 +1,7 @@
 <?php
 
 use diCore\Tool\CollectionCache;
+use diCore\Entity\DynamicPic\Collection as dpCol;
 
 /**
  * Created by PhpStorm.
@@ -76,9 +77,9 @@ class diAdminTasksPage extends diAdminBasePage
 		],
 	];
 
-	/** @var diDynamicPicCollection */
+	/** @var dpCol */
 	protected $picsBefore;
-	/** @var diDynamicPicCollection */
+	/** @var dpCol */
 	protected $picsAfter;
 
 	public static function getStatusStr($status)
@@ -132,8 +133,8 @@ class diAdminTasksPage extends diAdminBasePage
 			])
 			->buildQuery()
 			->setSelectFromCollectionInput('admin_id',
-				diCollection::create(diTypes::admin)->filterBy('active', 1)->orderBy('login'),
-				function(diAdminModel $admin) {
+				\diCollection::create(\diTypes::admin)->filterBy('active', 1)->orderBy('login'),
+				function(\diAdminModel $admin) {
 					return [
 						'value' => $admin->getId(),
 						'text' => $admin->getLogin(),
@@ -336,12 +337,12 @@ class diAdminTasksPage extends diAdminBasePage
 	}
 
 	/**
-	 * @return diDynamicPicCollection
+	 * @return dpCol
 	 * @throws Exception
 	 */
 	public function getAttachedPicsCollection($id = null)
 	{
-		return diDynamicPicCollection::createByTarget($this->getTable(), $id ?: $this->getId(), "pics")->load();
+		return dpCol::createByTarget($this->getTable(), $id ?: $this->getId(), "pics")->load();
 	}
 
 	protected function beforeSubmitForm()

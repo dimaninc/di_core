@@ -168,9 +168,9 @@ class diLib
 
 	public static function checkCompatibility()
 	{
-		if (version_compare(PHP_VERSION, '5.4.0', '<'))
+		if (version_compare(PHP_VERSION, '5.5.0', '<'))
 		{
-			die('diCMS requires PHP 5.4.0 or higher. Current version is ' . PHP_VERSION);
+			die('diCMS requires PHP 5.5.0 or higher. Current version is ' . PHP_VERSION);
 		}
 	}
 

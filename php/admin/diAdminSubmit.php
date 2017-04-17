@@ -1119,11 +1119,11 @@ class diAdminSubmit
 
 		$ids_ar = array();
 
-		create_folders_chain($root, array(
-			$pics_folder.get_tn_folder(),
-			$pics_folder.get_tn_folder(2),
-			$pics_folder.get_tn_folder(3),
-		), self::DIR_CHMOD);
+		FileSystemHelper::createTree($root, [
+			$pics_folder . get_tn_folder(),
+			$pics_folder . get_tn_folder(2),
+			$pics_folder . get_tn_folder(3),
+		], self::DIR_CHMOD);
 
 		$w = "_table='{$this->getTable()}' and _field='$field' and _id='{$this->getId()}'";
 
@@ -1178,20 +1178,20 @@ class diAdminSubmit
 
 				$callback = isset($this->_all_fields[$field]["callback"]) ? $this->_all_fields[$field]["callback"] : self::defaultDynamicPicCallback;
 
-				$F = array(
+				$F = [
 					"name" => $_FILES["{$field}_{$f}"]["name"][$id],
 					"type" => $_FILES["{$field}_{$f}"]["type"][$id],
 					"tmp_name" => $_FILES["{$field}_{$f}"]["tmp_name"][$id],
 					"error" => $_FILES["{$field}_{$f}"]["error"][$id],
 					"size" => $_FILES["{$field}_{$f}"]["size"][$id],
-				);
+				];
 
 				if (is_callable($callback))
 				{
-					$callback($F, $this, array(
+					$callback($F, $this, [
 						"field" => $field,
 						"what" => $f,
-					), $db_ar, $pics_folder);
+					], $db_ar, $pics_folder);
 				}
 			}
 			//
@@ -1216,20 +1216,20 @@ class diAdminSubmit
 
 				$callback = isset($this->_all_fields[$field]["callback"]) ? $this->_all_fields[$field]["callback"]."_tn" : "";
 
-				$F = array(
+				$F = [
 					"name" => $_FILES["{$field}_{$f}"]["name"][$id],
 					"type" => $_FILES["{$field}_{$f}"]["type"][$id],
 					"tmp_name" => $_FILES["{$field}_{$f}"]["tmp_name"][$id],
 					"error" => $_FILES["{$field}_{$f}"]["error"][$id],
 					"size" => $_FILES["{$field}_{$f}"]["size"][$id],
-				);
+				];
 
 				if ($callback && is_callable($callback))
 				{
-					$callback($F, $this, array(
+					$callback($F, $this, [
 						"field" => $field,
 						"what" => $f,
-					), $db_ar, $pics_folder);
+					], $db_ar, $pics_folder);
 				}
 			}
 			//
@@ -1260,27 +1260,26 @@ class diAdminSubmit
 		}
 
 		// it's killing time!
-		$w_to_kill = " and id".diDB::in($ids_ar, false, false);
-
-		$kill_rs = $this->getDb()->rs(self::dynamicPicsTable, "WHERE ".$w.$w_to_kill) or $this->getDb()->dierror();
-		while ($kill_r = $this->getDb()->fetch($kill_rs))
-		{
-			@unlink($root . $pics_folder . $kill_r->pic);
-			@unlink($root . $pics_folder . get_tn_folder() . $kill_r->pic);
-			@unlink($root . $pics_folder . get_tn_folder(2) . $kill_r->pic);
-			@unlink($root . $pics_folder . get_tn_folder(3) . $kill_r->pic);
-		}
-		$this->getDb()->delete(self::dynamicPicsTable, "WHERE ".$w.$w_to_kill);
+		$killCol = \diCore\Entity\DynamicPic\Collection::createByTarget($this->getTable(), $this->getId(), $field);
+		$killCol
+			->filterById($ids_ar, '!=')
+			->hardDestroy();
 
 		// making order num to look ok
 		$order_num = 0;
 
-		$rs = $this->getDb()->rs(self::dynamicPicsTable, "WHERE $w ORDER BY order_num ASC,id ASC");
-		while ($r = $this->getDb()->fetch($rs))
+		$orderCol = \diCore\Entity\DynamicPic\Collection::createByTarget($this->getTable(), $this->getId(), $field);
+		$orderCol
+			->orderByOrderNum()
+			->orderById();
+
+		/** @var \diCore\Entity\DynamicPic\Model $m */
+		foreach ($orderCol as $m)
 		{
-			$this->getDb()->update(self::dynamicPicsTable, array("order_num" => ++$order_num), $r->id);
+			$m
+				->setOrderNum(++$order_num)
+				->save();
 		}
-		//
 
 		return $this;
 	}
