@@ -6,7 +6,7 @@
  * Time: 18:41
  */
 
-namespace Romantic\Data\Font;
+namespace diCore\Data\Font;
 
 
 class Cache
