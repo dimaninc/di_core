@@ -46,7 +46,7 @@ LocalizationAdmin = (function() {
           if (val === void 0 || val === null) {
             val = $td.html();
           }
-          valuesAr.push(val).replace(/'/g, '\\\'').replace(/"/g, '\"');
+          valuesAr.push(val.replace(/'/g, '\\\'').replace(/"/g, '\"'));
         }
         s = '$this->getDb()->q("INSERT IGNORE INTO `' + $t.data('table') + '`(`name`,`value`,`en_value`,`de_value`,`it_value`,`es_value`,`fr_value`)\n' + '\u0009\u0009\u0009VALUES(\'' + valuesAr.join('\',\'') + '\');' + '");';
         linesAr.push(s);
