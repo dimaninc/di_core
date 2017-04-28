@@ -733,7 +733,7 @@ abstract class diAdminBasePage
 		}
 	}
 
-	protected function setBeforeTableTemplate($template, $data = [])
+	public function setBeforeTableTemplate($template, $data = [])
 	{
 		$this->getTwig()
 			->render($template, 'before_table', $data);
@@ -741,7 +741,7 @@ abstract class diAdminBasePage
 		return $this;
 	}
 
-	protected function setAfterTableTemplate($template, $data = [])
+	public function setAfterTableTemplate($template, $data = [])
 	{
 		$this->getTwig()
 			->render($template, 'after_table', $data);
@@ -749,7 +749,7 @@ abstract class diAdminBasePage
 		return $this;
 	}
 
-	protected function setBeforeFormTemplate($template, $data = [])
+	public function setBeforeFormTemplate($template, $data = [])
 	{
 		$this->getTwig()
 			->render($template, 'before_form', $data);
@@ -757,7 +757,7 @@ abstract class diAdminBasePage
 		return $this;
 	}
 
-	protected function setAfterFormTemplate($template, $data = [])
+	public function setAfterFormTemplate($template, $data = [])
 	{
 		$this->getTwig()
 			->render($template, 'after_form', $data);

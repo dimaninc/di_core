@@ -18,6 +18,8 @@ tinymce.init({
     toolbar: '| insertfile undo redo | styleselect | bold italic | forecolor backcolor | ' +
         'alignleft aligncenter alignright alignjustify | ' +
         'bullist numlist outdent indent | link responsivefilemanager', // image
+    allow_script_urls: true,
+    extended_valid_elements: 'script[language|type|src]',
     {% if extra_wysiwyg_settings %}{{ extra_wysiwyg_settings|raw }}{% endif %}
     external_filemanager_path: '{{ asset_locations['vendor'] }}responsive_filemanager/',
     filemanager_title: 'File Manager',

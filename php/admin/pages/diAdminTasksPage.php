@@ -12,56 +12,6 @@ use diCore\Entity\DynamicPic\Collection as dpCol;
 
 class diAdminTasksPage extends diAdminBasePage
 {
-	// statuses
-	const STATUS_PENDING = 10;
-	const STATUS_IN_PROGRESS = 20;
-	const STATUS_RESOLVED = 30;
-	const STATUS_TESTED = 40;
-	const STATUS_CLOSED = 50;
-
-	const STATUS_REFINE_NEEDED = 80;
-	const STATUS_PAUSED = 89;
-	const STATUS_DELAYED = 90;
-	const STATUS_CANCELLED = 100;
-
-	public static $statusesActual = [
-		self::STATUS_PENDING,
-		self::STATUS_REFINE_NEEDED,
-		self::STATUS_IN_PROGRESS,
-		self::STATUS_RESOLVED,
-		self::STATUS_TESTED,
-		self::STATUS_PAUSED,
-		self::STATUS_DELAYED,
-	];
-
-	public static $statuses = [
-		self::STATUS_PENDING => "Не начата",
-		self::STATUS_IN_PROGRESS => "Выполняется",
-		self::STATUS_RESOLVED => "Ожидает тестирования",
-		self::STATUS_TESTED => "Протестирована",
-		self::STATUS_CLOSED => "Закрыта",
-
-		self::STATUS_REFINE_NEEDED => "Требуется уточнение",
-		self::STATUS_PAUSED => 'На паузе',
-		self::STATUS_DELAYED => "Отложена",
-		self::STATUS_CANCELLED => "Отменена",
-	];
-	//
-
-	// priorities
-	const PRIORITY_MINOR = 1;
-	const PRIORITY_MAJOR = 10;
-	const PRIORITY_CRITICAL = 20;
-	const PRIORITY_BLOCKER = 30;
-
-	public static $priorities = [
-		self::PRIORITY_MINOR => "Минимальный",
-		self::PRIORITY_MAJOR => "Средний",
-		self::PRIORITY_CRITICAL => "Высокий",
-		self::PRIORITY_BLOCKER => "Молния",
-	];
-	//
-
 	protected $options = [
 		"filters" => [
 			"defaultSorter" => [
@@ -81,16 +31,6 @@ class diAdminTasksPage extends diAdminBasePage
 	protected $picsBefore;
 	/** @var dpCol */
 	protected $picsAfter;
-
-	public static function getStatusStr($status)
-	{
-		return isset(self::$statuses[$status]) ? self::$statuses[$status] : null;
-	}
-
-	public static function getPriorityStr($priority)
-	{
-		return isset(self::$priorities[$priority]) ? self::$priorities[$priority] : null;
-	}
 
 	protected function initTable()
 	{
@@ -128,7 +68,7 @@ class diAdminTasksPage extends diAdminBasePage
 				"type" => "string",
 				"title" => "Статус",
 				"where_tpl" => "diaf_several_ints",
-				"default_value" => join(",", self::$statusesActual),
+				"default_value" => join(",", \diAdminTaskModel::statusesActual()),
 				'strict' => true,
 			])
 			->buildQuery()
@@ -145,11 +85,11 @@ class diAdminTasksPage extends diAdminBasePage
 					-1 => "Не присвоен",
 				]
 			)
-			->setSelectFromArrayInput("status", self::$statuses, [
+			->setSelectFromArrayInput("status", \diAdminTaskModel::statusStr(), [
 				//0 => "Все",
-				join(",", self::$statusesActual) => "[ Текущие задачи ]",
+				join(",", \diAdminTaskModel::statusesActual()) => "[ Текущие задачи ]",
 			])
-			->setSelectFromArrayInput("priority", self::$priorities, [
+			->setSelectFromArrayInput("priority", \diAdminTaskModel::$priorities, [
 				0 => "Все",
 			]);
 	}
@@ -201,7 +141,7 @@ class diAdminTasksPage extends diAdminBasePage
 				"value" => function(diAdminTaskModel $model) {
 					$icon = "<span class=\"admin-task-priority p{$model->getPriority()}\"></span>";
 
-					return $icon . diAdminTasksPage::getPriorityStr($model->getPriority());
+					return $icon . $model->getPriorityStr();
 				},
 				"headAttrs" => [
 					"width" => "10%",
@@ -213,7 +153,7 @@ class diAdminTasksPage extends diAdminBasePage
 			"status" => [
 				"title" => "Статус",
 				"value" => function(diAdminTaskModel $model) {
-					return diAdminTasksPage::getStatusStr($model->getStatus());
+					return $model->getStatusStr();
 				},
 				"headAttrs" => [
 					"width" => "10%",
@@ -236,7 +176,7 @@ class diAdminTasksPage extends diAdminBasePage
 			"title" => [
 				"title" => "Задача",
 				"value" => function(diAdminTaskModel $model) {
-					return $model->getTitle() . "<div class=\"lite\">" . str_cut_end($model->getContent(), 150) . "</div>";
+					return $model->getTitle() . "<div class='lite'>" . str_cut_end($model->getContent(), 150) . "</div>";
 				},
 				"headAttrs" => [
 					"width" => "50%",
@@ -291,8 +231,8 @@ class diAdminTasksPage extends diAdminBasePage
 				},
 				['' => "Не выбран"]
 			)
-			->setSelectFromArrayInput("status", self::$statuses)
-			->setSelectFromArrayInput("priority", self::$priorities);
+			->setSelectFromArrayInput("status", \diAdminTaskModel::statusStr())
+			->setSelectFromArrayInput("priority", \diAdminTaskModel::priorityStr());
 
 		if (!$this->getId())
 		{

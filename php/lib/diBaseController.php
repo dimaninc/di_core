@@ -91,10 +91,21 @@ class diBaseController
 	{
 		if ($this->Twig === null)
 		{
-			$this->Twig = diTwig::create($this->twigCreateOptions);
+			$this->setupTwig();
 		}
 
 		return $this->Twig;
+	}
+
+	protected function setupTwig()
+	{
+		$this->Twig = diTwig::create($this->twigCreateOptions);
+
+		$this->getTwig()->assign([
+			'asset_locations' => \diLib::getAssetLocations(),
+		]);
+
+		return $this;
 	}
 
 	public function setParamsAr($ar)
@@ -327,10 +338,11 @@ class diBaseController
 		return $this;
 	}
 
-	private function setupTpl()
+	protected function setupTpl()
 	{
 		$this->getTpl()
-			->setupBasicAssignees();
+			->setupBasicAssignees()
+			->assign(\diLib::getAssetLocations(), 'ASSET_LOCATIONS.');
 
 		return $this;
 	}

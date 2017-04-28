@@ -32,6 +32,29 @@
     margin-left: 30px;
 }
 
+.filter-block [data-purpose="reset-filter"] {
+	display: inline-block;
+	cursor: pointer;
+	position: relative;
+	margin-left: 10px
+}
+
+.filter-block [data-purpose="reset-filter"]:after {
+	content: 'X';
+	display: inline-block;
+	border-radius: 50%;
+	background-color: #bbb;
+	transition: background-color .5s ease;
+	color: white;
+	width: 21px;
+	line-height: 21px;
+	text-align: center;
+}
+
+.filter-block [data-purpose="reset-filter"]:hover:after {
+	background-color: #777;
+}
+
 .export-block {
     padding-top: 15px;
 }

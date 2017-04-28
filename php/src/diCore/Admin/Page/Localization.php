@@ -120,6 +120,8 @@ class Localization extends \diAdminBasePage
 
 	public function renderForm()
 	{
+		$this->setAfterFormTemplate('admin/localization/after_form');
+
 		if (!$this->getAdmin()->isAdminSuper() && $this->getId())
 		{
 			$this->getForm()->setStaticInput("name");

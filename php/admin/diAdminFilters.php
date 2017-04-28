@@ -259,7 +259,7 @@ class diAdminFilters
 			$sorterBlock = "";
 		}
 
-		$filterRowsAr = array();
+		$filterRowsAr = [];
 
 		foreach ($this->ar as $a)
 		{
@@ -641,6 +641,11 @@ EOF;
 		return $this;
 	}
 
+	protected function getResetButton($field)
+	{
+		return "<span data-purpose='reset-filter' data-field='$field'></span>";
+	}
+
 	/** @deprecated */
 	public function get_input($field)
 	{
@@ -661,15 +666,31 @@ EOF;
 			switch ($ar["type"])
 			{
 				default:
-					if (!$ar["value"] && in_array($ar["type"], explode(",", "int,float,double")))
+					if (!$ar["value"] && in_array($ar["type"], ['int', 'float', 'double']))
+					{
 						$ar["value"] = "";
+					}
 
-					if (in_array($ar["type"], explode(",", "int,float,double")))
-						$size = 6;
-					else
-						$size = 20;
+					switch ($ar['type'])
+					{
+						case 'int':
+						case 'float':
+						case 'double':
+							$size = 6;
+							break;
 
-					return "<input id=\"admin_filter[$field]\" name=\"$field\" value=\"{$ar["value"]}\" size=\"$size\" />";
+						default:
+							$size = 35;
+					}
+
+					$input = "<input id='admin_filter[$field]' name='$field' value=\"{$ar["value"]}\" size='$size'>";
+
+					if (true)
+					{
+						$input .= $this->getResetButton($field);
+					}
+
+					return $input;
 
 				case "date_range":
 				case "date_str_range":
@@ -714,7 +735,8 @@ EOF;
 						$y2_sel->addItem($i, $i);
 					}
 
-					$s = $d1_sel.".".$m1_sel.".".$y1_sel." &ndash; ".$d2_sel.".".$m2_sel.".".$y2_sel;
+					$s = $d1_sel . "." . $m1_sel . "." . $y1_sel . " &ndash; " .
+						$d2_sel . "." . $m2_sel . "." . $y2_sel;
 
 					// js
 					$uid = substr(get_unique_id(), 0, 8);

@@ -1,5 +1,4 @@
-function diAdminFilters(_opts)
-{
+var diAdminFilters = function(_opts) {
 	this.MODE_COOKIE = 1;
 	this.MODE_GET = 2;
 
@@ -10,16 +9,14 @@ function diAdminFilters(_opts)
 	        mode: this.MODE_COOKIE
         }, _opts || {}),
 	    e = {
-		    $form: $('form[name="admin_filter_form\\['+opts.table+'\\]"]')
+		    $form: $('form[name="admin_filter_form\\[{0}\\]"]'.format(opts.table))
 	    },
 	    filters = {},
 	    baseUri,
 	    uriGlue;
 
-    function constructor()
-    {
-	    if (!opts.fields)
-	    {
+    function constructor() {
+	    if (!opts.fields) {
 		    opts.fields = filters_ar[opts.table];
 	    }
 
@@ -33,7 +30,26 @@ function diAdminFilters(_opts)
 
             return false;
         });
+
+	    setupResetFilterButtons();
     }
+
+	function setupResetFilterButtons()
+	{
+		$('[data-purpose="reset-filter"]').on('click', function() {
+			var $this = $(this),
+				field = $this.data('field'),
+				$input = e.$form.find('input[name="{0}"]'.format(field));
+
+			if ($input.val()) {
+				$input.val('');
+
+				apply();
+			}
+
+			return false;
+		});
+	}
 
 	function apply()
 	{
@@ -111,4 +127,4 @@ function diAdminFilters(_opts)
 	}
 
     constructor();
-}
+};

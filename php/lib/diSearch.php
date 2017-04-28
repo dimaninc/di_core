@@ -40,6 +40,7 @@ $disearch_endings_ar = array(
     "че",
     "ь", "а", "о", "и", "ы", "е", "э", "я", "ю",
     "л", // для прошедшего времени
+    'ы',
 );
 
 /****************************************************************************************
@@ -75,7 +76,7 @@ abstract class diSearch
     public static function hey()
     {
     }
-    
+
 	public function getTable()
 	{
 		return $this->table;
@@ -108,8 +109,27 @@ abstract class diSearch
 		{
 			$search = self::create($table);
 			$search->index_record($id, "", $a["fields"], $a["where"], $a["callback"]);
+
+            return true;
 		}
+
+        return false;
 	}
+
+    public static function makeTableIndex($table)
+    {
+        $a = self::getSettings($table);
+
+        if ($a)
+        {
+            $search = self::create($table);
+            $search->index_full_table('', $a["fields"], $a["where"], $a["callback"]);
+
+            return true;
+        }
+
+        return false;
+    }
 
 	public static function getSettings($table)
 	{
@@ -217,6 +237,7 @@ abstract class diSearch
 
     $s_ar = explode(" ", $s);
     array_walk($s_ar, "kill_lil_word");
+      array_walk($s_ar, "kill_ending2");
     $s_ar = array_unique($s_ar);
     $s = implode(" ", $s_ar);
 

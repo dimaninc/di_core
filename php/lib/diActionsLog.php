@@ -352,16 +352,16 @@ class diActionsLog
 				list($old, $new) = self::parseSimpleCommaSeparatedInfo($r->info);
 
 				if ($r->action == self::aStatusChanged)
-					$entity = "Status";
+					$entity = "status";
 				elseif ($r->action == self::aPriorityChanged)
-					$entity = "Priority";
+					$entity = "priority";
 				else
 					$entity = "";
 
 				switch ($r->target_type)
 				{
 					case diTypes::admin_task:
-						$dataSource = "diAdminTasksPage::get{$entity}Str";
+						$dataSource = "diAdminTaskModel::{$entity}Str";
 						break;
 
 					case diTypes::order:
