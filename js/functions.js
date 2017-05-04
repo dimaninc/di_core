@@ -1451,5 +1451,5 @@ function insertCss(code, opts)
 		style.innerHTML = code;
 	}
 
-	document.getElementsByTagName("head")[0].appendChild(style);
+	return document.getElementsByTagName("head")[0].appendChild(style);
 }
