@@ -60,6 +60,15 @@ abstract class CMS
 	 */
 	protected $device;
 
+	/**
+	 * Domains to detect 'dev' environment
+	 * @var array
+	 */
+	public static $devDomains = [];
+
+	const ENV_DEV = 1;
+	const ENV_PROD = 2;
+
 	protected static $skipGetParams = [
 		\diPagesNavy::PAGE_PARAM,
 		\diComments::PAGE_PARAM,
@@ -275,9 +284,19 @@ abstract class CMS
 		}
 	}
 
+	public static function getEnvironment()
+	{
+		if (in_array(\diRequest::domain(), static::$devDomains))
+		{
+			return self::ENV_DEV;
+		}
+
+		return self::ENV_PROD;
+	}
+
 	public static function debugMode()
 	{
-		return false;
+		return static::getEnvironment() == self::ENV_DEV;
 	}
 
 	public static function ignoreCaches()
