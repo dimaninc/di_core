@@ -188,6 +188,11 @@ class diDynamicRows
 		return $this;
 	}
 
+	public function getCurrentModel()
+	{
+		return \diModel::createForTableNoStrict($this->table, $this->getAllData());
+	}
+
 	public function getAllData()
 	{
 		return $this->data;
@@ -779,7 +784,7 @@ class diDynamicRows
 				}
 			}
 
-			$checked = (int)$this->data[$field] ? " checked" : "";
+			$checked = (int)$this->data[$field] ? " checked=checked" : "";
 			$this->inputs[$field] = "<input type='radio' name='$name' id='$field' value='{$id}' {$checked}{$input_params}>";
 		}
 	}
@@ -999,7 +1004,7 @@ EOF;
 
 		$field2 = substr($matches[1], strlen($this->field) + 1);
 
-		$f = remove_ending_slash(diPaths::fileSystem()).$fullName;
+		$f = remove_ending_slash(\diCore\Data\Config::getPublicFolder()) . $fullName;
 		$ext = strtoupper(get_file_ext($fullName));
 
 		if (is_file($f))
@@ -1083,7 +1088,14 @@ EOF;
 		global $dynamic_pics_folder;
 
 		if ($path === false)
-			$path = "/" . $dynamic_pics_folder . "$this->table/";
+		{
+			/** @var \diModel $m */
+			$m = $this->getCurrentModel();
+
+			$path = $m->getTable()
+				? '/' . $m->getPicsFolder()
+				: "/" . $dynamic_pics_folder . "$this->table/";
+		}
 
 		$v = isset($this->data[$field]) ? $this->data[$field] : "";
 

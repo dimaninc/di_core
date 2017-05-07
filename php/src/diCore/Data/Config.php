@@ -132,6 +132,14 @@ class Config
 		return $class::__getTwigCorePath();
 	}
 
+	final public static function getPublicFolder()
+	{
+		/** @var Config $class */
+		$class = self::getClass();
+
+		return $class::__getPublicFolder();
+	}
+
 	public static function __getConfigurationFolder()
 	{
 		return static::__getPhpFolder();
