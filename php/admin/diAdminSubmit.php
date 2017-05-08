@@ -17,7 +17,7 @@ use diCore\Helper\StringHelper;
         * static/hidden datetime bug fixed
 
     // 2009/08/20
-        * redirect feture added
+        * redirect feature added
 
     // 2009/08/11
         * dynamic preview feature added
@@ -26,7 +26,7 @@ use diCore\Helper\StringHelper;
         * lots of additions
 
     // 2008/04/18
-        * birthdate
+        * birth
 */
 class diAdminSubmit
 {
@@ -1475,8 +1475,6 @@ function dias_save_dynamic_pic($F, $tableOrSubmit, $what, &$ar, $pics_folder)
 
 function diasSaveDynamicPic($F, $tableOrSubmit, $what, &$ar, $pics_folder)
 {
-	global $orig_folder, $big_folder;
-
 	if (is_object($tableOrSubmit))
 	{
 		/** @var diAdminSubmit $Submit */
@@ -1501,13 +1499,14 @@ function diasSaveDynamicPic($F, $tableOrSubmit, $what, &$ar, $pics_folder)
 
 	$fn = $ar[$what];
 
-	$full_fn = diPaths::fileSystem() . $pics_folder . $fn;
-	$big_fn = diPaths::fileSystem() . $pics_folder . $big_folder . $fn;
-	$orig_fn = diPaths::fileSystem() . $pics_folder . $orig_folder . $fn;
+	$root = \diPaths::fileSystem();
+	$full_fn = $root . $pics_folder . $fn;
+	$big_fn = $root . $pics_folder . get_big_folder() . $fn;
+	$orig_fn = $root . $pics_folder . get_orig_folder() . $fn;
 
-	FileSystemHelper::createTree(diPaths::fileSystem(), [
-		$pics_folder . $big_folder,
-		$pics_folder . $orig_folder,
+	FileSystemHelper::createTree($root, [
+		$pics_folder . get_big_folder(),
+		$pics_folder . get_orig_folder(),
 	], diAdminSubmit::DIR_CHMOD);
 
 	$mode = $F["tmp_name"] == $orig_fn ? "rebuilding" : "uploading";
@@ -1532,7 +1531,7 @@ function diasSaveDynamicPic($F, $tableOrSubmit, $what, &$ar, $pics_folder)
 
 			if (diConfiguration::exists($table . "_tn" . $suffix . "_width"))
 			{
-				$tn_fn = diPaths::fileSystem() . $pics_folder . get_tn_folder($i) . $fn;
+				$tn_fn = $root . $pics_folder . get_tn_folder($i) . $fn;
 
 				if ($mode == "uploading")
 				{
