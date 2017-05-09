@@ -1,7 +1,8 @@
-var diDynamicRows = function(opts)
-{
+var diDynamicRows = function(opts) {
 	var self = this,
-		$anc, $src;
+		$anc,
+		$src,
+		$wrapper;
 
 	opts = opts || {};
 
@@ -9,27 +10,24 @@ var diDynamicRows = function(opts)
 	this.signs = {};
 	this.field_titles = {};
 
-	function constructor()
-	{
+	function constructor() {
 		opts = $.extend({
 			field: null,
 			fieldTitle: null,
 			sign: 1,
 			counter: 0,
+			sortable: false,
 			afterInit: function(DynamicRows) {},
 			afterAddRow: function(DynamicRows, $row, id) {},
 			afterDelRow: function(DynamicRows, id) {}
 		}, opts);
 
-		if (opts.field)
-		{
+		if (opts.field) {
 			self.init(opts.field, opts.fieldTitle, opts.sign, opts.counter);
 		}
-
 	}
 
-	function setupEvents()
-	{
+	function setupEvents() {
 		var validatePassword = function() {
 			var $password = $(this).parent().find('input[type="password"]:not(.password-confirm)'),
 				$password2 = $(this).parent().find('input[type="password"].password-confirm');
@@ -74,17 +72,65 @@ var diDynamicRows = function(opts)
 
 		$src = $('#js_' + opts.field + '_resource');
 		$anc = $('#' + opts.field + '_anchor_div');
+		$wrapper = $anc.parent();
 
 		setupEvents();
 
-		if (opts.afterInit)
-		{
+		if (opts.afterInit) {
 			opts.afterInit(this);
 		}
+		
+		if (opts.sortable) {
+			this.setupSortable();
+		}
+		
+		return this;
+	};
+	
+	this.recountOrderNumbers = function() {
+		var num = 0;
+
+		$wrapper.find('.dynamic-row').each(function() {
+			var row = $(this);
+
+			row.find('input[name*="order_num"]').val(++num);
+		});
+
+		return this;
 	};
 
-	this.getRows = function()
-	{
+	this.setupSortable = function() {
+		$wrapper.sortable({
+			items: '.dynamic-row',
+			placeholder: 'ui-state-highlight',
+			/*
+			helper: function(e, item) {
+				var helper = item.clone();
+				helper.addClass('di-sortable-helper').height('auto');
+				return helper;
+			},
+			*/
+			start: function(e, ui) {
+				//console.log('start', ui);
+				ui.item.height('auto');
+				//ui.item.parent().addClass('sortable-active-container');
+			},
+			stop: function(e, ui) {
+				//ui.item.parent().removeClass('sortable-active-container');
+				self.recountOrderNumbers();
+			}
+		});
+
+		return this;
+	};
+
+	this.refreshSortable = function() {
+		$wrapper.sortable('refresh');
+
+		return this;
+	};
+
+	this.getRows = function() {
 		return $anc.parent().find('.dynamic-row');
 	};
 
@@ -143,9 +189,12 @@ var diDynamicRows = function(opts)
 			scrollTop: $e.offset().top - 5
 		});
 
-		if (opts.afterAddRow)
-		{
+		if (opts.afterAddRow) {
 			opts.afterAddRow(this, $e, id);
+		}
+		
+		if (opts.sortable) {
+			this.refreshSortable();
 		}
 
 		return false;

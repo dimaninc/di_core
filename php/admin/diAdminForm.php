@@ -287,6 +287,11 @@ class diAdminForm
 		return $ar;
 	}
 
+	private function getFieldType($field)
+	{
+		return $this->getFieldProperty($field, 'type');
+	}
+
 	private function getFieldProperty($field = null, $property = null)
 	{
 		$a = $this->getAllFields();
@@ -1139,7 +1144,7 @@ EOF;
 	protected function getRow($field, $title, $value, $div_params = "")
 	{
 		return <<<EOF
-<div id="tr_{$field}" class="diadminform-row"{$div_params} data-field="$field">
+<div id="tr_{$field}" class="diadminform-row"{$div_params} data-field="$field" data-type="{$this->getFieldType($field)}">
 	<label class="title" for="$field">$title</label>
 	<div class="value">$value</div>
 </div>
@@ -2636,7 +2641,7 @@ EOF;
 
 	function set_dynamic_input($field)
 	{
-		$dr = new diDynamicRows($this->AdminPage, $field);
+		$dr = new \diDynamicRows($this->AdminPage, $field);
 		$dr->static_mode = $this->static_mode || $this->isFlag($field, "static");
 
 		$this->inputs[$field] = $dr->get_html();

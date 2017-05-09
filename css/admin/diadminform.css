@@ -43,6 +43,18 @@
     box-flex: 1;
 }
 
+.diadminform-row[data-type="dynamic"] {
+    display: block;
+}
+
+.diadminform-row[data-type="dynamic"] .title {
+    width: auto;
+}
+
+.diadminform-row[data-type="dynamic"] .value {
+    margin-left: 19px;
+}
+
 @-moz-document url-prefix() {
     .diadminform-row .value {
         width: 90%;

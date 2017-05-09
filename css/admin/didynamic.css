@@ -9,10 +9,36 @@
     border: 1px solid #aaa;
     padding: 10px;
     border-radius: 10px;
+    /* below is for jquery-ui sortable */
+    display: inline-block;
+    width: 97%;
+    transition: background-color .25s ease;
+}
+
+.diadminform-row .value.ui-sortable .ui-state-highlight {
+    min-height: 50px;
+    margin: 0 0 5px 0;
+    border-radius: 10px;
 }
 
 .dynamic-row:hover {
-    background: #ffe;
+    background-color: #ffe;
+}
+
+.dynamic-row.ui-sortable-helper {
+    background-color: #fea;
+    cursor: move;
+}
+
+.diadminform-row .value.ui-sortable.sortable-active-container .existing-pic-holder img,
+.dynamic-row.di-sortable-helper .existing-pic-holder img {
+    max-height: 50px;
+    width: auto;
+}
+
+.dynamic-row.ui-sortable-helper .existing-pic-holder img {
+    max-height: 50px;
+    width: auto;
 }
 
 .dynamic-row div.m {

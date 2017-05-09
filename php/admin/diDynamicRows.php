@@ -286,6 +286,11 @@ class diDynamicRows
 		  }
 	  }
 
+	  if (!empty($this->info_ar[$this->field]['sortable']))
+	  {
+		  $jsOpts .= ', sortable: true';
+	  }
+
     $s .= "<div id=\"{$this->field}_anchor_div\"></div>";
     $s .= "<div id=\"js_{$this->field}_resource\" style=\"display:none;\">".$this->get_row("%NEWID%")."</div>";
     $s .= "<div id=\"js_{$this->field}_js_resource\" style=\"display:none;\">".join("\n", $this->scripts)."</div>";
