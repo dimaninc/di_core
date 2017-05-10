@@ -217,20 +217,25 @@ var diPopups = function() {
 	this.update_position = function(id) {
 		if (this.$e_ar[id]) {
 			if (
-				this.$e_ar[id].data('positioning') == 'false' ||
 				this.$e_ar[id].data('positioning') === false ||
-				this.$e_ar[id].data('no-margin')
+				this.$e_ar[id].data('no-margin') ||
+				(
+					is_mobile &&
+					(
+					this.$e_ar[id].data('mobile-positioning') === false
+					)
+				)
 			) {
 				return this;
 			}
 
 			var properties = {};
 
-			if (!this.$e_ar[id].data('manual-x') && this.$e_ar[id].data('positioning-x')) {
+			if (!this.$e_ar[id].data('manual-x') && this.$e_ar[id].data('positioning-x') !== false) {
 				properties.marginLeft = this.$e_ar[id].outerWidth() / -2;
 			}
 
-			if (!this.$e_ar[id].data('manual-y') && this.$e_ar[id].data('positioning-y')) {
+			if (!this.$e_ar[id].data('manual-y') && this.$e_ar[id].data('positioning-y') !== false) {
 				properties.marginTop = this.$e_ar[id].outerHeight() / -2;
 			}
 

@@ -60,7 +60,7 @@ abstract class Connection
 	 * @param $name
 	 * @return Connection
 	 */
-	public static function get($name)
+	public static function get($name = self::DEFAULT_NAME)
 	{
 		if (!self::exists($name))
 		{

@@ -69,7 +69,7 @@ abstract class diModule
 	}
 
 	/**
-	 * @return CMS
+	 * @return \diCurrentCMS
 	 */
 	public function getZ()
 	{

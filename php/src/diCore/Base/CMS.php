@@ -66,8 +66,15 @@ abstract class CMS
 	 */
 	public static $devDomains = [];
 
+	/**
+	 * Domains to detect 'stage' environment
+	 * @var array
+	 */
+	public static $stageDomains = [];
+
 	const ENV_DEV = 1;
-	const ENV_PROD = 2;
+	const ENV_STAGE = 2;
+	const ENV_PROD = 3;
 
 	protected static $skipGetParams = [
 		\diPagesNavy::PAGE_PARAM,
@@ -289,6 +296,10 @@ abstract class CMS
 		if (in_array(\diRequest::domain(), static::$devDomains))
 		{
 			return self::ENV_DEV;
+		}
+		elseif (in_array(\diRequest::domain(), static::$stageDomains))
+		{
+			return self::ENV_STAGE;
 		}
 
 		return self::ENV_PROD;

@@ -43,7 +43,6 @@ class diDynamicRows
 	public $test_r;
 
   public $table, $id, $field;
-  public $db_table;
   public $static_mode;
   public $inputs, $scripts, $data, $inputs_params;
   public $language = "ru";
@@ -200,7 +199,7 @@ class diDynamicRows
 
 	public function getCurrentModel()
 	{
-		return \diModel::createForTableNoStrict($this->table, $this->getAllData());
+		return \diModel::createForTableNoStrict($this->data_table, $this->getAllData());
 	}
 
 	public function getAllData()
@@ -1098,18 +1097,26 @@ EOF;
 			: "";
 	}
 
-	function set_pic_input($field, $path = false, $hide_if_no_file = false)
+	protected function getPicsFolder()
 	{
 		global $dynamic_pics_folder;
 
+		$defaultFolder = $dynamic_pics_folder . $this->table . '/';
+
+		/** @var \diModel $m */
+		$m = $this->getCurrentModel();
+		$folder = $m->getTable()
+			? ($m->getPicsFolder() ?: $defaultFolder)
+			: $defaultFolder;
+
+		return $folder;
+	}
+
+	function set_pic_input($field, $path = false, $hide_if_no_file = false)
+	{
 		if ($path === false)
 		{
-			/** @var \diModel $m */
-			$m = $this->getCurrentModel();
-
-			$path = $m->getTable()
-				? '/' . $m->getPicsFolder()
-				: "/" . $dynamic_pics_folder . "$this->table/";
+			$path = '/' . $this->getPicsFolder();
 		}
 
 		$v = isset($this->data[$field]) ? $this->data[$field] : "";
@@ -1233,6 +1240,20 @@ EOF;
 			$this->data = [];
 			$data_for_db = [];
 
+			// tech fields
+			if (is_callable($techFieldsCallback))
+			{
+				$_a = $techFieldsCallback($this->table, $this->field, $this->id, $this);
+
+				foreach ($_a as $_a_k => $_a_v)
+				{
+					$data_for_db[$_a_k] = $this->data[$_a_k] = $_a_v;
+				}
+
+				$techFieldsSet = true;
+			}
+
+			// form fields
 			foreach ($fields as $k => $v)
 			{
 				if (!is_array($v))
@@ -1266,18 +1287,6 @@ EOF;
 						$data_for_db[$k] = $this->data[$k];
 					}
 				}
-			}
-
-			if (is_callable($techFieldsCallback))
-			{
-				$_a = $techFieldsCallback($this->table, $this->field, $this->id, $this);
-
-				foreach ($_a as $_a_k => $_a_v)
-				{
-					$data_for_db[$_a_k] = $this->data[$_a_k] = $_a_v;
-				}
-
-				$techFieldsSet = true;
 			}
 
 			if (is_callable($beforeSaveCallback))
@@ -1487,13 +1496,9 @@ EOF;
 
   function store_pic($field, $id, $field_config)
   {
-    global $dynamic_pics_folder, $tn_folder;
+    global $tn_folder;
 
-	  /** @var \diModel $m */
-	  $m = $this->getCurrentModel();
-	  $pics_folder = $m->getTable()
-		  ? '/' . $m->getPicsFolder()
-		  : "/" . $dynamic_pics_folder . "$this->table/";
+	  $pics_folder = '/' . $this->getPicsFolder();
 
 	  //$pics_folder = $dynamic_pics_folder."$this->table/";
 	  create_folders_chain($this->abs_path, $pics_folder.$tn_folder, 0775);
