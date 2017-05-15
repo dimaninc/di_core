@@ -26,7 +26,7 @@ class diAdminCaption
 		{
 			$caption = $caption[$this->getX()->getLanguage()];
 		}
-		
+
 		return $method != "list"
 			? sprintf('<a href="%s">%s</a>', $href, $caption)
 			: $caption;

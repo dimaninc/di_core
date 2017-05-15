@@ -11,8 +11,6 @@ abstract class diAdminBase
 	const INIT_MODE_STANDARD = 0;
 	const INIT_MODE_LITE = 1;
 
-	private $protocol = "http";
-
 	/** @var FastTemplate */
     private $tpl;
 
@@ -149,7 +147,6 @@ abstract class diAdminBase
 
 		$this
 			->initDb()
-			->initProtocol()
 			->readUri()
 			->readParams()
 			->checkRights()
@@ -161,15 +158,7 @@ abstract class diAdminBase
 	private function liteInit()
 	{
 		$this
-			->initDb()
-			->initProtocol();
-
-		return $this;
-	}
-
-	private function initProtocol()
-	{
-		$this->protocol = $_SERVER["SERVER_PORT"] == 443 ? "https" : "http";
+			->initDb();
 
 		return $this;
 	}
@@ -262,10 +251,11 @@ abstract class diAdminBase
 	private function getTemplateVariables()
 	{
 		return [
-			"html_base" => "{$this->protocol}://{$_SERVER["HTTP_HOST"]}/" . self::SUBFOLDER . "/",
-			"current_uri" => diRequest::server("REQUEST_URI"),
+			"html_base" => \diRequest::protocol() . '://' . \diRequest::domain() . '/' . self::SUBFOLDER . '/',
+			"current_uri" => \diRequest::requestUri(),
 
-			"logout_href" => diLib::getAdminWorkerPath("admin_auth", "logout") . "?back=" . urlencode(diRequest::server("REQUEST_URI")),
+			"logout_href" => \diLib::getAdminWorkerPath("admin_auth", "logout") .
+				"?back=" . urlencode(\diRequest::requestUri()),
 
 			"current_year" => date("Y"),
 			"page_title" => $this->getPageTitle(),
@@ -310,14 +300,18 @@ abstract class diAdminBase
 	{
 		if ($this->Twig === null)
 		{
-			$this->Twig = diTwig::create($this->twigCreateOptions);
+			$this->Twig = \diTwig::create($this->twigCreateOptions);
 			$this->Twig->assign([
-				'_tech' => $this->getTemplateVariables(),
+				//'_tech' => $this->getTemplateVariables(),
 				'lang' => static::getVocabulary(),
 				'admin' => $this->getAdminModel(),
 				'asset_locations' => \diLib::getAssetLocations(),
 			]);
 		}
+
+		$this->Twig->assign([
+			'_tech' => $this->getTemplateVariables(),
+		]);
 
 		return $this->Twig;
 	}
@@ -340,15 +334,15 @@ abstract class diAdminBase
 	}
 
 	/**
-	 * @return FastTemplate
-	 * @throws Exception
+	 * @return \FastTemplate
+	 * @throws \Exception
 	 */
 	public static function getAdminTpl()
 	{
-		$tpl = new FastTemplate(
+		$tpl = new \FastTemplate(
 			Config::getOldTplFolder() . "_admin/_tpl",
 			Config::getCacheFolder() . "_admin/_inc/cache/tpl_cache.php",
-			FastTemplate::PLACE_ADMIN
+			\FastTemplate::PLACE_ADMIN
 		);
 
 		$tpl
@@ -517,7 +511,7 @@ abstract class diAdminBase
 
 			ob_start();
 
-			require diPaths::fileSystem() . self::SUBFOLDER . "/" . $this->path . "/" . $this->filename;
+			require \diPaths::fileSystem() . self::SUBFOLDER . "/" . $this->path . "/" . $this->filename;
 
 			$this->getTpl()->assign([
 				"PAGE" => ob_get_contents(),
@@ -590,7 +584,7 @@ abstract class diAdminBase
 
 	private function readParams()
 	{
-		$this->id = diRequest::request("id", $this->getUriParam(2, ''));
+		$this->id = \diRequest::request("id", $this->getUriParam(2, ''));
 		$this->id = diStringHelper::in($this->id);
 
 		return $this;
@@ -603,7 +597,7 @@ abstract class diAdminBase
 
 	private function readUri()
 	{
-		$m = diRequest::server("REQUEST_URI");
+		$m = \diRequest::requestUri();
 		$x = strpos($m, "?");
 		if ($x !== false)
 		{
@@ -621,9 +615,9 @@ abstract class diAdminBase
 		$this->method = $this->getUriParam(1, self::DEFAULT_METHOD);
 
 		// back compatibility
-		if (diRequest::get("path"))
+		if (\diRequest::get("path"))
 		{
-			$this->path = diRequest::get("path", "");
+			$this->path = \diRequest::get("path", "");
 			$this->filename = "content.php";
 
 			if (substr($this->path, strlen($this->path) - 5) == "_form")
@@ -707,7 +701,7 @@ abstract class diAdminBase
 	{
 		$script = '';
 
-		if ($alias = diAdminForm::getWysiwygAlias($this->getWysiwygVendor()))
+		if ($alias = \diAdminForm::getWysiwygAlias($this->getWysiwygVendor()))
 		{
 			$script = $this->getTwig()->parse('admin/wysiwyg/' . $alias, [
 				'extra_wysiwyg_settings' => $this->getExtraWysiwygSettings(),
@@ -762,7 +756,7 @@ abstract class diAdminBase
 		$super = in_array($moduleName, $this->superUserModules);
 		$local = in_array($moduleName, $this->localUserModules);
 
-		return (!$super || $this->isAdminSuper()) && (!$local || diCurrentCMS::debugMode());
+		return (!$super || $this->isAdminSuper()) && (!$local || \diCurrentCMS::debugMode());
 	}
 
 	protected static function menuAdd()
@@ -1001,12 +995,12 @@ abstract class diAdminBase
 
 	public static function getModuleClassName($module)
 	{
-		return diLib::getClassNameFor($module, diLib::ADMIN_PAGE);
+		return \diLib::getClassNameFor($module, \diLib::ADMIN_PAGE);
 	}
 
 	public function moduleExists($module)
 	{
-		return diLib::exists(self::getModuleClassName($module));
+		return \diLib::exists(self::getModuleClassName($module));
 	}
 
 	public function methodExists($module, $method)
