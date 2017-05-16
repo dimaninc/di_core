@@ -17,4 +17,17 @@ class Sqlite extends Pdo
 	{
 		return $dsn = "{$this->driver}:{$this->dbname}";
 	}
+
+	public function getTableNames()
+	{
+		$ar = [];
+
+		$tables = $this->q("SELECT * FROM sqlite_master WHERE type = 'table'");
+		while ($table = $this->fetch_array($tables))
+		{
+			$ar[] = $table['name'];
+		}
+
+		return $ar;
+	}
 }

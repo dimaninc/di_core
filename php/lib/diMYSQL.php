@@ -115,4 +115,17 @@ class diMYSQL extends diDB
 	{
 		return mysql_client_encoding($this->link);
 	}
+	
+	public function getTableNames()
+	{
+		$ar = [];
+		
+		$tables = $this->q("SHOW TABLES");
+		while ($table = $this->fetch_array($tables))
+		{
+			$ar[] = current($table);
+		}
+		
+		return $ar;
+	}
 }
