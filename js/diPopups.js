@@ -17,6 +17,18 @@ var diPopups = function() {
 	this.id_prefix = '';
 	this.id_suffix = '-dipopup';
 
+	function constructor() {
+		$(window)
+			.off('resize.dipopup-live orientationchange.dipopup-live')
+			.on('resize.dipopup-live orientationchange.dipopup-live', function() {
+				$.each(self.$e_ar, function(id, $popup) {
+					if ($popup.data('live-position')) {
+						self.update_position(id);
+					}
+				});
+			});
+	}
+
 	this.setEvent = function(id, eventName, callback) {
 		if (typeof events[id] == 'undefined') {
 			events[id] = {};
@@ -148,10 +160,12 @@ var diPopups = function() {
 			name: null,
 			content: null,
 			showCloseButton: true,
-			positioning: true,
-			positioningX: true,
-			positioningY: true,
-			afterUpdatePosition: null
+			positioning: true, // calc position on show
+			positioningX: true, // calc x-position on show
+			positioningY: true, // calc y-position on show
+			mobilePositioning: true, // calc position on mobiles on show
+			livePosition: true, // auto update position on window resize
+			afterUpdatePosition: null // after update position callback
 		}, options);
 
 		var $el = $('<div/>');
@@ -170,6 +184,10 @@ var diPopups = function() {
 			.attr('data-positioning-x', options.positioningX)
 			.data('positioning-y', options.positioningY)
 			.attr('data-positioning-y', options.positioningY)
+			.data('mobile-positioning', options.mobilePositioning)
+			.attr('data-mobile-positioning', options.mobilePositioning)
+			.data('live-position', options.livePosition)
+			.attr('data-live-position', options.livePosition)
 			.html(options.content)
 			.appendTo(document.body);
 
@@ -216,16 +234,16 @@ var diPopups = function() {
 
 	this.update_position = function(id) {
 		if (this.$e_ar[id]) {
-			if (
-				this.$e_ar[id].data('positioning') === false ||
-				this.$e_ar[id].data('no-margin') ||
-				(
-					is_mobile &&
-					(
-					this.$e_ar[id].data('mobile-positioning') === false
-					)
-				)
-			) {
+			var positioning = this.$e_ar[id].data('positioning');
+			var mobilePositioning = this.$e_ar[id].data('mobile-positioning');
+
+			if (is_mobile && mobilePositioning !== null) {
+				positioning = mobilePositioning;
+			} else if (positioning === null) {
+				positioning = true;
+			}
+
+			if (!positioning) {
 				return this;
 			}
 
@@ -299,6 +317,8 @@ var diPopups = function() {
 		$('.window_title', this.$e_ar[id]).html(title);
 		$('.window_text', this.$e_ar[id]).html(content);
 	};
+
+	constructor();
 };
 
 var dip = new diPopups();
