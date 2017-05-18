@@ -151,6 +151,7 @@ abstract class CMS
 	];
 
 	const META_FIELD_PREFIX = "meta_";
+	const META_FIELD_PREFIX_OLD = "html_";
 	const OPEN_GRAPH_FIELD_PREFIX = "open_graph_";
 
 	/** @deprecated */
@@ -1477,9 +1478,11 @@ abstract class CMS
 		return $this;
 	}
 
-	protected function getFullMetaField($field)
+	protected function getFullMetaField($field, $oldPrefix = false)
 	{
-		return static::META_FIELD_PREFIX . strtolower($field);
+		$prefix = $oldPrefix ? static::META_FIELD_PREFIX_OLD : static::META_FIELD_PREFIX;
+
+		return $prefix . strtolower($field);
 	}
 
 	protected function getFullOpenGraphField($field)
@@ -1633,7 +1636,9 @@ abstract class CMS
 
 		foreach ($defaults as $field => $defaultValue)
 		{
-			$value = $model->localized($this->getFullMetaField($field), $this->getLanguage()) ?: $defaultValue;
+			$value = $model->localized($this->getFullMetaField($field), $this->getLanguage())
+				?: $model->localized($this->getFullMetaField($field, true), $this->getLanguage())
+				?: $defaultValue;
 
 			if ($field == "title" && !$value)
 			{
