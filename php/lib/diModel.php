@@ -17,6 +17,7 @@ class diModel implements \ArrayAccess
 
 	// Model type (from diTypes class). Should be redefined
 	const type = null;
+	const connection_name = null;
 
 	// this should be redefined
 	protected $table;
@@ -29,9 +30,6 @@ class diModel implements \ArrayAccess
 
 	/** @var array */
 	protected $relatedData = [];
-
-	/** @var diDB */
-	protected $db;
 
 	/** @var int|null */
 	protected $id;
@@ -83,10 +81,6 @@ class diModel implements \ArrayAccess
 	 */
 	public function __construct($ar = null, $table = null)
 	{
-		global $db;
-
-		$this->db = $db;
-
 		if ($table)
 		{
 			$this->table = $table;
@@ -767,9 +761,13 @@ class diModel implements \ArrayAccess
 		return $o->getHref();
 	}
 
+	/**
+	 * @return \diDB
+	 */
 	protected function getDb()
 	{
-		return $this->db;
+		return \diCore\Database\Connection::get(static::connection_name ?: \diCore\Database\Connection::DEFAULT_NAME)
+			->getDb();
 	}
 
 	/**

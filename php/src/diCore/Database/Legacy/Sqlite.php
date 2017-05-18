@@ -12,6 +12,7 @@ namespace diCore\Database\Legacy;
 class Sqlite extends Pdo
 {
 	protected $driver = 'sqlite';
+	const CHARSET_INIT_NEEDED = false;
 
 	protected function getDSN()
 	{

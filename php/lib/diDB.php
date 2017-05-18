@@ -69,6 +69,8 @@ abstract class diDB
 	const QUOTE_FIELD = '`';
 	const QUOTE_VALUE = "'";
 
+	const CHARSET_INIT_NEEDED = true;
+
 	// basic db info
 	protected $host;
 	protected $dbname;
@@ -172,8 +174,13 @@ abstract class diDB
 		return "CREATE DATABASE IF NOT EXISTS `$this->dbname` /*!40100 COLLATE '" . strtolower(DIENCODING) . "_general_ci' */";
 	}
 
-	private function initCharset()
+	protected function initCharset()
 	{
+		if (!static::CHARSET_INIT_NEEDED)
+		{
+			return $this;
+		}
+
 		$enc = defined("DIENCODING") ? DIENCODING : "UTF8";
 
 		$this->q("SET NAMES " . $enc);

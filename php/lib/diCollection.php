@@ -10,6 +10,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 {
 	// this should be redefined
 	const type = null;
+	const connection_name = null;
 	protected $table;
 	protected $modelType;
 	protected $isIdUnique = true;
@@ -19,11 +20,6 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	const MAIN_TABLE_ALIAS = 'main_table';
 	protected $alias = self::MAIN_TABLE_ALIAS;
-
-	/**
-	 * @var \diDB
-	 */
-	protected $db;
 
 	/**
 	 * Current iterator position
@@ -141,10 +137,6 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function __construct($table = null)
 	{
-		global $db;
-
-		$this->db = $db;
-
 		if ($table !== null && empty($this->table))
 		{
 			$this->table = $table;
@@ -183,7 +175,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	public static function create($type, $options = [], $queryFields = null)
 	{
-		if (diDB::is_rs($options))
+		if (\diDB::is_rs($options))
 		{
 			$options = [
 				"cachedRecords" => $options,
@@ -237,7 +229,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public static function createForTable($table, $options = [])
 	{
-		return static::create(diTypes::getNameByTable($table), $options);
+		return static::create(\diTypes::getNameByTable($table), $options);
 	}
 
 	/**
@@ -248,7 +240,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	public static function createForTableNoStrict($table, $options = [])
 	{
-		$type = diTypes::getNameByTable($table);
+		$type = \diTypes::getNameByTable($table);
 		$typeName = self::existsFor($type, "type");
 
 		if ($typeName)
@@ -546,9 +538,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $ar;
 	}
 
+	/**
+	 * @return \diDB
+	 */
 	protected function getDb()
 	{
-		return $this->db;
+		return \diCore\Database\Connection::get(static::connection_name ?: \diCore\Database\Connection::DEFAULT_NAME)
+			->getDb();
 	}
 
 	/**
