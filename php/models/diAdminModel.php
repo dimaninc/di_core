@@ -84,18 +84,21 @@ class diAdminModel extends diBaseUserModel
 			return null;
 		}
 
-		if (class_exists("diAdminsCustomPage"))
+		/** @var \diAdminsPage $adminPageClassName */
+		$adminPageClassName = \diLib::getClassNameFor('admins', \diLib::ADMIN_PAGE);
+
+		if (class_exists($adminPageClassName))
 		{
-			$levelsAr = diAdminsCustomPage::$levelsAr;
+			$levelsAr = $adminPageClassName::$levelsAr;
 		}
 		else
 		{
-			$levelsAr = diAdminsPage::$levelsAr;
+			$levelsAr = \diAdminsPage::$levelsAr;
 		}
 
-		$levelsAr = array_merge(diAdminsPage::$baseLevelsAr, $levelsAr);
+		$levelsAr = array_merge(\diAdminsPage::$baseLevelsAr, $levelsAr);
 
-		$levelsAr = diAdminsPage::translateLevels($levelsAr, $this->__getLanguage());
+		$levelsAr = \diAdminsPage::translateLevels($levelsAr, $this->__getLanguage());
 
 		return isset($levelsAr[$this->getLevel()]) ? $levelsAr[$this->getLevel()] : '---';
 	}
