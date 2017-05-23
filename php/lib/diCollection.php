@@ -6,6 +6,8 @@
  * Time: 14:25
  */
 
+use diCore\Helper\FileSystemHelper;
+
 abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 {
 	// this should be redefined
@@ -15,11 +17,25 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	protected $modelType;
 	protected $isIdUnique = true;
 
-	const CACHE_FOLDER = '_cfg/cache/';
-	const cacheFileChmod = 0777;
-
 	const MAIN_TABLE_ALIAS = 'main_table';
 	protected $alias = self::MAIN_TABLE_ALIAS;
+
+	// cache
+	const CACHE_FOLDER = '_cfg/cache/';
+	const cacheDirChmod = 0777;
+	const cacheFileChmod = 0777;
+
+	const CACHE_ALL = 0;
+
+	protected static $commonCacheFileNames = [
+		self::CACHE_ALL => null, // null for auto-generation
+	];
+	protected static $cacheFileNames = []; // overridden in child classes
+
+	protected static $commonCacheNames = [
+		self::CACHE_ALL => 'all',
+	];
+	protected static $cacheNames = []; // overridden in child classes
 
 	/**
 	 * Current iterator position
@@ -266,7 +282,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 * @return diCollection
 	 * @throws \Exception
 	 */
-	public static function createFromCache($type, $options = [])
+	public static function createFromCache($type, $options = [], $cacheKind = self::CACHE_ALL)
 	{
 		$className = self::existsFor($type);
 
@@ -280,7 +296,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 		$o
 			->setOptions($options)
-			->loadCache();
+			->loadCache($cacheKind);
 
 		return $o;
 	}
@@ -629,17 +645,17 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	}
 
 	/**
-	 * @return diModel
+	 * @return \diModel
 	 * @throws \Exception
 	 */
 	public function getNewEmptyItem()
 	{
-		return diModel::create($this->getModelType());
+		return \diModel::create($this->getModelType());
 	}
 
 	public function getNewItem($data)
 	{
-		return diModel::create($this->getModelType(), $data);
+		return \diModel::create($this->getModelType(), $data);
 	}
 
 	/**
@@ -999,11 +1015,11 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	/**
 	 * Returns ID of model
 	 *
-	 * @param diModel $model
+	 * @param \diModel $model
 	 *
 	 * @return int|null
 	 */
-	protected function getId(diModel $model)
+	protected function getId(\diModel $model)
 	{
 		return $model->getId();
 	}
@@ -1015,7 +1031,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	public function getIds()
 	{
-		return array_filter($this->walk(function(diModel $m) {
+		return array_filter($this->walk(function(\diModel $m) {
 			return $this->getId($m);
 		}));
 	}
@@ -1040,7 +1056,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	public function hardDestroy()
 	{
-		/** @var diModel $model */
+		/** @var \diModel $model */
 		foreach ($this as $model)
 		{
 			$model->killRelatedFilesAndData();
@@ -1068,7 +1084,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 			{
 				$this->getDb()->update($this->getQueryTable(), $newData, $ids);
 
-				/** @var diModel $m */
+				/** @var \diModel $m */
 				foreach ($this as $m)
 				{
 					$m->set($newData);
@@ -1081,7 +1097,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	protected function getIdFieldName()
 	{
-		return diModel::create($this->modelType)->getIdFieldName();
+		return \diModel::create($this->modelType)->getIdFieldName();
 	}
 
 	/**
@@ -1103,7 +1119,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 *
 	 * @param $o
 	 *
-	 * @return diModel
+	 * @return \diModel
 	 */
 	public function findOne($o)
 	{
@@ -1115,13 +1131,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 *
 	 * @param integer $id
 	 *
-	 * @return diModel
+	 * @return \diModel
 	 */
 	public function getById($id)
 	{
 		if (!$this->isIdUnique)
 		{
-			throw new diRuntimeException(self::class . ' has no unique ID');
+			throw new \diRuntimeException(self::class . ' has no unique ID');
 		}
 
 		return $this->offsetGet($id) ?: $this->getNewEmptyItem();
@@ -1512,50 +1528,98 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 * Cache methods
 	 */
 
-	protected function getCacheContents()
+	protected function getCacheContents($cacheKind = self::CACHE_ALL)
 	{
 		$s = "<?php\n";
 
 		/** @var diModel $model */
 		foreach ($this as $model)
 		{
-			$s .= "\$this->addItem(" . $model->asPhpArray() . ");\n";
+			$s .= "\$this->addItem(" . $model->asPhp() . ");\n";
 		}
 
 		return $s;
 	}
 
-	protected function getCachePath()
+	protected function getBaseCacheSubFolder($cacheKind = self::CACHE_ALL)
 	{
-		return diPaths::fileSystem() . static::CACHE_FOLDER;
+		return \diTypes::getName(\diTypes::getId($this->getModelType()));
 	}
 
-	protected function getCacheFilename()
+	protected function getCacheSubFolder($cacheKind = self::CACHE_ALL)
 	{
-		return $this->getTable() . '.php';
+		$subFolder = '';
+
+		if (
+			empty(static::$cacheFileNames[$cacheKind]) &&
+			empty(static::$commonCacheFileNames[$cacheKind]) &&
+			!empty(static::$cacheNames[$cacheKind])
+		   )
+		{
+			$subFolder = $this->getBaseCacheSubFolder($cacheKind) . '/';
+		}
+
+		return $subFolder;
 	}
 
-	protected function getCachePathAndFilename()
+	protected function getCachePath($cacheKind = self::CACHE_ALL)
 	{
-		return $this->getCachePath() . $this->getCacheFilename();
+
+		return \diPaths::fileSystem() . static::CACHE_FOLDER;
 	}
 
-	public function buildCache()
+	protected function getCacheFilename($cacheKind = self::CACHE_ALL)
 	{
-		file_put_contents($this->getCachePathAndFilename(), $this->getCacheContents());
-		chmod($this->getCachePathAndFilename(), static::cacheFileChmod);
+		if ($cacheKind == self::CACHE_ALL)
+		{
+			$fn = $this->getTable();
+		}
+		elseif (!empty(static::$cacheFileNames[$cacheKind]))
+		{
+			$fn = static::$cacheFileNames[$cacheKind];
+		}
+		elseif (!empty(static::$commonCacheFileNames[$cacheKind]))
+		{
+			$fn = static::$commonCacheFileNames[$cacheKind];
+		}
+		elseif (!empty(static::$cacheNames[$cacheKind]))
+		{
+			$fn = static::$cacheNames[$cacheKind];
+		}
+		else
+		{
+			throw new \Exception('Undefined cache kind: ' . $cacheKind);
+		}
+
+		return $fn . '.php';
+	}
+
+	protected function getCachePathAndFilename($cacheKind = self::CACHE_ALL)
+	{
+		return $this->getCachePath($cacheKind) .
+			$this->getCacheSubFolder($cacheKind) .
+			$this->getCacheFilename($cacheKind);
+	}
+
+	public function buildCache($cacheKind = self::CACHE_ALL)
+	{
+		FileSystemHelper::createTree($this->getCachePath($cacheKind), $this->getCacheSubFolder($cacheKind),
+			static::cacheDirChmod);
+
+		file_put_contents($this->getCachePathAndFilename($cacheKind), $this->getCacheContents($cacheKind));
+		chmod($this->getCachePathAndFilename($cacheKind), static::cacheFileChmod);
 
 		return $this;
 	}
 
-	protected function loadCache($forceRebuild = false)
+	protected function loadCache($cacheKind = self::CACHE_ALL, $forceRebuild = false)
 	{
-		if ($forceRebuild) // || true
+		if ($forceRebuild)
 		{
-			$this->buildCache();
+			$this->buildCache($cacheKind);
 		}
 
-		include $this->getCachePathAndFilename();
+		include $this->getCachePathAndFilename($cacheKind);
 
 		$this->loaded = true;
 		$this->count = count($this->items);

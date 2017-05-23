@@ -1779,9 +1779,9 @@ class diModel implements \ArrayAccess
 
 	public function asPhp($excludeFields = [])
 	{
-		$s = "diModel::create(diTypes::" . diTypes::getName(static::type) . ", ";
+		$s = '\\diModel::create(\\diTypes::' . diTypes::getName(static::type) . ', ';
 		$s .= $this->asPhpArray($excludeFields);
-		$s .= ")";
+		$s .= ')';
 
 		return $s;
 	}
@@ -1809,7 +1809,7 @@ class diModel implements \ArrayAccess
 			$s .= "'$field'=>$value,\n";
 		}
 
-		return "[\n" . $s . "]\n";
+		return "[\n" . $s . "]";
 	}
 
 	public function allowInsertOrUpdate()
