@@ -35,7 +35,7 @@ abstract class CMS
 	private $ContentFamily;
 
 	/**
-	 * @var \diBreadCrumbs
+	 * @var BreadCrumbs
 	 */
 	private $BreadCrumbs;
 
@@ -217,7 +217,7 @@ abstract class CMS
 		}
 
 		$this->ContentFamily = \diContentFamily::create($this);
-		$this->BreadCrumbs = new \diBreadCrumbs($this);
+		$this->BreadCrumbs = BreadCrumbs::create($this);
 
 		$this->tables = [
 			$this->content_table => [],
@@ -373,7 +373,7 @@ abstract class CMS
 	}
 
 	/**
-	 * @return \diBreadCrumbs
+	 * @return BreadCrumbs
 	 */
 	public function getBreadCrumbs()
 	{

@@ -110,7 +110,7 @@ abstract class diModule
 	}
 
 	/**
-	 * @return diBreadCrumbs
+	 * @return \diCore\Base\BreadCrumbs
 	 */
 	public function getBreadCrumbs()
 	{

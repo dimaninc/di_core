@@ -1,15 +1,16 @@
 <?php
-
-use diCore\Base\CMS;
-use diCore\Entity\Content\Model;
-
 /**
  * Created by PhpStorm.
  * User: dimaninc
  * Date: 09.10.15
  * Time: 17:33
  */
-class diBreadCrumbs
+
+namespace diCore\Base;
+
+use diCore\Entity\Content\Model;
+
+class BreadCrumbs
 {
 	/**
 	 * @var array
@@ -27,16 +28,27 @@ class diBreadCrumbs
 
 	private $divider = " / ";
 
-    /**
-     * @var callable|null
-     */
-    private $titleGetter = null;
+	/**
+	 * @var callable|null
+	 */
+	private $titleGetter = null;
 
 	public function __construct(CMS $Z)
 	{
 		$this->Z = $Z;
 
 		$this->type = $this->getZ()->content_table;
+	}
+
+	/**
+	 * @param CMS $Z
+	 * @return BreadCrumbs
+	 */
+	public static function create(CMS $Z)
+	{
+		$className = \diLib::getChildClass(self::class);
+
+		return new $className($Z);
 	}
 
 	/**
@@ -52,12 +64,17 @@ class diBreadCrumbs
 		return $this->getZ()->getTpl();
 	}
 
-    public function setTitleGetter(callable $getter)
-    {
-        $this->titleGetter = $getter;
+	protected function getTwig()
+	{
+		return $this->getZ()->getTwig();
+	}
 
-        return $this;
-    }
+	public function setTitleGetter(callable $getter)
+	{
+		$this->titleGetter = $getter;
+
+		return $this;
+	}
 
 	public function reset()
 	{
@@ -66,7 +83,7 @@ class diBreadCrumbs
 		return $this;
 	}
 
-	private function hrefNeeded(diModel $m)
+	private function hrefNeeded(\diModel $m)
 	{
 		return
 			!$m->exists("to_show_content") ||
@@ -144,7 +161,7 @@ class diBreadCrumbs
 			"class" => null,
 			"wordWrap" => false,
 			"position" => -1,
-			"model" => diModel::create($this->type),
+			"model" => \diModel::create($this->type),
 		], !is_array($titleOrElement)
 			? [
 				"title" => $titleOrElement,
@@ -155,7 +172,7 @@ class diBreadCrumbs
 			: $titleOrElement
 		);
 
-		/** @var diModel $m */
+		/** @var \diModel $m */
 		$m = $element["model"];
 
 		if ($m->exists())
@@ -178,7 +195,7 @@ class diBreadCrumbs
 
 		if ($element["wordWrap"])
 		{
-			$element["title"] = trim(word_wrap($element["title"], diConfiguration::get("page_title_word_max_len"), " "));
+			$element["title"] = trim(word_wrap($element["title"], \diConfiguration::get("page_title_word_max_len"), " "));
 		}
 
 		array_splice($this->elements, $element["position"], 0, [$element]);
@@ -201,17 +218,17 @@ class diBreadCrumbs
 		return $this;
 	}
 
-    public function getTitleOfElement($element)
-    {
-        if ($cb = $this->titleGetter)
-        {
-            return $cb($element);
-        }
+	public function getTitleOfElement($element)
+	{
+		if ($cb = $this->titleGetter)
+		{
+			return $cb($element);
+		}
 
-        return $element['title'];
-    }
+		return $element['title'];
+	}
 
-	public function finish()
+	protected function getHtmlElements()
 	{
 		$ar = [];
 
@@ -225,6 +242,13 @@ class diBreadCrumbs
 				], "TT_")
 				->parse("TOP_TITLE_ELEMENT", $element["href"] ? "top_title_href" : "top_title_nohref");
 		}
+
+		return $ar;
+	}
+
+	public function finish()
+	{
+		$ar = $this->getHtmlElements();
 
 		$this->getTpl()->assign([
 			"TOP_TITLE" => join($this->divider, $ar),

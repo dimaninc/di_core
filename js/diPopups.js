@@ -237,9 +237,9 @@ var diPopups = function() {
 			var positioning = this.$e_ar[id].data('positioning');
 			var mobilePositioning = this.$e_ar[id].data('mobile-positioning');
 
-			if (is_mobile && mobilePositioning !== null) {
+			if (is_mobile && mobilePositioning !== undefined) {
 				positioning = mobilePositioning;
-			} else if (positioning === null) {
+			} else if (positioning === undefined) {
 				positioning = true;
 			}
 
