@@ -10,6 +10,7 @@ namespace diCore\Base;
 
 use diCore\Entity\Content\Model;
 
+// todo: implement Twig support
 class BreadCrumbs
 {
 	/**
@@ -124,17 +125,20 @@ class BreadCrumbs
 		return $this;
 	}
 
-	public function addHref($index = -1)
+	public function addHref($index = -1, $href = null)
 	{
 		if (!count($this->elements))
 		{
 			return $this;
 		}
 
-		$m = $this->getZ()->getContentFamily()->getMemberByLevel($index);
+		if ($href === null)
+		{
+			$href = $this->getZ()->getContentFamily()->getMemberByLevel($index)->getHref();
+		}
 
 		$this->update($index, [
-			"href" => $m->getHref(),
+			"href" => $href,
 		]);
 
 		return $this;
