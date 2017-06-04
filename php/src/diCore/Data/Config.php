@@ -14,6 +14,7 @@ class Config
 {
 	const apiQueryPrefix = null;
 	const folderForAssets = '';
+	const mainDomain = null;
 
 	protected static $location = \diLib::LOCATION_HTDOCS;
 
@@ -32,6 +33,11 @@ class Config
 		}
 
 		return self::$class;
+	}
+
+	final public static function resetClass()
+	{
+		self::$class = null;
 	}
 
 	final public static function getLocation()
@@ -53,6 +59,14 @@ class Config
 		$class = self::getClass();
 
 		return $class::apiQueryPrefix;
+	}
+
+	final public static function getMainDomain()
+	{
+		/** @var Config $class */
+		$class = self::getClass();
+
+		return $class::mainDomain;
 	}
 
 	final public static function getSourcesFolder()

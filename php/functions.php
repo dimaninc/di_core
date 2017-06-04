@@ -597,7 +597,7 @@ function transliterate_rus_to_eng($text)
 
 function get_user_ip()
 {
-	return $_SERVER["REMOTE_ADDR"];
+	return \diRequest::server("REMOTE_ADDR");
 
 	if (!empty($_SERVER["HTTP_CLIENT_IP"]))
 	{
@@ -627,10 +627,11 @@ function dierror($text, $status = DIE_FATAL)
   // file stuff
   $ip = get_user_ip();
   $host = gethostbyaddr($ip);
-  $r = isset($_SERVER["HTTP_REFERER"]) ? $_SERVER["HTTP_REFERER"] : "";
+  $r = \diRequest::referrer();
 
   $f = fopen(getLogFolder() . "log/".date("Y_m_d")."-errors.txt", "a");
-  fputs($f, date("d.m.Y H:i:s").", $ip ($host), uri: {$_SERVER["REQUEST_URI"]}, ref: $r, agent: {$_SERVER["HTTP_USER_AGENT"]}\n$text\n\n");
+  fputs($f, date("d.m.Y H:i:s") . ", $ip ($host), uri: " . \diRequest::requestUri() .
+	  ", ref: $r, agent: " . \diRequest::server("HTTP_USER_AGENT") . "\n$text\n\n");
   fclose($f);
   //
 
@@ -745,7 +746,7 @@ function escape_tpl_brackets($s)
 
 function fix_anchors($s)
 {
-  return preg_replace('/\<a([^\>]+)href[\x20\t]*\=[\x20\t]*[\'\"]?\#([^\'\"]+)[\'\"]?([^\>]*)\>/i', '<a\\1href="'.$_SERVER["REQUEST_URI"].'#\\2"\\3>', $s);
+  return preg_replace('/\<a([^\>]+)href[\x20\t]*\=[\x20\t]*[\'\"]?\#([^\'\"]+)[\'\"]?([^\>]*)\>/i', '<a\\1href="'.\diRequest::requestUri().'#\\2"\\3>', $s);
 }
 
 /** @deprecated */
@@ -1043,7 +1044,7 @@ function get_uri_glue($uri)
 /** @deprecated */
 function get_path_to_classes($prefix, $root = null)
 {
-	$root = $root ?: $_SERVER["DOCUMENT_ROOT"];
+	$root = $root ?: \diCore\Data\Config::getConfigurationFolder();
 
 	$path = $root."/_cfg/classes/";
 
@@ -1149,13 +1150,13 @@ function dierror2($text, $module = "")
 {
   $ip = get_user_ip();
   $host = gethostbyaddr($ip);
-  $r = isset($_SERVER["HTTP_REFERER"]) ? $_SERVER["HTTP_REFERER"] : "";
 
   if ($module)
     $module = "[$module]";
 
   $f = fopen(getLogFolder() . "log/".date("Y_m_d")."-errors.txt", "a");
-  fputs($f, date("d.m.Y H:i:s")." $module $ip ($host), uri: {$_SERVER["REQUEST_URI"]}, agent: {$_SERVER["HTTP_USER_AGENT"]}\n$text\n\n");
+  fputs($f, date("d.m.Y H:i:s") . " $module $ip ($host), uri: " . \diRequest::requestUri() .
+	  ", agent: " . \diRequest::server("HTTP_USER_AGENT") . "\n$text\n\n");
   fclose($f);
 
   die("$text");
@@ -1163,12 +1164,7 @@ function dierror2($text, $module = "")
 
 function getLogFolder()
 {
-	if (class_exists(\diCore\Data\Config::class))
-	{
-		return \diCore\Data\Config::getLogFolder();
-	}
-
-	return $_SERVER['DOCUMENT_ROOT'] . '/';
+	return \diCore\Data\Config::getLogFolder();
 }
 
 function simple_debug($message, $module = "", $fnSuffix = "")

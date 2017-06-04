@@ -7,6 +7,8 @@
 
 */
 
+use diCore\Data\Config;
+
 /**
  * @method static mixed get($name, $defaultValue = null, $type = null)
  * @method static mixed post($name, $defaultValue = null, $type = null)
@@ -47,7 +49,7 @@ class diRequest
 
 	public static function domain()
 	{
-		return static::server("HTTP_HOST");
+		return static::server("HTTP_HOST") ?: Config::getMainDomain();
 	}
 
 	public static function referrer($default = '')
@@ -150,7 +152,7 @@ class diRequest
 	{
 		return php_sapi_name() == 'cli';
 	}
-	
+
 	public static function isGet()
 	{
 		return self::getMethodStr() == 'GET';

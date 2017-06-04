@@ -152,6 +152,8 @@ class diLib
 		{
 			self::$projectNamespaces[] = $namespace;
 		}
+
+		\diCore\Data\Config::resetClass();
 	}
 
 	public static function getAllNamespaces()
