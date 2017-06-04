@@ -27,3 +27,10 @@ if (empty($_SERVER['DOCUMENT_ROOT']))
 
 require dirname(__FILE__) . '/functions.php';
 require \diCore\Data\Config::getConfigurationFolder() . '_cfg/common.php';
+
+$_GET = \diRequest::convertFromCommandLine();
+
+if (is_file($autoload = dirname(__FILE__) . '/../../../../vendor/autoload.php'))
+{
+	require $autoload;
+}
