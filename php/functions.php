@@ -626,7 +626,7 @@ function dierror($text, $status = DIE_FATAL)
 
   // file stuff
   $ip = get_user_ip();
-  $host = gethostbyaddr($ip);
+  $host = $ip ? gethostbyaddr($ip) : '';
   $r = \diRequest::referrer();
 
   $f = fopen(getLogFolder() . "log/".date("Y_m_d")."-errors.txt", "a");
