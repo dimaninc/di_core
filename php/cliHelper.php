@@ -8,7 +8,7 @@ if (empty($_SERVER['DOCUMENT_ROOT']))
 {
 	$_SERVER['DOCUMENT_ROOT'] = str_replace('\\', '/', realpath(dirname(__FILE__)));
 
-	if (($x = strpos($_SERVER['DOCUMENT_ROOT'], '/_core/php/')) !== false)
+	if (($x = strpos($_SERVER['DOCUMENT_ROOT'], '/_core/php')) !== false)
 	{
 		$_SERVER['DOCUMENT_ROOT'] = substr($_SERVER['DOCUMENT_ROOT'], 0, $x);
 	}
