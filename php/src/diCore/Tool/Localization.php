@@ -22,9 +22,11 @@ class Localization
 		/** @var $Z CMS */
 		global $Z;
 
-		return !empty($Z)
-			? $Z->language
+		$language = !empty($Z)
+			? $Z->getLanguage()
 			: (\diRequest::request("language") ?: \diRequest::request("l") ?: static::DEFAULT_LANGUAGE);
+
+		return $language;
 	}
 
 	protected static function checkLanguage($language)
@@ -57,6 +59,11 @@ class Localization
 		return true;
 	}
 
+	public static function resetCache()
+	{
+		self::$cache = [];
+	}
+
 	/**
 	 * @param $token
 	 * @return Model
@@ -82,11 +89,9 @@ class Localization
 	{
 		self::preCache();
 
-		$language = self::checkLanguage($language ?: self::getCurrentLanguage());
+		$language = self::checkLanguage($language ?: static::getCurrentLanguage());
 
-		$field = $language == "ru"
-			? "value"
-			: $language . "_value";
+		$field = \diModel::getLocalizedFieldName('value', $language);
 
 		if ($token === null)
 		{

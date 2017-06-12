@@ -1782,8 +1782,18 @@ class diModel implements \ArrayAccess
 		$s = '\\diModel::create(\\diTypes::' . diTypes::getName(static::type) . ', ';
 		$s .= $this->asPhpArray($excludeFields);
 		$s .= ')';
+		$s .= $this->getSuffixForPhpView();
 
 		return $s;
+	}
+
+	/**
+	 * This is used when one needs to add some related fields to cache or execute some method
+	 * @return string
+	 */
+	protected function getSuffixForPhpView()
+	{
+		return '';
 	}
 
 	public function asPhpArray($excludeFields = [])

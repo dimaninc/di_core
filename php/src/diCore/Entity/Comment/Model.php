@@ -204,13 +204,31 @@ class Model extends \diModel
 		return $this->target;
 	}
 
+	public function setTargetModel(\diModel $target)
+	{
+		$this->target = $target;
+
+		return $this;
+	}
+
 	protected function getHrefSuffix()
 	{
 		return "#comment" . $this->getId();
 	}
 
+	protected function getSuffixForPhpView()
+	{
+		return "->setRelated('href', '{$this->getHref()}')";
+	}
+
 	public function getHref()
 	{
+		// if href cached inside
+		if ($this->getRelated('href'))
+		{
+			return $this->getRelated('href');
+		}
+
 		return $this->getTargetModel()->getHref() . $this->getHrefSuffix();
 	}
 

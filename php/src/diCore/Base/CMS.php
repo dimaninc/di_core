@@ -242,16 +242,23 @@ abstract class CMS
 	 */
 	abstract public function go();
 
-	public static function fast_lite_create()
+	public static function fast_lite_create($options = [])
 	{
-		$Z = new static();
-		$Z->language = static::getBrowserLanguage();
+		$options = extend([
+			'language' => null,
+		], $options);
+
+		$class = \diLib::getChildClass(self::class);
+
+		/** @var CMS $Z */
+		$Z = new $class();
+		$Z->setLanguage($options['language'] ?: static::getBrowserLanguage());
+		$Z->load_content_table_cache();
 		$Z->init_tpl();
 		$Z->populateRoutes();
 		$Z->initTplDefines();
 		$Z->define_templates();
 		$Z->define_language_vars();
-		$Z->load_content_table_cache();
 
 		$Z->ct_ar = static::getCleanTitlesAr();
 		$Z->assign_ct_ar();
@@ -627,9 +634,24 @@ abstract class CMS
 		return $this;
 	}
 
-	public function printCommentsBlock($targetType, $targetId, $token = "COMMENTS_BLOCK")
+	/**
+	 * @param \diModel|int $targetType
+	 * @param int|string|null $targetId
+	 * @param string|null $token
+	 * @return $this
+	 */
+	public function printCommentsBlock($targetType, $targetId = null, $token = "COMMENTS_BLOCK")
 	{
-		$Comments = \diComments::create($targetType, $targetId);
+		if ($targetType instanceof \diModel)
+		{
+			$token = $targetId ?: $token;
+			$Comments = \diComments::create($targetType);
+		}
+		else
+		{
+			$Comments = \diComments::create($targetType, $targetId);
+		}
+
 		$Comments
 			->setTpl($this->getTpl())
 			->setTwig($this->getTwig());
@@ -687,7 +709,7 @@ abstract class CMS
 	{
 		if ($this->isCommentsBlockPrintNeeded())
 		{
-			$this->printCommentsBlock(Types::content, $this->getContentModel()->getId(), "PAGE_COMMENTS_BLOCK");
+			$this->printCommentsBlock($this->getContentModel(), "PAGE_COMMENTS_BLOCK");
 		}
 
 		return $this;
@@ -1219,6 +1241,11 @@ abstract class CMS
 
 	public function define_language($language)
 	{
+		if (!$language)
+		{
+			return $this;
+		}
+
 		$this->language = $language;
 
 		if (!in_array($language, static::$possibleLanguages))

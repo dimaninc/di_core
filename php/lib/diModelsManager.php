@@ -390,6 +390,12 @@ EOF;
 
 	protected function getFolderForNamespace()
 	{
+		/*
+		$pathPrefix = \diLib::isNamespaceRoot($this->getNamespace())
+			? Config::getSourcesFolder()
+			: '';
+		*/
+
 		return 'src/' . $this->getNamespace() . '/Entity/';
 	}
 

@@ -16,7 +16,8 @@ class Config
 	const folderForAssets = '';
 	const mainDomain = null;
 
-	protected static $location = \diLib::LOCATION_HTDOCS;
+    protected static $location = \diLib::LOCATION_HTDOCS;
+	protected static $useModuleCache = false;
 
 	private static $databaseDumpPaths = [
 		\diLib::LOCATION_HTDOCS => '_admin/db/dump/',
@@ -67,6 +68,14 @@ class Config
 		$class = self::getClass();
 
 		return $class::mainDomain;
+	}
+
+	final public static function useModuleCache()
+	{
+		/** @var Config $class */
+		$class = self::getClass();
+
+		return $class::$useModuleCache;
 	}
 
 	final public static function getSourcesFolder()

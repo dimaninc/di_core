@@ -427,6 +427,11 @@ class diLib
 		}
 	}
 
+	public static function isNamespaceRoot($namespace)
+	{
+		return in_array($namespace, self::$coreNamespaces);
+	}
+
 	static public function getClassFilename($className, $subFolder = "")
 	{
 	    $root = $_SERVER['DOCUMENT_ROOT'];
@@ -460,7 +465,7 @@ class diLib
 			{
 				$rootNamespace = strtok($className, '\\');
 
-				$pathId = in_array($rootNamespace, self::$coreNamespaces)
+				$pathId = self::isNamespaceRoot($rootNamespace)
 					? self::pathCoreSources
 					: self::pathProjectSources;
 

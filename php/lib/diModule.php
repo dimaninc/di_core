@@ -13,6 +13,8 @@ abstract class diModule
 	/** @var CMS */
 	private $Z;
 
+	protected $useModuleCache = false;
+
 	public function __construct(CMS $Z)
 	{
 		$this->Z = $Z;
@@ -20,7 +22,7 @@ abstract class diModule
 
 	public static function create(CMS $Z)
 	{
-		/** @var diModule $o */
+		/** @var \diModule $o */
 		$o = new static($Z);
 
 		$m = "render";
@@ -34,7 +36,7 @@ abstract class diModule
 
 		if ($o->$beforeM())
 		{
-			$o->$m();
+			$o->doRender();
 		}
 
 		$o->$afterM();
@@ -54,6 +56,11 @@ abstract class diModule
 		return $o;
 	}
 
+	public function getResultPage()
+	{
+		return $this->getTwig()->getPage() ?: $this->getTpl()->getAssigned('PAGE');
+	}
+
 	abstract public function render();
 
 	public function beforeRender()
@@ -66,6 +73,36 @@ abstract class diModule
 		$this->getZ()->beforeParsePage();
 
 		return $this;
+	}
+
+	protected function doRender()
+	{
+		if ($this->useModuleCache())
+		{
+			$MC = \diCore\Tool\Cache\Module::basicCreate();
+			$contents = $MC->getCachedContents($this, [
+				'language' => $this->getZ()->getLanguage(),
+				'query_string' => \diRequest::requestQueryString(),
+			]);
+
+			if ($contents)
+			{
+				$this->getTwig()->assign([
+					\diTwig::TOKEN_FOR_PAGE => $contents,
+				]);
+
+				return $this;
+			}
+		}
+
+		$this->render();
+
+		return $this;
+	}
+
+	protected function useModuleCache()
+	{
+		return \diCore\Data\Config::useModuleCache() && $this->useModuleCache;
 	}
 
 	/**
@@ -85,7 +122,7 @@ abstract class diModule
 	}
 
 	/**
-	 * @return diTwig
+	 * @return \diTwig
 	 */
 	public function getTwig()
 	{
@@ -93,7 +130,7 @@ abstract class diModule
 	}
 
 	/**
-	 * @return diDB
+	 * @return \diDB
 	 */
 	public function getDb()
 	{
@@ -139,5 +176,22 @@ abstract class diModule
 		$this->getZ()->redirect_301($href, $die);
 
 		return $this;
+	}
+
+	public function getName()
+	{
+		$name = get_class($this);
+
+		if ($id = diLib::childNamespace($name))
+		{
+			$id = strtolower($id);
+		}
+		else
+		{
+			$id = underscore($name);
+			$id = preg_replace('/^di_|(_custom)?_module$/', '', $id);
+		}
+
+		return $id;
 	}
 }

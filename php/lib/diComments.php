@@ -37,6 +37,8 @@ class diComments
 
 	private $mode = self::MODE_INITIAL;
 
+	/** @var  \diModel */
+	protected $target;
 	protected $targetType;
 	protected $targetId;
 
@@ -63,14 +65,29 @@ class diComments
 	/** @var  diPagesNavy */
 	protected $PagesNavy;
 
-	public function __construct($targetType, $targetId)
+	/**
+	 * diComments constructor.
+	 * @param \diModel|int $targetType
+	 * @param int|null $targetId
+	 */
+	public function __construct($targetType, $targetId = null)
 	{
 		global $db;
 
 		$this->db = $db;
 
-		$this->targetType = $targetType;
-		$this->targetId = $targetId;
+		if ($targetType instanceof \diModel)
+		{
+			$this->target = clone $targetType;
+			$this->targetType = $this->target->modelType();
+			$this->targetId = $this->target->getId();
+		}
+		else
+		{
+			$this->targetType = $targetType;
+			$this->targetId = $targetId;
+			$this->target = diModel::create($this->targetType, $this->targetId);
+		}
 
 		$this->queryAr = [
 			"target_type = '$this->targetType'",
@@ -86,9 +103,11 @@ class diComments
 	}
 
 	/**
+	 * @param \diModel|int $targetType
+	 * @param int|null $targetId
 	 * @return diComments
 	 */
-	public static function create($targetType, $targetId)
+	public static function create($targetType, $targetId = null)
 	{
 		$className = diLib::exists(self::className)
 			? self::className
@@ -112,6 +131,14 @@ class diComments
 	public function getCommentsCountPerLoad()
 	{
 		return static::COMMENTS_COUNT_PER_LOAD;
+	}
+
+	/**
+	 * @return \diModel
+	 */
+	public function getTarget()
+	{
+		return $this->target;
 	}
 
 	protected function initPagesNavy()
@@ -289,6 +316,11 @@ class diComments
 			else
 			{
 				$userIds[] = (int)$comment->getUserId();
+			}
+
+			if ($this->getTarget()->exists())
+			{
+				$comment->setTargetModel($this->getTarget());
 			}
 		}
 
