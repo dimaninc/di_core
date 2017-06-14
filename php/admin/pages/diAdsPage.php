@@ -85,7 +85,7 @@ class diAdsPage extends diAdminBasePage
 	public function submitForm()
 	{
 		$this->getSubmit()
-			->store_pics("pic", "dias_save_file");
+			->store_pics("pic");
 	}
 
 	protected function getQueryParamsForRedirectAfterSubmit()

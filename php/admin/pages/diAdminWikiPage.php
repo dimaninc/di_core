@@ -151,7 +151,6 @@ class diAdminWikiPage extends diAdminBasePage
 				"type"		=> "dynamic_pics",
 				"title"		=> "Подгруженные изображения",
 				"default"	=> "",
-				"callback"	=> "dias_save_dynamic_pic",
 			),
 
 			"tag_id" => array(

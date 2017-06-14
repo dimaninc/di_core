@@ -68,7 +68,7 @@ class diTagsPage extends diAdminBasePage
 	{
 		$this->getSubmit()
 			->makeSlug()
-			->store_pics("pic", "dias_save_file");
+			->store_pics("pic");
 	}
 
 	public function getFormTabs()

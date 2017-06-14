@@ -76,7 +76,7 @@ class diFontsPage extends diAdminBasePage
 	public function submitForm()
 	{
 		$this->getSubmit()
-			->store_pics("file_eot,file_otf,file_ttf,file_woff,file_svg", "dias_save_file");
+			->store_pics(['file_eot', 'file_otf', 'file_ttf', 'file_woff', 'file_svg']);
 	}
 
 	protected function afterSubmitForm()

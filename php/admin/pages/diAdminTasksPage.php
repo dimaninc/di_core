@@ -413,7 +413,6 @@ class diAdminTasksPage extends diAdminBasePage
 				"type" => "dynamic_files",
 				"title" => "Подгруженные файлы",
 				"default" => "",
-				"callback" => "diasSaveDynamicPic",
 			],
 
 			"due_date" => [

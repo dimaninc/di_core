@@ -6,6 +6,9 @@
  * Time: 10:22
  */
 
+use diCore\Admin\Submit;
+use diCore\Helper\FileSystemHelper;
+
 class diVideosPage extends diAdminBasePage
 {
 	const FILTER_DEFAULT_ALBUM_ID = null;
@@ -204,21 +207,24 @@ class diVideosPage extends diAdminBasePage
 			->makeSlug()
 			->storeImage($this->picFields, [
 				[
-					"type" => diAdminSubmit::IMAGE_TYPE_MAIN,
+					"type" => Submit::IMAGE_TYPE_MAIN,
 					//"resize" => diImage::DI_THUMB_FIT,
 				],
 				[
-					"type" => diAdminSubmit::IMAGE_TYPE_PREVIEW,
-					"resize" => diImage::DI_THUMB_FIT,
+					"type" => Submit::IMAGE_TYPE_PREVIEW,
+					"resize" => \diImage::DI_THUMB_FIT,
 				],
 			])
-			->storeFile($this->videoFields, function($F, $field, $folder, $fn, diAdminSubmit &$obj) {
+			->storeFile($this->videoFields, function($F, $field, $folder, $fn, Submit &$obj) {
 				$folder = get_files_folder($obj->getTable());
 
-				create_folders_chain(diPaths::fileSystem($this->getSubmit()->getSubmittedModel()),
-					$folder, diAdminSubmit::DIR_CHMOD);
+				FileSystemHelper::createTree(\diPaths::fileSystem($this->getSubmit()->getSubmittedModel()),
+					$folder, Submit::DIR_CHMOD);
 
-				dias_save_file($F, $field, $folder, $fn, $obj);
+				Submit::storeFileCallback($obj, $field, [
+					'folder' => $folder,
+					'filename' => $fn,
+				], $F);
 			});
 
 		if ($this->getSubmit()->getData("vendor") != diVideoVendors::Own)

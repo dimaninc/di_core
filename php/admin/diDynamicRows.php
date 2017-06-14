@@ -23,7 +23,7 @@
 
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\FileSystemHelper;
-use diCore\Helper\StringHelper;
+use diCore\Admin\Submit;
 
 class diDynamicRows
 {
@@ -1543,121 +1543,10 @@ EOF;
 
 	public static function storePicSimple($F, $pics_folder, $field, &$ar, diDynamicRows $DynamicRows = null)
 	{
-		diasSaveDynamicPic($F, $DynamicRows->getAdminPage()->getSubmit(), [
+		Submit::storeDynamicPicCallback($F, $DynamicRows->getAdminPage()->getSubmit(), [
 			'what' => $field,
 			'field' => $field,
 		], $ar, $pics_folder);
-
-		/*
-		$table = $DynamicRows ? $DynamicRows->getTable() : '';
-
-		$fn = $ar[$field];
-
-		$root = diPaths::fileSystem();
-		$full_fn = $root . $pics_folder . $fn;
-		$big_fn = $root . $pics_folder . get_big_folder() . $fn;
-		$orig_fn = $root . $pics_folder . get_orig_folder() . $fn;
-
-		FileSystemHelper::createTree($root, [
-			$pics_folder . get_big_folder(),
-			$pics_folder . get_orig_folder(),
-		], \diAdminSubmit::DIR_CHMOD);
-
-		$mode = $F["tmp_name"] == $orig_fn ? "rebuilding" : "uploading";
-
-		if ($mode == "uploading")
-		{
-			if (is_file($full_fn)) unlink($full_fn);
-			if (is_file($big_fn)) unlink($big_fn);
-			if (is_file($orig_fn)) unlink($orig_fn);
-		}
-
-		list($tmp, $tmp, $imgType) = getimagesize($F["tmp_name"]);
-
-		$Submit = $DynamicRows->getAdminPage()->getSubmit();
-
-		if (diImage::isImageType($imgType))
-		{
-			$I = new diImage();
-			$I->open($F["tmp_name"]);
-
-			for ($i = 1; $i < 10; $i++)
-			{
-				$suffix = $i > 1 ? "$i" : "";
-
-				if (\diConfiguration::exists($table . "_tn" . $suffix . "_width"))
-				{
-					$tn_fn = $root . $pics_folder . get_tn_folder($i) . $fn;
-
-					if ($mode == "uploading")
-					{
-						if (is_file($tn_fn))
-						{
-							unlink($tn_fn);
-						}
-					}
-
-					$tnWM = $Submit->getWatermarkOptionsFor($field, constant("diAdminSubmit::IMAGE_TYPE_PREVIEW" . $suffix));
-
-					//DI_THUMB_CROP | DI_THUMB_EXPAND_TO_SIZE
-					$I->make_thumb(DI_THUMB_CROP, $tn_fn,
-						diConfiguration::get($table . "_tn" . $suffix . "_width"),
-						diConfiguration::get($table . "_tn" . $suffix . "_height"),
-						false,
-						$tnWM["name"], $tnWM["x"], $tnWM["y"]
-					);
-
-					chmod($tn_fn, diAdminSubmit::FILE_CHMOD);
-					list($ar["pic_tn" . $suffix . "_w"], $ar["pic_tn" . $suffix . "_h"], $ar["pic_tn" . $suffix . "_t"]) = getimagesize($tn_fn);
-				}
-			}
-
-			$mainWM = $Submit->getWatermarkOptionsFor($field, diAdminSubmit::IMAGE_TYPE_MAIN);
-			$I->make_thumb_or_copy(DI_THUMB_FIT, $full_fn,
-				diConfiguration::safeGet($table . "_width"),
-				diConfiguration::safeGet($table . "_height"),
-				false,
-				$mainWM["name"], $mainWM["x"], $mainWM["y"]
-			);
-
-			$bigWM = $Submit->getWatermarkOptionsFor($field, diAdminSubmit::IMAGE_TYPE_BIG);
-			$I->make_thumb_or_copy(DI_THUMB_FIT, $big_fn,
-				diConfiguration::safeGet($table . '_big_width', 10000),
-				diConfiguration::safeGet($table . '_big_height', 10000),
-				false,
-				$bigWM["name"], $bigWM["x"], $bigWM["y"]);
-			$I->close();
-
-			if ($mode == "uploading")
-			{
-				move_uploaded_file($F["tmp_name"], $orig_fn);
-			}
-
-			chmod($full_fn, diAdminSubmit::FILE_CHMOD);
-			chmod($big_fn, diAdminSubmit::FILE_CHMOD);
-			chmod($orig_fn, diAdminSubmit::FILE_CHMOD);
-
-			list($ar["pic_w"], $ar["pic_h"], $ar["pic_t"]) = getimagesize($full_fn);
-			//DI_THUMB_CROP | DI_THUMB_EXPAND_TO_SIZE
-			$I->make_thumb(DI_THUMB_FIT, $tn_fn, diConfiguration::safeGet($table . '_tn_width', 320), diConfiguration::safeGet($table . '_tn_height', 240));
-			//$I->make_thumb(DI_THUMB_FIT, $tn2_fn, _cfg($table."_tn2_width"), _cfg($table."_tn2_height"));
-			$I->make_thumb_or_copy(DI_THUMB_FIT, $full_fn, diConfiguration::safeGet($table . '_width', 1920), diConfiguration::safeGet($table . '_height', 1080));
-			$I->close();
-
-			@chmod($full_fn, 0775);
-
-			list($ar["{$field}_w"], $ar["{$field}_h"], $ar["{$field}_t"]) = getimagesize($full_fn);
-		}
-		else
-		{
-			list($ar["pic_w"], $ar["pic_h"], $ar["pic_t"]) = [0, 0, 0];
-
-			if ($mode == "uploading")
-			{
-				move_uploaded_file($F["tmp_name"], $full_fn);
-			}
-		}
-		*/
 	}
 
 	public static function storeFileSimple($F, $pics_folder, $field, &$ar, diDynamicRows $DynamicRows = null)

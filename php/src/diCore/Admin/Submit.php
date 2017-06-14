@@ -19,7 +19,7 @@ class Submit
 	const FILE_NAME_RANDOM_LENGTH = 10;
 	const FILE_NAME_GLUE = '-';
 
-	const defaultDynamicPicCallback = "diasSaveDynamicPic";
+	public static $defaultDynamicPicCallback = [self::class, 'storeDynamicPicCallback'];
 	const dynamicPicsTable = "dipics";
 
 	public static $defaultSlugSourceFieldsAr = ["slug_source", "menu_title", "title"];
@@ -934,7 +934,7 @@ class Submit
 		}
 		//
 
-		$callback = "diasStoreImage";
+		$callback = [static::class, 'storeImageCallback'];
 
 		// preparing options
 		foreach ($filesOptions as &$opts)
@@ -997,7 +997,14 @@ class Submit
 					$this->setData($f, StringHelper::replaceFileExtension($this->getData($f), $newExt));
 				}
 
-				$callback($this, $f, $filesOptions, $_FILES[$f]);
+				if (is_callable($callback))
+				{
+					$callback($this, $f, $filesOptions, $_FILES[$f]);
+				}
+				else
+				{
+					throw new \Exception('Callback is now callable: ' . print_r($callback, true));
+				}
 			}
 		}
 
@@ -1048,7 +1055,7 @@ class Submit
 	// $callback is a function($_FILES[$f], $field, $pics_folder, $fn, &$this)
 	public function store_pics($pic_fields, $callbackOrFolder = null)
 	{
-		$defaultCallback = "dias_save_file";
+		$defaultCallback = [static::class, 'storeFileCallback'];
 
 		$callback = is_callable($callbackOrFolder) ? $callbackOrFolder : $defaultCallback;
 		$folder = is_callable($callbackOrFolder) || !$callbackOrFolder ? get_pics_folder($this->table) : $callbackOrFolder;
@@ -1059,30 +1066,40 @@ class Submit
 			$folder . get_tn_folder(),
 			self::DIR_CHMOD);
 
-		foreach ($pic_fields_ar as $f)
+		foreach ($pic_fields_ar as $field)
 		{
-			if (!$f)
+			if (!$field)
 			{
 				continue;
 			}
 
-			$this->setData($f, $this->getCurRec($f));
+			$this->setData($field, $this->getCurRec($field));
 
-			if (isset($_FILES[$f]) && !$_FILES[$f]["error"])
+			if (isset($_FILES[$field]) && !$_FILES[$field]["error"])
 			{
-				$old_file_ext = $this->getData($f) ? strtolower(get_file_ext($this->getData($f))) : "";
-				$new_file_ext = strtolower(get_file_ext($_FILES[$f]["name"]));
+				$old_file_ext = $this->getData($field) ? strtolower(get_file_ext($this->getData($field))) : "";
+				$new_file_ext = strtolower(get_file_ext($_FILES[$field]["name"]));
 
-				if (!$this->getData($f))
+				if (!$this->getData($field))
 				{
-					$this->generateFilename($f, $folder, $_FILES[$f]["name"]);
+					$this->generateFilename($field, $folder, $_FILES[$field]["name"]);
 				}
 				elseif ($old_file_ext != $new_file_ext)
 				{
-					$this->setData($f, StringHelper::replaceFileExtension($this->getData($f), $new_file_ext));
+					$this->setData($field, StringHelper::replaceFileExtension($this->getData($field), $new_file_ext));
 				}
 
-				$callback($_FILES[$f], $f, $folder, $this->getData($f), $this);
+				// new arguments order for static method callback
+				if (is_array($callback))
+				{
+					$callback($this, $field, [
+						'folder' => $folder,
+					], $_FILES[$field]);
+				}
+				else
+				{
+					$callback($_FILES[$field], $field, $folder, $this->getData($field), $this);
+				}
 			}
 		}
 
@@ -1160,7 +1177,7 @@ class Submit
 
 				$db_ar["orig_fn"] = str_in($_FILES["{$field}_{$f}"]["name"][$id]);
 
-				$callback = isset($this->_all_fields[$field]["callback"]) ? $this->_all_fields[$field]["callback"] : self::defaultDynamicPicCallback;
+				$callback = isset($this->_all_fields[$field]["callback"]) ? $this->_all_fields[$field]["callback"] : self::$defaultDynamicPicCallback;
 
 				$F = [
 					"name" => $_FILES["{$field}_{$f}"]["name"][$id],
@@ -1280,7 +1297,7 @@ class Submit
 
 		$callback = isset($Submit->_all_fields[$field]["callback"])
 			? $Submit->_all_fields[$field]["callback"]
-			: self::defaultDynamicPicCallback;
+			: self::$defaultDynamicPicCallback;
 
 		$field = \diDB::_in($field);
 		$id = (int)$id;
@@ -1343,242 +1360,278 @@ class Submit
 
 		return $this;
 	}
-}
 
-/**
- * @param $obj Submit
- * @param $field string
- * @param $options array
- * @param $F array
- */
-function diasStoreImage(&$obj, $field, $options, $F)
-{
-	$needToUnlink = true;
-
-	$I = new \diImage();
-	$I->open($F["tmp_name"]);
-
-	foreach ($options as $opts)
+	/**
+	 * @param $obj Submit
+	 * @param $field string
+	 * @param $options array
+	 * @param $F array
+	 */
+	public static function storeImageCallback(&$obj, $field, $options, $F)
 	{
-		$suffix = Submit::getPreviewSuffix($opts["type"]);
+		$needToUnlink = true;
+
+		$I = new \diImage();
+		$I->open($F["tmp_name"]);
+
+		foreach ($options as $opts)
+		{
+			$suffix = Submit::getPreviewSuffix($opts["type"]);
+
+			$fn = \diPaths::fileSystem($obj->getSubmittedModel(), true, $field) .
+				$opts["folder"] . $opts["subfolder"] . $obj->getData($field);
+
+			if (is_file($fn))
+			{
+				unlink($fn);
+			}
+
+			if (!$opts["resize"] && move_uploaded_file($F["tmp_name"], $fn))
+			{
+				$needToUnlink = false;
+			}
+			else
+			{
+				if (!empty($opts['quality']))
+				{
+					$I->set_jpeg_quality($opts['quality']);
+				}
+
+				$I->make_thumb(
+					$opts["resize"],
+					$fn,
+					$opts["width"],
+					$opts["height"],
+					false,
+					$opts['watermark']['name'], $opts['watermark']['x'], $opts['watermark']['y']
+				);
+			}
+
+			chmod($fn, Submit::FILE_CHMOD);
+
+			if (\diSwiffy::is($fn))
+			{
+				list($w, $h, $t) = \diSwiffy::getDimensions($fn);
+			}
+			else
+			{
+				list($w, $h, $t) = getimagesize($fn);
+			}
+
+			$obj->setData([
+				$field . $suffix . "_w" => $w,
+				$field . $suffix . "_h" => $h,
+				$field . $suffix . "_t" => $t,
+			]);
+
+			if (!empty($opts['afterSave']))
+			{
+				$afterSave = $opts['afterSave'];
+
+				if (is_callable($afterSave))
+				{
+					$afterSave($field, $fn, $obj->getSubmittedModel());
+				}
+			}
+		}
+
+		$I->close();
+		unset($I);
+
+		if ($needToUnlink)
+		{
+			unlink($F["tmp_name"]);
+		}
+	}
+
+	/**
+	 * @param $obj Submit
+	 * @param $field string
+	 * @param $options array
+	 * @param $F array
+	 */
+	public static function storeFileCallback(&$obj, $field, $options, $F)
+	{
+		$options = extend([
+			'folder' => '',
+			'subfolder' => '',
+			'filename' => '',
+		], $options);
 
 		$fn = \diPaths::fileSystem($obj->getSubmittedModel(), true, $field) .
-			$opts["folder"] . $opts["subfolder"] . $obj->getData($field);
+			$options["folder"] . $options["subfolder"] . ($options['filename'] ?: $obj->getData($field));
 
 		if (is_file($fn))
 		{
 			unlink($fn);
 		}
 
-		if (!$opts["resize"] && move_uploaded_file($F["tmp_name"], $fn))
+		if (!move_uploaded_file($F["tmp_name"], $fn))
 		{
-			$needToUnlink = false;
-		}
-		else
-		{
-			if (!empty($opts['quality']))
-			{
-				$I->set_jpeg_quality($opts['quality']);
-			}
-
-			$I->make_thumb(
-				$opts["resize"],
-				$fn,
-				$opts["width"],
-				$opts["height"],
-				false,
-				$opts['watermark']['name'], $opts['watermark']['x'], $opts['watermark']['y']
-			);
+			dierror("Unable to copy file {$F["name"]} to {$fn}");
 		}
 
 		chmod($fn, Submit::FILE_CHMOD);
 
-		if (\diSwiffy::is($fn))
+		$info = getimagesize($fn);
+		$obj
+			->setData($field . "_w", $info[0])
+			->setData($field . "_h", $info[1])
+			->setData($field . "_t", $info[2]);
+	}
+
+	public static function storeDynamicPicCallback($F, $tableOrSubmit, $what, &$ar, $folder)
+	{
+		if (is_object($tableOrSubmit))
 		{
-			list($w, $h, $t) = \diSwiffy::getDimensions($fn);
+			/** @var Submit $Submit */
+			$Submit = $tableOrSubmit;
+			$table = $Submit->getTable();
 		}
 		else
 		{
-			list($w, $h, $t) = getimagesize($fn);
+			$Submit = null;
+			$table = $tableOrSubmit;
 		}
 
-		$obj->setData([
-			$field . $suffix . "_w" => $w,
-			$field . $suffix . "_h" => $h,
-			$field . $suffix . "_t" => $t,
-		]);
-
-		if (!empty($opts['afterSave']))
+		if (is_array($what))
 		{
-			$afterSave = $opts['afterSave'];
+			$field = $what["field"];
+			$what = $what["what"];
+		}
+		else
+		{
+			$field = null;
+		}
 
-			if (is_callable($afterSave))
+		$fn = $ar[$what];
+
+		$root = \diPaths::fileSystem();
+		$full_fn = $root . $folder . $fn;
+		$big_fn = $root . $folder . get_big_folder() . $fn;
+		$orig_fn = $root . $folder . get_orig_folder() . $fn;
+
+		FileSystemHelper::createTree($root, [
+			$folder . get_big_folder(),
+			$folder . get_orig_folder(),
+		], Submit::DIR_CHMOD);
+
+		$mode = $F["tmp_name"] == $orig_fn ? "rebuilding" : "uploading";
+
+		if ($mode == "uploading")
+		{
+			if (is_file($full_fn)) unlink($full_fn);
+			if (is_file($big_fn)) unlink($big_fn);
+			if (is_file($orig_fn)) unlink($orig_fn);
+		}
+
+		list($tmp, $tmp, $imgType) = getimagesize($F["tmp_name"]);
+
+		if (\diImage::isImageType($imgType))
+		{
+			$I = new \diImage();
+			$I->open($F["tmp_name"]);
+
+			for ($i = 1; $i < 10; $i++)
 			{
-				$afterSave($field, $fn, $obj->getSubmittedModel());
+				$suffix = $i > 1 ? "$i" : "";
+
+				if (\diConfiguration::exists($table . "_tn" . $suffix . "_width"))
+				{
+					$tn_fn = $root . $folder . get_tn_folder($i) . $fn;
+
+					if ($mode == "uploading")
+					{
+						if (is_file($tn_fn))
+						{
+							unlink($tn_fn);
+						}
+					}
+
+					$tnWM = $Submit->getWatermarkOptionsFor($field, constant("diAdminSubmit::IMAGE_TYPE_PREVIEW" . $suffix));
+
+					//DI_THUMB_CROP | DI_THUMB_EXPAND_TO_SIZE
+					$I->make_thumb(DI_THUMB_CROP, $tn_fn,
+						\diConfiguration::get($table . "_tn" . $suffix . "_width"),
+						\diConfiguration::get($table . "_tn" . $suffix . "_height"),
+						false,
+						$tnWM["name"], $tnWM["x"], $tnWM["y"]
+					);
+
+					chmod($tn_fn, Submit::FILE_CHMOD);
+					list($ar["pic_tn" . $suffix . "_w"], $ar["pic_tn" . $suffix . "_h"], $ar["pic_tn" . $suffix . "_t"]) = getimagesize($tn_fn);
+				}
+			}
+
+			$mainWM = $Submit->getWatermarkOptionsFor($field, Submit::IMAGE_TYPE_MAIN);
+			$I->make_thumb_or_copy(DI_THUMB_FIT, $full_fn,
+				\diConfiguration::safeGet($table . "_width"),
+				\diConfiguration::safeGet($table . "_height"),
+				false,
+				$mainWM["name"], $mainWM["x"], $mainWM["y"]
+			);
+
+			$bigWM = $Submit->getWatermarkOptionsFor($field, Submit::IMAGE_TYPE_BIG);
+			$I->make_thumb_or_copy(DI_THUMB_FIT, $big_fn,
+				\diConfiguration::safeGet($table . '_big_width', 10000),
+				\diConfiguration::safeGet($table . '_big_height', 10000),
+				false,
+				$bigWM["name"], $bigWM["x"], $bigWM["y"]);
+			$I->close();
+
+			if ($mode == "uploading")
+			{
+				move_uploaded_file($F["tmp_name"], $orig_fn);
+			}
+
+			chmod($full_fn, Submit::FILE_CHMOD);
+			chmod($big_fn, Submit::FILE_CHMOD);
+			chmod($orig_fn, Submit::FILE_CHMOD);
+
+			list($ar["pic_w"], $ar["pic_h"], $ar["pic_t"]) = getimagesize($full_fn);
+		}
+		else
+		{
+			list($ar["pic_w"], $ar["pic_h"], $ar["pic_t"]) = [0, 0, 0];
+
+			if ($mode == "uploading")
+			{
+				move_uploaded_file($F["tmp_name"], $full_fn);
 			}
 		}
 	}
-
-	$I->close();
-	unset($I);
-
-	if ($needToUnlink)
-	{
-		unlink($F["tmp_name"]);
-	}
 }
 
+/* @deprecated */
+function diasStoreImage(&$obj, $field, $options, $F)
+{
+	Submit::storeImageCallback($obj, $field, $options, $F);
+}
+
+/* @deprecated */
 function dias_sharpen_img($img)
 {
 	return \diImage::sharpMask($img, 80, 0.5, 0);
 }
 
+/** @deprecated  */
 function dias_save_file($F, $field, $pics_folder, $fn, Submit $obj)
 {
-	$full_fn = \diPaths::fileSystem($obj->getSubmittedModel(), true, $field) . $pics_folder . $fn;
-
-	if (is_file($full_fn))
-	{
-		unlink($full_fn);
-	}
-
-	if (!move_uploaded_file($F["tmp_name"], $full_fn))
-	{
-		dierror("Unable to copy file {$F["name"]}");
-	}
-
-	chmod($full_fn, Submit::FILE_CHMOD);
-
-	$info = getimagesize($full_fn);
-	$obj
-		->setData($field . "_w", $info[0])
-		->setData($field . "_h", $info[1])
-		->setData($field . "_t", $info[2]);
+	Submit::storeFileCallback($obj, $field, [
+		'folder' => $pics_folder,
+		'subfolder' => '',
+		'filename' => $fn,
+	], $F);
 }
 
 /** @deprecated */
 function dias_save_dynamic_pic($F, $tableOrSubmit, $what, &$ar, $pics_folder)
 {
-	diasSaveDynamicPic($F, $tableOrSubmit, $what, $ar, $pics_folder);
+	Submit::storeDynamicPicCallback($F, $tableOrSubmit, $what, $ar, $pics_folder);
 }
 
+/** @deprecated */
 function diasSaveDynamicPic($F, $tableOrSubmit, $what, &$ar, $pics_folder)
 {
-	if (is_object($tableOrSubmit))
-	{
-		/** @var Submit $Submit */
-		$Submit = $tableOrSubmit;
-		$table = $Submit->getTable();
-	}
-	else
-	{
-		$Submit = null;
-		$table = $tableOrSubmit;
-	}
-
-	if (is_array($what))
-	{
-		$field = $what["field"];
-		$what = $what["what"];
-	}
-	else
-	{
-		$field = null;
-	}
-
-	$fn = $ar[$what];
-
-	$root = \diPaths::fileSystem();
-	$full_fn = $root . $pics_folder . $fn;
-	$big_fn = $root . $pics_folder . get_big_folder() . $fn;
-	$orig_fn = $root . $pics_folder . get_orig_folder() . $fn;
-
-	FileSystemHelper::createTree($root, [
-		$pics_folder . get_big_folder(),
-		$pics_folder . get_orig_folder(),
-	], Submit::DIR_CHMOD);
-
-	$mode = $F["tmp_name"] == $orig_fn ? "rebuilding" : "uploading";
-
-	if ($mode == "uploading")
-	{
-		if (is_file($full_fn)) unlink($full_fn);
-		if (is_file($big_fn)) unlink($big_fn);
-		if (is_file($orig_fn)) unlink($orig_fn);
-	}
-
-	list($tmp, $tmp, $imgType) = getimagesize($F["tmp_name"]);
-
-	if (\diImage::isImageType($imgType))
-	{
-		$I = new \diImage();
-		$I->open($F["tmp_name"]);
-
-		for ($i = 1; $i < 10; $i++)
-		{
-			$suffix = $i > 1 ? "$i" : "";
-
-			if (\diConfiguration::exists($table . "_tn" . $suffix . "_width"))
-			{
-				$tn_fn = $root . $pics_folder . get_tn_folder($i) . $fn;
-
-				if ($mode == "uploading")
-				{
-					if (is_file($tn_fn))
-					{
-						unlink($tn_fn);
-					}
-				}
-
-				$tnWM = $Submit->getWatermarkOptionsFor($field, constant("diAdminSubmit::IMAGE_TYPE_PREVIEW" . $suffix));
-
-				//DI_THUMB_CROP | DI_THUMB_EXPAND_TO_SIZE
-				$I->make_thumb(DI_THUMB_CROP, $tn_fn,
-					\diConfiguration::get($table . "_tn" . $suffix . "_width"),
-					\diConfiguration::get($table . "_tn" . $suffix . "_height"),
-					false,
-					$tnWM["name"], $tnWM["x"], $tnWM["y"]
-				);
-
-				chmod($tn_fn, Submit::FILE_CHMOD);
-				list($ar["pic_tn" . $suffix . "_w"], $ar["pic_tn" . $suffix . "_h"], $ar["pic_tn" . $suffix . "_t"]) = getimagesize($tn_fn);
-			}
-		}
-
-		$mainWM = $Submit->getWatermarkOptionsFor($field, Submit::IMAGE_TYPE_MAIN);
-		$I->make_thumb_or_copy(DI_THUMB_FIT, $full_fn,
-			\diConfiguration::safeGet($table . "_width"),
-			\diConfiguration::safeGet($table . "_height"),
-			false,
-			$mainWM["name"], $mainWM["x"], $mainWM["y"]
-		);
-
-		$bigWM = $Submit->getWatermarkOptionsFor($field, Submit::IMAGE_TYPE_BIG);
-		$I->make_thumb_or_copy(DI_THUMB_FIT, $big_fn,
-			\diConfiguration::safeGet($table . '_big_width', 10000),
-			\diConfiguration::safeGet($table . '_big_height', 10000),
-			false,
-			$bigWM["name"], $bigWM["x"], $bigWM["y"]);
-		$I->close();
-
-		if ($mode == "uploading")
-		{
-			move_uploaded_file($F["tmp_name"], $orig_fn);
-		}
-
-		chmod($full_fn, Submit::FILE_CHMOD);
-		chmod($big_fn, Submit::FILE_CHMOD);
-		chmod($orig_fn, Submit::FILE_CHMOD);
-
-		list($ar["pic_w"], $ar["pic_h"], $ar["pic_t"]) = getimagesize($full_fn);
-	}
-	else
-	{
-		list($ar["pic_w"], $ar["pic_h"], $ar["pic_t"]) = [0, 0, 0];
-
-		if ($mode == "uploading")
-		{
-			move_uploaded_file($F["tmp_name"], $full_fn);
-		}
-	}
+	Submit::storeDynamicPicCallback($F, $tableOrSubmit, $what, $ar, $pics_folder);
 }
