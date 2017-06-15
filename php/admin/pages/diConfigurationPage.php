@@ -46,7 +46,7 @@ class diConfigurationPage extends diAdminBasePage
 
 	public function renderForm()
 	{
-		throw new Exception("No form in ".get_class($this));
+		throw new Exception("No form in " . get_class($this));
 	}
 
 	public function printConfigurationTable()
@@ -201,14 +201,19 @@ class diConfigurationPage extends diAdminBasePage
 
 		foreach ($this->cfg->getTabsAr() as $k => $v)
 		{
-			$this->getTpl()->assign([
-				"NAME" => $k,
-				"TITLE" => $v,
-				"PROPERTY_ROWS" => $tabPagesAr[$k],
-			], "T_");
+			if (empty($tabPagesAr[$k]))
+			{
+				continue;
+			}
 
-			$this->getTpl()->parse("HEAD_TAB_ROWS", ".head_tab_row");
-			$this->getTpl()->parse("TAB_PAGES", ".tab_page");
+			$this->getTpl()
+				->assign([
+					"NAME" => $k,
+					"TITLE" => $v,
+					"PROPERTY_ROWS" => $tabPagesAr[$k],
+				], "T_")
+				->process("HEAD_TAB_ROWS", ".head_tab_row")
+				->process("TAB_PAGES", ".tab_page");
 		}
 	}
 
