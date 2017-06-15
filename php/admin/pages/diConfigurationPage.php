@@ -1,6 +1,7 @@
 <?php
-class diConfigurationPage extends diAdminBasePage
+class diConfigurationPage extends \diAdminBasePage
 {
+	/** @var \diConfiguration */
 	protected $cfg;
 
 	public function __construct($X)
@@ -30,7 +31,7 @@ class diConfigurationPage extends diAdminBasePage
 
 		$this->printConfigurationTable();
 
-		$saved = diRequest::get("saved", 0);
+		$saved = \diRequest::get("saved", 0);
 
 		if ($saved)
 		{
@@ -46,11 +47,15 @@ class diConfigurationPage extends diAdminBasePage
 
 	public function renderForm()
 	{
-		throw new Exception("No form in " . get_class($this));
+		throw new \Exception("No form in " . get_class($this));
 	}
 
 	public function printConfigurationTable()
 	{
+		$this->cfg
+			->setAdminPage($this)
+			->checkOtherTabInList(true);
+
 		$this->getTpl()->define("`configuration", [
 			"head_tab_row",
 
