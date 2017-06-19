@@ -37,9 +37,16 @@ class diConfiguration
 
 	private $db;
 
-	private $tabsAr = array();
+	private $tabsAr = [];
 	private $otherTabName = "_other";
-	private $otherTabTitle = "Прочее";
+	private $otherTabTitle = [
+		'en' => "Other",
+		'ru' => "Прочее",
+	];
+
+	/** @var \diAdminBasePage */
+	private $adminPage = null;
+	private $defaultLanguage = 'ru';
 
 	public static $data = [];
 	public static $cacheLoaded = false;
@@ -63,9 +70,16 @@ class diConfiguration
 	{
 		$this->tabsAr = $ar;
 
-		if (!isset($this->tabsAr[$this->otherTabName]))
+		$this->checkOtherTabInList();
+
+		return $this;
+	}
+
+	public function checkOtherTabInList($force = false)
+	{
+		if ($force || !isset($this->tabsAr[$this->getOtherTabName()]))
 		{
-			$this->tabsAr[$this->otherTabName] = $this->otherTabTitle;
+			$this->tabsAr[$this->getOtherTabName()] = $this->getOtherTabTitle();
 		}
 
 		return $this;
@@ -83,7 +97,36 @@ class diConfiguration
 
 	public function getOtherTabTitle()
 	{
-		return $this->otherTabTitle;
+		return $this->otherTabTitle[$this->getLanguage()];
+	}
+
+	/**
+	 * @return \diAdminBasePage
+	 */
+	public function getAdminPage()
+	{
+		return $this->adminPage;
+	}
+
+	/**
+	 * @param \diAdminBasePage $adminPage
+	 * @return $this
+	 */
+	public function setAdminPage(\diAdminBasePage $adminPage)
+	{
+		$this->adminPage = $adminPage;
+
+		return $this;
+	}
+
+	protected function getLanguage()
+	{
+		if ($this->getAdminPage())
+		{
+			return $this->getAdminPage()->getLanguage();
+		}
+
+		return $this->defaultLanguage;
 	}
 
 	public static function getFolder()
