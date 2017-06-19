@@ -119,6 +119,7 @@ abstract class CMS
 		"ru",
 	];
 	public static $defaultLanguage = "ru";
+	protected static $forceLanguage = null;
 	public $language = "ru";
 
 	public $language_href_prefix = "";
@@ -301,11 +302,13 @@ abstract class CMS
 
 	public static function getEnvironment()
 	{
-		if (in_array(\diRequest::domain(), static::$devDomains))
+		$domain = \diRequest::domain() ?: Config::getMainDomain();
+
+		if (in_array($domain, static::$devDomains))
 		{
 			return self::ENV_DEV;
 		}
-		elseif (in_array(\diRequest::domain(), static::$stageDomains))
+		elseif (in_array($domain, static::$stageDomains))
 		{
 			return self::ENV_STAGE;
 		}
@@ -472,12 +475,21 @@ abstract class CMS
 		return $this;
 	}
 
+	public static function setForceLanguage($language)
+	{
+		static::$forceLanguage = $language;
+	}
+
 	public static function currentLanguage()
 	{
 		/** @var CMS $Z */
 		global $Z;
 
-		if (
+		if (static::$forceLanguage)
+		{
+			return static::$forceLanguage;
+		}
+		elseif (
 			!empty($GLOBALS["CURRENT_LANGUAGE"]) &&
 			in_array($GLOBALS["CURRENT_LANGUAGE"], \diCurrentCMS::$possibleLanguages) &&
 			$GLOBALS["CURRENT_LANGUAGE"] != static::$defaultLanguage

@@ -53,7 +53,9 @@ class Module
 	{
 		/** @var \diModule $module */
 		$module = CMS::getModuleClassName($cacheModel->getModuleId());
-		$module = $module::create($this->createCMS());
+		$module = $module::create($this->createCMS(), [
+			'noCache' => true,
+		]);
 
 		$this->storeContent($cacheModel, $module->getResultPage());
 
@@ -90,7 +92,7 @@ class Module
 
 		return $this->getCacheFromModel($cache, $options);
 	}
-	
+
 	protected function getCacheFromModel(Model $cache, $options = [])
 	{
 		return $cache->exists()

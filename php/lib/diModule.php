@@ -20,8 +20,12 @@ abstract class diModule
 		$this->Z = $Z;
 	}
 
-	public static function create(CMS $Z)
+	public static function create(CMS $Z, $options = [])
 	{
+		$options = extend([
+			'noCache' => false,
+		], $options);
+
 		/** @var \diModule $o */
 		$o = new static($Z);
 
@@ -36,7 +40,7 @@ abstract class diModule
 
 		if ($o->$beforeM())
 		{
-			$o->doRender();
+			$o->doRender($options);
 		}
 
 		$o->$afterM();
@@ -75,9 +79,9 @@ abstract class diModule
 		return $this;
 	}
 
-	protected function doRender()
+	protected function doRender($options = [])
 	{
-		if ($this->useModuleCache())
+		if ($this->useModuleCache() && empty($options['noCache']))
 		{
 			$MC = \diCore\Tool\Cache\Module::basicCreate();
 			$contents = $MC->getCachedContents($this, [
