@@ -1,0 +1,49 @@
+.above_lm
+	background #fff
+	padding 14px 0 14px 22px
+	font-family Tahoma, sans-serif
+	color #000
+	font-size 12px
+	font-weight bold
+	border-bottom 1px solid #CCCCCC
+	margin-bottom 0
+	text-transform uppercase
+
+ul.left-menu
+	list-style none
+	margin 0
+	padding 0
+	> li
+		> b
+			display block
+			padding 7px 7px 7px 20px
+			background-color #edf0f4
+			border-bottom 1px solid #cfcfcf
+			font bold 12px/18px Tahoma, sans-serif
+			color #444
+			cursor pointer
+			width 173px
+			text-transform uppercase
+			&:hover
+				background-color #dde5e5
+		> ul
+			list-style none
+			margin 0
+			padding 0
+			border-bottom 1px solid #cfcfcf
+			> li
+				border-bottom 0 solid #edf0f4
+				font normal 11px/11px Verdana, sans-serif
+				color #0059B2
+				a
+					text-decoration none
+					color #7600AD
+					display block
+					background #ffffff
+					padding 7px 7px 7px 28px
+					&:hover
+						color #FF0000
+						background #f7f7f7
+	> li[state="0"]
+		> ul
+			display none

@@ -50,6 +50,7 @@ class Types
 	const redirect = 2028;
 	const localization = 2029;
 	const module_cache = 2030;
+	const comment_cache = 2031;
 
 	const admin_task = 1000;
 	const admin_wiki = 1001;
@@ -92,6 +93,7 @@ class Types
 		self::redirect => "redirects",
 		self::localization => "localization",
 		self::module_cache => 'module_cache',
+		self::comment_cache => 'comment_cache',
 
 		self::admin_task => "admin_tasks",
 		self::admin_wiki => "admin_wiki",
@@ -135,6 +137,7 @@ class Types
 		self::redirect => "redirect",
 		self::localization => "localization",
 		self::module_cache => 'module_cache',
+		self::comment_cache => 'comment_cache',
 
 		self::admin_task => "admin_task",
 		self::admin_wiki => "admin_wiki",
@@ -178,6 +181,7 @@ class Types
 		self::redirect => "Редирект",
 		self::localization => "Локализация",
 		self::module_cache => 'Кеш страницы модуля',
+		self::comment_cache => 'Кеш блока комментариев',
 
 		self::admin_task => "Задача",
 		self::admin_wiki => "Wiki",

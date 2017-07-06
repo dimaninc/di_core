@@ -1,0 +1,848 @@
+body
+	background #fff
+	margin 0
+	padding 0
+
+body, table, li
+	font-family Verdana,sans-serif
+	color #000
+	font-size 11px
+	font-weight normal
+	margin 0
+
+table
+	border-collapse collapse
+	&.tags-table
+		border 0
+		border-collapse collapse
+		margin 0
+		td
+			padding-right 20px
+			vertical-align top
+			border 0
+	&.banners_stat
+		padding 0
+		border-collapse collapse
+		width 94%
+		margin 20px 3% 0 3%
+		td
+			border 1px solid #000
+			padding 5px
+			background #eee
+			text-align right
+			font-size 14px
+			&.b
+				text-align left
+		tr
+			&.n2
+				td
+					background #ddd
+		th
+			border 1px solid #000
+			padding 5px
+			background #D4D0C8
+			text-align center
+			font-size 14px
+		table
+			&.sub_stat
+				margin 0
+				padding 0
+				border-collapse collapse
+				width 100%
+	&.item-colors-table
+		border-collapse collapse
+		td
+			text-align center
+			border 1px solid #ccc
+			padding 5px
+			margin-right 5px
+			label
+				cursor pointer
+	&.cover_pic_select
+		margin 5px 0
+		border-collapse collapse
+		display none
+		td
+			vertical-align top
+			text-align left
+			border 0
+			padding 0 20px 10px 0
+			.cover-note
+				position absolute
+				text-align center
+				padding-top 10px
+		img
+			border 4px solid transparent
+			padding 5px
+			background none
+	&.cover_video_select
+		img
+			padding 0 !important
+		a
+			&.cover_pic_selected
+				img
+					background none !important
+					padding 0 !important
+
+a
+	text-decoration none
+	color #7601AC
+	&:hover
+		text-decoration none
+		color #FF0000
+	&.video-tn
+		display block
+		position absolute
+		z-index 99
+	&.cover_pic_selected
+		img
+			border 4px solid #f00
+			padding 5px
+			background #f77
+	&.comments-close
+		display block
+		position absolute
+		border 1px solid #D4D0C8
+		background #333
+		color #fff
+		left 0
+		top 0
+		z-index 10
+		margin-left 1100px
+		width 20px
+		height 20px
+		text-align center
+		font-weight bold
+		font-size 17px
+		&:hover
+			background #B4B0A8
+
+p
+	margin 9px 0
+
+form
+	margin 0
+
+img
+	border 0
+	&.video
+		position absolute
+		z-index 98
+		margin -4px 0 0 -4px
+
+u
+	cursor pointer
+	text-decoration underline
+	&:hover
+		text-decoration none
+
+._up
+	text-transform uppercase !important
+
+._lo
+	text-transform lowercase !important
+
+.dt
+	font-weight normal !important
+	font-size 11px !important
+	text-align center !important
+
+.lite
+	font-weight normal !important
+	font-size 11px !important
+
+.bold
+	font-weight bold
+
+.italic
+	font-style italic
+
+.regular
+	font-weight normal !important
+
+.center
+	text-align center
+
+.border-rounded
+	border-radius 8px
+
+.display-none
+	display none !important
+
+.hidden
+	visibility hidden !important
+
+.no-padding
+	padding 0 !important
+
+.close
+	display block
+	float right
+	margin 5px 5px 0 0
+	width 18px
+	height 18px
+	background url(/_core/i/admin/buttons/close.png) 0 0 no-repeat
+	&:hover
+		background-position 0 -18px
+
+.admin-layout
+	padding-bottom 40px
+	> .nav
+		float left
+		border-right #ccc solid 1px
+		@media screen and (max-width: 767px)
+			display none
+			float none
+			position absolute
+			z-index 100
+			box-shadow 0 0 10px #000
+	&.nav-shown
+		> .nav
+			@media screen and (max-width: 767px)
+				display block
+	> .content
+		background #fff
+		position relative
+		margin-left 201px
+		padding-bottom 20px
+		@media screen and (max-width: 767px)
+			margin-left 0
+		&:after
+			content ""
+			display block
+			clear both
+	> .head-auth-info
+		line-height 25px
+		background #777
+		position absolute
+		right 0
+		top 36px
+		width 281px
+		padding 5px
+		text-align center
+		color #ffd
+		font-size 12px
+		box-sizing border-box
+		@media screen and (max-width: 767px)
+			width 100px
+			top 0
+			line-height 23px
+			height 23px
+			padding-top 0
+			padding-bottom 0
+		i
+			display inline-block
+			font-size 10px
+			line-height 15px
+			font-style normal
+			background #555
+			padding 1px 4px
+			border-radius 4px
+			position relative
+			top -1px
+			margin-left 4px
+			@media screen and (max-width: 767px)
+				display none
+	> .head-href
+		line-height 35px
+		padding 0 20px
+		background #555
+		color white
+		font-family Arial, Helvetica, sans-serif
+		font-size 12px
+		width 140px
+		position absolute
+		top 0
+		right 0
+		text-align center
+		transition background 500ms linear,color 500ms linear
+		box-sizing border-box
+		@media screen and (max-width: 767px)
+			width 100px
+			height 23px
+			line-height 23px
+			padding 0 5px
+			top 48px
+		&:hover
+			background #777
+			color #fff
+		&.go-to-face
+			right 141px
+			@media screen and (max-width: 767px)
+				right 0
+				top 24px
+	> .logo
+		background #7601AC
+		font-family Tahoma, Verdana, Segoe, sans-serif
+		position absolute
+		text-align center
+		width 200px
+		height 71px
+		box-sizing border-box
+		> b
+			display block
+			color #fff
+			font-size 30px
+			line-height 71px
+			font-weight normal
+			@media screen and (max-width: 450px)
+				font-size 14px
+				line-height 30px
+				padding-left 10px
+		@media screen and (max-width: 767px)
+			text-align left
+			padding-left 50px
+			cursor pointer
+			z-index 101
+		@media screen and (max-width: 450px)
+			position relative
+			width auto
+			margin-right 101px
+		> .menu-toggle
+			position absolute
+			display none
+			width 24px
+			height 24px
+			top 50%
+			left 12px
+			margin-top (@height / -2)
+			background url(/_core/i/admin/menu/simple-hamburger-white.svg) center center no-repeat
+			background-size contain
+			@media screen and (max-width: 767px)
+				display block
+	> .site-title
+		background #333
+		color #fff
+		line-height 71px
+		height 71px
+		font-size 24px
+		font-family Arial, Helvetica, sans-serif
+		margin 0 282px 0 200px
+		padding-left 20px
+		padding-right 10px
+		@media screen and (max-width: 767px)
+			max-width 100%
+			margin-right 101px
+			ellipsis()
+		@media screen and (max-width: 450px)
+			position absolute
+			z-index 102
+			top 30px
+			left 50px
+			right 101px
+			margin-left 0
+			margin-right 0
+			padding-left 10px
+			line-height 40px
+			height auto
+
+.footer
+	position fixed
+	bottom 0
+	left 0
+	right 0
+	height 40px
+	border-top 1px solid #B1B1B1
+	color #000
+	font-size 11px
+	background-color #ddd
+	line-height 40px
+	.copyright
+		width 200px
+		height 35px
+		padding-top 5px
+		float left
+		border-right 1px solid #B1B1B1
+		text-align center
+		line-height 150%
+	.console-container
+		margin-left 201px
+		background-color inherit
+		padding 5px 0 5px 50px
+		height 30px
+		transition background-color 1000ms linear
+		&.highlighted
+			background-color #ffe
+		.console
+			height 30px
+			overflow hidden
+			> div
+				line-height 15px
+				> i
+					font-style normal
+					margin-right 15px
+					display inline-block
+					color #777
+		.up,.down
+			cursor pointer
+			position absolute
+			display block
+			text-align center
+			width 15px
+			height 15px
+			line-height 15px
+			transition all 500ms ease
+			background #eee
+			margin-top -1px
+			margin-left -30px
+			&:hover
+				box-shadow 0 0 2px #000
+		.down
+			margin-top 16px
+		&:not(.navy-needed)
+			.up,.down
+				display none
+
+button
+	font-family Verdana, sans-serif
+	font-size 14px
+	font-weight normal
+	background #fff
+	color #000
+	border 1px solid #B2B2B2
+	border-top-color #000
+	border-left-color #000
+	border-radius 8px
+	cursor pointer
+	outline none
+	&:hover
+		background #A1DFFF
+	&.blue
+		background #0000CC
+		padding 7px 10px
+		color #fff
+		font-family Arial, Helvetica, sans-serif
+		font-size 11px
+		font-weight bold
+		border 0
+		&:hover
+			background #FF0000
+
+.mce-tinymce
+	button
+		border-radius 0
+
+.violet
+	background #9600DB
+	border 0
+	padding 7px 10px
+	font-family Arial
+	font-size 11px
+	color #fff
+	vertical-align middle
+	font-weight bold
+	&:hover
+		background #FF0000
+
+.gray
+	background #848484
+	border 0
+	padding 7px 10px
+	font-family Arial
+	font-size 11px
+	color #fff
+	vertical-align middle
+	font-weight bold
+	&:hover
+		background #FF0000
+
+.violet2
+	background #9600DB
+	border 0
+	padding 7px 10px
+	font-family Arial
+	font-size 14px
+	color #fff
+	vertical-align middle
+	font-weight bold
+	&:hover
+		background #FF0000
+
+.gray2
+	background #848484
+	border 0
+	padding 7px 10px
+	font-family Arial
+	font-size 14px
+	color #fff
+	vertical-align middle
+	font-weight bold
+	&:hover
+		background #FF0000
+
+input[type="text"]
+input[type="email"]
+input[type="tel"]
+input[type="number"]
+input[type="password"]
+input[type="url"]
+textarea
+	font-family Verdana,sans-serif
+	font-size 14px
+	font-weight normal
+	background-color #fff
+	color #000
+	border 1px solid #B2B2B2
+	padding 2px 5px
+	border-radius 4px
+
+textarea
+	padding-top 5px
+	padding-bottom 5px
+
+table.banners_stat td.sel,table.banners_stat th.sel
+	background #ffd
+
+.caution
+	padding 10px
+	font-family Tahoma,sans-serif
+	color #000
+	font-size 12px
+	font-weight bold
+	border 1px solid #f00
+	background #fee
+	margin 15px
+	text-align center
+
+.color-popup
+	position absolute
+	padding 10px
+	background #fff
+	border 1px solid #777
+	display none
+
+.buttons_block
+	text-align left
+	padding 25px 0 25px 22px
+	border-top 1px solid #CCCCCC
+	border-bottom 1px solid #CCCCCC
+	margin 50px 0
+
+.details_block
+	background-color #D4D0C8
+	padding 5px
+	& > table
+		& > tbody
+			& > tr
+				& > td
+					vertical-align top
+
+#btn-save
+	font-weight bold
+
+.submit-block
+	border 1px solid #CFCFCF
+	margin 10px 24px 3px 24px
+	background #edf0f4
+	text-align center
+	padding 10px 0 10px 0
+	border-radius 8px
+	button
+		margin 0 10px
+		padding 5px 10px
+		cursor pointer
+		&:hover
+			background #A1DFFF
+
+.submit-status-line
+	height 20px
+	background #edf0f4
+	margin-top 10px
+	border-top 1px solid #CFCFCF
+	padding-top 5px
+	font-style italic
+
+.save_frame
+	display none
+
+.new_admin_block
+	padding 0 0 20px 0
+
+.admin_help_link
+	img
+		border none
+		float right
+		margin 0 5px 0 0
+
+.bg_eee
+	background #eee
+
+.w_hover
+	&:hover
+		background #A1DFFF
+
+.list-control-panel
+	padding 10px
+	border-radius 10px
+	background #D4D0C8
+	margin 0 24px 20px 24px
+	min-height 22px
+	@media screen and (max-width: 767px)
+		margin-left 0
+		margin-right 0
+		border-radius 0
+	> ul
+		position fixed
+		top 0
+		left 50%
+		list-style none
+		margin 0 0 0 -100px
+		padding 10px
+		border-radius 0 0 10px 10px
+		background #D4D0C8
+		z-index 500
+		display none
+		box-shadow 0 0 5px black
+		li
+			display inline-block
+			vertical-align top
+			font-size 14px
+			font-weight bold
+	.toggle-all
+		float left
+		padding-right 50px
+		line-height 22px
+		input[type="checkbox"]
+			position relative
+			top 2px
+			margin-right 5px
+		label
+			cursor pointer
+	.notes
+		font-size 11px
+		line-height 22px
+
+.list-control-panel[data-table="feedback"] ul li[data-purpose="move"],
+.list-control-panel[data-table="feedback"] ul li[data-purpose="copy"]
+	display none
+
+.list-control-panel[data-table="feedback"]
+	.notes
+		visibility hidden
+
+.expand-collapse-block
+	float right
+	padding 10px 25px 0 10px
+	u
+		display inline-block
+		width 18px
+		height 18px
+		cursor pointer
+		margin-left 5px
+	u[data-action="expand"]
+		background url(/_core/i/admin/buttons/key_plus.gif) 0 0 no-repeat
+	u[data-action="collapse"]
+		background url(/_core/i/admin/buttons/key_minus.gif) 0 0 no-repeat
+
+iframe
+	&.comments-iframe
+		display block
+		position absolute
+		border 2px dashed #333
+		left 0
+		top 0
+		z-index 9
+		margin-left 200px
+		width 900px
+		height 300px
+		overflow auto
+
+#type_id_err_bottom_div
+	background #f00
+	color #fff
+	padding 3px 10px
+	position absolute
+	margin 0 20px
+	display none
+	width 200px
+
+.navy
+	text-align center
+	a
+		background #fff
+		&:hover
+			background #eee
+			border 1px solid #aaa
+
+.navy a,.navy b,.navy span
+	display inline-block
+	padding 3px 8px
+	font-size 12px
+	margin 0 5px
+	border 1px dotted #aaa
+
+.cb_level_any
+	margin 5px 5px 5px 0
+
+.cb_level0
+	font-weight bold
+
+.cb_level1
+	padding-left 10px
+
+.cb_level2
+	padding-left 20px
+
+.cb_level3
+	padding-left 30px
+
+.evil
+	background #fcc
+	padding 3px
+
+.show-actions-log
+	cursor pointer
+	text-decoration underline
+
+.diaf_checkboxes_block
+	display none
+	position absolute
+	border 1px solid #777
+	border-radius 5px
+	padding 10px
+	margin-top 3px
+	background #fff
+	button
+		margin 5px 10px
+		&:hover
+			background #A1DFFF
+
+.notice
+	background #dd7 !important
+
+.payment-success,.payment-insuccess
+	padding 0 4px
+	border-radius 4px
+
+.payment-success:hover,.payment-insuccess:hover
+	color #fff
+
+.payment-success
+	color #fff
+	background #0a0
+
+.payment-insuccess
+	color #fff
+	background #a00
+
+.multicolumn
+	overflow hidden
+	margin 0
+	padding 0
+	li
+		line-height 1.5em
+		padding 0
+		margin 0
+		float left
+		display inline
+
+.double
+	li
+		width 50%
+
+.triple
+	li
+		width 33.333%
+
+.quadro
+	li
+		width 25%
+
+.penta
+	li
+		width 20%
+
+.hexta
+	li
+		width 16.666%
+
+div
+	&.code
+		padding 10px
+		border-radius 5px
+		border 1px solid #ccc
+		background #eee
+
+code, samp, kbd
+	font-family "Courier New", Courier, monospace, sans-serif
+	text-align left
+	color #555
+
+pre
+	padding 0.1em 0.5em 0.3em 0.7em
+	border-left 11px solid #ccc
+	margin 1.7em 0 1.7em 0.3em
+	overflow auto
+	width 93%
+	code
+		line-height 1.6em
+		font-size 13px
+	&.code
+		background #ffe
+		code
+			color black
+
+.dyn-cell
+	float left
+	background #fff
+	margin-right 10px
+	&:nth-child(even)
+	&:last-child
+		margin-right 0
+		background #ff0 !important
+
+.clear
+	clear both
+
+[data-purpose="color-view"]
+	display inline-block
+	width 30px
+	height 30px
+	cursor pointer
+	box-shadow 0 0 10px rgba(0,0,0,1)
+	vertical-align middle
+
+[data-purpose="color-picker"]
+	display none
+
+.dynamic-row
+	[data-purpose="color-picker"]
+		position absolute
+
+.caption
+	padding 14px 24px
+	font-family Tahoma,sans-serif
+	font-size 12px
+	background #fff
+	border-bottom 1px solid #CCCCCC
+	margin-bottom 20px
+	b
+		text-transform uppercase
+	.buttons
+		padding 0 0 0 30px
+
+.admin-task-priority
+	display inline-block
+	border-radius 50%
+	width 12px
+	height 12px
+	margin-right 6px
+	float left
+	&.p1
+		background-color #4E7235
+	&.p10
+		background-color #72C43A
+	&.p20
+		background-color #FFFF00
+	&.p30
+		background-color #EB2121
+
+ins
+	color green
+	background #dfd
+	text-decoration none
+
+del
+	color red
+	background #fdd
+	text-decoration none

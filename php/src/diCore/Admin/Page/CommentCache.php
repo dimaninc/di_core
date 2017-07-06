@@ -1,15 +1,16 @@
 <?php
 /**
  * Created by \diAdminPagesManager
- * Date: 08.06.2017
- * Time: 17:37
+ * Date: 25.06.2017
+ * Time: 16:50
  */
 
 namespace diCore\Admin\Page;
 
-use diCore\Entity\ModuleCache\Model;
+use diCore\Data\Types;
+use diCore\Entity\CommentCache\Model;
 
-class ModuleCache extends \diAdminBasePage
+class CommentCache extends \diAdminBasePage
 {
 	protected $options = [
 		'filters' => [
@@ -22,54 +23,25 @@ class ModuleCache extends \diAdminBasePage
 
 	protected function initTable()
 	{
-		$this->setTable('module_cache');
+		$this->setTable('comment_cache');
 	}
 
 	public function renderList()
 	{
 		$this->getList()->addColumns([
 			'id' => 'ID',
-			'module_id' => [
+			'target' => [
 				'headAttrs' => [
-					'width' => '10%',
+					'width' => '80%',
 				],
+				'title' => 'Цель',
+				'value' => function (Model $m) {
+					return Types::getTitle($m->modelType()) . '#' . $m->getId();
+				},
 			],
-			'title' => [
-				'headAttrs' => [
-					'width' => '10%',
-				],
-				'bodyAttrs' => [
-					'class' => 'lite',
-				],
-			],
-			'query_string' => [
-				'headAttrs' => [
-					'width' => '25%',
-				],
-				'bodyAttrs' => [
-					'class' => 'lite',
-				],
-			],
-			'bootstrap_settings' => [
-				'headAttrs' => [
-					'width' => '25%',
-				],
-				'bodyAttrs' => [
-					'class' => 'lite',
-				],
-			],
-			'update_every_minutes' => [
-				'title' => 'Обновление, мин',
-				'headAttrs' => [
-					'width' => '10%',
-				],
-			],
-			'content' => [
+			'html' => [
 				'headAttrs' => [
 					//'width' => '10%',
-				],
-				'bodyAttrs' => [
-					'class' => 'lite',
 				],
 				'value' => function(Model $m, $field) {
 					return $m->has($field) ? '+' : '';
@@ -90,9 +62,7 @@ class ModuleCache extends \diAdminBasePage
 			'updated_at' => [
 				'title' => 'Обновлён',
 				'value' => function(Model $m) {
-					return $m->hasUpdatedAt()
-						? \diDateTime::format('d.m.Y H:i', $m->getUpdatedAt())
-						: '&ndash;';
+					return \diDateTime::format('d.m.Y H:i', $m->getUpdatedAt());
 				},
 				'headAttrs' => [
 					'width' => '10%',
@@ -103,20 +73,11 @@ class ModuleCache extends \diAdminBasePage
 			],
 			'#edit' => '',
 			'#del' => '',
-			'#active' => '',
 		]);
 	}
 
 	public function renderForm()
 	{
-		if (!$this->getForm()->getModel()->hasId())
-		{
-			$this->getForm()->setHiddenInput([
-				'created_at',
-				'updated_at',
-				'content',
-			]);
-		}
 	}
 
 	public function submitForm()
@@ -131,27 +92,15 @@ class ModuleCache extends \diAdminBasePage
 	public function getFormFields()
 	{
 		return [
-			'module_id' => [
-				'type'		=> 'string',
-				'title'		=> 'Модуль',
+			'target_type' => [
+				'type'		=> 'int',
+				'title'		=> 'Цель, тип',
 				'default'	=> '',
 			],
 
-			'query_string' => [
-				'type'		=> 'string',
-				'title'		=> 'Query string',
-				'default'	=> '',
-			],
-
-			'bootstrap_settings' => [
-				'type'		=> 'string',
-				'title'		=> 'Bootstrap-настройки',
-				'default'	=> '',
-			],
-
-			'title' => [
-				'type'		=> 'string',
-				'title'		=> 'Пояснение',
+			'target_id' => [
+				'type'		=> 'int',
+				'title'		=> 'Цель, ID',
 				'default'	=> '',
 			],
 
@@ -161,11 +110,10 @@ class ModuleCache extends \diAdminBasePage
 				'default'	=> '',
 			],
 
-			'content' => [
-				'type'		=> 'text',
+			'html' => [
+				'type'		=> 'string',
 				'title'		=> 'Кеш',
 				'default'	=> '',
-				'flags'     => ['static'],
 			],
 
 			'created_at' => [
@@ -191,6 +139,6 @@ class ModuleCache extends \diAdminBasePage
 
 	public function getModuleCaption()
 	{
-		return 'Кеш страницы модуля';
+		return 'Кеш блока комментариев';
 	}
 }

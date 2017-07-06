@@ -20,7 +20,7 @@ class diEmail
 
 	public static function isValid($email)
 	{
-		return preg_match("/^[0-9a-z]([-_.]?[0-9a-z])*@[0-9a-z]([-._]?[0-9a-z])*\.[a-z]{2,4}$/i", $email);
+		return preg_match("/^[0-9a-z]([-_.0-9a-z])*@[0-9a-z]([-._]?[0-9a-z])*\.[a-z]{2,4}$/i", $email);
 	}
 
 	public function setOption($option, $value = null)

@@ -11,9 +11,12 @@ namespace diCore\Tool\Cache;
 use diCore\Database\Connection;
 use diCore\Entity\Comment\Model;
 use diCore\Data\Types;
+use diCore\Traits\BasicCreate;
 
 class Comment
 {
+	use BasicCreate;
+
 	public static function updateCounts()
 	{
 		$errors = [];

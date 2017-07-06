@@ -1,157 +1,154 @@
 body {
-    background: #fff;
-    font-family: Tahoma, Verdana, Segoe, sans-serif;
-    font-size: 14px;
-    color: #000;
+  background: #fff;
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  font-size: 14px;
+  color: #000;
 }
-
 form {
-    margin: 0;
-    padding: 0;
+  margin: 0;
+  padding: 0;
 }
-
 a {
-    color: #9601DA;
+  color: #9601da;
 }
-
 a:hover {
-    text-decoration: none;
+  text-decoration: none;
 }
-
 .logo {
-    font-size: 50px;
-    line-height: 100px;
-    text-align: center;
+  font-size: 50px;
+  line-height: 100px;
+  text-align: center;
 }
-
+@media screen and (max-width: 767px) {
+  .logo {
+    line-height: 70px;
+  }
+}
 .logo i {
-    font-style: normal;
-    color: #7601AC;
+  font-style: normal;
+  color: #7601ac;
 }
-
 .logo b {
-    font-weight: 600;
+  font-weight: 600;
 }
-
 .description {
-    text-align: center;
-    font-size: 20px;
+  text-align: center;
+  font-size: 20px;
 }
-
 .login-form {
-    position: relative;
-    box-sizing: border-box;
-    left: 50%;
-    margin-left: -220px;
-    width: 440px;
-    background: #E5E5E5;
-    border-radius: 20px;
-    margin-top: 50px;
-    padding: 20px;
+  position: relative;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  left: 50%;
+  width: 380px;
+  margin-top: 50px;
+  margin-left: -190px;
+  background: #e5e5e5;
+  border-radius: 20px;
+  padding: 20px;
 }
-
+@media screen and (max-width: 767px) {
+  .login-form {
+    margin-top: 20px;
+    width: 90%;
+    margin-left: -45%;
+  }
+}
 .login-form > div:not(:first-child) {
-    margin-top: 15px;
+  margin-top: 15px;
 }
-
+.login-form label {
+  font-size: 14px;
+}
+.login-form button,
 .login-form input[type="text"],
 .login-form input[type="email"],
 .login-form input[type="password"] {
-	box-sizing: border-box;
-    width: 100%;
-    height: 42px;
-    background: #fff;
-    border: 0;
-    border-radius: 10px;
-    padding: 0 15px;
-    font-family: Tahoma, Verdana, Segoe, sans-serif;
-    font-size: 24px;
-    color: #000;
-    outline: none;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  border-radius: 10px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  font-family: Tahoma, Verdana, Segoe, sans-serif;
+  font-size: 24px;
+  color: #fff;
+  height: 42px;
+  cursor: pointer;
+  outline: none;
 }
-
-.login-form label {
-    font-size: 14px;
+@media screen and (max-width: 767px) {
+  .login-form button,
+  .login-form input[type="text"],
+  .login-form input[type="email"],
+  .login-form input[type="password"] {
+    font-size: 18px;
+    height: 28px;
+  }
 }
-
 .login-form button {
-    background-color: #9600DB;
-    border-radius: 10px;
-    width: 100%;
-    padding: 0;
-	border: 0;
-    font-family: Tahoma, Verdana, Segoe, sans-serif;
-    font-size: 24px;
-    color: #fff;
-    height: 42px;
-    cursor: pointer;
-    outline: none;
-	transition: background-color .5s ease;
+  background-color: #9600db;
+  -webkit-transition: background-color 0.5s ease;
+  -moz-transition: background-color 0.5s ease;
+  -o-transition: background-color 0.5s ease;
+  -ms-transition: background-color 0.5s ease;
+  transition: background-color 0.5s ease;
 }
-
 .login-form button:hover {
-    background-color: #FF0000;
+  background-color: #f00;
 }
-
+.login-form input[type="text"],
+.login-form input[type="email"],
+.login-form input[type="password"] {
+  padding: 0 15px;
+}
 .forgotten {
-    margin: 10px 0 0 0;
-    text-align: right;
+  margin: 10px 0 0 0;
+  text-align: right;
 }
-
 .forgotten a {
-    text-decoration: underline;
-    font-size: 11px;
-    color: #000;
+  text-decoration: underline;
+  font-size: 11px;
+  color: #000;
 }
-
-.contacts {
-    text-align: center;
-    margin-top: 50px;
-    font-size: 16px;
-}
-
 .to-home {
-	text-align: center;
-	margin-top: 50px;
-	font-size: 16px;
+  text-align: center;
+  margin-top: 50px;
+  font-size: 16px;
 }
-
+@media screen and (max-width: 767px) {
+  .to-home {
+    margin-top: 30px;
+  }
+}
 .to-home a {
-	display: inline-block;
-	-webkit-border-radius: 10px;
-	-moz-border-radius: 10px;
-	border-radius: 10px;
-	padding: 10px 50px;
-	text-decoration: none;
-	box-sizing: border-box;
-	background-color: #E5E5E5;
-	transition: background-color .5s ease, color .5s ease;
+  display: inline-block;
+  border-radius: 10px;
+  padding: 10px 50px;
+  text-decoration: none;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  background-color: #e5e5e5;
+  -webkit-transition: background-color 0.5s ease, color 0.5s ease;
+  -moz-transition: background-color 0.5s ease, color 0.5s ease;
+  -o-transition: background-color 0.5s ease, color 0.5s ease;
+  -ms-transition: background-color 0.5s ease, color 0.5s ease;
+  transition: background-color 0.5s ease, color 0.5s ease;
 }
-
 .to-home a:hover {
-	color: #f00;
-	background-color: #ddd;
+  color: #f00;
+  background-color: #ddd;
 }
-
-@media screen and (orientation:landscape) and (max-width:1281px) {
-	.logo {
-		font-size: 30px;
-		line-height: 40px;
-	}
-
-	.description {
-		font-size: 16px;
-	}
-
-    .login-form {
-	    margin-top: 10px;
-    }
-
-	.login-form input[type="text"],
-	.login-form input[type="email"],
-	.login-form input[type="password"],
-	.login-form button {
-		height: 32px;
-		font-size: 20px;
-	}
+.contacts {
+  text-align: center;
+  margin-top: 50px;
+  font-size: 16px;
+}
+@media screen and (max-width: 767px) {
+  .contacts {
+    margin-top: 30px;
+  }
 }

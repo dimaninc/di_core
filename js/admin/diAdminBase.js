@@ -1,16 +1,17 @@
-function diAdminBase()
-{
+var diAdminBase = function() {
 	this.console = new diAdminConsole();
 
-	function constructor()
-	{
+	function constructor() {
 		initMainMenu();
 		initControls();
 		initExpandCollapse();
 	}
 
-	function initMainMenu()
-	{
+	function isSideMenuMode() {
+		return $('.admin-layout .logo .menu-toggle').is(':visible');
+	}
+
+	function initMainMenu() {
 		$('ul.left-menu > li > b').click(function()	{
 			var $this = $(this),
 				$parent = $this.parent('li'),
@@ -21,23 +22,28 @@ function diAdminBase()
 				$parent.attr('state', state);
 
 				$.cookie('admin_visible_left_menu_ids',
-					$('ul.left-menu > li').map(function() { return parseInt($(this).attr('state')) ? $(this).data('id') : ''; }).get().join(','),
-					{
+					$('ul.left-menu > li').map(function() {
+						return parseInt($(this).attr('state')) ? $(this).data('id') : '';
+					}).get().join(','), {
 						expires: 365,
 						path: '/_admin/'
 					}
 				);
 			});
 		});
+
+		$('.admin-layout .logo,.admin-layout .site-title').on('click', function() {
+			if (isSideMenuMode()) {
+				$('.admin-layout').toggleClass('nav-shown');
+			}
+		});
 	}
 
-	function initControls()
-	{
+	function initControls() {
 		$(':radio,:checkbox').diControls();
 	}
 
-	function initExpandCollapse()
-	{
+	function initExpandCollapse() {
 		$('.expand-collapse-block u').click(function() {
 
 			var action = $(this).data('action'),
@@ -54,7 +60,7 @@ function diAdminBase()
 	}
 
 	constructor();
-}
+};
 
 $(function() {
 	window.A = new diAdminBase();

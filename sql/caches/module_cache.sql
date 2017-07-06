@@ -1,8 +1,10 @@
 CREATE TABLE module_cache (
   id                   INT UNSIGNED NOT NULL AUTO_INCREMENT,
 
+  title                VARCHAR(255) DEFAULT '',
   module_id            VARCHAR(50),
   query_string         VARCHAR(255),
+  bootstrap_settings   VARCHAR(255) DEFAULT '',
   update_every_minutes BIGINT,
 
   content              MEDIUMTEXT,

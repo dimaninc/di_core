@@ -1,0 +1,18 @@
+{% import 'admin/_macro/head.html.twig' as head %}
+
+<title>{{ _tech['page_title'] }}</title>
+<base href="{{ _tech['html_base'] }}">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0 , maximum-scale=1.0, user-scalable=0, minimum-scale=1.0">
+<meta name="format-detection" content="telephone=no">
+
+<link rel="icon" type="image/png" href="{{ asset_locations['images'] }}admin/icon.png">
+
+{% for name in jsFiles %}
+	{{ head.js(_context, name) }}
+{% endfor %}
+
+{% for name in cssFiles %}
+	{{ head.style(_context, name) }}
+{% endfor %}

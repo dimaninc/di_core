@@ -1336,14 +1336,14 @@ abstract class CMS
 					$modesStr .= '/';
 				}
 
-				$lng_up = strtoupper($lng);
+				$lngUp = strtoupper($lng);
 
 				$lngLink = ($lng == static::$defaultLanguage ? "/" : "/$lng/") . $modesStr . $q;
 				$lngActive = $isCurrentLanguage ? " active" : "";
 
 				$this->getTpl()->assign([
-					"PAGE_{$lng_up}_LINK" => $lngLink,
-					"{$lng_up}_LINK_ACTIVE" => $lngActive,
+					"PAGE_{$lngUp}_LINK" => $lngLink,
+					"{$lngUp}_LINK_ACTIVE" => $lngActive,
 					"LANG_PAGE_LINK" => $lngLink,
 					"LANG_LINK_ACTIVE" => $lngActive,
 					"LANG_NAME" => $lng,

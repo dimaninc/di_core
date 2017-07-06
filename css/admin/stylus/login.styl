@@ -1,0 +1,112 @@
+@import 'nib'
+
+body
+	background white
+	font-family Tahoma, Verdana, Segoe, sans-serif
+	font-size 14px
+	color black
+
+
+form
+	margin 0
+	padding 0
+
+a
+	color #9601DA
+	&:hover
+		text-decoration none
+
+.logo
+	font-size 50px
+	line-height 100px
+	text-align center
+	@media screen and (max-width: 767px)
+		line-height 70px
+	i
+		font-style normal
+		color #7601AC
+	b
+		font-weight 600
+
+.description
+	text-align center
+	font-size 20px
+
+.login-form
+	position relative
+	box-sizing border-box
+	left 50%
+	width 380px
+	margin-top 50px
+	margin-left (@width / -2)
+	background #E5E5E5
+	border-radius 20px
+	padding 20px
+	@media screen and (max-width: 767px)
+		margin-top 20px
+		width 90%
+		margin-left (@width / -2)
+	& > div
+		&:not(:first-child)
+			margin-top 15px
+	label
+		font-size 14px
+	button
+	input[type="text"],input[type="email"],input[type="password"]
+		box-sizing border-box
+		border-radius 10px
+		width 100%
+		padding 0
+		border 0
+		font-family Tahoma, Verdana, Segoe, sans-serif
+		font-size 24px
+		color white
+		height 42px
+		cursor pointer
+		outline none
+		@media screen and (max-width: 767px)
+			font-size 18px
+			height 28px
+	button
+		background-color #9600DB
+		transition background-color .5s ease
+		&:hover
+			background-color #FF0000
+	input
+		&[type="text"]
+		&[type="email"],
+		&[type="password"]
+			padding 0 15px
+
+.forgotten
+	margin 10px 0 0 0
+	text-align right
+	a
+		text-decoration underline
+		font-size 11px
+		color black
+
+.to-home
+	text-align center
+	margin-top 50px
+	font-size 16px
+	@media screen and (max-width: 767px)
+		margin-top 30px
+	a
+		display inline-block
+		border-radius 10px
+		padding 10px 50px
+		text-decoration none
+		box-sizing border-box
+		background-color #E5E5E5
+		transition background-color .5s ease, color .5s ease
+		&:hover
+			color #f00
+			background-color #ddd
+
+.contacts
+	text-align center
+	margin-top 50px
+	font-size 16px
+	@media screen and (max-width: 767px)
+		margin-top 30px

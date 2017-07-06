@@ -18,6 +18,9 @@ class Module
 {
 	use BasicCreate;
 
+	const BOOTSTRAP_SETTINGS_EQ = ':';
+	const BOOTSTRAP_SETTINGS_END = ';';
+
 	protected function createCMS()
 	{
 		return CMS::fast_lite_create();
@@ -55,6 +58,7 @@ class Module
 		$module = CMS::getModuleClassName($cacheModel->getModuleId());
 		$module = $module::create($this->createCMS(), [
 			'noCache' => true,
+			'bootstrapSettings' => $cacheModel->getBootstrapSettings(),
 		]);
 
 		$this->storeContent($cacheModel, $module->getResultPage());
@@ -85,12 +89,31 @@ class Module
 		/** @var Collection $col */
 		$col = \diCollection::create(Types::module_cache);
 		$col
-			->filterByModuleId($module->getName());
+			->filterByModuleId($module->getName())
+			->filterByQueryString($options['bootstrap_settings'])
+			->filterByBootstrapSettings($this->prepareBootstrapSettings($options['bootstrap_settings']));
 
 		/** @var Model $cache */
 		$cache = $col->getFirstItem();
 
 		return $this->getCacheFromModel($cache, $options);
+	}
+
+	protected function prepareBootstrapSettings($ar)
+	{
+		if (!is_array($ar))
+		{
+			return $ar;
+		}
+
+		$a = [];
+
+		foreach ($ar as $k => $v)
+		{
+			$a[] = $k . Module::BOOTSTRAP_SETTINGS_EQ . $v;
+		}
+
+		return join(Module::BOOTSTRAP_SETTINGS_END, $a);
 	}
 
 	protected function getCacheFromModel(Model $cache, $options = [])

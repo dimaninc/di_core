@@ -15,6 +15,9 @@ abstract class diModule
 
 	protected $useModuleCache = false;
 
+	protected $renderOptions = [];
+	protected $bootstrapSettings = [];
+
 	public function __construct(CMS $Z)
 	{
 		$this->Z = $Z;
@@ -24,6 +27,7 @@ abstract class diModule
 	{
 		$options = extend([
 			'noCache' => false,
+			'bootstrapSettings' => null,
 		], $options);
 
 		/** @var \diModule $o */
@@ -81,16 +85,23 @@ abstract class diModule
 
 	protected function doRender($options = [])
 	{
-		if ($this->useModuleCache() && empty($options['noCache']))
+		$this->setRenderOptions($options);
+
+		if ($this->useModuleCache() && !$this->getRenderOption('noCache'))
 		{
 			$MC = \diCore\Tool\Cache\Module::basicCreate();
 			$contents = $MC->getCachedContents($this, [
 				'language' => $this->getZ()->getLanguage(),
 				'query_string' => \diRequest::requestQueryString(),
+				'bootstrap_settings' => $this->getCurrentBootstrapSettings(),
 			]);
 
 			if ($contents)
 			{
+				$this
+					->setBootstrapSettings($this->getCurrentBootstrapSettings())
+					->cachedBootstrap();
+
 				$this->getTwig()->assign([
 					\diTwig::TOKEN_FOR_PAGE => $contents,
 				]);
@@ -99,9 +110,74 @@ abstract class diModule
 			}
 		}
 
-		$this->render();
+		$this
+			->bootstrap()
+			->render();
 
 		return $this;
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function getCurrentBootstrapSettings()
+	{
+		return [];
+	}
+
+	protected function cachedBootstrap()
+	{
+		return $this;
+	}
+
+	protected function bootstrap()
+	{
+		return $this;
+	}
+
+	protected function setRenderOptions($options)
+	{
+		$this->renderOptions = $options;
+		$this->setBootstrapSettings($this->getRenderOption('bootstrapSettings'));
+
+		return $this;
+	}
+
+	protected function getRenderOption($name = null)
+	{
+		return $name === null
+			? $this->renderOptions
+			: (isset($this->renderOptions[$name]) ? $this->renderOptions[$name] : null);
+	}
+
+	protected function setBootstrapSettings($options)
+	{
+		if (!is_array($options))
+		{
+			$a = explode(\diCore\Tool\Cache\Module::BOOTSTRAP_SETTINGS_END, $options);
+			$options = [];
+
+			foreach ($a as $kv)
+			{
+				list($k, $v) = array_merge(explode(\diCore\Tool\Cache\Module::BOOTSTRAP_SETTINGS_EQ, $kv), [null, null]);
+
+				if ($k)
+				{
+					$options[$k] = $v;
+				}
+			}
+		}
+
+		$this->bootstrapSettings = $options;
+
+		return $this;
+	}
+
+	protected function getBootstrapSettings($name = null)
+	{
+		return $name === null
+			? $this->bootstrapSettings
+			: (isset($this->bootstrapSettings[$name]) ? $this->bootstrapSettings[$name] : null);
 	}
 
 	protected function useModuleCache()
@@ -188,7 +264,7 @@ abstract class diModule
 
 		if ($id = diLib::childNamespace($name))
 		{
-			$id = strtolower($id);
+			$id = underscore($id);
 		}
 		else
 		{

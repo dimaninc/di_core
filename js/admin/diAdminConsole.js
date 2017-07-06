@@ -1,5 +1,4 @@
-function diAdminConsole(_opts)
-{
+var diAdminConsole = function(_opts) {
 	var self = this,
 		lines = 0,
 		opts = $.extend({
@@ -85,4 +84,4 @@ function diAdminConsole(_opts)
 	};
 
 	constructor();
-}
+};

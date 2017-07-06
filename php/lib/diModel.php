@@ -15,6 +15,8 @@ class diModel implements \ArrayAccess
 	const SLUG_FIELD_NAME_LEGACY = 'clean_title';
 	const SLUG_FIELD_NAME = 'slug';
 
+	const LOCALIZED_PREFIX = 'localized_';
+
 	// Model type (from diTypes class). Should be redefined
 	const type = null;
 	const connection_name = null;
@@ -491,6 +493,17 @@ class diModel implements \ArrayAccess
 		return isset($this->picsTnFolders[$index]) ? $this->picsTnFolders[$index] : get_tn_folder($index);
 	}
 
+	public function wrapFileWithPath($filename, $previewIdx = null)
+	{
+		$tnFolder = $previewIdx === null
+			? ''
+			: $this->getTnFolder($previewIdx);
+
+		return $filename
+			? \diPaths::http($this) . $this->getPicsFolder() . $tnFolder . $filename
+			: '';
+	}
+
 	public function getTemplateVars()
 	{
 		$ar = [];
@@ -502,6 +515,8 @@ class diModel implements \ArrayAccess
 
 		foreach ($this->ar as $k => $v)
 		{
+			$isLocalized = $this->isFieldLocalized($k);
+
 			if ($this->isPicField($k))
 			{
 				for ($i = 1; $i <= static::MAX_PREVIEWS_COUNT; $i++)
@@ -511,33 +526,62 @@ class diModel implements \ArrayAccess
 					if (!$this->exists($k . "_tn" . $idx))
 					{
 						$ar[$k . "_tn" . $idx] =
-						$ar[$k . "_tn" . $idx . "_with_path"] = $v
-							? diPaths::http($this) . $this->getPicsFolder() . $this->getTnFolder($i) . $v
-							: '';
+						$ar[$k . "_tn" . $idx . "_with_path"] = $this->wrapFileWithPath($v, $i);
+
+						if ($isLocalized)
+						{
+							$ar[static::LOCALIZED_PREFIX . $k . "_tn" . $idx] =
+							$ar[static::LOCALIZED_PREFIX . $k . "_tn" . $idx . "_with_path"] =
+								$this->wrapFileWithPath($this->localized($k), $i);
+						}
 					}
 					else
 					{
-						$ar[$k . "_tn" . $idx . "_with_path"] = $this->has($k . "_tn" . $idx)
-							? diPaths::http($this) . $this->getPicsFolder() . $this->getTnFolder($i) . $this->get($k . "_tn" . $idx)
-							: '';
+						$ar[$k . "_tn" . $idx . "_with_path"] = $this->wrapFileWithPath($this->get($k . '_tn' . $idx), $i);
+
+						if ($isLocalized)
+						{
+							$ar[static::LOCALIZED_PREFIX . $k . "_tn" . $idx . "_with_path"] =
+								$this->wrapFileWithPath($this->localized($k . '_tn' . $idx), $i);
+						}
 					}
 				}
 
 				if ($v)
 				{
-					$v = diPaths::http($this) . $this->getPicsFolder() . $v;
+					$v = $this->wrapFileWithPath($v);
 				}
 
 				$ar[$k . "_with_path"] = $v;
+
+				if ($isLocalized)
+				{
+					if ($v2 = $this->localized($k))
+					{
+						$v2 = $this->wrapFileWithPath($v2);
+					}
+
+					$ar[static::LOCALIZED_PREFIX . $k . "_with_path"] = $v2;
+				}
 			}
 			elseif ($this->isFileField($k))
 			{
 				if ($v)
 				{
-					$v = diPaths::http($this) . $this->getPicsFolder() . $v;
+					$v = $this->wrapFileWithPath($v);
 				}
 
 				$ar[$k . "_with_path"] = $v;
+
+				if ($isLocalized)
+				{
+					if ($v2 = $this->localized($k))
+					{
+						$v2 = $this->wrapFileWithPath($v2);
+					}
+
+					$ar[static::LOCALIZED_PREFIX . $k . "_with_path"] = $v2;
+				}
 			}
 			elseif ($this->isDateField($k))
 			{
@@ -563,9 +607,9 @@ class diModel implements \ArrayAccess
 			$ar[$k] = $v;
 		}
 
-		foreach (array_merge($this->localizedFields, $this->customLocalizedFields) as $f)
+		foreach ($this->getAllLocalizedFields() as $f)
 		{
-			$ar["localized_" . $f] = $this->localized($f);
+			$ar[static::LOCALIZED_PREFIX . $f] = $this->localized($f);
 		}
 
 		$ar[$this->getIdFieldName()] = $this->getId();
@@ -859,6 +903,16 @@ class diModel implements \ArrayAccess
 	public function localized($field, $lang = null)
 	{
 		return $this->get(static::getLocalizedFieldName($field, $lang));
+	}
+
+	public function getAllLocalizedFields()
+	{
+		return array_merge($this->localizedFields, $this->customLocalizedFields);
+	}
+
+	public function isFieldLocalized($field)
+	{
+		return in_array($field, $this->getAllLocalizedFields());
 	}
 
 	/**
