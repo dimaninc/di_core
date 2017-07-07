@@ -90,7 +90,7 @@ class Module
 		$col = \diCollection::create(Types::module_cache);
 		$col
 			->filterByModuleId($module->getName())
-			->filterByQueryString($options['bootstrap_settings'])
+			->filterByQueryString($options['query_string'])
 			->filterByBootstrapSettings($this->prepareBootstrapSettings($options['bootstrap_settings']));
 
 		/** @var Model $cache */
