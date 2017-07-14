@@ -154,7 +154,8 @@ class diContentFamily
 	{
 		$this
 			->beforeRoutesCheck()
-			->findModel();
+			->findModel()
+			->afterRoutesCheck();
 
 		if (!$this->getModel()->exists())
 		{
@@ -207,6 +208,11 @@ class diContentFamily
 	}
 
 	protected function beforeRoutesCheck()
+	{
+		return $this;
+	}
+
+	protected function afterRoutesCheck()
 	{
 		return $this;
 	}

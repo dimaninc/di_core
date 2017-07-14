@@ -8,10 +8,9 @@
 
 namespace diCore\Payment\Mixplat;
 
+use diCore\Payment\VendorContainer;
 
-use diCore\Tool\SimpleContainer;
-
-class MobileVendors extends SimpleContainer
+class MobileVendors extends VendorContainer
 {
 	const BEELINE = 1;
 	const MEGAFON = 2;

@@ -234,7 +234,7 @@ EOF;
 
 	public function getItemNumber()
 	{
-		return $this->getData('item_number');
+		return $this->getData('item_number') ?: $this->getData('item_number1');
 	}
 
 	public function getTransactionId()

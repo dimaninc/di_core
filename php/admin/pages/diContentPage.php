@@ -6,7 +6,7 @@
  * Date: 31.05.2015
  * Time: 21:01
  */
-class diContentPage extends diAdminBasePage
+class diContentPage extends \diAdminBasePage
 {
 	const MAX_LEVEL_NUM = 2;
 
@@ -88,11 +88,11 @@ class diContentPage extends diAdminBasePage
 
 	public function renderForm()
 	{
-		$h = new diHierarchyContentTable();
+		$h = new \diHierarchyContentTable();
 
 		$parents = $this->getId()
 			? $h->getParentsAr($this->getId())
-			: $h->getParentsArByParentId($this->getId());
+			: $h->getParentsArByParentId($this->getForm()->getModel()->get('parent'));
 
 		$parentsAr = [];
 		foreach ($parents as $parent_r)
@@ -123,7 +123,7 @@ class diContentPage extends diAdminBasePage
 		$this->getSubmit()
 			->storeImage(["pic", "pic2", "ico"], [
 				[
-					"type" => diAdminSubmit::IMAGE_TYPE_MAIN,
+					"type" => \diCore\Admin\Submit::IMAGE_TYPE_MAIN,
 					//"resize" => diImage::DI_THUMB_FIT,
 				],
 			])
@@ -135,7 +135,7 @@ class diContentPage extends diAdminBasePage
 	{
 		parent::afterSubmitForm();
 
-		$Z = new diCurrentCMS();
+		$Z = new \diCurrentCMS();
 		$Z->build_content_table_cache();
 	}
 

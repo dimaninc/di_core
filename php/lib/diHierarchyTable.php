@@ -70,7 +70,10 @@ class diHierarchyTable
 	{
 		$ar = array();
 
-		while ($r = $this->getDb()->r($this->getTable(), isset($r) ? $r->parent : $id))
+		while (
+			($parentId = isset($r) ? $r->parent : $id) &&
+			$r = $this->getDb()->r($this->getTable(), $parentId)
+		)
 		{
 			$ar[] = $r;
 

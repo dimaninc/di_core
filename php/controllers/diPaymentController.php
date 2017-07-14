@@ -1,6 +1,7 @@
 <?php
 
 use diCore\Payment\Yandex\Kassa;
+use diCore\Payment\System;
 
 /**
  * Created by PhpStorm.
@@ -11,7 +12,7 @@ use diCore\Payment\Yandex\Kassa;
 class diPaymentController extends diBaseController
 {
 	/** @var  integer */
-	protected $vendor;
+	protected $system;
 
 	/** @var  Kassa */
 	protected $kassa;
@@ -71,7 +72,7 @@ class diPaymentController extends diBaseController
 
 	public function yandexAction()
 	{
-		$this->vendor = diPayment::yandex;
+		$this->system = System::yandex_kassa;
 		$this->subAction = $this->param(0);
 
 		$this->kassa = Kassa::create($this->subAction, [
@@ -91,7 +92,7 @@ class diPaymentController extends diBaseController
 
 	public function mixplatAction()
 	{
-		$this->vendor = diPayment::mixplat;
+		$this->system = System::mixplat;
 		$this->subAction = $this->param(0);
 		$draftId = $this->param(1, 0);
 
@@ -162,7 +163,7 @@ class diPaymentController extends diBaseController
 
 	public function paypalAction()
 	{
-		$this->vendor = diPayment::paypal;
+		$this->system = System::paypal;
 		$this->subAction = $this->param(0);
 
 		$this->log("Paypal request: " . $this->subAction);
@@ -190,17 +191,60 @@ class diPaymentController extends diBaseController
 		}
 	}
 
+	public function robokassaAction()
+	{
+		$this->system = System::robokassa;
+		$this->subAction = $this->param(0);
+
+		$this->log("Robokassa request: " . $this->subAction);
+		var_debug($_GET, $_POST);
+		die();
+
+		$rk = \diCore\Payment\Robokassa\Helper::basicCreate([
+			'onSuccessPayment' => function(\diCore\Payment\Paypal\Helper $pp) {
+				$this
+					->initDraft($pp->getItemNumber(), $pp->getTransactionAmount())
+					->updateDraftDetailsIfNeeded()
+					->createReceipt($pp->getTransactionId());
+			},
+		]);
+
+		switch ($this->subAction)
+		{
+			case 'notification':
+				$rk->notification();
+				return null;
+
+			default:
+				return [
+					'ok' => false,
+					'message' => 'Unknown action: ' . $this->subAction,
+				];
+		}
+	}
+
 	protected function createReceipt($outerNumber, callable $beforeSave = null)
 	{
-		$this->receipt = diModel::create(diTypes::payment_receipt, $this->getDraft());
+		$this->receipt = \diModel::create(\diTypes::payment_receipt, $this->getDraft());
 
-		if (
-			$vendor = (int)diYandexKassaVendors::id(diRequest::post('paymentType')) &&
-			!$this->getReceipt()->hasVendor()
-		   )
+		if (!$this->getReceipt()->hasVendor())
 		{
-			$this->getReceipt()
-				->setVendor($vendor);
+			switch ($this->getReceipt()->getPaySystem())
+			{
+				case System::yandex_kassa:
+					$vendor = (int)\diCore\Payment\Yandex\Vendor::id(\diRequest::post('paymentType'));
+					break;
+
+				default:
+					$vendor = null;
+					break;
+			}
+
+			if ($vendor)
+			{
+				$this->getReceipt()
+					->setVendor($vendor);
+			}
 		}
 
 		$this->getReceipt()
@@ -298,17 +342,28 @@ class diPaymentController extends diBaseController
 
 		switch ($this->getDraft()->getPaySystem())
 		{
-			case diPayment::yandex:
+			case System::yandex_kassa:
 				if (
 					!$this->getDraft()->hasVendor() &&
-					$vendor = diYandexKassaVendors::id(diRequest::post('paymentType'))
+					$vendor = \diCore\Payment\Yandex\Vendor::id(\diRequest::post('paymentType'))
 				   )
 				{
 					$this->getDraft()->setVendor($vendor);
 				}
 				break;
 
-			case diPayment::mixplat:
+			case System::robokassa:
+				// todo: robokassa
+				if (
+					!$this->getDraft()->hasVendor() &&
+					$vendor = \diCore\Payment\Robokassa\Vendor::id(\diRequest::post('paymentType'))
+				   )
+				{
+					$this->getDraft()->setVendor($vendor);
+				}
+				break;
+
+			case System::mixplat:
 				if (!empty($data['status']))
 				{
 					$this->getDraft()
@@ -316,7 +371,7 @@ class diPaymentController extends diBaseController
 				}
 				break;
 
-			case diPayment::sms_online:
+			case System::sms_online:
 				/*
 				if (!empty($data['status']))
 				{
@@ -346,7 +401,7 @@ class diPaymentController extends diBaseController
 
 	private function returnErrorResponse($message)
 	{
-		if ($this->vendor == diPayment::yandex && $this->kassa)
+		if ($this->system == System::yandex_kassa && $this->kassa)
 		{
 			$this->kassa->sendErrorResponse($message, true);
 		}

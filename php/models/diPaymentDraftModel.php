@@ -6,6 +6,7 @@
  */
 
 use diCore\Traits\TargetInside;
+use diCore\Payment\System;
 
 /**
  * Class diPaymentDraftModel
@@ -77,28 +78,31 @@ class diPaymentDraftModel extends diModel
 
 	public function getTargetTypeStr()
 	{
-		return diTypes::getTitle($this->getTargetType());
+		return \diTypes::getTitle($this->getTargetType());
 	}
 
 	public function getPaySystemStr()
 	{
-		return diPayment::systemTitle($this->getPaySystem());
+		return \diPayment::systemTitle($this->getPaySystem());
 	}
 
 	public function getVendorStr()
 	{
 		switch ($this->getPaySystem())
 		{
-			case diPayment::yandex:
-				return diYandexKassaVendors::title($this->getVendor());
+			case System::yandex_kassa:
+				return \diCore\Payment\Yandex\Vendor::title($this->getVendor());
 
-			case diPayment::mixplat:
+			case System::robokassa:
+				return \diCore\Payment\Robokassa\Vendor::title($this->getVendor());
+
+			case System::mixplat:
 				return \diCore\Payment\Mixplat\MobileVendors::title($this->getVendor());
 
-			case diPayment::sms_online:
+			case System::sms_online:
 				return 'Not implemented yet';
 
-			case diPayment::paypal:
+			case System::paypal:
 				return 'Paypal';
 
 			default:
@@ -108,17 +112,17 @@ class diPaymentDraftModel extends diModel
 
 	public function getCurrencyStr()
 	{
-		return diPayment::currencyTitle($this->getCurrency());
+		return \diPayment::currencyTitle($this->getCurrency());
 	}
 
 	public function getStatusStr()
 	{
 		switch ($this->getPaySystem())
 		{
-			case diPayment::mixplat:
+			case System::mixplat:
 				return \diCore\Payment\Mixplat\ResultStatus::title($this->getStatus());
 
-			case diPayment::sms_online:
+			case System::sms_online:
 				return 'Not implemented yet';
 
 			default:
