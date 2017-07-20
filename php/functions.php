@@ -5,6 +5,8 @@
 
 require dirname(__FILE__) . "/lib/diLib.php";
 
+use diCore\Helper\StringHelper;
+
 $html_encodings_ar = [
 	"CP1251" => "windows-1251",
 	"UTF8" => "utf-8",
@@ -731,12 +733,10 @@ function digit_case($x, $s1, $s2, $s3 = false, $return_only_string = false)
     return $return_only_string ? $s3 : "$x0 $s3";
 }
 
+/** @deprecated  */
 function pad_left($s, $len, $char)
 {
-  while (mb_strlen($s) < $len)
-    $s = $char.$s;
-
-  return $s;
+  return StringHelper::leftPad($s, $len, $char, STR_PAD_LEFT);
 }
 
 function escape_tpl_brackets($s)

@@ -335,4 +335,14 @@ class StringHelper
 
 		return join('/', $ar) . '/';
 	}
+
+	public static function leftPad($string, $length, $char)
+	{
+		return str_repeat($char, $length - mb_strlen($string)) . $string;
+	}
+
+	public static function rightPad($string, $length, $char)
+	{
+		return $string . str_repeat($char, $length - mb_strlen($string));
+	}
 }
