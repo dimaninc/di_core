@@ -145,7 +145,7 @@ class diRequest
 		}
 	}
 
-	public static function rawPost($name, $defaultValue = null, $type = null)
+	public static function rawPost($name = null, $defaultValue = null, $type = null)
 	{
 		if (self::$postRawData === null)
 		{
@@ -157,7 +157,9 @@ class diRequest
 			self::$postRawParsed = (array)json_decode(self::$postRawData);
 		}
 
-		return ArrayHelper::getValue(self::$postRawParsed, $name, $defaultValue, $type);
+		return $name === null
+			? self::$postRawData
+			: ArrayHelper::getValue(self::$postRawParsed, $name, $defaultValue, $type);
 	}
 
 	public static function isHttps()
