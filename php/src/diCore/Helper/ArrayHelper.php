@@ -163,14 +163,14 @@ class ArrayHelper
 			$value = $key . '=' . $quote . $value . $quote;
 		});
 
-		return join(" ", $ar);
+		return join(' ', $ar);
 	}
 
 	/**
 	 * Returns element of array by idx, setting proper type, if it exists, else returns default value
 	 *
 	 * @param array $ar
-	 * @param int $idx
+	 * @param int|string|bool $idx
 	 * @param mixed $defaultValue
 	 * @param string $type
 	 * @return mixed
@@ -183,7 +183,7 @@ class ArrayHelper
 		{
 			$value = $ar[$idx];
 
-			if ($type != "NULL" && is_scalar($value))
+			if ($type != 'NULL' && is_scalar($value))
 			{
 				settype($value, $type);
 			}

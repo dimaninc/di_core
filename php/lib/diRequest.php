@@ -8,6 +8,7 @@
 */
 
 use diCore\Data\Config;
+use diCore\Helper\ArrayHelper;
 
 /**
  * @method static mixed get($name, $defaultValue = null, $type = null)
@@ -27,6 +28,9 @@ class diRequest
 		"server",
 		"session",
 	];
+
+	private static $postRawData = null;
+	private static $postRawParsed = null;
 
 	public static function convertFromCommandLine()
 	{
@@ -86,7 +90,7 @@ class diRequest
     {
 		$scope = self::all($method);
 
-	    return diArrayHelper::getValue($scope, $name, $defaultValue, $type);
+	    return ArrayHelper::getValue($scope, $name, $defaultValue, $type);
     }
 
 	public static function all($method)
@@ -139,6 +143,21 @@ class diRequest
 			default:
 				throw new Exception("Undefined mode '$mode'");
 		}
+	}
+
+	public static function rawPost($name, $defaultValue = null, $type = null)
+	{
+		if (self::$postRawData === null)
+		{
+			self::$postRawData = file_get_contents('php://input');
+		}
+
+		if (self::$postRawParsed === null)
+		{
+			self::$postRawParsed = (array)json_decode(self::$postRawData);
+		}
+
+		return ArrayHelper::getValue(self::$postRawParsed, $name, $defaultValue, $type);
 	}
 
 	public static function isHttps()
