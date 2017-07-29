@@ -8,8 +8,6 @@
 
 namespace diCore\Controller;
 
-use diCore\Data\Types;
-use diCore\Entity\ModuleCache\Model;
 use diCore\Tool\Cache\Comment;
 use diCore\Tool\Cache\Module;
 

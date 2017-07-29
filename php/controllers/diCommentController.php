@@ -120,6 +120,7 @@ class diCommentController extends diBaseController
 			$this
 				->setNewComment($comment)
 				->afterAddComment()
+				->updateCache()
 				->sendEmailNotify("add");
 
 			$result['ok'] = true;
@@ -287,6 +288,14 @@ class diCommentController extends diBaseController
 	protected function getEmailNotifyBody($action)
 	{
 		return null;
+	}
+
+	protected function updateCache()
+	{
+		$this->Comments
+			->updateCache();
+
+		return $this;
 	}
 
 	protected function afterAddComment()

@@ -155,6 +155,9 @@ abstract class CMS
 	const META_FIELD_PREFIX_OLD = "html_";
 	const OPEN_GRAPH_FIELD_PREFIX = "open_graph_";
 
+	/** @var  \diModel */
+	protected $mainTarget;
+
 	/** @deprecated */
 	public $title_var;
 	/** @deprecated */
@@ -721,7 +724,7 @@ abstract class CMS
 	{
 		if ($this->isCommentsBlockPrintNeeded())
 		{
-			$this->printCommentsBlock($this->getContentModel(), "PAGE_COMMENTS_BLOCK");
+			$this->printCommentsBlock($this->getMainTarget(), 'PAGE_COMMENTS_BLOCK');
 		}
 
 		return $this;
@@ -2251,5 +2254,23 @@ abstract class CMS
 	protected function getSelectedMenuClassName()
 	{
 		return 'selected';
+	}
+
+	/**
+	 * @param \diModel $m
+	 */
+	public function setMainTarget(\diModel $m)
+	{
+		$this->mainTarget = $m;
+
+		return $this;
+	}
+
+	/**
+	 * @return \diModel
+	 */
+	public function getMainTarget()
+	{
+		return $this->mainTarget ?: $this->getContentModel();
 	}
 }

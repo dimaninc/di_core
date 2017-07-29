@@ -76,6 +76,11 @@ class Model extends \diModel
 
 	const CONTENT_CUT_LENGTH = 100;
 
+	protected static $userExcludeFields = [
+		'password',
+		'activation_key',
+	];
+
 	protected function updateCommentsCountForTargetNeeded()
 	{
 		return false;
@@ -172,6 +177,13 @@ class Model extends \diModel
 		return $this;
 	}
 
+	public function afterToggleVisible()
+	{
+		$Comments = \diComments::create($this->getTargetType(), $this->getTargetId());
+		$Comments
+			->updateCache(true);
+	}
+
 	/**
 	 * @return \diModel
 	 * @throws \Exception
@@ -180,11 +192,14 @@ class Model extends \diModel
 	{
 		if (!$this->user)
 		{
-			$this->user = \diModel::create(
-				$this->getUserType() == \diComments::utAdmin ? \diTypes::admin : \diTypes::user,
-				$this->getUserId(),
-				"id"
-			);
+			if (!($this->user = $this->getRelated('user')))
+			{
+				$this->user = \diModel::create(
+					$this->getUserType() == \diComments::utAdmin ? \diTypes::admin : \diTypes::user,
+					$this->getUserId(),
+					"id"
+				);
+			}
 		}
 
 		return $this->user;
@@ -218,7 +233,17 @@ class Model extends \diModel
 
 	protected function getSuffixForPhpView()
 	{
-		return "->setRelated('href', '{$this->getHref()}')";
+		$related = [
+			"->setRelated('href', '{$this->getHref()}')",
+		];
+
+		/** @var \diUserModel $user */
+		if ($user = $this->getRelated('user'))
+		{
+			$related[] = "->setRelated('user', " . $user->asPhp(static::$userExcludeFields) . ")";
+		}
+
+		return join("\n", $related);
 	}
 
 	public function getHref()

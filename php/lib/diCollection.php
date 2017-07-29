@@ -22,6 +22,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	// cache
 	const CACHE_FOLDER = '_cfg/cache/';
+	const CACHE_FILE_EXTENSION = '.php';
 	const cacheDirChmod = 0777;
 	const cacheFileChmod = 0777;
 
@@ -291,12 +292,15 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 			throw new \Exception("Collection class doesn't exist: " . ($className ?: $type));
 		}
 
+		$forceRebuild = !empty($options['forceRebuild']);
+		unset($options['forceRebuild']);
+
 		/** @var diCollection $o */
 		$o = new $className();
 
 		$o
 			->setOptions($options)
-			->loadCache($cacheKind);
+			->loadCache($cacheKind, $forceRebuild);
 
 		return $o;
 	}
@@ -1564,7 +1568,6 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	protected function getCachePath($cacheKind = self::CACHE_ALL)
 	{
-
 		return \diPaths::fileSystem() . static::CACHE_FOLDER;
 	}
 
@@ -1591,7 +1594,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 			throw new \Exception('Undefined cache kind: ' . $cacheKind);
 		}
 
-		return $fn . '.php';
+		return $fn . static::CACHE_FILE_EXTENSION;
 	}
 
 	protected function getCachePathAndFilename($cacheKind = self::CACHE_ALL)
@@ -1612,7 +1615,12 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this;
 	}
 
-	protected function loadCache($cacheKind = self::CACHE_ALL, $forceRebuild = false)
+	public function cacheExists($cacheKind = self::CACHE_ALL)
+	{
+		return is_file($this->getCachePathAndFilename($cacheKind));
+	}
+
+	public function loadCache($cacheKind = self::CACHE_ALL, $forceRebuild = false)
 	{
 		if ($forceRebuild)
 		{

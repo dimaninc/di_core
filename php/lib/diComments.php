@@ -26,6 +26,14 @@ class diComments
 
 	const META_TITLE_COMMENT_PAGE_SUFFIX = "META_TITLE_COMMENTS_SUFFIX";
 
+	/** cache settings */
+	const CACHE_DISABLED = 0;
+	const CACHE_MANUAL = 1;
+	const CACHE_INSTANT = 2;
+	const CACHE_PERIODICAL = 3;
+
+	const cacheMode = self::CACHE_DISABLED;
+
 	/** @var diDB */
 	private $db;
 	/** @var FastTemplate */
@@ -158,7 +166,7 @@ class diComments
 
 	protected function getFormTemplateName()
 	{
-		return $formTemplate = $this->authorized() ? "comment_form" : "comment_auth";
+		return $this->authorized() ? "comment_form" : "comment_auth";
 	}
 
 	public function printForm()
@@ -177,14 +185,14 @@ class diComments
 
 	protected function getMetaTitleSuffix()
 	{
-		$page = $this->getPagesNavy()->getPage();
+		$page = $this->getPagesNavy() ? $this->getPagesNavy()->getPage() : null;
 
 		if ($this->usePagesNavy && $page > 1)
 		{
 			return $this->generateMetaTitleSuffix($page);
 		}
 
-		return "";
+		return '';
 	}
 
 	protected function generateMetaTitleSuffix($page)
@@ -228,11 +236,7 @@ class diComments
 		}
 		else
 		{
-			$user = diModel::create(
-				$comment->getUserType() == self::utAdmin ? diTypes::admin : diTypes::user,
-				$comment->getUserId(),
-				"id"
-			);
+			$user = $comment->getUserModel();
 		}
 
 		if (!$user)
@@ -269,7 +273,7 @@ class diComments
 		];
 	}
 
-	protected function getInitialQueryAr()
+	public function getInitialQueryAr()
 	{
 		return [];
 	}
@@ -448,6 +452,48 @@ class diComments
 	public function setMode($mode)
 	{
 		$this->mode = $mode;
+
+		return $this;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getCacheMode()
+	{
+		return static::cacheMode;
+	}
+
+	public function updateCache($force = false)
+	{
+		$rebuildNow = false;
+
+		switch ($this->getCacheMode())
+		{
+			default:
+			case self::CACHE_DISABLED:
+				// do nothing
+				break;
+
+			case self::CACHE_MANUAL:
+				$rebuildNow = !!$force;
+				break;
+
+			case self::CACHE_INSTANT:
+				$rebuildNow = true;
+				break;
+
+			case self::CACHE_PERIODICAL:
+				// todo: make schedule, use cron
+				$rebuildNow = true;
+				break;
+		}
+
+		if ($rebuildNow)
+		{
+			$Cache = \diCore\Tool\Cache\Comment::basicCreate();
+			$Cache->rebuildByTarget($this->targetType, $this->targetId, $this);
+		}
 
 		return $this;
 	}

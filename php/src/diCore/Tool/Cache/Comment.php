@@ -9,6 +9,7 @@
 namespace diCore\Tool\Cache;
 
 use diCore\Database\Connection;
+use diCore\Entity\Comment\Collection;
 use diCore\Entity\Comment\Model;
 use diCore\Data\Types;
 use diCore\Traits\BasicCreate;
@@ -40,5 +41,43 @@ class Comment
 		}, 'comments', 'GROUP BY target_type,target_id', 'target_type, target_id, COUNT(id) AS count, MAX(date) AS dt');
 
 		return $errors;
+	}
+
+	/**
+	 * @param \diModel|int $targetType
+	 * @param null|int $targetId
+	 * @return Collection
+	 */
+	protected function createCollectionByTarget($targetType, $targetId = null, \diComments $Comments = null)
+	{
+		$col = Collection::createForTarget($targetType, $targetId);
+		$col
+			->filterByVisible(1);
+
+		return $col;
+	}
+
+	public function rebuildByTarget($targetType, $targetId = null, \diComments $Comments = null)
+	{
+		/** @var Collection $comments */
+		$comments = $this->createCollectionByTarget($targetType, $targetId, $Comments);
+
+		/** @var \diUserCollection $users */
+		$users = \diCollection::create(Types::user, $comments->map('user_id'));
+
+		/** @var Model $comment */
+		foreach ($comments as $comment)
+		{
+			/** @var \diUserModel $user */
+			$user = $users[$comment->getUserId()];
+
+			$comment
+				->setRelated('user', $user);
+		}
+
+		$comments
+			->buildCache(Collection::CACHE_BY_TARGET);
+
+		return $this;
 	}
 }

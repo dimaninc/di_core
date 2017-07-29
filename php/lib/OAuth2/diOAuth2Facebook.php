@@ -9,31 +9,36 @@ abstract class diOAuth2Facebook extends diOAuth2
 
 	protected function getLoginUrlParams()
 	{
-		return extend(parent::getLoginUrlParams(), array(
+		return extend(parent::getLoginUrlParams(), [
 			'scope' => 'email,public_profile',
-		));
+		]);
 	}
 
 	protected function downloadData()
 	{
 		parent::downloadData();
 
-		parse_str(static::makeHttpRequest(static::authUrlBase, $this->getAuthUrlParams()), $tokenInfo);
+		$tokenInfo = json_decode($response = static::makeHttpRequest(static::authUrlBase, $this->getAuthUrlParams()));
 
-		if (count($tokenInfo))
+		if (!empty($tokenInfo))
 		{
-			if (isset($tokenInfo["access_token"]))
+			$token = $tokenInfo->access_token;
+
+			if ($token)
 			{
-				$params = array(
-					'access_token' => $tokenInfo['access_token'],
+				$params = [
+					'access_token' => $token,
 					'fields' => 'first_name,last_name,middle_name,name,link,gender,timezone,locale,verified,picture,age_range,birthday,cover,email,id,hometown,languages,name_format,updated_time,website',
-				);
+				];
 
 				$this->setProfileRawData(json_decode(static::makeHttpRequest(static::profileUrlBase, $params), true));
 			}
 			else
 			{
-				$errorInfo = json_decode(current(array_keys($tokenInfo)));
+				var_debug('Facebook error');
+				var_debug($tokenInfo);
+
+				$errorInfo = json_decode(current(array_keys((array)$tokenInfo)));
 
 				$this->setProfileError($errorInfo->error->message);
 			}
@@ -41,6 +46,9 @@ abstract class diOAuth2Facebook extends diOAuth2
 		else
 		{
 			$this->setProfileError("Error during first request");
+
+			var_debug('Facebook error');
+			var_debug($response);
 		}
 
 		return $this;
