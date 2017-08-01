@@ -34,6 +34,9 @@ class diComments
 
 	const cacheMode = self::CACHE_DISABLED;
 
+	protected static $cachedTargetTypes = [];
+	protected static $nonCachedTargetTypes = [];
+
 	/** @var diDB */
 	private $db;
 	/** @var FastTemplate */
@@ -94,7 +97,7 @@ class diComments
 		{
 			$this->targetType = $targetType;
 			$this->targetId = $targetId;
-			$this->target = diModel::create($this->targetType, $this->targetId);
+			$this->target = \diModel::create($this->targetType, $this->targetId);
 		}
 
 		$this->queryAr = [
@@ -117,7 +120,7 @@ class diComments
 	 */
 	public static function create($targetType, $targetId = null)
 	{
-		$className = diLib::exists(self::className)
+		$className = \diLib::exists(self::className)
 			? self::className
 			: get_called_class();
 
@@ -151,7 +154,7 @@ class diComments
 
 	protected function initPagesNavy()
 	{
-		$this->PagesNavy = new diPagesNavy($this->table, [
+		$this->PagesNavy = new \diPagesNavy($this->table, [
 			'initial' => $this->getMode() == self::MODE_INITIAL ? $this->getRecentCommentsCount() : $this->getCommentsCountPerLoad(),
 			'load' => $this->getCommentsCountPerLoad(), // this is not used yet
 		], "WHERE " . $this->getBaseQuery(), false, static::PAGE_PARAM);
@@ -161,7 +164,7 @@ class diComments
 
 	protected function authorized()
 	{
-		return diAuth::i()->authorized();
+		return \diAuth::i()->authorized();
 	}
 
 	protected function getFormTemplateName()
@@ -221,7 +224,7 @@ class diComments
 		return $this->getTpl()->parse("comments_block");
 	}
 
-	protected function beforeParseRow(CommentModel $comment, diBaseUserModel $user)
+	protected function beforeParseRow(CommentModel $comment, \diBaseUserModel $user)
 	{
 		return $this;
 	}
@@ -230,7 +233,7 @@ class diComments
 	{
 		if ($this->admins && $this->users)
 		{
-			$user = $comment->getUserType() == diComments::utAdmin
+			$user = $comment->getUserType() == self::utAdmin
 				? $this->admins[$comment->getUserId()]
 				: $this->users[$comment->getUserId()];
 		}
@@ -241,7 +244,7 @@ class diComments
 
 		if (!$user)
 		{
-			$user = diModel::create(diTypes::user);
+			$user = \diModel::create(\diTypes::user);
 		}
 
 		return $user;
@@ -300,7 +303,7 @@ class diComments
 
 		//echo "WHERE " . join(" AND ", $queryAr) . " LIMIT = " . $size;
 
-		$this->comments = diCollection::create(diTypes::comment, "WHERE " . join(" AND ", $queryAr));
+		$this->comments = \diCollection::create(\diTypes::comment, "WHERE " . join(" AND ", $queryAr));
 		$this->comments->orderBy('order_num');
 
 		if ($size !== null)
@@ -313,7 +316,7 @@ class diComments
 		/** @var CommentModel $comment */
 		foreach ($this->comments as $comment)
 		{
-			if ($comment->getUserType() == diComments::utAdmin)
+			if ($comment->getUserType() == self::utAdmin)
 			{
 				$adminIds[] = (int)$comment->getUserId();
 			}
@@ -328,8 +331,8 @@ class diComments
 			}
 		}
 
-		$this->users = diCollection::create(diTypes::user, "WHERE id" . diDB::in(array_unique($userIds), true));
-		$this->admins = diCollection::create(diTypes::admin, "WHERE id" . diDB::in(array_unique($adminIds), true));
+		$this->users = \diCollection::create(\diTypes::user, "WHERE id" . \diDB::in(array_unique($userIds), true));
+		$this->admins = \diCollection::create(\diTypes::admin, "WHERE id" . \diDB::in(array_unique($adminIds), true));
 
 		return $this->comments;
 	}
@@ -414,7 +417,7 @@ class diComments
 		return $this->db;
 	}
 
-	public function setTpl(FastTemplate $tpl)
+	public function setTpl(\FastTemplate $tpl)
 	{
 		$this->tpl = $tpl;
 
@@ -426,7 +429,7 @@ class diComments
 		return $this->tpl;
 	}
 
-	public function setTwig(diTwig $twig)
+	public function setTwig(\diTwig $twig)
 	{
 		$this->Twig = $twig;
 
@@ -464,6 +467,23 @@ class diComments
 		return static::cacheMode;
 	}
 
+	public function cacheNeededByTargetType()
+	{
+		$res = false;
+
+		if (!static::$cachedTargetTypes || in_array($this->targetType, static::$cachedTargetTypes))
+		{
+			$res = true;
+		}
+
+		if (in_array($this->targetType, static::$nonCachedTargetTypes))
+		{
+			$res = false;
+		}
+
+		return $res;
+	}
+
 	public function updateCache($force = false)
 	{
 		$rebuildNow = false;
@@ -487,6 +507,11 @@ class diComments
 				// todo: make schedule, use cron
 				$rebuildNow = true;
 				break;
+		}
+
+		if (!$this->cacheNeededByTargetType())
+		{
+			$rebuildNow = false;
 		}
 
 		if ($rebuildNow)
