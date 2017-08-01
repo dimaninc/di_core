@@ -74,9 +74,7 @@ a:hover {
   border: 0;
   font-family: Tahoma, Verdana, Segoe, sans-serif;
   font-size: 24px;
-  color: #fff;
   height: 42px;
-  cursor: pointer;
   outline: none;
 }
 @media screen and (max-width: 767px) {
@@ -95,6 +93,8 @@ a:hover {
   -o-transition: background-color 0.5s ease;
   -ms-transition: background-color 0.5s ease;
   transition: background-color 0.5s ease;
+  color: #fff;
+  cursor: pointer;
 }
 .login-form button:hover {
   background-color: #f00;
