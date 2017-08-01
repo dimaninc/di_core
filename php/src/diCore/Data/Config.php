@@ -15,6 +15,7 @@ class Config
 	const apiQueryPrefix = null;
 	const folderForAssets = '';
 	const mainDomain = null;
+	const mainLanguage = 'ru'; // used to determine localization field names
 
     protected static $location = \diLib::LOCATION_HTDOCS;
 	protected static $useModuleCache = false;
@@ -68,6 +69,14 @@ class Config
 		$class = self::getClass();
 
 		return $class::mainDomain;
+	}
+
+	final public static function getMainLanguage()
+	{
+		/** @var Config $class */
+		$class = self::getClass();
+
+		return $class::mainLanguage;
 	}
 
 	final public static function useModuleCache()

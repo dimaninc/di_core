@@ -56,6 +56,11 @@ class diRequest
 		return static::server("HTTP_HOST") ?: Config::getMainDomain();
 	}
 
+	public static function urlBase($slash = false)
+	{
+		return static::protocol() . '://' . static::domain() . ($slash ? '/' : '');
+	}
+
 	public static function referrer($default = '')
 	{
 		return static::server('HTTP_REFERER') ?: $default;

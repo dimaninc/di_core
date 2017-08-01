@@ -15,6 +15,11 @@ abstract class CMS
 	const TABLES_CONTENT_CACHE_PHP = "_cfg/cache/table_content.php";
 	const TABLES_CONTENT_CLEAN_TITLES_PHP = "_cfg/cache/table_content_ct_ar.php";
 
+	const TEMPLATE_ENGINE_TWIG = 1;
+	const TEMPLATE_ENGINE_FASTTEMPLATE = 2;
+
+	const MAIN_TEMPLATE_ENGINE = self::TEMPLATE_ENGINE_FASTTEMPLATE;
+
 	/** @var \FastTemplate */
 	public $tpl;
 
@@ -53,7 +58,7 @@ abstract class CMS
 	private $fileChmod = 0666;
 	private $dirChmod = 0777;
 
-	protected $protocol = "http";
+	protected $protocol = 'http';
 
 	/**
 	 * @var \diDeviceDetector
@@ -155,6 +160,9 @@ abstract class CMS
 	const META_FIELD_PREFIX_OLD = "html_";
 	const OPEN_GRAPH_FIELD_PREFIX = "open_graph_";
 
+	protected $metaFields = [];
+	protected $openGraphFields = [];
+
 	/** @var  \diModel */
 	protected $mainTarget;
 
@@ -201,7 +209,6 @@ abstract class CMS
 		"accepted",
 		"moderated",
 	];
-	//
 
 	// paths
 	public $tpl_dir;
@@ -416,6 +423,7 @@ abstract class CMS
 	}
 
 	/**
+	 * @deprecated
 	 * @return \FastTemplate
 	 */
 	public function getTpl()
@@ -430,10 +438,10 @@ abstract class CMS
 	{
 		if (!$this->Twig)
 		{
-			$this->initTwig();
+			$this
+				->initTwig()
+				->assignTwigBasics();
 		}
-
-		$this->assignTwigBasics();
 
 		return $this->Twig;
 	}
@@ -631,19 +639,34 @@ abstract class CMS
 
 	protected function assignMetaVariables()
 	{
-		if (!$this->tpl->getAssigned("META_TITLE"))
+		if (!$this->getMeta('title'))
 		{
-			$this->tpl->assign("META_TITLE", $this->getContentModel()->localized("title"));
+			$this->setMeta($this->getContentModel()->localized('title'));
 		}
 
-		if (!$this->tpl->getAssigned("META_DESCRIPTION"))
+		if (!$this->getMeta('description'))
 		{
-			$this->tpl->assign("META_DESCRIPTION", $this->tpl->getAssigned("HTML_DESCRIPTION"));
+			$this->setMeta($this->getContentModel()->localized('description') ?: $this->getMeta('title'), 'description');
 		}
 
-		if (!$this->tpl->getAssigned("META_DESCRIPTION"))
+		if (!$this->hasHeaderImage())
 		{
-			$this->tpl->assign("META_DESCRIPTION", $this->tpl->getAssigned("META_TITLE"));
+			if ($this->getContentModel()->localized('pic'))
+			{
+				$this
+					->setHeaderImage(
+						$this->getContentModel()->getPicsFolder() . $this->getContentModel()->localized('pic'), null,
+						$this->getContentModel()->localized('pic_w'),
+						$this->getContentModel()->localized('pic_h')
+					);
+			}
+			elseif (\diConfiguration::exists('smm_logo'))
+			{
+				$this->setHeaderImage(\diConfiguration::getFilename('smm_logo'), null,
+					\diConfiguration::get('smm_logo', 'img_width'),
+					\diConfiguration::get('smm_logo', 'img_height')
+				);
+			}
 		}
 
 		return $this;
@@ -730,18 +753,14 @@ abstract class CMS
 		return $this;
 	}
 
-	protected function printSearchStuff()
+	protected function openGraphNeeded()
 	{
-		$this->getTpl()->assign([
-			"SEARCH_Q" => trim(StringHelper::out(\diRequest::get("q", ""))),
-		]);
-
-		return $this;
+		return $this->responseCode != 404;
 	}
 
-	protected function processShareBlockHref($href)
+	protected function countersNeeded()
 	{
-		return $href;
+		return !static::debugMode();
 	}
 
 	protected function shareBlockNeeded()
@@ -751,15 +770,43 @@ abstract class CMS
 			!\diContentTypes::getParam($this->getContentModel()->getType(), "logged_in");
 	}
 
+	protected function htmlBaseNeeded()
+	{
+		return true;
+	}
+
+	protected function printSearchStuff()
+	{
+		$query = trim(StringHelper::out(\diRequest::get('q', '')));
+
+		$this->getTpl()->assign([
+			"SEARCH_Q" => $query,
+		]);
+
+		$this->getTwig()
+			->assign([
+				'search' => [
+					'query' => $query,
+				],
+			]);
+
+		return $this;
+	}
+
+	protected function processShareBlockHref($href)
+	{
+		return $href;
+	}
+
 	protected function printShareBlock()
 	{
-		if ($this->shareBlockNeeded())
+		if ($this->shareBlockNeeded() && self::MAIN_TEMPLATE_ENGINE == self::TEMPLATE_ENGINE_FASTTEMPLATE)
 		{
 			$title0 = $this->getMeta("title");
 			$content0 = $this->getMeta("description");
 
-			$title = StringHelper::out($title0); //META_ //PAGE_
-			$content = StringHelper::out($content0); //META_;
+			$title = StringHelper::out($title0);
+			$content = StringHelper::out($content0);
 			$href = "$this->protocol://{$_SERVER["HTTP_HOST"]}{$_SERVER["REQUEST_URI"]}";
 			$href = $this->processShareBlockHref($href);
 
@@ -769,7 +816,7 @@ abstract class CMS
 				$content0 = $title0;
 			}
 
-			$img = $this->getTpl()->getAssigned("HEADER_HTML_BASE") . $this->getTpl()->getAssigned("HEADER_IMAGE_URI");
+			$img = $this->getHeaderImage();
 			$content_ending_for_lj = "<div><img src=\"$img\" /></div>";
 
 			$this->getTpl()
@@ -873,10 +920,42 @@ abstract class CMS
 		return $this;
 	}
 
-	protected function getWholeFinalPage()
+	protected function getFastTemplateFinalPage()
 	{
 		return $this->getTpl()
 			->parse("index");
+	}
+
+	protected function getNeededSwitches()
+	{
+		return [
+			'open_graph' => $this->openGraphNeeded(),
+			'counters' => $this->countersNeeded(),
+			'share_block' => $this->shareBlockNeeded(),
+			'comments' => $this->isCommentsBlockPrintNeeded(),
+			'html_base' => $this->htmlBaseNeeded(),
+		];
+	}
+
+	protected function getWholeFinalPage()
+	{
+		if (static::MAIN_TEMPLATE_ENGINE == self::TEMPLATE_ENGINE_FASTTEMPLATE)
+		{
+			return $this->getFastTemplateFinalPage();
+		}
+
+		$this->getTwig()->assign([
+			'_tech' => [
+				'html_base' => $this->getBaseAddress() . '/',
+				'html_base_wo_slash' => $this->getBaseAddress(),
+			]
+		], true);
+
+		return $this->getTwig()->parse('index', [
+			'needed' => $this->getNeededSwitches(),
+			'meta' => $this->metaFields,
+			'open_graph' => $this->openGraphFields,
+		]);
 	}
 
 	protected function finish()
@@ -980,20 +1059,21 @@ abstract class CMS
 
 	public function initTwig()
 	{
-		$host = \diRequest::server('HTTP_HOST');
+		$host = \diRequest::domain();
 
 		$this->Twig = \diTwig::create()->assign([
 			'content_slugs' => $this->getCleanTitlesAr(),
 			'logged_in' => $this->authUsed && \diAuth::i()->authorized() ? true : false,
 
 			'_tech' => [
-				'uri' => \diRequest::server('REQUEST_URI'),
-				'url' => \diRequest::server('REQUEST_URI'),
+				'uri' => \diRequest::requestUri(),
+				'url' => \diRequest::requestUri(),
+				'year' => date('Y'),
 				'timestamp' => time(),
 				'http_host' => $host,
 				'http_protocol' => $this->protocol,
-				'html_base' => "{$this->protocol}://{$host}/",
-				'html_base_wo_slash' => "{$this->protocol}://{$host}",
+				'html_base' => $this->getBaseAddress() . '/',
+				'html_base_wo_slash' => $this->getBaseAddress(),
 			],
 		]);
 
@@ -1002,9 +1082,9 @@ abstract class CMS
 
 	protected function assignTwigBasics()
 	{
-		if ($this->getContentModel()->exists() && !$this->Twig->getAssigned('content_page'))
+		if ($this->getContentModel()->exists() && !$this->getTwig()->getAssigned('content_page'))
 		{
-			$this->Twig->assign([
+			$this->getTwig()->assign([
 				'content_page' => $this->getContentModel(),
 				'content_pages' => $this->getCachedContentCollection(),
 			]);
@@ -1054,15 +1134,13 @@ abstract class CMS
 	 */
 	public function initTplDefines()
 	{
-		$uri = \diRequest::server("REQUEST_URI");
-		$host = \diRequest::server("HTTP_HOST");
+		$this
+			->defineIndexTemplates();
+
+		$uri = \diRequest::requestUri();
+		$host = \diRequest::domain();
 
 		$this->getTpl()
-			->define("~", [
-				"index",
-				"head",
-				"counters",
-			])
 			->define([
 				"error_404" => "index/errors/404/page.htm",
 				"error_login" => "index/errors/login/page.htm",
@@ -1109,9 +1187,6 @@ abstract class CMS
 				"pic_a_img",
 				"pic_a_swf",
 			])
-			->define("~share", [
-				"share_block",
-			])
 			->define("~title", [
 				"top_title_divider",
 				"top_title_href",
@@ -1123,9 +1198,9 @@ abstract class CMS
 
 				"CURRENT_TIMESTAMP" => time(),
 
-				"HTML_BASE" => "{$this->protocol}://{$host}/",
-				"HEADER_HTML_BASE" => "{$this->protocol}://{$host}/",
-				"HTML_BASE2" => "{$this->protocol}://{$host}",
+				"HEADER_HTML_BASE" => \diRequest::urlBase(true),
+				"HTML_BASE" => $this->getBaseAddress() . '/',
+				"HTML_BASE2" => $this->getBaseAddress(),
 				"HTTP_HOST" => $host,
 				"HTTP_PROTOCOL" => $this->protocol,
 
@@ -1137,16 +1212,42 @@ abstract class CMS
 		return $this;
 	}
 
+	/** @deprecated  */
+	protected function defineIndexTemplates()
+	{
+		if (static::MAIN_TEMPLATE_ENGINE != self::TEMPLATE_ENGINE_FASTTEMPLATE)
+		{
+			return $this;
+		}
+
+		$this->getTpl()
+			->define("~", [
+				"index",
+				"head",
+				"counters",
+			])
+			->define("~share", [
+				"share_block",
+			]);
+
+		return $this;
+	}
+
 	protected function getCanonicalAddress($fullAddress = null)
 	{
 		if ($fullAddress === null)
 		{
-			$fullAddress = \diRequest::server("REQUEST_URI");
+			$fullAddress = \diRequest::requestUri();
 		}
 
 		$fullAddress = StringHelper::removeQueryStringParameter($fullAddress, [], [\diPagesNavy::PAGE_PARAM, \diComments::PAGE_PARAM]);
 
 		return $fullAddress;
+	}
+
+	protected function getBaseAddress()
+	{
+		return $this->protocol . '://' . \diRequest::domain();
 	}
 
 	public function initTplAssigns()
@@ -1372,16 +1473,16 @@ abstract class CMS
 				"LANGUAGE_HREF_PREFIX" => $this->language_href_prefix,
 				"SITE_LNG_LINK" => $currentModesStr,
 			]);
-
-			$this->getTwig()
-				->assign([
-					'_lang' => [
-						'name' => $this->language,
-						'href_prefix' => $this->language_href_prefix,
-						'links' => $links,
-					],
-				]);
 		}
+
+		$this->getTwig()
+			->assign([
+				'_lang' => [
+					'name' => $this->language,
+					'href_prefix' => $this->language_href_prefix,
+					'links' => $links,
+				],
+			]);
 
 		return $this;
 	}
@@ -1466,25 +1567,6 @@ abstract class CMS
 	}
 
 	/** @deprecated */
-	function check_multiline_field($field)
-	{
-		if ($this->getContentModel()->localized($field) === null)
-		{
-			$r = $this->getDb()->r("content", $this->getContentModel()->getId());
-
-			if ($this->{$field."_var"} && isset($r->{$this->{$field."_var"}}))
-			{
-				$this->getContentModel()->set(
-					$this->{$field . "_var"},
-					$r->{$this->{$field . "_var"}}
-				);
-			}
-		}
-
-		return $this;
-	}
-
-	/** @deprecated */
 	function get_content_of($id)
 	{
 		return $this->get_field_by_field("content", $this->content_var, "id", $id);
@@ -1495,25 +1577,36 @@ abstract class CMS
 	 */
 	protected function assignHtmlHead()
 	{
-		$this->check_multiline_field("content");
+		$pageData = [
+			'title' => $this->getContentModel()->localized('title'),
+			'caption' => $this->getContentModel()->localized('caption'),
+			'short_content' => $this->getContentModel()->localized('short_content'),
+			'content' => $this->getContentModel()->localized('content'),
+			'output_mode' => \diCore\Tool\Embed\App::getInstance()->getModeName(),
+		];
+
+		$this->metaFields = [
+			'title' => $this->getContentModel()->localized('meta_title') ?: $this->getContentModel()->localized('html_title'),
+			'description' => $this->getContentModel()->localized('meta_description') ?: $this->getContentModel()->localized('html_description'),
+			'keywords' => $this->getContentModel()->localized('meta_keywords') ?: $this->getContentModel()->localized('html_keywords'),
+		];
+
+		$canonical = [
+			'url' => $this->getCanonicalAddress(),
+			'full_url' => \diRequest::urlBase() . $this->getCanonicalAddress(),
+		];
 
 		$this->getTpl()
-			->assign($this->getContentModel()->getTemplateVars(), "PAGE_")
+			->assign($this->getContentModel()->getTemplateVars(), 'PAGE_')
+			->assign($canonical, 'CANONICAL_')
+			->assign($pageData, 'PAGE_')
+			->assign($this->metaFields, 'META_');
+
+		$this->getTwig()
 			->assign([
-				"CANONICAL_URI" => $this->getCanonicalAddress(),
-			])
-			->assign([
-				"TITLE" => $this->getContentModel()->localized("title"),
-				"CAPTION" => $this->getContentModel()->localized("caption"),
-				"SHORT_CONTENT" => $this->getContentModel()->localized("short_content"),
-				"CONTENT" => $this->getContentModel()->localized("content"),
-				"OUTPUT_MODE" => \diCore\Tool\Embed\App::getInstance()->getModeName(),
-			], "PAGE_")
-			->assign([
-				"TITLE" => $this->getContentModel()->localized("html_title"),
-				"DESCRIPTION" => $this->getContentModel()->localized("html_description"),
-				"KEYWORDS" => $this->getContentModel()->localized("html_keywords"),
-			], "META_");
+				//'page_data' => $pageData,
+				'canonical' => $canonical,
+			]);
 
 		$this->assign_top_language_links();
 
@@ -1534,7 +1627,9 @@ abstract class CMS
 
 	public function getMeta($field)
 	{
-		return $this->getTpl()->getAssigned($this->getFullMetaField($field));
+		return isset($this->metaFields[$field])
+			? $this->metaFields[$field]
+			: null;
 	}
 
 	/**
@@ -1543,53 +1638,47 @@ abstract class CMS
 	 *
 	 * @return \diCurrentCMS
 	 */
-	public function setMeta($text, $field = "title")
+	public function setMeta($text, $field = 'title')
 	{
 		if (is_array($text))
 		{
 			$text = ArrayHelper::recursiveJoin($text, ' ');
 		}
 
-		$this->getTpl()->assign([
-			$this->getFullMetaField($field) => $text,
-		]);
+		$this->metaFields[$field] = $text;
 
 		return $this;
 	}
 
-	public function appendMeta($text, $field = "title")
+	public function appendMeta($text, $field = 'title')
 	{
-		$this->getTpl()->assign([
-			$this->getFullMetaField($field) => $this->getMeta($field) . $text,
-		]);
+		$this->metaFields[$field] = $this->getMeta($field) . $text;
 
 		return $this;
 	}
 
 	public function getOpenGraph($field)
 	{
-		return $this->getTpl()->getAssigned($this->getFullOpenGraphField($field));
+		return isset($this->openGraphFields[$field])
+			? $this->openGraphFields[$field]
+			: null;
 	}
 
-	public function setOpenGraph($text, $field = "title")
+	public function setOpenGraph($text, $field = 'title')
 	{
 		if (is_array($text))
 		{
 			$text = ArrayHelper::recursiveJoin($text, ' ');
 		}
 
-		$this->getTpl()->assign([
-			$this->getFullOpenGraphField($field) => $text,
-		]);
+		$this->openGraphFields[$field] = $text;
 
 		return $this;
 	}
 
-	public function appendOpenGraph($text, $field = "title")
+	public function appendOpenGraph($text, $field = 'title')
 	{
-		$this->getTpl()->assign([
-			$this->getFullOpenGraphField($field) => $this->getOpenGraph($field) . $text,
-		]);
+		$this->openGraphFields[$field] = $this->getOpenGraph($field) . $text;
 
 		return $this;
 	}
@@ -1601,15 +1690,20 @@ abstract class CMS
 				"HEADER_IMAGE_URI" => $imagePath,
 				"HEADER_IMAGE_W" => $width,
 				"HEADER_IMAGE_H" => $height,
-				"HEADER_HTML_BASE" => $imageHtmlBase ?: $this->getTpl()->getAssigned("HTML_BASE"),
+				"HEADER_HTML_BASE" => $imageHtmlBase ?: \diRequest::urlBase(true),
 			]);
+
+		$this
+			->setOpenGraph(($imageHtmlBase ?: \diRequest::urlBase(true)) . $imagePath, 'image')
+			->setOpenGraph($width, 'image_width')
+			->setOpenGraph($height, 'image_height');
 
 		return $this;
 	}
 
 	public function getHeaderImage()
 	{
-		return $this->getTpl()->getAssigned('HEADER_IMAGE_URI');
+		return $this->getOpenGraph('image');
 	}
 
 	public function hasHeaderImage()
@@ -1617,20 +1711,22 @@ abstract class CMS
 		return !!$this->getHeaderImage();
 	}
 
+	/** @deprecated  */
 	protected function checkOpenGraphVariables()
 	{
-		if (!$this->getOpenGraph("title"))
+		if (self::MAIN_TEMPLATE_ENGINE != self::TEMPLATE_ENGINE_FASTTEMPLATE)
 		{
-			$this->getTpl()->assign([
-				$this->getFullOpenGraphField("title") => $this->getMeta("title"),
-			]);
+			return $this;
 		}
 
-		if (!$this->getOpenGraph("description"))
+		if (!$this->getOpenGraph('title'))
 		{
-			$this->getTpl()->assign([
-				$this->getFullOpenGraphField("description") => $this->getMeta("description"),
-			]);
+			$this->setOpenGraph($this->getMeta('title'));
+		}
+
+		if (!$this->getOpenGraph('description'))
+		{
+			$this->setOpenGraph($this->getMeta('description'), 'description');
 		}
 
 		return $this;
@@ -1642,7 +1738,7 @@ abstract class CMS
 	 */
 	public function getPaginationTitleSuffixTemplate()
 	{
-		return " Страница №%d";
+		return ' Страница №%d';
 	}
 
 	/**
@@ -1790,7 +1886,7 @@ abstract class CMS
 
 	public function needToPrintBreadCrumbs()
 	{
-		return $this->getContentModel()->getType() != "home";
+		return !in_array($this->getContentModel()->getType(), ['home']);
 	}
 
 	/**
@@ -1965,7 +2061,7 @@ abstract class CMS
 
 	public static function reload($die = true)
 	{
-		static::redirect(\diRequest::server("REQUEST_URI"), $die);
+		static::redirect(\diRequest::requestUri(), $die);
 	}
 
 	/** @deprecated  */
@@ -1987,7 +2083,9 @@ abstract class CMS
 	 */
 	public function getModelById($id)
 	{
-		return isset($this->tables["content"][$id]) ? $this->tables["content"][$id] : $this->getEmptyModel();
+		return isset($this->tables["content"][$id])
+			? $this->tables["content"][$id]
+			: $this->getEmptyModel();
 	}
 
 	/**
@@ -2232,6 +2330,7 @@ abstract class CMS
 	}
 
 	/**
+	 * @deprecated
 	 * @param Model $model
 	 * @return CMS
 	 */

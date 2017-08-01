@@ -988,9 +988,9 @@ class diModel implements \ArrayAccess
 	{
 		$lang = static::normalizeLang($lang, $field);
 
-		if ($lang != "ru") //diCurrentCMS::$defaultLanguage
+		if ($lang != \diCore\Data\Config::getMainLanguage())
 		{
-			$field = $lang . "_" . $field;
+			$field = $lang . '_' . $field;
 		}
 
 		return $field;

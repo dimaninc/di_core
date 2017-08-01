@@ -165,11 +165,18 @@ class diTwig
 	 * @param array|object $data
 	 * @return $this
 	 */
-	public function assign($data)
+	public function assign($data, $recursive = false)
 	{
 		if ($data)
 		{
-			$this->data = extend($this->data, $data);
+			if ($recursive)
+			{
+				$this->data = array_replace_recursive($this->data, $data);
+			}
+			else
+			{
+				$this->data = extend($this->data, $data);
+			}
 		}
 
 		return $this;
@@ -188,6 +195,14 @@ class diTwig
 	public function assigned($token)
 	{
 		return !!$this->getAssigned($token);
+	}
+
+	public function addFunction($name, callable $callable)
+	{
+		$function = new Twig_SimpleFunction($name, $callable);
+		$this->Twig->addFunction($function);
+
+		return $this;
 	}
 
 	/**
