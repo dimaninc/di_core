@@ -27,6 +27,7 @@ abstract class CMS
 	 * @var \diTwig
 	 */
 	private $Twig;
+	private $twigBasicsAssigned = false;
 
 	/** @var \diDB */
 	protected $db;
@@ -439,9 +440,11 @@ abstract class CMS
 		if (!$this->Twig)
 		{
 			$this
-				->initTwig()
-				->assignTwigBasics();
+				->initTwig();
 		}
+
+		$this
+			->assignTwigBasics();
 
 		return $this->Twig;
 	}
@@ -1082,12 +1085,19 @@ abstract class CMS
 
 	protected function assignTwigBasics()
 	{
-		if ($this->getContentModel()->exists() && !$this->getTwig()->getAssigned('content_page'))
+		if ($this->twigBasicsAssigned)
 		{
-			$this->getTwig()->assign([
+			return $this;
+		}
+
+		if ($this->getContentModel()->exists() && !$this->Twig->getAssigned('content_page'))
+		{
+			$this->Twig->assign([
 				'content_page' => $this->getContentModel(),
 				'content_pages' => $this->getCachedContentCollection(),
 			]);
+
+			$this->twigBasicsAssigned = true;
 		}
 
 		return $this;
