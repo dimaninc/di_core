@@ -74,6 +74,9 @@ abstract class diAdminBase
 			'menu.db.admin_pages.create' => 'Создать админ.страницу',
 			'menu.emails' => 'Письма',
 			'menu.admins' => 'Админы',
+			'menu.settings' => 'Служебное',
+			'menu.edit_settings' => 'Настройки',
+			'menu.rebuild_cache' => 'Обновить кеш',
 		],
 		'en' => [
 			'logo_description' => 'Content management system',
@@ -95,6 +98,9 @@ abstract class diAdminBase
 			'menu.db.admin_pages.create' => 'Create admin page',
 			'menu.emails' => 'E-mails',
 			'menu.admins' => 'Admins',
+			'menu.settings' => 'Settings',
+			'menu.edit_settings' => 'Edit settings',
+			'menu.rebuild_cache' => 'Rebuild cache',
 		],
 	];
 
@@ -878,13 +884,13 @@ abstract class diAdminBase
 	protected function getAdminMenuSettingsTree()
 	{
 		return [
-			"Служебное" => [
+			$this->getVocabulary('menu.settings') => [
 				"items" => [
-					"<b>Настройки</b>" => [
+					'<b>' . $this->getVocabulary('menu.edit_settings') . '</b>' => [
 						"module" => "configuration",
 					],
-					"Обновить кеш<br />" . CMS::getTemplatesCacheModificationDateTime() => [
-						"link" => diLib::getAdminWorkerPath("cache", "rebuild") . "?back=" . urlencode(diRequest::server("REQUEST_URI")),
+					$this->getVocabulary('menu.rebuild_cache') . '<br />' . CMS::getTemplatesCacheModificationDateTime() => [
+						"link" => diLib::getAdminWorkerPath("cache", "rebuild") . "?back=" . urlencode(\diRequest::requestUri()),
 					],
 				],
 				"permissions" => ["root"],

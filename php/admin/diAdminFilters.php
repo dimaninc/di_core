@@ -60,6 +60,18 @@ class diAdminFilters
 		"y2" => "year",
 	];
 
+	public static $lngStrings = [
+		'en' => [
+			'form.submit.title' => 'Apply filter',
+			'form.reset.title' => 'Reset',
+		],
+
+		'ru' => [
+			'form.submit.title' => 'Применить фильтр',
+			'form.reset.title' => 'Сбросить',
+		],
+	];
+
 	public $table;
 
 	/** @var diDB */
@@ -74,6 +86,8 @@ class diAdminFilters
 	protected $buttonOptions = [];
 
 	private $notes = [];
+
+	protected $language = 'ru';
 
 	public $ar = [];
 	public $applied_date = false;
@@ -107,6 +121,7 @@ class diAdminFilters
 			$this->AdminPage = $table;
 
 			$this->table = $this->AdminPage->getTable();
+			$this->language = $this->AdminPage->getAdmin()->getLanguage();
 		}
 		else
 		{
@@ -444,20 +459,20 @@ EOF;
 		return $this->buttonsSuffix;
 	}
 
-	public function get_buttons_block($opts = array())
+	public function get_buttons_block($opts = [])
 	{
-		$opts = extend(array(
+		$opts = extend([
 			"prefix" => $this->getButtonsPrefix(),
 			"suffix" => $this->getButtonsSuffix(),
-		), $this->buttonOptions, (array)$opts);
+		], $this->buttonOptions, (array)$opts);
 
 		return <<<EOF
-  <div class="buttons">
+<div class="buttons">
 {$opts["prefix"]}
-    <button type="submit" class="violet">Применить фильтр</button>
-    <button type="button" class="gray" data-purpose="reset">Сбросить</button>
+	<button type="submit" class="violet">{$this->L('form.submit.title')}</button>
+	<button type="button" class="gray" data-purpose="reset">{$this->L('form.reset.title')}</button>
 {$opts["suffix"]}
-  </div>
+</div>
 EOF;
 	}
 
@@ -806,7 +821,7 @@ EOF;
 
 		if ($prefix_ar)
 		{
-			$sel->AddItemArray($prefix_ar);
+			$sel->addItemArray($prefix_ar);
 		}
 
 		while ($db_rs && $db_r = $this->getDb()->fetch_array($db_rs))
@@ -823,12 +838,12 @@ EOF;
 			$text = str_replace($ar1, $ar2, $template_text);
 			$value = str_replace($ar1, $ar2, $template_value);
 
-			$sel->AddItem($value, $text);
+			$sel->addItem($value, $text);
 		}
 
 		if ($suffix_ar)
 		{
-			$sel->AddItemArray($suffix_ar);
+			$sel->addItemArray($suffix_ar);
 		}
 
 		$this->setInput($field, $sel);
@@ -957,7 +972,7 @@ EOF;
 		{
 			foreach ($this->input_params_ar[$field] as $_pn => $_pv)
 			{
-				$sel->setParam($_pn, $_pv);
+				$sel->setAttr($_pn, $_pv);
 			}
 		}
 
@@ -1107,6 +1122,15 @@ EOF;
 		);
 
 		return $this;
+	}
+
+	public function L($token, $language = null)
+	{
+		$language = $language ?: $this->language;
+
+		return isset(self::$lngStrings[$language][$token])
+			? self::$lngStrings[$language][$token]
+			: $token;
 	}
 
   function convert_from_and_to_dates()

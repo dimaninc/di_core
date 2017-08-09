@@ -67,6 +67,17 @@ abstract class diAdminBasePage
 		],
 	];
 
+	const VOCABULARY_MODULE_CAPTION = 'module.caption';
+
+	/**
+	 * @var array
+	 * Keys: module.caption
+	 */
+	protected $vocabulary = [
+		'ru' => [],
+		'en' => [],
+	];
+
 	/*
 	 * override this in child classed
 	 * possible keys:
@@ -1277,18 +1288,18 @@ abstract class diAdminBasePage
 	{
 		global $admin_captions_ar;
 
-		if (!isset($admin_captions_ar[$this->getLanguage()][$this->getTable()]))
+		if (isset($admin_captions_ar[$this->getLanguage()][$this->getTable()]))
 		{
-			return null;
+			$s = $admin_captions_ar[$this->getLanguage()][$this->getTable()];
+			if (($x = strpos($s, " / ")) !== false)
+			{
+				$s = substr($s, 0, $x);
+			}
+
+			return $s;
 		}
 
-		$s = $admin_captions_ar[$this->getLanguage()][$this->getTable()];
-		if (($x = strpos($s, " / ")) !== false)
-		{
-			$s = substr($s, 0, $x);
-		}
-
-		return $s;
+		return $this->getVocabularyTerm(self::VOCABULARY_MODULE_CAPTION);
 	}
 
 	public function getMethodCaption($action)
@@ -1311,5 +1322,12 @@ abstract class diAdminBasePage
 	public function useEditLog()
 	{
 		return false;
+	}
+
+	public function getVocabularyTerm($name)
+	{
+		return isset($this->vocabulary[$this->getLanguage()][$name])
+			? $this->vocabulary[$this->getLanguage()][$name]
+			: $name;
 	}
 }

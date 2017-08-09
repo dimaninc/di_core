@@ -1,6 +1,17 @@
 <?php
 class diConfigurationPage extends \diAdminBasePage
 {
+	protected $vocabulary = [
+		'ru' => [
+			'form.submit.title' => 'Сохранить',
+			'form.cancel.title' => 'Закрыть',
+		],
+		'en' => [
+			'form.submit.title' => 'Save',
+			'form.cancel.title' => 'Cancel',
+		],
+	];
+
 	/** @var \diConfiguration */
 	protected $cfg;
 
@@ -24,10 +35,15 @@ class diConfigurationPage extends \diAdminBasePage
 
 	public function printList()
 	{
-		$this->getTpl()->define("`configuration", [
-			"page",
-			"saved_message",
-		]);
+		$this->getTpl()
+			->define("`configuration", [
+				"page",
+				"saved_message",
+			])
+			->assign([
+				'SUBMIT_TITLE' => $this->getVocabularyTerm('form.submit.title'),
+				'CANCEL_TITLE' => $this->getVocabularyTerm('form.cancel.title'),
+			]);
 
 		$this->printConfigurationTable();
 
