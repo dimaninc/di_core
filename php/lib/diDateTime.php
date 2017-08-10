@@ -162,14 +162,14 @@ class diDateTime
 		return $year % 4 == 0 && $year % 100 != 0 || $year % 400 == 0;
 	}
 
-	public static function weekDay($dt)
+	public static function weekDay($dt = null)
 	{
 		$a = getdate(self::timestamp($dt));
 
 		return $a["wday"] ?: 7;
 	}
 
-	public static function yearDay($dt)
+	public static function yearDay($dt = null)
 	{
 		if (!$dt)
 		{
@@ -181,7 +181,7 @@ class diDateTime
 		return floor(($dt - mktime(0, 0, 0, 1, 1, date("Y", $dt))) / self::SECS_PER_DAY);
 	}
 
-	public static function bigYearDay($dt)
+	public static function bigYearDay($dt = null)
 	{
 		$yd = self::yearDay($dt);
 		$yd = str_repeat("0", 3 - mb_strlen($yd)).$yd;
