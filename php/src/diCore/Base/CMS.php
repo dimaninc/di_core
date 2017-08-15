@@ -409,6 +409,21 @@ abstract class CMS
 		return $this->tables["content"];
 	}
 
+	public function getCachedContentCollectionByType()
+	{
+		$contentByType = [];
+
+		/**
+		 * @var Model $m
+		 */
+		foreach ($this->getCachedContentCollection() as $m)
+		{
+			$contentByType[$m->getType()] = $m;
+		}
+
+		return $contentByType;
+	}
+
 	/** * @deprecated */
 	public static function get_ct_ar()
 	{
@@ -1095,6 +1110,7 @@ abstract class CMS
 			$this->Twig->assign([
 				'content_page' => $this->getContentModel(),
 				'content_pages' => $this->getCachedContentCollection(),
+				'content_by_type' => $this->getCachedContentCollectionByType(),
 			]);
 
 			$this->twigBasicsAssigned = true;
