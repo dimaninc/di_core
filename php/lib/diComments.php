@@ -213,6 +213,11 @@ class diComments
 				static::META_TITLE_COMMENT_PAGE_SUFFIX => $this->getMetaTitleSuffix(),
 				"COMMENT_AUTH_CLASS_NAME" => $this->authorized() ? "auth-ok" : "auth-needed",
 			]);
+		
+		$this->getTwig()
+			->assign([
+				static::META_TITLE_COMMENT_PAGE_SUFFIX => $this->getMetaTitleSuffix(),
+			]);
 
 		return $this;
 	}

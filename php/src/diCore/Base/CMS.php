@@ -776,6 +776,11 @@ abstract class CMS
 		return $this->responseCode != 404;
 	}
 
+	protected function languageAlternatesNeeded()
+	{
+		return false;
+	}
+
 	protected function countersNeeded()
 	{
 		return !static::debugMode();
@@ -952,6 +957,7 @@ abstract class CMS
 			'share_block' => $this->shareBlockNeeded(),
 			'comments' => $this->isCommentsBlockPrintNeeded(),
 			'html_base' => $this->htmlBaseNeeded(),
+			'language_alternates' => $this->languageAlternatesNeeded(),
 		];
 	}
 
@@ -978,6 +984,12 @@ abstract class CMS
 
 	protected function finish()
 	{
+		if (static::MAIN_TEMPLATE_ENGINE == self::TEMPLATE_ENGINE_FASTTEMPLATE)
+		{
+			$this->getTpl()
+				->assign($this->metaFields, 'META_');
+		}
+
 		echo $this
 			->finalParse()
 			->getWholeFinalPage();
@@ -1304,11 +1316,18 @@ abstract class CMS
 	 */
 	protected function setupDeviceDetector()
 	{
-		$this->getTpl()
+		$device = [
+			'os' => $this->getDeviceDetector()->getOsStr(),
+			'type' => $this->getDeviceDetector()->getTypeStr(),
+		];
+
+		$this->getTwig()
 			->assign([
-				"TYPE" => $this->getDeviceDetector()->getTypeStr(),
-				"OS" => $this->getDeviceDetector()->getOsStr(),
-			], "DEVICE_");
+				'device' => $device,
+			]);
+
+		$this->getTpl()
+			->assign($device, "DEVICE_");
 
 		return $this;
 	}
@@ -1321,7 +1340,7 @@ abstract class CMS
 
 	protected function getFullRoute()
 	{
-		return addslashes(trim(\diRequest::server('REQUEST_URI'), '/'));
+		return addslashes(trim(\diRequest::requestUri(), '/'));
 	}
 
 	public function populateRoutes()
