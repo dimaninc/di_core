@@ -206,6 +206,7 @@ abstract class diModule
 
 	/**
 	 * @return FastTemplate
+	 * @deprecated
 	 */
 	public function getTpl()
 	{
