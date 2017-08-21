@@ -51,14 +51,25 @@ abstract class diModule
 
 		if ($o->getTwig()->has(\diTwig::TOKEN_FOR_PAGE))
 		{
-			$o->getTpl()
-				->assign([
-					"PAGE" => $o->getTwig()->getPage(),
-				]);
+			if ($Z::templateEngineIsFastTemplate())
+			{
+				$o->getTpl()
+					->assign([
+						"PAGE" => $o->getTwig()->getPage(),
+					]);
+			}
 		}
 		elseif ($o->getTpl()->defined("page"))
 		{
-			$o->getTpl()->parse("PAGE");
+			$o->getTpl()->process('page');
+
+			if ($Z::templateEngineIsTwig())
+			{
+				$o->getTwig()
+					->importFromFastTemplate($o->getTpl(), [
+						\diTwig::TOKEN_FOR_PAGE => 'page',
+					], false);
+			}
 		}
 
 		return $o;

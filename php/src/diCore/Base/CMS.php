@@ -822,9 +822,19 @@ abstract class CMS
 		return $href;
 	}
 
+	public static function templateEngineIsTwig()
+	{
+		return static::MAIN_TEMPLATE_ENGINE === self::TEMPLATE_ENGINE_TWIG;
+	}
+
+	public static function templateEngineIsFastTemplate()
+	{
+		return static::MAIN_TEMPLATE_ENGINE === self::TEMPLATE_ENGINE_FASTTEMPLATE;
+	}
+
 	protected function printShareBlock()
 	{
-		if ($this->shareBlockNeeded() && self::MAIN_TEMPLATE_ENGINE == self::TEMPLATE_ENGINE_FASTTEMPLATE)
+		if ($this->shareBlockNeeded()) // && static::templateEngineIsFastTemplate()
 		{
 			$title0 = $this->getMeta("title");
 			$content0 = $this->getMeta("description");
@@ -977,7 +987,7 @@ abstract class CMS
 
 	protected function getWholeFinalPage()
 	{
-		if (static::MAIN_TEMPLATE_ENGINE == self::TEMPLATE_ENGINE_FASTTEMPLATE)
+		if (static::templateEngineIsFastTemplate())
 		{
 			return $this->getFastTemplateFinalPage();
 		}
@@ -998,7 +1008,7 @@ abstract class CMS
 
 	protected function finish()
 	{
-		if (static::MAIN_TEMPLATE_ENGINE == self::TEMPLATE_ENGINE_FASTTEMPLATE)
+		if (static::templateEngineIsFastTemplate())
 		{
 			$this->getTpl()
 				->assign($this->metaFields, 'META_');
@@ -1267,7 +1277,7 @@ abstract class CMS
 	/** @deprecated  */
 	protected function defineIndexTemplates()
 	{
-		if (static::MAIN_TEMPLATE_ENGINE != self::TEMPLATE_ENGINE_FASTTEMPLATE)
+		if (!static::templateEngineIsFastTemplate())
 		{
 			return $this;
 		}
@@ -1773,7 +1783,7 @@ abstract class CMS
 	/** @deprecated  */
 	protected function checkOpenGraphVariables()
 	{
-		if (self::MAIN_TEMPLATE_ENGINE != self::TEMPLATE_ENGINE_FASTTEMPLATE)
+		if (!static::templateEngineIsFastTemplate())
 		{
 			return $this;
 		}
