@@ -1143,7 +1143,11 @@ abstract class CMS
 			return $this;
 		}
 
-		if (count($this->getCachedContentCollection()) && !$this->Twig->getAssigned('content_page'))
+		$contentReady = $this->responseCode == HttpCode::NOT_FOUND
+			? !!count($this->getCachedContentCollection())
+			: $this->getContentModel()->exists();
+
+		if ($contentReady && !$this->Twig->getAssigned('content_page'))
 		{
 			$this->Twig->assign([
 				'content_page' => $this->getContentModel(),
