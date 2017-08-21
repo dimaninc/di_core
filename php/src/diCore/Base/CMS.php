@@ -28,6 +28,7 @@ abstract class CMS
 	 */
 	private $Twig;
 	private $twigBasicsAssigned = false;
+	private $indexTemplateName = 'index';
 
 	/** @var \diDB */
 	protected $db;
@@ -943,6 +944,7 @@ abstract class CMS
 		return $this;
 	}
 
+	/** @deprecated */
 	protected function getFastTemplateFinalPage()
 	{
 		return $this->getTpl()
@@ -961,6 +963,18 @@ abstract class CMS
 		];
 	}
 
+	protected function getIndexTemplateName()
+	{
+		return $this->indexTemplateName;
+	}
+
+	public function setIndexTemplateName($name)
+	{
+		$this->indexTemplateName = $name;
+
+		return $this;
+	}
+
 	protected function getWholeFinalPage()
 	{
 		if (static::MAIN_TEMPLATE_ENGINE == self::TEMPLATE_ENGINE_FASTTEMPLATE)
@@ -975,7 +989,7 @@ abstract class CMS
 			]
 		], true);
 
-		return $this->getTwig()->parse('index', [
+		return $this->getTwig()->parse($this->getIndexTemplateName(), [
 			'needed' => $this->getNeededSwitches(),
 			'meta' => $this->metaFields,
 			'open_graph' => $this->openGraphFields,
