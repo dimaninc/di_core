@@ -7,6 +7,7 @@ use diCore\Data\Types;
 use diCore\Entity\Content\Model;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
+use diCore\Data\Http\HttpCode;
 
 abstract class CMS
 {
@@ -106,7 +107,7 @@ abstract class CMS
 	 * @var int
 	 * Todo: make response object
 	 */
-	protected $responseCode = 200;
+	protected $responseCode = HttpCode::OK;
 
 	private $routes = [];
 	private $origRoutes = [];
@@ -774,7 +775,7 @@ abstract class CMS
 
 	protected function openGraphNeeded()
 	{
-		return $this->responseCode != 404;
+		return $this->responseCode != HttpCode::NOT_FOUND;
 	}
 
 	protected function languageAlternatesNeeded()
@@ -790,6 +791,7 @@ abstract class CMS
 	protected function shareBlockNeeded()
 	{
 		return
+			$this->responseCode == HttpCode::OK &&
 			$this->print_share_block &&
 			!\diContentTypes::getParam($this->getContentModel()->getType(), "logged_in");
 	}
@@ -1141,7 +1143,7 @@ abstract class CMS
 			return $this;
 		}
 
-		if ($this->getContentModel()->exists() && !$this->Twig->getAssigned('content_page'))
+		if (count($this->getCachedContentCollection()) && !$this->Twig->getAssigned('content_page'))
 		{
 			$this->Twig->assign([
 				'content_page' => $this->getContentModel(),
@@ -2055,9 +2057,9 @@ abstract class CMS
 	 */
 	public function errorNotAuthorized()
 	{
-		$this->responseCode = 403;
+		$this->responseCode = HttpCode::UNAUTHORIZED;
 
-		header("HTTP/1.1 403 Forbidden");
+		HttpCode::header($this->responseCode);
 
 		$this->printBreadCrumbs();
 
@@ -2077,7 +2079,7 @@ abstract class CMS
 	 */
 	public function errorNoAccess()
 	{
-		//$this->responseCode = 401;
+		$this->responseCode = HttpCode::FORBIDDEN;
 
 		$this->error_404();
 
@@ -2086,9 +2088,9 @@ abstract class CMS
 
 	public function error_404()
 	{
-		$this->responseCode = 404;
+		$this->responseCode = HttpCode::NOT_FOUND;
 
-		header("HTTP/1.1 404 Not Found");
+		HttpCode::header($this->responseCode);
 
 		if (static::debugMode())
 		{
@@ -2113,7 +2115,7 @@ abstract class CMS
 
 	public static function redirect_301($href, $die = true)
 	{
-		header("HTTP/1.1 301 Moved Permanently");
+		HttpCode::header(HttpCode::MOVED_PERMANENTLY);
 
 		static::redirect($href, $die);
 	}
