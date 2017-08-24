@@ -8,22 +8,26 @@ tinymce.init({
     //relative_urls: false,
     //remove_script_host: false,
     image_advtab: true,
-    content_css: '/_admin/_static/css/wysiwyg.css',
+    content_css: '{% block content_css_path %}/_admin/_static/css/wysiwyg.css{% endblock %}',
     plugins: [
         'advlist autolink lists link image charmap print preview anchor textcolor',
         'searchreplace visualblocks code fullscreen',
         'responsivefilemanager insertdatetime media table contextmenu paste',
-        ''
+        '{% block extra_plugins %}{% endblock %}'
     ],
     toolbar: '| insertfile undo redo | styleselect | bold italic | forecolor backcolor | ' +
         'alignleft aligncenter alignright alignjustify | ' +
-        'bullist numlist outdent indent | link responsivefilemanager', // image
-    allow_script_urls: true,
-    extended_valid_elements: 'script[language|type|src]',
-    {% if extra_wysiwyg_settings %}{{ extra_wysiwyg_settings|raw }}{% endif %}
+        'bullist numlist outdent indent | link {% if needed['rfm'] %}responsivefilemanager{% endif %} {% block toolbar_file_manager %}{% endblock %}', // image
+{% if needed['rfm'] %}
     external_filemanager_path: '{{ asset_locations['vendor'] }}responsive_filemanager/',
     filemanager_title: 'File Manager',
-    external_plugins: {'filemanager': 'plugins/responsivefilemanager/plugin.min.js'}
+    external_plugins: {'filemanager': 'plugins/responsivefilemanager/plugin.min.js'},
+{% endif %}
+    {% if extra_wysiwyg_settings %}{{ extra_wysiwyg_settings|raw }}{% endif %}
+    {% block extra_settings %}{% endblock %}
+    allow_script_urls: true,
+    extended_valid_elements: 'script[language|type|src]'
 });
 {% endblock %}
+{% block after_init %}{% endblock %}
 </script>

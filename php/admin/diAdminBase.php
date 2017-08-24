@@ -703,13 +703,21 @@ abstract class diAdminBase
 		return $this->wysiwygVendor;
 	}
 
+	protected function getWysiwygTemplateName($alias)
+	{
+		return 'admin/wysiwyg/' . $alias;
+	}
+
 	private function printWysiwygHeadScript()
 	{
 		$script = '';
 
 		if ($alias = \diAdminForm::getWysiwygAlias($this->getWysiwygVendor()))
 		{
-			$script = $this->getTwig()->parse('admin/wysiwyg/' . $alias, [
+			$script = $this->getTwig()->parse($this->getWysiwygTemplateName($alias), [
+				'needed' => [
+					'rfm' => $this->responsiveFileManagerNeeded(),
+				],
 				'extra_wysiwyg_settings' => $this->getExtraWysiwygSettings(),
 			]);
 		}
@@ -723,6 +731,11 @@ abstract class diAdminBase
 	protected function getExtraWysiwygSettings()
 	{
 		return '';
+	}
+
+	protected function responsiveFileManagerNeeded()
+	{
+		return true;
 	}
 
 	public function printHead()

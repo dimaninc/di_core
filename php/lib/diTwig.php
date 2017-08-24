@@ -22,6 +22,9 @@ class diTwig
 
 	const customClassName = "diCustomTwig";
 
+	const NAMESPACE_CORE = 'core';
+	const NAMESPACE_MAIN = Twig_Loader_Filesystem::MAIN_NAMESPACE;
+
 	/**
 	 * @var Twig_Loader_Filesystem
 	 */
@@ -43,7 +46,12 @@ class diTwig
 	 */
 	public function __construct($options = [])
 	{
-		$this->loader = new Twig_Loader_Filesystem(static::wrapPaths($this->getPaths()));
+		$this->loader = new Twig_Loader_Filesystem();
+
+		foreach ($this->getAllPaths() as $namespace => $paths)
+		{
+			$this->loader->setPaths(static::wrapPaths($paths), $namespace);
+		}
 
 		$this->Twig = new Twig_Environment($this->loader, extend([
 			'cache' => Config::getCacheFolder() . static::CACHE_FOLDER,
@@ -66,17 +74,33 @@ class diTwig
 		return $t;
 	}
 
-	protected function getCustomPaths()
+	protected function getAllPaths()
 	{
-		return [];
+		return extend([
+			//self::NAMESPACE_CORE => $this->getCorePaths(),
+			self::NAMESPACE_MAIN => array_merge($this->getMainPaths(), $this->getCorePaths()),
+		], $this->getOtherPaths());
 	}
 
-	protected function getPaths()
+	protected function getCorePaths()
 	{
-		return array_merge([
-			'',
+		return [
 			Config::getTwigCorePath(),
-		], $this->getCustomPaths());
+		];
+	}
+
+	protected function getMainPaths()
+	{
+		return [
+			'',
+		];
+	}
+
+	protected function getOtherPaths()
+	{
+		return [
+			// 'namespace' => ['paths'],
+		];
 	}
 
 	protected static function wrapPaths($paths)
