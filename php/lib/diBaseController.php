@@ -304,9 +304,7 @@ class diBaseController
 
 	protected function getRawPostData()
 	{
-		global $HTTP_RAW_POST_DATA;
-
-		return $HTTP_RAW_POST_DATA;
+		return \diRequest::rawPost();
 	}
 
 	protected function getIncomingXml()
