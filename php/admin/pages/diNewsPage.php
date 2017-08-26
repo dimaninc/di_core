@@ -1,13 +1,22 @@
 <?php
-
 /**
  * Created by PhpStorm.
  * User: dimaninc
  * Date: 28.05.2015
  * Time: 22:20
  */
+
+use diCore\Entity\MailIncut\Model as IncutModel;
+use diCore\Entity\MailIncut\Collection as IncutCollection;
+use diCore\Data\Types;
+use diCore\Admin\Submit;
+use diCore\Tool\Mail\Queue;
+
 class diNewsPage extends diAdminBasePage
 {
+	const DISPATCH_MODE_TEST = 1;
+	const DISPATCH_MODE_STANDARD = 2;
+
 	protected $slugFieldName = "clean_title";
 	protected $slugSourceFieldName = "menu_title";
 
@@ -26,12 +35,12 @@ class diNewsPage extends diAdminBasePage
 
 	protected $picOptions = [
 		[
-			"type" => diAdminSubmit::IMAGE_TYPE_MAIN,
-			"resize" => diImage::DI_THUMB_FIT,
+			"type" => Submit::IMAGE_TYPE_MAIN,
+			"resize" => \diImage::DI_THUMB_FIT,
 		],
 		[
-			"type" => diAdminSubmit::IMAGE_TYPE_PREVIEW,
-			"resize" => diImage::DI_THUMB_CROP,
+			"type" => Submit::IMAGE_TYPE_PREVIEW,
+			"resize" => \diImage::DI_THUMB_CROP,
 		],
 	];
 
@@ -59,7 +68,7 @@ class diNewsPage extends diAdminBasePage
 			"date" => [
 				"title" => "Дата",
 				"value" => function(diNewsModel $n) {
-					return diDateTime::format("d.m.Y H:i", $n->getDate());
+					return \diDateTime::format("d.m.Y H:i", $n->getDate());
 				},
 				"attrs" => [
 					"width" => "10%",
@@ -101,18 +110,18 @@ class diNewsPage extends diAdminBasePage
 
 	protected function dispatchNewsletter()
 	{
-		$mq = diMailQueue::create();
+		$mq = Queue::basicCreate();
 		/** @var diNewsModel $m */
-		$m = diModel::create(diTypes::news, $this->getSubmit()->getSubmittedModel()->getId());
+		$m = \diModel::create(Types::news, $this->getSubmit()->getSubmittedModel()->getId());
 
-		if (!diRequest::post("dispatch", 0) && !diRequest::post("dispatch_test", 0))
+		if (!\diRequest::post("dispatch", 0) && !\diRequest::post("dispatch_test", 0))
 		{
 			return $this;
 		}
 
-		$mode = diRequest::post("dispatch_test", 0) ? "test" : "standard";
+		$mode = \diRequest::post("dispatch_test", 0) ? self::DISPATCH_MODE_TEST : self::DISPATCH_MODE_STANDARD;
 
-		$sender = diConfiguration::get("newsletter_email");
+		$sender = \diConfiguration::get("newsletter_email");
 		$subject = $m->getTitle();
 		$content = $m->getContent();
 
@@ -122,14 +131,14 @@ class diNewsPage extends diAdminBasePage
 		$attaches = [];
 		$fileReplaces = [];
 
-		$fn = diPaths::fileSystem() . $m->getPicsFolder() . $m->getPic();
+		$fn = \diPaths::fileSystem() . $m->getPicsFolder() . $m->getPic();
 		$fileReplaces["{PIC}"] = "";
 
 		if ($m->hasPic() && is_file($fn))
 		{
 			$imgContent = file_get_contents($fn);
 
-			$ext = strtolower(get_file_ext($m->getPic()));
+			$ext = strtolower(\diCore\Helper\StringHelper::fileExtension($m->getPic()));
 
 			if ($ext == "jpeg" || $ext == "jpg")
 				$contentType = "image/jpeg";
@@ -151,15 +160,14 @@ class diNewsPage extends diAdminBasePage
 				"content_id" => $cid,
 			];
 
-			$fileReplaces["{PIC}"] = "<img src=\"cid:$cid\" />";
+			$fileReplaces["{PIC}"] = "<img src=\"cid:$cid\">";
 
-			diCollection::create(diTypes::news_attach, "WHERE news_id='{$m->getId()}'")->hardDestroy();
+			IncutCollection::createBinaryAttachment()
+				->filterByTargetType(Types::news)
+				->filterByTargetId($m->getId())
+				->hardDestroy();
 
-			/** @var diNewsAttachModel $attach */
-			$attach = diModel::create(diTypes::news_attach);
-			$attach
-				->setNewsId($m->getId())
-				->setAttachment(serialize($attaches))
+			IncutModel::createBinaryAttachment(serialize($attaches), Types::news, $m->getId())
 				->save();
 
 			$content = str_replace(array_keys($fileReplaces), array_values($fileReplaces), $content);
@@ -180,8 +188,8 @@ class diNewsPage extends diAdminBasePage
 {$content}<br />
 EOF;
 
-		$users = diCollection::create(diTypes::user, $mode == "test"
-			? "WHERE email" . diDB::in(preg_split("/[\r\n\s,;]+/", diConfiguration::get("newsletter_test_emails")))
+		$users = \diCollection::create(Types::user, $mode == self::DISPATCH_MODE_TEST
+			? "WHERE email" . diDB::in(preg_split("/[\r\n\s,;]+/", \diConfiguration::get("newsletter_test_emails")))
 			: "WHERE email!='' and notify_news='1' and newsletter_flag='0' and active='1' ORDER BY id ASC"
 		);
 		/** @var diUserCustomModel $user */
@@ -199,11 +207,9 @@ EOF;
 EOF;
 
 			/*
-
 			<br /><br /><br />
 			Отписаться от данной рассылки можно, перейдя по ссылке:
 			<a href="http://strategy.ru/unsubscribe/$user_r->id-$user_r->activation_key/">http://strategy.ru/unsubscribe/$user_r->id-$user_r->activation_key/</a><br />
-
 			*/
 
 			$mq->add($sender, $recipient, $subject, $body_prefix . $bodySuffix, false, $m->getId());

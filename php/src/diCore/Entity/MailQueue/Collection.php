@@ -59,4 +59,19 @@ class Collection extends \diCollection
 	const type = Types::mail_queue;
 	protected $table = 'mail_queue';
 	protected $modelType = 'mail_queue';
+
+	/**
+	 * @return Collection
+	 * @throws \Exception
+	 */
+	public static function createActual()
+	{
+		/** @var Collection $col */
+		$col = \diCollection::create(Types::mail_queue);
+		$col
+			->filterByVisible(1)
+			->filterBySent(0);
+
+		return $col;
+	}
 }

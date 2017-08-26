@@ -38,7 +38,6 @@ use diCore\Data\Types;
  * @method bool hasNewsId
  * @method bool hasDate
  *
- * @method Model setSender($value)
  * @method Model setRecipient($value)
  * @method Model setRecipientId($value)
  * @method Model setSubject($value)
@@ -71,4 +70,27 @@ class Model extends \diModel
 		self::DIRECTION_INCOMING => 'Исходящее',
 		self::DIRECTION_OUTGOING => 'Входящее',
 	];
+
+	public function setSender($email, $name = null)
+	{
+		if ($name === null)
+		{
+			if (is_array($email))
+			{
+				$sender = sprintf('%s <%s>', $email['name'], $email['email']);
+			}
+			else
+			{
+				$sender = $email;
+			}
+		}
+		else
+		{
+			$sender = sprintf('%s <%s>', $name, $email);
+		}
+
+		$this->set('sender', $sender);
+
+		return $this;
+	}
 }
