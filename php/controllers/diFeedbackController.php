@@ -6,6 +6,9 @@
  * Date: 30.09.15
  * Time: 23:10
  */
+
+use diCore\Tool\Mail\Queue;
+
 class diFeedbackController extends diBaseController
 {
 	protected $sendEmail = true;
@@ -87,7 +90,7 @@ class diFeedbackController extends diBaseController
 
 	protected function sendEmail($from, $to, $subj, $body)
 	{
-		return diMailQueue::create()->add_and_send($from, $to, $subj, $body);
+		return Queue::basicCreate()->addAndSend($from, $to, $subj, $body);
 	}
 
 	private function sendEmailNotification()

@@ -6,6 +6,9 @@
  * Time: 17:25
  */
 
+use diCore\Tool\Mail\Queue;
+use diCore\Entity\Comment\Model;
+
 class diCommentController extends diBaseController
 {
 	/** @var diComments  */
@@ -31,11 +34,11 @@ class diCommentController extends diBaseController
 	 */
 	protected $target;
 	/**
-	 * @var diCommentModel
+	 * @var Model
 	 */
 	protected $targetComment;
 	/**
-	 * @var diCommentModel
+	 * @var Model
 	 */
 	protected $newComment;
 
@@ -43,15 +46,15 @@ class diCommentController extends diBaseController
 	{
 		parent::__construct();
 
-		$this->targetType = diRequest::post("target_type", 0);
-		$this->targetId = diRequest::post("target_id", 0);
-		$this->template = diRequest::post("template", "");
+		$this->targetType = \diRequest::post("target_type", 0);
+		$this->targetId = \diRequest::post("target_id", 0);
+		$this->template = \diRequest::post("template", "");
 
 		$this
 			->checkAuth()
 			->initTpl();
 
-		$this->Comments = diComments::create($this->targetType, $this->targetId);
+		$this->Comments = \diComments::create($this->targetType, $this->targetId);
 		$this->Comments
 			->setTpl($this->getTpl())
 			->setTwig($this->getTwig());
@@ -72,24 +75,24 @@ class diCommentController extends diBaseController
 			'message' => '',
 		];
 
-		/** @var diCommentModel $comment */
-		$comment = diModel::create(diTypes::comment);
+		/** @var Model $comment */
+		$comment = \diModel::create(\diTypes::comment);
 
 		try
 		{
 			if (!$this->userId)
 			{
-				throw new Exception("Authorization required");
+				throw new \Exception("Authorization required");
 			}
 
-			$target = new diModel($this->targetId, diTypes::getTable($this->targetType));
+			$target = new \diModel($this->targetId, \diTypes::getTable($this->targetType));
 
 			if (!$target->exists())
 			{
-				throw new Exception("Target {$this->targetType}#{$this->targetId} doesn't exist");
+				throw new \Exception("Target {$this->targetType}#{$this->targetId} doesn't exist");
 			}
 
-			if ($this->targetType == diTypes::user)
+			if ($this->targetType == \diTypes::user)
 			{
 				$ownerId = $target->getId();
 			}
@@ -169,7 +172,7 @@ class diCommentController extends diBaseController
 
 				$comments = $this->Comments->getPastCommentsCollection($firstCommentId);
 
-				/** @var diCommentModel $comment */
+				/** @var Model $comment */
 				foreach ($comments as $comment)
 				{
 					$response["new_comments"][] = [
@@ -304,7 +307,7 @@ class diCommentController extends diBaseController
 	}
 
 	/**
-	 * @param diCommentModel $comment
+	 * @param Model $comment
 	 * @param string $action
 	 *
 	 * @return $this
@@ -322,7 +325,7 @@ class diCommentController extends diBaseController
 
 		if ($recipient && ($subject || $body))
 		{
-			diMailQueue::create()->sendWorker(
+			Queue::basicCreate()->sendWorker(
 				[
 					"email" => diConfiguration::get("noreply_email"),
 				],
@@ -340,7 +343,7 @@ class diCommentController extends diBaseController
 	{
 		if (!$this->targetCommentOwner)
 		{
-			$this->targetCommentOwner = diModel::create(diTypes::user, $this->getTargetComment()->getUserId());
+			$this->targetCommentOwner = \diModel::create(\diTypes::user, $this->getTargetComment()->getUserId());
 		}
 
 		return $this->targetCommentOwner;
@@ -350,7 +353,7 @@ class diCommentController extends diBaseController
 	{
 		if (!$this->commenter)
 		{                                      // todo: this could be admin
-			$this->commenter = diModel::create(diTypes::user, $this->getNewComment()->getUserId());
+			$this->commenter = \diModel::create(\diTypes::user, $this->getNewComment()->getUserId());
 		}
 
 		return $this->commenter;
@@ -370,7 +373,7 @@ class diCommentController extends diBaseController
 	{
 		if (!$this->targetComment)
 		{
-			$this->targetComment = diModel::create(diTypes::comment, $this->getNewComment()->getParent());
+			$this->targetComment = \diModel::create(\diTypes::comment, $this->getNewComment()->getParent());
 		}
 
 		return $this->targetComment;
@@ -386,7 +389,7 @@ class diCommentController extends diBaseController
 		return $this->newComment;
 	}
 
-	protected function setNewComment(diCommentModel $comment)
+	protected function setNewComment(Model $comment)
 	{
 		$this->newComment = $comment;
 
