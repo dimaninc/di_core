@@ -67,9 +67,19 @@ class Sender
 
 		if (!is_array($from))
 		{
-			$from = [
-				'email' => $from,
-			];
+			if (preg_match("/^(.+)\s+<(.+)>$/", $from, $matches))
+			{
+				$from = [
+					'name' => $matches[1],
+					'email' => $matches[2],
+				];
+			}
+			else
+			{
+				$from = [
+					'email' => $from,
+				];
+			}
 		}
 
 		$from = extend([
@@ -134,13 +144,24 @@ class Sender
 		{
 			$mail->Host = Vendor::smtpHost(static::getAccountVendor($fromEmail));
 			$mail->Password = static::getAccountPassword($fromEmail);
+
+			if (!$mail->Host)
+			{
+				throw new \Exception('SMTP host not defined');
+			}
+
+			if (!$mail->Password)
+			{
+				throw new \Exception('SMTP password not defined');
+			}
+
 			$mail->isSMTP();
 
 			if ($mail->Mailer == 'smtp')
 			{
 				$mail->SMTPAuth = true;
 				$mail->SMTPSecure = 'tls';
-				$mail->Port = 25;
+				$mail->Port = 587;
 				$mail->Username = $fromEmail;
 
 				$mail->SMTPOptions = [

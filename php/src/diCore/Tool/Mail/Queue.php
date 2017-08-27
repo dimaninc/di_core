@@ -143,9 +143,11 @@ class Queue
 		if ($message->exists())
 		{
 			$this->sendMessage($message);
+
+			return true;
 		}
 
-		return $this;
+		return false;
 	}
 
 	public function sendWorker($from, $to, $subject, $bodyPlain, $bodyHtml, $attachments = [], $options = [])

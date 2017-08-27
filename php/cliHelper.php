@@ -11,12 +11,19 @@ if (empty($_SERVER['DOCUMENT_ROOT']))
 	if (($x = strpos($_SERVER['DOCUMENT_ROOT'], '/_core/php')) !== false)
 	{
 		$_SERVER['DOCUMENT_ROOT'] = substr($_SERVER['DOCUMENT_ROOT'], 0, $x);
+
+		if (is_file($autoload = $_SERVER['DOCUMENT_ROOT'] . '/vendor/autoload.php'))
+		{
+			require $autoload;
+		}
 	}
 	else
 	{
 		if (($x = strpos($_SERVER['DOCUMENT_ROOT'], '/vendor/dimaninc/di_core/php')) !== false)
 		{
 			$_SERVER['DOCUMENT_ROOT'] = substr($_SERVER['DOCUMENT_ROOT'], 0, $x) . '/htdocs';
+
+			require $_SERVER['DOCUMENT_ROOT'] . '/../vendor/autoload.php';;
 		}
 		else
 		{
