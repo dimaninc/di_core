@@ -21,7 +21,7 @@ class MailQueue extends \diAdminBasePage
 		$this->setTable("mail_queue");
 	}
 
-	public function renderList()
+	protected function renderControlPanel()
 	{
 		$this->getTpl()->define("`mail_queue/list", [
 			"before_table",
@@ -30,6 +30,13 @@ class MailQueue extends \diAdminBasePage
 			"VISIBLE_WORKER_URI" => \diLib::getAdminWorkerPath("mail", "set_visible") . "?back=" . urlencode($_SERVER["REQUEST_URI"]),
 			"SEND_ALL_WORKER_URI" => \diLib::getAdminWorkerPath("mail", "send_all"),
 		]);
+
+		return $this;
+	}
+
+	public function renderList()
+	{
+		$this->renderControlPanel();
 
 		$this->getList()->addColumns([
 			"id" => "ID",
