@@ -1162,36 +1162,22 @@ function dierror2($text, $module = "")
   die("$text");
 }
 
+/** @deprecated  */
 function getLogFolder()
 {
-	return \diCore\Data\Config::getLogFolder();
+	return \diCore\Tool\Logger::getInstance()->getFolder();
 }
 
+/** @deprecated  */
 function simple_debug($message, $module = "", $fnSuffix = "")
 {
-	$fn = getLogFolder() . "log/debug/".date("Y_m_d").$fnSuffix.".txt";
-
-	if ($module)
-	{
-		$module = " [$module]";
-	}
-
-	$f = fopen($fn, "a");
-	fputs($f, date("[d.m.Y H:i:s]")."{$module} $message\n");
-	fclose($f);
-
-	chmod($fn, 0777);
+	\diCore\Tool\Logger::getInstance()->log($message, $module, $fnSuffix);
 }
 
+/** @deprecated  */
 function var_debug()
 {
-	$fn = getLogFolder() . "log/debug/".date("Y_m_d").".txt";
-
-	$f = fopen($fn, "a");
-	fputs($f, date("[d.m.Y H:i:s] ").var_export(func_get_args(), true)."\n");
-	fclose($f);
-
-	chmod($fn, 0777);
+	\diCore\Tool\Logger::getInstance()->variable();
 }
 
 function cron_debug($script)

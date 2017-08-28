@@ -22,7 +22,7 @@ class Sender
 	const defaultFromEmail = 'noreply@domain.com';
 
 	const secureSending = true;
-	const debugSenging = false;
+	const debugSending = false;
 
 	protected static $localHost = '127.0.0.1';
 
@@ -39,9 +39,14 @@ class Sender
 		*/
 	];
 
+	public static function getTransport()
+	{
+		return static::transport;
+	}
+
 	public static function send($from, $to, $subject, $bodyPlain, $bodyHtml, $attachments = [], $options = [])
 	{
-		switch (static::transport)
+		switch (static::getTransport())
 		{
 			case Transport::SENDMAIL:
 				return static::viaSendmail($from, $to, $subject, $bodyPlain, $bodyHtml, $attachments, $options);
@@ -98,6 +103,18 @@ class Sender
 		$mail->Subject = $subject;
 		$mail->Body = $bodyPlain ?: $bodyHtml;
 
+		if (!empty($options['replyTo']))
+		{
+			if (is_array($options['replyTo']))
+			{
+				$mail->addReplyTo($options['replyTo']['email'], $options['replyTo']['name']);
+			}
+			else
+			{
+				$mail->addReplyTo($options['replyTo']);
+			}
+		}
+		
 		foreach ($to as $recipient)
 		{
 			$mail->addAddress($recipient);
@@ -139,7 +156,7 @@ class Sender
 		$mail->CharSet = 'UTF-8';
 		$mail->Host = self::$localHost;
 
-		if (static::debugSenging)
+		if (static::debugSending)
 		{
 			$mail->SMTPDebug = 3;
 		}
