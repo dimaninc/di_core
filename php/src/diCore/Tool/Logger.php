@@ -15,6 +15,11 @@ class Logger
 
 	const SUB_FOLDER = 'log/debug/';
 	const EXTENSION = '.txt';
+	const DATE_TIME_FORMAT = '[d.m.Y H:i:s]';
+	const CHMOD = 0777;
+
+	const PURPOSE_SIMPLE = 1;
+	const PURPOSE_VARIABLE = 2;
 
 	protected function init()
 	{
@@ -25,33 +30,49 @@ class Logger
 		return \diCore\Data\Config::getLogFolder();
 	}
 
-	public function log($message, $module = '', $fnSuffix = '')
+	protected function getFilename($purpose, $fnSuffix = '')
 	{
-		$fn = $this->getFolder() . static::SUB_FOLDER . date("Y_m_d").$fnSuffix. static::EXTENSION;
+		return \diDateTime::format('Y_m_d') . $fnSuffix . static::EXTENSION;
+	}
 
-		if ($module)
-		{
-			$module = " [$module]";
-		}
+	protected function getFullFilename($purpose, $fnSuffix = '')
+	{
+		return $this->getFolder() . static::SUB_FOLDER . $this->getFilename($purpose, $fnSuffix);
+	}
 
-		$f = fopen($fn, "a");
-		fputs($f, date("[d.m.Y H:i:s]")."{$module} $message\n");
+	protected function getDateTime($purpose)
+	{
+		return \diDateTime::format(static::DATE_TIME_FORMAT);
+	}
+
+	protected function saveLine($line, $purpose, $fnSuffix = '')
+	{
+		$fn = $this->getFullFilename($purpose, $fnSuffix);
+
+		$f = fopen($fn, 'a');
+		fputs($f, $this->getDateTime($purpose) . ' ' . $line . "\n");
 		fclose($f);
 
-		chmod($fn, 0777);
+		chmod($fn, static::CHMOD);
+
+		return $this;
+	}
+
+	public function log($message, $module = '', $fnSuffix = '')
+	{
+		if ($module)
+		{
+			$module = "[$module]";
+		}
+
+		$this->saveLine($module . ' ' . $message, self::PURPOSE_SIMPLE, $fnSuffix);
 
 		return $this;
 	}
 
 	public function variable()
 	{
-		$fn = $this->getFolder() . static::SUB_FOLDER.date("Y_m_d").static::EXTENSION;
-
-		$f = fopen($fn, "a");
-		fputs($f, date("[d.m.Y H:i:s] ").var_export(func_get_args(), true)."\n");
-		fclose($f);
-
-		chmod($fn, 0777);
+		$this->saveLine(var_export(func_get_args(), true), self::PURPOSE_VARIABLE);
 
 		return $this;
 	}

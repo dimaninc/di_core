@@ -736,7 +736,7 @@ function digit_case($x, $s1, $s2, $s3 = false, $return_only_string = false)
 /** @deprecated  */
 function pad_left($s, $len, $char)
 {
-  return StringHelper::leftPad($s, $len, $char, STR_PAD_LEFT);
+  return StringHelper::leftPad($s, $len, $char);
 }
 
 function escape_tpl_brackets($s)
@@ -1177,7 +1177,8 @@ function simple_debug($message, $module = "", $fnSuffix = "")
 /** @deprecated  */
 function var_debug()
 {
-	\diCore\Tool\Logger::getInstance()->variable();
+	$arguments = func_get_args();
+	call_user_func_array([\diCore\Tool\Logger::class, 'variable'], $arguments);
 }
 
 function cron_debug($script)
