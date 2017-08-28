@@ -31,10 +31,28 @@ class Vendor extends SimpleContainer
 		self::yandex => 'smtp.yandex.ru',
 	];
 
+	protected static $smtpPorts = [
+		self::google => [
+			true => 587,
+			false => 25,
+		],
+		self::yandex => [
+			true => 25,
+			false => 25,
+		],
+	];
+
 	public static function smtpHost($id)
 	{
 		return isset(static::$smtpHosts[$id])
 			? static::$smtpHosts[$id]
+			: null;
+	}
+
+	public static function smtpPort($id, $secure)
+	{
+		return isset(static::$smtpPorts[$id][$secure])
+			? static::$smtpPorts[$id][$secure]
 			: null;
 	}
 }

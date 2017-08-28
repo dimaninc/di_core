@@ -21,6 +21,9 @@ class Sender
 	const defaultFromName = 'Robot';
 	const defaultFromEmail = 'noreply@domain.com';
 
+	const secureSending = true;
+	const debugSenging = false;
+
 	protected static $localHost = '127.0.0.1';
 
 	protected static $accounts = [
@@ -135,14 +138,21 @@ class Sender
 		$mail = new \PHPMailer();
 		$mail->CharSet = 'UTF-8';
 		$mail->Host = self::$localHost;
-		$mail->SMTPDebug = 3;
+
+		if (static::debugSenging)
+		{
+			$mail->SMTPDebug = 3;
+		}
+
 		$mail->Debugoutput = function($str, $level) {
 			Logger::getInstance()->log($str, 'Mailer/' . $level);
 		};
 
 		if ($fromEmail)
 		{
-			$mail->Host = Vendor::smtpHost(static::getAccountVendor($fromEmail));
+			$vendor = static::getAccountVendor($fromEmail);
+
+			$mail->Host = Vendor::smtpHost($vendor);
 			$mail->Password = static::getAccountPassword($fromEmail);
 
 			if (!$mail->Host)
@@ -161,7 +171,7 @@ class Sender
 			{
 				$mail->SMTPAuth = true;
 				$mail->SMTPSecure = 'tls';
-				$mail->Port = 587;
+				$mail->Port = Vendor::smtpPort($vendor, static::secureSending);
 				$mail->Username = $fromEmail;
 
 				$mail->SMTPOptions = [

@@ -142,9 +142,7 @@ class Queue
 
 		if ($message->exists())
 		{
-			$this->sendMessage($message);
-
-			return true;
+			return $this->sendMessage($message);
 		}
 
 		return false;
@@ -182,9 +180,12 @@ class Queue
 		/** @var Model $message */
 		foreach ($messages as $message)
 		{
-			$this->sendMessage($message);
+			if ($this->sendMessage($message))
+			{
+				$counter++;
+			}
 
-			if ($limit && ++$counter > $limit)
+			if ($limit && $counter > $limit)
 			{
 				break;
 			}
@@ -213,7 +214,7 @@ class Queue
 			$this->setMessageSent($message);
 		}
 
-		return $this;
+		return $result;
 	}
 
 	private function setMessageSent(Model $message)
