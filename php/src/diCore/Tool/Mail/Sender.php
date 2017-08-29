@@ -135,6 +135,8 @@ class Sender
 		{
 			foreach ($attachments as $attachment)
 			{
+				$attachment = static::prepareAttachment($attachment);
+
 				if (!empty($attachment['data']))
 				{
 					$mail->addStringEmbeddedImage(
@@ -170,6 +172,11 @@ class Sender
 		}
 
 		return $res;
+	}
+
+	protected static function prepareAttachment($attachment)
+	{
+		return $attachment;
 	}
 
 	/**
