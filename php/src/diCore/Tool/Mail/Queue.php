@@ -211,7 +211,7 @@ class Queue
 	public function sendAllSafe($limit = 0)
 	{
 		$i = 0;
-		$errorsAllowed = static::SAFE_SEND_ERRORS_ALLOWED;
+		//$errorsAllowed = static::SAFE_SEND_ERRORS_ALLOWED;
 
 		do {
 			if ($limit && $i >= $limit)
@@ -232,10 +232,11 @@ class Queue
 			{
 				if ($this->isLastErrorFatal())
 				{
-					$errorsAllowed--;
+					break;
+					//$errorsAllowed--;
 				}
 			}
-		} while ($sent || $errorsAllowed);
+		} while ($sent); // || $errorsAllowed)
 
 		return $i;
 	}
