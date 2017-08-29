@@ -72,7 +72,12 @@ class Logger
 
 	public function variable()
 	{
-		$this->saveLine(var_export(func_get_args(), true), self::PURPOSE_VARIABLE);
+		$arguments = func_get_args();
+
+		foreach ($arguments as $arg)
+		{
+			$this->saveLine(var_export($arg, true), self::PURPOSE_VARIABLE);
+		}
 
 		return $this;
 	}

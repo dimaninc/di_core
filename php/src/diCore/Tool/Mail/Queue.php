@@ -20,8 +20,9 @@ class Queue
 {
 	use BasicCreate;
 
+	const INSTANT_SEND = false;
+
 	private $incuts = [];
-	private $instantSend = false;
 
 	public function add($from, $to, $subject, $body, $plainBody = false, $attachments = [], $incutIds = '')
 	{
@@ -66,7 +67,7 @@ class Queue
 	{
 		$id = $this->add($from, $to, $subj, $body, $plain_body, $attachment_ar);
 
-		if ($this->instantSend)
+		if (static::INSTANT_SEND)
 		{
 			$this->send($id);
 		}

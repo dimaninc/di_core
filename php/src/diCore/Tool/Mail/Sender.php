@@ -44,6 +44,16 @@ class Sender
 		return static::transport;
 	}
 
+	/*
+	 * each $attachments element should look like this:
+	 * [0] => [
+	 *      'filename' => 'filename.jpg',
+	 *      'content_id' => 'CID',
+	 *      'content_type' => 'image/jpeg',
+	 * 	    'data' => '[binary_data]', // or
+	 *      'path' => '/full/path/to/filename.jpg'
+	 * ],
+	 */
 	public static function send($from, $to, $subject, $bodyPlain, $bodyHtml, $attachments = [], $options = [])
 	{
 		switch (static::getTransport())
@@ -114,7 +124,7 @@ class Sender
 				$mail->addReplyTo($options['replyTo']);
 			}
 		}
-		
+
 		foreach ($to as $recipient)
 		{
 			$mail->addAddress($recipient);
@@ -124,13 +134,30 @@ class Sender
 		{
 			foreach ($attachments as $attachment)
 			{
-				$mail->addStringEmbeddedImage(
-					$attachment['data'],
-					!empty($attachment['content_id']) ? $attachment['content_id'] : '',
-					$attachment['filename'],
-					'base64',
-					$attachment['content_type']
-				);
+				if (!empty($attachment['data']))
+				{
+					$mail->addStringEmbeddedImage(
+						$attachment['data'],
+						!empty($attachment['content_id']) ? $attachment['content_id'] : '',
+						$attachment['filename'],
+						'base64',
+						$attachment['content_type']
+					);
+				}
+				elseif (!empty($attachment['path']))
+				{
+					$mail->addEmbeddedImage(
+						$attachment['path'],
+						!empty($attachment['content_id']) ? $attachment['content_id'] : '',
+						$attachment['filename']
+					);
+				}
+				else
+				{
+					Logger::getInstance()
+						->log('attachment error: no file contents')
+						->variable($attachment);
+				}
 			}
 		}
 
