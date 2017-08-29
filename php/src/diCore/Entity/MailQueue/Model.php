@@ -77,7 +77,14 @@ class Model extends \diModel
 		{
 			if (is_array($email))
 			{
-				$sender = sprintf('%s <%s>', $email['name'], $email['email']);
+				if (isset($email['name']))
+				{
+					$sender = sprintf('%s <%s>', $email['name'], $email['email']);
+				}
+				else
+				{
+					$sender = $email['email'];
+				}
 			}
 			else
 			{

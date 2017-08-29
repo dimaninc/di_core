@@ -14,6 +14,7 @@ use diCore\Entity\MailIncut\Collection as IncutCollection;
 use diCore\Entity\MailIncut\Type;
 use diCore\Entity\MailQueue\Collection;
 use diCore\Entity\MailQueue\Model;
+use diCore\Tool\Logger;
 use diCore\Traits\BasicCreate;
 
 class Queue
@@ -21,6 +22,7 @@ class Queue
 	use BasicCreate;
 
 	const INSTANT_SEND = false;
+	const SAFE_SEND_ERRORS_ALLOWED = 50;
 
 	private $incuts = [];
 
@@ -162,8 +164,13 @@ class Queue
 
 		foreach ($to as $singleTo)
 		{
-			if (!$sender->send($from, $singleTo, $subject, $bodyPlain, $bodyHtml, $attachments, $options))
-			{
+			try {
+				if (!$sender->send($from, $singleTo, $subject, $bodyPlain, $bodyHtml, $attachments, $options))
+				{
+					$res = false;
+				}
+			} catch (\Exception $e) {
+				Logger::getInstance()->log($e->getMessage(), 'Queue::sendWorker');
 				$res = false;
 			}
 		}
@@ -228,9 +235,26 @@ class Queue
 
 	public function sendAllSafe($limit = 0)
 	{
-		$i = -1;
+		$i = 0;
+		$errorsAllowed = static::SAFE_SEND_ERRORS_ALLOWED;
 
-		do if ($limit && ++$i > $limit) break; while ($this->send());
+		do {
+			if ($limit && $i >= $limit)
+			{
+				break;
+			}
+
+			$sent = $this->send();
+
+			if ($sent)
+			{
+				$i++;
+			}
+			else
+			{
+				$errorsAllowed--;
+			}
+		} while ($sent || $errorsAllowed);
 
 		return $i;
 	}

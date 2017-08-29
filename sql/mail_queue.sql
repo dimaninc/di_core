@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS mail_queue(
   subject varchar(255),
   body mediumtext,
   plain_body tinyint default '1',
-  attachment mediumtext,
+  attachment MEDIUMBLOB,
   incut_ids varchar(20) default '',
   visible tinyint default '1',
   sent tinyint default '0',

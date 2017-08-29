@@ -10,6 +10,7 @@ namespace diCore\Tool\Mail;
 
 use diCore\Traits\BasicCreate;
 use diCore\Tool\Logger;
+use PHPMailer\PHPMailer\PHPMailer;
 
 class Sender
 {
@@ -101,11 +102,11 @@ class Sender
 		}
 
 		$from = extend([
-			'name' => self::defaultFromName,
-			'email' => self::defaultFromEmail,
+			'name' => static::defaultFromName,
+			'email' => static::defaultFromEmail,
 		], $from);
 
-		$mail = self::createPhpMailerInstance($from['email']);
+		$mail = static::createPhpMailerInstance($from['email']);
 
 		$mail->setFrom($from['email'], $from['name']);
 		$mail->WordWrap = 150;
@@ -175,13 +176,13 @@ class Sender
 	 * @param null|string $fromEmail
 	 * Don't forget to install PHPMailer: composer require phpmailer/phpmailer
 	 *
-	 * @return \PHPMailer
+	 * @return PHPMailer
 	 */
 	public static function createPhpMailerInstance($fromEmail = null)
 	{
-		$mail = new \PHPMailer();
+		$mail = new PHPMailer();
 		$mail->CharSet = 'UTF-8';
-		$mail->Host = self::$localHost;
+		$mail->Host = static::$localHost;
 
 		if (static::debugSending)
 		{
@@ -201,12 +202,12 @@ class Sender
 
 			if (!$mail->Host)
 			{
-				throw new \Exception('SMTP host not defined');
+				throw new \Exception('SMTP host not defined for ' . $fromEmail);
 			}
 
 			if (!$mail->Password)
 			{
-				throw new \Exception('SMTP password not defined');
+				throw new \Exception('SMTP password not defined for ' . $fromEmail);
 			}
 
 			$mail->isSMTP();
@@ -233,15 +234,23 @@ class Sender
 
 	protected static function getAccountVendor($email)
 	{
-		return isset(static::$accounts[$email]['vendor'])
-			? static::$accounts[$email]['vendor']
+		$a = isset(static::$accounts[$email])
+			? static::$accounts[$email]
+			: null;
+
+		return isset($a['vendor'])
+			? $a['vendor']
 			: static::defaultVendor;
 	}
 
 	protected static function getAccountPassword($email)
 	{
-		return isset(static::$accounts[$email]['password'])
-			? static::$accounts[$email]['password']
-			: static::$accounts[$email];
+		$a = isset(static::$accounts[$email])
+			? static::$accounts[$email]
+			: null;
+
+		return isset($a['password'])
+			? $a['password']
+			: $a;
 	}
 }
