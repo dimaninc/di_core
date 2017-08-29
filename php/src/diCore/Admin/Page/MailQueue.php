@@ -145,6 +145,13 @@ class MailQueue extends \diAdminBasePage
 				"default" => "",
 			],
 
+			"attachment" => [
+				"type" => "text",
+				"title" => "Attachments (serialized)",
+				"default" => "",
+				"flags" => ["static"],
+			],
+
 			"visible" => [
 				"type" => "checkbox",
 				"title" => "Активно",
