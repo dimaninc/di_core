@@ -22,9 +22,11 @@ class Queue
 	use BasicCreate;
 
 	const INSTANT_SEND = false;
-	const SAFE_SEND_ERRORS_ALLOWED = 50;
+	const SAFE_SEND_ERRORS_ALLOWED = 5;
 
 	private $incuts = [];
+
+	private $lastError = Error::NONE;
 
 	public function add($from, $to, $subject, $body, $plainBody = false, $attachments = [], $incutIds = '')
 	{
@@ -56,18 +58,18 @@ class Queue
 		return $model->getId();
 	}
 
-	public function addAndSend($from, $to, $subj, $body, $plainBody = false, $attachment = [])
+	public function addAndSend($from, $to, $subject, $body, $plainBody = false, $attachments = [])
 	{
-		$id = $this->add($from, $to, $subj, $body, $plainBody, $attachment);
+		$id = $this->add($from, $to, $subject, $body, $plainBody, $attachments);
 
 		$this->send($id);
 
 		return $this;
 	}
 
-	public function addAndMayBeSend($from, $to, $subj, $body, $plain_body = false, $attachment_ar = [])
+	public function addAndMayBeSend($from, $to, $subject, $body, $plainBody = false, $attachments = [])
 	{
-		$id = $this->add($from, $to, $subj, $body, $plain_body, $attachment_ar);
+		$id = $this->add($from, $to, $subject, $body, $plainBody, $attachments);
 
 		if (static::INSTANT_SEND)
 		{
@@ -106,7 +108,7 @@ class Queue
 		return $this;
 	}
 
-	public function getAttachment(Model $model)
+	public function getAttachments(Model $model)
 	{
 		if ($model->hasNewsId())
 		{
@@ -120,7 +122,9 @@ class Queue
 			/** @var \diCore\Entity\MailIncut\Model $incut */
 			$incut = $col->getFirstItem();
 
-			return $incut->getContent();
+			return $incut->exists() && $incut->hasContent()
+				? unserialize($incut->getContent())
+				: [];
 		}
 		else
 		{
@@ -168,6 +172,8 @@ class Queue
 				if (!$sender->send($from, $singleTo, $subject, $bodyPlain, $bodyHtml, $attachments, $options))
 				{
 					$res = false;
+
+					$this->setLastError(Error::UNKNOWN_FATAL);
 				}
 			} catch (\Exception $e) {
 				Logger::getInstance()->log($e->getMessage(), 'Queue::sendWorker');
@@ -202,20 +208,52 @@ class Queue
 		return $this;
 	}
 
+	public function sendAllSafe($limit = 0)
+	{
+		$i = 0;
+		$errorsAllowed = static::SAFE_SEND_ERRORS_ALLOWED;
+
+		do {
+			if ($limit && $i >= $limit)
+			{
+				break;
+			}
+
+			$this
+				->setLastError();
+
+			$sent = $this->send();
+
+			if ($sent)
+			{
+				$i++;
+			}
+			else
+			{
+				if ($this->isLastErrorFatal())
+				{
+					$errorsAllowed--;
+				}
+			}
+		} while ($sent || $errorsAllowed);
+
+		return $i;
+	}
+
 	protected function sendMessage(Model $message)
 	{
 		$message
 			->setVisible(0)
 			->save();
 
-		$attachment = $this->getAttachment($message);
+		$attachments = $this->getAttachments($message);
 		$this->processIncuts($message);
 
 		$bodyPlain = $message->hasPlainBody() ? $message->getBody() : '';
 		$bodyHtml = $message->hasPlainBody() ? '' : $message->getBody();
 
 		$result = $this->sendWorker($message->getSender(), $message->getRecipient(), $message->getSubject(),
-			$bodyPlain, $bodyHtml, $attachment);
+			$bodyPlain, $bodyHtml, $attachments);
 
 		if ($result)
 		{
@@ -233,30 +271,37 @@ class Queue
 		return $this;
 	}
 
-	public function sendAllSafe($limit = 0)
+	/**
+	 * @return int
+	 */
+	public function getLastError()
 	{
-		$i = 0;
-		$errorsAllowed = static::SAFE_SEND_ERRORS_ALLOWED;
+		return $this->lastError;
+	}
 
-		do {
-			if ($limit && $i >= $limit)
-			{
-				break;
-			}
+	/**
+	 * @param int $lastError
+	 * @return $this
+	 */
+	protected function setLastError($lastError = Error::NONE)
+	{
+		$this->lastError = $lastError;
 
-			$sent = $this->send();
+		return $this;
+	}
 
-			if ($sent)
-			{
-				$i++;
-			}
-			else
-			{
-				$errorsAllowed--;
-			}
-		} while ($sent || $errorsAllowed);
+	protected function isLastErrorFatal()
+	{
+		return !$this->isLastErrorLite();
+	}
 
-		return $i;
+	protected function isLastErrorLite()
+	{
+		return in_array($this->getLastError(), [
+			Error::NONE,
+			Error::QUEUE_IS_EMPTY,
+			Error::NO_CREDENTIALS,
+		]);
 	}
 
 	public static function incutToken($id)

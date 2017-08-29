@@ -71,7 +71,7 @@ class diEmail
 			"data" => "[binary_data]",
 		],
 	*/
-	public static function fastSend($from, $to, $subject, $message, $body_html, $attachment_ar = [], $options = [])
+	public static function fastSend($from, $to, $subject, $message, $body_html, $attachments = [], $options = [])
 	{
 		global $html_encodings_ar;
 
@@ -158,7 +158,7 @@ class diEmail
 			$headersAr[] = "Return-Path: $from_email_brackets";
 		}
 
-		if ($body_html || ($attachment_ar && count($attachment_ar)))
+		if ($body_html || ($attachments && count($attachments)))
 		{
 			$mime_boundary = "==Multipart_Boundary_x".md5(mt_rand())."x";
 
@@ -194,10 +194,25 @@ class diEmail
 
 			//$message .= "\n--{$mime_boundary}--\n";
 
-			if ($attachment_ar)
+			if ($attachments)
 			{
-				foreach ($attachment_ar as $attachment)
+				foreach ($attachments as $attachment)
 				{
+					if (empty($attachment['data']) && !empty($attachment['path']))
+					{
+						$attachment['data'] = file_get_contents($attachment['path']);
+
+						if (empty($attachment['filename']))
+						{
+							$attachment['filename'] = basename($attachment['path']);
+						}
+
+						if (empty($attachment['content_type']))
+						{
+							$attachment['content_type'] = \diCore\Helper\StringHelper::mimeTypeByFilename($attachment['filename']);
+						}
+					}
+
 					$attachment["data"] = chunk_split(base64_encode($attachment["data"]));
 
 					$cid_line = !empty($attachment["content_id"]) ? "Content-ID: <{$attachment["content_id"]}>\n" : "";

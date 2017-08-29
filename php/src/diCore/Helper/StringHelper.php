@@ -345,4 +345,22 @@ class StringHelper
 	{
 		return $string . str_repeat($char, $length - mb_strlen($string));
 	}
+
+	public static function mimeTypeByFilename($filename)
+	{
+		$ext = strtolower(self::fileExtension($filename));
+
+		if ($ext == 'jpeg' || $ext == 'jpg')
+			$contentType = 'image/jpeg';
+		elseif ($ext == 'gif' || $ext == 'png')
+			$contentType = 'image/' . $ext;
+		elseif ($ext == 'swf')
+			$contentType = 'application/x-shockwave-flash';
+		elseif ($ext == 'exe')
+			$contentType = 'application/octet-stream';
+		else
+			$contentType = 'application/octet-stream';
+
+		return $contentType;
+	}
 }

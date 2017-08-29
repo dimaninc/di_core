@@ -1,13 +1,11 @@
 <?php
 /**
  * Created by \diModelsManager
- * Date: 26.08.2017
- * Time: 17:15
+ * Date: 29.08.2017
+ * Time: 18:25
  */
 
 namespace diCore\Entity\MailIncut;
-
-use diCore\Data\Types;
 
 /**
  * Class Collection

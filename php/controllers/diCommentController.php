@@ -325,13 +325,12 @@ class diCommentController extends diBaseController
 
 		if ($recipient && ($subject || $body))
 		{
-			Queue::basicCreate()->sendWorker(
+			Queue::basicCreate()->addAndMayBeSend(
 				[
-					"email" => diConfiguration::get("noreply_email"),
+					'email' => diConfiguration::get('noreply_email'),
 				],
 				$recipient,
 				$subject,
-				"",
 				$body
 			);
 		}

@@ -139,17 +139,7 @@ class diNewsPage extends diAdminBasePage
 			$imgContent = file_get_contents($fn);
 
 			$ext = strtolower(\diCore\Helper\StringHelper::fileExtension($m->getPic()));
-
-			if ($ext == "jpeg" || $ext == "jpg")
-				$contentType = "image/jpeg";
-			elseif ($ext == "gif" || $ext == "png")
-				$contentType = "image/$ext";
-			elseif ($ext == "swf")
-				$contentType = "application/x-shockwave-flash";
-			elseif ($ext == "exe")
-				$contentType = "application/octet-stream";
-			else
-				$contentType = "application/octet-stream";
+			$contentType = \diCore\Helper\StringHelper::mimeTypeByFilename($m->getPic());
 
 			$cid = get_unique_id();
 
