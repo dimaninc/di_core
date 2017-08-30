@@ -183,15 +183,25 @@ class diContentFamily
 		return $this;
 	}
 
+	protected function isModelSuitable(Model $content)
+	{
+		return $content->getSlug() == $this->getZ()->getRoute(0);
+	}
+
+	protected function getContentCollection()
+	{
+		return $this->getZ()->tables[$this->table];
+	}
+
 	protected function findModel()
 	{
 		/**
 		 * @var int $id
 		 * @var Model $content
 		 */
-		foreach ($this->getZ()->tables[$this->table] as $id => $content)
+		foreach ($this->getContentCollection() as $id => $content)
 		{
-			if ($content->getSlug() == $this->getZ()->getRoute(0))
+			if ($this->isModelSuitable($content))
 			{
 				$this->setModel($content);
 

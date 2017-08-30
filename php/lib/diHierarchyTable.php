@@ -8,27 +8,60 @@
 
 class diHierarchyTable
 {
-	/** @var string */
+	/** @var int */
+	protected $type;
+
+	/**
+	 * @deprecated
+	 * @var string
+	 */
 	protected $table;
 
 	/** @var diDB */
 	protected $db;
 
-	public function __construct($table = null)
+	public function __construct($type = null)
 	{
 		global $db;
 
-		if ($table)
+		if ($type)
 		{
-			$this->table = $table;
+			if (isInteger($type))
+			{
+				$this->type = $type;
+				$this->table = \diTypes::getTableByName($this->type);
+			}
+			else
+			{
+				$this->table = $type;
+				$this->type = \diTypes::getId($this->table);
+			}
+		}
+		else
+		{
+			if (!$this->type)
+			{
+				$this->type = \diTypes::getId($this->table);
+			}
+
+			if (!$this->table)
+			{
+				$this->table = \diTypes::getTableByName($this->type);
+			}
 		}
 
 		$this->db = $db;
 	}
 
+	/** @deprecated  */
 	public function getTable()
 	{
 		return $this->table;
+	}
+
+	public function getType()
+	{
+		return $this->type;
 	}
 
 	public function getDb()
@@ -43,6 +76,7 @@ class diHierarchyTable
 		return $r ? $r->level_num + 1 : 0;
 	}
 
+	/** @deprecated  */
 	public function getParentsAr($id)
 	{
 		$ar = array();
@@ -66,6 +100,33 @@ class diHierarchyTable
 		return array_reverse($ar);
 	}
 
+	public function getParents($id)
+	{
+		$ar = [];
+		$id0 = $id;
+
+		while (
+			($model = \diCollection::create($this->getType())->find((int)$id)->getFirstItem()) &&
+			$model->exists()
+		)
+		{
+			if ($id0 != $model->getId())
+			{
+				$ar[] = $model;
+			}
+
+			$id = $model->get('parent');
+
+			if ($id <= 0)
+			{
+				break;
+			}
+		}
+
+		return array_reverse($ar);
+	}
+
+	/** @deprecated  */
 	public function getParentsArByParentId($id)
 	{
 		$ar = array();
@@ -80,6 +141,30 @@ class diHierarchyTable
 			if ($r->parent > 0)
 			{
 				$id = $r->parent;
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		return array_reverse($ar);
+	}
+
+	public function getParentsByParentId($id)
+	{
+		$ar = [];
+
+		while (
+			($parentId = isset($model) ? $model->get('parent') : $id) &&
+			$model = \diCollection::create($this->getType())->find($parentId)->getFirstItem()
+		)
+		{
+			$ar[] = $model;
+
+			if ($model->get('parent') > 0)
+			{
+				$id = $model->get('parent');
 			}
 			else
 			{
@@ -107,7 +192,7 @@ class diHierarchyTable
 		return $id;
 	}
 
-	public function getChildrenIdsAr($id, $ar = array(), $order_by = "order_num", $where_suffix = "")
+	public function getChildrenIdsAr($id, $ar = [], $order_by = "order_num", $where_suffix = "")
 	{
 		if ($where_suffix && substr(trim($where_suffix), 0, 4) != "and ")
 		{

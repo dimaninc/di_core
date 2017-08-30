@@ -1368,7 +1368,7 @@ abstract class CMS
 		return $this->populateRoutes();
 	}
 
-	protected function getFullRoute()
+	public function getFullRoute()
 	{
 		return addslashes(trim(\diRequest::requestUri(), '/'));
 	}
