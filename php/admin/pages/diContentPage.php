@@ -123,6 +123,9 @@ class diContentPage extends \diAdminBasePage
 
 	public function submitForm()
 	{
+		$this
+			->generateSlugOnSubmit();
+
 		$this->getSubmit()
 			->storeImage(["pic", "pic2", "ico"], [
 				[
@@ -130,8 +133,15 @@ class diContentPage extends \diAdminBasePage
 					//"resize" => diImage::DI_THUMB_FIT,
 				],
 			])
-			->makeSlug()
 			->makeOrderAndLevelNum();
+	}
+
+	protected function generateSlugOnSubmit()
+	{
+		$this->getSubmit()
+			->makeSlug();
+
+		return $this;
 	}
 
 	protected function afterSubmitForm()
