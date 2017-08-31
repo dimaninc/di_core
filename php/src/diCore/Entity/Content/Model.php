@@ -152,18 +152,23 @@ class Model extends \diModel
 	{
 		switch ($this->getType())
 		{
-			case "home":
-				return $this->__getPrefixForHref() . "/";
+			case 'home':
+				return $this->__getPrefixForHref() . '/';
 
-			case "href":
+			case 'href':
 				return $this->getMenuTitle();
 
-			case "logout":
-				return \diLib::getWorkerPath("auth", "logout") . "?back=" . urlencode(\diRequest::server("REQUEST_URI"));
+			case 'logout':
+				return \diLib::getWorkerPath('auth', 'logout') . '?back=' . urlencode(\diRequest::requestUri());
 
 			default:
-				return $this->__getPrefixForHref() . "/" . $this->getSlug() . "/";
+				return $this->getDefaultHref();
 		}
+	}
+
+	protected function getDefaultHref()
+	{
+		return $this->__getPrefixForHref() . '/' . $this->getSlug() . '/';
 	}
 
 	public function getSourceForSlug()

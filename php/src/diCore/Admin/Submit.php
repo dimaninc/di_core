@@ -742,11 +742,21 @@ class Submit
 		return is_array($f_ar) ? in_array($flag, $f_ar) : $f_ar == $flag;
 	}
 
+	public function getOriginForSlug()
+	{
+		return $this->getSubmittedModel()->getSourceForSlug() ?: self::$defaultSlugSourceFieldsAr;
+	}
+
+	public function getSlugFieldName()
+	{
+		return $this->slugFieldName;
+	}
+
 	public function makeSlug($origin = null)
 	{
 		if (is_null($origin))
 		{
-			$origin = $this->getSubmittedModel()->getSourceForSlug() ?: self::$defaultSlugSourceFieldsAr;
+			$origin = $this->getOriginForSlug();
 		}
 
 		if (is_array($origin))

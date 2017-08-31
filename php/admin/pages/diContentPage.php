@@ -1,11 +1,13 @@
 <?php
-
 /**
  * Created by PhpStorm.
  * User: dimaninc
  * Date: 31.05.2015
  * Time: 21:01
  */
+
+use diCore\Entity\Content\Model;
+
 class diContentPage extends \diAdminBasePage
 {
 	const MAX_LEVEL_NUM = 2;
@@ -91,13 +93,14 @@ class diContentPage extends \diAdminBasePage
 		$h = new \diHierarchyContentTable();
 
 		$parents = $this->getId()
-			? $h->getParentsAr($this->getId())
-			: $h->getParentsArByParentId($this->getForm()->getModel()->get('parent'));
+			? $h->getParents($this->getId())
+			: $h->getParentsByParentId($this->getForm()->getModel()->get('parent'));
 
 		$parentsAr = [];
-		foreach ($parents as $parent_r)
+		/** @var Model $parent */
+		foreach ($parents as $parent)
 		{
-			$parentsAr[] = strip_tags($parent_r->title);
+			$parentsAr[] = strip_tags($parent->getTitle());
 		}
 
 		if ($parentsAr)
@@ -120,6 +123,9 @@ class diContentPage extends \diAdminBasePage
 
 	public function submitForm()
 	{
+		$this
+			->generateSlugOnSubmit();
+
 		$this->getSubmit()
 			->storeImage(["pic", "pic2", "ico"], [
 				[
@@ -127,8 +133,15 @@ class diContentPage extends \diAdminBasePage
 					//"resize" => diImage::DI_THUMB_FIT,
 				],
 			])
-			->makeSlug()
 			->makeOrderAndLevelNum();
+	}
+
+	protected function generateSlugOnSubmit()
+	{
+		$this->getSubmit()
+			->makeSlug();
+
+		return $this;
 	}
 
 	protected function afterSubmitForm()
