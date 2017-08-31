@@ -30,32 +30,44 @@ class Queue
 
 	public function add($from, $to, $subject, $body, $plainBody = false, $attachments = [], $incutIds = '')
 	{
-		/** @var Model $model */
-		$model = \diModel::create(Types::mail_queue);
-		$model
-			->setSender($from)
-			->setRecipient($to)
-			->setSubject($subject)
-			->setBody($body)
-			->setPlainBody($plainBody)
-			->setIncutIds($incutIds)
-			->setSent(0);
-
-		if (!is_array($attachments) && $attachments)
+		if (!is_array($to))
 		{
-			$model
-				->setAttachment('')
-				->setNewsId((int)$attachments);
-		}
-		else
-		{
-			$model
-				->setAttachment(serialize($attachments));
+			$to = [$to];
 		}
 
-		$model->save();
+		$ids = [];
 
-		return $model->getId();
+		foreach ($to as $singleTo)
+		{
+			/** @var Model $model */
+			$model = \diModel::create(Types::mail_queue);
+			$model
+				->setSender($from)
+				->setRecipient($singleTo)
+				->setSubject($subject)
+				->setBody($body)
+				->setPlainBody($plainBody)
+				->setIncutIds($incutIds)
+				->setSent(0);
+
+			if (!is_array($attachments) && $attachments)
+			{
+				$model
+					->setAttachment('')
+					->setNewsId((int)$attachments);
+			}
+			else
+			{
+				$model
+					->setAttachment(serialize($attachments));
+			}
+
+			$model->save();
+
+			$ids[] = $model->getId();
+		}
+
+		return $ids;
 	}
 
 	public function addAndSend($from, $to, $subject, $body, $plainBody = false, $attachments = [])
