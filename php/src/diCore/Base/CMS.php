@@ -1149,16 +1149,21 @@ abstract class CMS
 
 		if ($contentReady && !$this->Twig->getAssigned('content_page'))
 		{
-			$this->Twig->assign([
-				'content_page' => $this->getContentModel(),
-				'content_pages' => $this->getCachedContentCollection(),
-				'content_by_type' => $this->getCachedContentCollectionByType(),
-			]);
+			$this->Twig->assign($this->getTwigBasicsData());
 
 			$this->twigBasicsAssigned = true;
 		}
 
 		return $this;
+	}
+
+	protected function getTwigBasicsData()
+	{
+		return [
+			'content_page' => $this->getContentModel(),
+			'content_pages' => $this->getCachedContentCollection(),
+			'content_by_type' => $this->getCachedContentCollectionByType(),
+		];
 	}
 
 	public function init_tpl()

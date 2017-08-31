@@ -114,7 +114,8 @@ class diContentPage extends \diAdminBasePage
 
 		$typesAr = \diContentTypes::get($this->getLanguage());
 		array_walk($typesAr, function (&$opts, $type) {
-			$opts = "{$opts["title"]} ({$type}.php)";
+			$module = camelize($type, false);
+			$opts = "{$opts["title"]} ///{$module}";
 		});
 
 		$this->getForm()
