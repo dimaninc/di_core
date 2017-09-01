@@ -30,7 +30,7 @@ class diPaymentReceiptsPage extends diPaymentDraftsPage
 		parent::renderList();
 
 		$this->getList()
-			->setColumnAttr('date_reserved', 'value', function(diPaymentReceiptModel $m) {
+			->setColumnAttr('date_reserved', 'value', function(\diCore\Entity\PaymentReceipt\Model $m) {
 				return diDateTime::format("d.m.Y H:i", $m->getDatePayed());
 			})
 			->insertColumnsAfter("date_reserved", [

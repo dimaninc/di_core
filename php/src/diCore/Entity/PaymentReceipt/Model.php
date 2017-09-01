@@ -4,8 +4,11 @@
  * Date: 14.12.2015
  * Time: 18:31
  */
+
+namespace diCore\Entity\PaymentReceipt;
+
 /**
- * Class diPaymentReceiptModel
+ * Class Model
  * Methods list for IDE
  *
  * @method string	getRnd
@@ -18,14 +21,14 @@
  * @method bool hasDatePayed
  * @method bool hasDraftId
  *
- * @method diPaymentReceiptModel setRnd($value)
- * @method diPaymentReceiptModel setOuterNumber($value)
- * @method diPaymentReceiptModel setDatePayed($value)
- * @method diPaymentReceiptModel setDraftId($value)
+ * @method Model setRnd($value)
+ * @method Model setOuterNumber($value)
+ * @method Model setDatePayed($value)
+ * @method Model setDraftId($value)
  */
-class diPaymentReceiptModel extends diPaymentDraftModel
+class Model extends \diCore\Entity\PaymentDraft\Model
 {
-	const type = diTypes::payment_receipt;
+	const type = \diTypes::payment_receipt;
 	protected $table = "payment_receipts";
 
 	public function validate()

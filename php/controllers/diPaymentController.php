@@ -20,10 +20,10 @@ class diPaymentController extends diBaseController
 	/** @var  string */
 	protected $subAction;
 
-	/** @var  diPaymentDraftModel */
+	/** @var  \diCore\Entity\PaymentDraft\Model */
 	protected $draft;
 
-	/** @var  diPaymentReceiptModel */
+	/** @var  \diCore\Entity\PaymentReceipt\Model */
 	protected $receipt;
 
 	public function __construct()
@@ -48,8 +48,8 @@ class diPaymentController extends diBaseController
 
 		if ($draftId)
 		{
-			/** @var diPaymentReceiptCollection $col */
-			$col = diCollection::create(diTypes::payment_receipt);
+			/** @var \diCore\Entity\PaymentReceipt\Collection $col */
+			$col = \diCollection::create(\diTypes::payment_receipt);
 			$col
 				->filterByDraftId($draftId);
 
@@ -59,8 +59,8 @@ class diPaymentController extends diBaseController
 			}
 			else
 			{
-				/** @var diPaymentDraftModel $draft */
-				$draft = \diModel::create(diTypes::payment_draft, $draftId);
+				/** @var \diCore\Entity\PaymentDraft\Model $draft */
+				$draft = \diModel::create(\diTypes::payment_draft, $draftId);
 
 				$res['status'] = $draft->getStatus();
 				$res['status_str'] = $draft->getStatusStr();
@@ -118,7 +118,7 @@ class diPaymentController extends diBaseController
 				{
 					$this->log('Creating receipt');
 
-					$this->createReceipt($result->getData('order_id'), function(diPaymentReceiptModel $r) use($result) {
+					$this->createReceipt($result->getData('order_id'), function(\diCore\Entity\PaymentReceipt\Model $r) use($result) {
 						$r->setRnd($result->getData('operator'));
 					});
 				}
@@ -265,10 +265,13 @@ class diPaymentController extends diBaseController
 			$this->log('Receipt created, ID = ' . $this->getReceipt()->getId());
 			$this->log("Receipt #" . $this->getReceipt()->getId() . " created");
 
-			$this->log("Draft #" . $this->getDraft()->getId() . " killed");
+			$this->log("Draft #" . $this->getDraft()->getId() . " set as paid");
 			$this->log("Receipt: " . print_r($this->getReceipt()->get(), true));
 
-			$this->getDraft()->hardDestroy();
+			$this->getDraft()
+				->setPaid(1)
+				->save();
+				//->hardDestroy();
 
 			diCustomPayment::postProcess($this->getReceipt());
 		} catch (Exception $e) {
@@ -290,7 +293,7 @@ class diPaymentController extends diBaseController
 	*/
 
 	/**
-	 * @return diPaymentDraftModel
+	 * @return \diCore\Entity\PaymentDraft\Model
 	 */
 	protected function getDraft()
 	{
@@ -298,7 +301,7 @@ class diPaymentController extends diBaseController
 	}
 
 	/**
-	 * @return diPaymentReceiptModel
+	 * @return \diCore\Entity\PaymentReceipt\Model
 	 */
 	protected function getReceipt()
 	{
@@ -307,7 +310,7 @@ class diPaymentController extends diBaseController
 
 	protected function initDraft($draftId, $amount, $userId = null)
 	{
-		$this->draft = diModel::create(\diCore\Data\Types::payment_draft, $draftId);
+		$this->draft = \diModel::create(\diCore\Data\Types::payment_draft, $draftId);
 
 		$this->log("Draft used: " . print_r($this->draft->get(), true));
 

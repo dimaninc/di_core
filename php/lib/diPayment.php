@@ -65,7 +65,7 @@ class diPayment
 	 * @param float $amount
 	 * @param int $systemId
 	 * @param int $vendorId
-	 * @return \diPaymentDraftModel
+	 * @return \diCore\Entity\PaymentDraft\Model
 	 * @throws Exception
 	 */
 	public static function createDraft($targetType, $targetId, $userId, $amount, $systemId, $vendorId = 0)
@@ -73,7 +73,7 @@ class diPayment
 		static::log("Creating draft for [$targetType, $targetId, $userId, $amount, $systemId, $vendorId]");
 		static::log("Route: " . \diRequest::requestUri());
 
-		/** @var diPaymentDraftModel $draft */
+		/** @var \diCore\Entity\PaymentDraft\Model $draft */
 		$draft = \diModel::create(\diTypes::payment_draft);
 
 		$draft
@@ -110,7 +110,7 @@ EOF;
 		simple_debug($message, "diPayment", "-payment");
 	}
 
-	public static function postProcess(diPaymentReceiptModel $receipt)
+	public static function postProcess(\diCore\Entity\PaymentReceipt\Model $receipt)
 	{
 	}
 }
