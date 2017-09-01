@@ -233,12 +233,12 @@ class diPaymentController extends diBaseController
 			->filterByDraftId($this->getDraft()->getId());
 
 		$this->receipt = $receipts->getFirstItem();
-		$existedReceipt = true;
+		$existingReceipt = true;
 
 		if (!$this->getReceipt()->exists())
 		{
 			$this->receipt = \diModel::create(\diTypes::payment_receipt, $this->getDraft());
-			$existedReceipt = false;
+			$existingReceipt = false;
 		}
 
 		if (!$this->getReceipt()->hasVendor())
@@ -261,7 +261,7 @@ class diPaymentController extends diBaseController
 			}
 		}
 
-		if (!$existedReceipt)
+		if (!$existingReceipt)
 		{
 			$this->getReceipt()
 				->killOrig()
@@ -280,7 +280,7 @@ class diPaymentController extends diBaseController
 			$this->getReceipt()
 				->save();
 
-			if (!$existedReceipt)
+			if (!$existingReceipt)
 			{
 				$this->log('Receipt created, ID = ' . $this->getReceipt()->getId());
 				$this->log("Receipt #" . $this->getReceipt()->getId() . " created");
@@ -300,7 +300,7 @@ class diPaymentController extends diBaseController
 				->save();
 				//->hardDestroy();
 
-			if (!$existedReceipt)
+			if (!$existingReceipt)
 			{
 				\diCustomPayment::postProcess($this->getReceipt());
 			}
