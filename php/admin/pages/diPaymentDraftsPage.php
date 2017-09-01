@@ -129,6 +129,11 @@ class diPaymentDraftsPage extends diAdminBasePage
 					"class" => "dt",
 				],
 			],
+			"paid" => [
+				'value' => function(Model $m) {
+					return $m->hasPaid() ? '+' : '';
+				},
+			],
 			"#edit" => "",
 			"#del" => [
 				'active' => function(Model $model) {
@@ -232,6 +237,13 @@ class diPaymentDraftsPage extends diAdminBasePage
 			"status" => [
 				"type" => "int",
 				"title" => "Статус",
+				"default" => "",
+				"flags" => ["static"],
+			],
+
+			"paid" => [
+				"type" => "checkbox",
+				"title" => "Оплачен",
 				"default" => "",
 				"flags" => ["static"],
 			],

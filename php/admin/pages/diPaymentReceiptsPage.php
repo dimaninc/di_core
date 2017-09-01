@@ -30,6 +30,7 @@ class diPaymentReceiptsPage extends diPaymentDraftsPage
 		parent::renderList();
 
 		$this->getList()
+			->removeColumn(['paid'])
 			->setColumnAttr('date_reserved', 'value', function(\diCore\Entity\PaymentReceipt\Model $m) {
 				return diDateTime::format("d.m.Y H:i", $m->getDatePayed());
 			})
@@ -47,7 +48,11 @@ class diPaymentReceiptsPage extends diPaymentDraftsPage
 
 	public function getFormFields()
 	{
-		return extend(parent::getFormFields(), [
+		$ar = parent::getFormFields();
+
+		unset($ar['paid']);
+
+		return extend($ar, [
 			"rnd" => [
 				"type" => "string",
 				"title" => "Случайный код",
