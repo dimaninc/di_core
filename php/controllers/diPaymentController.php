@@ -2,6 +2,8 @@
 
 use diCore\Payment\Yandex\Kassa;
 use diCore\Payment\System;
+use diCore\Entity\PaymentDraft\Model as DraftModel;
+use diCore\Entity\PaymentReceipt\Model as ReceiptModel;
 
 /**
  * Created by PhpStorm.
@@ -20,10 +22,10 @@ class diPaymentController extends diBaseController
 	/** @var  string */
 	protected $subAction;
 
-	/** @var  \diCore\Entity\PaymentDraft\Model */
+	/** @var  DraftModel */
 	protected $draft;
 
-	/** @var  \diCore\Entity\PaymentReceipt\Model */
+	/** @var  ReceiptModel */
 	protected $receipt;
 
 	public function __construct()
@@ -59,7 +61,7 @@ class diPaymentController extends diBaseController
 			}
 			else
 			{
-				/** @var \diCore\Entity\PaymentDraft\Model $draft */
+				/** @var DraftModel $draft */
 				$draft = \diModel::create(\diTypes::payment_draft, $draftId);
 
 				$res['status'] = $draft->getStatus();
@@ -118,7 +120,7 @@ class diPaymentController extends diBaseController
 				{
 					$this->log('Creating receipt');
 
-					$this->createReceipt($result->getData('order_id'), function(\diCore\Entity\PaymentReceipt\Model $r) use($result) {
+					$this->createReceipt($result->getData('order_id'), function(ReceiptModel $r) use($result) {
 						$r->setRnd($result->getData('operator'));
 					});
 				}
@@ -225,7 +227,19 @@ class diPaymentController extends diBaseController
 
 	protected function createReceipt($outerNumber, callable $beforeSave = null)
 	{
-		$this->receipt = \diModel::create(\diTypes::payment_receipt, $this->getDraft());
+		/** @var \diCore\Entity\PaymentReceipt\Collection $receipts */
+		$receipts = \diCollection::create(\diTypes::payment_receipt);
+		$receipts
+			->filterByDraftId($this->getDraft()->getId());
+
+		$this->receipt = $receipts->getFirstItem();
+		$existedReceipt = true;
+
+		if (!$this->getReceipt()->exists())
+		{
+			$this->receipt = \diModel::create(\diTypes::payment_receipt, $this->getDraft());
+			$existedReceipt = false;
+		}
 
 		if (!$this->getReceipt()->hasVendor())
 		{
@@ -247,12 +261,15 @@ class diPaymentController extends diBaseController
 			}
 		}
 
-		$this->getReceipt()
-			->killOrig()
-			->killId()
-			->kill('paid')
-			->setDraftId($this->getDraft()->getId())
-			->setOuterNumber($outerNumber);
+		if (!$existedReceipt)
+		{
+			$this->getReceipt()
+				->killOrig()
+				->killId()
+				->kill('paid')
+				->setDraftId($this->getDraft()->getId())
+				->setOuterNumber($outerNumber);
+		}
 
 		if ($beforeSave)
 		{
@@ -263,10 +280,19 @@ class diPaymentController extends diBaseController
 			$this->getReceipt()
 				->save();
 
-			$this->log('Receipt created, ID = ' . $this->getReceipt()->getId());
-			$this->log("Receipt #" . $this->getReceipt()->getId() . " created");
+			if (!$existedReceipt)
+			{
+				$this->log('Receipt created, ID = ' . $this->getReceipt()->getId());
+				$this->log("Receipt #" . $this->getReceipt()->getId() . " created");
 
-			$this->log("Draft #" . $this->getDraft()->getId() . " set as paid");
+				$this->log("Draft #" . $this->getDraft()->getId() . " set as paid");
+			}
+			else
+			{
+				$this->log('Receipt updated, ID = ' . $this->getReceipt()->getId());
+				$this->log("Draft #" . $this->getDraft()->getId() . " set as paid (not first time)");
+			}
+
 			$this->log("Receipt: " . print_r($this->getReceipt()->get(), true));
 
 			$this->getDraft()
@@ -274,8 +300,11 @@ class diPaymentController extends diBaseController
 				->save();
 				//->hardDestroy();
 
-			diCustomPayment::postProcess($this->getReceipt());
-		} catch (Exception $e) {
+			if (!$existedReceipt)
+			{
+				\diCustomPayment::postProcess($this->getReceipt());
+			}
+		} catch (\Exception $e) {
 			$this->log('Error while creating receipt: ' . $e->getMessage());
 		}
 
@@ -294,7 +323,7 @@ class diPaymentController extends diBaseController
 	*/
 
 	/**
-	 * @return \diCore\Entity\PaymentDraft\Model
+	 * @return DraftModel
 	 */
 	protected function getDraft()
 	{
@@ -302,7 +331,7 @@ class diPaymentController extends diBaseController
 	}
 
 	/**
-	 * @return \diCore\Entity\PaymentReceipt\Model
+	 * @return ReceiptModel
 	 */
 	protected function getReceipt()
 	{
@@ -419,7 +448,7 @@ class diPaymentController extends diBaseController
 
 	protected function log($message)
 	{
-		diCustomPayment::log($message);
+		\diCustomPayment::log($message);
 
 		return $this;
 	}
