@@ -250,6 +250,7 @@ class diPaymentController extends diBaseController
 		$this->getReceipt()
 			->killOrig()
 			->killId()
+			->kill('paid')
 			->setDraftId($this->getDraft()->getId())
 			->setOuterNumber($outerNumber);
 
