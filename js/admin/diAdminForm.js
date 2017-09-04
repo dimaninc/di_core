@@ -167,7 +167,7 @@ function diAdminForm(table, id, auto_save_timeout)
             {
                 if (!$title.val())
                 {
-                    $title.val($(this).find('option:selected').text().replace(/\s*\([a-z\-_0-9]+\.php\)$/i, ''));
+                    $title.val($(this).find('option:selected').text().replace(/\s*\/\/\/([A-Za-z\-_0-9])+$/i, ''));
                 }
 
                 if (!$menuTitle.val())
