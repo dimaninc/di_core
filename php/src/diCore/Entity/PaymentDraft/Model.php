@@ -5,15 +5,15 @@
  * Time: 18:31
  */
 
+namespace diCore\Entity\PaymentDraft;
+
 use diCore\Traits\TargetInside;
 use diCore\Payment\System;
 
 /**
- * Class diPaymentDraftModel
+ * Class Model
  * Methods list for IDE
  *
- * @method integer	getTargetType
- * @method integer	getTargetId
  * @method integer	getUserId
  * @method string	getPaySystem
  * @method string	getVendor
@@ -21,9 +21,8 @@ use diCore\Payment\System;
  * @method double	getAmount
  * @method string	getDateReserved
  * @method integer	getStatus
+ * @method integer	getPaid
  *
- * @method bool hasTargetType
- * @method bool hasTargetId
  * @method bool hasUserId
  * @method bool hasPaySystem
  * @method bool hasVendor
@@ -31,22 +30,22 @@ use diCore\Payment\System;
  * @method bool hasAmount
  * @method bool hasDateReserved
  * @method bool hasStatus
+ * @method bool hasPaid
  *
- * @method diPaymentDraftModel setTargetType($value)
- * @method diPaymentDraftModel setTargetId($value)
- * @method diPaymentDraftModel setUserId($value)
- * @method diPaymentDraftModel setPaySystem($value)
- * @method diPaymentDraftModel setVendor($value)
- * @method diPaymentDraftModel setCurrency($value)
- * @method diPaymentDraftModel setAmount($value)
- * @method diPaymentDraftModel setDateReserved($value)
- * @method diPaymentDraftModel setStatus($value)
+ * @method Model setUserId($value)
+ * @method Model setPaySystem($value)
+ * @method Model setVendor($value)
+ * @method Model setCurrency($value)
+ * @method Model setAmount($value)
+ * @method Model setDateReserved($value)
+ * @method Model setStatus($value)
+ * @method Model setPaid($value)
  */
-class diPaymentDraftModel extends diModel
+class Model extends \diModel
 {
 	use TargetInside;
 
-	const type = diTypes::payment_draft;
+	const type = \diTypes::payment_draft;
 	protected $table = "payment_drafts";
 
 	protected $customDateFields = ["date_reserved", "date_payed"];

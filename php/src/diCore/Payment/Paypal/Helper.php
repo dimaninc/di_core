@@ -57,7 +57,7 @@ class Helper
 		return static::testMode ? static::testUrl : static::productionUrl;
 	}
 
-	public static function getForm(\diPaymentDraftModel $draft, $opts = [])
+	public static function getForm(\diCore\Entity\PaymentDraft\Model $draft, $opts = [])
 	{
 		$action = static::getUrl();
 		$business = static::email;

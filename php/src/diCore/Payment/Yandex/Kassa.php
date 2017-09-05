@@ -342,7 +342,7 @@ class Kassa
 		return null;
 	}
 
-	public static function getForm(\diPaymentDraftModel $draft, $opts = [])
+	public static function getForm(\diCore\Entity\PaymentDraft\Model $draft, $opts = [])
 	{
 		$action = static::getUrl();
 		$shopId = static::getShopId();

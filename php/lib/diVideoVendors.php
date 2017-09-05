@@ -112,7 +112,32 @@ class diVideoVendors
 						return $data["title"];
 					}
 				}
-			break;
+				break;
+
+			case self::Vimeo:
+				$info = self::getVimeoData($videoUid);
+
+				return isset($info[0]['title'])
+					? $info[0]['title']
+					: null;
+		}
+
+		return null;
+	}
+
+	public static function getDescription($vendor, $videoUid)
+	{
+		switch ($vendor)
+		{
+			case self::YouTube:
+				break;
+
+			case self::Vimeo:
+				$info = self::getVimeoData($videoUid);
+
+				return isset($info[0]['description'])
+					? $info[0]['description']
+					: null;
 		}
 
 		return null;

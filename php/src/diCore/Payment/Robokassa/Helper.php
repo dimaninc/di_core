@@ -76,12 +76,12 @@ class Helper
 	}
 
 	/**
-	 * @param \diPaymentDraftModel $draft
+	 * @param \diCore\Entity\PaymentDraft\Model $draft
 	 * @param array $opts
 	 * How to calculate amount: https://partner.robokassa.ru/Help/Doc/f5af7f3b-9c27-41de-b1c3-0aa76445ecd6
 	 * @return string
 	 */
-	public static function getForm(\diPaymentDraftModel $draft, $opts = [])
+	public static function getForm(\diCore\Entity\PaymentDraft\Model $draft, $opts = [])
 	{
 		$action = static::getUrl();
 
@@ -138,7 +138,7 @@ EOF;
 		return $form;
 	}
 
-	public static function getSignature(\diPaymentDraftModel $draft)
+	public static function getSignature(\diCore\Entity\PaymentDraft\Model $draft)
 	{
 		$cost = sprintf('%.2f', $draft->getAmount());
 
@@ -152,7 +152,7 @@ EOF;
 		return md5(join(':', $source));
 	}
 
-	public static function getSignature2(\diPaymentDraftModel $draft)
+	public static function getSignature2(\diCore\Entity\PaymentDraft\Model $draft)
 	{
 		$source = [
 			$draft->getAmount(),

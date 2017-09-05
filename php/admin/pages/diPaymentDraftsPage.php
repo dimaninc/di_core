@@ -6,6 +6,7 @@
  */
 
 use diCore\Tool\CollectionCache;
+use \diCore\Entity\PaymentDraft\Model;
 
 class diPaymentDraftsPage extends diAdminBasePage
 {
@@ -68,7 +69,7 @@ class diPaymentDraftsPage extends diAdminBasePage
 				"headAttrs" => [
 					"width" => "20%",
 				],
-				"value" => function(diPaymentDraftModel $m) {
+				"value" => function(Model $m) {
 					return diTypes::getTitle($m->getTargetType());
 				},
 			],
@@ -81,9 +82,9 @@ class diPaymentDraftsPage extends diAdminBasePage
 				"headAttrs" => [
 					"width" => "20%",
 				],
-				"value" => function(diPaymentDraftModel $m) {
+				"value" => function(Model $m) {
 					/** @var diUserModel $user */
-					$user = CollectionCache::getModel(diTypes::user, $m->getUserId());
+					$user = CollectionCache::getModel(\diTypes::user, $m->getUserId());
 
 					return $user;
 				},
@@ -99,7 +100,7 @@ class diPaymentDraftsPage extends diAdminBasePage
 				"headAttrs" => [
 					"width" => "20%",
 				],
-				"value" => function(diPaymentDraftModel $m) {
+				"value" => function(Model $m) {
 					return join(' / ', array_filter([$m->getPaySystemStr(), $m->getVendorStr()]));
 				},
 			],
@@ -107,7 +108,7 @@ class diPaymentDraftsPage extends diAdminBasePage
 				"headAttrs" => [
 					"width" => "10%",
 				],
-				"value" => function(diPaymentDraftModel $m) {
+				"value" => function(Model $m) {
 					return $m->getCurrencyStr();
 				},
 			],
@@ -118,7 +119,7 @@ class diPaymentDraftsPage extends diAdminBasePage
 			],
 			"date_reserved" => [
 				"title" => "Дата",
-				"value" => function(diPaymentDraftModel $m) {
+				"value" => function(Model $m) {
 					return diDateTime::format("d.m.Y H:i", $m->getDateReserved());
 				},
 				"headAttrs" => [
@@ -128,9 +129,14 @@ class diPaymentDraftsPage extends diAdminBasePage
 					"class" => "dt",
 				],
 			],
+			"paid" => [
+				'value' => function(Model $m) {
+					return $m->hasPaid() ? '+' : '';
+				},
+			],
 			"#edit" => "",
 			"#del" => [
-				'active' => function(diPaymentDraftModel $model) {
+				'active' => function(Model $model) {
 					return $this->getAdmin()->isAdminSuper();
 				},
 			],
@@ -144,7 +150,7 @@ class diPaymentDraftsPage extends diAdminBasePage
 
 	public function renderForm()
 	{
-		/** @var diPaymentDraftModel $draft */
+		/** @var Model $draft */
 		$draft = $this->getForm()->getModel();
 		/** @var diUserModel $user */
 		$user = diModel::create(diTypes::user, $draft->getUserId());
@@ -231,6 +237,13 @@ class diPaymentDraftsPage extends diAdminBasePage
 			"status" => [
 				"type" => "int",
 				"title" => "Статус",
+				"default" => "",
+				"flags" => ["static"],
+			],
+
+			"paid" => [
+				"type" => "checkbox",
+				"title" => "Оплачен",
 				"default" => "",
 				"flags" => ["static"],
 			],
