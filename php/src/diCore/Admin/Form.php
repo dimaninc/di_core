@@ -11,6 +11,7 @@ namespace diCore\Admin;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 use diCore\Helper\FileSystemHelper;
+use diCore\Tool\Font\Helper;
 
 class Form
 {
@@ -1685,7 +1686,7 @@ EOF;
 					->setRelated("folder", preg_replace("/^\/+/", "", add_ending_slash(dirname($fullName))))
 					->set("file_" . strtolower($ext), basename($fullName));
 
-				$fontDefinition = \diFonts::getCssForFont($font);
+				$fontDefinition = Helper::getCssForFont($font);
 
 				$letters = join("", range("a", "z"));
 				$capitalLetters = mb_strtoupper($letters);

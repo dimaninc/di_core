@@ -6,10 +6,16 @@
  * Time: 0:29
  */
 
-use diCore\Data\Config;
+namespace diCore\Tool\Font;
 
-class diFonts
+use diCore\Data\Config;
+use diCore\Data\Types;
+use diCore\Traits\BasicCreate;
+
+class Helper
 {
+	use BasicCreate;
+
 	const CHMOD_FILE = 0664;
 	const CACHE_FILENAME = "css/fonts/fonts.css";
 
@@ -23,27 +29,36 @@ class diFonts
 
 	public static function getCssFilename()
 	{
-		return Config::getAssetSourcesFolder() . self::CACHE_FILENAME;
+		return Config::getAssetSourcesFolder() . static::CACHE_FILENAME;
 	}
 
-	public static function storeToCss()
+	public function storeCss()
 	{
 		$css = "";
 
-		$fonts = diCollection::create(diTypes::font)->orderBy('token');
-		/** @var diFontModel $font */
+		$fonts = \diCollection::create(Types::font)->orderBy('token');
+		/** @var \diFontModel $font */
 		foreach ($fonts as $font)
 		{
-			$css .= self::getCssForFont($font) . "\n\n";
+			$css .= static::getCssForFont($font) . "\n\n";
 		}
 
 		$fn = static::getCssFilename();
 
 		file_put_contents($fn, $css);
 		chmod($fn, self::CHMOD_FILE);
+
+		return $this;
 	}
 
-	public static function getCssForFont(diFontModel $font)
+	public static function storeToCss()
+	{
+		$o = static::basicCreate();
+
+		$o->storeCss();
+	}
+
+	public static function getCssForFont(\diFontModel $font)
 	{
 		if (!$font->hasTokenSvg())
 		{

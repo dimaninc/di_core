@@ -83,7 +83,7 @@ class diFontsPage extends diAdminBasePage
 	{
 		parent::afterSubmitForm();
 
-		diFonts::storeToCss();
+		\diCore\Tool\Font\Helper::storeToCss();
 	}
 
 	public function getFormFields()
