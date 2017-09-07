@@ -657,17 +657,41 @@ abstract class CMS
 		return $this;
 	}
 
-	protected function assignMetaVariables()
+	protected function getDefaultMetaTitlePrefix()
+	{
+		return '';
+	}
+
+	protected function getDefaultMetaTitleSuffix()
+	{
+		return '';
+	}
+
+	protected function checkTextMetaFields()
 	{
 		if (!$this->getMeta('title'))
 		{
-			$this->setMeta($this->getContentModel()->localized('title'));
+			$this->setMeta(
+				$this->getDefaultMetaTitlePrefix() .
+				$this->getContentModel()->localized('title') .
+				$this->getDefaultMetaTitleSuffix()
+			);
 		}
 
 		if (!$this->getMeta('description'))
 		{
-			$this->setMeta($this->getContentModel()->localized('description') ?: $this->getMeta('title'), 'description');
+			$this->setMeta(
+				$this->getContentModel()->localized('description') ?: $this->getMeta('title'), 'description'
+			);
 		}
+
+		return $this;
+	}
+
+	protected function assignMetaVariables()
+	{
+		$this
+			->checkTextMetaFields();
 
 		if (!$this->hasHeaderImage())
 		{
