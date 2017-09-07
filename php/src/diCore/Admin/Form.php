@@ -816,12 +816,14 @@ EOF;
 								break;
 
 							default:
-								$s = str_out($this->data[$field]);
+								$s = StringHelper::out($this->data[$field]);
+								/*
 								if (!$s)
 								{
 									// ie bugfix
 									$s = "&nbsp;";
 								}
+								*/
 								break;
 						}
 					}
@@ -831,8 +833,14 @@ EOF;
 						$s = isset($this->inputs[$field]) ? $this->inputs[$field] : $this->getData($field);
 					}
 
-					$this->inputs[$field] = "<div class=\"static\">$s</div>" .
-						"<input type=\"hidden\" id=\"$field\" name=\"$field\" value=\"".str_out($this->data[$field])."\" />";
+					$this->setInputAttribute($field, [
+						'type' => 'hidden',
+						'value' => StringHelper::out($this->data[$field]),
+						'id' => $field,
+						'name' => $field,
+					]);
+
+					$this->inputs[$field] = "<div class=\"static\">$s</div><input " . $this->getInputAttributesString($field) . ">";
 				}
 
 				if (isset($this->inputs[$field]))
@@ -924,7 +932,7 @@ EOF;
 
 				if ($this->isFlag($field, "hidden"))
 				{
-					$html .= "\n<input type=\"hidden\" id=\"$field\" name=\"$field\" value=\"".str_out($this->data[$field])."\" />\n";
+					$html .= "\n<input type=\"hidden\" id=\"$field\" name=\"$field\" value=\"".StringHelper::out($this->data[$field])."\" />\n";
 				}
 				else
 				{
@@ -1350,11 +1358,11 @@ EOF;
 
 		foreach ($field_ar as $field)
 		{
-			$sel = new \diSelect($field, str_out($this->getData($field)));
+			$sel = new \diSelect($field, StringHelper::out($this->getData($field)));
 
 			foreach ($values as $v)
 			{
-				$sel->addItem(str_out($v), str_out($v));
+				$sel->addItem(StringHelper::out($v), StringHelper::out($v));
 			}
 
 			$sel->setAttr($this->getInputAttributes($field));
@@ -1420,7 +1428,7 @@ EOF;
 	{
 		if ($this->static_mode || $this->isFlag($field, "static"))
 		{
-			$this->inputs[$field] = str_out($this->getData($field));
+			$this->inputs[$field] = StringHelper::out($this->getData($field));
 		}
 		else
 		{
@@ -2110,8 +2118,8 @@ EOF;
 		$visible_checked = ($pic_r && $pic_r->visible) || !$pic_r ? " checked=\"checked\"" : "";
 		$visible_text = $visible_checked ? " Отображается" : " Не отображается";
 
-		$title = $pic_r ? str_out($pic_r->title) : "";
-		$content = $pic_r ? str_out($pic_r->content) : "";
+		$title = $pic_r ? StringHelper::out($pic_r->title) : "";
+		$content = $pic_r ? StringHelper::out($pic_r->content) : "";
 
 		return $this->is_flag($field, "static") || $this->static_mode
 
@@ -2195,8 +2203,8 @@ EOF;
 		$visible_checked = ($pic_r && $pic_r->visible) || !$pic_r ? " checked=\"checked\"" : "";
 		$visible_text = $visible_checked ? ", Отображается" : "";
 
-		$title = $pic_r ? str_out($pic_r->title) : "";
-		$content = $pic_r ? str_out($pic_r->content) : "";
+		$title = $pic_r ? StringHelper::out($pic_r->title) : "";
+		$content = $pic_r ? StringHelper::out($pic_r->content) : "";
 
 		$a = $this->getAllFields();
 
