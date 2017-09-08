@@ -42,9 +42,9 @@ class diCommentController extends diBaseController
 	 */
 	protected $newComment;
 
-	public function __construct()
+	public function __construct($params = [])
 	{
-		parent::__construct();
+		parent::__construct($params);
 
 		$this->targetType = \diRequest::post("target_type", 0);
 		$this->targetId = \diRequest::post("target_id", 0);

@@ -51,6 +51,8 @@ use diCore\Data\Types;
  * @method integer	getToShowContent
  * @method integer	getOrderNum
  * @method integer	getTop
+ * @method string	getCreatedAt
+ * @method string	getUpdatedAt
  * @method integer	getCommentsCount
  * @method string	getCommentsLastDate
  * @method integer	getCommentsEnabled
@@ -94,6 +96,8 @@ use diCore\Data\Types;
  * @method bool hasToShowContent
  * @method bool hasOrderNum
  * @method bool hasTop
+ * @method bool hasCreatedAt
+ * @method bool hasUpdatedAt
  * @method bool hasCommentsCount
  * @method bool hasCommentsLastDate
  * @method bool hasCommentsEnabled
@@ -140,6 +144,8 @@ use diCore\Data\Types;
  * @method Model setCommentsCount($value)
  * @method Model setCommentsLastDate($value)
  * @method Model setCommentsEnabled($value)
+ * @method Model setCreatedAt($value)
+ * @method Model setUpdatedAt($value)
  * @method Model setShowLinks($value)
  * @method Model setAdBlockId($value)
  */

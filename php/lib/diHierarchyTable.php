@@ -192,7 +192,12 @@ class diHierarchyTable
 		return $id;
 	}
 
-	public function getChildrenIdsAr($id, $ar = [], $order_by = "order_num", $where_suffix = "")
+	protected function createModel($data = null, $options = [])
+	{
+		return \diModel::create($this->getType(), $data, $options);
+	}
+
+	public function getChildrenIdsAr($id, $ar = [], $order_by = 'order_num', $where_suffix = '')
 	{
 		if ($where_suffix && substr(trim($where_suffix), 0, 4) != "and ")
 		{
@@ -208,5 +213,33 @@ class diHierarchyTable
 		}
 
 		return $ar;
+	}
+
+	public function getChildren($id, $orderBy = 'order_num', $whereSuffix = '', $ar = [])
+	{
+		if ($whereSuffix && substr(trim($whereSuffix), 0, 4) != "and ")
+		{
+			$whereSuffix = " and $whereSuffix";
+		}
+
+		$rs = $this->getDb()->rs($this->getTable(), "WHERE parent='$id'{$whereSuffix} ORDER BY $orderBy ASC", "id");
+		while ($a = $this->getDb()->fetch_array($rs))
+		{
+			$m = $this->createModel($a);
+			$ar[] = $m;
+
+			$ar = $this->getChildren($m->getId(), $orderBy, $whereSuffix, $ar);
+		}
+
+		return $ar;
+	}
+
+	public function getFirstChild($id, $orderBy = 'order_num', $whereSuffix = '')
+	{
+		$children = $this->getChildren($id, [], $orderBy, $whereSuffix);
+
+		return count($children)
+			? $children[0]
+			: $this->createModel();
 	}
 }

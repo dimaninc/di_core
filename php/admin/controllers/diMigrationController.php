@@ -5,9 +5,9 @@ class diMigrationController extends diBaseAdminController
 	/** @var diMigrationsManager */
 	private $Manager;
 
-	public function __construct()
+	public function __construct($params = [])
 	{
-		parent::__construct();
+		parent::__construct($params);
 
 		$this->Manager = diMigrationsManager::create();
 	}

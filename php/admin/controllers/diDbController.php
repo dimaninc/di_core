@@ -18,9 +18,9 @@ class diDbController extends diBaseAdminController
 		self::FOLDER_CORE_SQL,
 	];
 
-	public function __construct()
+	public function __construct($params = [])
 	{
-	    parent::__construct();
+	    parent::__construct($params);
 
 		$this->file = diRequest::get("file", "");
 		$this->folderId = diRequest::get("folderId", 1);

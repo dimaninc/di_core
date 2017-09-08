@@ -9,9 +9,9 @@ class diCartController extends diBaseController
 	protected $count;
 	protected $rnd;
 
-	public function __construct()
+	public function __construct($params = [])
 	{
-		parent::__construct();
+		parent::__construct($params);
 
 		$this->Cart = new diCart();
 

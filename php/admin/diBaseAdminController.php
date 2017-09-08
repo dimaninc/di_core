@@ -2,9 +2,9 @@
 
 class diBaseAdminController extends diBaseController
 {
-	public function __construct()
+	public function __construct($params = [])
 	{
-	    parent::__construct();
+	    parent::__construct($params);
 
 		$this
 			->initAdmin()
@@ -13,7 +13,7 @@ class diBaseAdminController extends diBaseController
 
 	protected function redirect()
 	{
-		$back = diRequest::get('back', diRequest::referrer('/_admin/'));
+		$back = \diRequest::get('back', \diRequest::referrer('/_admin/'));
 
 		header("Location: $back");
 	}

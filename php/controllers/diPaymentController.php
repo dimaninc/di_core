@@ -28,9 +28,9 @@ class diPaymentController extends diBaseController
 	/** @var  ReceiptModel */
 	protected $receipt;
 
-	public function __construct()
+	public function __construct($params = [])
 	{
-		parent::__construct();
+		parent::__construct($params);
 
 		if (!diConfiguration::get("epay_enabled"))
 		{

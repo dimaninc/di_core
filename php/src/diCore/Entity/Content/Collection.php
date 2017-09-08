@@ -51,6 +51,8 @@ namespace diCore\Entity\Content;
  * @method Collection filterByToShowContent($value, $operator = null)
  * @method Collection filterByOrderNum($value, $operator = null)
  * @method Collection filterByTop($value, $operator = null)
+ * @method Collection filterByCreatedAt($value, $operator = null)
+ * @method Collection filterByUpdatedAt($value, $operator = null)
  * @method Collection filterByCommentsCount($value, $operator = null)
  * @method Collection filterByCommentsLastDate($value, $operator = null)
  * @method Collection filterByCommentsEnabled($value, $operator = null)
@@ -95,6 +97,8 @@ namespace diCore\Entity\Content;
  * @method Collection orderByToShowContent($direction = null)
  * @method Collection orderByOrderNum($direction = null)
  * @method Collection orderByTop($direction = null)
+ * @method Collection orderByCreatedAt($direction = null)
+ * @method Collection orderByUpdatedAt($direction = null)
  * @method Collection orderByCommentsCount($direction = null)
  * @method Collection orderByCommentsLastDate($direction = null)
  * @method Collection orderByCommentsEnabled($direction = null)
@@ -139,6 +143,8 @@ namespace diCore\Entity\Content;
  * @method Collection selectToShowContent()
  * @method Collection selectOrderNum()
  * @method Collection selectTop()
+ * @method Collection selectCreatedAt()
+ * @method Collection selectUpdatedAt()
  * @method Collection selectCommentsCount()
  * @method Collection selectCommentsLastDate()
  * @method Collection selectCommentsEnabled()
@@ -146,6 +152,7 @@ namespace diCore\Entity\Content;
  */
 class Collection extends \diCollection
 {
+	const type = \diTypes::content;
 	protected $table = 'content';
 	protected $modelType = 'content';
 }

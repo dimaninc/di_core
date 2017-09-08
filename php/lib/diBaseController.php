@@ -7,16 +7,13 @@ use diCore\Data\Config;
 
 class diBaseController
 {
-	/** @var FastTemplate */
+	/** @var \FastTemplate */
 	private $tpl;
 
-	/** @var diTwig */
+	/** @var \diTwig */
 	private $Twig;
 
-    /** @var diDB */
-	private $db;
-
-	/** @var diAdminUser */
+	/** @var \diAdminUser */
 	protected $admin;
 
 	protected $action;
@@ -24,19 +21,16 @@ class diBaseController
 
 	protected $twigCreateOptions = [];
 
-	public function __construct()
+	public function __construct($params = [])
 	{
-	    global $db;
+		\diSession::start();
 
-		diSession::start();
-
-		$this->action = diRequest::request("action");
-		$this->paramsAr = [];
-		$this->db = $db;
+		$this->action = \diRequest::request("action");
+		$this->paramsAr = $params;
 	}
 
 	/**
-	 * @return diAdminUser
+	 * @return \diAdminUser
 	 */
 	protected function getAdmin()
 	{
@@ -45,7 +39,7 @@ class diBaseController
 
 	protected function initAdmin()
 	{
-		$this->admin = diAdminUser::create();
+		$this->admin = \diAdminUser::create();
 
 		return $this;
 	}
@@ -67,25 +61,25 @@ class diBaseController
 
 	protected function getDb()
 	{
-		return $this->db;
+		return \diCore\Database\Connection::get()->getDb();
 	}
 
 	/**
-	 * @return FastTemplate
-	 * @throws Exception
+	 * @return \FastTemplate
+	 * @throws \Exception
 	 */
 	protected function getTpl()
 	{
 		if ($this->tpl === null)
 		{
-			throw new Exception("Template not initialized");
+			throw new \Exception("Template not initialized");
 		}
 
 		return $this->tpl;
 	}
 
 	/**
-	 * @return diTwig
+	 * @return \diTwig
 	 */
 	protected function getTwig()
 	{
@@ -99,7 +93,7 @@ class diBaseController
 
 	protected function setupTwig()
 	{
-		$this->Twig = diTwig::create($this->twigCreateOptions);
+		$this->Twig = \diTwig::create($this->twigCreateOptions);
 
 		$this->getTwig()->assign([
 			'asset_locations' => \diLib::getAssetLocations(),
@@ -121,9 +115,9 @@ class diBaseController
 	/*
 		creates an instance of defined class
 	*/
-	public static function create()
+	public static function create($params = [])
 	{
-		$c = new static();
+		$c = new static($params);
 
 		$result = $c->act();
 
@@ -146,7 +140,7 @@ class diBaseController
 				static::autoCreate([
 					'pathBeginning' => $pathBeginning,
 				]);
-			} catch (Exception $e) {
+			} catch (\Exception $e) {
 				static::autoError($e);
 			}
 
@@ -229,19 +223,19 @@ class diBaseController
 
 			if (!$classBaseName)
 			{
-				throw new Exception("Empty controller name passed");
+				throw new \Exception("Empty controller name passed");
 			}
 		}
 
-		$className = diLib::getClassNameFor($classBaseName, diLib::CONTROLLER);
+		$className = \diLib::getClassNameFor($classBaseName, \diLib::CONTROLLER);
 
-		if (!diLib::exists($className))
+		if (!\diLib::exists($className))
 		{
-			throw new Exception("Controller class '$className' doesn't exist");
+			throw new \Exception("Controller class '$className' doesn't exist");
 		}
 
 		/** @var diBaseController $c */
-		$c = new $className();
+		$c = new $className($params);
 
 		$result = $c->act($action, $params);
 
@@ -253,7 +247,7 @@ class diBaseController
 		return $c;
 	}
 
-	public static function autoError(Exception $e)
+	public static function autoError(\Exception $e)
 	{
 		print_json([
 			'ok' => false,
@@ -285,10 +279,10 @@ class diBaseController
 			}
 		}
 
-		throw new Exception("There is not action method for '$action' in " . get_class($this));
+		throw new \Exception("There is not action method for '$action' in " . get_class($this));
 	}
 
-	protected function defaultResponse($ar)
+	protected function defaultResponse($ar, $die = false)
 	{
 		if (is_scalar($ar))
 		{
@@ -297,6 +291,11 @@ class diBaseController
 		else
 		{
 			print_json($ar, !static::isCli());
+		}
+
+		if ($die)
+		{
+			die();
 		}
 
 		return $this;
@@ -314,7 +313,7 @@ class diBaseController
 
 	protected function initAdminTpl()
 	{
-		$this->tpl = diAdminBase::getAdminTpl();
+		$this->tpl = \diAdminBase::getAdminTpl();
 
 		$this->setupTpl();
 
@@ -323,7 +322,7 @@ class diBaseController
 
 	protected function initWebTpl()
 	{
-		$this->tpl = new FastTemplate(
+		$this->tpl = new \FastTemplate(
 			Config::getOldTplFolder() . CMS::TPL_DIR,
 			Config::getCacheFolder() . CMS::TPL_CACHE_PHP
 		);
@@ -354,7 +353,7 @@ class diBaseController
 
 	protected function redirect()
 	{
-		$back = diRequest::get("back", diRequest::referrer('/'));
+		$back = \diRequest::get("back", \diRequest::referrer('/'));
 
 		$this->redirectTo($back);
 
