@@ -48,6 +48,11 @@ class diAuth
 	private $tpl;
 	/** @var bool */
 	private $redirectAllowed = true;
+	/**
+	 * Ids of super users
+	 * @var array
+	 */
+	protected $superUsers = [];
 
 	public function __construct($redirectAllowed = true)
 	{
@@ -80,7 +85,7 @@ class diAuth
 	}
 
 	/**
-	 * @return diAuth
+	 * @return diAuth|diCustomAuth
 	 */
 	public static function i()
 	{
@@ -125,6 +130,11 @@ class diAuth
 	public function getUserId()
 	{
 		return $this->getUserModel()->getId();
+	}
+
+	public function isSuperUser()
+	{
+		return in_array($this->getUserId(), $this->superUsers);
 	}
 
 	public function isRedirectAllowed()

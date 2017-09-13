@@ -2104,19 +2104,28 @@ abstract class CMS
 		die(0);
 	}
 
+	/** @deprecated  */
+	public function errorNoAccess()
+	{
+		$this->errorForbidden();
+	}
+
 	/**
 	 * Such page exists, user is authorized, but he has no access to it
-	 * Todo: remake to 401 code
-	 *
-	 * @return $this
 	 */
-	public function errorNoAccess()
+	public function errorForbidden()
 	{
 		$this->responseCode = HttpCode::FORBIDDEN;
 
-		$this->error_404();
+		HttpCode::header($this->responseCode);
 
-		return $this;
+		$this->printBreadCrumbs();
+
+		$this->getTwig()
+			->renderPage('errors/' . $this->responseCode, [
+			]);
+
+		die(0);
 	}
 
 	public function error_404()

@@ -384,6 +384,11 @@ class diModel implements \ArrayAccess
 		return $this->exists($this->getSlugFieldName());
 	}
 
+	public function killSlug()
+	{
+		return $this->kill($this->getSlugFieldName());
+	}
+
 	public function getSourceForSlug()
 	{
 		return $this->get("slug_source") ?: $this->get("en_title") ?: $this->get("title");
