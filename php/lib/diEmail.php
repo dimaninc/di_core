@@ -63,6 +63,43 @@ class diEmail
 		return $this->getOption();
 	}
 
+	public static function parseNameAndEmail($nameAndEmail, $defaultEmail = '', $defaultName = '')
+	{
+		if (is_array($nameAndEmail))
+		{
+			return extend([
+				'name' => $defaultName,
+				'email' => $defaultEmail,
+			], $nameAndEmail);
+		}
+
+		if (self::isValid($nameAndEmail))
+		{
+			$name = '';
+			$email = $nameAndEmail;
+		}
+		else
+		{
+			preg_match("/^(.+)\s+\<(.+)\>$/", $nameAndEmail, $regs);
+
+			if ($regs)
+			{
+				$name = $regs[1];
+				$email = $regs[2];
+			}
+			else
+			{
+				$name = $defaultName;
+				$email = $nameAndEmail;
+			}
+		}
+
+		return [
+			'name' => $name,
+			'email' => $email,
+		];
+	}
+
 	/*
 		each element in attachment_ar should look like this:
 		[0] => [
@@ -85,86 +122,57 @@ class diEmail
 		/** @var diEmail $m */
 		$m = new $class();
 
+		$options = extend([
+			'replyTo' => '',
+		], $options);
+
 		$encoding = defined('DIMAILENCODING') ? DIMAILENCODING : 'UTF8';
-		$mail_encodings_ar = [
+		$mailEncodings = [
 			"CP1251" => "CP1251",
 			"UTF8" => "UTF-8",
 		];
 
-		$headerEnc = $mail_encodings_ar[$encoding];
+		$headerEnc = $mailEncodings[$encoding];
 		$enc = $html_encodings_ar[$encoding];
 
 		$content_transfer_encoding = $m->getOption("quotedPrintable") ? "quoted-printable" : "8bit";
 
 		// from
-		if (self::isValid($from))
-		{
-			$from_email_brackets = "<$from>";
-
-			$from_name = "";
-			$from_email = $from;
-		}
-		else
-		{
-			preg_match("/^(.+) \<(.+)\>$/", $from, $from_regs);
-
-			if ($from_regs)
-			{
-				$from_email_brackets = "<".$from_regs[2].">";
-
-				$from_name = $from_regs[1];
-				$from_email = $from_regs[2];
-			}
-			else
-			{
-				$from_email_brackets = $from;
-
-				$from_name = "";
-				$from_email = $from;
-			}
-		}
-		//
+		$from = self::parseNameAndEmail($from);
+		$fromName = $from['name'];
+		$fromEmail = $from['email'];
+		$fromEmailInBrackets = "<{$from['email']}>";
 
 		// to
-		preg_match("/^(.+) \<(.+)\>$/", $to, $to_regs);
-
-		if (!empty($to_regs))
-		{
-			$to_name = $to_regs[1];
-			$to_email = $to_regs[2];
-		}
-		else
-		{
-			$to_name = "";
-			$to_email = $to;
-		}
-		//
+		$to = self::parseNameAndEmail($to);
+		$toName = $to['name'];
+		$toEmail = $to['email'];
 
 		// encoding
-		$from = $from_name ? "=?{$headerEnc}?B?" . base64_encode($from_name) . "?= <$from_email>" : $from_email;
-		$to = $to_name ? "=?{$headerEnc}?B?" . base64_encode($to_name) . "?= <$to_email>" : $to_email;
+		$from = $fromName ? "=?{$headerEnc}?B?" . base64_encode($fromName) . "?= <$fromEmail>" : $fromEmail;
+		$to = $toName ? "=?{$headerEnc}?B?" . base64_encode($toName) . "?= <$toEmail>" : $toEmail;
 		$subject = "=?{$headerEnc}?B?" . base64_encode($subject) . "?=";
 
 		// making headers
-		$headersAr = [
+		$headers = [
 			"From: $from",
-			"Reply-To: $from_email_brackets",
-			"X-Sender: $from_email_brackets",
+			"Reply-To: " . ($options['replyTo'] ?: $fromEmailInBrackets),
+			"X-Sender: $fromEmailInBrackets",
 			"X-Mailer: diEmail v2.5",
 		];
 
 		if ($m->getOption("addReturnPathHeader"))
 		{
-			$headersAr[] = "Return-Path: $from_email_brackets";
+			$headers[] = "Return-Path: $fromEmailInBrackets";
 		}
 
 		if ($body_html || ($attachments && count($attachments)))
 		{
 			$mime_boundary = "==Multipart_Boundary_x".md5(mt_rand())."x";
 
-			$headersAr[] = "MIME-Version: 1.0";
-			$headersAr[] = "Content-Transfer-Encoding: binary";
-			$headersAr[] = "Content-Type: multipart/mixed; boundary=\"{$mime_boundary}\"";
+			$headers[] = "MIME-Version: 1.0";
+			$headers[] = "Content-Transfer-Encoding: binary";
+			$headers[] = "Content-Type: multipart/mixed; boundary=\"{$mime_boundary}\"";
 
 			if ($message)
 			{
@@ -215,13 +223,15 @@ class diEmail
 
 					$attachment["data"] = chunk_split(base64_encode($attachment["data"]));
 
-					$cid_line = !empty($attachment["content_id"]) ? "Content-ID: <{$attachment["content_id"]}>\n" : "";
+					$cidLine = !empty($attachment["content_id"])
+						? "Content-ID: <{$attachment["content_id"]}>\n"
+						: "";
 
-					$message .= "\n--{$mime_boundary}\n".
-						"Content-Disposition: inline; filename=\"{$attachment["filename"]}\"\n".
-						$cid_line.
-						"Content-Type: {$attachment["content_type"]}; name=\"{$attachment["filename"]}\"\n".
-						"Content-Transfer-Encoding: base64\n".
+					$message .= "\n--{$mime_boundary}\n" .
+						"Content-Disposition: inline; filename=\"{$attachment["filename"]}\"\n" .
+						$cidLine .
+						"Content-Type: {$attachment["content_type"]}; name=\"{$attachment["filename"]}\"\n" .
+						"Content-Transfer-Encoding: base64\n" .
 						"\n{$attachment["data"]}\n";
 				}
 			}
@@ -230,8 +240,8 @@ class diEmail
 		}
 		else
 		{
-			$headersAr[] = "Content-Type: text/plain; charset=\"{$enc}\"";
-			$headersAr[] = "Content-Transfer-Encoding: $content_transfer_encoding";
+			$headers[] = "Content-Type: text/plain; charset=\"{$enc}\"";
+			$headers[] = "Content-Transfer-Encoding: $content_transfer_encoding";
 
 			if ($m->getOption("quotedPrintable"))
 			{
@@ -243,10 +253,10 @@ class diEmail
 
 		if ($m->getOption("addReturnPathSendMailParam"))
 		{
-			$additionalParams = "-f{$from_email}";
+			$additionalParams = "-f{$fromEmail}";
 		}
 
-		$result = mail($to, $subject, $message, join($m::$headersNL, $headersAr), $additionalParams);
+		$result = mail($to, $subject, $message, join($m::$headersNL, $headers), $additionalParams);
 
 		return $result;
 	}

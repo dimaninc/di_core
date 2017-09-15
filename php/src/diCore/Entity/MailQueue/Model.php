@@ -15,6 +15,7 @@ use diCore\Data\Types;
  * @method string	getSender
  * @method string	getRecipient
  * @method integer	getRecipientId
+ * @method string	getReplyTo
  * @method string	getSubject
  * @method string	getBody
  * @method integer	getPlainBody
@@ -24,10 +25,12 @@ use diCore\Data\Types;
  * @method integer	getSent
  * @method integer	getNewsId
  * @method string	getDate
+ * @method string	getSettings
  *
  * @method bool hasSender
  * @method bool hasRecipient
  * @method bool hasRecipientId
+ * @method bool hasReplyTo
  * @method bool hasSubject
  * @method bool hasBody
  * @method bool hasPlainBody
@@ -37,8 +40,8 @@ use diCore\Data\Types;
  * @method bool hasSent
  * @method bool hasNewsId
  * @method bool hasDate
+ * @method bool hasSettings
  *
- * @method Model setRecipient($value)
  * @method Model setRecipientId($value)
  * @method Model setSubject($value)
  * @method Model setBody($value)
@@ -49,6 +52,7 @@ use diCore\Data\Types;
  * @method Model setSent($value)
  * @method Model setNewsId($value)
  * @method Model setDate($value)
+ * @method Model setSettings($value)
  */
 class Model extends \diModel
 {
@@ -71,13 +75,19 @@ class Model extends \diModel
 		self::DIRECTION_OUTGOING => 'Входящее',
 	];
 
-	public function setSender($email, $name = null)
+	/**
+	 * @param string $field
+	 * @param string|array $email
+	 * @param string|null $name
+	 * @return Model
+	 */
+	protected function setEmailNameField($field, $email, $name = null)
 	{
 		if ($name === null)
 		{
 			if (is_array($email))
 			{
-				if (isset($email['name']))
+				if (!empty($email['name']))
 				{
 					$sender = sprintf('%s <%s>', $email['name'], $email['email']);
 				}
@@ -96,8 +106,21 @@ class Model extends \diModel
 			$sender = sprintf('%s <%s>', $name, $email);
 		}
 
-		$this->set('sender', $sender);
+		return $this->set($field, $sender);
+	}
 
-		return $this;
+	public function setSender($email, $name = null)
+	{
+		return $this->setEmailNameField('sender', $email, $name);
+	}
+
+	public function setRecipient($email, $name = null)
+	{
+		return $this->setEmailNameField('recipient', $email, $name);
+	}
+
+	public function setReplyTo($email, $name = null)
+	{
+		return $this->setEmailNameField('reply_to', $email, $name);
 	}
 }

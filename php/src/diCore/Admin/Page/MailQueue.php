@@ -45,12 +45,25 @@ class MailQueue extends \diAdminBasePage
 				"attrs" => [
 					"width" => "20%",
 				],
+				'value' => function (Model $m) {
+					$s = StringHelper::out($m->getSender());
+
+					if ($m->hasReplyTo())
+					{
+						$s .= '<div class="lite">' . StringHelper::out('Reply-To: ' . $m->getReplyTo()) . '</div>';
+					}
+
+					return $s;
+				},
 			],
 			"recipient" => [
 				"title" => "Получатель",
 				"attrs" => [
 					"width" => "30%",
 				],
+				'value' => function (Model $m) {
+					return StringHelper::out($m->getRecipient());
+				},
 			],
 			"subject" => [
 				"title" => "Тема",
@@ -126,6 +139,12 @@ class MailQueue extends \diAdminBasePage
 				"default" => "",
 			],
 
+			"reply_to" => [
+				"type" => "string",
+				"title" => "Reply-To",
+				"default" => '',
+			],
+
 			"subject" => [
 				"type" => "string",
 				"title" => "Тема",
@@ -147,7 +166,7 @@ class MailQueue extends \diAdminBasePage
 
 			"attachment" => [
 				"type" => "text",
-				"title" => "Attachments (serialized)",
+				"title" => "Вложения (serialized)",
 				"default" => "",
 				"flags" => ["static"],
 			],
@@ -162,6 +181,13 @@ class MailQueue extends \diAdminBasePage
 				"type" => "checkbox",
 				"title" => "Отослано",
 				"default" => false,
+				"flags" => ["static"],
+			],
+
+			"settings" => [
+				"type" => "text",
+				"title" => "Настройки (serialized)",
+				"default" => "",
 				"flags" => ["static"],
 			],
 		];

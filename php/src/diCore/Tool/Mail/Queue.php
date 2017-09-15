@@ -14,6 +14,7 @@ use diCore\Entity\MailIncut\Collection as IncutCollection;
 use diCore\Entity\MailIncut\Type;
 use diCore\Entity\MailQueue\Collection;
 use diCore\Entity\MailQueue\Model;
+use diCore\Helper\ArrayHelper;
 use diCore\Tool\Logger;
 use diCore\Traits\BasicCreate;
 
@@ -28,12 +29,28 @@ class Queue
 
 	private $lastError = Error::NONE;
 
-	public function add($from, $to, $subject, $body, $plainBody = false, $attachments = [], $incutIds = '')
+	public function add($from, $to, $subject, $body, $settings = [], $attachments = [], $incutIds = '')
 	{
 		if (!is_array($to))
 		{
 			$to = [$to];
 		}
+
+		if (!is_array($settings))
+		{
+			$settings = [
+				'plainBody' => $settings,
+			];
+		}
+
+		$settings = extend([
+			'plainBody' => false,
+			'replyTo' => '',
+		], $settings);
+
+		$otherSettings = $settings;
+		unset($otherSettings['plainBody']);
+		unset($otherSettings['replyTo']);
 
 		$ids = [];
 
@@ -44,10 +61,12 @@ class Queue
 			$model
 				->setSender($from)
 				->setRecipient($singleTo)
+				->setReplyTo($settings['replyTo'])
 				->setSubject($subject)
 				->setBody($body)
-				->setPlainBody($plainBody)
+				->setPlainBody($settings['plainBody'])
 				->setIncutIds($incutIds)
+				->setSettings($otherSettings ? serialize($otherSettings) : '')
 				->setSent(0);
 
 			if (!is_array($attachments) && $attachments)
@@ -70,22 +89,28 @@ class Queue
 		return $ids;
 	}
 
-	public function addAndSend($from, $to, $subject, $body, $plainBody = false, $attachments = [])
+	public function addAndSend($from, $to, $subject, $body, $settings = [], $attachments = [], $incutIds = '')
 	{
-		$id = $this->add($from, $to, $subject, $body, $plainBody, $attachments);
+		$ids = $this->add($from, $to, $subject, $body, $settings, $attachments, $incutIds);
 
-		$this->send($id);
+		foreach ($ids as $id)
+		{
+			$this->send($id);
+		}
 
 		return $this;
 	}
 
-	public function addAndMayBeSend($from, $to, $subject, $body, $plainBody = false, $attachments = [])
+	public function addAndMayBeSend($from, $to, $subject, $body, $settings = [], $attachments = [], $incutIds = '')
 	{
-		$id = $this->add($from, $to, $subject, $body, $plainBody, $attachments);
+		$ids = $this->add($from, $to, $subject, $body, $settings, $attachments, $incutIds);
 
 		if (static::INSTANT_SEND)
 		{
-			$this->send($id);
+			foreach ($ids as $id)
+			{
+				$this->send($id);
+			}
 		}
 
 		return $this;
@@ -265,8 +290,12 @@ class Queue
 		$bodyPlain = $message->hasPlainBody() ? $message->getBody() : '';
 		$bodyHtml = $message->hasPlainBody() ? '' : $message->getBody();
 
+		$options = [
+			'replyTo' => $message->getReplyTo(),
+		];
+
 		$result = $this->sendWorker($message->getSender(), $message->getRecipient(), $message->getSubject(),
-			$bodyPlain, $bodyHtml, $attachments);
+			$bodyPlain, $bodyHtml, $attachments, $options);
 
 		if ($result)
 		{

@@ -84,27 +84,7 @@ class Sender
 			$to = [$to];
 		}
 
-		if (!is_array($from))
-		{
-			if (preg_match("/^(.+)\s+<(.+)>$/", $from, $matches))
-			{
-				$from = [
-					'name' => $matches[1],
-					'email' => $matches[2],
-				];
-			}
-			else
-			{
-				$from = [
-					'email' => $from,
-				];
-			}
-		}
-
-		$from = extend([
-			'name' => static::defaultFromName,
-			'email' => static::defaultFromEmail,
-		], $from);
+		$from = \diEmail::parseNameAndEmail($from, static::defaultFromEmail, static::defaultFromName);
 
 		$mail = static::createPhpMailerInstance($from['email']);
 
@@ -116,19 +96,16 @@ class Sender
 
 		if (!empty($options['replyTo']))
 		{
-			if (is_array($options['replyTo']))
-			{
-				$mail->addReplyTo($options['replyTo']['email'], $options['replyTo']['name']);
-			}
-			else
-			{
-				$mail->addReplyTo($options['replyTo']);
-			}
+			$options['replyTo'] = \diEmail::parseNameAndEmail($options['replyTo']);
+
+			$mail->addReplyTo($options['replyTo']['email'], $options['replyTo']['name']);
 		}
 
 		foreach ($to as $recipient)
 		{
-			$mail->addAddress($recipient);
+			$recipient = \diEmail::parseNameAndEmail($recipient);
+
+			$mail->addAddress($recipient['email'], $recipient['name']);
 		}
 
 		if ($attachments)

@@ -17,6 +17,7 @@ use diCore\Data\Types;
  * @method Collection filterBySender($value, $operator = null)
  * @method Collection filterByRecipient($value, $operator = null)
  * @method Collection filterByRecipientId($value, $operator = null)
+ * @method Collection filterByReplyTo($value, $operator = null)
  * @method Collection filterBySubject($value, $operator = null)
  * @method Collection filterByBody($value, $operator = null)
  * @method Collection filterByPlainBody($value, $operator = null)
@@ -25,12 +26,14 @@ use diCore\Data\Types;
  * @method Collection filterByVisible($value, $operator = null)
  * @method Collection filterBySent($value, $operator = null)
  * @method Collection filterByNewsId($value, $operator = null)
+ * @method Collection filterBySettings($value, $operator = null)
  *
  * @method Collection orderById($direction = null)
  * @method Collection orderByDate($direction = null)
  * @method Collection orderBySender($direction = null)
  * @method Collection orderByRecipient($direction = null)
  * @method Collection orderByRecipientId($direction = null)
+ * @method Collection orderByReplyTo($direction = null)
  * @method Collection orderBySubject($direction = null)
  * @method Collection orderByBody($direction = null)
  * @method Collection orderByPlainBody($direction = null)
@@ -39,12 +42,14 @@ use diCore\Data\Types;
  * @method Collection orderByVisible($direction = null)
  * @method Collection orderBySent($direction = null)
  * @method Collection orderByNewsId($direction = null)
+ * @method Collection orderBySettings($direction = null)
  *
  * @method Collection selectId()
  * @method Collection selectDate()
  * @method Collection selectSender()
  * @method Collection selectRecipient()
  * @method Collection selectRecipientId()
+ * @method Collection selectReplyTo()
  * @method Collection selectSubject()
  * @method Collection selectBody()
  * @method Collection selectPlainBody()
@@ -53,6 +58,7 @@ use diCore\Data\Types;
  * @method Collection selectVisible()
  * @method Collection selectSent()
  * @method Collection selectNewsId()
+ * @method Collection selectSettings()
  */
 class Collection extends \diCollection
 {
