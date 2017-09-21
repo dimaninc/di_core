@@ -249,9 +249,35 @@ class Submit
 		}
 	}
 
+	public static function parseImageType($name)
+	{
+		if (isInteger($name))
+		{
+			return $name;
+		}
+		else
+		{
+			switch ($name)
+			{
+				case 'orig':
+					return self::IMAGE_TYPE_ORIG;
+
+				case 'big':
+					return self::IMAGE_TYPE_BIG;
+
+				case '':
+				case 'main':
+					return self::IMAGE_TYPE_MAIN;
+
+				default:
+					throw new \Exception('Unknown image type: ' . $name);
+			}
+		}
+	}
+
 	function redirect()
 	{
-		$params_ar = array();
+		$params_ar = [];
 		foreach ($this->redirect_href_ar as $k => $v)
 		{
 			$params_ar[] = "$k=$v";
@@ -1313,17 +1339,17 @@ class Submit
 		$id = (int)$id;
 
 		$queryAr = [
-			"_table='{$Submit->getTable()}'",
+			"_table = '{$Submit->getTable()}'",
 		];
 
 		if ($field)
 		{
-			$queryAr[] = "_field='$field'";
+			$queryAr[] = "_field = '$field'";
 		}
 
 		if ($id)
 		{
-			$queryAr[] = "_id='$id'";
+			$queryAr[] = "_id = '$id'";
 		}
 
 		$ar = [];
@@ -1469,28 +1495,28 @@ class Submit
 		], $options);
 
 		$fn = \diPaths::fileSystem($obj->getSubmittedModel(), true, $field) .
-			$options["folder"] . $options["subfolder"] . ($options['filename'] ?: $obj->getData($field));
+			$options['folder'] . $options['subfolder'] . ($options['filename'] ?: $obj->getData($field));
 
 		if (is_file($fn))
 		{
 			unlink($fn);
 		}
 
-		if (!move_uploaded_file($F["tmp_name"], $fn))
+		if (!move_uploaded_file($F['tmp_name'], $fn))
 		{
-			dierror("Unable to copy file {$F["name"]} to {$fn}");
+			dierror("Unable to copy file {$F['name']} to {$fn}");
 		}
 
 		chmod($fn, Submit::FILE_CHMOD);
 
 		$info = getimagesize($fn);
 		$obj
-			->setData($field . "_w", $info[0])
-			->setData($field . "_h", $info[1])
-			->setData($field . "_t", $info[2]);
+			->setData($field . '_w', $info[0])
+			->setData($field . '_h', $info[1])
+			->setData($field . '_t', $info[2]);
 	}
 
-	public static function storeDynamicPicCallback($F, $tableOrSubmit, $what, &$ar, $folder)
+	public static function storeDynamicPicCallback($F, $tableOrSubmit, $options, &$ar, $folder)
 	{
 		if (is_object($tableOrSubmit))
 		{
@@ -1504,15 +1530,43 @@ class Submit
 			$table = $tableOrSubmit;
 		}
 
-		if (is_array($what))
+		if (is_array($options))
 		{
-			$field = $what["field"];
-			$what = $what["what"];
+			$options = extend([
+				'field' => null,
+				'what' => null,
+				'group_field' => null,
+			], $options);
+
+			$field = $options['field'];
+			$groupField = $options['group_field'];
+			$what = $options['what'];
 		}
 		else
 		{
+			$what = $options;
 			$field = null;
+			$groupField = null;
+			$options = [];
 		}
+
+		$options = extend([
+			'fileOptions' => [],
+		], $options);
+
+		$getFileOptions = function($imageType) use($options) {
+			$type = static::parseImageType($imageType);
+
+			foreach ($options['fileOptions'] as $o)
+			{
+				if (isset($o['type']) && $o['type'] == $type)
+				{
+					return $o;
+				}
+			}
+
+			return [];
+		};
 
 		$fn = $ar[$what];
 
@@ -1526,31 +1580,42 @@ class Submit
 			$folder . get_orig_folder(),
 		], Submit::DIR_CHMOD);
 
-		$mode = $F["tmp_name"] == $orig_fn ? "rebuilding" : "uploading";
+		$mode = $F['tmp_name'] == $orig_fn ? 'rebuilding' : 'uploading';
 
-		if ($mode == "uploading")
+		if ($mode == 'uploading')
 		{
 			if (is_file($full_fn)) unlink($full_fn);
 			if (is_file($big_fn)) unlink($big_fn);
 			if (is_file($orig_fn)) unlink($orig_fn);
 		}
 
-		list($tmp, $tmp, $imgType) = getimagesize($F["tmp_name"]);
+		list($tmp, $tmp, $imgType) = getimagesize($F['tmp_name']);
 
 		if (\diImage::isImageType($imgType))
 		{
 			$I = new \diImage();
-			$I->open($F["tmp_name"]);
+			$I->open($F['tmp_name']);
 
 			for ($i = 1; $i < 10; $i++)
 			{
-				$suffix = $i > 1 ? "$i" : "";
+				$suffix = $i > 1 ? "$i" : '';
 
-				if (\diConfiguration::exists($table . "_tn" . $suffix . "_width"))
+				$widthParam = \diConfiguration::exists([
+					$table . '_' . $groupField . '_' . $field . '_tn' . $suffix . '_width',
+					$table . '_' . $groupField . '_tn' . $suffix . '_width',
+					$table . '_tn' . $suffix . '_width',
+				]);
+				$heightParam = \diConfiguration::exists([
+					$table . '_' . $groupField . '_' . $field . '_tn' . $suffix . '_height',
+					$table . '_' . $groupField . '_tn' . $suffix . '_height',
+					$table . '_tn' . $suffix . '_height',
+				]);
+
+				if ($widthParam || $heightParam)
 				{
 					$tn_fn = $root . $folder . get_tn_folder($i) . $fn;
 
-					if ($mode == "uploading")
+					if ($mode == 'uploading')
 					{
 						if (is_file($tn_fn))
 						{
@@ -1558,55 +1623,69 @@ class Submit
 						}
 					}
 
-					$tnWM = $Submit->getWatermarkOptionsFor($field, constant("diAdminSubmit::IMAGE_TYPE_PREVIEW" . $suffix));
+					$tnWM = $Submit->getWatermarkOptionsFor($field, constant('diAdminSubmit::IMAGE_TYPE_PREVIEW' . $suffix));
 
-					//DI_THUMB_CROP | DI_THUMB_EXPAND_TO_SIZE
-					$I->make_thumb(DI_THUMB_CROP, $tn_fn,
-						\diConfiguration::get($table . "_tn" . $suffix . "_width"),
-						\diConfiguration::get($table . "_tn" . $suffix . "_height"),
+					$fileOptionsTn = $getFileOptions($i) ?: [
+						'resize' => DI_THUMB_CROP, //| DI_THUMB_EXPAND_TO_SIZE
+					];
+
+					$I->make_thumb($fileOptionsTn['resize'], $tn_fn,
+						\diConfiguration::safeGet($widthParam),
+						\diConfiguration::safeGet($heightParam),
 						false,
-						$tnWM["name"], $tnWM["x"], $tnWM["y"]
+						$tnWM['name'], $tnWM['x'], $tnWM['y']
 					);
 
 					chmod($tn_fn, Submit::FILE_CHMOD);
-					list($ar["pic_tn" . $suffix . "_w"], $ar["pic_tn" . $suffix . "_h"], $ar["pic_tn" . $suffix . "_t"]) = getimagesize($tn_fn);
+					list(
+						$ar['pic_tn' . $suffix . '_w'],
+						$ar['pic_tn' . $suffix . '_h'],
+						$ar['pic_tn' . $suffix . '_t']
+					) = getimagesize($tn_fn);
 				}
 			}
 
+			$fileOptionsMain = $getFileOptions(Submit::IMAGE_TYPE_MAIN) ?: [
+				'resize' => DI_THUMB_FIT,
+			];
 			$mainWM = $Submit->getWatermarkOptionsFor($field, Submit::IMAGE_TYPE_MAIN);
-			$I->make_thumb_or_copy(DI_THUMB_FIT, $full_fn,
-				\diConfiguration::safeGet($table . "_width"),
-				\diConfiguration::safeGet($table . "_height"),
+			$I->make_thumb_or_copy($fileOptionsMain['resize'], $full_fn,
+				\diConfiguration::safeGet([$table . '_' . $groupField . '_' . $field . '_width', $table . '_' . $groupField . '_width', $table . '_width']),
+				\diConfiguration::safeGet([$table . '_' . $groupField . '_' . $field . '_height', $table . '_' . $groupField . '_height', $table . '_height']),
 				false,
-				$mainWM["name"], $mainWM["x"], $mainWM["y"]
+				$mainWM['name'], $mainWM['x'], $mainWM['y']
 			);
 
+			$fileOptionsBig = $getFileOptions(Submit::IMAGE_TYPE_BIG) ?: [
+				'resize' => DI_THUMB_FIT,
+			];
 			$bigWM = $Submit->getWatermarkOptionsFor($field, Submit::IMAGE_TYPE_BIG);
-			$I->make_thumb_or_copy(DI_THUMB_FIT, $big_fn,
-				\diConfiguration::safeGet($table . '_big_width', 10000),
-				\diConfiguration::safeGet($table . '_big_height', 10000),
+			$I->make_thumb_or_copy($fileOptionsBig['resize'], $big_fn,
+				\diConfiguration::safeGet([$table . '_' . $groupField . '_' . $field . '_big_width', $table . '_' . $groupField . '_big_width', $table . '_big_width'], 10000),
+				\diConfiguration::safeGet([$table . '_' . $groupField . '_' . $field . '_big_height', $table . '_' . $groupField . '_big_height', $table . '_big_height'], 10000),
 				false,
-				$bigWM["name"], $bigWM["x"], $bigWM["y"]);
+				$bigWM['name'], $bigWM['x'], $bigWM['y']
+			);
 			$I->close();
 
-			if ($mode == "uploading")
+			if ($mode == 'uploading')
 			{
-				move_uploaded_file($F["tmp_name"], $orig_fn);
+				move_uploaded_file($F['tmp_name'], $orig_fn);
 			}
 
 			chmod($full_fn, Submit::FILE_CHMOD);
 			chmod($big_fn, Submit::FILE_CHMOD);
 			chmod($orig_fn, Submit::FILE_CHMOD);
 
-			list($ar["pic_w"], $ar["pic_h"], $ar["pic_t"]) = getimagesize($full_fn);
+			list($ar['pic_w'], $ar['pic_h'], $ar['pic_t']) = getimagesize($full_fn);
 		}
 		else
 		{
-			list($ar["pic_w"], $ar["pic_h"], $ar["pic_t"]) = [0, 0, 0];
+			list($ar['pic_w'], $ar['pic_h'], $ar['pic_t']) = [0, 0, 0];
 
-			if ($mode == "uploading")
+			if ($mode == 'uploading')
 			{
-				move_uploaded_file($F["tmp_name"], $full_fn);
+				move_uploaded_file($F['tmp_name'], $full_fn);
 			}
 		}
 	}

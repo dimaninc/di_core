@@ -1154,7 +1154,7 @@ EOF;
 	{
 		$ar = $this->getInputAttributes($field, $forceAttributes);
 
-		return $ar ? diArrayHelper::toAttributesString($ar, true, ArrayHelper::ESCAPE_HTML) : "";
+		return $ar ? ArrayHelper::toAttributesString($ar, true, ArrayHelper::ESCAPE_HTML) : "";
 	}
 
 	private function getInputAttributes($field, $forceAttributes = [])
@@ -1516,13 +1516,14 @@ EOF;
       }
       else
       {
-	      $this->data[$field] = diAdminSubmit::getGeneratedFilename(
+	      $this->data[$field] = Submit::getGeneratedFilename(
 			  \diCore\Data\Config::getPublicFolder() . $pics_folder,
 		      $_FILES[$ff]["name"][$id],
 		      $this->getFieldProperty($field, 'naming')
 	      );
       }
 
+	    $fileOptions = $this->getFieldProperty($field, 'fileOptions');
       $callback = isset($field_config["callback"]) ? $field_config["callback"] : "";
 
       $F = array(
@@ -1535,27 +1536,30 @@ EOF;
 
       if ($callback && is_callable($callback))
       {
-        $callback($F, $pics_folder, $field, $this->data, $this);
+        $callback($F, $pics_folder, $field, $this->data, $this, [
+	        'fileOptions' => $fileOptions,
+        ]);
       }
     }
     //
   }
 
-	public static function storePicSimple($F, $pics_folder, $field, &$ar, diDynamicRows $DynamicRows = null)
+	public static function storePicSimple($F, $folder, $field, &$ar, diDynamicRows $DR = null, $options = [])
 	{
-		Submit::storeDynamicPicCallback($F, $DynamicRows->getAdminPage()->getSubmit(), [
+		Submit::storeDynamicPicCallback($F, $DR->getAdminPage()->getSubmit(), extend([
 			'what' => $field,
 			'field' => $field,
-		], $ar, $pics_folder);
+			'group_field' => $DR->getField(),
+		], $options), $ar, $folder);
 	}
 
-	public static function storeFileSimple($F, $pics_folder, $field, &$ar, diDynamicRows $DynamicRows = null)
+	public static function storeFileSimple($F, $folder, $field, &$ar, diDynamicRows $DR = null, $options = [])
 	{
 		$fn = $ar[$field];
 
-		FileSystemHelper::createTree(diPaths::fileSystem(), $pics_folder, 0777);
+		FileSystemHelper::createTree(diPaths::fileSystem(), $folder, 0777);
 
-		$full_fn = diPaths::fileSystem() . $pics_folder . $fn;
+		$full_fn = diPaths::fileSystem() . $folder . $fn;
 
 		if (is_file($full_fn))
 		{

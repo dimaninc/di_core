@@ -155,10 +155,15 @@ class diConfiguration
 		return $this;
 	}
 
-	// property can be 'value' or 'width/height/type' (for images)
+	/**
+	 * @param string|array $name
+	 * @param string $property   can be 'value' or 'width/height/type' (for images)
+	 * @return mixed|null
+	 * @throws Exception
+	 */
 	public static function get($name, $property = "value")
 	{
-		if (self::exists($name))
+		if ($name = self::exists($name))
 		{
 			return self::getPropertyOption($name, $property);
 		}
@@ -170,9 +175,15 @@ class diConfiguration
 		}
 	}
 
+	/**
+	 * @param string|array $name
+	 * @param null|mixed $default
+	 * @param string $property   can be 'value' or 'width/height/type' (for images)
+	 * @return null
+	 */
 	public static function safeGet($name, $default = null, $property = "value")
 	{
-		if (self::exists($name))
+		if ($name = self::exists($name))
 		{
 			return self::getPropertyOption($name, $property);
 		}
@@ -204,9 +215,26 @@ class diConfiguration
 		return array_change_key_case(self::getArray($pattern), CASE_LOWER);
 	}
 
+	/**
+	 * @param  string|array $name
+	 * @return bool|string
+	 */
 	public static function exists($name)
 	{
-		return isset(self::$data[$name]);
+		if (is_array($name))
+		{
+			foreach ($name as $n)
+			{
+				if (static::exists($n))
+				{
+					return $n;
+				}
+			}
+
+			return false;
+		}
+
+		return isset(self::$data[$name]) ? $name : null;
 	}
 
 	public static function getFilename($name)
