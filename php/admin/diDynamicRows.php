@@ -1462,6 +1462,11 @@ EOF;
         $this->data[$f] = $this->data[$f] ? 1 : 0;
         break;
     }
+
+	  $this->getStoredModel()
+		  ->set($f, $this->data[$f]);
+
+	  return $this;
   }
 
   function make_datetime($field, $id, $date = true, $time = false)
