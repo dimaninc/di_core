@@ -12,6 +12,7 @@ mkdir -p htdocs/uploads
 chmod -R 777 htdocs/uploads
 
 mkdir -p log/db
+chmod -R 777 log
 chmod -R 777 log/db
 
 mkdir -p log/debug
