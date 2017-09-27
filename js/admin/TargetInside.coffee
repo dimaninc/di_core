@@ -6,12 +6,21 @@ class TargetInside
         @opts = $.extend
             types: []
             targets: []
+            emptyTitles:
+                type: '[ Не выбрано ]'
+                id: '[ Не выбрано ]'
             selected:
                 type: null
                 id: null
         , opts
 
         @setupSelects()
+
+    emptyOptionsNeeded: ->
+        !!@opts.emptyTitles.type
+
+    createOption: (title, id) ->
+        $ '<option value="{0}">{1}</option>'.format id, title
 
     setupSelects: ->
         self = @
@@ -32,9 +41,11 @@ class TargetInside
             $targetId.replaceWith $s
             $targetId = $s
 
+        if @emptyOptionsNeeded()
+            $targetType.append @createOption @opts.emptyTitles.type, 0
+
         $.each @opts.types, (id, title) ->
-            $option = $ '<option value="{0}">{1}</option>'.format id, title
-            $targetType.append $option
+            $targetType.append self.createOption title, id
             self.opts.selected.type = id * 1 unless self.opts.selected.type * 1
             true
 
@@ -57,12 +68,16 @@ class TargetInside
     loadTargets: (type = @opts.selected.type) ->
         return @ if @opts.selected.type * 1 is @value * 1 or not type
 
+        self = @
+
         $targetId.find 'option'
         .remove()
 
+        if @emptyOptionsNeeded()
+            $targetId.append @createOption @opts.emptyTitles.id, 0
+
         $.each @opts.targets[type], (id, ar) ->
-            $option = $ '<option value="{0}">{1}</option>'.format ar.id, ar.title
-            $targetId.append $option
+            $targetId.append self.createOption ar.title, ar.id
 
         $targetId.val @opts.selected.id if @opts.selected.type * 1 is $targetType.val() * 1
 

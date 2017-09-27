@@ -12,6 +12,10 @@ TargetInside = (function() {
     this.opts = $.extend({
       types: [],
       targets: [],
+      emptyTitles: {
+        type: '[ Не выбрано ]',
+        id: '[ Не выбрано ]'
+      },
       selected: {
         type: null,
         id: null
@@ -19,6 +23,14 @@ TargetInside = (function() {
     }, opts);
     this.setupSelects();
   }
+
+  TargetInside.prototype.emptyOptionsNeeded = function() {
+    return !!this.opts.emptyTitles.type;
+  };
+
+  TargetInside.prototype.createOption = function(title, id) {
+    return $('<option value="{0}">{1}</option>'.format(id, title));
+  };
 
   TargetInside.prototype.setupSelects = function() {
     var $s, self;
@@ -37,10 +49,11 @@ TargetInside = (function() {
       $targetId.replaceWith($s);
       $targetId = $s;
     }
+    if (this.emptyOptionsNeeded()) {
+      $targetType.append(this.createOption(this.opts.emptyTitles.type, 0));
+    }
     $.each(this.opts.types, function(id, title) {
-      var $option;
-      $option = $('<option value="{0}">{1}</option>'.format(id, title));
-      $targetType.append($option);
+      $targetType.append(self.createOption(title, id));
       if (!(self.opts.selected.type * 1)) {
         self.opts.selected.type = id * 1;
       }
@@ -64,17 +77,20 @@ TargetInside = (function() {
   };
 
   TargetInside.prototype.loadTargets = function(type) {
+    var self;
     if (type == null) {
       type = this.opts.selected.type;
     }
     if (this.opts.selected.type * 1 === this.value * 1 || !type) {
       return this;
     }
+    self = this;
     $targetId.find('option').remove();
+    if (this.emptyOptionsNeeded()) {
+      $targetId.append(this.createOption(this.opts.emptyTitles.id, 0));
+    }
     $.each(this.opts.targets[type], function(id, ar) {
-      var $option;
-      $option = $('<option value="{0}">{1}</option>'.format(ar.id, ar.title));
-      return $targetId.append($option);
+      return $targetId.append(self.createOption(ar.title, ar.id));
     });
     if (this.opts.selected.type * 1 === $targetType.val() * 1) {
       $targetId.val(this.opts.selected.id);
