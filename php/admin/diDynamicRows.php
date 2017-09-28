@@ -1297,7 +1297,7 @@ EOF;
 				$this->data = extend($this->data, $_a);
 			}
 
-			if ($this->storedModel->exists())
+			if ($this->storedModel->exists() && $this->test_r)
 			{
 				$this->getDb()->update($this->data_table, $data_for_db, $this->test_r->id) or $this->getDb()->dierror();
 				$ids_ar[] = $this->test_r->id;
