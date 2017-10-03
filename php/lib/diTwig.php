@@ -262,8 +262,12 @@ class diTwig
 	 */
 	public function renderPage($template, $data = [])
 	{
+		global $Z;
+
 		return $this
-			->render($template, self::TOKEN_FOR_PAGE, $data);
+			->render($template, self::TOKEN_FOR_PAGE, extend([
+				'Z' => isset($Z) ? $Z : null,
+			], $data));
 	}
 
 	public function importFromFastTemplate(FastTemplate $tpl, $tokens = [], $clear = true)

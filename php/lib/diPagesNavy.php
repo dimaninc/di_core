@@ -83,6 +83,16 @@ class diPagesNavy
 		return $this->page;
 	}
 
+	public function getPrevPage()
+	{
+		return $this->checkPrevNext($this->getPage() - $this->getSign());
+	}
+
+	public function getNextPage()
+	{
+		return $this->checkPrevNext($this->getPage() + $this->getSign());
+	}
+
 	public function getStart()
 	{
 		return $this->start;
@@ -111,6 +121,21 @@ class diPagesNavy
 	public function getDir()
 	{
 		return $this->dir;
+	}
+
+	public function getSign()
+	{
+		return $this->reverse ? -1 : 1;
+	}
+
+	protected function checkPrevNext($page)
+	{
+		if ($page < 1 || $page > $this->getTotalPages())
+		{
+			return null;
+		}
+
+		return $page;
 	}
 
 	protected function getDb()
