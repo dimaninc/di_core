@@ -9,40 +9,45 @@ class diBasePrevNextModel extends diModel
 {
 	const CONDITION_TYPE_SAME = 1;
 
-	protected $languageAr = array(
+	/** @var  diBasePrevNextModel */
+	protected $prev;
+	/** @var  diBasePrevNextModel */
+	protected $next;
+
+	protected $languageAr = [
 		"prev" => "Предыдущая",
 		"next" => "Следующая",
-	);
+	];
 
-	protected $htmlAr = array(
+	protected $htmlAr = [
 		"siblingHref" => '<a href="%2$s">%1$s</a>', // word and link
 		"siblingNoHref" => '<span>%1$s</span>', // just word, no link
-	);
+	];
 
-	protected $orderByOptions = array(
+	protected $orderByOptions = [
 		"circular" => false,
 		"reuseSelfIfNoSiblings" => false,
 		"reverse" => false,
-		"conditions" => array(),
-		"fields" => array(
-			array(
+		"conditions" => [],
+		"fields" => [
+			[
 				"field" => "date",
 				"dir" => "DESC",
-			),
-			array(
+			],
+			[
 				"field" => "%slug%",
 				"dir" => "DESC",
-			),
-		),
-	);
+			],
+		],
+	];
 
-	protected $customOrderByOptions = array();
+	protected $customOrderByOptions = [];
 
 	public function __construct($r = null)
 	{
 		parent::__construct($r);
 
-		$this->orderByOptions = array_merge($this->orderByOptions, $this->customOrderByOptions);
+		$this->orderByOptions = array_replace_recursive($this->orderByOptions, $this->customOrderByOptions);
 	}
 
 	public function getCustomTemplateVars()
@@ -50,11 +55,11 @@ class diBasePrevNextModel extends diModel
 		return extend(parent::getCustomTemplateVars(), $this->getPrevNextTemplateVars());
 	}
 
-	protected function getPrevNextHtml($name, $r = null)
+	protected function getPrevNextHtml($name, \diModel $model)
 	{
-		return sprintf($this->htmlAr[$r ? "siblingHref" : "siblingNoHref"],
+		return sprintf($this->htmlAr[$model->exists() ? "siblingHref" : "siblingNoHref"],
 			$this->languageAr[$name],
-			$r ? static::href($r) : ""
+			$model->getHref()
 		);
 	}
 
@@ -85,13 +90,13 @@ class diBasePrevNextModel extends diModel
 		$conditionSet = array_slice($this->orderByOptions["fields"], 0, $i);
 		$orderSet = array_slice($this->orderByOptions["fields"], $i);
 
-		$conditions = array(
-			"visible='1'",
-			"id!='{$this->getId()}'"
-		);
+		$conditions = [
+			"visible = '1'",
+			"id != '{$this->getId()}'",
+		];
 
-		$prevConditions = $nextConditions = array();
-		$prevOrders = $nextOrders = array();
+		$prevConditions = $nextConditions = [];
+		$prevOrders = $nextOrders = [];
 
 		foreach ($conditionSet as $fAr)
 		{
@@ -147,8 +152,33 @@ class diBasePrevNextModel extends diModel
 		);
 	}
 
-	public function getPrevNextTemplateVars()
+	/**
+	 * @return diBasePrevNextModel
+	 */
+	public function getPrev()
 	{
+		$this->initPrevNextModels();
+
+		return $this->prev;
+	}
+
+	/**
+	 * @return diBasePrevNextModel
+	 */
+	public function getNext()
+	{
+		$this->initPrevNextModels();
+
+		return $this->next;
+	}
+
+	protected function initPrevNextModels()
+	{
+		if ($this->prev && $this->next)
+		{
+			return $this;
+		}
+
 		$ordersBy = count($this->orderByOptions["fields"]);
 
 		$prev_r = $next_r = null;
@@ -204,12 +234,25 @@ class diBasePrevNextModel extends diModel
 			}
 		}
 
-		return [
-			"prev_href" => $prev_r ? static::href($prev_r) : "#no-prev",
-			"next_href" => $next_r ? static::href($next_r) : "#no-next",
+		$this->prev = \diModel::create($this->modelType(), $prev_r);
+		$this->next = \diModel::create($this->modelType(), $next_r);
 
-			"prev" => $prev_r ? $this->getPrevNextHtml("prev", $prev_r) : "",
-			"next" => $next_r ? $this->getPrevNextHtml("next", $next_r) : "",
+		return $this;
+	}
+
+	public function getPrevNextTemplateVars()
+	{
+		$this->initPrevNextModels();
+
+		return [
+			'prev_href' => $this->getPrev()->getHref(),
+			'next_href' => $this->getNext()->getHref(),
+
+			'prev_model' => $this->getPrev(),
+			'next_model' => $this->getNext(),
+
+			'prev' => $this->getPrevNextHtml('prev', $this->getPrev()),
+			'next' => $this->getPrevNextHtml('next', $this->getNext()),
 		];
 	}
 }

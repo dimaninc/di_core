@@ -75,6 +75,7 @@
  */
 class diNewsModel extends diBasePrevNextModel
 {
+	const type = \diTypes::news;
 	protected $table = "news";
 
 	// prev/next stuff
@@ -89,6 +90,6 @@ class diNewsModel extends diBasePrevNextModel
 
 	public function getHref()
 	{
-		return $this->__getPrefixForHref() . "/" . diCurrentCMS::ct("news") . "/" . $this->getSlug() . "/";
+		return $this->__getPrefixForHref() . "/" . \diCurrentCMS::ct("news") . "/" . $this->getSlug() . "/";
 	}
 }
