@@ -2322,11 +2322,21 @@ EOF;
 
 			foreach ($feed as $k => $v)
 			{
-				$v = is_array($v) ? $v : ["title" => $v];
+				$v = is_array($v) || $v instanceof \diModel ? $v : ["title" => $v];
 
-				$v = extend([
-					"enabled" => true,
-				], $v);
+				if (is_array($v))
+				{
+					$v = extend([
+						"enabled" => true,
+					], $v);
+				}
+				elseif ($v instanceof \diModel)
+				{
+					if ($v->getRelated('enabled') === null)
+					{
+						$v->setRelated('enabled', true);
+					}
+				}
 
 				$attr_ar = [];
 
@@ -2334,10 +2344,24 @@ EOF;
 					(is_string($this->getData($field)) && strpos(",{$this->getData($field)},", ",$k,") !== false) ||
 					(in_array($k, $values_ar))
 				)
+				{
 					$attr_ar[] = "checked=\"checked\"";
+				}
 
-				if ($this->static_mode || !$v["enabled"])
+				$disabled = $this->static_mode;
+
+				if (
+					(is_array($v) && empty($v["enabled"])) ||
+					($v instanceof \diModel && !$v->getRelated('enabled'))
+				   )
+				{
+					$disabled = true;
+				}
+
+				if ($disabled)
+				{
 					$attr_ar[] = "disabled=\"true\"";
+				}
 
 				$tags_ar[] = "<input type=\"checkbox\" name=\"{$field}[]\" value='$k' id=\"{$field}[{$k}]\" ".join(" ", $attr_ar)."> ".
 					"<label for=\"{$field}[{$k}]\">{$v["title"]}</label>";
@@ -2380,10 +2404,12 @@ EOF;
 	{
 		/** @var \diTags $class */
 		$class = $this->getFieldOption($field, "class") ?: "diTags";
+		/** @var \diTags $instance */
+		$instance = new $class;
 
 		$this
 			->setData($field, $class::tagIdsAr(\diTypes::getId($this->getTable()), $this->getId()))
-			->setCheckboxesListInput($field, $this->getDb()->rs("tags", "ORDER BY title ASC"), $columns, $ableToAddNew);
+			->setCheckboxesListInput($field, $instance->getFeed(), $columns, $ableToAddNew);
 	}
 
 	public function get_datetime_input($table, $field, $value, $date = true, $time = false, $calendar_cfg = true)

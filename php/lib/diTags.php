@@ -31,6 +31,8 @@
         * created
 */
 
+use diCore\Admin\Form;
+
 class diTags
 {
 	/** @var diDB */
@@ -56,7 +58,7 @@ class diTags
 		global $db;
 
 		$this->db = $db;
-		$this->new_field_suffix = diAdminForm::NEW_FIELD_SUFFIX;
+		$this->new_field_suffix = Form::NEW_FIELD_SUFFIX;
 	}
 
 	protected function getDb()
@@ -107,6 +109,22 @@ class diTags
 	public function getTableName($table)
 	{
 		return $this->tables[$table];
+	}
+
+	protected function tuneFeed(\diCollection $feed)
+	{
+		$feed
+			->orderBy('title');
+
+		return $feed;
+	}
+
+	public function getFeed()
+	{
+		$col = \diCollection::createForTable($this->getTableName('tags'));
+		$col = $this->tuneFeed($col);
+
+		return $col;
 	}
 
 	public function getSubQueryForTargetId($targetType, $tagId)
