@@ -359,11 +359,50 @@ class diTags
 		return $o->getTagRecords($type, $targetId, $template);
 	}
 
+	public static function tagModels($type, $targetId)
+	{
+		$o = new static();
+
+		return $o->getTagModels($type, $targetId);
+	}
+
 	public static function targetRecords($type, $tagId)
 	{
 		$o = new static();
 
 		return $o->getTargetRecords($type, $tagId);
+	}
+
+	public static function targetModels($type, $tagId)
+	{
+		$o = new static();
+
+		return $o->getTargetModels($type, $tagId);
+	}
+
+	public function getTagModels($type, $targetId)
+	{
+		$ar = $this->getTagRecords($type, $targetId);
+
+		foreach ($ar as &$tag)
+		{
+			$tag = \diModel::create(\diCore\Data\Types::tag, $tag);
+		}
+
+		return $ar;
+	}
+
+	public function getTargetModels($type, $tagId)
+	{
+		$rs = $this->getTargetRecords($type, $tagId);
+		$ar = [];
+
+		while ($target = $this->getDb()->fetch_ar($rs))
+		{
+			$ar[$target['id']] = \diModel::create($type, $target);
+		}
+
+		return $ar;
 	}
 
 	public function getTagRecords($type, $targetId, $template = null)
