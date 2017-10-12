@@ -382,11 +382,12 @@ class diTags
 
 	public function getTagModels($type, $targetId)
 	{
-		$ar = $this->getTagRecords($type, $targetId);
+		$rs = $this->getTagRecords($type, $targetId);
+		$ar = [];
 
-		foreach ($ar as &$tag)
+		while ($tag = $this->getDb()->fetch_ar($rs))
 		{
-			$tag = \diModel::create(\diCore\Data\Types::tag, $tag);
+			$ar[$tag['id']] = \diModel::create(\diCore\Data\Types::tag, $tag);
 		}
 
 		return $ar;
