@@ -1,0 +1,21 @@
+{{ head|raw }}
+
+<p>Новое сообщение обратной связи</p>
+<hr>
+{% if feedback['name'] %}
+<p><b>Контактное лицо:</b> {{ feedback['name'] }}</p>
+{% endif %}
+{% if feedback['email'] %}
+<p><b>E-mail:</b> <a href="mailto:{{ feedback['email'] }}">{{ feedback['email'] }}</a></p>
+{% endif %}
+{% if feedback['phone'] %}
+<p><b>Телефон:</b> {{ feedback['phone'] }}</p>
+{% endif %}
+{% if feedback['content'] %}
+<p><b>Вопрос:</b> {{ feedback['content'] }}</p>
+{% endif %}
+<p><b>Ссылка в админке:</b> <a href="{{ feedback['full_admin_href'] }}">{{ feedback['full_admin_href'] }}</a></p>
+<p><b>IP:</b> {{ feedback['ip'] }}</p>
+<hr>
+
+{{ foot|raw }}

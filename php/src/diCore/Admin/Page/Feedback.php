@@ -1,12 +1,17 @@
 <?php
-
 /**
  * Created by PhpStorm.
  * User: dimaninc
  * Date: 30.06.2015
  * Time: 14:12
  */
-class diFeedbackPage extends diAdminBasePage
+
+namespace diCore\Admin\Page;
+
+use diCore\Entity\Feedback\Model;
+use diCore\Helper\StringHelper;
+
+class Feedback extends \diAdminBasePage
 {
 	protected $options = [
 		"staticMode" => true,
@@ -51,14 +56,14 @@ class diFeedbackPage extends diAdminBasePage
 				"bodyAttrs" => [
 					"class" => "lite",
 				],
-				"value" => function(diModel $model) {
-					return str_out(str_cut_end($model->get("content"), 200));
+				"value" => function(Model $model) {
+					return StringHelper::out(str_cut_end($model->getContent(), 200));
 				},
 			],
 			"date" => [
 				"title" => "Дата",
-				"value" => function(diModel $model) {
-					return date("d.m.Y H:i", strtotime($model->get("date")));
+				"value" => function(Model $model) {
+					return \diDateTime::format('d.m.Y H:i', $model->getDate());
 				},
 				"attrs" => [],
 				"headAttrs" => [
@@ -77,9 +82,8 @@ class diFeedbackPage extends diAdminBasePage
 	{
 		$this->getForm()
 			->processData("content", function($v) {
-				return diDB::_out($v);
-			})
-			->processData("ip", "bin2ip");
+				return StringHelper::out($v);
+			});
 	}
 
 	public function submitForm()

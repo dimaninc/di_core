@@ -456,7 +456,7 @@ abstract class diAdminBase
 
 	public function getSiteTitle()
 	{
-		return $this->siteTitle;
+		return Config::getSiteTitle() ?: $this->siteTitle;
 	}
 
 	public static function getOldSchoolPath($module, $method = "list")

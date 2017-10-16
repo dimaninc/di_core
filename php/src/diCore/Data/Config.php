@@ -12,6 +12,7 @@ use diCore\Helper\StringHelper;
 
 class Config
 {
+	const siteTitle = null;
 	const apiQueryPrefix = null;
 	const folderForAssets = '';
 	const mainDomain = null;
@@ -53,6 +54,14 @@ class Config
 		}
 
 		return $class::$location;
+	}
+
+	final public static function getSiteTitle()
+	{
+		/** @var Config $class */
+		$class = self::getClass();
+
+		return $class::siteTitle;
 	}
 
 	final public static function getApiQueryPrefix()
