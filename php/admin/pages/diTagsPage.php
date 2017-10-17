@@ -8,14 +8,14 @@
 
 class diTagsPage extends diAdminBasePage
 {
-	protected $options = array(
-		"filters" => array(
-			"defaultSorter" => array(
+	protected $options = [
+		"filters" => [
+			"defaultSorter" => [
 				"sortBy" => "title",
 				"dir" => "ASC",
-			),
-		),
-	);
+			],
+		],
+	];
 
 	protected function initTable()
 	{
@@ -24,44 +24,50 @@ class diTagsPage extends diAdminBasePage
 
 	public function renderList()
 	{
-		$this->getList()->addColumns(array(
+		$this->getList()->addColumns([
 			"id" => "ID",
-			"title" => array(
-				"headAttrs" => array(
+			"title" => [
+				"headAttrs" => [
 					"width" => "40%",
-				),
-			),
-			"slug" => array(
+				],
+			],
+			"slug" => [
 				"title" => "Название для URL",
-				"attrs" => array(),
-				"headAttrs" => array(
+				"attrs" => [],
+				"headAttrs" => [
 					"width" => "40%",
-				),
-				"bodyAttrs" => array(
+				],
+				"bodyAttrs" => [
 					"class" => "lite",
-				),
-			),
-			"date" => array(
+				],
+			],
+			"date" => [
 				"title" => "Добавлен",
-				"value" => function(diTagModel $tag) {
+				"value" => function (diTagModel $tag)
+				{
 					return date("d.m.Y H:i", strtotime($tag->getDate()));
 				},
-				"attrs" => array(),
-				"headAttrs" => array(
+				"attrs" => [],
+				"headAttrs" => [
 					"width" => "20%",
-				),
-				"bodyAttrs" => array(
+				],
+				"bodyAttrs" => [
 					"class" => "dt",
-				),
-			),
+				],
+			],
 			"#edit" => "",
 			"#del" => "",
 			"#visible" => "",
-		));
+		]);
 	}
 
 	public function renderForm()
 	{
+		if (!$this->getForm()->getId())
+		{
+			$this->getForm()
+				->setHiddenInput('date');
+		}
 	}
 
 	public function submitForm()
@@ -116,7 +122,8 @@ class diTagsPage extends diAdminBasePage
 			"date" => [
 				"type" => "datetime_str",
 				"title" => "Дата публикации",
-				"default" => date("Y-m-d H:i:s"),
+				"default" => '',
+				'flags'		=> ['static', 'untouchable'],
 			],
 
 			"html_title" => [
