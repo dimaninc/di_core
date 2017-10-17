@@ -10,11 +10,9 @@ namespace diCore\Tool;
 
 abstract class SimpleContainer
 {
-	public static $names = [
-	];
-
-	public static $titles = [
-	];
+	public static $names = [];
+	public static $titles = [];
+	public static $descriptions = [];
 
 	public static function name($id)
 	{
@@ -27,6 +25,13 @@ abstract class SimpleContainer
 	{
 		return isset(static::$titles[$id])
 			? static::$titles[$id]
+			: null;
+	}
+
+	public static function description($id)
+	{
+		return isset(static::$descriptions[$id])
+			? static::$descriptions[$id]
 			: null;
 	}
 
@@ -49,5 +54,22 @@ abstract class SimpleContainer
 		}
 
 		return $id;
+	}
+
+	public static function getCollection()
+	{
+		$ar = [];
+
+		foreach (static::$names as $id => $name)
+		{
+			$ar[] = [
+				'id' => $id,
+				'name' => static::name($id),
+				'title' => static::title($id),
+				'description' => static::description($id),
+			];
+		}
+
+		return $ar;
 	}
 }
