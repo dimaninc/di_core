@@ -160,7 +160,10 @@ class diHierarchyTable
 			$model = \diCollection::create($this->getType())->find($parentId)->getFirstItem()
 		)
 		{
-			$ar[] = $model;
+			if ($model->exists())
+			{
+				$ar[] = $model;
+			}
 
 			if ($model->get('parent') > 0)
 			{
