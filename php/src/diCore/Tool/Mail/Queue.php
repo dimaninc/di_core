@@ -64,7 +64,7 @@ class Queue
 				->setReplyTo($settings['replyTo'])
 				->setSubject($subject)
 				->setBody($body)
-				->setPlainBody($settings['plainBody'])
+				->setPlainBody($settings['plainBody'] ? 1 : 0)
 				->setIncutIds($incutIds)
 				->setSettings($otherSettings ? serialize($otherSettings) : '')
 				->setSent(0);
