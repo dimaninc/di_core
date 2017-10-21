@@ -79,14 +79,14 @@ var diDynamicRows = function(opts) {
 		if (opts.afterInit) {
 			opts.afterInit(this);
 		}
-		
+
 		if (opts.sortable) {
 			this.setupSortable();
 		}
-		
+
 		return this;
 	};
-	
+
 	this.recountOrderNumbers = function() {
 		var num = 0;
 
@@ -176,6 +176,7 @@ var diDynamicRows = function(opts) {
 		if (Math.abs(id) == 1)
 		{
 			$(_ge(field + '_by_default[' + id + ']')).prop('checked', true);
+			$('input[type="radio"][name="{0}_default"][value="{1}"]'.format(field, id)).prop('checked', true);
 		}
 
 		if (admin_form)
@@ -192,7 +193,7 @@ var diDynamicRows = function(opts) {
 		if (opts.afterAddRow) {
 			opts.afterAddRow(this, $e, id);
 		}
-		
+
 		if (opts.sortable) {
 			this.refreshSortable();
 		}
