@@ -1,6 +1,14 @@
 <?php
-require $_SERVER['DOCUMENT_ROOT'] . "/_core/php/functions.php";
-require $_SERVER['DOCUMENT_ROOT'] . "/_cfg/common.php";
+$corePath = is_dir($_SERVER['DOCUMENT_ROOT'] . '/_core')
+	? $_SERVER['DOCUMENT_ROOT'] . '/_core'
+	: dirname($_SERVER['DOCUMENT_ROOT']) . '/vendor/dimaninc/di_core';
+
+$phpPath = is_dir($_SERVER['DOCUMENT_ROOT'] . '/_cfg')
+	? $_SERVER['DOCUMENT_ROOT'] . '/_cfg'
+	: dirname($_SERVER['DOCUMENT_ROOT']) . '/_cfg';
+
+require $corePath . '/php/functions.php';
+require $phpPath . '/common.php';
 
 $Admin = \diAdminUser::create(false);
 if (!$Admin->authorized())
