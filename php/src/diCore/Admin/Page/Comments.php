@@ -42,6 +42,7 @@ class Comments extends \diAdminBasePage
 	{
 		return [
 			'name',
+			'login',
 			'email',
 		];
 	}
