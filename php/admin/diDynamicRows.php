@@ -1119,6 +1119,9 @@ EOF;
 			$path = '/' . $this->getPicsFolder();
 		}
 
+		$showImageType = $this->getFieldProperty($this->current_field, 'showImageType') ?: Submit::IMAGE_TYPE_MAIN;
+		$path .= Submit::getFolderByImageType($showImageType);
+
 		$v = isset($this->data[$field]) ? $this->data[$field] : "";
 
 		$file_info = $this->get_pic_html_for_input($field, $path . $v, $hide_if_no_file);

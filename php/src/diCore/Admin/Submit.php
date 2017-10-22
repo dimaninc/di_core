@@ -931,7 +931,7 @@ class Submit
 		switch ($type)
 		{
 			case self::IMAGE_TYPE_MAIN:
-				return "";
+				return '';
 
 			case self::IMAGE_TYPE_BIG:
 				return $big_folder;
@@ -1604,11 +1604,13 @@ class Submit
 					$table . '_' . $groupField . '_' . $field . '_tn' . $suffix . '_width',
 					$table . '_' . $groupField . '_tn' . $suffix . '_width',
 					$table . '_tn' . $suffix . '_width',
+					$groupField . '_tn' . $suffix . '_width',
 				]);
 				$heightParam = \diConfiguration::exists([
 					$table . '_' . $groupField . '_' . $field . '_tn' . $suffix . '_height',
 					$table . '_' . $groupField . '_tn' . $suffix . '_height',
 					$table . '_tn' . $suffix . '_height',
+					$groupField . '_tn' . $suffix . '_height',
 				]);
 
 				if ($widthParam || $heightParam)
@@ -1625,9 +1627,9 @@ class Submit
 
 					$tnWM = $Submit->getWatermarkOptionsFor($field, constant('diAdminSubmit::IMAGE_TYPE_PREVIEW' . $suffix));
 
-					$fileOptionsTn = $getFileOptions($i) ?: [
+					$fileOptionsTn = extend([
 						'resize' => DI_THUMB_CROP, //| DI_THUMB_EXPAND_TO_SIZE
-					];
+					], $getFileOptions($i));
 
 					$I->make_thumb($fileOptionsTn['resize'], $tn_fn,
 						\diConfiguration::safeGet($widthParam),
@@ -1645,9 +1647,9 @@ class Submit
 				}
 			}
 
-			$fileOptionsMain = $getFileOptions(Submit::IMAGE_TYPE_MAIN) ?: [
+			$fileOptionsMain = extend([
 				'resize' => DI_THUMB_FIT,
-			];
+			], $getFileOptions(Submit::IMAGE_TYPE_MAIN));
 			$mainWM = $Submit->getWatermarkOptionsFor($field, Submit::IMAGE_TYPE_MAIN);
 			$I->make_thumb_or_copy($fileOptionsMain['resize'], $full_fn,
 				\diConfiguration::safeGet([$table . '_' . $groupField . '_' . $field . '_width', $table . '_' . $groupField . '_width', $table . '_width']),
@@ -1656,9 +1658,9 @@ class Submit
 				$mainWM['name'], $mainWM['x'], $mainWM['y']
 			);
 
-			$fileOptionsBig = $getFileOptions(Submit::IMAGE_TYPE_BIG) ?: [
+			$fileOptionsBig = extend([
 				'resize' => DI_THUMB_FIT,
-			];
+			], $getFileOptions(Submit::IMAGE_TYPE_BIG));
 			$bigWM = $Submit->getWatermarkOptionsFor($field, Submit::IMAGE_TYPE_BIG);
 			$I->make_thumb_or_copy($fileOptionsBig['resize'], $big_fn,
 				\diConfiguration::safeGet([$table . '_' . $groupField . '_' . $field . '_big_width', $table . '_' . $groupField . '_big_width', $table . '_big_width'], 10000),
