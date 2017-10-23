@@ -1178,7 +1178,8 @@ function simple_debug($message, $module = "", $fnSuffix = "")
 function var_debug()
 {
 	$arguments = func_get_args();
-	call_user_func_array([\diCore\Tool\Logger::class, 'variable'], $arguments);
+	$logger = \diCore\Tool\Logger::getInstance();
+	call_user_func_array([$logger, 'variable'], $arguments);
 }
 
 function cron_debug($script)
