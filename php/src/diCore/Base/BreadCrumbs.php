@@ -263,6 +263,12 @@ class BreadCrumbs
 			$this->getTpl()->parse("TOP_TITLE_DIV", "top_title_div");
 		}
 
+		$this->getTwig()
+			->assign([
+				'top_title' => join($this->divider, $ar),
+				'top_title_div' => $this->getTpl()->getAssigned('TOP_TITLE_DIV'),
+			]);
+
 		return $this;
 	}
 }
