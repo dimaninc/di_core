@@ -9,6 +9,7 @@
 namespace diCore\Entity\Album;
 
 use diCore\Data\Types;
+use diCore\Entity\Photo\Collection as PhotosCol;
 use diCore\Helper\FileSystemHelper;
 
 /**
@@ -83,7 +84,62 @@ class Model extends \diModel
 		return sprintf(static::TOKEN_TEMPLATE, str_pad($this->getId(), static::TOKEN_DIGITS, '0', STR_PAD_LEFT));
 	}
 
-	public function generateThumbnail($options = array())
+	protected function getDefaultThumbnailOptions()
+	{
+		return [
+			'childTable' => null, // 'photos'
+			'childModelType' => Types::photo,
+			'fieldForSubFolders' => null, // e.g. user_id
+			'borderWidth' => 1,
+			'borderHeight' => null,
+			'borderColor' => '#FFFFFF',
+		];
+	}
+
+	/**
+	 * @param PhotosCol $collection
+	 * @return $this
+	 */
+	protected function tuneThumbnailCollection(\diCollection $collection)
+	{
+		$collection
+			->filterByAlbumId($this->getId())
+			->filterByVisible(1)
+			->orderById('desc');
+
+		return $this;
+	}
+
+	protected function minPhotosCountForThumbnail()
+	{
+		return 1;
+	}
+
+	protected function maxPhotosCountForThumbnail()
+	{
+		return $this->maxHorPhotosCountOnThumbnail() * $this->maxVerPhotosCountOnThumbnail();
+	}
+
+	protected function maxHorPhotosCountOnThumbnail()
+	{
+		return 2;
+	}
+
+	protected function maxVerPhotosCountOnThumbnail()
+	{
+		return 2;
+	}
+
+	/**
+	 * @param PhotosCol $collection
+	 * @return $this
+	 */
+	protected function getFinalThumbnails(\diCollection $collection)
+	{
+		return $collection->getRandomItemsArray($this->maxPhotosCountForThumbnail());
+	}
+
+	public function generateThumbnail($options = [])
 	{
 		if (
 			!\diConfiguration::exists('albums_tn_width') ||
@@ -94,14 +150,7 @@ class Model extends \diModel
 			return $this;
 		}
 
-		$options = extend([
-			'childTable' => 'photos',
-			'fieldForSubFolders' => null, // e.g. user_id
-			'borderWidth' => 1,
-			'borderHeight' => null,
-		], $options);
-
-		$query = "WHERE album_id='{$this->getId()}' and visible='1' ORDER BY id DESC";
+		$options = extend($this->getDefaultThumbnailOptions(), $options);
 
 		$width = \diConfiguration::get('albums_tn_width');
 		$height = \diConfiguration::get('albums_tn_height');
@@ -109,11 +158,11 @@ class Model extends \diModel
 		$borderWidth = $options['borderWidth'];
 		$borderHeight = $options['borderHeight'] ?: $options['borderWidth'];
 
-		$childWidth = ($width - $borderWidth) >> 1;
-		$childHeight = ($height - $borderHeight) >> 1;
+		$childWidth = floor(($width - $borderWidth) / $this->maxHorPhotosCountOnThumbnail());
+		$childHeight = floor(($height - $borderHeight) / $this->maxVerPhotosCountOnThumbnail());
 
 		$albumsFolder = get_pics_folder($this->getTable());
-		$photosFolder = get_pics_folder($options['childTable']);
+		$photosFolder = get_pics_folder($options['childTable'] ?: Types::getTable($options['childModelType']));
 
 		if ($options['fieldForSubFolders'] && $this->has($options['fieldForSubFolders']))
 		{
@@ -130,15 +179,20 @@ class Model extends \diModel
 		{
 			do {
 				$fn = substr(get_unique_id(), 0, 10) . '.jpg';
-			} while (is_file(\diPaths::fileSystem().$albumsFolder.$fn));
+			} while (is_file(\diPaths::fileSystem() . $albumsFolder . $fn));
 
 			$this->setPic($fn);
 		}
 
-		$fullFn = \diPaths::fileSystem().$albumsFolder.$fn;
-		$collection = \diCollection::createForTable($options['childTable'], $query);
+		$fullFn = \diPaths::fileSystem() . $albumsFolder . $fn;
 
-		if (false && $this->getPhotosCount() < 4)
+		$collection = $options['childTable']
+			? \diCollection::createForTable($options['childTable'])
+			: \diCollection::create($options['childModelType']);
+
+		$this->tuneThumbnailCollection($collection);
+
+		if ($this->getPhotosCount() < $this->minPhotosCountForThumbnail())
 		{
 			/** @var \diCore\Entity\Photo\Model $photo */
 			$photo = $collection->getFirstItem();
@@ -157,11 +211,11 @@ class Model extends \diModel
 			$I->h = $height;
 			$I->t = \diImage::TYPE_JPEG;
 			$I->image = imagecreatetruecolor($I->w, $I->h);
-			imagefilledrectangle($I->image, 0, 0, $I->w, $I->h, rgb_allocate($I->image, '#ffffff'));
+			imagefilledrectangle($I->image, 0, 0, $I->w, $I->h, rgb_allocate($I->image, $options['borderColor']));
 
 			$x = $y = 0;
 
-			$randomPhotos = $collection->getRandomItemsArray(4);
+			$randomPhotos = $this->getFinalThumbnails($collection);
 
 			/** @var \diCore\Entity\Photo\Model $photo */
 			foreach ($randomPhotos as $photo)
@@ -174,13 +228,15 @@ class Model extends \diModel
 				}
 
 				$I2 = new \diImage($picFn);
-				list($src_w, $src_h, $src_x, $src_y) = $I2->calculate_dst_dimentsions(DI_THUMB_CROP, $childWidth, $childHeight);
-				imagecopyresampled($I->image, $I2->image, $x, $y, $src_x, $src_y, $childWidth, $childHeight, $src_w, $src_h);
+				list($src_w, $src_h, $src_x, $src_y) = $I2->calculate_dst_dimentsions(DI_THUMB_CROP,
+					$childWidth, $childHeight);
+				imagecopyresampled($I->image, $I2->image, $x, $y, $src_x, $src_y,
+					$childWidth, $childHeight, $src_w, $src_h);
 				$I2->close();
 
 				$x += $childWidth + $borderWidth;
 
-				if ($x >= ($childWidth + 1) * 2)
+				if ($x >= ($childWidth + $borderWidth) * $this->maxHorPhotosCountOnThumbnail())
 				{
 					$x = 0;
 					$y += $childHeight + $borderHeight;
