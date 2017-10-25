@@ -1455,9 +1455,9 @@ class Submit
 			}
 
 			$obj->setData([
-				$field . $suffix . "_w" => $w,
-				$field . $suffix . "_h" => $h,
-				$field . $suffix . "_t" => $t,
+				$field . $suffix . "_w" => (int)$w,
+				$field . $suffix . "_h" => (int)$h,
+				$field . $suffix . "_t" => (int)$t,
 			]);
 
 			if (!empty($opts['afterSave']))
