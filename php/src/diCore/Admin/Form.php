@@ -930,9 +930,14 @@ EOF;
 					}
 				}
 
-				if ($this->isFlag($field, "hidden"))
+				$hidden =
+					$this->isFlag($field, 'hidden') ||
+					($this->isFlag($field, 'initially_hidden') && !$this->getId());
+
+				if ($hidden)
 				{
-					$html .= "\n<input type=\"hidden\" id=\"$field\" name=\"$field\" value=\"".StringHelper::out($this->data[$field])."\" />\n";
+					$html .= "\n<input type=\"hidden\" id=\"$field\" name=\"$field\" value=\"" .
+						StringHelper::out($this->data[$field]) . "\">\n";
 				}
 				else
 				{
