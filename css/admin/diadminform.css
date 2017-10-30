@@ -17,6 +17,14 @@
     display: box;
 }
 
+.diadminform-row.has-advanced-uploading {
+    background: #fafaff;
+}
+
+.diadminform-row.has-advanced-uploading.is-drag-over {
+    background: #dddddd;
+}
+
 .diadminform-row .title,
 .diadminform-row .value {
     /*

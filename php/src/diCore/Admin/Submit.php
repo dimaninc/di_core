@@ -10,6 +10,7 @@ namespace diCore\Admin;
 
 use diCore\Helper\FileSystemHelper;
 use diCore\Helper\StringHelper;
+use diCore\Tool\Logger;
 
 class Submit
 {
@@ -979,7 +980,7 @@ class Submit
 
 			$opts = extend([
 				"type" => self::IMAGE_TYPE_MAIN,
-				"folder" => get_pics_folder($this->getTable()),
+				"folder" => $this->getSubmittedModel()->getPicsFolder() ?: get_pics_folder($this->getTable()),
 				"subfolder" => null,
 				"resize" => null,
 				"width" => \diConfiguration::safeGet($this->getTable() . $suffix . "_width"),

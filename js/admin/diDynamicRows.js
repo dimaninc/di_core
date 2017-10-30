@@ -2,7 +2,9 @@ var diDynamicRows = function(opts) {
 	var self = this,
 		$anc,
 		$src,
-		$wrapper;
+		$wrapper,
+		$formRow,
+		droppedFiles;
 
 	opts = opts || {};
 
@@ -42,6 +44,34 @@ var diDynamicRows = function(opts) {
 		$anc.parent().on('keyup', 'input[type="password"].password-confirm', validatePassword);
 	}
 
+	function isDragAndDropSupported() {
+		return $formRow.data('drag-and-drop-uploading') && di.supported.advancedUploading;
+	}
+
+	function setupDragAndDropUploads() {
+		if (isDragAndDropSupported()) {
+			// todo: https://css-tricks.com/drag-and-drop-file-uploading/
+			/*
+			$formRow.addClass('has-advanced-uploading');
+
+			$formRow.find('form')
+				.on('drag dragstart dragend dragover dragenter dragleave drop', function (e) {
+					e.preventDefault();
+					e.stopPropagation();
+				})
+				.on('dragover dragenter', function () {
+					$formRow.addClass('is-drag-over');
+				})
+				.on('dragleave dragend drop', function () {
+					$formRow.removeClass('is-drag-over');
+				})
+				.on('drop', function (e) {
+					droppedFiles = e.originalEvent.dataTransfer.files;
+				});
+			*/
+		}
+	}
+
 	this.init = function(field, field_title, sign, counter)
 	{
 		this.counters[field] = typeof counter == 'undefined' ? 0 : counter * 1;
@@ -73,8 +103,10 @@ var diDynamicRows = function(opts) {
 		$src = $('#js_' + opts.field + '_resource');
 		$anc = $('#' + opts.field + '_anchor_div');
 		$wrapper = $anc.parent();
+		$formRow = $wrapper.closest('.diadminform-row');
 
 		setupEvents();
+		setupDragAndDropUploads();
 
 		if (opts.afterInit) {
 			opts.afterInit(this);

@@ -69,6 +69,7 @@ class Model extends \diModel
 {
 	const type = Types::photo;
 	protected $table = 'photos';
+	protected $slugFieldName = self::SLUG_FIELD_NAME;
 
 	public static $tokenAlignments = [
 		'left',

@@ -1089,10 +1089,20 @@ EOF;
 		StringHelper::out($this->getData($field)) . "</textarea>";
 	}
 
-	protected function getRow($field, $title, $value, $div_params = "")
+	protected function getRow($field, $title, $value, $rowAttrs = "")
 	{
+		if (is_array($rowAttrs))
+		{
+			$rowAttrs = ArrayHelper::toAttributesString($rowAttrs);
+		}
+
+		if ($this->getFieldProperty($field, 'drag_and_drop_uploading'))
+		{
+			$rowAttrs .= ' data-drag-and-drop-uploading="true"';
+		}
+
 		return <<<EOF
-<div id="tr_{$field}" class="diadminform-row"{$div_params} data-field="$field" data-type="{$this->getFieldType($field)}">
+<div id="tr_{$field}" class="diadminform-row"{$rowAttrs} data-field="$field" data-type="{$this->getFieldType($field)}">
 	<label class="title" for="$field">$title</label>
 	<div class="value">$value</div>
 </div>
@@ -1799,11 +1809,10 @@ EOF;
 	 */
 	public function setPicInput($field, $path = false, $hideIfNoFile = false)
 	{
-		$pics_folder = get_pics_folder($this->table);
-
 		if ($path === false)
 		{
-			$path = "/$pics_folder";
+			$path = $this->getModel()->getPicsFolder() ?: get_pics_folder($this->table);
+			$path = '/' . $path;
 		}
 
 		$fields = is_array($field) ? $field : [$field];
