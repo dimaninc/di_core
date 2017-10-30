@@ -17,11 +17,28 @@
     display: box;
 }
 
-.diadminform-row.has-advanced-uploading {
-    background: #fafaff;
+.admin-form-uploading-area {
+    background: rgba(25, 187, 251, 0.5);
+    padding: 15px;
+    text-align: center;
+    border-radius: 8px;
+    font-size: 16px;
+    position: relative;
+    margin-right: 10px;
 }
 
-.diadminform-row.has-advanced-uploading.is-drag-over {
+.admin-form-uploading-area input[type="file"] {
+    position: absolute;
+    display: block;
+    opacity: .5;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.admin-form-uploading-area.is-drag-over {
     background: #dddddd;
 }
 

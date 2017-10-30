@@ -60,6 +60,8 @@ class diDynamicRows
 
 	private $options = [
 		'addRowText' => 'Добавить +',
+		'multipleUpload' => 'Загрузить сразу много файлов',
+		'dragAndDropUpload' => '(можно перетащить мышкой)',
 	];
 
 	public function __construct($AdminPage, $field, $oldField = null)
@@ -258,6 +260,7 @@ class diDynamicRows
 
 	  if (!$this->static_mode && $this->getDb()->count($rs))
 	  {
+		  $s .= $this->getAdvancedUploadingArea();
 		  $s .= $this->getAddRowHtml();
 	  }
 
@@ -299,6 +302,7 @@ class diDynamicRows
     if (!$this->static_mode)
     {
 	    $s .= $this->getAddRowHtml();
+	    $s .= $this->getAdvancedUploadingArea();
     }
 
     if ($this->dicontrols_code_needed)
@@ -310,6 +314,36 @@ class diDynamicRows
 
     return $s;
   }
+
+	public function getAdvancedUploadingArea()
+	{
+		$drag = $this->getAdminPage()->getForm()->getFieldProperty($this->getField(), 'drag_and_drop_uploading');
+		$multiple = $this->getAdminPage()->getForm()->getFieldProperty($this->getField(), 'multiple_uploading');
+
+		if (!$drag && !$multiple)
+		{
+			return '';
+		}
+
+		$attrs = [
+			'data-multiple-uploads' => $multiple ? 'true' : '',
+			'data-drag-and-drop-uploads' => $drag ? 'true' : '',
+		];
+
+		$texts = [
+			$this->getOption('multipleUpload'),
+		];
+
+		if ($drag)
+		{
+			$texts[] = $this->getOption('dragAndDropUpload');
+		}
+
+		return sprintf('<div class="admin-form-uploading-area"%1$s>%2$s</div>',
+			' ' . ArrayHelper::toAttributesString($attrs),
+			join(' ', $texts)
+		);
+	}
 
 	public function getAddRowHtml()
 	{

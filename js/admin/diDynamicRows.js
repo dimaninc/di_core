@@ -4,6 +4,7 @@ var diDynamicRows = function(opts) {
 		$src,
 		$wrapper,
 		$formRow,
+		$dropAreas,
 		droppedFiles;
 
 	opts = opts || {};
@@ -46,6 +47,19 @@ var diDynamicRows = function(opts) {
 
 	function isDragAndDropSupported() {
 		return $formRow.data('drag-and-drop-uploading') && di.supported.advancedUploading;
+	}
+
+	function setupMultipleUploads() {
+		$dropAreas.each(function() {
+			var $this = $(this);
+			var $inp = $('<input/>').attr({
+				type: 'file',
+				multiple: 'multiple',
+				name: '__new_files[]'
+			});
+
+			$inp.appendTo($this);
+		});
 	}
 
 	function setupDragAndDropUploads() {
@@ -104,6 +118,12 @@ var diDynamicRows = function(opts) {
 		$anc = $('#' + opts.field + '_anchor_div');
 		$wrapper = $anc.parent();
 		$formRow = $wrapper.closest('.diadminform-row');
+
+		setTimeout(function() {
+			$dropAreas = $formRow.find('.admin-form-uploading-area');
+
+			setupMultipleUploads();
+		}, 0);
 
 		setupEvents();
 		setupDragAndDropUploads();

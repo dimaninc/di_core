@@ -108,7 +108,7 @@ EOF;
 			$annotations = $this->getModelMethodsAnnotations($this->getFieldsOfTable($table), $className);
 
 			$slugFieldName = $this->doesTableHaveField($table, 'slug')
-				? "\n\tprotected \$slugFieldName = 'slug';\n"
+				? "\n\tprotected \$slugFieldName = self::SLUG_FIELD_NAME;"
 				: '';
 
 			$contents = sprintf($this->getModelTemplate(),

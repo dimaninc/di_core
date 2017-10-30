@@ -222,12 +222,12 @@ class Form
 		return $ar;
 	}
 
-	private function getFieldType($field)
+	public function getFieldType($field)
 	{
 		return $this->getFieldProperty($field, 'type');
 	}
 
-	private function getFieldProperty($field = null, $property = null)
+	public function getFieldProperty($field = null, $property = null)
 	{
 		$a = $this->getAllFields();
 
