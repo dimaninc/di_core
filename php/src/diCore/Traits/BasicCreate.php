@@ -15,7 +15,7 @@ trait BasicCreate
 	 */
 	public static function basicCreate(...$args)
 	{
-		$class = \diLib::getChildClass(self::class);
+		$class = \diLib::getChildClass(static::class);
 
 		return new $class(...$args);
 	}

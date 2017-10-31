@@ -2,8 +2,6 @@
 
 class diAdminUser extends diAuth
 {
-	const CUSTOM_CLASS_NAME = "diCustomAdminUser";
-
 	const COOKIE_USER_ID = "auth_admin_id";
 	const COOKIE_SECRET = "auth_admin_secret";
 	const COOKIE_REMEMBER = "auth_admin_remember";
