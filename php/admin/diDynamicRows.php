@@ -1353,6 +1353,8 @@ EOF;
 			}
 		}
 
+		$this->submitMultipleFiles();
+
 		// it's killing time!
 		$filesToKill = [];
 		$pics_folder = $dynamic_pics_folder . "$this->table/";
@@ -1397,6 +1399,18 @@ EOF;
 		}
 
 		return true;
+	}
+
+	protected function submitMultipleFiles()
+	{
+		if (!$this->getProperty('multiple_uploading'))
+		{
+			return $this;
+		}
+
+		var_debug($_FILES);
+
+		return $this;
 	}
 
   function set_data($f, $v, $id)

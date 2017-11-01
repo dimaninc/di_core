@@ -30,7 +30,7 @@
 .admin-form-uploading-area input[type="file"] {
     position: absolute;
     display: block;
-    opacity: .5;
+    opacity: 0;
     left: 0;
     top: 0;
     width: 100%;
