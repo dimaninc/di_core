@@ -10,6 +10,12 @@ namespace diCore\Data;
 
 use diCore\Helper\StringHelper;
 
+/**
+ * Class Config
+ * @package diCore\Data
+ *
+ * Child class will keep global config of website in its class
+ */
 class Config
 {
 	const siteTitle = null;
@@ -77,7 +83,7 @@ class Config
 		/** @var Config $class */
 		$class = self::getClass();
 
-		return $class::mainDomain;
+		return Environment::getMainDomain() ?: $class::mainDomain;
 	}
 
 	final public static function getMainLanguage()
