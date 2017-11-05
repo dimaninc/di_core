@@ -302,6 +302,17 @@ class diLib
 		$subNamespace = self::parentNamespace($parentFullClassName);
 		$subNamespace = preg_replace('/^[^\\\\]+\\\\/', '\\', $subNamespace);
 
+		// костыли!
+		if (!$basicName && strpos($parentFullClassName, '\\') === false)
+		{
+			$basicName = preg_replace("/^di/", '', $parentFullClassName);
+
+			if ($basicName == 'Auth' && $parentFullClassName == 'diAuth')
+			{
+				$subNamespace = '\\Tool';
+			}
+		}
+
 		foreach (self::getAllNamespaces() as $ns)
 		{
 			$class = self::getClassNameInNamespace($basicName, $ns . $subNamespace, self::SIMPLE_CLASS);

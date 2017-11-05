@@ -48,7 +48,7 @@ abstract class CMS
 	private $BreadCrumbs;
 
 	/**
-	 * @var \diCustomAuth|\diAuth
+	 * @var \diAuth
 	 */
 	private $Auth;
 
