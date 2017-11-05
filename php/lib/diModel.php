@@ -1899,4 +1899,9 @@ class diModel implements \ArrayAccess
 	{
 		return $this->insertOrUpdateAllowed;
 	}
+
+	public function __toString()
+	{
+		return '[Model:' . diTypes::getName(static::type) . '#' . $this->getId() . ']';
+	}
 }
