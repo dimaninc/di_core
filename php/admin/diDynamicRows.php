@@ -42,6 +42,10 @@ class diDynamicRows
 	 */
 	public $test_r;
 
+	const MULTIPLE_UPLOAD_FIELD_NAME = '__new_files';
+	const MULTIPLE_UPLOAD_FIRST_ID = -10000;
+	private $defaultMultiplePicField = null;
+
   public $table, $id, $field;
   public $static_mode;
   public $inputs, $scripts, $data, $inputs_params;
@@ -1260,8 +1264,21 @@ EOF;
 			if (in_array($v['type'], ['file', 'pic']))
 			{
 				$fileFields[] = $k;
+
+				if (!empty($v['defaultMultiplePic']))
+				{
+					$this->defaultMultiplePicField = $k;
+				}
 			}
 		}
+
+		if (!$this->defaultMultiplePicField && $fileFields)
+		{
+			reset($fileFields);
+			$this->defaultMultiplePicField = current($fileFields);
+		}
+
+		\diCore\Tool\Logger::getInstance()->log($this->defaultMultiplePicField, 'defaultMultiplePicField');
 
 		foreach ($initial_ids_ar as $id)
 		{
@@ -1408,7 +1425,112 @@ EOF;
 			return $this;
 		}
 
-		var_debug($_FILES);
+		if (!empty($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['name'][0]))
+		{
+			$id = self::MULTIPLE_UPLOAD_FIRST_ID;
+
+			$fields = (array)$this->getProperty('fields');
+			$techFieldsCallback = $this->getProperty('techFieldsCallback') ?: $this->getProperty('tech_fields_ar');
+			$techFieldsSet = false;
+			$beforeSaveCallback = $this->getProperty('beforeSave');
+
+			\diCore\Tool\Logger::getInstance()->log(0, 'multiple');
+
+			foreach ($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['name'] as $idx => $name)
+			{
+				\diCore\Tool\Logger::getInstance()->log($idx . ' - ' . $name, 'multiple');
+
+				if (!empty($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['error'][$idx]))
+				{
+					\diCore\Tool\Logger::getInstance()->log($idx . ' error: ' .
+						$_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['error'][$idx], 'multiple');
+
+					continue;
+				}
+
+				\diCore\Tool\Logger::getInstance()->log('no-error', 'multiple');
+
+				$this->data_id = (int)$id;
+
+				\diCore\Tool\Logger::getInstance()->log('id = ' . $id, 'multiple');
+
+				$this->test_r = false;
+				$this->storedModel->initFrom($this->test_r);
+
+				$this->data = [];
+				$data_for_db = [];
+
+				// tech fields
+				if (is_callable($techFieldsCallback))
+				{
+					$_a = $techFieldsCallback($this->table, $this->field, $this->id, $this);
+
+					foreach ($_a as $_a_k => $_a_v)
+					{
+						$data_for_db[$_a_k] = $this->data[$_a_k] = $_a_v;
+					}
+
+					$techFieldsSet = true;
+				}
+
+				// form fields
+				foreach ($fields as $k => $v)
+				{
+					if (!is_array($v))
+					{
+						$v = ["type" => $v];
+					}
+
+					if (!empty($v["virtual"]))
+					{
+						continue;
+					}
+
+					if (!isset($v["default"]))
+					{
+						$v["default"] = "";
+					}
+
+					$this->set_data($k, $v, $id);
+
+					if (in_array($v["type"], ["pic", "file"]) && !$this->data[$k])
+					{
+					}
+					else
+					{
+						if ($v['type'] == 'radio')
+						{
+							$data_for_db[$k] = isset($_POST[$this->field . '_' . $k]) && $_POST[$this->field . '_' . $k] == $id ? 1 : 0;
+						}
+						elseif (isset($this->data[$k]))
+						{
+							$data_for_db[$k] = $this->data[$k];
+						}
+					}
+				}
+
+				if (is_callable($beforeSaveCallback))
+				{
+					$_a = $beforeSaveCallback($this);
+
+					$data_for_db = extend($data_for_db, $_a);
+					$this->data = extend($this->data, $_a);
+				}
+
+				if (!$techFieldsSet)
+				{
+					$data_for_db["_table"] = $this->data["_table"] = $this->table;
+					$data_for_db["_field"] = $this->data["_field"] = $this->field;
+					$data_for_db["_id"] = $this->data["_id"] = $this->id;
+				}
+
+				\diCore\Tool\Logger::getInstance()->variable($this->data_table, $data_for_db);
+
+				$ids_ar[] = $this->getDb()->insert($this->data_table, $data_for_db) or $this->getDb()->dierror();
+
+				$id--;
+			}
+		}
 
 		return $this;
 	}
@@ -1550,6 +1672,11 @@ EOF;
     }
   }
 
+	private function isMultipleUploadRecord($id)
+	{
+		return $id > self::MULTIPLE_UPLOAD_FIRST_ID;
+	}
+
   function store_pic($field, $id, $field_config)
   {
     global $tn_folder;
@@ -1559,9 +1686,15 @@ EOF;
 	  //$pics_folder = $dynamic_pics_folder."$this->table/";
 	  create_folders_chain($this->abs_path, $pics_folder.$tn_folder, 0775);
 
-    $ff = "{$this->field}_$field";
+    $ff = $this->isMultipleUploadRecord($id)
+	    ? self::MULTIPLE_UPLOAD_FIELD_NAME
+	    : "{$this->field}_$field";
 
-    // pic
+	  if ($this->isMultipleUploadRecord($id))
+	  {
+		  $id = self::MULTIPLE_UPLOAD_FIRST_ID - $id;
+	  }
+
     if (isset($_FILES[$ff]["name"][$id]) && !$_FILES[$ff]["error"][$id])
     {
       $ext = ".".strtolower(get_file_ext($_FILES[$ff]["name"][$id]));
@@ -1597,7 +1730,6 @@ EOF;
         ]);
       }
     }
-    //
   }
 
 	public static function storePicSimple($F, $folder, $field, &$ar, diDynamicRows $DR = null, $options = [])
