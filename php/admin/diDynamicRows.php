@@ -1278,8 +1278,6 @@ EOF;
 			$this->defaultMultiplePicField = current($fileFields);
 		}
 
-		\diCore\Tool\Logger::getInstance()->log($this->defaultMultiplePicField, 'defaultMultiplePicField');
-
 		foreach ($initial_ids_ar as $id)
 		{
 			if (!(int)$id)
@@ -1370,7 +1368,7 @@ EOF;
 			}
 		}
 
-		$this->submitMultipleFiles();
+		$ids_ar = array_merge($ids_ar, $this->submitMultipleFiles());
 
 		// it's killing time!
 		$filesToKill = [];
@@ -1422,24 +1420,24 @@ EOF;
 	{
 		if (!$this->getProperty('multiple_uploading'))
 		{
-			return $this;
+			return [];
 		}
+
+		$ids_ar = [];
 
 		if (!empty($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['name'][0]))
 		{
 			$id = self::MULTIPLE_UPLOAD_FIRST_ID;
+			$orderNum = 1;
 
 			$fields = (array)$this->getProperty('fields');
 			$techFieldsCallback = $this->getProperty('techFieldsCallback') ?: $this->getProperty('tech_fields_ar');
 			$techFieldsSet = false;
+			$multiUploadCallback = $this->getProperty('multiUploadCallback');
 			$beforeSaveCallback = $this->getProperty('beforeSave');
-
-			\diCore\Tool\Logger::getInstance()->log(0, 'multiple');
 
 			foreach ($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['name'] as $idx => $name)
 			{
-				\diCore\Tool\Logger::getInstance()->log($idx . ' - ' . $name, 'multiple');
-
 				if (!empty($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['error'][$idx]))
 				{
 					\diCore\Tool\Logger::getInstance()->log($idx . ' error: ' .
@@ -1448,11 +1446,7 @@ EOF;
 					continue;
 				}
 
-				\diCore\Tool\Logger::getInstance()->log('no-error', 'multiple');
-
 				$this->data_id = (int)$id;
-
-				\diCore\Tool\Logger::getInstance()->log('id = ' . $id, 'multiple');
 
 				$this->test_r = false;
 				$this->storedModel->initFrom($this->test_r);
@@ -1465,10 +1459,8 @@ EOF;
 				{
 					$_a = $techFieldsCallback($this->table, $this->field, $this->id, $this);
 
-					foreach ($_a as $_a_k => $_a_v)
-					{
-						$data_for_db[$_a_k] = $this->data[$_a_k] = $_a_v;
-					}
+					$data_for_db = extend($data_for_db, $_a);
+					$this->data = extend($this->data, $_a);
 
 					$techFieldsSet = true;
 				}
@@ -1509,6 +1501,14 @@ EOF;
 					}
 				}
 
+				if (is_callable($multiUploadCallback))
+				{
+					$_a = $multiUploadCallback($this->table, $this->field, $this->id, $this);
+
+					$data_for_db = extend($data_for_db, $_a);
+					$this->data = extend($this->data, $_a);
+				}
+
 				if (is_callable($beforeSaveCallback))
 				{
 					$_a = $beforeSaveCallback($this);
@@ -1524,15 +1524,38 @@ EOF;
 					$data_for_db["_id"] = $this->data["_id"] = $this->id;
 				}
 
-				\diCore\Tool\Logger::getInstance()->variable($this->data_table, $data_for_db);
+				if (isset($fields['order_num']) && empty($data_for_db['order_num']))
+				{
+					$data_for_db['order_num'] = $this->data['order_num'] = $orderNum;
+				}
 
-				$ids_ar[] = $this->getDb()->insert($this->data_table, $data_for_db) or $this->getDb()->dierror();
+				if (isset($fields['default']) && $orderNum == 1)
+				{
+					$data_for_db['default'] = $this->data['default'] = 1;
+				}
+
+				if (isset($fields['by_default']) && $orderNum == 1)
+				{
+					$data_for_db['by_default'] = $this->data['by_default'] = 1;
+				}
+
+				try {
+					$model = \diModel::createForTable($this->data_table, $data_for_db);
+					$model
+						->killId()
+						->save();
+					$insertedId = $model->getId();
+					$ids_ar[] = $insertedId;
+				} catch (\Exception $e) {
+					\diCore\Tool\Logger::getInstance()->variable('exception', $e->getMessage());
+				}
 
 				$id--;
+				$orderNum++;
 			}
 		}
 
-		return $this;
+		return $ids_ar;
 	}
 
   function set_data($f, $v, $id)
@@ -1674,7 +1697,7 @@ EOF;
 
 	private function isMultipleUploadRecord($id)
 	{
-		return $id > self::MULTIPLE_UPLOAD_FIRST_ID;
+		return $id <= self::MULTIPLE_UPLOAD_FIRST_ID;
 	}
 
   function store_pic($field, $id, $field_config)

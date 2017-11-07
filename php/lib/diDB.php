@@ -773,7 +773,7 @@ abstract class diDB
 		$time1 = utime();
 
 		$this->__q("LOCK TABLES $t WRITE");
-		if (!$this->__rq("INSERT INTO {$t}{$q1} VALUES".join(",", $q2_ar).";"))
+		if (!$this->__rq("INSERT INTO {$t}{$q1} VALUES" . join(",", $q2_ar) . ";"))
 		{
 			$this->_log("unable to insert into table $t");
 
