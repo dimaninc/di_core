@@ -52,13 +52,43 @@ var diDynamicRows = function(opts) {
 	function setupMultipleUploads() {
 		$dropAreas.each(function() {
 			var $this = $(this);
+			var $previewArea = $('<ul/>')
+				.hide()
+				.addClass('admin-form-uploading-area-preview')
+				.insertAfter($this);
 			var $inp = $('<input/>').attr({
 				type: 'file',
 				multiple: 'multiple',
 				name: '__new_files[]'
 			});
 
-			$inp.appendTo($this);
+			$inp
+				.appendTo($this)
+				.on('change', function() {
+					$previewArea.html('');
+
+					if (this.files.length) {
+						for (var i in this.files) {
+							if (this.files.hasOwnProperty(i)) {
+								var $row = $('<li><img src=""></li>');
+
+								$previewArea
+									.append($row);
+
+								(function($row, file) {
+									var reader = new FileReader();
+
+									reader.onload = function(e) {
+										$row.find('img').attr('src', e.target.result);
+									};
+									reader.readAsDataURL(file);
+								})($row, this.files[i]);
+							}
+						}
+					}
+
+					$previewArea.fadeIn();
+				});
 		});
 	}
 

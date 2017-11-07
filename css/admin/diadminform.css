@@ -38,6 +38,29 @@
     cursor: pointer;
 }
 
+.admin-form-uploading-area-preview {
+    list-style: none;
+    background: rgba(251, 248, 87, 0.5);
+    padding: 10px;
+    text-align: center;
+    border-radius: 8px;
+    position: relative;
+    margin-top: 10px;
+    margin-right: 10px;
+}
+
+.admin-form-uploading-area-preview > li {
+    display: inline-block;
+    vertical-align: top;
+    margin-left: 10px;
+    margin-right: 10px;
+}
+
+.admin-form-uploading-area-preview > li > img {
+    max-width: 120px;
+    max-height: 120px;
+}
+
 .admin-form-uploading-area.is-drag-over {
     background: #dddddd;
 }

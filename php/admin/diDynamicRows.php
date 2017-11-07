@@ -1428,7 +1428,9 @@ EOF;
 		if (!empty($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['name'][0]))
 		{
 			$id = self::MULTIPLE_UPLOAD_FIRST_ID;
-			$orderNum = 1;
+
+			$maxOrderNum = $this->getDb()->r($this->data_table, "WHERE $this->subquery", "MAX(order_num) AS o");
+			$orderNum = $maxOrderNum ? (int)$maxOrderNum->o : 0;
 
 			$fields = (array)$this->getProperty('fields');
 			$techFieldsCallback = $this->getProperty('techFieldsCallback') ?: $this->getProperty('tech_fields_ar');
@@ -1446,6 +1448,7 @@ EOF;
 					continue;
 				}
 
+				$orderNum++;
 				$this->data_id = (int)$id;
 
 				$this->test_r = false;
@@ -1551,7 +1554,6 @@ EOF;
 				}
 
 				$id--;
-				$orderNum++;
 			}
 		}
 
