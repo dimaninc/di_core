@@ -64,7 +64,7 @@ class diDynamicRows
 
 	private $options = [
 		'addRowText' => 'Добавить +',
-		'multipleUpload' => 'Загрузить сразу много файлов',
+		'multipleUpload' => 'Выбрать несколько файлов',
 		'dragAndDropUpload' => '(можно перетащить мышкой)',
 	];
 

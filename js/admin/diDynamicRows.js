@@ -56,6 +56,11 @@ var diDynamicRows = function(opts) {
 				.hide()
 				.addClass('admin-form-uploading-area-preview')
 				.insertAfter($this);
+			var $submitArea = $('<div/>')
+				.hide()
+				.html('<button type="submit">Загрузить выбранные фотографии на сервер</button>')
+				.addClass('admin-form-uploading-area-submit')
+				.insertAfter($previewArea);
 			var $inp = $('<input/>').attr({
 				type: 'file',
 				multiple: 'multiple',
@@ -88,6 +93,7 @@ var diDynamicRows = function(opts) {
 					}
 
 					$previewArea.fadeIn();
+					$submitArea.fadeIn();
 				});
 		});
 	}
