@@ -20,6 +20,7 @@ class Feedback extends \diBaseController
 	protected $mailBodyTemplateFolder = '`emails/feedback'; //fasttemplate
 	protected $mailBodyTemplate = 'emails/feedback/admin'; //twig
 	protected $mailSubject = 'Новое сообщение обратной связи';
+	protected $instantSend = true;
 
 	/** @var Model */
 	private $feedback;
@@ -111,7 +112,9 @@ class Feedback extends \diBaseController
 
 	protected function sendEmail($from, $to, $subj, $body)
 	{
-		return Queue::basicCreate()->addAndSend($from, $to, $subj, $body);
+		return $this->instantSend
+			? Queue::basicCreate()->addAndSend($from, $to, $subj, $body)
+			: Queue::basicCreate()->add($from, $to, $subj, $body);
 	}
 
 	private function sendEmailNotification()
