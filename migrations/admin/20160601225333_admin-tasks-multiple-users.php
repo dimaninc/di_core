@@ -1,4 +1,8 @@
 <?php
+
+use diCore\Entity\AdminTask\Collection;
+use diCore\Entity\AdminTask\Model;
+
 class diMigration_20160601225333 extends diMigration
 {
 	public static $idx = "20160601225333";
@@ -46,7 +50,7 @@ class diMigration_20160601225333 extends diMigration
 
 	protected function copyData()
 	{
-		/** @var diAdminTaskModel $task */
+		/** @var Model $task */
 		foreach (diCollection::create(diTypes::admin_task) as $task)
 		{
 			if (!$task->hasAdminId())
@@ -68,13 +72,13 @@ class diMigration_20160601225333 extends diMigration
 
 	protected function copyDataBack()
 	{
-		/** @var diAdminTaskCollection $tasks */
+		/** @var Collection $tasks */
 		$tasks = diCollection::create(diTypes::admin_task);
 
 		/** @var diAdminTaskParticipantModel $participant */
 		foreach (diCollection::create(diTypes::admin_task_participant) as $participant)
 		{
-			/** @var diAdminTaskModel $task */
+			/** @var Model $task */
 			$task = $tasks->getById($participant->getTaskId());
 
 			$task

@@ -1,5 +1,4 @@
-function diActionsLog(_opts)
-{
+var diActionsLog = function(_opts) {
 	var self = this,
 		worker = '/_core/php/admin/workers/actions_log/get/',
 		opts = $.extend({
@@ -11,21 +10,17 @@ function diActionsLog(_opts)
 			'<th width="15%">Когда</th><th width="20%">Кто</th><th width="20%">Действие</th><th width="45%">Информация</th>'+
 			'</tr></thead><tbody></tbody></table>';
 
-	function constructor()
-	{
-		if (typeof opts.$container == 'string')
-		{
+	function constructor() {
+		if (typeof opts.$container == 'string') {
 			opts.$container = $(opts.$container);
 		}
 
-		if (opts.$container.length)
-		{
+		if (opts.$container.length) {
 			getAndPrintLog();
 		}
 	}
 
-	this.printLogTable = function(rows)
-	{
+	this.printLogTable = function(rows) {
 		opts.$container.html(template);
 
 		var $body = opts.$container.find('tbody');
@@ -37,20 +32,17 @@ function diActionsLog(_opts)
 		})
 	};
 
-	function getWorkerUri()
-	{
+	function getWorkerUri() {
 		return worker + [opts.targetType, opts.targetId].join('/') + '/';
 	}
 
-	function getAndPrintLog()
-	{
+	function getAndPrintLog() {
 		$.get(getWorkerUri(), {}, function(res) {
-			if (res.ok)
-			{
+			if (res.ok) {
 				self.printLogTable(res.data);
 			}
 		});
 	}
 
 	constructor();
-}
+};

@@ -55,7 +55,7 @@ class diAdminWikiPage extends diAdminBasePage
 			),
 			"date" => array(
 				"title" => "Добавлено",
-				"value" => function(diAdminTaskModel $model, $field) {
+				"value" => function(diAdminWikiModel $model, $field) {
 					return date("d.m.Y H:i", strtotime($model->get($field)));
 				},
 				"headAttrs" => array(

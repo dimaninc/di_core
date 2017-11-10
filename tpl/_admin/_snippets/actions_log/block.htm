@@ -19,7 +19,8 @@
 		{
 			Tabs = new diTabs({
 				$tabsContainer: $container.find('ul.mini-tabs'),
-				$pagesContainer: $container.find('ul[data-purpose="tab-pages"]')
+				$pagesContainer: $container.find('ul[data-purpose="tab-pages"]'),
+				selectedTab: 'actions-log'
 			});
 
 			new diActionsLog({
@@ -28,15 +29,14 @@
 				$container: $container.find('ul[data-purpose="tab-pages"] li[data-tab="actions-log"]')
 			});
 
-			var Comments = new diComments({
+			new diComments({
 				$container: $container.find('ul[data-purpose="tab-pages"] li[data-tab="comments"]'),
 				loadOnInit: true,
 				submitOnCtrlEnter: true,
 				afterWork: function(action, response) {
 					$('[data-purpose="comments-count"]').html(response.total_count);
 
-					if (response.total_count > 0)
-					{
+					if (response.total_count > 0) {
 						Tabs.select('comments');
 					}
 				}

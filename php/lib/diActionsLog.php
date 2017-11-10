@@ -285,7 +285,7 @@ class diActionsLog
 		$userType = self::getUserType($action);
 
 		/** @var diDiActionsLogModel $log */
-		$log = diModel::create(self::logTable);
+		$log = \diModel::create(self::logTable);
 		$log
 			->setTargetType($this->targetType)
 			->setTargetId($this->targetId)
@@ -361,7 +361,7 @@ class diActionsLog
 				switch ($r->target_type)
 				{
 					case diTypes::admin_task:
-						$dataSource = "diAdminTaskModel::{$entity}Str";
+						$dataSource = \diCore\Entity\AdminTask\Model::class . "::{$entity}Str";
 						break;
 
 					case diTypes::order:

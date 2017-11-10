@@ -1,7 +1,11 @@
 <?php
 
+namespace diCore\Admin\Page;
+
+use diCore\Data\Types;
 use diCore\Tool\CollectionCache;
 use diCore\Entity\DynamicPic\Collection as dpCol;
+use diCore\Entity\AdminTask\Model;
 
 /**
  * Created by PhpStorm.
@@ -10,7 +14,7 @@ use diCore\Entity\DynamicPic\Collection as dpCol;
  * Time: 14:33
  */
 
-class diAdminTasksPage extends diAdminBasePage
+class AdminTasks extends \diAdminBasePage
 {
 	protected $options = [
 		"filters" => [
@@ -68,12 +72,12 @@ class diAdminTasksPage extends diAdminBasePage
 				"type" => "string",
 				"title" => "Статус",
 				"where_tpl" => "diaf_several_ints",
-				"default_value" => join(",", \diAdminTaskModel::statusesActual()),
+				"default_value" => join(",", Model::statusesActual()),
 				'strict' => true,
 			])
 			->buildQuery()
 			->setSelectFromCollectionInput('admin_id',
-				\diCollection::create(\diTypes::admin)->filterBy('active', 1)->orderBy('login'),
+				\diCollection::create(Types::admin)->filterBy('active', 1)->orderBy('login'),
 				function(\diAdminModel $admin) {
 					return [
 						'value' => $admin->getId(),
@@ -85,11 +89,11 @@ class diAdminTasksPage extends diAdminBasePage
 					-1 => "Не присвоен",
 				]
 			)
-			->setSelectFromArrayInput("status", \diAdminTaskModel::statusStr(), [
+			->setSelectFromArrayInput("status", Model::statusStr(), [
 				//0 => "Все",
-				join(",", \diAdminTaskModel::statusesActual()) => "[ Текущие задачи ]",
+				join(",", Model::statusesActual()) => "[ Текущие задачи ]",
 			])
-			->setSelectFromArrayInput("priority", \diAdminTaskModel::$priorities, [
+			->setSelectFromArrayInput("priority", Model::$priorities, [
 				0 => "Все",
 			]);
 	}
@@ -101,7 +105,7 @@ class diAdminTasksPage extends diAdminBasePage
 
 		$orderBy = $options["sortBy"] ? " ORDER BY t.{$options["sortBy"]} t.{$options["dir"]}" : "";
 
-		$col = diCollection::create(diTypes::admin_task, $this->getDb()->rs(
+		$col = diCollection::create(Types::admin_task, $this->getDb()->rs(
 			$this->getTable() . ' t INNER JOIN admin_task_participants p INNER JOIN admins a '.
 			'ON t.id = p.task_id AND a.id = p.admin_id',
 			$options["query"] . $orderBy . $options["limit"],
@@ -116,7 +120,7 @@ class diAdminTasksPage extends diAdminBasePage
 	{
 		parent::cacheDataForList();
 
-		CollectionCache::addManual(diTypes::admin, 'id', $this->getListCollection()->map('admin_id'));
+		CollectionCache::addManual(Types::admin, 'id', $this->getListCollection()->map('admin_id'));
 
 		return $this;
 	}
@@ -126,9 +130,9 @@ class diAdminTasksPage extends diAdminBasePage
 		$this->getList()->addColumns([
 			"id" => "ID",
 			"admin_id" => [
-				"value" => function(diAdminTaskModel $model) {
-					/** @var diAdminModel $admin */
-					$admin = CollectionCache::getModel(diTypes::admin, $model->getAdminId());
+				"value" => function(Model $model) {
+					/** @var \diAdminModel $admin */
+					$admin = CollectionCache::getModel(Types::admin, $model->getAdminId());
 
 					return $admin->exists() ? $admin->getLogin() : "&ndash;";
 				},
@@ -138,7 +142,7 @@ class diAdminTasksPage extends diAdminBasePage
 			],
 			"priority" => [
 				"title" => "Приоритет",
-				"value" => function(diAdminTaskModel $model) {
+				"value" => function(Model $model) {
 					$icon = "<span class=\"admin-task-priority p{$model->getPriority()}\"></span>";
 
 					return $icon . $model->getPriorityStr();
@@ -152,7 +156,7 @@ class diAdminTasksPage extends diAdminBasePage
 			],
 			"status" => [
 				"title" => "Статус",
-				"value" => function(diAdminTaskModel $model) {
+				"value" => function(Model $model) {
 					return $model->getStatusStr();
 				},
 				"headAttrs" => [
@@ -164,7 +168,7 @@ class diAdminTasksPage extends diAdminBasePage
 			],
 			"attaches" => [
 				"title" => "*",
-				"value" => function(diAdminTaskModel $model) {
+				"value" => function(Model $model) {
 					$pics = $this->getAttachedPicsCollection($model->getId());
 
 					return count($pics) ?: "";
@@ -175,7 +179,7 @@ class diAdminTasksPage extends diAdminBasePage
 			],
 			"title" => [
 				"title" => "Задача",
-				"value" => function(diAdminTaskModel $model) {
+				"value" => function(Model $model) {
 					return $model->getTitle() . "<div class='lite'>" . str_cut_end($model->getContent(), 150) . "</div>";
 				},
 				"headAttrs" => [
@@ -184,8 +188,8 @@ class diAdminTasksPage extends diAdminBasePage
 			],
 			"date" => [
 				"title" => "Добавлено",
-				"value" => function(diAdminTaskModel $model, $field) {
-					return diDateTime::format("d.m.Y H:i", $model->get($field));
+				"value" => function(Model $model, $field) {
+					return \diDateTime::format("d.m.Y H:i", $model->get($field));
 				},
 				"headAttrs" => [
 					"width" => "10%",
@@ -196,8 +200,8 @@ class diAdminTasksPage extends diAdminBasePage
 			],
 			"due_date" => [
 				"title" => "Срок сдачи",
-				"value" => function(diAdminTaskModel $model, $field) {
-					return diDateTime::format("d.m.Y H:i", $model->get($field));
+				"value" => function(Model $model, $field) {
+					return \diDateTime::format("d.m.Y H:i", $model->get($field));
 				},
 				"headAttrs" => [
 					"width" => "10%",
@@ -222,8 +226,8 @@ class diAdminTasksPage extends diAdminBasePage
 	{
 		$this->getForm()
 			->setSelectFromCollectionInput('admin_id',
-				diCollection::create(diTypes::admin)->filterBy('active', 1)->orderBy('login'),
-				function(diAdminModel $admin) {
+				\diCollection::create(Types::admin)->filterBy('active', 1)->orderBy('login'),
+				function(\diAdminModel $admin) {
 					return [
 						'value' => $admin->getId(),
 						'text' => $admin->getLogin(),
@@ -231,8 +235,8 @@ class diAdminTasksPage extends diAdminBasePage
 				},
 				['' => "Не выбран"]
 			)
-			->setSelectFromArrayInput("status", \diAdminTaskModel::statusStr())
-			->setSelectFromArrayInput("priority", \diAdminTaskModel::priorityStr());
+			->setSelectFromArrayInput("status", Model::statusStr())
+			->setSelectFromArrayInput("priority", Model::priorityStr());
 
 		if (!$this->getId())
 		{
@@ -253,32 +257,32 @@ class diAdminTasksPage extends diAdminBasePage
 		{
 			if ($this->getSubmit()->wasFieldChanged("status"))
 			{
-				diActionsLog::act(diTypes::admin_task, $this->getId(), diActionsLog::aStatusChanged,
+				\diActionsLog::act(Types::admin_task, $this->getId(), \diActionsLog::aStatusChanged,
 					$this->getSubmit()->getCurRec("status") . "," . $this->getSubmit()->getData("status"));
 			}
 
 			if ($this->getSubmit()->wasFieldChanged("priority"))
 			{
-				diActionsLog::act(diTypes::admin_task, $this->getId(), diActionsLog::aPriorityChanged,
+				\diActionsLog::act(Types::admin_task, $this->getId(), \diActionsLog::aPriorityChanged,
 					$this->getSubmit()->getCurRec("priority") . "," . $this->getSubmit()->getData("priority"));
 			}
 
 			if ($this->getSubmit()->wasFieldChanged("admin_id"))
 			{
-				diActionsLog::act(diTypes::admin_task, $this->getId(), diActionsLog::aOwned,
+				\diActionsLog::act(Types::admin_task, $this->getId(), \diActionsLog::aOwned,
 					$this->getSubmit()->getCurRec("admin_id") . "," . $this->getSubmit()->getData("admin_id"));
 			}
 
 			if ($this->getSubmit()->wasFieldChanged(["title", "content", "date", "due_date"]))
 			{
-				diActionsLog::act(diTypes::admin_task, $this->getId(), diActionsLog::aEdited);
+				\diActionsLog::act(Types::admin_task, $this->getId(), \diActionsLog::aEdited);
 			}
 		}
 	}
 
 	/**
 	 * @return dpCol
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public function getAttachedPicsCollection($id = null)
 	{
@@ -300,24 +304,24 @@ class diAdminTasksPage extends diAdminBasePage
 
 		if ($this->isNew())
 		{
-			diActionsLog::act(diTypes::admin_task, $this->getId(), diActionsLog::aAdded);
+			\diActionsLog::act(Types::admin_task, $this->getId(), \diActionsLog::aAdded);
 		}
 		else
 		{
 			$this->picsAfter = $this->getAttachedPicsCollection();
 
-			/** @var diDynamicPicModel $pic */
+			/** @var \diDynamicPicModel $pic */
 			foreach ($this->getDeletedPics() as $pic)
 			{
-				diActionsLog::act(diTypes::admin_task, $this->getId(), diActionsLog::aUploadDeleted, [
+				\diActionsLog::act(Types::admin_task, $this->getId(), \diActionsLog::aUploadDeleted, [
 					"info" => $pic->getOrigFn(),
 				]);
 			}
 
-			/** @var diDynamicPicModel $pic */
+			/** @var \diDynamicPicModel $pic */
 			foreach ($this->getNewPics() as $pic)
 			{
-				diActionsLog::act(diTypes::admin_task, $this->getId(), diActionsLog::aUploaded, [
+				\diActionsLog::act(Types::admin_task, $this->getId(), \diActionsLog::aUploaded, [
 					"info" => $pic->getOrigFn(),
 				]);
 			}
@@ -335,8 +339,8 @@ class diAdminTasksPage extends diAdminBasePage
 	}
 
 	/**
-	 * @param $subjectCollection diCollection
-	 * @param $objectCollection  diCollection
+	 * @param $subjectCollection \diCollection
+	 * @param $objectCollection  \diCollection
 	 *
 	 * @return array
 	 */
@@ -344,12 +348,12 @@ class diAdminTasksPage extends diAdminBasePage
 	{
 		$ar = [];
 
-		/** @var diDynamicPicModel $subjectModel */
+		/** @var \diDynamicPicModel $subjectModel */
 		foreach ($subjectCollection as $subjectModel)
 		{
 			$found = false;
 
-			/** @var diDynamicPicModel $objectModel */
+			/** @var \diDynamicPicModel $objectModel */
 			foreach ($objectCollection as $objectModel)
 			{
 				if ($objectModel->getId() == $subjectModel->getId())

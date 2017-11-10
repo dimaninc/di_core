@@ -4,8 +4,13 @@
  * Date: 11.09.2015
  * Time: 11:29
  */
+
+namespace diCore\Entity\AdminTask;
+
+use diCore\Helper\StringHelper;
+
 /**
- * Class diAdminTaskModel
+ * Class Model
  * Methods list for IDE
  *
  * @method string	getTitle
@@ -26,18 +31,18 @@
  * @method bool hasDate
  * @method bool hasAdminId
  *
- * @method diAdminTaskModel setTitle($value)
- * @method diAdminTaskModel setContent($value)
- * @method diAdminTaskModel setVisible($value)
- * @method diAdminTaskModel setStatus($value)
- * @method diAdminTaskModel setPriority($value)
- * @method diAdminTaskModel setDueDate($value)
- * @method diAdminTaskModel setDate($value)
- * @method diAdminTaskModel setAdminId($value)
+ * @method Model setTitle($value)
+ * @method Model setContent($value)
+ * @method Model setVisible($value)
+ * @method Model setStatus($value)
+ * @method Model setPriority($value)
+ * @method Model setDueDate($value)
+ * @method Model setDate($value)
+ * @method Model setAdminId($value)
  */
-class diAdminTaskModel extends diModel
+class Model extends \diModel
 {
-	const type = diTypes::admin_task;
+	const type = \diTypes::admin_task;
 	protected $table = "admin_tasks";
 
 	// statuses
@@ -97,8 +102,8 @@ class diAdminTaskModel extends diModel
 
 	public function getCustomTemplateVars()
 	{
-		$contentHtml = nl2br(diStringHelper::out($this->getContent()));
-		$contentHtmlWithLinks = nl2br(highlight_urls(diStringHelper::out($this->getContent())));
+		$contentHtml = nl2br(StringHelper::out($this->getContent()));
+		$contentHtmlWithLinks = nl2br(highlight_urls(StringHelper::out($this->getContent())));
 
 		return extend(parent::getCustomTemplateVars(), [
 			'content_html' => $contentHtml,

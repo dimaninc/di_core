@@ -63,10 +63,12 @@ var diTabs = function(_opts)
         }
 
 		e.$allTabs.removeClass('selected');
-		$tab.addClass('selected');
-
 		e.$allPages.removeClass('selected');
-		$page.addClass('selected');
+
+		setTimeout(function() {
+			$tab.addClass('selected');
+			$page.addClass('selected');
+		}, 10);
 
 		opts.selectedTab = tab;
 
