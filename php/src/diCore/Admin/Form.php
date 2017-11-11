@@ -985,7 +985,8 @@ EOF;
 							$input = $this->wrapInput($field, $input);
 
 							//(isset($this->uploaded_images_w[$k]) && $this->uploaded_images_w[$k] > 200 || ( &&
-							$html .= $this->getRow($field, "{$v["title"]}{$notesStar}:", $tag && ($this->static_mode || $this->data[$field]) ? "$tag<div>$input</div>" : $input);
+							$html .= $this->getRow($field, "{$v["title"]}{$notesStar}:",
+								$tag && ($this->static_mode || $this->data[$field]) ? "$tag<div>$input</div>" : $input);
 
 							break;
 
@@ -1824,7 +1825,7 @@ EOF;
 			$this->uploaded_images[$field] = $v
 				? $this->getPreviewHtmlForFile($field, $path . $v, [
 					'hideIfNoFile' => $hideIfNoFile,
-					'showDelLink' => !$this->isFlag($field, "static"),
+					'showDelLink' => !$this->isFlag($field, "static") || $this->getFieldProperty($field, 'showDelLink'),
 					'showPreviewWithLink' => $this->getFieldProperty($field, 'showPreview'),
 				])
 				: "";
