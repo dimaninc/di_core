@@ -1,8 +1,11 @@
 <?php
 
-use diCore\Helper\StringHelper;
+namespace diCore\Controller;
 
-class diFilesController extends diBaseAdminController
+use diCore\Helper\StringHelper;
+use diCore\Admin\Submit;
+
+class Files extends \diBaseAdminController
 {
 	public function rebuildDynamicPicsAction()
 	{
@@ -12,7 +15,7 @@ class diFilesController extends diBaseAdminController
 
 		$redirect = \diRequest::get('redirect', 0);
 
-		$ar = \diAdminSubmit::rebuildDynamicPics($module, $field, $id);
+		$ar = Submit::rebuildDynamicPics($module, $field, $id);
 
 		if ($redirect)
 		{
@@ -22,34 +25,25 @@ class diFilesController extends diBaseAdminController
 		{
 			/*
 			$this->defaultResponse(array(
-				"ok" => 1,
-				"files" => $ar,
+				'ok' => 1,
+				'files' => $ar,
 			));
 			*/
-			echo join("<br>", $ar);
+			echo join('<br>', $ar);
 		}
 	}
 
 	public function delAction()
 	{
-		$ok = false;
 		$table = StringHelper::in($this->param(0));
 		$id  = (int)$this->param(1);
 		$field = StringHelper::in($this->param(2));
 
 		$redirect = \diRequest::get('redirect', 1);
 
-		$model = \diModel::createForTableNoStrict($table, $id, "id");
+		$model = \diModel::createForTableNoStrict($table, $id, 'id');
 
-		if ($model->exists() && $model->has($field))
-		{
-			$model
-				->killRelatedFiles($field)
-				->resetFieldsOfRelatedFiles($field)
-				->save();
-
-			$ok = true;
-		}
+		$ok = $this->delRelatedFiles($model, $field);
 
 		if ($redirect)
 		{
@@ -65,7 +59,6 @@ class diFilesController extends diBaseAdminController
 
 	public function delDynamicAction()
 	{
-		$ok = false;
 		$table = StringHelper::in($this->param(0)); // todo: make a check if the model belongs to $table#$id
 		$id  = (int)$this->param(1);
 		$subTable = StringHelper::in($this->param(2));
@@ -74,22 +67,14 @@ class diFilesController extends diBaseAdminController
 
 		$redirect = \diRequest::get('redirect', 1);
 
-		$model = \diModel::createForTableNoStrict($subTable, $subId, "id");
+		$model = \diModel::createForTableNoStrict($subTable, $subId, 'id');
 
-		if ($model->exists() && $model->has($field))
-		{
-			$model
-				->killRelatedFiles($field)
-				->resetFieldsOfRelatedFiles($field)
-				->save();
-
-			$ok = true;
-		}
+		$ok = $this->delRelatedFiles($model, $field);
 
 		if ($redirect)
 		{
 			$this->redirect();
-			
+
 			return null;
 		}
 
@@ -101,5 +86,20 @@ class diFilesController extends diBaseAdminController
 			'field' => $field,
 			'subId' => $subId,
 		];
+	}
+
+	protected function delRelatedFiles(\diModel $model, $field = null)
+	{
+		if ($model->exists() && $model->has($field))
+		{
+			$model
+				->killRelatedFiles($field)
+				->resetFieldsOfRelatedFiles($field)
+				->save();
+
+			return true;
+		}
+
+		return false;
 	}
 }
