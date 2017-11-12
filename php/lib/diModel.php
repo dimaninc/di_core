@@ -1902,6 +1902,10 @@ class diModel implements \ArrayAccess
 
 	public function __toString()
 	{
-		return '[Model:' . diTypes::getName(static::type) . '#' . $this->getId() . ']';
+		$name = static::type
+			? \diTypes::getName(static::type)
+			: 'undefined';
+
+		return '[Model:' . $name . '#' . $this->getId() . ']';
 	}
 }

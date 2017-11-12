@@ -45,9 +45,21 @@ trait TargetInside
 		{
 			$this->target = method_exists($this, 'getRelated') && $this->getRelated('target_model')
 				? $this->getRelated('target_model')
-				: \diModel::create($this->getTargetType(), $this->getTargetId());
+				: ($this->getTargetType()
+					? \diModel::create($this->getTargetType(), $this->getTargetId())
+					: new \diModel()
+				);
 		}
 
 		return $this->target;
+	}
+
+	public function setTarget(\diModel $target)
+	{
+		$this
+			->setTargetType($target->modelType())
+			->setTargetId($target->getId());
+
+		return $this;
 	}
 }
