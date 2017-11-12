@@ -1,0 +1,12 @@
+<script type="text/javascript">
+	$(function() {
+		new TargetInside({
+			types: {{ types|json_encode|raw }},
+			targets: {{ targets|json_encode|raw }},
+			selected: {
+				type: '{{ selected['type'] }}' * 1,
+				id: '{{ selected['id'] }}' * 1
+			}
+		});
+	});
+</script>
