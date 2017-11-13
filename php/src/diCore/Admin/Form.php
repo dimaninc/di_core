@@ -1327,25 +1327,29 @@ EOF;
 		return $this;
 	}
 
-	function set_typed_input($field, $include_ar = [], $exclude_ar = [])
+	/** @deprecated  */
+	function _set_typed_input($field, $include_ar = [], $exclude_ar = [])
 	{
-		global $db;
+		return $this->setSelectFromOwnValues($field, $include_ar, $exclude_ar);
+	}
 
+	function setSelectFromOwnValues($field, $include = [], $exclude = [])
+	{
 		$sel = new \diSelect($field, $this->getData($field));
-		$sel->addItemArray2($include_ar);
+		$sel
+			->setAttr($this->getInputAttributes($field))
+			->addItemArray2($include);
 
-		$rs = $db->rs($this->table, "ORDER BY $field ASC", "DISTINCT $field");
-		while ($r = $db->fetch($rs))
+		$rs = $this->getDb()->rs($this->table, "ORDER BY $field ASC", "DISTINCT $field");
+		while ($r = $this->getDb()->fetch($rs))
 		{
-			if (!in_array($r->$field, $exclude_ar))
+			if (!in_array($r->$field, $exclude))
 			{
 				$sel->addItem($r->$field, $r->$field);
 			}
 		}
 
-		$sel->setAttr($this->getInputAttributes($field));
-
-		$this->inputs[$field] = $sel->getHTML();
+		$this->inputs[$field] = $sel;
 		$this->inputs[$field] .= ' ' . $this->L('or_enter') . ': <input type="text" name="' .
 			$field . self::NEW_FIELD_SUFFIX . '" value="" style="width: 300px;">';
 

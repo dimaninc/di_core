@@ -235,6 +235,11 @@ class Videos extends \diAdminBasePage
 		{
 			$videoInfo = \diVideoVendors::extractInfoFromEmbed(stripslashes($this->getSubmit()->getData('embed')));
 
+			if (!$videoInfo['video_uid'])
+			{
+				$videoInfo = \diVideoVendors::extractInfoFromEmbed(stripslashes($this->getSubmit()->getData('vendor_video_uid')));
+			}
+
 			if ($videoInfo['video_uid'])
 			{
 				$this->getSubmit()
@@ -247,7 +252,11 @@ class Videos extends \diAdminBasePage
 					->setData('vendor', $videoInfo['vendor']);
 			}
 
-			if (!$this->getSubmit()->getData('title') && $this->getSubmit()->getData('vendor') && $this->getSubmit()->getData('vendor_video_uid'))
+			if (
+				!$this->getSubmit()->getData('title') &&
+				$this->getSubmit()->getData('vendor') &&
+				$this->getSubmit()->getData('vendor_video_uid')
+			   )
 			{
 				$this->getSubmit()->setData('title', \diVideoVendors::getTitle(
 					$this->getSubmit()->getData('vendor'),

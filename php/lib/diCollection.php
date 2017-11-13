@@ -1430,11 +1430,20 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 				{
 					if (is_array($value))
 					{
-					    $value = count($value)
-							? '(' . join(',', array_map(function($v) {
-						    		return $this->getDb()->escapeValue($v);
-					    		}, $value)) . ')'
-							: null;
+						if ($val['operator'] == 'between')
+						{
+							$value = join(' AND ', array_map(function($v) {
+								return $this->getDb()->escapeValue($v);
+							}, $value));
+						}
+						else
+						{
+							$value = count($value)
+								? '(' . join(',', array_map(function($v) {
+							            return $this->getDb()->escapeValue($v);
+						            }, $value)) . ')'
+								: null;
+						}
 					}
 					else
 					{

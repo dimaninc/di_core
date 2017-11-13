@@ -88,6 +88,13 @@ class diAdminPagesManager
 		"updated_at",
 	];
 
+	protected $initiallyHiddenFieldNames = [
+		"date",
+		"created_at",
+		"edited_at",
+		"updated_at",
+	];
+
 	/** @var diDB */
 	private $db;
 
@@ -274,6 +281,11 @@ EOF;
 		if (in_array($field, $this->untouchableFieldNames))
 		{
 			$flags[] = 'untouchable';
+		}
+
+		if (in_array($field, $this->initiallyHiddenFieldNames))
+		{
+			$flags[] = 'initially_hidden';
 		}
 
 		return $flags
