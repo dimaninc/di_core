@@ -607,6 +607,8 @@ class diModel implements \ArrayAccess
 				$ar[$k . "_num"] = $v;
 
 				$v = isInteger($v) ? bin2ip($v) : $v;
+
+				$ar[$k . '_str'] = $v;
 			}
 
 			$ar[$k] = $v;

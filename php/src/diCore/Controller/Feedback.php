@@ -15,6 +15,8 @@ use diCore\Entity\Feedback\Model;
 
 class Feedback extends \diBaseController
 {
+	const MODEL_TYPE = Types::feedback;
+
 	protected $sendEmail = true;
 	protected $useTwig = true;
 	protected $mailBodyTemplateFolder = '`emails/feedback'; //fasttemplate
@@ -31,8 +33,6 @@ class Feedback extends \diBaseController
 			'ok' => true,
 			'message' => '',
 		];
-
-		$this->feedback = \diModel::create(Types::feedback);
 
 		$this->gatherData();
 
@@ -51,8 +51,20 @@ class Feedback extends \diBaseController
 		return $ar;
 	}
 
+	protected function initModel()
+	{
+		$this->feedback = \diModel::create(static::MODEL_TYPE);
+
+		return $this;
+	}
+
 	protected function getModel()
 	{
+		if (!$this->feedback)
+		{
+			$this->initModel();
+		}
+
 		return $this->feedback;
 	}
 
@@ -71,9 +83,14 @@ class Feedback extends \diBaseController
 		return \diConfiguration::get('sender_email');
 	}
 
+	protected function getRecipientsString()
+	{
+		return \diConfiguration::get('feedback_email');
+	}
+	
 	protected function getRecipients()
 	{
-		return preg_split("/[,;\r\n\s]+/", \diConfiguration::get('feedback_email'));
+		return preg_split("/[,;\r\n\s]+/", $this->getRecipientsString());
 	}
 
 	protected function getMailSubject()
