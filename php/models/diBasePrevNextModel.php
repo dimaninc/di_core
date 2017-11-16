@@ -5,7 +5,7 @@
  * Date: 24.06.2015
  * Time: 19:23
  */
-class diBasePrevNextModel extends diModel
+class diBasePrevNextModel extends \diModel
 {
 	const CONDITION_TYPE_SAME = 1;
 
@@ -47,7 +47,7 @@ class diBasePrevNextModel extends diModel
 	{
 		parent::__construct($r);
 
-		$this->orderByOptions = array_replace_recursive($this->orderByOptions, $this->customOrderByOptions);
+		$this->orderByOptions = extend($this->orderByOptions, $this->customOrderByOptions);
 	}
 
 	public function getCustomTemplateVars()
@@ -85,15 +85,20 @@ class diBasePrevNextModel extends diModel
 		return $f;
 	}
 
+	protected function getBasePrevNextConditions()
+	{
+		return [
+			"visible = '1'",
+			"id != '{$this->getId()}'",
+		];
+	}
+
 	private function getPrevNextQueries($i)
 	{
 		$conditionSet = array_slice($this->orderByOptions["fields"], 0, $i);
 		$orderSet = array_slice($this->orderByOptions["fields"], $i);
 
-		$conditions = [
-			"visible = '1'",
-			"id != '{$this->getId()}'",
-		];
+		$conditions = $this->getBasePrevNextConditions();
 
 		$prevConditions = $nextConditions = [];
 		$prevOrders = $nextOrders = [];
@@ -102,7 +107,7 @@ class diBasePrevNextModel extends diModel
 		{
 			$field = $this->decodeOrderField($fAr["field"]);
 
-			$conditions[] = $field."='{$this->get($field)}'";
+			$conditions[] = $field . " = '{$this->get($field)}'";
 		}
 
 		foreach ($this->orderByOptions["conditions"] as $cAr)
@@ -112,7 +117,7 @@ class diBasePrevNextModel extends diModel
 			switch ($cAr["type"])
 			{
 				case self::CONDITION_TYPE_SAME:
-					$condition = "{$field}='{$this->get($field)}'";
+					$condition = "{$field} = '{$this->get($field)}'";
 					break;
 
 				default:
@@ -126,6 +131,10 @@ class diBasePrevNextModel extends diModel
 			}
 		}
 
+		// todo: here are still some problems: when orderByOptions->fields has several fields,
+		// todo: they both have '>' sign (on seconds request, the condition should be skipped)
+		// todo: or we get query like "WHERE order_num > 1 AND slug > 'zhopa'" instead of just
+		// todo: "WHERE order_num > 1"
 		foreach ($orderSet as $oAr)
 		{
 			$field = $this->decodeOrderField($oAr["field"]);
@@ -136,20 +145,20 @@ class diBasePrevNextModel extends diModel
 			$prevDir = $isAsc ? "DESC" : "ASC";
 			$nextDir = $isAsc ? "ASC" : "DESC";
 
-			$prevConditions[] = $field.$prevSign."'{$this->get($field)}'";
-			$nextConditions[] = $field.$nextSign."'{$this->get($field)}'";
+			$prevConditions[] = $field . $prevSign . "'{$this->get($field)}'";
+			$nextConditions[] = $field . $nextSign . "'{$this->get($field)}'";
 
-			$prevOrders[] = $field." ".$prevDir;
-			$nextOrders[] = $field." ".$nextDir;
+			$prevOrders[] = $field . " " . $prevDir;
+			$nextOrders[] = $field . " " . $nextDir;
 		}
 
-		return array(
+		return [
 			"conditions" => $conditions,
 			"prevConditions" => $prevConditions,
 			"nextConditions" => $nextConditions,
 			"prevOrders" => $prevOrders,
 			"nextOrders" => $nextOrders,
-		);
+		];
 	}
 
 	/**
@@ -187,19 +196,19 @@ class diBasePrevNextModel extends diModel
 		{
 			$q = $this->getPrevNextQueries($i);
 
-			/*
-			echo "prev: WHERE ".join(" AND ", array_merge($q["conditions"], $q["prevConditions"]))." ORDER BY ".join(",", $q["prevOrders"])."<br>";
-			echo "next: WHERE ".join(" AND ", array_merge($q["conditions"], $q["nextConditions"]))." ORDER BY ".join(",", $q["nextOrders"])."<br>";
-			*/
+			/* * /
+			echo "prev: WHERE ".join(" AND ", array_merge($q["conditions"], $q["prevConditions"]))." ORDER BY ".join(",", $q["prevOrders"])."<br>\n";
+			echo "next: WHERE ".join(" AND ", array_merge($q["conditions"], $q["nextConditions"]))." ORDER BY ".join(",", $q["nextOrders"])."<br>\n";
+			/* */
 
 			$prev_r = $prev_r ?: $this->getDb()->r($this->getTable(),
-				"WHERE ".join(" AND ", array_merge($q["conditions"], $q["prevConditions"])).
-				" ORDER BY ".join(",", $q["prevOrders"])
+				"WHERE " . join(" AND ", array_merge($q["conditions"], $q["prevConditions"])) .
+				" ORDER BY " . join(",", $q["prevOrders"])
 			);
 
 			$next_r = $next_r ?: $this->getDb()->r($this->getTable(),
-				"WHERE ".join(" AND ", array_merge($q["conditions"], $q["nextConditions"])).
-				" ORDER BY ".join(",", $q["nextOrders"])
+				"WHERE " . join(" AND ", array_merge($q["conditions"], $q["nextConditions"])) .
+				" ORDER BY " . join(",", $q["nextOrders"])
 			);
 		}
 
