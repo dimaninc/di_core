@@ -52,13 +52,13 @@ class diMigration_20151013160113 extends diMigration
 	{
 		$this->queries[] = "DROP PROCEDURE IF EXISTS `{$this->procedureName}`";
 
-		$q = "CREATE PROCEDURE `{$this->procedureName}`(IN media_table_name varchar(100), alb_id int)\nBEGIN\n";
+		$q = "CREATE PROCEDURE `{$this->procedureName}`(IN media_table_name VARCHAR(100), alb_id INT, diff INT)\nBEGIN\n";
 
 		foreach ($this->triggerTables as $table)
 		{
 			$q .= "IF media_table_name = '{$table}' THEN
 					UPDATE albums SET
-						`{$table}_count` = (SELECT COUNT(id) FROM {$table} WHERE album_id = alb_id and visible = '1')
+						`{$table}_count` = diff + (SELECT COUNT(id) FROM {$table} WHERE album_id = alb_id and visible = '1')
 					WHERE id = alb_id;
 				END IF;\n";
 		}
@@ -87,12 +87,13 @@ class diMigration_20151013160113 extends diMigration
 				{
 					$triggerName = "album_{$table}_{$when}_{$action}_trg";
 					$source = $when == "before" ? "OLD" : "NEW";
+					$diff = $when == "before" ? -1 : 0; // correction for BEFORE DELETE
 
 					$this->queries[] = "DROP TRIGGER IF EXISTS `{$triggerName}`";
 					$this->queries[] = "CREATE TRIGGER `{$triggerName}` {$when} {$action} ON {$table}
 					FOR EACH ROW
 					BEGIN
-						CALL {$this->procedureName}('{$table}', {$source}.album_id);
+						CALL {$this->procedureName}('{$table}', {$source}.album_id, {$diff});
 					END";
 				}
 			}
