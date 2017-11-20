@@ -920,6 +920,11 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function getRealCount()
 	{
+		if ($this->realCount === null)
+		{
+			$this->count();
+		}
+
 		return $this->realCount;
 	}
 
