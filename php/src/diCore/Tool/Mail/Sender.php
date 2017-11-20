@@ -215,6 +215,7 @@ class Sender
 				if (static::getAccountUseSSL($fromEmail))
 				{
 					$mail->SMTPAuth = true;
+					$mail->SMTPAutoTLS = true;
 					$mail->SMTPSecure = 'tls';
 					$mail->SMTPOptions = [
 						'ssl' => [
@@ -223,6 +224,10 @@ class Sender
 							'allow_self_signed' => true,
 						],
 					];
+				}
+				else
+				{
+					$mail->SMTPAutoTLS = false;
 				}
 
 				if ($mail->Password)
