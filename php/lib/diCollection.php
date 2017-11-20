@@ -53,11 +53,18 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	protected $items = [];
 
 	/**
-	 * Total count of files
+	 * Total count of records in current collection
 	 *
 	 * @var int
 	 */
 	protected $count = null;
+
+	/**
+	 * Total count of records in database
+	 *
+	 * @var int
+	 */
+	protected $realCount = null;
 
 	/**
 	 * Indicates if all files were loaded from server
@@ -170,12 +177,12 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		if (isInteger($type))
 		{
-			$type = diTypes::getName($type);
+			$type = \diTypes::getName($type);
 		}
 
-		$className = diLib::getClassNameFor($type, diLib::COLLECTION);
+		$className = \diLib::getClassNameFor($type, \diLib::COLLECTION);
 
-		if (!diLib::exists($className))
+		if (!\diLib::exists($className))
 		{
 			return false;
 		}
@@ -469,7 +476,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 				return $this->selectLocalized($field, true);
 		}
 
-		throw new Exception(
+		throw new \Exception(
 			sprintf("Invalid method %s::%s(%s)", get_class($this), $method, print_r($arguments, 1))
 		);
 	}
@@ -911,6 +918,11 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this;
 	}
 
+	public function getRealCount()
+	{
+		return $this->realCount;
+	}
+
 	public function count()
 	{
 		if ($this->count === null)
@@ -938,7 +950,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 				);
 			}
 
-			$this->count = $r ? $r->cc : 0;
+			$this->realCount = $this->count = $r ? $r->cc : 0;
 		}
 
 		if ($this->pageSize && $this->count > $this->pageSize)
