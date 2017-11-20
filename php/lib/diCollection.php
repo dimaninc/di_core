@@ -595,6 +595,22 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	}
 
 	/**
+	 * @return int
+	 */
+	public function getPageSize()
+	{
+		return $this->pageSize;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getPageNumber()
+	{
+		return $this->pageNumber;
+	}
+
+	/**
 	 * @param integer $number   First page number is 1
 	 * @return $this
 	 */

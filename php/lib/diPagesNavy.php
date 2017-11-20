@@ -59,13 +59,14 @@ class diPagesNavy
 	public $glue = "&";
 	public $replaces_ar = array();
 
-	public function __construct($table, $per_page, $where = "", $reverse = false, $page_param = "page")
+	public function __construct($tableOrCollection, $perPageOrPageParam = 1, $whereOrTotalRecords = "",
+	                            $reverse = false, $page_param = "page")
 	{
 	    global $db;
 
 	    $this->db = $db;
 
-		$this->init($table, $per_page, $where, $reverse, $page_param);
+		$this->init($tableOrCollection, $perPageOrPageParam, $whereOrTotalRecords, $reverse, $page_param);
 	}
 
 	public function getTable()
@@ -150,7 +151,7 @@ class diPagesNavy
 
 	public function getSqlLimit()
 	{
-		return " LIMIT ".$this->getStart().",".$this->getPerPage();
+		return " LIMIT " . $this->getStart() . "," . $this->getPerPage();
 	}
 
 	public function getWhere()
@@ -158,9 +159,21 @@ class diPagesNavy
 		return $this->where;
 	}
 
-	public function init($table, $per_page, $where = "", $reverse = false, $page_param = "page")
+	public function init($table, $per_page = 1, $where = "", $reverse = false, $page_param = "page")
 	{
 		global $pagesnavy_sortby_ar, $pagesnavy_sortby_defaults_ar;
+
+		if ($table instanceof \diCollection)
+		{
+			$col = $table;
+			if ($per_page && is_string($per_page) && !isInteger($per_page))
+			{
+				$page_param = $per_page;
+			}
+			$per_page = $col->getPageSize();
+			$where = $col->getRealCount();
+			$table = $table->getTable();
+		}
 
 		if (is_array($reverse))
 		{
@@ -185,7 +198,7 @@ class diPagesNavy
 			$this->per_page = $this->per_load = $per_page;
 		}
 
-		if (is_numeric($where))
+		if (isInteger($where))
 		{
 			$this->total_records = (int)$where;
 			$this->where = "";
