@@ -19,6 +19,7 @@ class Sender
 	const transport = Transport::SENDMAIL;
 
 	const defaultVendor = Vendor::google;
+	const defaultUseSSL = true;
 	const defaultFromName = 'Robot';
 	const defaultFromEmail = 'noreply@domain.com';
 
@@ -26,6 +27,7 @@ class Sender
 	const debugSending = false;
 
 	protected static $localHost = '127.0.0.1';
+	protected static $localPort = 25;
 
 	protected static $accounts = [
 		/*
@@ -36,6 +38,7 @@ class Sender
 		'fred@durst.com' => [
 			'vendor' => Vendor::yandex,
 			'password' => 'password',
+			'useSSL' => true,
 		],
 		*/
 	];
@@ -167,6 +170,7 @@ class Sender
 		$mail = new PHPMailer();
 		$mail->CharSet = 'UTF-8';
 		$mail->Host = static::$localHost;
+		$mail->Port = static::$localPort;
 
 		if (static::debugSending)
 		{
@@ -181,39 +185,65 @@ class Sender
 		{
 			$vendor = static::getAccountVendor($fromEmail);
 
-			$mail->Host = Vendor::smtpHost($vendor);
-			$mail->Password = static::getAccountPassword($fromEmail);
+			if ($vendor != Vendor::own)
+			{
+				$mail->Host = Vendor::smtpHost($vendor) ?: $mail->Host;
+			}
+			$mail->Password = static::getAccountPassword($fromEmail) ?: '';
 
 			if (!$mail->Host)
 			{
 				throw new \Exception('SMTP host not defined for ' . $fromEmail);
 			}
 
+			/*
 			if (!$mail->Password)
 			{
 				throw new \Exception('SMTP password not defined for ' . $fromEmail);
 			}
+			*/
 
 			$mail->isSMTP();
 
 			if ($mail->Mailer == 'smtp')
 			{
-				$mail->SMTPAuth = true;
-				$mail->SMTPSecure = 'tls';
-				$mail->Port = Vendor::smtpPort($vendor, static::secureSending);
-				$mail->Username = $fromEmail;
+				if ($vendor != Vendor::own)
+				{
+					$mail->Port = Vendor::smtpPort($vendor, static::secureSending);
+				}
 
-				$mail->SMTPOptions = [
-					'ssl' => [
-						'verify_peer' => true,
-						'verify_depth' => 3,
-						'allow_self_signed' => true,
-					],
-				];
+				if (static::getAccountUseSSL($fromEmail))
+				{
+					$mail->SMTPAuth = true;
+					$mail->SMTPSecure = 'tls';
+					$mail->SMTPOptions = [
+						'ssl' => [
+							'verify_peer' => true,
+							'verify_depth' => 3,
+							'allow_self_signed' => true,
+						],
+					];
+				}
+
+				if ($mail->Password)
+				{
+					$mail->Username = $fromEmail;
+				}
 			}
 		}
 
 		return $mail;
+	}
+
+	protected static function getAccountUseSSL($email)
+	{
+		$a = isset(static::$accounts[$email])
+			? static::$accounts[$email]
+			: null;
+
+		return isset($a['useSSL'])
+			? $a['useSSL']
+			: static::defaultUseSSL;
 	}
 
 	protected static function getAccountVendor($email)
