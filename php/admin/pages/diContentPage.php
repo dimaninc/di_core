@@ -170,17 +170,17 @@ class diContentPage extends \diAdminBasePage
 				"values" => array_keys(\diContentTypes::get($this->getLanguage())),
 			],
 
-			"menu_title" => [
-				"type" => "string",
-				"title" => "Название для URL",
-				"default" => "",
-			],
-
 			"title" => [
 				"type" => "string",
 				"title" => "Название",
 				"default" => "",
 				"tab" => "content",
+			],
+
+			"menu_title" => [
+				"type" => "string",
+				"title" => "Название для URL",
+				"default" => "",
 			],
 
 			"caption" => [
