@@ -45,12 +45,12 @@ class diListController extends \diBaseAdminController
 
 	public function batchMoveAction()
 	{
-		$this->batch(self::BATCH_MOVE_ACTION);
+		return $this->batch(self::BATCH_MOVE_ACTION);
 	}
 
 	public function batchCopyAction()
 	{
-		$this->batch(self::BATCH_COPY_ACTION);
+		return $this->batch(self::BATCH_COPY_ACTION);
 	}
 
 	protected function batch($action)
@@ -70,6 +70,22 @@ class diListController extends \diBaseAdminController
 
 			$parentModel = $this->getParentModel($table, \diRequest::post("parent", 0));
 			$order = $parentModel->getRelated("order");
+
+			// checking if there is a loop, we can't move model inside itself or inside children
+			if ($action == self::BATCH_MOVE_ACTION)
+			{
+				/** @var \diModel $m */
+				foreach ($all as $m)
+				{
+					if ($parentModel->getId() == $m->getId())
+					{
+						return [
+							'ok' => false,
+							'message' => 'Parent cycling detected',
+						];
+					}
+				}
+			}
 
 			$this->moveRecordsDown($table, $order, $delta);
 
@@ -400,11 +416,21 @@ class diListController extends \diBaseAdminController
 	{
 		if ($m->has("parent"))
 		{
-			$col = \diCollection::createForTable($m->getTable(), "WHERE parent='{$m->getId()}'");
+			$col = \diCollection::createForTable($m->getTable())->filterBy('parent', $m->getId());
 
-			/** @var diModel $model */
+			/** @var \diModel $model */
 			foreach ($col as $model)
 			{
+				/** @var \diModel $_m */
+				foreach ($collection as $_m)
+				{
+					if ($model->getId() == $_m->getId())
+					{
+						//\diCore\Tool\Logger::getInstance()->log('Parent cycling detected');
+						throw new \Exception('Parent cycling detected');
+					}
+				}
+
 				$collection[] = $model;
 
 				$collection = $this->getFamilyCollection($model, $collection);
