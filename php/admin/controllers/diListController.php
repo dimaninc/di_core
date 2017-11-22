@@ -1,6 +1,6 @@
 <?php
 
-class diListController extends diBaseAdminController
+class diListController extends \diBaseAdminController
 {
 	const BATCH_COPY_ACTION = 1;
 	const BATCH_MOVE_ACTION = 2;
@@ -24,11 +24,11 @@ class diListController extends diBaseAdminController
 		{
 			if ($m->exists("parent") && $m->exists("level_num"))
 			{
-				$collection = $this->getFamilyCollection($m, array($m));
+				$collection = $this->getFamilyCollection($m, [$m]);
 			}
 			else
 			{
-				$collection = array($m);
+				$collection = [$m];
 			}
 
 			/** @var diModel $model */
@@ -40,7 +40,7 @@ class diListController extends diBaseAdminController
 			}
 		}
 
-		$this->defaultResponse($ar);
+		return $ar;
 	}
 
 	public function batchMoveAction()
@@ -66,9 +66,9 @@ class diListController extends diBaseAdminController
 		{
 			$table = \diDB::_in($this->param(0));
 			$delta = count($all);
-			$map = array();
+			$map = [];
 
-			$parentModel = $this->getParentModel($table, diRequest::post("parent", 0));
+			$parentModel = $this->getParentModel($table, \diRequest::post("parent", 0));
 			$order = $parentModel->getRelated("order");
 
 			$this->moveRecordsDown($table, $order, $delta);
@@ -101,7 +101,7 @@ class diListController extends diBaseAdminController
 			$this->postProcess(current($all));
 		}
 
-		$this->defaultResponse($ar);
+		return $ar;
 	}
 
 	private function moveRecordsDown($table, $orderNum, $delta)
@@ -125,7 +125,7 @@ class diListController extends diBaseAdminController
 			$minRec = $this->getDb()->r($table, "", "MIN($this->orderNumField) as min_order_num");
 			$order = $minRec ? $minRec->min_order_num - 1 : 0;
 
-			$parentModel = diModel::createForTableNoStrict($table);
+			$parentModel = \diModel::createForTableNoStrict($table);
 			$parentModel
 				->setId(-1)
 				->set("parent", -1)
@@ -138,7 +138,7 @@ class diListController extends diBaseAdminController
 		return $parentModel;
 	}
 
-	private function getAllModels(diCollection $c)
+	private function getAllModels(\diCollection $c)
 	{
 		$all = [];
 
@@ -161,7 +161,7 @@ class diListController extends diBaseAdminController
 			}
 		}
 
-		uasort($all, function(diModel $a, diModel $b) {
+		uasort($all, function(\diModel $a, \diModel $b) {
 			if ($a->get("order_num") == $b->get("order_num"))
 			{
 				return 0;
@@ -188,7 +188,7 @@ class diListController extends diBaseAdminController
 
 		$ar = [
 			"ok" => $m->exists(),
-			"id" => array_map(function(diModel $m) {
+			"id" => array_map(function(\diModel $m) {
 				return $m->getId();
 			}, $collection),
 		];
@@ -198,12 +198,12 @@ class diListController extends diBaseAdminController
 			$this->deleteRecord($model);
 		}
 
-		$this->defaultResponse($ar);
+		return $ar;
 	}
 
 	public function toggleAction()
 	{
-		$field = diRequest::post("field");
+		$field = \diRequest::post("field");
 		$m = $this->getTargetModel();
 
 		$ar = [
@@ -241,7 +241,7 @@ class diListController extends diBaseAdminController
 			}
 		}
 
-		$this->defaultResponse($ar);
+		return $ar;
 	}
 
 	protected function afterToggle(diModel $m, $field)
@@ -258,15 +258,15 @@ class diListController extends diBaseAdminController
 
 	public function moveAction()
 	{
-		$direction = diRequest::post("direction");
+		$direction = \diRequest::post("direction");
 		$m = $this->getTargetModel();
 
-		$ar = array(
+		$ar = [
 			"ok" => false,
-			"up" => array(),
-			"down" => array(),
+			"up" => [],
+			"down" => [],
 			"downFirst" => null,
-		);
+		];
 
 		if (in_array($direction, $this->possibleDirections) && $m->exists($this->orderNumField))
 		{
@@ -291,8 +291,8 @@ class diListController extends diBaseAdminController
 					$m2 = $neighbor;
 				}
 
-				$col1 = $this->getFamilyCollection($m1, array($m1));
-				$col2 = $this->getFamilyCollection($m2, array($m2));
+				$col1 = $this->getFamilyCollection($m1, [$m1]);
+				$col2 = $this->getFamilyCollection($m2, [$m2]);
 
 				$num = $m1->get($this->orderNumField);
 				$counter = 0;
@@ -300,9 +300,8 @@ class diListController extends diBaseAdminController
 				$field = $this->orderNumField;
 				$dir = "up";
 
-				try
-				{
-					array_map(function (diModel $model) use ($num, $field, &$ar, $dir, &$counter, $limit) {
+				try {
+					array_map(function (\diModel $model) use ($num, $field, &$ar, $dir, &$counter, $limit) {
 						$model
 							->set($field, $num + $counter++)
 							->save();
@@ -319,18 +318,16 @@ class diListController extends diBaseAdminController
 
 					$ar["downFirst"] = $m1->getId();
 					$ar["ok"] = true;
-				}
-				catch (\Exception $e)
-				{
+				} catch (\Exception $e) {
 					$ar["message"] = $e->getMessage();
 				}
 			}
 		}
 
-		$this->defaultResponse($ar);
+		return $ar;
 	}
 
-	protected function getQueryArForMove(diModel $m, $ar = array())
+	protected function getQueryArForMove(\diModel $m, $ar = [])
 	{
 		return array_merge($ar, $m->getQueryArForMove());
 	}
@@ -352,9 +349,9 @@ class diListController extends diBaseAdminController
 	protected function getTargetCollection()
 	{
 		$table = \diDB::_in($this->param(0));
-		$ids = array_map("intval", explode(",", diRequest::post("ids", "")));
+		$ids = array_map("intval", explode(",", \diRequest::post("ids", "")));
 
-		return \diCollection::createForTableNoStrict($table, "WHERE id" . \diDB::in($ids));
+		return \diCollection::createForTableNoStrict($table)->filterBy('id', $ids);
 	}
 
 	/**
@@ -399,7 +396,7 @@ class diListController extends diBaseAdminController
 	 * @param array $collection
 	 * @return array
 	 */
-	private function getFamilyCollection(\diModel $m, $collection = array())
+	private function getFamilyCollection(\diModel $m, $collection = [])
 	{
 		if ($m->has("parent"))
 		{
