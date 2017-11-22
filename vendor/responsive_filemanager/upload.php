@@ -160,13 +160,18 @@ if ( ! empty($_FILES) || isset($_POST['url']))
 		if ($is_img)
 		{
 			// dimaninc
+			$diImageConfig = extend([
+				'maxWidth' => 4000,
+				'maxHeight' => 3000,
+			], \diCore\Vendor\ResponsiveFileManager\Settings::basicCreate()->get());
+
 			$fn = realpath($targetFile);
 			list($w, $h, $t) = is_file($fn) ? getimagesize($fn) : [0, 0, 0];
 
-			if ($t >= 1 && $t <= 3 && $w * $h > 4000 * 3000 && class_exists('IMagick'))
+			if ($t >= 1 && $t <= 3 && $w * $h > $diImageConfig['maxWidth'] * $diImageConfig['maxHeight'] && class_exists('IMagick'))
 			{
 				$im = new \Imagick($fn);
-				$im->resizeImage(4000, 3000, \Imagick::FILTER_CATROM, 1, true);
+				$im->resizeImage($diImageConfig['maxWidth'], $diImageConfig['maxHeight'], \Imagick::FILTER_CATROM, 1, true);
 				$im->writeImage();
 				$im->clear();
 				$im->destroy();
