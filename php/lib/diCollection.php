@@ -110,6 +110,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	protected $pageNumber = 1;
 
 	/**
+	 * \diPagesNavy object, if initialized
+	 *
+	 * @var null|\diPagesNavy
+	 */
+	protected $PN = null;
+
+	/**
 	 * How many records to skip. If set, the $pageNumber is not used
 	 *
 	 * @var int
@@ -621,15 +628,46 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this;
 	}
 
+	public function populatePageNumber($param = \diPagesNavy::PAGE_PARAM)
+	{
+		return $this->setPageNumber(\diRequest::get($param, 1));
+	}
+
 	/**
-	 * @param integer $size     Records per page
+	 * @param integer|null $size     Records per page, if null automatically gets read from configuration
 	 * @return $this
 	 */
-	public function setPageSize($size)
+	public function setPageSize($size = null)
 	{
+		if ($size === null)
+		{
+			$size = $this->getStandardPageSize();
+		}
+
 		$this->pageSize = $size;
 
 		return $this;
+	}
+
+	protected function getStandardPageSize()
+	{
+		return \diConfiguration::get('per_page[' . $this->getTable() . ']');
+	}
+
+	public function initPagesNavy()
+	{
+		$this
+			->setPageSize()
+			->populatePageNumber();
+
+		$this->PN = new \diPagesNavy($this);
+
+		return $this;
+	}
+
+	public function getPN()
+	{
+		return $this->PN;
 	}
 
 	/**
