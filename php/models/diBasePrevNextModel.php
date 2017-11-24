@@ -43,11 +43,18 @@ class diBasePrevNextModel extends \diModel
 
 	protected $customOrderByOptions = [];
 
-	public function __construct($r = null)
+	public function __construct($ar = null, $table = null)
 	{
-		parent::__construct($r);
+		parent::__construct($ar);
 
+		$this->setupOrderByOptions();
+	}
+
+	protected function setupOrderByOptions()
+	{
 		$this->orderByOptions = extend($this->orderByOptions, $this->customOrderByOptions);
+
+		return $this;
 	}
 
 	public function getCustomTemplateVars()
