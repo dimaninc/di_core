@@ -24,6 +24,8 @@
 		* auto table creating added
 */
 
+use diCore\Admin\BasePage;
+
 class diConfiguration
 {
 	private $tableName = "configuration";	// table name of values to get stored in
@@ -44,7 +46,7 @@ class diConfiguration
 		'ru' => "Прочее",
 	];
 
-	/** @var \diAdminBasePage */
+	/** @var BasePage */
 	private $adminPage = null;
 	private $defaultLanguage = 'ru';
 
@@ -101,7 +103,7 @@ class diConfiguration
 	}
 
 	/**
-	 * @return \diAdminBasePage
+	 * @return BasePage
 	 */
 	public function getAdminPage()
 	{
@@ -109,10 +111,10 @@ class diConfiguration
 	}
 
 	/**
-	 * @param \diAdminBasePage $adminPage
+	 * @param BasePage $adminPage
 	 * @return $this
 	 */
-	public function setAdminPage(\diAdminBasePage $adminPage)
+	public function setAdminPage(BasePage $adminPage)
 	{
 		$this->adminPage = $adminPage;
 

@@ -2,6 +2,8 @@
 
 use diCore\Base\CMS;
 use diCore\Data\Config;
+use diCore\Admin\BasePage;
+use diCore\Admin\Form;
 
 abstract class diAdminBase
 {
@@ -11,24 +13,24 @@ abstract class diAdminBase
 	const INIT_MODE_STANDARD = 0;
 	const INIT_MODE_LITE = 1;
 
-	/** @var FastTemplate */
+	/** @var \FastTemplate */
     private $tpl;
 
-	/** @var diTwig */
+	/** @var \diTwig */
 	private $Twig;
 
 	protected $twigCreateOptions = [];
 
-    /** @var diDB */
+    /** @var \diDB */
 	private $db;
 
 	/** @var diAdminUser */
 	protected $adminUser;
 
-	/** @var diAdminBasePage */
+	/** @var BasePage */
 	protected $adminPage;
 
-	private $version = "4.5";
+	private $version = "4.6";
 
 	protected $defaultSuperUsersAr = ["dimaninc"];
 	protected $superUsersAr = [];
@@ -51,7 +53,7 @@ abstract class diAdminBase
 	protected $language = "ru";
 	protected static $_language;
 
-	protected $wysiwygVendor = diAdminForm::wysiwygTinyMCE;
+	protected $wysiwygVendor = Form::wysiwygTinyMCE;
 
 	private static $vocabulary = [
 		'ru' => [
@@ -208,7 +210,7 @@ abstract class diAdminBase
 	}
 
 	/**
-	 * @return diAdminBasePage
+	 * @return BasePage
 	 */
 	public function getPage()
 	{
@@ -531,7 +533,7 @@ abstract class diAdminBase
 
 	public function load()
 	{
-		/** @var diAdminBasePage $class */
+		/** @var BasePage $class */
 		$class = self::getModuleClassName($this->getModule());
 
 		$this->adminPage = $class::create($this);

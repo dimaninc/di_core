@@ -53,7 +53,7 @@ class Logger
 		fputs($f, $this->getDateTime($purpose) . ' ' . $line . "\n");
 		fclose($f);
 
-		chmod($fn, static::CHMOD);
+		@chmod($fn, static::CHMOD);
 
 		return $this;
 	}

@@ -9,6 +9,7 @@
 namespace diCore\Traits\TargetInside;
 
 use diCore\Data\Types;
+use diCore\Admin\BasePage;
 
 trait ForAdminPage
 {
@@ -16,7 +17,7 @@ trait ForAdminPage
 		Types::content,
 	];
 
-	public function tiAddToForm(\diAdminBasePage $Page, $modelTypes = [], $options = [])
+	public function tiAddToForm(BasePage $Page, $modelTypes = [], $options = [])
 	{
 		$defaultSetupCollectionCallback = function (\diCollection $col) {
 			$col->orderBy('order_num');

@@ -2,13 +2,14 @@
 
 use diCore\Helper\ArrayHelper;
 use diCore\Base\CMS;
+use diCore\Admin\BasePage;
 
 class diAdminList
 {
 	/** @var diNiceTable */
 	private $T;
 
-	/** @var diAdminBasePage */
+	/** @var BasePage */
 	private $AdminPage;
 
 	/** @var array */
@@ -32,7 +33,7 @@ class diAdminList
 	/** @var array */
 	private $options;
 
-	public function __construct(diAdminBasePage $AdminPage, $options = [])
+	public function __construct(BasePage $AdminPage, $options = [])
 	{
 		$this->AdminPage = $AdminPage;
 

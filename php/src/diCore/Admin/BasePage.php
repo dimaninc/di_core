@@ -1,34 +1,36 @@
 <?php
-
-use diCore\Helper\ArrayHelper;
-
 /**
  * Created by PhpStorm.
  * User: dimaninc
  * Date: 07.06.2015
  * Time: 14:35
  */
-abstract class diAdminBasePage
+
+namespace diCore\Admin;
+
+use diCore\Helper\ArrayHelper;
+
+abstract class BasePage
 {
-    /** @var diAdmin */
+    /** @var \diAdmin */
 	private $X;
 
-	/** @var diAdminList */
+	/** @var \diAdminList */
 	private $List;
 
-	/** @var diAdminGrid */
+	/** @var \diAdminGrid */
 	private $Grid;
 
-	/** @var diAdminFilters */
+	/** @var \diAdminFilters */
 	private $Filters;
 
-	/** @var diAdminForm */
+	/** @var Form */
 	private $Form;
 
-	/** @var diAdminSubmit */
+	/** @var Submit */
 	private $Submit;
 
-	/** @var diPagesNavy */
+	/** @var \diPagesNavy */
 	private $PagesNavy;
 
 	/** @var string */
@@ -42,7 +44,7 @@ abstract class diAdminBasePage
 	/** @var integer */
 	protected $originalId;
 
-	/** @var diCollection */
+	/** @var \diCollection */
 	private $listCollection;
 
 	const LIST_LIST = 1;
@@ -102,7 +104,7 @@ abstract class diAdminBasePage
 		"formBasePath",
 	];
 
-	public function __construct(diAdminBase $X)
+	public function __construct(\diAdminBase $X)
 	{
 		$this->X = $X;
 
@@ -117,34 +119,34 @@ abstract class diAdminBasePage
 	}
 
 	/**
-	 * @param diAdminBase $X
+	 * @param \diAdminBase $X
 	 * @return static
-	 * @throws Exception
+	 * @throws \Exception
 	 */
-	public static function create(diAdminBase $X)
+	public static function create(\diAdminBase $X)
 	{
-		/** @var diAdminBasePage $o */
+		/** @var \diAdminBasePage $o */
 		$o = new static($X);
 
 		$o->tryToInitTable();
 
-		$m = diAdminBase::getClassMethodName($o->getMethod());
-		$beforeM = diAdminBase::getClassMethodName($o->getMethod(), "before");
-		$afterM = diAdminBase::getClassMethodName($o->getMethod(), "after");
+		$m = \diAdminBase::getClassMethodName($o->getMethod());
+		$beforeM = \diAdminBase::getClassMethodName($o->getMethod(), "before");
+		$afterM = \diAdminBase::getClassMethodName($o->getMethod(), "after");
 
 		if (!method_exists($o, $m))
 		{
-			throw new Exception("Class " . get_class($o) . " doesn't have '$m' method");
+			throw new \Exception("Class " . get_class($o) . " doesn't have '$m' method");
 		}
 
 		if (!method_exists($o, $beforeM))
 		{
-			throw new Exception("Class " . get_class($o) . " doesn't have '$beforeM' method");
+			throw new \Exception("Class " . get_class($o) . " doesn't have '$beforeM' method");
 		}
 
 		if (!method_exists($o, $afterM))
 		{
-			throw new Exception("Class " . get_class($o) . " doesn't have '$afterM' method");
+			throw new \Exception("Class " . get_class($o) . " doesn't have '$afterM' method");
 		}
 
 		if ($o->$beforeM())
@@ -212,7 +214,7 @@ abstract class diAdminBasePage
 	}
 
 	/**
-	 * @return diAdmin
+	 * @return \diAdmin
 	 */
 	public function getAdmin()
 	{
@@ -240,7 +242,7 @@ abstract class diAdminBasePage
 		return $x;
 	}
 
-	public function getOptions($keys = [])
+	protected function getPageOptions()
 	{
 		$opt = extend($this->options, $this->customOptions);
 
@@ -248,6 +250,13 @@ abstract class diAdminBasePage
 		{
 			$opt['formBasePath'] = static::basePath;
 		}
+
+		return $opt;
+	}
+
+	public function getOptions($keys = [])
+	{
+		$opt = $this->getPageOptions();
 
 		if (empty($keys))
 		{
@@ -263,7 +272,7 @@ abstract class diAdminBasePage
 	}
 
 	/**
-	 * @return FastTemplate
+	 * @return \FastTemplate
 	 */
 	public function getTpl()
 	{
@@ -277,18 +286,18 @@ abstract class diAdminBasePage
 
 	/**
 	 * @return $this
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	private function initPagesNavy()
 	{
 		if (
-			(!$this->PagesNavy && diConfiguration::exists("admin_per_page[" . $this->getTable() . "]")) ||
+			(!$this->PagesNavy && \diConfiguration::exists("admin_per_page[" . $this->getTable() . "]")) ||
 			($this->PagesNavy && !$this->PagesNavy->getWhere() && $this->hasFilters() && $this->getFilters()->get_where())
 		   )
 		{
-			$this->PagesNavy = new diPagesNavy(
+			$this->PagesNavy = new \diPagesNavy(
 				$this->getTable(),
-				diConfiguration::get("admin_per_page[" . $this->getTable() . "]"),
+				\diConfiguration::get("admin_per_page[" . $this->getTable() . "]"),
 				$this->hasFilters() ? $this->getFilters()->get_where() : ""
 			);
 		}
@@ -298,7 +307,7 @@ abstract class diAdminBasePage
 
 	/**
 	 * @return bool
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public function hasPagesNavy()
 	{
@@ -307,8 +316,8 @@ abstract class diAdminBasePage
 
 	/**
 	 * @param bool $strict
-	 * @return diPagesNavy
-	 * @throws Exception
+	 * @return \diPagesNavy
+	 * @throws \Exception
 	 */
 	public function getPagesNavy($strict = true)
 	{
@@ -316,7 +325,7 @@ abstract class diAdminBasePage
 
 		if (!$this->PagesNavy && $strict)
 	    {
-	    	throw new Exception("diPagesNavy not initialized");
+	    	throw new \Exception("diPagesNavy not initialized");
 	    }
 
 		return $this->PagesNavy;
@@ -331,14 +340,14 @@ abstract class diAdminBasePage
 	}
 
 	/**
-	 * @return diAdminList
-	 * @throws Exception
+	 * @return \diAdminList
+	 * @throws \Exception
 	 */
 	public function getList()
 	{
 	    if (!$this->hasList())
 	    {
-	    	throw new Exception("diAdminList not initialized");
+	    	throw new \Exception("diAdminList not initialized");
 	    }
 
 		return $this->List;
@@ -353,14 +362,14 @@ abstract class diAdminBasePage
 	}
 
 	/**
-	 * @return diAdminGrid
-	 * @throws Exception
+	 * @return \diAdminGrid
+	 * @throws \Exception
 	 */
 	public function getGrid()
 	{
 		if (!$this->hasGrid())
 		{
-			throw new Exception("diAdminGrid not initialized");
+			throw new \Exception("diAdminGrid not initialized");
 		}
 
 		return $this->Grid;
@@ -375,14 +384,14 @@ abstract class diAdminBasePage
 	}
 
 	/**
-	 * @return diAdminForm
-	 * @throws Exception
+	 * @return \diAdminForm
+	 * @throws \Exception
 	 */
 	public function getForm()
 	{
 	    if (!$this->Form)
 	    {
-	    	throw new Exception("diAdminForm not initialized");
+	    	throw new \Exception("diAdminForm not initialized");
 		}
 
 		return $this->Form;
@@ -398,7 +407,7 @@ abstract class diAdminBasePage
 
 	/**
 	 * @return bool
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public function filtersBlockNeeded()
 	{
@@ -406,28 +415,28 @@ abstract class diAdminBasePage
 	}
 
 	/**
-	 * @return diAdminFilters
-	 * @throws Exception
+	 * @return \diAdminFilters
+	 * @throws \Exception
 	 */
 	public function getFilters()
 	{
 		if (!$this->hasFilters())
 		{
-			throw new Exception("diAdminFilters not initialized");
+			throw new \Exception("Filters not initialized");
 		}
 
 		return $this->Filters;
 	}
 
 	/**
-	 * @return diAdminSubmit
-	 * @throws Exception
+	 * @return Submit
+	 * @throws \Exception
 	 */
 	public function getSubmit()
 	{
 	    if (!$this->Submit)
 	    {
-	    	throw new Exception("diAdminSubmit not initialized");
+	    	throw new \Exception("Submit not initialized");
 		}
 
 		return $this->Submit;
@@ -443,13 +452,13 @@ abstract class diAdminBasePage
 
 	/**
 	 * @return string
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public function getTable()
 	{
 	    if (!$this->hasTable())
 		{
-			throw new Exception("Table undefined in " . get_class($this));
+			throw new \Exception("Table undefined in " . get_class($this));
 		}
 
 		return $this->table;
@@ -517,7 +526,7 @@ abstract class diAdminBasePage
 	{
 	    if (method_exists($this, "submitForm"))
 	    {
-	    	return diAdminBase::getPageUri($this->getBasePath(), "submit");
+	    	return \diAdminBase::getPageUri($this->getBasePath(), "submit");
 	    }
 
 		return $this->getTable() . "/submit.php";
@@ -591,7 +600,7 @@ abstract class diAdminBasePage
 	}
 
 	/**
-	 * @return diCollection
+	 * @return \diCollection
 	 */
 	public function getListCollection()
 	{
@@ -600,7 +609,7 @@ abstract class diAdminBasePage
 
 	protected function defaultPrintListRows($rs)
 	{
-		if ($rs instanceof diCollection)
+		if ($rs instanceof \diCollection)
 		{
 			foreach ($rs as $model)
 			{
@@ -644,9 +653,9 @@ abstract class diAdminBasePage
 		return $this;
 	}
 
-	protected function defaultPrintGridRows(diCollection $collection)
+	protected function defaultPrintGridRows(\diCollection $collection)
 	{
-		/** @var diModel $model */
+		/** @var \diModel $model */
 		foreach ($collection as $model)
 		{
 			$this->getGrid()->printElement($model);
@@ -658,14 +667,14 @@ abstract class diAdminBasePage
 	/**
 	 * Prefix added before IMG urls. If it is an external URL, this should return empty string
 	 *
-	 * @param diModel $model
+	 * @param \diModel $model
 	 * @return string
 	 */
-	public function getImgUrlPrefix(diModel $model)
+	public function getImgUrlPrefix(\diModel $model)
 	{
 		return class_exists("diExternalFolders") &&
-			$model->exists(diExternalFolders::FIELD_NAME) &&
-			$model->get(diExternalFolders::FIELD_NAME) != diExternalFolders::MAIN
+			$model->exists(\diExternalFolders::FIELD_NAME) &&
+			$model->get(\diExternalFolders::FIELD_NAME) != \diExternalFolders::MAIN
 			? ""
 			: "/";
 	}
@@ -698,17 +707,17 @@ abstract class diAdminBasePage
 			    case self::LIST_LIST:
 				    $listOptions = $this->getOptions(self::$listOptions);
 
-				    $this->List = new diAdminList($this, $listOptions);
+				    $this->List = new \diAdminList($this, $listOptions);
 				    break;
 
 			    case self::LIST_GRID:
-					$this->Grid = new diAdminGrid($this);
+					$this->Grid = new \diAdminGrid($this);
 				    break;
 		    }
 
 		    if ($filters = $this->getOption("filters"))
 		    {
-			    $this->Filters = new diAdminFilters($this);
+			    $this->Filters = new \diAdminFilters($this);
 			    $this->getFilters()->setSortableState(isset($filters["sortByAr"]));
 
 			    if (isset($filters["defaultSorter"]))
@@ -727,7 +736,7 @@ abstract class diAdminBasePage
 			    {
 					$this->getFilters()
 						->setSelectFromArrayInput("sortby", $filters["sortByAr"])
-						->setSelectFromArrayInput("dir", diAdminFilters::$dirAr);
+						->setSelectFromArrayInput("dir", \diAdminFilters::$dirAr);
 			    }
 		    }
 	    }
@@ -784,7 +793,7 @@ abstract class diAdminBasePage
 			{
 				$this->getTpl()
 					->assign([
-						"PAGES_NAVY" => $this->getPagesNavy()->print_pages(diAdminBase::getPageUri($this->getModule())),
+						"PAGES_NAVY" => $this->getPagesNavy()->print_pages(\diAdminBase::getPageUri($this->getModule())),
 					])
 					->parse("navy");
 			}
@@ -827,7 +836,7 @@ abstract class diAdminBasePage
 
 	/**
 	 * @return bool
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	protected function beforeRenderForm()
 	{
@@ -845,7 +854,7 @@ abstract class diAdminBasePage
 				"AFTER_FORM" => "",
 			]);
 
-		$this->Form = new diAdminForm($this);
+		$this->Form = new \diAdminForm($this);
 		$this->getForm()
 			->setStaticMode($this->getOption("staticMode"))
 			->read_data();
@@ -862,24 +871,24 @@ abstract class diAdminBasePage
 	{
 		if ($this->useEditLog() && $this->getId())
 		{
-			/** @var diAdminTableEditLogCollection $records */
-			$records = diCollection::create(diTypes::admin_table_edit_log);
+			/** @var \diAdminTableEditLogCollection $records */
+			$records = \diCollection::create(\diTypes::admin_table_edit_log);
 			$records
 				->filterByTargetTable($this->getTable())
 				->filterByTargetId($this->getId())
 				->orderById('DESC');
 
-			/** @var diAdminCollection $admins */
-			$admins = diCollection::create(diTypes::admin);
+			/** @var \diAdminCollection $admins */
+			$admins = \diCollection::create(\diTypes::admin);
 
-			/** @var diAdminTableEditLogModel $rec */
+			/** @var \diAdminTableEditLogModel $rec */
 			foreach ($records as $rec)
 			{
 				$rec->parseData();
 			}
 
 			$this->getForm()
-				->setInput(diAdminTableEditLogModel::ADMIN_TAB_NAME,
+				->setInput(\diAdminTableEditLogModel::ADMIN_TAB_NAME,
 					$this->getTwig()->parse('admin/admin_table_edit_log/form_field', [
 						'records' => $records,
 						'admins' => $admins,
@@ -919,11 +928,11 @@ abstract class diAdminBasePage
 
 	/**
 	 * @return bool
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	protected function beforeSubmitForm()
 	{
-		$this->Submit = new diAdminSubmit($this);
+		$this->Submit = new Submit($this);
 
 		if ($this->getSubmit()->isSubmit() && !$this->getOption("staticMode"))
 		{
@@ -944,7 +953,7 @@ abstract class diAdminBasePage
 
 		if ($this->getOption("updateSearchIndexOnSubmit"))
 		{
-			diSearch::makeRecordIndex($this->getTable(), $this->getId());
+			\diSearch::makeRecordIndex($this->getTable(), $this->getId());
 		}
 
 		$this
@@ -958,8 +967,8 @@ abstract class diAdminBasePage
 		{
 			try
 			{
-				/** @var diAdminTableEditLogModel $log */
-				$log = diModel::create(diTypes::admin_table_edit_log);
+				/** @var \diAdminTableEditLogModel $log */
+				$log = \diModel::create(\diTypes::admin_table_edit_log);
 
 				$log->setRelated('formFields', $this->getFormFieldsFiltered());
 
@@ -970,7 +979,7 @@ abstract class diAdminBasePage
 					->setBothData($this->getSubmit()->getSubmittedModel(), $this->getSubmit()->getCurModel())
 					->save();
 			}
-			catch (Exception $e)
+			catch (\Exception $e)
 			{
 				// validation failed -> no changes
 				//throw $e;
@@ -1021,7 +1030,7 @@ abstract class diAdminBasePage
 			? '#' . \diNiceTable::getRowAnchorName($this->getId())
 			: '';
 
-		return diAdminBase::getPageUri(
+		return \diAdminBase::getPageUri(
 			$this->getBasePath(),
 			'list',
 			$this->getQueryParamsForRedirectAfterSubmit()
@@ -1048,7 +1057,7 @@ abstract class diAdminBasePage
 
 		if (!isset($ar[$field]))
 		{
-			throw new Exception("No field '$field' in " . get_class($this));
+			throw new \Exception("No field '$field' in " . get_class($this));
 		}
 
 		return $property
@@ -1107,12 +1116,12 @@ abstract class diAdminBasePage
 
 		if ($this->useEditLog() && $this->getId())
 		{
-			$ar[diAdminTableEditLogModel::ADMIN_TAB_NAME] = [
+			$ar[\diAdminTableEditLogModel::ADMIN_TAB_NAME] = [
 				"type" => "string",
 				"title" => "Журнал изменений",
 				"default" => "",
 				"flags" => ["virtual", "static"],
-				"tab" => diAdminTableEditLogModel::ADMIN_TAB_NAME,
+				"tab" => \diAdminTableEditLogModel::ADMIN_TAB_NAME,
 			];
 		}
 
