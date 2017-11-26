@@ -118,7 +118,7 @@ class diAdminPagesManager
  */
 %11$s
 %12$s
-class %3$s extends \diAdminBasePage
+class %3$s extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		'filters' => [
@@ -264,9 +264,26 @@ EOF;
 			'{$field}' => [
 				'type'		=> '{$typeTuned}',
 				'title'		=> '',
-				'default'	=> '',{$this->getFlagsStr($field)}
+				'default'	=> '',{$this->getFlagsStr($field)}{$this->getExtraPropertiesStr($field)}
 			],
 EOF;
+	}
+
+	protected function getExtraPropertiesStr($field)
+	{
+		$ar = [];
+
+		if (in_array($field, $this->orderNumFieldNames))
+		{
+			$ar[] = "'direction'\t=> 1,";
+		}
+
+		if ($ar)
+		{
+			array_splice($ar, 0, 0, ['']);
+		}
+
+		return join("\n\t\t\t\t", $ar);
 	}
 
 	protected function getFlagsStr($field)

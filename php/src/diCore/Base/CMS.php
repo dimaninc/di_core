@@ -8,6 +8,7 @@ use diCore\Entity\Content\Model;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 use diCore\Data\Http\HttpCode;
+use diCore\Tool\Auth;
 
 abstract class CMS
 {
@@ -48,7 +49,7 @@ abstract class CMS
 	private $BreadCrumbs;
 
 	/**
-	 * @var \diAuth
+	 * @var Auth
 	 */
 	private $Auth;
 
@@ -57,6 +58,11 @@ abstract class CMS
 	 * @var bool
 	 */
 	protected $authUsed = false;
+
+	/**
+	 * @var bool
+	 */
+	protected $timestampSuffixNeeded = true;
 
 	private $fileChmod = 0666;
 	private $dirChmod = 0777;
@@ -247,14 +253,21 @@ abstract class CMS
 	}
 
 	/**
+	 * @deprecated
 	 * @return $this
 	 */
-	abstract function define_templates();
+	public function define_templates()
+	{
+		return $this;
+	}
 
 	/**
 	 * @return $this
 	 */
-	abstract public function go();
+	public function go()
+	{
+		return $this;
+	}
 
 	public static function fast_lite_create($options = [])
 	{
@@ -467,7 +480,7 @@ abstract class CMS
 	}
 
 	/**
-	 * @return \diAuth
+	 * @return Auth
 	 */
 	public function getAuth()
 	{
@@ -476,7 +489,7 @@ abstract class CMS
 
 	protected function initAuth()
 	{
-		$this->Auth = \diAuth::create();
+		$this->Auth = Auth::create();
 
 		return $this;
 	}
@@ -1143,7 +1156,8 @@ abstract class CMS
 
 		$this->Twig = \diTwig::create()->assign([
 			'content_slugs' => $this->getCleanTitlesAr(),
-			'logged_in' => $this->authUsed && \diAuth::i()->authorized() ? true : false,
+			'logged_in' => $this->authUsed && Auth::i()->authorized() ? true : false,
+			'files_timestamp' => $this->timestampSuffixNeeded ? \diStaticBuild::VERSION : '',
 
 			'_tech' => [
 				'uri' => \diRequest::requestUri(),
