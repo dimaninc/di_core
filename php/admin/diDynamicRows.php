@@ -557,9 +557,11 @@ class diDynamicRows
 			  $type = "text";
 		  }
 
-          $this->inputs[$name] = $this->static_mode
+		  $static = $this->static_mode || $this->isFlag($ar, 'static');
+
+          $this->inputs[$name] = $static
             ? str_out($value)
-            : "<input type=\"{$type}\" name=\"$name\" id=\"$name\" value=\"".str_out($value)."\"$input_params />";
+            : "<input type=\"{$type}\" name=\"$name\" id=\"$name\" value=\"".str_out($value)."\"$input_params>";
           break;
       }
     }
