@@ -99,7 +99,13 @@ class Config
 		/** @var Config $class */
 		$class = self::getClass();
 
-		return $class::$useModuleCache;
+		$val = Environment::getUseModuleCache();
+		if ($val === null)
+		{
+			$val = $class::$useModuleCache;
+		}
+
+		return $val;
 	}
 
 	final public static function getSourcesFolder()

@@ -19,6 +19,7 @@ namespace diCore\Data;
 class Environment
 {
 	const mainDomain = null;
+	const useModuleCache = null;
 
 	private static $class;
 
@@ -43,5 +44,13 @@ class Environment
 		$class = self::getClass();
 
 		return $class::mainDomain;
+	}
+
+	final public static function getUseModuleCache()
+	{
+		/** @var Environment $class */
+		$class = self::getClass();
+
+		return $class::useModuleCache;
 	}
 }
