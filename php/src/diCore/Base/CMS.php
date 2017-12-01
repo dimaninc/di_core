@@ -1710,6 +1710,8 @@ abstract class CMS
 		];
 
 		$canonical = [
+			'protocol' => \diRequest::protocol(),
+			'domain' => \diRequest::domain(),
 			'url' => $this->getCanonicalAddress(),
 			'full_url' => \diRequest::urlBase() . $this->getCanonicalAddress(),
 		];
