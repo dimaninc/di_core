@@ -1,6 +1,7 @@
 class LocalizationAdmin
     constructor: ->
-        @setupForm().setupList()
+        @setupForm()
+        .setupList()
 
     setupForm: ->
         @setupAutoHeight()
