@@ -31,7 +31,7 @@ class Queue
 
 	private $lastError = Error::NONE;
 
-	public function add($from, $to, $subject, $body, $settings = [], $attachments = [], $incutIds = '')
+	public function add($from, $to, $subject, $body, $settings = [], $attachments = [], $incutIds = [])
 	{
 		if (!is_array($to))
 		{
@@ -54,6 +54,11 @@ class Queue
 		unset($otherSettings['plainBody']);
 		unset($otherSettings['replyTo']);
 
+		if (!is_array($incutIds))
+		{
+			$incutIds = explode(',', $incutIds);
+		}
+
 		$ids = [];
 
 		foreach ($to as $singleTo)
@@ -67,7 +72,7 @@ class Queue
 				->setSubject($subject)
 				->setBody($body)
 				->setPlainBody($settings['plainBody'] ? 1 : 0)
-				->setIncutIds($incutIds)
+				->setIncutIds(join(',', $incutIds))
 				->setSettings($otherSettings ? serialize($otherSettings) : '')
 				->setSent(0);
 
