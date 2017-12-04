@@ -784,6 +784,16 @@ abstract class BasePage
 
 		return $this;
 	}
+	
+	protected function beforeRenderFilters()
+	{
+		return $this;
+	}
+
+	protected function afterRenderFilters()
+	{
+		return $this;
+	}
 
 	protected function afterRenderList()
 	{
@@ -808,12 +818,16 @@ abstract class BasePage
 			}
 		}
 
+		$this->beforeRenderFilters();
+		
 		if ($this->filtersBlockNeeded())
 		{
 			$this->getTpl()->assign([
 				"FILTERS" => $this->getFilters()->getBlockHtml() . $this->getFilters()->get_js_data(true),
 			]);
 		}
+		
+		$this->afterRenderFilters();
 
 		if ($this->getTwig()->assigned('before_table'))
 		{

@@ -418,7 +418,7 @@ EOF;
 		if ($print_script_tags)
 		{
 			$s = "<script type=\"text/javascript\">$(function() { ".
-				"var diAF = new diAdminFilters({table: '".$this->getTable()."', fields: ['".join("','", $ar)."']});".
+				"window.diAF = new diAdminFilters({table: '".$this->getTable()."', fields: ['".join("','", $ar)."']});".
 				" });</script>\n";
 		}
 		else
