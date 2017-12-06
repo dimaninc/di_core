@@ -1765,14 +1765,14 @@ abstract class CMS
 			$text = ArrayHelper::recursiveJoin($text, ' ');
 		}
 
-		$this->metaFields[$field] = $text;
+		$this->metaFields[$field] = strip_tags($text);
 
 		return $this;
 	}
 
 	public function appendMeta($text, $field = 'title')
 	{
-		$this->metaFields[$field] = $this->getMeta($field) . $text;
+		$this->metaFields[$field] = $this->getMeta($field) . strip_tags($text);
 
 		return $this;
 	}
@@ -1791,14 +1791,14 @@ abstract class CMS
 			$text = ArrayHelper::recursiveJoin($text, ' ');
 		}
 
-		$this->openGraphFields[$field] = $text;
+		$this->openGraphFields[$field] = strip_tags($text);
 
 		return $this;
 	}
 
 	public function appendOpenGraph($text, $field = 'title')
 	{
-		$this->openGraphFields[$field] = $this->getOpenGraph($field) . $text;
+		$this->openGraphFields[$field] = $this->getOpenGraph($field) . strip_tags($text);
 
 		return $this;
 	}
@@ -1882,9 +1882,9 @@ abstract class CMS
 	public function assignMeta(\diModel $model = null, $defaults = [])
 	{
 		$defaults = extend([
-			"title" => null,
-			"description" => null,
-			"keywords" => null,
+			'title' => null,
+			'description' => null,
+			'keywords' => null,
 		], $defaults);
 
 		if (!$model)
@@ -1898,9 +1898,14 @@ abstract class CMS
 				?: $model->localized($this->getFullMetaField($field, true), $this->getLanguage())
 				?: $defaultValue;
 
-			if ($field == "title" && !$value)
+			if ($field == 'title' && !$value)
 			{
-				$value = $model->localized("title", $this->getLanguage());
+				$value = $model->localized('title', $this->getLanguage());
+			}
+
+			if ($field == 'description' && !$value)
+			{
+				$value = $model->localized('short_content', $this->getLanguage());
 			}
 
 			if ($value)
@@ -1914,7 +1919,7 @@ abstract class CMS
 
 		if ($page > 1 && $this->isPageTitleSuffixNeeded())
 		{
-			$this->appendMeta(sprintf($this->getPaginationTitleSuffixTemplate(), $page), "title");
+			$this->appendMeta(sprintf($this->getPaginationTitleSuffixTemplate(), $page), 'title');
 		}
 
 		return $this;
