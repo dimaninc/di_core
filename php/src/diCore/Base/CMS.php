@@ -1905,7 +1905,8 @@ abstract class CMS
 
 			if ($field == 'description' && !$value)
 			{
-				$value = $model->localized('short_content', $this->getLanguage());
+				$value = $model->localized('short_content', $this->getLanguage())
+					?: $model->localized('content', $this->getLanguage());
 			}
 
 			if ($value)
