@@ -8,7 +8,7 @@
 
 namespace diCore\Payment\Robokassa;
 
-
+use diCore\Tool\Logger;
 use diCore\Traits\BasicCreate;
 
 class Helper
@@ -22,7 +22,6 @@ class Helper
 	const testPassword2 = null;
 
 	const productionUrl = 'https://auth.robokassa.ru/Merchant/Index.aspx';
-	const testUrl = 'http://test.robokassa.ru/Index.aspx';
 
 	const securityType = 'MD5';
 	const testMode = false;
@@ -39,16 +38,11 @@ class Helper
 	public static function getUrl()
 	{
 		return static::productionUrl;
-		/*
-		return static::testMode
-			? static::testUrl
-			: static::productionUrl;
-		*/
 	}
 
 	public static function log($message)
 	{
-		simple_debug($message, 'Robokassa', "-payment");
+		Logger::getInstance()->log($message, 'Robokassa', '-payment');
 	}
 
 	public static function getMerchantLogin()
@@ -89,6 +83,7 @@ class Helper
 			'amount' => $draft->getAmount(),
 			'userId' => $draft->getUserId(),
 			'draftId' => $draft->getId(),
+			'description' => '',
 			'customerEmail' => '',
 			'customerPhone' => '',
 			'autoSubmit' => false,
@@ -109,7 +104,7 @@ class Helper
 			'OutSum' => sprintf('%.2f', $opts['amount']),
 			'customerNumber' => $opts['userId'],
 			'InvId' => $opts['draftId'],
-			'Desc' => '',
+			'Desc' => $opts['description'],
 			'SignatureValue' => static::getSignature($draft),
 			'IncCurrLabel' => $opts['paymentVendor'] ? Vendor::code($opts['paymentVendor']) : null,
 			'Culture' => 'ru',
