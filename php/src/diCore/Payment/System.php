@@ -21,6 +21,7 @@ class System extends SimpleContainer
 	const mixplat = 4;
 	const paypal = 5;
 	const sms_online = 6;
+	const tinkoff = 7;
 
 	public static $titles = [
 		self::webmoney => 'Webmoney',
@@ -29,6 +30,7 @@ class System extends SimpleContainer
 		self::mixplat => 'Mixplat',
 		self::paypal => 'Paypal',
 		self::sms_online => 'SMS online',
+		self::tinkoff => 'Тинькофф',
 	];
 
 	public static $names = [
@@ -38,6 +40,7 @@ class System extends SimpleContainer
 		self::mixplat => 'mixplat',
 		self::paypal => 'paypal',
 		self::sms_online => 'sms_online',
+		self::tinkoff => 'tinkoff',
 	];
 
 	public static function getSystemClass($systemId, $vendorId = null)

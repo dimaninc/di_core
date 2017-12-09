@@ -201,7 +201,7 @@ class Payment extends \diBaseController
 		$this->subAction = $this->param(0);
 
 		$this->log("Robokassa request: " . $this->subAction);
-		var_debug($_GET, $_POST);
+		var_debug("Robokassa request", \diRequest::requestUri(), print_r($_GET, true), print_r($_POST, true));
 		die();
 
 		$rk = \diCore\Payment\Robokassa\Helper::basicCreate([
