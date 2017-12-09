@@ -53,20 +53,25 @@ class Helper
 	public static function getPassword1()
 	{
 		return static::testMode
-			? static::password1
-			: static::testPassword1;
+			? static::testPassword1
+			: static::password1;
 	}
 
 	public static function getPassword2()
 	{
 		return static::testMode
-			? static::password2
-			: static::testPassword2;
+			? static::testPassword2
+			: static::password2;
 	}
 
 	public static function isTestMode()
 	{
 		return static::testMode;
+	}
+
+	public static function formatCost($cost)
+	{
+		return sprintf('%.2f', $cost);
 	}
 
 	/**
@@ -88,7 +93,7 @@ class Helper
 			'customerPhone' => '',
 			'autoSubmit' => false,
 			'buttonCaption' => 'Заплатить',
-			'paymentVendor' => '',
+			'paymentVendor' => null,
 			'additionalParams' => [],
 		], $opts);
 
@@ -101,12 +106,12 @@ class Helper
 
 		$params = extend([
 			'MrchLogin' => static::getMerchantLogin(),
-			'OutSum' => sprintf('%.2f', $opts['amount']),
-			'customerNumber' => $opts['userId'],
+			'OutSum' => self::formatCost($opts['amount']),
+			//'customerNumber' => $opts['userId'],
 			'InvId' => $opts['draftId'],
 			'Desc' => $opts['description'],
 			'SignatureValue' => static::getSignature($draft),
-			'IncCurrLabel' => $opts['paymentVendor'] ? Vendor::code($opts['paymentVendor']) : null,
+			'IncCurrLabel' => $opts['paymentVendor'] ?: null,
 			'Culture' => 'ru',
 			'Encoding' => 'utf-8',
 		], $opts['additionalParams']);
@@ -135,7 +140,7 @@ EOF;
 
 	public static function getSignature(\diCore\Entity\PaymentDraft\Model $draft)
 	{
-		$cost = sprintf('%.2f', $draft->getAmount());
+		$cost = self::formatCost($draft->getAmount());
 
 		$source = [
 			static::getMerchantLogin(),
