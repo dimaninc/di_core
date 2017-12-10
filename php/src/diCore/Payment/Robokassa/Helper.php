@@ -8,6 +8,8 @@
 
 namespace diCore\Payment\Robokassa;
 
+use diCore\Data\Types;
+use diCore\Entity\PaymentDraft\Model;
 use diCore\Tool\Logger;
 use diCore\Traits\BasicCreate;
 
@@ -26,8 +28,10 @@ class Helper
 	const securityType = 'MD5';
 	const testMode = false;
 
+	/** @var  Model */
+	private $draft;
+
 	protected $options = [
-		'onSuccessPayment' => null,
 	];
 
 	public function __construct($options = [])
@@ -74,6 +78,35 @@ class Helper
 		return sprintf('%.2f', $cost);
 	}
 
+	public static function getRequest($url)
+	{
+		$request = \Requests::get(
+			$url,
+			[], [
+				'transport' => 'Requests_Transport_fsockopen',
+			]
+		);
+
+		return $request->body;
+	}
+
+	public static function getReducedCost($cost, $currency)
+	{
+		$url = sprintf(
+			'https://auth.robokassa.ru/Merchant/WebService/Service.asmx/CalcOutSumm?MerchantLogin=%1$s&IncCurrLabel=%3$s&IncSum=%2$s',
+			static::getMerchantLogin(),
+			$cost * 10,
+			$currency
+		);
+		$xml = static::getRequest($url);
+
+		preg_match('#<OutSum>(\d+)</OutSum>#', $xml, $regs);
+
+		$reducedCost = !empty($regs[1]) ? (float)$regs[1] : 0;
+
+		return $reducedCost ?: $cost;
+	}
+
 	/**
 	 * @param \diCore\Entity\PaymentDraft\Model $draft
 	 * @param array $opts
@@ -86,16 +119,18 @@ class Helper
 
 		$opts = extend([
 			'amount' => $draft->getAmount(),
-			'userId' => $draft->getUserId(),
 			'draftId' => $draft->getId(),
 			'description' => '',
+			'customerId' => $draft->getUserId(),
 			'customerEmail' => '',
 			'customerPhone' => '',
 			'autoSubmit' => false,
 			'buttonCaption' => 'Заплатить',
-			'paymentVendor' => null,
 			'additionalParams' => [],
 		], $opts);
+
+		$paymentVendor = Vendor::code($draft->getVendor());
+		$opts['amount'] = static::getReducedCost($opts['amount'], $paymentVendor);
 
 		array_walk($opts, function(&$item) {
 			$item = \diDB::_out($item);
@@ -107,11 +142,10 @@ class Helper
 		$params = extend([
 			'MrchLogin' => static::getMerchantLogin(),
 			'OutSum' => self::formatCost($opts['amount']),
-			//'customerNumber' => $opts['userId'],
 			'InvId' => $opts['draftId'],
 			'Desc' => $opts['description'],
 			'SignatureValue' => static::getSignature($draft),
-			'IncCurrLabel' => $opts['paymentVendor'] ?: null,
+			'IncCurrLabel' => $paymentVendor,
 			'Culture' => 'ru',
 			'Encoding' => 'utf-8',
 		], $opts['additionalParams']);
@@ -158,9 +192,90 @@ EOF;
 			$draft->getAmount(),
 			$draft->getId(),
 			static::getPassword2(),
-			static::getMerchantLogin(),
+			//static::getMerchantLogin(),
 		];
 
 		return md5(join(':', $source));
+	}
+
+	public function initDraft(callable $getDraftCallback)
+	{
+		$draftId = \diRequest::post('InvId', 0);
+		$amount = \diRequest::post('OutSum', 0.0);
+
+		$this->draft = $getDraftCallback($draftId, $amount);
+
+		return $this;
+	}
+
+	/**
+	 * @return Model
+	 * @throws \Exception
+	 */
+	public function getDraft()
+	{
+		return $this->draft ?: \diModel::create(Types::payment_draft);
+	}
+
+	public function result(callable $successCallback)
+	{
+		try {
+			$signature2 = strtolower(\diRequest::post('SignatureValue'));
+
+			if (!$this->getDraft()->exists())
+			{
+				throw new \Exception('No draft found');
+			}
+
+			/*
+			if ($this->getDraft()->getAmount() != $cost)
+			{
+				throw new \Exception('Cost not match: (their) ' . $cost . ', (our) ' . $draft->getAmount());
+			}
+			*/
+
+			if ($signature2 != static::getSignature2($this->getDraft()))
+			{
+				throw new \Exception('Signature not matched');
+			}
+
+			$successCallback($this);
+
+			return 'OK' . $this->getDraft()->getId();
+		} catch (\Exception $e) {
+			return [
+				'ok' => false,
+				'message' => $e->getMessage(),
+			];
+		}
+	}
+
+	public function success()
+	{
+		try {
+			$signature = strtolower(\diRequest::post('SignatureValue'));
+
+			if (!$this->getDraft()->exists())
+			{
+				throw new \Exception('No draft found');
+			}
+
+			if ($signature != static::getSignature($this->getDraft()))
+			{
+				throw new \Exception('Signature not matched');
+			}
+
+			return 'success ' . $this->getDraft()->getId();
+		} catch (\Exception $e) {
+			return [
+				'ok' => false,
+				'message' => $e->getMessage(),
+			];
+		}
+	}
+
+	public function fail()
+	{
+		return 'fail ' . $this->getDraft()->getId();
 	}
 }

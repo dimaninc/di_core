@@ -201,23 +201,30 @@ class Payment extends \diBaseController
 		$this->subAction = $this->param(0);
 
 		$this->log("Robokassa request: " . $this->subAction);
-		var_debug("Robokassa request", \diRequest::requestUri(), print_r($_GET, true), print_r($_POST, true));
-		die();
+		$this->log('GET: ' . print_r($_GET, true));
+		$this->log('POST: ' . print_r($_POST, true));
 
-		$rk = \diCore\Payment\Robokassa\Helper::basicCreate([
-			'onSuccessPayment' => function(\diCore\Payment\Paypal\Helper $pp) {
-				$this
-					->initDraft($pp->getItemNumber(), $pp->getTransactionAmount())
-					->updateDraftDetailsIfNeeded()
-					->createReceipt($pp->getTransactionId());
-			},
-		]);
+		$rk = \diCore\Payment\Robokassa\Helper::basicCreate();
+		$rk->initDraft(function($draftId, $amount) {
+			$this
+				->initDraft($draftId, $amount)
+				->updateDraftDetailsIfNeeded();
+
+			return $this->getDraft();
+		});
 
 		switch ($this->subAction)
 		{
-			case 'notification':
-				$rk->notification();
-				return null;
+			case 'result':
+				return $rk->result(function(\diCore\Payment\Robokassa\Helper $rk) {
+					$this->createReceipt(0);
+				});
+
+			case 'success':
+				return $rk->success();
+
+			case 'fail':
+				return $rk->fail();
 
 			default:
 				return [
@@ -389,6 +396,7 @@ class Payment extends \diBaseController
 
 			case System::robokassa:
 				// todo: robokassa
+				/*
 				if (
 					!$this->getDraft()->hasVendor() &&
 					$vendor = \diCore\Payment\Robokassa\Vendor::id(\diRequest::post('paymentType'))
@@ -396,6 +404,7 @@ class Payment extends \diBaseController
 				{
 					$this->getDraft()->setVendor($vendor);
 				}
+				*/
 				break;
 
 			case System::mixplat:
