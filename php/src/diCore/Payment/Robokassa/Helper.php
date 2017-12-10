@@ -176,11 +176,9 @@ EOF;
 
 	public static function getSignatureForm(\diCore\Entity\PaymentDraft\Model $draft)
 	{
-		$cost = self::formatCost($draft->getAmount());
-
 		$source = [
 			static::getMerchantLogin(),
-			$cost,
+			static::formatCost($draft->getAmount()),
 			$draft->getId(),
 			static::getPassword1(),
 		];
@@ -191,7 +189,7 @@ EOF;
 	public static function getSignatureResult(\diCore\Entity\PaymentDraft\Model $draft)
 	{
 		$source = [
-			$draft->getAmount(),
+			static::formatCost($draft->getAmount()),
 			$draft->getId(),
 			static::getPassword2(),
 			//static::getMerchantLogin(),
