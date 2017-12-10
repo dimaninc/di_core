@@ -11,6 +11,7 @@ namespace diCore\Payment;
 use diCore\Payment\Mixplat\MobileVendors;
 use diCore\Payment\Robokassa\Vendor as RobokassaVendor;
 use diCore\Payment\Yandex\Vendor as YandexKassaVendor;
+use diCore\Payment\Tinkoff\Vendor as TinkoffVendor;
 use diCore\Tool\SimpleContainer;
 
 class System extends SimpleContainer
@@ -26,7 +27,7 @@ class System extends SimpleContainer
 	public static $titles = [
 		self::webmoney => 'Webmoney',
 		self::robokassa => 'Робокасса',
-		self::yandex_kassa => 'Yandex.Kassa',
+		self::yandex_kassa => 'Yandex', //.Kassa
 		self::mixplat => 'Mixplat',
 		self::paypal => 'Paypal',
 		self::sms_online => 'SMS online',
@@ -52,6 +53,9 @@ class System extends SimpleContainer
 
 			case self::yandex_kassa:
 				return YandexKassaVendor::class;
+
+			case self::tinkoff:
+				return TinkoffVendor::class;
 
 			case self::mixplat:
 				return $vendorId ? MobileVendors::class : self::class;

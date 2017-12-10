@@ -146,7 +146,7 @@ class Helper
 			'OutSum' => self::formatCost($opts['amount']),
 			'InvId' => $opts['draftId'],
 			'Desc' => $opts['description'],
-			'SignatureValue' => static::getSignature($draft),
+			'SignatureValue' => static::getSignatureForm($draft),
 			'IncCurrLabel' => $paymentVendor,
 			'Culture' => 'ru',
 			'Encoding' => 'utf-8',
@@ -174,7 +174,7 @@ EOF;
 		return $form;
 	}
 
-	public static function getSignature(\diCore\Entity\PaymentDraft\Model $draft)
+	public static function getSignatureForm(\diCore\Entity\PaymentDraft\Model $draft)
 	{
 		$cost = self::formatCost($draft->getAmount());
 
@@ -188,13 +188,24 @@ EOF;
 		return md5(join(':', $source));
 	}
 
-	public static function getSignature2(\diCore\Entity\PaymentDraft\Model $draft)
+	public static function getSignatureResult(\diCore\Entity\PaymentDraft\Model $draft)
 	{
 		$source = [
 			$draft->getAmount(),
 			$draft->getId(),
 			static::getPassword2(),
 			//static::getMerchantLogin(),
+		];
+
+		return md5(join(':', $source));
+	}
+
+	public static function getSignatureSuccess(\diCore\Entity\PaymentDraft\Model $draft)
+	{
+		$source = [
+			$draft->getAmount(),
+			$draft->getId(),
+			static::getPassword1(),
 		];
 
 		return md5(join(':', $source));
@@ -236,7 +247,7 @@ EOF;
 			}
 			*/
 
-			if ($signature2 != static::getSignature2($this->getDraft()))
+			if ($signature2 != static::getSignatureResult($this->getDraft()))
 			{
 				throw new \Exception('Signature not matched');
 			}
@@ -262,12 +273,12 @@ EOF;
 				throw new \Exception('No draft found');
 			}
 
-			if ($signature != static::getSignature($this->getDraft()))
+			if ($signature != static::getSignatureSuccess($this->getDraft()))
 			{
 				throw new \Exception('Signature not matched');
 			}
 
-			return 'success ' . $this->getDraft()->getId();
+			return 'success ' . $this->getDraft()->getId() . ' - ' . $this->getDraft()->getTargetModel()->getHref();
 		} catch (\Exception $e) {
 			return [
 				'ok' => false,
@@ -278,6 +289,6 @@ EOF;
 
 	public function fail()
 	{
-		return 'fail ' . $this->getDraft()->getId();
+		return 'fail ' . $this->getDraft()->getId() . ' - ' . $this->getDraft()->getTargetModel()->getHref();
 	}
 }

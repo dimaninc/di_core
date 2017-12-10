@@ -217,7 +217,7 @@ class Payment extends \diBaseController
 		{
 			case 'result':
 				return $rk->result(function(\diCore\Payment\Robokassa\Helper $rk) {
-					$this->createReceipt(0);
+					$this->createReceipt(1);
 				});
 
 			case 'success':
