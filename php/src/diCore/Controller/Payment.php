@@ -201,7 +201,6 @@ class Payment extends \diBaseController
 		$this->subAction = $this->param(0);
 
 		$this->log("Robokassa request: " . $this->subAction);
-		$this->log('GET: ' . print_r($_GET, true));
 		$this->log('POST: ' . print_r($_POST, true));
 
 		$rk = \diCore\Payment\Robokassa\Helper::basicCreate();
@@ -221,10 +220,14 @@ class Payment extends \diBaseController
 				});
 
 			case 'success':
-				return $rk->success();
+				return $rk->success(function(\diCore\Payment\Robokassa\Helper $rk) {
+					$this->redirectTo($this->getDraft()->getTargetModel()->getHref());
+				});
 
 			case 'fail':
-				return $rk->fail();
+				return $rk->fail(function(\diCore\Payment\Robokassa\Helper $rk) {
+					$this->redirectTo($this->getDraft()->getTargetModel()->getHref());
+				});
 
 			default:
 				return [
@@ -236,6 +239,8 @@ class Payment extends \diBaseController
 
 	protected function createReceipt($outerNumber, callable $beforeSave = null)
 	{
+		$this->log('createReceipt begins');
+
 		/** @var \diCore\Entity\PaymentReceipt\Collection $receipts */
 		$receipts = \diCollection::create(\diTypes::payment_receipt);
 		$receipts

@@ -203,7 +203,7 @@ EOF;
 	public static function getSignatureSuccess(\diCore\Entity\PaymentDraft\Model $draft)
 	{
 		$source = [
-			$draft->getAmount(),
+			static::formatCost($draft->getAmount()),
 			$draft->getId(),
 			static::getPassword1(),
 		];
@@ -230,7 +230,7 @@ EOF;
 		return $this->draft ?: \diModel::create(Types::payment_draft);
 	}
 
-	public function result(callable $successCallback)
+	public function result(callable $paidCallback)
 	{
 		try {
 			$signature2 = strtolower(\diRequest::post('SignatureValue'));
@@ -252,10 +252,14 @@ EOF;
 				throw new \Exception('Signature not matched');
 			}
 
-			$successCallback($this);
+			self::log('Result method OK');
+
+			$paidCallback($this);
 
 			return 'OK' . $this->getDraft()->getId();
 		} catch (\Exception $e) {
+			self::log('Error during `result`: ' . $e->getMessage());
+
 			return [
 				'ok' => false,
 				'message' => $e->getMessage(),
@@ -263,7 +267,7 @@ EOF;
 		}
 	}
 
-	public function success()
+	public function success(callable $successCallback)
 	{
 		try {
 			$signature = strtolower(\diRequest::post('SignatureValue'));
@@ -278,8 +282,12 @@ EOF;
 				throw new \Exception('Signature not matched');
 			}
 
-			return 'success ' . $this->getDraft()->getId() . ' - ' . $this->getDraft()->getTargetModel()->getHref();
+			self::log('Success method OK');
+
+			return $successCallback($this);
 		} catch (\Exception $e) {
+			self::log('Error during `success`: ' . $e->getMessage());
+
 			return [
 				'ok' => false,
 				'message' => $e->getMessage(),
@@ -287,8 +295,10 @@ EOF;
 		}
 	}
 
-	public function fail()
+	public function fail(callable $failCallback)
 	{
-		return 'fail ' . $this->getDraft()->getId() . ' - ' . $this->getDraft()->getTargetModel()->getHref();
+		self::log('Fail method OK');
+
+		return $failCallback($this);
 	}
 }
