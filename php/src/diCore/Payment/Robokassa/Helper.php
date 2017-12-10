@@ -90,13 +90,15 @@ class Helper
 		return $request->body;
 	}
 
-	public static function getReducedCost($cost, $currency)
+	public static function getReducedCost($cost, $vendor)
 	{
+		return $cost;
+
 		$url = sprintf(
 			'https://auth.robokassa.ru/Merchant/WebService/Service.asmx/CalcOutSumm?MerchantLogin=%1$s&IncCurrLabel=%3$s&IncSum=%2$s',
 			static::getMerchantLogin(),
-			$cost * 10,
-			$currency
+			$cost,
+			$vendor
 		);
 		$xml = static::getRequest($url);
 
