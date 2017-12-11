@@ -8,6 +8,9 @@
 
 namespace diCore\Controller;
 
+use diCore\Data\Types;
+use diCore\Entity\MailPlan\Collection;
+use diCore\Entity\MailPlan\Model;
 use diCore\Tool\Mail\Queue;
 
 class Mail extends \diBaseAdminController
@@ -29,5 +32,23 @@ class Mail extends \diBaseAdminController
 		$mq->setVisible();
 
 		$this->redirect();
+	}
+
+	public function processPlanAction()
+	{
+		/** @var Collection $plans */
+		$plans = \diCollection::create(Types::mail_plan);
+		$plans
+			->filterByProcessedAt(null, '=');
+
+		/** @var Model $plan */
+		foreach ($plans as $plan)
+		{
+			$plan->process();
+		}
+
+		return [
+			'processed' => $plans->count(),
+		];
 	}
 }

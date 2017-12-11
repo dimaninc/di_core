@@ -1483,7 +1483,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		if ($this->sqlParts['where'])
 		{
-			return "WHERE " . join(" AND ", array_filter(array_map(function($val) {
+			return 'WHERE ' . join(' AND ', array_filter(array_map(function($val) {
 				$value = $val['value'];
 
 				if (!empty($val['options']['manual']))
@@ -1551,6 +1551,21 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 						}
 					}
 				}
+				elseif (is_null($val['value']))
+				{
+					switch ($val['operator'])
+					{
+						case '=':
+							$val['operator'] = 'IS';
+							$value = 'NULL';
+							break;
+
+						case '!=':
+							$val['operator'] = 'IS NOT';
+							$value = 'NULL';
+							break;
+					}
+				}
 
 				return
 					$this->getDb()->escapeField($val['field']) .
@@ -1566,7 +1581,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		if ($this->sqlParts['orderBy'])
 		{
-			return "ORDER BY " . join(",", array_map(function($val) {
+			return 'ORDER BY ' . join(',', array_map(function($val) {
 				$field = empty($val['options']['rawValue'])
 					? $this->getDb()->escapeField($val['field'])
 					: $val['field'];
@@ -1581,7 +1596,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		if ($this->sqlParts['groupBy'])
 		{
-			return "GROUP BY " . join(",", array_map(function($val) {
+			return 'GROUP BY ' . join(',', array_map(function($val) {
 				return $this->getDb()->escapeField($val['field']);
 			}, $this->sqlParts['groupBy']));
 		}
@@ -1593,7 +1608,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		if ($this->sqlParts['select'])
 		{
-			return join(",", array_map(function($opt) {
+			return join(',', array_map(function($opt) {
 				if (is_scalar($opt['field']))
 				{
 					return !empty($opt['options']['raw'])
@@ -1601,7 +1616,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 						: $this->getDb()->escapeField($opt['field']);
 				}
 
-				throw new \Exception("Not implemented yet");
+				throw new \Exception('Not implemented yet');
 			}, $this->sqlParts['select']));
 		}
 
