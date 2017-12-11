@@ -249,7 +249,7 @@ class diDbController extends diBaseAdminController
 		$date_fn_format = "Y_m_d__H_i_s";
 		$date_sql_comment = "Y/m/d H:i:s";
 
-		$filename = $this->folder.$fn."__dump_".date($date_fn_format).".sql";
+		$filename = $this->folder . $fn . "__dump_" . date($date_fn_format) . ".sql";
 		if ($compress)
 		{
 			$filename .= ".gz";
@@ -269,9 +269,9 @@ class diDbController extends diBaseAdminController
 		{
 			$command_suffix = $compress ? " | gzip" : "";
 
-			$command = "mysqldump --host=".$this->getDb()->getHost()." --user=".$this->getDb()->getUsername().
-				" --password=".$this->getDb()->getPassword()." --opt --skip-extended-insert ".$this->getDb()->getDatabase().
-				" {$tablesList} {$command_suffix} > $filename";
+			$command = "mysqldump --host=" . $this->getDb()->getHost() . " --user=" . $this->getDb()->getUsername() .
+				" --password=" . $this->getDb()->getPassword() . " --opt --skip-extended-insert " .
+				$this->getDb()->getDatabase() . " {$tablesList} {$command_suffix} > $filename";
 
 			system($command, $a);
 
@@ -497,7 +497,7 @@ EOF;
 	public function restoreAction()
 	{
 		$startTime = utime();
-		$maxTimeout = 200;
+		$maxTimeout = 25;
 		$startFrom = false;
 
 		// comments
@@ -507,6 +507,7 @@ EOF;
 
 		$fn = $this->file;
 		$start_from = diRequest::get("start_from", 0);
+		$system = diRequest::get("system", 0);
 
 		if (!$fn)
 		{
@@ -521,6 +522,26 @@ EOF;
 		$fclose_func = $is_gz ? "gzclose" : "fclose";
 		$ftell_func = $is_gz ? "gztell" : "ftell";
 		$fseek_func = $is_gz ? "gzseek" : "fseek";
+
+		if ($system)
+		{
+			if ($is_gz)
+			{
+				throw new \Exception('System method can execute non-archived SQL only');
+			}
+
+			$command = 'mysql --user=' . $this->getDb()->getUsername() . ' --password=' . $this->getDb()->getPassword() .
+				' ' . $this->getDb()->getDatabase() . '< ' . $ffn;
+			system($command, $a);
+
+			if (!$a)
+			{
+				return [
+					"ok" => true,
+					"system" => true,
+				];
+			}
+		}
 
 		$errorsAr = [];
 
@@ -639,10 +660,11 @@ EOF;
 			"errors" => $errorsAr,
 			"file" => $fn,
 			"startFrom" => $startFrom,
+			'system' => false,
 		];
 
 		$ar = array_merge($ar, $this->getTablesList($this->getDb()));
 
-		print_json($ar);
+		return $ar;
 	}
 }
