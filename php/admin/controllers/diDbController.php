@@ -187,10 +187,18 @@ class diDbController extends diBaseAdminController
 	{
 		for ($i = 0; $i < count($s); $i++)
 		{
-			$s[$i] = addslashes($s[$i]);
-			$s[$i] = str_replace("\r\n", "\\r\\n", $s[$i]);
-			$s[$i] = str_replace("\r", "\\r", $s[$i]);
-			$s[$i] = str_replace("\n", "\\n", $s[$i]);
+			if ($s[$i] === null)
+			{
+				$s[$i] = 'NULL';
+			}
+			else
+			{
+				$s[$i] = addslashes($s[$i]);
+				$s[$i] = str_replace("\r\n", "\\r\\n", $s[$i]);
+				$s[$i] = str_replace("\r", "\\r", $s[$i]);
+				$s[$i] = str_replace("\n", "\\n", $s[$i]);
+				$s[$i] = "'" . $s[$i] . "'";
+			}
 		}
 
 		return $s;
@@ -337,7 +345,7 @@ EOF;
 
 					$name = $r->Field;
 					$type = $r->Type;
-					$null = $r->Null == "YES" ? "" : " NOT NULL";
+					$null = $r->Null == "YES" ? " NULL" : " NOT NULL";
 					$def  = $r->Default != NULL ? " DEFAULT ".$r->Default."" : "";
 					$xtra = ($r->Extra) ? " ".$r->Extra : "";
 
@@ -451,7 +459,7 @@ EOF;
 						$end_symbol = ";";
 					}
 
-					$sql .= "('".join("','", $this->prepareString(array_values($r)))."'){$end_symbol}\n";
+					$sql .= "(".join(',', $this->prepareString(array_values($r)))."){$end_symbol}\n";
 
 					$this->tryToFlush($fp, $sql, $compress);
 				}
