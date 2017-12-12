@@ -8,6 +8,7 @@
 
 namespace diCore\Controller;
 
+use diCore\Helper\StringHelper;
 use diCore\Payment\Yandex\Kassa;
 use diCore\Payment\System;
 use diCore\Entity\PaymentDraft\Model as DraftModel;
@@ -34,10 +35,41 @@ class Payment extends \diBaseController
 	{
 		parent::__construct($params);
 
-		if (!\diConfiguration::get("epay_enabled"))
+		if (!\diConfiguration::get('epay_enabled'))
 		{
-			$this->returnErrorResponse("E-pay disabled at the moment " . get_user_ip());
+			$this->returnErrorResponse('E-pay disabled at the moment ' . get_user_ip());
 		}
+	}
+
+	public function payDraftManualAction()
+	{
+		$draftId = $this->param(0, 0);
+
+		$res = [
+			'ok' => false,
+			'message' => null,
+		];
+
+		if ($draftId)
+		{
+			$this->initDraftOnly($draftId);
+
+			if (!$this->getDraft()->exists())
+			{
+				$res['message'] = 'Draft #' . $draftId . ' not found';
+			}
+			elseif ($this->getDraft()->hasPaid())
+			{
+				$res['message'] = 'Draft #' . $draftId . ' already paid';
+			}
+			else
+			{
+				$this->createReceipt('manual-' . StringHelper::random(8));
+				$res['ok'] = true;
+			}
+		}
+
+		return $res;
 	}
 
 	public function isDraftPaidAction()
@@ -82,8 +114,8 @@ class Payment extends \diBaseController
 		$this->kassa = Kassa::create($this->subAction, [
 			'init' => function(Kassa $k) {
 				$this
-					->initDraft(\diRequest::post("orderNumber", 0), \diRequest::post('orderSumAmount'),
-						\diRequest::post("customerNumber", 0))
+					->initDraft(\diRequest::post('orderNumber', 0), \diRequest::post('orderSumAmount'),
+						\diRequest::post('customerNumber', 0))
 					->updateDraftDetailsIfNeeded();
 			},
 			'onAviso' => function(Kassa $k) {
@@ -100,7 +132,7 @@ class Payment extends \diBaseController
 		$this->subAction = $this->param(0);
 		$draftId = $this->param(1, 0);
 
-		$this->log("Mixplat request: " . $this->subAction);
+		$this->log('Mixplat request: ' . $this->subAction);
 		$this->log("GET:\n" . print_r($_GET, true));
 		$this->log("POST:\n" . print_r($_POST, true));
 		$this->log("POST BODY:\n" . print_r(file_get_contents('php://input'), true));
@@ -109,11 +141,11 @@ class Payment extends \diBaseController
 
 		switch ($this->subAction)
 		{
-			case "check":
+			case 'check':
 				$result = $mixplat->handleCheck();
 				break;
 
-			case "status":
+			case 'status':
 				$result = $mixplat->handleStatus();
 
 				$this->processMixplatRequest($result->getData());
@@ -129,10 +161,10 @@ class Payment extends \diBaseController
 
 				break;
 
-			case "get":
+			case 'get':
 				if (!$draftId)
 				{
-					$this->returnErrorResponse("Draft ID should be specified for `get` action");
+					$this->returnErrorResponse('Draft ID should be specified for `get` action');
 				}
 
 				$result = $mixplat->queryGet(null, $draftId);
@@ -147,7 +179,7 @@ class Payment extends \diBaseController
 				break;
 
 			default:
-				$this->returnErrorResponse("Unknown action: " . $this->subAction);
+				$this->returnErrorResponse('Unknown action: ' . $this->subAction);
 				exit;
 		}
 
@@ -170,7 +202,7 @@ class Payment extends \diBaseController
 		$this->system = System::paypal;
 		$this->subAction = $this->param(0);
 
-		$this->log("Paypal request: " . $this->subAction);
+		$this->log('Paypal request: ' . $this->subAction);
 
 		$pp = \diCore\Payment\Paypal\Helper::create([
 			'onSuccessPayment' => function(\diCore\Payment\Paypal\Helper $pp) {
@@ -200,7 +232,7 @@ class Payment extends \diBaseController
 		$this->system = System::robokassa;
 		$this->subAction = $this->param(0);
 
-		$this->log("Robokassa request: " . $this->subAction);
+		$this->log('Robokassa request: ' . $this->subAction);
 		$this->log('POST: ' . print_r($_POST, true));
 
 		$rk = \diCore\Payment\Robokassa\Helper::basicCreate();
@@ -297,22 +329,22 @@ class Payment extends \diBaseController
 			if (!$existingReceipt)
 			{
 				$this->log('Receipt created, ID = ' . $this->getReceipt()->getId());
-				$this->log("Receipt #" . $this->getReceipt()->getId() . " created");
+				$this->log('Receipt #' . $this->getReceipt()->getId() . ' created');
 
-				$this->log("Draft #" . $this->getDraft()->getId() . " set as paid");
+				$this->log('Draft #' . $this->getDraft()->getId() . ' set as paid');
 			}
 			else
 			{
 				$this->log('Receipt updated, ID = ' . $this->getReceipt()->getId());
-				$this->log("Draft #" . $this->getDraft()->getId() . " set as paid (not first time)");
+				$this->log('Draft #' . $this->getDraft()->getId() . ' set as paid (not first time)');
 			}
 
-			$this->log("Receipt: " . print_r($this->getReceipt()->get(), true));
+			$this->log('Receipt: ' . print_r($this->getReceipt()->get(), true));
 
 			$this->getDraft()
 				->setPaid(1)
 				->save();
-			//->hardDestroy();
+				//->hardDestroy();
 
 			if (!$existingReceipt)
 			{
@@ -352,32 +384,39 @@ class Payment extends \diBaseController
 		return $this->receipt;
 	}
 
-	protected function initDraft($draftId, $amount, $userId = null)
+	protected function initDraftOnly($draftId)
 	{
 		$this->draft = \diModel::create(\diCore\Data\Types::payment_draft, $draftId);
 
-		$this->log("Draft used: " . print_r($this->draft->get(), true));
+		return $this;
+	}
+
+	protected function initDraft($draftId, $amount, $userId = null)
+	{
+		$this->initDraftOnly($draftId);
+
+		$this->log('Draft used: ' . print_r($this->draft->get(), true));
 
 		if (!$this->getDraft()->exists())
 		{
-			$this->returnErrorResponse("No such payment draft");
+			$this->returnErrorResponse('No such payment draft');
 		}
 
 		if ($userId && $userId != $this->getDraft()->getUserId())
 		{
-			$this->returnErrorResponse("Customer number " . $userId . " is wrong");
+			$this->returnErrorResponse('Customer number ' . $userId . ' is wrong');
 		}
 
 		/* mixplat's beeline adds 10 rub so this doesn't work
 		if ($amount != $this->getDraft()->getAmount())
 		{
-			$this->sendErrorResponse("Amount doesn't match draft");
+			$this->sendErrorResponse('Amount doesn't match draft');
 		}
 		*/
 
 		if ($amount < 1)
 		{
-			$this->returnErrorResponse("Too small amount");
+			$this->returnErrorResponse('Too small amount');
 		}
 
 		return $this;
@@ -439,7 +478,7 @@ class Payment extends \diBaseController
 
 	protected function processMixplatRequest($data = [])
 	{
-		$this->log("Start " . $this->subAction);
+		$this->log('Start ' . $this->subAction);
 
 		$this
 			->initDraft($data['merchant_order_id'], $data['amount'])
@@ -456,7 +495,7 @@ class Payment extends \diBaseController
 		}
 		else
 		{
-			$this->log("Sending error response: " . $message);
+			$this->log('Sending error response: ' . $message);
 
 			die($message);
 		}

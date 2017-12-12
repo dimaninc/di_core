@@ -1,0 +1,23 @@
+<script type="text/javascript">
+	$(function() {
+		$('button[data-purpose="pay-manual"]').on('click', function() {
+			if (!confirm('Провести этот платёж?') || !confirm('Вы уверены?')) {
+				return false;
+			}
+
+			var id = ~~$('form[name="payment_drafts_form"] input[name="id"]').val();
+
+			$.get('/api/payment/pay_draft_manual/{0}/'.format(id), function(res) {
+				if (res && res.ok) {
+					$('.diadminform-row[data-field="pay_manual"]').hide();
+					$('.diadminform-row[data-field="paid"] input[name="paid"]').val(1);
+					$('.diadminform-row[data-field="paid"] .static').html('Да');
+				} else {
+					alert(res.message);
+				}
+			});
+
+			return false;
+		});
+	});
+</script>
