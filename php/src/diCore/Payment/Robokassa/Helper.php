@@ -186,7 +186,7 @@ EOF;
 		return md5(join(':', $source));
 	}
 
-	public static function getSignatureResult(\diCore\Entity\PaymentDraft\Model $draft)
+	public static function getSignatureResult(\diCore\Entity\PaymentDraft\Model $draft, $alt = false)
 	{
 		$source = [
 			static::formatCost($draft->getAmount()),
@@ -194,6 +194,11 @@ EOF;
 			static::getPassword2(),
 			//static::getMerchantLogin(),
 		];
+
+		if ($alt)
+		{
+			$source[] = static::getMerchantLogin();
+		}
 
 		return md5(join(':', $source));
 	}
@@ -231,7 +236,7 @@ EOF;
 	public function result(callable $paidCallback)
 	{
 		try {
-			$signature2 = strtolower(\diRequest::post('SignatureValue'));
+			$signature = strtolower(\diRequest::post('SignatureValue'));
 
 			if (!$this->getDraft()->exists())
 			{
@@ -245,9 +250,12 @@ EOF;
 			}
 			*/
 
-			if ($signature2 != static::getSignatureResult($this->getDraft()))
+			$s1 = static::getSignatureResult($this->getDraft());
+			$s2 = static::getSignatureResult($this->getDraft(), true);
+
+			if ($signature != $s1 && $signature != $s2)
 			{
-				throw new \Exception('Signature not matched');
+				throw new \Exception('Signature not matched (' . $signature . ' != ' . $s1 . ', ' . $s2 . ')');
 			}
 
 			self::log('Result method OK');
