@@ -1,5 +1,11 @@
 <?php
-class diDbPage extends diAdminBasePage
+
+namespace diCore\Admin\Page;
+
+use diCore\Controller\Db as dbController;
+use diCore\Helper\FileSystemHelper;
+
+class Db extends \diCore\Admin\BasePage
 {
 	protected $excludedTables = [
 		"banner_stat2",
@@ -22,21 +28,21 @@ class diDbPage extends diAdminBasePage
 
 		$this->getTpl()
 			->assign([
-				"URI" => diLib::getAdminWorkerPath("db"),
-				"URI_UPLOAD" => diLib::getAdminWorkerPath("db", "upload"),
+				"URI" => \diLib::getAdminWorkerPath("db"),
+				"URI_UPLOAD" => \diLib::getAdminWorkerPath("db", "upload"),
 			], "WORKER_");
 	}
 
 	public function renderForm()
 	{
-		throw new Exception("No form in " . get_class($this));
+		throw new \Exception("No form in " . get_class($this));
 	}
 
 	private function printTablesSelect()
 	{
-		$tablesAr = diDbController::getTablesList($this->getDb());
+		$tablesAr = dbController::getTablesList($this->getDb());
 
-		$tablesSel = new diSelect("tables");
+		$tablesSel = new \diSelect("tables");
 		$tablesSel->setCurrentValue(function($table) use ($tablesSel) {
 			return !in_array($table, $this->excludedTables) && substr($table, 0, 13) != "search_index_"
 				&& !preg_match('/\[[^\]]+\]$/', $tablesSel->getTextByValue($table));
@@ -57,15 +63,8 @@ class diDbPage extends diAdminBasePage
 
 	private function printDumpFiles()
 	{
-		/** @var diDbController $controllerClass */
-		if (diLib::exists("diDbCustomController"))
-		{
-			$controllerClass = "diDbCustomController";
-		}
-		else
-		{
-			$controllerClass = "diDbController";
-		}
+		/** @var dbController $controllerClass */
+		$controllerClass = \diLib::getChildClass(dbController::class);
 
 		foreach ($controllerClass::$foldersIdsAr as $folderId)
 		{
@@ -103,9 +102,9 @@ class diDbPage extends diAdminBasePage
 
 	private function getDumpFilesFromFolder($folder, $folderId = null)
 	{
-		$ar = array();
+		$ar = [];
 
-		$dir = get_dir_array($folder, true, true);
+		$dir = FileSystemHelper::folderContents($folder, true, true);
 		$filesAr = $dir["f"];
 
 		$filesAr = array_map(function($v) use($folder) {

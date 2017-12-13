@@ -158,8 +158,10 @@ class Model extends \diModel
 		$borderWidth = $options['borderWidth'];
 		$borderHeight = $options['borderHeight'] ?: $options['borderWidth'];
 
-		$childWidth = floor(($width - $borderWidth) / $this->maxHorPhotosCountOnThumbnail());
-		$childHeight = floor(($height - $borderHeight) / $this->maxVerPhotosCountOnThumbnail());
+		$childWidth = floor(($width - $borderWidth * ($this->maxHorPhotosCountOnThumbnail() - 1))
+			/ $this->maxHorPhotosCountOnThumbnail());
+		$childHeight = floor(($height - $borderHeight * ($this->maxVerPhotosCountOnThumbnail() - 1))
+			/ $this->maxVerPhotosCountOnThumbnail());
 
 		$albumsFolder = get_pics_folder($this->getTable());
 		$photosFolder = get_pics_folder($options['childTable'] ?: Types::getTable($options['childModelType']));
@@ -199,7 +201,9 @@ class Model extends \diModel
 
 			if ($photo->exists())
 			{
-				$I = new \diImage(\diPaths::fileSystem() . $photosFolder . get_tn_folder() . $photo->getPic());
+				$folder = ($photo->getPicsFolder() ?: $photosFolder) . $photo->getTnFolder();
+
+				$I = new \diImage(\diPaths::fileSystem() . $folder . $photo->getPic());
 				$I->make_thumb(DI_THUMB_CROP, $fullFn, $width, $height);
 				$I->close();
 			}
@@ -220,7 +224,9 @@ class Model extends \diModel
 			/** @var \diCore\Entity\Photo\Model $photo */
 			foreach ($randomPhotos as $photo)
 			{
-				$picFn = \diPaths::fileSystem() . $photosFolder . get_tn_folder() . $photo->getPic();
+				$folder = ($photo->getPicsFolder() ?: $photosFolder) . $photo->getTnFolder();
+
+				$picFn = \diPaths::fileSystem() . $folder . $photo->getPic();
 
 				if (!is_file($picFn))
 				{

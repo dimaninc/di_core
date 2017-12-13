@@ -1137,7 +1137,7 @@ function print_json($ar, $printHeaders = true)
 		header("Pragma: no-cache");
 	}
 
-	echo json_encode2($ar);
+	echo json_encode($ar);
 }
 
 function dierror2($text, $module = "")
