@@ -274,7 +274,7 @@ abstract class diModule
 	{
 		$name = get_class($this);
 
-		if ($id = diLib::childNamespace($name))
+		if ($id = \diLib::childNamespace($name))
 		{
 			$id = underscore($id);
 		}

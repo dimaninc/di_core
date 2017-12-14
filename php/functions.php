@@ -599,19 +599,13 @@ function transliterate_rus_to_eng($text)
 
 function get_user_ip()
 {
-	return \diRequest::server("REMOTE_ADDR");
+	$ip = \diRequest::server('HTTP_CLIENT_IP')
+		?: \diRequest::server('HTTP_X_FORWARDED_FOR')
+			?: \diRequest::server('REMOTE_ADDR');
 
-	if (!empty($_SERVER["HTTP_CLIENT_IP"]))
+	if ($x = strpos($ip, ','))
 	{
-		$ip = $_SERVER["HTTP_CLIENT_IP"];
-	}
-	elseif (!empty($_SERVER["HTTP_X_FORWARDED_FOR"]))
-	{
-		$ip = $_SERVER["HTTP_X_FORWARDED_FOR"];
-	}
-	else
-	{
-		$ip = $_SERVER["REMOTE_ADDR"];
+		$ip = substr($ip, 0, $x);
 	}
 
 	return $ip;
@@ -1143,7 +1137,7 @@ function print_json($ar, $printHeaders = true)
 		header("Pragma: no-cache");
 	}
 
-	echo json_encode2($ar);
+	echo json_encode($ar);
 }
 
 function dierror2($text, $module = "")

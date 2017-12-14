@@ -42,6 +42,8 @@
         * birthday
 */
 
+use diCore\Admin\BasePage;
+
 class diAdminFilters
 {
 	const DEFAULT_WHERE_TPL = "[-field-]='[-value-]'";
@@ -74,10 +76,10 @@ class diAdminFilters
 
 	public $table;
 
-	/** @var diDB */
+	/** @var \diDB */
 	private $db;
 
-	/** @var diAdminBasePage */
+	/** @var BasePage */
 	private $AdminPage;
 
 	/**
@@ -416,7 +418,7 @@ EOF;
 		if ($print_script_tags)
 		{
 			$s = "<script type=\"text/javascript\">$(function() { ".
-				"var diAF = new diAdminFilters({table: '".$this->getTable()."', fields: ['".join("','", $ar)."']});".
+				"window.diAF = new diAdminFilters({table: '".$this->getTable()."', fields: ['".join("','", $ar)."']});".
 				" });</script>\n";
 		}
 		else

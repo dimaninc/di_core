@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS slugs(
 	level_num tinyint,
 	unique index slug_idx(slug,level_num),
 	unique index target_idx(target_type,target_id),
+	UNIQUE INDEX full_slug_idx(full_slug),
 	primary key(id)
 )
 ENGINE=InnoDB

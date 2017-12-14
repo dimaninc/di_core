@@ -1,12 +1,17 @@
 <?php
 
+namespace diCore\Controller;
+
 use diCore\Data\Config;
 
-class diDbController extends diBaseAdminController
+class Db extends \diBaseAdminController
 {
 	private $file;
 	private $folder;
 	private $folderId;
+
+	const MAX_TIMEOUT = 25;
+	const MYSQL_SYSTEM_HOST = null;
 
 	const CHMOD_FILE = 0664;
 
@@ -22,15 +27,15 @@ class diDbController extends diBaseAdminController
 	{
 	    parent::__construct($params);
 
-		$this->file = diRequest::get("file", "");
-		$this->folderId = diRequest::get("folderId", 1);
+		$this->file = \diRequest::get("file", "");
+		$this->folderId = \diRequest::get("folderId", 1);
 		$this->folder = $this->getFolderById($this->folderId);
 	}
 
 	/**
 	 * @param $id integer
 	 * @return string
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public static function getFolderById($id)
 	{
@@ -43,7 +48,7 @@ class diDbController extends diBaseAdminController
 				return static::getCoreSqlFolder();
 
 			default:
-				throw new Exception("Undefined folder id#$id");
+				throw new \Exception("Undefined folder id#$id");
 		}
 	}
 
@@ -54,15 +59,15 @@ class diDbController extends diBaseAdminController
 
 	public static function getCoreSqlFolder()
 	{
-		return dirname(dirname(dirname(dirname(__FILE__)))) . "/sql/";
+		return dirname(dirname(dirname(dirname(dirname(__FILE__))))) . '/sql/';
 	}
 
 	public function deleteAction()
 	{
-	    $ar = array(
-	    	"file" => $this->file,
-	    	"ok" => false,
-	    );
+		$ar = [
+			"file" => $this->file,
+			"ok" => false,
+		];
 
 		if ($this->file)
 		{
@@ -81,7 +86,7 @@ class diDbController extends diBaseAdminController
 
 	public function downloadAction()
 	{
-		$headers = diRequest::get("headers", 1);
+		$headers = \diRequest::get("headers", 1);
 
 		if ($headers)
 		{
@@ -92,11 +97,11 @@ class diDbController extends diBaseAdminController
 			header("Expires: 0");
 		}
 
-		readfile($this->folder.$this->file);
+		readfile($this->folder . $this->file);
 	}
 
 	/**
-	 * @param $db diDB
+	 * @param $db \diDB
 	 * @return array
 	 */
 	public static function getTablesList($db)
@@ -187,10 +192,18 @@ class diDbController extends diBaseAdminController
 	{
 		for ($i = 0; $i < count($s); $i++)
 		{
-			$s[$i] = addslashes($s[$i]);
-			$s[$i] = str_replace("\r\n", "\\r\\n", $s[$i]);
-			$s[$i] = str_replace("\r", "\\r", $s[$i]);
-			$s[$i] = str_replace("\n", "\\n", $s[$i]);
+			if ($s[$i] === null)
+			{
+				$s[$i] = 'NULL';
+			}
+			else
+			{
+				$s[$i] = addslashes($s[$i]);
+				$s[$i] = str_replace("\r\n", "\\r\\n", $s[$i]);
+				$s[$i] = str_replace("\r", "\\r", $s[$i]);
+				$s[$i] = str_replace("\n", "\\n", $s[$i]);
+				$s[$i] = "'" . $s[$i] . "'";
+			}
 		}
 
 		return $s;
@@ -216,13 +229,13 @@ class diDbController extends diBaseAdminController
 		$table_case_sensitivity = false;
 		$table_case_sensitivity_str = $table_case_sensitivity ? "cs" : "ci";
 
-		$compress = diRequest::get("compress", 0);
-		$drops = diRequest::get("drops", 0);
-		$creates = diRequest::get("creates", 0);
-		$fields = diRequest::get("fields", 0);
-		$data = diRequest::get("data", 0);
-		$multiple = diRequest::get("multiple", 0);
-		$system = diRequest::get("system", 0);
+		$compress = \diRequest::get("compress", 0);
+		$drops = \diRequest::get("drops", 0);
+		$creates = \diRequest::get("creates", 0);
+		$fields = \diRequest::get("fields", 0);
+		$data = \diRequest::get("data", 0);
+		$multiple = \diRequest::get("multiple", 0);
+		$system = \diRequest::get("system", 0);
 
 		if (!function_exists('gzopen'))
 		{
@@ -235,13 +248,13 @@ class diDbController extends diBaseAdminController
 			$fn = $this->getDb()->getDatabase();
 		}
 
-		$tablesAr = explode(",", diRequest::get("tables", ""));
+		$tablesAr = explode(",", \diRequest::get("tables", ""));
 		$tablesList = join(" ", $tablesAr);
 
 		$date_fn_format = "Y_m_d__H_i_s";
 		$date_sql_comment = "Y/m/d H:i:s";
 
-		$filename = $this->folder.$fn."__dump_".date($date_fn_format).".sql";
+		$filename = $this->folder . $fn . "__dump_" . date($date_fn_format) . ".sql";
 		if ($compress)
 		{
 			$filename .= ".gz";
@@ -261,9 +274,9 @@ class diDbController extends diBaseAdminController
 		{
 			$command_suffix = $compress ? " | gzip" : "";
 
-			$command = "mysqldump --host=".$this->getDb()->getHost()." --user=".$this->getDb()->getUsername().
-				" --password=".$this->getDb()->getPassword()." --opt --skip-extended-insert ".$this->getDb()->getDatabase().
-				" {$tablesList} {$command_suffix} > $filename";
+			$command = "mysqldump --host=" . $this->getDb()->getHost() . " --user=" . $this->getDb()->getUsername() .
+				" --password=" . $this->getDb()->getPassword() . " --opt --skip-extended-insert " .
+				$this->getDb()->getDatabase() . " {$tablesList} {$command_suffix} > $filename";
 
 			system($command, $a);
 
@@ -291,7 +304,7 @@ class diDbController extends diBaseAdminController
 		$fp = $compress ? gzopen($filename, "w9") : fopen($filename, "w");
 		if (!$fp)
 		{
-			throw new Exception("Unable to create db dump $filename");
+			throw new \Exception("Unable to create db dump $filename");
 		}
 
 		$sql = <<<EOF
@@ -312,6 +325,8 @@ EOF;
 				continue;
 			}
 
+			$fieldsAr = [];
+
 			if ($drops)
 			{
 				$sql .= "DROP TABLE IF EXISTS `$table`;\n";
@@ -321,11 +336,10 @@ EOF;
 			{
 				$sql .= "CREATE TABLE `$table` (\n";
 
-				$fieldsAr = array();
-				$createFieldsAr = array();
+				$createFieldsAr = [];
 
 				$rs = $this->getDb()->q("SHOW FIELDS FROM `$table`");
-				while($r = $this->getDb()->fetch($rs))
+				while ($r = $this->getDb()->fetch($rs))
 				{
 					if ($r->Default != NULL)
 					{
@@ -337,12 +351,12 @@ EOF;
 
 					$name = $r->Field;
 					$type = $r->Type;
-					$null = $r->Null == "YES" ? "" : " NOT NULL";
+					$null = $r->Null == "YES" ? " NULL" : " NOT NULL";
 					$def  = $r->Default != NULL ? " DEFAULT ".$r->Default."" : "";
-					$xtra = ($r->Extra) ? " ".$r->Extra : "";
+					$extra = $r->Extra ? " " . $r->Extra : "";
 
 					$fieldsAr[$r->Field] = $r->Type;
-					$createFieldsAr[] = "\t`".$name."` ".$type.$null.$def.$xtra;
+					$createFieldsAr[] = "\t`" . $name . "` " . $type . $null . $def . $extra;
 				}
 
 				$sql .= join(",\n", $createFieldsAr);
@@ -358,7 +372,7 @@ EOF;
 
 					if ($key_name != "PRIMARY" && $r_key->Non_unique == 0)
 					{
-						$key_name = "UNIQUE|".$key_name;
+						$key_name = "UNIQUE|" . $key_name;
 					}
 
 					if (!isset($indexAr[$key_name]) || !is_array($indexAr[$key_name]))
@@ -404,11 +418,12 @@ EOF;
 							$key_name = substr($key_name, 7);
 						}
 
-						$sql .= "\t".$prefix."KEY `$key_name`($col_names)";
+						$sql .= "\t" . $prefix . "KEY `$key_name`($col_names)";
 					}
 				}
 
-				$sql .= "\n)\nENGINE=$engine\nDEFAULT CHARSET=" . strtolower(DIENCODING) . "\nCOLLATE=" . strtolower(DIENCODING) . "_general_{$table_case_sensitivity_str};\n\n";
+				$sql .= "\n)\nENGINE=$engine\nDEFAULT CHARSET=" . strtolower(DIENCODING) .
+					"\nCOLLATE=" . strtolower(DIENCODING) . "_general_{$table_case_sensitivity_str};\n\n";
 			}
 
 			if ($data)
@@ -451,7 +466,7 @@ EOF;
 						$end_symbol = ";";
 					}
 
-					$sql .= "('".join("','", $this->prepareString(array_values($r)))."'){$end_symbol}\n";
+					$sql .= "(".join(',', $this->prepareString(array_values($r)))."){$end_symbol}\n";
 
 					$this->tryToFlush($fp, $sql, $compress);
 				}
@@ -489,7 +504,6 @@ EOF;
 	public function restoreAction()
 	{
 		$startTime = utime();
-		$maxTimeout = 200;
 		$startFrom = false;
 
 		// comments
@@ -498,11 +512,12 @@ EOF;
 		$ending = ';';
 
 		$fn = $this->file;
-		$start_from = diRequest::get("start_from", 0);
+		$start_from = \diRequest::get("start_from", 0);
+		$system = \diRequest::get("system", 0);
 
 		if (!$fn)
 		{
-			throw new Exception("No file defined");
+			throw new \Exception("No file defined");
 		}
 
 		$ffn = $this->folder.$fn;
@@ -513,6 +528,35 @@ EOF;
 		$fclose_func = $is_gz ? "gzclose" : "fclose";
 		$ftell_func = $is_gz ? "gztell" : "ftell";
 		$fseek_func = $is_gz ? "gzseek" : "fseek";
+
+		if ($system)
+		{
+			if ($is_gz)
+			{
+				throw new \Exception('System method can execute non-archived SQL only');
+			}
+
+			$params = [
+				'--user=' . $this->getDb()->getUsername(),
+				'--password=' . $this->getDb()->getPassword(),
+			];
+
+			if (static::MYSQL_SYSTEM_HOST)
+			{
+				$params[] = '--host=' . static::MYSQL_SYSTEM_HOST;
+			}
+
+			$command = 'mysql ' . join(' ', $params) . ' ' . $this->getDb()->getDatabase() . ' < ' . $ffn;
+			system($command, $a);
+
+			if (!$a)
+			{
+				return [
+					"ok" => true,
+					"system" => true,
+				];
+			}
+		}
 
 		$errorsAr = [];
 
@@ -611,7 +655,7 @@ EOF;
 
 				$line_counter++;
 
-				if ($this->checkTimeout($startTime, $maxTimeout))
+				if ($this->checkTimeout($startTime, static::MAX_TIMEOUT))
 				{
 					$startFrom = $ftell_func($file);
 
@@ -631,10 +675,11 @@ EOF;
 			"errors" => $errorsAr,
 			"file" => $fn,
 			"startFrom" => $startFrom,
+			'system' => false,
 		];
 
 		$ar = array_merge($ar, $this->getTablesList($this->getDb()));
 
-		print_json($ar);
+		return $ar;
 	}
 }

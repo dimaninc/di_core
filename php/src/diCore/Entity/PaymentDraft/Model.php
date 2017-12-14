@@ -95,6 +95,9 @@ class Model extends \diModel
 			case System::robokassa:
 				return \diCore\Payment\Robokassa\Vendor::title($this->getVendor());
 
+			case System::tinkoff:
+				return \diCore\Payment\Tinkoff\Vendor::title($this->getVendor());
+
 			case System::mixplat:
 				return \diCore\Payment\Mixplat\MobileVendors::title($this->getVendor());
 
@@ -107,6 +110,20 @@ class Model extends \diModel
 			default:
 				return $this->hasVendor() ? 'Vendor #' . $this->getVendor() : '';
 		}
+	}
+
+	public function getPaySystemWithVendorShortStr()
+	{
+		$ar = [
+			$this->getPaySystemStr()
+		];
+
+		if (!in_array($this->getPaySystem(), [System::paypal]))
+		{
+			$ar[] = $this->getVendorStr() ?: 'Unknown?';
+		}
+
+		return join('/', $ar);
 	}
 
 	public function getCurrencyStr()
@@ -137,6 +154,7 @@ class Model extends \diModel
 			"vendor_str" => $this->getVendorStr(),
 			"currency_str" => $this->getCurrencyStr(),
 			'status_str' => $this->getStatusStr(),
+			'pay_system_with_vendor_short_str' => $this->getPaySystemWithVendorShortStr(),
 		]);
 	}
 }

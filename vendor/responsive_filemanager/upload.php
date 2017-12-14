@@ -159,6 +159,10 @@ if ( ! empty($_FILES) || isset($_POST['url']))
 
 		if ($is_img)
 		{
+			// dimaninc
+			\diCore\Vendor\ResponsiveFileManager\Settings::basicCreate()->processImage($targetFile);
+			//
+
 			if(isset($image_watermark) && $image_watermark){
 				require_once('include/php_image_magician.php');
 

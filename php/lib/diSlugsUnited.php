@@ -7,6 +7,7 @@
  */
 
 use diCore\Base\CMS;
+use diCore\Data\Types;
 
 class diSlugsUnited
 {
@@ -14,7 +15,7 @@ class diSlugsUnited
 	private $targetId;
 	private $levelNum;
 
-	/** @var diSlugModel */
+	/** @var \diSlugModel */
 	private $model;
 
 	public function __construct($targetType, $targetId, $levelNum = null)
@@ -23,8 +24,12 @@ class diSlugsUnited
 		$this->targetId = $targetId;
 		$this->levelNum = $levelNum;
 
-		$this->model = diCollection::create("slug", "WHERE target_type='$this->targetType' and target_id='$this->targetId'")
-			->getFirstItem();
+		/** @var \diSlugCollection $col */
+		$col = \diCollection::create(Types::slug);
+		$col
+			->filterByTargetType($this->targetType)
+			->filterByTargetId($this->targetId);
+		$this->model = $col->getFirstItem();
 
 		if (!$this->getModel()->exists())
 		{
@@ -35,7 +40,7 @@ class diSlugsUnited
 		}
 	}
 
-	public static function emulateRealHref(diSlugModel $s, CMS $Z)
+	public static function emulateRealHref(\diSlugModel $s, CMS $Z)
 	{
 	}
 
@@ -64,35 +69,35 @@ class diSlugsUnited
 
 	protected function getUniqueOptions()
 	{
-		return array();
+		return [];
 	}
 
 	protected function unique($source)
 	{
-		return diSlug::unique(
+		return \diSlug::unique(
 			$source,
 			$this->getModel()->getTable(),
 			$this->getModel()->getId(),
-			extend(array(
-				"queryConditions" => array(
-					"`level_num`='$this->levelNum'",
-				),
-			), $this->getUniqueOptions())
+			extend([
+				'queryConditions' => [
+					"`level_num` = '$this->levelNum'",
+				],
+			], $this->getUniqueOptions())
 		);
 	}
 
 	protected function prepare($source)
 	{
-		return diSlug::prepare($source);
+		return \diSlug::prepare($source);
 	}
 
-	public function generate($source, $options = array())
+	public function generate($source, $options = [])
 	{
-		$options = extend(array(
-			"prepare" => true,
-		), $options);
+		$options = extend([
+			'prepare' => true,
+		], $options);
 
-		if ($options["prepare"])
+		if ($options['prepare'])
 		{
 			$source = $this->prepare($source);
 		}
@@ -102,16 +107,16 @@ class diSlugsUnited
 		return $this;
 	}
 
-	public function setFullSlug($parentSlugs = array())
+	public function setFullSlug($parentSlugs = [])
 	{
 		if (is_scalar($parentSlugs))
 		{
-			$parentSlugs = $parentSlugs ? array($parentSlugs) : array();
+			$parentSlugs = $parentSlugs ? [$parentSlugs] : [];
 		}
 
 		$parentSlugs[] = $this->getModel()->getSlug();
 
-		$this->getModel()->setFullSlug(join("/", $parentSlugs));
+		$this->getModel()->setFullSlug(join('/', $parentSlugs));
 
 		return $this;
 	}

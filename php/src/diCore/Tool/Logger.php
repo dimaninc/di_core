@@ -53,7 +53,7 @@ class Logger
 		fputs($f, $this->getDateTime($purpose) . ' ' . $line . "\n");
 		fclose($f);
 
-		chmod($fn, static::CHMOD);
+		@chmod($fn, static::CHMOD);
 
 		return $this;
 	}
@@ -76,7 +76,7 @@ class Logger
 
 		foreach ($arguments as $arg)
 		{
-			$this->saveLine(var_export($arg, true), self::PURPOSE_VARIABLE);
+			$this->saveLine(print_r($arg, true) ?: var_export($arg, true), self::PURPOSE_VARIABLE);
 		}
 
 		return $this;

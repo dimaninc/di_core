@@ -15,15 +15,18 @@ class Vendor extends SimpleContainer
 {
 	const google = 1;
 	const yandex = 2;
+	const own = 50;
 
 	public static $titles = [
 		self::google => 'Google',
 		self::yandex => 'Yandex',
+		self::own => 'Own SMTP',
 	];
 
 	public static $names = [
 		self::google => 'google',
 		self::yandex => 'yandex',
+		self::own => 'own',
 	];
 
 	protected static $smtpHosts = [

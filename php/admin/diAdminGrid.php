@@ -7,10 +7,11 @@
  */
 
 use diCore\Helper\ArrayHelper;
+use diCore\Admin\BasePage;
 
 class diAdminGrid
 {
-	/** @var diAdminBasePage */
+	/** @var BasePage */
 	private $AdminPage;
 
 	/** @var array */
@@ -22,7 +23,7 @@ class diAdminGrid
 	/** @var array */
 	private $options;
 
-	public function __construct(diAdminBasePage $AdminPage, $options = [])
+	public function __construct(BasePage $AdminPage, $options = [])
 	{
 		$this->AdminPage = $AdminPage;
 

@@ -52,6 +52,7 @@ class diLib
 	const pathCoreVendor = 7;
 	const pathCoreTests = 8;
 	const pathCoreSources = 9;
+	const pathCoreLegacy = 10;
 
 	const pathCoreAdmin = 11;
 	const pathCoreAdminControllers = 12;
@@ -110,6 +111,7 @@ class diLib
 		self::pathCoreVendor => "/_core/php/vendor/",
 		self::pathCoreTests => "/_core/php/tests/",
 		self::pathCoreSources => "/_core/php/src/",
+		self::pathCoreLegacy => "/_core/php/legacy/",
 
 		self::pathCoreAdmin => "/_core/php/admin/",
 		self::pathCoreAdminControllers => "/_core/php/admin/controllers/",

@@ -25,11 +25,13 @@ class Queue
 	const INSTANT_SEND = false;
 	const SAFE_SEND_ERRORS_ALLOWED = 5;
 
+	const STORED_NEWS_ID_TARGET_TYPE = Types::news;
+
 	private $incuts = [];
 
 	private $lastError = Error::NONE;
 
-	public function add($from, $to, $subject, $body, $settings = [], $attachments = [], $incutIds = '')
+	public function add($from, $to, $subject, $body, $settings = [], $attachments = [], $incutIds = [])
 	{
 		if (!is_array($to))
 		{
@@ -52,6 +54,11 @@ class Queue
 		unset($otherSettings['plainBody']);
 		unset($otherSettings['replyTo']);
 
+		if (!is_array($incutIds))
+		{
+			$incutIds = explode(',', $incutIds);
+		}
+
 		$ids = [];
 
 		foreach ($to as $singleTo)
@@ -65,7 +72,7 @@ class Queue
 				->setSubject($subject)
 				->setBody($body)
 				->setPlainBody($settings['plainBody'] ? 1 : 0)
-				->setIncutIds($incutIds)
+				->setIncutIds(join(',', $incutIds))
 				->setSettings($otherSettings ? serialize($otherSettings) : '')
 				->setSent(0);
 
@@ -152,9 +159,9 @@ class Queue
 			/** @var IncutCollection $col */
 			$col = \diCollection::create(Types::mail_incut);
 			$col
-				->filterByTargetType(Types::news)
-				->filterByTargetId($model->getNewsId())
-				->filterByType(Type::binary_attachment);
+				//->filterByType(Type::binary_attachment)
+				->filterByTargetType(self::STORED_NEWS_ID_TARGET_TYPE)
+				->filterByTargetId($model->getNewsId());
 
 			/** @var \diCore\Entity\MailIncut\Model $incut */
 			$incut = $col->getFirstItem();

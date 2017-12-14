@@ -103,6 +103,7 @@ class diHierarchyTable
 	public function getParents($id)
 	{
 		$ar = [];
+		$idsAr = [];
 		$id0 = $id;
 
 		while (
@@ -115,11 +116,17 @@ class diHierarchyTable
 				$ar[] = $model;
 			}
 
+			$idsAr[] = $model->getId();
 			$id = $model->get('parent');
 
 			if ($id <= 0)
 			{
 				break;
+			}
+
+			if (in_array($id, $idsAr))
+			{
+				throw new \Exception('Parent/id infinite cycle for id=' . $id);
 			}
 		}
 
@@ -129,7 +136,8 @@ class diHierarchyTable
 	/** @deprecated  */
 	public function getParentsArByParentId($id)
 	{
-		$ar = array();
+		$ar = [];
+		$idsAr = [];
 
 		while (
 			($parentId = isset($r) ? $r->parent : $id) &&
@@ -137,6 +145,7 @@ class diHierarchyTable
 		)
 		{
 			$ar[] = $r;
+			$idsAr[] = $r->id;
 
 			if ($r->parent > 0)
 			{
@@ -146,6 +155,11 @@ class diHierarchyTable
 			{
 				break;
 			}
+
+			if (in_array($id, $idsAr))
+			{
+				throw new \Exception('Parent/id infinite cycle for id=' . $id);
+			}
 		}
 
 		return array_reverse($ar);
@@ -154,12 +168,16 @@ class diHierarchyTable
 	public function getParentsByParentId($id)
 	{
 		$ar = [];
+		$idsAr = [];
 
+		/** @var \diModel $model */
 		while (
 			($parentId = isset($model) ? $model->get('parent') : $id) &&
 			$model = \diCollection::create($this->getType())->find($parentId)->getFirstItem()
 		)
 		{
+			$idsAr[] = $model->getId();
+
 			if ($model->exists())
 			{
 				$ar[] = $model;
@@ -173,6 +191,11 @@ class diHierarchyTable
 			{
 				break;
 			}
+
+			if (in_array($id, $idsAr))
+			{
+				throw new \Exception('Parent/id infinite cycle for id=' . $id);
+			}
 		}
 
 		return array_reverse($ar);
@@ -180,8 +203,12 @@ class diHierarchyTable
 
 	public function getParent0Id($id)
 	{
+		$idsAr = [];
+
 		while ($r = $this->getDb()->r($this->getTable(), isset($r) ? $r->parent : $id))
 		{
+			$idsAr[] = $r->id;
+
 			if ($r->parent > 0)
 			{
 				$id = $r->parent;
@@ -189,6 +216,11 @@ class diHierarchyTable
 			else
 			{
 				break;
+			}
+
+			if (in_array($id, $idsAr))
+			{
+				throw new \Exception('Parent/id infinite cycle for id=' . $id);
 			}
 		}
 

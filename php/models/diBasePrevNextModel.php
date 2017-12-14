@@ -43,11 +43,18 @@ class diBasePrevNextModel extends \diModel
 
 	protected $customOrderByOptions = [];
 
-	public function __construct($r = null)
+	public function __construct($ar = null, $table = null)
 	{
-		parent::__construct($r);
+		parent::__construct($ar);
 
+		$this->setupOrderByOptions();
+	}
+
+	protected function setupOrderByOptions()
+	{
 		$this->orderByOptions = extend($this->orderByOptions, $this->customOrderByOptions);
+
+		return $this;
 	}
 
 	public function getCustomTemplateVars()
@@ -131,11 +138,7 @@ class diBasePrevNextModel extends \diModel
 			}
 		}
 
-		// todo: here are still some problems: when orderByOptions->fields has several fields,
-		// todo: they both have '>' sign (on seconds request, the condition should be skipped)
-		// todo: or we get query like "WHERE order_num > 1 AND slug > 'zhopa'" instead of just
-		// todo: "WHERE order_num > 1"
-		foreach ($orderSet as $oAr)
+		foreach ($orderSet as $j => $oAr)
 		{
 			$field = $this->decodeOrderField($oAr["field"]);
 			$isAsc = strtoupper($oAr["dir"]) == "ASC" && !$this->orderByOptions["reverse"];
@@ -145,12 +148,37 @@ class diBasePrevNextModel extends \diModel
 			$prevDir = $isAsc ? "DESC" : "ASC";
 			$nextDir = $isAsc ? "ASC" : "DESC";
 
-			$prevConditions[] = $field . $prevSign . "'{$this->get($field)}'";
-			$nextConditions[] = $field . $nextSign . "'{$this->get($field)}'";
+			/* todo: check this stuff when cound of fields > 2 */
+			if (
+				$i < count($this->orderByOptions["fields"]) - 1 &&
+				$j > 0
+			   )
+			{
+				// no condition needed
+			}
+			else
+			{
+				$prevConditions[] = "$field $prevSign '{$this->get($field)}'";
+				$nextConditions[] = "$field $nextSign '{$this->get($field)}'";
+			}
 
 			$prevOrders[] = $field . " " . $prevDir;
 			$nextOrders[] = $field . " " . $nextDir;
 		}
+
+		/* * /
+		if ($this->getTable() == '#' && $this->getId() == 0)
+		{
+			\diCore\Tool\Logger::getInstance()->variable(
+				'$this->orderByOptions["fields"]', $this->orderByOptions["fields"],
+				'$i = ' . $i,
+				'$orderSet', $orderSet,
+				'$conditionSet', $conditionSet,
+				'$nextConditions', $nextConditions,
+				'$nextOrders', $nextOrders
+			);
+		}
+		/* */
 
 		return [
 			"conditions" => $conditions,
@@ -196,11 +224,6 @@ class diBasePrevNextModel extends \diModel
 		{
 			$q = $this->getPrevNextQueries($i);
 
-			/* * /
-			echo "prev: WHERE ".join(" AND ", array_merge($q["conditions"], $q["prevConditions"]))." ORDER BY ".join(",", $q["prevOrders"])."<br>\n";
-			echo "next: WHERE ".join(" AND ", array_merge($q["conditions"], $q["nextConditions"]))." ORDER BY ".join(",", $q["nextOrders"])."<br>\n";
-			/* */
-
 			$prev_r = $prev_r ?: $this->getDb()->r($this->getTable(),
 				"WHERE " . join(" AND ", array_merge($q["conditions"], $q["prevConditions"])) .
 				" ORDER BY " . join(",", $q["prevOrders"])
@@ -210,6 +233,19 @@ class diBasePrevNextModel extends \diModel
 				"WHERE " . join(" AND ", array_merge($q["conditions"], $q["nextConditions"])) .
 				" ORDER BY " . join(",", $q["nextOrders"])
 			);
+
+			/* * /
+			if ($this->getTable() == '#' && $this->getId() == 0)
+			{
+				\diCore\Tool\Logger::getInstance()->variable("prev: WHERE " .
+					join(" AND ", array_merge($q["conditions"], $q["prevConditions"])) .
+					" ORDER BY " . join(",", $q["prevOrders"]), $prev_r);
+				\diCore\Tool\Logger::getInstance()->log("next: WHERE " .
+					join(" AND ", array_merge($q["conditions"], $q["nextConditions"])) .
+					" ORDER BY " . join(",", $q["nextOrders"]));
+				\diCore\Tool\Logger::getInstance()->variable('$next_r', $next_r);
+			}
+			/* */
 		}
 
 		if ($this->orderByOptions["circular"])
@@ -219,8 +255,8 @@ class diBasePrevNextModel extends \diModel
 			if (!$prev_r)
 			{
 				$prev_r = $this->getDb()->r($this->getTable(),
-					"WHERE ".join(" AND ", $q["conditions"]).
-					" ORDER BY ".join(",", $q["prevOrders"])
+					"WHERE " . join(" AND ", $q["conditions"]) .
+					" ORDER BY " . join(",", $q["prevOrders"])
 				);
 			}
 
@@ -232,8 +268,8 @@ class diBasePrevNextModel extends \diModel
 			if (!$next_r)
 			{
 				$next_r = $this->getDb()->r($this->getTable(),
-					"WHERE ".join(" AND ", $q["conditions"]).
-					" ORDER BY ".join(",", $q["nextOrders"])
+					"WHERE " . join(" AND ", $q["conditions"]) .
+					" ORDER BY " . join(",", $q["nextOrders"])
 				);
 			}
 

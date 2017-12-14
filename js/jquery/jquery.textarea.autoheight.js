@@ -4,7 +4,10 @@ jQuery.fn.extend({
 		function worker(element)
 		{
 			element.style.height = 'auto';
-			element.style.height = element.scrollHeight + 'px';
+
+			if (element.scrollHeight) {
+				element.style.height = element.scrollHeight + 'px';
+			}
 		}
 
 		return this.each(function() {

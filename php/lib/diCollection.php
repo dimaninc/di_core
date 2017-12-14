@@ -53,11 +53,18 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	protected $items = [];
 
 	/**
-	 * Total count of files
+	 * Total count of records in current collection
 	 *
 	 * @var int
 	 */
 	protected $count = null;
+
+	/**
+	 * Total count of records in database
+	 *
+	 * @var int
+	 */
+	protected $realCount = null;
 
 	/**
 	 * Indicates if all files were loaded from server
@@ -101,6 +108,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 * @var int
 	 */
 	protected $pageNumber = 1;
+
+	/**
+	 * \diPagesNavy object, if initialized
+	 *
+	 * @var null|\diPagesNavy
+	 */
+	protected $PN = null;
 
 	/**
 	 * How many records to skip. If set, the $pageNumber is not used
@@ -170,12 +184,12 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		if (isInteger($type))
 		{
-			$type = diTypes::getName($type);
+			$type = \diTypes::getName($type);
 		}
 
-		$className = diLib::getClassNameFor($type, diLib::COLLECTION);
+		$className = \diLib::getClassNameFor($type, \diLib::COLLECTION);
 
-		if (!diLib::exists($className))
+		if (!\diLib::exists($className))
 		{
 			return false;
 		}
@@ -469,7 +483,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 				return $this->selectLocalized($field, true);
 		}
 
-		throw new Exception(
+		throw new \Exception(
 			sprintf("Invalid method %s::%s(%s)", get_class($this), $method, print_r($arguments, 1))
 		);
 	}
@@ -588,6 +602,22 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	}
 
 	/**
+	 * @return int
+	 */
+	public function getPageSize()
+	{
+		return $this->pageSize;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getPageNumber()
+	{
+		return $this->pageNumber;
+	}
+
+	/**
 	 * @param integer $number   First page number is 1
 	 * @return $this
 	 */
@@ -598,15 +628,46 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this;
 	}
 
+	public function populatePageNumber($param = \diPagesNavy::PAGE_PARAM)
+	{
+		return $this->setPageNumber(\diRequest::get($param, 1));
+	}
+
 	/**
-	 * @param integer $size     Records per page
+	 * @param integer|null $size     Records per page, if null automatically gets read from configuration
 	 * @return $this
 	 */
-	public function setPageSize($size)
+	public function setPageSize($size = null)
 	{
+		if ($size === null)
+		{
+			$size = $this->getStandardPageSize();
+		}
+
 		$this->pageSize = $size;
 
 		return $this;
+	}
+
+	protected function getStandardPageSize()
+	{
+		return \diConfiguration::get('per_page[' . $this->getTable() . ']');
+	}
+
+	public function initPagesNavy()
+	{
+		$this
+			->setPageSize()
+			->populatePageNumber();
+
+		$this->PN = new \diPagesNavy($this);
+
+		return $this;
+	}
+
+	public function getPN()
+	{
+		return $this->PN;
 	}
 
 	/**
@@ -911,6 +972,16 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this;
 	}
 
+	public function getRealCount()
+	{
+		if ($this->realCount === null)
+		{
+			$this->count();
+		}
+
+		return $this->realCount;
+	}
+
 	public function count()
 	{
 		if ($this->count === null)
@@ -938,7 +1009,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 				);
 			}
 
-			$this->count = $r ? $r->cc : 0;
+			$this->realCount = $this->count = $r ? $r->cc : 0;
 		}
 
 		if ($this->pageSize && $this->count > $this->pageSize)
@@ -1412,7 +1483,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		if ($this->sqlParts['where'])
 		{
-			return "WHERE " . join(" AND ", array_filter(array_map(function($val) {
+			return 'WHERE ' . join(' AND ', array_filter(array_map(function($val) {
 				$value = $val['value'];
 
 				if (!empty($val['options']['manual']))
@@ -1480,6 +1551,21 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 						}
 					}
 				}
+				elseif (is_null($val['value']))
+				{
+					switch ($val['operator'])
+					{
+						case '=':
+							$val['operator'] = 'IS';
+							$value = 'NULL';
+							break;
+
+						case '!=':
+							$val['operator'] = 'IS NOT';
+							$value = 'NULL';
+							break;
+					}
+				}
 
 				return
 					$this->getDb()->escapeField($val['field']) .
@@ -1495,7 +1581,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		if ($this->sqlParts['orderBy'])
 		{
-			return "ORDER BY " . join(",", array_map(function($val) {
+			return 'ORDER BY ' . join(',', array_map(function($val) {
 				$field = empty($val['options']['rawValue'])
 					? $this->getDb()->escapeField($val['field'])
 					: $val['field'];
@@ -1510,7 +1596,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		if ($this->sqlParts['groupBy'])
 		{
-			return "GROUP BY " . join(",", array_map(function($val) {
+			return 'GROUP BY ' . join(',', array_map(function($val) {
 				return $this->getDb()->escapeField($val['field']);
 			}, $this->sqlParts['groupBy']));
 		}
@@ -1522,7 +1608,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		if ($this->sqlParts['select'])
 		{
-			return join(",", array_map(function($opt) {
+			return join(',', array_map(function($opt) {
 				if (is_scalar($opt['field']))
 				{
 					return !empty($opt['options']['raw'])
@@ -1530,7 +1616,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 						: $this->getDb()->escapeField($opt['field']);
 				}
 
-				throw new \Exception("Not implemented yet");
+				throw new \Exception('Not implemented yet');
 			}, $this->sqlParts['select']));
 		}
 

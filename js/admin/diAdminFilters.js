@@ -51,8 +51,7 @@ var diAdminFilters = function(_opts) {
 		});
 	}
 
-	function apply()
-	{
+	function apply() {
 		if (opts.mode == self.MODE_COOKIE)
 		{
 			gatherFilerValues();
@@ -66,9 +65,7 @@ var diAdminFilters = function(_opts) {
 			reloadPageInCookiesMode();
 
 			return false;
-		}
-		else if (opts.mode == self.MODE_GET)
-		{
+		} else if (opts.mode == self.MODE_GET) {
 			/*
 			window.location.href = baseUri + uriGlue + Object.keys(filters).map(function(key) {
 					return key + '=' + filters[key];
@@ -79,45 +76,34 @@ var diAdminFilters = function(_opts) {
 		}
 	}
 
-	function reset()
-	{
+	function reset() {
 		var k;
 
-		for (var i = 0; i < opts.fields.length; i++)
-		{
+		for (var i = 0; i < opts.fields.length; i++) {
 			k = opts.fields[i];
 
 			$.removeCookie('admin_filter[' + opts.table + '][' + k + ']');
 		}
 
-		if (opts.mode == self.MODE_COOKIE)
-		{
+		if (opts.mode == self.MODE_COOKIE) {
 			reloadPageInCookiesMode();
-		}
-		else if (opts.mode == self.MODE_GET)
-		{
+		} else if (opts.mode == self.MODE_GET) {
 			window.location.href = baseUri;
 		}
 	}
 
-	function reloadPageInCookiesMode()
-	{
-		if (baseUri != window.location.href)
-		{
+	function reloadPageInCookiesMode() {
+		if (baseUri != window.location.href) {
 			window.location.href = baseUri;
-		}
-		else
-		{
+		} else {
 			window.location.reload();
 		}
 	}
 
-	function gatherFilerValues()
-	{
+	function gatherFilerValues() {
 		var k, $f, selector;
 
-		for (var i = 0; i < opts.fields.length; i++)
-		{
+		for (var i = 0; i < opts.fields.length; i++) {
 			k = opts.fields[i];
 			selector = ('#admin_filter[' + k + ']').replace(/\[/g, '\\[').replace(/\]/g, '\\]');
 			$f = $(selector, e.$form);
@@ -125,6 +111,12 @@ var diAdminFilters = function(_opts) {
 			filters[k] = $f.val();
 		}
 	}
+
+	this.getFilterValues = function() {
+		gatherFilerValues();
+
+		return filters;
+	};
 
     constructor();
 };

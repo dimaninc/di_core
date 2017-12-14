@@ -8,6 +8,7 @@ use diCore\Entity\Content\Model;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 use diCore\Data\Http\HttpCode;
+use diCore\Tool\Auth;
 
 abstract class CMS
 {
@@ -48,7 +49,7 @@ abstract class CMS
 	private $BreadCrumbs;
 
 	/**
-	 * @var \diAuth
+	 * @var Auth
 	 */
 	private $Auth;
 
@@ -57,6 +58,11 @@ abstract class CMS
 	 * @var bool
 	 */
 	protected $authUsed = false;
+
+	/**
+	 * @var bool
+	 */
+	protected $timestampSuffixNeeded = true;
 
 	private $fileChmod = 0666;
 	private $dirChmod = 0777;
@@ -247,14 +253,21 @@ abstract class CMS
 	}
 
 	/**
+	 * @deprecated
 	 * @return $this
 	 */
-	abstract function define_templates();
+	public function define_templates()
+	{
+		return $this;
+	}
 
 	/**
 	 * @return $this
 	 */
-	abstract public function go();
+	public function go()
+	{
+		return $this;
+	}
 
 	public static function fast_lite_create($options = [])
 	{
@@ -467,7 +480,7 @@ abstract class CMS
 	}
 
 	/**
-	 * @return \diAuth
+	 * @return Auth
 	 */
 	public function getAuth()
 	{
@@ -476,7 +489,7 @@ abstract class CMS
 
 	protected function initAuth()
 	{
-		$this->Auth = \diAuth::create();
+		$this->Auth = Auth::create();
 
 		return $this;
 	}
@@ -1143,7 +1156,8 @@ abstract class CMS
 
 		$this->Twig = \diTwig::create()->assign([
 			'content_slugs' => $this->getCleanTitlesAr(),
-			'logged_in' => $this->authUsed && \diAuth::i()->authorized() ? true : false,
+			'logged_in' => $this->authUsed && Auth::i()->authorized() ? true : false,
+			'files_timestamp' => $this->timestampSuffixNeeded ? \diStaticBuild::VERSION : '',
 
 			'_tech' => [
 				'uri' => \diRequest::requestUri(),
@@ -1696,6 +1710,8 @@ abstract class CMS
 		];
 
 		$canonical = [
+			'protocol' => \diRequest::protocol(),
+			'domain' => \diRequest::domain(),
 			'url' => $this->getCanonicalAddress(),
 			'full_url' => \diRequest::urlBase() . $this->getCanonicalAddress(),
 		];
@@ -1749,14 +1765,14 @@ abstract class CMS
 			$text = ArrayHelper::recursiveJoin($text, ' ');
 		}
 
-		$this->metaFields[$field] = $text;
+		$this->metaFields[$field] = strip_tags($text);
 
 		return $this;
 	}
 
 	public function appendMeta($text, $field = 'title')
 	{
-		$this->metaFields[$field] = $this->getMeta($field) . $text;
+		$this->metaFields[$field] = $this->getMeta($field) . strip_tags($text);
 
 		return $this;
 	}
@@ -1775,14 +1791,14 @@ abstract class CMS
 			$text = ArrayHelper::recursiveJoin($text, ' ');
 		}
 
-		$this->openGraphFields[$field] = $text;
+		$this->openGraphFields[$field] = strip_tags($text);
 
 		return $this;
 	}
 
 	public function appendOpenGraph($text, $field = 'title')
 	{
-		$this->openGraphFields[$field] = $this->getOpenGraph($field) . $text;
+		$this->openGraphFields[$field] = $this->getOpenGraph($field) . strip_tags($text);
 
 		return $this;
 	}
@@ -1866,9 +1882,9 @@ abstract class CMS
 	public function assignMeta(\diModel $model = null, $defaults = [])
 	{
 		$defaults = extend([
-			"title" => null,
-			"description" => null,
-			"keywords" => null,
+			'title' => null,
+			'description' => null,
+			'keywords' => null,
 		], $defaults);
 
 		if (!$model)
@@ -1882,9 +1898,15 @@ abstract class CMS
 				?: $model->localized($this->getFullMetaField($field, true), $this->getLanguage())
 				?: $defaultValue;
 
-			if ($field == "title" && !$value)
+			if ($field == 'title' && !$value)
 			{
-				$value = $model->localized("title", $this->getLanguage());
+				$value = $model->localized('title', $this->getLanguage());
+			}
+
+			if ($field == 'description' && !$value)
+			{
+				$value = $model->localized('short_content', $this->getLanguage())
+					?: $model->localized('content', $this->getLanguage());
 			}
 
 			if ($value)
@@ -1898,7 +1920,7 @@ abstract class CMS
 
 		if ($page > 1 && $this->isPageTitleSuffixNeeded())
 		{
-			$this->appendMeta(sprintf($this->getPaginationTitleSuffixTemplate(), $page), "title");
+			$this->appendMeta(sprintf($this->getPaginationTitleSuffixTemplate(), $page), 'title');
 		}
 
 		return $this;

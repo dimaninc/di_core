@@ -37,6 +37,11 @@ class diPagesNavy
 
 	private $init_on_last_page = false;
 
+	/**
+	 * @var callable|null
+	 */
+	protected $pageHrefProcessor = null;
+
 	public $tpl_ar = [
 		"link" => "<a href=\"{HREF}\">{PAGE}</a>",
 		"selected" => "<b>{PAGE}</b>",
@@ -54,13 +59,14 @@ class diPagesNavy
 	public $glue = "&";
 	public $replaces_ar = array();
 
-	public function __construct($table, $per_page, $where = "", $reverse = false, $page_param = "page")
+	public function __construct($tableOrCollection, $perPageOrPageParam = 1, $whereOrTotalRecords = "",
+	                            $reverse = false, $page_param = "page")
 	{
 	    global $db;
 
 	    $this->db = $db;
 
-		$this->init($table, $per_page, $where, $reverse, $page_param);
+		$this->init($tableOrCollection, $perPageOrPageParam, $whereOrTotalRecords, $reverse, $page_param);
 	}
 
 	public function getTable()
@@ -145,7 +151,7 @@ class diPagesNavy
 
 	public function getSqlLimit()
 	{
-		return " LIMIT ".$this->getStart().",".$this->getPerPage();
+		return " LIMIT " . $this->getStart() . "," . $this->getPerPage();
 	}
 
 	public function getWhere()
@@ -153,9 +159,21 @@ class diPagesNavy
 		return $this->where;
 	}
 
-	public function init($table, $per_page, $where = "", $reverse = false, $page_param = "page")
+	public function init($table, $per_page = 1, $where = "", $reverse = false, $page_param = "page")
 	{
 		global $pagesnavy_sortby_ar, $pagesnavy_sortby_defaults_ar;
+
+		if ($table instanceof \diCollection)
+		{
+			$col = $table;
+			if ($per_page && is_string($per_page) && !isInteger($per_page))
+			{
+				$page_param = $per_page;
+			}
+			$per_page = $col->getPageSize();
+			$where = $col->getRealCount();
+			$table = $table->getTable();
+		}
 
 		if (is_array($reverse))
 		{
@@ -180,7 +198,7 @@ class diPagesNavy
 			$this->per_page = $this->per_load = $per_page;
 		}
 
-		if (is_numeric($where))
+		if (isInteger($where))
 		{
 			$this->total_records = (int)$where;
 			$this->where = "";
@@ -238,6 +256,13 @@ class diPagesNavy
 
 		$this->start = ($this->reverse ? $this->total_pages - $this->page : $this->page - 1) * $this->per_page;
 		//
+
+		return $this;
+	}
+
+	public function setPageHrefProcessor(callable $cb)
+	{
+		$this->pageHrefProcessor = $cb;
 
 		return $this;
 	}
@@ -396,6 +421,11 @@ class diPagesNavy
 			if ($href == $k) $href = $v;
 		}
 
+		if ($this->pageHrefProcessor && is_callable($this->pageHrefProcessor))
+		{
+			$href = call_user_func($this->pageHrefProcessor, $href);
+		}
+
 		return $href;
 	}
 
@@ -407,14 +437,21 @@ class diPagesNavy
 
 		if ($this->total_pages > 1)
 		{
-			$_pages = array();
+			$_pages = [];
 			$_pages["start"] = $this->page - $pages_max_shown; // * $sign;
 			$_pages["finish"] = $this->page + $pages_max_shown; // * $sign;
 
-			if ($_pages["start"] < 1) $_pages["start"] = 1;
-			if ($_pages["finish"] > $this->total_pages) $_pages["finish"] = $this->total_pages;
+			if ($_pages["start"] < 1)
+			{
+				$_pages["start"] = 1;
+			}
 
-			$_pages["ar"] = array();
+			if ($_pages["finish"] > $this->total_pages)
+			{
+				$_pages["finish"] = $this->total_pages;
+			}
+
+			$_pages["ar"] = [];
 
 			switch ($_pages["start"])
 			{
@@ -465,7 +502,13 @@ class diPagesNavy
 				{
 					$tpl = $p == $this->page ? "selected" : "link";
 
-					$tmp_s = str_replace(array("{PAGE}","{HREF}"), array($p, $this->get_page_href($p, $base_uri)), $this->tpl_ar[$tpl]);
+					$tmp_s = str_replace([
+						"{PAGE}",
+						"{HREF}",
+					], [
+						$p,
+						$this->get_page_href($p, $base_uri),
+					], $this->tpl_ar[$tpl]);
 				}
 
 				if ($separator && $i != count($_pages["ar"]) - 1) $tmp_s .= $separator;
@@ -486,23 +529,47 @@ class diPagesNavy
 			$prev_tpl = $prev_page <= $this->total_pages ? "link" : "inactive";
 			$next_tpl = $next_page >= 1 ? "link" : "inactive";
 
-			$prev_page_s = $this->str_ar["prev_symb"] ? str_replace(array("{PAGE}","{HREF}"), array("{$this->str_ar["prev_symb"]} {$this->str_ar["next_page"]}",$this->get_page_href($prev_page, $base_uri)), $this->tpl_ar[$prev_tpl]) : "";
-			$next_page_s = $this->str_ar["next_symb"] ? str_replace(array("{PAGE}","{HREF}"), array("{$this->str_ar["prev_page"]} {$this->str_ar["next_symb"]}",$this->get_page_href($next_page, $base_uri)), $this->tpl_ar[$next_tpl]) : "";
+			$prev_page_s = $this->str_ar["prev_symb"] ? str_replace([
+				"{PAGE}",
+				"{HREF}",
+			], [
+				"{$this->str_ar["prev_symb"]} {$this->str_ar["next_page"]}",
+				$this->get_page_href($prev_page, $base_uri),
+			], $this->tpl_ar[$prev_tpl]) : "";
+			$next_page_s = $this->str_ar["next_symb"] ? str_replace([
+				"{PAGE}",
+				"{HREF}",
+			], [
+				"{$this->str_ar["prev_page"]} {$this->str_ar["next_symb"]}",
+				$this->get_page_href($next_page, $base_uri),
+			], $this->tpl_ar[$next_tpl]) : "";
 		}
 		else
 		{
 			$prev_tpl = $prev_page >= 1 ? "link" : "inactive";
 			$next_tpl = $next_page <= $this->total_pages ? "link" : "inactive";
 
-			$prev_page_s = $this->str_ar["prev_symb"] ? str_replace(array("{PAGE}","{HREF}"), array("{$this->str_ar["prev_page"]} {$this->str_ar["prev_symb"]}",$this->get_page_href($prev_page, $base_uri)), $this->tpl_ar[$prev_tpl]) : "";
-			$next_page_s = $this->str_ar["next_symb"] ? str_replace(array("{PAGE}","{HREF}"), array("{$this->str_ar["next_symb"]} {$this->str_ar["next_page"]}",$this->get_page_href($next_page, $base_uri)), $this->tpl_ar[$next_tpl]) : "";
+			$prev_page_s = $this->str_ar["prev_symb"] ? str_replace([
+				"{PAGE}",
+				"{HREF}",
+			], [
+				"{$this->str_ar["prev_page"]} {$this->str_ar["prev_symb"]}",
+				$this->get_page_href($prev_page, $base_uri),
+			], $this->tpl_ar[$prev_tpl]) : "";
+			$next_page_s = $this->str_ar["next_symb"] ? str_replace([
+				"{PAGE}",
+				"{HREF}",
+			], [
+				"{$this->str_ar["next_symb"]} {$this->str_ar["next_page"]}",
+				$this->get_page_href($next_page, $base_uri),
+			], $this->tpl_ar[$next_tpl]) : "";
 		}
 
-		$this->parts = (object)array(
+		$this->parts = (object)[
 			"prev_page" => $prev_page_s,
 			"next_page" => $next_page_s,
 			"pages" => $s,
-		);
+		];
 
 		return $this->total_pages >= 1 ? "$prev_page_s $separator $s $separator $next_page_s" : "";
 	}

@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Created by PhpStorm.
  * User: dimaninc
@@ -9,13 +8,7 @@
 
 use diCore\Base\CMS;
 
+/** @deprecated  */
 class diTemporaryCMS extends CMS
 {
-	function define_templates()
-	{
-	}
-	
-	public function go()
-	{
-	}
 }

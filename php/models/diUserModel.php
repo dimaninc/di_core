@@ -10,7 +10,7 @@
  * @method bool hasActivationKey
  *
  * @method diUserModel setPassword($value)
- * @method diUserCustomModel setActivationKey($value)
+ * @method diUserModel setActivationKey($value)
  */
 class diUserModel extends diBaseUserModel
 {

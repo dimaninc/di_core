@@ -34,10 +34,11 @@ class Feedback extends \diBaseController
 			'message' => '',
 		];
 
-		$this->gatherData();
-
 		try {
-			$this->getModel()->save();
+			$this->gatherData();
+
+			$this->getModel()
+				->save();
 		} catch (\Exception $e) {
 			$ar['ok'] = false;
 			$ar['message'] = $e->getMessage();

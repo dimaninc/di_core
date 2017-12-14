@@ -351,6 +351,12 @@ class Form
 		if (is_array($field))
 		{
 			$this->data = extend($this->data, $field);
+
+			if ($value === true)
+			{
+				$this->getModel()
+					->set($field);
+			}
 		}
 		else
 		{

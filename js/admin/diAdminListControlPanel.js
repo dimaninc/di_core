@@ -170,18 +170,19 @@ var diAdminListControlPanel = function(_opts)
 			parent = null;
 			confirmation = $btn.data('confirmation') || title + ' выделенные записи';
 
-			if (!confirm(confirmation + ' (' + ids.length + ' шт)?') || !confirm('Вы уверены?'))
-			{
+			if (!confirm(confirmation + ' (' + ids.length + ' шт)?') || !confirm('Вы уверены?')) {
 				return false;
 			}
 
-			if (in_array(action, ['copy', 'move']))
-			{
+			if (in_array(action, ['copy', 'move'])) {
 				e.$rowToggles.each(function() {
 					var $cb = $(this);
 
-					$cb.addClass('hidden')
-						.parent().append(anchorHtml);
+					$cb.addClass('hidden');
+
+					if (!in_array($cb.data('id'), ids)) {
+						$cb.parent().append(anchorHtml);
+					}
 				});
 
 				$('.dinicetable_div').prepend('<div class="outer-anchor">{0}</div>'.format(anchorHtml));
@@ -193,9 +194,7 @@ var diAdminListControlPanel = function(_opts)
 
 					doButtonAction();
 				});
-			}
-			else
-			{
+			} else {
 				doButtonAction();
 			}
 
@@ -203,19 +202,22 @@ var diAdminListControlPanel = function(_opts)
 		});
 	}
 
-	function log(message)
-	{
+	function log(message) {
 		A.console.add(message);
 	}
 
-	function call(action, params, callback)
-	{
+	function call(action, params, callback) {
 		log('Requesting ' + action + ' record(s)');
 
 		$.post(opts.NiceTable.getWorkerBase() + 'batch_' + action + '/' + table + '/', params, function(res) {
-			if (!res.ok)
-			{
-				log('Error while requesting action "' + action + '" for #' + params.ids);
+			if (!res.ok) {
+				var message = 'Error while requesting action "' + action + '" for #' + params.ids;
+
+				if (typeof res.message != 'undefined') {
+					message += ': ' + res.message;
+				}
+
+				log(message);
 
 				return false;
 			}

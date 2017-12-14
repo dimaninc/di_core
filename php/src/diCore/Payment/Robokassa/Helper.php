@@ -8,7 +8,9 @@
 
 namespace diCore\Payment\Robokassa;
 
-
+use diCore\Data\Types;
+use diCore\Entity\PaymentDraft\Model;
+use diCore\Tool\Logger;
 use diCore\Traits\BasicCreate;
 
 class Helper
@@ -22,13 +24,14 @@ class Helper
 	const testPassword2 = null;
 
 	const productionUrl = 'https://auth.robokassa.ru/Merchant/Index.aspx';
-	const testUrl = 'http://test.robokassa.ru/Index.aspx';
 
 	const securityType = 'MD5';
 	const testMode = false;
 
+	/** @var  Model */
+	private $draft;
+
 	protected $options = [
-		'onSuccessPayment' => null,
 	];
 
 	public function __construct($options = [])
@@ -39,16 +42,11 @@ class Helper
 	public static function getUrl()
 	{
 		return static::productionUrl;
-		/*
-		return static::testMode
-			? static::testUrl
-			: static::productionUrl;
-		*/
 	}
 
 	public static function log($message)
 	{
-		simple_debug($message, 'Robokassa', "-payment");
+		Logger::getInstance()->log($message, 'Robokassa', '-payment');
 	}
 
 	public static function getMerchantLogin()
@@ -59,20 +57,56 @@ class Helper
 	public static function getPassword1()
 	{
 		return static::testMode
-			? static::password1
-			: static::testPassword1;
+			? static::testPassword1
+			: static::password1;
 	}
 
 	public static function getPassword2()
 	{
 		return static::testMode
-			? static::password2
-			: static::testPassword2;
+			? static::testPassword2
+			: static::password2;
 	}
 
 	public static function isTestMode()
 	{
 		return static::testMode;
+	}
+
+	public static function formatCost($cost)
+	{
+		return sprintf('%.2f', $cost);
+	}
+
+	public static function getRequest($url)
+	{
+		$request = \Requests::get(
+			$url,
+			[], [
+				'transport' => 'Requests_Transport_fsockopen',
+			]
+		);
+
+		return $request->body;
+	}
+
+	public static function getReducedCost($cost, $vendor)
+	{
+		return $cost;
+
+		$url = sprintf(
+			'https://auth.robokassa.ru/Merchant/WebService/Service.asmx/CalcOutSumm?MerchantLogin=%1$s&IncCurrLabel=%3$s&IncSum=%2$s',
+			static::getMerchantLogin(),
+			$cost,
+			$vendor
+		);
+		$xml = static::getRequest($url);
+
+		preg_match('#<OutSum>(\d+)</OutSum>#', $xml, $regs);
+
+		$reducedCost = !empty($regs[1]) ? (float)$regs[1] : 0;
+
+		return $reducedCost ?: $cost;
 	}
 
 	/**
@@ -87,15 +121,18 @@ class Helper
 
 		$opts = extend([
 			'amount' => $draft->getAmount(),
-			'userId' => $draft->getUserId(),
 			'draftId' => $draft->getId(),
+			'description' => '',
+			'customerId' => $draft->getUserId(),
 			'customerEmail' => '',
 			'customerPhone' => '',
 			'autoSubmit' => false,
 			'buttonCaption' => 'Заплатить',
-			'paymentVendor' => '',
 			'additionalParams' => [],
 		], $opts);
+
+		$paymentVendor = Vendor::code($draft->getVendor());
+		$opts['amount'] = static::getReducedCost($opts['amount'], $paymentVendor);
 
 		array_walk($opts, function(&$item) {
 			$item = \diDB::_out($item);
@@ -106,12 +143,11 @@ class Helper
 
 		$params = extend([
 			'MrchLogin' => static::getMerchantLogin(),
-			'OutSum' => sprintf('%.2f', $opts['amount']),
-			'customerNumber' => $opts['userId'],
+			'OutSum' => self::formatCost($opts['amount']),
 			'InvId' => $opts['draftId'],
-			'Desc' => '',
-			'SignatureValue' => static::getSignature($draft),
-			'IncCurrLabel' => $opts['paymentVendor'] ? Vendor::code($opts['paymentVendor']) : null,
+			'Desc' => $opts['description'],
+			'SignatureValue' => static::getSignatureForm($draft),
+			'IncCurrLabel' => $paymentVendor,
 			'Culture' => 'ru',
 			'Encoding' => 'utf-8',
 		], $opts['additionalParams']);
@@ -138,13 +174,11 @@ EOF;
 		return $form;
 	}
 
-	public static function getSignature(\diCore\Entity\PaymentDraft\Model $draft)
+	public static function getSignatureForm(\diCore\Entity\PaymentDraft\Model $draft)
 	{
-		$cost = sprintf('%.2f', $draft->getAmount());
-
 		$source = [
 			static::getMerchantLogin(),
-			$cost,
+			static::formatCost($draft->getAmount()),
 			$draft->getId(),
 			static::getPassword1(),
 		];
@@ -152,15 +186,125 @@ EOF;
 		return md5(join(':', $source));
 	}
 
-	public static function getSignature2(\diCore\Entity\PaymentDraft\Model $draft)
+	public static function getSignatureResult(\diCore\Entity\PaymentDraft\Model $draft, $alt = false)
 	{
 		$source = [
-			$draft->getAmount(),
+			static::formatCost($draft->getAmount()),
 			$draft->getId(),
 			static::getPassword2(),
-			static::getMerchantLogin(),
+			//static::getMerchantLogin(),
+		];
+
+		if ($alt)
+		{
+			$source[] = static::getMerchantLogin();
+		}
+
+		return md5(join(':', $source));
+	}
+
+	public static function getSignatureSuccess(\diCore\Entity\PaymentDraft\Model $draft)
+	{
+		$source = [
+			static::formatCost($draft->getAmount()),
+			$draft->getId(),
+			static::getPassword1(),
 		];
 
 		return md5(join(':', $source));
+	}
+
+	public function initDraft(callable $getDraftCallback)
+	{
+		$draftId = \diRequest::post('InvId', 0);
+		$amount = \diRequest::post('OutSum', 0.0);
+
+		$this->draft = $getDraftCallback($draftId, $amount);
+
+		return $this;
+	}
+
+	/**
+	 * @return Model
+	 * @throws \Exception
+	 */
+	public function getDraft()
+	{
+		return $this->draft ?: \diModel::create(Types::payment_draft);
+	}
+
+	public function result(callable $paidCallback)
+	{
+		try {
+			$signature = strtolower(\diRequest::post('SignatureValue'));
+
+			if (!$this->getDraft()->exists())
+			{
+				throw new \Exception('No draft found');
+			}
+
+			/*
+			if ($this->getDraft()->getAmount() != $cost)
+			{
+				throw new \Exception('Cost not match: (their) ' . $cost . ', (our) ' . $draft->getAmount());
+			}
+			*/
+
+			$s1 = static::getSignatureResult($this->getDraft());
+			$s2 = static::getSignatureResult($this->getDraft(), true);
+
+			if ($signature != $s1 && $signature != $s2)
+			{
+				throw new \Exception('Signature not matched (' . $signature . ' != ' . $s1 . ', ' . $s2 . ')');
+			}
+
+			self::log('Result method OK');
+
+			$paidCallback($this);
+
+			return 'OK' . $this->getDraft()->getId();
+		} catch (\Exception $e) {
+			self::log('Error during `result`: ' . $e->getMessage());
+
+			return [
+				'ok' => false,
+				'message' => $e->getMessage(),
+			];
+		}
+	}
+
+	public function success(callable $successCallback)
+	{
+		try {
+			$signature = strtolower(\diRequest::post('SignatureValue'));
+
+			if (!$this->getDraft()->exists())
+			{
+				throw new \Exception('No draft found');
+			}
+
+			if ($signature != static::getSignatureSuccess($this->getDraft()))
+			{
+				throw new \Exception('Signature not matched');
+			}
+
+			self::log('Success method OK');
+
+			return $successCallback($this);
+		} catch (\Exception $e) {
+			self::log('Error during `success`: ' . $e->getMessage());
+
+			return [
+				'ok' => false,
+				'message' => $e->getMessage(),
+			];
+		}
+	}
+
+	public function fail(callable $failCallback)
+	{
+		self::log('Fail method OK');
+
+		return $failCallback($this);
 	}
 }
