@@ -8,6 +8,9 @@
 
 namespace diCore\Payment\Yandex;
 
+use diCore\Helper\ArrayHelper;
+use diCore\Tool\Logger;
+
 class Kassa
 {
 	const shopId = null;
@@ -38,7 +41,7 @@ class Kassa
 
 		if ($this->action)
 		{
-			$this->log("Yandex request: " . $this->action);
+			$this->log('Yandex request: ' . $this->action);
 		}
 	}
 
@@ -103,25 +106,25 @@ class Kassa
 	{
 		if (!$this->actionExists($this->getAction()))
 		{
-			$this->log("Unknown action: " . $this->getAction());
+			$this->log('Unknown action: ' . $this->getAction());
 
 			return [
 				'ok' => false,
-				'message' => "Unknown action: " . $this->getAction(),
+				'message' => 'Unknown action: ' . $this->getAction(),
 			];
 		}
 
 		$this->processRequest();
 
-		$this->log("Request processed, now trying to pass action: " . $this->getAction());
+		$this->log('Request processed, now trying to pass action: ' . $this->getAction());
 
 		switch ($this->getAction())
 		{
-			case "check":
+			case 'check':
 				$response = $this->checkResponse();
 				break;
 
-			case "aviso":
+			case 'aviso':
 				if (is_callable($this->options['onAviso']))
 				{
 					$this->options['onAviso']($this);
@@ -140,34 +143,35 @@ class Kassa
 
 	protected function processRequest()
 	{
-		$this->log("Start " . $this->getAction());
-		$this->log("Security type " . static::getSecurityType());
+		$this->log('Start ' . $this->getAction());
+		$this->log('Security type ' . static::getSecurityType());
 
 		switch (static::getSecurityType())
 		{
-			case "MD5":
-				$this->log("Request: " . print_r($_POST, true));
+			case 'MD5':
+				$this->log('Request: ' . print_r($_POST, true));
 
-				// If the MD5 checking fails, respond with "1" error code
+				// If the MD5 checking fails, respond with '1' error code
 				if (!$this->checkMD5())
 				{
-					$this->log("MD5 not passed");
+					$this->log('MD5 not passed');
 
 					$response = $this->buildResponse($this->getAction(), \diRequest::post('invoiceId'), 1);
+
 					return $this->sendResponse($response, true);
 				}
 
 				break;
 
-			case "PKCS7":
-				// Checking for a certificate sign. If the checking fails, respond with "200" error code.
+			case 'PKCS7':
+				// Checking for a certificate sign. If the checking fails, respond with '200' error code.
 				if (($request = $this->verifySign()) == null)
 				{
 					$response = $this->buildResponse($this->getAction(), null, 200);
 					return $this->sendResponse($response, true);
 				}
 
-				$this->log("Request: " . print_r($_POST, true));
+				$this->log('Request: ' . print_r($_POST, true));
 
 				break;
 		}
@@ -182,40 +186,40 @@ class Kassa
 
 	public static function checkResponse()
 	{
-		static::log("Check action!");
+		static::log('Check action!');
 
 		return static::buildResponse('check', \diRequest::post('invoiceId'), 0);
 	}
 
 	public static function avisoResponse()
 	{
-		static::log("Aviso action!");
+		static::log('Aviso action!');
 
 		return static::buildResponse('aviso', \diRequest::post('invoiceId'), 0);
 	}
 
 	public static function formatDate(\DateTime $date)
 	{
-		$performedDatetime = $date->format("Y-m-d") . "T" . $date->format("H:i:s") . ".000" . $date->format("P");
+		$performedDatetime = $date->format('Y-m-d') . 'T' . $date->format('H:i:s') . '.000' . $date->format('P');
 
 		return $performedDatetime;
 	}
 
 	public static function formatDateForMWS(\DateTime $date)
 	{
-		$performedDatetime = $date->format("Y-m-d") . "T" . $date->format("H:i:s") . ".000Z";
+		$performedDatetime = $date->format('Y-m-d') . 'T' . $date->format('H:i:s') . '.000Z';
 
 		return $performedDatetime;
 	}
 
 	public static function log($message)
 	{
-		simple_debug($message, "Yandex.Kassa", "-payment");
+		Logger::getInstance()->log($message, 'Yandex.Kassa', '-payment');
 	}
 
 	public function sendErrorResponse($message, $forcePrintAndExit = false)
 	{
-		$this->log("Sending error response: " . $message);
+		$this->log('Sending error response: ' . $message);
 
 		$response = $this->buildResponse($this->getAction(), null, 100, $message);
 
@@ -224,10 +228,10 @@ class Kassa
 
 	public function sendResponse($responseBody, $forcePrintAndExit = false)
 	{
-		$this->log("Response: " . $responseBody);
+		$this->log('Response: ' . $responseBody);
 
-		header("HTTP/1.0 200");
-		header("Content-Type: application/xml");
+		header('HTTP/1.0 200');
+		header('Content-Type: application/xml');
 
 		if ($forcePrintAndExit)
 		{
@@ -243,22 +247,30 @@ class Kassa
 	 */
 	private function checkMD5()
 	{
-		$str = \diRequest::post('action') . ";" .
-			\diRequest::post('orderSumAmount') . ";" . \diRequest::post('orderSumCurrencyPaycash') . ";" .
-			\diRequest::post('orderSumBankPaycash') . ";" . \diRequest::post('shopId') . ";" .
-			\diRequest::post('invoiceId') . ";" . \diRequest::post('customerNumber') . ";" . static::getShopPassword();
+		$ar = [
+			\diRequest::post('action'),
+			\diRequest::post('orderSumAmount'),
+			\diRequest::post('orderSumCurrencyPaycash'),
+			\diRequest::post('orderSumBankPaycash'),
+			\diRequest::post('shopId'),
+			\diRequest::post('invoiceId'),
+			\diRequest::post('customerNumber'),
+			static::getShopPassword(),
+		];
 
-		$this->log("String to md5: " . $str);
+		$str = join(';', $ar);
+
+		$this->log('String to md5: ' . $str);
 		$md5 = strtoupper(md5($str));
 
 		if ($md5 != strtoupper(\diRequest::post('md5')))
 		{
-			$this->log("Wait for md5:" . $md5 . ", received md5: " . \diRequest::post('md5'));
+			$this->log('Waited for md5: ' . $md5 . ', received md5: ' . \diRequest::post('md5'));
 
 			return false;
 		}
 
-		$this->log("md5: OK");
+		$this->log('md5: OK');
 
 		return true;
 	}
@@ -269,7 +281,7 @@ class Kassa
 	 */
 	private function verifySign()
 	{
-		$descriptorspec = [0 => ["pipe", "r"], 1 => ["pipe", "w"], 2 => ["pipe", "w"]];
+		$descriptorspec = [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
 		$certificate = 'yamoney.pem';
 		$process = proc_open('openssl smime -verify -inform PEM -nointern -certfile ' . $certificate . ' -CAfile ' . $certificate,
 			$descriptorspec, $pipes);
@@ -277,7 +289,7 @@ class Kassa
 		if (is_resource($process))
 		{
 			// Getting data from request body.
-			$data = file_get_contents("php://input");
+			$data = file_get_contents('php://input');
 			fwrite($pipes[0], $data);
 			fclose($pipes[0]);
 			$content = stream_get_contents($pipes[1]);
@@ -290,10 +302,10 @@ class Kassa
 			}
 			else
 			{
-				$this->log("Raw xml: " . $content);
+				$this->log('Raw xml: ' . $content);
 				$xml = simplexml_load_string($content);
 				$array = json_decode(json_encode($xml), TRUE);
-				return $array["@attributes"];
+				return $array['@attributes'];
 			}
 		}
 
@@ -302,22 +314,22 @@ class Kassa
 
 	/**
 	 * Building XML response.
-	 * @param  string $functionName  "checkOrder" or "paymentAviso" string
+	 * @param  string $functionName  'checkOrder' or 'paymentAviso' string
 	 * @param  string $invoiceId     transaction number
-	 * @param  string $result_code   result code
+	 * @param  string $resultCode    result code
 	 * @param  string $message       error message. May be null.
 	 * @return string                prepared XML response
 	 */
-	private function buildResponse($functionName, $invoiceId, $result_code, $message = null)
+	private function buildResponse($functionName, $invoiceId, $resultCode, $message = null)
 	{
 		switch ($functionName)
 		{
-			case "check":
-				$methodName = "checkOrder";
+			case 'check':
+				$methodName = 'checkOrder';
 				break;
 
-			case "aviso":
-				$methodName = "paymentAviso";
+			case 'aviso':
+				$methodName = 'paymentAviso';
 				break;
 
 			default:
@@ -325,21 +337,31 @@ class Kassa
 				break;
 		}
 
-		try
-		{
+		try {
 			$performedDatetime = self::formatDate(new \DateTime());
-			$response = '<?xml version="1.0" encoding="UTF-8"?><' . $methodName . 'Response performedDatetime="' . $performedDatetime .
-				'" code="' . $result_code . '" ' . ($message != null ? 'message="' . $message . '"' : "") . ' invoiceId="' . $invoiceId .
-				'" shopId="' . static::getShopId() . '"/>';
+
+			$attrs = [
+				'performedDatetime' => $performedDatetime,
+				'code' => $resultCode,
+				'message' => $message,
+				'invoiceId' => $invoiceId,
+				'shopId' => static::getShopId(),
+			];
+
+			$response = '<?xml version="1.0" encoding="UTF-8"?><' . $methodName . 'Response ' .
+				ArrayHelper::toAttributesString($attrs, true) . '/>';
 
 			return $response;
-		}
-		catch (\Exception $e)
-		{
+		} catch (\Exception $e) {
 			$this->log($e);
 		}
 
 		return null;
+	}
+
+	public static function formatPrice($price)
+	{
+		return sprintf('%.2f', $price);
 	}
 
 	public static function getForm(\diCore\Entity\PaymentDraft\Model $draft, $opts = [])
@@ -349,37 +371,37 @@ class Kassa
 		$showCaseId = static::getShowCaseId();
 
 		$opts = extend([
-			"amount" => $draft->getAmount(),
-			"userId" => $draft->getUserId(),
-			"draftId" => $draft->getId(),
-			"customerEmail" => "",
-			"customerPhone" => "",
-			"autoSubmit" => false,
-			"buttonCaption" => "Заплатить",
-			"paymentSystem" => "",
-			"additionalParams" => [],
+			'amount' => $draft->getAmount(),
+			'userId' => $draft->getUserId(),
+			'draftId' => $draft->getId(),
+			'customerEmail' => '',
+			'customerPhone' => '',
+			'autoSubmit' => false,
+			'buttonCaption' => 'Заплатить',
+			'paymentSystem' => '',
+			'additionalParams' => [],
 		], $opts);
 
 		array_walk($opts, function(&$item) {
 			$item = \diDB::_out($item);
 		});
 
-		$button = !$opts["autoSubmit"] ? "<button type=\"submit\">{$opts["buttonCaption"]}</button>" : "";
-		$redirectScript = $opts["autoSubmit"] ? \diPayment::getAutoSubmitScript() : "";
+		$button = !$opts['autoSubmit'] ? "<button type=\"submit\">{$opts['buttonCaption']}</button>" : '';
+		$redirectScript = $opts['autoSubmit'] ? \diPayment::getAutoSubmitScript() : '';
 
 		$params = extend([
-			"shopId" => $shopId,
-			"scid" => $showCaseId,
-			"sum" => $opts["amount"],
-			"customerNumber" => $opts["userId"],
-			"orderNumber" => $opts["draftId"],
-			"paymentType" => $opts["paymentSystem"],
-			"cps_phone" => $opts["customerPhone"] ?: null,
-			"cps_email" => $opts["customerEmail"],
-		], $opts["additionalParams"]);
+			'shopId' => $shopId,
+			'scid' => $showCaseId,
+			'sum' => self::formatPrice($opts['amount']),
+			'customerNumber' => $opts['userId'],
+			'orderNumber' => $opts['draftId'],
+			'paymentType' => $opts['paymentSystem'],
+			'cps_phone' => $opts['customerPhone'] ?: null,
+			'cps_email' => $opts['customerEmail'],
+		], $opts['additionalParams']);
 
 		$paramsStr = join("\n\t", array_filter(array_map(function($name, $value) {
-			return $value !== null ? \diPayment::getHiddenInput($name, $value) : "";
+			return $value !== null ? \diPayment::getHiddenInput($name, $value) : '';
 		}, array_keys($params), $params)));
 
 		$form = <<<EOF
