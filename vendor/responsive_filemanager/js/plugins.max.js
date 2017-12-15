@@ -4829,7 +4829,7 @@
                         if (e.abovethetop(this, c) || e.leftofbegin(this, c));
                         else if (e.belowthefold(this, c) || e.rightoffold(this, c)) {
                             if (++t > c.failure_limit) return !1
-                        } else n.trigger("appear"), t = 0
+                        } else {n.trigger("appear"); t = 0;}
                 })
             }
             var a, l = this,
@@ -4850,7 +4850,9 @@
             }), this.each(function() {
                 var t = this,
                     n = e(t);
-                t.loaded = !1, (n.attr("src") === i || n.attr("src") === !1) && n.is("img") && n.attr("src", c.placeholder), n.one("appear", function() {
+                t.loaded = false;
+                (n.attr("src") === i || n.attr("src") === !1) && n.is("img") && n.attr("src", c.placeholder);
+                n.one("appear", function() {
                     if (!this.loaded) {
                         if (c.appear) {
                             var i = l.length;
@@ -4870,7 +4872,8 @@
                     }
                 }), 0 !== c.event.indexOf("scroll") && n.bind(c.event, function() {
                     t.loaded || n.trigger("appear")
-                })
+                });
+                n.trigger('appear');
             }), o.bind("resize", function() {
                 s()
             }), /(?:iphone|ipod|ipad).*os 5/gi.test(navigator.appVersion) && o.bind("pageshow", function(t) {
