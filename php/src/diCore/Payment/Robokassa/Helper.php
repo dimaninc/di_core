@@ -56,21 +56,21 @@ class Helper
 
 	public static function getPassword1()
 	{
-		return static::testMode
+		return static::isTestMode()
 			? static::testPassword1
 			: static::password1;
 	}
 
 	public static function getPassword2()
 	{
-		return static::testMode
+		return static::isTestMode()
 			? static::testPassword2
 			: static::password2;
 	}
 
 	public static function isTestMode()
 	{
-		return static::testMode;
+		return !!static::testMode;
 	}
 
 	public static function formatCost($cost)
@@ -183,33 +183,37 @@ EOF;
 			static::getPassword1(),
 		];
 
+		self::log('getSignatureForm source: ' . join(':', $source));
+
 		return md5(join(':', $source));
 	}
 
-	public static function getSignatureResult(\diCore\Entity\PaymentDraft\Model $draft, $alt = false)
+	public static function getSignatureResult(\diCore\Entity\PaymentDraft\Model $draft)
 	{
+		$cost = \diRequest::request('OutSum'); //static::formatCost($draft->getAmount())
+
 		$source = [
-			static::formatCost($draft->getAmount()),
+			$cost,
 			$draft->getId(),
 			static::getPassword2(),
-			//static::getMerchantLogin(),
 		];
 
-		if ($alt)
-		{
-			$source[] = static::getMerchantLogin();
-		}
+		self::log('getSignatureResult source: ' . join(':', $source));
 
 		return md5(join(':', $source));
 	}
 
 	public static function getSignatureSuccess(\diCore\Entity\PaymentDraft\Model $draft)
 	{
+		$cost = \diRequest::request('OutSum'); //static::formatCost($draft->getAmount())
+
 		$source = [
-			static::formatCost($draft->getAmount()),
+			$cost,
 			$draft->getId(),
 			static::getPassword1(),
 		];
+
+		self::log('getSignatureSuccess source: ' . join(':', $source));
 
 		return md5(join(':', $source));
 	}
@@ -237,28 +241,26 @@ EOF;
 	{
 		try {
 			$signature = strtolower(\diRequest::post('SignatureValue'));
+			$cost = \diRequest::post('OutSum', 0.0);
 
 			if (!$this->getDraft()->exists())
 			{
 				throw new \Exception('No draft found');
 			}
 
-			/*
 			if ($this->getDraft()->getAmount() != $cost)
 			{
-				throw new \Exception('Cost not match: (their) ' . $cost . ', (our) ' . $draft->getAmount());
+				throw new \Exception('Cost not match: (their) ' . $cost . ', (our) ' . $this->getDraft()->getAmount());
 			}
-			*/
 
-			$s1 = static::getSignatureResult($this->getDraft());
-			$s2 = static::getSignatureResult($this->getDraft(), true);
+			$ourSignature = static::getSignatureResult($this->getDraft());
 
-			if ($signature != $s1 && $signature != $s2)
+			if ($signature != $ourSignature)
 			{
-				throw new \Exception('Signature not matched (' . $signature . ' != ' . $s1 . ', ' . $s2 . ')');
+				throw new \Exception('Signature not matched (' . $signature . ' != ' . $ourSignature . ')');
 			}
 
-			self::log('Result method OK');
+			self::log('Result method OK, signature received: ' . $signature . ', ours: ' . $ourSignature);
 
 			$paidCallback($this);
 

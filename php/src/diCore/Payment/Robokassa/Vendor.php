@@ -63,8 +63,8 @@ class Vendor extends VendorContainer
 		<Currency Label="ElecsnetWalletRIBR" Alias="ElecsnetWallet" Name="Кошелек Элекснет" MaxValue="14999"/>
 		<Currency Label="W1RIBR" Alias="W1" Name="RUR " MaxValue="14999"/>
 		*/
-		self::YANDEX_MONEY => 'YandexMoney',
-		self::WEBMONEY => 'WMR',
+		self::YANDEX_MONEY => 'YandexMerchantRIBR',
+		self::WEBMONEY => 'WMR20RM',
 		self::QIWI => 'Qiwi50RIBRM',
 		self::ELECSNET => 'ElecsnetWallet',
 		self::W1 => 'W1RIBR',
