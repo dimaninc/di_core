@@ -1752,6 +1752,11 @@ abstract class CMS
 			: null;
 	}
 
+	protected function processTextForMeta($text)
+	{
+		return strip_tags($text);
+	}
+	
 	/**
 	 * @param string|array $text
 	 * @param string $field
@@ -1765,14 +1770,14 @@ abstract class CMS
 			$text = ArrayHelper::recursiveJoin($text, ' ');
 		}
 
-		$this->metaFields[$field] = strip_tags($text);
+		$this->metaFields[$field] = $this->processTextForMeta($text);
 
 		return $this;
 	}
 
 	public function appendMeta($text, $field = 'title')
 	{
-		$this->metaFields[$field] = $this->getMeta($field) . strip_tags($text);
+		$this->metaFields[$field] = $this->getMeta($field) . $this->processTextForMeta($text);
 
 		return $this;
 	}
@@ -1791,14 +1796,14 @@ abstract class CMS
 			$text = ArrayHelper::recursiveJoin($text, ' ');
 		}
 
-		$this->openGraphFields[$field] = strip_tags($text);
+		$this->openGraphFields[$field] = $this->processTextForMeta($text);
 
 		return $this;
 	}
 
 	public function appendOpenGraph($text, $field = 'title')
 	{
-		$this->openGraphFields[$field] = $this->getOpenGraph($field) . strip_tags($text);
+		$this->openGraphFields[$field] = $this->getOpenGraph($field) . $this->processTextForMeta($text);
 
 		return $this;
 	}
