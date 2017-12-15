@@ -22,7 +22,7 @@ class Vendor extends VendorContainer
 	const APPLE_PAY = 11;
 	const SAMSUNG_PAY = 12;
 
-	const SBERBANK_ONLINE = 20;
+	//const SBERBANK_ONLINE = 20;
 	const ALPHA_CLICK = 21;
 
 	public static $titles = [
@@ -36,7 +36,7 @@ class Vendor extends VendorContainer
 		self::APPLE_PAY => 'Apple Pay',
 		self::SAMSUNG_PAY => 'Samsung Pay',
 
-		self::SBERBANK_ONLINE => 'Сбербанк-онлайн',
+		//self::SBERBANK_ONLINE => 'Сбербанк-онлайн',
 		self::ALPHA_CLICK => 'Альфа-клик',
 	];
 
@@ -51,7 +51,7 @@ class Vendor extends VendorContainer
 		self::APPLE_PAY => 'apple-pay',
 		self::SAMSUNG_PAY => 'samsung-pay',
 
-		self::SBERBANK_ONLINE => 'sberbank-online',
+		//self::SBERBANK_ONLINE => 'sberbank-online',
 		self::ALPHA_CLICK => 'alpha-click',
 	];
 
@@ -67,7 +67,7 @@ class Vendor extends VendorContainer
 		self::WEBMONEY => 'WMR',
 		self::QIWI => 'Qiwi50RIBRM',
 		self::ELECSNET => 'ElecsnetWallet',
-		self::W1 => 'W1',
+		self::W1 => 'W1RIBR',
 
 		/*
 		<Currency Label="BANKOCEAN3R" Alias="BankCard" Name="Банковская карта"/>
@@ -78,7 +78,7 @@ class Vendor extends VendorContainer
 		self::APPLE_PAY => 'ApplePay',
 		self::SAMSUNG_PAY => 'SamsungPay',
 
-		self::SBERBANK_ONLINE => 'BankSberBank',
+		//self::SBERBANK_ONLINE => 'BankSberBank',
 		self::ALPHA_CLICK => 'AlfaBank',
 	];
 
@@ -93,7 +93,7 @@ class Vendor extends VendorContainer
 		self::APPLE_PAY => null,
 		self::SAMSUNG_PAY => null,
 
-		self::SBERBANK_ONLINE => null,
+		//self::SBERBANK_ONLINE => null,
 		self::ALPHA_CLICK => null,
 	];
 
