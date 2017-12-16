@@ -810,6 +810,7 @@ var encodeURL, show_animation, hide_animation, apply, apply_none, apply_img, app
                 })
             })
         }
+        x();
         jQuery(window).resize(function() {
             v(28)
         }), v(14), y(1 == jQuery("#clipboard").val() ? !0 : !1), jQuery("li.dir, li.file").draggable({
