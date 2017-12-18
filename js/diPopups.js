@@ -17,6 +17,18 @@ var diPopups = function() {
 	this.id_prefix = '';
 	this.id_suffix = '-dipopup';
 
+	this.defaultCallbacks = {
+		realShow: function (obj, id) {
+			obj.getPopupElement(id).fadeIn();
+			obj.update_position(id);
+		},
+		realHide: function (obj, id) {
+			obj.getPopupElement(id).fadeOut();
+		}
+	};
+
+	this.callbacks = {};
+
 	function constructor() {
 		$(window)
 			.off('resize.dipopup-live orientationchange.dipopup-live')
@@ -50,6 +62,16 @@ var diPopups = function() {
 		}
 	};
 
+	this.setCallback = function(name, callback) {
+		this.callbacks[name] = callback;
+
+		return this;
+	};
+
+	this.getCallback = function(name) {
+		return this.callbacks[name] || this.defaultCallbacks[name];
+	};
+
 	this.show_bg = function() {
 		if (!this.e.$bg.length) {
 			this.e.$bg = $('<div id="gray-bg"></div>').appendTo($(document.body)).click(function() {
@@ -77,12 +99,11 @@ var diPopups = function() {
 	};
 
 	function realShow(id) {
-		self.getPopupElement(id).fadeIn();
-		self.update_position(id);
+		self.getCallback('realShow')(self, id);
 	}
 
 	function realHide(id) {
-		self.getPopupElement(id).fadeOut();
+		self.getCallback('realHide')(self, id);
 	}
 
 	this.show = function(name, _opts/* or showBackground */) {
