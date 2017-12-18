@@ -58,7 +58,7 @@ if($subdir == "")
 	}
 }
 //remember last position
-setcookie('last_position',$subdir,time() + (86400 * 7));
+setcookie('last_position',$subdir, $time + (86400 * 7));
 
 if ($subdir == "/") { $subdir = ""; }
 
@@ -300,7 +300,7 @@ $get_params = http_build_query($get_params);
 		height: 100%;
 	}
 	</style><![endif]-->
-	<script src="js/plugins.js"></script>
+	<script src="js/plugins.max.js?<?php echo $time; ?>"></script>
 	<script src="js/jPlayer/jquery.jplayer/jquery.jplayer.js"></script>
 	<script src="js/modernizr.custom.js"></script>
 	<?php
@@ -387,12 +387,12 @@ $get_params = http_build_query($get_params);
 	});
 		}
 	</script>
-	<script src="js/include.js"></script>
+	<script src="js/include.max.js?<?php echo $time; ?>"></script>
 </head>
 <body>
 	<input type="hidden" id="ftp" value="<?php echo !!$ftp; ?>" />
 	<input type="hidden" id="popup" value="<?php echo $popup;?>" />
-	<input type="hidden" id="callback" value="<?php echo $callback; ?>" />	
+	<input type="hidden" id="callback" value="<?php echo $callback; ?>" />
 	<input type="hidden" id="crossdomain" value="<?php echo $crossdomain;?>" />
 	<input type="hidden" id="editor" value="<?php echo $editor;?>" />
 	<input type="hidden" id="view" value="<?php echo $view;?>" />
