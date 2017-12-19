@@ -871,7 +871,8 @@ class diModel implements \ArrayAccess
 	{
 		if (is_null($field))
 		{
-			return $this->getWithId();
+			// todo: return array
+			return (object)$this->getWithId();
 		}
 
 		if ($field == $this->idFieldName)
@@ -1011,7 +1012,7 @@ class diModel implements \ArrayAccess
 	public function getWithId()
 	{
 		return $this->ar
-			? (object)array_merge($this->ar, [
+			? extend($this->ar, [
 				$this->getIdFieldName() => $this->getId(),
 			])
 			: null;
@@ -1020,7 +1021,7 @@ class diModel implements \ArrayAccess
 	public function getOrigWithId()
 	{
 		return $this->origData
-			? (object)array_merge($this->origData, [
+			? extend($this->origData, [
 				$this->getIdFieldName() => $this->getOrigId(),
 			])
 			: null;

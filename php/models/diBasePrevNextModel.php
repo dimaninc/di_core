@@ -218,18 +218,18 @@ class diBasePrevNextModel extends \diModel
 
 		$ordersBy = count($this->orderByOptions["fields"]);
 
-		$prev_r = $next_r = null;
+		$prev = $next = [];
 
 		for ($i = $ordersBy - 1; $i >= 0; $i--)
 		{
 			$q = $this->getPrevNextQueries($i);
 
-			$prev_r = $prev_r ?: $this->getDb()->r($this->getTable(),
+			$prev = $prev ?: $this->getDb()->ar($this->getTable(),
 				"WHERE " . join(" AND ", array_merge($q["conditions"], $q["prevConditions"])) .
 				" ORDER BY " . join(",", $q["prevOrders"])
 			);
 
-			$next_r = $next_r ?: $this->getDb()->r($this->getTable(),
+			$next = $next ?: $this->getDb()->ar($this->getTable(),
 				"WHERE " . join(" AND ", array_merge($q["conditions"], $q["nextConditions"])) .
 				" ORDER BY " . join(",", $q["nextOrders"])
 			);
@@ -239,11 +239,11 @@ class diBasePrevNextModel extends \diModel
 			{
 				\diCore\Tool\Logger::getInstance()->variable("prev: WHERE " .
 					join(" AND ", array_merge($q["conditions"], $q["prevConditions"])) .
-					" ORDER BY " . join(",", $q["prevOrders"]), $prev_r);
+					" ORDER BY " . join(",", $q["prevOrders"]), $prev);
 				\diCore\Tool\Logger::getInstance()->log("next: WHERE " .
 					join(" AND ", array_merge($q["conditions"], $q["nextConditions"])) .
 					" ORDER BY " . join(",", $q["nextOrders"]));
-				\diCore\Tool\Logger::getInstance()->variable('$next_r', $next_r);
+				\diCore\Tool\Logger::getInstance()->variable('$next', $next);
 			}
 			/* */
 		}
@@ -252,35 +252,35 @@ class diBasePrevNextModel extends \diModel
 		{
 			$q = $this->getPrevNextQueries(0);
 
-			if (!$prev_r)
+			if (!$prev)
 			{
-				$prev_r = $this->getDb()->r($this->getTable(),
+				$prev = $this->getDb()->ar($this->getTable(),
 					"WHERE " . join(" AND ", $q["conditions"]) .
 					" ORDER BY " . join(",", $q["prevOrders"])
 				);
 			}
 
-			if (!$prev_r && $this->orderByOptions["reuseSelfIfNoSiblings"])
+			if (!$prev && $this->orderByOptions["reuseSelfIfNoSiblings"])
 			{
-				$prev_r = $this->getWithId();
+				$prev = $this->getWithId();
 			}
 
-			if (!$next_r)
+			if (!$next)
 			{
-				$next_r = $this->getDb()->r($this->getTable(),
+				$next = $this->getDb()->ar($this->getTable(),
 					"WHERE " . join(" AND ", $q["conditions"]) .
 					" ORDER BY " . join(",", $q["nextOrders"])
 				);
 			}
 
-			if (!$next_r && $this->orderByOptions["reuseSelfIfNoSiblings"])
+			if (!$next && $this->orderByOptions["reuseSelfIfNoSiblings"])
 			{
-				$next_r = $this->getWithId();
+				$next = $this->getWithId();
 			}
 		}
 
-		$this->prev = \diModel::create($this->modelType(), $prev_r);
-		$this->next = \diModel::create($this->modelType(), $next_r);
+		$this->prev = \diModel::create($this->modelType(), $prev);
+		$this->next = \diModel::create($this->modelType(), $next);
 
 		return $this;
 	}
