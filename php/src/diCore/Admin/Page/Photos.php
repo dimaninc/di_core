@@ -67,7 +67,7 @@ class Photos extends \diAdminBasePage
 		}
 		else
 		{
-			if (isset($this->filters))
+			if (isset($this->filters[$field]))
 			{
 				return $this->filters[$field];
 			}
