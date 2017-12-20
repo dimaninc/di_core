@@ -2,6 +2,7 @@
 
 namespace diCore\Base;
 
+use diCore\Base\Exception\HttpException;
 use diCore\Data\Config;
 use diCore\Data\Types;
 use diCore\Entity\Content\Model;
@@ -267,6 +268,27 @@ abstract class CMS
 	public function go()
 	{
 		return $this;
+	}
+
+	public function work()
+	{
+		try {
+			$this->go();
+		} catch (HttpException $e) {
+			$this->getTwig()
+				->renderPage('errors/' . $e->getCode(), [
+					'exception' => $e,
+				]);
+		} catch (\Exception $e) {
+			$this->getTwig()
+				->renderPage('errors/basic', [
+					'exception' => $e,
+				]);
+		} finally {
+			$this
+				->finish();
+		}
+
 	}
 
 	public static function fast_lite_create($options = [])
@@ -1756,7 +1778,7 @@ abstract class CMS
 	{
 		return strip_tags($text);
 	}
-	
+
 	/**
 	 * @param string|array $text
 	 * @param string $field
