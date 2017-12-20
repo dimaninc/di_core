@@ -113,8 +113,8 @@ class diDynamicRows
 
 		if (empty($this->info_ar[$this->field]["subquery"]))
 		{
-			$this->info_ar[$this->field]["subquery"] = function($table, $field, $id) {
-				return "_table='$table' and _field='$field' and _id='$id'";
+			$this->info_ar[$this->field]["subquery"] = function($table, $field, $id, \diDynamicRows $DR = null) {
+				return "_table = '$table' and _field = '$field' and _id = '$id'";
 			};
 		}
 
@@ -123,7 +123,7 @@ class diDynamicRows
 			$this->setOption($this->info_ar[$this->field]['options']);
 		}
 
-		$this->subquery = $this->info_ar[$this->field]["subquery"]($this->table, $this->field, $this->id);
+		$this->subquery = $this->info_ar[$this->field]["subquery"]($this->table, $this->field, $this->id, $this);
 
 		if (!empty($this->info_ar[$this->field]["sortby"]))
 		{
