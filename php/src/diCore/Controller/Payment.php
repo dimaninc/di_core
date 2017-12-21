@@ -16,6 +16,9 @@ use diCore\Entity\PaymentReceipt\Model as ReceiptModel;
 
 class Payment extends \diBaseController
 {
+	const STATUS_SUCCESS = 1;
+	const STATUS_FAIL = 2;
+
 	/** @var  integer */
 	protected $system;
 
@@ -243,7 +246,7 @@ class Payment extends \diBaseController
 
 			return $this->getDraft();
 		});
-		
+
 		$this->beforeRoboAction();
 
 		switch ($this->subAction)
@@ -255,12 +258,12 @@ class Payment extends \diBaseController
 
 			case 'success':
 				return $rk->success(function(\diCore\Payment\Robokassa\Helper $rk) {
-					$this->redirectTo($this->getDraft()->getTargetModel()->getHref());
+					$this->redirectTo($this->getTargetHref(self::STATUS_SUCCESS));
 				});
 
 			case 'fail':
 				return $rk->fail(function(\diCore\Payment\Robokassa\Helper $rk) {
-					$this->redirectTo($this->getDraft()->getTargetModel()->getHref());
+					$this->redirectTo($this->getTargetHref(self::STATUS_FAIL));
 				});
 
 			default:
@@ -270,7 +273,12 @@ class Payment extends \diBaseController
 				];
 		}
 	}
-	
+
+	protected function getTargetHref($status)
+	{
+		return $this->getDraft()->getTargetModel()->getHref();
+	}
+
 	protected function beforeRoboAction()
 	{
 		return $this;
