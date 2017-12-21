@@ -243,6 +243,8 @@ class Payment extends \diBaseController
 
 			return $this->getDraft();
 		});
+		
+		$this->beforeRoboAction();
 
 		switch ($this->subAction)
 		{
@@ -267,6 +269,11 @@ class Payment extends \diBaseController
 					'message' => 'Unknown action: ' . $this->subAction,
 				];
 		}
+	}
+	
+	protected function beforeRoboAction()
+	{
+		return $this;
 	}
 
 	protected function createReceipt($outerNumber, callable $beforeSave = null)
