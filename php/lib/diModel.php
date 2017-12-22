@@ -1903,6 +1903,29 @@ class diModel implements \ArrayAccess
 		return $this->insertOrUpdateAllowed;
 	}
 
+	protected function getAppearanceFeedForAdmin()
+	{
+		return [
+			$this->get('title'),
+			$this->get('name'),
+		];
+	}
+
+	protected function getStringAppearanceForAdmin()
+	{
+		return join(', ', array_filter($this->getAppearanceFeedForAdmin()));
+	}
+
+	public function appearanceForAdmin()
+	{
+		$linkWord = \diCore\Admin\Form::L('link', $this->__getLanguage());
+
+		return $this->exists()
+			? $this->getStringAppearanceForAdmin() . sprintf(
+				' [<a href="%s" target="_blank">%s</a>]', $this->getAdminHref(), $linkWord)
+			: '---';
+	}
+
 	public function __toString()
 	{
 		$name = static::type

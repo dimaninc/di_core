@@ -8,7 +8,6 @@
 
 namespace diCore\Data\Font;
 
-
 class Cache
 {
 	use \diSingleton;

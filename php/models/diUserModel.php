@@ -23,17 +23,15 @@ class diUserModel extends diBaseUserModel
 		return $this->get($this->slugFieldName);
 	}
 
-	public function appearanceForAdmin()
+	public function getAppearanceFeedForAdmin()
 	{
-		return $this->exists()
-			? join(', ', array_filter([
-				$this->get('name'),
-				$this->get('first_name'),
-				$this->get('last_name'),
-				$this->get('login'),
-				$this->get('email'),
-			])) . " [<a href='{$this->getAdminHref()}'>ссылка</a>]"
-			: '---';
+		return [
+			$this->get('name'),
+			$this->get('first_name'),
+			$this->get('last_name'),
+			$this->get('login'),
+			$this->get('email'),
+		];
 	}
 
 	public static function generateActivationKey()

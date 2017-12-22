@@ -38,19 +38,21 @@ class diTags
 	/** @var diDB */
 	private $db;
 
+	protected $feed = null;
+
 	protected $new_field_suffix;
 
-	protected $outputGlue = ", ";
-	protected $inputGlue = "/,/";
+	protected $outputGlue = ', ';
+	protected $inputGlue = '/,/';
 
 	protected $tables = [
-		"tags" => "tags",
-		"map" => "tag_links",
+		'tags' => 'tags',
+		'map' => 'tag_links',
 	];
 	protected $fields = [
-		"tag_id" => "tag_id",
-		"target_type" => "target_type",
-		"target_id" => "target_id",
+		'tag_id' => 'tag_id',
+		'target_type' => 'target_type',
+		'target_id' => 'target_id',
 	];
 
 	public function __construct()
@@ -69,24 +71,24 @@ class diTags
 	public static function create($opts = [])
 	{
 		$opts = extend([
-			"tags_table" => "",
-			"map_table" => "",
+			'tags_table' => '',
+			'map_table' => '',
 
-			"tag_id_field" => "",
-			"target_type_field" => "",
-			"target_id_field" => "",
+			'tag_id_field' => '',
+			'target_type_field' => '',
+			'target_id_field' => '',
 		], $opts);
 
 		/** @var diTags $t */
 		$t = new static();
 
 		$t->setTables([
-			"tags" => $opts["tags_table"] ?: $opts["tag_id_field"] . "s",
-			"map" => $opts["map_table"] ?: $opts["target_id_field"] . "_" . $opts["tag_id_field"] . "_links",
+			'tags' => $opts['tags_table'] ?: $opts['tag_id_field'] . 's',
+			'map' => $opts['map_table'] ?: $opts['target_id_field'] . '_' . $opts['tag_id_field'] . '_links',
 		])->setFields([
-			"tag_id" => $opts["tag_id_field"],
-			"target_type" => $opts["target_type_field"],
-			"target_id" => $opts["target_id_field"],
+			'tag_id' => $opts['tag_id_field'],
+			'target_type' => $opts['target_type_field'],
+			'target_id' => $opts['target_id_field'],
 		]);
 
 		return $t;
@@ -111,6 +113,13 @@ class diTags
 		return $this->tables[$table];
 	}
 
+	public function setFeed($feed)
+	{
+		$this->feed = $feed ?: null;
+
+		return $this;
+	}
+
 	protected function tuneFeed(\diCollection $feed)
 	{
 		$feed
@@ -121,6 +130,11 @@ class diTags
 
 	public function getFeed()
 	{
+		if ($this->feed)
+		{
+			return $this->feed;
+		}
+
 		$col = \diCollection::createForTable($this->getTableName('tags'));
 		$col = $this->tuneFeed($col);
 
@@ -137,13 +151,13 @@ class diTags
 		$ar = [];
 
 		$queryAr = [
-			"m." . $this->fields["target_type"] . "='$targetType'",
+			"m." . $this->fields["target_type"] . " = '$targetType'",
 			"m." . $this->fields["target_id"] . diDB::in($targetId),
 			"t.visible='1'",
 		];
 
 		$tag_rs = $this->getDb()->rs(
-			"{$this->tables["map"]} m INNER JOIN {$this->tables["tags"]} t ON t.id=m.{$this->fields["tag_id"]}",
+			"{$this->tables["map"]} m INNER JOIN {$this->tables["tags"]} t ON t.id = m.{$this->fields["tag_id"]}",
 			"WHERE " . join(" AND ", $queryAr) . " ORDER BY t.title ASC",
 			"t.*"
 		);
@@ -235,6 +249,10 @@ class diTags
 	protected function storeMapRecord($targetType, $targetId, $tagId)
 	{
 		$ar = $this->getDbArForMapRecord($targetType, $targetId, $tagId);
+
+		unset($ar[null]);
+		unset($ar['']);
+		unset($ar[false]);
 
 		$this->getDb()->insert($this->tables["map"], $ar);
 	}
@@ -408,13 +426,17 @@ class diTags
 
 	public function getTagRecords($type, $targetId, $template = null)
 	{
-		$qAr = [
-			"m.{$this->fields["target_type"]}='$type'",
-			"m.{$this->fields["target_id"]}" . $this->getDb()->in($targetId),
-		];
+		$qAr = [];
+
+		if ($this->fields["target_type"])
+		{
+			$qAr[] = "{$this->fields["target_type"]} = '$type'";
+		}
+
+		$qAr[] = "m.{$this->fields["target_id"]}" . $this->getDb()->in($targetId);
 
 		$rs = $this->getDb()->rs("{$this->tables["map"]} m INNER JOIN {$this->tables["tags"]} t " .
-			"ON m.{$this->fields["tag_id"]}=t.id",
+			"ON m.{$this->fields["tag_id"]} = t.id",
 			"WHERE " . join(" AND ", $qAr),
 			"t.*"
 		);
@@ -452,13 +474,17 @@ class diTags
 
 	public function getTargetRecords($type, $tagId)
 	{
-		$qAr = [
-			"m.{$this->fields["target_type"]}='$type'",
-			"m.{$this->fields["tag_id"]}" . $this->getDb()->in($tagId),
-		];
+		$qAr = [];
+
+		if ($this->fields["target_type"])
+		{
+			$qAr[] = "{$this->fields["target_type"]} = '$type'";
+		}
+
+		$qAr[] = "m.{$this->fields["tag_id"]}" . $this->getDb()->in($tagId);
 
 		return $this->getDb()->rs("{$this->tables["map"]} m INNER JOIN " . diTypes::getTable($type) . " t " .
-			"ON m.{$this->fields["target_id"]}=t.id",
+			"ON m.{$this->fields["target_id"]} = t.id",
 			"WHERE " . join(" AND ", $qAr),
 			"t.*"
 		);
@@ -500,16 +526,19 @@ class diTags
 	public function getTagIdsAr($type, $targetId)
 	{
 		$ar = [];
+		$qAr = [];
 
-		$qAr = [
-			"{$this->fields["target_type"]}='$type'",
-			"{$this->fields["target_id"]}" . $this->getDb()->in($targetId),
-		];
+		if ($this->fields["target_type"])
+		{
+			$qAr[] = "{$this->fields["target_type"]} = '$type'";
+		}
+
+		$qAr[] = "{$this->fields["target_id"]}" . $this->getDb()->in($targetId);
 
 		$rs = $this->getDb()->rs($this->tables["map"], "WHERE " . join(" AND ", $qAr));
-		while ($r = $this->getDb()->fetch($rs))
+		while ($r = $this->getDb()->fetch_array($rs))
 		{
-			$ar[] = $r->{$this->fields["tag_id"]};
+			$ar[] = $r[$this->fields["tag_id"]];
 		}
 
 		return $ar;

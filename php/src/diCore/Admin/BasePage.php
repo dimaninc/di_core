@@ -58,14 +58,14 @@ abstract class BasePage
 
 	protected $methodCaptionsAr = [
 		'ru' => [
-			"list" => "Управление",
-			"add" => "Добавление",
-			"edit" => "Редактирование",
+			'list' => 'Управление',
+			'add' => 'Добавление',
+			'edit' => 'Редактирование',
 		],
 		'en' => [
-			"list" => "Manage",
-			"add" => "Add",
-			"edit" => "Edit",
+			'list' => 'Manage',
+			'add' => 'Add',
+			'edit' => 'Edit',
 		],
 	];
 
@@ -99,9 +99,9 @@ abstract class BasePage
 	];
 
 	public static $listOptions = [
-		"showControlPanel",
-		"showHeader",
-		"formBasePath",
+		'showControlPanel',
+		'showHeader',
+		'formBasePath',
 	];
 
 	public function __construct(\diAdminBase $X)
@@ -131,8 +131,8 @@ abstract class BasePage
 		$o->tryToInitTable();
 
 		$m = \diAdminBase::getClassMethodName($o->getMethod());
-		$beforeM = \diAdminBase::getClassMethodName($o->getMethod(), "before");
-		$afterM = \diAdminBase::getClassMethodName($o->getMethod(), "after");
+		$beforeM = \diAdminBase::getClassMethodName($o->getMethod(), 'before');
+		$afterM = \diAdminBase::getClassMethodName($o->getMethod(), 'after');
 
 		if (!method_exists($o, $m))
 		{
@@ -282,6 +282,20 @@ abstract class BasePage
 	public function getTwig()
 	{
 		return $this->X->getTwig();
+	}
+
+	public function getData($field = null)
+	{
+		if ($this->Submit)
+		{
+			return $this->getSubmit()->getData($field);
+		}
+		elseif ($this->Form)
+		{
+			return $this->getForm()->getData($field);
+		}
+
+		return null;
 	}
 
 	/**
@@ -784,7 +798,7 @@ abstract class BasePage
 
 		return $this;
 	}
-	
+
 	protected function beforeRenderFilters()
 	{
 		return $this;
@@ -819,14 +833,14 @@ abstract class BasePage
 		}
 
 		$this->beforeRenderFilters();
-		
+
 		if ($this->filtersBlockNeeded())
 		{
 			$this->getTpl()->assign([
 				"FILTERS" => $this->getFilters()->getBlockHtml() . $this->getFilters()->get_js_data(true),
 			]);
 		}
-		
+
 		$this->afterRenderFilters();
 
 		if ($this->getTwig()->assigned('before_table'))

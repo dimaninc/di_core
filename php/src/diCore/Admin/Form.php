@@ -65,6 +65,7 @@ class Form
 
 			'or_enter' => 'or enter',
 			'add_item' => 'Add +',
+			'link' => 'Link',
 
 			"tab_general" => "General",
 		],
@@ -100,6 +101,7 @@ class Form
 
 			'or_enter' => 'или введите',
 			'add_item' => 'Добавить +',
+			'link' => 'Ссылка',
 
 			"tab_general" => "Основное",
 		],
@@ -129,7 +131,7 @@ class Form
 	public $id;
 	public $rec = null;
 	public $static_mode = true;
-	protected $language = "ru";
+	protected static $language = "ru";
 	public $show_help = false;
 	public $module_id;	 // module_id of current table
 
@@ -157,7 +159,7 @@ class Form
 			$this->AdminPage = $table;
 			$this->table = $this->AdminPage->getTable();
 			$this->id = $this->AdminPage->getId();
-			$this->language = $this->AdminPage->getAdmin()->getLanguage();
+			self::$language = $this->AdminPage->getAdmin()->getLanguage();
 		}
 		else
 		{
@@ -243,9 +245,9 @@ class Form
 		return null;
 	}
 
-	public function L($token, $language = null)
+	public static function L($token, $language = null)
 	{
-		$language = $language ?: $this->language;
+		$language = $language ?: self::$language;
 
 		return isset(self::$lngStrings[$language][$token])
 			? self::$lngStrings[$language][$token]
@@ -537,7 +539,7 @@ class Form
 		$hide_ar = isset($buttons["hide"]) ? $buttons["hide"] : [];
 
 		$help_link = $this->show_help
-			? "<a href=\"help_files/toc.php?location=/$this->language/$this->table/\" rel=\"width:910,height:500,ajax:false,scrollbar:true,showControls:false\" id=\"adminHelp_toc\" class=\"mb\">{$this->L("view_help")}</a>"
+			? "<a href=\"help_files/toc.php?location=/" . self::$language . "/$this->table/\" rel=\"width:910,height:500,ajax:false,scrollbar:true,showControls:false\" id=\"adminHelp_toc\" class=\"mb\">{$this->L("view_help")}</a>"
 			: "";
 
 		$auto_save_timeout = \diConfiguration::safeGet("auto_save_timeout", 0);
@@ -765,6 +767,10 @@ EOF;
 								$s = $this->L($this->data[$field] ? "yes" : "no");
 								break;
 
+							case 'checkboxes':
+								$this->setCheckboxesListInput($field);
+								break;
+
 							case "color":
 								$this->setColorInput($field);
 								break;
@@ -883,6 +889,10 @@ EOF;
 
 						case "checkbox":
 							$this->set_checkbox_input($field);
+							break;
+
+						case 'checkboxes':
+							$this->setCheckboxesListInput($field);
 							break;
 
 						case "color":
@@ -1166,7 +1176,14 @@ EOF;
 
 	public function setInput($field, $input, $static_input = "")
 	{
-		$this->inputs[$field] = $this->static_mode && $static_input ? $static_input : $input;
+		if ($input instanceof \diModel)
+		{
+			$input = $input->appearanceForAdmin();
+		}
+
+		$this->inputs[$field] = $this->static_mode && $static_input
+			? $static_input
+			: $input;
 
 		$this->force_inputs_fields[$field] = true;
 
@@ -2298,61 +2315,71 @@ EOF;
 		return $this->setCheckboxesListInput($field, $feed, $columns, $ableToAddNew);
 	}
 
-	public function setCheckboxesListInput($field, $feed, $columns = null, $ableToAddNew = null)
+	public function setCheckboxesListInput($field, $feed = null, $columns = null, $ableToAddNew = null)
 	{
+		if (is_null($feed))
+		{
+			$feed = $this->getFieldProperty($field, 'feed') ?: $this->getFieldOption($field, 'feed');
+		}
+
+		if (!$feed)
+		{
+			throw new \Exception('Checkboxes feed not defined');
+		}
+
 		if (is_null($columns))
 		{
-			$columns = $this->getFieldOption($field, "columns") ?: 2;
+			$columns = $this->getFieldOption($field, 'columns') ?: 2;
 		}
 
 		if (is_null($ableToAddNew))
 		{
-			$ableToAddNew = $this->getFieldOption($field, "ableToAddNew") ?: false;
+			$ableToAddNew = $this->getFieldOption($field, 'ableToAddNew') ?: false;
 		}
 
 		if (\diDB::is_rs($feed))
 		{
-			$feed_ar = [];
+			$tmpFeed = [];
 
 			while ($r = $this->getDb()->fetch($feed))
 			{
-				$feed_ar[$r->id] = $r->title;
+				$tmpFeed[$r->id] = $r->title;
 			}
 
-			$feed = $feed_ar;
-			unset($feed_ar);
+			$feed = $tmpFeed;
+			unset($tmpFeed);
 		}
 
-		$values_ar = $this->getData($field);
+		$values = $this->getData($field);
 
-		if (!is_array($values_ar))
+		if (!is_array($values))
 		{
-			$values_ar = explode(",", $values_ar);
+			$values = explode(',', $values);
 		}
 
 		if ($this->isStatic($field))
 		{
 			$ar = [];
 
-			foreach ($values_ar as $k)
+			foreach ($values as $k)
 			{
 				$ar[] = isset($feed[$k]) ? $feed[$k] : "[tag#{$k}]";
 			}
 
-			$table = $ar ? join(", ", $ar) : "&ndash;";
+			$table = $ar ? join(', ', $ar) : '&mdash;';
 		}
 		else
 		{
-			$tags_ar = [];
+			$tags = [];
 
 			foreach ($feed as $k => $v)
 			{
-				$v = is_array($v) || $v instanceof \diModel ? $v : ["title" => $v];
+				$v = is_array($v) || $v instanceof \diModel ? $v : ['title' => $v];
 
 				if (is_array($v))
 				{
 					$v = extend([
-						"enabled" => true,
+						'enabled' => true,
 					], $v);
 				}
 				elseif ($v instanceof \diModel)
@@ -2363,20 +2390,25 @@ EOF;
 					}
 				}
 
-				$attr_ar = [];
+				$attributes = [
+					'type' => 'checkbox',
+					'name' => $field . '[]',
+					'value' => $k,
+					'id' => $field . '[' . $k . ']',
+				];
 
 				if (
-					(is_string($this->getData($field)) && strpos(",{$this->getData($field)},", ",$k,") !== false) ||
-					(in_array($k, $values_ar))
-				)
+					(is_string($this->getData($field)) && StringHelper::contains(',' . $this->getData($field) . ',', ',' . $k . ',')) ||
+					(in_array($k, $values))
+				   )
 				{
-					$attr_ar[] = "checked=\"checked\"";
+					$attributes['checked'] = 'checked';
 				}
 
 				$disabled = $this->static_mode;
 
 				if (
-					(is_array($v) && empty($v["enabled"])) ||
+					(is_array($v) && empty($v['enabled'])) ||
 					($v instanceof \diModel && !$v->getRelated('enabled'))
 				   )
 				{
@@ -2385,36 +2417,41 @@ EOF;
 
 				if ($disabled)
 				{
-					$attr_ar[] = "disabled=\"true\"";
+					$attributes['disabled'] = 'true';
 				}
 
-				$tags_ar[] = "<input type=\"checkbox\" name=\"{$field}[]\" value='$k' id=\"{$field}[{$k}]\" ".join(" ", $attr_ar)."> ".
-					"<label for=\"{$field}[{$k}]\">{$v["title"]}</label>";
+				$tags[] = sprintf(
+					'<input %s> <label for="%s">%s</label>',
+					ArrayHelper::toAttributesString($attributes),
+					$attributes['id'],
+					$v['title']
+				);
 			}
 
 			$table = '';
 
-			if ($tags_ar)
+			if ($tags)
 			{
-				$table = "<div class='tags-grid'><table><tr>";
+				$table = '<div class="tags-grid"><table><tr>';
 
-				$per_column = ceil(count($tags_ar) / $columns);
+				$per_column = ceil(count($tags) / $columns);
 
 				for ($i = 0; $i < $columns; $i++)
 				{
-					$table .= "<td style=\"padding-right: 20px; vertical-align: top;\">" .
-						join("<br />", array_slice($tags_ar, $per_column * $i, $per_column)) .
-						"</td>";
+					$table .= '<td style="padding-right: 20px; vertical-align: top;">' .
+						join('<br />', array_slice($tags, $per_column * $i, $per_column)) .
+						'</td>';
 				}
 
-				$table .= "</tr></table></div>";
+				$table .= '</tr></table></div>';
 			}
 
 			if ($ableToAddNew)
 			{
-				$table .= "<div class=\"new-tag\">".
-					"<input type=\"text\" name=\"{$field}" . self::NEW_FIELD_SUFFIX . "\" value=\"\" placeholder=\"Добавить новые теги, через запятую\" />" .
-					"</div>";
+				$table .=
+					'<div class="new-tag">' .
+					'<input type="text" name="' . $field . self::NEW_FIELD_SUFFIX . '" value="" placeholder="Добавить новые теги, через запятую">' .
+					'</div>';
 			}
 		}
 
@@ -2428,9 +2465,15 @@ EOF;
 	public function setTagsInput($field, $columns = null, $ableToAddNew = null)
 	{
 		/** @var \diTags $class */
-		$class = $this->getFieldOption($field, "class") ?: "diTags";
+		$class = $this->getFieldOption($field, 'class') ?: \diTags::class;
 		/** @var \diTags $instance */
 		$instance = new $class;
+
+		if ($feed = $this->getFieldProperty($field, 'feed') ?: $this->getFieldOption($field, 'feed'))
+		{
+			$instance
+				->setFeed($feed);
+		}
 
 		$this
 			->setData($field, $class::tagIdsAr(\diTypes::getId($this->getTable()), $this->getId()))
@@ -2675,7 +2718,7 @@ EOF;
 		$prefixAr = array_merge(array(0 => "Не выбран",), $prefixAr);
 
 		$this->setSelectFromCollectionInput($field,
-			\Romantic\Data\Font\Cache::getInstance()->getFonts(),
+			\diCore\Data\Font\Cache::getInstance()->getFonts(),
 			function(\diFontModel $f) {
 				return [
 					'value' => $f->getToken(),
