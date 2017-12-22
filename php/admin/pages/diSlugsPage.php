@@ -31,6 +31,16 @@ class diSlugsPage extends diAdminBasePage
 				"title" => "ID",
 			])
 			->addFilter([
+				"field" => "target_type",
+				"type" => "int",
+				"title" => "Target type",
+			])
+			->addFilter([
+				"field" => "target_id",
+				"type" => "int",
+				"title" => "Target ID",
+			])
+			->addFilter([
 				"field" => "slug",
 				"type" => "string",
 				"title" => "Слаг",
