@@ -1903,7 +1903,7 @@ class diModel implements \ArrayAccess
 		return $this->insertOrUpdateAllowed;
 	}
 
-	protected function getAppearanceFeedForAdmin()
+	public function getAppearanceFeedForAdmin()
 	{
 		return [
 			$this->get('title'),
@@ -1911,7 +1911,7 @@ class diModel implements \ArrayAccess
 		];
 	}
 
-	protected function getStringAppearanceForAdmin()
+	public function getStringAppearanceForAdmin()
 	{
 		return join(', ', array_filter($this->getAppearanceFeedForAdmin()));
 	}
