@@ -11,6 +11,7 @@ namespace diCore\Entity\Ad;
 use diCore\Base\CMS;
 use diCore\Data\Types;
 use diCore\Entity\AdBlock\Model as AdBlock;
+use diCore\Helper\ArrayHelper;
 
 class Helper
 {
@@ -145,7 +146,10 @@ class Helper
 
 	protected function isHoliday()
 	{
-		return in_array(\diDateTime::format('m/d'), $this->getHolidayDates());
+		return !!array_intersect([
+			\diDateTime::format('m/d'),
+			\diDateTime::format('d.m'),
+		], $this->getHolidayDates());
 	}
 
 	/**
