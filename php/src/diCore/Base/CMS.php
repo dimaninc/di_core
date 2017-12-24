@@ -5,6 +5,7 @@ namespace diCore\Base;
 use diCore\Base\Exception\HttpException;
 use diCore\Data\Config;
 use diCore\Data\Types;
+use diCore\Entity\Ad\Helper;
 use diCore\Entity\Content\Model;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
@@ -582,13 +583,13 @@ abstract class CMS
 	/** @deprecated */
 	public function print_ad_block($block_id, $token)
 	{
-		return \diAds::printBlock($block_id, $token);
+		return Helper::printBlock($block_id, $token);
 	}
 
 	/** @deprecated */
 	public function incut_ad_blocks($content)
 	{
-		return \diAds::incutBlocks($content);
+		return Helper::incutBlocks($content);
 	}
 
 	/** @deprecated */

@@ -1,25 +1,27 @@
 <?php
-
 /**
  * Created by PhpStorm.
  * User: dimaninc
  * Date: 08.03.2016
  * Time: 11:27
  */
+
+use diCore\Admin\Submit;
+use diCore\Helper\FileSystemHelper;
+
 class diPhotosController extends diBaseAdminController
 {
 	public function uploadAction()
 	{
-		create_folders_chain(diPaths::fileSystem(), get_tmp_folder());
+		FileSystemHelper::createTree(\diPaths::fileSystem(), get_tmp_folder());
 
-		$upload_dir = diPaths::fileSystem() . get_tmp_folder();
-		$valid_extensions = array('gif', 'png', 'jpeg', 'jpg');
+		$upload_dir = \diPaths::fileSystem() . get_tmp_folder();
+		$valid_extensions = ['gif', 'png', 'jpeg', 'jpg'];
 
 		$Upload = new FileUpload('pic');
 		$origFileName = $Upload->getFileName();
 
-		do
-		{
+		do {
 			$Upload->newFileName = get_unique_id(10) . '.' . $Upload->getExtension();
 		} while (is_file($upload_dir . $Upload->newFileName));
 
@@ -30,12 +32,12 @@ class diPhotosController extends diBaseAdminController
 		if ($ok)
 		{
 			/** @var diPhotoModel $photo */
-			$photo = diModel::create(diTypes::photo);
+			$photo = \diModel::create(\diTypes::photo);
 
 			list($w, $h, $t) = getimagesize($upload_dir . $Upload->getFileName());
 
 			$photo
-				->setAlbumId(diRequest::get("album_id", 0))
+				->setAlbumId(\diRequest::get("album_id", 0))
 				->setTitle(str_replace("_", " ", replace_file_ext($origFileName, "")))
 				->setContent("")
 				->setPic($Upload->getFileName())
@@ -45,33 +47,33 @@ class diPhotosController extends diBaseAdminController
 				->calculateAndSetOrderNum(-1)
 				->save();
 
-			$Submit = new diAdminSubmit("photos", $photo->getId());
+			$Submit = new Submit("photos", $photo->getId());
 
-			$_FILES = array(
-				"pic" => array(
+			$_FILES = [
+				"pic" => [
 					"name" => $photo->getPic(),
 					"tmp_name" => $upload_dir . $photo->getPic(),
 					"error" => 0,
 					"size" => filesize($upload_dir . $photo->getPic()),
-				),
-			);
+				],
+			];
 
 			$_POST = (array)$photo->get();
 
 			//$Submit->storeData();
-			$Submit->storeImage("pic", array(
-				array(
-					"type" => diAdminSubmit::IMAGE_TYPE_MAIN,
-					"resize" => diImage::DI_THUMB_FIT,
-				),
-				array(
-					"type" => diAdminSubmit::IMAGE_TYPE_PREVIEW,
-					"resize" => diImage::DI_THUMB_FIT,
-				),
-				array(
-					"type" => diAdminSubmit::IMAGE_TYPE_ORIG,
-				),
-			));
+			$Submit->storeImage("pic", [
+				[
+					"type" => Submit::IMAGE_TYPE_MAIN,
+					"resize" => \diImage::DI_THUMB_FIT,
+				],
+				[
+					"type" => Submit::IMAGE_TYPE_PREVIEW,
+					"resize" => \diImage::DI_THUMB_FIT,
+				],
+				[
+					"type" => Submit::IMAGE_TYPE_ORIG,
+				],
+			]);
 
 			if (is_file($upload_dir . $photo->getPic()))
 			{
@@ -79,7 +81,7 @@ class diPhotosController extends diBaseAdminController
 			}
 
 			$picFn = $photo->getPicsFolder() . get_tn_folder() . $photo->getPic();
-			list($tnW, $tnH) = getimagesize(diPaths::fileSystem() . $picFn);
+			list($tnW, $tnH) = getimagesize(\diPaths::fileSystem() . $picFn);
 
 			$photo
 				->setPicTnW($tnW)
@@ -95,13 +97,13 @@ class diPhotosController extends diBaseAdminController
 EOF;
 		}
 
-		$this->defaultResponse(array(
+		return [
 			"success" => !!$ok,
 			"msg" => $ok ? "" : $Upload->getErrorMsg(),
 			"file" => $ok ? $Upload->getFileName() : "",
 			"html" => $html,
 			"direction" => -1,
-		));
+		];
 	}
 
 	/**
@@ -133,7 +135,9 @@ EOF;
 		}
 		else
 		{
-			exit(json_encode(array('success' => false)));
+			return [
+				'success' => false,
+			];
 		}
 
 		$pct = 0;
@@ -151,11 +155,11 @@ EOF;
 			}
 		}
 
-		$this->defaultResponse(array(
+		return [
 			'success' => true,
 			'pct' => $pct,
 			'size' => $size,
-		));
+		];
 	}
 
 	/**
@@ -178,14 +182,18 @@ EOF;
 
 		if (!isset($_POST[ini_get('session.upload_progress.name')]))
 		{
-			exit(json_encode(array('success' => false)));
+			return [
+				'success' => false,
+			];
 		}
 
 		$key = ini_get('session.upload_progress.prefix') . $_POST[ini_get('session.upload_progress.name')];
 
 		if (!isset($_SESSION[$key]))
 		{
-			exit(json_encode(array('success' => false)));
+			return [
+				'success' => false,
+			];
 		}
 
 		$progress = $_SESSION[$key];
@@ -204,10 +212,10 @@ EOF;
 			}
 		}
 
-		$this->defaultResponse(array(
+		return [
 			'success' => true,
 			'pct' => $pct,
 			'size' => $size,
-		));
+		];
 	}
 }

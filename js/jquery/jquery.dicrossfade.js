@@ -36,6 +36,7 @@
 		settings = $.extend({
 			$slide: null,
 			href: null,
+			hrefTarget: null,
 			pic: null,
 			transition: transitions.CROSSFADE,
 			transition_style: transition_styles.BOTH_SLIDING,
@@ -67,21 +68,29 @@
 			}
 		}
 
-		function set_href($e, href)
+		function set_href($e, href, hrefTarget)
 		{
 			if (!href)
 			{
+				$e.css({cursor: 'default'});
+
 				return false;
 			}
 
+			hrefTarget = hrefTarget || '_self';
+
 			if ($e.get(0).tagName.toUpperCase() == 'A')
 			{
-				$e.attr('href', href);
+				$e.attr('href', href).attr('target', hrefTarget);
 			}
 			else
 			{
 				$e.css({cursor: 'pointer'}).click(function() {
-					window.location.href = href;
+					if (hrefTarget != '_self') {
+						window.open(href, hrefTarget);
+					} else {
+						window.location.href = href;
+					}
 
 					return false;
 				});
@@ -218,8 +227,8 @@
 
 			$helper.css(css_ar).insertBefore($this);
 
-			set_href($helper, settings.href);
-			set_href($this, settings.href);
+			set_href($helper, settings.href, settings.hrefTarget);
+			set_href($this, settings.href, settings.hrefTarget);
 
 			switch (settings.transition)
 			{

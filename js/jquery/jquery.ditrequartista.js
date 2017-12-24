@@ -77,7 +77,7 @@
 
 			if ($container.data('ditrequartista-inited'))
 			{
-			    console.log($container.attr('id'), 'ditrequartista already inited');
+			    console.log($container.attr('id'), 'diTrequartista already initiated');
 
 				return true;
 			}
@@ -121,6 +121,7 @@
 
 						pic: $slide.data('pic'),
 						href: $slide.attr('href') || $slide.data('href'),
+						hrefTarget: $slide.data('href-target'),
 
 						title: $slide.data('title') || '',
 						content: $slide.data('content') || '',
@@ -302,6 +303,7 @@
 					$slide: slides_ar[idx].$slide,
 
 					href: slides_ar[idx].href,
+					hrefTarget: slides_ar[idx].hrefTarget,
 					pic: slides_ar[idx].pic,
 
 					transition: get_transition(idx),

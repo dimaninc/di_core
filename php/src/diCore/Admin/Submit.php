@@ -850,7 +850,7 @@ class Submit
 				->setData("order_num", (int)$r->num + 1);
 
 			$this->getDb()->update($this->getTable(), [
-				"*order_num" => "order_num+1",
+				"*order_num" => "order_num + 1",
 			], "WHERE order_num>='{$this->getData("order_num")}'");
 		}
 		else
@@ -886,14 +886,39 @@ class Submit
 		}
 
 		$ar["seconds"] = 0;
+		$value = null;
 
-		$value = !$date || ($date && $ar["mday"] && $ar["mon"] && $ar["year"])
+		if (
+			($date && $ar["mday"] && $ar["mon"] && $ar["year"]) ||
+			($time && $post['th'] !== '' && $post['tm'] !== '')
+		   )
+		{
+			$value = mktime($ar["hours"], $ar["minutes"], $ar["seconds"], $ar["mon"], $ar["mday"], $ar["year"]);
+		}
+
+		/*
+		$value = !$date || ()
 			? mktime($ar["hours"], $ar["minutes"], $ar["seconds"], $ar["mon"], $ar["mday"], $ar["year"])
 			: 0;
+		*/
 
 		if ($format == "str")
 		{
-			$value = $value ? date("Y-m-d H:i:s", $value) : "";
+			$tpl = [];
+
+			if ($date)
+			{
+				$tpl[] = 'Y-m-d';
+			}
+
+			if ($time)
+			{
+				$tpl[] = 'H:i:s';
+			}
+
+			$value = $value
+				? date(join(' ', $tpl), $value)
+				: '';
 		}
 
 		return $value;

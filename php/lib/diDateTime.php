@@ -166,7 +166,7 @@ class diDateTime
 	{
 		$a = getdate(self::timestamp($dt));
 
-		return $a["wday"] ?: 7;
+		return $a["wday"] ?: self::SUNDAY;
 	}
 
 	public static function yearDay($dt = null)
