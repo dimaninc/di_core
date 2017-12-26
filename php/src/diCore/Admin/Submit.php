@@ -308,10 +308,10 @@ class Submit
 		{
 			if (
 				!isset($_POST[$f]) &&
-				!isset($_POST[$f . \diAdminForm::NEW_FIELD_SUFFIX]) &&
+				!isset($_POST[$f . Form::NEW_FIELD_SUFFIX]) &&
 				!isset($_FILES[$f]) &&
-				!in_array($v["type"], ["checkbox", "dynamic", "dynamic_pics", "dynamic_files", 'separator']) &&
-				!$this->isFlag($f, "virtual")
+				!in_array($v['type'], ['checkbox', 'checkboxes', 'dynamic', 'dynamic_pics', 'dynamic_files', 'separator']) &&
+				!$this->isFlag($f, 'virtual')
 			)
 			{
 				//echo $f;
@@ -430,9 +430,9 @@ class Submit
 		// new fields
 		foreach ($this->_ff as $f)
 		{
-			if (!empty($_POST[$f . \diAdminForm::NEW_FIELD_SUFFIX]))
+			if (!empty($_POST[$f . Form::NEW_FIELD_SUFFIX]))
 			{
-				$this->setData($f, \diRequest::post($f . \diAdminForm::NEW_FIELD_SUFFIX));
+				$this->setData($f, \diRequest::post($f . Form::NEW_FIELD_SUFFIX));
 			}
 		}
 

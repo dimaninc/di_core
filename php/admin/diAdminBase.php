@@ -1,9 +1,9 @@
 <?php
 
-use diCore\Base\CMS;
-use diCore\Data\Config;
 use diCore\Admin\BasePage;
 use diCore\Admin\Form;
+use diCore\Base\CMS;
+use diCore\Data\Config;
 
 abstract class diAdminBase
 {
@@ -714,7 +714,7 @@ abstract class diAdminBase
 	{
 		$script = '';
 
-		if ($alias = \diAdminForm::getWysiwygAlias($this->getWysiwygVendor()))
+		if ($alias = Form::getWysiwygAlias($this->getWysiwygVendor()))
 		{
 			$script = $this->getTwig()->parse($this->getWysiwygTemplateName($alias), [
 				'needed' => [

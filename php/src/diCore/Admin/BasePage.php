@@ -398,7 +398,7 @@ abstract class BasePage
 	}
 
 	/**
-	 * @return \diAdminForm
+	 * @return Form
 	 * @throws \Exception
 	 */
 	public function getForm()
@@ -882,7 +882,7 @@ abstract class BasePage
 				"AFTER_FORM" => "",
 			]);
 
-		$this->Form = new \diAdminForm($this);
+		$this->Form = new Form($this);
 		$this->getForm()
 			->setStaticMode($this->getOption("staticMode"))
 			->read_data();
