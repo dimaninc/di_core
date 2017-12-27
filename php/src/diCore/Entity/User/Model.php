@@ -92,6 +92,13 @@ class Model extends \diBaseUserModel
 
 	public function fastSignUp($options = [])
 	{
+		if ($options instanceof \diTwig)
+		{
+			$options = [
+				'twig' => $options,
+			];
+		}
+
 		$options = extend([
 			'twig' => null,
 		], $options);

@@ -164,7 +164,7 @@ class Auth extends \diBaseController
 
 		if (!AuthTool::i()->authorized())
 		{
-			$ar['message'] = 'Авторизуйтесь для сохранения';
+			$ar['message'] = 'Авторизуйтесь для смены пароля';
 		}
 		else
 		{

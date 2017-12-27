@@ -237,7 +237,7 @@ class Model extends \diModel
 			"->setRelated('href', '{$this->getHref()}')",
 		];
 
-		/** @var \diUserModel $user */
+		/** @var \diCore\Entity\User\Model $user */
 		if ($user = $this->getRelated('user'))
 		{
 			$related[] = "->setRelated('user', " . $user->asPhp(static::$userExcludeFields) . ")";

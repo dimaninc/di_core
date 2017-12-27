@@ -281,17 +281,26 @@ abstract class CMS
 					'exception' => $e,
 				]);
 
+			$this->renderAfterError();
+
 			HttpCode::header($this->getResponseCode());
 		} catch (\Exception $e) {
 			$this->getTwig()
 				->renderPage('errors/basic', [
 					'exception' => $e,
 				]);
+
+			$this->renderAfterError();
 		} finally {
 			$this
 				->finish();
 		}
 
+	}
+
+	protected function renderAfterError()
+	{
+		return $this;
 	}
 
 	public static function fast_lite_create($options = [])
@@ -2132,7 +2141,7 @@ abstract class CMS
 	{
 		$this->setResponseCode(HttpCode::NOT_FOUND);
 
-		if (static::debugMode())
+		if ($this->notFoundBackTraceNeeded())
 		{
 			echo "<p><b>Debug back trace:</b></p><pre>";
 			debug_print_backtrace();
@@ -2140,6 +2149,11 @@ abstract class CMS
 		}
 
 		throw new HttpException($this->getResponseCode());
+	}
+
+	protected function notFoundBackTraceNeeded()
+	{
+		return false;
 	}
 
 	/**

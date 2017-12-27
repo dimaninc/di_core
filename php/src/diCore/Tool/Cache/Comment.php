@@ -62,13 +62,13 @@ class Comment
 		/** @var Collection $comments */
 		$comments = $this->createCollectionByTarget($targetType, $targetId, $Comments);
 
-		/** @var \diUserCollection $users */
+		/** @var \diCore\Entity\User\Collection $users */
 		$users = \diCollection::create(Types::user, $comments->map('user_id'));
 
 		/** @var Model $comment */
 		foreach ($comments as $comment)
 		{
-			/** @var \diUserModel $user */
+			/** @var \diCore\Entity\User\Model $user */
 			$user = $users[$comment->getUserId()];
 
 			$comment

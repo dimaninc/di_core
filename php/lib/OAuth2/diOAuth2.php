@@ -249,14 +249,14 @@ abstract class diOAuth2
 	}
 
 	/**
-	 * @return diModel|diUserCustomModel|diUserModel
+	 * @return \diCore\Entity\User\Model
 	 * @throws Exception
 	 */
 	protected function syncWithUser()
 	{
 		if (!$this->getProfile()->exists())
 		{
-			throw new Exception("No profile retrieved");
+			throw new \Exception("No profile retrieved");
 		}
 
 		$user = $this->getUserModelByProfile();
@@ -267,10 +267,10 @@ abstract class diOAuth2
 	}
 
 	/**
-	 * @param diUserModel $user
+	 * @param \diCore\Entity\User\Model $user
 	 * @return $this
 	 */
-	protected function storeProfileTo(diUserModel $user)
+	protected function storeProfileTo(\diCore\Entity\User\Model $user)
 	{
 		$user->importDataFromOAuthProfile($this->getProfile());
 

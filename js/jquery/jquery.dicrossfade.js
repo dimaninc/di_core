@@ -68,6 +68,18 @@
 			}
 		}
 
+		function reset_href($e)
+		{
+			if ($e.get(0).tagName.toUpperCase() == 'A')
+			{
+				$e.attr('href', '#');
+			}
+			else
+			{
+				$e.css({cursor: 'default'}).off('click.trequartista');
+			}
+		}
+
 		function set_href($e, href, hrefTarget)
 		{
 			if (!href)
@@ -85,15 +97,19 @@
 			}
 			else
 			{
-				$e.css({cursor: 'pointer'}).click(function() {
-					if (hrefTarget != '_self') {
-						window.open(href, hrefTarget);
-					} else {
-						window.location.href = href;
-					}
+				(function($e, href, hrefTarget) {
+					$e
+						.css({cursor: 'pointer'})
+						.on('click.trequartista', function() {
+							if (hrefTarget != '_self') {
+								window.open(href, hrefTarget);
+							} else {
+								window.location.href = href;
+							}
 
-					return false;
-				});
+							return false;
+						});
+				})($e, href, hrefTarget);
 			}
 		}
 
@@ -227,7 +243,9 @@
 
 			$helper.css(css_ar).insertBefore($this);
 
+			reset_href($helper);
 			set_href($helper, settings.href, settings.hrefTarget);
+			reset_href($this);
 			set_href($this, settings.href, settings.hrefTarget);
 
 			switch (settings.transition)

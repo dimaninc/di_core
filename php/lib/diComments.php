@@ -65,7 +65,7 @@ class diComments
 	/** @var  \diCore\Entity\Comment\Collection */
 	protected $comments;
 
-	/** @var  diUserCollection */
+	/** @var  \diCore\Entity\User\Collection */
 	protected $users;
 
 	/** @var  diAdminCollection */

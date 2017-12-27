@@ -444,7 +444,7 @@ class diActionsLog
 				return $admin->exists() ? $admin->getLogin() : "admin#$rowOrUserId->user_id";
 
 			case self::utUser:
-				/** @var diUserModel $user */
+				/** @var \diCore\Entity\User\Model $user */
 				$user = diModel::create(diTypes::user, $rowOrUserId->user_id);
 
 				return $user->exists() ? $user->getEmail() : "user#$rowOrUserId->user_id";

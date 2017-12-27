@@ -581,6 +581,6 @@ function diPagesNavy_wrong_page_error()
 
 	if (isset($Z))
 	{
-		$Z->error_404();
+		$Z->errorNotFound();
 	}
 }

@@ -43,7 +43,7 @@ class Auth
 	/** @var Auth */
 	protected static $instance;
 
-	/** @var \diUserModel */
+	/** @var \diCore\Entity\User\Model */
 	private $user;
 	/** @var int */
 	private $authSource;
@@ -97,7 +97,7 @@ class Auth
 	}
 
 	/**
-	 * @return \diUserModel
+	 * @return \diCore\Entity\User\Model
 	 */
 	public function getUserModel()
 	{

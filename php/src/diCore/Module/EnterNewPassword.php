@@ -19,7 +19,7 @@ class EnterNewPassword extends \diModule
 		$email = $this->getRoute(1);
 		$key = $this->getRoute(2);
 
-		/** @var \diUserModel $user */
+		/** @var \diCore\Entity\User\Model $user */
 		$user = !Auth::i()->authorized() && \diEmail::isValid($email) && Model::isActivationKeyValid($key)
 			? \diModel::create(\diTypes::user, $email, 'slug')
 			: \diModel::create(\diTypes::user);

@@ -87,7 +87,7 @@ class PaymentDrafts extends BasePage
 					'width' => '20%',
 				],
 				'value' => function(Model $m) {
-					/** @var \diUserModel $user */
+					/** @var \diCore\Entity\User\Model $user */
 					$user = CollectionCache::getModel(Types::user, $m->getUserId());
 
 					return $user;
@@ -158,7 +158,7 @@ class PaymentDrafts extends BasePage
 
 		/** @var Model $draft */
 		$draft = $this->getForm()->getModel();
-		/** @var \diUserModel $user */
+		/** @var \diCore\Entity\User\Model $user */
 		$user = \diModel::create(Types::user, $draft->getUserId());
 
 		$target = \diModel::create($draft->getTargetType(), $draft->getTargetId());
