@@ -384,13 +384,19 @@ class Auth
 
 		if ($this->authorized())
 		{
-			$tpl->process("LOGIN_PANEL", "user_panel");
+			if ($tpl->exists('user_panel'))
+			{
+				$tpl->process("LOGIN_PANEL", "user_panel");
+			}
 		}
 		else
 		{
-			$tpl
-				->process("LOGIN_PANEL", "auth_panel")
-				->process("LOGIN_POPUP", "auth_popup");
+			if ($tpl->exists('auth_panel') && $tpl->exists('auth_popup'))
+			{
+				$tpl
+					->process("LOGIN_PANEL", "auth_panel")
+					->process("LOGIN_POPUP", "auth_popup");
+			}
 		}
 
 		return $this;
