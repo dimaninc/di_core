@@ -280,6 +280,8 @@ abstract class CMS
 				->renderPage('errors/' . $e->getCode(), [
 					'exception' => $e,
 				]);
+
+			HttpCode::header($this->getResponseCode());
 		} catch (\Exception $e) {
 			$this->getTwig()
 				->renderPage('errors/basic', [
@@ -835,7 +837,7 @@ abstract class CMS
 
 	protected function openGraphNeeded()
 	{
-		return $this->responseCode != HttpCode::NOT_FOUND;
+		return !$this->isResponseCode(HttpCode::NOT_FOUND);
 	}
 
 	protected function languageAlternatesNeeded()
@@ -851,7 +853,7 @@ abstract class CMS
 	protected function shareBlockNeeded()
 	{
 		return
-			$this->responseCode == HttpCode::OK &&
+			$this->isResponseCode(HttpCode::OK) &&
 			$this->print_share_block &&
 			!\diContentTypes::getParam($this->getContentModel()->getType(), "logged_in");
 	}
@@ -1204,7 +1206,7 @@ abstract class CMS
 			return $this;
 		}
 
-		$contentReady = $this->responseCode == HttpCode::NOT_FOUND
+		$contentReady = $this->isResponseCode(HttpCode::NOT_FOUND)
 			? !!count($this->getCachedContentCollection())
 			: $this->getContentModel()->exists();
 
@@ -1248,7 +1250,7 @@ abstract class CMS
 			$this
 				->define_templates()
 				->initTplDefines()
-				->error_404();
+				->errorNotFound();
 		}
 
 		return $this;
@@ -2116,7 +2118,7 @@ abstract class CMS
 	 */
 	public function errorExtraQueryParams()
 	{
-		$this->error_404();
+		$this->errorNotFound();
 
 		return $this;
 	}
@@ -2128,30 +2130,28 @@ abstract class CMS
 	 */
 	public function errorNotFound()
 	{
-		$this->error_404();
+		$this->setResponseCode(HttpCode::NOT_FOUND);
 
-		return $this;
+		if (static::debugMode())
+		{
+			echo "<p><b>Debug back trace:</b></p><pre>";
+			debug_print_backtrace();
+			echo "</pre>";
+		}
+
+		throw new HttpException($this->getResponseCode());
 	}
 
 	/**
-	 * Such page exist, user will be able to access when authorized
+	 * Such page exists, user will be able to access it when authorized
 	 *
 	 * @return $this
 	 */
 	public function errorNotAuthorized()
 	{
-		$this->responseCode = HttpCode::UNAUTHORIZED;
+		$this->setResponseCode(HttpCode::UNAUTHORIZED);
 
-		HttpCode::header($this->responseCode);
-
-		$this->printBreadCrumbs();
-
-		echo $this->getTpl()
-			->process("PAGE", ".error_login")
-			->process("head")
-			->parse("FINAL", "index");
-
-		die(0);
+		throw new HttpException($this->getResponseCode());
 	}
 
 	/** @deprecated  */
@@ -2161,38 +2161,18 @@ abstract class CMS
 	}
 
 	/**
-	 * Such page exists, user is authorized, but he has no access to it
+	 * Such page exists, user is authorized, but he has no permission to access it
 	 */
 	public function errorForbidden()
 	{
-		$this->responseCode = HttpCode::FORBIDDEN;
+		$this->setResponseCode(HttpCode::FORBIDDEN);
 
-		HttpCode::header($this->responseCode);
-
-		$this->printBreadCrumbs();
-
-		$this->getTwig()
-			->renderPage('errors/' . $this->responseCode, [
-			]);
-
-		die(0);
+		throw new HttpException($this->getResponseCode());
 	}
 
 	public function error_404()
 	{
-		$this->responseCode = HttpCode::NOT_FOUND;
-
-		HttpCode::header($this->responseCode);
-
-		if (static::debugMode())
-		{
-			echo "<p><b>Debug back trace:</b></p><pre>";
-			debug_print_backtrace();
-			echo "</pre>";
-		}
-
-		echo $this->getTpl()->parse("FINAL", "error_404");
-		die(0);
+		return $this->errorNotFound();
 	}
 
 	public function redirect301ToPage($pageType, $die = true)
@@ -2534,5 +2514,32 @@ abstract class CMS
 	public function getMainTarget()
 	{
 		return $this->mainTarget ?: $this->getContentModel();
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getResponseCode()
+	{
+		return $this->responseCode;
+	}
+
+	/**
+	 * @return bool
+	 */
+	public function isResponseCode($code)
+	{
+		return $this->getResponseCode() == $code;
+	}
+
+	/**
+	 * @param int $responseCode
+	 * @return $this
+	 */
+	public function setResponseCode($responseCode)
+	{
+		$this->responseCode = $responseCode;
+
+		return $this;
 	}
 }
