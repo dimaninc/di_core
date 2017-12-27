@@ -137,7 +137,7 @@ class diModel implements \ArrayAccess
 
 		if (!$className)
 		{
-			throw new Exception("Model class doesn't exist: " . ($className ?: $type));
+			throw new \Exception("Model class doesn't exist: " . ($className ?: $type));
 		}
 
 		/** @var diModel $o */
@@ -225,7 +225,7 @@ class diModel implements \ArrayAccess
 
 	public function initFrom($r)
 	{
-		if (is_object($r) && $r instanceof diModel)
+		if (is_object($r) && $r instanceof \diModel)
 		{
 			$r = (array)$r->get();
 		}
@@ -238,7 +238,7 @@ class diModel implements \ArrayAccess
 			? $r
 			: ($r || $this->forceGetRecord ? $this->getRecord($r) : []);
 
-		if ($this->ar instanceof diModel)
+		if ($this->ar instanceof \diModel)
 		{
 			$m = $this->ar;
 			$this->ar = [];
@@ -744,12 +744,12 @@ class diModel implements \ArrayAccess
 	{
 		if (!$this->getTable())
 		{
-			throw new Exception("Table not defined");
+			throw new \Exception("Table not defined");
 		}
 
 		$a = $this->prepareIdAndFieldForGetRecord($id, $field);
 
-		return $this->getDb()->ar($this->getTable(), "WHERE {$a["field"]}='{$a["id"]}'");
+		return $this->getDb()->ar($this->getTable(), "WHERE {$a["field"]} = '{$a["id"]}'");
 	}
 
 	public function moveFieldToRelated($field)
@@ -1027,7 +1027,7 @@ class diModel implements \ArrayAccess
 			: null;
 	}
 
-	public function isEqualTo(diModel $m)
+	public function isEqualTo(\diModel $m)
 	{
 		return $this->hasId() && $this->getId() == $m->getId();
 	}
@@ -1217,7 +1217,7 @@ class diModel implements \ArrayAccess
 
 		if ($this->validationErrors)
 		{
-			$e = new diValidationException("Unable to validate " . get_class($this) . ": " . join("\n", $this->preparedValidationErrors()));
+			$e = new \diValidationException("Unable to validate " . get_class($this) . ": " . join("\n", $this->preparedValidationErrors()));
 			$e->setErrors($this->validationErrors);
 
 			throw $e;
@@ -1303,7 +1303,7 @@ class diModel implements \ArrayAccess
 				->saveToDb()
 				->afterSave()
 				->commitTransaction();
-		} catch (diRuntimeErrorsException $e) {
+		} catch (\diRuntimeErrorsException $e) {
 			$this->rollbackTransaction();
 
 			throw $e;
@@ -1355,7 +1355,7 @@ class diModel implements \ArrayAccess
 				->afterKill()
 				->commitTransaction()
 				->killRelatedFilesAndData();
-		} catch (diRuntimeErrorsException $e) {
+		} catch (\diRuntimeErrorsException $e) {
 			$this->rollbackTransaction();
 
 			throw $e;
@@ -1417,7 +1417,7 @@ class diModel implements \ArrayAccess
 				!$this->isFieldExcludedOnSave($k)
 			   )
 			{
-				$ar[$k] = diDB::_in($v);
+				$ar[$k] = \diDB::_in($v);
 			}
 		}
 
@@ -1451,7 +1451,7 @@ class diModel implements \ArrayAccess
 
 			if (!$result)
 			{
-				$e = new diDatabaseException("Unable to insert/update " . get_class($this) . " in DB: " .
+				$e = new \diDatabaseException("Unable to insert/update " . get_class($this) . " in DB: " .
 					join("\n", $this->getDb()->getLog()));
 				$e->setErrors($this->getDb()->getLog());
 
@@ -1464,7 +1464,7 @@ class diModel implements \ArrayAccess
 
 			if (!$result)
 			{
-				$e = new diDatabaseException("Unable to update " . get_class($this) . " in DB: " .
+				$e = new \diDatabaseException("Unable to update " . get_class($this) . " in DB: " .
 					join("\n", $this->getDb()->getLog()));
 				$e->setErrors($this->getDb()->getLog());
 
@@ -1477,7 +1477,7 @@ class diModel implements \ArrayAccess
 
 			if ($id === false)
 			{
-				$e = new diDatabaseException("Unable to insert " . get_class($this) . " into DB: " .
+				$e = new \diDatabaseException("Unable to insert " . get_class($this) . " into DB: " .
 					join("\n", $this->getDb()->getLog()));
 				$e->setErrors($this->getDb()->getLog());
 
@@ -1561,7 +1561,7 @@ class diModel implements \ArrayAccess
 	{
 		$type = preg_replace('/^di_|_model/', '', underscore(static::class));
 
-		return diCollection::create($type);
+		return \diCollection::create($type);
 	}
 
 	/**
@@ -1681,8 +1681,8 @@ class diModel implements \ArrayAccess
 				$this->set($field, get_unique_id($options['length']) . '.' . $ext);
 
 				$exists = $options['checkMode'] == 'db'
-					? diCollection::create(static::type)->filterBy($field, $this->get($field))->count() > 0
-					: is_file(diPaths::fileSystem($this) . $this->getPicsFolder() . $this->get($field));
+					? \diCollection::create(static::type)->filterBy($field, $this->get($field))->count() > 0
+					: is_file(\diPaths::fileSystem($this) . $this->getPicsFolder() . $this->get($field));
 			} while ($exists);
 		}
 

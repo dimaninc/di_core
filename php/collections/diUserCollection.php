@@ -1,13 +1,5 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: dimaninc
- * Date: 16.10.15
- * Time: 18:02
- */
-class diUserCollection extends diCollection
+/** @deprecated  */
+class diUserCollection extends \diCore\Entity\User\Collection
 {
-	const type = diTypes::user;
-	protected $table = "users";
-	protected $modelType = "user";
 }

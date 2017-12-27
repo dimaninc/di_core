@@ -9,6 +9,7 @@
 namespace diCore\Module;
 
 use diCore\Base\CMS;
+use diCore\Entity\User\Model;
 use diCore\Tool\Auth;
 
 class EnterNewPassword extends \diModule
@@ -19,7 +20,7 @@ class EnterNewPassword extends \diModule
 		$key = $this->getRoute(2);
 
 		/** @var \diUserModel $user */
-		$user = !Auth::i()->authorized() && \diEmail::isValid($email) && \diUserModel::isActivationKeyValid($key)
+		$user = !Auth::i()->authorized() && \diEmail::isValid($email) && Model::isActivationKeyValid($key)
 			? \diModel::create(\diTypes::user, $email, 'slug')
 			: \diModel::create(\diTypes::user);
 
@@ -44,7 +45,7 @@ class EnterNewPassword extends \diModule
 			{
 				$user
 					->setPassword($password)
-					->setActivationKey(\diUserModel::generateActivationKey())
+					->setActivationKey(Model::generateActivationKey())
 					->save();
 
 				Auth::i()->forceAuthorize($user, true);

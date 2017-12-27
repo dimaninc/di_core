@@ -6,8 +6,9 @@
  * Time: 17:25
  */
 
-use diCore\Tool\Mail\Queue;
 use diCore\Entity\Comment\Model;
+use diCore\Entity\User\Model as User;
+use diCore\Tool\Mail\Queue;
 
 class diCommentController extends diBaseController
 {
@@ -22,11 +23,11 @@ class diCommentController extends diBaseController
 	protected $userId;
 
 	/**
-	 * @var diUserModel
+	 * @var User
 	 */
 	protected $targetCommentOwner;
 	/**
-	 * @var diUserModel
+	 * @var User
 	 */
 	protected $commenter;
 	/**
