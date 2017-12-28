@@ -6,11 +6,25 @@
  * Time: 11:27
  */
 
-use diCore\Admin\Submit;
-use diCore\Helper\FileSystemHelper;
+namespace diCore\Controller;
 
-class diPhotosController extends diBaseAdminController
+use diCore\Admin\Submit;
+use diCore\Data\Types;
+use diCore\Helper\FileSystemHelper;
+use diCore\Helper\StringHelper;
+
+class AdminPhotos extends \diBaseAdminController
 {
+	protected function getPhotoTitle($origFileName)
+	{
+		return str_replace('_', ' ', StringHelper::replaceFileExtension($origFileName, ''));
+	}
+
+	protected function getPhotoContent($origFileName)
+	{
+		return '';
+	}
+
 	public function uploadAction()
 	{
 		FileSystemHelper::createTree(\diPaths::fileSystem(), get_tmp_folder());
@@ -18,7 +32,7 @@ class diPhotosController extends diBaseAdminController
 		$upload_dir = \diPaths::fileSystem() . get_tmp_folder();
 		$valid_extensions = ['gif', 'png', 'jpeg', 'jpg'];
 
-		$Upload = new FileUpload('pic');
+		$Upload = new \FileUpload('pic');
 		$origFileName = $Upload->getFileName();
 
 		do {
@@ -27,19 +41,19 @@ class diPhotosController extends diBaseAdminController
 
 		$ok = $Upload->handleUpload($upload_dir, $valid_extensions);
 
-		$html = "";
+		$html = '';
 
 		if ($ok)
 		{
-			/** @var diPhotoModel $photo */
-			$photo = \diModel::create(\diTypes::photo);
+			/** @var \diPhotoModel $photo */
+			$photo = \diModel::create(Types::photo);
 
 			list($w, $h, $t) = getimagesize($upload_dir . $Upload->getFileName());
 
 			$photo
-				->setAlbumId(\diRequest::get("album_id", 0))
-				->setTitle(str_replace("_", " ", replace_file_ext($origFileName, "")))
-				->setContent("")
+				->setAlbumId(\diRequest::get('album_id', 0))
+				->setTitle($this->getPhotoTitle($origFileName))
+				->setContent($this->getPhotoContent($origFileName))
 				->setPic($Upload->getFileName())
 				->setPicW($w)
 				->setPicH($h)
@@ -47,31 +61,31 @@ class diPhotosController extends diBaseAdminController
 				->calculateAndSetOrderNum(-1)
 				->save();
 
-			$Submit = new Submit("photos", $photo->getId());
+			$Submit = new Submit('photos', $photo->getId());
 
 			$_FILES = [
-				"pic" => [
-					"name" => $photo->getPic(),
-					"tmp_name" => $upload_dir . $photo->getPic(),
-					"error" => 0,
-					"size" => filesize($upload_dir . $photo->getPic()),
+				'pic' => [
+					'name' => $photo->getPic(),
+					'tmp_name' => $upload_dir . $photo->getPic(),
+					'error' => 0,
+					'size' => filesize($upload_dir . $photo->getPic()),
 				],
 			];
 
 			$_POST = (array)$photo->get();
 
 			//$Submit->storeData();
-			$Submit->storeImage("pic", [
+			$Submit->storeImage('pic', [
 				[
-					"type" => Submit::IMAGE_TYPE_MAIN,
-					"resize" => \diImage::DI_THUMB_FIT,
+					'type' => Submit::IMAGE_TYPE_MAIN,
+					'resize' => \diImage::DI_THUMB_FIT,
 				],
 				[
-					"type" => Submit::IMAGE_TYPE_PREVIEW,
-					"resize" => \diImage::DI_THUMB_FIT,
+					'type' => Submit::IMAGE_TYPE_PREVIEW,
+					'resize' => \diImage::DI_THUMB_FIT,
 				],
 				[
-					"type" => Submit::IMAGE_TYPE_ORIG,
+					'type' => Submit::IMAGE_TYPE_ORIG,
 				],
 			]);
 
@@ -92,17 +106,23 @@ class diPhotosController extends diBaseAdminController
 <li data-id="{$photo->getId()}" data-role="row">
 	<div class="tn"><a href="/_admin/photos/form/{$photo->getId()}/"><img src="/{$picFn}"></a></div>
 	<div class="title">{$photo->getTitle()}</div>
-	<div class="buttons-panel"><div class="nicetable-button" data-action="up" title="Переместить вверх"></div> <a class="nicetable-button" data-action="edit" title="Редактировать" href="/_admin/photos/form/13/?id=13"></a> <div class="nicetable-button" data-action="del" title="Удалить"></div> <div class="nicetable-button" data-action="visible" data-state="1" title="Видно"></div> <div class="nicetable-button" data-action="down" title="Переместить вниз"></div></div>
+	<div class="buttons-panel">
+		<div class="nicetable-button" data-action="up" title="Переместить вверх"></div>
+		<a class="nicetable-button" data-action="edit" title="Редактировать" href="/_admin/photos/form/{$photo->getId()}/"></a>
+		<div class="nicetable-button" data-action="del" title="Удалить"></div>
+		<div class="nicetable-button" data-action="visible" data-state="{$photo->getVisible()}" title="Видно"></div>
+		<div class="nicetable-button" data-action="down" title="Переместить вниз"></div>
+	</div>
 </li>
 EOF;
 		}
 
 		return [
-			"success" => !!$ok,
-			"msg" => $ok ? "" : $Upload->getErrorMsg(),
-			"file" => $ok ? $Upload->getFileName() : "",
-			"html" => $html,
-			"direction" => -1,
+			'success' => !!$ok,
+			'msg' => $ok ? '' : $Upload->getErrorMsg(),
+			'file' => $ok ? $Upload->getFileName() : '',
+			'html' => $html,
+			'direction' => -1,
 		];
 	}
 
