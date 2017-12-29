@@ -8,6 +8,7 @@
 use diCore\Data\Config;
 use diCore\Base\CMS;
 
+/** @deprecated */
 class FastTemplate
 {
 	const PLACE_WEB = 1;
@@ -420,7 +421,7 @@ class FastTemplate
 	//	{VAR} to VALUE conversion within the template.
 	public function parse_template($template, $tpl_array)
 	{
-		while (list($key, $val) = each($tpl_array))
+		foreach ($tpl_array as $key => $val)
 		{
 			if (!empty($key))
 			{
@@ -445,7 +446,7 @@ class FastTemplate
 			if (preg_match("/({[A-Z0-9_]+})/", $template))
 			{
 				$unknown = explode("\n", $template);
-				while (list($Element, $Line) = each($unknown))
+				foreach ($unknown as $Line)
 				{
 					$UnkVar = $Line;
 					if (!empty($UnkVar))
@@ -483,7 +484,7 @@ class FastTemplate
 			// Clear any previous data
 			unset($this->data[$returnVar]);
 
-			while (list($key, $val) = each($fileTags))
+			foreach ($fileTags as $val)
 			{
 				if (empty($this->data[$val]))
 				{
@@ -801,7 +802,7 @@ class FastTemplate
 		if (empty($fileHandle))
 		{
 			// Clear ALL fileHandles
-			while (list($key, $val) = each($this->LOADED))
+			foreach ($this->LOADED as $key => $val)
 			{
 				unset($this->data[$key]);
 			}
@@ -810,7 +811,7 @@ class FastTemplate
 		}
 		else
 		{
-			if (gettype($fileHandle) != "array")
+			if (!is_array($fileHandle))
 			{
 				if (isset($this->data[$fileHandle]) || !empty($this->data[$fileHandle]))
 				{
@@ -820,10 +821,10 @@ class FastTemplate
 			}
 			else
 			{
-				while (list($Key, $Val) = each($fileHandle))
+				foreach ($fileHandle as $key => $val)
 				{
-					unset($this->LOADED[$Key]);
-					unset($this->data[$Key]);
+					unset($this->LOADED[$key]);
+					unset($this->data[$key]);
 				}
 			}
 		}
@@ -844,13 +845,13 @@ class FastTemplate
 			return $this;
 		}
 
-		if (gettype($fileTag) != "array")
+		if (!is_array($fileTag))
 		{
 			unset($this->FILELIST[$fileTag]);
 		}
 		else
 		{
-			while (list($Tag, $Val) = each($fileTag))
+			foreach ($fileTag as $Tag => $Val)
 			{
 				unset($this->FILELIST[$Tag]);
 			}
@@ -914,7 +915,7 @@ class FastTemplate
 	{
 		if (gettype($templates) == "array")
 		{
-			while (list($key, $val) = each($templates))
+			foreach ($templates as $key => $val)
 			{
 				if (!empty($key))
 				{
