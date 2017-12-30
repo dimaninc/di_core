@@ -16,6 +16,7 @@ namespace diCore\Entity\MailPlan;
  * @method integer	getMode
  * @method string	getConditions
  * @method string	getCreatedAt
+ * @method string	getStartedAt
  * @method string	getProcessedAt
  *
  * @method bool hasTargetType
@@ -23,6 +24,7 @@ namespace diCore\Entity\MailPlan;
  * @method bool hasMode
  * @method bool hasConditions
  * @method bool hasCreatedAt
+ * @method bool hasStartedAt
  * @method bool hasProcessedAt
  *
  * @method Model setTargetType($value)
@@ -30,14 +32,19 @@ namespace diCore\Entity\MailPlan;
  * @method Model setMode($value)
  * @method Model setConditions($value)
  * @method Model setCreatedAt($value)
+ * @method Model setStartedAt($value)
  * @method Model setProcessedAt($value)
  */
 abstract class Model extends \diModel
 {
 	const type = \diTypes::mail_plan;
 	protected $table = 'mail_plans';
+	protected $sentMailsCount = 0;
 
-	protected $customDateFields = ['processed_at'];
+	protected $customDateFields = [
+		'started_at',
+		'processed_at',
+	];
 
 	public function getModeName()
 	{
@@ -57,8 +64,39 @@ abstract class Model extends \diModel
 		]);
 	}
 
+	protected function beforeProcess()
+	{
+		$this
+			->setStartedAt(\diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME))
+			->save();
+
+		return $this;
+	}
+
+	protected function afterProcess()
+	{
+		$this
+			->setProcessedAt(\diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME))
+			->save();
+
+		return $this;
+	}
+
 	/**
 	 * @return $this
 	 */
-	abstract public function process();
+	abstract protected function mainProcess();
+
+	public function process()
+	{
+		return $this
+			->beforeProcess()
+			->mainProcess()
+			->afterProcess();
+	}
+
+	public function getSentMailsCount()
+	{
+		return $this->sentMailsCount;
+	}
 }

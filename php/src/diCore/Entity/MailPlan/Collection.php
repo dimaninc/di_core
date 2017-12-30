@@ -17,6 +17,7 @@ namespace diCore\Entity\MailPlan;
  * @method Collection filterByMode($value, $operator = null)
  * @method Collection filterByConditions($value, $operator = null)
  * @method Collection filterByCreatedAt($value, $operator = null)
+ * @method Collection filterByStartedAt($value, $operator = null)
  * @method Collection filterByProcessedAt($value, $operator = null)
  *
  * @method Collection orderById($direction = null)
@@ -25,6 +26,7 @@ namespace diCore\Entity\MailPlan;
  * @method Collection orderByMode($direction = null)
  * @method Collection orderByConditions($direction = null)
  * @method Collection orderByCreatedAt($direction = null)
+ * @method Collection orderByStartedAt($direction = null)
  * @method Collection orderByProcessedAt($direction = null)
  *
  * @method Collection selectId()
@@ -33,6 +35,7 @@ namespace diCore\Entity\MailPlan;
  * @method Collection selectMode()
  * @method Collection selectConditions()
  * @method Collection selectCreatedAt()
+ * @method Collection selectStartedAt()
  * @method Collection selectProcessedAt()
  */
 class Collection extends \diCollection

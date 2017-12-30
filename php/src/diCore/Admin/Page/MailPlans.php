@@ -50,12 +50,23 @@ class MailPlans extends \diCore\Admin\BasePage
 			],
 			'conditions' => [
 				'headAttrs' => [
-					'width' => '50%',
+					'width' => '40%',
 				],
 			],
 			'created_at' => [
 				'value' => function(Model $m) {
 					return \diDateTime::format('d.m.Y H:i', $m->getCreatedAt());
+				},
+				'headAttrs' => [
+					'width' => '10%',
+				],
+				'bodyAttrs' => [
+					'class' => 'dt',
+				],
+			],
+			'started_at' => [
+				'value' => function(Model $m) {
+					return $m->hasStartedAt() ? \diDateTime::format('d.m.Y H:i', $m->getStartedAt()) : '&mdash;';
 				},
 				'headAttrs' => [
 					'width' => '10%',
@@ -129,6 +140,13 @@ class MailPlans extends \diCore\Admin\BasePage
 				'flags'		=> ['static', 'untouchable', 'initially_hidden'],
 			],
 
+			'started_at' => [
+				'type'		=> 'datetime_str',
+				'title'		=> 'Started at',
+				'default'	=> '',
+				'flags'		=> ['static', 'untouchable', 'initially_hidden'],
+			],
+
 			'processed_at' => [
 				'type'		=> 'datetime_str',
 				'title'		=> 'Processed at',
@@ -145,6 +163,6 @@ class MailPlans extends \diCore\Admin\BasePage
 
 	public function getModuleCaption()
 	{
-		return 'План рассылки';
+		return 'Планы рассылки';
 	}
 }

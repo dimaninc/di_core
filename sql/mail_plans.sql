@@ -5,8 +5,9 @@ CREATE TABLE IF NOT EXISTS mail_plans (
   mode         TINYINT,
   conditions   TEXT,
   created_at   TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+  started_at   DATETIME NULL DEFAULT NULL,
   processed_at DATETIME NULL DEFAULT NULL,
-  INDEX idx(target_type, target_id, mode),
+  INDEX idx(target_type, target_id, mode, started_at, processed_at),
   PRIMARY KEY (id)
 )
   ENGINE = InnoDB

@@ -39,16 +39,21 @@ class Mail extends \diBaseAdminController
 		/** @var Collection $plans */
 		$plans = \diCollection::create(Types::mail_plan);
 		$plans
-			->filterByProcessedAt(null, '=');
+			->filterByStartedAt(null, '=');
+
+		$sent = 0;
 
 		/** @var Model $plan */
 		foreach ($plans as $plan)
 		{
 			$plan->process();
+
+			$sent += $plan->getSentMailsCount();
 		}
 
 		return [
 			'processed' => $plans->count(),
+			'sent' => $sent,
 		];
 	}
 }
