@@ -144,7 +144,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	protected $options = [
 		"modelAfterCreate" => null, // called after collection loaded from database, callback for each model
-									// function(diModel $m) {}
+									// function(\diModel $m) {}
 	];
 
 	/**
@@ -525,7 +525,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	/**
 	 * Get the first result of the query or empty model
 	 *
-	 * @return diModel
+	 * @return \diModel
 	 */
 	public function getFirstItem()
 	{
@@ -692,9 +692,17 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this;
 	}
 
+	/**
+	 * @return int|null
+	 */
+	public function getRequestSize()
+	{
+		return $this->requestSize;
+	}
+
 	public function addItem($item)
 	{
-		if (!$item instanceof diModel)
+		if (!$item instanceof \diModel)
 		{
 			$item = $this->getNewItem($item);
 		}
@@ -705,6 +713,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		}
 
 		$this->offsetSet($this->isIdUnique ? $this->getId($item) : null, $item);
+
+		return $this;
+	}
+
+	private function removeItems()
+	{
+		$this->items = [];
 
 		return $this;
 	}
@@ -764,7 +779,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 			: ($this->pageSize ? ($this->pageNumber - 1) * $this->pageSize : 0);
 		$requestPageSize = $this->pageSize;
 
-		if ($this->requestSize)
+		if ($this->getRequestSize())
 		{
 			if ($this->requestNumber === null)
 			{
@@ -773,8 +788,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 			$this->requestNumber++;
 
-			$startFrom += ($this->requestNumber - 1) * $this->requestSize;
-			$requestPageSize = $this->requestSize;
+			$startFrom += ($this->requestNumber - 1) * $this->getRequestSize();
+			$requestPageSize = $this->getRequestSize();
+
+			/*
+			echo '$this->requestNumber: ' . $this->requestNumber . ', startFrom: ' . $startFrom .
+				', requestPageSize: ' . $requestPageSize . '<br>';
+			*/
 		}
 
 		if ($requestPageSize)
@@ -918,6 +938,19 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	private function isLoaded()
 	{
+		//echo 'isLoaded: '. ($this->loaded ? 'true' : 'false') . ', count($this->items): ' . count($this->items) . '<br>';
+
+		if ($this->getRequestSize())
+		{
+			/*
+			echo count($this->items) > 0 ? 'true!<br>' : 'false!<br>';
+
+			var_dump($this->key());
+			*/
+
+			return count($this->items) > 0 && $this->key();
+		}
+
 		return $this->loaded || ($this->pageSize && count($this->items) >= $this->pageSize);
 	}
 
@@ -941,18 +974,23 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		if ($this->cachedRecords)
 		{
-			$rs = $this->cachedRecords;
+			$rows = $this->cachedRecords;
 		}
 		else
 		{
-			$rs = $this->getDbRecords();
+			$rows = $this->getDbRecords();
 		}
 
-		while ($r = $this->getDb()->fetch($rs))
+		if ($this->getRequestSize())
 		{
-			/** @var diModel $item */
+			$this->removeItems();
+		}
+
+		while ($row = $this->getDb()->fetch_array($rows))
+		{
+			/** @var \diModel $item */
 			$item = $this->getNewEmptyItem();
-			$item->initFrom($r);
+			$item->initFrom($row);
 
 			$this->addItem($item);
 		}
@@ -1631,7 +1669,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		$s = "<?php\n";
 
-		/** @var diModel $model */
+		/** @var \diModel $model */
 		foreach ($this as $model)
 		{
 			$s .= "\$this->addItem(" . $model->asPhp() . ");\n";
