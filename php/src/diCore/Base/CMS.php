@@ -276,6 +276,8 @@ abstract class CMS
 		try {
 			$this->go();
 		} catch (HttpException $e) {
+			$this->renderBeforeError();
+
 			$this->getTwig()
 				->renderPage('errors/' . $e->getCode(), [
 					'exception' => $e,
@@ -285,6 +287,8 @@ abstract class CMS
 
 			HttpCode::header($this->getResponseCode());
 		} catch (\Exception $e) {
+			$this->renderBeforeError();
+
 			$this->getTwig()
 				->renderPage('errors/basic', [
 					'exception' => $e,
@@ -296,6 +300,12 @@ abstract class CMS
 				->finish();
 		}
 
+		return $this;
+	}
+
+	protected function renderBeforeError()
+	{
+		return $this;
 	}
 
 	protected function renderAfterError()
@@ -2184,6 +2194,7 @@ abstract class CMS
 		throw new HttpException($this->getResponseCode());
 	}
 
+	/** @deprecated */
 	public function error_404()
 	{
 		return $this->errorNotFound();

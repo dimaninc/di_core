@@ -182,7 +182,7 @@ EOF;
 			? "WHERE email" . diDB::in(preg_split("/[\r\n\s,;]+/", \diConfiguration::get("newsletter_test_emails")))
 			: "WHERE email!='' and notify_news='1' and newsletter_flag='0' and active='1' ORDER BY id ASC"
 		);
-		/** @var diUserCustomModel $user */
+		/** @var \diCore\Entity\User\Model $user */
 		foreach ($users as $user)
 		{
 			$recipient = $user->getEmail();
