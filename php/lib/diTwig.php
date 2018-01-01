@@ -230,6 +230,7 @@ class diTwig
 	}
 
 	/**
+	 * Parse template from file
 	 * @param $template
 	 * @param array $data
 	 * @return string
@@ -238,6 +239,20 @@ class diTwig
 	{
 		return $this->getEngine()
 			->render(static::wrapTemplateName($template), extend($this->get(), $data));
+	}
+
+	/**
+	 * Parse template from text
+	 * @param $templateText
+	 * @param array $data
+	 * @return string
+	 * @throws Exception
+	 */
+	public function parseVirtual($templateText, $data = [])
+	{
+		return $this->getEngine()
+			->createTemplate($templateText)
+			->render(extend($this->get(), $data));
 	}
 
 	/**

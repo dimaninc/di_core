@@ -20,6 +20,8 @@ class HttpCode extends SimpleContainer
 	const FORBIDDEN = 403;
 	const NOT_FOUND = 404;
 
+	const INTERNAL_SERVER_ERROR = 500;
+
 	public static $titles = [
 		self::OK => 'OK',
 
@@ -28,6 +30,8 @@ class HttpCode extends SimpleContainer
 		self::UNAUTHORIZED => 'Unauthorized',
 		self::FORBIDDEN => 'Forbidden',
 		self::NOT_FOUND => 'Not Found',
+
+		self::INTERNAL_SERVER_ERROR => 'Internal Server Error',
 	];
 
 	public static $names = [
@@ -38,6 +42,8 @@ class HttpCode extends SimpleContainer
 		self::UNAUTHORIZED => 'unauthorized',
 		self::FORBIDDEN => 'forbidden',
 		self::NOT_FOUND => 'not_found',
+
+		self::INTERNAL_SERVER_ERROR => 'internal_server_error',
 	];
 
 	public static function headerContent($code)

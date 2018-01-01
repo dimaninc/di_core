@@ -71,6 +71,11 @@ class Model extends \diBaseUserModel
 		return strlen($key) == 32;
 	}
 
+	public static function generatePassword()
+	{
+		return get_unique_id(static::MIN_PASSWORD_LENGTH);
+	}
+
 	public function importDataFromOAuthProfile(\diOAuth2ProfileModel $profile)
 	{
 		return $this;
@@ -79,13 +84,13 @@ class Model extends \diBaseUserModel
 	public function setInitiatingValues()
 	{
 		$this
-			->setPassword(get_unique_id(self::MIN_PASSWORD_LENGTH))
+			->setPassword(static::generatePassword())
 			->setActivationKey(static::generateActivationKey());
 
 		return $this;
 	}
 
-	public function setMainValues()
+	public function setMainValues($options = [])
 	{
 		return $this;
 	}
@@ -103,9 +108,14 @@ class Model extends \diBaseUserModel
 			'twig' => null,
 		], $options);
 
+		if (!$options['twig'])
+		{
+			$options['twig'] = \diTwig::create();
+		}
+
 		$this
 			->setInitiatingValues()
-			->setMainValues()
+			->setMainValues($options)
 			->save()
 			->notifyAboutRegistrationByEmail($options['twig']);
 
@@ -147,7 +157,7 @@ class Model extends \diBaseUserModel
 			: Queue::basicCreate()->add($from, $to, $subj, $body);
 	}
 
-	protected function getSender()
+	protected function getSender($reason)
 	{
 		return \diConfiguration::get('sender_email');
 	}
@@ -157,28 +167,32 @@ class Model extends \diBaseUserModel
 		return $this->mailSubjects[$reason];
 	}
 
-	protected function getMailBody(\diTwig $twig, $reason)
+	protected function getMailBodyData($reason)
 	{
-		$body = $twig->parse($this->mailBodyTemplates[$reason], [
+		return [
 			'user' => $this,
 			'title' => Config::getSiteTitle(),
 			'domain' => Config::getMainDomain(),
-		]);
+		];
+	}
 
-		$html = $twig->parse('emails/email_html_base', [
-			'body' => $body,
-			'title' => Config::getSiteTitle(),
-			'domain' => Config::getMainDomain(),
-		]);
+	protected function getMailInnerBody(\diTwig $twig, $reason)
+	{
+		return $twig->parse($this->mailBodyTemplates[$reason], $this->getMailBodyData($reason));
+	}
 
-		return $html;
+	protected function getMailBody(\diTwig $twig, $reason)
+	{
+		return $twig->parse('emails/email_html_base', extend($this->getMailBodyData($reason), [
+			'body' => $this->getMailInnerBody($twig, $reason),
+		]));
 	}
 
 	public function notifyAboutRegistrationByEmail(\diTwig $twig)
 	{
 		if ($this->hasEmail())
 		{
-			$this->sendEmail($this->getSender(), $this->getEmail(),
+			$this->sendEmail($this->getSender('sign_up'), $this->getEmail(),
 				$this->getMailSubject('sign_up'), $this->getMailBody($twig, 'sign_up'));
 		}
 
@@ -201,7 +215,7 @@ class Model extends \diBaseUserModel
 					'/' . $this->getEmail() . '/' . $this->getActivationKey() . '/',
 			]);
 
-			$this->sendEmail($this->getSender(), $this->getEmail(),
+			$this->sendEmail($this->getSender('password_forgotten'), $this->getEmail(),
 				$this->getMailSubject('password_forgotten'), $this->getMailBody($twig, 'password_forgotten'));
 		}
 

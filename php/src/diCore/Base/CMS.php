@@ -287,7 +287,9 @@ abstract class CMS
 
 			HttpCode::header($this->getResponseCode());
 		} catch (\Exception $e) {
-			$this->renderBeforeError();
+			$this
+				->setResponseCode(HttpCode::INTERNAL_SERVER_ERROR)
+				->renderBeforeError();
 
 			$this->getTwig()
 				->renderPage('errors/basic', [
@@ -295,6 +297,8 @@ abstract class CMS
 				]);
 
 			$this->renderAfterError();
+
+			HttpCode::header($this->getResponseCode());
 		} finally {
 			$this
 				->finish();
