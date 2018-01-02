@@ -226,7 +226,7 @@ class diNiceTable
 
 	public function textLinkCell($text, $more_td_params = [])
 	{
-		$href = diAdminBase::getPageUri($this->getFormPathBase(), "form", [
+		$href = \diCore\Admin\Base::getPageUri($this->getFormPathBase(), "form", [
 			"id" => $this->getRowModel()->getId(),
 			"lite" => $this->lite,
 			"edit" => 1,
@@ -430,7 +430,7 @@ class diNiceTable
 
 	public function editBtnCell()
 	{
-		$href = diAdminBase::getPageUri($this->getFormPathBase(), "form", array(
+		$href = \diCore\Admin\Base::getPageUri($this->getFormPathBase(), "form", array(
 			"id" => $this->getRowModel()->getId(),
 			"lite" => $this->lite,
 			"edit" => 1,
@@ -607,7 +607,7 @@ class diNiceTable
 			$this->getRowModel()->get("level_num") < $maxLevelNum
 		   )
 		{
-			$s = $this->getButton("create", diAdminBase::getPageUri($this->getTable(), "form", extend(array(
+			$s = $this->getButton("create", \diCore\Admin\Base::getPageUri($this->getTable(), "form", extend(array(
 				"parent" => $this->getRowModel()->getId(),
 			), $queryParams)));
 		}
@@ -622,7 +622,7 @@ class diNiceTable
 	public function printBtnCell($state = 1)
 	{
 		$s = $state
-			? $this->getButton("print", diAdminBase::getPageUri($this->getTable(), "form", array(
+			? $this->getButton("print", \diCore\Admin\Base::getPageUri($this->getTable(), "form", array(
 				"id" => $this->getRowModel()->getId(),
 				"print" => 1,
 			)))

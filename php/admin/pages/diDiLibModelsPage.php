@@ -59,7 +59,7 @@ class diDiLibModelsPage extends diAdminBasePage
 				"TABLES_INFO_AR" => json_encode($tablesInfoAr),
 			])
 			->assign([
-				"ACTION" => diAdminBase::getPageUri($this->pseudoTable, "submit"),
+				"ACTION" => \diCore\Admin\Base::getPageUri($this->pseudoTable, "submit"),
 			], "ADMIN_FORM_");
 	}
 
@@ -77,7 +77,7 @@ class diDiLibModelsPage extends diAdminBasePage
 
 	protected function afterSubmitForm()
 	{
-		$this->redirectTo(diAdminBase::getPageUri($this->pseudoTable, "form"));
+		$this->redirectTo(\diCore\Admin\Base::getPageUri($this->pseudoTable, "form"));
 	}
 
 	public function getFormFields()

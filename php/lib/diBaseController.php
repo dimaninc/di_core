@@ -313,7 +313,7 @@ class diBaseController
 
 	protected function initAdminTpl()
 	{
-		$this->tpl = \diAdminBase::getAdminTpl();
+		$this->tpl = \diCore\Admin\Base::getAdminTpl();
 
 		$this->setupTpl();
 

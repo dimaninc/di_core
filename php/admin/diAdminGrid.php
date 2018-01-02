@@ -156,15 +156,15 @@ class diAdminGrid
 		return $this->curModel;
 	}
 
-	public function printElement(diModel $model)
+	public function printElement(\diModel $model)
 	{
 		$this->setCurModel($model);
 
-		$buttons = array_intersect_key($this->buttonsAr, diNiceTableButtons::$titles[$this->getLanguage()]);
+		$buttons = array_intersect_key($this->buttonsAr, \diNiceTableButtons::$titles[$this->getLanguage()]);
 		$htmlButtons = [];
 
 		// edit href always needed
-		$editHref = diAdminBase::getPageUri($this->getTable(), "form", [
+		$editHref = \diCore\Admin\Base::getPageUri($this->getTable(), "form", [
 			"id" => $model->getId(),
 		]);
 

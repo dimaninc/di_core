@@ -19,7 +19,7 @@ class diAdminsPage extends diAdminBasePage
 
 	public static $levelsAr = [];
 
-	public function __construct(diAdminBase $X)
+	public function __construct(\diCore\Admin\Base $X)
 	{
 		parent::__construct($X);
 

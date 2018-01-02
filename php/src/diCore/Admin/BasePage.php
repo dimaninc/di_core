@@ -104,7 +104,7 @@ abstract class BasePage
 		'formBasePath',
 	];
 
-	public function __construct(\diAdminBase $X)
+	public function __construct(Base $X)
 	{
 		$this->X = $X;
 
@@ -119,20 +119,20 @@ abstract class BasePage
 	}
 
 	/**
-	 * @param \diAdminBase $X
+	 * @param Base $X
 	 * @return static
 	 * @throws \Exception
 	 */
-	public static function create(\diAdminBase $X)
+	public static function create(Base $X)
 	{
-		/** @var \diAdminBasePage $o */
+		/** @var BasePage $o */
 		$o = new static($X);
 
 		$o->tryToInitTable();
 
-		$m = \diAdminBase::getClassMethodName($o->getMethod());
-		$beforeM = \diAdminBase::getClassMethodName($o->getMethod(), 'before');
-		$afterM = \diAdminBase::getClassMethodName($o->getMethod(), 'after');
+		$m = Base::getClassMethodName($o->getMethod());
+		$beforeM = Base::getClassMethodName($o->getMethod(), 'before');
+		$afterM = Base::getClassMethodName($o->getMethod(), 'after');
 
 		if (!method_exists($o, $m))
 		{
@@ -540,7 +540,7 @@ abstract class BasePage
 	{
 	    if (method_exists($this, "submitForm"))
 	    {
-	    	return \diAdminBase::getPageUri($this->getBasePath(), "submit");
+	    	return Base::getPageUri($this->getBasePath(), "submit");
 	    }
 
 		return $this->getTable() . "/submit.php";
@@ -817,7 +817,7 @@ abstract class BasePage
 			{
 				$this->getTpl()
 					->assign([
-						"PAGES_NAVY" => $this->getPagesNavy()->print_pages(\diAdminBase::getPageUri($this->getModule())),
+						"PAGES_NAVY" => $this->getPagesNavy()->print_pages(Base::getPageUri($this->getModule())),
 					])
 					->parse("navy");
 			}
@@ -1058,7 +1058,7 @@ abstract class BasePage
 			? '#' . \diNiceTable::getRowAnchorName($this->getId())
 			: '';
 
-		return \diAdminBase::getPageUri(
+		return Base::getPageUri(
 			$this->getBasePath(),
 			'list',
 			$this->getQueryParamsForRedirectAfterSubmit()

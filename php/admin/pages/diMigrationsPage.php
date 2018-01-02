@@ -304,7 +304,7 @@ class diMigrationsPage extends diAdminBasePage
 				"after_form",
 			])
 			->assign([
-				"ACTION" => diAdminBase::getPageUri($this->pseudoTable, "submit"),
+				"ACTION" => \diCore\Admin\Base::getPageUri($this->pseudoTable, "submit"),
 			], "ADMIN_FORM_");
 
 		$rawFolders = diMigrationsManager::getSubFolders(diMigrationsManager::FOLDER_LOCAL);
@@ -354,7 +354,7 @@ class diMigrationsPage extends diAdminBasePage
 
 	protected function afterSubmitForm()
 	{
-		$this->redirectTo(diAdminBase::getPageUri($this->pseudoTable, "list"));
+		$this->redirectTo(\diCore\Admin\Base::getPageUri($this->pseudoTable, "list"));
 	}
 
 	public function getFormFields()

@@ -33,13 +33,13 @@ class diDiLibAdminPagesPage extends diAdminBasePage
 	{
 		$this->getTpl()
 			->assign([
-				"ACTION" => diAdminBase::getPageUri($this->pseudoTable, "submit"),
+				"ACTION" => \diCore\Admin\Base::getPageUri($this->pseudoTable, "submit"),
 			], "ADMIN_FORM_");
 
 		$this->getForm()
-			->setData('namespace', diLib::getFirstNamespace())
+			->setData('namespace', \diLib::getFirstNamespace())
 			->setSelectFromDbInput("table", $this->getDb()->q("SHOW TABLE STATUS"), "%Name%", "%Name%")
-			->setSelectFromArray2Input('namespace', array_merge([''], diLib::getAllNamespaces()));
+			->setSelectFromArray2Input('namespace', array_merge([''], \diLib::getAllNamespaces()));
 	}
 
 	public function submitForm()
@@ -54,7 +54,7 @@ class diDiLibAdminPagesPage extends diAdminBasePage
 
 	protected function afterSubmitForm()
 	{
-		$this->redirectTo(diAdminBase::getPageUri($this->pseudoTable, "form"));
+		$this->redirectTo(\diCore\Admin\Base::getPageUri($this->pseudoTable, "form"));
 	}
 
 	public function getFormFields()

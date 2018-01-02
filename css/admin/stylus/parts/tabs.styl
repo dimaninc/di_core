@@ -1,0 +1,30 @@
+[data-purpose="tabs"]
+	list-style none
+	li
+		display inline-block
+		cursor pointer
+
+[data-purpose="tab-pages"]
+	list-style none
+	> [data-tab]
+		display none
+	> [data-tab].selected
+		display block
+
+ul.mini-tabs
+	margin 0
+	padding 0
+	> li
+		margin 0
+		padding 5px 10px
+		border-radius 5px
+		background #bbb
+		&.selected
+			background #999
+
+ul.mini-pages
+	margin 0
+	padding 0
+	> li
+		margin 0
+		padding 0

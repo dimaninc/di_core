@@ -237,7 +237,7 @@ class diAdminList
 		    	$href["method"] = "list";
 		    }
 
-			$href = diAdminBase::getPageUri($href["module"], $href["method"], $href["params"]);
+			$href = \diCore\Admin\Base::getPageUri($href["module"], $href["method"], $href["params"]);
 		}
 
 		return $href;
@@ -245,9 +245,9 @@ class diAdminList
 
 	protected function setCurRec($r)
 	{
-		$this->curModel = $r instanceof diModel
+		$this->curModel = $r instanceof \diModel
 			? $r
-			: diModel::createForTableNoStrict($this->getTable(), $r);
+			: \diModel::createForTableNoStrict($this->getTable(), $r);
 
 		return $this;
 	}
