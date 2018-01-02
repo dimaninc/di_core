@@ -6,7 +6,7 @@
  * Time: 14:27
  */
 
-class diDiLibModelsPage extends diAdminBasePage
+class diDiLibModelsPage extends \diCore\Admin\BasePage
 {
 	/** @var diModelsManager */
 	private $Manager;

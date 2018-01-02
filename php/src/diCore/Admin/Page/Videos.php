@@ -12,7 +12,7 @@ use diCore\Admin\Submit;
 use diCore\Helper\FileSystemHelper;
 use diCore\Entity\Video\Model;
 
-class Videos extends \diAdminBasePage
+class Videos extends \diCore\Admin\BasePage
 {
 	const FILTER_DEFAULT_ALBUM_ID = null;
 

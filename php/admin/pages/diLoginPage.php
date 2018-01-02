@@ -6,7 +6,7 @@
  * Time: 18:34
  */
 
-class diLoginPage extends diAdminBasePage
+class diLoginPage extends \diCore\Admin\BasePage
 {
 	protected function initTable()
 	{

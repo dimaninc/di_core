@@ -12,7 +12,7 @@ use diCore\Admin\Submit;
 use diCore\Entity\Album\Model;
 use diCore\Data\Types;
 
-class Albums extends \diAdminBasePage
+class Albums extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		'filters' => [

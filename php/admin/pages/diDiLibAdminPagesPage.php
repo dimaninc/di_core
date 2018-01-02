@@ -6,7 +6,7 @@
  * Time: 18:27
  */
 
-class diDiLibAdminPagesPage extends diAdminBasePage
+class diDiLibAdminPagesPage extends \diCore\Admin\BasePage
 {
 	/** @var diAdminPagesManager */
 	private $Manager;

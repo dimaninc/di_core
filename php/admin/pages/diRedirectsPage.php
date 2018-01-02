@@ -5,7 +5,7 @@
  * Time: 11:43
  */
 
-class diRedirectsPage extends diAdminBasePage
+class diRedirectsPage extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		"filters" => [

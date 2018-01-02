@@ -6,7 +6,7 @@
  * Time: 14:33
  */
 
-class diAdminWikiPage extends diAdminBasePage
+class diAdminWikiPage extends \diCore\Admin\BasePage
 {
 	protected $options = array(
 		"filters" => array(

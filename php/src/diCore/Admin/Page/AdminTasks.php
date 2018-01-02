@@ -14,7 +14,7 @@ use diCore\Entity\AdminTask\Model;
  * Time: 14:33
  */
 
-class AdminTasks extends \diAdminBasePage
+class AdminTasks extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		"filters" => [

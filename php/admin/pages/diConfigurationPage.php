@@ -1,5 +1,5 @@
 <?php
-class diConfigurationPage extends \diAdminBasePage
+class diConfigurationPage extends \diCore\Admin\BasePage
 {
 	protected $vocabulary = [
 		'ru' => [
@@ -147,7 +147,7 @@ class diConfigurationPage extends \diAdminBasePage
 					// video
 					elseif (in_array($ext, ["MP4", "M4V", "OGV", "WEBM", "AVI"]))
 					{
-						$mime_type = diAdminForm::get_mime_type_by_ext($ext);
+						$mime_type = \diCore\Admin\Form::get_mime_type_by_ext($ext);
 																										// type=\"$mime_type\"
 						$img_tag = "<div><video preload=\"none\" controls width=400 height=225><source src=\"$ff_orig\" /></video></div>";
 					}

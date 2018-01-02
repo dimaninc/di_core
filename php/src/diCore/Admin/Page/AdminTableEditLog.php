@@ -10,7 +10,7 @@ namespace diCore\Admin\Page;
 use diCore\Tool\CollectionCache;
 use diCore\Helper\ArrayHelper;
 
-class AdminTableEditLog extends \diAdminBasePage
+class AdminTableEditLog extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		'filters' => [

@@ -9,7 +9,7 @@ namespace diCore\Admin\Page;
 
 use diCore\Entity\ModuleCache\Model;
 
-class ModuleCache extends \diAdminBasePage
+class ModuleCache extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		'filters' => [

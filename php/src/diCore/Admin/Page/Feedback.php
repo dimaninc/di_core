@@ -11,7 +11,7 @@ namespace diCore\Admin\Page;
 use diCore\Entity\Feedback\Model;
 use diCore\Helper\StringHelper;
 
-class Feedback extends \diAdminBasePage
+class Feedback extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		"staticMode" => true,

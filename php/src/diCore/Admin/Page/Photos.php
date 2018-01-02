@@ -13,7 +13,7 @@ use diCore\Data\Types;
 use diCore\Entity\Album\Collection as Albums;
 use diCore\Entity\Photo\Model;
 
-class Photos extends \diAdminBasePage
+class Photos extends \diCore\Admin\BasePage
 {
 	const FILTER_DEFAULT_ALBUM_ID = null;
 

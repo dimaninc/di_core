@@ -5,7 +5,7 @@ namespace diCore\Admin\Page;
 use diCore\Entity\MailQueue\Model;
 use diCore\Helper\StringHelper;
 
-class MailQueue extends \diAdminBasePage
+class MailQueue extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		"filters" => [

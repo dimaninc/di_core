@@ -27,7 +27,7 @@ use diCore\Admin\Submit;
 
 class diDynamicRows
 {
-	/** @var diAdminBasePage */
+	/** @var \diCore\Admin\BasePage */
 	private $AdminPage;
 
 	/** @var diDB */
@@ -137,7 +137,7 @@ class diDynamicRows
 	}
 
 	/**
-	 * @return diAdminBasePage
+	 * @return \diCore\Admin\BasePage
 	 */
 	public function getAdminPage()
 	{

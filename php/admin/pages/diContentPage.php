@@ -8,7 +8,7 @@
 
 use diCore\Entity\Content\Model;
 
-class diContentPage extends \diAdminBasePage
+class diContentPage extends \diCore\Admin\BasePage
 {
 	const MAX_LEVEL_NUM = 2;
 

@@ -8,7 +8,7 @@ use diCore\Tool\CollectionCache;
  * Date: 14.06.2015
  * Time: 0:16
  */
-class diMigrationsPage extends diAdminBasePage
+class diMigrationsPage extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		"filters" => [
@@ -324,7 +324,7 @@ class diMigrationsPage extends diAdminBasePage
 		$folders["*"] = "Создать папку";
 
 		$this->getForm()
-			->setInputSuffix("folder", diAdminForm::INPUT_SUFFIX_NEW_FIELD)
+			->setInputSuffix("folder", \diCore\Admin\Form::INPUT_SUFFIX_NEW_FIELD)
 			->setSelectFromArrayInput("folder", $folders);
 	}
 
@@ -339,7 +339,7 @@ class diMigrationsPage extends diAdminBasePage
 			{
 				if ($folder == "*")
 				{
-					$folder = diRequest::post("folder" . diAdminForm::NEW_FIELD_SUFFIX, "");
+					$folder = \diRequest::post("folder" . \diCore\Admin\Form::NEW_FIELD_SUFFIX, "");
 				}
 
 				return preg_replace('/[^a-z0-9_]/i', "", $folder);

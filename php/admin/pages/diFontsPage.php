@@ -6,7 +6,7 @@
  * Time: 0:13
  */
 
-class diFontsPage extends diAdminBasePage
+class diFontsPage extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		"filters" => [

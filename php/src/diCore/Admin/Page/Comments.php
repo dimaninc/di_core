@@ -12,7 +12,7 @@ use diCore\Data\Types;
 use diCore\Entity\Comment\Model;
 use diCore\Helper\ArrayHelper;
 
-class Comments extends \diAdminBasePage
+class Comments extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		'filters' => [

@@ -1,5 +1,5 @@
 <?php
-class diAdminsPage extends diAdminBasePage
+class diAdminsPage extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		"filters" => [

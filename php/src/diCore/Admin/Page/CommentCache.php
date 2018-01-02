@@ -10,7 +10,7 @@ namespace diCore\Admin\Page;
 use diCore\Data\Types;
 use diCore\Entity\CommentCache\Model;
 
-class CommentCache extends \diAdminBasePage
+class CommentCache extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		'filters' => [

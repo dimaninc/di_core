@@ -6,7 +6,7 @@
  * Time: 20:38
  */
 
-class diBannersPage extends diAdminBasePage
+class diBannersPage extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		"filters" => [

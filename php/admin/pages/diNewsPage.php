@@ -12,7 +12,7 @@ use diCore\Data\Types;
 use diCore\Admin\Submit;
 use diCore\Tool\Mail\Queue;
 
-class diNewsPage extends diAdminBasePage
+class diNewsPage extends \diCore\Admin\BasePage
 {
 	const DISPATCH_MODE_TEST = 1;
 	const DISPATCH_MODE_STANDARD = 2;

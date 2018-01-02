@@ -18,7 +18,7 @@ class Form
 	/** @var \diDB */
 	private $db;
 
-	/** @var \diAdminBasePage */
+	/** @var \diCore\Admin\BasePage */
 	private $AdminPage;
 
 	const wysiwygCK = 1;

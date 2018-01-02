@@ -6,7 +6,7 @@
  * Time: 14:58
  */
 
-class diSlugsPage extends diAdminBasePage
+class diSlugsPage extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		"filters" => [

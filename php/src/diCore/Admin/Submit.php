@@ -63,7 +63,7 @@ class Submit
 	/** @var \diDB */
 	private $db;
 
-	/** @var \diAdminBasePage */
+	/** @var \diCore\Admin\BasePage */
 	private $AdminPage;
 
 	public $table;
@@ -1352,7 +1352,7 @@ class Submit
 		$className = \diCore\Admin\Base::getModuleClassName($module);
 
 		$X = new \diAdmin(\diCore\Admin\Base::INIT_MODE_LITE);
-		/** @var \diAdminBasePage $Page */
+		/** @var \diCore\Admin\BasePage $Page */
 		$Page = new $className($X);
 		$Page->tryToInitTable();
 		$Submit = new self($Page);

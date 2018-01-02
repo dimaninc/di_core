@@ -10,7 +10,7 @@ namespace diCore\Admin\Page;
 
 use diCore\Entity\Localization\Model;
 
-class Localization extends \diAdminBasePage
+class Localization extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		"filters" => [
