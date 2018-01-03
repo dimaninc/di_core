@@ -569,12 +569,12 @@ abstract class BasePage
 	protected function extendListQueryOptions($options = [])
 	{
 		return extend([
-			"query" => "",
-			"limit" => "",
+			'query' => '',
+			'limit' => '',
 			'pageNumber' => null,
 			'pageSize' => null,
-			"sortBy" => "",
-			"dir" => null,
+			'sortBy' => '',
+			'dir' => null,
 		], $options);
 	}
 
@@ -582,11 +582,21 @@ abstract class BasePage
 	{
 		$options = $this->extendListQueryOptions($options);
 
-		$this->listCollection = \diCollection::createForTable($this->getTable(), $options["query"]);
+		$this->listCollection = \diCollection::createForTable($this->getTable(), $options['query']);
 
-		if ($options["sortBy"])
+		if ($options['sortBy'])
 		{
-			$this->listCollection->orderBy($options["sortBy"], $options["dir"]);
+			if (is_array($options['sortBy']))
+			{
+				foreach ($options['sortBy'] as $field => $direction)
+				{
+					$this->listCollection->orderBy($field, $direction);
+				}
+			}
+			else
+			{
+				$this->listCollection->orderBy($options['sortBy'], $options['dir']);
+			}
 		}
 
 		if ($options['pageSize'])
@@ -644,12 +654,12 @@ abstract class BasePage
 	protected function extendListOptions($options = [])
 	{
 		return extend([
-			"query" => $this->getListQueryFilters(),
-			"limit" => $this->getListQueryLimit(),
+			'query' => $this->getListQueryFilters(),
+			'limit' => $this->getListQueryLimit(),
 			'pageNumber' => $this->getListPageNumber(),
 			'pageSize' => $this->getListPageSize(),
-			"sortBy" => $this->hasFilters() ? $this->getFilters()->getSortBy() : "id",
-			"dir" => $this->hasFilters() ? $this->getFilters()->getDir() : "DESC",
+			'sortBy' => $this->hasFilters() ? $this->getFilters()->getSortBy() : 'id',
+			'dir' => $this->hasFilters() ? $this->getFilters()->getDir() : 'DESC',
 		], $options);
 	}
 
