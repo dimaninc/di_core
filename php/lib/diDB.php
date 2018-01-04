@@ -878,7 +878,8 @@ abstract class diDB
 
 		$q1 = "(".self::fields_to_string_for_insert($fields_values).")";
 		$q2 = "(".self::values_to_string_for_insert($fields_values).")";
-		$q3 = self::fields_and_values_to_string_for_update($fields_values);
+		$q3 = self::fields_and_values_to_string_for_update($fields_values) .
+			",id = LAST_INSERT_ID(id)";
 
 		$time1 = utime();
 

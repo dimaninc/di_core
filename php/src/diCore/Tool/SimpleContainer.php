@@ -56,6 +56,13 @@ abstract class SimpleContainer
 		return $id;
 	}
 
+	public static function idByTitle($title)
+	{
+		$id = array_search($title, static::$titles) ?: null;
+
+		return $id;
+	}
+
 	public static function getCollection()
 	{
 		$ar = [];

@@ -391,7 +391,7 @@ EOF;
 			'$field' => [
 				'title' => 'Дата',
 				'value' => function($modelName \$m) {
-					return \diDateTime::format('d.m.Y H:i', \$m->{$methodName}());
+					return \diDateTime::simpleFormat(\$m->{$methodName}());
 				},
 				'headAttrs' => [
 					'width' => '10%',

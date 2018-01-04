@@ -990,7 +990,7 @@ abstract class BasePage
 
 	protected function afterSubmitForm()
 	{
-		if ($this->getSubmit()->isSubmit())
+		if ($this->reallySubmit() && $this->getSubmit()->isSubmit())
 		{
 			$this->getSubmit()->storeData();
 		}
@@ -1375,6 +1375,11 @@ abstract class BasePage
 	public function useEditLog()
 	{
 		return false;
+	}
+
+	protected function reallySubmit()
+	{
+		return true;
 	}
 
 	public function getVocabularyTerm($name)
