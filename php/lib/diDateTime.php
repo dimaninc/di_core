@@ -110,6 +110,11 @@ class diDateTime
 		12 => "December",
 	];
 
+	public static function sqlFormat($dt = null)
+	{
+		return self::format(self::FORMAT_SQL_DATE_TIME, $dt);
+	}
+
 	public static function format($format, $dt = null)
 	{
 		$dt = self::timestamp($dt ?: time());

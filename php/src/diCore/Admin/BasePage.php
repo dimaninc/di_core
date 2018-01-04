@@ -171,11 +171,17 @@ abstract class BasePage
 		return $o;
 	}
 
-	abstract public function renderList();
-	/*
-	abstract public function renderForm();
-	abstract public function submitForm();
-	*/
+	public function renderList()
+	{
+	}
+
+	public function renderForm()
+	{
+	}
+
+	public function submitForm()
+	{
+	}
 
 	public function getLanguage()
 	{
