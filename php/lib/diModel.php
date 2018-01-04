@@ -1449,7 +1449,11 @@ class diModel implements \ArrayAccess
 
 			$this->disallowInsertOrUpdate();
 
-			if (!$result)
+			if ($result)
+			{
+				$this->setId((int)$result);
+			}
+			else
 			{
 				$e = new \diDatabaseException("Unable to insert/update " . get_class($this) . " in DB: " .
 					join("\n", $this->getDb()->getLog()));
