@@ -1,0 +1,52 @@
+.dynamic-add
+	margin 10px 0 5px 0
+
+.dynamic-row
+	margin 0 0 5px 0
+	border 1px solid #aaa
+	padding 10px
+	border-radius 10px
+	display inline-block
+	width 97%
+	transition background-color .25s ease
+	&:hover
+		background-color #ffe
+	&.ui-sortable-helper
+	&.di-sortable-helper
+		background-color #fea
+		cursor move
+		.existing-pic-holder
+			img
+				max-height 50px
+				width auto
+	div.m
+		margin 10px 0
+	.remove
+		float right
+	.diaf_clear
+		clear right
+	ul.line
+		margin 0
+		padding 0
+		list-style none
+		> li
+			display inline-block
+			margin 5px 15px 5px 0
+			input[type="text"]
+			textarea
+				width 300px
+			&:last-child
+				margin-right 0
+			&.wider
+				input[type="text"]
+				textarea
+					width 500px
+			&.wide
+				input[type="text"]
+				textarea
+					width 750px
+			&.full-width
+				display block
+				input[type="text"]
+				textarea
+					width 90%
