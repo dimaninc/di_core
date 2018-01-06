@@ -16,7 +16,6 @@ namespace diCore\Data;
  * Conversion from type_id to table_name
  *
  * Should be overridden in project as diTypes
- *
  */
 class Types
 {

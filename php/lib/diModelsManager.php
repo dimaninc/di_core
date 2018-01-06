@@ -182,7 +182,7 @@ EOF;
 
 	public static function getModelNameByTable($table)
 	{
-		if (in_array($table, ["news"]))
+		if (in_array($table, ['news']))
 		{
 			return $table;
 		}
@@ -191,7 +191,7 @@ EOF;
 		{
 			$table = substr($table, 0, -3) . 'y';
 		}
-		elseif (substr($table, -1) == "s" && substr($table, -2) != "ss")
+		elseif (substr($table, -1) == 's' && !in_array(substr($table, -2), ['ss', 'us', 'os', 'as', 'ys', 'is']))
 		{
 			$table = substr($table, 0, -1);
 		}
