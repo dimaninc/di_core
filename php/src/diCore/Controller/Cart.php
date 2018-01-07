@@ -27,7 +27,8 @@ class Cart extends \diBaseController
 		$this->targetId = \diRequest::request('target_id', 0);
 		$this->quantity = \diRequest::request('quantity', 0);
 
-		$this->item = $this->getCart()->getItem($this->targetType, $this->targetId);
+		$this->item = $this->getCart()
+			->getItem($this->targetType, $this->targetId);
 	}
 
 	public function _postItemAction()

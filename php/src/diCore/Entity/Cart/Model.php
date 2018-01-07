@@ -146,7 +146,7 @@ class Model extends \diModel
 		/** @var CartItem $i */
 		foreach ($this->getItems() as $i)
 		{
-			if ($i->getTargetType() == $targetType && $i->getTargetId())
+			if ($i->getTargetType() == $targetType && $i->getTargetId() == $targetId)
 			{
 				$item = $i;
 
