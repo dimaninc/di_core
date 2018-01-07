@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS cart (
   session_id VARCHAR(32)     DEFAULT '',
   user_id    BIGINT,
   created_at TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE INDEX user_idx(user_id),
   KEY idx(session_id, user_id),
   PRIMARY KEY (id)
 )

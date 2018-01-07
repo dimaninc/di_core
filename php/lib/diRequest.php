@@ -21,12 +21,12 @@ use diCore\Helper\ArrayHelper;
 class diRequest
 {
 	public static $possibleMethodsAr = [
-		"get",
-		"post",
-		"cookie",
-		"env",
-		"server",
-		"session",
+		'get',
+		'post',
+		'cookie',
+		'env',
+		'server',
+		'session',
 	];
 
 	private static $postRawData = null;
@@ -34,26 +34,26 @@ class diRequest
 
 	public static function convertFromCommandLine()
 	{
-		$queryString = join("&", array_slice($_SERVER["argv"], 1));
+		$queryString = join('&', array_slice($_SERVER['argv'], 1));
 
 		parse_str($queryString, $outAr);
 
 		return $outAr;
 	}
 
-	public static function createFromCommandLine($name = "get")
+	public static function createFromCommandLine($name = 'get')
 	{
-		$GLOBALS["_" . strtoupper($name)] = self::convertFromCommandLine();
+		$GLOBALS['_' . strtoupper($name)] = self::convertFromCommandLine();
 	}
 
 	public static function protocol()
 	{
-		return static::server("SERVER_PORT") == 443 ? "https" : "http";
+		return static::server('SERVER_PORT') == 443 ? 'https' : 'http';
 	}
 
 	public static function domain()
 	{
-		return static::server("HTTP_HOST") ?: Config::getMainDomain();
+		return static::server('HTTP_HOST') ?: Config::getMainDomain();
 	}
 
 	public static function urlBase($slash = false)
@@ -88,7 +88,7 @@ class diRequest
 
 	public static function request($name, $defaultValue = null, $type = null)
 	{
-		return self::post($name, self::get($name, $defaultValue, $type), $type);
+		return self::post($name, self::get($name, self::rawPost($name, $defaultValue, $type), $type), $type);
 	}
 
     public static function single($method, $name, $defaultValue = null, $type = null)
@@ -100,11 +100,11 @@ class diRequest
 
 	public static function all($method)
 	{
-		$varName = "_" . strtoupper($method);
+		$varName = '_' . strtoupper($method);
 		global $$varName;
 
 		/*
-		if ($method == "session")
+		if ($method == 'session')
 		{
 			diSession::start();
 		}
@@ -122,11 +122,11 @@ class diRequest
 
 	public static function __callStatic($method, $arguments)
 	{
-	    $mode = "single";
+	    $mode = 'single';
 
-		if (substr(underscore($method), 0, 4) == "all_")
+		if (substr(underscore($method), 0, 4) == 'all_')
 		{
-			$mode = "all";
+			$mode = 'all';
 
 			$method = substr(underscore($method), 4);
 		}
@@ -138,10 +138,10 @@ class diRequest
 
 		switch ($mode)
 		{
-			case "all":
+			case 'all':
 				return self::all($method);
 
-			case "single":
+			case 'single':
 				list($name, $defaultValue, $type) = array_merge($arguments, array(null, null, null));
 				return self::single($method, $name, $defaultValue, $type);
 

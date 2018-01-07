@@ -255,7 +255,7 @@ class diBaseController
 		]);
 	}
 
-	public function act($action = "", $paramsAr = [])
+	public function act($action = '', $paramsAr = [])
 	{
 		if (!$action)
 	    {
@@ -269,8 +269,15 @@ class diBaseController
 
 		if ($action)
 		{
-			$methodName = camelize($action . "_action");
+			$methodName = '_' . camelize(strtolower(\diRequest::getMethodStr()) . '_' . $action . '_action');
 
+			// first looking for REST API methods like _putSomeAction
+			if (!method_exists($this, $methodName))
+			{
+				$methodName = camelize($action . '_action');
+			}
+
+			// then for basic method like someAction
 			if (method_exists($this, $methodName))
 			{
 			    $this->setParamsAr($paramsAr);
