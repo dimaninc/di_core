@@ -141,16 +141,31 @@ class Model extends \diModel
 		return static::autoCreate();
 	}
 
-	public function getItem($targetType, $targetId)
+	public function getItem($targetType, $targetId, $additionalFields = [])
 	{
 		/** @var CartItem $i */
 		foreach ($this->getItems() as $i)
 		{
 			if ($i->getTargetType() == $targetType && $i->getTargetId() == $targetId)
 			{
-				$item = $i;
+				$ok = true;
 
-				break;
+				foreach ($additionalFields as $k => $v)
+				{
+					if ($i->get($k) != $v)
+					{
+						$ok = false;
+
+						break;
+					}
+				}
+
+				if ($ok)
+				{
+					$item = $i;
+
+					break;
+				}
 			}
 		}
 
@@ -163,6 +178,12 @@ class Model extends \diModel
 				->setCartId($this->getId())
 				->setTargetType($targetType)
 				->setTargetId($targetId);
+
+			foreach ($additionalFields as $k => $v)
+			{
+				$item
+					->set($k, $v);
+			}
 		}
 
 		return $item;

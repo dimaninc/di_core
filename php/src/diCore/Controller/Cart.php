@@ -2,15 +2,14 @@
 
 namespace diCore\Controller;
 
-use diCore\Data\Types;
 use diCore\Entity\Cart\Model;
 
 class Cart extends \diBaseController
 {
 	/** @var Model */
-	private $cart;
+	protected $cart;
 	/** @var \diCore\Entity\CartItem\Model */
-	private $item;
+	protected $cartItem;
 
 	protected $targetType;
 	protected $targetId;
@@ -26,15 +25,24 @@ class Cart extends \diBaseController
 		$this->targetType = \diRequest::request('target_type', 0);
 		$this->targetId = \diRequest::request('target_id', 0);
 		$this->quantity = \diRequest::request('quantity', 0);
+	}
+	
+	protected function setupCartItem()
+	{
+		if (!$this->cartItem)
+		{
+			$this->cartItem = $this->getCart()
+				->getItem($this->targetType, $this->targetId);
+		}
 
-		$this->item = $this->getCart()
-			->getItem($this->targetType, $this->targetId);
+		return $this;
 	}
 
 	public function _postItemAction()
 	{
-		$this->getItem()
-			->setQuantity($this->quantity)
+		$this->updateItem();
+
+		$this->getCartItem()
 			->save();
 
 		return $this->getInfo();
@@ -42,20 +50,34 @@ class Cart extends \diBaseController
 
 	public function _deleteItemAction()
 	{
-		$this->getItem()
+		$this->getCartItem()
 			->hardDestroy();
 
 		return $this->getInfo();
 	}
 
+	protected function updateItem()
+	{
+		$this->getCartItem()
+			->setQuantity($this->quantity);
+
+		return $this;
+	}
+
+	/**
+	 * @return Model
+	 */
 	protected function getCart()
 	{
 		return $this->cart;
 	}
 
-	protected function getItem()
+	protected function getCartItem()
 	{
-		return $this->item;
+		$this
+			->setupCartItem();
+		
+		return $this->cartItem;
 	}
 
 	protected function getInfo()
