@@ -430,13 +430,19 @@ class diNiceTable
 
 	public function editBtnCell()
 	{
-		$href = \diCore\Admin\Base::getPageUri($this->getFormPathBase(), "form", array(
-			"id" => $this->getRowModel()->getId(),
-			"lite" => $this->lite,
-			"edit" => 1,
-		));
+		$queryParams = [
+			'id' => $this->getRowModel()->getId(),
+			//'edit' => 1,
+		];
 
-		return $this->btnCell($this->getButton("edit", $href));
+		if ($this->lite)
+		{
+			$queryParams['lite'] = $this->lite;
+		}
+
+		$href = \diCore\Admin\Base::getPageUri($this->getFormPathBase(), 'form', $queryParams);
+
+		return $this->btnCell($this->getButton('edit', $href));
 	}
 
 	public function delBtnCell()

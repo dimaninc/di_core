@@ -482,8 +482,7 @@ class Base
 		{
 			$idPart = $params["id"] . "/";
 
-			// back compatibility. todo: remove this
-			//unset($params["id"]);
+			unset($params["id"]);
 		}
 		else
 		{
