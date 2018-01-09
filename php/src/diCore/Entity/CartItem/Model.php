@@ -6,6 +6,7 @@
  */
 
 namespace diCore\Entity\CartItem;
+use diCore\Tool\CollectionCache;
 
 /**
  * Class Model
@@ -33,10 +34,32 @@ class Model extends \diModel
 {
 	const type = \diTypes::cart_item;
 	protected $table = 'cart_item';
+	/** @var  \diModel */
+	protected $item;
 
 	public function getIdForCart()
 	{
 		return $this->getTargetType() . '-' . $this->getTargetId();
+	}
+
+	public function getTitleForCart()
+	{
+		return $this->getItem()->get('title');
+	}
+
+	protected function initItem()
+	{
+		if (!$this->item)
+		{
+			$this->item = CollectionCache::getModel($this->getTargetType(), $this->getTargetId(), true);
+		}
+
+		return $this;
+	}
+
+	public function getItem()
+	{
+		return $this->initItem()->item;
 	}
 
 	public function getCustomTemplateVars()
