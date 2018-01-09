@@ -33,4 +33,16 @@ class Model extends \diModel
 {
 	const type = \diTypes::cart_item;
 	protected $table = 'cart_item';
+
+	public function getIdForCart()
+	{
+		return $this->getTargetType() . '-' . $this->getTargetId();
+	}
+
+	public function getCustomTemplateVars()
+	{
+		return extend(parent::getCustomTemplateVars(), [
+			'id_for_cart' => $this->getIdForCart(),
+		]);
+	}
 }
