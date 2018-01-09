@@ -14,6 +14,7 @@ class Cart extends \diBaseController
 	protected $targetType;
 	protected $targetId;
 	protected $quantity;
+	protected $action;
 
 	public function __construct($params = [])
 	{
@@ -26,7 +27,7 @@ class Cart extends \diBaseController
 		$this->targetId = \diRequest::request('target_id', 0);
 		$this->quantity = \diRequest::request('quantity', 0);
 	}
-	
+
 	protected function setupCartItem()
 	{
 		if (!$this->cartItem)
@@ -40,6 +41,8 @@ class Cart extends \diBaseController
 
 	public function _postItemAction()
 	{
+		$this->action = 'save';
+
 		$this->updateItem();
 
 		$this->getCartItem()
@@ -50,6 +53,13 @@ class Cart extends \diBaseController
 
 	public function _deleteItemAction()
 	{
+		$this->action = 'delete';
+
+		if (!$this->getCartItem()->hasId())
+		{
+			throw new \Exception('Cart item not loaded from DB');
+		}
+
 		$this->getCartItem()
 			->hardDestroy();
 
@@ -76,7 +86,7 @@ class Cart extends \diBaseController
 	{
 		$this
 			->setupCartItem();
-		
+
 		return $this->cartItem;
 	}
 
@@ -84,6 +94,7 @@ class Cart extends \diBaseController
 	{
 		return [
 			'ok' => true,
+			'action' => $this->action,
 			'target_type' => $this->targetType,
 			'target_id' => $this->targetId,
 			'quantity' => $this->quantity,
