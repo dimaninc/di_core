@@ -1,4 +1,12 @@
 Helper =
+    workFolder: './'
+
+    setWorkFolder: (@workFolder) ->
+        @
+
+    req: (module) ->
+        require @workFolder + '/node_modules/' + module
+
     getRootFolder: ->
         './'
 
@@ -14,6 +22,7 @@ Helper =
 
     tryDone: (tasksDone, tasksTotal, done) ->
         done() if tasksDone is tasksTotal
+        @
 
     deleteFolderRecursive: (folder, excludesList = []) ->
         fs = require 'fs' unless fs
@@ -28,7 +37,7 @@ Helper =
                     fs.unlinkSync curPath
                 return
             fs.rmdirSync folder
-        return
+        @
 
     copyCoreAssets: (gulp, done) ->
         console.log 'Copying CSS'
@@ -57,6 +66,7 @@ Helper =
         .pipe gulp.dest '../htdocs/assets/vendor/'
 
         done()
+        @
 
     getFolders: ->
         [
@@ -74,7 +84,7 @@ Helper =
         ]
 
     createFolders: (done) ->
-        mkdirp = require 'mkdirp' unless mkdirp
+        mkdirp = @req 'mkdirp' unless mkdirp
         folders = @getFolders().map (f) -> '../' + f
         tasksTotal = folders.length
         tasksDone = 0
@@ -86,10 +96,88 @@ Helper =
                     else
                         console.log folder, 'created'
                     Helper.tryDone ++tasksDone, tasksTotal, done
+        @
 
     writeVersionFile: ->
         fs = require 'fs' unless fs
         fs.writeFileSync @getRootFolder() + @getVersionFile(),
             '<?php\nclass diStaticBuild\n{\n    const VERSION = ' + (new Date()).getTime() + ';\n}'
+        @
+
+    assignBasicTasksToGulp: (gulp) ->
+        # create version timestamp php class
+        gulp.task 'version', (done) ->
+            Helper.writeVersionFile()
+            done()
+
+        # create initial folders
+        gulp.task 'create-folders', (done) ->
+            Helper.createFolders done
+
+        # copy core assets to htdocs
+        gulp.task 'copy-core-assets', (done) ->
+            Helper.copyCoreAssets gulp, done
+
+        # init project
+        gulp.task 'init', gulp.series(
+            'create-folders'
+            'copy-core-assets'
+        )
+
+        @
+
+    assignLessTaskToGulp: (gulp, opts = fn: null, buildFolder: null) ->
+        less = @req 'gulp-less' unless less
+        gulp.task 'less', (done) =>
+            gulp.src @fullPath opts.fn
+            .pipe less()
+            .on 'error', console.log
+            .pipe gulp.dest @fullPath opts.buildFolder
+            .on 'end', -> done()
+        @
+
+    assignStylusTaskToGulp: (gulp, opts = fn: null, buildFolder: null) ->
+        stylus = @req 'gulp-stylus' unless stylus
+        nib = @req 'nib' unless nib
+        gulp.task 'stylus', (done) =>
+            gulp.src @fullPath opts.fn
+            .pipe stylus use: nib(), 'include css': true
+            .on 'error', console.log
+            .pipe gulp.dest @fullPath opts.buildFolder
+            .on 'end', -> done()
+        @
+
+    assignPngSpritesTaskToGulp: (gulp, opts = mask: null, imgName: null, cssName: null, cssFormat: 'stylus', imgFolder: null, cssFolder: null) ->
+        spriteSmith = @req 'gulp.spritesmith' unless spriteSmith
+        gulp.task 'stylus-sprite', (done) =>
+            spriteData = gulp.src @fullPath opts.mask
+            .pipe spriteSmith
+                imgName: opts.imgName
+                cssName: opts.cssName
+                cssFormat: opts.cssFormat
+                algorithm: 'binary-tree'
+                cssTemplate: (data) ->
+                    timestamp = (new Date).getTime()
+                    template = "$sprite-timestamp = #{timestamp}\n"
+
+                    for item in data.items
+                        template += "$sprite-#{item.name} = #{item.px.offset_x} #{item.px.offset_y} #{item.px.width} #{item.px.height}\n"
+
+                    template
+            .on 'error', console.log
+            .on 'end', -> done()
+            spriteData.img.pipe gulp.dest @fullPath opts.imgFolder
+            spriteData.css.pipe gulp.dest @fullPath opts.cssFolder
+        @
+
+    assignCssConcatTaskToGulp: (gulp, opts = files: [], output: null) ->
+        concat = @req 'gulp-concat' unless concat
+        gulp.task 'css-concat', (done) =>
+            gulp.src opts.files.map (f) => @fullPath f
+            .pipe concat opts.output
+            .on 'error', console.log
+            .pipe gulp.dest @fullPath @getRootFolder()
+            .on 'end', -> done()
+        @
 
 module.exports = Helper
