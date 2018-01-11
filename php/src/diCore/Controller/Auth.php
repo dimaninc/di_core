@@ -8,9 +8,9 @@
 
 namespace diCore\Controller;
 
-use diCore\Tool\Auth as AuthTool;
 use diCore\Data\Types;
 use diCore\Entity\User\Model;
+use diCore\Tool\Auth as AuthTool;
 
 class Auth extends \diBaseController
 {
@@ -120,6 +120,28 @@ class Auth extends \diBaseController
 		return $ar;
 	}
 
+	protected function getEmptyUserUidErrorMessage()
+	{
+		return 'Введите E-mail';
+	}
+
+	protected function getUserUidForReset()
+	{
+		$email = \diRequest::post('email');
+
+		if (!$email)
+		{
+			throw new \Exception($this->getEmptyUserUidErrorMessage());
+		}
+
+		return $email;
+	}
+
+	protected function getUserForReset()
+	{
+		return Model::create(Types::user, $this->getUserForReset(), 'slug');
+	}
+
 	public function resetAction()
 	{
 		$ar = [
@@ -133,11 +155,11 @@ class Auth extends \diBaseController
 			}
 
 			/** @var Model $user */
-			$user = Model::create(Types::user, \diRequest::post('email', ''), 'slug');
+			$user = $this->getUserForReset();
 
 			if (!$user->exists())
 			{
-				throw new \Exception('E-mail не найден');
+				throw new \Exception('Пользователь не найден');
 			}
 
 			if (!$user->active())
