@@ -58,38 +58,24 @@ function diAdminForm(table, id, auto_save_timeout)
 		})
 	}
 
-	this.getTabs = function()
-	{
+	this.getTabs = function() {
 		return Tabs;
 	};
 
-	function initDelLinks()
-	{
+	function initDelLinks() {
 		$('a.del-file').click(function() {
 			var $this = $(this);
 
-			if (confirm($this.data('confirm')))
-			{
+			if (confirm($this.data('confirm'))) {
 				$.get($this.attr('href'), {redirect: 0}, function(res) {
-					if (res.ok)
-					{
-						var $e;
-
-						// dynamic rows
-						if (res.field && res.subId)
-						{
-							$e = $('.diadminform-row[data-field="{0}"] .dynamic-row[data-id="{1}"] .existing-pic-holder[data-field="{2}"]'.format(res.subTable, res.subId, res.field));
-						}
-						else
-						{
-							$e = $('.diadminform-row[data-field="{0}"] .existing-pic-holder'.format($this.data('field')));
-						}
-
+					if (res.ok) {
+						var $e = res.field && res.subId
+                            // dynamic rows
+							? $('.diadminform-row[data-field="{0}"] .dynamic-row[data-id="{1}"] .existing-pic-holder[data-field="{2}"]'.format(res.subTable, res.subId, res.field))
+							: $('.diadminform-row[data-field="{0}"] .existing-pic-holder'.format($this.data('field')));
 						$e.remove();
-					}
-					else
-					{
-						alert('Error: no such record');
+					} else {
+						alert(res.message || 'Error: no such record');
 					}
 				});
 			}

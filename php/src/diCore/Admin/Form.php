@@ -1676,7 +1676,7 @@ EOF;
 
 	private function getDelLinkCode($field)
 	{
-		return ", <a href=\"" . \diLib::getAdminWorkerPath("files", "del", array($this->table, $this->id, $field)) . "\" " .
+		return ", <a href=\"" . \diLib::getAdminWorkerPath("files", "del", [$this->table, $this->id, $field]) . "\" " .
 		"data-field=\"$field\" data-confirm=\"{$this->L("delete_pic_confirmation")}\" " .
 		"class=\"del-file\" data>{$this->L("delete")}</a>";
 	}

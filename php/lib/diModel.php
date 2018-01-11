@@ -50,11 +50,11 @@ class diModel implements \ArrayAccess
 	/** @var array Fields of the model */
 	protected $fields = [];
 
-	protected $picFields = ["pic", "pic2", "ico"];
+	protected $picFields = ['pic', 'pic2', 'ico'];
 	/* redefine this in child class */
 	protected $customPicFields = [];
 
-	protected $fileFields = ["pic", "pic2", "pic3", "pic_main", "ico", "flv", "mp3", "swf", "final_pic"];
+	protected $fileFields = ['pic', 'pic2', 'pic3', 'pic_main', 'ico', 'flv', 'mp3', 'swf', 'final_pic'];
 	protected $customFileFields = [];
 	protected $customFileFolders = [];
 
@@ -62,11 +62,11 @@ class diModel implements \ArrayAccess
 	protected $localizedFields = [];
 	protected $customLocalizedFields = [];
 
-	protected $dateFields = ["date", "created_at", "edited_at", "updated_at"];
+	protected $dateFields = ['date', 'created_at', 'edited_at', 'updated_at'];
 	/* redefine this in child class */
 	protected $customDateFields = [];
 
-	protected $ipFields = ["ip"];
+	protected $ipFields = ['ip'];
 	/* redefine this in child class */
 	protected $customIpFields = [];
 
@@ -96,7 +96,7 @@ class diModel implements \ArrayAccess
 	 * @param string $return could be class or type
 	 * @return bool|string
 	 */
-	public static function existsFor($type, $return = "class")
+	public static function existsFor($type, $return = 'class')
 	{
 		if (isInteger($type))
 		{
@@ -110,7 +110,7 @@ class diModel implements \ArrayAccess
 			return false;
 		}
 
-		return $return == "class" ? $className : $type;
+		return $return == 'class' ? $className : $type;
 	}
 
 	/**
@@ -125,12 +125,12 @@ class diModel implements \ArrayAccess
 		if (is_scalar($options))
 		{
 			$options = [
-				"identityFieldName" => $options,
+				'identityFieldName' => $options,
 			];
 		}
 
 		$options = extend([
-			"identityFieldName" => null,
+			'identityFieldName' => null,
 		], $options);
 
 		$className = self::existsFor($type);
@@ -1642,26 +1642,26 @@ class diModel implements \ArrayAccess
 			: array_merge($this->fileFields, $this->customFileFields);
 
 		$fieldSuffixes = [
-			"",
-			"_tn",
-			"_tn2",
-			"_tn3",
+			'',
+			'_tn',
+			'_tn2',
+			'_tn3',
 		];
 
 		foreach ($fileFields as $field)
 		{
 			if ($this->exists($field))
 			{
-				$this->set($field, "");
+				$this->set($field, '');
 			}
 
 			foreach ($fieldSuffixes as $suffix)
 			{
-				if ($this->exists($field . $suffix . "_w") && $this->exists($field . $suffix . "_h"))
+				if ($this->exists($field . $suffix . '_w') && $this->exists($field . $suffix . '_h'))
 				{
 					$this
-						->set($field . $suffix . "_w", "")
-						->set($field . $suffix . "_h", "");
+						->set($field . $suffix . '_w', 0)
+						->set($field . $suffix . '_h', 0);
 				}
 			}
 		}
@@ -1746,7 +1746,7 @@ class diModel implements \ArrayAccess
 
 		if ($this->exists("parent"))
 		{
-			$ar[] = "parent='{$this->get("parent")}'";
+			$ar[] = "parent = '{$this->get("parent")}'";
 		}
 
 		return $ar;
@@ -1765,7 +1765,8 @@ class diModel implements \ArrayAccess
 		$qAr = $this->getQueryArForMove();
 		$query = $qAr ? "WHERE " . join(" AND ", $qAr) : "";
 
-		$order_r = $this->getDb()->r($this->getTable(), $query, "{$min_max}({$this->orderFieldName}) AS num,COUNT(id) AS cc");
+		$order_r = $this->getDb()->r($this->getTable(), $query,
+			"{$min_max}({$this->orderFieldName}) AS num,COUNT(id) AS cc");
 		$this->set($this->orderFieldName, $order_r && $order_r->cc ? intval($order_r->num) + $sign : $init_value);
 
 		return $this;
@@ -1845,7 +1846,7 @@ class diModel implements \ArrayAccess
 
 	public function asPhp($excludeFields = [])
 	{
-		$s = '\\diModel::create(\\diTypes::' . diTypes::getName(static::type) . ', ';
+		$s = '\\diModel::create(\\diTypes::' . \diTypes::getName(static::type) . ', ';
 		$s .= $this->asPhpArray($excludeFields);
 		$s .= ')';
 		$s .= $this->getSuffixForPhpView();
