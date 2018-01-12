@@ -63,9 +63,17 @@ class diDynamicRows
   protected $max_feed_count_to_show_static_checkboxes = 20;
 
 	private $options = [
-		'addRowText' => 'Добавить +',
-		'multipleUpload' => 'Выбрать несколько файлов',
-		'dragAndDropUpload' => '(можно перетащить мышкой)',
+		'en' => [
+			'addRowText' => 'Add +',
+			'multipleUpload' => 'Select several files',
+			'dragAndDropUpload' => '(drag and drop is allowed)',
+		],
+
+		'ru' => [
+			'addRowText' => 'Добавить +',
+			'multipleUpload' => 'Выбрать несколько файлов',
+			'dragAndDropUpload' => '(можно перетащить мышкой)',
+		],
 	];
 
 	public function __construct($AdminPage, $field, $oldField = null)
@@ -82,6 +90,7 @@ class diDynamicRows
 			$this->table = $this->AdminPage->getTable();
 			$this->id = $this->AdminPage->getId();
 			$this->field = $field;
+			$this->language = $this->AdminPage->getLanguage();
 
 			$this->info_ar = $this->AdminPage->getAllFields();
 		}
@@ -184,8 +193,8 @@ class diDynamicRows
 
 	public function getOption($option)
 	{
-		return isset($this->options[$option])
-			? $this->options[$option]
+		return isset($this->options[$this->language][$option])
+			? $this->options[$this->language][$option]
 			: null;
 	}
 
@@ -193,11 +202,11 @@ class diDynamicRows
 	{
 		if ($value === null && is_array($option))
 		{
-			$this->options = extend($this->options, $option);
+			$this->options[$this->language] = extend($this->options[$this->language], $option);
 		}
 		else
 		{
-			$this->options[$option] = $value;
+			$this->options[$this->language][$option] = $value;
 		}
 
 		return $this;
