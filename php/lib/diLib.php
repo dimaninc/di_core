@@ -256,6 +256,14 @@ class diLib
 	{
 		$basicName = camelize($name, false);
 
+		// old style: custom class
+		$class = camelize('di_' . $name . '_custom_' . self::$kindNames[$kind]);
+		if (self::exists($class))
+		{
+			return $class;
+		}
+
+		// namespaces class
 		foreach (self::getAllNamespaces() as $ns)
 		{
 			$class = self::getClassNameInNamespace($basicName, $ns, $kind);
@@ -266,14 +274,8 @@ class diLib
 			}
 		}
 
-		$class = camelize("di_" . $name . "_custom_" . self::$kindNames[$kind]);
-
-		if (self::exists($class))
-		{
-			return $class;
-		}
-
-		return camelize("di_" . $name . '_' . self::$kindNames[$kind]);
+		// old style: main class
+		return camelize('di_' . $name . '_' . self::$kindNames[$kind]);
 	}
 
 	public static function parentNamespace($namespace)
