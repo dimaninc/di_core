@@ -8,6 +8,8 @@
 
 namespace diCore\Database\BaseEntity\Mongo;
 
+use diCore\Database\FieldType;
+
 class Model extends \diModel
 {
 	protected $idFieldName = '_id';
@@ -16,6 +18,20 @@ class Model extends \diModel
 	 * @var \MongoDB\Collection
 	 */
 	protected $collectionResource;
+
+	protected static $fieldTypes = [];
+
+	protected function getFieldTypes()
+	{
+		return static::$fieldTypes;
+	}
+
+	protected function getFieldType($field)
+	{
+		$ar = $this->getFieldTypes();
+
+		return isset($ar[$field]) ? $ar[$field] : null;
+	}
 
 	/**
 	 * @return \MongoDB\Collection
@@ -34,7 +50,44 @@ class Model extends \diModel
 	{
 		$ar = parent::getDataForDb();
 
-		// set type of each field here
+		foreach ($this->getFieldTypes() as $field => $type)
+		{
+			if ($type == FieldType::timestamp)
+			{
+				if (!isset($ar[$field]))
+				{
+					$ar[$field] = 'now';
+				}
+			}
+		}
+
+		foreach ($ar as $field => &$value)
+		{
+			if ($value === null)
+			{
+				continue;
+			}
+
+			switch ($this->getFieldType($field))
+			{
+				case FieldType::int:
+					$value = (int)$value;
+					break;
+
+				case FieldType::float:
+					$value = (float)$value;
+					break;
+
+				case FieldType::double:
+					$value = (double)$value;
+					break;
+
+				case FieldType::timestamp:
+				case FieldType::datetime:
+					$value = new \MongoDB\BSON\UTCDateTime((new \DateTime($value))->getTimestamp() * 1000);
+					break;
+			}
+		}
 
 		return $ar;
 	}
