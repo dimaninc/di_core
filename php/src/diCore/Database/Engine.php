@@ -22,10 +22,12 @@ class Engine extends SimpleContainer
 	public static $names = [
 		self::MYSQL => 'mysql',
 		self::SQLITE => 'sqlite',
+		self::MONGO => 'mongo',
 	];
 
 	public static $titles = [
 		self::MYSQL => 'MySQL',
 		self::SQLITE => 'SQLite',
+		self::MONGO => 'MongoDB',
 	];
 }

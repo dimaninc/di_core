@@ -37,10 +37,10 @@ class diModel implements \ArrayAccess
 	protected $id;
 	/** @var int|null */
 	protected $origId;
-	protected $idFieldName = "id";
+	protected $idFieldName = 'id';
 	protected $idAutoIncremented = true;
 	protected $slugFieldName = self::SLUG_FIELD_NAME_LEGACY;
-	protected $orderFieldName = "order_num";
+	protected $orderFieldName = 'order_num';
 	/** @var string - 'id' or 'slug', auto-detect by default */
 	protected $identityFieldName;
 
@@ -1434,7 +1434,7 @@ class diModel implements \ArrayAccess
 	 *
 	 * @return $this
 	 */
-	private function saveToDb()
+	protected function saveToDb()
 	{
 		$ar = $this->getDataForDb();
 

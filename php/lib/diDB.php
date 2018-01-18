@@ -71,8 +71,11 @@ abstract class diDB
 
 	const CHARSET_INIT_NEEDED = true;
 
+	const DEFAULT_PORT = null;
+
 	// basic db info
 	protected $host;
+	protected $port;
 	protected $dbname;
 	protected $username;
 	protected $password;
@@ -82,7 +85,7 @@ abstract class diDB
 	protected $logFolder = "log/db/";
 	protected $log;
 	protected $execution_time = 0;
-	protected $execution_time_log = array();
+	protected $execution_time_log = [];
 
 	protected $tables_ar;
 	protected $debug = false;
@@ -92,16 +95,38 @@ abstract class diDB
 	protected $transactionNestingLevel = 0;
 
 	public $affected_rows = 0;
-	public $cached_db_data = array();
+	public $cached_db_data = [];
 
-	public function __construct($host, $username, $password, $dbname)
+	public function __construct($settingsOrHost, $username = null, $password = null, $dbname = null)
 	{
-		$this->host = $host;
-		$this->dbname = $dbname;
-		$this->username = $username;
-		$this->password = $password;
+		if (is_array($settingsOrHost) && $username === null && $password === null && $dbname === null)
+		{
+			$settings = extend([
+				'host' => null,
+				'username' => null,
+				'password' => null,
+				'dbname' => null,
+				'port' => null,
+			], $settingsOrHost);
+		}
+		else
+		{
+			$settings = [
+				'host' => $settingsOrHost,
+				'username' => $username,
+				'password' => $password,
+				'dbname' => $dbname,
+				'port' => null,
+			];
+		}
 
-		$this->log = array();
+		$this->host = $settings['host'];
+		$this->dbname = $settings['dbname'];
+		$this->username = $settings['username'];
+		$this->password = $settings['password'];
+		$this->port = $settings['port'];
+
+		$this->log = [];
 
 		if ($this->debug)
 		{
@@ -121,14 +146,19 @@ abstract class diDB
 		$this->initCharset();
 	}
 
+	public function getLink()
+	{
+		return $this->link;
+	}
+
 	public function enableDebug()
 	{
 		$this->debug = true;
 
-		$this->debugMessage(array(
+		$this->debugMessage([
 			"URL",
-			diRequest::server("REQUEST_URI"),
-		));
+			\diRequest::requestUri(),
+		]);
 
 		return $this;
 	}
@@ -137,9 +167,8 @@ abstract class diDB
 	{
 		if (!$this->debugFileName)
 		{
-			do
-			{
-				$this->debugFileName = diDateTime::format("Y-m-d-H-i-s-") . get_unique_id() . ".csv";
+			do {
+				$this->debugFileName = \diDateTime::format("Y-m-d-H-i-s-") . get_unique_id() . ".csv";
 			} while (is_file($this->getDebugLogFileName()));
 		}
 
@@ -150,7 +179,7 @@ abstract class diDB
 	{
 		$this->checkDebugFilename();
 
-		return diPaths::fileSystem() . add_ending_slash($this->logFolder) . $this->debugFileName;
+		return \diPaths::fileSystem() . add_ending_slash($this->logFolder) . $this->debugFileName;
 	}
 
 	protected function debugMessage($message)
@@ -222,6 +251,11 @@ abstract class diDB
 	public function getPassword()
 	{
 		return $this->password;
+	}
+
+	public function getPort()
+	{
+		return $this->port;
 	}
 
 	public function getExecutionTime()
@@ -753,7 +787,7 @@ abstract class diDB
 		return join(",", $q_ar);
 	}
 
-	public function insert($table, $fields_values = array())
+	public function insert($table, $fields_values = [])
 	{
 		$t = $this->get_table_name($table);
 

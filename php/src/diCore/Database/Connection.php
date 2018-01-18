@@ -20,6 +20,7 @@ abstract class Connection
 	const engine = null;
 
 	protected $host;
+	protected $port;
 	protected $login;
 	protected $password;
 	protected $database;
@@ -107,6 +108,7 @@ abstract class Connection
 	{
 		$connData = extend([
 			'host' => null,
+			'port' => null,
 			'login' => null,
 			'username' => null,
 			'password' => null,
@@ -116,6 +118,7 @@ abstract class Connection
 
 		$this
 			->setHost($connData['host'])
+			->setPort($connData['port'])
 			->setLogin($connData['login'] ?: $connData['username'])
 			->setPassword($connData['password'])
 			->setDatabase($connData['database'] ?: $connData['dbname']);
@@ -124,7 +127,7 @@ abstract class Connection
 	}
 
 	/**
-	 * @return mixed
+	 * @return string
 	 */
 	public function getHost()
 	{
@@ -132,12 +135,31 @@ abstract class Connection
 	}
 
 	/**
-	 * @param mixed $host
+	 * @param string $host
 	 * @return $this
 	 */
 	public function setHost($host)
 	{
 		$this->host = $host;
+
+		return $this;
+	}
+
+	/**
+	 * @return int
+	 */
+	public function getPort()
+	{
+		return $this->port;
+	}
+
+	/**
+	 * @param int $port
+	 * @return $this
+	 */
+	public function setPort($port)
+	{
+		$this->port = $port;
 
 		return $this;
 	}
