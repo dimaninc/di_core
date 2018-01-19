@@ -14,6 +14,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	const type = null;
 	const connection_name = null;
 	protected $table;
+	/** @var @deprecated */
 	protected $modelType;
 	protected $isIdUnique = true;
 
@@ -1210,7 +1211,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	protected function getIdFieldName()
 	{
-		return \diModel::create($this->modelType)->getIdFieldName();
+		return \diModel::create($this->getModelType())->getIdFieldName();
 	}
 
 	/**

@@ -680,10 +680,10 @@ class diModel implements \ArrayAccess
 			"onlyFirstRecord" => false,
 			"orderBy" => "order_num ASC",
 			"queryAr" => [
-				"visible='1'",
-				"_table='{$this->getTable()}'",
-				"_id='{$this->getId()}'",
-				"_field='$field'",
+				"visible = '1'",
+				"_table = '{$this->getTable()}'",
+				"_id = '{$this->getId()}'",
+				"_field = '$field'",
 			],
 			"additionalQueryAr" => [],
 		], $options);
@@ -707,31 +707,38 @@ class diModel implements \ArrayAccess
 			: $ar;
 	}
 
-	protected function prepareIdAndFieldForGetRecord($id, $field = null)
+	protected function processIdBeforeGetRecord($id, $field)
 	{
-		$id = diDB::_in($id);
+		return (int)$id;
+	}
+
+	protected function prepareIdAndFieldForGetRecord($id, $fieldAlias = null)
+	{
+		$id = \diDB::_in($id);
 
 		// identifying wood
-		$field = $field ?: $this->identityFieldName;
+		$fieldAlias = $fieldAlias ?: 'id';
 
-		if ($field == "id")
+		if ($fieldAlias == 'id')
 		{
-			$field = $this->idFieldName;
-			$id = (int)$id;
+			$field = $this->getIdFieldName();
+			$id = $this->processIdBeforeGetRecord($id, $fieldAlias);
 		}
-		elseif ($field == "slug")
+		elseif ($fieldAlias == 'slug')
 		{
-			$field = $this->slugFieldName;
+			$field = $this->getSlugFieldName();
 		}
 		else
 		{
-			$field = static::isProperId($id) ? $this->idFieldName : $this->slugFieldName;
+			$field = static::isProperId($id)
+				? $this->getIdFieldName()
+				: $this->getSlugFieldName();
 		}
 		//
 
 		return [
-			"id" => $id,
-			"field" => $field,
+			'id' => $id,
+			'field' => $field,
 		];
 	}
 
@@ -740,16 +747,22 @@ class diModel implements \ArrayAccess
 		return isInteger($id) && $id > 0;
 	}
 
-	protected function getRecord($id, $field = null)
+	protected function getRecord($id, $fieldAlias = null)
 	{
 		if (!$this->getTable())
 		{
-			throw new \Exception("Table not defined");
+			throw new \Exception('Table not defined');
 		}
 
-		$a = $this->prepareIdAndFieldForGetRecord($id, $field);
+		$a = $this->prepareIdAndFieldForGetRecord($id, $fieldAlias);
+		$ar = $this->getDb()->ar($this->getTable(), "WHERE {$a["field"]} = '{$a["id"]}'");
 
-		return $this->getDb()->ar($this->getTable(), "WHERE {$a["field"]} = '{$a["id"]}'");
+		return $this->tuneDataAfterFetch($ar);
+	}
+	
+	protected function tuneDataAfterFetch($ar)
+	{
+		return $ar;
 	}
 
 	public function moveFieldToRelated($field)

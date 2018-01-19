@@ -6,7 +6,7 @@
  * Time: 23:07
  */
 
-namespace diCore\Database\BaseEntity\Mongo;
+namespace diCore\Database\Entity\Mongo;
 
 use diCore\Database\FieldType;
 
@@ -114,11 +114,12 @@ class Model extends \diModel
 		else
 		{
 			$insertResult = $this->getCollectionResource()->insertOne($ar); //['fsync' => true,]
+			/** @var \MongoDB\BSON\ObjectId $id */
 			$id = $insertResult->getInsertedId();
 
 			if ($id)
 			{
-				$this->setId($id);
+				$this->setId((string)$id);
 			}
 		}
 
@@ -126,5 +127,49 @@ class Model extends \diModel
 			->setOrigData();
 
 		return $this;
+	}
+
+	protected function processIdBeforeGetRecord($id, $field)
+	{
+		return new \MongoDB\BSON\ObjectId($id);
+	}
+
+	protected static function isProperId($id)
+	{
+		return strlen($id) == 24;
+	}
+
+	protected function getRecord($id, $fieldAlias = null)
+	{
+		if (!$this->getTable())
+		{
+			throw new \Exception('Collection not defined');
+		}
+
+		$a = $this->prepareIdAndFieldForGetRecord($id, $fieldAlias);
+
+		$ar = $this->getCollectionResource()
+			->findOne([
+				$a['field'] => $a['id'],
+			]);
+
+		return $this->tuneDataAfterFetch($ar);
+	}
+
+	protected function tuneDataAfterFetch($ar)
+	{
+		foreach ($ar as $field => &$value)
+		{
+			if ($value instanceof \MongoDB\BSON\ObjectId)
+			{
+				$value = (string)$value;
+			}
+			elseif ($value instanceof \MongoDB\BSON\UTCDateTime)
+			{
+				$value = $value->toDateTime()->format(\diDateTime::FORMAT_SQL_DATE_TIME);
+			}
+		}
+
+		return $ar;
 	}
 }

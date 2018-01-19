@@ -79,13 +79,14 @@ class Mongo extends \diDB
 
 		$insertResult = $this->getCollectionResource($table)
 			->insertOne($fields_values);
+		/** @var \MongoDB\BSON\ObjectId $id */
 		$id = $insertResult->getInsertedId();
 
 		$time2 = utime();
 		$this->execution_time += $time2 - $time1;
 		$this->time_log('insert', $time2 - $time1);
 
-		return $id;
+		return (string)$id;
 	}
 
 	protected function __close()
