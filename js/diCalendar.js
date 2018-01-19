@@ -837,9 +837,13 @@ function diCalendar(cfg)
 
   this.init_position = function()
   {
+    if (this.cfg.no_positioning) return this;
+
     this.e.style.left = (_get_left(this.stick_to_e))+'px';
     this.e.style.top = (_get_top(this.stick_to_e) + this.stick_to_e.offsetHeight)+'px';
-  }
+
+    return this;
+  };
 
   // initiating
   this.instance_name = cfg.instance_name;
@@ -876,10 +880,6 @@ function diCalendar(cfg)
   this.e = document.createElement('DIV');
   this.e.id = this.id;
   this.e.className = 'dicalendar';
-
-  this.init_position();
-
-  this.stick_to_e.parentNode.insertBefore(this.e, this.stick_to_e);
   //
 
   this.today_dt = new Date();
@@ -888,13 +888,14 @@ function diCalendar(cfg)
 
   this.dates_ar = [];
 
-  this.cfg = {}
+  this.cfg = {};
 
   this.set_config({
     add_events_to_date: {1: [], 2: []},
     able_to_go_to_past: true,
     show_weekday_titles: true,
     stick_to: false, // id or object; if false, then sticking to date1 element
+    no_positioning: false,
     language: 'rus',
     mode: 'single', // single - one date at once, multi - few dates at once
     onsetdate: false,
@@ -910,6 +911,10 @@ function diCalendar(cfg)
     date1_select_str: dicalendar_lng_ar[this.cfg.language].date1_select_str, // only for range selection:
     date2_select_str: dicalendar_lng_ar[this.cfg.language].date2_select_str // these messages will pop up when user clicks on a date
   });
+
+  this.init_position();
+
+  this.stick_to_e.parentNode.insertBefore(this.e, this.stick_to_e);
 
   this.init();
   this.add_events_to_inputs();
