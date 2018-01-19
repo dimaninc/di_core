@@ -875,7 +875,7 @@ function diCalendar(cfg)
     this.stick_to_e = this.e_ar[1].e ? this.e_ar[1].e : this.e_ar[1].dd;
 
   if (!this.stick_to_e)
-    alert('error! "stick to" element not found');
+    console.log('error! "stick to" element not found');
 
   this.e = document.createElement('DIV');
   this.e.id = this.id;
