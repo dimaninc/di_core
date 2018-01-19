@@ -81,10 +81,19 @@ class Model extends \diBaseUserModel
 		return $this;
 	}
 
+	public function setPasswordExt($password)
+	{
+		$this
+			->hashPassword($password)
+			->setRelated('password', $password);
+		
+		return $this;
+	}
+	
 	public function setInitiatingValues()
 	{
 		$this
-			->setPassword(static::generatePassword())
+			->setPasswordExt(static::generatePassword())
 			->setActivationKey(static::generateActivationKey());
 
 		return $this;
@@ -144,7 +153,7 @@ class Model extends \diBaseUserModel
 		}
 
 		$this
-			->setPassword($newPassword)
+			->setPasswordExt($newPassword)
 			->save();
 
 		return $this;

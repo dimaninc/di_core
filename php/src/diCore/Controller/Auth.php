@@ -139,7 +139,7 @@ class Auth extends \diBaseController
 
 	protected function getUserForReset()
 	{
-		return Model::create(Types::user, $this->getUserForReset(), 'slug');
+		return Model::create(Types::user, $this->getUserUidForReset(), 'slug');
 	}
 
 	public function resetAction()
@@ -170,7 +170,7 @@ class Auth extends \diBaseController
 			$user->notifyAboutResetPasswordByEmail($this->getTwig());
 
 			$ar['ok'] = true;
-			$ar['user'] = $user->get();
+			//$ar['user'] = $user->get();
 		} catch (\Exception $e) {
 			$ar['message'] = $e->getMessage();
 		}

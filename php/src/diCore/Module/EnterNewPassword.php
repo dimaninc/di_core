@@ -44,7 +44,7 @@ class EnterNewPassword extends \diModule
 			if ($password && $password2 && $password == $password2)
 			{
 				$user
-					->setPassword($password)
+					->setPasswordExt($password)
 					->setActivationKey(Model::generateActivationKey())
 					->save();
 
