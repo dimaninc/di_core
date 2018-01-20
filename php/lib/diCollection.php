@@ -153,7 +153,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 *
 	 * @var array
 	 */
-	private $sqlParts = [
+	protected $sqlParts = [
 		'select' => [],
 		'from' => [],
 		'join' => [],
@@ -165,7 +165,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		'values' => [],
 	];
 
-	private $possibleDirections = ['ASC', 'DESC'];
+	protected $possibleDirections = ['ASC', 'DESC'];
 
 	public function __construct($table = null)
 	{
@@ -772,7 +772,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 		return $this;
 	}
-	
+
 	protected function getStartFrom()
 	{
 		$startFrom = $this->skip !== null

@@ -93,6 +93,22 @@ class Mongo extends \diDB
 		return $this->lastInsertId = (string)$id;
 	}
 
+	public static function convertDirection($direction)
+	{
+		switch (mb_strtolower($direction))
+		{
+			case 'asc':
+				$direction = 1;
+				break;
+
+			case 'desc':
+				$direction = -1;
+				break;
+		}
+
+		return $direction;
+	}
+
 	public function rs($table, $q_ending = "", $q_fields = "*")
 	{
 		if (is_array($q_ending))
@@ -106,16 +122,7 @@ class Mongo extends \diDB
 
 			foreach ($ar['sort'] as $field => &$direction)
 			{
-				switch (mb_strtolower($direction))
-				{
-					case 'asc':
-						$direction = 1;
-						break;
-
-					case 'desc':
-						$direction = -1;
-						break;
-				}
+				$direction = static::convertDirection($direction);
 			}
 
 			$options = array_filter($ar);
