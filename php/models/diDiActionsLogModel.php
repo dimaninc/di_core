@@ -39,7 +39,7 @@ class diDiActionsLogModel extends diModel
 	public function getCustomTemplateVars()
 	{
 		return extend(parent::getCustomTemplateVars(), [
-			"info_str" => diActionsLog::getActionInfoStr($this->get()),
+			"info_str" => diActionsLog::getActionInfoStr((object)$this->get()),
 			"action_str" => diActionsLog::getActionStr($this->getAction()),
 		]);
 	}

@@ -72,7 +72,7 @@ class AdminPhotos extends \diBaseAdminController
 				],
 			];
 
-			$_POST = (array)$photo->get();
+			$_POST = $photo->get();
 
 			//$Submit->storeData();
 			$Submit->storeImage('pic', [

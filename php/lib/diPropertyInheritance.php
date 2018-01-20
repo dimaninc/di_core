@@ -21,7 +21,7 @@ class diPropertyInheritance
 
 	public function push($rec)
 	{
-		$this->ar[] = (array)(is_object($rec) && $rec instanceof diModel ? $rec->get() : $rec);
+		$this->ar[] = (array)(is_object($rec) && $rec instanceof \diModel ? $rec->get() : $rec);
 	}
 
 	public function get($field)

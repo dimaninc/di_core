@@ -759,7 +759,7 @@ class diModel implements \ArrayAccess
 
 		return $this->tuneDataAfterFetch($ar);
 	}
-	
+
 	protected function tuneDataAfterFetch($ar)
 	{
 		return $ar;
@@ -884,8 +884,7 @@ class diModel implements \ArrayAccess
 	{
 		if (is_null($field))
 		{
-			// todo: return array
-			return (object)$this->getWithId();
+			return $this->getWithId();
 		}
 
 		if ($field == $this->idFieldName)

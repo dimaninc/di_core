@@ -217,7 +217,7 @@ class diAdminList
 
 		foreach ($this->getCurRec() as $k => $v)
 		{
-			$this->replaceAr["%".$k."%"] = $v;
+			$this->replaceAr["%" . $k . "%"] = $v;
 		}
 
 		return $this;
@@ -254,7 +254,7 @@ class diAdminList
 
 	public function getCurRec()
 	{
-		return $this->getCurModel()->get();
+		return (object)$this->getCurModel()->get();
 	}
 
 	public function getCurModel()

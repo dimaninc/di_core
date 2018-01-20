@@ -436,7 +436,7 @@ class Form
 
 			if ($this->getModel()->exists())
 			{
-				$this->rec = $this->getModel()->get();
+				$this->rec = (object)$this->getModel()->get();
 			}
 			else
 			{
