@@ -8,6 +8,7 @@
 
 namespace diCore\Database\Legacy;
 
+use diCore\Helper\ArrayHelper;
 use MongoDB\Driver\Cursor;
 use MongoDB\Model\CollectionInfo;
 
@@ -125,8 +126,8 @@ class Mongo extends \diDB
 				$direction = static::convertDirection($direction);
 			}
 
-			$options = array_filter($ar);
-			unset($ar['filter']);
+			$options = array_filter($ar) ?: [];
+			unset($options['filter']);
 
 			/** @var Cursor $cursor */
 			$cursor = $this->getCollectionResource($table)->find($ar['filter'], $options);
@@ -191,15 +192,18 @@ class Mongo extends \diDB
 		return null;
 	}
 
-	/**
-	 * @param $rs Cursor
-	 * @return integer
-	 */
-	protected function __count($rs)
+	protected function __count($options)
 	{
-		return $rs
-			? count($rs->toArray())
-			: 0;
+		$options = extend([
+			'collectionName' => null,
+			'filters' => [],
+		], $options);
+
+		$options['filters'] = ArrayHelper::filterByKey($options['filters'], ['filter', 'skip', 'limit']);
+
+		return $options['collectionName']
+			? $this->getCollectionResource($options['collectionName'])->count($options['filters'])
+			: null;
 	}
 
 	protected function __insert_id()
