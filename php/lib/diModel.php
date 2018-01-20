@@ -717,7 +717,7 @@ class diModel implements \ArrayAccess
 		$id = \diDB::_in($id);
 
 		// identifying wood
-		$fieldAlias = $fieldAlias ?: 'id';
+		$fieldAlias = $fieldAlias ?: $this->identityFieldName;
 
 		if ($fieldAlias == 'id')
 		{
