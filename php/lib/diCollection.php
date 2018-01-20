@@ -144,7 +144,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 * @var array
 	 */
 	protected $options = [
-		"modelAfterCreate" => null, // called after collection loaded from database, callback for each model
+		'modelAfterCreate' => null, // called after collection loaded from database, callback for each model
 									// function(\diModel $m) {}
 	];
 
@@ -165,7 +165,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		'values' => [],
 	];
 
-	private $possibleDirections = ["ASC", "DESC"];
+	private $possibleDirections = ['ASC', 'DESC'];
 
 	public function __construct($table = null)
 	{
@@ -181,7 +181,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 * @return bool|string
 	 * @throws Exception
 	 */
-	public static function existsFor($type, $return = "class")
+	public static function existsFor($type, $return = 'class')
 	{
 		if (isInteger($type))
 		{
@@ -195,7 +195,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 			return false;
 		}
 
-		return $return == "class" ? $className : $type;
+		return $return == 'class' ? $className : $type;
 	}
 
 	/**
@@ -210,20 +210,20 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		if (\diDB::is_rs($options))
 		{
 			$options = [
-				"cachedRecords" => $options,
+				'cachedRecords' => $options,
 			];
 		}
 		elseif (is_scalar($options))
 		{
 			$options = [
-				"query" => $options,
+				'query' => $options,
 			];
 		}
 
 		$options = extend([
-			"query" => null,
-			"queryFields" => $queryFields,
-			"cachedRecords" => null,
+			'query' => null,
+			'queryFields' => $queryFields,
+			'cachedRecords' => null,
 		], $options);
 
 		$className = self::existsFor($type);
@@ -236,22 +236,22 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		/** @var diCollection $o */
 		$o = new $className();
 
-		if ($options["query"])
+		if ($options['query'])
 		{
-			$o->setQuery($options["query"]);
-			unset($options["query"]);
+			$o->setQuery($options['query']);
+			unset($options['query']);
 		}
 
-		if ($options["queryFields"])
+		if ($options['queryFields'])
 		{
-			$o->setQueryFields($options["queryFields"]);
-			unset($options["queryFields"]);
+			$o->setQueryFields($options['queryFields']);
+			unset($options['queryFields']);
 		}
 
-		if ($options["cachedRecords"])
+		if ($options['cachedRecords'])
 		{
-			$o->setCachedRecords($options["cachedRecords"]);
-			unset($options["cachedRecords"]);
+			$o->setCachedRecords($options['cachedRecords']);
+			unset($options['cachedRecords']);
 		}
 
 		$o->setOptions($options);
@@ -273,7 +273,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	public static function createForTableNoStrict($table, $options = [])
 	{
 		$type = \diTypes::getNameByTable($table);
-		$typeName = self::existsFor($type, "type");
+		$typeName = self::existsFor($type, 'type');
 
 		if ($typeName)
 		{
@@ -282,10 +282,10 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 		$c = new static($table);
 
-		if (isset($options["query"]))
+		if (isset($options['query']))
 		{
-			$c->setQuery($options["query"]);
-			unset($options["query"]);
+			$c->setQuery($options['query']);
+			unset($options['query']);
 		}
 
 		$c->setOptions($options);
@@ -426,18 +426,18 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	protected function detectMethod($fullMethod)
 	{
 		$possibleMethods = [
-			"filter_by_localized",
-			"filter_by_expression",
-			"filter_by",
-			"order_by_localized",
-			"order_by",
-			"select_localized",
-			"select",
+			'filter_by_localized',
+			'filter_by_expression',
+			'filter_by',
+			'order_by_localized',
+			'order_by',
+			'select_localized',
+			'select',
 		];
 
 		foreach ($possibleMethods as $method)
 		{
-			if (substr($fullMethod, 0, strlen($method) + 1) == $method . "_")
+			if (substr($fullMethod, 0, strlen($method) + 1) == $method . '_')
 			{
 				return [$method, substr($fullMethod, strlen($method) + 1)];
 			}
@@ -456,36 +456,36 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 		switch ($method)
 		{
-			case "filter_by":
+			case 'filter_by':
 				return $operator !== null
 					? $this->filterBy($field, $operator, $value)
 					: $this->filterBy($field, $value);
 
-			case "filter_by_localized":
+			case 'filter_by_localized':
 				return $operator !== null
 					? $this->filterByLocalized($field, $operator, $value)
 					: $this->filterByLocalized($field, $value);
 
-			case "filter_by_expression":
+			case 'filter_by_expression':
 				return $operator !== null
 					? $this->filterByExpression($field, $operator, $value)
 					: $this->filterByExpression($field, $value);
 
-			case "order_by":
+			case 'order_by':
 				return $this->orderBy($field, $value);
 
-			case "order_by_localized":
+			case 'order_by_localized':
 				return $this->orderByLocalized($field, $value);
 
-			case "select":
+			case 'select':
 				return $this->select($field, true);
 
-			case "select_localized":
+			case 'select_localized':
 				return $this->selectLocalized($field, true);
 		}
 
 		throw new \Exception(
-			sprintf("Invalid method %s::%s(%s)", get_class($this), $method, print_r($arguments, 1))
+			sprintf('Invalid method %s::%s(%s)', get_class($this), $method, print_r($arguments, 1))
 		);
 	}
 
@@ -708,9 +708,9 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 			$item = $this->getNewItem($item);
 		}
 
-		if ($this->options["modelAfterCreate"] && is_callable($this->options["modelAfterCreate"]))
+		if ($this->options['modelAfterCreate'] && is_callable($this->options['modelAfterCreate']))
 		{
-			$this->options["modelAfterCreate"]($item);
+			$this->options['modelAfterCreate']($item);
 		}
 
 		$this->offsetSet($this->isIdUnique ? $this->getId($item) : null, $item);
@@ -757,7 +757,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	public function setQueryFields($queryFields)
 	{
-		$this->queryFields = is_array($queryFields) ? join(",", $queryFields) : $queryFields;
+		$this->queryFields = is_array($queryFields) ? join(',', $queryFields) : $queryFields;
 
 		return $this;
 	}
@@ -772,12 +772,19 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 		return $this;
 	}
-
-	protected function getLimitQueryEnding()
+	
+	protected function getStartFrom()
 	{
 		$startFrom = $this->skip !== null
 			? $this->skip
 			: ($this->pageSize ? ($this->pageNumber - 1) * $this->pageSize : 0);
+
+		return $startFrom;
+	}
+
+	protected function getLimitQueryEnding()
+	{
+		$startFrom = $this->getStartFrom();
 		$requestPageSize = $this->pageSize;
 
 		if ($this->getRequestSize())
@@ -801,7 +808,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		if ($requestPageSize)
 		{
 			return sprintf(
-				"LIMIT %d,%d",
+				'LIMIT %d,%d',
 				$startFrom,
 				$requestPageSize
 			);
@@ -823,7 +830,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	protected function getQueryFields()
 	{
-		return $this->queryFields ?: $this->getBuiltQueryFields() ?: $this->addAliasToField("*");
+		return $this->queryFields ?: $this->getBuiltQueryFields() ?: $this->addAliasToField('*');
 	}
 
 	/**
@@ -872,7 +879,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 			$this->getLimitQueryEnding(),
 		]);
 
-		return join(" ", $ar);
+		return join(' ', $ar);
 	}
 
 	public function rewind()
@@ -987,13 +994,27 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 			$this->removeItems();
 		}
 
-		while ($row = $this->getDb()->fetch_array($rows))
-		{
+		$iterator = function($row) {
 			/** @var \diModel $item */
 			$item = $this->getNewEmptyItem();
 			$item->initFrom($row);
 
 			$this->addItem($item);
+		};
+
+		if (is_array($rows))
+		{
+			foreach ($rows as $row)
+			{
+				$iterator($row);
+			}
+		}
+		else
+		{
+			while ($row = $this->getDb()->fetch_array($rows))
+			{
+				$iterator($row);
+			}
 		}
 
 		if ($this->cachedRecords)
@@ -1030,13 +1051,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 				$q = $this->getDb()->getQueryForRs(
 					$this->getQueryTable(),
 					$this->getQueryWhere() . ' ' . $this->getQueryGroupBy(),
-					"COUNT(*)"
+					'COUNT(*)'
 				);
 
 				$r = $this->getDb()->r(
 					'(' . $q . ') counterfeit',
 					'',
-					"COUNT(*) AS cc"
+					'COUNT(*) AS cc'
 				);
 			}
 			else
@@ -1044,7 +1065,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 				$r = $this->getDb()->r(
 					$this->getQueryTable(),
 					$this->getQueryWhere(),
-					"COUNT(*) AS cc"
+					'COUNT(*) AS cc'
 				);
 			}
 
@@ -1106,7 +1127,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	public function walk($callback, array $arguments = [])
 	{
 		$results = [];
-		$useItemCallback = is_string($callback) && strpos($callback, "::") === false;
+		$useItemCallback = is_string($callback) && strpos($callback, '::') === false;
 
 		foreach ($this as $id => $item)
 		{
@@ -1382,7 +1403,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function orderBy($field, $direction = null)
 	{
-		$direction = strtoupper($direction ?: "ASC");
+		$direction = strtoupper($direction ?: 'ASC');
 
 		if (!in_array($direction, $this->possibleDirections))
 		{
@@ -1407,7 +1428,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function orderByExpression($field, $direction = null)
 	{
-		$direction = strtoupper($direction ?: "ASC");
+		$direction = strtoupper($direction ?: 'ASC');
 
 		if (!in_array($direction, $this->possibleDirections))
 		{
