@@ -6,6 +6,7 @@
  * Time: 14:25
  */
 
+use diCore\Helper\ArrayHelper;
 use diCore\Helper\FileSystemHelper;
 
 abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
@@ -1002,7 +1003,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 			$this->addItem($item);
 		};
 
-		if (is_array($rows))
+		if (ArrayHelper::is($rows) || $rows instanceof \Traversable)
 		{
 			foreach ($rows as $row)
 			{

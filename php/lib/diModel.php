@@ -20,6 +20,10 @@ class diModel implements \ArrayAccess
 	// Model type (from diTypes class). Should be redefined
 	const type = null;
 	const connection_name = null;
+	const table = null;
+	const id_field_name = 'id';
+	const slug_field_name = self::SLUG_FIELD_NAME_LEGACY;
+	const order_field_name = 'order_num';
 
 	// this should be redefined
 	protected $table;
@@ -37,9 +41,12 @@ class diModel implements \ArrayAccess
 	protected $id;
 	/** @var int|null */
 	protected $origId;
-	protected $idFieldName = 'id';
+	/** @deprecated */
+	protected $idFieldName = self::id_field_name;
 	protected $idAutoIncremented = true;
+	/** @deprecated */
 	protected $slugFieldName = self::SLUG_FIELD_NAME_LEGACY;
+	/** @deprecated */
 	protected $orderFieldName = 'order_num';
 	/** @var string - 'id' or 'slug', auto-detect by default */
 	protected $identityFieldName;
@@ -278,7 +285,7 @@ class diModel implements \ArrayAccess
 
 	public function getTable()
 	{
-		return $this->table;
+		return static::table ?: $this->table;
 	}
 
 	public function modelType()
@@ -298,12 +305,12 @@ class diModel implements \ArrayAccess
 
 	public function getAdminHref()
 	{
-		return "/_admin/" . $this->getTable() . "/form/" . $this->getId() . "/";
+		return '/_admin/' . $this->getTable() . '/form/' . $this->getId() . '/';
 	}
 
 	public function getFullAdminHref()
 	{
-		return diPaths::defaultHttp() . $this->getAdminHref();
+		return \diPaths::defaultHttp() . $this->getAdminHref();
 	}
 
 	protected function __getPrefixForHref()
@@ -311,11 +318,11 @@ class diModel implements \ArrayAccess
 		global $Z;
 
 		if (
-			!empty($GLOBALS["CURRENT_LANGUAGE"]) &&
-			in_array($GLOBALS["CURRENT_LANGUAGE"], diCurrentCMS::$possibleLanguages) &&
-			$GLOBALS["CURRENT_LANGUAGE"] != "ru"
+			!empty($GLOBALS['CURRENT_LANGUAGE']) &&
+			in_array($GLOBALS['CURRENT_LANGUAGE'], \diCurrentCMS::$possibleLanguages) &&
+			$GLOBALS['CURRENT_LANGUAGE'] != 'ru'
 		) {
-			$prefix = "/" . $GLOBALS["CURRENT_LANGUAGE"];
+			$prefix = '/' . $GLOBALS['CURRENT_LANGUAGE'];
 		}
 		elseif (!empty($Z))
 		{
@@ -323,7 +330,7 @@ class diModel implements \ArrayAccess
 		}
 		else
 		{
-			$prefix = "";
+			$prefix = '';
 		}
 
 		return $prefix;
@@ -337,11 +344,11 @@ class diModel implements \ArrayAccess
 		global $X;
 
 		if (
-			!empty($GLOBALS["CURRENT_LANGUAGE"]) &&
-			in_array($GLOBALS["CURRENT_LANGUAGE"], diCurrentCMS::$possibleLanguages) &&
-			$GLOBALS["CURRENT_LANGUAGE"] != diCurrentCMS::$defaultLanguage
+			!empty($GLOBALS['CURRENT_LANGUAGE']) &&
+			in_array($GLOBALS['CURRENT_LANGUAGE'], \diCurrentCMS::$possibleLanguages) &&
+			$GLOBALS['CURRENT_LANGUAGE'] != \diCurrentCMS::$defaultLanguage
 		) {
-			$language = $GLOBALS["CURRENT_LANGUAGE"];
+			$language = $GLOBALS['CURRENT_LANGUAGE'];
 		}
 		elseif (!empty($Z))
 		{
@@ -353,7 +360,7 @@ class diModel implements \ArrayAccess
 		}
 		else
 		{
-			$language = diCurrentCMS::$defaultLanguage;
+			$language = \diCurrentCMS::$defaultLanguage;
 		}
 
 		return $language;
@@ -361,7 +368,7 @@ class diModel implements \ArrayAccess
 
 	public function getSlugFieldName()
 	{
-		return $this->slugFieldName;
+		return static::slug_field_name ?: $this->slugFieldName;
 	}
 
 	public final function getRawSlug()
@@ -391,10 +398,10 @@ class diModel implements \ArrayAccess
 
 	public function getSourceForSlug()
 	{
-		return $this->get("slug_source") ?: $this->get("en_title") ?: $this->get("title");
+		return $this->get('slug_source') ?: $this->get('en_title') ?: $this->get('title');
 	}
 
-	public function generateSlug($source = null, $delimiter = "-")
+	public function generateSlug($source = null, $delimiter = '-')
 	{
 		$this->setSlug(diSlug::generate($source ?: $this->getSourceForSlug(), $this->getTable(), $this->getId(),
 			$this->getIdFieldName(), $this->getSlugFieldName(), $delimiter
@@ -405,7 +412,7 @@ class diModel implements \ArrayAccess
 
 	public function getIdFieldName()
 	{
-		return $this->idFieldName;
+		return static::id_field_name ?: $this->idFieldName;
 	}
 
 	public function getId()
@@ -526,27 +533,27 @@ class diModel implements \ArrayAccess
 			{
 				for ($i = 1; $i <= static::MAX_PREVIEWS_COUNT; $i++)
 				{
-					$idx = $i > 1 ? $i : "";
+					$idx = $i > 1 ? $i : '';
 
-					if (!$this->exists($k . "_tn" . $idx))
+					if (!$this->exists($k . '_tn' . $idx))
 					{
-						$ar[$k . "_tn" . $idx] =
-						$ar[$k . "_tn" . $idx . "_with_path"] = $this->wrapFileWithPath($v, $i);
+						$ar[$k . '_tn' . $idx] =
+						$ar[$k . '_tn' . $idx . '_with_path'] = $this->wrapFileWithPath($v, $i);
 
 						if ($isLocalized)
 						{
-							$ar[static::LOCALIZED_PREFIX . $k . "_tn" . $idx] =
-							$ar[static::LOCALIZED_PREFIX . $k . "_tn" . $idx . "_with_path"] =
+							$ar[static::LOCALIZED_PREFIX . $k . '_tn' . $idx] =
+							$ar[static::LOCALIZED_PREFIX . $k . '_tn' . $idx . '_with_path'] =
 								$this->wrapFileWithPath($this->localized($k), $i);
 						}
 					}
 					else
 					{
-						$ar[$k . "_tn" . $idx . "_with_path"] = $this->wrapFileWithPath($this->get($k . '_tn' . $idx), $i);
+						$ar[$k . '_tn' . $idx . '_with_path'] = $this->wrapFileWithPath($this->get($k . '_tn' . $idx), $i);
 
 						if ($isLocalized)
 						{
-							$ar[static::LOCALIZED_PREFIX . $k . "_tn" . $idx . "_with_path"] =
+							$ar[static::LOCALIZED_PREFIX . $k . '_tn' . $idx . '_with_path'] =
 								$this->wrapFileWithPath($this->localized($k . '_tn' . $idx), $i);
 						}
 					}
@@ -557,7 +564,7 @@ class diModel implements \ArrayAccess
 					$v = $this->wrapFileWithPath($v);
 				}
 
-				$ar[$k . "_with_path"] = $v;
+				$ar[$k . '_with_path'] = $v;
 
 				if ($isLocalized)
 				{
@@ -566,7 +573,7 @@ class diModel implements \ArrayAccess
 						$v2 = $this->wrapFileWithPath($v2);
 					}
 
-					$ar[static::LOCALIZED_PREFIX . $k . "_with_path"] = $v2;
+					$ar[static::LOCALIZED_PREFIX . $k . '_with_path'] = $v2;
 				}
 			}
 			elseif ($this->isFileField($k))
@@ -576,7 +583,7 @@ class diModel implements \ArrayAccess
 					$v = $this->wrapFileWithPath($v);
 				}
 
-				$ar[$k . "_with_path"] = $v;
+				$ar[$k . '_with_path'] = $v;
 
 				if ($isLocalized)
 				{
@@ -585,7 +592,7 @@ class diModel implements \ArrayAccess
 						$v2 = $this->wrapFileWithPath($v2);
 					}
 
-					$ar[static::LOCALIZED_PREFIX . $k . "_with_path"] = $v2;
+					$ar[static::LOCALIZED_PREFIX . $k . '_with_path'] = $v2;
 				}
 			}
 			elseif ($this->isDateField($k))
@@ -594,17 +601,17 @@ class diModel implements \ArrayAccess
 
 				if ($v)
 				{
-					$ar[$k . "_time"] = date("H:i", $v);
-					$ar[$k . "_date"] = date("d.m.Y", $v);
-					$ar[$k . "_str"] = \diDateTime::format(static::getDateStrFormat(), $v);
-					$ar[$k . "_passed_by"] = \diDateTime::passedBy($v);
+					$ar[$k . '_time'] = date('H:i', $v);
+					$ar[$k . '_date'] = date('d.m.Y', $v);
+					$ar[$k . '_str'] = \diDateTime::format(static::getDateStrFormat(), $v);
+					$ar[$k . '_passed_by'] = \diDateTime::passedBy($v);
 
-					$v = $ar[$k . "_date"];
+					$v = $ar[$k . '_date'];
 				}
 			}
 			elseif ($this->isIpField($k))
 			{
-				$ar[$k . "_num"] = $v;
+				$ar[$k . '_num'] = $v;
 
 				$v = isInteger($v) ? bin2ip($v) : $v;
 
@@ -620,11 +627,11 @@ class diModel implements \ArrayAccess
 		}
 
 		$ar[$this->getIdFieldName()] = $this->getId();
-		$ar["slug"] = $this->getSlug(); // back compatibility for clean_title
-		$ar["href"] = $this->getHref();
-		$ar["full_href"] = $this->getFullHref();
-		$ar["admin_href"] = $this->getAdminHref();
-		$ar["full_admin_href"] = $this->getFullAdminHref();
+		$ar['slug'] = $this->getSlug(); // back compatibility for clean_title
+		$ar['href'] = $this->getHref();
+		$ar['full_href'] = $this->getFullHref();
+		$ar['admin_href'] = $this->getAdminHref();
+		$ar['full_admin_href'] = $this->getFullAdminHref();
 
 		return $ar;
 	}
@@ -674,35 +681,35 @@ class diModel implements \ArrayAccess
 	/**
 	 * @param string $field for `_field` in `dipics` table
 	 */
-	public function getDynamicPics($field = "pics", $options = [])
+	public function getDynamicPics($field = 'pics', $options = [])
 	{
 		$options = extend([
-			"onlyFirstRecord" => false,
-			"orderBy" => "order_num ASC",
-			"queryAr" => [
+			'onlyFirstRecord' => false,
+			'orderBy' => 'order_num ASC',
+			'queryAr' => [
 				"visible = '1'",
 				"_table = '{$this->getTable()}'",
 				"_id = '{$this->getId()}'",
 				"_field = '$field'",
 			],
-			"additionalQueryAr" => [],
+			'additionalQueryAr' => [],
 		], $options);
 
-		$queryAr = array_merge($options["queryAr"], $options["additionalQueryAr"]);
-		$limit = $options["onlyFirstRecord"] ? " LIMIT 1" : "";
+		$queryAr = array_merge($options['queryAr'], $options['additionalQueryAr']);
+		$limit = $options['onlyFirstRecord'] ? ' LIMIT 1' : '';
 
 		$ar = [];
 
-		$rs = $this->getDb()->rs("dipics", "WHERE " . join(" AND ", $queryAr) . " ORDER BY " . $options["orderBy"] . $limit);
+		$rs = $this->getDb()->rs('dipics', 'WHERE ' . join(' AND ', $queryAr) . ' ORDER BY ' . $options['orderBy'] . $limit);
 		while ($r = $this->getDb()->fetch($rs))
 		{
 			$m = static::create(diTypes::dynamic_pic, $r);
-			$m->setRelated("table", $this->getTable());
+			$m->setRelated('table', $this->getTable());
 
 			$ar[] = $m;
 		}
 
-		return $options["onlyFirstRecord"]
+		return $options['onlyFirstRecord']
 			? (isset($ar[0]) ? $ar[0] : null)
 			: $ar;
 	}
@@ -858,7 +865,7 @@ class diModel implements \ArrayAccess
 
 	public function has($field)
 	{
-		if ($field == $this->idFieldName)
+		if ($field == (static::id_field_name ?: $this->idFieldName))
 		{
 			return !!$this->getId();
 		}
@@ -868,7 +875,7 @@ class diModel implements \ArrayAccess
 
 	public function hasOrig($field)
 	{
-		if ($field == $this->idFieldName)
+		if ($field == (static::id_field_name ?: $this->idFieldName))
 		{
 			return !!$this->getOrigId();
 		}
@@ -887,7 +894,7 @@ class diModel implements \ArrayAccess
 			return $this->getWithId();
 		}
 
-		if ($field == $this->idFieldName)
+		if ($field == (static::id_field_name ?: $this->idFieldName))
 		{
 			return $this->getId();
 		}
@@ -908,7 +915,7 @@ class diModel implements \ArrayAccess
 			return $this->getOrigWithId();
 		}
 
-		if ($field == $this->idFieldName)
+		if ($field == (static::id_field_name ?: $this->idFieldName))
 		{
 			return $this->getOrigId();
 		}
@@ -1433,9 +1440,9 @@ class diModel implements \ArrayAccess
 			}
 		}
 
-		if (!$this->idAutoIncremented && $this->changed($this->idFieldName))
+		if (!$this->idAutoIncremented && $this->changed(static::id_field_name ?: $this->idFieldName))
 		{
-			$ar[$this->idFieldName] = $this->getId();
+			$ar[static::id_field_name ?: $this->idFieldName] = $this->getId();
 		}
 
 		return $ar;
@@ -1467,7 +1474,7 @@ class diModel implements \ArrayAccess
 			}
 			else
 			{
-				$e = new \diDatabaseException("Unable to insert/update " . get_class($this) . " in DB: " .
+				$e = new \diDatabaseException('Unable to insert/update ' . get_class($this) . ' in DB: ' .
 					join("\n", $this->getDb()->getLog()));
 				$e->setErrors($this->getDb()->getLog());
 
@@ -1737,11 +1744,11 @@ class diModel implements \ArrayAccess
 
 	protected function checkId()
 	{
-		if (isset($this->ar[$this->idFieldName]))
+		if (isset($this->ar[static::id_field_name ?: $this->idFieldName]))
 		{
-			$this->id = $this->ar[$this->idFieldName];
+			$this->id = $this->ar[static::id_field_name ?: $this->idFieldName];
 
-			$this->kill($this->idFieldName);
+			$this->kill(static::id_field_name ?: $this->idFieldName);
 		}
 
 		return $this;
@@ -1776,10 +1783,11 @@ class diModel implements \ArrayAccess
 
 		$qAr = $this->getQueryArForMove();
 		$query = $qAr ? "WHERE " . join(" AND ", $qAr) : "";
+		$field = static::order_field_name ?: $this->orderFieldName;
 
 		$order_r = $this->getDb()->r($this->getTable(), $query,
-			"{$min_max}({$this->orderFieldName}) AS num,COUNT(id) AS cc");
-		$this->set($this->orderFieldName, $order_r && $order_r->cc ? intval($order_r->num) + $sign : $init_value);
+			"{$min_max}({$field}) AS num,COUNT(id) AS cc");
+		$this->set($field, $order_r && $order_r->cc ? intval($order_r->num) + $sign : $init_value);
 
 		return $this;
 	}

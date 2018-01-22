@@ -23,11 +23,11 @@
  * @method diSlugModel setFullSlug($value)
  * @method diSlugModel setLevelNum($value)
  */
-class diSlugModel extends diModel
+class diSlugModel extends \diModel
 {
-	const type = diTypes::slug;
+	const type = \diTypes::slug;
+	const slug_field_name = self::SLUG_FIELD_NAME;
 	protected $table = "slugs";
-	protected $slugFieldName = "slug";
 
 	public function validate()
 	{

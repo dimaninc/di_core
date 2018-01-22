@@ -199,10 +199,19 @@ class Mongo extends \diDB
 			'filters' => [],
 		], $options);
 
-		$options['filters'] = ArrayHelper::filterByKey($options['filters'], ['filter', 'skip', 'limit']);
+		$options['filters'] = extend([
+			'filter' => [],
+			'sort' => [],
+			'skip' => null,
+			'limit' => null,
+		], ArrayHelper::filterByKey($options['filters'], ['filter', 'skip', 'limit']));
+
+		$filter = $options['filters']['filter'];
+		$options['filters'] = array_filter($options['filters']) ?: [];
+		unset($options['filters']['filter']);
 
 		return $options['collectionName']
-			? $this->getCollectionResource($options['collectionName'])->count($options['filters'])
+			? $this->getCollectionResource($options['collectionName'])->count($filter, $options['filters'])
 			: null;
 	}
 

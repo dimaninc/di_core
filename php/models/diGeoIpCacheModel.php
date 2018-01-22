@@ -45,13 +45,13 @@
  * @method diGeoIpCacheModel setCreatedAt($value)
  * @method diGeoIpCacheModel setUpdatedAt($value)
  */
-class diGeoIpCacheModel extends diModel
+class diGeoIpCacheModel extends \diModel
 {
-	const type = diTypes::geo_ip_cache;
+	const type = \diTypes::geo_ip_cache;
+	const id_field_name = 'ip';
+	const slug_field_name = 'ip';
 	protected $table = "geo_ip_cache";
-	protected $idFieldName = 'ip';
 	protected $idAutoIncremented = false;
-	protected $slugFieldName = 'ip';
 
 	public function prepareForSave()
 	{

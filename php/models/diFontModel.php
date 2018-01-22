@@ -54,9 +54,9 @@
  * @method diFontModel setOrderNum($value)
  * @method diFontModel setDate($value)
  */
-class diFontModel extends diModel
+class diFontModel extends \diModel
 {
-	const type = diTypes::font;
+	const type = \diTypes::font;
+	const slug_field_name = 'token';
 	protected $table = "fonts";
-	protected $slugFieldName = "token";
 }

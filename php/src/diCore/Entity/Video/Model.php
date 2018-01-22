@@ -102,9 +102,9 @@ use diCore\Data\Types;
 class Model extends \diModel
 {
 	const type = Types::video;
+	const slug_field_name = self::SLUG_FIELD_NAME;
 	protected $table = 'videos';
 	protected $customFileFields = ['video_mp4', 'video_m4v', 'video_ogv', 'video_webm'];
-	protected $slugFieldName = 'slug';
 
 	public function getToken()
 	{

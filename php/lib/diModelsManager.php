@@ -14,17 +14,17 @@ class diModelsManager
 {
 	const fileChmod = 0664;
 
-	const defaultModelFolder = "_cfg/models";
-	const defaultCollectionFolder = "_cfg/collections";
+	const defaultModelFolder = '_cfg/models';
+	const defaultCollectionFolder = '_cfg/collections';
 
 	protected $fieldsByTable = [];
 
 	private $namespace;
 
 	public static $skippedInAnnotationFields = [
-		"id",
-		"clean_title",
-		"slug",
+		'id',
+		'clean_title',
+		'slug',
 	];
 
 	public static $skippedInCollectionAnnotationFields = [];
@@ -62,6 +62,7 @@ class diModelsManager
 class %3$s extends \diModel
 {
 	const type = \diTypes::%11$s;
+	const table = '%4$s';
 	protected $table = '%4$s';%10$s%9$s
 }
 EOF;
@@ -96,7 +97,7 @@ class %3$s extends \diCollection
 EOF;
 	}
 
-	public function createModel($table, $needed, $className, $collectionNeeded = false, $collectionClassName = "",
+	public function createModel($table, $needed, $className, $collectionNeeded = false, $collectionClassName = '',
 		$namespace = '')
 	{
 		$this->setNamespace($namespace);
@@ -108,7 +109,7 @@ EOF;
 			$annotations = $this->getModelMethodsAnnotations($this->getFieldsOfTable($table), $className);
 
 			$slugFieldName = $this->doesTableHaveField($table, 'slug')
-				? "\n\tprotected \$slugFieldName = self::SLUG_FIELD_NAME;"
+				? "\n\tconst slug_field_name = self::SLUG_FIELD_NAME;"
 				: '';
 
 			$contents = sprintf($this->getModelTemplate(),

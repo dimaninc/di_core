@@ -41,11 +41,11 @@
  * @method diTagModel setVisible($value)
  * @method diTagModel setDate($value)
  */
-class diTagModel extends diModel
+class diTagModel extends \diModel
 {
-	const type = diTypes::tag;
+	const type = \diTypes::tag;
+	const slug_field_name = self::SLUG_FIELD_NAME;
 	protected $table = "tags";
-	protected $slugFieldName = "slug";
 
 	public function prepareForSave()
 	{

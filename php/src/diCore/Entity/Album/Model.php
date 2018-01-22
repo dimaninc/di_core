@@ -73,8 +73,8 @@ use diCore\Helper\FileSystemHelper;
 class Model extends \diModel
 {
 	const type = Types::album;
+	const slug_field_name = self::SLUG_FIELD_NAME;
 	protected $table = 'albums';
-	protected $slugFieldName = 'slug';
 
 	const TOKEN_TEMPLATE = '[ALBUM-%s]';
 	const TOKEN_DIGITS = 5;

@@ -12,7 +12,7 @@ use diCore\Database\FieldType;
 
 class Model extends \diModel
 {
-	protected $idFieldName = '_id';
+	const id_field_name = '_id';
 
 	/**
 	 * @var \MongoDB\Collection
@@ -21,14 +21,14 @@ class Model extends \diModel
 
 	protected static $fieldTypes = [];
 
-	protected function getFieldTypes()
+	public static function getFieldTypes()
 	{
 		return static::$fieldTypes;
 	}
 
-	protected function getFieldType($field)
+	public static function getFieldType($field)
 	{
-		$ar = $this->getFieldTypes();
+		$ar = static::getFieldTypes();
 
 		return isset($ar[$field]) ? $ar[$field] : null;
 	}
@@ -44,6 +44,85 @@ class Model extends \diModel
 		}
 
 		return $this->collectionResource;
+	}
+
+	public function initFrom($r)
+	{
+		if ($r instanceof \MongoDB\Model\BSONDocument)
+		{
+			$ar = [];
+
+			foreach ($r->getIterator() as $field => $value)
+			{
+				$ar[$field] = self::tuneFieldValueByTypeAfterDb($field, $value);
+			}
+
+			return parent::initFrom($ar);
+		}
+
+		return parent::initFrom($r);
+	}
+
+	public static function tuneFieldValueByTypeAfterDb($field, $value)
+	{
+		if ($value instanceof \MongoDB\BSON\ObjectID)
+		{
+			return (string)$value;
+		}
+		elseif ($value instanceof \MongoDB\BSON\UTCDatetime)
+		{
+			return \diDateTime::sqlFormat(((string)$value) / 1000);
+		}
+
+		return $value;
+	}
+
+	public static function tuneFieldValueByTypeBeforeDb($field, $value)
+	{
+		$type = static::getFieldType($field);
+
+		if (is_array($value))
+		{
+			foreach ($value as $k => &$v)
+			{
+				$v = static::tuneFieldValueByTypeBeforeDb($field, $v);
+			}
+
+			return $value;
+		}
+
+		if ($field == static::id_field_name)
+		{
+			if (!$value instanceof \MongoDB\BSON\ObjectID)
+			{
+				return new \MongoDB\BSON\ObjectID($value);
+			}
+		}
+
+		switch ($type)
+		{
+			case FieldType::int:
+				$value = (int)$value;
+				break;
+
+			case FieldType::float:
+				$value = (float)$value;
+				break;
+
+			case FieldType::double:
+				$value = (double)$value;
+				break;
+
+			case FieldType::timestamp:
+			case FieldType::datetime:
+				if (!$value instanceof \MongoDB\BSON\UTCDatetime)
+				{
+					$value = new \MongoDB\BSON\UTCDatetime((new \DateTime($value))->getTimestamp() * 1000);
+				}
+				break;
+		}
+
+		return $value;
 	}
 
 	protected function getDataForDb()
@@ -68,25 +147,7 @@ class Model extends \diModel
 				continue;
 			}
 
-			switch ($this->getFieldType($field))
-			{
-				case FieldType::int:
-					$value = (int)$value;
-					break;
-
-				case FieldType::float:
-					$value = (float)$value;
-					break;
-
-				case FieldType::double:
-					$value = (double)$value;
-					break;
-
-				case FieldType::timestamp:
-				case FieldType::datetime:
-					$value = new \MongoDB\BSON\UTCDateTime((new \DateTime($value))->getTimestamp() * 1000);
-					break;
-			}
+			$value = self::tuneFieldValueByTypeBeforeDb($field, $value);
 		}
 
 		return $ar;
@@ -131,7 +192,7 @@ class Model extends \diModel
 
 	protected function processIdBeforeGetRecord($id, $field)
 	{
-		return new \MongoDB\BSON\ObjectId($id);
+		return new \MongoDB\BSON\ObjectID($id);
 	}
 
 	protected static function isProperId($id)
@@ -160,11 +221,11 @@ class Model extends \diModel
 	{
 		foreach ($ar as $field => &$value)
 		{
-			if ($value instanceof \MongoDB\BSON\ObjectId)
+			if ($value instanceof \MongoDB\BSON\ObjectID)
 			{
 				$value = (string)$value;
 			}
-			elseif ($value instanceof \MongoDB\BSON\UTCDateTime)
+			elseif ($value instanceof \MongoDB\BSON\UTCDatetime)
 			{
 				$value = $value->toDateTime()->format(\diDateTime::FORMAT_SQL_DATE_TIME);
 			}

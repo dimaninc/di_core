@@ -45,13 +45,13 @@
  * @method diAdminModel setDate($value)
  * @method diAdminModel setIp($value)
  */
-class diAdminModel extends diBaseUserModel
+class diAdminModel extends \diBaseUserModel
 {
 	const COMPLEX_QUERY_PREFIX = 'admin_';
 
-	const type = diTypes::admin;
-	protected $table = "admins";
-	protected $slugFieldName = "login";
+	const type = \diTypes::admin;
+	const slug_field_name = 'login';
+	protected $table = 'admins';
 
 	protected $fields = [
 		'login',
@@ -71,8 +71,8 @@ class diAdminModel extends diBaseUserModel
 	{
 		$ar = parent::getTemplateVars();
 
-		$ar["level_str"] = $this->getLevelStr();
-		$ar["name"] = sprintf("%s %s", $this->getFirstName(), $this->getLastName());
+		$ar['level_str'] = $this->getLevelStr();
+		$ar['name'] = sprintf('%s %s', $this->getFirstName(), $this->getLastName());
 
 		return $ar;
 	}

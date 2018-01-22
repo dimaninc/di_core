@@ -68,8 +68,8 @@ use diCore\Data\Types;
 class Model extends \diModel
 {
 	const type = Types::photo;
+	const slug_field_name = self::SLUG_FIELD_NAME;
 	protected $table = 'photos';
-	protected $slugFieldName = self::SLUG_FIELD_NAME;
 
 	public static $tokenAlignments = [
 		'left',

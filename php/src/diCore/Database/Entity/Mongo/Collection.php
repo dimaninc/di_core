@@ -22,8 +22,32 @@ class Collection extends \diCollection
 	/** @var  Cursor */
 	protected $cursor;
 
+	protected static $operators = [
+		'=' => '$eq',
+		'!=' => '$ne',
+		'in' => '$in',
+		'not in' => '$nin',
+		'>' => '$gt',
+		'>=' => '$gte',
+		'<' => '$lt',
+		'<=' => '$lte',
+	];
+
+	public function addAliasToTable($table, $alias = null)
+	{
+		return $table;
+	}
+
 	public function addAliasToField($field, $alias = null)
 	{
+		if ($field == 'id')
+		{
+			/** @var Model $m */
+			$m = $this->getNewEmptyItem();
+
+			return $m->getIdFieldName();
+		}
+
 		return $field;
 	}
 
@@ -48,25 +72,33 @@ class Collection extends \diCollection
 		{
 			foreach ($this->sqlParts['where'] as $val)
 			{
-				switch ($val['operator'])
+				$val['value'] = Model::tuneFieldValueByTypeBeforeDb($val['field'], $val['value']);
+
+				$existingFilter = isset($filter[$val['field']])
+					? $filter[$val['field']]
+					: [];
+
+				$val['operator'] = mb_strtolower($val['operator']);
+
+				if (isset(self::$operators[$val['operator']]))
 				{
-					case '=':
-						$filter[$val['field']] = $val['value'];
-						break;
-
-					case '>':
-						$filter[$val['field']] = [
-							'&gt;' => $val['value'],
-						];
-						break;
-
-					case '<':
-						$filter[$val['field']] = [
-							'&lt;' => $val['value'],
-						];
-						break;
+					$operator = self::$operators[$val['operator']];
+				}
+				else
+				{
+					throw new \Exception('Operator "' . $val['operator'] . '" not supported yet');
 				}
 
+				$newFilter = [
+					$operator => $val['value'],
+				];
+
+				$existingFilter = array_merge($existingFilter, $newFilter);
+
+				if ($existingFilter)
+				{
+					$filter[$val['field']] = $existingFilter;
+				}
 			}
 		}
 
@@ -90,7 +122,7 @@ class Collection extends \diCollection
 
 	protected function getQueryGroupBy()
 	{
-		var_dump($this->sqlParts['groupBy']);
+		throw new \Exception('Group by is not implemented for Mongo yet: ' . print_r($this->sqlParts['groupBy'], true));
 	}
 
 	protected function getDbRecords()

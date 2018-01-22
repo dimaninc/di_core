@@ -29,8 +29,8 @@ use diCore\Tool\Mail\Queue;
 class Model extends \diBaseUserModel
 {
 	const type = Types::user;
+	const slug_field_name = 'login';
 	protected $table = 'users';
-	protected $slugFieldName = 'login';
 
 	const MIN_PASSWORD_LENGTH = 6;
 
@@ -47,7 +47,7 @@ class Model extends \diBaseUserModel
 
 	public function __toString()
 	{
-		return $this->get($this->slugFieldName);
+		return $this->getSlug();
 	}
 
 	public function getAppearanceFeedForAdmin()
@@ -86,10 +86,10 @@ class Model extends \diBaseUserModel
 		$this
 			->hashPassword($password)
 			->setRelated('password', $password);
-		
+
 		return $this;
 	}
-	
+
 	public function setInitiatingValues()
 	{
 		$this

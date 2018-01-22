@@ -2,8 +2,8 @@
 
 class diBaseUserModel extends diModel
 {
-	protected $table = "";
-	protected $slugFieldName = "login";
+	protected $table = '';
+	const slug_field_name = 'login';
 
 	public function active()
 	{
