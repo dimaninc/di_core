@@ -22,7 +22,7 @@ class diModel implements \ArrayAccess
 	const connection_name = null;
 	const table = null;
 	const id_field_name = 'id';
-	const slug_field_name = self::SLUG_FIELD_NAME_LEGACY;
+	const slug_field_name = null; //self::SLUG_FIELD_NAME_LEGACY; get this back when all models are updated
 	const order_field_name = 'order_num';
 
 	// this should be redefined
