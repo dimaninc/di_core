@@ -1453,3 +1453,10 @@ function insertCss(code, opts)
 
 	return document.getElementsByTagName("head")[0].appendChild(style);
 }
+
+function array_unique(array)
+{
+	return jQuery.grep(array, function(el, index) {
+		return index === jQuery.inArray(el, array);
+	});
+}
