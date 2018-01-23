@@ -31,7 +31,7 @@ class diLoginPage extends \diCore\Admin\BasePage
 
 	public function renderForm()
 	{
-		$this->getAdmin()->setHeadPrinter(function(\diAdmin $A) {
+		$this->getAdmin()->setHeadPrinter(function(\diCore\Admin\Base $A) {
 			return $A->getTwig()->parse('admin/_index/head_of_login', []);
 		});
 

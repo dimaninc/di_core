@@ -1350,8 +1350,9 @@ class Submit
 	public static function rebuildDynamicPics($module, $field = null, $id = null)
 	{
 		$className = \diCore\Admin\Base::getModuleClassName($module);
+		$adminBaseClassName = \diLib::getChildClass(Base::class);
 
-		$X = new \diAdmin(\diCore\Admin\Base::INIT_MODE_LITE);
+		$X = new $adminBaseClassName(\diCore\Admin\Base::INIT_MODE_LITE);
 		/** @var \diCore\Admin\BasePage $Page */
 		$Page = new $className($X);
 		$Page->tryToInitTable();

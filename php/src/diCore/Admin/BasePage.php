@@ -12,7 +12,7 @@ use diCore\Helper\ArrayHelper;
 
 abstract class BasePage
 {
-    /** @var \diAdmin */
+    /** @var Base */
 	private $X;
 
 	/** @var \diAdminList */
@@ -220,7 +220,7 @@ abstract class BasePage
 	}
 
 	/**
-	 * @return \diAdmin
+	 * @return Base
 	 */
 	public function getAdmin()
 	{

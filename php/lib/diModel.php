@@ -345,7 +345,7 @@ class diModel implements \ArrayAccess
 	{
 		/** @var CMS $Z */
 		global $Z;
-		/** @var diAdmin $X */
+		/** @var \diCore\Admin\Base $X */
 		global $X;
 
 		if (

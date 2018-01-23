@@ -1,7 +1,7 @@
 <?php
 class diAdminCaption
 {
-    /** @var diAdmin */
+    /** @var \diCore\Admin\Base */
 	private $X;
 
 	private $delimiter = " / ";

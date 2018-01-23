@@ -574,7 +574,7 @@ class diNiceTable
 				throw new Exception("manageBtnCell path not defined");
 			}
 
-			$opts["href"] = "/" . diAdmin::SUBFOLDER . "/" . $path . "/" . $suffix;
+			$opts["href"] = "/" . \diAdmin::SUBFOLDER . "/" . $path . "/" . $suffix;
 		}
 
 		return $this->btnCell($this->getButton("manage", $href));
