@@ -9,6 +9,7 @@
 namespace diCore\Database\Entity\Mongo;
 
 use diCore\Database\Legacy\Mongo;
+use diCore\Helper\ArrayHelper;
 use MongoDB\Driver\Cursor;
 
 /**
@@ -68,11 +69,14 @@ class Collection extends \diCollection
 	{
 		$filter = [];
 
+		/** @var Model $modelClass */
+		$modelClass = static::getModelClass();
+
 		if ($this->sqlParts['where'])
 		{
 			foreach ($this->sqlParts['where'] as $val)
 			{
-				$val['value'] = Model::tuneFieldValueByTypeBeforeDb($val['field'], $val['value']);
+				$val['value'] = $modelClass::tuneFieldValueByTypeBeforeDb($val['field'], $val['value']);
 
 				$existingFilter = isset($filter[$val['field']])
 					? $filter[$val['field']]
@@ -83,15 +87,30 @@ class Collection extends \diCollection
 				if (isset(self::$operators[$val['operator']]))
 				{
 					$operator = self::$operators[$val['operator']];
+
+					$newFilter = [
+						$operator => $val['value'],
+					];
+				}
+				elseif ($val['operator'] == 'between')
+				{
+					if (is_array($val['value']) && count($val['value']) == 2)
+					{
+						$newFilter = [
+							'$gte' => ArrayHelper::getValue($val['value'], 0),
+							'$lte' => ArrayHelper::getValue($val['value'], 1),
+						];
+					}
+					else
+					{
+						throw new \Exception('Operator "' . $val['operator'] .
+							'" supports only array with 2 values, but given: ' . print_r($val['value'], true));
+					}
 				}
 				else
 				{
 					throw new \Exception('Operator "' . $val['operator'] . '" not supported yet');
 				}
-
-				$newFilter = [
-					$operator => $val['value'],
-				];
 
 				$existingFilter = array_merge($existingFilter, $newFilter);
 

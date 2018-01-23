@@ -199,6 +199,11 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $return == 'class' ? $className : $type;
 	}
 
+	public static function getModelClass()
+	{
+		return \diLib::getChildClass(static::class, 'Model');
+	}
+
 	/**
 	 * @param integer|string $type
 	 * @param array $options

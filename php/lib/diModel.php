@@ -120,6 +120,11 @@ class diModel implements \ArrayAccess
 		return $return == 'class' ? $className : $type;
 	}
 
+	public static function getCollectionClass()
+	{
+		return \diLib::getChildClass(static::class, 'Collection');
+	}
+
 	/**
 	 * @param $type
 	 * @param null|array|object $ar
