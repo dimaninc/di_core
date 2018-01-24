@@ -79,7 +79,7 @@ class Model extends \diBaseUserModel
 
 	public static function isPasswordValid($rawPassword)
 	{
-		return strlen($rawPassword) > static::MIN_PASSWORD_LENGTH;
+		return strlen($rawPassword) >= static::MIN_PASSWORD_LENGTH;
 	}
 
 	public function importDataFromOAuthProfile(\diOAuth2ProfileModel $profile)
