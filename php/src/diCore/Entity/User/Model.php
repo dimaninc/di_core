@@ -9,6 +9,7 @@
 namespace diCore\Entity\User;
 
 use diCore\Base\CMS;
+use diCore\Controller\Cabinet;
 use diCore\Data\Config;
 use diCore\Data\Types;
 use diCore\Tool\Mail\Queue;
@@ -76,6 +77,11 @@ class Model extends \diBaseUserModel
 		return get_unique_id(static::MIN_PASSWORD_LENGTH);
 	}
 
+	public static function isPasswordValid($rawPassword)
+	{
+		return strlen($rawPassword) > static::MIN_PASSWORD_LENGTH;
+	}
+
 	public function importDataFromOAuthProfile(\diOAuth2ProfileModel $profile)
 	{
 		return $this;
@@ -139,17 +145,17 @@ class Model extends \diBaseUserModel
 
 		if (!$oldPassword || static::hash($oldPassword, 'db') != $this->getPassword())
 		{
-			throw new \Exception('Введён неверный старый пароль');
+			throw new \Exception(Cabinet::L('set_password.wrong_old_password'));
 		}
 
-		if (!$newPassword)
+		if (!static::isPasswordValid($newPassword))
 		{
-			throw new \Exception('Введите новый пароль');
+			throw new \Exception(Cabinet::L('set_password.password_not_valid'));
 		}
 
 		if ($newPassword != $newPassword2)
 		{
-			throw new \Exception('Введите одинаковые новые пароли');
+			throw new \Exception(Cabinet::L('set_password.passwords_not_match'));
 		}
 
 		$this
@@ -229,5 +235,10 @@ class Model extends \diBaseUserModel
 		}
 
 		return $this;
+	}
+
+	public function authenticateAfterEnteringNewPassword()
+	{
+		return true;
 	}
 }

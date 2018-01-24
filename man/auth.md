@@ -1,4 +1,4 @@
-# Authentication
+# Authentication API
 
 ## POST /api/auth/login
 
@@ -6,12 +6,13 @@ Log in to the system
 
 query params:
 
-`vm_login`: login/email of user
-`vm_password`: password
+	vm_login: (string) login/email of user
+	vm_password: (string) password
+	vm_remember: (bool) remember password
 
 response:
 
-`ok`: true/false
+	ok: (bool)
 
 ## GET /api/auth/logout
 
@@ -19,7 +20,7 @@ Log out from the system
 
 query params:
 
-`back`: where to redirect after logging out
+	back: (string) where to redirect after logging out
 
 no response, just 302 Redirect
 
@@ -29,24 +30,25 @@ Reset password request
 
 query params:
 
-`email`: email of user
+	email: (string) email of user
 
 response:
 
-`ok`: true/false
-`message`: description of error if ok is false
+	ok: (bool)
+	message: (string) description of error if ok is false
 
-## POST /api/auth/set_password
+## POST /api/auth/enter_new_password
 
-Set new password request (user should be authenticated)
+Set new password on password reset
 
 query params:
 
-`old_password`: old user password
-`new_password`: new user password
-`new_password2`: repeated new user password
+	email: (string) user email
+	key: (string) user's hash key
+	password: (string) user password
+	password2: (string) repeated user password
 
 response:
 
-`ok`: true/false
-`message`: description of error if ok is false
+	ok: (bool)
+	message: (string) description of error if ok is false

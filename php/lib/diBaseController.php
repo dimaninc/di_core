@@ -21,6 +21,13 @@ class diBaseController
 
 	protected $twigCreateOptions = [];
 
+	protected static $language = [
+		'en' => [
+		],
+		'ru' => [
+		],
+	];
+
 	public function __construct($params = [])
 	{
 		\diSession::start();
@@ -65,6 +72,7 @@ class diBaseController
 	}
 
 	/**
+	 * @deprecated
 	 * @return \FastTemplate
 	 * @throws \Exception
 	 */
@@ -112,9 +120,9 @@ class diBaseController
 		return ArrayHelper::getValue($this->paramsAr, $idx, $defaultValue, $type);
 	}
 
-	/*
-		creates an instance of defined class
-	*/
+	/**
+	 * creates an instance of defined class
+	 */
 	public static function create($params = [])
 	{
 		$c = new static($params);
@@ -365,5 +373,17 @@ class diBaseController
 		$this->redirectTo($back);
 
 		return $this;
+	}
+
+	public static function L($key, $lang = null)
+	{
+		if ($lang === null)
+		{
+			$lang = Config::getMainLanguage();
+		}
+
+		return isset(static::$language[$lang][$key])
+			? static::$language[$lang][$key]
+			: $key;
 	}
 }

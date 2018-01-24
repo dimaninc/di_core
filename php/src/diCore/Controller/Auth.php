@@ -16,6 +16,29 @@ class Auth extends \diBaseController
 {
 	const BACK_KEY = 'oAuth2Back';
 
+	protected static $language = [
+		'en' => [
+			'enter_new_password.sign_out_first' => 'You are signed in, enter new password in cabinet',
+			'enter_new_password.email_not_valid' => 'E-mail is not valid',
+			'enter_new_password.key_not_valid' => 'Key is not valid',
+			'enter_new_password.keys_not_match' => 'Keys do not match',
+			'enter_new_password.password_not_valid' => 'Password is not valid (min length is 6 chars)',
+			'enter_new_password.passwords_not_match' => 'Passwords do not match',
+			'enter_new_password.user_not_exist' => 'User does not exist',
+			'enter_new_password.user_not_active' => 'User is not active',
+		],
+		'ru' => [
+			'enter_new_password.sign_out_first' => 'Вы авторизованы, задайте новый пароль в личном кабинете',
+			'enter_new_password.email_not_valid' => 'Некорректный E-mail',
+			'enter_new_password.key_not_valid' => 'Некорректный код',
+			'enter_new_password.keys_not_match' => 'Коды не совпадают',
+			'enter_new_password.password_not_valid' => 'Некорректный пароль (мин.длина - 6 символов)',
+			'enter_new_password.passwords_not_match' => 'Пароли не совпадают',
+			'enter_new_password.user_not_exist' => 'Пользователь не существует',
+			'enter_new_password.user_not_active' => 'Пользователь не активен',
+		],
+	];
+
 	public function loginAction()
 	{
 		$Auth = AuthTool::create(false);
@@ -170,7 +193,6 @@ class Auth extends \diBaseController
 			$user->notifyAboutResetPasswordByEmail($this->getTwig());
 
 			$ar['ok'] = true;
-			//$ar['user'] = $user->get();
 		} catch (\Exception $e) {
 			$ar['message'] = $e->getMessage();
 		}
@@ -178,27 +200,74 @@ class Auth extends \diBaseController
 		return $ar;
 	}
 
-	public function setPasswordAction()
+	public function enterNewPasswordAction()
 	{
 		$ar = [
 			'ok' => false,
 		];
 
-		if (!AuthTool::i()->authorized())
-		{
-			$ar['message'] = 'Авторизуйтесь для смены пароля';
-		}
-		else
-		{
-			try {
-				/** @var Model $user */
-				$user = AuthTool::i()->getUserModel();
-				$user->cabinetSubmitPassword();
+		$email = \diRequest::post('email', '');
+		$key = \diRequest::post('key', '');
+		$password = \diRequest::post('password', '');
+		$password2 = \diRequest::post('password2', '');
 
-				$ar['ok'] = true;
-			} catch (\Exception $e) {
-				$ar['message'] = $e->getMessage();
+		try {
+			if (AuthTool::i()->authorized())
+			{
+				throw new \Exception(self::L('enter_new_password.sign_out_first'));
 			}
+
+			if (!\diEmail::isValid($email))
+			{
+				throw new \Exception(self::L('enter_new_password.email_not_valid'));
+			}
+
+			if (!Model::isActivationKeyValid($key))
+			{
+				throw new \Exception(self::L('enter_new_password.key_not_valid'));
+			}
+
+			if (Model::isPasswordValid($password))
+			{
+				throw new \Exception(self::L('enter_new_password.password_not_valid'));
+			}
+
+			if ($password != $password2)
+			{
+				throw new \Exception(self::L('enter_new_password.passwords_not_match'));
+			}
+
+			/** @var \diCore\Entity\User\Model $user */
+			$user = \diModel::create(\diTypes::user, $email, 'slug');
+
+			if (!$user->exists())
+			{
+				throw new \Exception(self::L('enter_new_password.user_not_exist'));
+			}
+
+			if (!$user->active())
+			{
+				throw new \Exception(self::L('enter_new_password.user_not_active'));
+			}
+
+			if ($user->getActivationKey() != $key)
+			{
+				throw new \Exception(self::L('enter_new_password.keys_not_match'));
+			}
+
+			$user
+				->setPasswordExt($password)
+				->setActivationKey(Model::generateActivationKey())
+				->save();
+
+			if ($user->authenticateAfterEnteringNewPassword())
+			{
+				AuthTool::i()->forceAuthorize($user, true);
+			}
+
+			$ar['ok'] = true;
+		} catch (\Exception $e) {
+			$ar['message'] = $e->getMessage();
 		}
 
 		return $ar;
