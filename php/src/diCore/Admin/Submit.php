@@ -1006,10 +1006,12 @@ class Submit
 			$widthParam = \diConfiguration::exists([
 				$this->getTable() . '_' . $field . $suffix . '_width',
 				$this->getTable() . $suffix . '_width',
+				$this->getTable() . '_width',
 			]);
 			$heightParam = \diConfiguration::exists([
 				$this->getTable() . '_' . $field . $suffix . '_height',
 				$this->getTable() . $suffix . '_height',
+				$this->getTable() . '_height',
 			]);
 
 			$opts = extend([
