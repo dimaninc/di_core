@@ -1003,13 +1003,22 @@ class Submit
 		{
 			$suffix = self::getPreviewSuffix($opts["type"]);
 
+			$widthParam = \diConfiguration::exists([
+				$this->getTable() . '_' . $field . $suffix . '_width',
+				$this->getTable() . $suffix . '_width',
+			]);
+			$heightParam = \diConfiguration::exists([
+				$this->getTable() . '_' . $field . $suffix . '_height',
+				$this->getTable() . $suffix . '_height',
+			]);
+
 			$opts = extend([
-				"type" => self::IMAGE_TYPE_MAIN,
-				"folder" => $this->getSubmittedModel()->getPicsFolder() ?: get_pics_folder($this->getTable()),
-				"subfolder" => null,
-				"resize" => null,
-				"width" => \diConfiguration::safeGet($this->getTable() . $suffix . "_width"),
-				"height" => \diConfiguration::safeGet($this->getTable() . $suffix . "_height"),
+				'type' => self::IMAGE_TYPE_MAIN,
+				'folder' => $this->getSubmittedModel()->getPicsFolder() ?: get_pics_folder($this->getTable()),
+				'subfolder' => null,
+				'resize' => null,
+				'width' => \diConfiguration::safeGet($widthParam),
+				'height' => \diConfiguration::safeGet($heightParam),
 				'quality' => null,
 				'afterSave' => null,
 				'watermark' => [
@@ -1019,40 +1028,40 @@ class Submit
 				],
 			], $opts);
 
-			if ($opts["type"] != self::IMAGE_TYPE_MAIN && is_null($opts["subfolder"]))
+			if ($opts['type'] != self::IMAGE_TYPE_MAIN && is_null($opts['subfolder']))
 			{
-				$opts["subfolder"] = self::getFolderByImageType($opts["type"]);
+				$opts['subfolder'] = self::getFolderByImageType($opts['type']);
 			}
 
 			FileSystemHelper::createTree(\diPaths::fileSystem($this->getSubmittedModel(), true, $field),
-				$opts["folder"] . $opts["subfolder"], self::DIR_CHMOD);
+				$opts['folder'] . $opts['subfolder'], self::DIR_CHMOD);
 		}
 		//
 
 		if (!is_array($field))
 		{
-			$field = explode(",", $field);
+			$field = explode(',', $field);
 		}
 
-		if (empty($filesOptions[0]["folder"]))
+		if (empty($filesOptions[0]['folder']))
 		{
 			throw new \Exception("You should define non-empty 'folder'");
 		}
 
-		$baseFolder = $filesOptions[0]["folder"];
+		$baseFolder = $filesOptions[0]['folder'];
 
 		foreach ($field as $f)
 		{
 			$this->setData($f, $this->getCurRec($f));
 
-			if (!empty($_FILES[$f]) && empty($_FILES[$f]["error"]))
+			if (!empty($_FILES[$f]) && empty($_FILES[$f]['error']))
 			{
 				$oldExt = strtolower(StringHelper::fileExtension($this->getData($f)));
-				$newExt = strtolower(StringHelper::fileExtension($_FILES[$f]["name"]));
+				$newExt = strtolower(StringHelper::fileExtension($_FILES[$f]['name']));
 
 				if (!$this->getData($f))
 				{
-					$this->generateFilename($f, $baseFolder, $_FILES[$f]["name"]);
+					$this->generateFilename($f, $baseFolder, $_FILES[$f]['name']);
 				}
 				elseif ($oldExt != $newExt)
 				{
@@ -1122,7 +1131,7 @@ class Submit
 		$callback = is_callable($callbackOrFolder) ? $callbackOrFolder : $defaultCallback;
 		$folder = is_callable($callbackOrFolder) || !$callbackOrFolder ? get_pics_folder($this->table) : $callbackOrFolder;
 
-		$pic_fields_ar = is_array($pic_fields) ? $pic_fields : explode(",", $pic_fields);
+		$pic_fields_ar = is_array($pic_fields) ? $pic_fields : explode(',', $pic_fields);
 
 		FileSystemHelper::createTree(\diPaths::fileSystem($this->getSubmittedModel(), true, $pic_fields_ar[0]),
 			$folder . get_tn_folder(),
@@ -1137,14 +1146,14 @@ class Submit
 
 			$this->setData($field, $this->getCurRec($field));
 
-			if (isset($_FILES[$field]) && !$_FILES[$field]["error"])
+			if (isset($_FILES[$field]) && !$_FILES[$field]['error'])
 			{
-				$old_file_ext = $this->getData($field) ? strtolower(get_file_ext($this->getData($field))) : "";
-				$new_file_ext = strtolower(get_file_ext($_FILES[$field]["name"]));
+				$old_file_ext = $this->getData($field) ? strtolower(get_file_ext($this->getData($field))) : '';
+				$new_file_ext = strtolower(get_file_ext($_FILES[$field]['name']));
 
 				if (!$this->getData($field))
 				{
-					$this->generateFilename($field, $folder, $_FILES[$field]["name"]);
+					$this->generateFilename($field, $folder, $_FILES[$field]['name']);
 				}
 				elseif ($old_file_ext != $new_file_ext)
 				{
