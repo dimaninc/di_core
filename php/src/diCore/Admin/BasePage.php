@@ -449,6 +449,14 @@ abstract class BasePage
 	}
 
 	/**
+	 * @return bool
+	 */
+	public function hasSubmit()
+	{
+		return !!$this->Submit;
+	}
+
+	/**
 	 * @return Submit
 	 * @throws \Exception
 	 */
@@ -509,6 +517,28 @@ abstract class BasePage
 		$this->id = $id;
 
 		return $this;
+	}
+
+	protected function getCurrentModel()
+	{
+		if ($this->hasList())
+		{
+			return $this->getList()->getCurModel();
+		}
+		elseif ($this->hasGrid())
+		{
+			return $this->getGrid()->getCurModel();
+		}
+		elseif ($this->hasForm())
+		{
+			return $this->getForm()->getModel();
+		}
+		elseif ($this->hasSubmit())
+		{
+			return $this->getSubmit()->getSubmittedModel();
+		}
+
+		throw new \Exception('Where the hell are we? No current model detected');
 	}
 
 	/**
