@@ -43,7 +43,7 @@ function diCalendar(cfg)
     {
       this.cfg[i] = cfg[i];
     }
-  }
+  };
 
   this.get_prev_link_html = function()
   {
@@ -57,7 +57,7 @@ function diCalendar(cfg)
       html += '<p id="'+this.id+'_prev" class="prev-'+class_prefix+'active" onclick="'+this.instance_name+'.go_to_prev_month();">'+this.cfg.prev_link_html+'</p>';
 
     return html;
-  }
+  };
 
   this.get_next_link_html = function()
   {
@@ -70,29 +70,29 @@ function diCalendar(cfg)
       html += '<p id="'+this.id+'_next_year" class="next-active" onclick="'+this.instance_name+'.go_to_next_year();">'+this.cfg.next_year_link_html+'</p>';
 
     return html;
-  }
+  };
 
   this.get_close_link_html = function()
   {
     return this.cfg.close_link_html ? '<p id="'+this.id+'_close" class="dic-close" onclick="'+this.instance_name+'.hide();">'+this.cfg.close_link_html+'</p>' : '';
-  }
+  };
 
   this.get_clear_link_html = function()
   {
     return this.cfg.clear_link_html ? '<p id="'+this.id+'_clear" class="dic-clear" onclick="'+this.instance_name+'.clear();">'+this.cfg.clear_link_html+'</p>' : '';
-  }
+  };
 
   this.get_day_onclick = function(date)
   {
     return this.range_select
       ? this.instance_name+'.prompt_for_idx_and_set_date(\''+date+'\');'
       : this.instance_name+'.set_date(\''+date+'\');';
-  }
+  };
 
   this.get_prompt_for_idx_div = function()
   {
     return '<div id="'+this.id+'_prompt_for_idx" class="dicalendar-prompt-for-idx"></div>';
-  }
+  };
 
   this.prompt_for_idx_and_set_date = function(date)
   {
@@ -115,7 +115,7 @@ function diCalendar(cfg)
       e.style.left = (_get_left(td) + Math.round(td.offsetWidth / 2))+'px';
       e.style.top = (_get_top(td) + Math.round(td.offsetHeight / 2))+'px';
     }
-  }
+  };
 
   this.clear = function()
   {
@@ -128,7 +128,7 @@ function diCalendar(cfg)
     this.set_str_date_to_input(2, false);
 
     this.print();
-  }
+  };
 
   this.get_str_date_from_input = function(e_obj)
   {
@@ -153,7 +153,7 @@ function diCalendar(cfg)
     }
 
     return s;
-  }
+  };
 
   this.set_str_date_to_input = function(idx, date)
   {
@@ -199,7 +199,7 @@ function diCalendar(cfg)
         }
       }
     }
-  }
+  };
 
   this.get_e_ar = function(date)
   {
@@ -214,7 +214,7 @@ function diCalendar(cfg)
         dy: _ge(date+'[dy]'),
         th: _ge(date+'[th]'),
         tm: _ge(date+'[tm]')
-      }
+      };
 
       if (!ar.e && !ar.dd)
       {
@@ -247,7 +247,7 @@ function diCalendar(cfg)
     if (ar && ar.e) eval('_add_event(ar.e, \'keyup\', function() {'+this.instance_name+'.init();});');
 
     return ar;
-  }
+  };
 
   this.go_to_prev_month = function()
   {
@@ -257,41 +257,41 @@ function diCalendar(cfg)
     var a = {m: this.showing_dt.getMonth() + 1, y: this.showing_dt.getFullYear()};
     a = this.get_prev_m_y(a.m, a.y);
 
-    this.showing_dt = new Date(a.y, a.m - 1, 1, 12, 0, 0, 0);;
+    this.showing_dt = new Date(a.y, a.m - 1, 1, 12, 0, 0, 0);
 
     this.print();
     this.update_prev_next_buttons();
-  }
+  };
 
   this.go_to_next_month = function()
   {
     var a = {m: this.showing_dt.getMonth() + 1, y: this.showing_dt.getFullYear()};
     a = this.get_next_m_y(a.m, a.y);
 
-    this.showing_dt = new Date(a.y, a.m - 1, 1, 12, 0, 0, 0);;
+    this.showing_dt = new Date(a.y, a.m - 1, 1, 12, 0, 0, 0);
 
     this.print();
     this.update_prev_next_buttons();
-  }
+  };
 
   this.go_to_prev_year = function()
   {
     if (!this.cfg.able_to_go_to_past && this.showing_dt <= this.today_dt)
       return false;
 
-    this.showing_dt = new Date(this.showing_dt.getFullYear() - 1, this.showing_dt.getMonth(), 1, 12, 0, 0, 0);;
+    this.showing_dt = new Date(this.showing_dt.getFullYear() - 1, this.showing_dt.getMonth(), 1, 12, 0, 0, 0);
 
     this.print();
     this.update_prev_next_buttons();
-  }
+  };
 
   this.go_to_next_year = function()
   {
-    this.showing_dt = new Date(this.showing_dt.getFullYear() + 1, this.showing_dt.getMonth(), 1, 12, 0, 0, 0);;
+    this.showing_dt = new Date(this.showing_dt.getFullYear() + 1, this.showing_dt.getMonth(), 1, 12, 0, 0, 0);
 
     this.print();
     this.update_prev_next_buttons();
-  }
+  };
 
   this.update_prev_next_buttons = function()
   {
@@ -300,12 +300,12 @@ function diCalendar(cfg)
 
     if (e1 && !this.cfg.able_to_go_to_past)
       e1.className = this.showing_dt <= this.today_dt ? 'prev-inactive' : 'prev-active';
-  }
+  };
 
   this.has_time_fields = function(idx)
   {
     return this.e_ar[idx].th && this.e_ar[idx].tm ? true : false;
-  }
+  };
 
   this.set_date = function(date, idx)
   {
@@ -392,7 +392,7 @@ function diCalendar(cfg)
 
     if (typeof this.cfg.onsetdate == 'function')
       this.cfg.onsetdate(this);
-  }
+  };
 
   this.str_to_obj = function(str)
   {
@@ -414,7 +414,7 @@ function diCalendar(cfg)
     return date_ar[0]*1 && date_ar[1]*1 && date_ar[2]*1 && date_ar[2].length == 4
       ? new Date(date_ar[2]*1, date_ar[1]*1 - 1, date_ar[0]*1, date_ar[3]*1, date_ar[4]*1, 0)
       : false;
-  }
+  };
 
   this.prepare_dates = function()
   {
@@ -460,7 +460,7 @@ function diCalendar(cfg)
         )
        )
       this.showing_dt = old_dt;
-  }
+  };
 
   this.print = function()
   {
@@ -504,7 +504,7 @@ function diCalendar(cfg)
         document.body.appendChild(e);
       }
     }
-  }
+  };
 
   this.get_month_html = function(m, y)
   {
@@ -622,7 +622,7 @@ function diCalendar(cfg)
     html += '</table>';
 
     return html;
-  }
+  };
 
   this.print_head_weekdays = function()
   {
@@ -636,12 +636,12 @@ function diCalendar(cfg)
     }
 
     return '<tr class="head">'+html+'</tr>';
-  }
+  };
 
   this.get_month_title = function(m)
   {
     return dicalendar_lng_ar[this.cfg.language].nominative_month_titles[m];
-  }
+  };
 
   this.get_date_str = function(date, output_type)
   {
@@ -670,7 +670,7 @@ function diCalendar(cfg)
       return lead0(d)+'.'+lead0(m)+'.'+y;
     else
       return 'unknown output_type='+output_type;
-  }
+  };
 
   this.get_wd_title = function(wd)
   {
@@ -678,7 +678,7 @@ function diCalendar(cfg)
       wd = wd % dicalendar_lng_ar[this.cfg.language].wd_titles.length;
 
     return dicalendar_lng_ar[this.cfg.language].wd_titles[wd - 1];
-  }
+  };
 
   this.get_prev_m_y = function(m, y)
   {
@@ -689,7 +689,7 @@ function diCalendar(cfg)
     }
 
     return {m: m, y: y};
-  }
+  };
 
   this.get_next_m_y = function(m, y)
   {
@@ -700,7 +700,7 @@ function diCalendar(cfg)
     }
 
     return {m: m, y: y};
-  }
+  };
 
   this.get_prev_m_y_obj = function(obj)
   {
@@ -717,7 +717,7 @@ function diCalendar(cfg)
     obj.setFullYear(y);
 
     return obj;
-  }
+  };
 
   this.get_next_m_y_obj = function(obj)
   {
@@ -734,7 +734,7 @@ function diCalendar(cfg)
     obj.setFullYear(y);
 
     return obj;
-  }
+  };
 
   this.show = function()
   {
@@ -747,11 +747,10 @@ function diCalendar(cfg)
     this.e.style.display = 'block';
     this.state = true;
 
-    if (typeof dip != 'undefined')
-      dip.show_bg();
+    if (typeof dip != 'undefined' && !this.cfg.no_gray) dip.show_bg();
 
     return false;
-  }
+  };
 
   this.hide = function()
   {
@@ -759,12 +758,11 @@ function diCalendar(cfg)
       return false;
 
     this.e.style.display = 'none';
-    if (typeof dip != 'undefined')
-      dip.hide_bg();
+    if (typeof dip != 'undefined' && !this.cfg.no_gray) dip.hide_bg();
     this.state = false;
 
     return false;
-  }
+  };
 
   this.toggle = function()
   {
@@ -772,7 +770,7 @@ function diCalendar(cfg)
       this.hide();
     else
       this.show();
-  }
+  };
 
   this.init = function()
   {
@@ -802,7 +800,7 @@ function diCalendar(cfg)
 
     this.prepare_dates();
     this.print();
-  }
+  };
 
   this.add_events_to_inputs = function()
   {
@@ -833,7 +831,7 @@ function diCalendar(cfg)
         }
       }
     }
-  }
+  };
 
   this.init_position = function()
   {
@@ -856,7 +854,7 @@ function diCalendar(cfg)
 
   this.e_ar = typeof cfg.date2 != 'undefined' && cfg.date2
     ? {1: this.get_e_ar(cfg.date1), 2: this.get_e_ar(cfg.date2)}
-    : {1: this.get_e_ar(cfg.date1), 2: false}
+    : {1: this.get_e_ar(cfg.date1), 2: false};
 
   // creating a container for the calendar
   if (typeof cfg.stick_to == 'string')
@@ -896,6 +894,7 @@ function diCalendar(cfg)
     show_weekday_titles: true,
     stick_to: false, // id or object; if false, then sticking to date1 element
     no_positioning: false,
+    no_gray: false,
     language: 'rus',
     mode: 'single', // single - one date at once, multi - few dates at once
     onsetdate: false,
@@ -943,4 +942,4 @@ var dicalendar_lng_ar = {
     date1_select_str: '%d.%m - начальная дата',
     date2_select_str: '%d.%m - конечная дата'
   }
-}
+};
