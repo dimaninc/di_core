@@ -219,6 +219,11 @@ class Model extends \diModel
 
 	protected function tuneDataAfterFetch($ar)
 	{
+		if (!$ar)
+		{
+			return $ar;
+		}
+
 		foreach ($ar as $field => &$value)
 		{
 			if ($value instanceof \MongoDB\BSON\ObjectID)

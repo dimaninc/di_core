@@ -28,11 +28,11 @@ Helper =
         fs = require 'fs' unless fs
         path = require 'path' unless path
         if fs.existsSync folder
-            fs.readdirSync(folder).forEach (file, index) ->
+            fs.readdirSync(folder).forEach (file, index) =>
                 curPath = path.join folder + '/' + file
                 return if curPath in excludesList
                 if fs.lstatSync(curPath).isDirectory()
-                    deleteFolderRecursive curPath
+                    @deleteFolderRecursive curPath
                 else
                     fs.unlinkSync curPath
                 return
@@ -177,6 +177,20 @@ Helper =
             .pipe concat opts.output
             .on 'error', console.log
             .pipe gulp.dest @fullPath @getRootFolder()
+            .on 'end', -> done()
+        @
+
+    cleanCoffeeBuildDirectory: (folder) ->
+        @deleteFolderRecursive @fullPath folder
+        @
+
+    assignCoffeeTaskToGulp: (gulp, opts = folder: null, mask: null, jsBuildFolder: null, cleanBefore: false) ->
+        coffee = @req 'gulp-coffee'
+        gulp.task 'coffee', (done) =>
+            @cleanCoffeeBuildDirectory opts.jsBuildFolder if opts.cleanBefore
+            gulp.src @fullPath opts.folder + opts.mask
+            .pipe coffee bare: true
+            .pipe gulp.dest @fullPath opts.jsBuildFolder
             .on 'end', -> done()
         @
 

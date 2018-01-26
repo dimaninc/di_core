@@ -44,18 +44,20 @@ Helper = {
       path = require('path');
     }
     if (fs.existsSync(folder)) {
-      fs.readdirSync(folder).forEach(function(file, index) {
-        var curPath;
-        curPath = path.join(folder + '/' + file);
-        if (indexOf.call(excludesList, curPath) >= 0) {
-          return;
-        }
-        if (fs.lstatSync(curPath).isDirectory()) {
-          deleteFolderRecursive(curPath);
-        } else {
-          fs.unlinkSync(curPath);
-        }
-      });
+      fs.readdirSync(folder).forEach((function(_this) {
+        return function(file, index) {
+          var curPath;
+          curPath = path.join(folder + '/' + file);
+          if (indexOf.call(excludesList, curPath) >= 0) {
+            return;
+          }
+          if (fs.lstatSync(curPath).isDirectory()) {
+            _this.deleteFolderRecursive(curPath);
+          } else {
+            fs.unlinkSync(curPath);
+          }
+        };
+      })(this));
       fs.rmdirSync(folder);
     }
     return this;
@@ -232,6 +234,35 @@ Helper = {
         return gulp.src(opts.files.map(function(f) {
           return _this.fullPath(f);
         })).pipe(concat(opts.output)).on('error', console.log).pipe(gulp.dest(_this.fullPath(_this.getRootFolder()))).on('end', function() {
+          return done();
+        });
+      };
+    })(this));
+    return this;
+  },
+  cleanCoffeeBuildDirectory: function(folder) {
+    this.deleteFolderRecursive(this.fullPath(folder));
+    return this;
+  },
+  assignCoffeeTaskToGulp: function(gulp, opts) {
+    var coffee;
+    if (opts == null) {
+      opts = {
+        folder: null,
+        mask: null,
+        jsBuildFolder: null,
+        cleanBefore: false
+      };
+    }
+    coffee = this.req('gulp-coffee');
+    gulp.task('coffee', (function(_this) {
+      return function(done) {
+        if (opts.cleanBefore) {
+          _this.cleanCoffeeBuildDirectory(opts.jsBuildFolder);
+        }
+        return gulp.src(_this.fullPath(opts.folder + opts.mask)).pipe(coffee({
+          bare: true
+        })).pipe(gulp.dest(_this.fullPath(opts.jsBuildFolder))).on('end', function() {
           return done();
         });
       };
