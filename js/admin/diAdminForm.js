@@ -43,7 +43,7 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 		initColorPickers();
         initTypeChange();
 		initDelLinks();
-        self.initPicHolders();
+        self.initPicHolders().initRotateLinks();
 
         initiating = false;
 	}
@@ -52,6 +52,37 @@ var diAdminForm = function(table, id, auto_save_timeout) {
         $('.existing-pic-holder .container').on('click', function() {
             $(this).toggleClass('img-full-size');
         });
+
+        return this;
+    };
+
+    this.initRotateLinks = function() {
+        $('.existing-pic-holder a.rotate-pic').on('click', function() {
+            var $this = $(this);
+            var $h = $this.closest('.existing-pic-holder');
+            var $c = $h.find('.container');
+            var $img = $c.find('img');
+
+            $c.addClass('freeze');
+
+            if (confirm($this.data('confirm'))) {
+                $.get($this.attr('href'), function(res) {
+                    if (res.ok) {
+                        $img.attr('src', $img.attr('src').replace(/\?.+$/, '') + '?' + new Date().getTime());
+                        setTimeout(function() {
+                            $c.removeClass('freeze');
+                        }, 500);
+                    } else {
+                        $c.removeClass('freeze');
+                        alert(res.message || 'Error: no such record');
+                    }
+                });
+            }
+
+            return false;
+        });
+
+        return this;
     };
 
 	function initTabs() {

@@ -196,17 +196,18 @@
 	.container
 		max-width 100%
 		display inline-block
+		position relative
 		margin-bottom 10px
 		box-shadow 0 0 6px 0 rgba(0,0,0,.6)
 		overflow hidden
 		cursor zoom-in
 		> img
-			width 100%
+			max-width 100%
 		&.img-full-size
 			overflow-x auto
 			cursor zoom-out
 			> img
-				width auto
+				max-width none
 		&.embed
 			font-size 0
 			line-height 0
@@ -229,6 +230,17 @@
 			border-bottom 1px dotted #999
 		&:last-child
 			border-radius 0 0 5px 5px
+		.rotate-block
+			display inline-block
+			margin-left 30px
+			> a
+				display inline-block
+				font-size 24px
+				font-weight bold
+				padding 0 10px
+				box-shadow 0 0 4px rgba(0,0,0,.5)
+				&:not(:last-child)
+					margin-right 15px
 
 ul.table-edit-log
 	list-style none

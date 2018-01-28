@@ -990,6 +990,21 @@ del {
   background: #fdd;
   text-decoration: none;
 }
+.freeze {
+  filter: blur(2px);
+}
+.freeze:after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  background: url("/_core/i/ani/loading.gif") center center no-repeat;
+  -webkit-background-size: 20% 20%;
+  -moz-background-size: 20% 20%;
+  background-size: 20% 20%;
+}
 .above_lm {
   background: #fff;
   padding: 14px 0 14px 22px;
@@ -1279,6 +1294,7 @@ ul.left-menu > li[state="0"] > ul {
 .existing-pic-holder .container {
   max-width: 100%;
   display: inline-block;
+  position: relative;
   margin-bottom: 10px;
   -webkit-box-shadow: 0 0 6px 0 rgba(0,0,0,0.6);
   box-shadow: 0 0 6px 0 rgba(0,0,0,0.6);
@@ -1286,14 +1302,14 @@ ul.left-menu > li[state="0"] > ul {
   cursor: zoom-in;
 }
 .existing-pic-holder .container > img {
-  width: 100%;
+  max-width: 100%;
 }
 .existing-pic-holder .container.img-full-size {
   overflow-x: auto;
   cursor: zoom-out;
 }
 .existing-pic-holder .container.img-full-size > img {
-  width: auto;
+  max-width: none;
 }
 .existing-pic-holder .container.embed {
   font-size: 0;
@@ -1321,6 +1337,21 @@ ul.left-menu > li[state="0"] > ul {
 }
 .existing-pic-holder .info:last-child {
   border-radius: 0 0 5px 5px;
+}
+.existing-pic-holder .info .rotate-block {
+  display: inline-block;
+  margin-left: 30px;
+}
+.existing-pic-holder .info .rotate-block > a {
+  display: inline-block;
+  font-size: 24px;
+  font-weight: bold;
+  padding: 0 10px;
+  -webkit-box-shadow: 0 0 4px rgba(0,0,0,0.5);
+  box-shadow: 0 0 4px rgba(0,0,0,0.5);
+}
+.existing-pic-holder .info .rotate-block > a:not(:last-child) {
+  margin-right: 15px;
 }
 ul.table-edit-log {
   list-style: none;

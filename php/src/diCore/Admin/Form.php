@@ -56,6 +56,8 @@ class Form
 			"delete_pic_confirmation" => "Delete the pic? Are you sure?",
 			"delete_file_confirmation" => "Delete the file? Are you sure?",
 			'rotate_pic_confirmation' => 'Rotate the pic? Are you sure?',
+			'rotate_pic.ccw' => 'Rotate pic 90° CCW',
+			'rotate_pic.cw' => 'Rotate pic 90° CW',
 
 			"yes" => "Yes",
 			"no" => "No",
@@ -93,6 +95,8 @@ class Form
 			"delete_pic_confirmation" => "Удалить картинку? Вы уверены?",
 			"delete_file_confirmation" => "Удалить файл? Вы уверены?",
 			'rotate_pic_confirmation' => 'Повернуть картинку? Вы уверены?',
+			'rotate_pic.ccw' => 'Повернуть на 90° против часовой стрелки',
+			'rotate_pic.cw' => 'Повернуть на 90° по часовой стрелке',
 
 			"yes" => "Да",
 			"no" => "Нет",
@@ -1687,13 +1691,13 @@ EOF;
 	{
 		$ccw = '<a href="' . \diLib::getAdminWorkerPath('files', 'rotate', [$this->table, $this->id, $field, 'ccw']) . '"' .
 			' data-field="' . $field . '" data-confirm="' . $this->L('rotate_pic_confirmation') . '"' .
-			' class="rotate-pic">↶</a>';
+			' class="rotate-pic" title="' . $this->L('rotate_pic.ccw') . '">↶</a>';
 
 		$cw = '<a href="' . \diLib::getAdminWorkerPath('files', 'rotate', [$this->table, $this->id, $field, 'cw']) . '"' .
 			' data-field="' . $field . '" data-confirm="' . $this->L('rotate_pic_confirmation') . '"' .
-			' class="rotate-pic">↷</a>';
+			' class="rotate-pic" title="' . $this->L('rotate_pic.cw') . '">↷</a>';
 
-		return $ccw . $cw;
+		return '<div class="rotate-block">' . $ccw . $cw . '</div>';
 	}
 
 	public function getPreviewHtmlForFile($field, $fullName, $options = [])
@@ -1827,7 +1831,7 @@ EOF;
 			? $this->getDelLinkCode($field)
 			: '';
 
-		$rotateBlock = $options['showRotateBlock']
+		$rotateBlock = $options['showRotateBlock'] && \diImage::isImageType($ff_t)
 			? $this->getRotateBlockCode($field)
 			: '';
 
@@ -1872,7 +1876,8 @@ EOF;
 			$this->uploaded_images[$field] = $v
 				? $this->getPreviewHtmlForFile($field, $path . $v, [
 					'hideIfNoFile' => $hideIfNoFile,
-					'showDelLink' => !$this->isFlag($field, "static") || $this->getFieldProperty($field, 'showDelLink'),
+					'showDelLink' => !$this->isFlag($field, 'static') || $this->getFieldProperty($field, 'showDelLink'),
+					'showRotateBlock' => $this->getFieldProperty($field, 'showRotateBlock'),
 					'showPreviewWithLink' => $this->getFieldProperty($field, 'showPreview'),
 				])
 				: "";

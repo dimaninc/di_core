@@ -852,3 +852,15 @@ del
 	color red
 	background #fdd
 	text-decoration none
+
+.freeze
+	filter blur(2px)
+	&:after
+		content ''
+		position absolute
+		left 0
+		top 0
+		right 0
+		bottom 0
+		background url(/_core/i/ani/loading.gif) center center no-repeat
+		background-size 20% 20%

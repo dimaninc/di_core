@@ -2,6 +2,7 @@
 
 namespace diCore\Controller;
 
+use diCore\Helper\ImageHelper;
 use diCore\Helper\StringHelper;
 use diCore\Admin\Submit;
 
@@ -101,5 +102,42 @@ class Files extends \diBaseAdminController
 		}
 
 		return false;
+	}
+
+	public function rotateAction()
+	{
+		$ar = [
+			'ok' => false,
+		];
+
+		$table = StringHelper::in($this->param(0));
+		$id  = (int)$this->param(1);
+		$field = StringHelper::in($this->param(2));
+		$direction = strtolower(StringHelper::in($this->param(3)));
+
+		switch ($direction)
+		{
+			case 'cw':
+				$angle = -90;
+				break;
+
+			case 'ccw':
+				$angle = 90;
+				break;
+
+			default:
+				throw new \Exception('Undefined direction: ' . $direction);
+		}
+
+		$model = \diModel::createForTableNoStrict($table, $id, 'id');
+
+		$fn = \diPaths::fileSystem($this) . $model[$field . '_with_path'];
+
+		ImageHelper::rotate($angle, $fn);
+
+		$ar['ok'] = true;
+		$ar['fn'] = $fn;
+
+		return $ar;
 	}
 }
