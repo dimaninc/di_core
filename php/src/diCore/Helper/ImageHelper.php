@@ -46,7 +46,7 @@ class ImageHelper
 				break;
 
 			case self::IMAGICK:
-				self::rotatePhMagick($angle, $inFilename, $outFilename, $backgroundColor);
+				self::rotateIMagick($angle, $inFilename, $outFilename, $backgroundColor);
 				break;
 
 			case self::GD:
