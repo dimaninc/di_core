@@ -55,6 +55,7 @@ class Form
 			"delete" => "Delete",
 			"delete_pic_confirmation" => "Delete the pic? Are you sure?",
 			"delete_file_confirmation" => "Delete the file? Are you sure?",
+			'rotate_pic_confirmation' => 'Rotate the pic? Are you sure?',
 
 			"yes" => "Yes",
 			"no" => "No",
@@ -91,6 +92,7 @@ class Form
 			"delete" => "Удалить",
 			"delete_pic_confirmation" => "Удалить картинку? Вы уверены?",
 			"delete_file_confirmation" => "Удалить файл? Вы уверены?",
+			'rotate_pic_confirmation' => 'Повернуть картинку? Вы уверены?',
 
 			"yes" => "Да",
 			"no" => "Нет",
@@ -1678,7 +1680,20 @@ EOF;
 	{
 		return ", <a href=\"" . \diLib::getAdminWorkerPath("files", "del", [$this->table, $this->id, $field]) . "\" " .
 		"data-field=\"$field\" data-confirm=\"{$this->L("delete_pic_confirmation")}\" " .
-		"class=\"del-file\" data>{$this->L("delete")}</a>";
+		"class=\"del-file\">{$this->L("delete")}</a>";
+	}
+
+	private function getRotateBlockCode($field)
+	{
+		$ccw = '<a href="' . \diLib::getAdminWorkerPath('files', 'rotate', [$this->table, $this->id, $field, 'ccw']) . '"' .
+			' data-field="' . $field . '" data-confirm="' . $this->L('rotate_pic_confirmation') . '"' .
+			' class="rotate-pic">↶</a>';
+
+		$cw = '<a href="' . \diLib::getAdminWorkerPath('files', 'rotate', [$this->table, $this->id, $field, 'cw']) . '"' .
+			' data-field="' . $field . '" data-confirm="' . $this->L('rotate_pic_confirmation') . '"' .
+			' class="rotate-pic">↷</a>';
+
+		return $ccw . $cw;
 	}
 
 	public function getPreviewHtmlForFile($field, $fullName, $options = [])
@@ -1686,6 +1701,7 @@ EOF;
 		$options = extend([
 			'hideIfNoFile' => false,
 			'showDelLink' => true,
+			'showRotateBlock' => false,
 			'showPreviewWithLink' => false,
 		], $options);
 
@@ -1809,7 +1825,11 @@ EOF;
 
 		$delLink = $options['showDelLink']
 			? $this->getDelLinkCode($field)
-			: "";
+			: '';
+
+		$rotateBlock = $options['showRotateBlock']
+			? $this->getRotateBlockCode($field)
+			: '';
 
 		$this->uploaded_images_w[$field] = isset($ff_w) ? $ff_w : 0;
 
@@ -1817,7 +1837,7 @@ EOF;
 			? "<div class='existing-pic-holder'>{$imgTag}" .
 			"<a href='{$httpName}' class='link'>" . basename($fullName) . "</a>" .
 			$previewInfoBlock .
-			"<div class='info'>{$info}{$delLink}</div>" .
+			"<div class='info'>{$info}{$delLink}{$rotateBlock}</div>" .
 			"</div>"
 			: "";
 	}
