@@ -118,11 +118,11 @@ class Files extends \diBaseAdminController
 		switch ($direction)
 		{
 			case 'cw':
-				$angle = -90;
+				$angle = 90;
 				break;
 
 			case 'ccw':
-				$angle = 90;
+				$angle = -90;
 				break;
 
 			default:
