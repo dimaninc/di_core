@@ -1,13 +1,15 @@
 .diadminform-row
+	position relative
 	border 1px solid #CFCFCF
 	border-radius 8px
 	background #FAFAFA
-	color #000
-	margin 0 24px 3px 24px
-	padding 8px 19px 8px 5px
+	color black
+	margin 0 20px 3px 20px
+	padding 8px 20px 8px 225px
 	min-height 18px
-	display flex
-	//display box
+	&:nth-of-type(odd)
+		@media screen and (max-width: 767px)
+			background #eee
 	@media screen and (max-width: 767px)
 		margin-left 0
 		margin-right 0
@@ -17,6 +19,7 @@
 		border-right 0
 		border-bottom 0
 		display block
+		padding-left 5px
 	&:last-of-type
 		@media screen and (max-width: 767px)
 			border-bottom 1px solid #CFCFCF
@@ -26,17 +29,22 @@
 		font-size 12px
 		vertical-align top
 	.title
+		position absolute
 		display block
-		width 200px
-		padding 3px 0 0 19px
+		width 220px
+		padding 3px 20px 0 20px
+		left 0
 		@media screen and (max-width: 767px)
+			position relative
+			left auto
 			width auto
 			padding-left 7px
 			padding-bottom 7px
+			font-weight bolder
 	.value
-		margin 0 0 0 19px
+		margin 0 // 0 0 19px
 		width 100%
-		box-flex 1
+		//box-flex 1
 		@media screen and (max-width: 767px)
 			width auto
 			margin-left 7px
@@ -177,7 +185,7 @@
 
 .existing-pic-holder
 	display inline-block
-	max-width 96%
+	max-width 98%
 	border 1px solid #CFCFCF
 	padding 10px
 	background #fff
@@ -188,9 +196,17 @@
 	.container
 		max-width 100%
 		display inline-block
-		overflow-x auto
 		margin-bottom 10px
 		box-shadow 0 0 6px 0 rgba(0,0,0,.6)
+		overflow hidden
+		cursor zoom-in
+		> img
+			width 100%
+		&.img-full-size
+			overflow-x auto
+			cursor zoom-out
+			> img
+				width auto
 		&.embed
 			font-size 0
 			line-height 0

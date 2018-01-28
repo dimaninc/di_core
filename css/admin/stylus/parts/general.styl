@@ -188,14 +188,17 @@ u
 .admin-layout
 	padding-bottom 40px
 	> .nav
-		float left
+		position absolute
+		//float left
 		border-right #ccc solid 1px
+		margin-bottom 50px
 		@media screen and (max-width: 767px)
 			display none
-			float none
-			position absolute
+			//float none
+			//position absolute
 			z-index 100
 			box-shadow 0 0 10px #000
+			margin-bottom 0
 	&.nav-shown
 		> .nav
 			@media screen and (max-width: 767px)

@@ -209,17 +209,17 @@ u:hover {
   padding-bottom: 40px;
 }
 .admin-layout > .nav {
-  float: left;
+  position: absolute;
   border-right: #ccc solid 1px;
+  margin-bottom: 50px;
 }
 @media screen and (max-width: 767px) {
   .admin-layout > .nav {
     display: none;
-    float: none;
-    position: absolute;
     z-index: 100;
     -webkit-box-shadow: 0 0 10px #000;
     box-shadow: 0 0 10px #000;
+    margin-bottom: 0;
   }
 }
 @media screen and (max-width: 767px) {
@@ -1046,19 +1046,19 @@ ul.left-menu > li[state="0"] > ul {
   display: none;
 }
 .diadminform-row {
+  position: relative;
   border: 1px solid #cfcfcf;
   border-radius: 8px;
   background: #fafafa;
   color: #000;
-  margin: 0 24px 3px 24px;
-  padding: 8px 19px 8px 5px;
+  margin: 0 20px 3px 20px;
+  padding: 8px 20px 8px 225px;
   min-height: 18px;
-  display: -webkit-box;
-  display: -moz-box;
-  display: -webkit-flex;
-  display: -ms-flexbox;
-  display: box;
-  display: flex;
+}
+@media screen and (max-width: 767px) {
+  .diadminform-row:nth-of-type(odd) {
+    background: #eee;
+  }
 }
 @media screen and (max-width: 767px) {
   .diadminform-row {
@@ -1070,6 +1070,7 @@ ul.left-menu > li[state="0"] > ul {
     border-right: 0;
     border-bottom: 0;
     display: block;
+    padding-left: 5px;
   }
 }
 @media screen and (max-width: 767px) {
@@ -1084,21 +1085,25 @@ ul.left-menu > li[state="0"] > ul {
   vertical-align: top;
 }
 .diadminform-row .title {
+  position: absolute;
   display: block;
-  width: 200px;
-  padding: 3px 0 0 19px;
+  width: 220px;
+  padding: 3px 20px 0 20px;
+  left: 0;
 }
 @media screen and (max-width: 767px) {
   .diadminform-row .title {
+    position: relative;
+    left: auto;
     width: auto;
     padding-left: 7px;
     padding-bottom: 7px;
+    font-weight: bolder;
   }
 }
 .diadminform-row .value {
-  margin: 0 0 0 19px;
+  margin: 0;
   width: 100%;
-  box-flex: 1;
 }
 @media screen and (max-width: 767px) {
   .diadminform-row .value {
@@ -1262,7 +1267,7 @@ ul.left-menu > li[state="0"] > ul {
 }
 .existing-pic-holder {
   display: inline-block;
-  max-width: 96%;
+  max-width: 98%;
   border: 1px solid #cfcfcf;
   padding: 10px;
   background: #fff;
@@ -1274,10 +1279,21 @@ ul.left-menu > li[state="0"] > ul {
 .existing-pic-holder .container {
   max-width: 100%;
   display: inline-block;
-  overflow-x: auto;
   margin-bottom: 10px;
   -webkit-box-shadow: 0 0 6px 0 rgba(0,0,0,0.6);
   box-shadow: 0 0 6px 0 rgba(0,0,0,0.6);
+  overflow: hidden;
+  cursor: zoom-in;
+}
+.existing-pic-holder .container > img {
+  width: 100%;
+}
+.existing-pic-holder .container.img-full-size {
+  overflow-x: auto;
+  cursor: zoom-out;
+}
+.existing-pic-holder .container.img-full-size > img {
+  width: auto;
 }
 .existing-pic-holder .container.embed {
   font-size: 0;
@@ -1694,4 +1710,239 @@ ul.admin-grid > li .buttons-panel {
 }
 ul.admin-grid > li img {
   max-width: 100%;
+}
+.filter-block {
+  font-family: Verdana, sans-serif;
+  color: #000;
+  font-size: 11px;
+  background-color: #fff;
+  padding: 0 0 20px 24px;
+  border-bottom: 1px solid #ccc;
+  margin-bottom: 20px;
+}
+.filter-block .buttons {
+  padding: 10px 0 0 0;
+}
+.filter-block .buttons > * {
+  vertical-align: top;
+}
+.filter-block .row {
+  padding: 0 0 7px 0;
+  margin: 0;
+}
+.filter-block .row:after {
+  content: '';
+  display: table;
+  clear: both;
+}
+.filter-block .row > b {
+  display: block;
+  float: left;
+  padding-top: 5px;
+  width: 150px;
+}
+.filter-block button[name="export"] {
+  margin-left: 30px;
+}
+.filter-block [data-purpose="reset-filter"] {
+  display: inline-block;
+  cursor: pointer;
+  position: relative;
+  margin-left: 10px;
+}
+.filter-block [data-purpose="reset-filter"]:after {
+  content: 'X';
+  display: inline-block;
+  border-radius: 50%;
+  background-color: #bbb;
+  -webkit-transition: background-color 0.5s ease;
+  -moz-transition: background-color 0.5s ease;
+  -o-transition: background-color 0.5s ease;
+  -ms-transition: background-color 0.5s ease;
+  transition: background-color 0.5s ease;
+  color: #fff;
+  width: 21px;
+  line-height: 21px;
+  text-align: center;
+}
+.filter-block [data-purpose="reset-filter"]:hover:after {
+  background-color: #777;
+}
+.filter-block .upload-area {
+  display: inline-block;
+  border-radius: 8px;
+  background: #f00;
+  position: relative;
+  cursor: pointer;
+}
+.filter-block .upload-area .caption {
+  color: #fff;
+  line-height: 26px;
+  background: none;
+  margin: 0;
+  padding: 0 15px;
+  border-bottom: 0;
+}
+.filter-block .progress-box {
+  display: inline-block;
+}
+.filter-block .progress-box .wrapper {
+  padding-left: 40px;
+  background: url("/_core/i/ani/loading.gif") left center no-repeat;
+}
+.filter-block .progress-box .name {
+  width: 200px;
+  white-space: nowrap;
+  -o-text-overflow: ellipsis;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  line-height: 16px;
+}
+.filter-block .progress-box .size {
+  line-height: 16px;
+  float: left;
+  margin-right: 10px;
+  background: #eee;
+  border-radius: 5px;
+  padding: 5px;
+}
+.export-block {
+  padding-top: 15px;
+}
+.export-block textarea {
+  width: 90%;
+  height: 150px;
+}
+.filter-caption {
+  font-weight: bold;
+  font-size: 12px;
+  background: #edf0f4;
+  border-radius: 10px;
+  padding: 10px;
+  text-align: center;
+  margin: 0 0 10px 0;
+}
+ul.filters-of-cat {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+ul.filters-of-cat > li {
+  float: left;
+  margin: 0 20px 0 0;
+  padding: 0;
+}
+.progress {
+  overflow: hidden;
+  height: 20px;
+  margin-bottom: 20px;
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  -webkit-box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+.progress-bar {
+  float: left;
+  width: 0;
+  height: 100%;
+  font-size: 12px;
+  color: #fff;
+  text-align: center;
+  background-color: #428bca;
+  -webkit-box-shadow: inset 0 -1px 0 rgba(0,0,0,0.15);
+  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.15);
+  -webkit-transition: width 0.6s ease;
+  -moz-transition: width 0.6s ease;
+  -o-transition: width 0.6s ease;
+  -ms-transition: width 0.6s ease;
+  transition: width 0.6s ease;
+}
+.progress.active .progress-bar {
+  -webkit-animation: progress-bar-stripes 2s linear infinite;
+  -moz-animation: progress-bar-stripes 2s linear infinite;
+  -o-animation: progress-bar-stripes 2s linear infinite;
+  -ms-animation: progress-bar-stripes 2s linear infinite;
+  animation: progress-bar-stripes 2s linear infinite;
+}
+.progress-striped .progress-bar {
+  background-image: -webkit-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: -moz-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: -o-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: -ms-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  -webkit-background-size: 40px 40px;
+  -moz-background-size: 40px 40px;
+  background-size: 40px 40px;
+}
+.progress-striped .progress-bar-success {
+  background-image: -webkit-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: -moz-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: -o-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: -ms-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+}
+.progress-striped .progress-bar-info {
+  background-image: -webkit-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: -moz-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: -o-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: -ms-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+}
+.progress-striped .progress-bar-warning {
+  background-image: -webkit-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: -moz-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: -o-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: -ms-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+}
+.progress-striped .progress-bar-danger {
+  background-image: -webkit-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: -moz-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: -o-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: -ms-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+  background-image: linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
+}
+.progress-bar-success {
+  background-color: #5cb85c;
+}
+.progress-bar-info {
+  background-color: #5bc0de;
+}
+.progress-bar-warning {
+  background-color: #f0ad4e;
+}
+.progress-bar-danger {
+  background-color: #d9534f;
+}
+@-moz-keyframes progress-bar-stripes {
+  from {
+    background-position: 40px 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+@-webkit-keyframes progress-bar-stripes {
+  from {
+    background-position: 40px 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+@-o-keyframes progress-bar-stripes {
+  from {
+    background-position: 40px 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+@keyframes progress-bar-stripes {
+  from {
+    background-position: 40px 0;
+  }
+  to {
+    background-position: 0 0;
+  }
 }

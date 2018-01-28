@@ -1781,7 +1781,7 @@ EOF;
 					}
 					else
 					{
-						$imgTag = "<img src=\"$httpName\" width=\"$ff_w\" height=\"$ff_h\" alt=\"$field\">";
+						$imgTag = "<img src=\"$httpName\" alt=\"$field\">"; // width=\"$ff_w\" height=\"$ff_h\"
 					}
 				}
 			}

@@ -7,8 +7,7 @@
 
 */
 
-function diAdminForm(table, id, auto_save_timeout)
-{
+var diAdminForm = function(table, id, auto_save_timeout) {
 	var self = this,
         initiating = true,
 		Tabs;
@@ -24,8 +23,7 @@ function diAdminForm(table, id, auto_save_timeout)
 		form: document.forms[table+'_form']
 	};
 
-	function init()
-	{
+	function init() {
 		$(self.e.form).find('button#btn-clone').click(function() {
 
 			$(self.e.form).find('input[name=id]').val(0);
@@ -33,8 +31,7 @@ function diAdminForm(table, id, auto_save_timeout)
 
 		});
 
-		if (self.auto_save_timeout && self.id)
-		{
+		if (self.auto_save_timeout && self.id) {
 			self.timer_id = setInterval(function() {
 				self.auto_save();
 			}, self.auto_save_timeout * 1000);
@@ -46,12 +43,18 @@ function diAdminForm(table, id, auto_save_timeout)
 		initColorPickers();
         initTypeChange();
 		initDelLinks();
+        self.initPicHolders();
 
         initiating = false;
 	}
 
-	function initTabs()
-	{
+    this.initPicHolders = function() {
+        $('.existing-pic-holder .container').on('click', function() {
+            $(this).toggleClass('img-full-size');
+        });
+    };
+
+	function initTabs() {
 		Tabs = new diTabs({
 			$tabsContainer: $('.diadminform_tabs ul'),
 			$pagesContainer: $('form [data-purpose="tab-pages"]')
@@ -84,8 +87,7 @@ function diAdminForm(table, id, auto_save_timeout)
 		});
 	}
 
-	this.setupColorPicker = function($colorPicker)
-	{
+	this.setupColorPicker = function($colorPicker) {
 		var $hidden = $('input:hidden[name="' + $colorPicker.data('field') + '"]'),
 			$view = $('[data-purpose="color-view"][data-field="' + $colorPicker.data('field') + '"]'),
 			saveColor = function(hex, close) {
@@ -110,8 +112,7 @@ function diAdminForm(table, id, auto_save_timeout)
 		});
 	};
 
-	function initColorPickers()
-	{
+	function initColorPickers() {
 	    $(self.e.form).on('click', '[data-purpose="color-view"]', function() {
 		    $('[data-purpose="color-picker"][data-field="{0}"]'.format($(this).data('field'))).slideToggle();
 	    });
@@ -121,8 +122,7 @@ function diAdminForm(table, id, auto_save_timeout)
 		});
 	}
 
-    function initTypeChange()
-    {
+    function initTypeChange() {
 	    var $type = $('select[name="type"],input:hidden[name="type"]');
 
         function typeOnChange()
@@ -172,8 +172,7 @@ function diAdminForm(table, id, auto_save_timeout)
     }
 
 	// old shit. todo: refactor this
-  this.is_able_to_leave_page = function()
-  {
+  this.is_able_to_leave_page = function() {
     return this.able_to_leave_page;
   };
 
@@ -352,4 +351,4 @@ function diAdminForm(table, id, auto_save_timeout)
 	};
 
 	init();
-}
+};

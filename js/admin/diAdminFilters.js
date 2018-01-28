@@ -34,8 +34,7 @@ var diAdminFilters = function(_opts) {
 	    setupResetFilterButtons();
     }
 
-	function setupResetFilterButtons()
-	{
+	function setupResetFilterButtons() {
 		$('[data-purpose="reset-filter"]').on('click', function() {
 			var $this = $(this),
 				field = $this.data('field'),
@@ -52,9 +51,8 @@ var diAdminFilters = function(_opts) {
 	}
 
 	function apply() {
-		if (opts.mode == self.MODE_COOKIE)
-		{
-			gatherFilerValues();
+		if (opts.mode == self.MODE_COOKIE) {
+			gatherFilterValues();
 
 			$.each(filters, function(k, v) {
 				$.cookie('admin_filter[' + opts.table + '][' + k + ']', v, {
@@ -100,7 +98,7 @@ var diAdminFilters = function(_opts) {
 		}
 	}
 
-	function gatherFilerValues() {
+	function gatherFilterValues() {
 		var k, $f, selector;
 
 		for (var i = 0; i < opts.fields.length; i++) {
@@ -113,7 +111,7 @@ var diAdminFilters = function(_opts) {
 	}
 
 	this.getFilterValues = function() {
-		gatherFilerValues();
+		gatherFilterValues();
 
 		return filters;
 	};
