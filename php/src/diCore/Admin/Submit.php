@@ -1001,26 +1001,11 @@ class Submit
 		// preparing options
 		foreach ($filesOptions as &$opts)
 		{
-			$suffix = self::getPreviewSuffix($opts["type"]);
-
-			$widthParam = \diConfiguration::exists([
-				$this->getTable() . '_' . $field . $suffix . '_width',
-				$this->getTable() . $suffix . '_width',
-				$this->getTable() . '_width',
-			]);
-			$heightParam = \diConfiguration::exists([
-				$this->getTable() . '_' . $field . $suffix . '_height',
-				$this->getTable() . $suffix . '_height',
-				$this->getTable() . '_height',
-			]);
-
 			$opts = extend([
 				'type' => self::IMAGE_TYPE_MAIN,
 				'folder' => $this->getSubmittedModel()->getPicsFolder() ?: get_pics_folder($this->getTable()),
 				'subfolder' => null,
 				'resize' => null,
-				'width' => \diConfiguration::safeGet($widthParam),
-				'height' => \diConfiguration::safeGet($heightParam),
 				'quality' => null,
 				'afterSave' => null,
 				'watermark' => [
@@ -1072,6 +1057,27 @@ class Submit
 
 				if (is_callable($callback))
 				{
+					foreach ($filesOptions as &$opts)
+					{
+						$suffix = self::getPreviewSuffix($opts["type"]);
+
+						$widthParam = \diConfiguration::exists([
+							$this->getTable() . '_' . $f . $suffix . '_width',
+							$this->getTable() . $suffix . '_width',
+							$this->getTable() . '_width',
+						]);
+						$heightParam = \diConfiguration::exists([
+							$this->getTable() . '_' . $f . $suffix . '_height',
+							$this->getTable() . $suffix . '_height',
+							$this->getTable() . '_height',
+						]);
+
+						$opts = extend([
+							'width' => \diConfiguration::safeGet($widthParam),
+							'height' => \diConfiguration::safeGet($heightParam),
+						], $opts);
+					}
+
 					$callback($this, $f, $filesOptions, $_FILES[$f]);
 				}
 				else
