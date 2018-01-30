@@ -1430,7 +1430,7 @@ class diModel implements \ArrayAccess
 	/**
 	 * @return array
 	 */
-	protected function getDataForDb()
+	protected function getRawDataForDb()
 	{
 		$ar = [];
 
@@ -1441,13 +1441,28 @@ class diModel implements \ArrayAccess
 				!$this->isFieldExcludedOnSave($k)
 			   )
 			{
-				$ar[$k] = \diDB::_in($v);
+				$ar[$k] = $v;
 			}
 		}
 
 		if (!$this->idAutoIncremented && $this->changed(static::id_field_name ?: $this->idFieldName))
 		{
 			$ar[static::id_field_name ?: $this->idFieldName] = $this->getId();
+		}
+
+		return $ar;
+	}
+
+	/**
+	 * @return array
+	 */
+	protected function getDataForDb()
+	{
+		$ar = $this->getRawDataForDb();
+
+		foreach ($ar as $k => &$v)
+		{
+			$v = \diDB::_in($v);
 		}
 
 		return $ar;

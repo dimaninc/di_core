@@ -127,7 +127,7 @@ class Model extends \diModel
 
 	protected function getDataForDb()
 	{
-		$ar = parent::getDataForDb();
+		$ar = $this->getRawDataForDb();
 
 		foreach ($this->getFieldTypes() as $field => $type)
 		{
