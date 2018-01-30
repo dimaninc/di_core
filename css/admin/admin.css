@@ -1103,7 +1103,10 @@ ul.left-menu > li[state="0"] > ul {
   position: absolute;
   display: block;
   width: 220px;
-  padding: 3px 20px 0 20px;
+  padding: 3px 10px 0 20px;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
   left: 0;
 }
 @media screen and (max-width: 767px) {
