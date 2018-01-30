@@ -218,6 +218,10 @@ abstract class diDB
 		return $this;
 	}
 
+	/**
+	 * @deprecated
+	 * Use \diDB->escape_string() instead
+	 */
 	public static function _in($s)
 	{
 		return diStringHelper::in($s);
@@ -363,7 +367,7 @@ abstract class diDB
 
 	public function get_table_name($table)
 	{
-		return $this->tables_ar && isset($this->tables_ar[$table]) ? $this->tables_ar[$table] : $table;
+		return $this->escape_string($this->tables_ar && isset($this->tables_ar[$table]) ? $this->tables_ar[$table] : $table);
 	}
 
 	public function precache_rs($table, $query_or_ids_ar = "", $fields = "*")
@@ -434,10 +438,10 @@ abstract class diDB
 
 	public function escape_string($s)
 	{
-		return mysql_real_escape_string($s);
+		return $s;
 	}
 
-	public static function in($ar = array(), $digits_only = false, $positive = true)
+	public static function in($ar = [], $digits_only = false, $positive = true)
 	{
 		if (is_array($ar))
 		{
@@ -460,11 +464,11 @@ abstract class diDB
 		{
 			$c = $positive ? "" : "!";
 
-			return "$c='$ar'";
+			return "$c = '$ar'";
 		}
 	}
 
-	public static function not_in($ar = array(), $digits_only = false)
+	public static function not_in($ar = [], $digits_only = false)
 	{
 		return static::in($ar, $digits_only, false);
 	}
@@ -579,11 +583,11 @@ abstract class diDB
 	{
 		if (is_numeric($q_ending))
 		{
-			$q_ending = "WHERE id='$q_ending'";
+			$q_ending = "WHERE id = '$q_ending'";
 		}
 		elseif (is_array($q_ending))
 		{
-			$q_ending = "WHERE id" . $this->in($q_ending);
+			$q_ending = "WHERE id " . $this->in($q_ending);
 		}
 
 		if (is_array($q_fields))
@@ -1036,7 +1040,7 @@ abstract class diDB
 	 */
 	public function escapeTable($string)
 	{
-		return static::QUOTE_TABLE . static::_in($string) . static::QUOTE_TABLE;
+		return static::QUOTE_TABLE . $this->escape_string($string) . static::QUOTE_TABLE;
 	}
 
 	/**
@@ -1062,7 +1066,7 @@ abstract class diDB
 		}
 
 		return $field != '*'
-			? $alias . static::QUOTE_FIELD . static::_in($field) . static::QUOTE_FIELD
+			? $alias . static::QUOTE_FIELD . $this->escape_string($field) . static::QUOTE_FIELD
 			: $alias . $field;
 	}
 
@@ -1075,7 +1079,7 @@ abstract class diDB
 	 */
 	public function escapeValue($string)
 	{
-		return static::QUOTE_VALUE . static::_in($string) . static::QUOTE_VALUE;
+		return static::QUOTE_VALUE . $this->escape_string($string) . static::QUOTE_VALUE;
 	}
 
 	/* these methods should be overwritten */

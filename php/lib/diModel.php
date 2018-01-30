@@ -186,7 +186,7 @@ class diModel implements \ArrayAccess
 	 */
 	public static function createForTableNoStrict($table, $ar = null, $options = [])
 	{
-		$type = diTypes::getNameByTable($table);
+		$type = \diTypes::getNameByTable($table);
 		$typeName = self::existsFor($type, "type");
 
 		return $typeName
@@ -726,7 +726,7 @@ class diModel implements \ArrayAccess
 
 	protected function prepareIdAndFieldForGetRecord($id, $fieldAlias = null)
 	{
-		$id = \diDB::_in($id);
+		$id = $this->getDb()->escape_string($id);
 
 		// identifying wood
 		$fieldAlias = $fieldAlias ?: $this->identityFieldName;
@@ -1462,7 +1462,7 @@ class diModel implements \ArrayAccess
 
 		foreach ($ar as $k => &$v)
 		{
-			$v = \diDB::_in($v);
+			$v = $this->getDb()->escape_string($v);
 		}
 
 		return $ar;

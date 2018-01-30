@@ -334,17 +334,17 @@ class diConfiguration
 	{
 		$this->createTable();
 
-		$this->getDB()->insert_or_update($this->tableName, array(
-			$this->nameField => $name,
+		$this->getDB()->insert_or_update($this->tableName, [
+			$this->nameField => $this->getDB()->escape_string($name),
 			$this->valueField => $this->adjustBeforeDB($value, self::getPropertyType($name)),
-		));
+		]);
 
 		return $this;
 	}
 
 	public function store()
 	{
-		$checkboxesAr = array();
+		$checkboxesAr = [];
 
 		foreach ($_POST as $k => $v)
 		{

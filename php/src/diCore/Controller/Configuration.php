@@ -17,9 +17,9 @@ class Configuration extends \diBaseAdminController
 	{
 	    global $cfg;
 
-		$k = \diDB::_in($this->param(0));
+		$k = $this->param(0);
 
-		if ($k && \diConfiguration::get($k))
+		if ($k && \diConfiguration::exists($k) && \diConfiguration::get($k))
 		{
 			$fn = \diConfiguration::getFolder() . \diConfiguration::get($k);
 			$full_fn = \diPaths::fileSystem() . $fn;

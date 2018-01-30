@@ -138,10 +138,10 @@ class diActionsLog
 			"_dir" => "ASC",
 		], $filtersAr);
 
-		$queryAr = array(
-			"target_type='{$this->targetType}'",
-			"target_id='{$this->targetId}'",
-		);
+		$queryAr = [
+			"target_type = '{$this->targetType}'",
+			"target_id = '{$this->targetId}'",
+		];
 
 		foreach ($filtersAr as $field => $value)
 		{
@@ -150,7 +150,7 @@ class diActionsLog
 				continue;
 			}
 
-			$queryAr[] = "$field='" . diDB::_in($value) . "'";
+			$queryAr[] = "$field = '" . $this->getDb()->escape_string($value) . "'";
 		}
 
 		$orderBy = " ORDER BY " . $filtersAr["_sortby"] . " " . $filtersAr["_dir"];
@@ -170,7 +170,7 @@ class diActionsLog
 
 		$ar = array();
 
-		$rs = $this->getDb()->rs(self::logTable, "WHERE ".join(" and ", $queryAr).$orderBy.$limit);
+		$rs = $this->getDb()->rs(self::logTable, "WHERE " . join(" and ", $queryAr) . $orderBy . $limit);
 		while ($r = $this->getDb()->fetch($rs))
 		{
 			$ar[] = $r;

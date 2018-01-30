@@ -64,7 +64,7 @@ class diListController extends \diBaseAdminController
 
 		if ($ar["ok"])
 		{
-			$table = \diDB::_in($this->param(0));
+			$table = $this->param(0);
 			$delta = count($all);
 			$map = [];
 
@@ -133,7 +133,7 @@ class diListController extends \diBaseAdminController
 	{
 		if ($parentId > 0)
 		{
-			$parentModel = diModel::createForTableNoStrict($table, $parentId, "id");
+			$parentModel = \diModel::createForTableNoStrict($table, $parentId, "id");
 			$order = $parentModel->get($this->orderNumField) + 1;
 		}
 		else
@@ -353,10 +353,10 @@ class diListController extends \diBaseAdminController
 	 */
 	protected function getTargetModel()
 	{
-		$table = \diDB::_in($this->param(0));
+		$table = $this->param(0);
 		$id = $this->param(1, 0);
 
-		return \diModel::createForTableNoStrict($table, $id, "id");
+		return \diModel::createForTableNoStrict($table, $id, 'id');
 	}
 
 	/**
@@ -364,8 +364,8 @@ class diListController extends \diBaseAdminController
 	 */
 	protected function getTargetCollection()
 	{
-		$table = \diDB::_in($this->param(0));
-		$ids = array_map("intval", explode(",", \diRequest::post("ids", "")));
+		$table = $this->param(0);
+		$ids = array_filter(array_map('intval', explode(',', \diRequest::post('ids', ''))));
 
 		return \diCollection::createForTableNoStrict($table)->filterBy('id', $ids);
 	}
@@ -393,12 +393,12 @@ class diListController extends \diBaseAdminController
 	{
 		switch ($m->getTable())
 		{
-			case "content":
+			case 'content':
 				$Z = new \diCurrentCMS();
 				$Z->build_content_table_cache();
 				break;
 
-			case "orders":
+			case 'orders':
 				$this->getDb()->delete("order_items", "WHERE order_id='{$m->getId()}'");
 				$this->getDb()->delete("actions_log", "WHERE type='{$m->getTable()}' and target_id='{$m->getId()}'");
 				break;

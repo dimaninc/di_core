@@ -1,6 +1,10 @@
 <?php
 
 use diCore\Data\Config;
+use diCore\Entity\DiMigrationsLog\Model;
+use diCore\Entity\DiMigrationsLog\Collection;
+use diCore\Helper\FileSystemHelper;
+use diCore\Helper\StringHelper;
 
 class diMigrationsManager
 {
@@ -36,7 +40,7 @@ class diMigrationsManager
 
 	public static function create()
 	{
-		$mmClassName = diLib::exists(self::childClassName)
+		$mmClassName = \diLib::exists(self::childClassName)
 			? self::childClassName
 			: "diMigrationsManager";
 
@@ -70,7 +74,7 @@ class diMigrationsManager
 			$folder = self::getFolderById($folder);
 		}
 
-		return array_reverse(glob_recursive(add_ending_slash($folder) . ($idx ?: "*") . "_*.php"));
+		return array_reverse(glob_recursive(StringHelper::slash($folder) . ($idx ?: "*") . "_*.php"));
 	}
 
 	public static function getSubFolders($folder)
@@ -80,7 +84,7 @@ class diMigrationsManager
 			$folder = self::getFolderById($folder);
 		}
 
-		$contents = get_dir_array($folder, true, true);
+		$contents = FileSystemHelper::folderContents($folder, true, true);
 
 		return $contents["d"];
 	}
@@ -96,11 +100,11 @@ class diMigrationsManager
 
 		if (count($files) == 0)
 		{
-			throw new Exception("No migrations with idx '$idx' found");
+			throw new \Exception("No migrations with idx '$idx' found");
 		}
 		elseif (count($files) > 1)
 		{
-			throw new Exception("More that just 1 migration found with idx '$idx': " . join(", ", $files));
+			throw new \Exception("More that just 1 migration found with idx '$idx': " . join(", ", $files));
 		}
 
 		return $files[0];
@@ -137,15 +141,15 @@ EOF;
 	{
 		$contents = $this->getTemplate($idx, $name, $folder);
 
-		$fullFolder = add_ending_slash(self::$localFolder);
+		$fullFolder = StringHelper::slash(self::$localFolder);
 
 		if ($folder)
 		{
-			$fullFolder .= add_ending_slash($folder);
+			$fullFolder .= StringHelper::slash($folder);
 
 			if (!is_dir($fullFolder))
 			{
-				create_folders_chain(self::$localFolder, $folder, self::dirChmod);
+				FileSystemHelper::createTree(self::$localFolder, $folder, self::dirChmod);
 			}
 		}
 
@@ -272,29 +276,57 @@ EOF;
 
 	private function logExecution(diMigration $migration, $state)
 	{
-		$adminUser = diAdminUser::create();
+		$adminUser = \diAdminUser::create();
 
-		$this->getDb()->insert(static::logTable, [
-			"admin_id" => $adminUser->getModel()->getId(),
-			"idx" => diDB::_in($migration::$idx),
-			"name" => diDB::_in($migration::$name),
-			"direction" => $state ? diMigration::UP : diMigration::DOWN,
-		]);
+		/** @var Model $log */
+		$log = \diModel::create(\diTypes::di_migrations_log);
+		$log
+			->setAdminId($adminUser->getModel()->getId())
+			->setIdx($migration::$idx)
+			->setName($migration::$name)
+			->setDirection($state ? \diMigration::UP : \diMigration::DOWN)
+			->save();
 
 		return $this;
 	}
 
+	/**
+	 * @param $idx
+	 * @return Model
+	 * @throws \Exception
+	 */
+	protected function getLastLogByIdx($idx)
+	{
+		/** @var Collection $col */
+		$col = \diCollection::create(\diCore\Data\Types::di_migrations_log);
+
+		if ($idx)
+		{
+			$col
+				->filterByIdx($idx)
+				->orderById('desc');
+
+			return $col->getFirstItem();
+		}
+		else
+		{
+			return $col->getNewEmptyItem();
+		}
+	}
+
 	public function wasExecuted($idx)
 	{
-		$r = $idx ? $this->getDb()->r(static::logTable, "WHERE idx='" . diDB::_in($idx) . "' ORDER BY id DESC") : false;
+		$log = $this->getLastLogByIdx($idx);
 
-		return $r && $r->direction == diMigration::UP;
+		return $log->exists() && $log->getDirection() == \diMigration::UP;
 	}
 
 	public function whenExecuted($idx)
 	{
-		$r = $idx ? $this->getDb()->r(static::logTable, "WHERE idx='" . diDB::_in($idx) . "' ORDER BY id DESC") : false;
+		$log = $this->getLastLogByIdx($idx);
 
-		return $r && $r->direction == diMigration::UP ? $r->date : null;
+		return $log->exists() && $log->getDirection() == \diMigration::UP
+			? $log->getDate()
+			: null;
 	}
 }

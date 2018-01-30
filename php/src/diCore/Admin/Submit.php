@@ -8,6 +8,7 @@
 
 namespace diCore\Admin;
 
+use diCore\Data\Types;
 use diCore\Helper\FileSystemHelper;
 use diCore\Helper\StringHelper;
 use diCore\Tool\Logger;
@@ -1369,45 +1370,46 @@ class Submit
 		$className = \diCore\Admin\Base::getModuleClassName($module);
 		$adminBaseClassName = \diLib::getChildClass(Base::class);
 
+		/** @var Base $X */
 		$X = new $adminBaseClassName(\diCore\Admin\Base::INIT_MODE_LITE);
 		/** @var \diCore\Admin\BasePage $Page */
 		$Page = new $className($X);
 		$Page->tryToInitTable();
 		$Submit = new self($Page);
 
-		$callback = isset($Submit->_all_fields[$field]["callback"])
-			? $Submit->_all_fields[$field]["callback"]
+		$callback = isset($Submit->_all_fields[$field]['callback'])
+			? $Submit->_all_fields[$field]['callback']
 			: self::$defaultDynamicPicCallback;
 
-		$field = \diDB::_in($field);
 		$id = (int)$id;
 
-		$queryAr = [
-			"_table = '{$Submit->getTable()}'",
-		];
+		$ar = [];
+
+		/** @var \diCore\Entity\DynamicPic\Collection $pics */
+		$pics = \diCollection::create(Types::dynamic_pic);
+		$pics
+			->filterByTargetTable($Submit->getTable());
 
 		if ($field)
 		{
-			$queryAr[] = "_field = '$field'";
+			$pics->filterByTargetField($field);
 		}
 
 		if ($id)
 		{
-			$queryAr[] = "_id = '$id'";
+			$pics->filterByTargetId($id);
 		}
-
-		$ar = [];
-
-		$rs = $X->getDb()->rs(self::dynamicPicsTable, "WHERE " . join(" AND ", $queryAr));
-		while ($r = $X->getDb()->fetch($rs))
+		
+			/** @var \diCore\Entity\DynamicPic\Model $pic */
+		foreach ($pics as $pic)
 		{
 			$fn = \diPaths::fileSystem() . get_pics_folder($Page->getTable()) .
-				get_orig_folder() . $r->pic;
+				get_orig_folder() . $pic->getPic();
 
 			$ar[] = $fn;
 
 			$F = [
-				"name" => $r->orig_fn,
+				"name" => $pic->getOrigFn(),
 				"type" => "image/jpeg",
 				"tmp_name" => $fn,
 				"error" => 0,
@@ -1415,18 +1417,20 @@ class Submit
 			];
 
 			$db_ar = [
-				"pic" => $r->pic,
+				"pic" => $pic->getPic(),
 			];
 
 			if (is_callable($callback))
 			{
 				$callback($F, $Submit, [
-					"field" => $r->_field,
+					"field" => $pic->getTargetField(),
 					"what" => "pic",
 				], $db_ar, get_pics_folder($Page->getTable()));
 			}
 
-			$X->getDb()->update(self::dynamicPicsTable, $db_ar, $r->id);
+			$pic
+				->set($db_ar)
+				->save();
 		}
 
 		return $ar;

@@ -1,5 +1,7 @@
 <?php
 
+namespace diCore\Admin\Page;
+
 use diCore\Tool\CollectionCache;
 use diCore\Entity\DiMigrationsLog\Model;
 
@@ -9,7 +11,7 @@ use diCore\Entity\DiMigrationsLog\Model;
  * Date: 14.06.2015
  * Time: 0:16
  */
-class diMigrationsPage extends \diCore\Admin\BasePage
+class Migrations extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		"filters" => [
@@ -20,21 +22,21 @@ class diMigrationsPage extends \diCore\Admin\BasePage
 		],
 	];
 
-	/** @var diMigrationsManager */
+	/** @var \diMigrationsManager */
 	private $Manager;
 
 	private $pseudoTable = "migrations";
 
 	protected function initTable()
 	{
-		$this->Manager = diMigrationsManager::create();
+		$this->Manager = \diMigrationsManager::create();
 
 		$this->setTable($this->pseudoTable);
 
 		switch ($this->getMethod())
 		{
 			case "log":
-				$this->setTable(diMigrationsManager::logTable);
+				$this->setTable(\diMigrationsManager::logTable);
 				break;
 		}
 	}
@@ -85,8 +87,8 @@ class diMigrationsPage extends \diCore\Admin\BasePage
 			"admin_id" => [
 				"title" => "Применил админ",
 				"value" => function(Model $l) {
-					/** @var diAdminModel $admin */
-					$admin = CollectionCache::getModel(diTypes::admin, $l->getAdminId());
+					/** @var \diAdminModel $admin */
+					$admin = CollectionCache::getModel(\diTypes::admin, $l->getAdminId());
 
 					return $admin->exists() ? $admin->getLogin() : "&ndash;";
 				},
@@ -99,7 +101,7 @@ class diMigrationsPage extends \diCore\Admin\BasePage
 				"title" => "",
 				"value" => function (Model $l)
 				{
-					return $l->getDirection() == diMigration::UP ? "+" : "-";
+					return $l->getDirection() == \diMigration::UP ? "+" : "-";
 				},
 				"noHref" => true,
 			],
@@ -126,7 +128,7 @@ class diMigrationsPage extends \diCore\Admin\BasePage
 	{
 		parent::cacheDataForList();
 
-		CollectionCache::addManual(diTypes::admin, 'id', $this->getListCollection()->map('admin_id'));
+		CollectionCache::addManual(\diTypes::admin, 'id', $this->getListCollection()->map('admin_id'));
 
 		return $this;
 	}
@@ -156,7 +158,7 @@ class diMigrationsPage extends \diCore\Admin\BasePage
 			],
 			"date_created" => [
 				"title" => "Дата создания",
-				"value" => function(diModel $m) {
+				"value" => function(\diModel $m) {
 					if ($m->has("folder"))
 					{
 						return "";
@@ -177,7 +179,7 @@ class diMigrationsPage extends \diCore\Admin\BasePage
 			],
 			"date_modified" => [
 				"title" => "Дата модификации",
-				"value" => function(diModel $m) {
+				"value" => function(\diModel $m) {
 					if ($m->has("folder"))
 					{
 						return "";
@@ -196,7 +198,7 @@ class diMigrationsPage extends \diCore\Admin\BasePage
 			],
 			"date_applied" => [
 				"title" => "Дата наката",
-				"value" => function(diModel $m) {
+				"value" => function(\diModel $m) {
 					if ($m->has("folder"))
 					{
 						return "";
@@ -216,7 +218,7 @@ class diMigrationsPage extends \diCore\Admin\BasePage
 				"noHref" => true,
 			],
 			"#play" => [
-				"active" => function(diModel $m) {
+				"active" => function(\diModel $m) {
 					if ($m->has("folder"))
 					{
 						return false;
@@ -224,11 +226,11 @@ class diMigrationsPage extends \diCore\Admin\BasePage
 
 					return !$this->getManager()->wasExecuted($m->getId());
 				},
-				"href" => diLib::getAdminWorkerPath("migration", "up", "%id%") . "?back=" . urlencode($_SERVER["REQUEST_URI"]),
+				"href" => \diLib::getAdminWorkerPath("migration", "up", "%id%") . "?back=" . urlencode($_SERVER["REQUEST_URI"]),
 				"onclick" => "return confirm('Накатить миграцию?');",
 			],
 			"#rollback" => [
-				"active" => function(diModel $m) {
+				"active" => function(\diModel $m) {
 					if ($m->has("folder"))
 					{
 						return false;
@@ -236,12 +238,12 @@ class diMigrationsPage extends \diCore\Admin\BasePage
 
 					return $this->getManager()->wasExecuted($m->getId());
 				},
-				"href" => diLib::getAdminWorkerPath("migration", "down", "%id%") . "?back=" . urlencode($_SERVER["REQUEST_URI"]),
+				"href" => \diLib::getAdminWorkerPath("migration", "down", "%id%") . "?back=" . urlencode($_SERVER["REQUEST_URI"]),
 				"onclick" => "return confirm('Откатить миграцию?');",
 			],
 		]);
 
-		/** @var diMigrationsManager $c */
+		/** @var \diMigrationsManager $c */
 		$c = get_class($this->getManager());
 
 		foreach ($c::$foldersIdsAr as $folderId)
@@ -259,17 +261,17 @@ class diMigrationsPage extends \diCore\Admin\BasePage
 			$this->getList()->addRow($r);
 			//
 
-			$migrations = diMigrationsManager::getMigrationsInFolder($folder);
+			$migrations = \diMigrationsManager::getMigrationsInFolder($folder);
 			usort($migrations, function($a, $b) use ($that) {
-				return diMigrationsManager::getIdxByFileName($a) < diMigrationsManager::getIdxByFileName($b) ? 1 : -1;
+				return \diMigrationsManager::getIdxByFileName($a) < \diMigrationsManager::getIdxByFileName($b) ? 1 : -1;
 			});
 
 			foreach ($migrations as $i => $fn)
 			{
-				$idx = diMigrationsManager::getIdxByFileName($fn);
+				$idx = \diMigrationsManager::getIdxByFileName($fn);
 
-				/** @var diMigration $className */
-				$className = diMigrationsManager::getClassNameByIdx($idx);
+				/** @var \diMigration $className */
+				$className = \diMigrationsManager::getClassNameByIdx($idx);
 				include($fn);
 
 				$subFolder = basename(dirname($fn));
@@ -278,9 +280,9 @@ class diMigrationsPage extends \diCore\Admin\BasePage
 					$subFolder = "";
 				}
 
-				$r = (object)[
+				$r = [
 					"id" => $idx,
-					"description" => diDB::_out($className::$name),
+					"description" => \diDB::_out($className::$name),
 					"date" => filemtime($fn),
 					"subFolder" => $subFolder,
 				];
@@ -308,7 +310,7 @@ class diMigrationsPage extends \diCore\Admin\BasePage
 				"ACTION" => \diCore\Admin\Base::getPageUri($this->pseudoTable, "submit"),
 			], "ADMIN_FORM_");
 
-		$rawFolders = diMigrationsManager::getSubFolders(diMigrationsManager::FOLDER_LOCAL);
+		$rawFolders = \diMigrationsManager::getSubFolders(\diMigrationsManager::FOLDER_LOCAL);
 		$folders = [
 			"" => "/",
 		];
