@@ -136,10 +136,11 @@
 					default:
 					case slides_mode.SCREEN:
 						$e = $('<div></div>').css({
-							backgroundPosition: 'inherit',
+							backgroundPosition: 'center center',
 							backgroundImage: idx == slide_index.OLD
 								? $this.css('background-image')
-								: 'url(' + settings.pic + ')'
+								: 'url(' + settings.pic + ')',
+							backgroundSize: 'cover'
 						});
 						break;
 
