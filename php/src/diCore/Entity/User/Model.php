@@ -82,6 +82,26 @@ class Model extends \diBaseUserModel
 		return strlen($rawPassword) >= static::MIN_PASSWORD_LENGTH;
 	}
 
+	public function getFullActivationHref()
+	{
+		return \diPaths::defaultHttp() . $this->getActivationHref();
+	}
+
+	public function getActivationHref()
+	{
+		return '/api/auth/activate/' . $this->getSlug() . '/' . $this->getActivationKey() . '/';
+	}
+
+	public function getFullEnterNewPasswordHref()
+	{
+		return \diPaths::defaultHttp() . $this->getEnterNewPasswordHref();
+	}
+
+	public function getEnterNewPasswordHref()
+	{
+		return '/' . CMS::ct('enter_new_password') . '/' . $this->getEmail() . '/' . $this->getActivationKey() . '/';
+	}
+
 	public function importDataFromOAuthProfile(\diOAuth2ProfileModel $profile)
 	{
 		return $this;
@@ -226,8 +246,7 @@ class Model extends \diBaseUserModel
 		if ($this->hasEmail())
 		{
 			$twig->assign([
-				'reset_href' => \diPaths::defaultHttp() . '/' . CMS::ct('enter_new_password') .
-					'/' . $this->getEmail() . '/' . $this->getActivationKey() . '/',
+				'reset_href' => $this->getFullEnterNewPasswordHref(),
 			]);
 
 			$this->sendEmail($this->getSender('password_forgotten'), $this->getEmail(),
@@ -240,5 +259,15 @@ class Model extends \diBaseUserModel
 	public function authenticateAfterEnteringNewPassword()
 	{
 		return true;
+	}
+
+	public function getCustomTemplateVars()
+	{
+		return extend(parent::getCustomTemplateVars(), [
+			'full_activation_href' => $this->getFullActivationHref(),
+			'activation_href' => $this->getActivationHref(),
+			'full_enter_new_password_href' => $this->getFullEnterNewPasswordHref(),
+			'enter_new_password_href' => $this->getEnterNewPasswordHref(),
+		]);
 	}
 }

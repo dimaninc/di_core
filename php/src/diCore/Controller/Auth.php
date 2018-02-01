@@ -8,6 +8,7 @@
 
 namespace diCore\Controller;
 
+use diCore\Base\CMS;
 use diCore\Data\Types;
 use diCore\Entity\User\Model;
 use diCore\Tool\Auth as AuthTool;
@@ -18,6 +19,8 @@ class Auth extends \diBaseController
 
 	protected static $language = [
 		'en' => [
+			'common.enter_email' => 'Enter E-mail',
+
 			'enter_new_password.sign_out_first' => 'You are signed in, enter new password in cabinet',
 			'enter_new_password.email_not_valid' => 'E-mail is not valid',
 			'enter_new_password.key_not_valid' => 'Key is not valid',
@@ -26,8 +29,18 @@ class Auth extends \diBaseController
 			'enter_new_password.passwords_not_match' => 'Passwords do not match',
 			'enter_new_password.user_not_exist' => 'User does not exist',
 			'enter_new_password.user_not_active' => 'User is not active',
+
+			'activate.sign_out_first' => 'Unable to activate account while you are authenticated',
+			'activate.account_not_found' => 'Account not found',
+			'activate.account_already_activated' => 'Account has been already activated',
+			'activate.key_not_match' => 'Activation key does not match',
+			'activate.key_is_empty' => 'Activation key is empty',
+			'activate.unknown_error' => 'Unknown error',
+			'activate.success' => 'Account successfully activated',
 		],
 		'ru' => [
+			'common.enter_email' => 'Введите E-mail',
+
 			'enter_new_password.sign_out_first' => 'Вы авторизованы, задайте новый пароль в личном кабинете',
 			'enter_new_password.email_not_valid' => 'Некорректный E-mail',
 			'enter_new_password.key_not_valid' => 'Некорректный код',
@@ -36,6 +49,14 @@ class Auth extends \diBaseController
 			'enter_new_password.passwords_not_match' => 'Пароли не совпадают',
 			'enter_new_password.user_not_exist' => 'Пользователь не существует',
 			'enter_new_password.user_not_active' => 'Пользователь не активен',
+
+			'activate.sign_out_first' => 'Вы не можете активировать аккаунт, т.к. вы авторизованы',
+			'activate.account_not_found' => 'Пользователь не найден',
+			'activate.account_already_activated' => 'Аккаунт уже активирован ранее',
+			'activate.key_not_match' => 'Код активации не подходит',
+			'activate.key_is_empty' => 'Код активации пуст',
+			'activate.unknown_error' => 'Неизвестная ошибка',
+			'activate.success' => 'Активация прошла успешно',
 		],
 	];
 
@@ -106,8 +127,48 @@ class Auth extends \diBaseController
 		return $ar;
 	}
 
+	protected function getActivateRedirectUrl($token)
+	{
+		return '/' . CMS::ct('registration') . '/?activate_message=' . $token;
+	}
+
 	public function activateAction()
 	{
+		try {
+			if (AuthTool::i()->authorized())
+			{
+				throw new \Exception('activate.sign_out_first');
+			}
+
+			/** @var Model $user */
+			$user = $this->getUserForActivate();
+
+			if (!$user->exists())
+			{
+				throw new \Exception('activate.account_not_found');
+			}
+
+			if ($user->active())
+			{
+				throw new \Exception('activate.account_already_activated');
+			}
+
+			if ($user->getActivationKey() != $this->getKeyForActivate())
+			{
+				throw new \Exception('activate.key_not_match');
+			}
+
+			$user
+				->setActive(1)
+				->setActivationKey(Model::generateActivationKey())
+				->save();
+
+			$href = '/';
+		} catch (\Exception $e) {
+			$href = $this->getActivateRedirectUrl($e->getMessage());
+		}
+
+		$this->redirectTo($href);
 	}
 
 	public function signUpAction()
@@ -145,7 +206,7 @@ class Auth extends \diBaseController
 
 	protected function getEmptyUserUidErrorMessage()
 	{
-		return 'Введите E-mail';
+		return self::L('common.enter_email');
 	}
 
 	protected function getUserUidForReset()
@@ -163,6 +224,35 @@ class Auth extends \diBaseController
 	protected function getUserForReset()
 	{
 		return Model::create(Types::user, $this->getUserUidForReset(), 'slug');
+	}
+
+	protected function getUserUidForActivate()
+	{
+		$email = $this->param(0);
+
+		if (!$email)
+		{
+			throw new \Exception('common.enter_email');
+		}
+
+		return $email;
+	}
+
+	protected function getKeyForActivate()
+	{
+		$key = $this->param(1);
+
+		if (!$key)
+		{
+			throw new \Exception(self::L('activate.key_is_empty'));
+		}
+
+		return $key;
+	}
+
+	protected function getUserForActivate()
+	{
+		return Model::create(Types::user, $this->getUserUidForActivate(), 'slug');
 	}
 
 	public function resetAction()
