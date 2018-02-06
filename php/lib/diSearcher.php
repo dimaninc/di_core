@@ -9,6 +9,7 @@ class diSearcher
 	public $search_results_exist = false;
 	public $current_area = false;
 	protected $q = "";
+	public $hardReplaceSymbols = true;
 
 	protected $orig_page;
 
@@ -87,6 +88,7 @@ class diSearcher
 			}
 			else
 			{
+				$search->hardReplaceSymbolsOfQuery = $this->hardReplaceSymbols;
 				$ar = $search->search($this->q);
 				$rc = count($ar);
 			}

@@ -55,9 +55,13 @@ abstract class diSearch
     public $table;
 	public $min_word_length;
 	public $use_query_replaces = false;
-    public $prepare_replace_ar = [
+    public static $prepare_replace_ar = [
         "\n", "\r", "\t", "<", ">", " -", "-", ".", ",", "!", "?", ":", ";", ")", "(", '"', "'", "\\", "/", "|",
     ];
+	public static $prepare_replace_lite_ar = [
+		"\n", "\r", "\t", ",", "!", "?", ":", ";", '"', "'", "|",
+	];
+	public $hardReplaceSymbolsOfQuery = true;
 
 	function __construct($table)
 	{
@@ -108,7 +112,7 @@ abstract class diSearch
 		if ($a)
 		{
 			$search = self::create($table);
-			$search->index_record($id, "", $a["fields"], $a["where"], $a["callback"]);
+			$search->index_record($id, "", $a["fields"], $a["where"], $a["callback"], $a['post_callback']);
 
             return true;
 		}
@@ -144,6 +148,7 @@ abstract class diSearch
             "fields" => $search_q_ar[$table]["fields"],
             "where" => !empty($search_q_ar[$table]["where"]) ? "WHERE " . str_replace("t.", "", $search_q_ar[$table]["where"]) : "",
             "callback" => !empty($search_q_ar[$table]["callback"]) ? $search_q_ar[$table]["callback"] : "",
+	        'post_callback' => !empty($search_q_ar[$table]["post_callback"]) ? $search_q_ar[$table]["post_callback"] : null,
         ];
 	}
 
@@ -176,7 +181,7 @@ abstract class diSearch
 		return $this;
 	}
 
-	function index_record($r_or_id, $primary_fields_ar, $fields_ar, $q_ending = "", $callback = "")
+	function index_record($r_or_id, $primary_fields_ar, $fields_ar, $q_ending = "", $callback = "", callable $post_callback = null)
 	{
 		$r = is_object($r_or_id) ? $r_or_id : $this->getDb()->r($this->table, $q_ending ? "$q_ending and id='$r_or_id'" : $r_or_id);
 
@@ -212,7 +217,7 @@ abstract class diSearch
 			}
 		}
 
-		$data = join(" ", $data_ar);
+		$origData = $data = join(" ", $data_ar);
 
 		if ($callback)
 		{
@@ -221,28 +226,41 @@ abstract class diSearch
 
 		$data = $this->prepare_string($data);
 
+		if ($post_callback)
+		{
+			$data = $post_callback($this->table, $r, $data, $origData);
+		}
+
 		$this->update_search_index($r->id, join("|", $primary_data_ar), $data);
 
 		return $this;
 	}
 
-  function prepare_string($s)
-  {
-    $s = $this->lo($s);
+	public static function prepare_string($s, $removeCharacters = true)
+	{
+		$s = mb_strtolower($s);
 
-    $s = strip_tags($s);
-    $s = preg_replace("/&#?[a-z0-9\s]+;/", " ", $s);
+		$s = strip_tags($s);
+		$s = preg_replace("/&#?[a-z0-9\s]+;/", " ", $s);
+		$s = str_replace('-', '', $s);
 
-    $s = str_replace($this->prepare_replace_ar, " ", $s);
+		if ($removeCharacters)
+		{
+			$s = str_replace(self::$prepare_replace_ar, " ", $s);
+		}
+		else
+		{
+			$s = str_replace(self::$prepare_replace_lite_ar, " ", $s);
+		}
 
-    $s_ar = explode(" ", $s);
-    array_walk($s_ar, "kill_lil_word");
-      array_walk($s_ar, "kill_ending2");
-    $s_ar = array_unique($s_ar);
-    $s = implode(" ", $s_ar);
+		$s_ar = explode(" ", $s);
+		array_walk($s_ar, "kill_lil_word");
+		array_walk($s_ar, "kill_ending2");
+		$s_ar = array_unique($s_ar);
+		$s = implode(" ", $s_ar);
 
-    return trim($s);
-  }
+		return trim($s);
+	}
 
   function get_replaced_query($query)
   {
@@ -582,7 +600,17 @@ class diDBSearch extends diSearch
 
     $query = $this->lo($query);
     $query = chop($query);
-    $query = str_replace($this->prepare_replace_ar, " ", $query);
+
+	  $query = str_replace('-', '', $query);
+
+	  if ($this->hardReplaceSymbolsOfQuery)
+	  {
+		  $query = str_replace(self::$prepare_replace_ar, " ", $query);
+	  }
+	  else
+	  {
+		  $query = str_replace(self::$prepare_replace_lite_ar, " ", $query);
+	  }
 
     $query_ar = explode(" ", $query);
     array_walk($query_ar, "kill_ending2");
