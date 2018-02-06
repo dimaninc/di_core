@@ -1075,7 +1075,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 				);
 			}
 
-			$this->realCount = $this->count = $r ? $r->cc : 0;
+			$this->realCount = $this->count = $r ? (int)$r->cc : 0;
 		}
 
 		if ($this->pageSize && $this->count > $this->pageSize)

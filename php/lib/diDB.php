@@ -365,9 +365,16 @@ abstract class diDB
 		return $this;
 	}
 
-	public function get_table_name($table)
+	public function get_table_name($table, $escape = false)
 	{
-		return $this->escape_string($this->tables_ar && isset($this->tables_ar[$table]) ? $this->tables_ar[$table] : $table);
+		$name = $this->tables_ar && isset($this->tables_ar[$table]) ? $this->tables_ar[$table] : $table;
+
+		if ($escape)
+		{
+			$name = $this->escape_string($name);
+		}
+
+		return $name;
 	}
 
 	public function precache_rs($table, $query_or_ids_ar = "", $fields = "*")
