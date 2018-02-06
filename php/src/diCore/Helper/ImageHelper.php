@@ -93,7 +93,7 @@ class ImageHelper
 			$color = rgb_allocate($source, $backgroundColor);
 		}
 
-		$rotation = imagerotate($source, $angle, $color);
+		$rotation = imagerotate($source, -$angle, $color);
 
 		if ($img->isImageType(\diImage::TYPE_PNG))
 		{

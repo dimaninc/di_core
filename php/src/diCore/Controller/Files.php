@@ -133,11 +133,16 @@ class Files extends \diBaseAdminController
 
 		$fn = \diPaths::fileSystem($this) . $model[$field . '_with_path'];
 
-		ImageHelper::rotate($angle, $fn);
+		static::doRotate($angle, $fn);
 
 		$ar['ok'] = true;
 		$ar['fn'] = $fn;
 
 		return $ar;
+	}
+
+	protected static function doRotate($angle, $fn)
+	{
+		ImageHelper::rotate($angle, $fn);
 	}
 }
