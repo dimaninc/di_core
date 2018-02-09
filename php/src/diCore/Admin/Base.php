@@ -128,7 +128,7 @@ class Base
 	/** @deprecated */
 	protected $filename;
 
-	/** @var \diAdminCaption */
+	/** @var Caption */
 	protected $caption;
 	protected $forceShowExpandCollapse = false;
 
@@ -158,7 +158,7 @@ class Base
 
 	private function standardInit()
 	{
-		$this->caption = new \diAdminCaption($this);
+		$this->caption = Caption::basicCreate($this);
 		$this->adminUser = \diAdminUser::create();
 
 		$this
@@ -958,6 +958,12 @@ class Base
 						];
 					}
 
+					$item = extend([
+						'link' => null,
+						'link_suffix' => null,
+						'module' => null,
+					], $item);
+
 					if (empty($item["link"]) && !empty($item["module"]))
 					{
 						if (!$this->isModuleAccessible($item["module"]))
@@ -968,7 +974,7 @@ class Base
 						$item["link"] = self::getPageUri($item["module"]);
 					}
 
-					$href = $item["link"];
+					$href = $item["link"] . $item['link_suffix'];
 					$state = in_array($i, $visible_left_menu_ids_ar);
 
 					$this->getTpl()

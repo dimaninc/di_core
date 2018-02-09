@@ -1,10 +1,17 @@
 <?php
-class diAdminCaption
-{
-    /** @var \diCore\Admin\Base */
-	private $X;
 
-	private $delimiter = " / ";
+namespace diCore\Admin;
+
+use diCore\Traits\BasicCreate;
+
+class Caption
+{
+	use BasicCreate;
+
+	/** @var \diCore\Admin\Base */
+	private $X;
+	/** @var string */
+	protected $delimiter = ' / ';
 
 	public function __construct($X)
 	{
@@ -20,14 +27,14 @@ class diAdminCaption
 	{
 		$method = $this->getX()->getRefinedMethod();
 		$caption = $this->getX()->getPage()->getModuleCaption();
-		$href = $this->getX()->getCurrentPageUri("list");
+		$href = $this->getX()->getCurrentPageUri('list');
 
 		if (is_array($caption))
 		{
 			$caption = $caption[$this->getX()->getLanguage()];
 		}
 
-		return $method != "list"
+		return $method != 'list'
 			? sprintf('<a href="%s">%s</a>', $href, $caption)
 			: $caption;
 	}
@@ -54,8 +61,8 @@ class diAdminCaption
 		global $admin_captions_ar;
 
 		$no_caption = [
-			"en" => "This module title is not defined. Please contact administrator.",
-			"ru" => "Заголовок для этого раздела не определен. Свяжитесь с администратором.",
+			'en' => 'This module title is not defined. Please contact administrator.',
+			'ru' => 'Заголовок для этого раздела не определен. Свяжитесь с администратором.',
 		];
 
 		$path = $this->getX()->getOldSchoolPath($this->getX()->getModule(), $this->getX()->getMethod());
@@ -66,16 +73,16 @@ class diAdminCaption
 
 			if (is_array($s))
 			{
-				$action = (int)$this->getX()->getId() ? "edit" : "add";
+				$action = (int)$this->getX()->getId() ? 'edit' : 'add';
 
 				$s = $s[$action];
+				$x = strpos($s, ' / ');
 
-				$x = strpos($s, " / ");
 				if ($x !== false)
 				{
-					$href = $this->getX()->getCurrentPageUri("list");
+					$href = $this->getX()->getCurrentPageUri('list');
 
-					$s = "<a href=\"$href\">".substr($s, 0, $x)."</a>".substr($s, $x);
+					$s = sprintf('<a href="%s">%s</a>%s', $href, substr($s, 0, $x), substr($s, $x));
 				}
 			}
 
@@ -93,8 +100,8 @@ class diAdminCaption
 		}
 
 		return $this->getX()->getPage()->addButtonNeededInCaption() &&
-			$this->getX()->getPage()->getMethodCaption("add") &&
-			$this->getX()->getRefinedMethod() == "list";
+			$this->getX()->getPage()->getMethodCaption('add') &&
+			$this->getX()->getRefinedMethod() == 'list';
 	}
 
 	public function getButtons()
@@ -103,16 +110,16 @@ class diAdminCaption
 
 		if (
 			$this->addButtonNeeded() ||
-			isset($admin_captions_ar[$this->getX()->getLanguage()][$this->getX()->getPath()."_form"]["add"]) // back compatibility
+			isset($admin_captions_ar[$this->getX()->getLanguage()][$this->getX()->getPath().'_form']['add']) // back compatibility
 		   )
 		{
-		    $href = $this->getX()->getCurrentPageUri("form");
+		    $href = $this->getX()->getCurrentPageUri('form');
 
 			return "[ <a href=\"$href\">{$this->getX()->getVocabulary('add')}</a> ]";
 		}
 		else
 		{
-			return "";
+			return '';
 		}
 	}
 
