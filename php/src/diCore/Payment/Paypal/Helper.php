@@ -8,6 +8,8 @@
 
 namespace diCore\Payment\Paypal;
 
+use diCore\Payment\Payment;
+use diCore\Tool\Logger;
 
 class Helper
 {
@@ -81,7 +83,7 @@ class Helper
 		});
 
 		$button = !$opts["autoSubmit"] ? "<button type=\"submit\">{$opts["buttonCaption"]}</button>" : "";
-		$redirectScript = $opts["autoSubmit"] ? \diPayment::getAutoSubmitScript() : '';
+		$redirectScript = $opts["autoSubmit"] ? Payment::getAutoSubmitScript() : '';
 
 		$params = extend([
 			'cmd' => '_xclick',
@@ -111,7 +113,7 @@ class Helper
 $redirectScript
 EOF;
 
-		\diPayment::log("Paypal form:\n" . $form);
+		static::log("Paypal form:\n" . $form);
 
 		return $form;
 	}
@@ -259,6 +261,6 @@ EOF;
 
 	public static function log($message)
 	{
-		simple_debug($message, "PayPal", "-payment");
+		Logger::getInstance()->log($message, 'PayPal', '-payment');
 	}
 }

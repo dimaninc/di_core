@@ -28,11 +28,11 @@ use diCore\Admin\BasePage;
 
 class diConfiguration
 {
-	private $tableName = "configuration";	// table name of values to get stored in
-	private $nameField = "name";
-	private $valueField = "value";
+	private $tableName = 'configuration';	// table name of values to get stored in
+	private $nameField = 'name';
+	private $valueField = 'value';
 
-	private $cacheFilename = "_cfg/cache/configuration.php";
+	private $cacheFilename = '_cfg/cache/configuration.php';
 	private $fileChmod = 0666;
 	private $dirChmod = 0777;
 	private static $folder;
@@ -40,10 +40,10 @@ class diConfiguration
 	private $db;
 
 	private $tabsAr = [];
-	private $otherTabName = "_other";
+	private $otherTabName = '_other';
 	private $otherTabTitle = [
-		'en' => "Other",
-		'ru' => "Прочее",
+		'en' => 'Other',
+		'ru' => 'Прочее',
 	];
 
 	/** @var BasePage */
@@ -163,11 +163,11 @@ class diConfiguration
 	 * @return mixed|null
 	 * @throws Exception
 	 */
-	public static function get($name, $property = "value")
+	public static function get($name, $property = 'value')
 	{
-		if ($name = self::exists($name))
+		if ($name2 = self::exists($name))
 		{
-			return self::getPropertyOption($name, $property);
+			return self::getPropertyOption($name2, $property);
 		}
 		else
 		{
@@ -183,7 +183,7 @@ class diConfiguration
 	 * @param string $property   can be 'value' or 'width/height/type' (for images)
 	 * @return null
 	 */
-	public static function safeGet($name, $default = null, $property = "value")
+	public static function safeGet($name, $default = null, $property = 'value')
 	{
 		if ($name = self::exists($name))
 		{
@@ -289,7 +289,7 @@ class diConfiguration
 				continue;
 			}
 
-			self::$data[$r->{$this->nameField}]["value"] = $this->adjustAfterDB(
+			self::$data[$r->{$this->nameField}]['value'] = $this->adjustAfterDB(
 				$r->{$this->valueField},
 				self::getPropertyType($r->{$this->nameField})
 			);
@@ -305,13 +305,13 @@ class diConfiguration
 
 	public static function getPropertyType($name)
 	{
-		return self::getPropertyOption($name, "type");
+		return self::getPropertyOption($name, 'type');
 	}
 
 	public static function throwException($name)
 	{
 		$d = debug_backtrace();
-		$info = isset($d[0]) ? "{$d[0]["file"]}:{$d[0]["line"]}" : "no debug info";
+		$info = isset($d[0]) ? "{$d[0]['file']}:{$d[0]['line']}" : 'no debug info';
 
 		throw new Exception("There's no variable '$name' in diConfiguration::\$data ($info)");
 	}
@@ -325,9 +325,9 @@ class diConfiguration
 			return null;
 		}
 
-		$r = $this->getDB()->r($this->tableName, "WHERE {$this->nameField}='$name'");
+		$r = $this->getDB()->r($this->tableName, "WHERE {$this->nameField} = '$name'");
 
-		return $this->adjustAfterDB($r ? $r->{$this->valueField} : self::$data[$name]["value"], self::getPropertyType($name));
+		return $this->adjustAfterDB($r ? $r->{$this->valueField} : self::$data[$name]['value'], self::getPropertyType($name));
 	}
 
 	public function setToDB($name, $value)
@@ -352,14 +352,14 @@ class diConfiguration
 			{
 				foreach ($v as $_k => $_v)
 				{
-					$full_k = $k . "[" . $_k . "]";
+					$full_k = $k . '[' . $_k . ']';
 
 					if (self::exists($full_k))
 					{
 						$this->setToDB($full_k, $_v);
 					}
 
-					if (self::getPropertyType($full_k) == "checkbox")
+					if (self::getPropertyType($full_k) == 'checkbox')
 					{
 						$checkboxesAr[] = $full_k;
 					}
@@ -371,7 +371,7 @@ class diConfiguration
 				{
 					$this->setToDB($k, $v);
 
-					if (self::getPropertyType($k) == "checkbox")
+					if (self::getPropertyType($k) == 'checkbox')
 					{
 						$checkboxesAr[] = $k;
 					}
@@ -381,22 +381,22 @@ class diConfiguration
 
 		foreach ((array)$_FILES as $k => $v)
 		{
-			if (self::exists($k) && in_array(self::getPropertyType($k), ["pic", "file"]))
+			if (self::exists($k) && in_array(self::getPropertyType($k), ['pic', 'file']))
 			{
-				if (isset($_FILES[$k]) && $_FILES[$k]["error"] == 0)
+				if (isset($_FILES[$k]) && $_FILES[$k]['error'] == 0)
 				{
 					create_folders_chain(diPaths::fileSystem(), self::getFolder(), $this->dirChmod);
 
-					$ext = strtolower("." . get_file_ext($_FILES[$k]["name"]));
+					$ext = strtolower('.' . get_file_ext($_FILES[$k]['name']));
 
 					do
 					{
 						$pic = substr(get_unique_id(), 0, 10) . $ext;
 					} while (is_file(diPaths::fileSystem() . self::getFolder() . $pic));
 
-					if (!move_uploaded_file($_FILES[$k]["tmp_name"], diPaths::fileSystem() . self::getFolder() . $pic))
+					if (!move_uploaded_file($_FILES[$k]['tmp_name'], diPaths::fileSystem() . self::getFolder() . $pic))
 					{
-						throw new \Exception("Unable to copy file {$_FILES[$k]["name"]} to " . diPaths::fileSystem() . self::getFolder() . $pic);
+						throw new \Exception("Unable to copy file {$_FILES[$k]['name']} to " . diPaths::fileSystem() . self::getFolder() . $pic);
 					}
 
 					if (self::get($k) && is_file(diPaths::fileSystem() . self::getFolder() . self::get($k)))
@@ -411,16 +411,16 @@ class diConfiguration
 
 		foreach (self::$data as $_k => $_v)
 		{
-		    if (!isset($_v["type"]))
+		    if (!isset($_v['type']))
 		    {
 		    	continue;
 			}
 
-			if ($_v["type"] == "checkbox")
+			if ($_v['type'] == 'checkbox')
 			{
 				if (!in_array($_k, $checkboxesAr))
 				{
-					self::$data[$_k]["value"] = 0;
+					self::$data[$_k]['value'] = 0;
 
 					$this->setToDB($_k, 0);
 				}
@@ -436,7 +436,7 @@ class diConfiguration
 	{
 		if (self::exists($name))
 		{
-			$flags = self::getPropertyOption($name, "flags");
+			$flags = self::getPropertyOption($name, 'flags');
 
 			if (!is_array($flags))
 			{
@@ -472,16 +472,16 @@ class diConfiguration
 	public function updateCache($options = array())
 	{
 		$options = extend(array(
-			"prefixCode" => "",
-			"suffixCode" => "",
+			'prefixCode' => '',
+			'suffixCode' => '',
 		), $options);
 
-		$cache_file = "";
+		$cache_file = '';
 		$cache_file .= $this->phpHeader();
 
-		if ($options["prefixCode"])
+		if ($options['prefixCode'])
 		{
-			$cache_file .= $options["prefixCode"];
+			$cache_file .= $options['prefixCode'];
 		}
 
 		$rs = $this->getDB()->rs($this->tableName);
@@ -497,14 +497,14 @@ class diConfiguration
 			$type = self::getPropertyType($name);
 			$s = $this->adjustBeforeDB($r->{$this->valueField}, $type);
 
-			if (!in_array($type, ["int", "integer", "float", "double", "checkbox"]))
+			if (!in_array($type, ['int', 'integer', 'float', 'double', 'checkbox']))
 			{
 				$s = "\"$s\"";
 			}
 
 			$cache_file .= "self::\$data[\"$name\"][\"value\"] = $s;\n";
 
-			if ($type == "pic")
+			if ($type == 'pic')
 			{
 				$ff = diPaths::fileSystem() . self::getFolder() . $r->{$this->valueField};
 				list($w, $h, $t) = is_file($ff) ? getimagesize($ff) : [0, 0, 0];
@@ -518,9 +518,9 @@ class diConfiguration
 			}
 		}
 
-		if ($options["suffixCode"])
+		if ($options['suffixCode'])
 		{
-			$cache_file .= $options["suffixCode"];
+			$cache_file .= $options['suffixCode'];
 		}
 
 		$cache_file .= $this->phpFooter();
@@ -538,14 +538,14 @@ class diConfiguration
 			default:
 				return addslashes($value);
 
-			case "checkbox":
-			case "int":
-			case "integer":
+			case 'checkbox':
+			case 'int':
+			case 'integer':
 				return intval($value);
 
-			case "float":
-			case "double":
-				return doubleval(str_replace(",", ".", $value));
+			case 'float':
+			case 'double':
+				return doubleval(str_replace(',', '.', $value));
 		}
 	}
 
@@ -556,14 +556,14 @@ class diConfiguration
 			default:
 				return $value;
 
-			case "checkbox":
-			case "int":
-			case "integer":
+			case 'checkbox':
+			case 'int':
+			case 'integer':
 				return intval($value);
 
-			case "float":
-			case "double":
-				return doubleval(str_replace(",", ".", $value));
+			case 'float':
+			case 'double':
+				return doubleval(str_replace(',', '.', $value));
 		}
 	}
 

@@ -8,11 +8,12 @@
 
 namespace diCore\Controller;
 
+use diCore\Entity\PaymentDraft\Model as DraftModel;
+use diCore\Entity\PaymentReceipt\Model as ReceiptModel;
 use diCore\Helper\StringHelper;
 use diCore\Payment\Yandex\Kassa;
 use diCore\Payment\System;
-use diCore\Entity\PaymentDraft\Model as DraftModel;
-use diCore\Entity\PaymentReceipt\Model as ReceiptModel;
+use diCore\Tool\Auth as AuthTool;
 
 class Payment extends \diBaseController
 {
@@ -38,7 +39,8 @@ class Payment extends \diBaseController
 	{
 		parent::__construct($params);
 
-		if (!\diConfiguration::get('epay_enabled'))
+		$class = \diCore\Payment\Payment::getClass();
+		if (!$class::enabled())
 		{
 			$this->returnErrorResponse('E-pay disabled at the moment ' . get_user_ip());
 		}
@@ -109,6 +111,65 @@ class Payment extends \diBaseController
 		return $res;
 	}
 
+	protected function getTargetTypeForRedirect()
+	{
+		return $this->param(2, 0);
+	}
+
+	protected function getTargetIdForRedirect()
+	{
+		return $this->param(3, 0);
+	}
+
+	protected function getAmountForRedirect()
+	{
+		return \diRequest::get('amount', 0.0);
+	}
+
+	public function redirectAction()
+	{
+		$paymentSystemName = $this->param(0);
+		$paymentVendorName = $this->param(1);
+		$targetType = $this->getTargetTypeForRedirect();
+		$targetId = $this->getTargetIdForRedirect();
+
+		$paymentSystemId = System::id($paymentSystemName);
+		$paymentVendorId = System::vendorIdByName($paymentSystemId, $paymentVendorName);
+
+		$Payment = \diCore\Payment\Payment::basicCreate($targetType, $targetId, AuthTool::i()->getUserId());
+
+		/** @var \diCore\Entity\PaymentDraft\Model $draft */
+		$draft = $Payment->getNewDraft(
+			$this->getAmountForRedirect(),
+			$paymentSystemId,
+			$paymentVendorId
+		);
+
+		switch ($draft->getPaySystem())
+		{
+			case System::mixplat:
+				return $Payment->initMixplat($draft);
+
+			case System::sms_online:
+				return $Payment->initSmsOnline($draft);
+
+			case System::paypal:
+				return $Payment->initPaypal($draft);
+
+			case System::yandex_kassa:
+				return $Payment->initYandex($draft);
+
+			case System::robokassa:
+				return $Payment->initRobokassa($draft);
+
+			case System::tinkoff:
+				return $Payment->initTinkoff($draft);
+
+			default:
+				throw new \Exception('Unsupported payment system #' . $draft->getPaySystem());
+		}
+	}
+
 	public function yandexAction()
 	{
 		$this->system = System::yandex_kassa;
@@ -140,7 +201,7 @@ class Payment extends \diBaseController
 		$this->log("POST:\n" . print_r($_POST, true));
 		$this->log("POST BODY:\n" . print_r(file_get_contents('php://input'), true));
 
-		$mixplat = \Romantic\Settings\Mixplat::create();
+		$mixplat = \diCore\Payment\Mixplat\Helper::create();
 
 		switch ($this->subAction)
 		{
@@ -363,7 +424,8 @@ class Payment extends \diBaseController
 
 			if (!$existingReceipt)
 			{
-				\diCustomPayment::postProcess($this->getReceipt());
+				$class = \diCore\Payment\Payment::getClass();
+				$class::postProcess($this->getReceipt());
 			}
 		} catch (\Exception $e) {
 			$this->log('Error while creating receipt: ' . $e->getMessage());
@@ -377,7 +439,8 @@ class Payment extends \diBaseController
 	{
 		$this->receipt = diModel::create(diTypes::payment_receipt, 9);
 
-		diCustomPayment::postProcess($this->getReceipt());
+		$class = \diCore\Payment\Payment::getClass();
+		$class::postProcess($this->getReceipt());
 
 		return ['zhopa' => 1488];
 	}
@@ -518,7 +581,8 @@ class Payment extends \diBaseController
 
 	protected function log($message)
 	{
-		\diCustomPayment::log($message);
+		$class = \diCore\Payment\Payment::getClass();
+		$class::log($message);
 
 		return $this;
 	}

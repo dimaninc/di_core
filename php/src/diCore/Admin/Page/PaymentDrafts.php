@@ -8,9 +8,10 @@
 namespace diCore\Admin\Page;
 
 use diCore\Admin\BasePage;
-use diCore\Tool\CollectionCache;
-use diCore\Entity\PaymentDraft\Model;
 use diCore\Data\Types;
+use diCore\Entity\PaymentDraft\Model;
+use diCore\Payment\Payment;
+use diCore\Tool\CollectionCache;
 
 class PaymentDrafts extends BasePage
 {
@@ -39,8 +40,7 @@ class PaymentDrafts extends BasePage
 
 	protected function setupFilters()
 	{
-		/** @var \diPayment $paymentClass */
-		$paymentClass = class_exists('diCustomPayment') ? 'diCustomPayment' : 'diPayment';
+		$paymentClass = \diCore\Payment\Payment::getClass();
 
 		$this->getFilters()
 			->addFilter([
@@ -74,7 +74,7 @@ class PaymentDrafts extends BasePage
 					'width' => '20%',
 				],
 				'value' => function(Model $m) {
-					return \diTypes::getTitle($m->getTargetType());
+					return $m->hasTargetType() ? \diTypes::getTitle($m->getTargetType()) : '&mdash;';
 				},
 			],
 			'target_id' => [
@@ -161,14 +161,16 @@ class PaymentDrafts extends BasePage
 		/** @var \diCore\Entity\User\Model $user */
 		$user = \diModel::create(Types::user, $draft->getUserId());
 
-		$target = \diModel::create($draft->getTargetType(), $draft->getTargetId());
+		$target = $draft->hasTargetType() && $draft->hasTargetId()
+			? \diModel::create($draft->getTargetType(), $draft->getTargetId())
+			: new \diModel();
 
 		$this->getForm()
 			->setInput('pay_manual', '<button type="button" data-purpose="pay-manual">Провести</button>')
 			->setInput('vendor', $draft->getVendorStr())
 			->setInput('status', $draft->getStatusStr())
-			->setInput('currency', \diPayment::currencyTitle($draft->getCurrency()))
-			->setInput('pay_system', \diPayment::systemTitle($draft->getPaySystem()))
+			->setInput('currency', Payment::currencyTitle($draft->getCurrency()))
+			->setInput('pay_system', Payment::systemTitle($draft->getPaySystem()))
 			->setInput('user_id', sprintf('%s [<a href="%s">ссылка</a>]', $user, $user->getAdminHref()))
 			->setInput('target_id', sprintf('%s [<a href="%s">ссылка</a>]', $this->getTargetTitle($target), $target->getAdminHref()));
 	}

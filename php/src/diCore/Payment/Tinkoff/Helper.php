@@ -76,7 +76,7 @@ class Helper
 		});
 
 		$button = !$opts['autoSubmit'] ? "<button type=\"submit\">{$opts["buttonCaption"]}</button>" : '';
-		$redirectScript = $opts['autoSubmit'] ? \diPayment::getAutoSubmitScript() : '';
+		$redirectScript = $opts['autoSubmit'] ? \diCore\Payment\Payment::getAutoSubmitScript() : '';
 
 		$params = extend([
 			'MrchLogin' => static::getMerchantLogin(),
@@ -91,7 +91,7 @@ class Helper
 		], $opts['additionalParams']);
 
 		$paramsStr = join("\n\t", array_filter(array_map(function($name, $value) {
-			return $value !== null ? \diPayment::getHiddenInput($name, $value) : '';
+			return $value !== null ? \diCore\Payment\Payment::getHiddenInput($name, $value) : '';
 		}, array_keys($params), $params)));
 
 		$form = <<<EOF

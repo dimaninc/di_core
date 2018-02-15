@@ -7,8 +7,9 @@
 
 namespace diCore\Entity\PaymentDraft;
 
-use diCore\Traits\TargetInside;
 use diCore\Payment\System;
+use diCore\Payment\Payment;
+use diCore\Traits\TargetInside;
 
 /**
  * Class Model
@@ -46,30 +47,31 @@ class Model extends \diModel
 	use TargetInside;
 
 	const type = \diTypes::payment_draft;
-	protected $table = "payment_drafts";
+	protected $table = 'payment_drafts';
 
-	protected $customDateFields = ["date_reserved", "date_payed"];
+	const TARGET_IS_NECESSARY = true;
+	protected $customDateFields = ['date_reserved', 'date_payed'];
 
 	public function validate()
 	{
-		if (!$this->hasTargetType())
+		if (!$this->hasTargetType() && static::TARGET_IS_NECESSARY)
 		{
-			$this->addValidationError("Target type required");
+			$this->addValidationError('Target type required');
 		}
 
-		if (!$this->hasTargetId())
+		if (!$this->hasTargetId() && static::TARGET_IS_NECESSARY)
 		{
-			$this->addValidationError("Target ID required");
+			$this->addValidationError('Target ID required');
 		}
 
 		if (!$this->hasUserId())
 		{
-			$this->addValidationError("User ID required");
+			$this->addValidationError('User ID required');
 		}
 
 		if (!$this->hasAmount())
 		{
-			$this->addValidationError("Amount required");
+			$this->addValidationError('Amount required');
 		}
 
 		return parent::validate();
@@ -82,7 +84,7 @@ class Model extends \diModel
 
 	public function getPaySystemStr()
 	{
-		return \diPayment::systemTitle($this->getPaySystem());
+		return Payment::systemTitle($this->getPaySystem());
 	}
 
 	public function getVendorStr()
@@ -128,7 +130,7 @@ class Model extends \diModel
 
 	public function getCurrencyStr()
 	{
-		return \diPayment::currencyTitle($this->getCurrency());
+		return Payment::currencyTitle($this->getCurrency());
 	}
 
 	public function getStatusStr()
@@ -149,10 +151,10 @@ class Model extends \diModel
 	public function getCustomTemplateVars()
 	{
 		return extend(parent::getCustomTemplateVars(), [
-			"target_type_str" => $this->getTargetTypeStr(),
+			'target_type_str' => $this->getTargetTypeStr(),
 			'pay_system_str' => $this->getPaySystemStr(),
-			"vendor_str" => $this->getVendorStr(),
-			"currency_str" => $this->getCurrencyStr(),
+			'vendor_str' => $this->getVendorStr(),
+			'currency_str' => $this->getCurrencyStr(),
 			'status_str' => $this->getStatusStr(),
 			'pay_system_with_vendor_short_str' => $this->getPaySystemWithVendorShortStr(),
 		]);
