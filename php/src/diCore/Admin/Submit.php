@@ -1399,7 +1399,7 @@ class Submit
 		{
 			$pics->filterByTargetId($id);
 		}
-		
+
 			/** @var \diCore\Entity\DynamicPic\Model $pic */
 		foreach ($pics as $pic)
 		{
@@ -1605,11 +1605,14 @@ class Submit
 		$getFileOptions = function($imageType) use($options) {
 			$type = static::parseImageType($imageType);
 
-			foreach ($options['fileOptions'] as $o)
+			if ($options['fileOptions'])
 			{
-				if (isset($o['type']) && $o['type'] == $type)
+				foreach ($options['fileOptions'] as $o)
 				{
-					return $o;
+					if (isset($o['type']) && $o['type'] == $type)
+					{
+						return $o;
+					}
 				}
 			}
 

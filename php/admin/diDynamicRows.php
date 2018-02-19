@@ -1713,62 +1713,66 @@ EOF;
 		return $id <= self::MULTIPLE_UPLOAD_FIRST_ID;
 	}
 
-  function store_pic($field, $id, $field_config)
-  {
-    global $tn_folder;
+	protected function store_pic($field, $id, $field_config)
+	{
+		global $tn_folder;
 
-	  $pics_folder = '/' . $this->getPicsFolder();
+		$pics_folder = '/' . $this->getPicsFolder();
 
-	  //$pics_folder = $dynamic_pics_folder."$this->table/";
-	  create_folders_chain($this->abs_path, $pics_folder.$tn_folder, 0775);
+		//$pics_folder = $dynamic_pics_folder."$this->table/";
+		create_folders_chain($this->abs_path, $pics_folder . $tn_folder, 0775);
 
-    $ff = $this->isMultipleUploadRecord($id)
-	    ? self::MULTIPLE_UPLOAD_FIELD_NAME
-	    : "{$this->field}_$field";
+		$ff = $this->isMultipleUploadRecord($id)
+			? self::MULTIPLE_UPLOAD_FIELD_NAME
+			: "{$this->field}_$field";
 
-	  if ($this->isMultipleUploadRecord($id))
-	  {
-		  $id = self::MULTIPLE_UPLOAD_FIRST_ID - $id;
-	  }
+		if ($this->isMultipleUploadRecord($id))
+		{
+			$id = self::MULTIPLE_UPLOAD_FIRST_ID - $id;
+		}
 
-    if (isset($_FILES[$ff]["name"][$id]) && !$_FILES[$ff]["error"][$id])
-    {
-      $ext = ".".strtolower(get_file_ext($_FILES[$ff]["name"][$id]));
+		if (isset($_FILES[$ff]["name"][$id]) && !$_FILES[$ff]["error"][$id])
+		{
+			$ext = "." . strtolower(get_file_ext($_FILES[$ff]["name"][$id]));
 
-      if ($this->test_r && $this->test_r->$field)
-      {
-        $this->data[$field] = replace_file_ext($this->test_r->$field, $ext);
-      }
-      else
-      {
-	      $this->data[$field] = Submit::getGeneratedFilename(
-			  \diCore\Data\Config::getPublicFolder() . $pics_folder,
-		      $_FILES[$ff]["name"][$id],
-		      $this->getFieldProperty($field, 'naming')
-	      );
-      }
+			if ($this->test_r && $this->test_r->$field)
+			{
+				$this->data[$field] = replace_file_ext($this->test_r->$field, $ext);
+			}
+			else
+			{
+				$this->data[$field] = Submit::getGeneratedFilename(
+					\diCore\Data\Config::getPublicFolder() . $pics_folder,
+					$_FILES[$ff]["name"][$id],
+					$this->getFieldProperty($field, 'naming')
+				);
+			}
 
-	    $fileOptions = $this->getFieldProperty($field, 'fileOptions');
-      $callback = isset($field_config["callback"]) ? $field_config["callback"] : "";
+			$fileOptions = $this->getFieldProperty($field, 'fileOptions');
+			$callback = isset($field_config["callback"])
+				? $field_config["callback"]
+				: [\diDynamicRows::class, 'storePicSimple'];
 
-      $F = array(
-        "name" => $_FILES[$ff]["name"][$id],
-        "type" => $_FILES[$ff]["type"][$id],
-        "tmp_name" => $_FILES[$ff]["tmp_name"][$id],
-        "error" => $_FILES[$ff]["error"][$id],
-        "size" => $_FILES[$ff]["size"][$id],
-      );
+			$F = [
+				"name" => $_FILES[$ff]["name"][$id],
+				"type" => $_FILES[$ff]["type"][$id],
+				"tmp_name" => $_FILES[$ff]["tmp_name"][$id],
+				"error" => $_FILES[$ff]["error"][$id],
+				"size" => $_FILES[$ff]["size"][$id],
+			];
 
-      if ($callback && is_callable($callback))
-      {
-        $callback($F, $pics_folder, $field, $this->data, $this, [
-	        'fileOptions' => $fileOptions,
-        ]);
-      }
-    }
-  }
+			if ($callback && is_callable($callback))
+			{
+				$callback($F, $pics_folder, $field, $this->data, $this, [
+					'fileOptions' => $fileOptions,
+				]);
+			}
+		}
 
-	public static function storePicSimple($F, $folder, $field, &$ar, diDynamicRows $DR = null, $options = [])
+		return $this;
+	}
+
+	public static function storePicSimple($F, $folder, $field, &$ar, \diDynamicRows $DR = null, $options = [])
 	{
 		Submit::storeDynamicPicCallback($F, $DR->getAdminPage()->getSubmit(), extend([
 			'what' => $field,
