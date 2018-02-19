@@ -1948,6 +1948,25 @@ class diModel implements \ArrayAccess
 		return $this->insertOrUpdateAllowed;
 	}
 
+	/**
+	 * @return boolean
+	 */
+	public function isIdAutoIncremented()
+	{
+		return $this->idAutoIncremented;
+	}
+
+	/**
+	 * @param boolean $idAutoIncremented
+	 * @return $this
+	 */
+	public function setIdAutoIncremented($idAutoIncremented)
+	{
+		$this->idAutoIncremented = $idAutoIncremented;
+
+		return $this;
+	}
+
 	public function getAppearanceFeedForAdmin()
 	{
 		return [
