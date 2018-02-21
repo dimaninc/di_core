@@ -18,7 +18,7 @@ class diSlugsUnited
 	/** @var \diSlugModel */
 	private $model;
 
-	public function __construct($targetType, $targetId, $levelNum = null)
+	public function __construct($targetType, $targetId, $levelNum = 0)
 	{
 		$this->targetType = $targetType;
 		$this->targetId = $targetId;
@@ -64,7 +64,10 @@ class diSlugsUnited
 
 	public function kill()
 	{
-		$this->getModel()->hardDestroy();
+		$this->getModel()
+			->hardDestroy();
+
+		return $this;
 	}
 
 	protected function getUniqueOptions()
@@ -102,7 +105,15 @@ class diSlugsUnited
 			$source = $this->prepare($source);
 		}
 
-		$this->getModel()->setSlug($this->unique($source));
+		$this->setShortSlug($this->unique($source));
+
+		return $this;
+	}
+
+	public function setShortSlug($slug)
+	{
+		$this->getModel()
+			->setSlug($slug);
 
 		return $this;
 	}
@@ -130,6 +141,8 @@ class diSlugsUnited
 
 	public function save()
 	{
+		\diCore\Tool\Logger::getInstance()->variable($this->getModel());
+
 		$this->getModel()->save();
 
 		return $this;

@@ -1102,6 +1102,7 @@ abstract class CMS
 		}
 
 		echo $this
+			->assignCanonicalAddress()
 			->finalParse()
 			->getWholeFinalPage();
 
@@ -1579,7 +1580,7 @@ abstract class CMS
 
 		if (count(static::$possibleLanguages) > 1)
 		{
-			$q = $_SERVER["QUERY_STRING"] ? "?" . $_SERVER["QUERY_STRING"] : "";
+			$q = \diRequest::requestQueryString() ? '?' . \diRequest::requestQueryString() : '';
 
 			$currentModesStr = null;
 
@@ -1757,18 +1758,26 @@ abstract class CMS
 			'keywords' => $this->getContentModel()->localized('meta_keywords') ?: $this->getContentModel()->localized('html_keywords'),
 		];
 
+		$this->getTpl()
+			->assign($this->getContentModel()->getTemplateVars(), 'PAGE_')
+			->assign($pageData, 'PAGE_')
+			->assign($this->metaFields, 'META_');
+
+		$this->assign_top_language_links();
+
+		return $this;
+	}
+	
+	protected function assignCanonicalAddress()
+	{
+		$canonicalAddress = $this->getCanonicalAddress();
+
 		$canonical = [
 			'protocol' => \diRequest::protocol(),
 			'domain' => \diRequest::domain(),
-			'url' => $this->getCanonicalAddress(),
-			'full_url' => \diRequest::urlBase() . $this->getCanonicalAddress(),
+			'url' => $canonicalAddress,
+			'full_url' => \diRequest::urlBase() . $canonicalAddress,
 		];
-
-		$this->getTpl()
-			->assign($this->getContentModel()->getTemplateVars(), 'PAGE_')
-			->assign($canonical, 'CANONICAL_')
-			->assign($pageData, 'PAGE_')
-			->assign($this->metaFields, 'META_');
 
 		$this->getTwig()
 			->assign([
@@ -1776,8 +1785,9 @@ abstract class CMS
 				'canonical' => $canonical,
 			]);
 
-		$this->assign_top_language_links();
-
+		$this->getTpl()
+			->assign($canonical, 'CANONICAL_');
+		
 		return $this;
 	}
 
@@ -2147,7 +2157,7 @@ abstract class CMS
 	}
 
 	/**
-	 * Such page doesn't exist
+	 * Such page does not exist
 	 *
 	 * @return $this
 	 */
