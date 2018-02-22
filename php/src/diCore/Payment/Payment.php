@@ -26,16 +26,15 @@ class Payment
     const ORDER_THANKS = 'Thank you';
 
     protected static $paymentVendorsUsed = [
-        /*
+        /* example:
         System::mixplat,
         //System::sms_online,
+        System::paypal,
 
         [
             'system' => System::yandex_kassa,
             'vendors' => [
-                //\diCore\Payment\Yandex\Vendor::MOBILE,
                 \diCore\Payment\Yandex\Vendor::CARD,
-                //\diCore\Payment\Yandex\Vendor::SBERBANK_ONLINE,
             ],
         ],
 
@@ -43,41 +42,6 @@ class Payment
             'system' => System::robokassa,
             'vendors' => [
                 \diCore\Payment\Robokassa\Vendor::CARD,
-            ],
-        ],
-
-        System::paypal,
-
-        [
-            'system' => System::robokassa,
-            'vendors' => [
-                \diCore\Payment\Robokassa\Vendor::APPLE_PAY,
-                \diCore\Payment\Robokassa\Vendor::SAMSUNG_PAY,
-            ],
-        ],
-
-        [
-            'system' => System::yandex_kassa,
-            'vendors' => [
-                \diCore\Payment\Yandex\Vendor::YANDEX_MONEY,
-                \diCore\Payment\Yandex\Vendor::MASTER_PASS,
-                \diCore\Payment\Yandex\Vendor::WEBMONEY,
-                \diCore\Payment\Yandex\Vendor::QIWI_WALLET,
-                //\diCore\Payment\Yandex\Vendor::PROM_SVYAZ_BANK,
-                //\diCore\Payment\Yandex\Vendor::ALPHA_CLICK,
-                //\diCore\Payment\Yandex\Vendor::QPPI,
-                //\diCore\Payment\Yandex\Vendor::TINKOFF,
-            ],
-        ],
-
-        [
-            'system' => System::robokassa,
-            'vendors' => [
-                //\diCore\Payment\Robokassa\Vendor::YANDEX_MONEY,
-                \diCore\Payment\Robokassa\Vendor::WEBMONEY,
-                \diCore\Payment\Robokassa\Vendor::QIWI,
-                //\diCore\Payment\Robokassa\Vendor::W1,
-                //\diCore\Payment\Robokassa\Vendor::ALPHA_CLICK,
             ],
         ],
         */
@@ -131,6 +95,13 @@ class Payment
     final public static function resetClass()
     {
         self::$class = null;
+    }
+
+    public static function getPaymentVendorsUsed()
+    {
+        $class = static::getClass();
+
+        return $class::$paymentVendorsUsed;
     }
 
     /**
@@ -210,6 +181,43 @@ class Payment
         return isset(static::$currencies[$currencyId])
             ? static::$currencies[$currencyId]
             : 'Unknown currency #' . $currencyId;
+    }
+
+    public function initiateProcess($amount, $paymentSystemName, $paymentVendorName)
+    {
+        $paymentSystemId = System::id($paymentSystemName);
+        $paymentVendorId = System::vendorIdByName($paymentSystemId, $paymentVendorName);
+
+        /** @var Draft $draft */
+        $draft = $this->getNewDraft(
+            $amount,
+            $paymentSystemId,
+            $paymentVendorId
+        );
+
+        switch ($draft->getPaySystem())
+        {
+            case System::mixplat:
+                return $this->initMixplat($draft);
+
+            case System::sms_online:
+                return $this->initSmsOnline($draft);
+
+            case System::paypal:
+                return $this->initPaypal($draft);
+
+            case System::yandex_kassa:
+                return $this->initYandex($draft);
+
+            case System::robokassa:
+                return $this->initRobokassa($draft);
+
+            case System::tinkoff:
+                return $this->initTinkoff($draft);
+
+            default:
+                throw new \Exception('Unsupported payment system #' . $draft->getPaySystem());
+        }
     }
 
     public function getNewDraft($amount, $systemId, $vendorId = 0, $currency = self::rub)

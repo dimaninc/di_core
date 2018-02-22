@@ -297,23 +297,28 @@ class diBaseController
 		throw new \Exception("There is not action method for '$action' in " . get_class($this));
 	}
 
-	protected function defaultResponse($ar, $die = false)
+	protected function defaultResponse($data, $die = false)
 	{
-		if (is_scalar($ar))
+		static::makeResponse($data, $die);
+
+		return $this;
+	}
+
+	public static function makeResponse($data, $die = false)
+	{
+		if (is_scalar($data))
 		{
-			echo $ar;
+			echo $data;
 		}
 		else
 		{
-			print_json($ar, !static::isCli());
+			print_json($data, !static::isCli());
 		}
 
 		if ($die)
 		{
 			die();
 		}
-
-		return $this;
 	}
 
 	protected function getRawPostData()

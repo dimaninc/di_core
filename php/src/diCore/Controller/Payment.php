@@ -133,41 +133,8 @@ class Payment extends \diBaseController
 		$targetType = $this->getTargetTypeForRedirect();
 		$targetId = $this->getTargetIdForRedirect();
 
-		$paymentSystemId = System::id($paymentSystemName);
-		$paymentVendorId = System::vendorIdByName($paymentSystemId, $paymentVendorName);
-
 		$Payment = \diCore\Payment\Payment::basicCreate($targetType, $targetId, AuthTool::i()->getUserId());
-
-		/** @var \diCore\Entity\PaymentDraft\Model $draft */
-		$draft = $Payment->getNewDraft(
-			$this->getAmountForRedirect(),
-			$paymentSystemId,
-			$paymentVendorId
-		);
-
-		switch ($draft->getPaySystem())
-		{
-			case System::mixplat:
-				return $Payment->initMixplat($draft);
-
-			case System::sms_online:
-				return $Payment->initSmsOnline($draft);
-
-			case System::paypal:
-				return $Payment->initPaypal($draft);
-
-			case System::yandex_kassa:
-				return $Payment->initYandex($draft);
-
-			case System::robokassa:
-				return $Payment->initRobokassa($draft);
-
-			case System::tinkoff:
-				return $Payment->initTinkoff($draft);
-
-			default:
-				throw new \Exception('Unsupported payment system #' . $draft->getPaySystem());
-		}
+		return $Payment->initiateProcess($this->getAmountForRedirect(), $paymentSystemName, $paymentVendorName);
 	}
 
 	public function yandexAction()
