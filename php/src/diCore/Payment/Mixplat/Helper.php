@@ -24,7 +24,7 @@ class Helper
     {
         if (!self::$class)
         {
-            self::$class = \diLib::getChildClass(self::class);
+            self::$class = \diLib::getChildClass(self::class, 'Settings');
         }
 
         return self::$class;
