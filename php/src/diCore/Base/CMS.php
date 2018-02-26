@@ -92,6 +92,12 @@ abstract class CMS
 	const ENV_STAGE = 2;
 	const ENV_PROD = 3;
 
+	public static $envNames = [
+		self::ENV_DEV => 'dev',
+		self::ENV_STAGE => 'stage',
+		self::ENV_PROD => 'prod',
+	];
+
 	protected static $skipGetParams = [
 		\diPagesNavy::PAGE_PARAM,
 		\diComments::PAGE_PARAM,
@@ -388,6 +394,11 @@ abstract class CMS
 		}
 
 		return self::ENV_PROD;
+	}
+
+	public static function getEnvironmentName()
+	{
+		return static::$envNames[static::getEnvironment()];
 	}
 
 	public static function debugMode()
@@ -1217,6 +1228,7 @@ abstract class CMS
 				'http_protocol' => $this->protocol,
 				'html_base' => $this->getBaseAddress() . '/',
 				'html_base_wo_slash' => $this->getBaseAddress(),
+				'env' => static::getEnvironmentName(),
 			],
 		]);
 
@@ -1767,7 +1779,7 @@ abstract class CMS
 
 		return $this;
 	}
-	
+
 	protected function assignCanonicalAddress()
 	{
 		$canonicalAddress = $this->getCanonicalAddress();
@@ -1787,7 +1799,7 @@ abstract class CMS
 
 		$this->getTpl()
 			->assign($canonical, 'CANONICAL_');
-		
+
 		return $this;
 	}
 
