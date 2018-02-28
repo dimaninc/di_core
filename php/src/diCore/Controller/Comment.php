@@ -138,12 +138,14 @@ class Comment extends \diBaseController
 				->sendEmailNotify('add');
 
 			$result['ok'] = true;
+			$result['id'] = $comment->getId();
 		} catch (\Exception $e) {
 			$result['message'] = $e->getMessage();
 
 			if ($comment->getId())
 			{
 				$result['ok'] = true;
+				$result['id'] = $comment->getId();
 			}
 		}
 
