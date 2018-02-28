@@ -132,9 +132,9 @@ class Model extends \diModel
 				->setLevelNum($h->getChildLevelNum($this->getParent()))
 				->setOrderNum((int)$r->num + 1);
 
-			$this->getDb()->update($this->getTable(), array(
+			$this->getDb()->update($this->getTable(), [
 				"*order_num" => "order_num+1",
-			), "WHERE order_num>='{$this->getOrderNum()}'");
+			], "WHERE order_num>='{$this->getOrderNum()}'");
 		}
 		//
 
@@ -270,5 +270,10 @@ class Model extends \diModel
 		return
 			\diTypes::getTitle($this->getTargetType()) . ": " .
 			($this->getTargetModel()->get("title") ?: $this->getTargetType() . "#" . $this->getTargetId());
+	}
+
+	public function isUserAllowed(\diCore\Entity\User\Model $user)
+	{
+		return $this->getUserType() == \diComments::utUser && $this->getUserId() == $user->getId();
 	}
 }

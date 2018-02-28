@@ -1,20 +1,22 @@
 <?php
-
 /**
  * Created by PhpStorm.
  * User: dimaninc
- * Date: 20.08.2016
- * Time: 16:08
+ * Date: 28.02.2018
+ * Time: 12:26
  */
-class diBannerController extends diBaseController
+
+namespace diCore\Controller;
+
+class Banner extends \diBaseController
 {
 	public function redirectAction()
 	{
 		$bannerId = $this->param(0, 0);
-		$uri = diRequest::get('uri', '');
+		$uri = \diRequest::get('uri', '');
 
-		/** @var diBannerModel $banner */
-		$banner = \diModel::create(diTypes::banner, $bannerId);
+		/** @var \diBannerModel $banner */
+		$banner = \diModel::create(\diTypes::banner, $bannerId);
 
 		if ($banner->exists())
 		{

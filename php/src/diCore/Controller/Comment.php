@@ -6,13 +6,16 @@
  * Time: 17:25
  */
 
+namespace diCore\Controller;
+
 use diCore\Entity\Comment\Model;
 use diCore\Entity\User\Model as User;
+use diCore\Tool\Auth as AuthTool;
 use diCore\Tool\Mail\Queue;
 
-class diCommentController extends diBaseController
+class Comment extends \diBaseController
 {
-	/** @var diComments  */
+	/** @var \diComments  */
 	private $Comments;
 
 	protected $targetType;
@@ -31,7 +34,7 @@ class diCommentController extends diBaseController
 	 */
 	protected $commenter;
 	/**
-	 * @var diModel
+	 * @var \diModel
 	 */
 	protected $target;
 	/**
@@ -47,9 +50,9 @@ class diCommentController extends diBaseController
 	{
 		parent::__construct($params);
 
-		$this->targetType = \diRequest::post("target_type", 0);
-		$this->targetId = \diRequest::post("target_id", 0);
-		$this->template = \diRequest::post("template", "");
+		$this->targetType = \diRequest::post('target_type', 0);
+		$this->targetId = \diRequest::post('target_id', 0);
+		$this->template = \diRequest::post('template', '');
 
 		$this
 			->checkAuth()
@@ -64,26 +67,33 @@ class diCommentController extends diBaseController
 	public function blockAction()
 	{
 		$this->response([
-			"html" => $this->Comments->getBlockHtml(),
-			"total_count" => $this->Comments->getTotalCount(),
+			'html' => $this->Comments->getBlockHtml(),
+			'total_count' => $this->Comments->getTotalCount(),
 		]);
 	}
 
+	/** @deprecated  */
 	public function addAction()
+	{
+		return $this->saveAction();
+	}
+
+	public function saveAction()
 	{
 		$result = [
 			'ok' => false,
 			'message' => '',
 		];
 
-		/** @var Model $comment */
-		$comment = \diModel::create(\diTypes::comment);
+		$commentId = $this->param(0, \diRequest::post('id', 0));
 
-		try
-		{
+		/** @var Model $comment */
+		$comment = $this->getCommentModel($commentId);
+
+		try {
 			if (!$this->userId)
 			{
-				throw new \Exception("Authorization required");
+				throw new \Exception('Authorization required');
 			}
 
 			$target = new \diModel($this->targetId, \diTypes::getTable($this->targetType));
@@ -97,9 +107,9 @@ class diCommentController extends diBaseController
 			{
 				$ownerId = $target->getId();
 			}
-			elseif ($target->has("user_id"))
+			elseif ($target->has('user_id'))
 			{
-				$ownerId = $target->get("user_id");
+				$ownerId = $target->get('user_id');
 			}
 			else
 			{
@@ -112,25 +122,23 @@ class diCommentController extends diBaseController
 				->setUserType($this->userType)
 				->setUserId($this->userId)
 				->setOwnerId($ownerId)
-				->setContent(diRequest::post("content", ""))
-				->setParent(diRequest::post("parent", 0))
+				->setContent(\diRequest::post('content', ''))
+				->setParent(\diRequest::post('parent', 0))
 				->setVisible($this->Comments->moderatedBeforeShow() ? 0 : 1) // todo: use only setModerated()
 				->setModerated($this->Comments->moderatedBeforeShow() ? 0 : 1)
 				->save();
 
 			// for output, sql-like format
-			$comment->setDate(date("Y-m-d H:i:s"));
+			$comment->setDate(date('Y-m-d H:i:s'));
 
 			$this
 				->setNewComment($comment)
 				->afterAddComment()
 				->updateCache()
-				->sendEmailNotify("add");
+				->sendEmailNotify('add');
 
 			$result['ok'] = true;
-		}
-		catch (\Exception $e)
-		{
+		} catch (\Exception $e) {
 			$result['message'] = $e->getMessage();
 
 			if ($comment->getId())
@@ -139,35 +147,40 @@ class diCommentController extends diBaseController
 			}
 		}
 
+		return $this->extendAddResult($result);
+	}
+
+	protected function extendAddResult($result)
+	{
 		return extend($result, [
-			"html" => $this->Comments->getRowHtml($comment),
-			"parent" => $comment->getParent(),
-			"total_count" => $result['ok'] ? $this->Comments->incTotalCount() : $this->Comments->getTotalCount(),
-			"order_num" => $comment->getOrderNum(),
+			'html' => $this->Comments->getRowHtml($this->getNewComment()),
+			'parent' => $this->getNewComment()->getParent(),
+			'total_count' => $result['ok'] ? $this->Comments->incTotalCount() : $this->Comments->getTotalCount(),
+			'order_num' => $this->getNewComment()->getOrderNum(),
 		]);
 	}
 
 	public function editAction()
 	{
-		$this->response([]);
+		return [];
 	}
 
-	public function delAction()
+	public function deleteAction()
 	{
-		$this->response([]);
+		return [];
 	}
 
 	public function refreshAction()
 	{
-		$where = \diRequest::post("where");
-		$firstCommentId = \diRequest::post("first_comment_id", 0);
-		$lastCommentId = \diRequest::post("last_comment_id", 0);
+		$where = \diRequest::post('where');
+		$firstCommentId = \diRequest::post('first_comment_id', 0);
+		$lastCommentId = \diRequest::post('last_comment_id', 0);
 		$response = [];
 
 		switch ($where)
 		{
-			case "past":
-				$response["new_comments"] = [];
+			case 'past':
+				$response['new_comments'] = [];
 
 				$this->Comments->setMode(\diComments::MODE_LOAD);
 
@@ -176,11 +189,11 @@ class diCommentController extends diBaseController
 				/** @var Model $comment */
 				foreach ($comments as $comment)
 				{
-					$response["new_comments"][] = [
-						"html" => $this->Comments->getRowHtml($comment),
-						"parent" => $comment->getParent(),
-						"id" => $comment->getId(),
-						"order_num" => $comment->getOrderNum(),
+					$response['new_comments'][] = [
+						'html' => $this->Comments->getRowHtml($comment),
+						'parent' => $comment->getParent(),
+						'id' => $comment->getId(),
+						'order_num' => $comment->getOrderNum(),
 					];
 				}
 
@@ -193,10 +206,10 @@ class diCommentController extends diBaseController
 	protected function response($data = [])
 	{
 		$this->defaultResponse(extend([
-			"action" => $this->action,
-			"ok" => true,
-			"id" => $this->targetId,
-			"type" => $this->targetType,
+			'action' => $this->action,
+			'ok' => true,
+			'id' => $this->targetId,
+			'type' => $this->targetType,
 		], $data));
 	}
 
@@ -204,37 +217,37 @@ class diCommentController extends diBaseController
 	{
 		switch ($this->template)
 		{
-			case "admin-snippet":
-				/** @var diAdminUser $admin */
-				$admin = diAdminUser::create();
+			case 'admin-snippet':
+				/** @var \diAdminUser $admin */
+				$admin = \diAdminUser::create();
 
 				if (!$admin->authorized())
 				{
-					throw new Exception("Admin auth error");
+					throw new \Exception('Admin auth error');
 				}
 
-				$this->userType = diComments::utAdmin;
+				$this->userType = \diComments::utAdmin;
 				$this->userId = $admin->getModel()->getId();
 
 				break;
 
-			case "":
-				$Auth = diAuth::create();
+			case '':
+				$Auth = AuthTool::create();
 
 				/*
 				if (!$Auth->authorized())
 				{
-					throw new Exception("User auth error");
+					throw new Exception('User auth error');
 				}
 				*/
 
-				$this->userType = diComments::utUser;
+				$this->userType = \diComments::utUser;
 				$this->userId = $Auth->getUserId();
 
 				break;
 
 			default:
-				throw new Exception("Unknown template name '$this->template'. Can't authorize");
+				throw new \Exception("Unknown template name '$this->template'. Can't authorize");
 		}
 
 		return $this;
@@ -244,26 +257,26 @@ class diCommentController extends diBaseController
 	{
 		switch ($this->template)
 		{
-			case "admin-snippet":
+			case 'admin-snippet':
 				$this->initAdminTpl();
-				$folder = "`_snippets/comments";
+				$folder = '`_snippets/comments';
 				break;
 
-			case "":
+			case '':
 				$this->initWebTpl();
-				$folder = "~comments";
+				$folder = '~comments';
 				break;
 
 			default:
-				throw new Exception("Unknown template name '$this->template'");
+				throw new \Exception("Unknown template name '$this->template'");
 		}
 
 		$this->getTpl()
 			->define($folder, [
-				"comment_form",
-				"comment_row",
-				"comment_actions",
-				"comments_block",
+				'comment_form',
+				'comment_row',
+				'comment_actions',
+				'comments_block',
 			]);
 
 		return $this;
@@ -326,9 +339,8 @@ class diCommentController extends diBaseController
 
 		if ($recipient && ($subject || $body))
 		{
-			Queue::basicCreate()->addAndMayBeSend(
-				[
-					'email' => diConfiguration::get('noreply_email'),
+			Queue::basicCreate()->addAndMayBeSend([
+					'email' => \diConfiguration::get('noreply_email'),
 				],
 				$recipient,
 				$subject,
@@ -383,7 +395,7 @@ class diCommentController extends diBaseController
 	{
 		if (!$this->newComment)
 		{
-			throw new \Exception("New comment not added");
+			throw new \Exception('New comment not added');
 		}
 
 		return $this->newComment;
@@ -394,5 +406,18 @@ class diCommentController extends diBaseController
 		$this->newComment = $comment;
 
 		return $this;
+	}
+
+	protected function getCommentModel($id)
+	{
+		/** @var Model $comment */
+		$comment = \diModel::create(\diTypes::comment, $id);
+
+		if ($comment->exists() && $comment->isUserAllowed(AuthTool::i()->getUserModel()))
+		{
+			throw new \Exception('You have no access to this comment');
+		}
+
+		return $comment;
 	}
 }
