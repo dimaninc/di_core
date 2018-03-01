@@ -1487,18 +1487,13 @@ abstract class CMS
 			$url = rtrim(substr($url, 0, $x), "/");
 		}
 
-		$this->origRoutes = $this->routes = array_filter(explode('/', $url));
+		$this->origRoutes = $this->routes = array_values(array_filter(explode('/', $url)));
 
 		$this
 			->define_language($this->getRoute(0))
 			->define_language_vars();
 
 		if ($this->routes && in_array($this->routes[0], static::$possibleLanguages))
-		{
-			array_splice($this->routes, 0, 1);
-		}
-
-		if ($this->routes && !$this->routes[0])
 		{
 			array_splice($this->routes, 0, 1);
 		}
