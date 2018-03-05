@@ -363,4 +363,22 @@ class StringHelper
 
 		return $contentType;
 	}
+
+	public static function digitCase($x, $s1, $s2, $s3 = null, $returnOnlySuffix = false)
+	{
+		if ($s3 === null)
+		{
+			$s3 = $s2;
+		}
+
+		$x0 = $x;
+		$x = $x % 100;
+
+		if ($x % 10 == 1 && $x != 11)
+			return $returnOnlySuffix ? $s1 : "$x0 $s1";
+		elseif ($x % 10 >= 2 && $x % 10 <= 4 && $x != 12 && $x != 13 && $x != 14)
+			return $returnOnlySuffix ? $s2 : "$x0 $s2";
+		else
+			return $returnOnlySuffix ? $s3 : "$x0 $s3";
+	}
 }

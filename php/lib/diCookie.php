@@ -1,11 +1,13 @@
 <?php
-
 /**
  * Created by PhpStorm.
  * User: dimaninc
  * Date: 24.03.2016
  * Time: 15:12
  */
+
+use diCore\Base\CMS;
+
 class diCookie
 {
 	const DEBUG = false;
@@ -15,7 +17,7 @@ class diCookie
 	 *
 	 * @param string $name
 	 * @param mixed $value
-	 * @param array $optionsOrDate        Options array or expire date
+	 * @param array|null $optionsOrDate Options array or expire date
 	 * @param string|null $path
 	 * @param string|null $domain
 	 */
@@ -28,37 +30,37 @@ class diCookie
 		else
 		{
 			$options = [
-				"expire" => $optionsOrDate,
-				"path" => $path,
-				"domain" => $domain,
+				'expire' => $optionsOrDate,
+				'path' => $path,
+				'domain' => $domain,
 			];
 		}
 
 		$options = extend([
-			"expire" => null,
-			"path" => $path,
-			"domain" => $domain,
-			"secure" => null,
-			"httpOnly" => null,
+			'expire' => null,
+			'path' => $path,
+			'domain' => $domain,
+			'secure' => null,
+			'httpOnly' => null,
 		], $options);
 
-		if ($options["expire"] !== null)
+		if ($options['expire'] !== null)
 		{
-			$options["expire"] = diDateTime::timestamp($options["expire"]);
+			$options['expire'] = \diDateTime::timestamp($options['expire']);
 		}
 
-		if ($options["domain"] === true)
+		if ($options['domain'] === true)
 		{
-			$options["domain"] = static::getDomainForAll();
+			$options['domain'] = static::getDomainForAll();
 		}
 
-		setcookie($name, $value, $options["expire"], $options["path"], $options["domain"], $options["secure"], $options["httpOnly"]);
+		setcookie($name, $value, $options['expire'], $options['path'], $options['domain'], $options['secure'], $options['httpOnly']);
 
 		if (static::DEBUG)
 		{
-			if ($options["expire"])
+			if ($options['expire'])
 			{
-				$options["expire"] = diDateTime::format("d.m.Y H:i:s", $options["expire"]);
+				$options['expire'] = \diDateTime::format('d.m.Y H:i:s', $options['expire']);
 			}
 
 			static::log("Cookie set: '$name' = '$value', " . var_export($options, true));
@@ -78,7 +80,7 @@ class diCookie
 			static::log("Cookie get: '$name'");
 		}
 
-		return diRequest::cookie($name);
+		return \diRequest::cookie($name);
 	}
 
 	/**
@@ -96,7 +98,7 @@ class diCookie
 			static::log("Cookie remove: '$name'");
 		}
 
-		static::set($name, "", $options, $path, $domain);
+		static::set($name, '', $options, $path, $domain);
 	}
 
 	/**
@@ -104,14 +106,20 @@ class diCookie
 	 */
 	public static function getDomainForAll()
 	{
-		$host = diRequest::server("HTTP_HOST");
+		$host = \diRequest::domain();
 
-		return substr($host, 0, 4) == "www."
+		if (CMS::getEnvironment() == CMS::ENV_DEV)
+		{
+			return $host;
+		}
+
+		return substr($host, 0, 4) == 'www.'
 			? substr($host, 3)
-			: "." . $host;
+			: '.' . $host;
 	}
 
 	protected static function log($message)
 	{
+		\diCore\Tool\Logger::getInstance()->log($message, '', '-cookie');
 	}
 }

@@ -712,19 +712,10 @@ function rgb_allocate($image, $color)
   return ($index == -1 ? imagecolorallocate($image, $r, $g, $b) : $index);
 }
 
-function digit_case($x, $s1, $s2, $s3 = false, $return_only_string = false)
+/** @deprecated  */
+function digit_case($x, $s1, $s2, $s3 = null, $return_only_string = false)
 {
-  if ($s3 === false) $s3 = $s2;
-
-  $x0 = $x;
-  $x = $x % 100;
-
-  if ($x % 10 == 1 && $x != 11)
-    return $return_only_string ? $s1 : "$x0 $s1";
-  elseif ($x % 10 >= 2 && $x % 10 <= 4 && $x != 12 && $x != 13 && $x != 14)
-    return $return_only_string ? $s2 : "$x0 $s2";
-  else
-    return $return_only_string ? $s3 : "$x0 $s3";
+	return StringHelper::digitCase($x, $s1, $s2, $s3, $return_only_string);
 }
 
 /** @deprecated  */

@@ -8,8 +8,8 @@
 
 namespace diCore\Tool;
 
-use diCore\Traits\BasicCreate;
 use diCore\Data\Types;
+use diCore\Traits\BasicCreate;
 
 class Auth
 {
@@ -21,24 +21,24 @@ class Auth
 	const SOURCE_COOKIE = 2;
 	const SOURCE_SESSION = 3;
 
-	const COOKIE_LIFE_TIME_REMEMBERED = "+2 weeks";
-	const COOKIE_LIFE_TIME_GUEST = "+30 min";
+	const COOKIE_LIFE_TIME_REMEMBERED = '+2 weeks';
+	const COOKIE_LIFE_TIME_GUEST = '+30 min';
 
-	const COOKIE_PATH = "/";
+	const COOKIE_PATH = '/';
 
-	const COOKIE_USER_ID = "auth_user_id";
-	const COOKIE_SECRET = "auth_secret";
-	const COOKIE_REMEMBER = "auth_remember";
+	const COOKIE_USER_ID = 'auth_user_id';
+	const COOKIE_SECRET = 'auth_secret';
+	const COOKIE_REMEMBER = 'auth_remember';
 
-	const POST_LOGIN_FIELD = "vm_login";
-	const POST_PASSWORD_FIELD = "vm_password";
-	const POST_REMEMBER_FIELD = "vm_remember";
+	const POST_LOGIN_FIELD = 'vm_login';
+	const POST_PASSWORD_FIELD = 'vm_password';
+	const POST_REMEMBER_FIELD = 'vm_remember';
 
-	const TEMPLATE_VAR_PREFIX = "LOGGED_IN_";
+	const TEMPLATE_VAR_PREFIX = 'LOGGED_IN_';
 
 	const USER_MODEL_TYPE = Types::user;
 
-	const SESSION_USER_ID_FIELD = "user_id";
+	const SESSION_USER_ID_FIELD = 'user_id';
 
 	/** @var Auth */
 	protected static $instance;
@@ -186,7 +186,7 @@ class Auth
 
 	protected function rememberUser()
 	{
-		return \diRequest::post(static::POST_REMEMBER_FIELD, "") || \diCookie::get(static::COOKIE_REMEMBER);
+		return \diRequest::post(static::POST_REMEMBER_FIELD, '') || \diCookie::get(static::COOKIE_REMEMBER);
 	}
 
 	protected function needToStoreCookies($force = false)
@@ -219,7 +219,7 @@ class Auth
 			$cookieTime = strtotime($this->rememberUser() || $remember ? static::COOKIE_LIFE_TIME_REMEMBERED : static::COOKIE_LIFE_TIME_GUEST);
 
 			$id = $this->getUserId();
-			$secret = \diBaseUserModel::hash($this->getUserModel()->getPassword(), "cookie", "db");
+			$secret = \diBaseUserModel::hash($this->getUserModel()->getPassword(), 'cookie', 'db');
 
 			$this
 				->setCookie(static::COOKIE_USER_ID, $id, $cookieTime)
@@ -253,7 +253,7 @@ class Auth
 		}
 
 		$this->user = \diModel::create(static::USER_MODEL_TYPE, $id);
-		$sourceStr = $source == self::SOURCE_POST ? "raw" : "cookie";
+		$sourceStr = $source == self::SOURCE_POST ? 'raw' : 'cookie';
 
 		if ($this->getUserModel()->exists() && $this->getUserModel()->active() && $this->getUserModel()->isPasswordOk($passwordHash, $sourceStr))
 		{
@@ -299,7 +299,7 @@ class Auth
 	{
 		$id = \diRequest::session(static::SESSION_USER_ID_FIELD, 0);
 
-		$this->user = \diModel::create(static::USER_MODEL_TYPE, $id, "id");
+		$this->user = \diModel::create(static::USER_MODEL_TYPE, $id, 'id');
 
 		if ($this->authorized())
 		{
@@ -342,8 +342,8 @@ class Auth
 			return $this;
 		}
 
-		$login = \diRequest::post(static::POST_LOGIN_FIELD, "");
-		$password = \diRequest::post(static::POST_PASSWORD_FIELD, "");
+		$login = \diRequest::post(static::POST_LOGIN_FIELD, '');
+		$password = \diRequest::post(static::POST_PASSWORD_FIELD, '');
 
 		if ($login && $password && $this->authorize($login, $password, self::SOURCE_POST))
 		{
@@ -359,7 +359,7 @@ class Auth
 	{
 		if ($this->isRedirectAllowed() && $this->redirectNeeded())
 		{
-			header("Location: " . \diRequest::server("REQUEST_URI"));
+			header('Location: ' . \diRequest::requestUri());
 
 			die();
 		}
@@ -369,7 +369,7 @@ class Auth
 
 	private function redirectNeeded()
 	{
-		return in_array($this->authSource, [self::SOURCE_POST, self::SOURCE_COOKIE]);
+		return in_array($this->authSource, [self::SOURCE_POST]); //, self::SOURCE_COOKIE
 	}
 
 	public function assignTemplateVariables(\FastTemplate $tpl)
@@ -379,14 +379,14 @@ class Auth
 		$tpl
 			->assign($this->getUserModel()->getTemplateVarsExtended(), static::TEMPLATE_VAR_PREFIX)
 			->assign([
-				"BOOLEAN" => $this->authorized() ? "true" : "false",
+				'BOOLEAN' => $this->authorized() ? 'true' : 'false',
 			], static::TEMPLATE_VAR_PREFIX);
 
 		if ($this->authorized())
 		{
 			if ($tpl->exists('user_panel'))
 			{
-				$tpl->process("LOGIN_PANEL", "user_panel");
+				$tpl->process('LOGIN_PANEL', 'user_panel');
 			}
 		}
 		else
@@ -394,8 +394,8 @@ class Auth
 			if ($tpl->exists('auth_panel') && $tpl->exists('auth_popup'))
 			{
 				$tpl
-					->process("LOGIN_PANEL", "auth_panel")
-					->process("LOGIN_POPUP", "auth_popup");
+					->process('LOGIN_PANEL', 'auth_panel')
+					->process('LOGIN_POPUP', 'auth_popup');
 			}
 		}
 
