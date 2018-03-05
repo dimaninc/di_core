@@ -966,9 +966,9 @@ EOF;
 		return $this->setSelectFromArray2Input($field, $ar);
 	}
 
-	public function setSelectFromArray2Input($field, $ar)
+	public function setSelectFromArray2Input($field, $ar, $prefix_ar = [], $suffix_ar = [])
 	{
-		$sel = new diSelect("admin_filter[$field]", $this->data[$field]);
+		$sel = new \diSelect("admin_filter[$field]", $this->data[$field]);
 
 		if (isset($this->input_params_ar[$field]))
 		{
@@ -978,7 +978,17 @@ EOF;
 			}
 		}
 
+		if ($prefix_ar)
+		{
+			$sel->addItemArray($prefix_ar);
+		}
+
 		$sel->addItemArray2($ar);
+
+		if ($suffix_ar)
+		{
+			$sel->addItemArray($suffix_ar);
+		}
 
 		$this->setInput($field, $sel);
 
