@@ -158,6 +158,12 @@ class Auth extends \diBaseController
 				throw new \Exception('activate.key_not_match');
 			}
 
+			if ($user->exists('activated'))
+			{
+				$user
+					->setActivated(1);
+			}
+
 			$user
 				->setActive(1)
 				->setActivationKey(Model::generateActivationKey())
