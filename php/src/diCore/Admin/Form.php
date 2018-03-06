@@ -25,96 +25,100 @@ class Form
 	const wysiwygTinyMCE = 2;
 	const wysiwygNone = 3;
 
-	const NEW_FIELD_SUFFIX = "__new__";
+	const NEW_FIELD_SUFFIX = '__new__';
 
 	public static $wysiwygAliases = [
-		self::wysiwygCK => "ck",
-		self::wysiwygTinyMCE => "tinymce",
+		self::wysiwygCK => 'ck',
+		self::wysiwygTinyMCE => 'tinymce',
 		self::wysiwygNone => null,
 	];
 
 	public static $lngStrings = [
-		"en" => [
-			"notes_caption" => [
-				false => "Note",
-				true => "Notes",
+		'en' => [
+			'notes_caption' => [
+				false => 'Note',
+				true => 'Notes',
 			],
 
-			"view_help" => "View help",
-			"save" => "Save",
-			"clone" => "Save as a new record",
-			"cancel" => "Cancel",
-			"quick_save" => "Quick save",
-			"dispatch" => "Save and dispatch",
-			"dispatch_test" => "Save and test dispatch",
-			"edit" => "Edit record",
-			"calendar" => "Calendar",
-			"submit_and_add" => "Save and add new item",
-			"submit_and_next" => "Save and go to next item",
-			"submit_and_send" => "Save and send via email",
-			"delete" => "Delete",
-			"delete_pic_confirmation" => "Delete the pic? Are you sure?",
-			"delete_file_confirmation" => "Delete the file? Are you sure?",
+			'view_help' => 'View help',
+			'save' => 'Save',
+			'clone' => 'Save as a new record',
+			'cancel' => 'Cancel',
+			'quick_save' => 'Quick save',
+			'dispatch' => 'Save and dispatch',
+			'dispatch_test' => 'Save and test dispatch',
+			'edit' => 'Edit record',
+			'calendar' => 'Calendar',
+			'submit_and_add' => 'Save and add new item',
+			'submit_and_next' => 'Save and go to next item',
+			'submit_and_send' => 'Save and send via email',
+			'delete' => 'Delete',
+			'delete_pic_confirmation' => 'Delete the pic? Are you sure?',
+			'delete_file_confirmation' => 'Delete the file? Are you sure?',
 			'rotate_pic_confirmation' => 'Rotate the pic? Are you sure?',
 			'rotate_pic.ccw' => 'Rotate pic 90° CCW',
 			'rotate_pic.cw' => 'Rotate pic 90° CW',
+			'watermark_pic_confirmation' => 'Watermark the pic? Are you sure?',
+			'watermark_pic' => 'Watermark pic',
 
-			"yes" => "Yes",
-			"no" => "No",
+			'yes' => 'Yes',
+			'no' => 'No',
 
-			"confirm" => "Confirm",
-			"confirm_dispatch" => "Dispatch this record to the subscribers? Are you sure?",
-			"confirm_send" => "Send the reply to email? Are you sure?",
+			'confirm' => 'Confirm',
+			'confirm_dispatch' => 'Dispatch this record to the subscribers? Are you sure?',
+			'confirm_send' => 'Send the reply to email? Are you sure?',
 
 			'or_enter' => 'or enter',
 			'add_item' => 'Add +',
 			'link' => 'Link',
 
-			"tab_general" => "General",
+			'tab_general' => 'General',
 		],
 
-		"ru" => [
-			"notes_caption" => [
-				false => "Примечание",
-				true => "Примечания",
+		'ru' => [
+			'notes_caption' => [
+				false => 'Примечание',
+				true => 'Примечания',
 			],
 
-			"view_help" => "Помощь",
-			"save" => "Сохранить",
-			"clone" => "Сохранить как новую запись",
-			"cancel" => "Отмена",
-			"quick_save" => "Быстрое сохранение",
-			"dispatch" => "Сохранить и произвести рассылку",
-			"dispatch_test" => "Сохранить и произвести тестовую рассылку",
-			"edit" => "Редактировать",
-			"calendar" => "Календарь",
-			"submit_and_add" => "Сохранить и добавить новый товар",
-			"submit_and_next" => "Сохранить и перейти к следующей записи",
-			"submit_and_send" => "Сохранить и отправить письмо",
-			"delete" => "Удалить",
-			"delete_pic_confirmation" => "Удалить картинку? Вы уверены?",
-			"delete_file_confirmation" => "Удалить файл? Вы уверены?",
+			'view_help' => 'Помощь',
+			'save' => 'Сохранить',
+			'clone' => 'Сохранить как новую запись',
+			'cancel' => 'Отмена',
+			'quick_save' => 'Быстрое сохранение',
+			'dispatch' => 'Сохранить и произвести рассылку',
+			'dispatch_test' => 'Сохранить и произвести тестовую рассылку',
+			'edit' => 'Редактировать',
+			'calendar' => 'Календарь',
+			'submit_and_add' => 'Сохранить и добавить новый товар',
+			'submit_and_next' => 'Сохранить и перейти к следующей записи',
+			'submit_and_send' => 'Сохранить и отправить письмо',
+			'delete' => 'Удалить',
+			'delete_pic_confirmation' => 'Удалить картинку? Вы уверены?',
+			'delete_file_confirmation' => 'Удалить файл? Вы уверены?',
 			'rotate_pic_confirmation' => 'Повернуть картинку? Вы уверены?',
 			'rotate_pic.ccw' => 'Повернуть на 90° против часовой стрелки',
 			'rotate_pic.cw' => 'Повернуть на 90° по часовой стрелке',
+			'watermark_pic_confirmation' => 'Наложить водяной знак?',
+			'watermark_pic' => 'Наложить водяной знак',
 
-			"yes" => "Да",
-			"no" => "Нет",
+			'yes' => 'Да',
+			'no' => 'Нет',
 
-			"confirm" => "Подтвердите",
-			"confirm_dispatch" => "Пустить этот материал в рассылку подписчикам? Вы уверены?",
-			"confirm_send" => "Отправить ответ на почту? Вы уверены?",
+			'confirm' => 'Подтвердите',
+			'confirm_dispatch' => 'Пустить этот материал в рассылку подписчикам? Вы уверены?',
+			'confirm_send' => 'Отправить ответ на почту? Вы уверены?',
 
 			'or_enter' => 'или введите',
 			'add_item' => 'Добавить +',
 			'link' => 'Ссылка',
 
-			"tab_general" => "Основное",
+			'tab_general' => 'Основное',
 		],
 	];
 
-	protected static $numericTypes = ["int", "integer", "float", "double"];
-	protected static $stringTypes = ["str", "string", "email", "tel", "url", "varchar"];
+	protected static $numericTypes = ['int', 'integer', 'float', 'double'];
+	protected static $stringTypes = ['str', 'string', 'email', 'tel', 'url', 'varchar'];
 
 	private $wysiwygVendor = self::wysiwygTinyMCE;
 
@@ -137,7 +141,7 @@ class Form
 	public $id;
 	public $rec = null;
 	public $static_mode = true;
-	protected static $language = "ru";
+	protected static $language = 'ru';
 	public $show_help = false;
 	public $module_id;	 // module_id of current table
 
@@ -146,12 +150,12 @@ class Form
 
 	private $manualFieldFlags = [];
 
-	private $pics_table = "dipics";
+	private $pics_table = 'dipics';
 
 	protected $submitButtonsOptions = [
-		"show" => [],
-		"show_additional" => [],
-		"hide" => [],
+		'show' => [],
+		'show_additional' => [],
+		'hide' => [],
 	];
 
 	public function __construct($table, $id = 0, $module_id = 0)
@@ -160,7 +164,7 @@ class Form
 
 		$this->db = $db;
 
-		if (gettype($table) == "object")
+		if (gettype($table) == 'object')
 		{
 			$this->AdminPage = $table;
 			$this->table = $this->AdminPage->getTable();
@@ -176,7 +180,7 @@ class Form
 
 		$this->lite = !empty($lite) ? $lite : 0;
 
-		if (true || \diRequest::get("edit", 0) || !$id)
+		if (true || \diRequest::get('edit', 0) || !$id)
 		{
 			$this->static_mode = false;
 		}
@@ -1700,6 +1704,15 @@ EOF;
 		return '<div class="rotate-block">' . $ccw . $cw . '</div>';
 	}
 
+	private function getWatermarkBlockCode($field)
+	{
+		$btn = '<a href="' . \diLib::getAdminWorkerPath('files', 'watermark', [$this->table, $this->id, $field]) . '"' .
+			' data-field="' . $field . '" data-confirm="' . $this->L('watermark_pic_confirmation') . '"' .
+			' class="watermark-pic" title="' . $this->L('watermark_pic') . '">⧉</a>';
+
+		return '<div class="watermark-block">' . $btn . '</div>';
+	}
+
 	public function getPreviewHtmlForFile($field, $fullName, $options = [])
 	{
 		$options = extend([
@@ -1831,8 +1844,12 @@ EOF;
 			? $this->getDelLinkCode($field)
 			: '';
 
-		$rotateBlock = $options['showRotateBlock'] && \diImage::isImageType($ff_t)
+		$rotateBlock = $options['showRotateBlock'] && isset($ff_t) && \diImage::isImageType($ff_t)
 			? $this->getRotateBlockCode($field)
+			: '';
+
+		$watermarkBlock = $options['showWatermarkBlock'] && isset($ff_t) && \diImage::isImageType($ff_t)
+			? $this->getWatermarkBlockCode($field)
 			: '';
 
 		$this->uploaded_images_w[$field] = isset($ff_w) ? $ff_w : 0;
@@ -1841,7 +1858,7 @@ EOF;
 			? "<div class='existing-pic-holder'>{$imgTag}" .
 			"<a href='{$httpName}' class='link'>" . basename($fullName) . "</a>" .
 			$previewInfoBlock .
-			"<div class='info'>{$info}{$delLink}{$rotateBlock}</div>" .
+			"<div class='info'>{$info}{$delLink}{$rotateBlock}{$watermarkBlock}</div>" .
 			"</div>"
 			: "";
 	}
@@ -1871,29 +1888,30 @@ EOF;
 
 		foreach ($fields as $field)
 		{
-			$v = $this->getData($field) ?: "";
+			$v = $this->getData($field) ?: '';
 
 			$this->uploaded_images[$field] = $v
 				? $this->getPreviewHtmlForFile($field, $path . $v, [
 					'hideIfNoFile' => $hideIfNoFile,
 					'showDelLink' => !$this->isFlag($field, 'static') || $this->getFieldProperty($field, 'showDelLink'),
 					'showRotateBlock' => $this->getFieldProperty($field, 'showRotateBlock'),
+					'showWatermarkBlock' => $this->getFieldProperty($field, 'showWatermarkBlock'),
 					'showPreviewWithLink' => $this->getFieldProperty($field, 'showPreview'),
 				])
-				: "";
+				: '';
 
 			$name = $field;
 
-			if ($this->hasInputAttribute($field, "multiple"))
+			if ($this->hasInputAttribute($field, 'multiple'))
 			{
-				$name .= "[]";
+				$name .= '[]';
 			}
 
 			$attributes = $this->getInputAttributesString($field, $this->hasInputAttribute($field, 'accept') ? [] : [
 				'accept' => '.jpg,.jpeg,.gif,.png,.svg',
 			]);
 
-			$this->inputs[$field] = $this->isFlag($field, "static")
+			$this->inputs[$field] = $this->isFlag($field, 'static')
 				? "<input type=\"hidden\" name=\"$field\" value=\"$v\">"
 				: "<input type=\"file\" name=\"$name\" value=\"\" size=\"70\" {$attributes}>";
 

@@ -1341,11 +1341,13 @@ ul.left-menu > li[state="0"] > ul {
 .existing-pic-holder .info:last-child {
   border-radius: 0 0 5px 5px;
 }
-.existing-pic-holder .info .rotate-block {
+.existing-pic-holder .info .rotate-block,
+.existing-pic-holder .info .watermark-block {
   display: inline-block;
   margin-left: 30px;
 }
-.existing-pic-holder .info .rotate-block > a {
+.existing-pic-holder .info .rotate-block > a,
+.existing-pic-holder .info .watermark-block > a {
   display: inline-block;
   font-size: 24px;
   font-weight: bold;
@@ -1353,7 +1355,8 @@ ul.left-menu > li[state="0"] > ul {
   -webkit-box-shadow: 0 0 4px rgba(0,0,0,0.5);
   box-shadow: 0 0 4px rgba(0,0,0,0.5);
 }
-.existing-pic-holder .info .rotate-block > a:not(:last-child) {
+.existing-pic-holder .info .rotate-block > a:not(:last-child),
+.existing-pic-holder .info .watermark-block > a:not(:last-child) {
   margin-right: 15px;
 }
 ul.table-edit-log {

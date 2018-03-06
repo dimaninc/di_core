@@ -184,7 +184,7 @@ class diBaseController
 
 		if ($pathBeginning)
 		{
-			$paramsStr = static::getFullQueryRoute();
+			$paramsStr = rtrim(static::getFullQueryRoute(), '/');
 		}
 		else
 		{

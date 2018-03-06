@@ -43,7 +43,7 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 		initColorPickers();
         initTypeChange();
 		initDelLinks();
-        self.initPicHolders().initRotateLinks();
+        self.initPicHolders().initRotateAndWaterMarkLinks();
 
         initiating = false;
 	}
@@ -56,8 +56,8 @@ var diAdminForm = function(table, id, auto_save_timeout) {
         return this;
     };
 
-    this.initRotateLinks = function() {
-        $('.existing-pic-holder a.rotate-pic').on('click', function() {
+    this.initRotateAndWaterMarkLinks = function() {
+        $('.existing-pic-holder a.rotate-pic, .existing-pic-holder a.watermark-pic').on('click', function() {
             var $this = $(this);
             var $h = $this.closest('.existing-pic-holder');
             var $c = $h.find('.container');

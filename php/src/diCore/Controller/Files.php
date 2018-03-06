@@ -145,4 +145,61 @@ class Files extends \diBaseAdminController
 	{
 		ImageHelper::rotate($angle, $fn);
 	}
+
+	public function watermarkAction()
+	{
+		$ar = [
+			'ok' => false,
+		];
+
+		$table = StringHelper::in($this->param(0));
+		$id  = (int)$this->param(1);
+		$field = StringHelper::in($this->param(2));
+		$type = strtolower(StringHelper::in($this->param(3, 'main')));
+
+		$model = \diModel::createForTableNoStrict($table, $id, 'id');
+
+		$fn = \diPaths::fileSystem($this) . $model[$field . '_with_path'];
+
+		static::doWatermark($table, $field, $type, $fn);
+
+		$ar['ok'] = true;
+		$ar['fn'] = $fn;
+
+		return $ar;
+	}
+
+	protected static function getWatermarkFilename($table, $field, $type)
+	{
+		switch ($type)
+		{
+			case 'main':
+				$wm = \diPaths::fileSystem() . \diConfiguration::getFilename('watermark');
+				break;
+
+			case 'tn':
+				$wm = \diPaths::fileSystem() . \diConfiguration::getFilename('watermark_tn');
+				break;
+
+			default:
+				throw new \Exception('Undefined watermark size: ' . $type);
+		}
+
+		return $wm;
+	}
+
+	protected static function getWatermarkCoordinates($table, $field, $type)
+	{
+		return [
+			'x' => 'right',
+			'y' => 'bottom',
+		];
+	}
+
+	protected static function doWatermark($table, $field, $type, $fn)
+	{
+		$xy = static::getWatermarkCoordinates($table, $field, $type);
+
+		ImageHelper::watermark(static::getWatermarkFilename($table, $field, $type), $fn, null, $xy['x'], $xy['y']);
+	}
 }

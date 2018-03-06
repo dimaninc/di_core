@@ -66,6 +66,11 @@ class ImageHelper
 
 	public static function rotateIMagick($angle, $inFilename, $outFilename = null, $backgroundColor = self::DEFAULT_BACKGROUND_COLOR)
 	{
+		if ($outFilename === null)
+		{
+			$outFilename = $inFilename;
+		}
+
 		$im = new \Imagick($inFilename);
 		$im->rotateImage($backgroundColor, $angle);
 		$im->writeImage($outFilename);
@@ -105,5 +110,87 @@ class ImageHelper
 
 		imagedestroy($source);
 		imagedestroy($rotation);
+	}
+
+	public static function watermark($watermarkFilename, $inFilename, $outFilename = null, $x = 'right', $y = 'bottom')
+	{
+		$watermarkFilename = realpath($watermarkFilename);
+		$inFilename = realpath($inFilename);
+
+		switch (self::vendor())
+		{
+			case self::PH_MAGICK:
+				self::watermarkPhMagick($watermarkFilename, $inFilename, $outFilename, $x, $y);
+				break;
+
+			case self::IMAGICK:
+				self::watermarkIMagick($watermarkFilename, $inFilename, $outFilename, $x, $y);
+				break;
+
+			case self::GD:
+				self::watermarkGd($watermarkFilename, $inFilename, $outFilename, $x, $y);
+				break;
+		}
+	}
+
+	public static function calculateWatermarkCoordinates($watermarkFilename, $inFilename, $x, $y)
+	{
+		list($srcWidth, $srcHeight) = is_file($inFilename) ? getimagesize($inFilename) : [0, 0, 0];
+		list($wmWidth, $wmHeight) = is_file($watermarkFilename) ? getimagesize($watermarkFilename) : [0, 0, 0];
+
+		if ($x == 'left') $x = 0;
+		elseif ($x == 'right') $x = $srcWidth - $wmWidth;
+		elseif ($x == 'center') $x = ($srcWidth - $wmWidth) >> 1;
+		else $x = $x >= 0 ? $x : $srcWidth - $wmWidth + (int)$x;
+
+		if ($y == 'top') $y = 0;
+		elseif ($y == 'bottom') $y = $srcHeight - $wmHeight;
+		elseif ($y == 'center') $y = ($srcHeight - $wmHeight) >> 1;
+		else $y = $y >= 0 ? $y : $srcHeight - $wmHeight + (int)$y;
+
+		return [
+			'x' => $x,
+			'y' => $y,
+		];
+	}
+
+	public static function watermarkPhMagick($watermarkFilename, $inFilename, $outFilename = null, $x = 'right', $y = 'bottom')
+	{
+		throw new \Exception('Not yet implemented');
+	}
+
+	public static function watermarkIMagick($watermarkFilename, $inFilename, $outFilename = null, $x = 'right', $y = 'bottom')
+	{
+		if ($outFilename === null)
+		{
+			$outFilename = $inFilename;
+		}
+
+		$xy = self::calculateWatermarkCoordinates($watermarkFilename, $inFilename, $x, $y);
+
+		$wm = new \Imagick($watermarkFilename);
+		$im = new \Imagick($inFilename);
+
+		$im->compositeImage($wm, \Imagick::COMPOSITE_OVER, $xy['x'], $xy['y']);
+		$im->writeImage($outFilename);
+
+		$wm->clear();
+		$im->clear();
+	}
+
+	public static function watermarkGd($watermarkFilename, $inFilename, $outFilename = null, $x = 'right', $y = 'bottom')
+	{
+		if ($outFilename === null)
+		{
+			$outFilename = $inFilename;
+		}
+
+		$xy = self::calculateWatermarkCoordinates($watermarkFilename, $inFilename, $x, $y);
+
+		$img = new \diImage();
+		$img->open($inFilename);
+		$img->merge_wm($watermarkFilename, $xy['x'], $xy['y']);
+		$img->store($outFilename);
+		$img->close();
 	}
 }
