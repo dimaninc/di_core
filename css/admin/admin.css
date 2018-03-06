@@ -1067,8 +1067,13 @@ ul.left-menu > li[state="0"] > ul {
   background: #fafafa;
   color: #000;
   margin: 0 20px 3px 20px;
-  padding: 8px 20px 8px 225px;
+  padding: 8px 20px;
   min-height: 18px;
+}
+.diadminform-row:after {
+  content: '';
+  display: table;
+  clear: both;
 }
 @media screen and (max-width: 767px) {
   .diadminform-row:nth-of-type(odd) {
@@ -1100,19 +1105,17 @@ ul.left-menu > li[state="0"] > ul {
   vertical-align: top;
 }
 .diadminform-row .title {
-  position: absolute;
+  float: left;
   display: block;
   width: 220px;
-  padding: 3px 10px 0 20px;
+  padding: 3px 10px 0 0;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
-  left: 0;
 }
 @media screen and (max-width: 767px) {
   .diadminform-row .title {
-    position: relative;
-    left: auto;
+    float: none;
     width: auto;
     padding-left: 7px;
     padding-bottom: 7px;
@@ -1120,8 +1123,7 @@ ul.left-menu > li[state="0"] > ul {
   }
 }
 .diadminform-row .value {
-  margin: 0;
-  width: 100%;
+  margin: 0 0 0 225px;
 }
 @media screen and (max-width: 767px) {
   .diadminform-row .value {
@@ -1161,6 +1163,9 @@ ul.left-menu > li[state="0"] > ul {
   padding: 5px;
   border-radius: 5px;
   margin-bottom: 5px;
+}
+.diadminform-row .value select {
+  max-width: 100%;
 }
 .diadminform-row[data-type="dynamic"] {
   display: block;

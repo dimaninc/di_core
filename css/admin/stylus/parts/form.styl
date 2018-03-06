@@ -5,8 +5,9 @@
 	background #FAFAFA
 	color black
 	margin 0 20px 3px 20px
-	padding 8px 20px 8px 225px
+	padding 8px 20px //8px 225px
 	min-height 18px
+	clearing-after()
 	&:nth-of-type(odd)
 		@media screen and (max-width: 767px)
 			background #eee
@@ -29,22 +30,24 @@
 		font-size 12px
 		vertical-align top
 	.title
-		position absolute
+		//position absolute
+		float left
 		display block
 		width 220px
-		padding 3px 10px 0 20px
+		padding 3px 10px 0 0 //20px
 		box-sizing border-box
-		left 0
+		//left 0
 		@media screen and (max-width: 767px)
-			position relative
-			left auto
+			//position relative
+			float none
+			//left auto
 			width auto
 			padding-left 7px
 			padding-bottom 7px
 			font-weight bolder
 	.value
-		margin 0 // 0 0 19px
-		width 100%
+		margin 0 0 0 225px // 0 0 19px
+		//width 100%
 		//box-flex 1
 		@media screen and (max-width: 767px)
 			width auto
@@ -80,6 +83,8 @@
 			padding 5px
 			border-radius 5px
 			margin-bottom 5px
+		select
+			max-width 100%
 	&[data-type="dynamic"]
 		display block
 		.title
