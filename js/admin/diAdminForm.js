@@ -49,7 +49,7 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 	}
 
     this.initPicHolders = function() {
-        $('.existing-pic-holder .container').on('click', function() {
+        $('.existing-pic-holder .container:not(.no-zoom-feature)').on('click', function() {
             $(this).toggleClass('img-full-size');
         });
 

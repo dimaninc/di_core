@@ -60,7 +60,7 @@ var di = {
 		return di.workerAdminPrefix + di.getWorkerBasePath(controller, action, params, options);
 	},
 
-	asap: function(whenToStart, whatToDo) {
+	asap: function(whenToStart, whatToDo, delay, maxTries) {
 		var opts = $.extend({
 				whenToStart: whenToStart || function() {
 					return true;
@@ -68,25 +68,24 @@ var di = {
 				whatToDo: whatToDo || function() {
 					return true;
 				},
-				maxTries: null,
-				delay: 50
+				maxTries: maxTries,
+				delay: delay || 50
 			}, typeof whenToStart == 'object' ? whenToStart : {}),
-			interval;
+			interval,
+			tries = 0;
 
-		function start()
-		{
+		function start() {
 			interval = setInterval(function() {
-				if (opts.whenToStart())
-				{
+				if (opts.whenToStart()) {
 					opts.whatToDo();
-
+					stop();
+				} else if (opts.maxTries && ++tries == opts.maxTries) {
 					stop();
 				}
 			}, opts.delay);
 		}
 
-		function stop()
-		{
+		function stop() {
 			clearInterval(interval);
 		}
 

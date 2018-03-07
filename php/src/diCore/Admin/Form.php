@@ -1719,6 +1719,7 @@ EOF;
 			'hideIfNoFile' => false,
 			'showDelLink' => true,
 			'showRotateBlock' => false,
+			'showWatermarkBlock' => false,
 			'showPreviewWithLink' => false,
 		], $options);
 
@@ -1819,25 +1820,30 @@ EOF;
 				}
 			}
 
-			$info = join(", ", array_filter([
+			$info = join(', ', array_filter([
 				$ext,
-				$ff_w && $ff_h ? $ff_w . "x" . $ff_h : null,
+				$ff_w && $ff_h ? $ff_w . 'x' . $ff_h : null,
 				size_in_bytes($ff_s),
-				\diDateTime::format("d.m.Y H:i", filemtime($f))
+				\diDateTime::simpleFormat(filemtime($f))
 			]));
 
 			if ($imgTag)
 			{
-				$additionalClassName = $previewWithText ? "text" : "embed";
+				$additionalClassName = $previewWithText ? 'text' : 'embed';
 
-				$imgTag = "<div class='container {$additionalClassName}'>$imgTag</div>";
+				if ($this->getFieldOption($field, 'noZoomFeature'))
+				{
+					$additionalClassName .= ' no-zoom-feature';
+				}
+
+				$imgTag = "<div class=\"container {$additionalClassName}\">$imgTag</div>";
 			}
 		}
 		else
 		{
 			$info = "No file ($f)";
 
-			$httpName = "#no-file";
+			$httpName = '#no-file';
 		}
 
 		$delLink = $options['showDelLink']
@@ -1855,12 +1861,12 @@ EOF;
 		$this->uploaded_images_w[$field] = isset($ff_w) ? $ff_w : 0;
 
 		return $fullName && (is_file(\diPaths::fileSystem() . $fullName) || !$options['hideIfNoFile'])
-			? "<div class='existing-pic-holder'>{$imgTag}" .
-			"<a href='{$httpName}' class='link'>" . basename($fullName) . "</a>" .
-			$previewInfoBlock .
-			"<div class='info'>{$info}{$delLink}{$rotateBlock}{$watermarkBlock}</div>" .
-			"</div>"
-			: "";
+			? '<div class="existing-pic-holder">' . $imgTag .
+				'<a href="' . $httpName . '" class="link">' . basename($fullName) . '</a>' .
+				$previewInfoBlock .
+				'<div class="info">' . $info . $delLink . $rotateBlock . $watermarkBlock . '</div>' .
+			'</div>'
+			: '';
 	}
 
 	/** @deprecated */

@@ -1307,6 +1307,8 @@ ul.left-menu > li[state="0"] > ul {
   -webkit-box-shadow: 0 0 6px 0 rgba(0,0,0,0.6);
   box-shadow: 0 0 6px 0 rgba(0,0,0,0.6);
   overflow: hidden;
+}
+.existing-pic-holder .container:not(.no-zoom-feature) {
   cursor: zoom-in;
 }
 .existing-pic-holder .container > img {
