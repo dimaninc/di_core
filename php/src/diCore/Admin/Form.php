@@ -1833,7 +1833,7 @@ EOF;
 
 				if ($this->getFieldOption($field, 'noZoomFeature'))
 				{
-					$additionalClassName .= ' no-zoom-feature';
+					$additionalClassName .= ' no-zoom-feature img-full-size';
 				}
 
 				$imgTag = "<div class=\"container {$additionalClassName}\">$imgTag</div>";

@@ -1316,6 +1316,8 @@ ul.left-menu > li[state="0"] > ul {
 }
 .existing-pic-holder .container.img-full-size {
   overflow-x: auto;
+}
+.existing-pic-holder .container.img-full-size:not(.no-zoom-feature) {
   cursor: zoom-out;
 }
 .existing-pic-holder .container.img-full-size > img {

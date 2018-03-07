@@ -212,7 +212,8 @@
 			max-width 100%
 		&.img-full-size
 			overflow-x auto
-			cursor zoom-out
+			&:not(.no-zoom-feature)
+				cursor zoom-out
 			> img
 				max-width none
 		&.embed
