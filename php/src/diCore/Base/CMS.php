@@ -1714,7 +1714,7 @@ abstract class CMS
 				$uri .= "?" . join("&", $get_ar);
 			}
 
-			$this->redirect_301($uri);
+			$this->redirect_301($uri, 'CMS/redundant-params');
 		}
 
 		$ar = (array)\diContentTypes::getParam($this->getContentModel()->getType(), "possible_get_params");
@@ -2221,26 +2221,39 @@ abstract class CMS
 		return $this->errorNotFound();
 	}
 
-	public function redirect301ToPage($pageType, $die = true)
+	public function redirect301ToPage($pageType, $die = true, $headerDebugMessage = null, $headerDebugName = null)
 	{
-		static::redirect_301($this->getModelByType($pageType)->getHref(), $die);
+		static::redirect_301($this->getModelByType($pageType)->getHref(), $die, $headerDebugMessage, $headerDebugName);
 	}
 
-	public function redirectToPage($pageType, $die = false)
+	public function redirectToPage($pageType, $die = false, $headerDebugMessage = null, $headerDebugName = null)
 	{
-		static::redirect($this->getModelByType($pageType)->getHref(), $die);
+		static::redirect($this->getModelByType($pageType)->getHref(), $die, $headerDebugMessage, $headerDebugName);
 	}
 
-	public static function redirect_301($href, $die = true)
+	public static function redirect_301($href, $die = true, $headerDebugMessage = null, $headerDebugName = null)
 	{
 		HttpCode::header(HttpCode::MOVED_PERMANENTLY);
 
-		static::redirect($href, $die);
+		static::redirect($href, $die, $headerDebugMessage, $headerDebugName);
 	}
 
-	public static function redirect($href, $die = false)
+	public static function redirect($href, $die = false, $headerDebugMessage = null, $headerDebugName = null)
 	{
-		header("Location: " . $href);
+		header('Location: ' . $href);
+
+		if (is_string($die) && $headerDebugMessage === null && $headerDebugName === null)
+		{
+			$headerDebugMessage = $die;
+			$die = true;
+		}
+
+		if ($headerDebugMessage)
+		{
+			$headerDebugName = $headerDebugName ?: 'Redirect-message';
+
+			header($headerDebugName . ': ' . $headerDebugMessage);
+		}
 
 		if ($die)
 		{

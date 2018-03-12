@@ -251,21 +251,21 @@ abstract class diModule
 	 * @param bool|true $die
 	 * @return $this
 	 */
-	public function redirect($href, $die = true)
+	public function redirect($href, $die = true, $headerDebugMessage = null, $headerDebugName = null)
 	{
-		$this->getZ()->redirect($href, $die);
+		$this->getZ()->redirect($href, $die, $headerDebugMessage, $headerDebugName);
 
 		return $this;
 	}
 
 	/**
 	 * @param $href
-	 * @param bool|true $die
+	 * @param bool|string $die  Redirect debug message can be instead of $die (this means also that $die = true)
 	 * @return $this
 	 */
-	public function redirect_301($href, $die = true)
+	public function redirect_301($href, $die = true, $headerDebugMessage = null, $headerDebugName = null)
 	{
-		$this->getZ()->redirect_301($href, $die);
+		$this->getZ()->redirect_301($href, $die, $headerDebugMessage, $headerDebugName);
 
 		return $this;
 	}
