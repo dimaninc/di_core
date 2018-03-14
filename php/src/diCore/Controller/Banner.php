@@ -20,7 +20,7 @@ class Banner extends \diBaseController
 
 		if ($banner->exists())
 		{
-			\diBannerDailyStatModel::add($banner->getId(), \diBanners::STAT_CLICK, $uri);
+			\diBannerDailyStatModel::add($banner->getId(), \diCore\Helper\Banner::STAT_CLICK, $uri);
 
 			$this->redirectTo($banner->get('href'));
 

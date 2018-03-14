@@ -6,6 +6,9 @@
  * Time: 20:38
  */
 
+use diCore\Helper\Banner;
+use diCore\Helper\StringHelper;
+
 class diBannersPage extends \diCore\Admin\BasePage
 {
 	protected $options = [
@@ -30,7 +33,7 @@ class diBannersPage extends \diCore\Admin\BasePage
 				"title" => "Формат",
 				"value" => function(diBannerModel $banner) {
 					return $banner->hasPic()
-						? strtoupper(get_file_ext($banner->getPic())) . " {$banner->getPicW()}x{$banner->getPicH()}"
+						? strtoupper(StringHelper::fileExtension($banner->getPic())) . " {$banner->getPicW()}x{$banner->getPicH()}"
 						: "Текстовый";
 				},
 				"attrs" => [
@@ -41,8 +44,8 @@ class diBannersPage extends \diCore\Admin\BasePage
 				"attrs" => [
 					"width" => "15%",
 				],
-				"value" => function(diBannerModel $banner) {
-					return diBanners::$placesAr[$banner->getPlace()];
+				"value" => function(\diBannerModel $banner) {
+					return $banner->getPlaceTitle();
 				},
 			],
 			"title" => [
@@ -78,14 +81,14 @@ class diBannersPage extends \diCore\Admin\BasePage
 
 	protected function getAvailablePlaces()
 	{
-		return array_keys(diBanners::$placesAr);
+		return array_keys(Banner::getPlaces());
 	}
 
 	public function renderForm()
 	{
 		$this->getForm()
-			->setSelectFromArrayInput("place", diArrayHelper::filterByKey(diBanners::$placesAr, $this->getAvailablePlaces()))
-			->setSelectFromArrayInput("href_target", diBanners::$hrefTargetsAr);
+			->setSelectFromArrayInput("place", Banner::getPlaces())
+			->setSelectFromArrayInput("href_target", Banner::$hrefTargetsAr);
 
 		// banner uris
 		$uri_ar = [
@@ -100,7 +103,7 @@ class diBannersPage extends \diCore\Admin\BasePage
 
 		$js = "";
 
-		$bu_rs = $this->getDb()->rs(diBanners::urisTable, "WHERE banner_id='" . $this->getId() . "' ORDER BY uri ASC");
+		$bu_rs = $this->getDb()->rs(Banner::urisTable, "WHERE banner_id='" . $this->getId() . "' ORDER BY uri ASC");
 		while ($bu_rs && $bu_r = $this->getDb()->fetch($bu_rs))
 		{
 			$uri_ar[$bu_r->positive ? "positive" : "negative"][] = str_out($bu_r->uri);
@@ -164,7 +167,7 @@ class diBannersPage extends \diCore\Admin\BasePage
 	{
 		parent::afterSubmitForm();
 
-		diBanners::storeUris($this->getId());
+		Banner::storeUris($this->getId());
 	}
 
 	public function getFormTabs()

@@ -10,6 +10,8 @@ namespace diCore\Traits;
 
 trait BasicCreate
 {
+	private static $class;
+
 	/**
 	 * @return $this
 	 */
@@ -18,5 +20,20 @@ trait BasicCreate
 		$class = \diLib::getChildClass(static::class);
 
 		return new $class(...$args);
+	}
+
+	public static function getClass()
+	{
+		if (!self::$class)
+		{
+			self::$class = \diLib::getChildClass(static::class);
+		}
+
+		return self::$class;
+	}
+
+	final public static function resetClass()
+	{
+		self::$class = null;
 	}
 }

@@ -5,6 +5,8 @@
  * Time: 23:19
  */
 
+use diCore\Helper\Banner;
+
 /**
  * Class diBannerDailyStatModel
  * Methods list for IDE
@@ -34,7 +36,7 @@ class diBannerDailyStatModel extends diModel
 
 	public static function add($bannerId, $statType, $uri = '')
 	{
-		if (\diBanners::isCurrentDomainIgnored())
+		if (Banner::isCurrentDomainIgnored())
 		{
 			return false;
 		}
@@ -79,13 +81,13 @@ class diBannerDailyStatModel extends diModel
 
 		switch ($statType)
 		{
-			case \diBanners::STAT_VIEW:
+			case Banner::STAT_VIEW:
 				$banner
 					->setViewsCount($banner->getViewsCount() + 1)
 					->setLastViewDate(\diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME));
 				break;
 
-			case \diBanners::STAT_CLICK:
+			case Banner::STAT_CLICK:
 				$banner
 					->setClicksCount($banner->getClicksCount() + 1);
 				break;

@@ -6,11 +6,19 @@
  * Time: 19:53
  */
 
-class diBanners
+namespace diCore\Helper;
+
+use diCore\Data\Types;
+use diCore\Database\Connection;
+use diCore\Traits\BasicCreate;
+
+class Banner
 {
-	const table = "banners";
-	const statTable = "banner_daily_stat";
-	const urisTable = "banner_uris";
+	use BasicCreate;
+
+	const table = 'banners';
+	const statTable = 'banner_daily_stat';
+	const urisTable = 'banner_uris';
 
 	const STAT_VIEW = 1;
 	const STAT_CLICK = 2;
@@ -21,32 +29,32 @@ class diBanners
 	];
 
 	public static $placesAr = [
-		"left" => "Слева",
-		"right" => "Справа",
-		"top" => "Сверху",
-		"down" => "Снизу",
+		'left' => 'Слева',
+		'right' => 'Справа',
+		'top' => 'Сверху',
+		'down' => 'Снизу',
 	];
 
 	public static $hrefTargetsAr = [
-		"" => "Том же окне",
-		"blank" => "Новом окне",
+		'' => 'Том же окне',
+		'blank' => 'Новом окне',
 	];
 
 	public static $replacePattern = "/\[BANNER\-([0-9]+)x([0-9]+)\]/";
 
 	public static $ignoredDomainsAr = [
-		"google.com",
-		"google.ru",
-		"yandex.ru",
-		"ya.ru",
-		"search.live.com",
-		"rambler.ru",
-		"mail.ru",
-		"nigma.ru",
-		"yahoo.com",
-		"aport.ru",
-		"search.ukr.net",
-		"msn.com",
+		'google.com',
+		'google.ru',
+		'yandex.ru',
+		'ya.ru',
+		'search.live.com',
+		'rambler.ru',
+		'mail.ru',
+		'nigma.ru',
+		'yahoo.com',
+		'aport.ru',
+		'search.ukr.net',
+		'msn.com',
 	];
 
 	public static function getTpl()
@@ -56,40 +64,54 @@ class diBanners
 		return $Z->getTpl();
 	}
 
+	/** @deprecated  */
 	public static function getDb()
 	{
-		global $db;
+		return Connection::get()->getDb();
+	}
 
-		return $db;
+	final public static function getPlaces()
+	{
+		/** @var self $class */
+		$class = self::getClass();
+
+		return $class::$placesAr;
+	}
+
+	public static function getPlaceTitle($placeName)
+	{
+		$ar = static::getPlaces();
+
+		return $ar[$placeName];
 	}
 
 	/** @deprecated  */
-	public static function getHtml($r, $banner_token = "__BANNER_PIC")
+	public static function getHtml($r, $banner_token = '__BANNER_PIC')
 	{
 		self::storeStat($r->id, self::STAT_VIEW);
 
 		$tpl_name = $r->pic
-			? ($r->pic_t == 4 || $r->pic_t == 13 ? "pic_a_swf" : "pic_a_img")
-			: "text_banner";
+			? ($r->pic_t == 4 || $r->pic_t == 13 ? 'pic_a_swf' : 'pic_a_img')
+			: 'text_banner';
 
 		return self::getTpl()
 			->assign([
-				"TITLE"         => str_out($r->title),
-				"HREF"          => "/redir.php?bid={$r->id}&uri=".urlencode(diRequest::server("REQUEST_URI")),
-				"HREF_TARGET"   => $r->href_target == "blank" ? " target=_blank" : "",
-				"PIC"           => get_pics_folder(self::table).$r->pic,
-				"PIC_W"         => $r->pic_w,
-				"PIC_H"         => $r->pic_h,
-				"BG"            => isset($r->background) ? str_out($r->background) : "#FFFFFF",
-			], "PIC_")
-			->parse("$banner_token", "$tpl_name");
+				'TITLE'         => str_out($r->title),
+				'HREF'          => "/redir.php?bid={$r->id}&uri=".urlencode(\diRequest::requestUri()),
+				'HREF_TARGET'   => $r->href_target == 'blank' ? ' target=_blank' : '',
+				'PIC'           => get_pics_folder(self::table).$r->pic,
+				'PIC_W'         => $r->pic_w,
+				'PIC_H'         => $r->pic_h,
+				'BG'            => isset($r->background) ? str_out($r->background) : '#FFFFFF',
+			], 'PIC_')
+			->parse($banner_token, $tpl_name);
 	}
 
 	/** @deprecated  */
 	public static function redirect()
 	{
-		$uri = diRequest::get("uri", "") ?: diRequest::get("url", "");
-		$bid = diRequest::get("bid", 0);
+		$uri = \diRequest::get("uri", "") ?: \diRequest::get("url", "");
+		$bid = \diRequest::get("bid", 0);
 
 		$b_r = $bid
 			? self::getDb()->r(self::table, "WHERE id='$bid' and NOW() BETWEEN date1 and date2 and visible='1'")
@@ -174,45 +196,74 @@ class diBanners
 						$uri = "/$uri";
 					}
 
-					self::getDb()->insert(self::urisTable, array(
+					self::getDb()->insert(self::urisTable, [
 						"banner_id" => $banner_id,
 						"uri" => $uri,
 						"positive" => $positive,
-					));
+					]);
 				}
 
 			}
 		}
 	}
 
-	public static function printForPlace($place)
+	public static function getRawBannersForPlace($place = null)
 	{
-		if (!diConfiguration::exists("max_banners_count[$place]"))
+		/** @var \diBannerCollection $banners */
+		$banners = \diCollection::create(Types::banner);
+
+		if ($place)
 		{
-			return "";
+			$banners
+				->filterByPlace($place);
 		}
 
-		$query = "WHERE place='$place' and NOW() BETWEEN date1 and date2 and visible='1' ORDER BY last_view_date ASC";
+		$banners
+			->filterManual("NOW() BETWEEN date1 and date2")
+			->filterByVisible(1)
+			->orderByLastViewDate();
 
-		$limit = (int)diConfiguration::get("max_banners_count[$place]");
-		$limit_where = $limit && false ? " LIMIT $limit" : "";
+		return $banners;
+	}
 
-		$b_rs = $limit
-			? self::getDb()->rs("banners", "{$query}{$limit_where}") // order_num
-			: self::getDb()->random_rs("banners", $limit, $query);
+	public static function getBannersForPlace($place = null)
+	{
+		$ar = [];
+		/** @var self $class */
+		$class = static::getClass();
+		$banners = $class::getRawBannersForPlace($place);
 
-		$cc = 0;
-
-		while ($b_r = self::getDb()->fetch($b_rs))
+		/** @var \diBannerModel $banner */
+		foreach ($banners as $banner)
 		{
-			if (!static::needToShow($b_r->id))
+			if (!$class::needToShow($banner->getId()))
 			{
 				continue;
 			}
 
-			static::getHtml($b_r, "BANNER_PIC");
+			$ar[$banner->getId()] = $banner;
+		}
 
-			self::getTpl()->parse(strtoupper($b_r->place) . "_BANNER_ROWS", ".{$b_r->place}_banner_row");
+		return $ar;
+	}
+
+	public static function printForPlace($place)
+	{
+		if (!\diConfiguration::exists("max_banners_count[$place]"))
+		{
+			return '';
+		}
+
+		$banners = static::getBannersForPlace($place);
+		$limit = (int)\diConfiguration::get("max_banners_count[$place]");
+		$cc = 0;
+
+		/** @var \diBannerModel $banner */
+		foreach ($banners as $banner)
+		{
+			static::getHtml((object)$banner->get(), "BANNER_PIC");
+
+			self::getTpl()->parse(strtoupper($banner->getPlace()) . "_BANNER_ROWS", ".{$banner->getPlace()}_banner_row");
 
 			if (++$cc >= $limit)
 			{
@@ -242,20 +293,20 @@ class diBanners
 
 		foreach (self::$placesAr as $place => $title)
 		{
-			$limits[$place] = (int)diConfiguration::safeGet("banners_max_count[$place]", 0);
+			$limits[$place] = (int)\diConfiguration::safeGet("banners_max_count[$place]", 0);
 			$counts[$place] = 0;
 		}
 
 		$ar = [];
 
-		/** @var diBannerCollection $banners */
+		/** @var \diBannerCollection $banners */
 		$banners = \diCollection::create(\diTypes::banner);
 		$banners
 			->filterByVisible(1)
 			->filterManual('NOW() BETWEEN `date1` and `date2`')
 			->orderByLastViewDate();
 
-		/** @var diBannerModel $banner */
+		/** @var \diBannerModel $banner */
 		foreach ($banners as $banner)
 		{
 			if (
@@ -264,13 +315,13 @@ class diBanners
 					!$limits[$banner->getPlace()] ||
 					($limits[$banner->getPlace()] && $counts[$banner->getPlace()] < $limits[$banner->getPlace()])
 				)
-			   )
+			)
 			{
 				$ar[] = $banner;
 
 				$counts[$banner->getPlace()]++;
 
-				\diBannerDailyStatModel::add($banner->getId(), \diBanners::STAT_VIEW);
+				\diBannerDailyStatModel::add($banner->getId(), self::STAT_VIEW);
 			}
 		}
 

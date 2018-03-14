@@ -4,6 +4,9 @@
  * Date: 11.09.2015
  * Time: 11:42
  */
+
+use diCore\Helper\Banner;
+
 /**
  * Class diBannerModel
  * Methods list for IDE
@@ -59,10 +62,15 @@
  * @method diBannerModel setLastViewDate($value)
  * @method diBannerModel setOrderNum($value)
  */
-class diBannerModel extends diModel
+class diBannerModel extends \diModel
 {
 	const type = diTypes::banner;
 	protected $table = "banners";
+
+	public function getPlaceTitle()
+	{
+		return Banner::getPlaceTitle($this->getPlace());
+	}
 
 	public function getRedirectHref()
 	{
@@ -74,6 +82,8 @@ class diBannerModel extends diModel
 	{
 		return extend(parent::getCustomTemplateVars(), [
 			'redirect_href' => $this->getRedirectHref(),
+			'place_title' => $this->getPlaceTitle(),
+			'href_target_attribute' => $this->getHrefTarget() == 'blank' ? ' target="_blank"' : '',
 		]);
 	}
 }
