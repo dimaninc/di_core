@@ -1,14 +1,14 @@
-<div class="slider-block" data-transition="{{ block.transition }}" data-transition-style="{{ block.transition_style }}"
-     data-duration-of-change="{{ block.duration_of_change }}" data-duration-of-show="{{ block.duration_of_show }}"
-     data-slides-order="{{ block.slides_order }}"
+<div class="slider-block" data-transition="{{ block['transition'] }}" data-transition-style="{{ block['transition_style'] }}"
+     data-duration-of-change="{{ block['duration_of_change'] }}" data-duration-of-show="{{ block['duration_of_show'] }}"
+     data-slides-order="{{ block['slides_order'] }}"
 >
 	<div class="slider-prev"></div>
 	<div class="slider-next"></div>
 	<div class="slider" data-role="screen"></div>
 
 	{% for ad in ads %}
-		<u data-href="{{ ad.href }}" data-role="button" data-pic="{{ ad.pic_with_path }}" data-title="{{ ad.title|e('html_attr') }}"
-		   data-transition="{{ ad.transition }}" data-transition-style="{{ ad.transition_style }}"
-		   data-duration-of-change="{{ ad.duration_of_change }}" data-duration-of-show="{{ ad.duration_of_show }}"></u>
+		<u data-href="{{ ad['href'] }}" data-role="button" data-pic="{{ ad['pic_with_path'] }}" data-title="{{ ad['title']|e('html_attr') }}"
+		   data-transition="{{ ad['transition'] }}" data-transition-style="{{ ad['transition_style'] }}"
+		   data-duration-of-change="{{ ad['duration_of_change'] }}" data-duration-of-show="{{ ad['duration_of_show'] }}"></u>
 	{% endfor %}
 </div>

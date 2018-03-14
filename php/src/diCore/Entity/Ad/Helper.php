@@ -11,7 +11,6 @@ namespace diCore\Entity\Ad;
 use diCore\Base\CMS;
 use diCore\Data\Types;
 use diCore\Entity\AdBlock\Model as AdBlock;
-use diCore\Helper\ArrayHelper;
 
 class Helper
 {
@@ -66,6 +65,31 @@ class Helper
 	 */
 	private $block;
 
+	public static function printBlock($blockId, $token = null, CMS $CMS = null)
+	{
+		global $Z;
+
+		$a = new static($CMS ?: $Z);
+
+		return $a->render($blockId, $token);
+	}
+
+	public static function incutBlocks($content, CMS $Z = null)
+	{
+		$ar1 = $ar2 = [];
+
+		$blocks = \diCollection::create(Types::ad_block);
+		foreach ($blocks as $block)
+		{
+			$ar1[] = sprintf(AdBlock::INCUT_TEMPLATE, $block->getId());
+			$ar2[] = self::printBlock($block, '_AD_BLOCK', $Z);
+		}
+
+		$content = str_replace($ar1, $ar2, $content);
+
+		return $content;
+	}
+
 	public function __construct(CMS $Z)
 	{
 		$this->Z = $Z;
@@ -86,19 +110,25 @@ class Helper
 		return $this->getZ()->getTwig();
 	}
 
+	protected function populateBlock($blockId)
+	{
+		$this->block = is_object($blockId) && $blockId instanceof \diModel
+			? $blockId
+			: \diModel::create(Types::ad_block, $blockId);
+
+		return $this;
+	}
+
+	protected function blockIsNeeded()
+	{
+		return true;
+	}
+
 	public function render($blockId, $token = null)
 	{
-		if (is_object($blockId) && $blockId instanceof \diModel)
-		{
-			$this->block = $blockId;
-		}
-		else
-		{
-			/** @var AdBlock $block */
-			$this->block = \diModel::create(Types::ad_block, $blockId);
-		}
+		$this->populateBlock($blockId);
 
-		if (!$this->getBlock()->exists())
+		if ($this->blockIsNeeded() && !$this->getBlock()->exists())
 		{
 			return '';
 		}
@@ -114,18 +144,17 @@ class Helper
 			? static::CUSTOM_TEMPLATE_NAME
 			: static::TEMPLATE_NAME;
 
-		$this->getTwig()
-			->assign([
-				'block' => $this->getBlock(),
-				'ads' => $this->getAds(),
-			]);
+		$data = [
+			'block' => $this->getBlock(),
+			'ads' => $this->getAds(),
+		];
 
 		return $token
 			? $this->getTwig()
-				->render($templateName, $token)
+				->render($templateName, $token, $data)
 				->get($token)
 			: $this->getTwig()
-				->parse($templateName);
+				->parse($templateName, $data);
 	}
 
 	/**
@@ -160,32 +189,79 @@ class Helper
 	{
 		if (!isset($this->ads[$this->getBlock()->getId()]))
 		{
-			$wd = \diDateTime::weekDay();
-
-			$holidayValues = [
-				ShowOnHolidays::always,
-				$this->isHoliday()
-					? ShowOnHolidays::only
-					: ShowOnHolidays::except,
-			];
-
-			/** @var Collection $col */
-			$col = \diCollection::create(Types::ad);
-			$col
-				->filterByBlockId($this->getBlock()->getId())
-				->filterManual('show_date1 IS NULL OR NOW() >= show_date1')
-				->filterManual('show_date2 IS NULL OR NOW() <= show_date2')
-				->filterManual('show_time1 IS NULL OR NOW() >= show_time1')
-				->filterManual('show_time2 IS NULL OR NOW() <= show_time2')
-				->filterManual("show_on_weekdays = '' OR INSTR(show_on_weekdays, ',$wd,') > 0")
-				->filterByShowOnHolidays($holidayValues)
-				->filterByVisible(1)
-				->orderByOrderNum();
-
-			$this->ads[$this->getBlock()->getId()] = $col;
+			$this->ads[$this->getBlock()->getId()] = $this->fetchAds();
 		}
 
 		return $this->ads[$this->getBlock()->getId()];
+	}
+
+	protected function fetchAds()
+	{
+		$wd = \diDateTime::weekDay();
+
+		$holidayValues = [
+			ShowOnHolidays::always,
+			$this->isHoliday()
+				? ShowOnHolidays::only
+				: ShowOnHolidays::except,
+		];
+
+		/** @var Collection $col */
+		$col = \diCollection::create(Types::ad);
+		$col
+			->filterByBlockId($this->getBlock()->getId());
+
+		if ($this->considerDates())
+		{
+			$col
+				->filterManual('show_date1 IS NULL OR NOW() >= show_date1')
+				->filterManual('show_date2 IS NULL OR NOW() <= show_date2');
+		}
+
+		if ($this->considerTimes())
+		{
+			$col
+				->filterManual('show_time1 IS NULL OR NOW() >= show_time1')
+				->filterManual('show_time2 IS NULL OR NOW() <= show_time2');
+		}
+
+		if ($this->considerWeekdays())
+		{
+			$col
+				->filterManual("show_on_weekdays = '' OR INSTR(show_on_weekdays, ',$wd,') > 0");
+		}
+
+		if ($this->considerHolidays())
+		{
+			$col
+				->filterByShowOnHolidays($holidayValues);
+		}
+
+		$col
+			->filterByVisible(1)
+			->orderByOrderNum();
+
+		return $col;
+	}
+
+	protected function considerDates()
+	{
+		return true;
+	}
+
+	protected function considerTimes()
+	{
+		return true;
+	}
+
+	protected function considerWeekdays()
+	{
+		return true;
+	}
+
+	protected function considerHolidays()
+	{
+		return true;
 	}
 
 	protected function checkTitleAndContentOfSlides()
@@ -231,30 +307,5 @@ class Helper
 		return $this->getAds()->count()
 			? $this->getTpl()->parse($token, 'ad_block')
 			: '';
-	}
-
-	public static function printBlock($blockId, $token = null, CMS $CMS = null)
-	{
-		global $Z;
-
-		$a = new static($CMS ?: $Z);
-
-		return $a->render($blockId, $token);
-	}
-
-	public static function incutBlocks($content, CMS $Z = null)
-	{
-		$ar1 = $ar2 = [];
-
-		$blocks = \diCollection::create(Types::ad_block);
-		foreach ($blocks as $block)
-		{
-			$ar1[] = sprintf(AdBlock::INCUT_TEMPLATE, $block->getId());
-			$ar2[] = self::printBlock($block, '_AD_BLOCK', $Z);
-		}
-
-		$content = str_replace($ar1, $ar2, $content);
-
-		return $content;
 	}
 }
