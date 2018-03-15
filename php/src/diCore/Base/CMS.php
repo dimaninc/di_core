@@ -4,20 +4,20 @@ namespace diCore\Base;
 
 use diCore\Base\Exception\HttpException;
 use diCore\Data\Config;
+use diCore\Data\Http\HttpCode;
 use diCore\Data\Types;
 use diCore\Entity\Ad\Helper;
 use diCore\Entity\Content\Model;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
-use diCore\Data\Http\HttpCode;
 use diCore\Tool\Auth;
 
 abstract class CMS
 {
-	const TPL_DIR = "tpl";
-	const TPL_CACHE_PHP = "_cfg/cache/tpl_cache.php";
-	const TABLES_CONTENT_CACHE_PHP = "_cfg/cache/table_content.php";
-	const TABLES_CONTENT_CLEAN_TITLES_PHP = "_cfg/cache/table_content_ct_ar.php";
+	const TPL_DIR = 'tpl';
+	const TPL_CACHE_PHP = '_cfg/cache/tpl_cache.php';
+	const TABLES_CONTENT_CACHE_PHP = '_cfg/cache/table_content.php';
+	const TABLES_CONTENT_CLEAN_TITLES_PHP = '_cfg/cache/table_content_ct_ar.php';
 
 	const TEMPLATE_ENGINE_TWIG = 1;
 	const TEMPLATE_ENGINE_FASTTEMPLATE = 2;
@@ -128,54 +128,54 @@ abstract class CMS
 	public $m1, $m2, $m3, $m4, $m5;
 
 	public $tables;
-	public $ct_ar = []; // clean titles ar ["type" => "clean_title"]
-	protected $default_page_type = "home";
+	public $ct_ar = []; // clean titles ar ['type' => 'clean_title']
+	protected $defaultPageType = 'home';
 	public $safe_swf_idx = 0;
 	public $print_share_block = true;
-	public $comments_form_prefix = "";
+	public $comments_form_prefix = '';
 
 	private $commentsBlockNeeded = true;
 	private $forceCommentsBlockNeeded = false;
 
 	static public $possibleLanguages = [
-		"ru",
+		'ru',
 	];
-	public static $defaultLanguage = "ru";
+	public static $defaultLanguage = 'ru';
 	protected static $forceLanguage = null;
-	public $language = "ru";
+	public $language = 'ru';
 
-	public $language_href_prefix = "";
+	public $language_href_prefix = '';
 
-	public $content_table = "content";
-	public $news_table = "news";
+	public $content_table = 'content';
+	public $news_table = 'news';
 
 	protected $fieldsExcludedFromCache = [];
 
 	// language stuff
 	static public $field_names_ar = [
-		"title",
-		"caption",
-		"html_title",
-		"html_keywords",
-		"html_description",
-		"short_content",
-		"content",
-		"content2",
-		"description",
-		"tag",
-		"name",
-		"href",
-		"client",
-		"type",
-		"model",
-		"position",
-		"value",
-		"to_user_prefix",
+		'title',
+		'caption',
+		'html_title',
+		'html_keywords',
+		'html_description',
+		'short_content',
+		'content',
+		'content2',
+		'description',
+		'tag',
+		'name',
+		'href',
+		'client',
+		'type',
+		'model',
+		'position',
+		'value',
+		'to_user_prefix',
 	];
 
-	const META_FIELD_PREFIX = "meta_";
-	const META_FIELD_PREFIX_OLD = "html_";
-	const OPEN_GRAPH_FIELD_PREFIX = "open_graph_";
+	const META_FIELD_PREFIX = 'meta_';
+	const META_FIELD_PREFIX_OLD = 'html_';
+	const OPEN_GRAPH_FIELD_PREFIX = 'open_graph_';
 
 	protected $metaFields = [];
 	protected $openGraphFields = [];
@@ -199,32 +199,32 @@ abstract class CMS
 	public $tag_var;
 
 	public static $possible_toggle_fields_ar = [
-		"active",
+		'active',
 		'en_active',
-		"activated",
-		"recommended",
-		"to_show_content",
-		"top",
-		"visible",
-		"visible_left",
-		"visible_right",
-		"visible_logged_in",
-		"visible_top",
-		"visible_bottom",
-		"visible_2nd_bottom",
+		'activated',
+		'recommended',
+		'to_show_content',
+		'top',
+		'visible',
+		'visible_left',
+		'visible_right',
+		'visible_logged_in',
+		'visible_top',
+		'visible_bottom',
+		'visible_2nd_bottom',
 		'en_top',
 		'en_visible',
-		"en_visible_left",
-		"en_visible_right",
-		"en_visible_logged_in",
-		"en_visible_top",
-		"en_visible_bottom",
-		"en_visible_2nd_bottom",
-		"opened",
-		"check_before",
-		"sold",
-		"accepted",
-		"moderated",
+		'en_visible_left',
+		'en_visible_right',
+		'en_visible_logged_in',
+		'en_visible_top',
+		'en_visible_bottom',
+		'en_visible_2nd_bottom',
+		'opened',
+		'check_before',
+		'sold',
+		'accepted',
+		'moderated',
 	];
 
 	// paths
@@ -347,9 +347,9 @@ abstract class CMS
 		return $Z;
 	}
 
-	public static function getBrowserLanguage($default = "ru")
+	public static function getBrowserLanguage($default = 'ru')
 	{
-		$l = \diRequest::cookie("lang", "") ?: mb_strtolower(mb_substr(\diRequest::server("HTTP_ACCEPT_LANGUAGE", ""), 0, 2));
+		$l = \diRequest::cookie('lang', '') ?: mb_strtolower(mb_substr(\diRequest::server('HTTP_ACCEPT_LANGUAGE', ''), 0, 2));
 
 		return in_array($l, static::$possibleLanguages) ? $l : $default;
 	}
@@ -413,7 +413,7 @@ abstract class CMS
 
 	public static function isHardDebug()
 	{
-		return !!\diRequest::cookie("test");
+		return !!\diRequest::cookie('test');
 	}
 
 	public static function extendFieldsWithAllLanguages($fields)
@@ -480,7 +480,7 @@ abstract class CMS
 	 */
 	public function getCachedContentCollection()
 	{
-		return $this->tables["content"];
+		return $this->tables['content'];
 	}
 
 	public function getCachedContentCollectionByType()
@@ -1023,7 +1023,7 @@ abstract class CMS
 	{
 		if ($default_page_type)
 		{
-			$this->default_page_type = $default_page_type;
+			$this->defaultPageType = $default_page_type;
 		}
 
 		if ($defaultLanguage)
@@ -1481,10 +1481,10 @@ abstract class CMS
 	{
 		$url = $this->getFullRoute();
 
-		$x = strpos($url, "?");
+		$x = strpos($url, '?');
 		if ($x !== false)
 		{
-			$url = rtrim(substr($url, 0, $x), "/");
+			$url = rtrim(substr($url, 0, $x), '/');
 		}
 
 		$this->origRoutes = $this->routes = array_values(array_filter(explode('/', $url)));
@@ -1500,7 +1500,7 @@ abstract class CMS
 
 		if (!$this->routes)
 		{
-			$this->routes[] = $this->ct($this->default_page_type);
+			$this->routes[] = $this->ct($this->defaultPageType);
 		}
 
 		if (!$this->routes || !$this->routes[0])
@@ -1517,14 +1517,14 @@ abstract class CMS
 	{
 		for ($i = 0; $i < count($this->routes); $i++)
 		{
-			if ($this->routes[$i] === "")
+			if ($this->routes[$i] === '')
 			{
 				array_splice($this->routes, $i, 1);
 				$i--;
 			}
 			else
 			{
-				$this->{"m" . $i} = $this->routes[$i];
+				$this->{'m' . $i} = $this->routes[$i];
 			}
 		}
 	}
@@ -1550,7 +1550,7 @@ abstract class CMS
 
 	public static function languageHrefPrefix($language = null)
 	{
-		return !$language || $language == static::$defaultLanguage ? "" : "/" . $language;
+		return !$language || $language == static::$defaultLanguage ? '' : '/' . $language;
 	}
 
 	public static function makeUrl($routes = [], $queryParams = [])
@@ -1561,11 +1561,11 @@ abstract class CMS
 
   function define_language_vars()
   {
-    $prefix = $this->language != "rus" && $this->language != "ru" ? $this->language."_" : "";
+    $prefix = $this->language != 'rus' && $this->language != 'ru' ? $this->language . '_' : '';
 
     foreach (static::$field_names_ar as $field)
     {
-      $variable = "{$field}_var";
+      $variable = $field . '_var';
       $GLOBALS[$variable] = $prefix.$field;
       $this->$variable = $prefix.$field;
     }
@@ -1605,7 +1605,7 @@ abstract class CMS
 					$modesStr = join("/", $modesStr);
 				}
 
-				if ($modesStr == $this->ct("home"))
+				if ($modesStr == $this->ct($this->defaultPageType))
 				{
 					$modesStr = '';
 				}
@@ -2082,7 +2082,7 @@ abstract class CMS
 
 	public function needToPrintBreadCrumbs()
 	{
-		return !in_array($this->getContentModel()->getType(), ['home']);
+		return !in_array($this->getContentModel()->getType(), [$this->defaultPageType]);
 	}
 
 	/**
