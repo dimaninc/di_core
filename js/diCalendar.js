@@ -837,8 +837,25 @@ function diCalendar(cfg)
   {
     if (this.cfg.no_positioning) return this;
 
-    this.e.style.left = (_get_left(this.stick_to_e))+'px';
-    this.e.style.top = (_get_top(this.stick_to_e) + this.stick_to_e.offsetHeight)+'px';
+    var x, y, pos;
+    var $stick = $(this.stick_to_e);
+
+    switch (this.cfg.position_base)
+    {
+      case 'parent':
+        pos = $stick.position();
+        x = pos.left;
+        y = pos.top + $stick.outerHeight() + 2;
+        break;
+
+      case 'document':
+        x = _get_left(this.stick_to_e);
+        y = _get_top(this.stick_to_e) + this.stick_to_e.offsetHeight;
+        break;
+    }
+
+    this.e.style.left = x + 'px';
+    this.e.style.top = y + 'px';
 
     return this;
   };
@@ -894,6 +911,7 @@ function diCalendar(cfg)
     show_weekday_titles: true,
     stick_to: false, // id or object; if false, then sticking to date1 element
     no_positioning: false,
+    position_base: 'document',
     no_gray: false,
     language: 'rus',
     mode: 'single', // single - one date at once, multi - few dates at once

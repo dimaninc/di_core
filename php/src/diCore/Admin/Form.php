@@ -2589,6 +2589,7 @@ EOF;
 <script type="text/javascript">
 var c_{$uid} = new diCalendar({
 	instance_name: 'c_{$uid}',
+	position_base: 'parent',
 	$calendar_cfg_js
 });
 </script>
