@@ -1,9 +1,9 @@
 <?php
 class diOAuth2Vk extends diOAuth2
 {
-	const loginUrlBase = "https://oauth.vk.com/authorize";
-	const authUrlBase = "https://oauth.vk.com/access_token";
-	const profileUrlBase = "https://api.vk.com/method/users.get";
+	const loginUrlBase = 'https://oauth.vk.com/authorize';
+	const authUrlBase = 'https://oauth.vk.com/access_token';
+	const profileUrlBase = 'https://api.vk.com/method/users.get';
 
 	protected $vendorId = diOAuth2Vendors::vk;
 
@@ -15,33 +15,42 @@ class diOAuth2Vk extends diOAuth2
 
 		if (count($tokenInfo))
 		{
-			if (isset($tokenInfo["access_token"]))
+			if (isset($tokenInfo['access_token']))
 			{
-				$params = array(
+				$params = [
+					'v' => 5.71,
 					'access_token' => $tokenInfo['access_token'],
-					"uids" => $tokenInfo["user_id"],
+					'uids' => $tokenInfo['user_id'],
 					'fields' => 'uid,email,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo,photo_medium,photo_big,has_mobile,rate,contacts,education,online,counters',
-				);
+				];
 
 				$data = json_decode(static::makeHttpRequest(static::profileUrlBase, $params), true);
 
 				if ($data)
 				{
-					$this->setProfileRawData(current($data["response"]));
+					if (!empty($data['error']))
+					{
+						$this->setProfileError('Error retrieving data: ' . $data['error']['error_msg'] .
+							' (code#' . $data['error']['error_code'] . ')');
+					}
+					else
+					{
+						$this->setProfileRawData(current($data['response']));
+					}
 				}
 				else
 				{
-					$this->setProfileError("Error retrieving data");
+					$this->setProfileError('Error retrieving data');
 				}
 			}
 			else
 			{
-				$this->setProfileError($tokenInfo["error"] . ": " . $tokenInfo["error_description"]);
+				$this->setProfileError($tokenInfo['error'] . ': ' . $tokenInfo['error_description']);
 			}
 		}
 		else
 		{
-			$this->setProfileError("Error during first request");
+			$this->setProfileError('Error during first request');
 		}
 
 		return $this;

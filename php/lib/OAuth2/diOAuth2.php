@@ -155,7 +155,7 @@ abstract class diOAuth2
 		return http_build_query($params); //urldecode(
 	}
 
-	public static function makeUrl($base, $params = array())
+	public static function makeUrl($base, $params = [])
 	{
 		$glue = $params ? "?" : "";
 
