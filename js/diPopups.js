@@ -72,12 +72,30 @@ var diPopups = function() {
 		return this.callbacks[name] || this.defaultCallbacks[name];
 	};
 
-	this.show_bg = function() {
+	this.checkBg = function() {
 		if (!this.e.$bg.length) {
 			this.e.$bg = $('<div id="gray-bg"></div>').appendTo($(document.body)).click(function() {
 				self.hide_all();
 			});
 		}
+
+		return this;
+	};
+
+	this.onBg = function(eventName, callback) {
+		this.e.$bg.on(eventName, callback);
+
+		return this;
+	};
+
+	this.offBg = function(eventName) {
+		this.e.$bg.off(eventName);
+
+		return this;
+	};
+
+	this.show_bg = function() {
+		this.checkBg();
 
 		if (!this.e.$bg.is(':visible')) {
 			this.e.$bg.css({
@@ -86,6 +104,8 @@ var diPopups = function() {
 				opacity: 1
 			});
 		}
+
+		return this;
 	};
 
 	this.hide_bg = function() {

@@ -37,6 +37,8 @@
 
 function diCalendar(cfg)
 {
+  var self = this;
+
   this.set_config = function(cfg)
   {
     for (var i in cfg)
@@ -800,6 +802,9 @@ function diCalendar(cfg)
 
     this.prepare_dates();
     this.print();
+    this.setupBgClick();
+
+    return this;
   };
 
   this.add_events_to_inputs = function()
@@ -856,6 +861,16 @@ function diCalendar(cfg)
 
     this.e.style.left = x + 'px';
     this.e.style.top = y + 'px';
+
+    return this;
+  };
+
+  this.setupBgClick = function() {
+    if (!this.cfg.no_gray) {
+      dip.checkBg().onBg('click.dicalendar', function() {
+        self.hide();
+      });
+    }
 
     return this;
   };
