@@ -1313,6 +1313,7 @@ ul.left-menu > li[state="0"] > ul {
 }
 .existing-pic-holder .container > img {
   max-width: 100%;
+  height: auto;
 }
 .existing-pic-holder .container.img-full-size {
   overflow-x: auto;
