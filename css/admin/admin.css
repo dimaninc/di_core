@@ -1548,20 +1548,17 @@ table.dinicetable tr td .tree.expand {
 table.dinicetable tr td .tree.collapse {
   background: url("/_core/i/admin/buttons/key_minus_small.gif");
 }
-table.dinicetable tr.delete td {
-  background-color: #fbb !important;
+table.dinicetable tr:not(.no-hover):not(.delete):not(.highlight):hover > td {
+  background-color: #f3f3f3;
 }
-table.dinicetable tr.highlight td {
-  background-color: #ffd !important;
+table.dinicetable tr.delete > td {
+  background-color: #fbb;
 }
-table.dinicetable tr:hover > td {
-  background: #f3f3f3;
+table.dinicetable tr.highlight > td {
+  background-color: #ffd;
 }
-table.dinicetable tr.no-hover:hover > td {
-  background: #dfdfd0;
-}
-table.dinicetable tr.del td {
-  background: #faa !important;
+table.dinicetable tr.del > td {
+  background-color: #faa;
 }
 .dinicetable_div .parent-anchor {
   position: absolute;

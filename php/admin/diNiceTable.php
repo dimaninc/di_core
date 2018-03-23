@@ -347,17 +347,17 @@ class diNiceTable
 	{
 		$this->setRowRec($r);
 
-		$id = (int)$this->getRowModel()->getId();
+		$id = \diCore\Helper\StringHelper::out($this->getRowModel()->getId());
 
 		$this->col_idx = 0;
 		$this->anchorPlaced = false;
 
-		$this->row_class_prefix = $row_class_prefix ?: "level".((int)$this->getRowModel()->get("level_num") + 1);
+		$this->row_class_prefix = $row_class_prefix ?: "level" . ((int)$this->getRowModel()->get("level_num") + 1);
 		$this->row_id_prefix = $row_id_prefix;
 
-		$attributes = array(
+		$attributes = [
 			"class" => $this->row_class_prefix,
-		);
+		];
 
 		if ($this->getRowModel()->has("parent") && in_array($this->getRowModel()->get("parent"), $this->collapsedIds))
 		{
@@ -370,7 +370,7 @@ class diNiceTable
 		}
 
 		return sprintf(
-			"<tr %s data-role=\"row\" data-id=\"%d\" data-level=\"%d\">\n",
+			"<tr %s data-role=\"row\" data-id=\"%s\" data-level=\"%d\">\n",
 			ArrayHelper::toAttributesString($attributes, true, ArrayHelper::ESCAPE_HTML),
 			$id,
 			(int)$this->getRowModel()->get("level_num")

@@ -114,22 +114,18 @@ table.dinicetable
 					background url(/_core/i/admin/buttons/key_plus_small.gif)
 				&.collapse
 					background url(/_core/i/admin/buttons/key_minus_small.gif)
-		&.delete
-			td
-				background-color #fbb !important
-		&.highlight
-			td
-				background-color #ffd !important
-		&:hover
+		&:not(.no-hover):not(.delete):not(.highlight):hover
 			> td
-				background #f3f3f3
-		&.no-hover
-			&:hover
-				> td
-					background #dfdfd0
+				background-color #f3f3f3
+		&.delete
+			> td
+				background-color #fbb
+		&.highlight
+			> td
+				background-color #ffd
 		&.del
-			td
-				background #faa !important
+			> td
+				background-color #faa
 
 .dinicetable_div
 	.parent-anchor

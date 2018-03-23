@@ -68,7 +68,7 @@ var diNiceTable = function(opts)
 		settings.$table.on('click', '.nicetable-button', function() {
 			var $b = $(this),
 				action = $b.data('action'),
-				id = parseInt($b.closest('[data-id]').data('id'));
+				id = $b.closest('[data-id]').data('id');
 
 			if ($b.is('a'))
 			{
@@ -94,23 +94,21 @@ var diNiceTable = function(opts)
 		});
 	}
 
-	function clickDel(id)
-	{
+	function clickDel(id) {
 		var $rows = getRow(id);
 		$rows.addClass('delete');
 
-		if (confirm('Удалить?') && confirm('Вы уверены?'))
-		{
-			call('delete', id, function(res, $row) {
-				$row.remove();
+		setTimeout(function() {
+			if (confirm('Удалить?') && confirm('Вы уверены?')) {
+				call('delete', id, function(res, $row) {
+					$row.remove();
 
-				log('Deleted');
-			});
-		}
-		else
-		{
-			$rows.removeClass('delete');
-		}
+					log('Deleted');
+				});
+			} else {
+				$rows.removeClass('delete');
+			}
+		}, 10);
 	}
 
 	function clickMove(direction, id)

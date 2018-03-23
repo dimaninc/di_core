@@ -168,9 +168,13 @@ class Model extends \diModel
 		}
 		elseif ($this->getId() && ($this->idAutoIncremented || (!$this->idAutoIncremented && $this->getOrigId())))
 		{
+			$a = $this->prepareIdAndFieldForGetRecord($this->getId(), 'id');
+
 			$this->getCollectionResource()->updateOne([
-				$this->getIdFieldName() => $this->getId(),
-			], $ar);
+				$a['field'] => $a['id'],
+			], [
+				'$set' => $ar,
+			]);
 		}
 		else
 		{
@@ -237,5 +241,20 @@ class Model extends \diModel
 		}
 
 		return $ar;
+	}
+
+	protected function killFromDb()
+	{
+		if ($this->hasId())
+		{
+			$a = $this->prepareIdAndFieldForGetRecord($this->getId(), 'id');
+
+			$this->getCollectionResource()
+				->deleteOne([
+					$a['field'] => $a['id'],
+				]);
+		}
+
+		return $this;
 	}
 }

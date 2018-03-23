@@ -440,9 +440,9 @@ class Form
 
 	function read_data()
 	{
-		if ($this->id)
+		if ($this->getId())
 		{
-			$this->model = \diModel::createForTableNoStrict($this->getTable(), $this->getId());
+			$this->model = \diModel::createForTableNoStrict($this->getTable(), $this->getId(), 'id');
 
 			if ($this->getModel()->exists())
 			{

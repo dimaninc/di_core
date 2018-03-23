@@ -1539,12 +1539,9 @@ class diModel implements \ArrayAccess
 		return $this;
 	}
 
-	/**
-	 * @return diModel
-	 */
-	private function killFromDb()
+	protected function killFromDb()
 	{
-		if ($this->getId())
+		if ($this->hasId())
 		{
 			$this->getDb()->delete($this->getTable(), $this->getId());
 		}
@@ -1552,9 +1549,6 @@ class diModel implements \ArrayAccess
 		return $this;
 	}
 
-	/**
-	 * @return $this
-	 */
 	public function killRelatedFilesAndData()
 	{
 		return $this

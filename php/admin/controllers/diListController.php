@@ -354,7 +354,7 @@ class diListController extends \diBaseAdminController
 	protected function getTargetModel()
 	{
 		$table = $this->param(0);
-		$id = $this->param(1, 0);
+		$id = $this->param(1);
 
 		return \diModel::createForTableNoStrict($table, $id, 'id');
 	}

@@ -9,9 +9,9 @@
 namespace diCore\Admin;
 
 use diCore\Data\Types;
+use diCore\Database\Entity\Mongo\Model as MongoModel;
 use diCore\Helper\FileSystemHelper;
 use diCore\Helper\StringHelper;
-use diCore\Tool\Logger;
 
 class Submit
 {
@@ -558,7 +558,7 @@ class Submit
 		$dynamicFields = [];
 		$dynamicPicsFields = [];
 
-		if ($this->id)
+		if ($this->getId())
 		{
 			foreach ($this->_all_fields as $f => $v)
 			{
@@ -599,9 +599,17 @@ class Submit
 				}
 			}
 
-			if (!$this->getDb()->update($this->table, $dbAr, $this->id))
+			if ($this->getSubmittedModel() instanceof MongoModel)
 			{
-				$this->getDb()->dierror();
+				$this->getSubmittedModel()->
+					save();
+			}
+			else
+			{
+				if (!$this->getDb()->update($this->table, $dbAr, $this->id))
+				{
+					$this->getDb()->dierror();
+				}
 			}
 		}
 		else
