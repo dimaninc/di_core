@@ -43,11 +43,6 @@ abstract class Connection
 	 */
 	public static function open($connData, $engine = Engine::MYSQL, $name = self::DEFAULT_NAME)
 	{
-		if (self::exists($name))
-		{
-			throw new \diRuntimeException("Connection '$name' already exists");
-		}
-
 		$className = self::getChildClassName($engine);
 		/** @var Connection $conn */
 		$conn = new $className($connData);
@@ -78,7 +73,22 @@ abstract class Connection
 
 	private static function add($name, Connection $conn)
 	{
-		self::$connections[$name] = $conn;
+		if (is_array($name))
+		{
+			foreach ($name as $n)
+			{
+				self::add($n, $conn);
+			}
+		}
+		else
+		{
+			if (self::exists($name))
+			{
+				throw new \diRuntimeException("Connection '$name' already exists");
+			}
+
+			self::$connections[$name] = $conn;
+		}
 	}
 
 	/**
