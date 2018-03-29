@@ -1326,7 +1326,8 @@ class diModel implements \ArrayAccess
 				->beforeSave()
 				->saveToDb()
 				->afterSave()
-				->commitTransaction();
+				->commitTransaction()
+				->setOrigData();
 		} catch (\diRuntimeErrorsException $e) {
 			$this->rollbackTransaction();
 
@@ -1532,9 +1533,6 @@ class diModel implements \ArrayAccess
 				$this->setId($id);
 			}
 		}
-
-		$this
-			->setOrigData();
 
 		return $this;
 	}

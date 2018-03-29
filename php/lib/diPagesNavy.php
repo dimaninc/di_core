@@ -18,6 +18,9 @@ class diPagesNavy
 {
 	const PAGE_PARAM = 'page';
 
+	/** @var  \diCollection */
+	private $col;
+
     private $db;
 
 	private $table;
@@ -43,16 +46,16 @@ class diPagesNavy
 	protected $pageHrefProcessor = null;
 
 	public $tpl_ar = [
-		"link" => "<a href=\"{HREF}\">{PAGE}</a>",
-		"selected" => "<b>{PAGE}</b>",
-		"inactive" => "<span>{PAGE}</span>",
-		"dots" => "{DOTS}",
+		'link' => '<a href="{HREF}">{PAGE}</a>',
+		'selected' => '<b>{PAGE}</b>',
+		'inactive' => '<span>{PAGE}</span>',
+		'dots' => '{DOTS}',
 	];
 	public $str_ar = [
-		"prev_page" => "",
-		"next_page" => "",
-		"prev_symb" => "&laquo;",
-		"next_symb" => "&raquo;",
+		'prev_page' => '',
+		'next_page' => '',
+		'prev_symb' => '&laquo;',
+		'next_symb' => '&raquo;',
 	];
 
 	public $wrong_page_error_handler = "diPagesNavy_wrong_page_error";
@@ -60,7 +63,7 @@ class diPagesNavy
 	public $replaces_ar = array();
 
 	public function __construct($tableOrCollection, $perPageOrPageParam = 1, $whereOrTotalRecords = "",
-	                            $reverse = false, $page_param = "page")
+	                            $reverse = false, $page_param = self::PAGE_PARAM)
 	{
 	    global $db;
 
@@ -151,7 +154,7 @@ class diPagesNavy
 
 	public function getSqlLimit()
 	{
-		return " LIMIT " . $this->getStart() . "," . $this->getPerPage();
+		return ' LIMIT ' . $this->getStart() . ',' . $this->getPerPage();
 	}
 
 	public function getWhere()
@@ -159,19 +162,19 @@ class diPagesNavy
 		return $this->where;
 	}
 
-	public function init($table, $per_page = 1, $where = "", $reverse = false, $page_param = "page")
+	public function init($table, $per_page = 1, $where = '', $reverse = false, $page_param = self::PAGE_PARAM)
 	{
 		global $pagesnavy_sortby_ar, $pagesnavy_sortby_defaults_ar;
 
 		if ($table instanceof \diCollection)
 		{
-			$col = $table;
+			$this->col = $table;
 			if ($per_page && is_string($per_page) && !isInteger($per_page))
 			{
 				$page_param = $per_page;
 			}
-			$per_page = $col->getPageSize();
-			$where = $col->getRealCount();
+			$per_page = $this->col->getPageSize();
+			$where = $this->col->getRealCount();
 			$table = $table->getTable();
 		}
 
@@ -205,24 +208,32 @@ class diPagesNavy
 		}
 		else
 		{
-			if ($where && strtoupper(substr($where, 0, 5)) != "WHERE") $where = "WHERE $where";
-			$r = $this->getDb()->r($table, $where, "COUNT(*) AS cc");
-			$this->total_records = $r ? (int)$r->cc : 0;
+			if ($where && strtoupper(substr($where, 0, 5)) != "WHERE")
+			{
+				$where = "WHERE $where";
+			}
+
+			if (!$this->col)
+			{
+				$this->col = $this->getInitialCollection();
+			}
+
+			$this->total_records = $this->col->count();
 
 			$this->where = $where;
 		}
 
 		$this->total_pages = $this->total_records ? ceil($this->total_records / $this->per_page) : 0;
-		$this->page = diRequest::get($this->page_param,
-			$this->reverse || $this->init_on_last_page ? ($this->total_records ? (int)$this->total_pages : 1) : 1);
+		$this->page = \diRequest::get($this->page_param,
+			$this->reverse || $this->init_on_last_page ? ((int)$this->total_pages ?: 1) : 1);
 
 		$sortby_ar = isset($pagesnavy_sortby_ar[$this->table]) ? $pagesnavy_sortby_ar[$this->table] : $pagesnavy_sortby_ar["*default"];
 		$sortby_defaults_ar = isset($pagesnavy_sortby_defaults_ar[$this->table]) ? $pagesnavy_sortby_defaults_ar[$this->table] : $pagesnavy_sortby_defaults_ar["*default"];
 
-		$this->sortby = diRequest::get($this->sortby_param, $sortby_defaults_ar["sortby"]);
-		$this->dir = strtolower(diRequest::get($this->dir_param, $sortby_defaults_ar["dir"]));
+		$this->sortby = \diRequest::get($this->sortby_param, $sortby_defaults_ar["sortby"]);
+		$this->dir = strtolower(\diRequest::get($this->dir_param, $sortby_defaults_ar["dir"]));
 
-		if (!in_array($this->dir, array("asc","desc")))
+		if (!in_array($this->dir, ["asc", "desc"]))
 		{
 			$this->dir = $sortby_defaults_ar["dir"];
 		}
@@ -260,6 +271,15 @@ class diPagesNavy
 		return $this;
 	}
 
+	protected function getInitialCollection()
+	{
+		$col = \diCollection::createForTable($this->getTable());
+		$col
+			->setQuery($this->getWhere());
+
+		return $col;
+	}
+
 	public function setPageHrefProcessor(callable $cb)
 	{
 		$this->pageHrefProcessor = $cb;
@@ -267,25 +287,18 @@ class diPagesNavy
 		return $this;
 	}
 
-	public function get_page_of($id, $orderby, $dir)
+	public function get_page_of($id, $orderByField, $dir)
 	{
-		$r = $this->getDb()->r($this->table, $id, $orderby);
-
-		$where = $this->where;
+		$m = \diModel::createForTable($this->getTable(), $id, 'id');
+		$orderByValue = $m->get($orderByField);
 
 		$sign = strtolower($dir) == "asc" ? "<" : ">";
-		$where2 = "{$orderby}{$sign}'{$r->$orderby}'";
 
-		if ($where)
-			$where .= " and ";
-		else
-			$where = "WHERE ";
+		$col = $this->getInitialCollection();
+		$col
+			->filterBy($orderByField, $sign, $orderByValue);
 
-		$where .= $where2;
-
-		$r2 = $this->getDb()->r($this->table, $where, "COUNT(id) AS cc");
-
-		$page = ceil(++$r2->cc / $this->per_page);
+		$page = ceil(($col->count() + 1) / $this->per_page);
 
 		return $page;
 	}

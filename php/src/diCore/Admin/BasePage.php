@@ -160,12 +160,12 @@ abstract class BasePage
 		{
 			$o->getTpl()
 				->assign([
-					"PAGE" => $o->getTwig()->getPage(),
+					'PAGE' => $o->getTwig()->getPage(),
 				]);
 		}
-		elseif ($o->getTpl()->defined("page"))
+		elseif ($o->getTpl()->defined('page'))
 		{
-			$o->getTpl()->process("page");
+			$o->getTpl()->process('page');
 		}
 
 		return $o;
@@ -211,7 +211,7 @@ abstract class BasePage
 
 	public function tryToInitTable()
 	{
-		if (method_exists($this, "initTable"))
+		if (method_exists($this, 'initTable'))
 		{
 			$this->initTable();
 		}
@@ -311,18 +311,28 @@ abstract class BasePage
 	private function initPagesNavy()
 	{
 		if (
-			(!$this->PagesNavy && \diConfiguration::exists("admin_per_page[" . $this->getTable() . "]")) ||
+			(!$this->PagesNavy && $this->isPagesNavyNeeded()) ||
 			($this->PagesNavy && !$this->PagesNavy->getWhere() && $this->hasFilters() && $this->getFilters()->get_where())
 		   )
 		{
 			$this->PagesNavy = new \diPagesNavy(
 				$this->getTable(),
-				\diConfiguration::get("admin_per_page[" . $this->getTable() . "]"),
-				$this->hasFilters() ? $this->getFilters()->get_where() : ""
+				$this->getCountPerPage(),
+				$this->hasFilters() ? $this->getFilters()->get_where() : ''
 			);
 		}
 
 		return $this;
+	}
+
+	protected function isPagesNavyNeeded()
+	{
+		return \diConfiguration::exists('admin_per_page[' . $this->getTable() . ']');
+	}
+
+	protected function getCountPerPage()
+	{
+		return \diConfiguration::get('admin_per_page[' . $this->getTable() . ']');
 	}
 
 	/**
@@ -345,7 +355,7 @@ abstract class BasePage
 
 		if (!$this->PagesNavy && $strict)
 	    {
-	    	throw new \Exception("diPagesNavy not initialized");
+	    	throw new \Exception('diPagesNavy not initialized');
 	    }
 
 		return $this->PagesNavy;
@@ -367,7 +377,7 @@ abstract class BasePage
 	{
 	    if (!$this->hasList())
 	    {
-	    	throw new \Exception("diAdminList not initialized");
+	    	throw new \Exception('diAdminList not initialized');
 	    }
 
 		return $this->List;
@@ -389,7 +399,7 @@ abstract class BasePage
 	{
 		if (!$this->hasGrid())
 		{
-			throw new \Exception("diAdminGrid not initialized");
+			throw new \Exception('diAdminGrid not initialized');
 		}
 
 		return $this->Grid;
@@ -411,7 +421,7 @@ abstract class BasePage
 	{
 	    if (!$this->Form)
 	    {
-	    	throw new \Exception("diAdminForm not initialized");
+	    	throw new \Exception('diAdminForm not initialized');
 		}
 
 		return $this->Form;
@@ -431,7 +441,7 @@ abstract class BasePage
 	 */
 	public function filtersBlockNeeded()
 	{
-		return $this->hasFilters() && (!!$this->getOption("filters", "sortByAr") || !!$this->getFilters()->getFilters());
+		return $this->hasFilters() && (!!$this->getOption('filters', 'sortByAr') || !!$this->getFilters()->getFilters());
 	}
 
 	/**
@@ -442,7 +452,7 @@ abstract class BasePage
 	{
 		if (!$this->hasFilters())
 		{
-			throw new \Exception("Filters not initialized");
+			throw new \Exception('Filters not initialized');
 		}
 
 		return $this->Filters;
@@ -464,7 +474,7 @@ abstract class BasePage
 	{
 	    if (!$this->Submit)
 	    {
-	    	throw new \Exception("Submit not initialized");
+	    	throw new \Exception('Submit not initialized');
 		}
 
 		return $this->Submit;
@@ -486,7 +496,7 @@ abstract class BasePage
 	{
 	    if (!$this->hasTable())
 		{
-			throw new \Exception("Table undefined in " . get_class($this));
+			throw new \Exception('Table undefined in ' . get_class($this));
 		}
 
 		return $this->table;
@@ -574,22 +584,22 @@ abstract class BasePage
 
 	protected function getFormWorkerUri()
 	{
-	    if (method_exists($this, "submitForm"))
+	    if (method_exists($this, 'submitForm'))
 	    {
-	    	return Base::getPageUri($this->getBasePath(), "submit");
+	    	return Base::getPageUri($this->getBasePath(), 'submit');
 	    }
 
-		return $this->getTable() . "/submit.php";
+		return $this->getTable() . '/submit.php';
 	}
 
 	protected function getListQueryFilters()
 	{
-		return $this->hasFilters() ? $this->getFilters()->getQuery() : "";
+		return $this->hasFilters() ? $this->getFilters()->getQuery() : '';
 	}
 
 	protected function getListQueryLimit()
 	{
-		return $this->hasPagesNavy() ? $this->getPagesNavy()->getSqlLimit() : "";
+		return $this->hasPagesNavy() ? $this->getPagesNavy()->getSqlLimit() : '';
 	}
 
 	protected function getListPageSize()
@@ -605,7 +615,8 @@ abstract class BasePage
 	protected function extendListQueryOptions($options = [])
 	{
 		return extend([
-			'query' => '',
+			'query' => '', // deprecated
+			'filterBy' => [],
 			'limit' => '',
 			'pageNumber' => null,
 			'pageSize' => null,
@@ -732,11 +743,11 @@ abstract class BasePage
 	 */
 	public function getImgUrlPrefix(\diModel $model)
 	{
-		return class_exists("diExternalFolders") &&
+		return class_exists('diExternalFolders') &&
 			$model->exists(\diExternalFolders::FIELD_NAME) &&
 			$model->get(\diExternalFolders::FIELD_NAME) != \diExternalFolders::MAIN
-			? ""
-			: "/";
+			? ''
+			: '/';
 	}
 
 	protected function beforeRenderList()
@@ -775,19 +786,19 @@ abstract class BasePage
 				    break;
 		    }
 
-		    if ($filters = $this->getOption("filters"))
+		    if ($filters = $this->getOption('filters'))
 		    {
 			    $this->Filters = new \diAdminFilters($this);
-			    $this->getFilters()->setSortableState(isset($filters["sortByAr"]));
+			    $this->getFilters()->setSortableState(isset($filters['sortByAr']));
 
-			    if (isset($filters["defaultSorter"]))
+			    if (isset($filters['defaultSorter']))
 			    {
-				    $this->getFilters()->set_default_sorter($filters["defaultSorter"]);
+				    $this->getFilters()->set_default_sorter($filters['defaultSorter']);
 			    }
 
-			    if (isset($filters["buttonOptions"]))
+			    if (isset($filters['buttonOptions']))
 			    {
-				    $this->getFilters()->setButtonOptions($filters["buttonOptions"]);
+				    $this->getFilters()->setButtonOptions($filters['buttonOptions']);
 			    }
 
 			    $this->setupFilters();
@@ -795,8 +806,8 @@ abstract class BasePage
 			    if ($this->getFilters()->getSortableState())
 			    {
 					$this->getFilters()
-						->setSelectFromArrayInput("sortby", $filters["sortByAr"])
-						->setSelectFromArrayInput("dir", \diAdminFilters::$dirAr);
+						->setSelectFromArrayInput('sortby', $filters['sortByAr'])
+						->setSelectFromArrayInput('dir', \diAdminFilters::$dirAr);
 			    }
 		    }
 	    }
@@ -863,9 +874,9 @@ abstract class BasePage
 			{
 				$this->getTpl()
 					->assign([
-						"PAGES_NAVY" => $this->getPagesNavy()->print_pages(Base::getPageUri($this->getModule())),
+						'PAGES_NAVY' => $this->getPagesNavy()->print_pages(Base::getPageUri($this->getModule())),
 					])
-					->parse("navy");
+					->parse('navy');
 			}
 
 			$this->printList();
@@ -873,7 +884,7 @@ abstract class BasePage
 			if ($this->hasList())
 			{
 				$this->getTpl()->assign([
-					"TABLE" => $this->getList()->getHtml(),
+					'TABLE' => $this->getList()->getHtml(),
 				]);
 			}
 		}
@@ -883,7 +894,7 @@ abstract class BasePage
 		if ($this->filtersBlockNeeded())
 		{
 			$this->getTpl()->assign([
-				"FILTERS" => $this->getFilters()->getBlockHtml() . $this->getFilters()->get_js_data(true),
+				'FILTERS' => $this->getFilters()->getBlockHtml() . $this->getFilters()->get_js_data(true),
 			]);
 		}
 
@@ -893,18 +904,18 @@ abstract class BasePage
 		{
 			$this->getTpl()->assign('before_table', $this->getTwig()->getAssigned('before_table'));
 		}
-		elseif ($this->getTpl()->defined("before_table"))
+		elseif ($this->getTpl()->defined('before_table'))
 		{
-			$this->getTpl()->parse("before_table");
+			$this->getTpl()->parse('before_table');
 		}
 
 		if ($this->getTwig()->assigned('after_table'))
 		{
 			$this->getTpl()->assign('after_table', $this->getTwig()->getAssigned('after_table'));
 		}
-		elseif ($this->getTpl()->defined("after_table"))
+		elseif ($this->getTpl()->defined('after_table'))
 		{
-			$this->getTpl()->parse("after_table");
+			$this->getTpl()->parse('after_table');
 		}
 	}
 
@@ -930,7 +941,7 @@ abstract class BasePage
 
 		$this->Form = new Form($this);
 		$this->getForm()
-			->setStaticMode($this->getOption("staticMode"))
+			->setStaticMode($this->getOption('staticMode'))
 			->read_data();
 
 		return true;
@@ -985,18 +996,18 @@ abstract class BasePage
 		{
 			$this->getTpl()->assign('before_form', $this->getTwig()->getAssigned('before_form'));
 		}
-		elseif ($this->getTpl()->defined("before_form"))
+		elseif ($this->getTpl()->defined('before_form'))
 		{
-			$this->getTpl()->parse("before_form");
+			$this->getTpl()->parse('before_form');
 		}
 
 		if ($this->getTwig()->assigned('after_form'))
 		{
 			$this->getTpl()->assign('after_form', $this->getTwig()->getAssigned('after_form'));
 		}
-		elseif ($this->getTpl()->defined("after_form"))
+		elseif ($this->getTpl()->defined('after_form'))
 		{
-			$this->getTpl()->parse("after_form");
+			$this->getTpl()->parse('after_form');
 		}
 	}
 
@@ -1008,7 +1019,7 @@ abstract class BasePage
 	{
 		$this->Submit = new Submit($this);
 
-		if ($this->getSubmit()->isSubmit() && !$this->getOption("staticMode"))
+		if ($this->getSubmit()->isSubmit() && !$this->getOption('staticMode'))
 		{
 			$this->getSubmit()->gatherData();
 
@@ -1025,7 +1036,7 @@ abstract class BasePage
 			$this->getSubmit()->storeData();
 		}
 
-		if ($this->getOption("updateSearchIndexOnSubmit"))
+		if ($this->getOption('updateSearchIndexOnSubmit'))
 		{
 			\diSearch::makeRecordIndex($this->getTable(), $this->getId());
 		}
@@ -1078,8 +1089,8 @@ abstract class BasePage
 		$this->beforeRenderList();
 		$this->renderList();
 
-		$sortBy = $this->hasFilters() ? $this->getFilters()->getSortBy() : "title";
-		$dir = $this->hasFilters() ? $this->getFilters()->getDir() : "ASC";
+		$sortBy = $this->hasFilters() ? $this->getFilters()->getSortBy() : 'title';
+		$dir = $this->hasFilters() ? $this->getFilters()->getDir() : 'ASC';
 
 		$page = $this->hasPagesNavy()
 			? $this->getPagesNavy()->get_page_of($this->getId(), $sortBy, $dir)
@@ -1087,7 +1098,7 @@ abstract class BasePage
 
 		if ($page)
 		{
-			$ar["page"] = $page;
+			$ar['page'] = $page;
 		}
 
 		return $ar;
@@ -1141,7 +1152,7 @@ abstract class BasePage
 
 	public static function getFieldFlags($fieldsAr, $field)
 	{
-		$flags = isset($fieldsAr[$field]["flags"]) ? $fieldsAr[$field]["flags"] : [];
+		$flags = isset($fieldsAr[$field]['flags']) ? $fieldsAr[$field]['flags'] : [];
 
 		if (!is_array($flags))
 		{
@@ -1169,19 +1180,19 @@ abstract class BasePage
 	 */
 	public function getFormTabs()
 	{
-		return isset($GLOBALS["tables_tabs_ar"][$this->getTable()])
-			? $GLOBALS["tables_tabs_ar"][$this->getTable()]
+		return isset($GLOBALS['tables_tabs_ar'][$this->getTable()])
+			? $GLOBALS['tables_tabs_ar'][$this->getTable()]
 			: null;
 	}
 
 	public function getFormFields()
 	{
-		return $GLOBALS[$this->getTable()."_form_fields"];
+		return $GLOBALS[$this->getTable() . '_form_fields'];
 	}
 
 	public function getLocalFields()
 	{
-		return $GLOBALS[$this->getTable()."_local_fields"];
+		return $GLOBALS[$this->getTable() . '_local_fields'];
 	}
 
 	public function getFormFieldsFiltered()
@@ -1191,11 +1202,11 @@ abstract class BasePage
 		if ($this->useEditLog() && $this->getId())
 		{
 			$ar[\diAdminTableEditLogModel::ADMIN_TAB_NAME] = [
-				"type" => "string",
-				"title" => "Журнал изменений",
-				"default" => "",
-				"flags" => ["virtual", "static"],
-				"tab" => \diAdminTableEditLogModel::ADMIN_TAB_NAME,
+				'type' => 'string',
+				'title' => 'Журнал изменений',
+				'default' => '',
+				'flags' => ['virtual', 'static'],
+				'tab' => \diAdminTableEditLogModel::ADMIN_TAB_NAME,
 			];
 		}
 
@@ -1268,13 +1279,13 @@ abstract class BasePage
 
 				if ($state)
 				{
-					$fieldsAr[$field]["flags"] = array_merge($flags, $flag);
+					$fieldsAr[$field]['flags'] = array_merge($flags, $flag);
 				}
 				else
 				{
 					foreach ($flag as $fl)
 					{
-						$fieldsAr[$field]["flags"] = ArrayHelper::removeByValue($flags, $fl);
+						$fieldsAr[$field]['flags'] = ArrayHelper::removeByValue($flags, $fl);
 					}
 				}
 			}
@@ -1342,27 +1353,27 @@ abstract class BasePage
 
 	public static function setFieldsHidden($fieldsAr, $fields)
 	{
-		return self::addFieldFlag($fieldsAr, $fields, "hidden");
+		return self::addFieldFlag($fieldsAr, $fields, 'hidden');
 	}
 
 	public static function setFieldsStatic($fieldsAr, $fields)
 	{
-		return self::addFieldFlag($fieldsAr, $fields, "static");
+		return self::addFieldFlag($fieldsAr, $fields, 'static');
 	}
 
 	public static function setFieldsVisible($fieldsAr, $fields)
 	{
-		return self::removeFieldFlag($fieldsAr, $fields, "hidden");
+		return self::removeFieldFlag($fieldsAr, $fields, 'hidden');
 	}
 
 	public static function setFieldsEditable($fieldsAr, $fields)
 	{
-		return self::removeFieldFlag($fieldsAr, $fields, "static");
+		return self::removeFieldFlag($fieldsAr, $fields, 'static');
 	}
 
 	public static function setFieldTitle($fieldsAr, $field, $title)
 	{
-		$fieldsAr[$field]["title"] = $title;
+		$fieldsAr[$field]['title'] = $title;
 
 		return $fieldsAr;
 	}
@@ -1374,7 +1385,7 @@ abstract class BasePage
 		if (isset($admin_captions_ar[$this->getLanguage()][$this->getTable()]))
 		{
 			$s = $admin_captions_ar[$this->getLanguage()][$this->getTable()];
-			if (($x = strpos($s, " / ")) !== false)
+			if (($x = strpos($s, ' / ')) !== false)
 			{
 				$s = substr($s, 0, $x);
 			}

@@ -192,9 +192,6 @@ class Model extends \diModel
 			}
 		}
 
-		$this
-			->setOrigData();
-
 		return $this;
 	}
 
