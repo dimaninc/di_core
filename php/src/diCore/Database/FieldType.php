@@ -13,6 +13,7 @@ use diCore\Tool\SimpleContainer;
 class FieldType extends SimpleContainer
 {
 	const string = 1;
+	const bool = 2;
 
 	const int = 11;
 	const float = 12;
@@ -25,6 +26,7 @@ class FieldType extends SimpleContainer
 
 	public static $names = [
 		self::string => 'string',
+		self::bool => 'bool',
 		self::int => 'int',
 		self::float => 'float',
 		self::double => 'double',
@@ -36,6 +38,7 @@ class FieldType extends SimpleContainer
 
 	public static $titles = [
 		self::string => 'String',
+		self::bool => 'Bool',
 		self::int => 'Int',
 		self::float => 'Float',
 		self::double => 'Double',

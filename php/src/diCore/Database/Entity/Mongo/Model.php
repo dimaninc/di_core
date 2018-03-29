@@ -113,6 +113,10 @@ class Model extends \diModel
 				$value = (double)$value;
 				break;
 
+			case FieldType::bool:
+				$value = !!$value;
+				break;
+
 			case FieldType::timestamp:
 			case FieldType::datetime:
 				if (!$value instanceof \MongoDB\BSON\UTCDatetime)
