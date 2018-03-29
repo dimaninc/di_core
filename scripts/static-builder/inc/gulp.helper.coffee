@@ -1,6 +1,16 @@
 Helper =
     workFolder: './'
 
+    extend: ->
+        for i in [1..arguments.length]
+            for key of arguments[i]
+                if arguments[i].hasOwnProperty(key)
+                    if typeof arguments[0][key] is 'object' and typeof arguments[i][key] is 'object'
+                        @extend arguments[0][key], arguments[i][key]
+                    else
+                        arguments[0][key] = arguments[i][key]
+        arguments[0]
+
     setWorkFolder: (@workFolder) ->
         @
 
@@ -126,9 +136,10 @@ Helper =
 
         @
 
-    assignLessTaskToGulp: (gulp, opts = fn: null, buildFolder: null) ->
+    assignLessTaskToGulp: (gulp, opts = {}) ->
         less = @req 'gulp-less' unless less
-        gulp.task 'less', (done) =>
+        opts = @extend {fn: null, buildFolder: null, taskName: 'less'}, opts
+        gulp.task opts.taskName, (done) =>
             gulp.src @fullPath opts.fn
             .pipe less()
             .on 'error', console.log
@@ -136,10 +147,11 @@ Helper =
             .on 'end', -> done()
         @
 
-    assignStylusTaskToGulp: (gulp, opts = fn: null, buildFolder: null) ->
+    assignStylusTaskToGulp: (gulp, opts = {}) ->
         stylus = @req 'gulp-stylus' unless stylus
         nib = @req 'nib' unless nib
-        gulp.task 'stylus', (done) =>
+        opts = @extend {fn: null, buildFolder: null, taskName: 'stylus'}, opts
+        gulp.task opts.taskName, (done) =>
             gulp.src @fullPath opts.fn
             .pipe stylus use: nib(), 'include css': true
             .on 'error', console.log
@@ -147,9 +159,10 @@ Helper =
             .on 'end', -> done()
         @
 
-    assignPngSpritesTaskToGulp: (gulp, opts = mask: null, imgName: null, cssName: null, cssFormat: 'stylus', imgFolder: null, cssFolder: null) ->
+    assignPngSpritesTaskToGulp: (gulp, opts = {}) ->
         spriteSmith = @req 'gulp.spritesmith' unless spriteSmith
-        gulp.task 'stylus-sprite', (done) =>
+        opts = @extend {mask: null, imgName: null, cssName: null, cssFormat: 'stylus', imgFolder: null, cssFolder: null, taskName: 'stylus-sprite'}, opts
+        gulp.task opts.taskName, (done) =>
             spriteData = gulp.src @fullPath opts.mask
             .pipe spriteSmith
                 imgName: opts.imgName
@@ -170,9 +183,10 @@ Helper =
             spriteData.css.pipe gulp.dest @fullPath opts.cssFolder
         @
 
-    assignCssConcatTaskToGulp: (gulp, opts = files: [], output: null) ->
+    assignCssConcatTaskToGulp: (gulp, opts = {}) ->
         concat = @req 'gulp-concat' unless concat
-        gulp.task 'css-concat', (done) =>
+        opts = @extend {files: [], output: null, taskName: 'css-concat'}, opts
+        gulp.task opts.taskName, (done) =>
             gulp.src opts.files.map (f) => @fullPath f
             .pipe concat opts.output
             .on 'error', console.log
@@ -184,9 +198,10 @@ Helper =
         @deleteFolderRecursive @fullPath folder
         @
 
-    assignCoffeeTaskToGulp: (gulp, opts = folder: null, mask: null, jsBuildFolder: null, cleanBefore: false) ->
-        coffee = @req 'gulp-coffee'
-        gulp.task 'coffee', (done) =>
+    assignCoffeeTaskToGulp: (gulp, opts = {}) ->
+        coffee = @req 'gulp-coffee' unless coffee
+        opts = @extend {folder: null, mask: null, jsBuildFolder: null, cleanBefore: false, taskName: 'coffee'}, opts
+        gulp.task opts.taskName, (done) =>
             @cleanCoffeeBuildDirectory opts.jsBuildFolder if opts.cleanBefore
             gulp.src @fullPath opts.folder + opts.mask
             .pipe coffee bare: true

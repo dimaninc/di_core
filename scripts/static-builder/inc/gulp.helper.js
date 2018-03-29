@@ -4,6 +4,21 @@ var Helper,
 
 Helper = {
   workFolder: './',
+  extend: function() {
+    var i, j, key, ref;
+    for (i = j = 1, ref = arguments.length; 1 <= ref ? j <= ref : j >= ref; i = 1 <= ref ? ++j : --j) {
+      for (key in arguments[i]) {
+        if (arguments[i].hasOwnProperty(key)) {
+          if (typeof arguments[0][key] === 'object' && typeof arguments[i][key] === 'object') {
+            this.extend(arguments[0][key], arguments[i][key]);
+          } else {
+            arguments[0][key] = arguments[i][key];
+          }
+        }
+      }
+    }
+    return arguments[0];
+  },
   setWorkFolder: function(workFolder) {
     this.workFolder = workFolder;
     return this;
@@ -80,7 +95,7 @@ Helper = {
     return ['_admin/_inc/cache', '_cfg/cache', 'db/dump', 'htdocs/assets/fonts', 'htdocs/assets/images/_core', 'htdocs/assets/js/_core', 'htdocs/assets/styles/_core', 'htdocs/uploads', 'log', 'log/db', 'log/debug'];
   },
   createFolders: function(done) {
-    var fn, folder, folders, i, len, mkdirp, tasksDone, tasksTotal;
+    var fn, folder, folders, j, len, mkdirp, tasksDone, tasksTotal;
     if (!mkdirp) {
       mkdirp = this.req('mkdirp');
     }
@@ -101,8 +116,8 @@ Helper = {
         return Helper.tryDone(++tasksDone, tasksTotal, done);
       });
     };
-    for (i = 0, len = folders.length; i < len; i++) {
-      folder = folders[i];
+    for (j = 0, len = folders.length; j < len; j++) {
+      folder = folders[j];
       fn(folder);
     }
     return this;
@@ -132,15 +147,17 @@ Helper = {
   assignLessTaskToGulp: function(gulp, opts) {
     var less;
     if (opts == null) {
-      opts = {
-        fn: null,
-        buildFolder: null
-      };
+      opts = {};
     }
     if (!less) {
       less = this.req('gulp-less');
     }
-    gulp.task('less', (function(_this) {
+    opts = this.extend({
+      fn: null,
+      buildFolder: null,
+      taskName: 'less'
+    }, opts);
+    gulp.task(opts.taskName, (function(_this) {
       return function(done) {
         return gulp.src(_this.fullPath(opts.fn)).pipe(less()).on('error', console.log).pipe(gulp.dest(_this.fullPath(opts.buildFolder))).on('end', function() {
           return done();
@@ -152,10 +169,7 @@ Helper = {
   assignStylusTaskToGulp: function(gulp, opts) {
     var nib, stylus;
     if (opts == null) {
-      opts = {
-        fn: null,
-        buildFolder: null
-      };
+      opts = {};
     }
     if (!stylus) {
       stylus = this.req('gulp-stylus');
@@ -163,7 +177,12 @@ Helper = {
     if (!nib) {
       nib = this.req('nib');
     }
-    gulp.task('stylus', (function(_this) {
+    opts = this.extend({
+      fn: null,
+      buildFolder: null,
+      taskName: 'stylus'
+    }, opts);
+    gulp.task(opts.taskName, (function(_this) {
       return function(done) {
         return gulp.src(_this.fullPath(opts.fn)).pipe(stylus({
           use: nib(),
@@ -178,19 +197,21 @@ Helper = {
   assignPngSpritesTaskToGulp: function(gulp, opts) {
     var spriteSmith;
     if (opts == null) {
-      opts = {
-        mask: null,
-        imgName: null,
-        cssName: null,
-        cssFormat: 'stylus',
-        imgFolder: null,
-        cssFolder: null
-      };
+      opts = {};
     }
     if (!spriteSmith) {
       spriteSmith = this.req('gulp.spritesmith');
     }
-    gulp.task('stylus-sprite', (function(_this) {
+    opts = this.extend({
+      mask: null,
+      imgName: null,
+      cssName: null,
+      cssFormat: 'stylus',
+      imgFolder: null,
+      cssFolder: null,
+      taskName: 'stylus-sprite'
+    }, opts);
+    gulp.task(opts.taskName, (function(_this) {
       return function(done) {
         var spriteData;
         spriteData = gulp.src(_this.fullPath(opts.mask)).pipe(spriteSmith({
@@ -199,12 +220,12 @@ Helper = {
           cssFormat: opts.cssFormat,
           algorithm: 'binary-tree',
           cssTemplate: function(data) {
-            var i, item, len, ref, template, timestamp;
+            var item, j, len, ref, template, timestamp;
             timestamp = (new Date).getTime();
             template = "$sprite-timestamp = " + timestamp + "\n";
             ref = data.items;
-            for (i = 0, len = ref.length; i < len; i++) {
-              item = ref[i];
+            for (j = 0, len = ref.length; j < len; j++) {
+              item = ref[j];
               template += "$sprite-" + item.name + " = " + item.px.offset_x + " " + item.px.offset_y + " " + item.px.width + " " + item.px.height + "\n";
             }
             return template;
@@ -221,15 +242,17 @@ Helper = {
   assignCssConcatTaskToGulp: function(gulp, opts) {
     var concat;
     if (opts == null) {
-      opts = {
-        files: [],
-        output: null
-      };
+      opts = {};
     }
     if (!concat) {
       concat = this.req('gulp-concat');
     }
-    gulp.task('css-concat', (function(_this) {
+    opts = this.extend({
+      files: [],
+      output: null,
+      taskName: 'css-concat'
+    }, opts);
+    gulp.task(opts.taskName, (function(_this) {
       return function(done) {
         return gulp.src(opts.files.map(function(f) {
           return _this.fullPath(f);
@@ -247,15 +270,19 @@ Helper = {
   assignCoffeeTaskToGulp: function(gulp, opts) {
     var coffee;
     if (opts == null) {
-      opts = {
-        folder: null,
-        mask: null,
-        jsBuildFolder: null,
-        cleanBefore: false
-      };
+      opts = {};
     }
-    coffee = this.req('gulp-coffee');
-    gulp.task('coffee', (function(_this) {
+    if (!coffee) {
+      coffee = this.req('gulp-coffee');
+    }
+    opts = this.extend({
+      folder: null,
+      mask: null,
+      jsBuildFolder: null,
+      cleanBefore: false,
+      taskName: 'coffee'
+    }, opts);
+    gulp.task(opts.taskName, (function(_this) {
       return function(done) {
         if (opts.cleanBefore) {
           _this.cleanCoffeeBuildDirectory(opts.jsBuildFolder);
