@@ -1252,7 +1252,7 @@ EOF;
 
 		if (empty($_POST["{$this->field}_ids_ar"]))
 		{
-			die("{$this->field}_ids_ar not defined. Please contact coders");
+			throw new \Exception("{$this->field}_ids_ar not defined. Please contact coders");
 		}
 
 		$ids_ar = [];
@@ -1436,7 +1436,9 @@ EOF;
 
 		$ids_ar = [];
 
-		if (!empty($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['name'][0]))
+		$atLeastOneUploaded = array_sum($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['size']) > 0;
+
+		if ($atLeastOneUploaded)
 		{
 			$id = self::MULTIPLE_UPLOAD_FIRST_ID;
 
@@ -1451,7 +1453,10 @@ EOF;
 
 			foreach ($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['name'] as $idx => $name)
 			{
-				if (!empty($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['error'][$idx]))
+				if (
+					!empty($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['error'][$idx]) &&
+					$_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['error'][$idx] != 4
+				   )
 				{
 					\diCore\Tool\Logger::getInstance()->log($idx . ' error: ' .
 						$_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['error'][$idx], 'multiple');
