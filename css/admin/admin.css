@@ -1172,9 +1172,11 @@ ul.left-menu > li[state="0"] > ul {
 }
 .diadminform-row[data-type="dynamic"] .title {
   width: auto;
+  float: none;
+  padding-bottom: 10px;
 }
 .diadminform-row[data-type="dynamic"] .value {
-  margin-left: 19px;
+  margin-left: 0;
 }
 .diadminform-row .tags-grid {
   margin-bottom: 15px;
