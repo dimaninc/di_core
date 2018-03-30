@@ -10,6 +10,13 @@ namespace diCore\Database\Entity\Mongo;
 
 use diCore\Database\FieldType;
 
+/**
+ * Class Model
+ * @package diCore\Database\Entity\Mongo
+ *
+ * @method string|null getId
+ * @method string|null getOrigId
+ */
 class Model extends \diModel
 {
 	const id_field_name = '_id';
@@ -101,6 +108,10 @@ class Model extends \diModel
 
 		switch ($type)
 		{
+			case FieldType::mongo_id:
+				$value = new \MongoDB\BSON\ObjectID($value);
+				break;
+
 			case FieldType::int:
 				$value = (int)$value;
 				break;

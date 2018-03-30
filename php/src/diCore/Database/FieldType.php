@@ -24,6 +24,8 @@ class FieldType extends SimpleContainer
 	const datetime = 23;
 	const timestamp = 24;
 
+	const mongo_id = 32;
+
 	public static $names = [
 		self::string => 'string',
 		self::bool => 'bool',
@@ -34,6 +36,7 @@ class FieldType extends SimpleContainer
 		self::time => 'time',
 		self::datetime => 'datetime',
 		self::timestamp => 'timestamp',
+		self::mongo_id => 'mongo_id',
 	];
 
 	public static $titles = [
@@ -46,5 +49,6 @@ class FieldType extends SimpleContainer
 		self::time => 'Time',
 		self::datetime => 'Datetime',
 		self::timestamp => 'Timestamp',
+		self::mongo_id => 'Mongo id',
 	];
 }
