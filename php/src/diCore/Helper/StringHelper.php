@@ -26,7 +26,7 @@ class StringHelper
 
 	public static function fixFloatDot($float)
 	{
-		return str_replace(",", ".", "$float");
+		return str_replace(',', '.', "$float");
 	}
 
 	public static function in($str)
@@ -85,7 +85,7 @@ class StringHelper
 	public static function wysiwygEmpty($s)
 	{
 		$s = preg_replace("/<\/?(p|br)[^>]*>/xis", "", $s);
-		$s = str_replace("&nbsp;", "", $s);
+		$s = str_replace('&nbsp;', '', $s);
 		$s = trim($s);
 
 		return !$s;
@@ -152,28 +152,64 @@ class StringHelper
 
 	public static function startsWith($haystack, $needle)
 	{
+		if (is_array($haystack))
+		{
+			foreach ($haystack as $h) if (self::startsWith($h, $needle)) return true;
+			return false;
+		}
+
+		if (is_array($needle))
+		{
+			foreach ($needle as $n) if (self::startsWith($haystack, $n)) return true;
+			return false;
+		}
+
 		return substr($haystack, 0, strlen($needle)) === $needle;
 	}
 
 	public static function endsWith($haystack, $needle)
 	{
+		if (is_array($haystack))
+		{
+			foreach ($haystack as $h) if (self::endsWith($h, $needle)) return true;
+			return false;
+		}
+
+		if (is_array($needle))
+		{
+			foreach ($needle as $n) if (self::endsWith($haystack, $n)) return true;
+			return false;
+		}
+
 		return substr($haystack, - strlen($needle)) === $needle;
 	}
 
 	public static function contains($haystack, $needle)
 	{
+		if (is_array($haystack))
+		{
+			foreach ($haystack as $h) if (self::contains($h, $needle)) return true;
+			return false;
+		}
+
+		if (is_array($needle))
+		{
+			foreach ($needle as $n) if (self::contains($haystack, $n)) return true;
+			return false;
+		}
+
 		return strpos($haystack, $needle) !== false;
 	}
 
 	public static function slash($path, $ending = true)
 	{
-		if ($ending && mb_substr($path, mb_strlen($path) - 1, 1) != "/")
+		if ($ending && mb_substr($path, mb_strlen($path) - 1, 1) != '/')
 		{
-			$path .= "/";
+			$path .= '/';
 		}
-		elseif (!$ending && mb_substr($path, 0, 1) != "/")
+		elseif (!$ending && mb_substr($path, 0, 1) != '/')
 		{
-			$path = "/" . $path;
+			$path = '/' . $path;
 		}
 
 		return $path;
@@ -181,11 +217,11 @@ class StringHelper
 
 	public static function unslash($path, $ending = true)
 	{
-		if ($ending && mb_substr($path, mb_strlen($path) - 1, 1) == "/")
+		if ($ending && mb_substr($path, mb_strlen($path) - 1, 1) == '/')
 		{
 			$path = mb_substr($path, 0, mb_strlen($path) - 1);
 		}
-		elseif (!$ending && mb_substr($path, 0, 1) == "/")
+		elseif (!$ending && mb_substr($path, 0, 1) == '/')
 		{
 			$path = mb_substr($path, 1);
 		}
@@ -209,7 +245,7 @@ class StringHelper
 		$position = 0;
 		$tags = [];
 
-		$res = "";
+		$res = '';
 
 		if (mb_strlen($s) > $maxLength)
 		{
@@ -217,7 +253,7 @@ class StringHelper
 		}
 		else
 		{
-			$trailer = "";
+			$trailer = '';
 		}
 
 		// For UTF-8, we need to count multibyte sequences as one character.
@@ -312,12 +348,12 @@ class StringHelper
 
 	public static function replaceFileExtension($fn, $newExtension = '')
 	{
-		if ($newExtension && $newExtension{0} != ".")
+		if ($newExtension && $newExtension{0} != '.')
 		{
-			$newExtension = "." . $newExtension;
+			$newExtension = '.' . $newExtension;
 		}
 
-		$x = strrpos($fn, ".");
+		$x = strrpos($fn, '.');
 
 		if ($x !== false)
 		{
