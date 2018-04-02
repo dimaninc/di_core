@@ -195,7 +195,7 @@ class diTwig
 		{
 			if ($recursive)
 			{
-				$this->data = array_replace_recursive($this->data, $data);
+				$this->data = array_merge_recursive($this->data, $data);
 			}
 			else
 			{
