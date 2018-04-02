@@ -38,20 +38,20 @@ class diAdminList
 		$this->AdminPage = $AdminPage;
 
 		$this->htmlAr = [
-			"head" => "",
-			"body" => "",
-			"foot" => "",
+			'head' => '',
+			'body' => '',
+			'foot' => '',
 		];
 
 		$this->options = extend([
-			"showControlPanel" => false,
-			"showHeader" => true,
-			"formBasePath" => null,
+			'showControlPanel' => false,
+			'showHeader' => true,
+			'formBasePath' => null,
 		], $options);
 
 		$this->printParts = array_keys($this->htmlAr);
 
-		$this->T = new diNiceTable($this->getAdminPage()->getTable(),
+		$this->T = new \diNiceTable($this->getAdminPage()->getTable(),
 			$this->getAdminPage()->getPagesNavy(false),
 			$this->getAdminPage()->getLanguage()
 		);
@@ -112,7 +112,7 @@ class diAdminList
 			if (!is_array($this->columnsAr[$name]))
 			{
 				$this->columnsAr[$name] = [
-					"title" => $this->columnsAr[$name],
+					'title' => $this->columnsAr[$name],
 				];
 			}
 
@@ -182,7 +182,7 @@ class diAdminList
 	public function getFieldTitle($name)
 	{
 		return $this->getAdminPage()->doesFieldExist($name)
-			? $this->getAdminPage()->getFieldProperty($name, "title")
+			? $this->getAdminPage()->getFieldProperty($name, 'title')
 			: null;
 	}
 
@@ -193,17 +193,17 @@ class diAdminList
 		    if (is_string($properties) && $properties)
 		    {
 			    $properties = [
-				    "title" => $properties,
+				    'title' => $properties,
 			    ];
 		    }
 
 			$p = extend([
-				"title" => $this->getFieldTitle($name),
-				"attrs" => [],
-				"headAttrs" => [],
+				'title' => $this->getFieldTitle($name),
+				'attrs' => [],
+				'headAttrs' => [],
 			], $properties);
 
-			$this->T->addColumn($p["title"], array_merge($p["attrs"], $p["headAttrs"]));
+			$this->T->addColumn($p['title'], array_merge($p['attrs'], $p['headAttrs']));
 		}
 
 		$this->columnsInited = true;
@@ -217,7 +217,10 @@ class diAdminList
 
 		foreach ($this->getCurRec() as $k => $v)
 		{
-			$this->replaceAr["%" . $k . "%"] = $v;
+			if (is_scalar($v))
+			{
+				$this->replaceAr['%' . $k . '%'] = $v;
+			}
 		}
 
 		return $this;
@@ -232,12 +235,12 @@ class diAdminList
 	{
 		if (is_array($href))
 		{
-		    if (!isset($href["method"]))
+		    if (!isset($href['method']))
 		    {
-		    	$href["method"] = "list";
+		    	$href['method'] = 'list';
 		    }
 
-			$href = \diCore\Admin\Base::getPageUri($href["module"], $href["method"], $href["params"]);
+			$href = \diCore\Admin\Base::getPageUri($href['module'], $href['method'], $href['params']);
 		}
 
 		return $href;
@@ -273,126 +276,126 @@ class diAdminList
 
 	    $this->prepareReplaceAr();
 
-		$html = "";
+		$html = '';
 
 		$html .= $this->T->openRow($r);
 
 		foreach ($this->columnsAr as $name => $properties)
 		{
-			if ($name == "id")
+			if ($name == 'id')
 			{
 				$html .= $this->T->idCell(true, false, false);
 			}
-			elseif ($name == "_checkbox" || $name == '#checkbox')
+			elseif ($name == '_checkbox' || $name == '#checkbox')
 			{
 				$p = extend([
 					'active' => true,
 				], $properties);
 
-				if (is_callable($p["active"]))
+				if (is_callable($p['active']))
 				{
-					$p["active"] = $p["active"]($this->getCurModel(), $name);
+					$p['active'] = $p['active']($this->getCurModel(), $name);
 				}
 
 				$html .= $this->T->idCell(false, $p['active'], false);
 			}
-			elseif ($name == "_expand" || $name == '#expand')
+			elseif ($name == '_expand' || $name == '#expand')
 			{
 				$p = extend([
 					'active' => true,
 				], $properties);
 
-				if (is_callable($p["active"]))
+				if (is_callable($p['active']))
 				{
-					$p["active"] = $p["active"]($this->getCurModel(), $name);
+					$p['active'] = $p['active']($this->getCurModel(), $name);
 				}
 
 				$html .= $this->T->idCell(false, false, $p['active']);
 			}
-			elseif (substr($name, 0, 1) == "#")
+			elseif (substr($name, 0, 1) == '#')
 			{
 				$name = substr($name, 1);
 				$isToggle = CMS::isFieldToggle($name);
-				$method = camelize(($isToggle ? "toggle" : $name) . "_btn_cell");
+				$method = camelize(($isToggle ? 'toggle' : $name) . '_btn_cell');
 
 				switch ($name)
 				{
-					case "create":
+					case 'create':
 						$p = extend([
-							"maxLevelNum" => null,
-							"hrefSuffix" => null,
+							'maxLevelNum' => null,
+							'hrefSuffix' => null,
 						], $properties);
 
-						$html .= $this->T->$method($p["maxLevelNum"], $p["hrefSuffix"]);
+						$html .= $this->T->$method($p['maxLevelNum'], $p['hrefSuffix']);
 						break;
 
-					case "href":
+					case 'href':
 						$p = extend([
-							"href" => null,
+							'href' => null,
 						], $properties);
 
-						if ($p["href"] === null)
+						if ($p['href'] === null)
 						{
-							$p["href"] = $this->getCurModel()->getHref();
+							$p['href'] = $this->getCurModel()->getHref();
 						}
 						else
 						{
-							if (is_callable($p["href"]))
+							if (is_callable($p['href']))
 							{
-								$p["href"] = $p["href"]($this->getCurModel(), $name);
+								$p['href'] = $p['href']($this->getCurModel(), $name);
 							}
 
-							$p["href"] = $this->replaceValues($p["href"]);
+							$p['href'] = $this->replaceValues($p['href']);
 						}
 
-						$html .= $this->T->hrefCell($p["href"]);
+						$html .= $this->T->hrefCell($p['href']);
 						break;
 
-					case "manage":
+					case 'manage':
 						$p = extend([
-							"href" => null,
-							"icon" => null,
+							'href' => null,
+							'icon' => null,
 						], $properties);
 
-						$html .= $this->T->$method($this->replaceValues($this->buildHref($p["href"])), $p["icon"]);
+						$html .= $this->T->$method($this->replaceValues($this->buildHref($p['href'])), $p['icon']);
 						break;
 
 					default:
 						$p = extend([
-							"active" => true,
-							"href" => "",
-							"onclick" => "",
+							'active' => true,
+							'href' => '',
+							'onclick' => '',
 						], $properties);
 
-						if (is_callable($p["active"]))
+						if (is_callable($p['active']))
 						{
-							$p["active"] = $p["active"]($this->getCurModel(), $name);
+							$p['active'] = $p['active']($this->getCurModel(), $name);
 						}
 
-						$p["href"] = $this->replaceValues($p["href"]);
-						$p["onclick"] = $this->replaceValues($p["onclick"]);
+						$p['href'] = $this->replaceValues($p['href']);
+						$p['onclick'] = $this->replaceValues($p['onclick']);
 
 						$html .= $isToggle
-							? $this->T->$method($name, $p["active"])
-							: ($p["active"] ? $this->T->$method($p) : $this->T->emptyBtnCell());
+							? $this->T->$method($name, $p['active'])
+							: ($p['active'] ? $this->T->$method($p) : $this->T->emptyBtnCell());
 						break;
 				}
 			}
 			else
 			{
 				$p = extend([
-					"bodyAttrs" => [],
+					'bodyAttrs' => [],
 				], $properties);
 
-				$method = empty($properties["noLink"]) && empty($properties["noHref"]) ? "textLinkCell" : "textCell";
+				$method = empty($properties['noLink']) && empty($properties['noHref']) ? 'textLinkCell' : 'textCell';
 
-				if (empty($properties["value"]))
+				if (empty($properties['value']))
 				{
-					$value = "%" . $name . "%";
+					$value = '%' . $name . '%';
 				}
 				else
 				{
-					$value = $properties["value"];
+					$value = $properties['value'];
 
 					if (is_callable($value))
 					{
@@ -402,27 +405,27 @@ class diAdminList
 
 				$value = $this->replaceValues($value);
 
-				if (!isset($p["bodyAttrs"]["data-field"]))
+				if (!isset($p['bodyAttrs']['data-field']))
 				{
-					$p["bodyAttrs"]["data-field"] = $name;
+					$p['bodyAttrs']['data-field'] = $name;
 				}
 
-				$html .= $this->T->$method($value, $p["bodyAttrs"]);
+				$html .= $this->T->$method($value, $p['bodyAttrs']);
 			}
 		}
 
 		$html .= $this->T->closeRow();
 
-		$this->htmlAr["body"] .= $html;
+		$this->htmlAr['body'] .= $html;
 
 		return $this;
 	}
 
-	public function setPrintParts($what = ["head", "body"])
+	public function setPrintParts($what = ['head', 'body'])
 	{
 		if (!is_array($what))
 		{
-			$what = explode(",", $what);
+			$what = explode(',', $what);
 		}
 
 		$this->printParts = $what;
@@ -433,7 +436,7 @@ class diAdminList
 	private function wrap($html)
 	{
 		return
-			$this->T->openTable($this->getOption("showHeader") ? diNiceTable::PRINT_HEADLINE : diNiceTable::NO_HEADLINE) .
+			$this->T->openTable($this->getOption('showHeader') ? diNiceTable::PRINT_HEADLINE : diNiceTable::NO_HEADLINE) .
 			$html .
 			$this->T->closeTable();
 	}
@@ -442,19 +445,19 @@ class diAdminList
 	{
 		$this->getAdminPage()->getTpl()
 			->assign([
-				"LIST_CONTROL_PANEL" => "",
+				'LIST_CONTROL_PANEL' => '',
 			]);
 
-		if ($this->getOption("showControlPanel"))
+		if ($this->getOption('showControlPanel'))
 		{
 			$this->getAdminPage()->getTpl()
 				->assign([
-					"TABLE" => $this->getAdminPage()->getTable(),
+					'TABLE' => $this->getAdminPage()->getTable(),
 				])
-				->process("list_control_panel");
+				->process('list_control_panel');
 		}
 
-		$html = "";
+		$html = '';
 
 		foreach ($this->printParts as $what)
 		{

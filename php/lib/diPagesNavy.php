@@ -213,14 +213,14 @@ class diPagesNavy
 				$where = "WHERE $where";
 			}
 
+			$this->where = $where;
+
 			if (!$this->col)
 			{
 				$this->col = $this->getInitialCollection();
 			}
 
 			$this->total_records = $this->col->count();
-
-			$this->where = $where;
 		}
 
 		$this->total_pages = $this->total_records ? ceil($this->total_records / $this->per_page) : 0;

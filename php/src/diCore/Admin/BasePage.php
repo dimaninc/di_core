@@ -312,13 +312,15 @@ abstract class BasePage
 	{
 		if (
 			(!$this->PagesNavy && $this->isPagesNavyNeeded()) ||
-			($this->PagesNavy && !$this->PagesNavy->getWhere() && $this->hasFilters() && $this->getFilters()->get_where())
+			// && $this->hasFilters()
+			($this->PagesNavy && !$this->PagesNavy->getWhere() && $this->getFilters()->get_where())
 		   )
 		{
 			$this->PagesNavy = new \diPagesNavy(
 				$this->getTable(),
 				$this->getCountPerPage(),
-				$this->hasFilters() ? $this->getFilters()->get_where() : ''
+				//$this->hasFilters() ? $this->getFilters()->get_where() : ''
+				$this->getFilters()->get_where()
 			);
 		}
 
@@ -450,6 +452,8 @@ abstract class BasePage
 	 */
 	public function getFilters()
 	{
+		$this->initFilters();
+
 		if (!$this->hasFilters())
 		{
 			throw new \Exception('Filters not initialized');
@@ -743,7 +747,7 @@ abstract class BasePage
 	 */
 	public function getImgUrlPrefix(\diModel $model)
 	{
-		return class_exists('diExternalFolders') &&
+		return class_exists('\diExternalFolders') &&
 			$model->exists(\diExternalFolders::FIELD_NAME) &&
 			$model->get(\diExternalFolders::FIELD_NAME) != \diExternalFolders::MAIN
 			? ''
@@ -786,33 +790,40 @@ abstract class BasePage
 				    break;
 		    }
 
-		    if ($filters = $this->getOption('filters'))
-		    {
-			    $this->Filters = new \diAdminFilters($this);
-			    $this->getFilters()->setSortableState(isset($filters['sortByAr']));
-
-			    if (isset($filters['defaultSorter']))
-			    {
-				    $this->getFilters()->set_default_sorter($filters['defaultSorter']);
-			    }
-
-			    if (isset($filters['buttonOptions']))
-			    {
-				    $this->getFilters()->setButtonOptions($filters['buttonOptions']);
-			    }
-
-			    $this->setupFilters();
-
-			    if ($this->getFilters()->getSortableState())
-			    {
-					$this->getFilters()
-						->setSelectFromArrayInput('sortby', $filters['sortByAr'])
-						->setSelectFromArrayInput('dir', \diAdminFilters::$dirAr);
-			    }
-		    }
+		    $this->initFilters();
 	    }
 
 		return true;
+	}
+
+	protected function initFilters()
+	{
+		if ($filters = $this->getOption('filters') && !$this->Filters)
+		{
+			$this->Filters = new \diAdminFilters($this);
+			$this->getFilters()->setSortableState(isset($filters['sortByAr']));
+
+			if (isset($filters['defaultSorter']))
+			{
+				$this->getFilters()->set_default_sorter($filters['defaultSorter']);
+			}
+
+			if (isset($filters['buttonOptions']))
+			{
+				$this->getFilters()->setButtonOptions($filters['buttonOptions']);
+			}
+
+			$this->setupFilters();
+
+			if ($this->getFilters()->getSortableState())
+			{
+				$this->getFilters()
+					->setSelectFromArrayInput('sortby', $filters['sortByAr'])
+					->setSelectFromArrayInput('dir', \diAdminFilters::$dirAr);
+			}
+		}
+
+		return $this;
 	}
 
 	protected function setupFilters()
