@@ -434,6 +434,8 @@ abstract class BasePage
 	 */
 	public function hasFilters()
 	{
+		$this->initFilters();
+
 		return !!$this->Filters;
 	}
 
@@ -798,7 +800,7 @@ abstract class BasePage
 
 	protected function initFilters()
 	{
-		if ($filters = $this->getOption('filters') && !$this->Filters)
+		if (!$this->Filters && $filters = $this->getOption('filters'))
 		{
 			$this->Filters = new \diAdminFilters($this);
 			$this->getFilters()->setSortableState(isset($filters['sortByAr']));

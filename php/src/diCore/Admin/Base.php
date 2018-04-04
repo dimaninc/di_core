@@ -15,8 +15,8 @@ use diCore\Helper\StringHelper;
 
 class Base
 {
-	const SUBFOLDER = "_admin";
-	const DEFAULT_METHOD = "list";
+	const SUBFOLDER = '_admin';
+	const DEFAULT_METHOD = 'list';
 
 	const INIT_MODE_STANDARD = 0;
 	const INIT_MODE_LITE = 1;
@@ -38,27 +38,27 @@ class Base
 	/** @var BasePage */
 	protected $adminPage;
 
-	private $version = "4.6";
+	private $version = '4.6';
 
-	protected $defaultSuperUsersAr = ["dimaninc"];
+	protected $defaultSuperUsersAr = ['dimaninc'];
 	protected $superUsersAr = [];
 
 	protected $superUserModules = [
-		"migrations",
-		"migrations/log",
-		"migrations/form",
-		"di_lib_models/form",
-		"di_lib_admin_pages/form",
+		'migrations',
+		'migrations/log',
+		'migrations/form',
+		'di_lib_models/form',
+		'di_lib_admin_pages/form',
 	];
 
 	protected $localUserModules = [
-		"migrations/form",
-		"di_lib_models/form",
-		"di_lib_admin_pages/form",
+		'migrations/form',
+		'di_lib_models/form',
+		'di_lib_admin_pages/form',
 	];
 
-	protected $siteTitle = "diCMS based";
-	protected $language = "ru";
+	protected $siteTitle = 'diCMS based';
+	protected $language = 'ru';
 	protected static $_language;
 
 	protected $wysiwygVendor = Form::wysiwygTinyMCE;
@@ -254,7 +254,7 @@ class Base
 			->printHead()
 			->printFooter();
 
-		echo $this->getTpl()->parse("index");
+		echo $this->getTpl()->parse('index');
 	}
 
 	protected function getStaticTimestampEnding()
@@ -267,24 +267,24 @@ class Base
 	private function getTemplateVariables()
 	{
 		return [
-			"html_base" => \diRequest::protocol() . '://' . \diRequest::domain() . '/' . self::SUBFOLDER . '/',
-			"current_uri" => \diRequest::requestUri(),
+			'html_base' => \diRequest::protocol() . '://' . \diRequest::domain() . '/' . self::SUBFOLDER . '/',
+			'current_uri' => \diRequest::requestUri(),
 
-			"logout_href" => \diLib::getAdminWorkerPath("admin_auth", "logout") .
-				"?back=" . urlencode(\diRequest::requestUri()),
+			'logout_href' => \diLib::getAdminWorkerPath('admin_auth', 'logout') .
+				'?back=' . urlencode(\diRequest::requestUri()),
 
-			"current_year" => date("Y"),
-			"page_title" => $this->getPageTitle(),
-			"site_title" => $this->getSiteTitle(),
+			'current_year' => date('Y'),
+			'page_title' => $this->getPageTitle(),
+			'site_title' => $this->getSiteTitle(),
 
-			"xx_version" => $this->getVersion(),
+			'xx_version' => $this->getVersion(),
 
-			"xx_path" => $this->getPath(),
-			"xx_module" => $this->getModule(),
-			"xx_table" => $this->getTable(),
-			"xx_id" => $this->getId(),
+			'xx_path' => $this->getPath(),
+			'xx_module' => $this->getModule(),
+			'xx_table' => $this->getTable(),
+			'xx_id' => $this->getId(),
 
-			"expand_collapse_block" => "",
+			'expand_collapse_block' => '',
 
 			'static_timestamp' => $this->getStaticTimestampEnding(),
 		];
@@ -296,12 +296,13 @@ class Base
 			->assign($this->getTemplateVariables())
 			->assign(\diLib::getAssetLocations(), 'ASSET_LOCATIONS.')
 			->assign(static::getVocabulary(), 'LANG.')
-			->assign($this->getAdminModel()->getTemplateVars(), "ADMIN_");
+			->assign($this->getAdminModel()->getTemplateVars(), 'ADMIN_');
 
 		return $this;
 	}
 
 	/**
+	 * @deprecated
 	 * @return \FastTemplate
 	 */
 	public function getTpl()
@@ -318,7 +319,6 @@ class Base
 		{
 			$this->Twig = \diTwig::create($this->twigCreateOptions);
 			$this->Twig->assign([
-				//'_tech' => $this->getTemplateVariables(),
 				'lang' => static::getVocabulary(),
 				'admin' => $this->getAdminModel(),
 				'asset_locations' => \diLib::getAssetLocations(),
@@ -356,23 +356,23 @@ class Base
 	public static function getAdminTpl()
 	{
 		$tpl = new \FastTemplate(
-			Config::getOldTplFolder() . "_admin/_tpl",
-			Config::getCacheFolder() . "_admin/_inc/cache/tpl_cache.php",
+			Config::getOldTplFolder() . '_admin/_tpl',
+			Config::getCacheFolder() . '_admin/_inc/cache/tpl_cache.php',
 			\FastTemplate::PLACE_ADMIN
 		);
 
 		$tpl
 			->strict()
-			->set_default_folder("")
+			->set_default_folder('')
 			->rebuild_cache()
 			->load_cache()
-			->define("`_index", [
-				"index",
+			->define('`_index', [
+				'index',
 
-				"expand_collapse_block",
-				"footer",
-				"head_includes",
-				"navy",
+				'expand_collapse_block',
+				'footer',
+				'head_includes',
+				'navy',
 			]);
 
 		return $tpl;
@@ -421,16 +421,16 @@ class Base
 
 	public function getRefinedMethod()
 	{
-		if ($this->getModule() == "login")
+		if ($this->getModule() == 'login')
 		{
-			return "";
+			return '';
 		}
 
 		$method = $this->getMethod();
 
-		if ($method == "form")
+		if ($method == 'form')
 		{
-			$method = $this->getId() ? "edit" : "add";
+			$method = $this->getId() ? 'edit' : 'add';
 		}
 
 		return $method;
@@ -469,46 +469,46 @@ class Base
 		return Config::getSiteTitle() ?: $this->siteTitle;
 	}
 
-	public static function getOldSchoolPath($module, $method = "list")
+	public static function getOldSchoolPath($module, $method = 'list')
 	{
-		return $module . ($method == "list" ? "" : "_" . $method);
+		return $module . ($method == 'list' ? '' : '_' . $method);
 	}
 
-	public static function getPageUri($module, $method = "", $params = [])
+	public static function getPageUri($module, $method = '', $params = [])
 	{
-		$methodPart = in_array($method, ["", "list"]) ? "" : "/$method";
+		$methodPart = in_array($method, ['', 'list']) ? '' : '/' . $method;
 
-		if ($method == "form" && isset($params["id"]))
+		if ($method == 'form' && isset($params['id']))
 		{
-			$idPart = $params["id"] . "/";
+			$idPart = $params['id'] . '/';
 
-			unset($params["id"]);
+			unset($params['id']);
 		}
 		else
 		{
-			$idPart = "";
+			$idPart = '';
 		}
 
-		$queryPart = $params ? "?" . (is_array($params) ? http_build_query($params) : $params) : "";
+		$queryPart = $params ? '?' . (is_array($params) ? http_build_query($params) : $params) : '';
 
-		return "/" . self::SUBFOLDER . "/" . $module . $methodPart . "/" . $idPart . $queryPart;
+		return '/' . self::SUBFOLDER . '/' . $module . $methodPart . '/' . $idPart . $queryPart;
 	}
 
-	public function getCurrentPageUri($method = "list", $paramsAr = [])
+	public function getCurrentPageUri($method = 'list', $paramsAr = [])
 	{
 		return self::getPageUri($this->getModule(), $method, $paramsAr);
 	}
 
 	public function getPageTitle()
 	{
-		return $this->getSiteTitle() . ": Admin / " . strip_tags($this->caption);
+		return $this->getSiteTitle() . ': Admin / ' . strip_tags($this->caption);
 	}
 
 	protected function printExpandCollapseBlock()
 	{
-		if (in_array($this->getTable(), ["content", "categories", "orders"]) || $this->forceShowExpandCollapse)
+		if (in_array($this->getTable(), ['content', 'categories', 'orders']) || $this->forceShowExpandCollapse)
 		{
-			$this->getTpl()->parse("EXPAND_COLLAPSE_BLOCK");
+			$this->getTpl()->parse('EXPAND_COLLAPSE_BLOCK');
 		}
 
 		return $this;
@@ -526,10 +526,10 @@ class Base
 
 			ob_start();
 
-			require \diPaths::fileSystem() . self::SUBFOLDER . "/" . $this->path . "/" . $this->filename;
+			require \diPaths::fileSystem() . self::SUBFOLDER . '/' . $this->path . '/' . $this->filename;
 
 			$this->getTpl()->assign([
-				"PAGE" => ob_get_contents(),
+				'PAGE' => ob_get_contents(),
 			]);
 
 			ob_end_clean();
@@ -551,8 +551,8 @@ class Base
 	protected function printCaption()
 	{
 		$this->getTpl()->assign([
-			"CAPTION" => $this->caption,
-			"CAPTION_BUTTONS" => $this->caption->getButtons(),
+			'CAPTION' => $this->caption,
+			'CAPTION_BUTTONS' => $this->caption->getButtons(),
 		]);
 
 		return $this;
@@ -575,7 +575,7 @@ class Base
 	{
 		if ($this->adminUser->authorizedForSetup())
 		{
-			$level = "root";
+			$level = 'root';
 		}
 		else
 		{
@@ -589,8 +589,8 @@ class Base
 	{
 		switch ($level)
 		{
-			case "root":
-				return "content";
+			case 'root':
+				return 'content';
 
 			default:
 				return null;
@@ -599,7 +599,7 @@ class Base
 
 	private function readParams()
 	{
-		$this->id = \diRequest::request("id", $this->getUriParam(2, ''));
+		$this->id = \diRequest::request('id', $this->getUriParam(2, ''));
 		$this->id = StringHelper::in($this->id);
 
 		return $this;
@@ -613,13 +613,13 @@ class Base
 	private function readUri()
 	{
 		$m = \diRequest::requestUri();
-		$x = strpos($m, "?");
+		$x = strpos($m, '?');
 		if ($x !== false)
 		{
 			$m = substr($m, 0, $x);
 		}
 
-		$this->uriParams = array_map("addslashes", explode("/", trim($m, "/")));
+		$this->uriParams = array_map('addslashes', explode('/', trim($m, '/')));
 
 		if ($this->uriParams && $this->uriParams[0] == self::SUBFOLDER)
 		{
@@ -630,24 +630,24 @@ class Base
 		$this->method = $this->getUriParam(1, self::DEFAULT_METHOD);
 
 		// back compatibility
-		if (\diRequest::get("path"))
+		if (\diRequest::get('path'))
 		{
-			$this->path = \diRequest::get("path", "");
-			$this->filename = "content.php";
+			$this->path = \diRequest::get('path', '');
+			$this->filename = 'content.php';
 
-			if (substr($this->path, strlen($this->path) - 5) == "_form")
+			if (substr($this->path, strlen($this->path) - 5) == '_form')
 			{
 				$this->path = substr($this->path, 0, strlen($this->path) - 5);
-				$this->filename = "form.php";
+				$this->filename = 'form.php';
 			}
 
 			$this->module = $this->path;
-			$this->method = $this->filename == "form.php" ? "form" : "list";
+			$this->method = $this->filename == 'form.php' ? 'form' : 'list';
 		}
 		else
 		{
 			$this->path = $this->module;
-			$this->filename = $this->method == "form" ? "form.php" : "content.php";
+			$this->filename = $this->method == 'form' ? 'form.php' : 'content.php';
 		}
 		//
 
@@ -665,20 +665,20 @@ class Base
 			// old school style
 			$pathForCheck = $this->module;
 
-			if ($this->method != "list")
+			if ($this->method != 'list')
 			{
-				$m = in_array($this->method, ["form", "submit"]) ? "form" : $this->method;
+				$m = in_array($this->method, ['form', 'submit']) ? 'form' : $this->method;
 
-				$pathForCheck .= "_".$m;
+				$pathForCheck .= '_' . $m;
 			}
 			//
 
 			foreach ($this->getAdminMenuFullTree() as $_title => $_ar)
 			{
 				if (
-					in_array($pathForCheck, $_ar["paths"]) &&
-					in_array($this->getAdminModel()->getLevel(), $_ar["permissions"]) &&
-					(empty($_ar["super"]) || $this->isAdminSuper())
+					in_array($pathForCheck, $_ar['paths']) &&
+					in_array($this->getAdminModel()->getLevel(), $_ar['permissions']) &&
+					(empty($_ar['super']) || $this->isAdminSuper())
 				)
 				{
 					$access_granted = true;
@@ -690,14 +690,14 @@ class Base
 			if (!$access_granted)
 			{
 				$this->module = $this->path = $this->getStartPath();
-				$this->filename = "content.php";
+				$this->filename = 'content.php';
 			}
 		}
 
 		if (!$this->module || !$this->adminUser->authorized())
 		{
-			$this->module = $this->path = "login";
-			$this->method = "form";
+			$this->module = $this->path = 'login';
+			$this->method = 'form';
 		}
 
 		return $this;
@@ -774,7 +774,7 @@ class Base
 
 	public function printFooter()
 	{
-		$this->getTpl()->process("footer");
+		$this->getTpl()->process('footer');
 
 		return $this;
 	}
@@ -820,35 +820,35 @@ class Base
 	protected static function getAdminMenuRow($moduleName, $options = [])
 	{
 		$options = extend([
-			"permissions" => ["root"],
-			"showList" => true,
-			"showForm" => true,
-			"listTitle" => static::getVocabulary('menu.list'),
-			"formTitle" => static::getVocabulary('menu.add'),
-			"listTitleSuffix" => "",
-			"formTitleSuffix" => "",
-			"extraPaths" => [],
+			'permissions' => ['root'],
+			'showList' => true,
+			'showForm' => true,
+			'listTitle' => static::getVocabulary('menu.list'),
+			'formTitle' => static::getVocabulary('menu.add'),
+			'listTitleSuffix' => '',
+			'formTitleSuffix' => '',
+			'extraPaths' => [],
 			'prefixRows' => [],
 			'suffixRows' => [],
 		], $options);
 
 		$ar = [
-			"items" => [],
-			"permissions" => $options["permissions"],
-			"paths" => array_merge([$moduleName, $moduleName . "_form"], $options["extraPaths"]),
+			'items' => [],
+			'permissions' => $options['permissions'],
+			'paths' => array_merge([$moduleName, $moduleName . '_form'], $options['extraPaths']),
 		];
 
-		if ($options["showList"])
+		if ($options['showList'])
 		{
-			$ar["items"][$options["listTitle"] . " " . $options["listTitleSuffix"]] = [
-				"module" => $moduleName,
+			$ar['items'][$options['listTitle'] . ' ' . $options['listTitleSuffix']] = [
+				'module' => $moduleName,
 			];
 		}
 
-		if ($options["showForm"])
+		if ($options['showForm'])
 		{
-			$ar["items"][$options["formTitle"] . " " . $options["formTitleSuffix"]] = [
-				"module" => $moduleName . "/form",
+			$ar['items'][$options['formTitle'] . ' ' . $options['formTitleSuffix']] = [
+				'module' => $moduleName . '/form',
 			];
 		}
 
@@ -868,8 +868,8 @@ class Base
 	protected function getAdminMenuTechTree()
 	{
 		return [
-			static::getVocabulary('menu.emails') => $this->getAdminMenuRow("mail_queue"),
-			static::getVocabulary('menu.admins') => $this->getAdminMenuRow("admins")
+			static::getVocabulary('menu.emails') => $this->getAdminMenuRow('mail_queue'),
+			static::getVocabulary('menu.admins') => $this->getAdminMenuRow('admins')
 		];
 	}
 
@@ -877,28 +877,28 @@ class Base
 	{
 		return [
 			static::getVocabulary('menu.db') => [
-				"items" => [
+				'items' => [
 					static::getVocabulary('menu.db.dump') => [
-						"module" => "db",
+						'module' => 'db',
 					],
 					static::getVocabulary('menu.db.migrations.log') => [
-						"module" => "migrations/log",
+						'module' => 'migrations/log',
 					],
 					static::getVocabulary('menu.db.migrations.list') => [
-						"module" => "migrations",
+						'module' => 'migrations',
 					],
 					static::getVocabulary('menu.db.migrations.create') => [
-						"module" => "migrations/form",
+						'module' => 'migrations/form',
 					],
 					static::getVocabulary('menu.db.models.create') => [
-						"module" => "di_lib_models/form",
+						'module' => 'di_lib_models/form',
 					],
 					static::getVocabulary('menu.db.admin_pages.create') => [
-						"module" => "di_lib_admin_pages/form",
+						'module' => 'di_lib_admin_pages/form',
 					],
 				],
-				"permissions" => ["root"],
-				"paths" => ["db", "migrations", "migrations_form", "migrations_log", "di_lib_models_form", "di_lib_admin_pages_form"],
+				'permissions' => ['root'],
+				'paths' => ['db', 'migrations', 'migrations_form', 'migrations_log', 'di_lib_models_form', 'di_lib_admin_pages_form'],
 			],
 		];
 	}
@@ -907,16 +907,16 @@ class Base
 	{
 		return [
 			$this->getVocabulary('menu.settings') => [
-				"items" => [
+				'items' => [
 					'<b>' . $this->getVocabulary('menu.edit_settings') . '</b>' => [
-						"module" => "configuration",
+						'module' => 'configuration',
 					],
 					$this->getVocabulary('menu.rebuild_cache') . '<br />' . CMS::getTemplatesCacheModificationDateTime() => [
-						"link" => \diLib::getAdminWorkerPath("cache", "rebuild") . "?back=" . urlencode(\diRequest::requestUri()),
+						'link' => \diLib::getAdminWorkerPath('cache', 'rebuild') . '?back=' . urlencode(\diRequest::requestUri()),
 					],
 				],
-				"permissions" => ["root"],
-				"paths" => ["configuration"],
+				'permissions' => ['root'],
+				'paths' => ['configuration'],
 			],
 		];
 	}
@@ -928,13 +928,13 @@ class Base
 			return $this;
 		}
 
-		$this->getTpl()->define("`_index/left_menu", [
-			"left_menu",
-			"left_menu_row0",
-			"left_menu_row1",
+		$this->getTpl()->define('`_index/left_menu', [
+			'left_menu',
+			'left_menu_row0',
+			'left_menu_row1',
 		]);
 
-		$visible_left_menu_ids_ar = explode(",", (string)@$_COOKIE["admin_visible_left_menu_ids"]);
+		$visible_left_menu_ids_ar = explode(',', (string)@$_COOKIE['admin_visible_left_menu_ids']);
 		$i = 0;
 
 		foreach ($this->getAdminMenuFullTree() as $group_title => $group_ar)
@@ -942,19 +942,19 @@ class Base
 			if (
 				$this->adminUser->authorizedForSetup() ||
 				(
-					in_array($this->getAdminModel()->getLevel(), $group_ar["permissions"]) &&
-					(empty($group_ar["super"]) || $this->isAdminSuper())
+					in_array($this->getAdminModel()->getLevel(), $group_ar['permissions']) &&
+					(empty($group_ar['super']) || $this->isAdminSuper())
 				)
 			)
 			{
 				$i++;
 
-				foreach ($group_ar["items"] as $itemTitle => $item)
+				foreach ($group_ar['items'] as $itemTitle => $item)
 				{
 					if (is_scalar($item))
 					{
 						$item = [
-							"module" => $item,
+							'module' => $item,
 						];
 					}
 
@@ -964,64 +964,64 @@ class Base
 						'module' => null,
 					], $item);
 
-					if (empty($item["link"]) && !empty($item["module"]))
+					if (empty($item['link']) && !empty($item['module']))
 					{
-						if (!$this->isModuleAccessible($item["module"]))
+						if (!$this->isModuleAccessible($item['module']))
 						{
 							continue;
 						}
 
-						$item["link"] = self::getPageUri($item["module"]);
+						$item['link'] = self::getPageUri($item['module']);
 					}
 
-					$href = $item["link"] . $item['link_suffix'];
+					$href = $item['link'] . $item['link_suffix'];
 					$state = in_array($i, $visible_left_menu_ids_ar);
 
 					$this->getTpl()
 						->assign([
-							//"ID" => $r->id,
-							"TITLE" => $itemTitle,
-							"HREF" => $href,
-							"TARGET" => !empty($item["target"]) ? " target=\"{$item["target"]}\"" : "",
-							"STYLE_DISPLAY" => $state ? "display: block;" : "display: none;",
-							"STATE" => $state ? 1 : 0,
-						], "M_")
-						->process("LEFT_MENU_ROWS1", ".left_menu_row1");
+							//'ID' => $r->id,
+							'TITLE' => $itemTitle,
+							'HREF' => $href,
+							'TARGET' => !empty($item['target']) ? " target=\"{$item["target"]}\"" : '',
+							'STYLE_DISPLAY' => $state ? 'display: block;' : 'display: none;',
+							'STATE' => $state ? 1 : 0,
+						], 'M_')
+						->process('LEFT_MENU_ROWS1', '.left_menu_row1');
 				}
 
 				$this->getTpl()
 					->assign([
-						"ID" => $i,
-						"TITLE" => $group_title,
-					], "M_")
-					->process("LEFT_MENU_ROWS0", ".left_menu_row0")
-					->clear("LEFT_MENU_ROWS1")
-					->assign("LEFT_MENU_ROWS1", "");
+						'ID' => $i,
+						'TITLE' => $group_title,
+					], 'M_')
+					->process('LEFT_MENU_ROWS0', '.left_menu_row0')
+					->clear('LEFT_MENU_ROWS1')
+					->assign('LEFT_MENU_ROWS1', '');
 			}
 		}
 
 		$this->getTpl()
-			->process("left_menu");
+			->process('left_menu');
 
 		return $this;
 	}
 
-	public static function getClassMethodName($method, $prefix = "")
+	public static function getClassMethodName($method, $prefix = '')
 	{
 		switch ($method)
 		{
-			case "submit":
-				$m = $method . "_form";
+			case 'submit':
+				$m = $method . '_form';
 				break;
 
 			default:
-				$m = "render_" . $method;
+				$m = 'render_' . $method;
 				break;
 		}
 
 		if ($prefix)
 		{
-			$prefix .= "_";
+			$prefix .= '_';
 		}
 
 		return camelize($prefix . $m);
