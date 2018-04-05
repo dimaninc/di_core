@@ -24,6 +24,7 @@ class diModel implements \ArrayAccess
 	const id_field_name = 'id';
 	const slug_field_name = null; //self::SLUG_FIELD_NAME_LEGACY; get this back when all models are updated
 	const order_field_name = 'order_num';
+	const use_data_cache = false;
 
 	// this should be redefined
 	protected $table;
@@ -33,6 +34,9 @@ class diModel implements \ArrayAccess
 
 	/** @var array */
 	protected $origData = [];
+
+	/** @var array */
+	protected $cachedData = [];
 
 	/** @var array */
 	protected $relatedData = [];
@@ -107,12 +111,12 @@ class diModel implements \ArrayAccess
 	{
 		if (isInteger($type))
 		{
-			$type = diTypes::getName($type);
+			$type = \diTypes::getName($type);
 		}
 
-		$className = diLib::getClassNameFor($type, diLib::MODEL);
+		$className = \diLib::getClassNameFor($type, \diLib::MODEL);
 
-		if (!diLib::exists($className))
+		if (!\diLib::exists($className))
 		{
 			return false;
 		}
@@ -130,7 +134,7 @@ class diModel implements \ArrayAccess
 	 * @param null|array|object $ar
 	 * @param array $options
 	 * @return diModel
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public static function create($type, $ar = null, $options = [])
 	{
@@ -170,11 +174,11 @@ class diModel implements \ArrayAccess
 	 * @param null|array|object $ar
 	 * @param array $options
 	 * @return diModel
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public static function createForTable($table, $ar = null, $options = [])
 	{
-		return static::create(diTypes::getNameByTable($table), $ar, $options);
+		return static::create(\diTypes::getNameByTable($table), $ar, $options);
 	}
 
 	/**
@@ -182,7 +186,7 @@ class diModel implements \ArrayAccess
 	 * @param null|array|object $ar
 	 * @param array $options
 	 * @return diModel
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public static function createForTableNoStrict($table, $ar = null, $options = [])
 	{
@@ -230,7 +234,7 @@ class diModel implements \ArrayAccess
 			return $value;
 		}
 
-		throw new Exception(
+		throw new \Exception(
 			sprintf("Invalid method %s::%s(%s)", get_class($this), $method, print_r($arguments, 1))
 		);
 	}
@@ -273,7 +277,7 @@ class diModel implements \ArrayAccess
 
 	public function initFromRequest($method = "post")
 	{
-		foreach (diRequest::all($method) as $key => $value)
+		foreach (\diRequest::all($method) as $key => $value)
 		{
 			$this->set($key, $value);
 		}
@@ -305,7 +309,7 @@ class diModel implements \ArrayAccess
 
 	public function getFullHref()
 	{
-		return diPaths::defaultHttp() . $this->getHref();
+		return \diPaths::defaultHttp() . $this->getHref();
 	}
 
 	public function getAdminHref()
@@ -408,7 +412,7 @@ class diModel implements \ArrayAccess
 
 	public function generateSlug($source = null, $delimiter = '-')
 	{
-		$this->setSlug(diSlug::generate($source ?: $this->getSourceForSlug(), $this->getTable(), $this->getId(),
+		$this->setSlug(\diSlug::generate($source ?: $this->getSourceForSlug(), $this->getTable(), $this->getId(),
 			$this->getIdFieldName(), $this->getSlugFieldName(), $delimiter
 		));
 
@@ -664,9 +668,24 @@ class diModel implements \ArrayAccess
 		return [];
 	}
 
-	public function getTemplateVarsExtended()
+	final public function getTemplateVarsExtended()
 	{
-		return extend($this->getTemplateVars(), $this->getCustomTemplateVars());
+		if (static::use_data_cache)
+		{
+			if (!$this->existsCached())
+			{
+				$this
+					->setCachedData($this->getCustomTemplateVars());
+			}
+
+			$customVars = $this->getCachedData();
+		}
+		else
+		{
+			$customVars = $this->getCustomTemplateVars();
+		}
+
+		return extend($this->getTemplateVars(), $customVars);
 	}
 
 	public function getExtendedTemplateVar($key)
@@ -708,7 +727,7 @@ class diModel implements \ArrayAccess
 		$rs = $this->getDb()->rs('dipics', 'WHERE ' . join(' AND ', $queryAr) . ' ORDER BY ' . $options['orderBy'] . $limit);
 		while ($r = $this->getDb()->fetch($rs))
 		{
-			$m = static::create(diTypes::dynamic_pic, $r);
+			$m = static::create(\diTypes::dynamic_pic, $r);
 			$m->setRelated('table', $this->getTable());
 
 			$ar[] = $m;
@@ -868,6 +887,17 @@ class diModel implements \ArrayAccess
 			: isset($this->origData[$field]);
 	}
 
+	/**
+	 * @param null|string $field
+	 * @return bool
+	 */
+	public function existsCached($field = null)
+	{
+		return is_null($field)
+			? !!$this->cachedData
+			: isset($this->cachedData[$field]);
+	}
+
 	public function has($field)
 	{
 		if ($field == (static::id_field_name ?: $this->idFieldName))
@@ -930,6 +960,18 @@ class diModel implements \ArrayAccess
 		}
 
 		return $this->origData[$field];
+	}
+
+	public function getCachedData($field = null)
+	{
+		if (is_null($field))
+		{
+			return $this->cachedData;
+		}
+
+		return $this->existsCached($field)
+			? $this->origData[$field]
+			: null;
 	}
 
 	public function localized($field, $lang = null)
@@ -1067,7 +1109,9 @@ class diModel implements \ArrayAccess
 			$this->ar[$field] = $value;
 		}
 
-		$this->checkId();
+		$this
+			->checkId()
+			->killCached();
 
 		return $this;
 	}
@@ -1095,6 +1139,26 @@ class diModel implements \ArrayAccess
 			{
 				$this->origData = extend($this->origData, (array)$field);
 			}
+		}
+
+		return $this;
+	}
+
+	/**
+	 * @param null|array|string $field
+	 * @param mixed $value
+	 * @return $this
+	 */
+	public function setCachedData($field, $value = null)
+	{
+		if (is_scalar($field))
+		{
+			$field = strtolower($field);
+			$this->cachedData[$field] = $value;
+		}
+		else
+		{
+			$this->cachedData = extend($this->cachedData, (array)$field);
 		}
 
 		return $this;
@@ -1158,6 +1222,35 @@ class diModel implements \ArrayAccess
 		return $this;
 	}
 
+	/**
+	 * @param null|string|array $field
+	 *
+	 * @return $this
+	 */
+	public function killCached($field = null)
+	{
+		if (is_null($field))
+		{
+			$this->destroyCached();
+		}
+		elseif (is_string($field))
+		{
+			if ($this->existsCached($field))
+			{
+				unset($this->cachedData[$field]);
+			}
+		}
+		elseif (is_array($field))
+		{
+			foreach ($field as $f)
+			{
+				$this->killCached($f);
+			}
+		}
+
+		return $this;
+	}
+
 	public function getRelated($field = null)
 	{
 		if (is_null($field))
@@ -1167,7 +1260,7 @@ class diModel implements \ArrayAccess
 
 		if (!isset($this->relatedData[$field]))
 		{
-			//throw new Exception("Field '$field' is undefined in related data of ".get_class($this));
+			//throw new \Exception("Field '$field' is undefined in related data of " . get_class($this));
 			return null;
 		}
 
@@ -1360,6 +1453,18 @@ class diModel implements \ArrayAccess
 	{
 		$this->origData = [];
 		$this->origId = null;
+
+		return $this;
+	}
+
+	/**
+	 * Removes cached data
+	 *
+	 * @return $this
+	 */
+	public function destroyCached()
+	{
+		$this->cachedData = [];
 
 		return $this;
 	}
@@ -1589,8 +1694,8 @@ class diModel implements \ArrayAccess
 	}
 
 	/**
-	 * @return diCollection
-	 * @throws Exception
+	 * @return \diCollection
+	 * @throws \Exception
 	 */
 	public static function createCollection()
 	{
@@ -1602,7 +1707,7 @@ class diModel implements \ArrayAccess
 	/**
 	 * @param string|array|null $field If null, files for all fields returned
 	 * @return array
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public function getRelatedFilesList($field = null)
 	{
