@@ -23,6 +23,7 @@ class Config
 	const folderForAssets = '';
 	const mainDomain = null;
 	const mainLanguage = 'ru'; // used to determine localization field names
+	const useCoreTwig = true; // if false, twig should be installed via composer
 
     protected static $location = \diLib::LOCATION_HTDOCS;
 	protected static $useModuleCache = false;
@@ -92,6 +93,14 @@ class Config
 		$class = self::getClass();
 
 		return $class::mainLanguage;
+	}
+
+	final public static function getUseCoreTwig()
+	{
+		/** @var Config $class */
+		$class = self::getClass();
+
+		return $class::useCoreTwig;
 	}
 
 	final public static function useModuleCache()

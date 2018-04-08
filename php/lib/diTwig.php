@@ -1,7 +1,7 @@
 <?php
 
-use diCore\Helper\FileSystemHelper;
 use diCore\Data\Config;
+use diCore\Helper\FileSystemHelper;
 
 /**
  * Wrapper for Twig template engine

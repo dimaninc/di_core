@@ -87,61 +87,63 @@ class diLib
 
 	public static $libPathsAr = [
 		// first, project libs
-		self::pathProjectAdminLib => "/_admin/_inc/lib/",
-		self::pathProjectAdminPages => "/_admin/_inc/lib/pages/",
-		self::pathProjectAdminControllers => "/_admin/_inc/lib/controllers/",
+		self::pathProjectAdminLib => '/_admin/_inc/lib/',
+		self::pathProjectAdminPages => '/_admin/_inc/lib/pages/',
+		self::pathProjectAdminControllers => '/_admin/_inc/lib/controllers/',
 
-		self::pathProjectLib => "/_cfg/lib/",
-		self::pathProjectModels => "/_cfg/models/",
-		self::pathProjectControllers => "/_cfg/controllers/",
-		self::pathProjectExceptions => "/_cfg/exceptions/",
-		self::pathProjectModules => "/_cfg/modules/",
-		self::pathProjectCollections => "/_cfg/collections/",
-		self::pathProjectVendor => "/_cfg/vendor/",
-		self::pathProjectTests => "/_cfg/tests/",
-		self::pathProjectSources => "/src/",
+		self::pathProjectLib => '/_cfg/lib/',
+		self::pathProjectModels => '/_cfg/models/',
+		self::pathProjectControllers => '/_cfg/controllers/',
+		self::pathProjectExceptions => '/_cfg/exceptions/',
+		self::pathProjectModules => '/_cfg/modules/',
+		self::pathProjectCollections => '/_cfg/collections/',
+		self::pathProjectVendor => '/_cfg/vendor/',
+		self::pathProjectTests => '/_cfg/tests/',
+		self::pathProjectSources => '/src/',
 
 		// then, core libs
-		self::pathCoreLib => "/_core/php/lib/",
-		self::pathCoreModels => "/_core/php/models/",
-		self::pathCoreControllers => "/_core/php/controllers/",
-		self::pathCoreExceptions => "/_core/php/exceptions/",
-		self::pathCoreModules => "/_core/php/modules/",
-		self::pathCoreCollections => "/_core/php/collections/",
-		self::pathCoreVendor => "/_core/php/vendor/",
-		self::pathCoreTests => "/_core/php/tests/",
-		self::pathCoreSources => "/_core/php/src/",
-		self::pathCoreLegacy => "/_core/php/legacy/",
+		self::pathCoreLib => '/_core/php/lib/',
+		self::pathCoreModels => '/_core/php/models/',
+		self::pathCoreControllers => '/_core/php/controllers/',
+		self::pathCoreExceptions => '/_core/php/exceptions/',
+		self::pathCoreModules => '/_core/php/modules/',
+		self::pathCoreCollections => '/_core/php/collections/',
+		self::pathCoreVendor => '/_core/php/vendor/',
+		self::pathCoreTests => '/_core/php/tests/',
+		self::pathCoreSources => '/_core/php/src/',
+		self::pathCoreLegacy => '/_core/php/legacy/',
 
-		self::pathCoreAdmin => "/_core/php/admin/",
-		self::pathCoreAdminControllers => "/_core/php/admin/controllers/",
-		self::pathCoreAdminPages => "/_core/php/admin/pages/",
-		self::pathCoreAdminWorkers => "/_core/php/admin/workers/",
+		self::pathCoreAdmin => '/_core/php/admin/',
+		self::pathCoreAdminControllers => '/_core/php/admin/controllers/',
+		self::pathCoreAdminPages => '/_core/php/admin/pages/',
+		self::pathCoreAdminWorkers => '/_core/php/admin/workers/',
 
 		// finally, old style project libs
-		self::pathOldLib => "/_cfg/classes/",
+		self::pathOldLib => '/_cfg/classes/',
 	];
 
 	public static $libSubFolders = [
 		self::pathProjectLib => [
-			"OAuth2",
-			"traits",
+			'OAuth2',
+			'traits',
 		],
 
 		self::pathCoreLib => [
-			"OAuth2",
-			"traits",
+			'OAuth2',
+			'traits',
 		],
 	];
 
-	const workerPrefix = "/_core/php/workers/";
-	const workerAdminPrefix = "/_core/php/admin/workers/";
+	const workerPrefix = '/_core/php/workers/';
+	const workerAdminPrefix = '/_core/php/admin/workers/';
 
 	/** @deprecated */
 	static public $classesAr = [];
 
 	/** @deprecated */
 	static public $classPropertiesAr = [];
+
+	protected static $twigInitiated = false;
 
 	public static function registerNamespace($namespaces)
 	{
@@ -156,6 +158,22 @@ class diLib
 		}
 
 		\diCore\Data\Config::resetClass();
+
+		self::initiateTwig();
+	}
+
+	protected static function initiateTwig()
+	{
+		if (!self::$twigInitiated)
+		{
+			if (\diCore\Data\Config::getUseCoreTwig())
+			{
+				require_once dirname(dirname(__FILE__)) . '/vendor/Twig/Autoloader.php';
+				Twig_Autoloader::register();
+			}
+
+			self::$twigInitiated = true;
+		}
 	}
 
 	public static function getAllNamespaces()
@@ -172,9 +190,9 @@ class diLib
 
 	public static function checkCompatibility()
 	{
-		if (version_compare(PHP_VERSION, '5.5.0', '<'))
+		if (version_compare(PHP_VERSION, '5.6.0', '<'))
 		{
-			die('diCMS requires PHP 5.5.0 or higher. Current version is ' . PHP_VERSION);
+			die('diCMS requires PHP 5.6 or higher. Current version is ' . PHP_VERSION);
 		}
 	}
 
@@ -216,13 +234,13 @@ class diLib
 		{
 			if ($options['underscoreParams'])
 			{
-				$suffixAr = array_map("underscore", $suffixAr);
+				$suffixAr = array_map('underscore', $suffixAr);
 			}
 
-			$suffixAr[] = "";
+			$suffixAr[] = '';
 		}
 
-		return join("/", $suffixAr);
+		return join('/', $suffixAr);
 	}
 
 	public static function getClassNameInNamespace($basicName, $ns, $kind)
@@ -366,7 +384,7 @@ class diLib
 
 	static public function normalizeClassName($className)
 	{
-		$x = array_search(strtolower($className), array_map("strtolower", self::$classesAr));
+		$x = array_search(strtolower($className), array_map('strtolower', self::$classesAr));
 
 		return $x !== false
 			? self::$classesAr[$x]
@@ -375,18 +393,18 @@ class diLib
 
 	static public function getClassPathSubfolder($className)
 	{
-		if (isset(self::$classPropertiesAr[$className]["subfolder"]))
+		if (isset(self::$classPropertiesAr[$className]['subfolder']))
 		{
-			return self::$classPropertiesAr[$className]["subfolder"];
+			return self::$classPropertiesAr[$className]['subfolder'];
 		}
 
-		return "";
+		return '';
 	}
 
 	static public function getClassPath($className)
 	{
-	    $location = isset(self::$classPropertiesAr[$className]["location"])
-	    	? self::$classPropertiesAr[$className]["location"]
+	    $location = isset(self::$classPropertiesAr[$className]['location'])
+	    	? self::$classPropertiesAr[$className]['location']
 	    	: null;
 
 		return $location ? self::$libPathsAr[$location] : null;
@@ -447,7 +465,7 @@ class diLib
 		return in_array($namespace, self::$coreNamespaces);
 	}
 
-	static public function getClassFilename($className, $subFolder = "")
+	static public function getClassFilename($className, $subFolder = '')
 	{
 	    $root = $_SERVER['DOCUMENT_ROOT'];
 		$path = null;
@@ -545,7 +563,7 @@ class diLib
 		return $fullFn;
 	}
 
-	static public function exists($className, $subFolder = "")
+	static public function exists($className, $subFolder = '')
 	{
 		if (class_exists($className))
 		{
@@ -555,7 +573,7 @@ class diLib
 		return is_file(self::getClassFilename($className, $subFolder));
 	}
 
-	public static function realInc($className, $subFolder = "")
+	public static function realInc($className, $subFolder = '')
 	{
 		if (class_exists($className))
 		{
@@ -572,7 +590,7 @@ class diLib
 
 			foreach ($ar as $k => $v)
 			{
-				if (in_array($k, ["class_name", "path_prefix"]))
+				if (in_array($k, ['class_name', 'path_prefix']))
 				{
 					continue;
 				}
@@ -592,7 +610,7 @@ class diLib
 	 * @param string $subFolder
 	 * @return bool
 	 */
-	static public function inc($className, $subFolder = "")
+	static public function inc($className, $subFolder = '')
 	{
 		if (diLib::AUTOLOAD && !$subFolder)
 		{
@@ -602,7 +620,8 @@ class diLib
 		return self::realInc($className, $subFolder);
 	}
 
-	static public function incInterface($interfaceName, $subFolder = "")
+	/** @deprecated */
+	static public function incInterface($interfaceName, $subFolder = '')
 	{
 		if (interface_exists($interfaceName))
 		{
@@ -615,7 +634,7 @@ class diLib
 
 		foreach ($ar as $k => $v)
 		{
-			if (in_array($k, array("class_name", "path_prefix")))
+			if (in_array($k, array('class_name', 'path_prefix')))
 			{
 				continue;
 			}
@@ -627,14 +646,11 @@ class diLib
 	}
 }
 
-diLib::checkCompatibility();
+\diLib::checkCompatibility();
 
-if (diLib::AUTOLOAD)
+if (\diLib::AUTOLOAD)
 {
 	spl_autoload_register(function($class) {
-		diLib::realInc($class);
+		\diLib::realInc($class);
 	});
 }
-
-require_once dirname(dirname(__FILE__)) . "/vendor/Twig/Autoloader.php";
-Twig_Autoloader::register();
