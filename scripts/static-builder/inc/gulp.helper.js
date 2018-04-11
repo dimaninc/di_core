@@ -4,6 +4,14 @@ var Helper,
 
 Helper = {
   workFolder: './',
+  htDocsFolder: 'htdocs',
+  setHtDocsFolder: function(folder) {
+    this.htDocsFolder = folder;
+    return this;
+  },
+  getHtDocsFolder: function() {
+    return this.htDocsFolder;
+  },
   extend: function() {
     var i, j, key, ref;
     for (i = j = 1, ref = arguments.length; 1 <= ref ? j <= ref : j >= ref; i = 1 <= ref ? ++j : --j) {
@@ -79,20 +87,20 @@ Helper = {
   },
   copyCoreAssets: function(gulp, done) {
     console.log('Copying CSS');
-    gulp.src(['../vendor/dimaninc/di_core/css/**/*']).pipe(gulp.dest('../htdocs/assets/styles/_core/'));
+    gulp.src(['../vendor/dimaninc/di_core/css/**/*']).pipe(gulp.dest('../' + this.getHtDocsFolder() + '/assets/styles/_core/'));
     console.log('Copying Fonts');
-    gulp.src(['../vendor/dimaninc/di_core/fonts/**/*']).pipe(gulp.dest('../htdocs/assets/fonts/'));
+    gulp.src(['../vendor/dimaninc/di_core/fonts/**/*']).pipe(gulp.dest('../' + this.getHtDocsFolder() + '/assets/fonts/'));
     console.log('Copying Images');
-    gulp.src(['../vendor/dimaninc/di_core/i/**/*']).pipe(gulp.dest('../htdocs/assets/images/_core/'));
+    gulp.src(['../vendor/dimaninc/di_core/i/**/*']).pipe(gulp.dest('../' + this.getHtDocsFolder() + '/assets/images/_core/'));
     console.log('Copying JS');
-    gulp.src(['../vendor/dimaninc/di_core/js/**/*']).pipe(gulp.dest('../htdocs/assets/js/_core/'));
+    gulp.src(['../vendor/dimaninc/di_core/js/**/*']).pipe(gulp.dest('../' + this.getHtDocsFolder() + '/assets/js/_core/'));
     console.log('Copying Vendor libs');
-    gulp.src(['../vendor/dimaninc/di_core/vendor/**/*']).pipe(gulp.dest('../htdocs/assets/vendor/'));
+    gulp.src(['../vendor/dimaninc/di_core/vendor/**/*']).pipe(gulp.dest('../' + this.getHtDocsFolder() + '/assets/vendor/'));
     done();
     return this;
   },
   getFolders: function() {
-    return ['_admin/_inc/cache', '_cfg/cache', 'db/dump', 'htdocs/assets/fonts', 'htdocs/assets/images/_core', 'htdocs/assets/js/_core', 'htdocs/assets/styles/_core', 'htdocs/uploads', 'log', 'log/db', 'log/debug'];
+    return ['_admin/_inc/cache', '_cfg/cache', 'db/dump', this.getHtDocsFolder() + '/assets/fonts', this.getHtDocsFolder() + '/assets/images/_core', this.getHtDocsFolder() + '/assets/js/_core', this.getHtDocsFolder() + '/assets/styles/_core', this.getHtDocsFolder() + '/uploads', 'log', 'log/db', 'log/debug'];
   },
   createFolders: function(done) {
     var fn, folder, folders, j, len, mkdirp, tasksDone, tasksTotal;

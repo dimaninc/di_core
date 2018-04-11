@@ -1,5 +1,12 @@
 Helper =
     workFolder: './'
+    htDocsFolder: 'htdocs'
+
+    setHtDocsFolder: (folder) ->
+        @htDocsFolder = folder
+        @
+
+    getHtDocsFolder: -> @htDocsFolder
 
     extend: ->
         for i in [1..arguments.length]
@@ -53,27 +60,27 @@ Helper =
         console.log 'Copying CSS'
         gulp
         .src ['../vendor/dimaninc/di_core/css/**/*']
-        .pipe gulp.dest '../htdocs/assets/styles/_core/'
+        .pipe gulp.dest '../' + @getHtDocsFolder() + '/assets/styles/_core/'
 
         console.log 'Copying Fonts'
         gulp
         .src ['../vendor/dimaninc/di_core/fonts/**/*']
-        .pipe gulp.dest '../htdocs/assets/fonts/'
+        .pipe gulp.dest '../' + @getHtDocsFolder() + '/assets/fonts/'
 
         console.log 'Copying Images'
         gulp
         .src ['../vendor/dimaninc/di_core/i/**/*']
-        .pipe gulp.dest '../htdocs/assets/images/_core/'
+        .pipe gulp.dest '../' + @getHtDocsFolder() + '/assets/images/_core/'
 
         console.log 'Copying JS'
         gulp
         .src ['../vendor/dimaninc/di_core/js/**/*']
-        .pipe gulp.dest '../htdocs/assets/js/_core/'
+        .pipe gulp.dest '../' + @getHtDocsFolder() + '/assets/js/_core/'
 
         console.log 'Copying Vendor libs'
         gulp
         .src ['../vendor/dimaninc/di_core/vendor/**/*']
-        .pipe gulp.dest '../htdocs/assets/vendor/'
+        .pipe gulp.dest '../' + @getHtDocsFolder() + '/assets/vendor/'
 
         done()
         @
@@ -83,11 +90,11 @@ Helper =
             '_admin/_inc/cache'
             '_cfg/cache'
             'db/dump'
-            'htdocs/assets/fonts'
-            'htdocs/assets/images/_core'
-            'htdocs/assets/js/_core'
-            'htdocs/assets/styles/_core'
-            'htdocs/uploads'
+            @getHtDocsFolder() + '/assets/fonts'
+            @getHtDocsFolder() + '/assets/images/_core'
+            @getHtDocsFolder() + '/assets/js/_core'
+            @getHtDocsFolder() + '/assets/styles/_core'
+            @getHtDocsFolder() + '/uploads'
             'log'
             'log/db'
             'log/debug'
