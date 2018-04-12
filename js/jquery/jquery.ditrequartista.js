@@ -50,8 +50,7 @@
 			duration_of_show: $(this).data('duration-of-show') || 0
 		}, settings || {});
 
-		if (settings.auto_play === null)
-		{
+		if (settings.auto_play === null) {
 			settings.auto_play = true;
 		}
 
@@ -75,25 +74,21 @@
 				each_height = Math.floor(($screen.height() - 4) / $buttons.length),
 				last_height = ($screen.height() - 4) - each_height * ($buttons.length - 1);
 
-			if ($container.data('ditrequartista-inited'))
-			{
+			if ($container.data('ditrequartista-initiated')) {
 			    console.log($container.attr('id'), 'diTrequartista already initiated');
 
 				return true;
 			}
 
-			$container.data('ditrequartista-inited', true);
+			$container.data('ditrequartista-initiated', true);
 
-			if (!$screen.length)
-			{
+			if (!$screen.length) {
 				$screen = $container;
 			}
 
-			function constructor()
-			{
+			function constructor() {
 			    // making vertical buttons fill whole column
-			    if (settings.adjust_buttons_height)
-			    {
+			    if (settings.adjust_buttons_height) {
 				    $(settings.inner_button_selector, $buttons).css({height: each_height})
 					    .filter(':last').css({height: last_height});
 			    }
@@ -101,8 +96,7 @@
 				if (
 					settings.slides_order == slides_order.RANDOM &&
 					settings.random_algorithm == random_algorithm.SHUFFLE_ON_START
-				   )
-				{
+				   ) {
 					//console.log(typeof $buttons, typeof []);
 					$buttons = shuffle($buttons);
 				}
@@ -110,9 +104,7 @@
 				$buttons.each(function() {
 					var $slide = $(this);
 
-					// precache
-					if ($slide.data('pic'))
-					{
+					if ($slide.data('pic')) { // precache
 						var $img = $('<img />').attr('src', $slide.data('pic'));
 					}
 
@@ -139,22 +131,19 @@
 					set_auto(settings.auto_play);
 				});
 
-				if ($prev)
-				{
+				if ($prev) {
 					$prev.click(function() {
 						select_prev();
 					});
 				}
 
-				if ($next)
-				{
+				if ($next) {
 					$next.click(function() {
 						select_next();
 					});
 				}
 
-				if (!settings.ignore_hover_hold)
-				{
+				if (!settings.ignore_hover_hold) {
 					$screen.hover(function() {
 						set_auto(false);
 					}, function() {
@@ -162,105 +151,89 @@
 					});
 				}
 
-				select(0, false, true);
+				if (hasSlides()) {
+					select(0, false, true);
+				}
 
 				set_auto(settings.auto_play);
 			}
 
-			function set_auto(state)
-			{
+			function hasSlides() {
+				return arrayCount(slides_ar) > 0;
+			}
+
+			function set_auto(state) {
 			    //console.log('set auto:', state);
 			    //console.trace();
 
 			    auto = !!state;
-
-				if (auto)
-				{
-					set_timer_to_next();
-				}
-				else
-				{
-					stop_timer();
-				}
+				auto ? set_timer_to_next() : stop_timer();
 			}
 
-			function get_random_idx(idx)
-			{
-			    do
-			    {
+			function get_random_idx(idx) {
+			    do {
 			        idx = Math.floor(Math.random() * $buttons.length);
 
-			    	if (idx != selected_idx)
-			    	{
+			    	if (idx != selected_idx) {
 						return idx;
 					}
 			    } while (true);
 			}
 
-			function get_next_idx(idx)
-			{
+			function get_next_idx(idx) {
 			    // random
 			    if (
 				    settings.slides_order == slides_order.RANDOM &&
 				    settings.random_algorithm == random_algorithm.EACH_TIME_PICK &&
 				    $buttons.length > 1
-			       )
-			    {
+			       ) {
 			    	return get_random_idx(idx);
 			    }
 
 				idx = idx || selected_idx;
 				idx++;
 
-				if (idx > $buttons.length - 1)
-				{
+				if (idx > $buttons.length - 1) {
 					idx = 0;
 				}
 
 				return idx;
 			}
 
-			function get_prev_idx(idx)
-			{
+			function get_prev_idx(idx) {
 			    // random
 				if (
 					settings.slides_order == slides_order.RANDOM &&
 					settings.random_algorithm == random_algorithm.EACH_TIME_PICK &&
 					$buttons.length > 1
-				   )
-			    {
+				   ) {
 			    	return get_random_idx(idx);
 			    }
 
 				idx = idx || selected_idx;
 				idx--;
 
-				if (idx < 0)
-				{
+				if (idx < 0) {
 					idx = $buttons.length - 1;
 				}
 
 				return idx;
 			}
 
-			function select_next(auto)
-			{
+			function select_next(auto) {
 				select(get_next_idx(), auto || false);
 			}
 
-			function select_prev(auto)
-			{
+			function select_prev(auto) {
 				select(get_prev_idx(), auto || false, false, settings.prev_reverse_animation);
 			}
 
-			function set_timer_to_next()
-			{
+			function set_timer_to_next() {
 			    var durationOfShow = get_duration_of_show(get_next_idx());
 
 			    //console.log('set timer to next, duration =', get_duration_of_show(get_next_idx()), 'id = ', get_next_idx());
 
-			    if (durationOfShow > 0)
-				{
+			    if (durationOfShow > 0) {
 					stop_timer();
 
 					timer_id = setTimeout(function() {
@@ -269,33 +242,30 @@
 				}
 			}
 
-			function stop_timer()
-			{
+			function stop_timer() {
 				clearTimeout(timer_id);
 			}
 
-			function select(idx, auto_selected, instant, reverse_animation)
-			{
-				if (!auto && auto_selected)
-				{
+			function select(idx, auto_selected, instant, reverse_animation) {
+				if (!hasSlides()) {
+					return false;
+				}
+
+				if (!auto && auto_selected) {
 					stop_timer();
 
 					return false;
-				}
-				else if (!auto_selected)
-				{
+				} else if (!auto_selected) {
 					set_auto(false);
 				}
 
-				if (idx == selected_idx)
-				{
+				if (idx == selected_idx) {
 					return false;
 				}
 
 				$buttons.eq(idx).addClass(settings.selected_class);
 
-				if (selected_idx >= 0)
-				{
+				if (selected_idx >= 0) {
 					$buttons.eq(selected_idx).removeClass(settings.selected_class);
 				}
 
@@ -314,8 +284,7 @@
 					duration: instant ? 0 : get_duration_of_change(idx)
 				});
 
-				if (auto_selected && settings.auto_play)
-				{
+				if (auto_selected && settings.auto_play) {
 					set_auto(true);
 				}
 
@@ -324,32 +293,31 @@
 
 				selected_idx = idx;
 
-				if (settings.afterChange)
-				{
+				if (settings.afterChange) {
 					settings.afterChange($buttons.eq(idx), $screen, $container);
 				}
 			}
 
-			function get_duration_of_change(idx)
-			{
+			function get_duration_of_change(idx) {
 			    var v = 'duration_of_' + (auto ? 'autochange' : 'change');
 
-				return slides_ar[idx][v] !== false && slides_ar[idx][v] != -1 ? slides_ar[idx][v] : settings[v];
+				return typeof slides_ar[idx] !== 'undefined' && slides_ar[idx][v] !== false && slides_ar[idx][v] != -1
+					? slides_ar[idx][v]
+					: settings[v];
 			}
 
-			function get_duration_of_show(idx)
-			{
-				return slides_ar[idx].duration_of_show !== false && slides_ar[idx].duration_of_show != -1 ? slides_ar[idx].duration_of_show : settings.duration_of_show;
+			function get_duration_of_show(idx) {
+				return typeof slides_ar[idx] !== 'undefined' && slides_ar[idx].duration_of_show !== false && slides_ar[idx].duration_of_show != -1
+					? slides_ar[idx].duration_of_show
+					: settings.duration_of_show;
 			}
 
-			function get_transition(idx)
-			{
-				return slides_ar[idx].transition || settings.transition;
+			function get_transition(idx) {
+				return typeof slides_ar[idx] !== 'undefined' && slides_ar[idx].transition || settings.transition;
 			}
 
-			function get_transition_style(idx)
-			{
-				return slides_ar[idx].transition_style || settings.transition_style;
+			function get_transition_style(idx) {
+				return typeof slides_ar[idx] !== 'undefined' && slides_ar[idx].transition_style || settings.transition_style;
 			}
 
 			constructor();

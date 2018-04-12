@@ -214,15 +214,15 @@ class Helper
 		if ($this->considerDates())
 		{
 			$col
-				->filterManual('show_date1 IS NULL OR NOW() >= show_date1')
-				->filterManual('show_date2 IS NULL OR NOW() <= show_date2');
+				->filterManual('show_date1 IS NULL OR CURDATE() >= show_date1')
+				->filterManual('show_date2 IS NULL OR CURDATE() <= show_date2');
 		}
 
 		if ($this->considerTimes())
 		{
 			$col
-				->filterManual('show_time1 IS NULL OR NOW() >= show_time1')
-				->filterManual('show_time2 IS NULL OR NOW() <= show_time2');
+				->filterManual('show_time1 IS NULL OR CURTIME() >= show_time1')
+				->filterManual('show_time2 IS NULL OR CURTIME() <= show_time2');
 		}
 
 		if ($this->considerWeekdays())
