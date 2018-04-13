@@ -76,7 +76,10 @@ class Collection extends \diCollection
 		{
 			foreach ($this->sqlParts['where'] as $val)
 			{
-				$val['value'] = $modelClass::tuneFieldValueByTypeBeforeDb($val['field'], $val['value']);
+				if ($val['value'] !== null)
+				{
+					$val['value'] = $modelClass::tuneFieldValueByTypeBeforeDb($val['field'], $val['value']);
+				}
 
 				$existingFilter = isset($filter[$val['field']])
 					? $filter[$val['field']]
