@@ -37,8 +37,6 @@ class diConfiguration
 	private $dirChmod = 0777;
 	private static $folder;
 
-	private $db;
-
 	private $tabsAr = [];
 	private $otherTabName = '_other';
 	private $otherTabTitle = [
@@ -55,9 +53,6 @@ class diConfiguration
 
 	public function __construct()
 	{
-		global $db;
-
-		$this->db = $db;
 		self::$folder = getSettingsFolder();
 	}
 
@@ -248,7 +243,7 @@ class diConfiguration
 
 	private function getDB()
 	{
-		return $this->db;
+		return \diCore\Database\Connection::get()->getDb();
 	}
 
 	public function setTableName($table)
@@ -282,16 +277,16 @@ class diConfiguration
 	public function getAllFromDB()
 	{
 		$rs = $this->getDB()->rs($this->tableName);
-		while ($r = $this->getDB()->fetch($rs))
+		while ($r = $this->getDB()->fetch_array($rs))
 		{
-			if (!self::exists($r->{$this->nameField}))
+			if (!self::exists($r[$this->nameField]))
 			{
 				continue;
 			}
 
-			self::$data[$r->{$this->nameField}]['value'] = $this->adjustAfterDB(
-				$r->{$this->valueField},
-				self::getPropertyType($r->{$this->nameField})
+			self::$data[$r[$this->nameField]]['value'] = $this->adjustAfterDB(
+				$r[$this->valueField],
+				self::getPropertyType($r[$this->nameField])
 			);
 		}
 
@@ -313,7 +308,7 @@ class diConfiguration
 		$d = debug_backtrace();
 		$info = isset($d[0]) ? "{$d[0]['file']}:{$d[0]['line']}" : 'no debug info';
 
-		throw new Exception("There's no variable '$name' in diConfiguration::\$data ($info)");
+		throw new \Exception("There's no variable '$name' in diConfiguration::\$data ($info)");
 	}
 
 	public function getFromDB($name)
@@ -385,23 +380,22 @@ class diConfiguration
 			{
 				if (isset($_FILES[$k]) && $_FILES[$k]['error'] == 0)
 				{
-					create_folders_chain(diPaths::fileSystem(), self::getFolder(), $this->dirChmod);
+					create_folders_chain(\diPaths::fileSystem(), self::getFolder(), $this->dirChmod);
 
 					$ext = strtolower('.' . get_file_ext($_FILES[$k]['name']));
 
-					do
-					{
+					do {
 						$pic = substr(get_unique_id(), 0, 10) . $ext;
-					} while (is_file(diPaths::fileSystem() . self::getFolder() . $pic));
+					} while (is_file(\diPaths::fileSystem() . self::getFolder() . $pic));
 
-					if (!move_uploaded_file($_FILES[$k]['tmp_name'], diPaths::fileSystem() . self::getFolder() . $pic))
+					if (!move_uploaded_file($_FILES[$k]['tmp_name'], \diPaths::fileSystem() . self::getFolder() . $pic))
 					{
-						throw new \Exception("Unable to copy file {$_FILES[$k]['name']} to " . diPaths::fileSystem() . self::getFolder() . $pic);
+						throw new \Exception("Unable to copy file {$_FILES[$k]['name']} to " . \diPaths::fileSystem() . self::getFolder() . $pic);
 					}
 
-					if (self::get($k) && is_file(diPaths::fileSystem() . self::getFolder() . self::get($k)))
+					if (self::get($k) && is_file(\diPaths::fileSystem() . self::getFolder() . self::get($k)))
 					{
-						unlink(diPaths::fileSystem() . self::getFolder() . self::get($k));
+						unlink(\diPaths::fileSystem() . self::getFolder() . self::get($k));
 					}
 
 					$this->setToDB($k, $pic);
@@ -462,19 +456,19 @@ class diConfiguration
 			`id` int not null auto_increment,
 			`{$this->nameField}` varchar(255),
 			`{$this->valueField}` text,
-			unique `idx`(`{$this->nameField}`),
+			unique key `idx`(`{$this->nameField}`),
 			primary key(`id`)
 		) ENGINE=InnoDB DEFAULT CHARSET={$e} COLLATE={$e}_general_ci;");
 
 		return $this;
 	}
 
-	public function updateCache($options = array())
+	public function updateCache($options = [])
 	{
-		$options = extend(array(
+		$options = extend([
 			'prefixCode' => '',
 			'suffixCode' => '',
-		), $options);
+		], $options);
 
 		$cache_file = '';
 		$cache_file .= $this->phpHeader();
@@ -506,7 +500,7 @@ class diConfiguration
 
 			if ($type == 'pic')
 			{
-				$ff = diPaths::fileSystem() . self::getFolder() . $r->{$this->valueField};
+				$ff = \diPaths::fileSystem() . self::getFolder() . $r->{$this->valueField};
 				list($w, $h, $t) = is_file($ff) ? getimagesize($ff) : [0, 0, 0];
 
 				if ($w && $h)
