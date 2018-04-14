@@ -51,6 +51,10 @@ class diConfiguration
 	public static $data = [];
 	public static $cacheLoaded = false;
 
+	public static $inputNameReplaces = [
+		'.' => '---DOT---',
+	];
+
 	public function __construct()
 	{
 		self::$folder = getSettingsFolder();
@@ -343,6 +347,12 @@ class diConfiguration
 
 		foreach ($_POST as $k => $v)
 		{
+			$k = str_replace(
+				array_values(\diConfiguration::$inputNameReplaces),
+				array_keys(\diConfiguration::$inputNameReplaces),
+				$k
+			);
+
 			if (is_array($v))
 			{
 				foreach ($v as $_k => $_v)

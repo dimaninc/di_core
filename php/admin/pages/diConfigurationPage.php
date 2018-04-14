@@ -94,11 +94,17 @@ class diConfigurationPage extends \diCore\Admin\BasePage
 			$titleSuffix = "";
 			$valueSuffix = "";
 
+			$htmlFieldName = str_replace(
+				array_keys(\diConfiguration::$inputNameReplaces),
+				array_values(\diConfiguration::$inputNameReplaces),
+				$k
+			);
+
 			switch ($v["type"])
 			{
 				case "checkbox":
 					$checked = $v["value"] ? " checked=\"checked\"" : "";
-					$value = "<input type=\"checkbox\" id='$k' name=\"$k\" value=\"1\" {$checked}>";
+					$value = "<input type=\"checkbox\" id='$k' name=\"$htmlFieldName\" value=\"1\" {$checked}>";
 					break;
 
 				case "select":
@@ -107,16 +113,16 @@ class diConfigurationPage extends \diCore\Admin\BasePage
 					$template_text = isset($v["select_template_text"]) ? $v["select_template_text"] : "%title%";
 					$template_value = isset($v["select_template_value"]) ? $v["select_template_value"] : "%id%";
 
-					$value = diSelect::fastCreate($k, $v["value"], $v["select_values"], $prefix_ar, $suffix_ar, $template_text, $template_value);
+					$value = diSelect::fastCreate($htmlFieldName, $v["value"], $v["select_values"], $prefix_ar, $suffix_ar, $template_text, $template_value);
 					break;
 
 				case "text":
-					$value = "<textarea name=\"$k\" id='$k'>{$v["value"]}</textarea>";
+					$value = "<textarea name=\"$htmlFieldName\" id='$k'>{$v["value"]}</textarea>";
 					break;
 
 				case "pic":
 				case "file":
-					$ff = diPaths::fileSystem() . $this->cfg->getFolder() . $v["value"];
+					$ff = \diPaths::fileSystem() . $this->cfg->getFolder() . $v["value"];
 					$ff_orig = "/" . $this->cfg->getFolder() . $v["value"];
 					$path = "/" . $this->cfg->getFolder();
 					$ext = strtoupper(get_file_ext($ff));
@@ -160,13 +166,13 @@ class diConfigurationPage extends \diCore\Admin\BasePage
 						? "<div>$img_tag</div><div class=\"file-info\">$info <a href=\"" . diLib::getAdminWorkerPath("configuration", "del_pic", $k) . "\">удалить</a></div>"
 						: "";
 
-					$value = "<input type=\"file\" name=\"$k\" id='$k' size=\"40\" />";
+					$value = "<input type=\"file\" name=\"$htmlFieldName\" id='$k' size=\"40\" />";
 					break;
 
 				default:
 					$value = isset($v["flags"]) && in_array("static", $v["flags"])
 						? diStringHelper::out($v["value"], true)
-						: "<input type=\"text\" name=\"$k\" id='$k' value=\"" . diStringHelper::out($v["value"], true) . "\" />";
+						: "<input type=\"text\" name=\"$htmlFieldName\" id='$k' value=\"" . diStringHelper::out($v["value"], true) . "\" />";
 					break;
 			}
 
