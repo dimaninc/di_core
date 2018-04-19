@@ -14,96 +14,86 @@ class diAdminPagesManager
 {
 	const fileChmod = 0664;
 
-	const defaultFolder = "_admin/_inc/lib/pages";
+	const defaultFolder = '_admin/_inc/lib/pages';
 
 	protected $fieldsByTable = [];
 
 	private $namespace;
 
 	protected $skipInColumnsFields = [
-		"id",
-		"visible",
-		"order_num",
-		"to_show_content",
-		"level_num",
-		"parent",
+		'id',
+		'visible',
+		'order_num',
+		'to_show_content',
+		'level_num',
+		'parent',
 	];
 
 	protected $localFieldNames = [
-		"clean_title",
-		"slug",
-		"order_num",
-		"pic_w",
-		"pic_h",
-		"pic_t",
-		"pic2_w",
-		"pic2_h",
-		"pic2_t",
-		"pic3_w",
-		"pic3_h",
-		"pic3_t",
+		'clean_title',
+		'slug',
+		'order_num',
+		'pic_w',
+		'pic_h',
+		'pic_t',
+		'pic2_w',
+		'pic2_h',
+		'pic2_t',
+		'pic3_w',
+		'pic3_h',
+		'pic3_t',
 	];
 
 	protected $picFieldNames = [
-		"pic",
-		"pic2",
-		"pic3",
-		"logo",
-		"img",
+		'pic',
+		'pic2',
+		'pic3',
+		'logo',
+		'img',
 	];
 
 	protected $checkboxFieldNames = [
-		"active",
-		"activated",
-		"visible",
-		"top",
+		'active',
+		'activated',
+		'visible',
+		'top',
 	];
 
 	protected $dateTimeFieldNames = [
-		"date",
-		"reg_date",
-		"last_visit_date",
-		"pay_date",
-		"created_at",
-		"edited_at",
-		"updated_at",
-		"done_at",
+		'date',
+		'reg_date',
+		'last_visit_date',
+		'pay_date',
+		'created_at',
+		'edited_at',
+		'updated_at',
+		'done_at',
 	];
 
 	protected $orderNumFieldNames = [
-		"order_num",
+		'order_num',
 	];
 
 	protected $staticFieldNames = [
-		"date",
-		"created_at",
-		"edited_at",
-		"updated_at",
+		'date',
+		'created_at',
+		'edited_at',
+		'updated_at',
 	];
 
 	protected $untouchableFieldNames = [
-		"date",
-		"created_at",
-		"edited_at",
-		"updated_at",
+		'date',
+		'created_at',
+		'edited_at',
+		'updated_at',
 	];
 
 	protected $initiallyHiddenFieldNames = [
-		"date",
-		"created_at",
-		"edited_at",
-		"updated_at",
+		'date',
+		'created_at',
+		'edited_at',
+		'updated_at',
 	];
-
-	/** @var diDB */
-	private $db;
-
-	public function __construct()
-	{
-		global $db;
-
-		$this->db = $db;
-	}
 
 	public function createPage($table, $caption, $className, $namespace = '')
 	{
@@ -138,6 +128,7 @@ class %3$s extends \diCore\Admin\BasePage
 	{
 		$this->getList()->addColumns([
 			'id' => 'ID',
+			'#href' => [],
 %8$s
 			'#edit' => '',
 			'#del' => '',
@@ -195,8 +186,8 @@ EOF;
 			basename($className),
 			$table,
 			$caption,
-			join("\n\n", $fieldsInfo["form"]),
-			join("\n\n", $fieldsInfo["local"]),
+			join("\n\n", $fieldsInfo['form']),
+			join("\n\n", $fieldsInfo['local']),
 			join("\n", $columns),
 			$sortBy,
 			$dir,
@@ -208,7 +199,7 @@ EOF;
 
 		if (is_file(Config::getSourcesFolder() . $fn))
 		{
-			throw new Exception("Admin page $fn already exists");
+			throw new \Exception("Admin page $fn already exists");
 		}
 
 		FileSystemHelper::createTree(Config::getSourcesFolder(), dirname($fn));
@@ -221,7 +212,7 @@ EOF;
 	{
 		return $namespace
 			? $namespace . '\\Admin\\Page\\' . camelize($table, false)
-			: camelize("di_" . $table . "_page");
+			: camelize('di_' . $table . '_page');
 	}
 
 	protected function getPageFilename($className)
@@ -237,18 +228,18 @@ EOF;
 	protected function getFieldsInfo($fields)
 	{
 		$ar = [
-			"form" => [],
-			"local" => [],
+			'form' => [],
+			'local' => [],
 		];
 
 		foreach ($fields as $field => $type)
 		{
-			if (in_array($field, ["id"]))
+			if (in_array($field, ['id']))
 			{
 				continue;
 			}
 
-			$sort = in_array($field, $this->localFieldNames) ? "local" : "form";
+			$sort = in_array($field, $this->localFieldNames) ? 'local' : 'form';
 
 			$ar[$sort][] = $this->getFieldInfo($field, $type);
 		}
@@ -314,43 +305,43 @@ EOF;
 	{
 		if (in_array($field, $this->checkboxFieldNames))
 		{
-			return "checkbox";
+			return 'checkbox';
 		}
  		elseif (in_array($field, $this->dateTimeFieldNames))
 		{
-			return "datetime_str";
+			return 'datetime_str';
 		}
 		elseif (in_array($field, $this->picFieldNames))
 		{
-			return "pic";
+			return 'pic';
 		}
 		elseif (in_array($field, $this->orderNumFieldNames))
 		{
-			return "order_num";
+			return 'order_num';
 		}
 
 		$type = preg_replace('/\(.+$/', '', mb_strtolower($type));
 
 		switch ($type)
 		{
-			case "timestamp":
-			case "datetime":
-				return "datetime_str";
+			case 'timestamp':
+			case 'datetime':
+				return 'datetime_str';
 
-			case "date":
-				return "date_str";
+			case 'date':
+				return 'date_str';
 
-			case "time":
-				return "time_str";
+			case 'time':
+				return 'time_str';
 
-			case "tinyint":
-			case "mediumint":
-			case "int":
-			case "bigint":
-				return "int";
+			case 'tinyint':
+			case 'mediumint':
+			case 'int':
+			case 'bigint':
+				return 'int';
 
 			default:
-				return "string";
+				return 'string';
 		}
 	}
 
@@ -385,11 +376,10 @@ EOF;
 
 			if (in_array($field, $this->dateTimeFieldNames))
 			{
-				$methodName = camelize("get_" . $field);
+				$methodName = camelize('get_' . $field);
 
 				$ar[] = <<<EOF
 			'$field' => [
-				'title' => 'Дата',
 				'value' => function($modelName \$m) {
 					return \diDateTime::simpleFormat(\$m->{$methodName}());
 				},
@@ -419,7 +409,7 @@ EOF;
 
 	protected function getDb()
 	{
-		return $this->db;
+		return \diCore\Database\Connection::get()->getDb();
 	}
 
 	protected function getFolderForNamespace()
@@ -434,17 +424,11 @@ EOF;
 			: static::defaultFolder);
 	}
 
-	/**
-	 * @return string
-	 */
 	public function getNamespace()
 	{
 		return $this->namespace;
 	}
 
-	/**
-	 * @param mixed $namespace
-	 */
 	public function setNamespace($namespace)
 	{
 		$this->namespace = $namespace;

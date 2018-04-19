@@ -168,34 +168,34 @@ function get_http_path($target = null)
 	return $className::http($target);
 }
 
-function get_pics_folder($table)
+function get_pics_folder($table, $assetsFolder = 'uploads/')
 {
-	if (isset($GLOBALS[$table."_pics_folder"]))
+	if (isset($GLOBALS[$table . "_pics_folder"]))
 	{
-		return $GLOBALS[$table."_pics_folder"];
+		return $GLOBALS[$table . "_pics_folder"];
 	}
 
-	return "uploads/{$table}/";
+	return StringHelper::slash($assetsFolder) . $table . '/';
 }
 
-function get_files_folder($table)
+function get_files_folder($table, $assetsFolder = 'uploads/')
 {
-	if (isset($GLOBALS[$table."_files_folder"]))
+	if (isset($GLOBALS[$table . "_files_folder"]))
 	{
-		return $GLOBALS[$table."_files_folder"];
+		return $GLOBALS[$table . "_files_folder"];
 	}
 
-	return "uploads/{$table}/files/";
+	return StringHelper::slash($assetsFolder) . $table . '/files/';
 }
 
-function get_tn_folder($index = "")
+function get_tn_folder($index = "", $folderBase = 'preview')
 {
 	if ($index < 2)
 	{
-		$index = "";
+		$index = '';
 	}
 
-	return "preview{$index}/";
+	return $folderBase . $index . '/';
 }
 
 function get_orig_folder()

@@ -21,6 +21,7 @@ class Config
 	const siteTitle = null;
 	const apiQueryPrefix = null;
 	const folderForAssets = '';
+	const folderForUserAssets = 'uploads/';
 	const mainDomain = null;
 	const mainLanguage = 'ru'; // used to determine localization field names
 	const useCoreTwig = true; // if false, twig should be installed via composer
@@ -186,6 +187,14 @@ class Config
 		return $class::__getAssetSourcesFolder();
 	}
 
+	final public static function getUserAssetsFolder()
+	{
+		/** @var Config $class */
+		$class = self::getClass();
+
+		return $class::__getUserAssetsFolder();
+	}
+
 	final public static function getTwigCorePath()
 	{
 		/** @var Config $class */
@@ -235,6 +244,11 @@ class Config
 	public static function __getAssetSourcesFolder()
 	{
 		return static::__getPhpFolder() . static::folderForAssets;
+	}
+
+	public static function __getUserAssetsFolder()
+	{
+		return static::folderForUserAssets;
 	}
 
 	public static function __getTwigCorePath()

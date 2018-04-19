@@ -1030,7 +1030,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		}
 		else
 		{
-			while ($row = $this->getDb()->fetch_array($rows))
+			while ($rows && $row = $this->getDb()->fetch_array($rows))
 			{
 				$iterator($row);
 			}

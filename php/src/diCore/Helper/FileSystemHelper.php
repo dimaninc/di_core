@@ -15,8 +15,8 @@ class FileSystemHelper
 		$handle = opendir($path);
 
 		$result = [
-			"f" => [],
-			"d" => [],
+			'f' => [],
+			'd' => [],
 		];
 
 		while ($f = readdir($handle))
@@ -25,11 +25,11 @@ class FileSystemHelper
 
 			if ($f && is_file(StringHelper::slash($path) . $f))
 			{
-				$result["f"][] = $f2;
+				$result['f'][] = $f2;
 			}
-			elseif ($f && is_dir(StringHelper::slash($path) . $f) && $f != "." && $f != "..")
+			elseif ($f && is_dir(StringHelper::slash($path) . $f) && $f != '.' && $f != '..')
 			{
-				$result["d"][] = $f2;
+				$result['d'][] = $f2;
 
 				if ($recursive)
 				{
@@ -42,8 +42,8 @@ class FileSystemHelper
 
 		closedir($handle);
 
-		sort($result["f"]);
-		sort($result["d"]);
+		sort($result['f']);
+		sort($result['d']);
 
 		return $result;
 	}
@@ -57,7 +57,7 @@ class FileSystemHelper
 
 		foreach ($pathEndingsToCreate as $path)
 		{
-			$folders = explode("/", $path);
+			$folders = explode('/', $path);
 			$fullPath = $basePath;
 
 			$oldMask = umask(0);

@@ -8,6 +8,7 @@
 
 namespace diCore\Admin;
 
+use diCore\Data\Config;
 use diCore\Data\Types;
 use diCore\Database\Entity\Mongo\Model as MongoModel;
 use diCore\Helper\FileSystemHelper;
@@ -1012,7 +1013,7 @@ class Submit
 		{
 			$opts = extend([
 				'type' => self::IMAGE_TYPE_MAIN,
-				'folder' => $this->getSubmittedModel()->getPicsFolder() ?: get_pics_folder($this->getTable()),
+				'folder' => $this->getSubmittedModel()->getPicsFolder() ?: get_pics_folder($this->getTable(), Config::getUserAssetsFolder()),
 				'subfolder' => null,
 				'resize' => null,
 				'quality' => null,

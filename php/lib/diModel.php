@@ -7,6 +7,7 @@
  */
 
 use diCore\Base\CMS;
+use diCore\Data\Config;
 
 class diModel implements \ArrayAccess
 {
@@ -489,7 +490,9 @@ class diModel implements \ArrayAccess
 
 	public function getPicsFolder()
 	{
-		return $this->picsFolder !== null ? $this->picsFolder : get_pics_folder($this->getTable());
+		return $this->picsFolder !== null
+			? $this->picsFolder
+			: get_pics_folder($this->getTable(), Config::getUserAssetsFolder());
 	}
 
 	public function setTnFolder($folder, $index = '')
