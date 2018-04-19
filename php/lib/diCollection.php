@@ -770,6 +770,14 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	}
 
 	/**
+	 * @return null|string
+	 */
+	public function getQuery()
+	{
+		return $this->query;
+	}
+
+	/**
 	 * @param string $queryFields
 	 * @deprecated Use ->select() instead
 	 * @return $this

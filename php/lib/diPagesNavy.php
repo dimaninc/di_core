@@ -295,8 +295,17 @@ class diPagesNavy
 		$sign = strtolower($dir) == "asc" ? "<" : ">";
 
 		$col = $this->getInitialCollection();
-		$col
-			->filterBy($orderByField, $sign, $orderByValue);
+
+		if ($col->getQuery())
+		{
+			$col
+				->setQuery($col->getQuery() . " AND `$orderByField` $sign '$orderByValue'");
+		}
+		else
+		{
+			$col
+				->filterBy($orderByField, $sign, $orderByValue);
+		}
 
 		$page = ceil(($col->count() + 1) / $this->per_page);
 

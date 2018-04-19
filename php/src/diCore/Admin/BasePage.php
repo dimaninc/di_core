@@ -779,11 +779,12 @@ abstract class BasePage
 
 		if ($this->hasTable())
 	    {
+		    $this->initFilters();
+
 		    switch ($this->listMode)
 		    {
 			    case self::LIST_LIST:
 				    $listOptions = $this->getOptions(self::$listOptions);
-
 				    $this->List = new \diAdminList($this, $listOptions);
 				    break;
 
@@ -791,8 +792,6 @@ abstract class BasePage
 					$this->Grid = new \diAdminGrid($this);
 				    break;
 		    }
-
-		    $this->initFilters();
 	    }
 
 		return true;
@@ -835,6 +834,8 @@ abstract class BasePage
 			$this->getFilters()
 				->buildQuery();
 		}
+
+		return $this;
 	}
 
 	public function setBeforeTableTemplate($template, $data = [])
