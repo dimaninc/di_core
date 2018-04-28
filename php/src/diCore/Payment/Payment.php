@@ -17,6 +17,11 @@ use diCore\Payment\Yandex\Kassa;
 use diCore\Tool\Auth as AuthTool;
 use diCore\Tool\Logger;
 
+/**
+ * Class Payment
+ * @package diCore\Payment
+ * @method static Payment getClass
+ */
 class Payment
 {
     use \diCore\Traits\BasicCreate;
@@ -58,8 +63,6 @@ class Payment
         self::eur => 'Eur',
     ];
 
-    private static $class;
-
     /** @var  int */
     protected $targetType;
     /** @var  int */
@@ -77,24 +80,6 @@ class Payment
     public static function enabled()
     {
         return \diConfiguration::get('epay_enabled');
-    }
-
-    /**
-     * @return Payment|string
-     */
-    public static function getClass()
-    {
-        if (!self::$class)
-        {
-            self::$class = \diLib::getChildClass(self::class);
-        }
-
-        return self::$class;
-    }
-
-    final public static function resetClass()
-    {
-        self::$class = null;
     }
 
     public static function getPaymentVendorsUsed()
