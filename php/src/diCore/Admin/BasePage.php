@@ -838,32 +838,52 @@ abstract class BasePage
 		return $this;
 	}
 
-	public function setBeforeTableTemplate($template, $data = [])
+	public function setBeforeTableTemplate($template = null, $data = [])
 	{
+		if ($template === null)
+		{
+			$template = 'admin/' . $this->getTable() . '/after_list';
+		}
+
 		$this->getTwig()
 			->render($template, 'before_table', $data);
 
 		return $this;
 	}
 
-	public function setAfterTableTemplate($template, $data = [])
+	public function setAfterTableTemplate($template = null, $data = [])
 	{
+		if ($template === null)
+		{
+			$template = 'admin/' . $this->getTable() . '/after_list';
+		}
+
 		$this->getTwig()
 			->render($template, 'after_table', $data);
 
 		return $this;
 	}
 
-	public function setBeforeFormTemplate($template, $data = [])
+	public function setBeforeFormTemplate($template = null, $data = [])
 	{
+		if ($template === null)
+		{
+			$template = 'admin/' . $this->getTable() . '/before_form';
+		}
+
 		$this->getTwig()
 			->render($template, 'before_form', $data);
 
 		return $this;
 	}
 
-	public function setAfterFormTemplate($template, $data = [])
+	public function setAfterFormTemplate($template = null, $data = [])
 	{
+		if ($template === null)
+		{
+			$template = 'admin/' . $this->getTable() . '/after_form';
+		}
+
 		$this->getTwig()
 			->render($template, 'after_form', $data);
 

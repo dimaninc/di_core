@@ -36,13 +36,11 @@ class LocalizationAdmin
                 valuesAr = []
                 $td = $(@).parent()
                 while $td = $td.next 'td:eq(0)'
-                    if $td.hasClass 'btn'
-                        break
-                    val = $td.find '[data-purpose="orig"]'
-                    .html()
-                    if val is undefined or val is null
-                        val = $td.html()
-                    valuesAr.push val.replace(/'/g, '\\\'').replace /"/g, '\"'
+                    break if $td.hasClass 'btn'
+                    val = $td.find('[data-purpose="orig"]').html()
+                    val = $td.html() if val is undefined or val is null
+                    val = val.replace(/'/g, '\\\'').replace(/"/g, '\\\"')
+                    valuesAr.push val
                 s = '$this->getDb()->q("INSERT IGNORE INTO `' + $t.data('table') + '`(`name`,`value`,`en_value`,`de_value`,`it_value`,`es_value`,`fr_value`)\n' + '\u0009\u0009\u0009VALUES(\'' + valuesAr.join('\',\'') + '\');' + '");'
                 linesAr.push s
                 true
@@ -51,8 +49,7 @@ class LocalizationAdmin
                 $out = $ '<div class="export-block"><textarea></textarea></div>'
                 .insertAfter $(@).parent()
 
-            $out.show().find 'textarea'
-            .val linesAr.join '\n'
+            $out.show().find('textarea').val linesAr.join '\n'
 
             false
         @
