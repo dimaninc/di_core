@@ -160,9 +160,9 @@ class diModel implements \ArrayAccess
 		/** @var diModel $o */
 		$o = new $className();
 
-		if ($options["identityFieldName"])
+		if ($options['identityFieldName'])
 		{
-			$o->setIdentityFieldName($options["identityFieldName"]);
+			$o->setIdentityFieldName($options['identityFieldName']);
 		}
 
 		$o->initFrom($ar);
@@ -192,7 +192,7 @@ class diModel implements \ArrayAccess
 	public static function createForTableNoStrict($table, $ar = null, $options = [])
 	{
 		$type = \diTypes::getNameByTable($table);
-		$typeName = self::existsFor($type, "type");
+		$typeName = self::existsFor($type, 'type');
 
 		return $typeName
 			? static::create($typeName, $ar, $options)
@@ -204,28 +204,28 @@ class diModel implements \ArrayAccess
 		$fullMethod = underscore($method);
 		$value = isset($arguments[0]) ? $arguments[0] : null;
 
-		$x = strpos($fullMethod, "_");
+		$x = strpos($fullMethod, '_');
 		$method = substr($fullMethod, 0, $x);
 		$field = substr($fullMethod, $x + 1);
 
 		switch ($method)
 		{
-			case "get":
+			case 'get':
 				return $this->get($field);
 
-			case "localized":
+			case 'localized':
 				return $this->localized($field);
 
-			case "set":
+			case 'set':
 				return $this->set($field, $value);
 
-			case "kill":
+			case 'kill':
 				return $this->kill($field);
 
-			case "has":
+			case 'has':
 				return $this->has($field);
 
-			case "exists":
+			case 'exists':
 				return $this->exists($field);
 		}
 
@@ -236,7 +236,7 @@ class diModel implements \ArrayAccess
 		}
 
 		throw new \Exception(
-			sprintf("Invalid method %s::%s(%s)", get_class($this), $method, print_r($arguments, 1))
+			sprintf('Invalid method %s::%s(%s)', get_class($this), $method, print_r($arguments, 1))
 		);
 	}
 
@@ -276,7 +276,7 @@ class diModel implements \ArrayAccess
 		return $this;
 	}
 
-	public function initFromRequest($method = "post")
+	public function initFromRequest($method = 'post')
 	{
 		foreach (\diRequest::all($method) as $key => $value)
 		{
@@ -463,22 +463,22 @@ class diModel implements \ArrayAccess
 
 	protected function isPicField($field)
 	{
-		return in_array($field, $this->picFields) || in_array($field, $this->customPicFields);
+		return in_array($field, $this->getPicFields());
 	}
 
 	protected function isFileField($field)
 	{
-		return in_array($field, $this->fileFields) || in_array($field, $this->customFileFields);
+		return in_array($field, $this->getFileFields());
 	}
 
 	protected function isDateField($field)
 	{
-		return in_array($field, $this->dateFields) || in_array($field, $this->customDateFields);
+		return in_array($field, $this->getDateFields());
 	}
 
 	protected function isIpField($field)
 	{
-		return in_array($field, $this->ipFields) || in_array($field, $this->customIpFields);
+		return in_array($field, $this->getIpFields());
 	}
 
 	public function setPicsFolder($folder)
@@ -493,6 +493,11 @@ class diModel implements \ArrayAccess
 		return $this->picsFolder !== null
 			? $this->picsFolder
 			: get_pics_folder($this->getTable(), Config::getUserAssetsFolder());
+	}
+
+	public function getFilesFolder()
+	{
+		return $this->getPicsFolder() . getFilesFolder();
 	}
 
 	public function setTnFolder($folder, $index = '')
@@ -789,7 +794,7 @@ class diModel implements \ArrayAccess
 		}
 
 		$a = $this->prepareIdAndFieldForGetRecord($id, $fieldAlias);
-		$ar = $this->getDb()->ar($this->getTable(), "WHERE {$a["field"]} = '{$a["id"]}'");
+		$ar = $this->getDb()->ar($this->getTable(), "WHERE {$a['field']} = '{$a['id']}'");
 
 		return $this->tuneDataAfterFetch($ar);
 	}
@@ -1337,7 +1342,7 @@ class diModel implements \ArrayAccess
 
 		if ($this->validationErrors)
 		{
-			$e = new \diValidationException("Unable to validate " . get_class($this) . ": " . join("\n", $this->preparedValidationErrors()));
+			$e = new \diValidationException('Unable to validate ' . get_class($this) . ': ' . join("\n", $this->preparedValidationErrors()));
 			$e->setErrors($this->validationErrors);
 
 			throw $e;
@@ -1616,7 +1621,7 @@ class diModel implements \ArrayAccess
 
 			if (!$result)
 			{
-				$e = new \diDatabaseException("Unable to update " . get_class($this) . " in DB: " .
+				$e = new \diDatabaseException('Unable to update ' . get_class($this) . ' in DB: ' .
 					join("\n", $this->getDb()->getLog()));
 				$e->setErrors($this->getDb()->getLog());
 
@@ -1629,7 +1634,7 @@ class diModel implements \ArrayAccess
 
 			if ($id === false)
 			{
-				$e = new \diDatabaseException("Unable to insert " . get_class($this) . " into DB: " .
+				$e = new \diDatabaseException('Unable to insert ' . get_class($this) . ' into DB: ' .
 					join("\n", $this->getDb()->getLog()));
 				$e->setErrors($this->getDb()->getLog());
 
@@ -1679,7 +1684,37 @@ class diModel implements \ArrayAccess
 	 */
 	public function getFileFields()
 	{
-		return array_merge($this->fileFields, $this->customFileFields);
+		return array_merge($this->fileFields, $this->customFileFields, $this->getPicFields());
+	}
+
+	/**
+	 * Returns array of pic fields of the model
+	 *
+	 * @return array
+	 */
+	public function getPicFields()
+	{
+		return array_merge($this->picFields, $this->customPicFields);
+	}
+
+	/**
+	 * Returns array of date fields of the model
+	 *
+	 * @return array
+	 */
+	public function getDateFields()
+	{
+		return array_merge($this->dateFields, $this->customDateFields);
+	}
+
+	/**
+	 * Returns array of IP fields of the model
+	 *
+	 * @return array
+	 */
+	public function getIpFields()
+	{
+		return array_merge($this->ipFields, $this->customIpFields);
 	}
 
 	/**
@@ -1721,13 +1756,13 @@ class diModel implements \ArrayAccess
 			: $this->getFileFields();
 
 		$subFolders = array_merge([
-			"",
+			'',
 			get_tn_folder(),
 			get_tn_folder(2),
 			get_tn_folder(3),
 			get_big_folder(),
 			get_orig_folder(),
-			"files/",
+			getFilesFolder(),
 		], $this->customFileFolders);
 
 		// own pics
@@ -1747,6 +1782,11 @@ class diModel implements \ArrayAccess
 		return $killFiles;
 	}
 
+	protected function getFileSystemBasePath($endingSlashNeeded = true, $field = null)
+	{
+		return \diPaths::fileSystem($this, $endingSlashNeeded, $field);
+	}
+
 	public function killRelatedFiles($field = null)
 	{
 		if (!$this->exists())
@@ -1755,17 +1795,18 @@ class diModel implements \ArrayAccess
 		}
 
 		$killFiles = $this->getRelatedFilesList($field);
+		$basePath = $this->getFileSystemBasePath(true, $field);
 
 		// killing time
 		foreach ($killFiles as $fn)
 		{
-			if ($fn && is_file(\diPaths::fileSystem($this, true, $field) . $fn))
+			if ($fn && is_file($basePath . $fn))
 			{
-				unlink(\diPaths::fileSystem($this, true, $field) . $fn);
+				unlink($basePath . $fn);
 			}
 		}
 
-		if ($field === null && $this->getTable() != "dipics")
+		if ($field === null && $this->getTable() != 'dipics')
 		{
 			\diCore\Entity\DynamicPic\Collection::createByTarget($this->getTable(), $this->getId())
 				->hardDestroy();
@@ -1778,7 +1819,7 @@ class diModel implements \ArrayAccess
 	{
 		$fileFields = $field
 			? [$field]
-			: array_merge($this->fileFields, $this->customFileFields);
+			: $this->getFileFields();
 
 		$fieldSuffixes = [
 			'',
@@ -1883,9 +1924,9 @@ class diModel implements \ArrayAccess
 	{
 		$ar = [];
 
-		if ($this->exists("parent"))
+		if ($this->exists('parent'))
 		{
-			$ar[] = "parent = '{$this->get("parent")}'";
+			$ar[] = "parent = '{$this->get('parent')}'";
 		}
 
 		return $ar;
@@ -1899,10 +1940,10 @@ class diModel implements \ArrayAccess
 	{
 		$init_value = $direction > 0 ? 1 : 65000;
 		$sign = $direction > 0 ? 1 : -1;
-		$min_max = $direction > 0 ? "MAX" : "MIN";
+		$min_max = $direction > 0 ? 'MAX' : 'MIN';
 
 		$qAr = $this->getQueryArForMove();
-		$query = $qAr ? "WHERE " . join(" AND ", $qAr) : "";
+		$query = $qAr ? 'WHERE ' . join(' AND ', $qAr) : '';
 		$field = static::order_field_name ?: $this->orderFieldName;
 
 		$order_r = $this->getDb()->r($this->getTable(), $query,
