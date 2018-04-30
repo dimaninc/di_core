@@ -1724,13 +1724,13 @@ EOF;
 		], $options);
 
 		$f = \diPaths::fileSystem($this->getModel(), false, $field) . $fullName;
-		$ext = strtoupper(get_file_ext($fullName));
-		$imgTag = "";
+		$ext = strtoupper(StringHelper::fileExtension($fullName));
+		$imgTag = '';
 		$previewInfoBlock = '';
 
 		if (is_file($f))
 		{
-			$httpName = \diPaths::http($this->getModel(), true, $field) . $fullName;
+			$httpName = \diPaths::http($this->getModel(), false, $field) . '/' . StringHelper::unslash($fullName, false);
 
 			$ff_w = $ff_h = null;
 			$ff_s = filesize($f);
@@ -1744,7 +1744,7 @@ EOF;
 				$imgTag = \diSwiffy::getHtml($httpName, $ff_w, $ff_h);
 			}
 			// video
-			elseif (in_array($ext, ["MP4", "M4V", "OGV", "WEBM", "AVI"]))
+			elseif (in_array($ext, ['MP4', 'M4V', 'OGV', 'WEBM', 'AVI']))
 			{
 				//$mime_type = self::get_mime_type_by_ext($ext);
 				// type=\"$mime_type\"
@@ -1768,7 +1768,7 @@ EOF;
 				$font = \diModel::create(\diTypes::font);
 				$font
 					->setToken($fontFamily)
-					->setRelated("folder", preg_replace("/^\/+/", "", add_ending_slash(dirname($fullName))))
+					->setRelated("folder", preg_replace("/^\/+/", "", StringHelper::slash(dirname($fullName))))
 					->set("file_" . strtolower($ext), basename($fullName));
 
 				$fontDefinition = Helper::getCssForFont($font);
@@ -1798,8 +1798,8 @@ EOF;
 					if ($options['showPreviewWithLink'])
 					{
 						$subFolder = Submit::getFolderByImageType($options['showPreviewWithLink']);
-						$previewHttpName = add_ending_slash(dirname($httpName)) . $subFolder . basename($httpName);
-						$previewFullName = add_ending_slash(dirname($f)) . $subFolder . basename($f);
+						$previewHttpName = StringHelper::slash(dirname($httpName)) . $subFolder . basename($httpName);
+						$previewFullName = StringHelper::slash(dirname($f)) . $subFolder . basename($f);
 
 						list($wTn, $hTn) = getimagesize($previewFullName);
 						$sizeTn = filesize($previewFullName);
@@ -1886,8 +1886,7 @@ EOF;
 	{
 		if ($path === false)
 		{
-			$path = $this->getModel()->getPicsFolder() ?: get_pics_folder($this->table);
-			$path = '/' . $path;
+			$path = StringHelper::slash($this->getModel()->getPicsFolder() ?: get_pics_folder($this->table), false);
 		}
 
 		$fields = is_array($field) ? $field : [$field];
@@ -1982,36 +1981,36 @@ EOF;
 
 		if ($path === false && !empty($files_folder))
 		{
-			$path = "/" . $files_folder;
+			$path = StringHelper::slash($files_folder, false);
 		}
 		elseif ($path === false && !empty($pics_folder))
 		{
-			$path = "/" . $pics_folder;
+			$path = StringHelper::slash($pics_folder, false);
 		}
 
 		$fields = is_array($field) ? $field : [$field];
 
 		foreach ($fields as $field)
 		{
-			$v = $this->getData($field) ?: "";
+			$v = $this->getData($field) ?: '';
 
 			$this->uploaded_files[$field] = $v
 				? $this->getPreviewHtmlForFile($field, $path . $v, [
 					'hideIfNoFile' => $hideIfNoFile,
 					'showDelLink' => $showDelLink,
 				])
-				: "";
+				: '';
 
 			$name = $field;
 
-			if ($this->hasInputAttribute($field, "multiple"))
+			if ($this->hasInputAttribute($field, 'multiple'))
 			{
-				$name .= "[]";
+				$name .= '[]';
 			}
 
-			$this->inputs[$field] = $this->isFlag($field, "static")
-				? "<input type=\"hidden\" name=\"$field\" value=\"$v\" />"
-				: "<input type=\"file\" name=\"$name\" value=\"\" size=\"70\"" . $this->getInputAttributesString($field) . " />";
+			$this->inputs[$field] = $this->isFlag($field, 'static')
+				? '<input type="hidden" name="' . $field . '" value="' . $v . '">'
+				: '<input type="file" name="' . $name . '" value="" size="70"' . $this->getInputAttributesString($field) . '>';
 
 			$this->force_inputs_fields[$field] = true;
 		}
@@ -2022,7 +2021,7 @@ EOF;
 	function set_cover_pic_input($field, $rs, $path, $cols = 3)
 	{
 		global $db;
-		$path2 = "/".get_pics_folder($this->table);
+		$path2 = '/' . get_pics_folder($this->table);
 
 		$orig_r = false;
 
