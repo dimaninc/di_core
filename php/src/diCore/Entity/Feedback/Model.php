@@ -38,6 +38,7 @@ namespace diCore\Entity\Feedback;
 class Model extends \diModel
 {
 	const type = \diTypes::feedback;
+	const table = 'feedback';
 	protected $table = 'feedback';
 
 	public function validate()

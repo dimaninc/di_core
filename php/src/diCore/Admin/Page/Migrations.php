@@ -2,6 +2,7 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Database\Tool\Migration;
 use diCore\Tool\CollectionCache;
 use diCore\Entity\DiMigrationsLog\Model;
 
@@ -101,7 +102,7 @@ class Migrations extends \diCore\Admin\BasePage
 				"title" => "",
 				"value" => function (Model $l)
 				{
-					return $l->getDirection() == \diMigration::UP ? "+" : "-";
+					return $l->getDirection() == Migration::UP ? "+" : "-";
 				},
 				"noHref" => true,
 			],
@@ -109,7 +110,7 @@ class Migrations extends \diCore\Admin\BasePage
 				"title" => "Когда",
 				"value" => function (Model $l)
 				{
-					return date("d.m.Y H:i", strtotime($l->getDate()));
+					return \diDateTime::simpleFormat($l->getDate());
 				},
 				"attrs" => [],
 				"headAttrs" => [
@@ -185,7 +186,7 @@ class Migrations extends \diCore\Admin\BasePage
 						return "";
 					}
 
-					return date("d.m.Y H:i", $m->get("date"));
+					return \diDateTime::simpleFormat($m->get("date"));
 				},
 				"attrs" => [],
 				"headAttrs" => [
@@ -206,7 +207,7 @@ class Migrations extends \diCore\Admin\BasePage
 
 					$date = $this->getManager()->whenExecuted($m->getId());
 
-					return $date ? date("d.m.Y H:i", strtotime($date)) : "&ndash;";
+					return $date ? \diDateTime::simpleFormat($date) : "&ndash;";
 				},
 				"attrs" => [],
 				"headAttrs" => [
@@ -270,7 +271,7 @@ class Migrations extends \diCore\Admin\BasePage
 			{
 				$idx = \diMigrationsManager::getIdxByFileName($fn);
 
-				/** @var \diMigration $className */
+				/** @var Migration $className */
 				$className = \diMigrationsManager::getClassNameByIdx($idx);
 				include($fn);
 

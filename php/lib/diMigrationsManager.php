@@ -1,6 +1,7 @@
 <?php
 
 use diCore\Data\Config;
+use diCore\Database\Tool\Migration;
 use diCore\Entity\DiMigrationsLog\Model;
 use diCore\Entity\DiMigrationsLog\Collection;
 use diCore\Helper\FileSystemHelper;
@@ -114,10 +115,10 @@ class diMigrationsManager
 	{
 		return <<<EOF
 <?php
-class %s extends diMigration
+class %s extends \diCore\Database\Tool\Migration
 {
-	public static \$idx = "%s";
-	public static \$name = "%s";
+	public static \$idx = '%s';
+	public static \$name = '%s';
 
 	public function up()
 	{
@@ -234,7 +235,7 @@ EOF;
 	}
 
 	/**
-	 * @return diMigration
+	 * @return Migration
 	 */
 	private function getMigrationObject($idx)
 	{
@@ -274,7 +275,7 @@ EOF;
 		return $this;
 	}
 
-	private function logExecution(diMigration $migration, $state)
+	private function logExecution(Migration $migration, $state)
 	{
 		$adminUser = \diAdminUser::create();
 
@@ -284,7 +285,7 @@ EOF;
 			->setAdminId($adminUser->getModel()->getId())
 			->setIdx($migration::$idx)
 			->setName($migration::$name)
-			->setDirection($state ? \diMigration::UP : \diMigration::DOWN)
+			->setDirection($state ? Migration::UP : Migration::DOWN)
 			->save();
 
 		return $this;
@@ -318,14 +319,14 @@ EOF;
 	{
 		$log = $this->getLastLogByIdx($idx);
 
-		return $log->exists() && $log->getDirection() == \diMigration::UP;
+		return $log->exists() && $log->getDirection() == Migration::UP;
 	}
 
 	public function whenExecuted($idx)
 	{
 		$log = $this->getLastLogByIdx($idx);
 
-		return $log->exists() && $log->getDirection() == \diMigration::UP
+		return $log->exists() && $log->getDirection() == Migration::UP
 			? $log->getDate()
 			: null;
 	}

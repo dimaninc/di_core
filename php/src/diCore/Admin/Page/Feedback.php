@@ -14,74 +14,74 @@ use diCore\Helper\StringHelper;
 class Feedback extends \diCore\Admin\BasePage
 {
 	protected $options = [
-		"staticMode" => true,
-		"filters" => [
-			"defaultSorter" => [
-				"sortBy" => "date",
-				"dir" => "DESC",
+		'staticMode' => true,
+		'filters' => [
+			'defaultSorter' => [
+				'sortBy' => 'date',
+				'dir' => 'DESC',
 			],
 		],
-		"showControlPanel" => true,
+		'showControlPanel' => true,
 	];
 
 	protected function initTable()
 	{
-		$this->setTable("feedback");
+		$this->setTable('feedback');
 	}
 
 	public function renderList()
 	{
 		$this->getList()->addColumns([
-			"_checkbox" => "",
-			"id" => "ID",
-			"email" => [
-				"headAttrs" => [
-					"width" => "15%",
+			'_checkbox' => '',
+			'id' => 'ID',
+			'email' => [
+				'headAttrs' => [
+					'width' => '15%',
 				],
 			],
-			"phone" => [
-				"headAttrs" => [
-					"width" => "15%",
+			'phone' => [
+				'headAttrs' => [
+					'width' => '15%',
 				],
 			],
-			"name" => [
-				"headAttrs" => [
-					"width" => "20%",
+			'name' => [
+				'headAttrs' => [
+					'width' => '20%',
 				],
 			],
-			"content" => [
-				"headAttrs" => [
-					"width" => "40%",
+			'content' => [
+				'headAttrs' => [
+					'width' => '40%',
 				],
-				"bodyAttrs" => [
-					"class" => "lite",
+				'bodyAttrs' => [
+					'class' => 'lite',
 				],
-				"value" => function(Model $model) {
+				'value' => function(Model $model) {
 					return StringHelper::out(str_cut_end($model->getContent(), 200));
 				},
 			],
-			"date" => [
-				"title" => "Дата",
-				"value" => function(Model $model) {
-					return \diDateTime::format('d.m.Y H:i', $model->getDate());
+			'date' => [
+				'title' => 'Дата',
+				'value' => function(Model $model) {
+					return \diDateTime::simpleFormat($model->getDate());
 				},
-				"attrs" => [],
-				"headAttrs" => [
-					"width" => "10%",
+				'attrs' => [],
+				'headAttrs' => [
+					'width' => '10%',
 				],
-				"bodyAttrs" => [
-					"class" => "dt",
+				'bodyAttrs' => [
+					'class' => 'dt',
 				],
 			],
-			"#edit" => "",
-			"#del" => "",
+			'#edit' => '',
+			'#del' => '',
 		]);
 	}
 
 	public function renderForm()
 	{
 		$this->getForm()
-			->processData("content", function($v) {
+			->processData('content', function($v) {
 				return StringHelper::out($v);
 			});
 	}
@@ -98,46 +98,46 @@ class Feedback extends \diCore\Admin\BasePage
 	public function getFormFields()
 	{
 		return [
-			"user_id" => [
-				"type" => "int",
-				"title" => "Пользователь",
-				"default" => "",
+			'user_id' => [
+				'type' => 'int',
+				'title' => 'Пользователь',
+				'default' => '',
 			],
 
-			"name" => [
-				"type" => "string",
-				"title" => "Имя",
-				"default" => "",
+			'name' => [
+				'type' => 'string',
+				'title' => 'Имя',
+				'default' => '',
 			],
 
-			"email" => [
-				"type" => "string",
-				"title" => "E-mail",
-				"default" => "",
+			'email' => [
+				'type' => 'string',
+				'title' => 'E-mail',
+				'default' => '',
 			],
 
-			"phone" => [
-				"type" => "string",
-				"title" => "Телефон",
-				"default" => "",
+			'phone' => [
+				'type' => 'string',
+				'title' => 'Телефон',
+				'default' => '',
 			],
 
-			"content" => [
-				"type" => "text",
-				"title" => "Текст сообщения",
-				"default" => "",
+			'content' => [
+				'type' => 'text',
+				'title' => 'Текст сообщения',
+				'default' => '',
 			],
 
-			"ip" => [
-				"type" => "ip",
-				"title" => "IP отправителя",
-				"default" => "",
+			'ip' => [
+				'type' => 'ip',
+				'title' => 'IP отправителя',
+				'default' => '',
 			],
 
-			"date" => [
-				"type" => "datetime_str",
-				"title" => "Дата/время",
-				"default" => "",
+			'date' => [
+				'type' => 'datetime_str',
+				'title' => 'Дата/время',
+				'default' => '',
 			],
 		];
 	}
@@ -149,7 +149,7 @@ class Feedback extends \diCore\Admin\BasePage
 
 	public function getModuleCaption()
 	{
-		return "Обратная связь";
+		return 'Обратная связь';
 	}
 
 	public function addButtonNeededInCaption()

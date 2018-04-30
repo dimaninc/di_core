@@ -1,5 +1,3 @@
-{{ head|raw }}
-
 <p>Новое сообщение обратной связи</p>
 <hr>
 {% if feedback['name'] %}
@@ -17,5 +15,3 @@
 <p><b>Ссылка в админке:</b> <a href="{{ feedback['full_admin_href'] }}">{{ feedback['full_admin_href'] }}</a></p>
 <p><b>IP:</b> {{ feedback['ip'] }}</p>
 <hr>
-
-{{ foot|raw }}
