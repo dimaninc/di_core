@@ -438,7 +438,7 @@ class diActionsLog
 		switch ($rowOrUserId->user_type)
 		{
 			case self::utAdmin:
-				/** @var diAdminModel $admin */
+				/** @var \diCore\Entity\Admin\Model $admin */
 				$admin = diModel::create(diTypes::admin, $rowOrUserId->user_id);
 
 				return $admin->exists() ? $admin->getLogin() : "admin#$rowOrUserId->user_id";

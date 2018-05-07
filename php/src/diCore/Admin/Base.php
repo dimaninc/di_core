@@ -188,7 +188,7 @@ class Base
 	}
 
 	/**
-	 * @return \diAdminModel
+	 * @return \diCore\Entity\Admin\Model
 	 * @deprecated
 	 */
 	public function getAdmin()
@@ -197,7 +197,7 @@ class Base
 	}
 
 	/**
-	 * @return \diAdminModel
+	 * @return \diCore\Entity\Admin\Model
 	 */
 	public function getAdminModel()
 	{

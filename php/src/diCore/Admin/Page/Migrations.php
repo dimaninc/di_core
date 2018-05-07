@@ -88,7 +88,7 @@ class Migrations extends \diCore\Admin\BasePage
 			"admin_id" => [
 				"title" => "Применил админ",
 				"value" => function(Model $l) {
-					/** @var \diAdminModel $admin */
+					/** @var \diCore\Entity\Admin\Model $admin */
 					$admin = CollectionCache::getModel(\diTypes::admin, $l->getAdminId());
 
 					return $admin->exists() ? $admin->getLogin() : "&ndash;";

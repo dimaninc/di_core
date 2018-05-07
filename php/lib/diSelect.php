@@ -197,7 +197,7 @@ class diSelect
 		foreach ($collection as $model)
 		{
 			$data = extend([
-				'value' => null,
+				'value' => $model->getId(),
 				'text' => null,
 				'attributes' => [],
 			], call_user_func($format, $model));

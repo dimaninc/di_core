@@ -78,7 +78,7 @@ class AdminTasks extends \diCore\Admin\BasePage
 			->buildQuery()
 			->setSelectFromCollectionInput('admin_id',
 				\diCollection::create(Types::admin)->filterBy('active', 1)->orderBy('login'),
-				function(\diAdminModel $admin) {
+				function(\diCore\Entity\Admin\Model $admin) {
 					return [
 						'value' => $admin->getId(),
 						'text' => $admin->getLogin(),
@@ -131,7 +131,7 @@ class AdminTasks extends \diCore\Admin\BasePage
 			"id" => "ID",
 			"admin_id" => [
 				"value" => function(Model $model) {
-					/** @var \diAdminModel $admin */
+					/** @var \diCore\Entity\Admin\Model $admin */
 					$admin = CollectionCache::getModel(Types::admin, $model->getAdminId());
 
 					return $admin->exists() ? $admin->getLogin() : "&ndash;";
@@ -227,7 +227,7 @@ class AdminTasks extends \diCore\Admin\BasePage
 		$this->getForm()
 			->setSelectFromCollectionInput('admin_id',
 				\diCollection::create(Types::admin)->filterBy('active', 1)->orderBy('login'),
-				function(\diAdminModel $admin) {
+				function(\diCore\Entity\Admin\Model $admin) {
 					return [
 						'value' => $admin->getId(),
 						'text' => $admin->getLogin(),

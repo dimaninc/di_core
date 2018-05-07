@@ -32,7 +32,7 @@ class diBaseController
 	{
 		\diSession::start();
 
-		$this->action = \diRequest::request("action");
+		$this->action = \diRequest::request('action');
 		$this->paramsAr = $params;
 	}
 
@@ -44,9 +44,17 @@ class diBaseController
 		return $this->admin;
 	}
 
+	protected function getAdminModel()
+	{
+		return $this->getAdmin()->getModel();
+	}
+
 	protected function initAdmin()
 	{
-		$this->admin = \diAdminUser::create();
+		if ($this->admin === null)
+		{
+			$this->admin = \diAdminUser::create();
+		}
 
 		return $this;
 	}
@@ -60,7 +68,7 @@ class diBaseController
 	{
 		if (!$this->isAdminAuthorized())
 		{
-			die("You have no access to this controller/action");
+			die('You have no access to this controller/action');
 		}
 
 		return $this;
@@ -80,7 +88,7 @@ class diBaseController
 	{
 		if ($this->tpl === null)
 		{
-			throw new \Exception("Template not initialized");
+			throw new \Exception('Template not initialized');
 		}
 
 		return $this->tpl;
@@ -170,7 +178,7 @@ class diBaseController
 
 	protected static function getCurrentFolder()
 	{
-		return dirname($_SERVER["SCRIPT_NAME"]);
+		return dirname($_SERVER['SCRIPT_NAME']);
 	}
 
 	protected static function getFullQueryRoute()
@@ -190,17 +198,17 @@ class diBaseController
 		{
 			$path = static::getCurrentFolder();
 
-			$paramsStr = trim(substr(static::getFullQueryRoute(), strlen($path) + 1), "/");
+			$paramsStr = trim(substr(static::getFullQueryRoute(), strlen($path) + 1), '/');
 		}
 
-		$paramsStr = preg_replace('/[?#].*$/', "", $paramsStr);
+		$paramsStr = preg_replace('/[?#].*$/', '', $paramsStr);
 
 		if ($pathBeginning && substr($paramsStr, 0, strlen($pathBeginning)) == $pathBeginning)
 		{
 			$paramsStr = substr($paramsStr, strlen($pathBeginning));
 		}
 
-		return explode("/", $paramsStr);
+		return explode('/', $paramsStr);
 	}
 
 	/*
@@ -225,13 +233,13 @@ class diBaseController
 
 		if (!$classBaseName || !$action)
 		{
-			$classBaseName = isset($paramsAr[0]) ? $paramsAr[0] : "";
-			$action = isset($paramsAr[1]) ? $paramsAr[1] : "";
+			$classBaseName = isset($paramsAr[0]) ? $paramsAr[0] : '';
+			$action = isset($paramsAr[1]) ? $paramsAr[1] : '';
 			$params = array_slice($paramsAr, 2);
 
 			if (!$classBaseName)
 			{
-				throw new \Exception("Empty controller name passed");
+				throw new \Exception('Empty controller name passed');
 			}
 		}
 
@@ -373,7 +381,7 @@ class diBaseController
 
 	protected function redirect()
 	{
-		$back = \diRequest::get("back", \diRequest::referrer('/'));
+		$back = \diRequest::get('back', \diRequest::referrer('/'));
 
 		$this->redirectTo($back);
 

@@ -997,7 +997,7 @@ abstract class BasePage
 				->filterByTargetId($this->getId())
 				->orderById('DESC');
 
-			/** @var \diAdminCollection $admins */
+			/** @var \diCore\Entity\Admin\Collection $admins */
 			$admins = \diCollection::create(\diTypes::admin);
 
 			/** @var \diAdminTableEditLogModel $rec */

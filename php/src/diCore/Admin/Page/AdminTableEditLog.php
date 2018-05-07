@@ -73,7 +73,7 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
 			->buildQuery()
 			->setSelectFromCollectionInput('admin_id',
 				\diCollection::create(\diTypes::admin)->orderBy('login'),
-				function(\diAdminModel $admin) {
+				function(\diCore\Entity\Admin\Model $admin) {
 					return [
 						'value' => $admin->getId(),
 						'text' => $admin->getLogin(),
@@ -114,7 +114,7 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
 			],
 			'admin_id' => [
 				'value' => function(\diAdminTableEditLogModel $model) {
-					/** @var \diAdminModel $admin */
+					/** @var \diCore\Entity\Admin\Model $admin */
 					$admin = CollectionCache::getModel(\diTypes::admin, $model->getAdminId());
 
 					return $admin->exists() ? $admin->getLogin() : '&ndash;';
@@ -170,7 +170,7 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
 		$this->getForm()
 			->setSelectFromCollectionInput('admin_id',
 				$admins = \diCollection::create(\diTypes::admin)->filterBy('active', 1)->orderBy('login'),
-				function(\diAdminModel $admin) {
+				function(\diCore\Entity\Admin\Model $admin) {
 					return [
 						'value' => $admin->getId(),
 						'text' => $admin->getLogin(),

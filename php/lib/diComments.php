@@ -68,7 +68,7 @@ class diComments
 	/** @var  \diCore\Entity\User\Collection */
 	protected $users;
 
-	/** @var  diAdminCollection */
+	/** @var  \diCore\Entity\Admin\Collection */
 	protected $admins;
 
 	protected $usePagesNavy = false;
