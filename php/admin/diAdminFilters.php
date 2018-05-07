@@ -904,7 +904,7 @@ EOF;
 				return $this->dir;
 
 			default:
-				return $this->data[$field];
+				return isset($this->data[$field]) ? $this->data[$field] : null;
 		}
 	}
 
@@ -916,7 +916,7 @@ EOF;
 
 	public function setSelectFromArrayInput($field, $ar, $prefix_ar = [], $suffix_ar = [])
 	{
-		$sel = new diSelect("admin_filter[$field]", $this->getValueForField($field));
+		$sel = new \diSelect("admin_filter[$field]", $this->getValueForField($field));
 
 		if (isset($this->input_params_ar[$field]))
 		{
