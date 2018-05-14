@@ -130,13 +130,15 @@ class Files extends \diBaseAdminController
 		}
 
 		$model = \diModel::createForTableNoStrict($table, $id, 'id');
+		$files = $model->getFilesForRotation($field);
 
-		$fn = \diPaths::fileSystem($this) . $model[$field . '_with_path'];
-
-		static::doRotate($angle, $fn);
+		foreach ($files as $fn)
+		{
+			static::doRotate($angle, \diPaths::fileSystem($this) . $fn);
+		}
 
 		$ar['ok'] = true;
-		$ar['fn'] = $fn;
+		$ar['files'] = $files;
 
 		return $ar;
 	}

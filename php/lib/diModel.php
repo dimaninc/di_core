@@ -533,6 +533,13 @@ class diModel implements \ArrayAccess
 			: '';
 	}
 
+	public function getFilesForRotation($field)
+	{
+		return [
+			$this[$field . '_with_path'],
+		];
+	}
+
 	public function getTemplateVars()
 	{
 		$ar = [];
