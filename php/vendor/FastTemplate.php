@@ -132,14 +132,14 @@ class FastTemplate
 	{
 		if (empty($this->ROOT))
 		{
-			$this->error("Cannot rebuild cache. Root not valid.", 1);
-			return false;
+			//$this->error("Cannot rebuild cache. Root not valid.", 1);
+			return $this;
 		}
 
 		if (empty($this->cache_filename))
 		{
 			$this->error("Cannot rebuild cache. Cache filename not valid.", 1);
-			return false;
+			return $this;
 		}
 
 		switch ($this->place)
@@ -199,12 +199,17 @@ class FastTemplate
 			$path .= "/";
 		}
 
-		$handle = opendir($path);
-
 		$rez = array(
 			"f" => array(),
 			"d" => array(),
 		);
+
+		if (!$path)
+		{
+			return $rez;
+		}
+
+		$handle = opendir($path);
 
 		while ($f = readdir($handle))
 		{
@@ -242,7 +247,10 @@ class FastTemplate
 			return false;
 		}
 
-		include $this->cache_filename;
+		if ($this->ROOT)
+		{
+			include $this->cache_filename;
+		}
 
 		return $this;
 	}
@@ -270,7 +278,7 @@ class FastTemplate
 			else
 			{
 				$this->ROOT = "";
-				$this->error("Specified ROOT dir [$root] is not a directory");
+				//$this->error("Specified ROOT dir [$root] is not a directory");
 			}
 		}
 		else

@@ -1265,6 +1265,7 @@ abstract class CMS
 		];
 	}
 
+	/** @deprecated  */
 	public function init_tpl()
 	{
 		$this->tpl = new \FastTemplate(

@@ -10,7 +10,6 @@ namespace diCore\Base;
 
 use diCore\Entity\Content\Model;
 
-// todo: implement Twig support
 class BreadCrumbs
 {
 	/**
@@ -18,7 +17,10 @@ class BreadCrumbs
 	 */
 	protected $elements = [];
 
-	protected $skippedContentTypes = ["virtual", "logged_in_menu"];
+	protected $skippedContentTypes = [
+		'virtual',
+		'logged_in_menu',
+	];
 
 	/**
 	 * @var CMS
@@ -27,7 +29,9 @@ class BreadCrumbs
 
 	private $type;
 
-	private $divider = " / ";
+	private $divider = ' / ';
+
+	private $useTpl = false;
 
 	/**
 	 * @var callable|null
@@ -37,8 +41,8 @@ class BreadCrumbs
 	public function __construct(CMS $Z)
 	{
 		$this->Z = $Z;
-
 		$this->type = $this->getZ()->content_table;
+		$this->useTpl = $this->getTpl() && $this->getTpl()->exists('top_title_divider');
 	}
 
 	/**
@@ -60,6 +64,7 @@ class BreadCrumbs
 		return $this->Z;
 	}
 
+	/** @deprecated  */
 	protected function getTpl()
 	{
 		return $this->getZ()->getTpl();
@@ -87,17 +92,17 @@ class BreadCrumbs
 	private function hrefNeeded(\diModel $m)
 	{
 		return
-			!$m->exists("to_show_content") ||
-			($m->has("to_show_content") && $m->getId() != $this->getZ()->getContentModel()->getId());
+			!$m->exists('to_show_content') ||
+			($m->has('to_show_content') && $m->getId() != $this->getZ()->getContentModel()->getId());
 	}
 
 	public function init()
 	{
 		$this->reset();
 
-		if ($this->getTpl()->defined("top_title_divider"))
+		if ($this->useTpl)
 		{
-			$this->setDivider($this->getTpl()->parse("top_title_divider"));
+			$this->setDivider($this->getTpl()->parse('top_title_divider'));
 		}
 
 		/** @var Model $m */
@@ -109,9 +114,9 @@ class BreadCrumbs
 			}
 
 			$this->add([
-				"href" => $this->hrefNeeded($m) ? $m->getHref() : null,
-				"hrefPrefixNeeded" => false,
-				"model" => $m,
+				'href' => $this->hrefNeeded($m) ? $m->getHref() : null,
+				'hrefPrefixNeeded' => false,
+				'model' => $m,
 			]);
 		}
 
@@ -138,7 +143,7 @@ class BreadCrumbs
 		}
 
 		$this->update($index, [
-			"href" => $href,
+			'href' => $href,
 		]);
 
 		return $this;
@@ -156,53 +161,53 @@ class BreadCrumbs
 		return $this;
 	}
 
-	public function add($titleOrElement, $href = "", $class = "", $word_wrap = false)
+	public function add($titleOrElement, $href = '', $class = '', $word_wrap = false)
 	{
 		$element = extend([
-			"title" => null,
-			"href" => null,
-			"hrefPrefixNeeded" => true,
-			"class" => null,
-			"wordWrap" => false,
-			"position" => -1,
-			"model" => \diModel::create($this->type),
+			'title' => null,
+			'href' => null,
+			'hrefPrefixNeeded' => true,
+			'class' => null,
+			'wordWrap' => false,
+			'position' => -1,
+			'model' => \diModel::create($this->type),
 		], !is_array($titleOrElement)
 			? [
-				"title" => $titleOrElement,
-				"href" => $href,
-				"class" => $class,
-				"wordWrap" => $word_wrap,
+				'title' => $titleOrElement,
+				'href' => $href,
+				'class' => $class,
+				'wordWrap' => $word_wrap,
 			]
 			: $titleOrElement
 		);
 
 		/** @var \diModel $m */
-		$m = $element["model"];
+		$m = $element['model'];
 
 		if ($m->exists())
 		{
-			if (!$element["title"])
+			if (!$element['title'])
 			{
-				$element["title"] = $m->localized("title");
+				$element['title'] = $m->localized('title');
 			}
 
-			if (!$element["href"] && $this->hrefNeeded($m))
+			if (!$element['href'] && $this->hrefNeeded($m))
 			{
-				$element["href"] = $m->getHref();
+				$element['href'] = $m->getHref();
 			}
 		}
 
-		if ($element["position"] < 0)
+		if ($element['position'] < 0)
 		{
-			$element["position"] += count($this->elements) + 1;
+			$element['position'] += count($this->elements) + 1;
 		}
 
-		if ($element["wordWrap"])
+		if ($element['wordWrap'])
 		{
-			$element["title"] = trim(word_wrap($element["title"], \diConfiguration::get("page_title_word_max_len"), " "));
+			$element['title'] = trim(word_wrap($element['title'], \diConfiguration::get('page_title_word_max_len'), ' '));
 		}
 
-		array_splice($this->elements, $element["position"], 0, [$element]);
+		array_splice($this->elements, $element['position'], 0, [$element]);
 
 		return $this;
 	}
@@ -232,19 +237,35 @@ class BreadCrumbs
 		return $element['title'];
 	}
 
+    protected function getProcessedElements()
+    {
+        $ar = [];
+
+        foreach ($this->elements as $element)
+        {
+            $hrefPrefix = $element['href'] && $element['hrefPrefixNeeded']
+                ? $this->getZ()->getLanguageHrefPrefix()
+                : '';
+
+            $ar[] = [
+                'title' => $this->getTitleOfElement($element),
+                'href' => $hrefPrefix . $element['href'],
+                'class' => $element['class'],
+            ];
+        }
+
+        return $ar;
+    }
+
 	protected function getHtmlElements()
 	{
 		$ar = [];
 
-		foreach ($this->elements as $element)
+		foreach ($this->getProcessedElements() as $e)
 		{
 			$ar[] = $this->getTpl()
-				->assign([
-					"TITLE" => $this->getTitleOfElement($element),
-					"HREF" => ($element["hrefPrefixNeeded"] ? $this->getZ()->getLanguageHrefPrefix() : "") . $element["href"],
-					"CLASS" => $element["class"],
-				], "TT_")
-				->parse("TOP_TITLE_ELEMENT", $element["href"] ? "top_title_href" : "top_title_nohref");
+				->assign($e, 'TT_')
+				->parse('TOP_TITLE_ELEMENT', $e['href'] ? 'top_title_href' : 'top_title_nohref');
 		}
 
 		return $ar;
@@ -252,22 +273,32 @@ class BreadCrumbs
 
 	public function finish()
 	{
-		$ar = $this->getHtmlElements();
+        if ($this->useTpl)
+        {
+            $ar = $this->getHtmlElements();
 
-		$this->getTpl()->assign([
-			"TOP_TITLE" => join($this->divider, $ar),
-		]);
+            $this->getTpl()->assign([
+                'TOP_TITLE' => join($this->divider, $ar),
+            ]);
 
-		if ($this->getZ()->needToPrintBreadCrumbs())
-		{
-			$this->getTpl()->parse("TOP_TITLE_DIV", "top_title_div");
-		}
+            if ($this->getZ()->needToPrintBreadCrumbs())
+            {
+                $this->getTpl()->parse('top_title_div');
+            }
 
-		$this->getTwig()
-			->assign([
-				'top_title' => join($this->divider, $ar),
-				'top_title_div' => $this->getTpl()->getAssigned('TOP_TITLE_DIV'),
-			]);
+            $this->getTwig()
+                ->assign([
+                    'top_title' => join($this->divider, $ar),
+                    'top_title_div' => $this->getTpl()->getAssigned('TOP_TITLE_DIV'),
+                ]);
+        }
+        else
+        {
+            $this->getTwig()
+                ->assign([
+                    'bread_crumbs' => $this->getProcessedElements(),
+                ]);
+        }
 
 		return $this;
 	}
