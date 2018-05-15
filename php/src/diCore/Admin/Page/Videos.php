@@ -479,6 +479,9 @@ class Videos extends \diCore\Admin\BasePage
 
 	public function getModuleCaption()
 	{
-		return 'Видео';
+		return [
+			'ru' => 'Видео',
+			'en' => 'Videos',
+		];
 	}
 }

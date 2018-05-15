@@ -2,6 +2,7 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Data\Config;
 use diCore\Entity\MailQueue\Model;
 use diCore\Helper\StringHelper;
 
@@ -111,20 +112,18 @@ class MailQueue extends \diCore\Admin\BasePage
 
 	public function getFormFields()
 	{
-		global $mail_domain;
-
 		return [
 			"date" => [
 				"type" => "datetime_str",
 				"title" => "Дата",
-				"default" => date("Y-m-d H:i:s"),
+				"default" => \diDateTime::sqlFormat(),
 				"flags" => ["static"],
 			],
 
 			"sender" => [
 				"type" => "string",
 				"title" => "От",
-				"default" => "support@{$mail_domain}",
+				"default" => "support@" . Config::getMainDomain(),
 			],
 
 			"recipient_id" => [
@@ -200,6 +199,9 @@ class MailQueue extends \diCore\Admin\BasePage
 
 	public function getModuleCaption()
 	{
-		return "Почтовая очередь";
+		return [
+			'ru' => 'Почтовая очередь',
+			'en' => 'Mail queue',
+		];
 	}
 }

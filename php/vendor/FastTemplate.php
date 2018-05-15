@@ -36,8 +36,6 @@ class FastTemplate
 
 	public function __construct($pathToTemplates = "", $cache_filename = "", $place = self::PLACE_WEB)
 	{
-		global $html_encodings_ar;
-
 		$this->place = $place;
 
 		if ($pathToTemplates)
@@ -50,7 +48,8 @@ class FastTemplate
 			$this->set_cache_filename($cache_filename);
 		}
 
-		$encoding = defined("DIMAILENCODING") && isset($html_encodings_ar[DIMAILENCODING]) ? $html_encodings_ar[DIMAILENCODING] : "utf-8";
+		$encoding = defined('DIMAILENCODING') ? DIMAILENCODING : 'UTF8';
+		$encoding = \diCore\Data\Http\Charset::title(\diCore\Data\Http\Charset::id($encoding));
 
 		$this->assign(array(
 			"DI_HTML_MAIL_ENCODING" => $encoding,
@@ -970,7 +969,7 @@ class FastTemplate
 
 		if ($die)
 		{
-			throw new Exception($this->ERROR);
+			throw new \Exception($this->ERROR);
 		}
 		else
 		{

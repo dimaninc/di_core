@@ -25,6 +25,8 @@ class Config
 	const mainDomain = null;
 	const mainLanguage = 'ru'; // used to determine localization field names
 	const useCoreTwig = true; // if false, twig should be installed via composer
+	const searchEngine = 'db';
+	const initiating = false; // if true, then DB is auto-created and admin works w/o password
 
     protected static $location = \diLib::LOCATION_HTDOCS;
 	protected static $useModuleCache = false;
@@ -70,6 +72,22 @@ class Config
 		$class = self::getClass();
 
 		return $class::siteTitle;
+	}
+
+	final public static function getSearchEngine()
+	{
+		/** @var Config $class */
+		$class = self::getClass();
+
+		return $class::searchEngine;
+	}
+
+	final public static function isInitiating()
+	{
+		/** @var Config $class */
+		$class = self::getClass();
+
+		return $class::initiating;
 	}
 
 	final public static function getApiQueryPrefix()

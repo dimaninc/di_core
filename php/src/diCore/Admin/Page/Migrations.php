@@ -391,6 +391,9 @@ class Migrations extends \diCore\Admin\BasePage
 
 	public function getModuleCaption()
 	{
-		return "Миграции";
+		return [
+			'ru' => 'Миграции',
+			'en' => 'Migrations',
+		];
 	}
 }

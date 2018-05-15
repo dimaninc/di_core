@@ -110,13 +110,11 @@ class diEmail
 	*/
 	public static function fastSend($from, $to, $subject, $message, $body_html, $attachments = [], $options = [])
 	{
-		global $html_encodings_ar;
+		$class = in_array(get_called_class(), ['\diEmail', 'diEmail']) ? static::$childClassName : get_called_class();
 
-		$class = get_called_class() == "diEmail" ? static::$childClassName : get_called_class();
-
-		if (!diLib::exists($class))
+		if (!\diLib::exists($class))
 		{
-			$class = "diEmail";
+			$class = '\diEmail';
 		}
 
 		/** @var diEmail $m */
@@ -133,7 +131,7 @@ class diEmail
 		];
 
 		$headerEnc = $mailEncodings[$encoding];
-		$enc = $html_encodings_ar[$encoding];
+		$enc = \diCore\Data\Http\Charset::title(\diCore\Data\Http\Charset::id($encoding));
 
 		$content_transfer_encoding = $m->getOption("quotedPrintable") ? "quoted-printable" : "8bit";
 

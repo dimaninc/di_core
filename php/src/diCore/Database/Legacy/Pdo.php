@@ -38,7 +38,7 @@ abstract class Pdo extends \diDB
 			return $this->_log("unable to connect to host $this->host: " . $e->getMessage());
 		}
 
-		if (defined("DI_CREATE_DATABASE") && DI_CREATE_DATABASE)
+		if (\diCore\Data\Config::isInitiating())
 		{
 			$this->__q($this->getCreateDatabaseQuery());
 		}

@@ -344,8 +344,9 @@ EOF;
 
 	public function getModuleCaption()
 	{
-		return $this->getAdmin()->getLanguage() == 'ru'
-			? 'Новости'
-			: 'News';
+		return [
+			'ru' => 'Новости',
+			'en' => 'News',
+		];
 	}
 }

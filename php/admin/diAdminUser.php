@@ -31,7 +31,7 @@ class diAdminUser extends diAuth
 
 	public function authorizedForSetup()
 	{
-		return defined('FIRST_LOGIN');
+		return \diCore\Data\Config::isInitiating();
 	}
 
 	protected function updateAuthorizedUserData()

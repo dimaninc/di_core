@@ -23,7 +23,7 @@ class diSearcher
 		$this->db = $db;
 
 		$this->tables_ar = $tables_ar;
-		$this->search_mode = DISEARCH_MODE;
+		$this->search_mode = \diCore\Data\Config::getSearchEngine();
 
 		$ids = diRequest::get("search_ids", "");
 

@@ -98,9 +98,9 @@ abstract class diSearch
 	 */
 	public static function create($table, $method = null)
 	{
-		$method = $method ?: DISEARCH_MODE;
+		$method = $method ?: \diCore\Data\Config::getSearchEngine();
 
-		$className = camelize("di_".$method."_search");
+		$className = camelize("di_" . $method . "_search");
 
 		return new $className($table);
 	}
@@ -689,9 +689,9 @@ function kill_ending2(&$item, $key)
        )
     {
       if ($x <= $disearch_min_word_length)
-        $item = $item." ".mb_substr($item, 0, $x).(DISEARCH_MODE == "db" ? "*" : "");
+        $item = $item." ".mb_substr($item, 0, $x).(\diCore\Data\Config::getSearchEngine() == "db" ? "*" : "");
       else
-        $item = mb_substr($item, 0, $x).(DISEARCH_MODE == "db" ? "*" : "");
+        $item = mb_substr($item, 0, $x).(\diCore\Data\Config::getSearchEngine() == "db" ? "*" : "");
 
       break;
     }

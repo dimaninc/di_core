@@ -20,7 +20,7 @@ class diMYSQLi extends diMYSQL
 			return $this->_log("unable to connect to host $this->host");
 		}
 
-		if (defined("DI_CREATE_DATABASE") && DI_CREATE_DATABASE)
+		if (\diCore\Data\Config::isInitiating())
 		{
 			$this->__q($this->getCreateDatabaseQuery());
 		}

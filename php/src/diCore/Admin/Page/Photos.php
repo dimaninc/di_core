@@ -318,6 +318,9 @@ class Photos extends \diCore\Admin\BasePage
 
 	public function getModuleCaption()
 	{
-		return 'Фото';
+		return [
+			'ru' => 'Фото',
+			'en' => 'Photos',
+		];
 	}
 }

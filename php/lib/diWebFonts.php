@@ -8,22 +8,22 @@
  */
 class diWebFonts
 {
-	const FOLDER = "_core/fonts/web/";
+	const FOLDER = '_core/fonts/web/';
 
 	public static $titlesExtended = [
-		"Arial" => "Arial (встроенный шрифт)",
-		"Georgia" => "Georgia (встроенный шрифт)",
-		"Tahoma" => "Tahoma (встроенный шрифт)",
-		"Times New Roman" => "Times New Roman (встроенный шрифт)",
-		"Verdana" => "Verdana (встроенный шрифт)",
+		'Arial' => 'Arial (встроенный шрифт)',
+		'Georgia' => 'Georgia (встроенный шрифт)',
+		'Tahoma' => 'Tahoma (встроенный шрифт)',
+		'Times New Roman' => 'Times New Roman (встроенный шрифт)',
+		'Verdana' => 'Verdana (встроенный шрифт)',
 	];
 
 	public static $files = [
-		"Arial" => "arial.ttf",
-		"Georgia" => "georgia.ttf",
-		"Tahoma" => "tahoma.ttf",
-		"Times New Roman" => "times.ttf",
-		"Verdana" => "verdana.ttf",
+		'Arial' => 'arial.ttf',
+		'Georgia' => 'georgia.ttf',
+		'Tahoma' => 'tahoma.ttf',
+		'Times New Roman' => 'times.ttf',
+		'Verdana' => 'verdana.ttf',
 	];
 
 	public static function exists($fontTitle)

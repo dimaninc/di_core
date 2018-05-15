@@ -131,21 +131,19 @@ class diSVNUpdater
 
 	function store_files_on_ftp($files_ar)
 	{
-		global $tmp_folder;
-
-		create_folders_chain(diPaths::fileSystem(), $tmp_folder, 0775);
+		create_folders_chain(diPaths::fileSystem(), get_tmp_folder(), 0775);
 
 		foreach ($files_ar as $f)
 		{
 			$tmp_fn = get_unique_id().".tmp";
 
-			$fp = fopen(diPaths::fileSystem().$tmp_folder.$tmp_fn, "w");
+			$fp = fopen(diPaths::fileSystem().get_tmp_folder().$tmp_fn, "w");
 			fputs($fp, $f["contents"]);
 			fclose($fp);
 
-			$this->ftp->simple_put(diPaths::fileSystem().$tmp_folder.$tmp_fn, $f["path"]);
+			$this->ftp->simple_put(diPaths::fileSystem().get_tmp_folder().$tmp_fn, $f["path"]);
 
-			unlink(diPaths::fileSystem().$tmp_folder.$tmp_fn);
+			unlink(diPaths::fileSystem().get_tmp_folder().$tmp_fn);
 
 			$this->log($f["path"], "file");
 		}

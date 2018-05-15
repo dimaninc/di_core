@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 lib_path="vendor/dimaninc/di_core"
-#root_path=$(pwd)
+root_path=$(pwd)
 COLOR_GREEN='\033[0;32m'
 COLOR_NO='\033[0m'
 src_path=$lib_path
@@ -14,14 +14,16 @@ fi
 if [ ! -d $lib_path ]; then
 	echo "diCore not found. Is script being executed from project root?"
 	exit
-fi	
+fi
 
 echo "Copying CSS"
 mkdir -p "$dst_path/styles/_core"
 if [ "$rsync" = true ]; then
 	rsync -a --include '*/' --include '*.css' --exclude '*' "$src_path/css/" "$dst_path/styles/_core/"
 else
-	find "$src_path/css/" -name \*.css -exec cp --parents {} "$dst_path/styles/_core" \;
+	cd "$src_path/css"
+	find . -name \*.css -exec cp --parents \{\} "${root_path}/${dst_path}/styles/_core" \;
+	cd - >/dev/null 2>&1
 fi
 
 echo "Copying Fonts"
@@ -36,7 +38,9 @@ mkdir -p "$dst_path/js/_core"
 if [ "$rsync" = true ]; then
 	rsync -a --include '*/' --include '*.js' --exclude '*' "$src_path/js/" "$dst_path/js/_core/"
 else
-	find "$src_path/js/" -name \*.js -exec cp --parents {} "$dst_path/js/_core" \;
+	cd "$src_path/js"
+	find . -name \*.js -exec cp --parents \{\} "${root_path}/${dst_path}/js/_core" \;
+	cd - >/dev/null 2>&1
 fi
 
 echo "Copying Vendor libs"

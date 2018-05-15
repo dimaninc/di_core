@@ -1116,12 +1116,12 @@ function wysiwyg_empty($s)
 
 function print_json($ar, $printHeaders = true)
 {
-	global $html_encodings_ar;
-
 	//text/plain
 	if ($printHeaders)
 	{
-		header("Content-type: application/json; charset={$html_encodings_ar[DIENCODING]}");
+		$charset = \diCore\Data\Http\Charset::title(\diCore\Data\Http\Charset::id(DIENCODING));
+
+		header("Content-type: application/json; charset=" . $charset);
 		header("Expires: Mon, 11 Jul 1999 00:00:00 GMT");
 		header("Last-Modified: " . gmdate("D, d M Y H:i:s") . "GMT");
 		header("Cache-Control: no-cache, must-revalidate");
