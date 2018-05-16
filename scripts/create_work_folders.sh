@@ -17,3 +17,6 @@ chmod -R 777 log/db
 
 mkdir -p log/debug
 chmod -R 777 log/debug
+
+mkdir -p assets/css/fonts
+chmod -R 777 assets/css/fonts
