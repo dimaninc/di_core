@@ -7,7 +7,10 @@ src_path=$lib_path
 dst_path="htdocs/assets"
 rsync=false
 
-if [ command -v rsync >/dev/null 2>&1 ]; then
+if command -v rsync >/dev/null 2>&1; then
+	rsync=true
+fi
+if type rsync >/dev/null 2>&1; then
 	rsync=true
 fi
 
