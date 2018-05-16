@@ -383,12 +383,14 @@ abstract class CMS
 	public static function getEnvironment()
 	{
 		$domain = \diRequest::domain() ?: Config::getMainDomain();
+		/** @var CMS $class */
+		$class = \diLib::getChildClass(static::class);
 
-		if (in_array($domain, static::$devDomains))
+		if (in_array($domain, $class::$devDomains))
 		{
 			return self::ENV_DEV;
 		}
-		elseif (in_array($domain, static::$stageDomains))
+		elseif (in_array($domain, $class::$stageDomains))
 		{
 			return self::ENV_STAGE;
 		}
