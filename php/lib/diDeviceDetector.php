@@ -99,6 +99,21 @@ class diDeviceDetector
 		return in_array($this->getType(), [self::TYPE_PHONE, self::TYPE_TABLET]);
 	}
 
+	public function isDesktop()
+	{
+		return $this->getType() == self::TYPE_PC;
+	}
+
+	public function isAndroid()
+	{
+		return $this->getOs() == self::OS_ANDROID;
+	}
+
+	public function isIOS()
+	{
+		return $this->getOs() == self::OS_IOS;
+	}
+
 	public function getTypeStr()
 	{
 		return self::$types[$this->type];
