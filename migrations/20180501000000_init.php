@@ -8,11 +8,13 @@ class diMigration_20180501000000 extends \diCore\Database\Tool\Migration
 	{
 		$folder = \diCore\Controller\Db::getCoreSqlFolder();
 
-		$this->executeSqlFile('admins.sql', $folder);
-		$this->executeSqlFile('content.sql', $folder);
-		$this->executeSqlFile('mail_incuts.sql', $folder);
-		$this->executeSqlFile('mail_plans.sql', $folder);
-		$this->executeSqlFile('mail_queue.sql', $folder);
+		$this->executeSqlFile([
+			'admins.sql',
+			'content.sql',
+			'mail_incuts.sql',
+			'mail_plans.sql',
+			'mail_queue.sql',
+		], $folder);
 	}
 
 	public function down()

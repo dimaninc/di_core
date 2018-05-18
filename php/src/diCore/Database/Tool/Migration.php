@@ -49,14 +49,22 @@ abstract class Migration
 		return $this;
 	}
 
-	protected function executeSqlFile($filename, $folder = null)
+	protected function executeSqlFile($files, $folder = null)
 	{
+		if (!is_array($files))
+		{
+			$files = [$files];
+		}
+
 		if ($folder === null)
 		{
 			$folder = Config::getDatabaseDumpFolder() . static::DB_FOLDER;
 		}
 
-		$this->getDb()->q(file_get_contents(StringHelper::slash($folder) . $filename));
+		foreach ($files as $file)
+		{
+			$this->getDb()->q(file_get_contents(StringHelper::slash($folder) . $file));
+		}
 
 		return $this;
 	}
