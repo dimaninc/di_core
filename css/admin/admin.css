@@ -1069,10 +1069,14 @@ ul.left-menu > li[state="0"] > ul {
   margin: 0 20px 3px 20px;
   padding: 8px 20px;
   min-height: 18px;
+  zoom: 1;
 }
 .diadminform-row:after {
   content: '';
-  display: table;
+  display: block;
+  height: 0;
+  line-height: 0;
+  font-size: 0;
   clear: both;
 }
 @media screen and (max-width: 767px) {
@@ -1721,6 +1725,10 @@ table.actions-log tr:last-of-type td {
 .dynamic-row ul.line > li.full-width textarea {
   width: 90%;
 }
+.dynamic-row ul.line > li input[type="text"][size],
+.dynamic-row ul.line > li textarea[cols] {
+  width: auto;
+}
 ul.admin-grid {
   list-style: none;
   margin: 0 24px 20px 24px;
@@ -1775,10 +1783,14 @@ ul.admin-grid > li img {
 .filter-block .row {
   padding: 0 0 7px 0;
   margin: 0;
+  zoom: 1;
 }
 .filter-block .row:after {
   content: '';
-  display: table;
+  display: block;
+  height: 0;
+  line-height: 0;
+  font-size: 0;
   clear: both;
 }
 .filter-block .row > b {

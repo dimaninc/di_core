@@ -1382,9 +1382,19 @@ EOF;
 			}
 		}
 
-		$this->inputs[$field] = $sel;
-		$this->inputs[$field] .= ' ' . $this->L('or_enter') . ': <input type="text" name="' .
-			$field . self::NEW_FIELD_SUFFIX . '" value="" style="width: 300px;">';
+		$this->inputs[$field] = count($sel->getItemsAr())
+			? $sel . ' ' . $this->L('or_enter') . ': '
+			: '';
+
+		$width = $this->inputs[$field]
+			? '50%'
+			: '100%';
+
+		$this->inputs[$field] .= sprintf(
+			'<input type="text" name="%s" value="" style="width: %s;">',
+			$field . self::NEW_FIELD_SUFFIX,
+			$width
+		);
 
 		$this->force_inputs_fields[$field] = true;
 
