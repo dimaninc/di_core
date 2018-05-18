@@ -4,8 +4,11 @@
  * Date: 02.07.2015
  * Time: 15:40
  */
+
+namespace diCore\Entity\Tag;
+
 /**
- * Class diTagModel
+ * Class Model
  * Methods list for IDE
  *
  * @method string	getSlugSource
@@ -30,22 +33,22 @@
  * @method bool hasVisible
  * @method bool hasDate
  *
- * @method diTagModel setSlugSource($value)
- * @method diTagModel setTitle($value)
- * @method diTagModel setContent($value)
- * @method diTagModel setWeight($value)
- * @method diTagModel setPic($value)
- * @method diTagModel setHtmlTitle($value)
- * @method diTagModel setHtmlKeywords($value)
- * @method diTagModel setHtmlDescription($value)
- * @method diTagModel setVisible($value)
- * @method diTagModel setDate($value)
+ * @method Model setSlugSource($value)
+ * @method Model setTitle($value)
+ * @method Model setContent($value)
+ * @method Model setWeight($value)
+ * @method Model setPic($value)
+ * @method Model setHtmlTitle($value)
+ * @method Model setHtmlKeywords($value)
+ * @method Model setHtmlDescription($value)
+ * @method Model setVisible($value)
+ * @method Model setDate($value)
  */
-class diTagModel extends \diModel
+class Model extends \diModel
 {
 	const type = \diTypes::tag;
 	const slug_field_name = self::SLUG_FIELD_NAME;
-	protected $table = "tags";
+	protected $table = 'tags';
 
 	public function prepareForSave()
 	{
@@ -61,12 +64,12 @@ class diTagModel extends \diModel
 	{
 		if (!$this->getTitle())
 		{
-			$this->addValidationError("Title required");
+			$this->addValidationError('Title required');
 		}
 
 		if (!$this->getSlug())
 		{
-			$this->addValidationError("Slug required");
+			$this->addValidationError('Slug required');
 		}
 
 		return parent::validate();
