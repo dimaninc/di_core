@@ -1212,20 +1212,45 @@ EOF;
 		return $this;
 	}
 
+	public function setTwigInput($field, $templateName = null, $data = [])
+	{
+		if (is_array($templateName) && !$data)
+		{
+			$data = $templateName;
+			$templateName = $field;
+		}
+
+		if (!StringHelper::contains($templateName, '/'))
+		{
+			$templateName = 'admin/' . $this->getTable() . '/' . $templateName;
+		}
+
+		$this
+			->setInput($field, $this->getX()->getTwig()->parse($templateName, extend([
+				'id' => $this->getId(),
+				'table' => $this->getTable(),
+				'type' => \diTypes::getId($this->getTable()),
+				'field' => $field,
+				'value' => $this->getData($field),
+			], $data)));
+
+		return $this;
+	}
+
+	/** @deprecated  */
 	public function setTemplateForInput($field, $templatePath, $templateName)
 	{
 		$this->getTpl()
-			->define($templatePath, array(
+			->define($templatePath, [
 				"_input_block" => $templateName,
-			))
-			->assign(array(
-				"ID" => $this->getId(),
-				"TABLE" => $this->getTable(),
-				"TYPE" => \diTypes::getId($this->getTable()),
-
-				"FIELD" => $field,
-				"VALUE" => $this->getData($field),
-			), "I_");
+			])
+			->assign([
+				'id' => $this->getId(),
+				'table' => $this->getTable(),
+				'type' => \diTypes::getId($this->getTable()),
+				'field' => $field,
+				'value' => $this->getData($field),
+			], "I_");
 
 		$this->setInput($field, $this->getTpl()->parse("_input_block"));
 
