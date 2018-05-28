@@ -113,6 +113,11 @@ class diTags
 		return $this->tables[$table];
 	}
 
+	public function getFieldName($field)
+	{
+		return $this->fields[$field];
+	}
+
 	public function setFeed($feed)
 	{
 		$this->feed = $feed ?: null;

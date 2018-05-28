@@ -51,6 +51,7 @@ class Types
 	const comment_cache = 2031;
 	const mail_incut = 2032;
 	const mail_plan = 2033;
+	const tagged = 2034;
 
 	const admin_task = 1000;
 	const admin_wiki = 1001;
@@ -95,6 +96,7 @@ class Types
 		self::comment_cache => 'comment_cache',
 		self::mail_incut => 'mail_incuts',
 		self::mail_plan => 'mail_plans',
+		self::tagged => 'tagged',
 
 		self::admin_task => 'admin_tasks',
 		self::admin_wiki => 'admin_wiki',
@@ -140,6 +142,7 @@ class Types
 		self::comment_cache => 'comment_cache',
 		self::mail_incut => 'mail_incut',
 		self::mail_plan => 'mail_plan',
+		self::tagged => 'tagged',
 
 		self::admin_task => 'admin_task',
 		self::admin_wiki => 'admin_wiki',
@@ -185,6 +188,7 @@ class Types
 		self::comment_cache => 'Кеш блока комментариев',
 		self::mail_incut => 'Вложение в письмо',
 		self::mail_plan => 'План рассылки',
+		self::tagged => 'Запись с тегами',
 
 		self::admin_task => 'Задача',
 		self::admin_wiki => 'Wiki',
