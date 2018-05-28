@@ -438,6 +438,11 @@ class Form
 		return $this;
 	}
 
+	protected function getFieldDefaultValue($field)
+	{
+		return $this->getFieldProperty($field, 'default');
+	}
+
 	function read_data()
 	{
 		if ($this->getId())
@@ -463,7 +468,7 @@ class Form
 					}
 					elseif ($this->isFlag($v, "virtual"))
 					{
-						$this->data[$k] = $v["default"];
+						$this->data[$k] = $this->getFieldDefaultValue($k);
 
 						$this->processDefaultValue($k);
 					}
@@ -482,7 +487,7 @@ class Form
 		{
 			foreach ($this->getAllFields() as $k => $v)
 			{
-				$this->data[$k] = \diRequest::get($k, $v["default"]);
+				$this->data[$k] = \diRequest::get($k, $this->getFieldDefaultValue($k));
 
 				$this->processDefaultValue($k);
 			}
