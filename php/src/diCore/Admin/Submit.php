@@ -390,33 +390,37 @@ class Submit
 
 	public function gatherData()
 	{
-		// form fields
 		foreach ($this->_form_fields as $f => $v)
 		{
-			switch($v["type"])
+			if (!isset($v['default']))
 			{
-				case "password":
+				$v['default'] = '';
+			}
+
+			switch($v['type'])
+			{
+				case 'password':
 					$this
-						->setData($f, \diRequest::post($f, $v["default"], "string"))
-						->setData($f . "2", \diRequest::post($f . "2", $v["default"], "string"));
+						->setData($f, \diRequest::post($f, $v['default'], 'string'))
+						->setData($f . '2', \diRequest::post($f . '2', $v['default'], 'string'));
 					break;
 
-				case "date":
-				case "date_str":
+				case 'date':
+				case 'date_str':
 					$this->make_datetime($f, true, false);
 					break;
 
-				case "time":
-				case "time_str":
+				case 'time':
+				case 'time_str':
 					$this->make_datetime($f, false, true);
 					break;
 
-				case "datetime":
-				case "datetime_str":
+				case 'datetime':
+				case 'datetime_str':
 					$this->make_datetime($f, true, true);
 					break;
 
-				case "checkbox":
+				case 'checkbox':
 					$this->setData($f, \diRequest::post($f) ? 1 : 0);
 					break;
 
@@ -424,7 +428,7 @@ class Submit
 					break;
 
 				default:
-					$this->setData($f, \diRequest::post($f, $v["default"]));
+					$this->setData($f, \diRequest::post($f, $v['default']));
 					break;
 			}
 		}
@@ -443,24 +447,24 @@ class Submit
 		{
 			if (!$this->getData($f))
 			{
-				$this->setData($f, $v["default"]);
+				$this->setData($f, $v['default']);
 			}
 		}
 
 		// adjusting fields type
 		foreach ($this->_all_fields as $f => $v)
 		{
-			if ($this->isFlag($f, "virtual") || in_array($v['type'], ['separator']))
+			if ($this->isFlag($f, 'virtual') || in_array($v['type'], ['separator']))
 			{
 				continue;
 			}
 
-			switch ($v["type"])
+			switch ($v['type'])
 			{
-				case "order_num":
-					$direction = isset($v["direction"]) ? $v["direction"] : 1;
-					$queryEnding = isset($v["queryEnding"]) ? $v["queryEnding"] : "";
-					$force = !empty($v["force"]);
+				case 'order_num':
+					$direction = isset($v['direction']) ? $v['direction'] : 1;
+					$queryEnding = isset($v['queryEnding']) ? $v['queryEnding'] : '';
+					$force = !empty($v['force']);
 
 					if (is_callable($queryEnding))
 					{
@@ -475,47 +479,47 @@ class Submit
 
 						if ($qAr)
 						{
-							$queryEnding = "WHERE " . join(" AND ", $qAr);
+							$queryEnding = 'WHERE ' . join(' AND ', $qAr);
 						}
 					}
 
 					$this->make_order_num($direction, $queryEnding, $force);
 					break;
 
-				case "int":
-				case "tinyint":
-				case "smallint":
-				case "integer":
-				case "date":
-				case "time":
-				case "datetime":
+				case 'int':
+				case 'tinyint':
+				case 'smallint':
+				case 'integer':
+				case 'date':
+				case 'time':
+				case 'datetime':
 					$this->processData($f, function($v) {
 						return intval($v);
 					});
 					break;
 
-				case "float":
+				case 'float':
 					$this->processData($f, function($v) {
 						return floatval(StringHelper::fixFloatDot($v));
 					});
 					break;
 
-				case "double":
+				case 'double':
 					$this->processData($f, function($v) {
 						return doubleval(StringHelper::fixFloatDot($v));
 					});
 					break;
 
-				case "pic":
-				case "file":
+				case 'pic':
+				case 'file':
 					if (!$this->getData($f))
 					{
-						$this->setData($f, "");
+						$this->setData($f, '');
 					}
 					break;
 
-				case "password":
-					if ($this->getData($f) && $this->getData($f) == $this->getData($f . "2"))
+				case 'password':
+					if ($this->getData($f) && $this->getData($f) == $this->getData($f . '2'))
 					{
 						$this->processData($f, function($v) {
 							return md5($v);
@@ -523,22 +527,22 @@ class Submit
 					}
 					else
 					{
-						$this->setData($f, $this->getCurRec($f) ?: "");
+						$this->setData($f, $this->getCurRec($f) ?: '');
 					}
 					break;
 
-				case "checkbox":
+				case 'checkbox':
 					$this->setData($f, $this->getData($f) ? 1 : 0);
 					break;
 
-				case "ip":
-					$this->processData($f, "ip2bin");
+				case 'ip':
+					$this->processData($f, 'ip2bin');
 					break;
 
-				case "enum":
-					if (!in_array($this->getData($f), $v["values"]))
+				case 'enum':
+					if (!in_array($this->getData($f), $v['values']))
 					{
-						$this->setData($f, $v["default"]);
+						$this->setData($f, $v['default']);
 					}
 					break;
 			}

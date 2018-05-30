@@ -11,7 +11,7 @@ abstract class Migration
 	const UP = 1;
 	const DOWN = 0;
 
-	const DB_FOLDER = 'db/';
+	const DB_FOLDER = 'db/dump/';
 
 	public static $idx;
 	public static $name;
