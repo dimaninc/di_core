@@ -149,7 +149,7 @@ function diCalendar(cfg)
     }
     else
     {
-      var s = e_obj.dd.value+'.'+e_obj.dm.value+'.'+e_obj.dy.value;
+      s = e_obj.dd.value+'.'+e_obj.dm.value+'.'+e_obj.dy.value;
       if (e_obj.th && e_obj.tm)
         s += ' '+e_obj.th.value+':'+e_obj.tm.value;
     }
@@ -161,7 +161,7 @@ function diCalendar(cfg)
   {
     var dt = this.str_to_obj(date);
 
-    var e = _ge(this.id+'_timestamp'+idx)
+    var e = _ge(this.id+'_timestamp'+idx);
     if (e) e.value = get_time(dt);
 
     if (this.e_ar[idx])
@@ -311,8 +311,10 @@ function diCalendar(cfg)
 
   this.set_date = function(date, idx)
   {
+      var e;
+
     if (typeof idx == 'undefined')
-      var idx = 1;
+      idx = 1;
 
     if (this.range_select)
     {
@@ -337,7 +339,7 @@ function diCalendar(cfg)
 
       this.last_edited_idx = idx;
 
-      var e = _ge(this.id+'_prompt_for_idx');
+      e = _ge(this.id+'_prompt_for_idx');
       if (e)
       {
         e.style.display = 'none';
@@ -358,7 +360,7 @@ function diCalendar(cfg)
       this.dates_ar.push(dt);
       this.yday_dates_ar.push(get_big_yday(dt));
 
-      var e = _ge(this.cfg.dates_container);
+      e = _ge(this.cfg.dates_container);
       if (e)
       {
         if (trim(e.innerHTML))
@@ -420,6 +422,8 @@ function diCalendar(cfg)
 
   this.prepare_dates = function()
   {
+      var i;
+
     this.dt1 = this.str_to_obj(this.date1);
     this.dt2 = this.str_to_obj(this.date2);
 
@@ -441,7 +445,7 @@ function diCalendar(cfg)
 
       if (!this.range_select && this.months_to_show > 2)
       {
-        for (var i = 0; i < Math.ceil(this.months_to_show / 2) - 1; i++)
+        for (i = 0; i < Math.ceil(this.months_to_show / 2) - 1; i++)
           this.showing_dt = this.get_prev_m_y_obj(this.showing_dt);
       }
     }
@@ -449,7 +453,7 @@ function diCalendar(cfg)
     {
       this.showing_dt = new Date(this.dt2);
 
-      for (var i = 0; i < this.months_to_show - 1; i++)
+      for (i = 0; i < this.months_to_show - 1; i++)
         this.showing_dt = this.get_prev_m_y_obj(this.showing_dt);
     }
 
@@ -647,21 +651,23 @@ function diCalendar(cfg)
 
   this.get_date_str = function(date, output_type)
   {
-    if (typeof date == 'undefined') var date = this.showing_dt;
-    if (typeof output_type == 'undefined') var output_type = 'input';
+      var d, m, y;
+
+    if (typeof date == 'undefined') date = this.showing_dt;
+    if (typeof output_type == 'undefined') output_type = 'input';
 
     if (typeof date == 'object')
     {
-      var d = date.getDate();
-      var m = date.getMonth() + 1;
-      var y = date.getFullYear();
+      d = date.getDate();
+      m = date.getMonth() + 1;
+      y = date.getFullYear();
     }
     else
     {
       var date_ar = date.split(/\./);
-      var d = date_ar[0]*1;
-      var m = date_ar[1]*1;
-      var y = date_ar[2]*1;
+      d = date_ar[0]*1;
+      m = date_ar[1]*1;
+      y = date_ar[2]*1;
     }
 
     if (output_type == 'input')
@@ -788,8 +794,6 @@ function diCalendar(cfg)
       this.range_select = false;
     }
 
-    //console.log(this.date1+' '+this.date2);
-
     this.today_yday = get_yday(this.today_dt);
 
     // if mode is multi
@@ -836,7 +840,23 @@ function diCalendar(cfg)
         }
       }
     }
+
+    return this;
   };
+
+    this.add_events_to_button = function () {
+        if (!this.cfg.uid) {
+            return this;
+        }
+
+        var $btn = $('[data-calendar-uid="{0}"]'.format(this.cfg.uid));
+
+        $btn.on('click', function() {
+            self.toggle();
+        });
+
+        return this;
+    };
 
   this.init_position = function()
   {
@@ -921,6 +941,8 @@ function diCalendar(cfg)
   this.cfg = {};
 
   this.set_config({
+      instance_name: null,
+      uid: null,
     add_events_to_date: {1: [], 2: []},
     able_to_go_to_past: true,
     show_weekday_titles: true,
@@ -949,7 +971,7 @@ function diCalendar(cfg)
   this.stick_to_e.parentNode.insertBefore(this.e, this.stick_to_e);
 
   this.init();
-  this.add_events_to_inputs();
+  this.add_events_to_inputs().add_events_to_button();
   //
 }
 

@@ -1003,7 +1003,8 @@ class diDynamicRows
     if ($date && $calendar_cfg)
     {
       $uid = "{$this->table}_{$this->field}_{$field}";
-      //$uid = substr(get_unique_id(), 0, 8);
+      //$uid = get_unique_id(8);
+        $uid2 = preg_replace('#\[.+$#', '', $uid);
 
       if ($calendar_cfg === true)
       {
@@ -1015,13 +1016,16 @@ class diDynamicRows
       }
 
       $calendar_btn = <<<EOF
- <button type="button" onclick="c_{$uid}[{$this->current_id}].toggle();" class="w_hover">{$this->L("calendar")}</button>
+ <button type="button" data-calendar-uid="{$uid}[{$this->current_id}]" class="w_hover">{$this->L("calendar")}</button>
 EOF;
 
       $calendar_script = <<<EOF
-c_{$uid} = [];
+if (typeof c_{$uid2} === 'undefined') c_{$uid2} = {};      
+c_{$uid} = {};
 c_{$uid}[{$this->current_id}] = new diCalendar({
   instance_name: 'c_{$uid}[{$this->current_id}]',
+  uid: '{$uid}[{$this->current_id}]',
+  position_base: 'parent',
   $calendar_cfg_js
 });
 EOF;
