@@ -87,7 +87,7 @@ trait Collection
             ' ON ' . $this->getTargetIdField() . ' = ' . $this->getMainIdField() .
             ' AND ' . $this->getTargetTypeField() . ' = ' . $this->realType .
             ' LEFT JOIN ' . $this->getTagTable() .
-            ' ON ' . $this->getTagIdField() . ' = ' . $this->getMainIdField();
+            ' ON ' . $this->getTagIdField() . ' = ' . $this->getGenericTagIdField();
 
         if ($this->tagId !== null)
         {
@@ -115,6 +115,11 @@ trait Collection
     private function getTagIdField($index = '')
     {
         return $this->addAliasToField($this->classInstance->getFieldName('tag_id'), $this->map_table_alias . $index);
+    }
+
+    private function getGenericTagIdField($index = '')
+    {
+        return $this->addAliasToField('id', $this->tag_table_alias . $index);
     }
 
     private function getTargetIdField($index = '')
