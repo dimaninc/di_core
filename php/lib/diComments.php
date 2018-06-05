@@ -174,21 +174,26 @@ class diComments
 
 	public function printForm()
 	{
-		$this->getTpl()
-			->assign([
-				"TARGET_TYPE" => $this->targetType,
-				"TARGET_ID" => $this->targetId,
-				"TOTAL_COUNT" => $this->getTotalCount(),
-				'MODERATED_BEFORE_SHOW' => static::moderatedBeforeShow() ? 'true' : 'false',
-			], "COMMENT_")
-			->process("COMMENT_FORM", $this->getFormTemplateName());
+		$tplName = $this->getFormTemplateName();
+
+		if ($tplName && $this->getTpl() && $this->getTpl()->defined($tplName) && $this->getTpl()->exists($tplName))
+		{
+			$this->getTpl()
+				->assign([
+					"TARGET_TYPE" => $this->targetType,
+					"TARGET_ID" => $this->targetId,
+					"TOTAL_COUNT" => $this->getTotalCount(),
+					'MODERATED_BEFORE_SHOW' => static::moderatedBeforeShow() ? 'true' : 'false',
+				], "COMMENT_")
+				->process("COMMENT_FORM", $tplName);
+		}
 
 		return $this;
 	}
 
 	protected function getMetaTitleSuffix()
 	{
-		$page = $this->getPagesNavy() ? $this->getPagesNavy()->getPage() : null;
+		$page = $this->usePagesNavy && $this->getPagesNavy() ? $this->getPagesNavy()->getPage() : null;
 
 		if ($this->usePagesNavy && $page > 1)
 		{
@@ -213,7 +218,7 @@ class diComments
 				static::META_TITLE_COMMENT_PAGE_SUFFIX => $this->getMetaTitleSuffix(),
 				"COMMENT_AUTH_CLASS_NAME" => $this->authorized() ? "auth-ok" : "auth-needed",
 			]);
-		
+
 		$this->getTwig()
 			->assign([
 				static::META_TITLE_COMMENT_PAGE_SUFFIX => $this->getMetaTitleSuffix(),
@@ -226,7 +231,9 @@ class diComments
 	{
 		$this->prepareToRenderBlock();
 
-		return $this->getTpl()->parse("comments_block");
+		return $this->getTpl() && $this->getTpl()->defined('comments_block')
+			? $this->getTpl()->parse("comments_block")
+			: '';
 	}
 
 	protected function beforeParseRow(CommentModel $comment, \diBaseUserModel $user)
@@ -368,8 +375,8 @@ class diComments
 			"SUM(CASE WHEN level_num = '0' THEN 1 ELSE 0 END) total_level_0"
 		);
 
-		$this->totalCount = (int)$r->total;
-		$this->totalTopLevelCount = (int)$r->total_level_0;
+		$this->totalCount = $r ? (int)$r->total : 0;
+		$this->totalTopLevelCount = $r ? (int)$r->total_level_0 : 0;
 
 		return $this;
 	}
