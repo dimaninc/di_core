@@ -167,7 +167,7 @@ class diFontsPage extends \diCore\Admin\BasePage
 				"type" => "datetime_str",
 				"title" => "Дата добавления",
 				"default" => "",
-				"flags" => ["static"],
+				"flags" => ["static", 'untouchable', 'initially_hidden'],
 			],
 		];
 	}

@@ -1,10 +1,10 @@
 /**
   * adding a sprite
   */
-sprite(sprite, horizontal = none, vertical = none, fn = "sprite")
+sprite(sprite, horizontal = '', vertical = '', fn = "sprite", path = "/assets/images/")
     width sprite[2]
     height sprite[3]
-    background url("/pic/" + fn + ".png?" + $sprite-timestamp) sprite[0]sprite[1]no-repeat;
+    background url(path + fn + ".png?" + $sprite-timestamp) sprite[0]sprite[1]no-repeat;
 
     if horizontal is center
         margin-left (@width / -2)
@@ -13,6 +13,10 @@ sprite(sprite, horizontal = none, vertical = none, fn = "sprite")
         left 0
     else if horizontal is right
         right 0
+    else if horizontal and horizontal > 0
+        left horizontal
+    else if horizontal and horizontal < 0
+        right - horizontal
 
     if vertical is center
         margin-top (@height / -2)
@@ -21,6 +25,10 @@ sprite(sprite, horizontal = none, vertical = none, fn = "sprite")
         top 0
     else if vertical is bottom
         bottom 0
+    else if vertical and vertical > 0
+        top vertical
+    else if vertical and vertical < 0
+        bottom - vertical
 
 fs(size = 12)
     ptValue = size
