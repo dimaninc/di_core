@@ -1,0 +1,50 @@
+{% if not pn and col %}
+    {% set pn = col.getPN() %}
+{% endif %}
+{% if pn.getTotalPages() > 1 %}
+    {% set href_base = href_base ?: Z.getMainTarget().getHref() %}
+    {% set print_prev_next = print_prev_next ?: false %}
+    {% set prev_word = prev_word ?: 'Предыдущая' %}
+    {% set next_word = next_word ?: 'Следующая' %}
+    {% set spread = spread ?: 2 %}
+    {% if '?' in href_base %}
+        {% set href_base = href_base ~ '&' %}
+    {% else %}
+        {% set href_base = href_base ~ '?' %}
+    {% endif %}
+    {% set pageStart = pn.getPage() - spread %}
+    {% set pageFinish = pn.getPage() + spread %}
+    {% if pageStart < 1 %}
+        {% set pageStart = 1 %}
+    {% endif %}
+    {% if pageFinish > pn.getTotalPages() %}
+        {% set pageFinish = pn.getTotalPages() %}
+    {% endif %}
+    {% set pagesList = [] %}
+    {% if pageStart == 2 %}
+        {% set pagesList = pagesList|merge([1]) %}
+    {% elseif pageStart > 2 %}
+        {% set pagesList = pagesList|merge([1, '...']) %}
+    {% endif %}
+    {% set pagesList = pagesList|merge(range(pageStart, pageFinish)) %}
+    {% if pageFinish == pn.getTotalPages() - 1 %}
+        {% set pagesList = pagesList|merge([pn.getTotalPages()]) %}
+    {% elseif pageFinish < pn.getTotalPages() - 1 %}
+        {% set pagesList = pagesList|merge(['...', pn.getTotalPages()]) %}
+    {% endif %}
+    {% set prevHref = href_base ~ (pn.getPrevPage() > 1 ? 'page=' ~ pn.getPrevPage() : '') %}
+    {% set nextHref = href_base ~ 'page=' ~ pn.getNextPage() %}
+
+    <div class="navy">
+        {% if print_prev_next %}{% if pn.getPrevPage() %}<a class="prev" href="{{ prevHref }}">{{ prev_word|raw }}</a>{%
+        else %}<span class="prev">{{ prev_word|raw }}</span>{% endif %}{% endif %}{%
+        for page in pagesList
+        %}{% if page == '...' %}{{ page }}{% else %}{%
+        set selected = pn.getPage() == page ? ' selected' : '' %}{%
+        set href = href_base ~ (page > 1 ? 'page=' ~ page : '')
+        %}<a class="page {{ selected }}" href="{{ href }}">{{ page }}</a>{% endif %}{%
+        endfor %}{% if print_prev_next %}{%
+        if pn.getNextPage() %}<a class="next" href="{{ nextHref }}">{{ next_word|raw }}</a>{%
+        else %}<span class="next">{{ next_word|raw }}</span>{% endif %}{% endif %}
+    </div>
+{% endif %}

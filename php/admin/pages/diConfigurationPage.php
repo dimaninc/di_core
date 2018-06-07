@@ -94,6 +94,8 @@ class diConfigurationPage extends \diCore\Admin\BasePage
 			$titleSuffix = "";
 			$valueSuffix = "";
 
+			$this->getTpl()->clear("P_NOTE_ROWS");
+
 			$htmlFieldName = str_replace(
 				array_keys(\diConfiguration::$inputNameReplaces),
 				array_values(\diConfiguration::$inputNameReplaces),

@@ -257,11 +257,11 @@ class diTwig
 
 	/**
 	 * @param $template
-	 * @param string|null $token
+	 * @param string $token
 	 * @param array $data
 	 * @return $this
 	 */
-	public function render($template, $token = null, $data = [])
+	public function render($template, $token, $data = [])
 	{
 		$this->assign([
 			$token => $this->parse($template, $data),

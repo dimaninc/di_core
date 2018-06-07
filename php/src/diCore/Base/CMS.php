@@ -883,7 +883,7 @@ abstract class CMS
 
 	protected function countersNeeded()
 	{
-		return !static::debugMode();
+		return static::getEnvironment() == self::ENV_PROD;
 	}
 
 	protected function shareBlockNeeded()
@@ -1261,6 +1261,7 @@ abstract class CMS
 	protected function getTwigBasicsData()
 	{
 		return [
+			'Z' => $this,
 			'content_page' => $this->getContentModel(),
 			'content_pages' => $this->getCachedContentCollection(),
 			'content_by_type' => $this->getCachedContentCollectionByType(),
