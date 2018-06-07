@@ -198,11 +198,11 @@ class diSelect
 		{
 			$data = extend([
 				'value' => $model->getId(),
-				'text' => null,
+				'text' => $model->get('title'),
 				'attributes' => [],
 			], call_user_func($format, $model));
 
-			$this->addItem($data["value"], $data["text"], $data["attributes"]);
+			$this->addItem($data['value'], $data['text'], $data['attributes']);
 		}
 
 		$this->addItemArray($suffixAr);
