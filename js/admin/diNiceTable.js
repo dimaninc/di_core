@@ -10,7 +10,7 @@ var diNiceTable = function(opts)
 
 	if (!settings.$table)
 	{
-		settings.$table = $('.dinicetable_div > table[data-table="{0}"]'.format(settings.table));
+		settings.$table = $('.dinicetable_div > table[data-table="{0}"],ul.admin-grid[data-table="{0}"]'.format(settings.table));
 	}
 
 	this.getWorkerBase = function()

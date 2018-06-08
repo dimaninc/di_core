@@ -18,7 +18,7 @@ abstract class BasePage
 	/** @var \diAdminList */
 	private $List;
 
-	/** @var \diAdminGrid */
+	/** @var Grid */
 	private $Grid;
 
 	/** @var \diAdminFilters */
@@ -47,8 +47,12 @@ abstract class BasePage
 	/** @var \diCollection */
 	private $listCollection;
 
+	/** @var callable|null */
+	private $renderCallback;
+
 	const LIST_LIST = 1;
 	const LIST_GRID = 2;
+
 	/**
 	 * How to render list: grid or list
 	 *
@@ -156,7 +160,20 @@ abstract class BasePage
 
 		$o->$afterM();
 
-		if ($o->getTwig()->has(\diTwig::TOKEN_FOR_PAGE))
+		if ($o->hasRenderCallback())
+		{
+			$cb = $o->getRenderCallback();
+			$result = $cb();
+
+			if ($result)
+			{
+				$o->getTpl()
+					->assign([
+						'PAGE' => $result,
+					]);
+			}
+		}
+		elseif ($o->getTwig()->has(\diTwig::TOKEN_FOR_PAGE))
 		{
 			$o->getTpl()
 				->assign([
@@ -169,6 +186,23 @@ abstract class BasePage
 		}
 
 		return $o;
+	}
+
+	public function setRenderCallback(callable $callback)
+	{
+		$this->renderCallback = $callback;
+
+		return $this;
+	}
+
+	public function hasRenderCallback()
+	{
+		return !!$this->renderCallback;
+	}
+
+	public function getRenderCallback()
+	{
+		return $this->renderCallback;
 	}
 
 	public function renderList()
@@ -394,14 +428,14 @@ abstract class BasePage
 	}
 
 	/**
-	 * @return \diAdminGrid
+	 * @return Grid
 	 * @throws \Exception
 	 */
 	public function getGrid()
 	{
 		if (!$this->hasGrid())
 		{
-			throw new \Exception('diAdminGrid not initialized');
+			throw new \Exception('Admin Grid not initialized');
 		}
 
 		return $this->Grid;
@@ -732,11 +766,7 @@ abstract class BasePage
 
 	protected function defaultPrintGridRows(\diCollection $collection)
 	{
-		/** @var \diModel $model */
-		foreach ($collection as $model)
-		{
-			$this->getGrid()->printElement($model);
-		}
+		$this->getGrid()->printElements($collection);
 
 		return $this;
 	}
@@ -758,15 +788,17 @@ abstract class BasePage
 
 	protected function beforeRenderList()
 	{
+		if ($this->listMode == self::LIST_LIST)
+		{
+			$this->getTpl()
+				->define("`_default/list", [
+					"page",
+				]);
+		}
+
 		$this->getTpl()
-			->define("`_default/" . ($this->listMode == self::LIST_LIST ? "list" : "grid"), [
-				"page",
-			])
 			->define("`_default/list", [
 				"list_control_panel",
-			])
-			->define("`_default/grid", [
-				"grid_row",
 			])
 			->assign([
 				"FILTERS" => "",
@@ -789,7 +821,7 @@ abstract class BasePage
 				    break;
 
 			    case self::LIST_GRID:
-					$this->Grid = new \diAdminGrid($this);
+					$this->Grid = new Grid($this);
 				    break;
 		    }
 	    }
@@ -1084,8 +1116,7 @@ abstract class BasePage
 	{
 		if ($this->useEditLog())
 		{
-			try
-			{
+			try {
 				/** @var \diAdminTableEditLogModel $log */
 				$log = \diModel::create(\diTypes::admin_table_edit_log);
 
@@ -1097,9 +1128,7 @@ abstract class BasePage
 					->setAdminId($this->getAdmin()->getAdminModel()->getId())
 					->setBothData($this->getSubmit()->getSubmittedModel(), $this->getSubmit()->getCurModel())
 					->save();
-			}
-			catch (\Exception $e)
-			{
+			} catch (\Exception $e) {
 				// validation failed -> no changes
 				//throw $e;
 			}

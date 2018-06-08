@@ -45,6 +45,8 @@ class diTags
 	protected $outputGlue = ', ';
 	protected $inputGlue = '/,/';
 
+	protected $targetTypeUsed = true;
+
 	protected $tables = [
 		'tags' => 'tags',
 		'map' => 'tag_links',
@@ -148,18 +150,29 @@ class diTags
 
 	public function getSubQueryForTargetId($targetType, $tagId)
 	{
-		return "SELECT {$this->fields["target_id"]} FROM {$this->tables["map"]} WHERE {$this->fields["target_type"]}='$targetType' and {$this->fields["tag_id"]}='$tagId'";
+		$ar = array_filter([
+			$this->targetTypeUsed && $this->fields["target_type"] ? "{$this->fields["target_type"]} = '$targetType'" : '',
+			"{$this->fields["tag_id"]} = '$tagId'",
+		]);
+
+		return "SELECT {$this->fields["target_id"]} FROM {$this->tables["map"]}
+			WHERE " . join(' AND ', $ar);
+	}
+
+	protected function getTagsQueryAr($targetType, $targetId)
+	{
+		return array_filter([
+			$this->targetTypeUsed && $this->fields["target_type"] ? "m." . $this->fields["target_type"] . " = '$targetType'" : '',
+			"m." . $this->fields["target_id"] . \diDB::in($targetId),
+			"t.visible = '1'",
+		]);
 	}
 
 	public function getTags($targetType, $targetId)
 	{
 		$ar = [];
 
-		$queryAr = [
-			"m." . $this->fields["target_type"] . " = '$targetType'",
-			"m." . $this->fields["target_id"] . diDB::in($targetId),
-			"t.visible='1'",
-		];
+		$queryAr = $this->getTagsQueryAr($targetType, $targetId);
 
 		$tag_rs = $this->getDb()->rs(
 			"{$this->tables["map"]} m INNER JOIN {$this->tables["tags"]} t ON t.id = m.{$this->fields["tag_id"]}",
@@ -206,6 +219,17 @@ class diTags
 		return join($this->outputGlue, $ar);
 	}
 
+	protected function getTagAssignedQuery($targetType, $targetId, $tagId)
+	{
+		$ar = array_filter([
+			$this->targetTypeUsed && $this->fields["target_type"] ? "{$this->fields["target_type"]} = '$targetType'" : '',
+			"{$this->fields["target_id"]} = '$targetId'",
+			"{$this->fields["tag_id"]} = '$tagId'",
+		]);
+
+		return "WHERE " . join(' AND ', $ar);
+	}
+
 	public function isTagAssigned($targetType, $targetId, $tagId)
 	{
 		if (!$targetId)
@@ -213,9 +237,7 @@ class diTags
 			return false;
 		}
 
-		$r = $this->getDb()->r($this->tables["map"],
-			"WHERE {$this->fields["target_type"]}='$targetType' and {$this->fields["target_id"]}='$targetId' and {$this->fields["tag_id"]}='$tagId'"
-		);
+		$r = $this->getDb()->r($this->tables["map"], $this->getTagAssignedQuery($targetType, $targetId, $tagId));
 
 		return !!$r;
 	}
@@ -244,11 +266,12 @@ class diTags
 
 	protected function getDbArForMapRecord($targetType, $targetId, $tagId)
 	{
-		return [
+		return extend($this->targetTypeUsed && $this->fields["target_type"] ? [
 			$this->fields["target_type"] => $targetType,
+		] : [], [
 			$this->fields["target_id"] => $targetId,
 			$this->fields["tag_id"] => $tagId,
-		];
+		]);
 	}
 
 	protected function storeMapRecord($targetType, $targetId, $tagId)
@@ -271,8 +294,13 @@ class diTags
 	{
 		$this->beforeStoreTags($targetType, $targetId, $tagsAr, $tagsStr);
 
+		$ar = array_filter([
+			$this->targetTypeUsed && $this->fields["target_type"] ? "{$this->fields["target_type"]} = '$targetType'" : '',
+			"{$this->fields["target_id"]} = '$targetId'",
+		]);
+
 		$this->getDb()->delete($this->tables["map"],
-			"WHERE {$this->fields["target_type"]} = '$targetType' and {$this->fields["target_id"]} = '$targetId'"
+			"WHERE " . join(' AND ', $ar)
 		);
 
 		$counter = 0;
@@ -354,7 +382,12 @@ class diTags
 
 	public function storeTargets($targetType, $tagId, $targets)
 	{
-		$this->getDb()->delete($this->tables["map"], "WHERE {$this->fields["target_type"]}='$targetType' and {$this->fields["tag_id"]}='$tagId'");
+		$ar = array_filter([
+			$this->targetTypeUsed && $this->fields["target_type"] ? "{$this->fields["target_type"]} = '$targetType'" : '',
+			"{$this->fields["tag_id"]} = '$tagId'",
+		]);
+
+		$this->getDb()->delete($this->tables["map"], "WHERE " . join(' AND ', $ar));
 
 		$counter = 0;
 
@@ -433,7 +466,7 @@ class diTags
 	{
 		$qAr = [];
 
-		if ($this->fields["target_type"])
+		if ($this->fields["target_type"] && $this->targetTypeUsed)
 		{
 			$qAr[] = "{$this->fields["target_type"]} = '$type'";
 		}
@@ -481,7 +514,7 @@ class diTags
 	{
 		$qAr = [];
 
-		if ($this->fields["target_type"])
+		if ($this->fields["target_type"] && $this->targetTypeUsed)
 		{
 			$qAr[] = "{$this->fields["target_type"]} = '$type'";
 		}
@@ -533,7 +566,7 @@ class diTags
 		$ar = [];
 		$qAr = [];
 
-		if ($this->fields["target_type"])
+		if ($this->fields["target_type"] && $this->targetTypeUsed)
 		{
 			$qAr[] = "{$this->fields["target_type"]} = '$type'";
 		}
@@ -558,10 +591,10 @@ class diTags
 	{
 		$ar = [];
 
-		$qAr = [
-			"{$this->fields["target_type"]}='$type'",
+		$qAr = array_filter([
+			$this->targetTypeUsed && $this->fields["target_type"] ? "{$this->fields["target_type"]} = '$type'" : '',
 			"{$this->fields["tag_id"]}" . $this->getDb()->in($tagId),
-		];
+		]);
 
 		$rs = $this->getDb()->rs($this->tables["map"], "WHERE " . join(" AND ", $qAr));
 		while ($r = $this->getDb()->fetch($rs))

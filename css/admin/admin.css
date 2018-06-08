@@ -1759,6 +1759,9 @@ ul.admin-grid > li .nicetable-button[data-action="down"] {
 ul.admin-grid > li.highlight {
   background-color: #ffd;
 }
+ul.admin-grid > li.delete {
+  background-color: #fbb;
+}
 ul.admin-grid > li .buttons-panel {
   margin: 10px 0 0 0;
 }

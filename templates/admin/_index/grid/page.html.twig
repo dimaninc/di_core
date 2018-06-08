@@ -1,0 +1,23 @@
+{{ filters|raw }}
+
+{{ before_table|raw }}
+
+<ul class="admin-grid" data-table="{{ table }}">
+	{% for row in rows %}<li data-id="{{ row['id'] }}" data-role="row">
+		{% block tn %}<div class="tn"><a href="{{ row.getRelated('edit_href') }}"><img src="{{ row.getRelated('img_url_prefix') }}{{ row['pic_tn'] }}"></a></div>{% endblock %}
+		{% block before_title %}{% if row['token'] %}<div class="token">Токен для вставки: <b>{{ row['token'] }}</b></div>{% endif %}{% endblock %}
+		{% block title %}
+			<div class="title">
+				{% block title_prefix %}{% endblock %}
+				{{ row['title'] }}
+				{% block title_suffix %}{% endblock %}
+			</div>
+		{% endblock %}
+		{% block after_title %}{% endblock %}
+		{% block buttons %}<div class="buttons-panel">{{ row.getRelated('buttons')|join(' ')|raw }}</div>{% endblock %}
+	</li>{% endfor %}
+</ul>
+
+{{ after_table|raw }}
+
+{{ navy|raw }}

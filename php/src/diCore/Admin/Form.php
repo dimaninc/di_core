@@ -2303,7 +2303,7 @@ EOF;
 			}
 		}
 
-		$this->uploaded_images[$field] = $s;
+		//$this->uploaded_images[$field] = $s;
 
 		$s .= "<div id=\"{$field}_anchor_div\"></div>";
 		$s .= "<div id=\"js_{$field}_resource\" style=\"display:none;\">".$this->get_dynamic_pic_row("%NEWID%", $field, false)."</div>";

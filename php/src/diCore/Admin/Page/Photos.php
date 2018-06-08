@@ -129,9 +129,9 @@ class Photos extends \diCore\Admin\BasePage
 				'up' => [
 					'allowed' => $orderAllowed,
 				],
-				'edit' => '',
-				'del' => '',
-				'visible' => '',
+				'edit' => [],
+				'del' => [],
+				'visible' => [],
 				'down' => [
 					'allowed' => $orderAllowed,
 				],
