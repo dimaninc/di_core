@@ -1020,7 +1020,7 @@ class diDynamicRows
 EOF;
 
       $calendar_script = <<<EOF
-if (typeof c_{$uid2} === 'undefined') c_{$uid2} = {};      
+if (typeof c_{$uid2} === 'undefined') c_{$uid2} = {};
 c_{$uid} = {};
 c_{$uid}[{$this->current_id}] = new diCalendar({
   instance_name: 'c_{$uid}[{$this->current_id}]',
@@ -1268,6 +1268,7 @@ EOF;
 		$techFieldsSet = false;
 		$beforeSaveCallback = $this->getProperty('beforeSave');
 		$afterSaveCallback = $this->getProperty('afterSave') ?: $this->getProperty('after_save');
+		$afterAllSavedCallback = $this->getProperty('afterAllSaved');
 
 		foreach ($fields as $k => $v)
 		{
@@ -1424,8 +1425,13 @@ EOF;
 			{
 				$initial_id = $initial_ids_ar[$_idx];
 
-				$afterSaveCallback($this->data_table, $_id, $this->table, $this->field, $this->id, !in_array($_id, $initial_ids_ar), $initial_id);
+				$afterSaveCallback($this, $_id, $initial_id);
 			}
+		}
+
+		if (is_callable($afterAllSavedCallback))
+		{
+			$afterAllSavedCallback($this);
 		}
 
 		return true;
