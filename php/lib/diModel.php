@@ -47,7 +47,6 @@ class diModel implements \ArrayAccess
 	/** @var int|null */
 	protected $origId;
 	/** @deprecated */
-	protected $idFieldName = self::id_field_name;
 	protected $idAutoIncremented = true;
 	/** @deprecated */
 	protected $slugFieldName = self::SLUG_FIELD_NAME_LEGACY;
@@ -420,9 +419,9 @@ class diModel implements \ArrayAccess
 		return $this;
 	}
 
-	public function getIdFieldName()
+	public static function getIdFieldName()
 	{
-		return static::id_field_name ?: $this->idFieldName;
+		return static::id_field_name;
 	}
 
 	public function getId()
@@ -915,7 +914,7 @@ class diModel implements \ArrayAccess
 
 	public function has($field)
 	{
-		if ($field == (static::id_field_name ?: $this->idFieldName))
+		if ($field == static::getIdFieldName())
 		{
 			return !!$this->getId();
 		}
@@ -925,7 +924,7 @@ class diModel implements \ArrayAccess
 
 	public function hasOrig($field)
 	{
-		if ($field == (static::id_field_name ?: $this->idFieldName))
+		if ($field == static::getIdFieldName())
 		{
 			return !!$this->getOrigId();
 		}
@@ -944,7 +943,7 @@ class diModel implements \ArrayAccess
 			return $this->getWithId();
 		}
 
-		if ($field == (static::id_field_name ?: $this->idFieldName))
+		if ($field == static::getIdFieldName())
 		{
 			return $this->getId();
 		}
@@ -965,7 +964,7 @@ class diModel implements \ArrayAccess
 			return $this->getOrigWithId();
 		}
 
-		if ($field == (static::id_field_name ?: $this->idFieldName))
+		if ($field == static::getIdFieldName())
 		{
 			return $this->getOrigId();
 		}
@@ -1566,9 +1565,9 @@ class diModel implements \ArrayAccess
 			}
 		}
 
-		if (!$this->idAutoIncremented && $this->changed(static::id_field_name ?: $this->idFieldName))
+		if (!$this->idAutoIncremented && $this->changed(static::getIdFieldName()))
 		{
-			$ar[static::id_field_name ?: $this->idFieldName] = $this->getId();
+			$ar[static::getIdFieldName()] = $this->getId();
 		}
 
 		return $ar;
@@ -1912,11 +1911,11 @@ class diModel implements \ArrayAccess
 
 	protected function checkId()
 	{
-		if (isset($this->ar[static::id_field_name ?: $this->idFieldName]))
+		if (isset($this->ar[static::getIdFieldName()]))
 		{
-			$this->id = $this->ar[static::id_field_name ?: $this->idFieldName];
+			$this->id = $this->ar[static::getIdFieldName()];
 
-			$this->kill(static::id_field_name ?: $this->idFieldName);
+			$this->kill(static::getIdFieldName());
 		}
 
 		return $this;

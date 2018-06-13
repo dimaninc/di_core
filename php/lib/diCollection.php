@@ -1257,9 +1257,12 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this;
 	}
 
-	protected function getIdFieldName()
+	public static function getIdFieldName()
 	{
-		return \diModel::create($this->getModelType())->getIdFieldName();
+		/** @var \diModel $modelClass */
+		$modelClass = static::getModelClass();
+
+		return $modelClass::getIdFieldName();
 	}
 
 	/**
@@ -1270,7 +1273,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		if (is_scalar($o))
 		{
-			return $this->filterBy($this->getIdFieldName(), $o);
+			return $this->filterBy(static::getIdFieldName(), $o);
 		}
 
 		return $this;
