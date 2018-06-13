@@ -1,5 +1,4 @@
 <?php
-
 /*
 	// dimaninc
 
@@ -55,6 +54,10 @@
 	// 2008/04/01
 		* birthday
 */
+
+use diCore\Data\Config;
+use diCore\Helper\FileSystemHelper;
+use diCore\Helper\StringHelper;
 
 /* back compatibility */
 /** @deprecated */
@@ -175,11 +178,16 @@ abstract class diDB
 		return $this;
 	}
 
+	protected function getFullDebugLogFolder()
+	{
+		return Config::getLogFolder() . $this->logFolder;
+	}
+
 	protected function getDebugLogFileName()
 	{
 		$this->checkDebugFilename();
 
-		return \diPaths::fileSystem() . add_ending_slash($this->logFolder) . $this->debugFileName;
+		return StringHelper::slash($this->getFullDebugLogFolder()) . $this->debugFileName;
 	}
 
 	protected function debugMessage($message)
@@ -191,7 +199,7 @@ abstract class diDB
 			}, $message));
 		}
 
-		create_folders_chain(diPaths::fileSystem(), $this->logFolder, 0777);
+		FileSystemHelper::createTree(Config::getLogFolder(), $this->logFolder, 0777);
 
 		file_put_contents($this->getDebugLogFileName(), $message . "\n", FILE_APPEND | LOCK_EX);
 

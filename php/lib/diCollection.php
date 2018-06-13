@@ -1588,7 +1588,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 				{
 					if (is_array($value))
 					{
-						if ($val['operator'] == 'between')
+						if (strtolower($val['operator']) == 'between')
 						{
 							$value = join(' AND ', array_map(function($v) {
 								return $this->getDb()->escapeValue($v);
