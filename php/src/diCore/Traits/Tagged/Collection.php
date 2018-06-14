@@ -13,8 +13,8 @@ namespace diCore\Traits\Tagged;
  * @package diCore\Entity\Tagged
  *
  * @method $this resetAlias
- * @method $this addAliasToField($field, $alias = null)
- * @method $this addAliasToTable($table, $alias = null)
+ * @method string addAliasToField($field, $alias = null)
+ * @method string addAliasToTable($table, $alias = null)
  * @method $this select($fields, $append = false)
  * @method $this selectExpression($fields, $append = false)
  * @method $this filterManual($expression)
