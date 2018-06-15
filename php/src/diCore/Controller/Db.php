@@ -81,7 +81,7 @@ class Db extends \diBaseAdminController
 			}
 		}
 
-		print_json($ar);
+		return $ar;
 	}
 
 	public function downloadAction()
@@ -149,7 +149,7 @@ class Db extends \diBaseAdminController
 
 	public function tablesAction()
 	{
-		print_json(self::getTablesList($this->getDb()));
+		return self::getTablesList($this->getDb());
 	}
 
 	public function uploadAction()
@@ -178,14 +178,14 @@ class Db extends \diBaseAdminController
 				$ar["text"] = "Unable to copy {$_FILES["dump"]["tmp_name"]} � $fn";
 			}
 
-			$ar = array_merge($ar, $this->getDumpInfo($fn));
+			$ar = extend($ar, $this->getDumpInfo($fn));
 		}
 		else
 		{
 			$ar["code"] = $_FILES["dump"]["error"];
 		}
 
-		print_json($ar);
+		return $ar;
 	}
 
 	private function prepareString($s)
@@ -267,6 +267,7 @@ class Db extends \diBaseAdminController
 			"format" => get_file_ext($filename),
 			"file" => basename($filename),
 			"name" => $fn,
+			'size' => null,
 		];
 
 		// trying to exec system command
@@ -284,6 +285,8 @@ class Db extends \diBaseAdminController
 			{
 				$ar["ok"] = true;
 				$ar["system"] = true;
+
+				$ar = extend($ar, $this->getDumpInfo($filename));
 
 				return $ar;
 			}
@@ -482,7 +485,7 @@ EOF;
 		chmod($filename, self::CHMOD_FILE);
 
 		$ar["ok"] = true;
-		$ar = array_merge($ar, $this->getDumpInfo($filename));
+		$ar = extend($ar, $this->getDumpInfo($filename));
 
 		return $ar;
 	}

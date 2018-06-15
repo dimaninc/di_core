@@ -195,13 +195,19 @@ function diDbManager(_opts)
 
 	function addDumpRow(res)
 	{
-		$('.db-dump-rows tbody[data-folder-id="1"] tr:first-child').after('<tr data-format="'+res.format+'" data-filename="'+res.file+'">'+
-			'<td><b>'+(res.name || res.file)+'</b> '+
-			'<small>('+(new Date().toLocaleString())+', '+size_in_bytes(res.size)+') ['+res.format+']</small></td>'+
-			'<td><button type="button" data-action="restore">Restore...</button> '+
-			'<button type="button" data-action="download">Download</button> '+
-			'<button type="button" data-action="delete">Delete...</button> '+
-			'<button type="button" data-action="view">View</button></td></tr>');
+		var sizeStr = res.size
+			? ', ' + size_in_bytes(res.size)
+			: '';
+
+		$('.db-dump-rows tbody[data-folder-id="1"] tr:first-child').after(
+			'<tr data-format="' + res.format + '" data-filename="' + res.file + '">' +
+			'<td><b>' + (res.name || res.file) + '</b> ' +
+			'<small>(' + (new Date().toLocaleString()) + sizeStr + ') [' + res.format + ']</small></td>' +
+			'<td><button type="button" data-action="restore">Restore...</button> ' +
+			'<button type="button" data-action="download">Download</button> ' +
+			'<button type="button" data-action="delete">Delete...</button> ' +
+			'<button type="button" data-action="view">View</button></td></tr>'
+		);
 	}
 
 	function getCheckboxParam($e)
