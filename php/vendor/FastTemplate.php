@@ -432,6 +432,11 @@ class FastTemplate
 		{
 			if (!empty($key))
 			{
+				if (is_array($val))
+				{
+					continue;
+				}
+
 				if (gettype($val) != "string")
 				{
 					settype($val, "string");
