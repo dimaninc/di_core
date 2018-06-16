@@ -1887,8 +1887,14 @@ abstract class CMS
 				"HEADER_HTML_BASE" => $imageHtmlBase ?: \diRequest::urlBase(true),
 			]);
 
+		$prefix = $imageHtmlBase ?: \diRequest::urlBase(true);
+		if ($prefix && StringHelper::startsWith($imagePath, $prefix))
+		{
+			$prefix = '';
+		}
+
 		$this
-			->setOpenGraph(($imageHtmlBase ?: \diRequest::urlBase(true)) . $imagePath, 'image')
+			->setOpenGraph($prefix . $imagePath, 'image')
 			->setOpenGraph($width, 'image_width')
 			->setOpenGraph($height, 'image_height');
 
