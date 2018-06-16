@@ -1888,7 +1888,7 @@ abstract class CMS
 			]);
 
 		$prefix = $imageHtmlBase ?: \diRequest::urlBase(true);
-		if ($prefix && StringHelper::startsWith($imagePath, $prefix))
+		if (preg_match('#^https?://#', $imagePath))
 		{
 			$prefix = '';
 		}
