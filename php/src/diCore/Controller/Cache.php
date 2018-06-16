@@ -44,8 +44,9 @@ class Cache extends \diBaseAdminController
 	{
 		try {
 			$MC = Module::basicCreate();
+			$cacheModuleId = $this->param(0, \diRequest::get('id', 0));
 
-			if ($cacheModuleId = $this->param(0, 0)) {
+			if ($cacheModuleId) {
 				$MC->rebuild($cacheModuleId);
 			} else {
 				$MC->rebuildAll();
