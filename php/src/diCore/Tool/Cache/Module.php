@@ -77,6 +77,8 @@ class Module
 	{
 		/** @var Collection $col */
 		$col = \diCollection::create(Types::module_cache);
+		$col
+			->filterByActive(1);
 		/** @var Model $cache */
 		foreach ($col as $cache)
 		{
