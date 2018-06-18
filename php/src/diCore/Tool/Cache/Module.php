@@ -46,7 +46,7 @@ class Module
 		$this->rebuildWorker($cacheModel);
 
 		$cacheModel
-			->setUpdatedAt(\diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME))
+			->setUpdatedAt(\diDateTime::sqlFormat())
 			->save();
 
 		return $this;

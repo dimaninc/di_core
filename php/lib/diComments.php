@@ -33,6 +33,8 @@ class diComments
 	const CACHE_PERIODICAL = 3;
 
 	const cacheMode = self::CACHE_DISABLED;
+	const useHtmlCache = false;
+	const createHtmlCacheIfNotExists = true;
 
 	protected static $cachedTargetTypes = [];
 	protected static $nonCachedTargetTypes = [];
@@ -337,13 +339,33 @@ class diComments
 			}
 		}
 
-		$this->users = \diCollection::create(\diTypes::user, "WHERE id" . \diDB::in(array_unique($userIds), true));
-		$this->admins = \diCollection::create(\diTypes::admin, "WHERE id" . \diDB::in(array_unique($adminIds), true));
+		$this->users = \diCollection::create(\diTypes::user)->filterBy('id', array_unique($userIds), true);
+		$this->admins = \diCollection::create(\diTypes::admin)->filterBy('id', array_unique($adminIds), true);
 
 		return $this->comments;
 	}
 
 	public function getRowsHtml()
+	{
+		if (static::isHtmlCacheUsed())
+		{
+			$CC = \diCore\Tool\Cache\Comment::basicCreate([
+				'Manager' => $this,
+			]);
+			$contents = $CC->getCachedHtmlContents($this->getTarget(), [
+				'createIfNotExists' => static::shouldCreateHtmlCacheIfNotExists(),
+			]);
+
+			if ($contents)
+			{
+				return $contents;
+			}
+		}
+
+		return $this->getDefaultRowsHtml();
+	}
+
+	public function getDefaultRowsHtml()
 	{
 		$rows = [];
 		$this->getInitialCommentsCollection();
@@ -353,7 +375,7 @@ class diComments
 			$rows[] = $this->getRowHtml($comment);
 		}
 
-		return join("", $rows);
+		return join('', $rows);
 	}
 
 	private function initCounts()
@@ -423,6 +445,7 @@ class diComments
 		return \diCore\Database\Connection::get()->getDb();
 	}
 
+	/** @deprecated  */
 	public function setTpl(\FastTemplate $tpl)
 	{
 		$this->tpl = $tpl;
@@ -430,8 +453,25 @@ class diComments
 		return $this;
 	}
 
+	/** @deprecated  */
 	public function getTpl()
 	{
+		if (!$this->tpl)
+		{
+			$this->tpl = \FastTemplate::createForWeb();
+			$this->tpl
+				->define("~comments", [
+					"comment_actions",
+					"comment_form",
+					"comment_auth",
+					"comment_row",
+					"comments_link",
+					"comments_instruction",
+					"comments_block",
+					"comments_load_previous",
+				]);
+		}
+
 		return $this->tpl;
 	}
 
@@ -444,6 +484,11 @@ class diComments
 
 	public function getTwig()
 	{
+		if (!$this->Twig)
+		{
+			$this->Twig = \diTwig::create();
+		}
+
 		return $this->Twig;
 	}
 
@@ -468,9 +513,19 @@ class diComments
 	/**
 	 * @return int
 	 */
-	public function getCacheMode()
+	public static function getCacheMode()
 	{
 		return static::cacheMode;
+	}
+
+	public static function isHtmlCacheUsed()
+	{
+		return static::useHtmlCache;
+	}
+
+	public static function shouldCreateHtmlCacheIfNotExists()
+	{
+		return static::createHtmlCacheIfNotExists;
 	}
 
 	public function cacheNeededByTargetType()
@@ -494,7 +549,7 @@ class diComments
 	{
 		$rebuildNow = false;
 
-		switch ($this->getCacheMode())
+		switch (static::getCacheMode())
 		{
 			default:
 			case self::CACHE_DISABLED:

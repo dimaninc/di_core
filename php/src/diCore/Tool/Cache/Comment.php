@@ -8,7 +8,6 @@
 
 namespace diCore\Tool\Cache;
 
-use diCore\Controller\Cache;
 use diCore\Data\Types;
 use diCore\Database\Connection;
 use diCore\Entity\Comment\Collection;
@@ -20,6 +19,33 @@ use diCore\Traits\BasicCreate;
 class Comment
 {
 	use BasicCreate;
+
+	/** @var \diComments */
+	protected $Manager;
+
+	public function __construct($options = [])
+	{
+		$options = extend([
+			'Manager' => null,
+		], $options);
+
+		if ($options['Manager'])
+		{
+			$this->setManager($options['Manager']);
+		}
+	}
+
+	public function setManager(\diComments $Manager)
+	{
+		$this->Manager = $Manager;
+
+		return $this;
+	}
+
+	public function getManager()
+	{
+		return $this->Manager;
+	}
 
 	public static function updateCounts()
 	{
@@ -63,7 +89,7 @@ class Comment
 	public function rebuildByTarget($targetType, $targetId = null, \diComments $Comments = null)
 	{
 		/** @var Collection $comments */
-		$comments = $this->createCollectionByTarget($targetType, $targetId, $Comments);
+		$comments = $this->createCollectionByTarget($targetType, $targetId, $Comments ?: $this->getManager());
 
 		/** @var \diCore\Entity\User\Collection $users */
 		$users = \diCollection::create(Types::user, $comments->map('user_id'));
@@ -112,14 +138,7 @@ class Comment
 
 	protected function rebuildWorker(CacheModel $cacheModel)
 	{
-		// todo!!!
-		$module = CMS::getModuleClassName($cacheModel->getModuleId());
-		$module = $module::create($this->createCMS(), [
-			'noCache' => true,
-			'bootstrapSettings' => $cacheModel->getBootstrapSettings(),
-		]);
-
-		$this->storeHtml($cacheModel, $module->getResultPage());
+		$this->storeHtml($cacheModel, $this->getManager()->getDefaultRowsHtml());
 
 		return $this;
 	}
@@ -142,5 +161,69 @@ class Comment
 		{
 			$this->rebuildHtml($cache);
 		}
+	}
+
+	public function getCachedHtmlContents($target, $options = [])
+	{
+		$options = extend([
+			'createIfNotExists' => false,
+		], $options);
+
+		if (is_array($target))
+		{
+			$target = extend([
+				'type' => null,
+				'id' => null,
+			], $target);
+
+			$targetType = $target['type'];
+			$targetId = $target['id'];
+		}
+		elseif ($target instanceof \diModel)
+		{
+			$targetType = $target->modelType();
+			$targetId = $target->getId();
+		}
+		else
+		{
+			$targetType = null;
+			$targetId = null;
+		}
+
+		if (!$targetType || !$targetId)
+		{
+			throw new \Exception('Undefined target for comment cache');
+		}
+
+		/** @var CacheCol $col */
+		$col = \diCollection::create(Types::comment_cache);
+		$col
+			->filterByTargetType($targetType)
+			->filterByTargetId($targetId);
+
+		/** @var CacheModel $cacheModel */
+		$cacheModel = $col->getFirstItem();
+
+		if (!$cacheModel->exists() && $options['createIfNotExists'])
+		{
+			$cacheModel
+				->setTargetType($targetType)
+				->setTargetId($targetId)
+				->setUpdatedAt(\diDateTime::sqlFormat());
+
+			$this->rebuildWorker($cacheModel);
+
+			$cacheModel
+				->save();
+		}
+
+		return $this->getHtmlCacheFromModel($cacheModel, $options);
+	}
+
+	protected function getHtmlCacheFromModel(CacheModel $cache, $options = [])
+	{
+		return $cache->exists()
+			? $cache->getHtml()
+			: null;
 	}
 }
