@@ -100,17 +100,19 @@ abstract class diModule
 
 		if ($this->useModuleCache() && !$this->getRenderOption('noCache'))
 		{
+			$bootstrapSettings = $this->getCurrentBootstrapSettings();
+
 			$MC = \diCore\Tool\Cache\Module::basicCreate();
 			$contents = $MC->getCachedContents($this, [
 				'language' => $this->getZ()->getLanguage(),
 				'query_string' => \diRequest::requestQueryString(),
-				'bootstrap_settings' => $this->getCurrentBootstrapSettings(),
+				'bootstrap_settings' => $bootstrapSettings,
 			]);
 
 			if ($contents)
 			{
 				$this
-					->setBootstrapSettings($this->getCurrentBootstrapSettings())
+					->setBootstrapSettings($bootstrapSettings)
 					->cachedBootstrap();
 
 				$this->getTwig()->assign([
@@ -119,6 +121,13 @@ abstract class diModule
 
 				return $this;
 			}
+		}
+
+		// todo: remove routes when module cache is being made from browser
+		if ($this->getRenderOption('noCache') && false)
+		{
+			$this
+				->bootstrapRoutes();
 		}
 
 		$this
@@ -138,6 +147,14 @@ abstract class diModule
 
 	protected function cachedBootstrap()
 	{
+		return $this;
+	}
+
+	protected function bootstrapRoutes()
+	{
+		$this->getZ()
+			->setRoute([]);
+
 		return $this;
 	}
 
