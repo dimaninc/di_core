@@ -90,12 +90,12 @@ class Model extends \diModel
 	{
 		if (!$this->getContent())
 		{
-			$this->addValidationError("Content required");
+			$this->addValidationError('Content required');
 		}
 
 		if (!$this->getTargetType() || !$this->getTargetId())
 		{
-			$this->addValidationError("Target required");
+			$this->addValidationError('Target required');
 		}
 
 		return parent::validate();
@@ -106,14 +106,18 @@ class Model extends \diModel
 	{
 		$contentCut = nl2br(StringHelper::out(StringHelper::cutEnd($this->getContent(), self::CONTENT_CUT_LENGTH)));
 		$contentHtml = nl2br(StringHelper::out($this->getContent()));
-		$contentHtmlWithLinks = nl2br(highlight_urls(StringHelper::out($this->getContent())));
+		$contentHtmlWithLinks = $this->getContentHtmlWithLinks();
 
 		return extend(parent::getCustomTemplateVars(), [
-			"content_html" => $contentHtml,
-			"content_html_with_links" => $contentHtmlWithLinks,
-
+			'content_html' => $contentHtml,
+			'content_html_with_links' => $contentHtmlWithLinks,
 			'content_cut' => $contentCut,
 		]);
+	}
+
+	public function getContentHtmlWithLinks()
+	{
+		return nl2br(highlight_urls(StringHelper::out($this->getContent())));
 	}
 
 	public function beforeSave()
@@ -126,15 +130,15 @@ class Model extends \diModel
 			$h = new \diHierarchyCommentsTable();
 
 			$skipIdsAr = $h->getChildrenIdsAr($this->getParent(), array($this->getParent()));
-			$r = $this->getDb()->r($this->getTable(), $skipIdsAr, "MAX(order_num) AS num");
+			$r = $this->getDb()->r($this->getTable(), $skipIdsAr, 'MAX(order_num) AS num');
 
 			$this
 				->setLevelNum($h->getChildLevelNum($this->getParent()))
 				->setOrderNum((int)$r->num + 1);
 
 			$this->getDb()->update($this->getTable(), [
-				"*order_num" => "order_num+1",
-			], "WHERE order_num>='{$this->getOrderNum()}'");
+				'*order_num' => 'order_num+1',
+			], "WHERE order_num >= '{$this->getOrderNum()}'");
 		}
 		//
 
@@ -197,7 +201,7 @@ class Model extends \diModel
 				$this->user = \diModel::create(
 					$this->getUserType() == \diComments::utAdmin ? \diTypes::admin : \diTypes::user,
 					$this->getUserId(),
-					"id"
+					'id'
 				);
 			}
 		}
@@ -213,7 +217,7 @@ class Model extends \diModel
 	{
 		if (!$this->target || !$this->target->exists())
 		{
-			$this->target = \diModel::create($this->getTargetType(), $this->getTargetId(), "id");
+			$this->target = \diModel::create($this->getTargetType(), $this->getTargetId(), 'id');
 		}
 
 		return $this->target;
@@ -228,7 +232,7 @@ class Model extends \diModel
 
 	protected function getHrefSuffix()
 	{
-		return "#comment" . $this->getId();
+		return '#comment' . $this->getId();
 	}
 
 	protected function getSuffixForPhpView()
@@ -260,16 +264,16 @@ class Model extends \diModel
 	public function getUserAppearance(\diModel $user = null)
 	{
 		$user = $user ?: $this->getUserModel();
-		$typeSuffix = $this->getUserType() == \diComments::utAdmin ? " (Admin)" : "";
+		$typeSuffix = $this->getUserType() == \diComments::utAdmin ? ' (Admin)' : '';
 
-		return ($user->get("name") ?: $user->get("login") ?: $user->get("email")) . $typeSuffix;
+		return ($user->get('name') ?: $user->get('login') ?: $user->get('email')) . $typeSuffix;
 	}
 
 	public function getDescriptionForAdmin()
 	{
 		return
-			\diTypes::getTitle($this->getTargetType()) . ": " .
-			($this->getTargetModel()->get("title") ?: $this->getTargetType() . "#" . $this->getTargetId());
+			\diTypes::getTitle($this->getTargetType()) . ': ' .
+			($this->getTargetModel()->get('title') ?: $this->getTargetType() . '#' . $this->getTargetId());
 	}
 
 	public function isUserAllowed(\diCore\Entity\User\Model $user)

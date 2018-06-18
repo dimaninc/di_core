@@ -37,8 +37,6 @@ class diComments
 	protected static $cachedTargetTypes = [];
 	protected static $nonCachedTargetTypes = [];
 
-	/** @var diDB */
-	private $db;
 	/** @var FastTemplate */
 	private $tpl;
 	/** @var diTwig */
@@ -83,10 +81,6 @@ class diComments
 	 */
 	public function __construct($targetType, $targetId = null)
 	{
-		global $db;
-
-		$this->db = $db;
-
 		if ($targetType instanceof \diModel)
 		{
 			$this->target = clone $targetType;
@@ -426,7 +420,7 @@ class diComments
 
 	protected function getDb()
 	{
-		return $this->db;
+		return \diCore\Database\Connection::get()->getDb();
 	}
 
 	public function setTpl(\FastTemplate $tpl)
