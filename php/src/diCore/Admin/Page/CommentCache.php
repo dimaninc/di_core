@@ -50,7 +50,7 @@ class CommentCache extends \diCore\Admin\BasePage
 			'created_at' => [
 				'title' => 'Создан',
 				'value' => function(Model $m) {
-					return \diDateTime::format('d.m.Y H:i', $m->getCreatedAt());
+					return \diDateTime::simpleFormat($m->getCreatedAt());
 				},
 				'headAttrs' => [
 					'width' => '10%',
@@ -62,7 +62,7 @@ class CommentCache extends \diCore\Admin\BasePage
 			'updated_at' => [
 				'title' => 'Обновлён',
 				'value' => function(Model $m) {
-					return \diDateTime::format('d.m.Y H:i', $m->getUpdatedAt());
+					return \diDateTime::simpleFormat($m->getUpdatedAt());
 				},
 				'headAttrs' => [
 					'width' => '10%',
@@ -71,8 +71,9 @@ class CommentCache extends \diCore\Admin\BasePage
 					'class' => 'dt',
 				],
 			],
-			'#edit' => '',
-			'#del' => '',
+			'#edit' => [],
+			'#del' => [],
+			'#active' => [],
 		]);
 	}
 

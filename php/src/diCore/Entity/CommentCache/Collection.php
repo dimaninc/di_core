@@ -18,6 +18,7 @@ namespace diCore\Entity\CommentCache;
  * @method Collection filterByHtml($value, $operator = null)
  * @method Collection filterByCreatedAt($value, $operator = null)
  * @method Collection filterByUpdatedAt($value, $operator = null)
+ * @method Collection filterByActive($value, $operator = null)
  *
  * @method Collection orderById($direction = null)
  * @method Collection orderByTargetType($direction = null)
@@ -26,6 +27,7 @@ namespace diCore\Entity\CommentCache;
  * @method Collection orderByHtml($direction = null)
  * @method Collection orderByCreatedAt($direction = null)
  * @method Collection orderByUpdatedAt($direction = null)
+ * @method Collection orderByActive($direction = null)
  *
  * @method Collection selectId()
  * @method Collection selectTargetType()
@@ -34,6 +36,7 @@ namespace diCore\Entity\CommentCache;
  * @method Collection selectHtml()
  * @method Collection selectCreatedAt()
  * @method Collection selectUpdatedAt()
+ * @method Collection selectActive()
  */
 class Collection extends \diCollection
 {

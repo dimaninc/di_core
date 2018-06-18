@@ -78,7 +78,7 @@ class ModuleCache extends \diCore\Admin\BasePage
 			'created_at' => [
 				'title' => 'Создан',
 				'value' => function(Model $m) {
-					return \diDateTime::format('d.m.Y H:i', $m->getCreatedAt());
+					return \diDateTime::simpleFormat($m->getCreatedAt());
 				},
 				'headAttrs' => [
 					'width' => '10%',
@@ -91,7 +91,7 @@ class ModuleCache extends \diCore\Admin\BasePage
 				'title' => 'Обновлён',
 				'value' => function(Model $m) {
 					return $m->hasUpdatedAt()
-						? \diDateTime::format('d.m.Y H:i', $m->getUpdatedAt())
+						? \diDateTime::simpleFormat($m->getUpdatedAt())
 						: '&ndash;';
 				},
 				'headAttrs' => [

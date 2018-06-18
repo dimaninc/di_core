@@ -17,6 +17,7 @@ namespace diCore\Entity\CommentCache;
  * @method string	getHtml
  * @method string	getCreatedAt
  * @method string	getUpdatedAt
+ * @method integer	getActive
  *
  * @method bool hasTargetType
  * @method bool hasTargetId
@@ -24,6 +25,7 @@ namespace diCore\Entity\CommentCache;
  * @method bool hasHtml
  * @method bool hasCreatedAt
  * @method bool hasUpdatedAt
+ * @method bool hasActive
  *
  * @method Model setTargetType($value)
  * @method Model setTargetId($value)
@@ -31,6 +33,7 @@ namespace diCore\Entity\CommentCache;
  * @method Model setHtml($value)
  * @method Model setCreatedAt($value)
  * @method Model setUpdatedAt($value)
+ * @method Model setActive($value)
  */
 class Model extends \diModel
 {

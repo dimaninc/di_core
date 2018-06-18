@@ -7,11 +7,12 @@ CREATE TABLE comment_cache (
 
   html                 MEDIUMTEXT,
 
-  created_at           TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  created_at           TIMESTAMP             DEFAULT CURRENT_TIMESTAMP,
   updated_at           DATETIME,
+  active               TINYINT               DEFAULT '1',
 
   UNIQUE KEY target(target_type, target_id),
-  KEY idx(updated_at, update_every_minutes),
+  KEY idx(updated_at, active, update_every_minutes),
   PRIMARY KEY (id)
 )
   DEFAULT CHARSET = 'utf8'

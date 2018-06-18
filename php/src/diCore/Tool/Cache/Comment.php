@@ -8,10 +8,13 @@
 
 namespace diCore\Tool\Cache;
 
+use diCore\Controller\Cache;
+use diCore\Data\Types;
 use diCore\Database\Connection;
 use diCore\Entity\Comment\Collection;
 use diCore\Entity\Comment\Model;
-use diCore\Data\Types;
+use diCore\Entity\CommentCache\Model as CacheModel;
+use diCore\Entity\CommentCache\Collection as CacheCol;
 use diCore\Traits\BasicCreate;
 
 class Comment
@@ -79,5 +82,65 @@ class Comment
 			->buildCache(Collection::CACHE_BY_TARGET);
 
 		return $this;
+	}
+
+	public function rebuildHtml($id)
+	{
+		if ($id instanceof CacheModel)
+		{
+			$cacheModel = $id;
+		}
+		else
+		{
+			/** @var CacheModel $cacheModel */
+			$cacheModel = Model::create(Types::comment_cache, $id);
+		}
+
+		if (!$cacheModel->exists())
+		{
+			throw new \Exception("Module #{$id} doesn't exist");
+		}
+
+		$this->rebuildWorker($cacheModel);
+
+		$cacheModel
+			->setUpdatedAt(\diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME))
+			->save();
+
+		return $this;
+	}
+
+	protected function rebuildWorker(CacheModel $cacheModel)
+	{
+		// todo!!!
+		$module = CMS::getModuleClassName($cacheModel->getModuleId());
+		$module = $module::create($this->createCMS(), [
+			'noCache' => true,
+			'bootstrapSettings' => $cacheModel->getBootstrapSettings(),
+		]);
+
+		$this->storeHtml($cacheModel, $module->getResultPage());
+
+		return $this;
+	}
+
+	protected function storeHtml(CacheModel $cacheModel, $content)
+	{
+		$cacheModel->setHtml($content);
+
+		return $this;
+	}
+
+	public function rebuildAll()
+	{
+		/** @var CacheCol $col */
+		$col = \diCollection::create(Types::comment_cache);
+		$col
+			->filterByActive(1);
+		/** @var CacheModel $cache */
+		foreach ($col as $cache)
+		{
+			$this->rebuildHtml($cache);
+		}
 	}
 }

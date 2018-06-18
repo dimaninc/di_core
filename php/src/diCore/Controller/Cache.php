@@ -62,4 +62,27 @@ class Cache extends \diBaseAdminController
 			'done' => true,
 		];
 	}
+
+	public function updateCommentsHtmlForAction()
+	{
+		try {
+			$CC = Comment::basicCreate();
+			$cacheCommentId = $this->param(0, \diRequest::get('id', 0));
+
+			if ($cacheCommentId) {
+				$CC->rebuildHtml($cacheCommentId);
+			} else {
+				$CC->rebuildAll();
+			}
+		} catch (\Exception $e) {
+			return [
+				'done' => false,
+				'error' => $e->getMessage(),
+			];
+		}
+
+		return [
+			'done' => true,
+		];
+	}
 }
