@@ -381,6 +381,32 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $ar;
 	}
 
+	public function slice($start = 0, $length = null)
+	{
+		$this->load();
+
+		$i = 0;
+		$ar = [];
+
+		/** @var \diModel $model */
+		foreach ($this as $model)
+		{
+			if ($length !== null && count($ar) >= $length)
+			{
+				break;
+			}
+
+			if ($i >= $start)
+			{
+				$ar[] = $model;
+			}
+
+			$i++;
+		}
+
+		return $ar;
+	}
+
 	/**
 	 * Setting current alias for next query settings
 	 * @param $alias
