@@ -36,7 +36,7 @@ class CommentCache extends \diCore\Admin\BasePage
 				],
 				'title' => 'Цель',
 				'value' => function (Model $m) {
-					return Types::getTitle($m->modelType()) . '#' . $m->getId();
+					return Types::getTitle($m->getTargetType()) . '#' . $m->getTargetId();
 				},
 			],
 			'html' => [
@@ -112,9 +112,10 @@ class CommentCache extends \diCore\Admin\BasePage
 			],
 
 			'html' => [
-				'type'		=> 'string',
+				'type'		=> 'text',
 				'title'		=> 'Кеш',
 				'default'	=> '',
+				'flags'     => ['static'],
 			],
 
 			'created_at' => [

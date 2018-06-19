@@ -6,6 +6,7 @@
  * Time: 16:43
  */
 
+use diCore\Data\Types;
 use diCore\Entity\Comment\Model as CommentModel;
 
 class diComments
@@ -35,6 +36,8 @@ class diComments
 	const cacheMode = self::CACHE_DISABLED;
 	const useHtmlCache = false;
 	const createHtmlCacheIfNotExists = true;
+
+	protected $forceHtmlCache = null;
 
 	protected static $cachedTargetTypes = [];
 	protected static $nonCachedTargetTypes = [];
@@ -339,21 +342,21 @@ class diComments
 			}
 		}
 
-		$this->users = \diCollection::create(\diTypes::user)->filterBy('id', array_unique($userIds), true);
-		$this->admins = \diCollection::create(\diTypes::admin)->filterBy('id', array_unique($adminIds), true);
+		$this->users = \diCollection::create(\diTypes::user)->filterById(array_unique($userIds));
+		$this->admins = \diCollection::create(\diTypes::admin)->filterById(array_unique($adminIds));
 
 		return $this->comments;
 	}
 
 	public function getRowsHtml()
 	{
-		if (static::isHtmlCacheUsed())
+		if ($this->isHtmlCacheUsed())
 		{
 			$CC = \diCore\Tool\Cache\Comment::basicCreate([
 				'Manager' => $this,
 			]);
 			$contents = $CC->getCachedHtmlContents($this->getTarget(), [
-				'createIfNotExists' => static::shouldCreateHtmlCacheIfNotExists(),
+				'createIfNotExists' => $this->shouldCreateHtmlCacheIfNotExists(),
 			]);
 
 			if ($contents)
@@ -513,19 +516,51 @@ class diComments
 	/**
 	 * @return int
 	 */
-	public static function getCacheMode()
+	public function getCacheMode()
 	{
 		return static::cacheMode;
 	}
 
-	public static function isHtmlCacheUsed()
+	public function isHtmlCacheException()
 	{
+		return in_array($this->targetType, [
+			Types::admin_task,
+			Types::admin_wiki,
+		]);
+	}
+
+	public function isHtmlCacheUsed()
+	{
+		if (is_bool($this->forceHtmlCache))
+		{
+			return $this->forceHtmlCache;
+		}
+
+		if ($this->isHtmlCacheException())
+		{
+			return false;
+		}
+
 		return static::useHtmlCache;
 	}
 
-	public static function shouldCreateHtmlCacheIfNotExists()
+	public function shouldCreateHtmlCacheIfNotExists()
 	{
 		return static::createHtmlCacheIfNotExists;
+	}
+
+	public function setForceHtmlCacheState($state)
+	{
+		$this->forceHtmlCache = !!$state;
+
+		return $this;
+	}
+
+	public function resetForceHtmlCacheState()
+	{
+		$this->forceHtmlCache = null;
+
+		return $this;
 	}
 
 	public function cacheNeededByTargetType()
@@ -549,7 +584,7 @@ class diComments
 	{
 		$rebuildNow = false;
 
-		switch (static::getCacheMode())
+		switch ($this->getCacheMode())
 		{
 			default:
 			case self::CACHE_DISABLED:
