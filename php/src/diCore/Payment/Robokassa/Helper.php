@@ -9,7 +9,7 @@
 namespace diCore\Payment\Robokassa;
 
 use diCore\Data\Types;
-use diCore\Entity\PaymentDraft\Model;
+use diCore\Entity\PaymentDraft\Model as Draft;
 use diCore\Tool\Logger;
 use diCore\Traits\BasicCreate;
 
@@ -28,7 +28,10 @@ class Helper
 	const securityType = 'MD5';
 	const testMode = false;
 
-	/** @var  Model */
+	const useReceipt = true;
+	const taxSystem = TaxSystem::osn;
+
+	/** @var Draft */
 	private $draft;
 
 	protected $options = [
@@ -73,6 +76,11 @@ class Helper
 		return !!static::testMode;
 	}
 
+	public static function isReceiptUsed()
+	{
+		return static::useReceipt;
+	}
+
 	public static function formatCost($cost)
 	{
 		return sprintf('%.2f', $cost);
@@ -110,12 +118,12 @@ class Helper
 	}
 
 	/**
-	 * @param \diCore\Entity\PaymentDraft\Model $draft
+	 * @param Draft $draft
 	 * @param array $opts
 	 * How to calculate amount: https://partner.robokassa.ru/Help/Doc/f5af7f3b-9c27-41de-b1c3-0aa76445ecd6
 	 * @return string
 	 */
-	public static function getForm(\diCore\Entity\PaymentDraft\Model $draft, $opts = [])
+	public static function getForm(Draft $draft, $opts = [])
 	{
 		$action = static::getUrl();
 
@@ -157,6 +165,11 @@ class Helper
 			$params['IsTest'] = 1;
 		}
 
+		if (static::isReceiptUsed())
+		{
+			$params['Receipt'] = static::getReceipt($draft);
+		}
+
 		$paramsStr = join("\n\t", array_filter(array_map(function($name, $value) {
 			return $value !== null ? \diCore\Payment\Payment::getHiddenInput($name, $value) : '';
 		}, array_keys($params), $params)));
@@ -174,21 +187,46 @@ EOF;
 		return $form;
 	}
 
-	public static function getSignatureForm(\diCore\Entity\PaymentDraft\Model $draft)
+	protected static function getReceipt(Draft $draft)
 	{
-		$source = [
+		$ar = [
+			'sno' => TaxSystem::name(static::taxSystem),
+			'items' => static::getItemsForReceipt($draft),
+		];
+
+		return urlencode(json_encode($ar));
+	}
+
+	protected static function getItemsForReceipt(Draft $draft)
+	{
+		return [
+			/*
+			[
+				'name' => StringHelper::out('Название товара'),
+				'quantity' => 1,
+				'sum' => 1000,
+				'tax' => Vat::name(Vat::none),
+			],
+			*/
+		];
+	}
+
+	public static function getSignatureForm(Draft $draft)
+	{
+		$source = array_filter([
 			static::getMerchantLogin(),
 			static::formatCost($draft->getAmount()),
 			$draft->getId(),
+			static::isReceiptUsed() ? static::getReceipt($draft) : null,
 			static::getPassword1(),
-		];
+		]);
 
 		self::log('getSignatureForm source: ' . join(':', $source));
 
 		return md5(join(':', $source));
 	}
 
-	public static function getSignatureResult(\diCore\Entity\PaymentDraft\Model $draft)
+	public static function getSignatureResult(Draft $draft)
 	{
 		$cost = \diRequest::request('OutSum'); //static::formatCost($draft->getAmount())
 
@@ -203,7 +241,7 @@ EOF;
 		return md5(join(':', $source));
 	}
 
-	public static function getSignatureSuccess(\diCore\Entity\PaymentDraft\Model $draft)
+	public static function getSignatureSuccess(Draft $draft)
 	{
 		$cost = \diRequest::request('OutSum'); //static::formatCost($draft->getAmount())
 
@@ -229,7 +267,7 @@ EOF;
 	}
 
 	/**
-	 * @return Model
+	 * @return Draft
 	 * @throws \Exception
 	 */
 	public function getDraft()
