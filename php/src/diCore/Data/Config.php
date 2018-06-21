@@ -87,7 +87,7 @@ class Config
 		/** @var Config $class */
 		$class = self::getClass();
 
-		return $class::initiating;
+		return Environment::getInitiating() ?: $class::initiating;
 	}
 
 	final public static function getApiQueryPrefix()

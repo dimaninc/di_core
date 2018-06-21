@@ -346,37 +346,10 @@ function highlight_urls($text, $cut_len = 0, $cut_all_words = false, $paramz = a
 	return $text;
 }
 
+/** @deprecated  */
 function divide3dig($s, $divider = ",")
 {
-  $x = mb_strpos($s, ".");
-
-  if ($x === false)
-    $x = mb_strlen($s);
-
-  $s2 = mb_substr($s, $x);
-  $s = mb_substr($s, 0, $x);
-
-  $ss = "";
-  $start = mb_strlen($s) - 3;
-
-  for ($i = 0; $i < ceil(mb_strlen($s) / 3); $i++)
-  {
-    $len = 3;
-
-    if ($start < 0)
-    {
-      $len += $start;
-      $start = 0;
-    }
-
-    $ss = mb_substr($s, $start, $len).$divider.$ss;
-
-    $start -= 3;
-  }
-
-  $ss = mb_substr($ss, 0, mb_strlen($ss) - mb_strlen($divider));
-
-  return $ss.$s2;
+  return StringHelper::divideThousands($s, $divider);
 }
 
 /** @deprecated */

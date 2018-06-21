@@ -417,4 +417,40 @@ class StringHelper
 		else
 			return $returnOnlySuffix ? $s3 : "$x0 $s3";
 	}
+
+	public static function divideThousands($x, $divider = ',', $length = 3)
+	{
+		$x = strval($x);
+
+		$dotPos = mb_strpos($x, '.');
+		if ($dotPos === false)
+		{
+			$dotPos = mb_strlen($x);
+		}
+
+		$fractionPart = mb_substr($x, $dotPos);
+		$x = mb_substr($x, 0, $dotPos);
+
+		$res = '';
+		$start = mb_strlen($x) - $length;
+		$steps = ceil(mb_strlen($x) / $length);
+
+		for ($i = 0; $i < $steps; $i++)
+		{
+			$len = $length;
+
+			if ($start < 0)
+			{
+				$len += $start;
+				$start = 0;
+			}
+
+			$res = mb_substr($x, $start, $len) . $divider . $res;
+			$start -= 3;
+		}
+
+		$res = mb_substr($res, 0, mb_strlen($res) - mb_strlen($divider));
+
+		return $res . $fractionPart;
+	}
 }

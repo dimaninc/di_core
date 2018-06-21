@@ -22,6 +22,8 @@ class diDateTime
 
 	const FORMAT_SQL_DATE_TIME = 'Y-m-d H:i:s';
 	const FORMAT_SIMPLE_DATE_TIME = 'd.m.Y H:i';
+	const FORMAT_SIMPLE_DATE = 'd.m.Y';
+	const FORMAT_SIMPLE_TIME = 'H:i';
 
 	public static $daysInMonth = [
 		false => [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
@@ -121,6 +123,16 @@ class diDateTime
 	public static function simpleFormat($dt = null)
 	{
 		return self::format(self::FORMAT_SIMPLE_DATE_TIME, $dt);
+	}
+
+	public static function simpleDateFormat($dt = null)
+	{
+		return self::format(self::FORMAT_SIMPLE_DATE, $dt);
+	}
+
+	public static function simpleTimeFormat($dt = null)
+	{
+		return self::format(self::FORMAT_SIMPLE_TIME, $dt);
 	}
 
 	public static function format($format, $dt = null)

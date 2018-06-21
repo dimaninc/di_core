@@ -20,6 +20,7 @@ class Environment
 {
 	const mainDomain = null;
 	const useModuleCache = null;
+	const initiating = null;
 
 	private static $class;
 
@@ -52,5 +53,13 @@ class Environment
 		$class = self::getClass();
 
 		return $class::useModuleCache;
+	}
+
+	final public static function getInitiating()
+	{
+		/** @var Environment $class */
+		$class = self::getClass();
+
+		return $class::initiating;
 	}
 }
