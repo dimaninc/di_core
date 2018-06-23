@@ -8,10 +8,11 @@
 
 namespace diCore\Admin\Page;
 
-use diCore\Entity\MailIncut\Model as IncutModel;
-use diCore\Entity\MailIncut\Collection as IncutCollection;
-use diCore\Data\Types;
 use diCore\Admin\Submit;
+use diCore\Data\Types;
+use diCore\Entity\MailIncut\Collection as IncutCollection;
+use diCore\Entity\MailIncut\Model as IncutModel;
+use diCore\Entity\News\Model;
 use diCore\Tool\Mail\Queue;
 
 class News extends \diCore\Admin\BasePage
@@ -69,7 +70,7 @@ class News extends \diCore\Admin\BasePage
 			'#href' => [],
 			'date' => [
 				'title' => 'Дата',
-				'value' => function(\diNewsModel $n) {
+				'value' => function(Model $n) {
 					return \diDateTime::simpleFormat($n->getDate());
 				},
 				'attrs' => [
@@ -113,7 +114,7 @@ class News extends \diCore\Admin\BasePage
 	protected function dispatchNewsletter()
 	{
 		$mq = Queue::basicCreate();
-		/** @var \diNewsModel $m */
+		/** @var Model $m */
 		$m = \diModel::create(Types::news, $this->getSubmit()->getSubmittedModel()->getId());
 
 		if (!\diRequest::post('dispatch', 0) && !\diRequest::post('dispatch_test', 0))
