@@ -457,6 +457,15 @@ class diDynamicRows
 	    }
     }
 
+	  if (!empty($this->info_ar[$this->field]['customTemplateMacros']))
+	  {
+		  foreach ($this->info_ar[$this->field]['customTemplateMacros'] as $key => $callback)
+		  {
+			  $ar1[] = '{' . $key . '}';
+			  $ar2[] = $callback((array)$r);
+		  }
+	  }
+
     $kill_div = $this->static_mode
 		? ""
 	    : "<a class=\"close\" title=\"Удалить\" href=\"#\" onclick=\"return {$this->js_var_name}.remove('{$this->field}',{$id});\"></a>";

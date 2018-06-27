@@ -92,6 +92,14 @@ abstract class BasePage
 	 *      showControlPanel
 	 *      showHeader
 	 *      filters
+				'defaultSorter' => [
+					'sortBy' => 'order_num',
+					'dir' => 'ASC',
+				],
+				'sortByAr' => [
+					'title' => 'By title',
+					'order_num' => 'By order',
+				],
 	 *      formBasePath
 	 */
 	/** @var array */
