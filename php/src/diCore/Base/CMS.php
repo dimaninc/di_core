@@ -1582,6 +1582,25 @@ abstract class CMS
 		return $this->routes;
 	}
 
+	protected function checkRouteStringForLanguageLinks($route, $language)
+	{
+		if ($route == $this->ct($this->defaultPageType))
+		{
+			$route = '';
+		}
+		elseif ($route && substr($route, -1) != '/')
+		{
+			$route .= '/';
+		}
+
+		return $route;
+	}
+
+	protected function getRequestQueryStringForLanguageLinks($language)
+	{
+		return \diRequest::requestQueryString() ? '?' . \diRequest::requestQueryString() : '';
+	}
+
 	/**
 	 * @return \diCurrentCMS
 	 */
@@ -1591,8 +1610,6 @@ abstract class CMS
 
 		if (count(static::$possibleLanguages) > 1)
 		{
-			$q = \diRequest::requestQueryString() ? '?' . \diRequest::requestQueryString() : '';
-
 			$currentModesStr = null;
 
 			$this->getTpl()
@@ -1600,6 +1617,7 @@ abstract class CMS
 
 			foreach (static::$possibleLanguages as $lng)
 			{
+				$q = $this->getRequestQueryStringForLanguageLinks($lng);
 				$isCurrentLanguage = $this->language == $lng;
 
 				$modesStr = $this->getRoutesForLanguageLinks($lng);
@@ -1609,14 +1627,7 @@ abstract class CMS
 					$modesStr = join("/", $modesStr);
 				}
 
-				if ($modesStr == $this->ct($this->defaultPageType))
-				{
-					$modesStr = '';
-				}
-				elseif ($modesStr && substr($modesStr, -1) != '/')
-				{
-					$modesStr .= '/';
-				}
+				$modesStr = $this->checkRouteStringForLanguageLinks($modesStr, $lng);
 
 				$lngUp = strtoupper($lng);
 
