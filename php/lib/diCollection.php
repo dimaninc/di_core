@@ -407,6 +407,11 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $ar;
 	}
 
+	public function asArray()
+	{
+		return $this->slice();
+	}
+
 	/**
 	 * Setting current alias for next query settings
 	 * @param $alias
