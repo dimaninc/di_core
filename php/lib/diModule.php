@@ -18,6 +18,8 @@ abstract class diModule
 	protected $renderOptions = [];
 	protected $bootstrapSettings = [];
 
+	const NO_CACHE_OPTION = 'noCache';
+
 	public function __construct(CMS $Z)
 	{
 		$this->Z = $Z;
@@ -102,14 +104,17 @@ abstract class diModule
 		{
 			$bootstrapSettings = $this->getCurrentBootstrapSettings();
 
-			$MC = \diCore\Tool\Cache\Module::basicCreate();
-			$contents = $MC->getCachedContents($this, [
-				'language' => $this->getZ()->getLanguage(),
-				'query_string' => \diRequest::requestQueryString(),
-				'bootstrap_settings' => $bootstrapSettings,
-			]);
+			if (empty($bootstrapSettings[self::NO_CACHE_OPTION]))
+			{
+				$MC = \diCore\Tool\Cache\Module::basicCreate();
+				$contents = $MC->getCachedContents($this, [
+					'language' => $this->getZ()->getLanguage(),
+					'query_string' => \diRequest::requestQueryString(),
+					'bootstrap_settings' => $bootstrapSettings,
+				]);
+			}
 
-			if ($contents)
+			if (!empty($contents))
 			{
 				$this
 					->setBootstrapSettings($bootstrapSettings)
