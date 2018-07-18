@@ -1517,6 +1517,9 @@ table.dinicetable tr td .anchor {
   position: absolute;
   top: 0;
 }
+table.dinicetable tr td .thin {
+  font-weight: normal;
+}
 table.dinicetable tr td .lite {
   font-weight: normal;
   font-size: 11px;
