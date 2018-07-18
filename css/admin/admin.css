@@ -1517,14 +1517,14 @@ table.dinicetable tr td .anchor {
   position: absolute;
   top: 0;
 }
-table.dinicetable tr td .thin {
+table.dinicetable tr td.regular {
   font-weight: normal;
 }
-table.dinicetable tr td .lite {
+table.dinicetable tr td.lite {
   font-weight: normal;
   font-size: 11px;
 }
-table.dinicetable tr td .dt {
+table.dinicetable tr td.dt {
   font-weight: normal;
   font-size: 11px;
   text-align: center;
