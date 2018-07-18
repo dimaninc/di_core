@@ -43,6 +43,7 @@
 */
 
 use diCore\Admin\BasePage;
+use diCore\Helper\ArrayHelper;
 
 class diAdminFilters
 {
@@ -104,6 +105,7 @@ class diAdminFilters
 	public $inputs_ar = [];
 	public $input_params_ar = [];
 	public $andor = "and";
+	public $static_mode = false;
 	public $static_inputs_ar = [];
 	public $values_ar = [];
 	public $possible_sortby_ar = false;
@@ -342,7 +344,7 @@ EOF;
 			"default_value" => $default_value,
 			"default_value2" => $default_value2,
 			"strict" => false,
-			"value" => false,
+			"value" => null,
 			"not" => false,
 			'queryPrefix' => '',
 			'querySuffix' => '',
@@ -679,6 +681,7 @@ EOF;
 		if (isset($this->ar[$field]))
 		{
 			$ar = $this->ar[$field];
+			$fieldName = 'admin_filter[' . $field . ']';
 
 			switch ($ar["type"])
 			{
@@ -700,7 +703,19 @@ EOF;
 							$size = 35;
 					}
 
-					$input = "<input id='admin_filter[$field]' name='$field' value=\"{$ar["value"]}\" size='$size'>";
+					if (isset($ar['feed']))
+					{
+						$input = \diSelect::fastCreate($fieldName, $ar['value'], $ar['feed']);
+					}
+					else
+					{
+						$input = sprintf('<input %s>', ArrayHelper::toAttributesString([
+							'id' => $fieldName,
+							'name' => $field,
+							'value' => $ar['value'],
+							'size' => $size,
+						]));
+					}
 
 					if (true)
 					{
@@ -1005,7 +1020,7 @@ EOF;
 
 	public function setCheckboxFromArrayInput($field, $ar, $columns = 1)
 	{
-		$ar2 = array();
+		$ar2 = [];
 
 		foreach ($ar as $k => $v)
 		{
