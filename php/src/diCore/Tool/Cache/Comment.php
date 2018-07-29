@@ -127,7 +127,9 @@ class Comment
 			throw new \Exception("Module #{$id} doesn't exist");
 		}
 
-		$this->rebuildWorker($cacheModel);
+		$this
+			->setManager(\diComments::create($cacheModel->getTargetType(), $cacheModel->getTargetId()))
+			->rebuildWorker($cacheModel);
 
 		$cacheModel
 			->setUpdatedAt(\diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME))
