@@ -97,6 +97,8 @@ class Cache extends \diBaseAdminController
 			/** @var CacheCol $col */
 			$col = \diCollection::create(Types::comment_cache);
 			$col
+				->selectTargetType()
+				->selectTargetId()
 				->filterByActive(1)
 				->filterByHtml('', '!=');
 			/** @var CacheModel $cacheModel */
