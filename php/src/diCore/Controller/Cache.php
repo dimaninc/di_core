@@ -8,6 +8,9 @@
 
 namespace diCore\Controller;
 
+use diCore\Data\Types;
+use diCore\Entity\CommentCache\Model as CacheModel;
+use diCore\Entity\CommentCache\Collection as CacheCol;
 use diCore\Tool\Cache\Comment;
 use diCore\Tool\Cache\Module;
 
@@ -73,6 +76,33 @@ class Cache extends \diBaseAdminController
 				$CC->rebuildHtml($cacheCommentId);
 			} else {
 				$CC->rebuildAll();
+			}
+		} catch (\Exception $e) {
+			return [
+				'done' => false,
+				'error' => $e->getMessage(),
+			];
+		}
+
+		return [
+			'done' => true,
+		];
+	}
+
+	public function updateCommentCollectionsAction()
+	{
+		try {
+			$CC = Comment::basicCreate();
+
+			/** @var CacheCol $col */
+			$col = \diCollection::create(Types::comment_cache);
+			$col
+				->filterByActive(1)
+				->filterByHtml('', '!=');
+			/** @var CacheModel $cacheModel */
+			foreach ($col as $cacheModel)
+			{
+				$CC->rebuildByTarget($cacheModel->getTargetType(), $cacheModel->getTargetId());
 			}
 		} catch (\Exception $e) {
 			return [

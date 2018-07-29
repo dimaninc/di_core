@@ -88,8 +88,10 @@ class Comment
 
 	public function rebuildByTarget($targetType, $targetId = null, \diComments $Comments = null)
 	{
+		$Manager = $Comments ?: $this->getManager() ?: \diComments::create($targetType, $targetId);
+
 		/** @var Collection $comments */
-		$comments = $this->createCollectionByTarget($targetType, $targetId, $Comments ?: $this->getManager());
+		$comments = $this->createCollectionByTarget($targetType, $targetId, $Manager);
 
 		/** @var \diCore\Entity\User\Collection $users */
 		$users = \diCollection::create(Types::user, $comments->map('user_id'));
