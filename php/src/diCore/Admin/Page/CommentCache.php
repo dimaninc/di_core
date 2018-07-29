@@ -8,6 +8,7 @@
 namespace diCore\Admin\Page;
 
 use diCore\Entity\CommentCache\Model;
+use diCore\Helper\ArrayHelper;
 
 class CommentCache extends \diCore\Admin\BasePage
 {
@@ -23,6 +24,33 @@ class CommentCache extends \diCore\Admin\BasePage
 	protected function initTable()
 	{
 		$this->setTable('comment_cache');
+	}
+
+	protected function setupFilters()
+	{
+		$this->getFilters()
+			->addFilter([
+				'field' => 'target_type',
+				'type' => 'int',
+				'title' => 'Тип объекта',
+			])
+			->addFilter([
+				'field' => 'target_id',
+				'type' => 'int',
+				'title' => 'ID объекта',
+			])
+			->buildQuery()
+			->setSelectFromArrayInput('target_type', $this->getUsedTargetTypesTitles(), [0 => 'Все типы']);
+	}
+
+	protected function getUsedTargetTypes()
+	{
+		return array_keys(\diTypes::titles());
+	}
+
+	protected function getUsedTargetTypesTitles()
+	{
+		return ArrayHelper::filterByKey(\diTypes::titles(), $this->getUsedTargetTypes());
 	}
 
 	public function renderList()

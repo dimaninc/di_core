@@ -76,6 +76,8 @@ class Model extends \diModel
 
 	const CONTENT_CUT_LENGTH = 100;
 
+	const UPDATE_COLLECTION_CACHE_ON_UPDATE = false;
+
 	protected static $userExcludeFields = [
 		'password',
 		'activation_key',
@@ -178,14 +180,22 @@ class Model extends \diModel
 				->save();
 		}
 
+		if ($this->hasVisible())
+		{
+			$this->afterToggleVisible();
+		}
+
 		return $this;
 	}
 
 	public function afterToggleVisible()
 	{
-		$Comments = \diComments::create($this->getTargetType(), $this->getTargetId());
-		$Comments
-			->updateCache(true);
+		if (static::UPDATE_COLLECTION_CACHE_ON_UPDATE)
+		{
+			$Comments = \diComments::create($this->getTargetType(), $this->getTargetId());
+			$Comments
+				->updateCache(true);
+		}
 	}
 
 	/**
