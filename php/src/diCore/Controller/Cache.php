@@ -99,8 +99,7 @@ class Cache extends \diBaseAdminController
 			$col
 				->selectTargetType()
 				->selectTargetId()
-				->filterByActive(1)
-				->filterByHtml('', '!=');
+				->filterByActive(1);
 			/** @var CacheModel $cacheModel */
 			foreach ($col as $cacheModel)
 			{
