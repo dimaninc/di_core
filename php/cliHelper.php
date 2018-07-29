@@ -35,4 +35,9 @@ if (empty($_SERVER['DOCUMENT_ROOT']))
 require dirname(__FILE__) . '/functions.php';
 require \diCore\Data\Config::getConfigurationFolder() . '_cfg/common.php';
 
+if (empty($_SERVER['SERVER_PORT']))
+{
+	$_SERVER['SERVER_PORT'] = \diCore\Data\Config::getMainPort();
+}
+
 $_GET = \diRequest::convertFromCommandLine();

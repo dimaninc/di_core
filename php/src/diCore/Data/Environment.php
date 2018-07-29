@@ -19,6 +19,7 @@ namespace diCore\Data;
 class Environment
 {
 	const mainDomain = null;
+	const mainPort = null;
 	const useModuleCache = null;
 	const initiating = null;
 
@@ -45,6 +46,14 @@ class Environment
 		$class = self::getClass();
 
 		return $class::mainDomain;
+	}
+
+	final public static function getMainPort()
+	{
+		/** @var Environment $class */
+		$class = self::getClass();
+
+		return $class::mainPort;
 	}
 
 	final public static function getUseModuleCache()

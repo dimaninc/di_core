@@ -23,6 +23,7 @@ class Config
 	const folderForAssets = '';
 	const folderForUserAssets = 'uploads/';
 	const mainDomain = null;
+	const mainPort = 80;
 	const mainLanguage = 'ru'; // used to determine localization field names
 	const useCoreTwig = true; // if false, twig should be installed via composer
 	const searchEngine = 'db';
@@ -104,6 +105,14 @@ class Config
 		$class = self::getClass();
 
 		return Environment::getMainDomain() ?: $class::mainDomain;
+	}
+
+	final public static function getMainPort()
+	{
+		/** @var Config $class */
+		$class = self::getClass();
+
+		return Environment::getMainPort() ?: $class::mainPort;
 	}
 
 	final public static function getMainLanguage()
