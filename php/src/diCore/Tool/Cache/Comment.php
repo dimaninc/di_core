@@ -94,7 +94,9 @@ class Comment
 		$comments = $this->createCollectionByTarget($targetType, $targetId, $Manager);
 
 		/** @var \diCore\Entity\User\Collection $users */
-		$users = \diCollection::create(Types::user, $comments->map('user_id'));
+		$users = \diCollection::create(Types::user);
+		$users
+			->filterById($comments->map('user_id'));
 
 		/** @var Model $comment */
 		foreach ($comments as $comment)
