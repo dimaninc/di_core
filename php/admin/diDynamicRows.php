@@ -1198,8 +1198,10 @@ EOF;
 	{
 		global $dynamic_pics_folder;
 
-		if (!$path)
-			$path = '/' . $dynamic_pics_folder . "$this->table/";
+		if ($path === false)
+		{
+			$path = '/' . $this->getPicsFolder();
+		}
 
 		$v = isset($this->data[$field]) ? $this->data[$field] : "";
 
