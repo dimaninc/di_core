@@ -1399,7 +1399,10 @@ EOF;
 
 		// it's killing time!
 		$filesToKill = [];
-		$pics_folder = $dynamic_pics_folder . "$this->table/";
+		$m = \diModel::createForTableNoStrict($this->data_table);
+		$pics_folder = $m->modelType()
+			? $m->getPicsFolder()
+			: $dynamic_pics_folder . "$this->table/";
 
 		$kill_rs = $this->getDb()->rs($this->data_table, "WHERE $this->subquery and id not in ('" . join("','", $ids_ar) . "')") or $this->getDb()->dierror();
 		while ($kill_r = $this->getDb()->fetch($kill_rs))
