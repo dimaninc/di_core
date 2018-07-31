@@ -135,7 +135,7 @@ class Feedback extends \diBaseController
 			: Queue::basicCreate()->add($from, $to, $subj, $body);
 	}
 
-	private function sendEmailNotification()
+	protected function sendEmailNotification()
 	{
 		foreach ($this->getRecipients() as $recipient)
 		{
