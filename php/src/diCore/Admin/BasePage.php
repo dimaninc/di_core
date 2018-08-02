@@ -146,27 +146,31 @@ abstract class BasePage
 		$beforeM = Base::getClassMethodName($o->getMethod(), 'before');
 		$afterM = Base::getClassMethodName($o->getMethod(), 'after');
 
-		if (!method_exists($o, $m))
-		{
-			throw new \Exception("Class " . get_class($o) . " doesn't have '$m' method");
-		}
+		try {
+			if (!method_exists($o, $m))
+			{
+				throw new \Exception("Class " . get_class($o) . " doesn't have '$m' method");
+			}
 
-		if (!method_exists($o, $beforeM))
-		{
-			throw new \Exception("Class " . get_class($o) . " doesn't have '$beforeM' method");
-		}
+			if (!method_exists($o, $beforeM))
+			{
+				throw new \Exception("Class " . get_class($o) . " doesn't have '$beforeM' method");
+			}
 
-		if (!method_exists($o, $afterM))
-		{
-			throw new \Exception("Class " . get_class($o) . " doesn't have '$afterM' method");
-		}
+			if (!method_exists($o, $afterM))
+			{
+				throw new \Exception("Class " . get_class($o) . " doesn't have '$afterM' method");
+			}
 
-		if ($o->$beforeM())
-		{
-			$o->$m();
-		}
+			if ($o->$beforeM())
+			{
+				$o->$m();
+			}
 
-		$o->$afterM();
+			$o->$afterM();
+		} catch (\Exception $e) {
+			die($e->getMessage());
+		}
 
 		if ($o->hasRenderCallback())
 		{
