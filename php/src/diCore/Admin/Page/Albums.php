@@ -8,6 +8,7 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Admin\Reference\PhotosOfAlbum;
 use diCore\Admin\Submit;
 use diCore\Entity\Album\Model;
 use diCore\Data\Types;
@@ -38,21 +39,18 @@ class Albums extends \diCore\Admin\BasePage
 				],
 			],
 			'photos_count' => [
-				'title' => 'Фото',
 				'bodyAttrs' => [
 					'class' => 'dt',
 				],
 			],
 			'videos_count' => [
-				'title' => 'Видео',
 				'bodyAttrs' => [
 					'class' => 'dt',
 				],
 			],
 			'date' => [
-				'title' => 'Дата',
 				'value' => function(Model $m) {
-					return \diDateTime::format('d.m.Y H:i', $m->getDate());
+					return \diDateTime::simpleFormat($m->getDate());
 				},
 				'attrs' => [],
 				'headAttrs' => [
@@ -129,102 +127,154 @@ class Albums extends \diCore\Admin\BasePage
 
 	public function getFormTabs()
 	{
-		return [];
+		return [
+            'photos' => $this->localized([
+                'en' => 'Photos',
+                'ru' => 'Фотографии',
+            ]),
+        ];
 	}
 
 	public function getFormFields()
 	{
+        /** @var PhotosOfAlbum $photosOfAlbum */
+        $photosOfAlbum = PhotosOfAlbum::basicCreate();
+
 		return [
 			'token' => [
 				'type' => 'string',
-				'title' => 'Токен',
+				'title' => $this->localized([
+                    'en' => 'Token',
+                    'ru' => 'Токен',
+                ]),
 				'default' => '',
 				'flags' => ['static', 'virtual'],
 			],
 
 			'title' => [
 				'type' => 'string',
-				'title' => 'Название',
+				'title' => $this->localized([
+                    'en' => 'Title',
+                    'ru' => 'Название',
+                ]),
 				'default' => '',
 			],
 
 			'content' => [
 				'type' => 'wysiwyg',
-				'title' => 'Описание',
+				'title' => $this->localized([
+                    'en' => 'Description',
+                    'ru' => 'Описание',
+                ]),
 				'default' => '',
 			],
 
 			'slug_source' => [
 				'type' => 'string',
-				'title' => 'Название для URL',
+				'title' => $this->localized([
+                    'en' => 'Slug source',
+                    'ru' => 'Название для URL',
+                ]),
 				'default' => '',
 			],
 
 			'cover_photo_id' => [
 				'type' => 'int',
-				'title' => 'Заглавное фото',
+				'title' => $this->localized([
+                    'en' => 'Cover photo',
+                    'ru' => 'Заглавное фото',
+                ]),
 				'default' => 0,
 			],
 
 			'pic' => [
 				'type' => 'pic',
-				'title' => 'Обложка',
+				'title' => $this->localized([
+                    'en' => 'Cover',
+                    'ru' => 'Обложка',
+                ]),
 				'default' => '',
 			],
 
 			'force_pic' => [
 				'type' => 'checkbox',
-				'title' => 'Сгенерировать обложку заново',
+				'title' => $this->localized([
+                    'en' => 'Force recreate cover',
+                    'ru' => 'Сгенерировать обложку заново',
+                ]),
 				'default' => '',
 				'flags' => ['virtual'],
 			],
 
 			'visible' => [
 				'type' => 'checkbox',
-				'title' => 'Отображать на сайте',
+				'title' => $this->localized([
+                    'en' => 'Visible',
+                    'ru' => 'Отображать на сайте',
+                ]),
 				'default' => 1,
 			],
 
 			'date' => [
 				'type' => 'datetime_str',
-				'title' => 'Дата создания',
+				'title' => $this->localized([
+                    'en' => 'Created at',
+                    'ru' => 'Дата создания',
+                ]),
 				'default' => '',
 				'flags' => ['static'],
 			],
 
 			'photos_count' => [
 				'type' => 'int',
-				'title' => 'Кол-во фото',
+				'title' => $this->localized([
+                    'en' => 'Photos count',
+                    'ru' => 'Кол-во фото',
+                ]),
 				'default' => 0,
 				'flags' => ['static'],
 			],
 
 			'videos_count' => [
 				'type' => 'int',
-				'title' => 'Кол-во видео',
+				'title' => $this->localized([
+                    'en' => 'Videos count',
+                    'ru' => 'Кол-во видео',
+                ]),
 				'default' => 0,
 				'flags' => ['static'],
 			],
 
 			'comments_enabled' => [
 				'type' => 'checkbox',
-				'title' => 'Разрешено комментировать',
+				'title' => $this->localized([
+                    'en' => 'Comments enabled',
+                    'ru' => 'Разрешено комментировать',
+                ]),
 				'default' => 1,
 			],
 
 			'comments_count' => [
 				'type' => 'int',
-				'title' => 'Кол-во комментариев',
+				'title' => $this->localized([
+                    'en' => 'Comments count',
+                    'ru' => 'Кол-во комментариев',
+                ]),
 				'default' => 0,
 				'flags' => ['static'],
 			],
 
 			'comments_last_date' => [
 				'type' => 'datetime_str',
-				'title' => 'Дата последнего комментария',
+				'title' => $this->localized([
+                    'en' => 'Last comment date',
+                    'ru' => 'Дата последнего комментария',
+                ]),
 				'default' => '',
 				'flags' => ['static'],
 			],
+
+            'photos' => $photosOfAlbum::getFormFieldArray(),
 		];
 	}
 
@@ -266,6 +316,9 @@ class Albums extends \diCore\Admin\BasePage
 
 	public function getModuleCaption()
 	{
-		return 'Альбомы';
+		return [
+            'en' => 'Albums',
+            'ru' => 'Альбомы',
+        ];
 	}
 }

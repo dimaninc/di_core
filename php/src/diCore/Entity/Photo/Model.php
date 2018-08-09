@@ -8,7 +8,9 @@
 
 namespace diCore\Entity\Photo;
 
+use diCore\Admin\Submit;
 use diCore\Data\Types;
+use diCore\Helper\FileSystemHelper;
 
 /**
  * Class Model
@@ -78,6 +80,20 @@ class Model extends \diModel
 		null,
 	];
 
+    public static function getPicOptions()
+    {
+        return [
+            [
+                'type' => Submit::IMAGE_TYPE_MAIN,
+                'resize' => \diImage::DI_THUMB_FIT,
+            ],
+            [
+                'type' => Submit::IMAGE_TYPE_PREVIEW,
+                'resize' => \diImage::DI_THUMB_FIT,
+            ],
+        ];
+    }
+
 	public function getToken($alignment = null)
 	{
 		$token = $this->getId()
@@ -129,4 +145,14 @@ class Model extends \diModel
 
 		return $ar;
 	}
+
+    public function getPicSubFolders()
+    {
+        return '';
+    }
+
+    public function getPicsFolder()
+    {
+        return parent::getPicsFolder() . $this->getPicSubFolders();
+    }
 }
