@@ -694,6 +694,8 @@ var diComments = function(_opts)
 			visibility: state ? 'visible' : 'hidden'
 		});
 
+		self.e.$form.toggleClass('comment-progress', !!state);
+
 		$('button[type="submit"]', self.e.$form).prop('disabled', !!state);
 	}
 
