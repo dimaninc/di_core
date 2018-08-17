@@ -7,6 +7,18 @@ var diDynamicRows = function(opts) {
 		$dropAreas,
 		droppedFiles;
 
+    var local = {
+        ru: {
+            passwords_not_match: 'Введенные пароли не совпадают',
+            submit_multiple_upload: 'Загрузить выбранные фотографии на сервер'
+        },
+
+        en: {
+            passwords_not_match: 'Entered passwords not match',
+            submit_multiple_upload: 'Upload selected pics to server'
+        }
+    };
+
 	opts = opts || {};
 
 	this.counters = {};
@@ -20,6 +32,7 @@ var diDynamicRows = function(opts) {
 			sign: 1,
 			counter: 0,
 			sortable: false,
+            language: 'ru',
 			afterInit: function(DynamicRows) {},
 			afterAddRow: function(DynamicRows, $row, id) {},
 			afterDelRow: function(DynamicRows, id) {}
@@ -30,13 +43,19 @@ var diDynamicRows = function(opts) {
 		}
 	}
 
+    this.L = function(name) {
+        return typeof local[opts.language][name] != 'undefined'
+            ? local[opts.language][name]
+            : name;
+    };
+
 	function setupEvents() {
 		var validatePassword = function() {
 			var $password = $(this).parent().find('input[type="password"]:not(.password-confirm)'),
 				$password2 = $(this).parent().find('input[type="password"].password-confirm');
 
 			$password2.get(0).setCustomValidity($password.val() != $password2.val()
-				? 'Введенные пароли не совпадают'
+				? self.L('passwords_not_match')
 				: ''
 			);
 		};
@@ -58,7 +77,7 @@ var diDynamicRows = function(opts) {
 				.insertAfter($this);
 			var $submitArea = $('<div/>')
 				.hide()
-				.html('<button type="submit">Загрузить выбранные фотографии на сервер</button>')
+				.html('<button type="submit">{0}</button>'.format(self.L('submit_multiple_upload')))
 				.addClass('admin-form-uploading-area-submit')
 				.insertAfter($previewArea);
 			var $inp = $('<input/>').attr({
@@ -231,7 +250,7 @@ var diDynamicRows = function(opts) {
 	{
 		if (!this.is_field_inited(field))
 		{
-			console.log('diDynamicRows: field {0} not inited'.format(field));
+			console.log('diDynamicRows: field {0} not initialized'.format(field));
 
 			return false;
 		}

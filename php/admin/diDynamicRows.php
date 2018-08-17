@@ -21,9 +21,9 @@
         * birthday
 */
 
+use diCore\Admin\Submit;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\FileSystemHelper;
-use diCore\Admin\Submit;
 
 class diDynamicRows
 {
@@ -45,6 +45,8 @@ class diDynamicRows
 	const MULTIPLE_UPLOAD_FIELD_NAME = '__new_files';
 	const MULTIPLE_UPLOAD_FIRST_ID = -10000;
 	private $defaultMultiplePicField = null;
+
+    const NEW_ID_STRING = '%NEWID%';
 
   public $table, $id, $field;
   public $static_mode;
@@ -291,7 +293,7 @@ class diDynamicRows
         $last_ref_idx = $x;
     }
 
-	  $jsOpts = "field: '$this->field', fieldTitle: 'запись', sign: 1, counter: $last_ref_idx";
+	  $jsOpts = "field: '$this->field', fieldTitle: 'запись', sign: 1, counter: $last_ref_idx, language: '{$this->language}'";
 
 	  foreach ($eventNames as $eventName)
 	  {
@@ -307,7 +309,7 @@ class diDynamicRows
 	  }
 
     $s .= "<div id=\"{$this->field}_anchor_div\"></div>";
-    $s .= "<div id=\"js_{$this->field}_resource\" style=\"display:none;\">".$this->get_row("%NEWID%")."</div>";
+    $s .= "<div id=\"js_{$this->field}_resource\" style=\"display:none;\">".$this->get_row(self::NEW_ID_STRING)."</div>";
     $s .= "<div id=\"js_{$this->field}_js_resource\" style=\"display:none;\">".join("\n", $this->scripts)."</div>";
 
     $s .= '<script type="text/javascript">var ' . $this->js_var_name . ' = new diDynamicRows({' . $jsOpts . '});</script>';
@@ -1477,6 +1479,13 @@ EOF;
 
 			foreach ($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['name'] as $idx => $name)
 			{
+                $id--;
+
+                if (!$name)
+                {
+                    continue;
+                }
+
 				if (
 					!empty($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['error'][$idx]) &&
 					$_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['error'][$idx] != 4
@@ -1593,7 +1602,7 @@ EOF;
 					\diCore\Tool\Logger::getInstance()->variable('exception', $e->getMessage());
 				}
 
-				$id--;
+				//$id--;
 			}
 		}
 
@@ -1746,18 +1755,19 @@ EOF;
 	{
 		global $tn_folder;
 
+        $multiUploadMode = $this->isMultipleUploadRecord($id);
 		$pics_folder = '/' . $this->getPicsFolder();
 
 		//$pics_folder = $dynamic_pics_folder."$this->table/";
 		create_folders_chain($this->abs_path, $pics_folder . $tn_folder, 0775);
 
-		$ff = $this->isMultipleUploadRecord($id)
+		$ff = $multiUploadMode
 			? self::MULTIPLE_UPLOAD_FIELD_NAME
 			: "{$this->field}_$field";
 
-		if ($this->isMultipleUploadRecord($id))
+		if ($multiUploadMode)
 		{
-			$id = self::MULTIPLE_UPLOAD_FIRST_ID - $id;
+			$id = self::MULTIPLE_UPLOAD_FIRST_ID - $id - 1;
 		}
 
 		if (isset($_FILES[$ff]["name"][$id]) && !$_FILES[$ff]["error"][$id])
