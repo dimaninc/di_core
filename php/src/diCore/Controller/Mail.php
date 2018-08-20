@@ -15,7 +15,7 @@ use diCore\Tool\Mail\Queue;
 
 class Mail extends \diBaseAdminController
 {
-	private $sendPerAttempt = 1000;
+	protected $sendPerAttempt = 1000;
 
 	public function sendAllAction()
 	{
