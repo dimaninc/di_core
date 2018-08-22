@@ -33,6 +33,28 @@ class diAdminList
 	/** @var array */
 	private $options;
 
+    protected static $language = 'ru';
+
+    public static $lngStrings = [
+        'en' => [
+            'choose_action' => 'Choose action with selected rows',
+            'copy' => 'Copy',
+            'move' => 'Move',
+            'delete' => 'Delete',
+            'toggle_all' => 'Select/deselect all',
+            'notes_about_children' => 'Warning: if selected row has subrows, all actions will be applied to them as well',
+        ],
+
+        'ru' => [
+            'choose_action' => 'Операции с выделенными строками',
+            'copy' => 'Копировать',
+            'move' => 'Переместить',
+            'delete' => 'Удалить',
+            'toggle_all' => 'Выделить/снять все',
+            'notes_about_children' => 'Внимание, если у выделенной строки имеются подразделы, то все действия автоматически будут примененыи и для них',
+        ],
+    ];
+
 	public function __construct(BasePage $AdminPage, $options = [])
 	{
 		$this->AdminPage = $AdminPage;
@@ -60,7 +82,18 @@ class diAdminList
 		{
 			$this->T->setFormPathBase($this->options['formBasePath']);
 		}
+
+        self::$language = $AdminPage->getLanguage();
 	}
+
+    public static function L($token, $language = null)
+    {
+        $language = $language ?: self::$language;
+
+        return isset(self::$lngStrings[$language][$token])
+            ? self::$lngStrings[$language][$token]
+            : $token;
+    }
 
 	protected function getAdminPage()
 	{
@@ -445,17 +478,13 @@ class diAdminList
 	{
 		$this->getAdminPage()->getTpl()
 			->assign([
-				'LIST_CONTROL_PANEL' => '',
+				'LIST_CONTROL_PANEL' => $this->getOption('showControlPanel')
+                    ? $this->getAdminPage()->getTwig()->parse('admin/_index/list/control_panel', [
+                        'table' => $this->getAdminPage()->getTable(),
+                        'List' => $this,
+                    ])
+                    : '',
 			]);
-
-		if ($this->getOption('showControlPanel'))
-		{
-			$this->getAdminPage()->getTpl()
-				->assign([
-					'TABLE' => $this->getAdminPage()->getTable(),
-				])
-				->process('list_control_panel');
-		}
 
 		$html = '';
 

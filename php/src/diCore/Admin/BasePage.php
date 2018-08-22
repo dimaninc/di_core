@@ -809,9 +809,6 @@ abstract class BasePage
 		}
 
 		$this->getTpl()
-			->define("`_default/list", [
-				"list_control_panel",
-			])
 			->assign([
 				"FILTERS" => "",
 				"NAVY" => "",
