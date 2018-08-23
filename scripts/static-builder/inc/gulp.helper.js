@@ -5,19 +5,55 @@ var Helper,
 Helper = {
   workFolder: './',
   htDocsFolder: 'htdocs',
-  setHtDocsFolder: function(folder) {
-    this.htDocsFolder = folder;
+  coreLocation: 'beyond',
+  coreFolders: {
+    beyond: '../vendor/dimaninc/di_core/',
+    inner: '../_core/'
+  },
+  masks: {
+    stylus: '**/*.styl',
+    less: '**/*.less',
+    sprite: 'images/sprite-src/**/*.png',
+    coffee: '**/**/*.coffee',
+    react: '**/**/*.jsx'
+  },
+  folders: {
+    stylus: 'css/admin/stylus/'
+  },
+  copyGroups: {},
+  setHtDocsFolder: function(htDocsFolder) {
+    this.htDocsFolder = htDocsFolder;
     return this;
   },
   getHtDocsFolder: function() {
     return this.htDocsFolder;
+  },
+  setCoreLocation: function(coreLocation) {
+    this.coreLocation = coreLocation;
+    return this;
+  },
+  getCoreLocation: function() {
+    return this.coreLocation;
+  },
+  getCoreFolder: function() {
+    return this.coreFolders[this.coreLocation];
+  },
+  setWorkFolder: function(workFolder) {
+    this.workFolder = workFolder;
+    return this;
+  },
+  getRootFolder: function() {
+    return './';
+  },
+  getVersionFile: function() {
+    return '../_cfg/lib/diStaticBuild.php';
   },
   extend: function() {
     var i, j, key, ref;
     for (i = j = 1, ref = arguments.length; 1 <= ref ? j <= ref : j >= ref; i = 1 <= ref ? ++j : --j) {
       for (key in arguments[i]) {
         if (arguments[i].hasOwnProperty(key)) {
-          if (typeof arguments[0][key] === 'object' && typeof arguments[i][key] === 'object') {
+          if (typeof (arguments[0][key] != null) === 'object' && typeof (arguments[i][key] != null) === 'object') {
             this.extend(arguments[0][key], arguments[i][key]);
           } else {
             arguments[0][key] = arguments[i][key];
@@ -27,21 +63,18 @@ Helper = {
     }
     return arguments[0];
   },
-  setWorkFolder: function(workFolder) {
-    this.workFolder = workFolder;
-    return this;
-  },
   req: function(module) {
     return require(this.workFolder + '/node_modules/' + module);
   },
-  getRootFolder: function() {
-    return './';
-  },
-  getVersionFile: function() {
-    return '../_cfg/lib/diStaticBuild.php';
-  },
   fullPath: function(path) {
-    var neg;
+    var k, neg, v;
+    if (typeof path === 'object') {
+      for (k in path) {
+        v = path[k];
+        path[k] = this.fullPath(v);
+      }
+      return path;
+    }
     neg = '';
     if (path.substr(0, 1) === '!') {
       neg = '!';
@@ -112,18 +145,18 @@ Helper = {
     });
     tasksTotal = folders.length;
     tasksDone = 0;
-    fn = function(folder) {
-      return mkdirp(folder, {
-        mode: 0x1ff
-      }, function(err) {
-        if (err) {
-          console.error(err);
-        } else {
-          console.log(folder, 'created');
-        }
-        return Helper.tryDone(++tasksDone, tasksTotal, done);
-      });
-    };
+    fn = (function(_this) {
+      return function(folder) {
+        return mkdirp(folder, 0x1ff, function(err) {
+          if (err) {
+            console.error(err);
+          } else {
+            console.log(folder, 'created');
+          }
+          return _this.tryDone(++tasksDone, tasksTotal, done);
+        });
+      };
+    })(this);
     for (j = 0, len = folders.length; j < len; j++) {
       folder = folders[j];
       fn(folder);
@@ -139,16 +172,22 @@ Helper = {
     return this;
   },
   assignBasicTasksToGulp: function(gulp) {
-    gulp.task('version', function(done) {
-      Helper.writeVersionFile();
-      return done();
-    });
-    gulp.task('create-folders', function(done) {
-      return Helper.createFolders(done);
-    });
-    gulp.task('copy-core-assets', function(done) {
-      return Helper.copyCoreAssets(gulp, done);
-    });
+    gulp.task('version', (function(_this) {
+      return function(done) {
+        _this.writeVersionFile();
+        return done();
+      };
+    })(this));
+    gulp.task('create-folders', (function(_this) {
+      return function(done) {
+        return _this.createFolders(done);
+      };
+    })(this));
+    gulp.task('copy-core-assets', (function(_this) {
+      return function(done) {
+        return _this.copyCoreAssets(gulp, done);
+      };
+    })(this));
     gulp.task('init', gulp.series('create-folders', 'copy-core-assets'));
     return this;
   },
@@ -271,6 +310,33 @@ Helper = {
     })(this));
     return this;
   },
+  assignCssMinTaskToGulp: function(gulp, opts) {
+    var csso, rename;
+    if (opts == null) {
+      opts = {};
+    }
+    if (!csso) {
+      csso = this.req('gulp-csso');
+    }
+    if (!rename) {
+      rename = this.req('gulp-rename');
+    }
+    opts = this.extend({
+      input: null,
+      outputFolder: null,
+      taskName: 'css-min'
+    }, opts);
+    gulp.task(opts.taskName, (function(_this) {
+      return function(done) {
+        return gulp.src(_this.fullPath(opts.input)).pipe(csso()).on('error', console.log).pipe(rename({
+          suffix: '.min'
+        })).pipe(gulp.dest(_this.fullPath(opts.outputFolder))).on('end', function() {
+          return done();
+        });
+      };
+    })(this));
+    return this;
+  },
   cleanCoffeeBuildDirectory: function(folder) {
     this.deleteFolderRecursive(this.fullPath(folder));
     return this;
@@ -302,6 +368,130 @@ Helper = {
         });
       };
     })(this));
+    return this;
+  },
+  assignJavascriptConcatTaskToGulp: function(gulp, opts) {
+    var concat;
+    if (opts == null) {
+      opts = {};
+    }
+    if (!concat) {
+      concat = this.req('gulp-concat');
+    }
+    opts = this.extend({
+      files: [],
+      output: null,
+      taskName: 'js-concat'
+    }, opts);
+    gulp.task(opts.taskName, (function(_this) {
+      return function(done) {
+        return gulp.src(opts.files.map(function(f) {
+          return _this.fullPath(f);
+        })).pipe(concat(opts.output)).on('error', console.log).pipe(gulp.dest(_this.fullPath(_this.getRootFolder()))).on('end', function() {
+          return done();
+        });
+      };
+    })(this));
+    return this;
+  },
+  assignJavascriptMinTaskToGulp: function(gulp, opts) {
+    var rename, uglify;
+    if (opts == null) {
+      opts = {};
+    }
+    if (!uglify) {
+      uglify = this.req('gulp-uglify');
+    }
+    if (!rename) {
+      rename = this.req('gulp-rename');
+    }
+    opts = this.extend({
+      input: null,
+      outputFolder: null,
+      taskName: 'js-min'
+    }, opts);
+    gulp.task(opts.taskName, (function(_this) {
+      return function(done) {
+        return gulp.src(_this.fullPath(opts.input)).pipe(uglify()).on('error', console.log).pipe(rename({
+          suffix: '.min'
+        })).pipe(gulp.dest(_this.fullPath(opts.outputFolder))).on('end', function() {
+          return done();
+        });
+      };
+    })(this));
+    return this;
+  },
+  addSimpleCopyTaskToGulp: function(gulp, opts) {
+    if (opts == null) {
+      opts = {};
+    }
+    opts = this.extend({
+      groupId: null,
+      files: [],
+      baseFolder: null,
+      destFolder: null,
+      done: null
+    }, opts);
+    if (this.copyGroups[opts.groupId] == null) {
+      this.copyGroups[opts.groupId] = {
+        total: 0,
+        done: 0
+      };
+    }
+    this.copyGroups[opts.groupId].total++;
+    gulp.src(opts.files, {
+      base: opts.baseFolder
+    }).on('error', console.log).pipe(gulp.dest(opts.destFolder)).on('end', (function(_this) {
+      return function() {
+        return _this.tryDone(++_this.copyGroups[opts.groupId].done, _this.copyGroups[opts.groupId].total, opts.done);
+      };
+    })(this));
+    return this;
+  },
+  assignBowerFilesTaskToGulp: function(gulp, opts) {
+    var bower;
+    if (opts == null) {
+      opts = {};
+    }
+    if (!bower) {
+      bower = this.req('gulp-bower');
+    }
+    opts = this.extend({
+      outputFolder: null,
+      taskName: 'bower-files'
+    }, opts);
+    gulp.task(opts.taskName, function(done) {
+      return bower({
+        interactive: true
+      }).pipe(gulp.dest(opts.outputFolder)).on('end', function() {
+        return done();
+      });
+    });
+    return this;
+  },
+  assignAdminStylusTaskToGulp: function(gulp) {
+    var watch;
+    watch = {
+      'admin-stylus': {
+        mask: this.getCoreFolder() + this.folders.stylus + Helper.masks.stylus
+      }
+    };
+    this.assignStylusTaskToGulp(gulp, {
+      taskName: 'admin-stylus',
+      fn: [this.getCoreFolder() + this.folders.stylus + 'admin.styl', this.getCoreFolder() + this.folders.stylus + 'login.styl'],
+      buildFolder: this.getCoreFolder() + 'css/admin/'
+    });
+    gulp.task('admin-stylus-watch', function(done) {
+      var fn, process;
+      fn = function(process, mask) {
+        gulp.watch(mask, gulp.series(process, 'copy-core-assets'));
+        return true;
+      };
+      for (process in watch) {
+        fn(process, watch[process].mask);
+      }
+      return done();
+    });
     return this;
   }
 };

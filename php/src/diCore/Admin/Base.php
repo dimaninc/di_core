@@ -8,6 +8,7 @@
 
 namespace diCore\Admin;
 
+use diCore\Admin\Data\Skin;
 use diCore\Base\CMS;
 use diCore\Data\Config;
 use diCore\Helper\ArrayHelper;
@@ -93,7 +94,7 @@ class Base
 			'remember_me' => 'Remember me',
 			'sign_in' => 'Sign in',
 			'sign_out' => 'Sign out',
-			'go_to_site' => 'Go to the website',
+			'go_to_site' => 'Open website',
 			'support' => 'Support',
 			'add' => 'Add',
 			'main_menu' => 'Main menu',
@@ -273,6 +274,7 @@ class Base
 			'logout_href' => \diLib::getAdminWorkerPath('admin_auth', 'logout') .
 				'?back=' . urlencode(\diRequest::requestUri()),
 
+            'admin_skin' => Skin::name(Config::getAdminSkin()),
 			'current_year' => date('Y'),
 			'page_title' => $this->getPageTitle(),
 			'site_title' => $this->getSiteTitle(),

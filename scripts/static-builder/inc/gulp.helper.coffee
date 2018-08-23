@@ -1,36 +1,46 @@
 Helper =
     workFolder: './'
     htDocsFolder: 'htdocs'
+    coreLocation: 'beyond'
+    coreFolders:
+        beyond: '../vendor/dimaninc/di_core/'
+        inner: '../_core/'
+    masks:
+        stylus: '**/*.styl'
+        less: '**/*.less'
+        sprite: 'images/sprite-src/**/*.png'
+        coffee: '**/**/*.coffee'
+        react: '**/**/*.jsx'
+    folders:
+        stylus: 'css/admin/stylus/'
+    copyGroups: {}
 
-    setHtDocsFolder: (folder) ->
-        @htDocsFolder = folder
-        @
-
+    setHtDocsFolder: (@htDocsFolder) -> @
     getHtDocsFolder: -> @htDocsFolder
+    setCoreLocation: (@coreLocation) -> @
+    getCoreLocation: -> @coreLocation
+    getCoreFolder: -> @coreFolders[@coreLocation]
+    setWorkFolder: (@workFolder) -> @
+    getRootFolder: -> './'
+    getVersionFile: -> '../_cfg/lib/diStaticBuild.php'
 
     extend: ->
         for i in [1..arguments.length]
             for key of arguments[i]
                 if arguments[i].hasOwnProperty(key)
-                    if typeof arguments[0][key] is 'object' and typeof arguments[i][key] is 'object'
+                    if typeof arguments[0][key]? is 'object' and typeof arguments[i][key]? is 'object'
                         @extend arguments[0][key], arguments[i][key]
                     else
                         arguments[0][key] = arguments[i][key]
         arguments[0]
 
-    setWorkFolder: (@workFolder) ->
-        @
-
-    req: (module) ->
-        require @workFolder + '/node_modules/' + module
-
-    getRootFolder: ->
-        './'
-
-    getVersionFile: ->
-        '../_cfg/lib/diStaticBuild.php'
+    req: (module) -> require @workFolder + '/node_modules/' + module
 
     fullPath: (path) ->
+        if typeof path is 'object'
+            for k, v of path
+                path[k] = @fullPath v
+            return path
         neg = ''
         if path.substr(0, 1) is '!'
             neg = '!'
@@ -106,13 +116,13 @@ Helper =
         tasksTotal = folders.length
         tasksDone = 0
         for folder in folders
-            do (folder) ->
-                mkdirp folder, mode: 0o777, (err) ->
+            do (folder) =>
+                mkdirp folder, 0o777, (err) =>
                     if err
                         console.error err
                     else
                         console.log folder, 'created'
-                    Helper.tryDone ++tasksDone, tasksTotal, done
+                    @tryDone ++tasksDone, tasksTotal, done
         @
 
     writeVersionFile: ->
@@ -123,17 +133,15 @@ Helper =
 
     assignBasicTasksToGulp: (gulp) ->
         # create version timestamp php class
-        gulp.task 'version', (done) ->
-            Helper.writeVersionFile()
+        gulp.task 'version', (done) =>
+            @writeVersionFile()
             done()
 
         # create initial folders
-        gulp.task 'create-folders', (done) ->
-            Helper.createFolders done
+        gulp.task 'create-folders', (done) => @createFolders done
 
         # copy core assets to htdocs
-        gulp.task 'copy-core-assets', (done) ->
-            Helper.copyCoreAssets gulp, done
+        gulp.task 'copy-core-assets', (done) => @copyCoreAssets gulp, done
 
         # init project
         gulp.task 'init', gulp.series(
@@ -201,6 +209,19 @@ Helper =
             .on 'end', -> done()
         @
 
+    assignCssMinTaskToGulp: (gulp, opts = {}) ->
+        csso = @req 'gulp-csso' unless csso
+        rename = @req 'gulp-rename' unless rename
+        opts = @extend {input: null, outputFolder: null, taskName: 'css-min'}, opts
+        gulp.task opts.taskName, (done) =>
+            gulp.src @fullPath opts.input
+            .pipe csso()
+            .on 'error', console.log
+            .pipe rename suffix: '.min'
+            .pipe gulp.dest @fullPath opts.outputFolder
+            .on 'end', -> done()
+        @
+
     cleanCoffeeBuildDirectory: (folder) ->
         @deleteFolderRecursive @fullPath folder
         @
@@ -214,6 +235,77 @@ Helper =
             .pipe coffee bare: true
             .pipe gulp.dest @fullPath opts.jsBuildFolder
             .on 'end', -> done()
+        @
+
+    assignJavascriptConcatTaskToGulp: (gulp, opts = {}) ->
+        concat = @req 'gulp-concat' unless concat
+        opts = @extend {files: [], output: null, taskName: 'js-concat'}, opts
+        gulp.task opts.taskName, (done) =>
+            gulp.src opts.files.map (f) => @fullPath f
+            .pipe concat opts.output
+            .on 'error', console.log
+            .pipe gulp.dest @fullPath @getRootFolder()
+            .on 'end', -> done()
+        @
+
+    assignJavascriptMinTaskToGulp: (gulp, opts = {}) ->
+        uglify = @req 'gulp-uglify' unless uglify
+        rename = @req 'gulp-rename' unless rename
+        opts = @extend {input: null, outputFolder: null, taskName: 'js-min'}, opts
+        gulp.task opts.taskName, (done) =>
+            gulp.src @fullPath opts.input
+            .pipe uglify()
+            .on 'error', console.log
+            .pipe rename suffix: '.min'
+            .pipe gulp.dest @fullPath opts.outputFolder
+            .on 'end', -> done()
+        @
+
+    addSimpleCopyTaskToGulp: (gulp, opts = {}) ->
+        opts = @extend {groupId: null, files: [], baseFolder: null, destFolder: null, done: null}, opts
+
+        unless @copyGroups[opts.groupId]?
+            @copyGroups[opts.groupId] =
+                total: 0
+                done: 0
+        @copyGroups[opts.groupId].total++
+
+        gulp.src opts.files, base: opts.baseFolder
+        .on 'error', console.log
+        .pipe gulp.dest opts.destFolder
+        .on 'end', => @tryDone ++@copyGroups[opts.groupId].done, @copyGroups[opts.groupId].total, opts.done
+        @
+
+    assignBowerFilesTaskToGulp: (gulp, opts = {}) ->
+        bower = @req 'gulp-bower' unless bower
+        opts = @extend {outputFolder: null, taskName: 'bower-files'}, opts
+        gulp.task opts.taskName, (done) ->
+            bower interactive: true
+            .pipe gulp.dest opts.outputFolder
+            .on 'end', -> done()
+        @
+
+    assignAdminStylusTaskToGulp: (gulp) ->
+        watch =
+            'admin-stylus':
+                mask: @getCoreFolder() + @folders.stylus + Helper.masks.stylus
+
+        # main + login
+        @assignStylusTaskToGulp gulp,
+            taskName: 'admin-stylus'
+            fn: [
+                @getCoreFolder() + @folders.stylus + 'admin.styl'
+                @getCoreFolder() + @folders.stylus + 'login.styl'
+            ]
+            buildFolder: @getCoreFolder() + 'css/admin/'
+
+        # watch
+        gulp.task 'admin-stylus-watch', (done) ->
+            for process of watch
+                do (process, mask = watch[process].mask) ->
+                    gulp.watch mask, gulp.series(process, 'copy-core-assets')
+                    true
+            done()
         @
 
 module.exports = Helper

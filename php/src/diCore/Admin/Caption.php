@@ -2,6 +2,8 @@
 
 namespace diCore\Admin;
 
+use diCore\Admin\Data\Skin;
+use diCore\Data\Config;
 use diCore\Traits\BasicCreate;
 
 class Caption
@@ -114,8 +116,10 @@ class Caption
 		   )
 		{
 		    $href = $this->getX()->getCurrentPageUri('form');
+            $bracketsNeeded = Config::getAdminSkin() == Skin::classic;
+            $tag = "<a href=\"$href\">{$this->getX()->getVocabulary('add')}</a>";
 
-			return "[ <a href=\"$href\">{$this->getX()->getVocabulary('add')}</a> ]";
+			return $bracketsNeeded ? "[ $tag ]" : $tag;
 		}
 		else
 		{

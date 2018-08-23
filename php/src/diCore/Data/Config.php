@@ -8,6 +8,7 @@
 
 namespace diCore\Data;
 
+use diCore\Admin\Data\Skin;
 use diCore\Helper\StringHelper;
 
 /**
@@ -27,6 +28,7 @@ class Config
 	const mainLanguage = 'ru'; // used to determine localization field names
 	const useCoreTwig = true; // if false, twig should be installed via composer
 	const searchEngine = 'db';
+    const adminSkin = Skin::classic;
 	const initiating = false; // if true, then DB is auto-created and admin works w/o password
 
     protected static $location = \diLib::LOCATION_HTDOCS;
@@ -82,6 +84,14 @@ class Config
 
 		return $class::searchEngine;
 	}
+
+    final public static function getAdminSkin()
+    {
+        /** @var Config $class */
+        $class = self::getClass();
+
+        return $class::adminSkin;
+    }
 
 	final public static function isInitiating()
 	{
