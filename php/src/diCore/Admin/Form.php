@@ -44,7 +44,7 @@ class Form
 			'save' => 'Save',
 			'clone' => 'Save as a new record',
 			'cancel' => 'Cancel',
-			'quick_save' => 'Quick save',
+			'quick_save' => 'Apply',
 			'dispatch' => 'Save and dispatch',
 			'dispatch_test' => 'Save and test dispatch',
 			'edit' => 'Edit record',
@@ -85,7 +85,7 @@ class Form
 			'save' => 'Сохранить',
 			'clone' => 'Сохранить как новую запись',
 			'cancel' => 'Отмена',
-			'quick_save' => 'Быстрое сохранение',
+			'quick_save' => 'Применить',
 			'dispatch' => 'Сохранить и произвести рассылку',
 			'dispatch_test' => 'Сохранить и произвести тестовую рассылку',
 			'edit' => 'Редактировать',
@@ -119,6 +119,7 @@ class Form
 
 	protected static $numericTypes = ['int', 'integer', 'float', 'double'];
 	protected static $stringTypes = ['str', 'string', 'email', 'tel', 'url', 'varchar'];
+    protected static $textTypes = ['text', 'wysiwyg'];
 
 	private $wysiwygVendor = self::wysiwygTinyMCE;
 
@@ -1067,7 +1068,7 @@ EOF;
 			{
 				if (!empty($tabs[$field]))
 				{
-					$tab_head_ar[] = "<li data-tab='{$field}'><a data-tab=\"{$field}\" href=\"{$_SERVER["REQUEST_URI"]}#$field\">$v</a></li>";
+					$tab_head_ar[] = "<li data-tab='{$field}'><a data-tab=\"{$field}\" href=\"{$_SERVER["REQUEST_URI"]}#$field\"><div>$v</div></a></li>";
 				}
 			}
 

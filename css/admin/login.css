@@ -4,6 +4,10 @@ body {
   font-size: 14px;
   color: #000;
 }
+body[data-skin="entrine"] {
+  background: #374254;
+  color: #fff;
+}
 form {
   margin: 0;
   padding: 0;
@@ -19,6 +23,10 @@ a:hover {
   line-height: 100px;
   text-align: center;
 }
+body[data-skin="entrine"] .logo {
+  font-size: 16px;
+  line-height: 60px;
+}
 @media screen and (max-width: 767px) {
   .logo {
     line-height: 70px;
@@ -28,12 +36,31 @@ a:hover {
   font-style: normal;
   color: #7601ac;
 }
+body[data-skin="entrine"] .logo i {
+  color: inherit;
+}
 .logo b {
   font-weight: 600;
+}
+body[data-skin="entrine"] .logo b {
+  font-weight: normal;
+}
+.site-title {
+  display: none;
+  text-align: center;
+  font-size: 20px;
+  line-height: 40px;
+}
+body[data-skin="entrine"] .site-title {
+  display: block;
 }
 .description {
   text-align: center;
   font-size: 20px;
+}
+body[data-skin="entrine"] .description {
+  font-size: 16px;
+  line-height: 40px;
 }
 .login-form {
   position: relative;
@@ -44,9 +71,17 @@ a:hover {
   width: 380px;
   margin-top: 50px;
   margin-left: -190px;
-  background: #e5e5e5;
+  background-color: #e5e5e5;
   border-radius: 20px;
   padding: 20px;
+}
+body[data-skin="entrine"] .login-form {
+  background-color: transparent;
+  border-radius: 0;
+  margin-top: 30px;
+  width: 230px;
+  margin-left: -115px;
+  padding: 0;
 }
 @media screen and (max-width: 767px) {
   .login-form {
@@ -57,6 +92,9 @@ a:hover {
 }
 .login-form > div:not(:first-child) {
   margin-top: 15px;
+}
+body[data-skin="entrine"] .login-form > div:not(:first-child) {
+  margin-top: 20px;
 }
 .login-form label {
   font-size: 14px;
@@ -76,6 +114,17 @@ a:hover {
   font-size: 24px;
   height: 42px;
   outline: none;
+}
+body[data-skin="entrine"] .login-form button,
+body[data-skin="entrine"] .login-form input[type="text"],
+body[data-skin="entrine"] .login-form input[type="email"],
+body[data-skin="entrine"] .login-form input[type="password"] {
+  border: 1px solid #fff;
+  border-radius: 3px;
+  height: 71px;
+  color: #fff;
+  font-size: 16px;
+  background-color: transparent;
 }
 @media screen and (max-width: 767px) {
   .login-form button,
@@ -98,6 +147,13 @@ a:hover {
 }
 .login-form button:hover {
   background-color: #f00;
+}
+body[data-skin="entrine"] .login-form button {
+  background-color: #5ab5df;
+  color: #fff;
+  text-align: left;
+  padding-left: 38px;
+  border: 0;
 }
 .login-form input[type="text"],
 .login-form input[type="email"],
@@ -123,6 +179,9 @@ a:hover {
     margin-top: 30px;
   }
 }
+body[data-skin="entrine"] .to-home {
+  display: none;
+}
 .to-home a {
   display: inline-block;
   border-radius: 10px;
@@ -146,6 +205,9 @@ a:hover {
   text-align: center;
   margin-top: 50px;
   font-size: 16px;
+}
+body[data-skin="entrine"] .contacts {
+  display: none;
 }
 @media screen and (max-width: 767px) {
   .contacts {

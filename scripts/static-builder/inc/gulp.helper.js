@@ -120,7 +120,7 @@ Helper = {
   },
   copyCoreAssets: function(gulp, done) {
     console.log('Copying CSS');
-    gulp.src(['../vendor/dimaninc/di_core/css/**/*']).pipe(gulp.dest('../' + this.getHtDocsFolder() + '/assets/styles/_core/'));
+    gulp.src(['../vendor/dimaninc/di_core/css/**/*', '!../vendor/dimaninc/di_core/css/**/*.styl']).pipe(gulp.dest('../' + this.getHtDocsFolder() + '/assets/styles/_core/'));
     console.log('Copying Fonts');
     gulp.src(['../vendor/dimaninc/di_core/fonts/**/*']).pipe(gulp.dest('../' + this.getHtDocsFolder() + '/assets/fonts/'));
     console.log('Copying Images');

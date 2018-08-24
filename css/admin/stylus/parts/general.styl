@@ -2,13 +2,12 @@ body
     background white
     margin 0
     padding 0
-
-body, table, li
     font-family Verdana, sans-serif
     color black
     font-size 11px
     font-weight normal
-    margin 0
+    &[data-skin="entrine"]
+        color $entrineColorText
 
 table
     border-collapse collapse
@@ -225,7 +224,7 @@ u
             margin-bottom 20px
             box-sizing border-box
             body[data-skin="entrine"] &
-                height 71px
+                height $entrineBaseHeight
                 line-height @height
                 background-color $entrineColorBgLightGray
                 border-bottom 0
@@ -261,7 +260,7 @@ u
             width $entrineMenuWidth
             right $entrineMenuWidth * 2
             top 0
-            line-height 71px
+            line-height $entrineBaseHeight
             background none
             color white
             padding 0
@@ -310,7 +309,7 @@ u
             color white
         body[data-skin="entrine"] &
             width $entrineMenuWidth
-            line-height 71px
+            line-height $entrineBaseHeight
             font-size 16px
             background $entrineColorBgDark
             &:hover
@@ -335,7 +334,7 @@ u
         position absolute
         text-align center
         width 200px
-        height 71px
+        height $entrineBaseHeight
         box-sizing border-box
         body[data-skin="entrine"] &
             width $entrineMenuWidth
@@ -346,7 +345,7 @@ u
             display block
             color white
             font-size 30px
-            line-height 71px
+            line-height $entrineBaseHeight
             font-weight normal
             body[data-skin="entrine"] &
                 font-weight bold
@@ -380,7 +379,7 @@ u
     > .site-title
         background #333
         color white
-        height 71px
+        height $entrineBaseHeight
         line-height @height
         font-size 24px
         font-family Arial, Helvetica, sans-serif
@@ -491,67 +490,67 @@ button
     &:hover
         background #A1DFFF
     &.blue
-        background #0000CC
+        background-color #0000CC
         padding 7px 10px
-        color #fff
+        color white
         font-family Arial, Helvetica, sans-serif
         font-size 11px
         font-weight bold
         border 0
         &:hover
-            background #FF0000
+            background-color red
 
 .mce-tinymce
     button
         border-radius 0
 
 .violet
-    background #9600DB
+    background-color #9600DB
     border 0
     padding 7px 10px
     font-family Arial
     font-size 11px
-    color #fff
+    color white
     vertical-align middle
     font-weight bold
     &:hover
-        background #FF0000
+        background-color red
 
 .gray
-    background #848484
+    background-color #848484
     border 0
     padding 7px 10px
     font-family Arial
     font-size 11px
-    color #fff
+    color white
     vertical-align middle
     font-weight bold
     &:hover
-        background #FF0000
+        background-color red
 
 .violet2
-    background #9600DB
+    background-color #9600DB
     border 0
     padding 7px 10px
     font-family Arial
     font-size 14px
-    color #fff
+    color white
     vertical-align middle
     font-weight bold
     &:hover
-        background #FF0000
+        background-color red
 
 .gray2
-    background #848484
+    background-color #848484
     border 0
     padding 7px 10px
     font-family Arial
     font-size 14px
-    color #fff
+    color white
     vertical-align middle
     font-weight bold
     &:hover
-        background #FF0000
+        background-color red
 
 input[type="text"]
 input[type="email"]
@@ -563,15 +562,26 @@ textarea
     font-family Verdana, sans-serif
     font-size 14px
     font-weight normal
-    background-color #fff
-    color #000
+    background-color white
+    color black
     border 1px solid #B2B2B2
     padding 2px 5px
     border-radius 4px
+    body[data-skin="entrine"] &
+        border-radius 0
+        padding 15px
+        border-color $entrineColorTableBorder
+
+select
+    body[data-skin="entrine"] &
+        padding 15px
+        border-color $entrineColorTableBorder
 
 textarea
     padding-top 5px
     padding-bottom 5px
+    body[data-skin="entrine"] &
+        padding 15px
 
 table.banners_stat td.sel, table.banners_stat th.sel
     background #ffd
@@ -612,28 +622,55 @@ table.banners_stat td.sel, table.banners_stat th.sel
 
 #btn-save
     font-weight bold
+    body[data-skin="entrine"] &
+        font-weight normal
 
 .submit-block
     border 1px solid #CFCFCF
     margin 10px 24px 3px 24px
-    background #edf0f4
+    background-color #edf0f4
     text-align center
     padding 10px 0 10px 0
     border-radius 8px
+    body[data-skin="entrine"] &
+        border 0
+        border-radius 0
+        background-color transparent
+        text-align left
+        margin-left 165px
     button
         margin 0 10px
         padding 5px 10px
         cursor pointer
+        box-sizing border-box
         &:hover
-            background #A1DFFF
-
-.submit-status-line
-    height 20px
-    background #edf0f4
-    margin-top 10px
-    border-top 1px solid #CFCFCF
-    padding-top 5px
-    font-style italic
+            background-color #A1DFFF
+        body[data-skin="entrine"] &
+            width $entrineMenuWidth
+            height $entrineBaseHeight
+            text-transform uppercase
+            text-align left
+            padding-left 32px
+            border 3px solid $entrineColorBgDark
+            border-radius 0
+            color $entrineColorBgDark
+            margin 0 20px 0 0
+            &:last-child
+                margin-right 0
+            &:hover
+                background-color $entrineColorTextMenuSelected
+                border-color $entrineColorTextMenuSelected
+                color white
+    .submit-status-line
+        height 20px
+        background #edf0f4
+        margin-top 10px
+        border-top 1px solid #CFCFCF
+        padding-top 5px
+        font-style italic
+        body[data-skin="entrine"] &
+            background none
+            border-top 0
 
 .save_frame
     display none
@@ -657,9 +694,12 @@ table.banners_stat td.sel, table.banners_stat th.sel
 .list-control-panel
     padding 10px
     border-radius 10px
-    background #D4D0C8
+    background-color  #D4D0C8
     margin 0 24px 20px 24px
     min-height 22px
+    body[data-skin="entrine"] &
+        background-color $entrineColorBgLightGray
+        border-radius 0
     @media screen and (max-width: 767px)
         margin-left 0
         margin-right 0

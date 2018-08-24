@@ -69,7 +69,7 @@ Helper =
     copyCoreAssets: (gulp, done) ->
         console.log 'Copying CSS'
         gulp
-        .src ['../vendor/dimaninc/di_core/css/**/*']
+        .src ['../vendor/dimaninc/di_core/css/**/*', '!../vendor/dimaninc/di_core/css/**/*.styl']
         .pipe gulp.dest '../' + @getHtDocsFolder() + '/assets/styles/_core/'
 
         console.log 'Copying Fonts'

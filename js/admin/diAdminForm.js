@@ -284,7 +284,7 @@ var diAdminForm = function(table, id, auto_save_timeout) {
   {
     if (!this.id)
     {
-      alert('Quick save feature is working only on existing records yet');
+      alert('Apply feature is working only on existing records yet');
 
       return false;
     }
