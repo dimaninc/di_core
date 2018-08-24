@@ -275,6 +275,10 @@ body[data-skin="entrine"] .admin-layout > .content > .caption {
 .admin-layout > .content > .caption b {
   text-transform: uppercase;
 }
+body[data-skin="entrine"] .admin-layout > .content > .caption b a {
+  color: #5ab5df;
+  text-decoration: underline;
+}
 .admin-layout > .content > .caption .buttons {
   padding: 0 0 0 30px;
 }
@@ -1366,11 +1370,19 @@ body[data-skin="entrine"] .diadminform-row .value {
   max-height: 50px;
   width: auto;
 }
+body[data-skin="entrine"] .diadminform-row .value .static {
+  padding-top: 18px;
+  min-height: 40px;
+}
 .diadminform-row .value .static-text {
   padding: 10px;
   background: #ddd;
   margin: 5px 5px 5px 0;
   border-radius: 10px;
+}
+body[data-skin="entrine"] .diadminform-row .value .static-text {
+  margin: -18px 0 0 0;
+  border-radius: 0;
 }
 .diadminform-row .value .wysiwyg,
 .diadminform-row .value .textarea {
