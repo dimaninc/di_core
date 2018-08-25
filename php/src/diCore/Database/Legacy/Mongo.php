@@ -73,7 +73,7 @@ class Mongo extends \diDB
 		return $s;
 	}
 
-	protected function getCollectionResource($collectionName)
+	public function getCollectionResource($collectionName)
 	{
 		return $this->getLink()->selectCollection($collectionName);
 	}
