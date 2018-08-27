@@ -8,6 +8,7 @@
 
 namespace diCore\Data;
 
+use diCore\Helper\StringHelper;
 
 class Paths
 {
@@ -16,12 +17,30 @@ class Paths
 
 	public static function fileSystem($target = null, $endingSlashNeeded = true, $field = null)
 	{
-		return \diRequest::server('DOCUMENT_ROOT') . ($endingSlashNeeded ? '/' : '');
+        $subFolder = \diLib::getSubFolder();
+
+        if ($subFolder)
+        {
+            $subFolder = '/' . $subFolder;
+        }
+
+		return \diRequest::server('DOCUMENT_ROOT') . $subFolder . ($endingSlashNeeded ? '/' : '');
 	}
 
 	public static function http($target = null, $endingSlashNeeded = true, $field = null)
 	{
-		return '';
+        $path = '';
+
+        if (\diLib::getSubFolder())
+        {
+            $path = '' . \diLib::getSubFolder() . '/' . $path;
+
+            $path = $endingSlashNeeded
+                ? StringHelper::slash($path, true)
+                : StringHelper::unslash($path, true);
+        }
+
+		return $path;
 	}
 
 	public static function domain()

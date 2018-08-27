@@ -518,7 +518,7 @@ class diNiceTable
 				throw new Exception("picBtnCell path not defined");
 			}
 
-			$opts["href"] = "/" . diAdmin::SUBFOLDER . "/" . $path . "/" . $suffix;
+			$opts["href"] = "/" . diAdmin::getSubFolder() . "/" . $path . "/" . $suffix;
 		}
 
 		return $this->btnCell($this->getButton("pic", $opts["href"]));
@@ -546,7 +546,7 @@ class diNiceTable
 				throw new Exception("videoBtnCell path not defined");
 			}
 
-			$opts["href"] = "/" . diAdmin::SUBFOLDER . "/" . $path . "/" . $suffix;
+			$opts["href"] = "/" . diAdmin::getSubFolder() . "/" . $path . "/" . $suffix;
 		}
 
 		return $this->btnCell($this->getButton("video", $opts["href"]));
@@ -574,7 +574,7 @@ class diNiceTable
 				throw new Exception("manageBtnCell path not defined");
 			}
 
-			$opts["href"] = "/" . \diAdmin::SUBFOLDER . "/" . $path . "/" . $suffix;
+			$opts["href"] = "/" . \diAdmin::getSubFolder() . "/" . $path . "/" . $suffix;
 		}
 
 		return $this->btnCell($this->getButton("manage", $href));

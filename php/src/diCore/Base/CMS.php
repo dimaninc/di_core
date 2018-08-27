@@ -1231,6 +1231,7 @@ abstract class CMS
 				'html_base' => $this->getBaseAddress() . '/',
 				'html_base_wo_slash' => $this->getBaseAddress(),
 				'env' => static::getEnvironmentName(),
+                'sub_folder' => \diLib::getSubFolder(true),
 			],
 		]);
 
@@ -1423,7 +1424,13 @@ abstract class CMS
 
 	protected function getBaseAddress()
 	{
-		return $this->protocol . '://' . \diRequest::domain();
+        if ($subFolder = \diLib::getSubFolder())
+        {
+            $subFolder = '/' . $subFolder;
+        }
+        //$subFolder = '';
+
+		return $this->protocol . '://' . \diRequest::domain() . $subFolder;
 	}
 
 	public function initTplAssigns()
@@ -1478,7 +1485,14 @@ abstract class CMS
 
 	public function getFullRoute()
 	{
-		return addslashes(trim(\diRequest::requestUri(), '/'));
+        $r = trim(\diRequest::requestUri(), '/');
+
+        if (\diLib::getSubFolder() && StringHelper::startsWith($r, \diLib::getSubFolder()))
+        {
+            $r = ltrim(substr($r, strlen(\diLib::getSubFolder())), '/');
+        }
+
+		return addslashes($r);
 	}
 
 	public function populateRoutes()

@@ -26,6 +26,7 @@ class diLib
 		self::LOCATION_HTDOCS => ['_core', 'php', 'lib'],
 		self::LOCATION_BEYOND => ['vendor', 'dimaninc', 'di_core', 'php', 'lib'],
 	];
+    private static $subFolder = null;
 
 	const SIMPLE_CLASS = 0;
 	const MODULE = 1;
@@ -364,12 +365,22 @@ class diLib
 
 	static public function getWorkerPath($controller = null, $action = null, $paramsAr = null, $options = [])
 	{
-		return self::workerPrefix . self::getWorkerBasePath($controller, $action, $paramsAr, $options);
+        if ($subFolder = \diLib::getSubFolder())
+        {
+            $subFolder = '/' . $subFolder;
+        }
+
+		return $subFolder . self::workerPrefix . self::getWorkerBasePath($controller, $action, $paramsAr, $options);
 	}
 
 	static public function getAdminWorkerPath($controller = null, $action = null, $paramsAr = null, $options = [])
 	{
-		return self::workerAdminPrefix . self::getWorkerBasePath($controller, $action, $paramsAr, $options);
+        if ($subFolder = \diLib::getSubFolder())
+        {
+            $subFolder = '/' . $subFolder;
+        }
+
+        return $subFolder . self::workerAdminPrefix . self::getWorkerBasePath($controller, $action, $paramsAr, $options);
 	}
 
 	static public function getRoot()
@@ -427,13 +438,41 @@ class diLib
 			}
 		}
 
+        if (self::$location === self::LOCATION_HTDOCS && isset($marker))
+        {
+            $file = str_replace('\\', '/', __FILE__);
+            $marker = str_replace('\\', '/', $marker);
+            $root = $_SERVER['DOCUMENT_ROOT'];
+
+            if (substr($file, 0, strlen($root)) === $root)
+            {
+                $file = substr($file, strlen($root));
+                self::$subFolder = trim(substr($file, 0, strpos($file, $marker)), '/');
+            }
+        }
+
 		if (self::$location === null)
 		{
 			throw new Exception('Unknown diCore location: ' . __FILE__);
 		}
 
+        if (self::$subFolder === null)
+        {
+            self::$subFolder = '';
+        }
+
 		return self::$location;
 	}
+
+    public static function getSubFolder($openingSlash = false)
+    {
+        if (self::$subFolder === null)
+        {
+            self::getLocation();
+        }
+        
+        return (self::$subFolder && $openingSlash ? '/' : '') . self::$subFolder;
+    }
 
 	public static function getAssetLocations()
 	{
@@ -450,12 +489,17 @@ class diLib
 
 			default:
 			case self::LOCATION_HTDOCS:
+                $subFolder = \diLib::getSubFolder();
+                if ($subFolder)
+                {
+                    $subFolder = '/' . $subFolder;
+                }
 				return [
-					'css' => '/_core/css/',
-					'fonts' => '/_core/fonts/',
-					'images' => '/_core/i/',
-					'js' => '/_core/js/',
-					'vendor' => '/_core/vendor/'
+					'css' => $subFolder . '/_core/css/',
+					'fonts' => $subFolder . '/_core/fonts/',
+					'images' => $subFolder . '/_core/i/',
+					'js' => $subFolder . '/_core/js/',
+					'vendor' => $subFolder . '/_core/vendor/'
 				];
 		}
 	}
@@ -470,6 +514,11 @@ class diLib
 	    $root = $_SERVER['DOCUMENT_ROOT'];
 		$path = null;
 		$libSubFolderProcessor = null;
+
+        if (self::getSubFolder())
+        {
+            $root .= '/' . self::getSubFolder();
+        }
 
 		switch (self::getLocation())
 		{

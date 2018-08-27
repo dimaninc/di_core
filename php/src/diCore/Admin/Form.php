@@ -1812,6 +1812,11 @@ EOF;
 		{
 			$httpName = \diPaths::http($this->getModel(), false, $field) . '/' . StringHelper::unslash($fullName, false);
 
+            if (!StringHelper::contains($httpName, '://') && \diLib::getSubFolder())
+            {
+                $httpName = '/' . $httpName;
+            }
+
 			$ff_w = $ff_h = null;
 			$ff_s = filesize($f);
 			$previewWithText = false;

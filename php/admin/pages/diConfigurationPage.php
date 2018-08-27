@@ -5,10 +5,12 @@ class diConfigurationPage extends \diCore\Admin\BasePage
 		'ru' => [
 			'form.submit.title' => 'Сохранить',
 			'form.cancel.title' => 'Закрыть',
+            'saved' => 'Изменения сохранены',
 		],
 		'en' => [
 			'form.submit.title' => 'Save',
 			'form.cancel.title' => 'Cancel',
+            'saved' => 'Changes saved',
 		],
 	];
 
@@ -43,6 +45,7 @@ class diConfigurationPage extends \diCore\Admin\BasePage
 			->assign([
 				'SUBMIT_TITLE' => $this->getVocabularyTerm('form.submit.title'),
 				'CANCEL_TITLE' => $this->getVocabularyTerm('form.cancel.title'),
+                'SAVED' => $this->getVocabularyTerm('saved'),
 			]);
 
 		$this->printConfigurationTable();
@@ -225,7 +228,7 @@ class diConfigurationPage extends \diCore\Admin\BasePage
 		$this->getTpl()->assign([
 			"TABS_LIST" => join(",", array_keys($this->cfg->getTabsAr())),
 			"FIRST_TAB" => current(array_keys($this->cfg->getTabsAr())),
-			"WORKER_URI" => diLib::getAdminWorkerPath("configuration", "store"),
+			"WORKER_URI" => \diLib::getAdminWorkerPath("configuration", "store"),
 		]);
 
 		foreach ($this->cfg->getTabsAr() as $k => $v)
@@ -248,7 +251,10 @@ class diConfigurationPage extends \diCore\Admin\BasePage
 
 	public function getModuleCaption()
 	{
-		return "Настройки";
+		return [
+            'ru' => 'Настройки',
+            'en' => 'Configuration',
+        ];
 	}
 
 	public function addButtonNeededInCaption()

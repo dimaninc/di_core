@@ -180,6 +180,18 @@ class Base
 		return $this;
 	}
 
+    public static function getSubFolder()
+    {
+        $subFolder = static::SUBFOLDER;
+
+        if (\diLib::getSubFolder())
+        {
+            $subFolder = \diLib::getSubFolder() . '/' . $subFolder;
+        }
+
+        return $subFolder;
+    }
+
 	/**
 	 * @return \diAdminUser
 	 */
@@ -268,13 +280,15 @@ class Base
 	private function getTemplateVariables()
 	{
 		return [
-			'html_base' => \diRequest::protocol() . '://' . \diRequest::domain() . '/' . self::SUBFOLDER . '/',
+			'html_base' => \diRequest::protocol() . '://' . \diRequest::domain() . '/' . self::getSubFolder() . '/',
 			'current_uri' => \diRequest::requestUri(),
 
 			'logout_href' => \diLib::getAdminWorkerPath('admin_auth', 'logout') .
 				'?back=' . urlencode(\diRequest::requestUri()),
 
             'admin_skin' => Skin::name(Config::getAdminSkin()),
+            'site_subfolder' => \diLib::getSubFolder(),
+            'site_path' => (\diLib::getSubFolder() ? '/' . \diLib::getSubFolder() : '') . '/',
 			'current_year' => date('Y'),
 			'page_title' => $this->getPageTitle(),
 			'site_title' => $this->getSiteTitle(),
@@ -493,7 +507,7 @@ class Base
 
 		$queryPart = $params ? '?' . (is_array($params) ? http_build_query($params) : $params) : '';
 
-		return '/' . self::SUBFOLDER . '/' . $module . $methodPart . '/' . $idPart . $queryPart;
+		return '/' . self::getSubFolder() . '/' . $module . $methodPart . '/' . $idPart . $queryPart;
 	}
 
 	public function getCurrentPageUri($method = 'list', $paramsAr = [])
@@ -528,7 +542,7 @@ class Base
 
 			ob_start();
 
-			require \diPaths::fileSystem() . self::SUBFOLDER . '/' . $this->path . '/' . $this->filename;
+			require \diPaths::fileSystem() . self::getSubFolder() . '/' . $this->path . '/' . $this->filename;
 
 			$this->getTpl()->assign([
 				'PAGE' => ob_get_contents(),
@@ -622,6 +636,11 @@ class Base
 		}
 
 		$this->uriParams = array_map('addslashes', explode('/', trim($m, '/')));
+
+        if (\diLib::getSubFolder() && isset($this->uriParams[0]) && $this->uriParams[0] == \diLib::getSubFolder())
+        {
+            array_splice($this->uriParams, 0, count(explode('/', \diLib::getSubFolder())));
+        }
 
 		if ($this->uriParams && $this->uriParams[0] == self::SUBFOLDER)
 		{

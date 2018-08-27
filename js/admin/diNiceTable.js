@@ -2,11 +2,17 @@ var diNiceTable = function(opts)
 {
 	var self = this,
 		CP,
+        subfolder,
 		workerBase = '/_core/php/admin/workers/list/',
 		settings = $.extend({
 			$table: null,
 			table: ''
 		}, opts);
+
+    if (subfolder = $(document.body).data('subfolder'))
+    {
+        workerBase = '/' + subfolder + workerBase;
+    }
 
 	if (!settings.$table)
 	{

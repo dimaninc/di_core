@@ -23,6 +23,10 @@
 	padding-top: 8px;
 }
 
+body[data-skin="entrine"] .configuration .grid tbody tr td:first-child {
+    vertical-align: middle;
+}
+
 .configuration .grid tbody tr:nth-child(even) td {
 	background: #e7e7e0;
 }
