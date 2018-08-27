@@ -883,7 +883,7 @@ abstract class BasePage
 	{
 		if ($template === null)
 		{
-			$template = 'admin/' . $this->getTable() . '/after_list';
+			$template = 'admin/' . $this->getTable() . '/before_list';
 		}
 
 		$this->getTwig()

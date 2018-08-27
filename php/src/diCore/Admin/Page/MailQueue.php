@@ -25,13 +25,25 @@ class MailQueue extends \diCore\Admin\BasePage
 
 	protected function renderControlPanel()
 	{
-		$this->getTpl()->define('`mail_queue/list', [
-			'before_table',
-		])->assign([
-			'TOTAL_RECORDS' => $this->getPagesNavy()->getTotalRecords(),
-			'VISIBLE_WORKER_URI' => \diLib::getAdminWorkerPath('mail', 'set_visible') . '?back=' . urlencode($_SERVER['REQUEST_URI']),
-			'SEND_ALL_WORKER_URI' => \diLib::getAdminWorkerPath('mail', 'send_all'),
-		]);
+        $this->setBeforeTableTemplate(null, [
+            'total_records' => $this->getPagesNavy()->getTotalRecords(),
+            'visible_worker_uri' => \diLib::getAdminWorkerPath('mail', 'set_visible') . '?back=' . urlencode($_SERVER['REQUEST_URI']),
+            'send_all_worker_uri' => \diLib::getAdminWorkerPath('mail', 'send_all'),
+            'lang' => [
+                'total_records' => $this->localized([
+                    'ru' => 'Всего записей',
+                    'en' => 'Total records',
+                ]),
+                'send1k' => $this->localized([
+                    'ru' => 'Обработать 1000 писем из очереди',
+                    'en' => 'Send 1000 messages from queue',
+                ]),
+                'make_visible' => $this->localized([
+                    'ru' => 'Скрытые &raquo; Видимые',
+                    'en' => 'Invisible &raquo; Visible',
+                ]),
+            ],
+        ]);
 
 		return $this;
 	}
@@ -44,7 +56,6 @@ class MailQueue extends \diCore\Admin\BasePage
 			'id' => 'ID',
 			'_checkbox' => '',
 			'sender' => [
-				'title' => 'Отправитель',
 				'attrs' => [
 					'width' => '20%',
 				],
@@ -60,7 +71,6 @@ class MailQueue extends \diCore\Admin\BasePage
 				},
 			],
 			'recipient' => [
-				'title' => 'Получатель',
 				'attrs' => [
 					'width' => '30%',
 				],
@@ -69,13 +79,11 @@ class MailQueue extends \diCore\Admin\BasePage
 				},
 			],
 			'subject' => [
-				'title' => 'Тема',
 				'attrs' => [
 					'width' => '40%',
 				],
 			],
 			'date' => [
-				'title' => 'Дата',
 				'value' => function (Model $m) {
 					return date('d.m.Y H:i', strtotime($m->getDate()));
 				},
@@ -117,26 +125,38 @@ class MailQueue extends \diCore\Admin\BasePage
 		return [
 			'date' => [
 				'type' => 'datetime_str',
-				'title' => 'Дата',
+				'title' => $this->localized([
+                    'ru' => 'Дата',
+                    'en' => 'Created at',
+                ]),
 				'default' => \diDateTime::sqlFormat(),
 				'flags' => ['static'],
 			],
 
 			'sender' => [
 				'type' => 'string',
-				'title' => 'От',
+				'title' => $this->localized([
+                    'ru' => 'От',
+                    'en' => 'From',
+                ]),
 				'default' => 'support@' . Config::getMainDomain(),
 			],
 
 			'recipient_id' => [
 				'type' => 'int',
-				'title' => 'Кому (Логин)',
+				'title' => $this->localized([
+                    'ru' => 'Кому (Логин)',
+                    'en' => 'To (Login)',
+                ]),
 				'default' => 0,
 			],
 
 			'recipient' => [
 				'type' => 'string',
-				'title' => 'Кому (E-mail)',
+				'title' => $this->localized([
+                    'ru' => 'Кому (E-mail)',
+                    'en' => 'To (E-mail)',
+                ]),
 				'default' => '',
 			],
 
@@ -148,45 +168,66 @@ class MailQueue extends \diCore\Admin\BasePage
 
 			'subject' => [
 				'type' => 'string',
-				'title' => 'Тема',
+				'title' => $this->localized([
+                    'ru' => 'Тема',
+                    'en' => 'Subject',
+                ]),
 				'default' => '',
 			],
 
 			'plain_body' => [
 				'type' => 'int',
-				'title' => 'Формат письма',
+				'title' => $this->localized([
+                    'ru' => 'Формат письма',
+                    'en' => 'Format',
+                ]),
 				'default' => 0,
 			],
 
 			'body' => [
 				'type' => 'wysiwyg',
-				'title' => 'Тело письма',
+				'title' => $this->localized([
+                    'ru' => 'Тело письма',
+                    'en' => 'Message',
+                ]),
 				'default' => '',
 			],
 
 			'attachment' => [
 				'type' => 'text',
-				'title' => 'Вложения (serialized)',
+				'title' => $this->localized([
+                    'ru' => 'Вложения (serialized)',
+                    'en' => 'Attachments (serialized)',
+                ]),
 				'default' => '',
 				'flags' => ['static'],
 			],
 
 			'visible' => [
 				'type' => 'checkbox',
-				'title' => 'Активно',
+				'title' => $this->localized([
+                    'ru' => 'Активно',
+                    'en' => 'Active',
+                ]),
 				'default' => true,
 			],
 
 			'sent' => [
 				'type' => 'checkbox',
-				'title' => 'Отослано',
+				'title' => $this->localized([
+                    'ru' => 'Отослано',
+                    'en' => 'Sent',
+                ]),
 				'default' => false,
 				'flags' => ['static'],
 			],
 
 			'settings' => [
 				'type' => 'text',
-				'title' => 'Настройки (serialized)',
+				'title' => $this->localized([
+                    'ru' => 'Настройки (serialized)',
+                    'en' => 'Settings (serialized)',
+                ]),
 				'default' => '',
 				'flags' => ['static'],
 			],
