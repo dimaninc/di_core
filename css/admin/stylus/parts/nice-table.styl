@@ -71,7 +71,9 @@ table.dinicetable
                         background-size 18px 18px
                         background-repeat no-repeat
                         background-position center center
-                        &:hover
+                        &:not([data-action])
+                            cursor default
+                        &[data-action]:hover
                             background-color $entrineColorTextMenuSelected
                         &[data-action="edit"]
                             background-image url(/assets/images/_core/admin/skin/entrine/list/edit.svg)
@@ -85,8 +87,11 @@ table.dinicetable
                             background-image url(/assets/images/_core/admin/skin/entrine/list/visible-1.svg)
                         &[data-action="up"]
                         &[data-action="down"]
+                        &[data-action="play"]
+                        &[data-action="rollback"]
                             background-image url(/assets/images/_core/admin/skin/entrine/list/up.svg)
                         &[data-action="down"]
+                        &[data-action="rollback"]
                             transform rotate(180deg)
                 a
                     display block

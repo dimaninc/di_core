@@ -2,6 +2,7 @@
 
 @import '../../stylus/helpers.styl'
 @import 'parts/skin/entrine/variables.styl'
+@import 'parts/skin/entrine/fonts.styl'
 
 body
     background white
@@ -9,6 +10,7 @@ body
     font-size 14px
     color black
     &[data-skin="entrine"]
+        font-family $entrineFont
         background $entrineColorBgDark
         color white
 
@@ -95,6 +97,7 @@ a
         height 42px
         outline none
         body[data-skin="entrine"] &
+            font-family $entrineFont
             border 1px solid white
             border-radius 3px
             height $entrineBaseHeight

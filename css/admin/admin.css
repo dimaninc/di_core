@@ -3,21 +3,21 @@
   src: url("/assets/fonts/skin/entrine/Montserrat-Regular.eot");
   src: url("/assets/fonts/skin/entrine/Montserrat-Regular.eot?#iefix") format('embedded-opentype'), url("/assets/fonts/skin/entrine/Montserrat-Regular.woff") format('woff'), url("/assets/fonts/skin/entrine/Montserrat-Regular.ttf") format('truetype'), url("/assets/fonts/skin/entrine/Montserrat-Regular.svg#Monserrat") format('svg');
   font-weight: 'normal';
-  font-style: 'normal';
+  font-style: normal;
 }
 @font-face {
   font-family: 'Monserrat';
   src: url("/assets/fonts/skin/entrine/Montserrat-Bold.eot");
   src: url("/assets/fonts/skin/entrine/Montserrat-Bold.eot?#iefix") format('embedded-opentype'), url("/assets/fonts/skin/entrine/Montserrat-Bold.woff") format('woff'), url("/assets/fonts/skin/entrine/Montserrat-Bold.ttf") format('truetype'), url("/assets/fonts/skin/entrine/Montserrat-Bold.svg#Monserrat") format('svg');
   font-weight: 'bold';
-  font-style: 'normal';
+  font-style: normal;
 }
 @font-face {
   font-family: 'Monserrat';
   src: url("/assets/fonts/skin/entrine/Montserrat-Medium.eot");
   src: url("/assets/fonts/skin/entrine/Montserrat-Medium.eot?#iefix") format('embedded-opentype'), url("/assets/fonts/skin/entrine/Montserrat-Medium.woff") format('woff'), url("/assets/fonts/skin/entrine/Montserrat-Medium.ttf") format('truetype'), url("/assets/fonts/skin/entrine/Montserrat-Medium.svg#Monserrat") format('svg');
   font-weight: 400;
-  font-style: 'normal';
+  font-style: normal;
 }
 body {
   background: #fff;
@@ -1953,7 +1953,10 @@ body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button {
   background-repeat: no-repeat;
   background-position: center center;
 }
-body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button:hover {
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button:not([data-action]) {
+  cursor: default;
+}
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action]:hover {
   background-color: #5ab5df;
 }
 body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="edit"] {
@@ -1972,10 +1975,13 @@ body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-act
   background-image: url("/assets/images/_core/admin/skin/entrine/list/visible-1.svg");
 }
 body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="up"],
-body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="down"] {
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="down"],
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="play"],
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="rollback"] {
   background-image: url("/assets/images/_core/admin/skin/entrine/list/up.svg");
 }
-body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="down"] {
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="down"],
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="rollback"] {
   -webkit-transform: rotate(180deg);
   -moz-transform: rotate(180deg);
   -o-transform: rotate(180deg);
