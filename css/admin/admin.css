@@ -1,3 +1,24 @@
+@font-face {
+  font-family: 'Monserrat';
+  src: url("/assets/fonts/skin/entrine/Montserrat-Regular.eot");
+  src: url("/assets/fonts/skin/entrine/Montserrat-Regular.eot?#iefix") format('embedded-opentype'), url("/assets/fonts/skin/entrine/Montserrat-Regular.woff") format('woff'), url("/assets/fonts/skin/entrine/Montserrat-Regular.ttf") format('truetype'), url("/assets/fonts/skin/entrine/Montserrat-Regular.svg#Monserrat") format('svg');
+  font-weight: 'normal';
+  font-style: 'normal';
+}
+@font-face {
+  font-family: 'Monserrat';
+  src: url("/assets/fonts/skin/entrine/Montserrat-Bold.eot");
+  src: url("/assets/fonts/skin/entrine/Montserrat-Bold.eot?#iefix") format('embedded-opentype'), url("/assets/fonts/skin/entrine/Montserrat-Bold.woff") format('woff'), url("/assets/fonts/skin/entrine/Montserrat-Bold.ttf") format('truetype'), url("/assets/fonts/skin/entrine/Montserrat-Bold.svg#Monserrat") format('svg');
+  font-weight: 'bold';
+  font-style: 'normal';
+}
+@font-face {
+  font-family: 'Monserrat';
+  src: url("/assets/fonts/skin/entrine/Montserrat-Medium.eot");
+  src: url("/assets/fonts/skin/entrine/Montserrat-Medium.eot?#iefix") format('embedded-opentype'), url("/assets/fonts/skin/entrine/Montserrat-Medium.woff") format('woff'), url("/assets/fonts/skin/entrine/Montserrat-Medium.ttf") format('truetype'), url("/assets/fonts/skin/entrine/Montserrat-Medium.svg#Monserrat") format('svg');
+  font-weight: 400;
+  font-style: 'normal';
+}
 body {
   background: #fff;
   margin: 0;
@@ -9,6 +30,7 @@ body {
 }
 body[data-skin="entrine"] {
   color: #4a4a4a;
+  font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
 }
 table {
   border-collapse: collapse;
@@ -260,6 +282,7 @@ body[data-skin="entrine"] .admin-layout > .content {
   box-sizing: border-box;
 }
 body[data-skin="entrine"] .admin-layout > .content > .caption {
+  font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
   height: 71px;
   line-height: 71px;
   background-color: #f1f1f1;
@@ -282,11 +305,31 @@ body[data-skin="entrine"] .admin-layout > .content > .caption b a {
 .admin-layout > .content > .caption .buttons {
   padding: 0 0 0 30px;
 }
+.admin-layout > .content > .caption .buttons a {
+  position: relative;
+}
 body[data-skin="entrine"] .admin-layout > .content > .caption .buttons a {
   border-radius: 2px;
   color: #fff;
   background-color: #5ab5df;
-  padding: 11px 14px;
+  padding: 11px 14px 11px 38px;
+}
+body[data-skin="entrine"] .admin-layout > .content > .caption .buttons a:before {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  left: 12px;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+  -moz-transform: translateY(-50%);
+  -o-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+  background: url("/assets/images/_core/admin/skin/entrine/plus.svg");
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  background-size: cover;
 }
 body[data-skin="entrine"] .admin-layout > .content > .caption .buttons a:hover {
   background-color: #374254;
@@ -315,6 +358,7 @@ body[data-skin="entrine"] .admin-layout > .head-auth-info {
   color: #fff;
   padding: 0;
   font-size: 16px;
+  font-weight: 400;
 }
 @media screen and (max-width: 767px) {
   .admin-layout > .head-auth-info {
@@ -325,6 +369,27 @@ body[data-skin="entrine"] .admin-layout > .head-auth-info {
     padding-top: 0;
     padding-bottom: 0;
   }
+}
+.admin-layout > .head-auth-info span {
+  display: inline-block;
+  position: relative;
+}
+body[data-skin="entrine"] .admin-layout > .head-auth-info span:before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: -32px;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+  -moz-transform: translateY(-50%);
+  -o-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+  background: url("/assets/images/_core/admin/skin/entrine/user.svg");
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  background-size: cover;
 }
 .admin-layout > .head-auth-info i {
   display: inline-block;
@@ -375,6 +440,8 @@ body[data-skin="entrine"] .admin-layout > .head-auth-info i {
   color: #fff;
 }
 body[data-skin="entrine"] .admin-layout > .head-href {
+  font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
+  font-weight: 400;
   width: 230px;
   line-height: 71px;
   font-size: 16px;
@@ -392,6 +459,9 @@ body[data-skin="entrine"] .admin-layout > .head-href:hover {
     top: 48px;
   }
 }
+.admin-layout > .head-href > span {
+  position: relative;
+}
 .admin-layout > .head-href.go-to-face {
   right: 141px;
 }
@@ -405,6 +475,40 @@ body[data-skin="entrine"] .admin-layout > .head-href.go-to-face {
     top: 24px;
   }
 }
+body[data-skin="entrine"] .admin-layout > .head-href.go-to-face > span:before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: -28px;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+  -moz-transform: translateY(-50%);
+  -o-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+  background: url("/assets/images/_core/admin/skin/entrine/globe.svg");
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  background-size: cover;
+}
+body[data-skin="entrine"] .admin-layout > .head-href.logout > span:before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: -30px;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+  -moz-transform: translateY(-50%);
+  -o-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+  background: url("/assets/images/_core/admin/skin/entrine/log-out.svg");
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  background-size: cover;
+}
 .admin-layout > .logo {
   background: #7601ac;
   font-family: Tahoma, Verdana, Segoe, sans-serif;
@@ -417,6 +521,7 @@ body[data-skin="entrine"] .admin-layout > .head-href.go-to-face {
   box-sizing: border-box;
 }
 body[data-skin="entrine"] .admin-layout > .logo {
+  font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
   width: 230px;
   background: #2a3246;
   text-align: left;
@@ -486,9 +591,10 @@ body[data-skin="entrine"] .admin-layout > .logo > b {
   padding-right: 10px;
 }
 body[data-skin="entrine"] .admin-layout > .site-title {
+  font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
   background: #374254;
   font-size: 20px;
-  font-weight: 600;
+  font-weight: 400;
   padding-left: 65px;
   margin-left: 230px;
 }
@@ -621,6 +727,9 @@ button {
   cursor: pointer;
   outline: none;
 }
+body[data-skin="entrine"] button {
+  font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
+}
 button:hover {
   background: #a1dfff;
 }
@@ -628,7 +737,6 @@ button.blue {
   background-color: #00c;
   padding: 7px 10px;
   color: #fff;
-  font-family: Arial, Helvetica, sans-serif;
   font-size: 11px;
   font-weight: bold;
   border: 0;
@@ -643,7 +751,6 @@ button.blue:hover {
   background-color: #9600db;
   border: 0;
   padding: 7px 10px;
-  font-family: Arial;
   font-size: 11px;
   color: #fff;
   vertical-align: middle;
@@ -656,7 +763,6 @@ button.blue:hover {
   background-color: #848484;
   border: 0;
   padding: 7px 10px;
-  font-family: Arial;
   font-size: 11px;
   color: #fff;
   vertical-align: middle;
@@ -669,7 +775,6 @@ button.blue:hover {
   background-color: #9600db;
   border: 0;
   padding: 7px 10px;
-  font-family: Arial;
   font-size: 14px;
   color: #fff;
   vertical-align: middle;
@@ -682,7 +787,6 @@ button.blue:hover {
   background-color: #848484;
   border: 0;
   padding: 7px 10px;
-  font-family: Arial;
   font-size: 14px;
   color: #fff;
   vertical-align: middle;
@@ -714,6 +818,7 @@ body[data-skin="entrine"] input[type="number"],
 body[data-skin="entrine"] input[type="password"],
 body[data-skin="entrine"] input[type="url"],
 body[data-skin="entrine"] textarea {
+  font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
   border-radius: 0;
   padding: 15px;
   border-color: #dbdbdb;
@@ -735,7 +840,6 @@ table.banners_stat th.sel {
 }
 .caution {
   padding: 10px;
-  font-family: Tahoma, sans-serif;
   color: #000;
   font-size: 12px;
   font-weight: bold;
@@ -808,6 +912,9 @@ body[data-skin="entrine"] .submit-block button {
   color: #374254;
   margin: 0 20px 0 0;
 }
+body[data-skin="entrine"] .submit-block button > svg {
+  float: right;
+}
 body[data-skin="entrine"] .submit-block button:last-child {
   margin-right: 0;
 }
@@ -815,6 +922,9 @@ body[data-skin="entrine"] .submit-block button:hover {
   background-color: #5ab5df;
   border-color: #5ab5df;
   color: #fff;
+}
+body[data-skin="entrine"] .submit-block button:hover > svg path {
+  fill: #fff;
 }
 .submit-block .submit-status-line {
   height: 20px;
@@ -1163,6 +1273,7 @@ del {
   text-transform: uppercase;
 }
 body[data-skin="entrine"] .above_lm {
+  font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
   background: #374254;
   color: #fff;
   padding: 0 0 0 27px;
@@ -1177,6 +1288,7 @@ ul.left-menu {
 }
 ul.left-menu > li > b {
   display: block;
+  position: relative;
   padding: 7px 7px 7px 20px;
   background-color: #edf0f4;
   border-bottom: 1px solid #cfcfcf;
@@ -1190,12 +1302,30 @@ ul.left-menu > li > b {
   width: 200px;
 }
 body[data-skin="entrine"] ul.left-menu > li > b {
+  font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
   font-weight: 600;
   border-bottom: 0;
   background-color: #374254;
   color: #cbd9f0;
   width: auto;
   padding-left: 27px;
+}
+body[data-skin="entrine"] ul.left-menu > li > b:after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 0;
+  background: 0;
+  border-style: solid;
+  border-width: 4px 0 4px 6px;
+  border-color: transparent transparent transparent #5ab5df;
+  right: 20px;
+  top: 13px;
+  -webkit-transition: 0.5s;
+  -moz-transition: 0.5s;
+  -o-transition: 0.5s;
+  -ms-transition: 0.5s;
+  transition: 0.5s;
 }
 ul.left-menu > li > b:hover {
   background-color: #dde5e5;
@@ -1251,6 +1381,13 @@ body[data-skin="entrine"] ul.left-menu > li > ul > li a:hover {
 body[data-skin="entrine"] ul.left-menu > li[state="1"] > b {
   background-color: #2a3246;
   color: #5ab5df;
+}
+body[data-skin="entrine"] ul.left-menu > li[state="1"] > b:after {
+  -webkit-transform: rotate(90deg);
+  -moz-transform: rotate(90deg);
+  -o-transform: rotate(90deg);
+  -ms-transform: rotate(90deg);
+  transform: rotate(90deg);
 }
 ul.left-menu > li[state="1"] > ul {
   display: block;
@@ -1309,6 +1446,10 @@ body[data-skin="entrine"] .diadminform-row {
   font-size: 12px;
   vertical-align: top;
 }
+body[data-skin="entrine"] .diadminform-row .title,
+body[data-skin="entrine"] .diadminform-row .value {
+  font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
+}
 .diadminform-row .title {
   float: left;
   display: block;
@@ -1351,7 +1492,16 @@ body[data-skin="entrine"] .diadminform-row .value {
     margin-left: 7px;
   }
 }
-.diadminform-row .value input,
+body[data-skin="entrine"] .diadminform-row .value .calendar-toggle {
+  margin-left: 15px;
+}
+body[data-skin="entrine"] .diadminform-row .value .date-sep,
+body[data-skin="entrine"] .diadminform-row .value .time-sep {
+  margin: 0 5px;
+  font-weight: bold;
+  margin-top: 25px;
+}
+.diadminform-row .value input:not([type="checkbox"]):not([type="radio"]):not([size]),
 .diadminform-row .value textarea {
   -webkit-box-flex: 1;
   -moz-box-flex: 1;
@@ -1360,6 +1510,10 @@ body[data-skin="entrine"] .diadminform-row .value {
   -webkit-flex: 1;
   -ms-flex: 1;
   flex: 1;
+}
+body[data-skin="entrine"] .diadminform-row .value input[type="checkbox"],
+body[data-skin="entrine"] .diadminform-row .value input[type="radio"] {
+  margin-top: 20px;
 }
 .diadminform-row .value.ui-sortable .ui-state-highlight {
   min-height: 50px;
@@ -1726,6 +1880,7 @@ table.dinicetable tr td {
   height: 28px;
 }
 body[data-skin="entrine"] table.dinicetable tr td {
+  font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
   background: none;
   height: auto;
   padding: 5px;
@@ -1754,6 +1909,18 @@ table.dinicetable tr td.href {
   text-align: center;
   padding: 0 5px;
 }
+body[data-skin="entrine"] table.dinicetable tr td.href a {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  background-image: url("/assets/images/_core/admin/skin/entrine/list/share.svg");
+  -webkit-background-size: cover;
+  -moz-background-size: cover;
+  background-size: cover;
+}
+body[data-skin="entrine"] table.dinicetable tr td.href a img {
+  display: none;
+}
 table.dinicetable tr td.btn {
   border-right: 0;
   padding: 0;
@@ -1764,6 +1931,45 @@ body[data-skin="entrine"] table.dinicetable tr td.btn {
 }
 body[data-skin="entrine"] table.dinicetable tr td.btn:not(:last-child) {
   border-right-color: #f1f1f1;
+}
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button {
+  width: 48px;
+  height: 48px;
+  background: none;
+  -webkit-background-size: 18px 18px;
+  -moz-background-size: 18px 18px;
+  background-size: 18px 18px;
+  background-repeat: no-repeat;
+  background-position: center center;
+}
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button:hover {
+  background-color: #5ab5df;
+}
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="edit"] {
+  background-image: url("/assets/images/_core/admin/skin/entrine/list/edit.svg");
+}
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="create"] {
+  background-image: url("/assets/images/_core/admin/skin/entrine/list/create.svg");
+}
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="del"] {
+  background-image: url("/assets/images/_core/admin/skin/entrine/list/del.svg");
+}
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="visible"][data-state="0"] {
+  background-image: url("/assets/images/_core/admin/skin/entrine/list/visible-0.svg");
+}
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="visible"][data-state="1"] {
+  background-image: url("/assets/images/_core/admin/skin/entrine/list/visible-1.svg");
+}
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="up"],
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="down"] {
+  background-image: url("/assets/images/_core/admin/skin/entrine/list/up.svg");
+}
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="down"] {
+  -webkit-transform: rotate(180deg);
+  -moz-transform: rotate(180deg);
+  -o-transform: rotate(180deg);
+  -ms-transform: rotate(180deg);
+  transform: rotate(180deg);
 }
 table.dinicetable tr td.btn a {
   display: block;

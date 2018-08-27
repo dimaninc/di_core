@@ -23,6 +23,7 @@ table.dinicetable
             vertical-align middle
             height 28px
             body[data-skin="entrine"] &
+                font-family $entrineFont
                 background none
                 height auto
                 padding 5px
@@ -46,6 +47,15 @@ table.dinicetable
             &.href
                 text-align center
                 padding 0 5px
+                body[data-skin="entrine"] &
+                    a
+                        display inline-block
+                        width 18px
+                        height 18px
+                        background-image url(/assets/images/_core/admin/skin/entrine/list/share.svg)
+                        background-size cover
+                        img
+                            display none
             &.btn
                 border-right 0
                 padding 0
@@ -54,6 +64,30 @@ table.dinicetable
                     background $entrineColorBgLightGray
                     &:not(:last-child)
                         border-right-color $entrineColorBgLightGray
+                    .nicetable-button
+                        width 48px
+                        height 48px
+                        background none
+                        background-size 18px 18px
+                        background-repeat no-repeat
+                        background-position center center
+                        &:hover
+                            background-color $entrineColorTextMenuSelected
+                        &[data-action="edit"]
+                            background-image url(/assets/images/_core/admin/skin/entrine/list/edit.svg)
+                        &[data-action="create"]
+                            background-image url(/assets/images/_core/admin/skin/entrine/list/create.svg)
+                        &[data-action="del"]
+                            background-image url(/assets/images/_core/admin/skin/entrine/list/del.svg)
+                        &[data-action="visible"][data-state="0"]
+                            background-image url(/assets/images/_core/admin/skin/entrine/list/visible-0.svg)
+                        &[data-action="visible"][data-state="1"]
+                            background-image url(/assets/images/_core/admin/skin/entrine/list/visible-1.svg)
+                        &[data-action="up"]
+                        &[data-action="down"]
+                            background-image url(/assets/images/_core/admin/skin/entrine/list/up.svg)
+                        &[data-action="down"]
+                            transform rotate(180deg)
                 a
                     display block
                     line-height 2px

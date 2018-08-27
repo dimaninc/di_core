@@ -8,6 +8,8 @@
 
 namespace diCore\Admin;
 
+use diCore\Admin\Data\Skin;
+use diCore\Data\Config;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 use diCore\Helper\FileSystemHelper;
@@ -520,6 +522,23 @@ class Form
 		return $this->getSubmitButtons($buttons_ar, $prefix_div, $suffix_div);
 	}
 
+    protected function getButtonIcon($name)
+    {
+        switch (Config::getAdminSkin())
+        {
+            case Skin::entrine:
+                $icons = [
+                    'save' => '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M16 10.975v13.025l-6-5.269-6 5.269v-24h6.816c-.553.576-1.004 1.251-1.316 2h-3.5v17.582l4-3.512 4 3.512v-8.763c.805.19 1.379.203 2 .156zm-.5-10.975c-2.486 0-4.5 2.015-4.5 4.5s2.014 4.5 4.5 4.5c2.484 0 4.5-2.015 4.5-4.5s-2.016-4.5-4.5-4.5zm-.469 6.484l-1.688-1.637.695-.697.992.94 2.115-2.169.697.696-2.811 2.867z"/></svg>',
+                    'quick_save' => '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M13.938 2c2.232 0 4.055 1.816 4.062 4.042v13.54l-4-3.512-4 3.512v-12.993c0-2.464-.28-3.333-.858-4.589h4.796zm0-2h-9.938c2.834 1.042 4 3.042 4 6.589v17.411l6-5.269 6 5.269v-17.958c-.011-3.341-2.723-6.042-6.062-6.042z"/></svg>',
+                    'cancel' => '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M16 10.975v13.025l-6-5.269-6 5.269v-24h6.816c-.553.576-1.004 1.251-1.316 2h-3.5v17.582l4-3.512 4 3.512v-8.763c.805.19 1.379.203 2 .156zm4-6.475c0 2.485-2.017 4.5-4.5 4.5s-4.5-2.015-4.5-4.5 2.017-4.5 4.5-4.5 4.5 2.015 4.5 4.5zm-3.086-2.122l-1.414 1.414-1.414-1.414-.707.708 1.414 1.414-1.414 1.414.707.708 1.414-1.415 1.414 1.414.708-.708-1.414-1.413 1.414-1.414-.708-.708z"/></svg>',
+                ];
+
+                return isset($icons[$name]) ? $icons[$name] : '';
+        }
+
+        return '';
+    }
+
 	public function getSubmitButtons($buttons = [], $prefix = "", $suffix = "")
 	{
 		$buttons = extend([
@@ -594,17 +613,37 @@ EOF;
 		}
 		else
 		{
-			$save_btn = $this->isButtonShown("save", $show_ar, $hide_ar) ? "<button type=\"submit\" id=\"btn-save\" onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->L("save")}</button>" : "";
-			$clone_btn = $this->isButtonShown("clone", $show_ar, $hide_ar) ? "<button type=\"button\" id=\"btn-clone\" onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->L("clone")}</button>" : "";
-			$quick_save_btn = $this->isButtonShown("quick_save", $show_ar, $hide_ar) ? "<button type=\"button\" id=\"btn-quick-save\" onclick=\"admin_form_{$this->table}_{$this->id}.quick_save();\">{$this->L("quick_save")}</button>" : "";
-			$dispatch_btn = $this->isButtonShown("dispatch", $show_ar, $hide_ar) ? "<button type=\"submit\" name=\"dispatch\" id=\"btn-dispatch\" value='1' onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true); return confirm('{$this->L("confirm_dispatch")}');\">{$this->L("dispatch")}</button>" : "";
-			$dispatch_test_btn = $this->isButtonShown("dispatch", $show_ar, $hide_ar) ? "<button type=\"submit\" name=\"dispatch_test\" value='1' id=\"btn-dispatch-test\" onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->L("dispatch_test")}</button>" : "";
-			$submit_and_add_btn = $this->isButtonShown("submit_and_add", $show_ar, $hide_ar) ? "<button type=\"submit\" name=\"submit_and_add\" id=\"btn-submit_and_add\" value=1 onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->L("submit_and_add")}</button>" : "";
-			$submit_and_next_btn = $this->isButtonShown("submit_and_next", $show_ar, $hide_ar) ? "<button type=\"submit\" name=\"submit_and_next\" id=\"btn-submit_and_next\" value=1 onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->L("submit_and_next")}</button>" : "";
-			$submit_and_send_btn = $this->isButtonShown("submit_and_send", $show_ar, $hide_ar) ? "<button type=\"submit\" name=\"submit_and_send\" id=\"btn-submit_and_send\" value=1 onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true); return confirm('{$this->L("confirm_send")}');\">{$this->L("submit_and_send")}</button>" : "";
-			$cancel_btn = $this->isButtonShown("cancel", $show_ar, $hide_ar) ? "<button type=\"button\" id=\"btn-cancel\" onclick=\"admin_form_{$this->table}_{$this->id}.cancel(".($this->lite ? "'&lite={$this->lite}'" : "").");\">{$this->L("cancel")}</button>" : "";
+			$save_btn = $this->isButtonShown("save", $show_ar, $hide_ar)
+                ? "<button type=\"submit\" id=\"btn-save\" onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->getButtonIcon('save')}{$this->L("save")}</button>"
+                : "";
+			$clone_btn = $this->isButtonShown("clone", $show_ar, $hide_ar)
+                ? "<button type=\"button\" id=\"btn-clone\" onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->L("clone")}</button>"
+                : "";
+			$quick_save_btn = $this->isButtonShown("quick_save", $show_ar, $hide_ar)
+                ? "<button type=\"button\" id=\"btn-quick-save\" onclick=\"admin_form_{$this->table}_{$this->id}.quick_save();\">{$this->getButtonIcon('quick_save')}{$this->L("quick_save")}</button>"
+                : "";
+			$dispatch_btn = $this->isButtonShown("dispatch", $show_ar, $hide_ar)
+                ? "<button type=\"submit\" name=\"dispatch\" id=\"btn-dispatch\" value='1' onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true); return confirm('{$this->L("confirm_dispatch")}');\">{$this->L("dispatch")}</button>"
+                : "";
+			$dispatch_test_btn = $this->isButtonShown("dispatch", $show_ar, $hide_ar)
+                ? "<button type=\"submit\" name=\"dispatch_test\" value='1' id=\"btn-dispatch-test\" onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->L("dispatch_test")}</button>"
+                : "";
+			$submit_and_add_btn = $this->isButtonShown("submit_and_add", $show_ar, $hide_ar)
+                ? "<button type=\"submit\" name=\"submit_and_add\" id=\"btn-submit_and_add\" value=1 onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->L("submit_and_add")}</button>"
+                : "";
+			$submit_and_next_btn = $this->isButtonShown("submit_and_next", $show_ar, $hide_ar)
+                ? "<button type=\"submit\" name=\"submit_and_next\" id=\"btn-submit_and_next\" value=1 onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->L("submit_and_next")}</button>"
+                : "";
+			$submit_and_send_btn = $this->isButtonShown("submit_and_send", $show_ar, $hide_ar)
+                ? "<button type=\"submit\" name=\"submit_and_send\" id=\"btn-submit_and_send\" value=1 onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true); return confirm('{$this->L("confirm_send")}');\">{$this->L("submit_and_send")}</button>"
+                : "";
+			$cancel_btn = $this->isButtonShown("cancel", $show_ar, $hide_ar)
+                ? "<button type=\"button\" id=\"btn-cancel\" onclick=\"admin_form_{$this->table}_{$this->id}.cancel(".($this->lite ? "'&lite={$this->lite}'" : "").");\">{$this->getButtonIcon('cancel')}{$this->L("cancel")}</button>"
+                : "";
 
-			$submit_status_line = $this->isButtonShown("quick_save", $show_ar, $hide_ar) ? "<div id=\"submit_status_line_{$this->table}_{$this->id}\" class=\"submit-status-line\"></div>" : "";
+			$submit_status_line = $this->isButtonShown("quick_save", $show_ar, $hide_ar)
+                ? "<div id=\"submit_status_line_{$this->table}_{$this->id}\" class=\"submit-status-line\"></div>"
+                : "";
 
 			return <<<EOF
 <div class="submit-block">
@@ -2597,11 +2636,11 @@ EOF;
 			$tm = "";
 		}
 
-		$d = "<input type=\"text\" name=\"{$field}[dd]\" id=\"{$field}[dd]\" value=\"$dd\" size=\"2\">.".
-			"<input type=\"text\" name=\"{$field}[dm]\" id=\"{$field}[dm]\" value=\"$dm\" size=\"2\">.".
+		$d = "<input type=\"text\" name=\"{$field}[dd]\" id=\"{$field}[dd]\" value=\"$dd\" size=\"2\"><span class='date-sep'>.</span>".
+			"<input type=\"text\" name=\"{$field}[dm]\" id=\"{$field}[dm]\" value=\"$dm\" size=\"2\"><span class='date-sep'>.</span>".
 			"<input type=\"text\" name=\"{$field}[dy]\" id=\"{$field}[dy]\" value=\"$dy\" size=\"4\">";
 
-		$t = "<input type=\"text\" name=\"{$field}[th]\" id=\"{$field}[th]\" value=\"$th\" size=\"2\">:".
+		$t = "<input type=\"text\" name=\"{$field}[th]\" id=\"{$field}[th]\" value=\"$th\" size=\"2\"><span class='time-sep'>:</span>".
 			"<input type=\"text\" name=\"{$field}[tm]\" id=\"{$field}[tm]\" value=\"$tm\" size=\"2\">";
 
 		$input = "";
@@ -2624,7 +2663,7 @@ EOF;
 			}
 
 			$input .= <<<EOF
- <button type="button" onclick="c_{$uid}.toggle();" class="w_hover">{$this->L("calendar")}</button>
+ <button type="button" onclick="c_{$uid}.toggle();" class="calendar-toggle w_hover">{$this->L("calendar")}</button>
 
 <script type="text/javascript">
 var c_{$uid} = new diCalendar({

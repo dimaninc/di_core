@@ -8,6 +8,7 @@ body
     font-weight normal
     &[data-skin="entrine"]
         color $entrineColorText
+        font-family $entrineFont
 
 table
     border-collapse collapse
@@ -224,6 +225,7 @@ u
             margin-bottom 20px
             box-sizing border-box
             body[data-skin="entrine"] &
+                font-family $entrineFont
                 height $entrineBaseHeight
                 line-height @height
                 background-color $entrineColorBgLightGray
@@ -241,11 +243,22 @@ u
             .buttons
                 padding 0 0 0 30px
                 a
+                    position relative
                     body[data-skin="entrine"] &
                         border-radius 2px
                         color white
                         background-color $entrineColorTextMenuSelected
-                        padding 11px 14px
+                        padding 11px 14px 11px 38px
+                        &:before
+                            content ''
+                            position absolute
+                            width 12px
+                            height 12px
+                            left 12px
+                            top 50%
+                            transform translateY(-50%)
+                            background url(/assets/images/_core/admin/skin/entrine/plus.svg)
+                            background-size cover
                         &:hover
                             background-color $entrineColorBgDark
     > .head-auth-info
@@ -269,6 +282,7 @@ u
             color white
             padding 0
             font-size 16px
+            font-weight 400
         @media screen and (max-width: 767px)
             width 100px
             top 0
@@ -276,6 +290,20 @@ u
             height 23px
             padding-top 0
             padding-bottom 0
+        span
+            display inline-block
+            position relative
+            body[data-skin="entrine"] &
+                &:before
+                    content ''
+                    position absolute
+                    width 18px
+                    height 18px
+                    left (-14px - @width)
+                    top 50%
+                    transform translateY(-50%)
+                    background url(/assets/images/_core/admin/skin/entrine/user.svg)
+                    background-size cover
         i
             display inline-block
             font-size 10px
@@ -312,6 +340,8 @@ u
             background #777
             color white
         body[data-skin="entrine"] &
+            font-family $entrineFont
+            font-weight 400
             width $entrineMenuWidth
             line-height $entrineBaseHeight
             font-size 16px
@@ -324,6 +354,8 @@ u
             line-height 23px
             padding 0 5px
             top 48px
+        > span
+            position relative
         &.go-to-face
             right 141px
             body[data-skin="entrine"] &
@@ -332,6 +364,31 @@ u
             @media screen and (max-width: 767px)
                 right 0
                 top 24px
+            > span
+                body[data-skin="entrine"] &
+                    &:before
+                        content ''
+                        position absolute
+                        width 18px
+                        height 18px
+                        left (-10px - @width)
+                        top 50%
+                        transform translateY(-50%)
+                        background url(/assets/images/_core/admin/skin/entrine/globe.svg)
+                        background-size cover
+        &.logout
+            > span
+                body[data-skin="entrine"] &
+                    &:before
+                        content ''
+                        position absolute
+                        width 18px
+                        height 18px
+                        left (-12px - @width)
+                        top 50%
+                        transform translateY(-50%)
+                        background url(/assets/images/_core/admin/skin/entrine/log-out.svg)
+                        background-size cover
     > .logo
         background #7601AC
         font-family Tahoma, Verdana, Segoe, sans-serif
@@ -341,6 +398,7 @@ u
         height $entrineBaseHeight
         box-sizing border-box
         body[data-skin="entrine"] &
+            font-family $entrineFont
             width $entrineMenuWidth
             background $entrineColorBgDarker
             text-align left
@@ -391,9 +449,10 @@ u
         padding-left 20px
         padding-right 10px
         body[data-skin="entrine"] &
+            font-family $entrineFont
             background $entrineColorBgDark
             font-size 20px
-            font-weight 600
+            font-weight 400
             padding-left 65px
             margin-left $entrineMenuWidth
         @media screen and (max-width: 767px)
@@ -491,13 +550,14 @@ button
     border-radius 8px
     cursor pointer
     outline none
+    body[data-skin="entrine"] &
+        font-family $entrineFont
     &:hover
         background #A1DFFF
     &.blue
         background-color #0000CC
         padding 7px 10px
         color white
-        font-family Arial, Helvetica, sans-serif
         font-size 11px
         font-weight bold
         border 0
@@ -512,7 +572,6 @@ button
     background-color #9600DB
     border 0
     padding 7px 10px
-    font-family Arial
     font-size 11px
     color white
     vertical-align middle
@@ -524,7 +583,6 @@ button
     background-color #848484
     border 0
     padding 7px 10px
-    font-family Arial
     font-size 11px
     color white
     vertical-align middle
@@ -536,7 +594,6 @@ button
     background-color #9600DB
     border 0
     padding 7px 10px
-    font-family Arial
     font-size 14px
     color white
     vertical-align middle
@@ -548,7 +605,6 @@ button
     background-color #848484
     border 0
     padding 7px 10px
-    font-family Arial
     font-size 14px
     color white
     vertical-align middle
@@ -572,6 +628,7 @@ textarea
     padding 2px 5px
     border-radius 4px
     body[data-skin="entrine"] &
+        font-family $entrineFont
         border-radius 0
         padding 15px
         border-color $entrineColorTableBorder
@@ -592,7 +649,6 @@ table.banners_stat td.sel, table.banners_stat th.sel
 
 .caution
     padding 10px
-    font-family Tahoma, sans-serif
     color #000
     font-size 12px
     font-weight bold
@@ -659,12 +715,17 @@ table.banners_stat td.sel, table.banners_stat th.sel
             border-radius 0
             color $entrineColorBgDark
             margin 0 20px 0 0
+            > svg
+                float right
             &:last-child
                 margin-right 0
             &:hover
                 background-color $entrineColorTextMenuSelected
                 border-color $entrineColorTextMenuSelected
                 color white
+                > svg
+                    path
+                        fill white
     .submit-status-line
         height 20px
         background #edf0f4

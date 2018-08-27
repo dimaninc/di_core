@@ -9,6 +9,7 @@
     margin-bottom 0
     text-transform uppercase
     body[data-skin="entrine"] &
+        font-family $entrineFont
         background $entrineColorBgDark
         color white
         padding 0 0 0 27px
@@ -21,6 +22,7 @@ ul.left-menu
     > li
         > b
             display block
+            position relative
             padding 7px 7px 7px 20px
             background-color #edf0f4
             border-bottom 1px solid #cfcfcf
@@ -31,12 +33,20 @@ ul.left-menu
             box-sizing border-box
             width 200px
             body[data-skin="entrine"] &
+                font-family $entrineFont
                 font-weight 600
                 border-bottom 0
                 background-color $entrineColorBgDark
                 color $entrineColorTextMenu
                 width auto //$entrineMenuWidth
                 padding-left 27px
+                &:after
+                    content ''
+                    position absolute
+                    triangle(6px, 8px, 'right', $entrineColorTextMenuSelected)
+                    right 20px
+                    top 13px
+                    transition .5s
             &:hover
                 background-color #dde5e5
                 body[data-skin="entrine"] &
@@ -78,5 +88,7 @@ ul.left-menu
                 body[data-skin="entrine"] &
                     background-color $entrineColorBgDarker
                     color $entrineColorTextMenuSelected
+                    &:after
+                        transform rotate(90deg)
             > ul
                 display block

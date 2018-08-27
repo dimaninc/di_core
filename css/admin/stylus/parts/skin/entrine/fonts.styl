@@ -1,0 +1,17 @@
+font-url(file)
+    return '/assets/fonts/skin/entrine/' + file
+
+web-font(family, file, weight = 'normal', style = 'normal')
+    @font-face
+        font-family family
+        src url(font-url(file + '.eot'))
+        src url(font-url(file + '.eot?#iefix')) format('embedded-opentype'),
+            url(font-url(file + '.woff')) format('woff'),
+            url(font-url(file + '.ttf')) format('truetype'),
+            url(font-url(file + '.svg#'+ family)) format('svg')
+        font-weight weight
+        font-style style
+
+web-font('Monserrat', 'Montserrat-Regular', 'normal')
+web-font('Monserrat', 'Montserrat-Bold', 'bold')
+web-font('Monserrat', 'Montserrat-Medium', 400)
