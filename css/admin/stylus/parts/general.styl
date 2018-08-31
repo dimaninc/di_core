@@ -210,6 +210,8 @@ u
         padding-bottom 20px
         body[data-skin="entrine"] &
             margin-left $entrineMenuWidth
+            @media screen and (max-width: 767px)
+                margin-left 0
         @media screen and (max-width: 767px)
             margin-left 0
         &:after
@@ -231,6 +233,9 @@ u
                 background-color $entrineColorBgLightGray
                 border-bottom 0
                 padding 0 0 0 65px
+                @media screen and (max-width: 767px)
+                    padding-left 12px
+                    padding-right 12px
             @media screen and (max-width: 767px)
                 padding-left 12px
                 padding-right 12px
@@ -278,11 +283,22 @@ u
             right $entrineMenuWidth * 2
             top 0
             line-height $entrineBaseHeight
-            background none
+            background $entrineColorBgDark
             color white
             padding 0
             font-size 16px
             font-weight 400
+            @media screen and (max-width: 1470px)
+                width $entrineMenuWidthNarrow1
+                right $entrineMenuWidthNarrow1 * 2
+            @media screen and (max-width: 767px)
+                width 100px
+                right 0
+                line-height 23px
+                height 23px
+                text-align left
+                font-size 13px
+                padding-left 5px
         @media screen and (max-width: 767px)
             width 100px
             top 0
@@ -304,6 +320,8 @@ u
                     transform translateY(-50%)
                     background url(/assets/images/_core/admin/skin/entrine/user.svg)
                     background-size cover
+                    @media screen and (max-width: 767px)
+                        display none
         i
             display inline-block
             font-size 10px
@@ -320,6 +338,7 @@ u
                 color white
                 background $entrineColorBgDarker
                 padding 7px
+                max-width 100px
             @media screen and (max-width: 767px)
                 display none
     > .head-href
@@ -346,6 +365,15 @@ u
             line-height $entrineBaseHeight
             font-size 16px
             background $entrineColorBgDark
+            @media screen and (max-width: 1470px)
+                width $entrineMenuWidthNarrow1
+                font-size 14px
+            @media screen and (max-width: 767px)
+                width 100px
+                line-height 24px
+                padding-left 5px
+                font-size 13px
+                text-align left
             &:hover
                 background $entrineColorBgDarker
         @media screen and (max-width: 767px)
@@ -361,6 +389,11 @@ u
             body[data-skin="entrine"] &
                 right $entrineMenuWidth
                 color #5ab5df
+                @media screen and (max-width: 1470px)
+                    right $entrineMenuWidthNarrow1
+                @media screen and (max-width: 767px)
+                    right 0
+                    color white
             @media screen and (max-width: 767px)
                 right 0
                 top 24px
@@ -376,6 +409,8 @@ u
                         transform translateY(-50%)
                         background url(/assets/images/_core/admin/skin/entrine/globe.svg)
                         background-size cover
+                        @media screen and (max-width: 767px)
+                            display none
         &.logout
             > span
                 body[data-skin="entrine"] &
@@ -389,6 +424,8 @@ u
                         transform translateY(-50%)
                         background url(/assets/images/_core/admin/skin/entrine/log-out.svg)
                         background-size cover
+                        @media screen and (max-width: 767px)
+                            display none
     > .logo
         background #7601AC
         font-family Tahoma, Verdana, Segoe, sans-serif
@@ -403,6 +440,19 @@ u
             background $entrineColorBgDarker
             text-align left
             padding-left 27px
+            @media screen and (max-width: 767px)
+                padding-left 50px
+            @media screen and (max-width: 450px)
+                width auto
+        @media screen and (max-width: 767px)
+            text-align left
+            padding-left 50px
+            cursor pointer
+            z-index 101
+        @media screen and (max-width: 450px)
+            position relative
+            width auto
+            margin-right 101px
         > b
             display block
             color white
@@ -417,15 +467,6 @@ u
                 font-size 14px
                 line-height 30px
                 padding-left 10px
-        @media screen and (max-width: 767px)
-            text-align left
-            padding-left 50px
-            cursor pointer
-            z-index 101
-        @media screen and (max-width: 450px)
-            position relative
-            width auto
-            margin-right 101px
         > .menu-toggle
             position absolute
             display none
@@ -455,6 +496,17 @@ u
             font-weight 400
             padding-left 65px
             margin-left $entrineMenuWidth
+            margin-right $entrineMenuWidth * 3
+            ellipsis()
+            @media screen and (max-width: 1470px)
+                margin-right $entrineMenuWidthNarrow1 * 3
+            @media screen and (max-width: 767px)
+                margin-right 101px
+                padding-left 15px
+            @media screen and (max-width: 450px)
+                margin-left 0
+                margin-right 0
+                font-size 16px
         @media screen and (max-width: 767px)
             max-width 100%
             margin-right 101px
@@ -632,17 +684,23 @@ textarea
         border-radius 0
         padding 15px
         border-color $entrineColorTableBorder
+        @media screen and (max-width: 767px)
+            padding 5px
 
 select
     body[data-skin="entrine"] &
         padding 15px
         border-color $entrineColorTableBorder
+        @media screen and (max-width: 767px)
+            padding 5px
 
 textarea
     padding-top 5px
     padding-bottom 5px
     body[data-skin="entrine"] &
         padding 15px
+        @media screen and (max-width: 767px)
+            padding 5px
 
 table.banners_stat td.sel, table.banners_stat th.sel
     background #ffd
@@ -698,6 +756,8 @@ table.banners_stat td.sel, table.banners_stat th.sel
         background-color transparent
         text-align left
         margin-left 165px
+        @media screen and (max-width: 767px)
+            margin-left 12px
     button
         margin 0 10px
         padding 5px 10px
@@ -715,8 +775,18 @@ table.banners_stat td.sel, table.banners_stat th.sel
             border-radius 0
             color $entrineColorBgDark
             margin 0 20px 0 0
+            @media screen and (max-width: 767px)
+                margin 0 12px 12px 0
+                padding 6px
+                border-width 2px
+                width auto
+                height auto
+                font-size 12px
+                text-transform none
             > svg
                 float right
+                @media screen and (max-width: 767px)
+                    display none
             &:last-child
                 margin-right 0
             &:hover
