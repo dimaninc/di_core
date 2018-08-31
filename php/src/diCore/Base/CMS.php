@@ -24,6 +24,10 @@ abstract class CMS
 
 	const MAIN_TEMPLATE_ENGINE = self::TEMPLATE_ENGINE_FASTTEMPLATE;
 
+	const OG_IMAGE = null;
+	const OG_IMAGE_W = 1200;
+	const OG_IMAGE_H = 623;
+
 	/** @var \FastTemplate */
 	public $tpl;
 
@@ -449,7 +453,7 @@ abstract class CMS
 		$ft = is_file($fn) ? filemtime($fn) : null;
 
 		return $ft
-			? \diDateTime::format('d.m.Y H:i', $ft)
+			? \diDateTime::simpleFormat($ft)
 			: '---';
 	}
 
@@ -762,29 +766,28 @@ abstract class CMS
 		return $this;
 	}
 
+	protected function useContentPicAsOpenGraph()
+	{
+		return true;
+	}
+
 	protected function assignMetaVariables()
 	{
 		$this
 			->checkTextMetaFields();
 
-		if (!$this->hasHeaderImage())
+		if ($this->useContentPicAsOpenGraph() && $this->getContentModel()->localized('pic'))
 		{
-			if ($this->getContentModel()->localized('pic'))
-			{
-				$this
-					->setHeaderImage(
-						$this->getContentModel()->getPicsFolder() . $this->getContentModel()->localized('pic'), null,
-						$this->getContentModel()->localized('pic_w'),
-						$this->getContentModel()->localized('pic_h')
-					);
-			}
-			elseif (\diConfiguration::exists('smm_logo'))
-			{
-				$this->setHeaderImage(\diConfiguration::getFilename('smm_logo'), null,
-					\diConfiguration::get('smm_logo', 'img_width'),
-					\diConfiguration::get('smm_logo', 'img_height')
+			$this
+				->setHeaderImage(
+					$this->getContentModel()->getPicsFolder() . $this->getContentModel()->localized('pic'), null,
+					$this->getContentModel()->localized('pic_w'),
+					$this->getContentModel()->localized('pic_h')
 				);
-			}
+		}
+		else
+		{
+			$this->setDefaultOpenGraphImage();
 		}
 
 		return $this;
@@ -1040,6 +1043,30 @@ abstract class CMS
 			->init_tpl()
 			->populateRoutes()
 			->initTplDefines();
+
+		return $this;
+	}
+
+	protected function setDefaultOpenGraphImage()
+	{
+		$key = \diConfiguration::exists('open_graph_default_pic')
+			? 'open_graph_default_pic'
+			: 'smm_logo';
+
+		if (\diConfiguration::exists($key) && \diConfiguration::getFilename($key))
+		{
+			$this->setHeaderImage(\diConfiguration::getFilename($key), null,
+				\diConfiguration::get($key, 'img_width'),
+				\diConfiguration::get($key, 'img_height')
+			);
+		}
+		elseif (static::OG_IMAGE)
+		{
+			$this->setHeaderImage(\diRequest::urlBase(true) . static::OG_IMAGE, null,
+				static::OG_IMAGE_W,
+				static::OG_IMAGE_H
+			);
+		}
 
 		return $this;
 	}
