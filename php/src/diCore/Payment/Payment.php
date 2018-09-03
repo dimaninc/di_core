@@ -214,6 +214,8 @@ class Payment
         /** @var \diCore\Entity\PaymentDraft\Model $draft */
         $draft = \diModel::create(\diTypes::payment_draft);
 
+        $this->afterDraftCreate($draft);
+
         $draft
             ->setUserId($this->getUserId())
             ->setTargetType($this->getTargetType())
@@ -221,12 +223,26 @@ class Payment
             ->setPaySystem((int)$systemId)
             ->setVendor((int)$vendorId)
             ->setCurrency($currency)
-            ->setAmount($amount)
+            ->setAmount($amount);
+
+        $this->beforeDraftSave($draft);
+
+        $draft
             ->save();
 
         static::log("Draft created: #{$draft->getId()}");
 
         return $draft;
+    }
+
+    protected function afterDraftCreate(\diCore\Entity\PaymentDraft\Model $draft)
+    {
+        return $this;
+    }
+
+    protected function beforeDraftSave(\diCore\Entity\PaymentDraft\Model $draft)
+    {
+        return $this;
     }
 
     /**
