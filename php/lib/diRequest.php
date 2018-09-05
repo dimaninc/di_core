@@ -46,9 +46,18 @@ class diRequest
 		$GLOBALS['_' . strtoupper($name)] = self::convertFromCommandLine();
 	}
 
+	public static function isSSL()
+	{
+		return
+			static::server('SERVER_PORT') == 443 ||
+			static::server('HTTPS') == 'on' ||
+			static::server('REQUEST_SCHEME') == 'https' ||
+			static::server('SSL_PROTOCOL');
+	}
+
 	public static function protocol()
 	{
-		return static::server('SERVER_PORT') == 443 ? 'https' : 'http';
+		return static::isSSL() ? 'https' : 'http';
 	}
 
 	public static function domain()
