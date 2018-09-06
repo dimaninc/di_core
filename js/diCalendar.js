@@ -983,14 +983,14 @@ days_in_mon_ar[false] = [31,28,31,30,31,30,31,31,30,31,30,31];
 days_in_mon_ar[true] = [31,29,31,30,31,30,31,31,30,31,30,31];
 
 var dicalendar_lng_ar = {
-  eng: {
+  en: {
     month_titles: ['','jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'],
     nominative_month_titles: ['','January','February','March','April','May','June','July','August','September','October','November','December'],
     wd_titles: ['mo','tu','we','th','fr','sa','su'],
-    date1_select_str: '%d.%m is a beginning date',
-    date2_select_str: '%d.%m is a finishing date'
+    date1_select_str: '%m/%d is a beginning date',
+    date2_select_str: '%m/%d is a finishing date'
   },
-  rus: {
+  ru: {
     month_titles: ['','января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'],
     nominative_month_titles: ['','Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'],
     wd_titles: ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'],
@@ -998,3 +998,6 @@ var dicalendar_lng_ar = {
     date2_select_str: '%d.%m - конечная дата'
   }
 };
+
+dicalendar_lng_ar.eng = dicalendar_lng_ar.en;
+dicalendar_lng_ar.rus = dicalendar_lng_ar.ru;

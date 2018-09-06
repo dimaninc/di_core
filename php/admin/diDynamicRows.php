@@ -1037,6 +1037,7 @@ c_{$uid}[{$this->current_id}] = new diCalendar({
   instance_name: 'c_{$uid}[{$this->current_id}]',
   uid: '{$uid}[{$this->current_id}]',
   position_base: 'parent',
+  language: '$this->language',
   $calendar_cfg_js
 });
 EOF;

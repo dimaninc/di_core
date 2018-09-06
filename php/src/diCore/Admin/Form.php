@@ -2674,6 +2674,7 @@ EOF;
 var c_{$uid} = new diCalendar({
 	instance_name: 'c_{$uid}',
 	position_base: 'parent',
+	language: '{$this->getX()->getLanguage()}',
 	$calendar_cfg_js
 });
 </script>

@@ -67,11 +67,13 @@ class diAdminFilters
 		'en' => [
 			'form.submit.title' => 'Apply filter',
 			'form.reset.title' => 'Reset',
+            'calendar' => 'Calendar',
 		],
 
 		'ru' => [
 			'form.submit.title' => 'Применить фильтр',
 			'form.reset.title' => 'Сбросить',
+            'calendar' => 'Календарь',
 		],
 	];
 
@@ -773,9 +775,9 @@ EOF;
 					// js
 					$uid = substr(get_unique_id(), 0, 8);
 
-					$calendar_cfg_js = "months_to_show: 2, date1: 'admin_filter[{$field}][1]', date2: 'admin_filter[{$field}][2]', able_to_go_to_past: true";
+					$calendar_cfg_js = "months_to_show: 2, date1: 'admin_filter[{$field}][1]', date2: 'admin_filter[{$field}][2]', able_to_go_to_past: true, language: '{$this->language}'";
 
-					$s .= " <button type=button onclick=\"c_{$uid}.toggle();\">Календарь</button>" .
+					$s .= " <button type=button onclick=\"c_{$uid}.toggle();\">{$this->L('calendar')}</button>" .
 						"<script type=\"text/javascript\">var c_{$uid} = new diCalendar({instance_name: 'c_{$uid}', $calendar_cfg_js});</script>";
 					//
 
