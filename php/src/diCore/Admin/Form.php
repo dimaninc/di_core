@@ -71,7 +71,7 @@ class Form
 			'confirm_send' => 'Send the reply to email? Are you sure?',
 
 			'or_enter' => 'or enter',
-			'add_item' => 'Add +',
+			'add_item' => 'Add',
 			'link' => 'Link',
 
 			'tab_general' => 'General',
@@ -112,7 +112,7 @@ class Form
 			'confirm_send' => 'Отправить ответ на почту? Вы уверены?',
 
 			'or_enter' => 'или введите',
-			'add_item' => 'Добавить +',
+			'add_item' => 'Добавить',
 			'link' => 'Ссылка',
 
 			'tab_general' => 'Основное',
@@ -2335,7 +2335,7 @@ EOF;
 
 		if ($this->getDb()->count($pic_rs))
 		{
-			$s .= "<div class='dynamic_add' style='margin: 0 0 10px 0;'>[<a href='#' onclick=\"return dipics_{$this->table}.add('$field');\">{$this->L('add_item')}</a>]</div>\n";
+			$s .= "<div class='dynamic-add'><a href='#' onclick=\"return dipics_{$this->table}.add('$field');\" class=\"simple-button\">{$this->L('add_item')}</a></div>\n";
 		}
 
 		while ($pic_r = $this->getDb()->fetch($pic_rs))
@@ -2355,7 +2355,7 @@ EOF;
 
 		$s .= "<script type=\"text/javascript\">\nif (typeof dipics_{$this->table} == 'undefined') var dipics_{$this->table} = new diDynamicRows();\ndipics_{$this->table}.init('$field', 'изображение', 1, $last_ref_idx);\n</script>\n";
 
-		$s .= "<div class='dynamic_add'>[<a href='#' onclick=\"return dipics_{$this->table}.add('$field');\">{$this->L('add_item')}</a>]</div>\n";
+		$s .= "<div class='dynamic-add'>[<a href='#' onclick=\"return dipics_{$this->table}.add('$field');\">{$this->L('add_item')}</a>]</div>\n";
 
 		$this->inputs[$field] = $s;
 

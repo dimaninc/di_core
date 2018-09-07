@@ -116,8 +116,8 @@ class Caption
 		   )
 		{
 		    $href = $this->getX()->getCurrentPageUri('form');
-            $bracketsNeeded = Config::getAdminSkin() == Skin::classic;
-            $tag = "<a href=\"$href\">{$this->getX()->getVocabulary('add')}</a>";
+            $bracketsNeeded = false; //Config::getAdminSkin() == Skin::classic;
+            $tag = "<a href=\"$href\" class=\"simple-button\">{$this->getX()->getVocabulary('add')}</a>";
 
 			return $bracketsNeeded ? "[ $tag ]" : $tag;
 		}

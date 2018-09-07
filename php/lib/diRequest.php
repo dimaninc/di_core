@@ -171,7 +171,7 @@ class diRequest
 	{
 		return
 			static::server('SERVER_PORT') == 443 ||
-			static::server('HTTPS') !== 'off' ||
+			static::server('HTTPS') === 'on' ||
 			static::server('REQUEST_SCHEME') === 'https' ||
 			static::server('SSL_PROTOCOL');
 	}

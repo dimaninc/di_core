@@ -134,13 +134,24 @@
         select
             max-width 100%
     &[data-type="dynamic"]
+    &[data-type="dynamic_pics"]
         .title
             width auto
             float none
             padding-bottom 10px
+            body[data-skin="entrine"] &
+                width auto
+                float none
+                padding-bottom 10px
+                text-align left
+                font-weight bold
         .value
             display block
             margin-left 0 !important
+            body[data-skin="entrine"] &
+                display block
+                padding 5px 0 5px 20px
+                border-left 3px solid $entrineColorTextMenuSelected //$entrineColorBgDark
     .tags-grid
         margin-bottom 15px
     .new-tag

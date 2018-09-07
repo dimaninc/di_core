@@ -1,19 +1,23 @@
 .above_lm
     background white
     color black
-    padding 14px 0 14px 22px
+    padding-left 22px
     font-family Tahoma, sans-serif
     font-size 12px
     font-weight bold
     border-bottom 1px solid #CCCCCC
     margin-bottom 0
     text-transform uppercase
+    height 40px
+    line-height @height
+    box-sizing border-box
     body[data-skin="entrine"] &
         font-family $entrineFont
         background $entrineColorBgDark
         color white
-        padding 0 0 0 27px
-        line-height 71px
+        padding-left 27px
+        height 71px
+        line-height @height
         font-weight 600
         border-bottom 0
 

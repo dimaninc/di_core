@@ -66,13 +66,13 @@ class diDynamicRows
 
 	private $options = [
 		'en' => [
-			'addRowText' => 'Add +',
+			'addRowText' => 'Add',
 			'multipleUpload' => 'Select several files',
 			'dragAndDropUpload' => '(drag and drop is allowed)',
 		],
 
 		'ru' => [
-			'addRowText' => 'Добавить +',
+			'addRowText' => 'Добавить',
 			'multipleUpload' => 'Выбрать несколько файлов',
 			'dragAndDropUpload' => '(можно перетащить мышкой)',
 		],
@@ -362,7 +362,7 @@ class diDynamicRows
 
 	public function getAddRowHtml()
 	{
-		return "<div class=\"dynamic-add\">[<a href=\"#\" onclick=\"return {$this->js_var_name}.add('{$this->field}');\">{$this->getOption('addRowText')}</a>]</div>\n";
+		return "<div class=\"dynamic-add\"><a href=\"#\" onclick=\"return {$this->js_var_name}.add('{$this->field}');\" class=\"simple-button\">{$this->getOption('addRowText')}</a></div>\n";
 	}
 
   function get_row_type($subfield)

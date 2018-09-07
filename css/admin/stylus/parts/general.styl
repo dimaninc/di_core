@@ -182,8 +182,41 @@ u
     width 18px
     height 18px
     background url(/_core/i/admin/buttons/close.png) 0 0 no-repeat
+    body[data-skin="entrine"] &
+        background-image url(/assets/images/_core/admin/skin/entrine/list/del.svg)
+        background-size 18px 18px
+        background-position center center
+        width 36px
+        height 36px
     &:hover
         background-position 0 -18px
+        body[data-skin="entrine"] &
+            background-position center center
+            background-color $entrineColorTextMenuSelected
+
+.simple-button
+    display inline-block
+    position relative
+    border-radius 3px
+    background-color #ddd
+    padding 5px 10px
+    body[data-skin="entrine"] &
+        border-radius 2px
+        color white
+        background-color $entrineColorTextMenuSelected
+        padding 11px 14px 11px 38px
+        &:before
+            content ''
+            position absolute
+            width 12px
+            height 12px
+            left 12px
+            top 50%
+            transform translateY(-50%)
+            background url(/assets/images/_core/admin/skin/entrine/plus.svg)
+            background-size cover
+        &:hover
+            background-color $entrineColorBgDark
 
 .admin-layout
     padding-bottom 40px
@@ -219,7 +252,9 @@ u
             display block
             clear both
         > .caption
-            padding 14px 24px
+            padding-left 24px
+            height 40px
+            line-height @height
             font-family Tahoma, sans-serif
             font-size 12px
             background #fff
@@ -249,23 +284,7 @@ u
                 padding 0 0 0 30px
                 a
                     position relative
-                    body[data-skin="entrine"] &
-                        border-radius 2px
-                        color white
-                        background-color $entrineColorTextMenuSelected
-                        padding 11px 14px 11px 38px
-                        &:before
-                            content ''
-                            position absolute
-                            width 12px
-                            height 12px
-                            left 12px
-                            top 50%
-                            transform translateY(-50%)
-                            background url(/assets/images/_core/admin/skin/entrine/plus.svg)
-                            background-size cover
-                        &:hover
-                            background-color $entrineColorBgDark
+                    display inline
     > .head-auth-info
         line-height 25px
         background #777
@@ -388,7 +407,7 @@ u
             right 141px
             body[data-skin="entrine"] &
                 right $entrineMenuWidth
-                color #5ab5df
+                color $entrineColorTextMenuSelected
                 @media screen and (max-width: 1470px)
                     right $entrineMenuWidthNarrow1
                 @media screen and (max-width: 767px)
