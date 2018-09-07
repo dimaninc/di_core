@@ -446,14 +446,16 @@ EOF;
 					$this->getDb()->reset($rs);
 				}
 
-				$fieldsListString = $fields && $fieldsAr ? "(".join(",", array_keys($fieldsAr)).")" : "";
+				$fieldsListString = $fields && $fieldsAr ? '(' . join(',', array_map(function($field) {
+						return '`' . $field . '`';
+					}, array_keys($fieldsAr))) . ')' : '';
 
 				if ($multiple && $rc)
 				{
 					$sql .= "INSERT INTO `{$table}`{$fieldsListString} VALUES";
 				}
 
-				$end_symbol = $multiple ? "," : ";";
+				$end_symbol = $multiple ? ',' : ';';
 
 				for ($j = 0; $j < $rc; $j++)
 				{
@@ -466,10 +468,10 @@ EOF;
 
 					if ($j == $rc - 1)
 					{
-						$end_symbol = ";";
+						$end_symbol = ';';
 					}
 
-					$sql .= "(".join(',', $this->prepareString(array_values($r)))."){$end_symbol}\n";
+					$sql .= '(' . join(',', $this->prepareString(array_values($r))) . "){$end_symbol}\n";
 
 					$this->tryToFlush($fp, $sql, $compress);
 				}
