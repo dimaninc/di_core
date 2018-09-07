@@ -2,6 +2,7 @@ var diDynamicRows = function(opts) {
 	var self = this,
 		$anc,
 		$src,
+		$jsSrc,
 		$wrapper,
 		$formRow,
 		$dropAreas,
@@ -169,6 +170,7 @@ var diDynamicRows = function(opts) {
 		}
 		//
 
+		$jsSrc = $('#js_' + opts.field + '_js_resource');
 		$src = $('#js_' + opts.field + '_resource');
 		$anc = $('#' + opts.field + '_anchor_div');
 		$wrapper = $anc.parent();
@@ -270,11 +272,19 @@ var diDynamicRows = function(opts) {
 		html = html.substr(0, html.length - 6);
 		html = html.replace(/%NEWID%/g, id);
 
-		var $e = $('<div>');
+		var js = $jsSrc.html();
+		js = js.replace(/%NEWID%/g, id);
+
+		var $e = $('<div />');
+		var $eJs = $('<script type="text/javascript">' + js + '</script>');
 
 		$e.attr('id', field + '_div[' + id + ']').attr('data-id', id).data('id', id).addClass('dynamic-row')
 			.html(html)
 			.insertBefore($anc);
+
+		setTimeout(function() {
+			$eJs.insertBefore($anc);
+		}, 10);
 
 		$e.find(':checkbox,:radio').diControls();
 

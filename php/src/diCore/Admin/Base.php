@@ -289,6 +289,7 @@ class Base
             'admin_skin' => Skin::name(Config::getAdminSkin()),
             'site_subfolder' => \diLib::getSubFolder(),
             'site_path' => (\diLib::getSubFolder() ? '/' . \diLib::getSubFolder() : '') . '/',
+			'site_language' => $this->getLanguage(),
 			'current_year' => date('Y'),
 			'page_title' => $this->getPageTitle(),
 			'site_title' => $this->getSiteTitle(),
