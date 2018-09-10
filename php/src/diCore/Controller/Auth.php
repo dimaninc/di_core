@@ -77,9 +77,14 @@ class Auth extends \diBaseController
 		$this->redirect();
 	}
 
+	protected function getOAuth()
+	{
+		return \diOAuth2::create($this->param(0));
+	}
+	
 	public function oauth2Action()
 	{
-		$a = \diOAuth2::create($this->param(0));
+		$a = $this->getOAuth();
 
 		if ($this->param(1) == \diOAuth2::callbackParam)
 		{

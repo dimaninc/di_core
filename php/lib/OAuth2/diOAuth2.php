@@ -25,6 +25,13 @@ abstract class diOAuth2
 	protected $profileRetrieveErrorInfo;
 	public static $lastRequestError;
 
+	/** @var  callable|null */
+	protected $signUpCallback;
+	/** @var  callable|null */
+	protected $signInCallback;
+	/** @var  callable|null */
+	protected $postCallback;
+
 	public function __construct()
 	{
 		$this->profile = diModel::create(diTypes::o_auth2_profile);
@@ -208,6 +215,36 @@ abstract class diOAuth2
 		return false;
 	}
 
+	/**
+	 * @param callable $signUpCallback
+	 * @return $this
+	 */
+	public function setSignUpCallback($signUpCallback)
+	{
+		$this->signUpCallback = $signUpCallback;
+		return $this;
+	}
+
+	/**
+	 * @param callable $signInCallback
+	 * @return $this
+	 */
+	public function setSignInCallback($signInCallback)
+	{
+		$this->signInCallback = $signInCallback;
+		return $this;
+	}
+
+	/**
+	 * @param callable $postCallback
+	 * @return $this
+	 */
+	public function setPostCallback($postCallback)
+	{
+		$this->postCallback = $postCallback;
+		return $this;
+	}
+
 	public function processReturn()
 	{
 		if ($this->isReturn())
@@ -219,6 +256,11 @@ abstract class diOAuth2
 			if (!diAuth::i()->authorized())
 			{
 				diAuth::i()->forceAuthorize($user);
+			}
+
+			if (is_callable($callback = $this->postCallback))
+			{
+				$callback($this, $user);
 			}
 		}
 
@@ -274,9 +316,26 @@ abstract class diOAuth2
 	{
 		$user->importDataFromOAuthProfile($this->getProfile());
 
+		$signUp = !$user->hasId();
+
 		if ($user->changed())
 		{
 			$user->save();
+
+			if ($signUp)
+			{
+				if (is_callable($callback = $this->signUpCallback))
+				{
+					$callback($this, $user);
+				}
+			}
+			else
+			{
+				if (is_callable($callback = $this->signInCallback))
+				{
+					$callback($this, $user);
+				}
+			}
 		}
 
 		return $this;
