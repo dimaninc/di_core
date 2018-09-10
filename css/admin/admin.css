@@ -1730,6 +1730,15 @@ body[data-skin="entrine"] .diadminform-row .value input[type="radio"] {
   max-height: 50px;
   width: auto;
 }
+.diadminform-row .value .static {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  -o-box-flex: 1;
+  box-flex: 1;
+  -webkit-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
+}
 body[data-skin="entrine"] .diadminform-row .value .static {
   padding-top: 18px;
   min-height: 40px;
