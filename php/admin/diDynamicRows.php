@@ -24,6 +24,7 @@
 use diCore\Admin\Submit;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\FileSystemHelper;
+use diCore\Helper\StringHelper;
 
 class diDynamicRows
 {
@@ -1088,7 +1089,13 @@ EOF;
 
 		if (is_file($f))
 		{
-			$httpName = diPaths::http() . $fullName;
+			$httpName = \diPaths::http($this->storedModel, false, $field) . '/' . StringHelper::unslash($fullName, false);
+
+            if (!StringHelper::contains($httpName, '://') && \diLib::getSubFolder())
+            {
+                $httpName = '/' . $httpName;
+            }
+
 			$imgTag = '';
 			$ff_w = $ff_h = null;
 			$ff_s = filesize($f);
@@ -1121,7 +1128,7 @@ EOF;
 				}
 				elseif ($ff_t)
 				{
-					$imgTag = "<img src=\"$fullName\" width=\"$ff_w\" height=\"$ff_h\" alt=\"$field\" />";
+					$imgTag = "<img src=\"$httpName\" width=\"$ff_w\" height=\"$ff_h\" alt=\"$field\" />";
 				}
 			}
 
