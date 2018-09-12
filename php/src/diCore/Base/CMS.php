@@ -776,18 +776,21 @@ abstract class CMS
 		$this
 			->checkTextMetaFields();
 
-		if ($this->useContentPicAsOpenGraph() && $this->getContentModel()->localized('pic'))
+		if (!$this->getOpenGraph('image'))
 		{
-			$this
-				->setHeaderImage(
-					$this->getContentModel()->getPicsFolder() . $this->getContentModel()->localized('pic'), null,
-					$this->getContentModel()->localized('pic_w'),
-					$this->getContentModel()->localized('pic_h')
-				);
-		}
-		else
-		{
-			$this->setDefaultOpenGraphImage();
+			if ($this->useContentPicAsOpenGraph() && $this->getContentModel()->localized('pic'))
+			{
+				$this
+					->setHeaderImage(
+						$this->getContentModel()->getPicsFolder() . $this->getContentModel()->localized('pic'), null,
+						$this->getContentModel()->localized('pic_w'),
+						$this->getContentModel()->localized('pic_h')
+					);
+			}
+			else
+			{
+				$this->setDefaultOpenGraphImage();
+			}
 		}
 
 		return $this;
