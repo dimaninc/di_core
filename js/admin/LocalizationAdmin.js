@@ -15,16 +15,21 @@ LocalizationAdmin = (function() {
   };
 
   LocalizationAdmin.prototype.setupAutoHeight = function() {
-    $('.diadminform-row').filter('[data-field$="value"]').find('textarea').autoHeight();
+    setTimeout((function(_this) {
+      return function() {
+        return $('.diadminform-row').filter('[data-field$="value"]').find('textarea').autoHeight();
+      };
+    })(this), 100);
     return this;
   };
 
   LocalizationAdmin.prototype.setupExport = function() {
     $('.filter-block [name="export"]').on('click', function() {
-      var $cb, $out, $t, linesAr;
+      var $cb, $out, $t, linesAr, names;
       $t = $('.dinicetable');
       $cb = $t.find('tr td.id .checked, tr td.id input:checkbox:checked');
       linesAr = [];
+      names = [];
       $out = $('.export-block');
       if ($out.length && $out.is(':visible')) {
         $out.hide();
@@ -47,6 +52,9 @@ LocalizationAdmin = (function() {
             val = $td.html();
           }
           val = val.replace(/'/g, '\\\'').replace(/"/g, '\\\"');
+          if ($td.data('field') === 'name') {
+            names.push(val);
+          }
           valuesAr.push(val);
         }
         s = '$this->getDb()->q("INSERT IGNORE INTO `' + $t.data('table') + '`(`name`,`value`,`en_value`,`de_value`,`it_value`,`es_value`,`fr_value`)\n' + '\u0009\u0009\u0009VALUES(\'' + valuesAr.join('\',\'') + '\');' + '");';
@@ -56,7 +64,11 @@ LocalizationAdmin = (function() {
       if (!$out.length) {
         $out = $('<div class="export-block"><textarea></textarea></div>').insertAfter($(this).parent());
       }
-      $out.show().find('textarea').val(linesAr.join('\n'));
+      $out.show().find('textarea').val(names.map((function(_this) {
+        return function(n) {
+          return "'" + n + "',";
+        };
+      })(this)).concat(linesAr).join('\n'));
       return false;
     });
     return this;

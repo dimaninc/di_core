@@ -10,10 +10,12 @@ class LocalizationAdmin
         @setupExport()
 
     setupAutoHeight: ->
-        $ '.diadminform-row'
-        .filter '[data-field$="value"]'
-        .find 'textarea'
-        .autoHeight()
+        setTimeout =>
+            $ '.diadminform-row'
+            .filter '[data-field$="value"]'
+            .find 'textarea'
+            .autoHeight()
+        , 100
         @
 
     setupExport: ->
@@ -22,6 +24,7 @@ class LocalizationAdmin
             $t = $ '.dinicetable'
             $cb = $t.find 'tr td.id .checked, tr td.id input:checkbox:checked'
             linesAr = []
+            names = []
             $out = $ '.export-block'
 
             if $out.length and $out.is ':visible'
@@ -40,8 +43,11 @@ class LocalizationAdmin
                     val = $td.find('[data-purpose="orig"]').html()
                     val = $td.html() if val is undefined or val is null
                     val = val.replace(/'/g, '\\\'').replace(/"/g, '\\\"')
+                    names.push val if $td.data('field') is 'name'
                     valuesAr.push val
-                s = '$this->getDb()->q("INSERT IGNORE INTO `' + $t.data('table') + '`(`name`,`value`,`en_value`,`de_value`,`it_value`,`es_value`,`fr_value`)\n' + '\u0009\u0009\u0009VALUES(\'' + valuesAr.join('\',\'') + '\');' + '");'
+                s = '$this->getDb()->q("INSERT IGNORE INTO `' + $t.data('table') +
+                    '`(`name`,`value`,`en_value`,`de_value`,`it_value`,`es_value`,`fr_value`)\n' +
+                    '\u0009\u0009\u0009VALUES(\'' + valuesAr.join('\',\'') + '\');' + '");'
                 linesAr.push s
                 true
 
@@ -49,7 +55,7 @@ class LocalizationAdmin
                 $out = $ '<div class="export-block"><textarea></textarea></div>'
                 .insertAfter $(@).parent()
 
-            $out.show().find('textarea').val linesAr.join '\n'
+            $out.show().find('textarea').val names.map((n) => "'#{n}',").concat(linesAr).join '\n'
 
             false
         @

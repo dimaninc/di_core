@@ -302,6 +302,13 @@ class diModel implements \ArrayAccess
 		return static::type;
 	}
 
+	public static function modelTypeName()
+	{
+		return static::type
+			? \diTypes::getName(static::type)
+			: null;
+	}
+
 	public function getHref()
 	{
 		return null;
