@@ -2118,6 +2118,40 @@ div.dinicetable_div {
 table.dinicetable {
   border-collapse: collapse;
 }
+table.dinicetable tr.level1 td {
+  font-weight: bold;
+}
+body[data-skin="entrine"] table.dinicetable tr.level1 td {
+  font-weight: 500;
+}
+table.dinicetable tr.level2 td {
+  background: #dfe0e5;
+  font-weight: bold;
+  padding-left: 20px;
+}
+table.dinicetable tr.level3 td {
+  color: #333;
+  background: #dddde7;
+  padding-left: 35px;
+}
+table.dinicetable tr.level4 td {
+  color: #333;
+  font-size: 11px;
+  background: #dfdfda;
+  padding-left: 50px;
+}
+table.dinicetable tr.level5 td {
+  color: #333;
+  font-size: 11px;
+  background: #dfdfda;
+  padding-left: 65px;
+}
+table.dinicetable tr.level6 td {
+  color: #333;
+  font-size: 10px;
+  background: #eee;
+  padding-left: 80px;
+}
 table.dinicetable tr td {
   border: 0;
   border-right: 1px #fff solid;
@@ -2314,40 +2348,6 @@ table.dinicetable tr.headline:hover > td {
 }
 body[data-skin="entrine"] table.dinicetable tr.headline:hover > td {
   background-color: none;
-}
-table.dinicetable tr.level1 td {
-  font-weight: bold;
-}
-body[data-skin="entrine"] table.dinicetable tr.level1 td {
-  font-weight: 500;
-}
-table.dinicetable tr.level2 td {
-  background: #dfe0e5;
-  font-weight: bold;
-  padding-left: 20px;
-}
-table.dinicetable tr.level3 td {
-  color: #333;
-  background: #dddde7;
-  padding-left: 35px;
-}
-table.dinicetable tr.level4 td {
-  color: #333;
-  font-size: 11px;
-  background: #dfdfda;
-  padding-left: 50px;
-}
-table.dinicetable tr.level5 td {
-  color: #333;
-  font-size: 11px;
-  background: #dfdfda;
-  padding-left: 65px;
-}
-table.dinicetable tr.level6 td {
-  color: #333;
-  font-size: 10px;
-  background: #eee;
-  padding-left: 80px;
 }
 .dinicetable_div .parent-anchor {
   position: absolute;
