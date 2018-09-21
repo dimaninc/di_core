@@ -12,7 +12,8 @@ class FreeGeoIpLocation extends GeoIpLocation
 {
 	protected function fetchData()
 	{
-		$this->data = (array)json_decode(file_get_contents('http://freegeoip.net/json/' . $this->getIp()));
+		// todo: find another free ip provider
+		//$this->data = (array)json_decode(file_get_contents('http://freegeoip.net/json/' . $this->getIp()));
 
 		return $this;
 	}
