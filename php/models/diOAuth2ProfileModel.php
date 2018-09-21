@@ -135,12 +135,12 @@ class diOAuth2ProfileModel extends diModel
 	public function importFromVk(diModel $m)
 	{
 		$this
-			->setUid($m["uid"])
+			->setUid($m["id"])
 			->setLogin($m["screen_name"] ?: $m["nick_name"])
 			->setFirstName($m["first_name"])
 			->setLastName($m["last_name"])
 			->setName($m["first_name"] . " " . $m["last_name"])
-			->setDob(diDateTime::format("Y-m-d", $m["bdate"]))
+			->setDob(\diDateTime::format("Y-m-d", $m["bdate"]))
 			->setSex(self::convertGender($m["gender"]))
 			->setAvatar($m["photo_big"]);
 

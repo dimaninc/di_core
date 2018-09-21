@@ -20,7 +20,7 @@ abstract class diOAuth2
 	protected $profile;
 
 	/** @var array */
-	protected $profileRawData = array();
+	protected $profileRawData = [];
 	/** @var string */
 	protected $profileRetrieveErrorInfo;
 	public static $lastRequestError;
@@ -43,7 +43,7 @@ abstract class diOAuth2
 	 * @return diOAuth2
 	 * @throws Exception
 	 */
-	public static function create($vendor, $options = array())
+	public static function create($vendor, $options = [])
 	{
 		$vendorName = diOAuth2Vendors::name(diOAuth2Vendors::id($vendor));
 
@@ -104,19 +104,19 @@ abstract class diOAuth2
 		return $this->vendorId;
 	}
 
-	public static function getWorkerPath($method, $params = array())
+	public static function getWorkerPath($method, $params = [])
 	{
 		if (!is_array($params))
 		{
 			$params = array($params);
 		}
 
-		array_splice($params, 0, 0, array($method));
+		array_splice($params, 0, 0, [$method]);
 
-		return diLib::getWorkerPath("auth", "oauth2", $params);
+		return \diLib::getWorkerPath("auth", "oauth2", $params);
 	}
 
-	public static function makeHttpRequest($url, $params = array(), $method = self::REQUEST_GET)
+	public static function makeHttpRequest($url, $params = [], $method = self::REQUEST_GET)
 	{
 		$ch = curl_init();
 
@@ -171,11 +171,11 @@ abstract class diOAuth2
 
 	protected function getBackUrlParts()
 	{
-		return array(
-			"scheme" => diRequest::protocol(),
-			"host" => diRequest::server("HTTP_HOST"),
-			"path" => static::getWorkerPath(diOAuth2Vendors::name($this->vendorId), static::callbackParam),
-		);
+		return [
+			"scheme" => \diRequest::protocol(),
+			"host" => \diRequest::domain(),
+			"path" => static::getWorkerPath(\diOAuth2Vendors::name($this->vendorId), static::callbackParam),
+		];
 	}
 
 	public function getBackUrl()
@@ -275,16 +275,21 @@ abstract class diOAuth2
 		}
 		else
 		{
-			$q = array(
-				diOAuth2Vendors::name($this->vendorId) . "_id='" . $this->getProfile()->getUid() . "'",
-			);
+			$q = [];
+
+			if ($this->getProfile()->getUid())
+			{
+				$q[] = diOAuth2Vendors::name($this->vendorId) . "_id = '" . $this->getProfile()->getUid() . "'";
+			}
 
 			if ($this->getProfile()->hasEmail())
 			{
-				$q[] = "email='{$this->getProfile()->getEmail()}'";
+				$q[] = "email = '{$this->getProfile()->getEmail()}'";
 			}
 
-			$user = diCollection::create(diTypes::user, "WHERE " . join(" OR ", $q))->getFirstItem();
+			$user = $q
+				? \diCollection::create(\diTypes::user, "WHERE " . join(" OR ", $q))->getFirstItem()
+				: \diModel::create(\diTypes::user);
 		}
 
 		return $user;
@@ -348,7 +353,7 @@ abstract class diOAuth2
 		return $this;
 	}
 
-	protected function setProfileRawData($data = array())
+	protected function setProfileRawData($data = [])
 	{
 		$this->profileRawData = $data;
 
@@ -389,25 +394,25 @@ abstract class diOAuth2
 
 	protected function isReturn()
 	{
-		return !!diRequest::get("code");
+		return !!\diRequest::get('code');
 	}
 
 	protected function getLoginUrlParams()
 	{
-		return array(
-			'client_id'     => static::appId,
+		return [
+			'client_id' => static::appId,
 			'response_type' => 'code',
-			'redirect_uri'  => $this->getBackUrl(),
-		);
+			'redirect_uri' => $this->getBackUrl(),
+		];
 	}
 
 	protected function getAuthUrlParams()
 	{
-		return array(
-			'client_id'     => static::appId,
+		return [
+			'client_id' => static::appId,
 			'client_secret' => static::secret,
-			'code'          => diRequest::get("code"),
-			'redirect_uri'  => $this->getBackUrl(),
-		);
+			'code' => \diRequest::get('code'),
+			'redirect_uri' => $this->getBackUrl(),
+		];
 	}
 }
