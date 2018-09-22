@@ -879,6 +879,22 @@ abstract class BasePage
 		return $this;
 	}
 
+	public function setListControlPanelTemplate($template = null, $data = [])
+	{
+		if ($template === null)
+		{
+			$template = 'admin/' . $this->getTable() . '/list_control_panel';
+		}
+
+		$this->getTwig()
+			->render($template, 'list_control_panel', extend([
+				'table' => $this->getTable(),
+				'List' => $this->getList(),
+			], $data));
+
+		return $this;
+	}
+
 	public function setBeforeTableTemplate($template = null, $data = [])
 	{
 		if ($template === null)

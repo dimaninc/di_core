@@ -474,16 +474,25 @@ class diAdminList
 			$this->T->closeTable();
 	}
 
+	protected function getControlPanelHtml()
+	{
+		if (!$this->getOption('showControlPanel'))
+		{
+			return '';
+		}
+
+		return $this->getAdminPage()->getTwig()->getAssigned('list_control_panel') ?:
+			$this->getAdminPage()->getTwig()->parse('admin/_index/list/control_panel', [
+				'table' => $this->getAdminPage()->getTable(),
+				'List' => $this,
+			]);
+	}
+	
 	public function getHtml()
 	{
 		$this->getAdminPage()->getTpl()
 			->assign([
-				'LIST_CONTROL_PANEL' => $this->getOption('showControlPanel')
-                    ? $this->getAdminPage()->getTwig()->parse('admin/_index/list/control_panel', [
-                        'table' => $this->getAdminPage()->getTable(),
-                        'List' => $this,
-                    ])
-                    : '',
+				'LIST_CONTROL_PANEL' => $this->getControlPanelHtml(),
 			]);
 
 		$html = '';
