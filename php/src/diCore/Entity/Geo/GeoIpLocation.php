@@ -47,7 +47,8 @@ class GeoIpLocation
 	protected $data = [];
 
 	protected static $providers = [
-		FreeGeoIpLocation::class,
+		//FreeGeoIpLocation::class,
+		ExtremeIpLookupLocation::class,
 	];
 
 	public function __construct($ip = null)
