@@ -51,10 +51,9 @@ class diGeoIpCacheCollection extends diCollection
 	protected $table = "geo_ip_cache";
 	protected $modelType = "geo_ip_cache";
 
-	// todo: rebuild cache collection once a week
-
+	// todo: remove this
 	public static function addToCache($ipAr)
 	{
-		\diCollectionCache::addManual(self::type, 'ip', $ipAr);
+		//\diCollectionCache::addManual(self::type, 'ip', $ipAr);
 	}
 }

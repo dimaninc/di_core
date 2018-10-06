@@ -43,12 +43,14 @@ namespace diCore\Entity\Geo;
  */
 class GeoIpLocation
 {
+	/** @var string */
 	protected $ip;
 	protected $data = [];
 
 	protected static $providers = [
 		//FreeGeoIpLocation::class,
-		ExtremeIpLookupLocation::class,
+		//ExtremeIpLookupLocation::class,
+		GeoLiteLocation::class,
 	];
 
 	public function __construct($ip = null)
@@ -83,7 +85,7 @@ class GeoIpLocation
 
 	protected function useCache()
 	{
-		return true;
+		return false;
 	}
 
 	protected function readFromCache()
