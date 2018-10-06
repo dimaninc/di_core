@@ -88,74 +88,12 @@ class GeoIpLocation
 		return false;
 	}
 
-	protected function readFromCache()
-	{
-		if ($this->useCache())
-		{
-			/** @var \diGeoIpCacheModel $cache */
-			$cache = \diCollectionCache::getModel(\diTypes::geo_ip_cache, $this->getBinIp());
-
-			if (!$cache->exists())
-			{
-				$cache = \diModel::create(\diTypes::geo_ip_cache, $this->getBinIp());
-			}
-
-			if ($cache->exists())
-			{
-				$this
-					->setCountryCode($cache->getCountryCode())
-					->setCountryName($cache->getCountryName())
-					->setRegionCode($cache->getRegionCode())
-					->setRegionName($cache->getRegionName())
-					->setCity($cache->getCity())
-					->setZipCode($cache->getZipCode())
-					->setLatitude($cache->getLatitude())
-					->setLongitude($cache->getLongitude());
-			}
-		}
-
-		return $this;
-	}
-
-	protected function writeToCache()
-	{
-		if ($this->useCache() && $this->exists())
-		{
-			/** @var \diGeoIpCacheModel $cache */
-			$cache = \diModel::create(\diTypes::geo_ip_cache);
-
-			try
-			{
-				$cache
-					->setIp($this->getBinIp())
-					->setCountryCode($this->getCountryCode())
-					->setCountryName($this->getCountryName())
-					->setRegionCode($this->getRegionCode())
-					->setRegionName($this->getRegionName())
-					->setCity($this->getCity())
-					->setZipCode($this->getZipCode())
-					->setLatitude($this->getLatitude())
-					->setLongitude($this->getLongitude())
-					->save();
-			}
-			catch (\Exception $e)
-			{
-				throw $e;
-			}
-		}
-
-		return $this;
-	}
-
 	protected function readData()
 	{
-		$this->readFromCache();
-
 		if (!$this->exists() && $this->getBinIp())
 		{
 			$this
-				->fetchData()
-				->writeToCache();
+				->fetchData();
 		}
 
 		return $this;
