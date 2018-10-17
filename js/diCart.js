@@ -3,7 +3,7 @@ function diCart(_opts)
 	var self = this,
 
 		opts = $.extend({
-			workerUri: '/_core/php/workers/cart/'
+			workerUri: '/api/cart/'
 		}, _opts || {}),
 
 		workerScript = opts.workerUri,

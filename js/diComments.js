@@ -1,7 +1,7 @@
 var diComments = function(_opts)
 {
 	var self = this,
-		backend = '/_core/php/workers/comment/',
+		backend = '/api/comment/',
 
 		BAND_MODE_TREE = 1,
 		BAND_MODE_FLAT = 2,

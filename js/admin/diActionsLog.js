@@ -1,6 +1,6 @@
 var diActionsLog = function(_opts) {
 	var self = this,
-		worker = '/_core/php/admin/workers/actions_log/get/',
+		worker = '/api/actions_log/get/',
 		opts = $.extend({
 			targetType: null,
 			targetId: null,

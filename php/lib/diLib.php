@@ -135,8 +135,8 @@ class diLib
 		],
 	];
 
-	const workerPrefix = '/_core/php/workers/';
-	const workerAdminPrefix = '/_core/php/admin/workers/';
+	const workerPrefix = '/api/';
+	const workerAdminPrefix = '/api/';
 
 	/** @deprecated */
 	static public $classesAr = [];
@@ -470,7 +470,7 @@ class diLib
         {
             self::getLocation();
         }
-        
+
         return (self::$subFolder && $openingSlash ? '/' : '') . self::$subFolder;
     }
 

@@ -3,7 +3,7 @@ var diNiceTable = function(opts)
 	var self = this,
 		CP,
         subfolder,
-		workerBase = '/_core/php/admin/workers/list/',
+		workerBase = '/api/list/',
 		settings = $.extend({
 			$table: null,
 			table: ''

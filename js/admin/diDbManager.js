@@ -3,7 +3,7 @@ function diDbManager(_opts)
 	var self = this,
 
 		opts = $.extend({
-			workerUri: '/_core/php/admin/workers/db/'
+			workerUri: '/api/db/'
 		}, _opts || {}),
 
 		workerScript = opts.workerUri,

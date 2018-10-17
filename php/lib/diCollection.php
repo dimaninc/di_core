@@ -1784,7 +1784,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	protected function getCachePath($cacheKind = self::CACHE_ALL)
 	{
-		return \diPaths::fileSystem() . static::CACHE_FOLDER;
+		return \diCore\Data\Config::__getPhpFolder() . static::CACHE_FOLDER;
 	}
 
 	protected function getCacheFilename($cacheKind = self::CACHE_ALL)

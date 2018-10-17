@@ -8,7 +8,7 @@
  */
 class diWebFonts
 {
-	const FOLDER = '_core/fonts/web/';
+	const FOLDER = 'assets/fonts/web/';
 
 	public static $titlesExtended = [
 		'Arial' => 'Arial (встроенный шрифт)',

@@ -3,8 +3,8 @@
  */
 
 var di = {
-	workerPrefix: '/_core/php/workers/',
-	workerAdminPrefix: '/_core/php/admin/workers/',
+	workerPrefix: '/api/',
+	workerAdminPrefix: '/api/',
 
 	getWorkerBasePath: function(controller, action, params, options) {
 		options = $.extend({
