@@ -1501,9 +1501,6 @@ abstract class CMS
 				'device' => $device,
 			]);
 
-		$this->getTpl()
-			->assign($device, "DEVICE_");
-
 		return $this;
 	}
 
