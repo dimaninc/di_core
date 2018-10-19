@@ -8,15 +8,15 @@
 
 namespace diCore\Tool\Debug;
 
-
 class Timing
 {
 	private $start;
+	private $lastTime;
 	private $times = [];
 
 	public function __construct()
 	{
-		$this->start = utime();
+		$this->start = $this->lastTime = utime();
 	}
 
 	public function save($title = '')
@@ -24,10 +24,13 @@ class Timing
 		$time = utime();
 
 		$this->times[] = [
-			'period' => $time - $this->start,
+			'period' => $time - $this->lastTime,
+			'from_start' => $time - $this->start,
 			'time' => $time,
 			'title' => $title,
 		];
+
+		$this->lastTime = $time;
 
 		return $this;
 	}

@@ -2057,6 +2057,20 @@ class diModel implements \ArrayAccess
 		return '';
 	}
 
+	public static function escapeValueForFile($value)
+	{
+		if (strpos($value, "\n") !== false)
+		{
+			$value = "<<<'EOF'\n" . $value . "\nEOF\n";
+		}
+		else
+		{
+			$value = "'" . str_replace("'", "\\'", str_replace('\\', '\\\\', $value)) . "'";
+		}
+
+		return $value;
+	}
+
 	public function asPhpArray($excludeFields = [])
 	{
 		$s = '';
@@ -2068,14 +2082,7 @@ class diModel implements \ArrayAccess
 				continue;
 			}
 
-			if (strpos($value, "\n") !== false)
-			{
-				$value = "<<<'EOF'\n" . $value . "\nEOF\n";
-			}
-			else
-			{
-				$value = "'" . str_replace("'", "\\'", str_replace('\\', '\\\\', $value)) . "'";
-			}
+			$value = static::escapeValueForFile($value);
 
 			$s .= "'$field'=>$value,\n";
 		}

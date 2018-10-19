@@ -30,4 +30,11 @@ class Model extends \diModel
 	const type = \diTypes::localization;
 	protected $table = 'localization';
 	protected $localizedFields = ['value'];
+
+	public function getValueForLanguage($language)
+	{
+		$field = static::getLocalizedFieldName('value', $language);
+
+		return $this->get($field);
+	}
 }

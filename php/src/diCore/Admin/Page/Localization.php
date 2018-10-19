@@ -8,6 +8,8 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Data\Types;
+use diCore\Entity\Localization\Collection;
 use diCore\Entity\Localization\Model;
 
 class Localization extends \diCore\Admin\BasePage
@@ -134,6 +136,14 @@ class Localization extends \diCore\Admin\BasePage
 
 	public function submitForm()
 	{
+	}
+
+	protected function afterSubmitForm()
+	{
+		parent::afterSubmitForm();
+
+		$L = \diCore\Tool\Localization::basicCreate();
+		$L->createCache();
 	}
 
 	public function getFormTabs()

@@ -8,13 +8,21 @@
 
 namespace diCore\Tool;
 
+use diCore\Data\Config;
+use diCore\Entity\Localization\Collection;
 use diCore\Entity\Localization\Model;
 use diCore\Base\CMS;
+use diCore\Helper\FileSystemHelper;
+use diCore\Traits\BasicCreate;
 
 class Localization
 {
-	const DEFAULT_LANGUAGE = 'ru';
+	use BasicCreate;
 
+	const DEFAULT_LANGUAGE = 'ru';
+	const CACHE_FOLDER = '_cfg/cache/localization/';
+
+	protected static $cacheLanguage;
 	protected static $cache = [];
 
 	protected static function getCurrentLanguage()
@@ -24,7 +32,7 @@ class Localization
 
 		$language = !empty($Z)
 			? $Z->getLanguage()
-			: (\diRequest::request("language") ?: \diRequest::request("l") ?: static::DEFAULT_LANGUAGE);
+			: (\diRequest::request('language') ?: \diRequest::request('l') ?: static::DEFAULT_LANGUAGE);
 
 		return $language;
 	}
@@ -39,22 +47,57 @@ class Localization
 		return $language;
 	}
 
-	// todo: cache this in php-file
-	public static function preCache()
+	protected static function getCacheFilename($language)
 	{
-		if (self::$cache)
+		return Config::__getPhpFolder() . static::CACHE_FOLDER . $language . '.php';
+	}
+
+	public static function createCache()
+	{
+		/** @var \diCore\Entity\Localization\Collection $locals */
+		$locals = \diCollection::create(\diTypes::localization);
+		$locals->orderByName();
+
+		$cache = [];
+
+		/** @var Model $l */
+		foreach ($locals as $l)
+		{
+			$cache[strtolower($l->getName())] = $l;
+		}
+
+		FileSystemHelper::createTree(Config::__getPhpFolder(), static::CACHE_FOLDER, 0777);
+
+		foreach (\diCurrentCMS::$possibleLanguages as $language)
+		{
+			$file = '<?php ';
+			foreach ($cache as $name => $l)
+			{
+				$file .= sprintf('self::$cache[\'%s\']=%s;',
+					$name,
+					\diModel::escapeValueForFile($l->getValueForLanguage($language))
+				);
+			}
+
+			file_put_contents(static::getCacheFilename($language), $file);
+			chmod(static::getCacheFilename($language), 0777);
+		}
+	}
+
+	public static function preCache($language)
+	{
+		if (self::$cache && self::$cacheLanguage === $language)
 		{
 			return false;
 		}
 
-		/** @var \diCore\Entity\Localization\Collection $locals */
-		$locals = \diCollection::create(\diTypes::localization);
-		$locals->orderByName();
-		/** @var Model $l */
-		foreach ($locals as $l)
+		if (!is_file(static::getCacheFilename($language)))
 		{
-			self::$cache[strtolower($l->getName())] = $l;
+			static::createCache();
 		}
+
+		include static::getCacheFilename($language);
+		self::$cacheLanguage = $language;
 
 		return true;
 	}
@@ -62,6 +105,7 @@ class Localization
 	public static function resetCache()
 	{
 		self::$cache = [];
+		self::$cacheLanguage = null;
 	}
 
 	/**
@@ -71,11 +115,12 @@ class Localization
 	 */
 	protected static function getModel($token)
 	{
-		$token = strtolower($token);
+		/** @var Collection $col */
+		$col = \diCollection::create(\diTypes::localization);
+		$col
+			->filterByName($token);
 
-		return isset(self::$cache[$token])
-			? self::$cache[$token]
-			: \diModel::create(\diTypes::localization);
+		return $col->getFirstItem();
 	}
 
 	/**
@@ -87,33 +132,18 @@ class Localization
 	 */
 	public static function get($token = null, $language = null, $default = null)
 	{
-		self::preCache();
-
 		$language = self::checkLanguage($language ?: static::getCurrentLanguage());
 
-		$field = \diModel::getLocalizedFieldName('value', $language);
+		self::preCache($language);
 
 		if ($token === null)
 		{
-			$ar = [];
-
-			/**
-			 * @var string $key
-			 * @var Model $m
-			 */
-			foreach (self::$cache as $key => $m)
-			{
-				$ar[$key] = $m->get($field);
-			}
-
-			return $ar;
+			return self::$cache;
 		}
 		else
 		{
-			$m = self::getModel($token);
-
-			return $m->exists()
-				? $m->get($field)
+			return isset(self::$cache[$token])
+				? self::$cache[$token]
 				: ($default !== null ? $default : $token);
 		}
 	}
@@ -123,8 +153,8 @@ class Localization
 		$name = \diSignUpErrors::name($code);
 
 		return $name
-			? static::get("sign_up_error_" . strtolower($name))
-			: "Sign up error #" . $code;
+			? static::get('sign_up_error_' . strtolower($name))
+			: 'Sign up error #' . $code;
 	}
 
 	public static function getAuthError($code)
@@ -132,7 +162,7 @@ class Localization
 		$name = \diAuthErrors::name($code);
 
 		return $name
-			? static::get("auth_error_" . strtolower($name))
-			: "Auth error #" . $code;
+			? static::get('auth_error_' . strtolower($name))
+			: 'Auth error #' . $code;
 	}
 }
