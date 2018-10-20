@@ -131,6 +131,7 @@ class Comment
 			throw new \Exception("Module #{$id} doesn't exist");
 		}
 
+		// todo: use page field of table
 		$this
 			->setManager(\diComments::create($cacheModel->getTargetType(), $cacheModel->getTargetId()))
 			->rebuildWorker($cacheModel);

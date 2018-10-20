@@ -63,7 +63,9 @@ class CommentCache extends \diCore\Admin\BasePage
 				],
 				'title' => 'Цель',
 				'value' => function (Model $m) {
-					return \diTypes::getTitle($m->getTargetType()) . '#' . $m->getTargetId();
+					return
+						\diTypes::getTitle($m->getTargetType()) . '#' . $m->getTargetId() .
+						($m->has('title') ? ' (' . $m->get('title') . ')' : '');
 				},
 			],
 			'html' => [

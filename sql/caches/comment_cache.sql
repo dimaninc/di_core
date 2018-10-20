@@ -4,6 +4,7 @@ CREATE TABLE comment_cache (
   target_type          INT,
   target_id            INT,
   update_every_minutes BIGINT,
+  page                 INT DEFAULT '1',
 
   html                 MEDIUMTEXT,
 

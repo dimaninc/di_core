@@ -14,6 +14,7 @@ namespace diCore\Entity\CommentCache;
  * @method integer	getTargetType
  * @method integer	getTargetId
  * @method integer	getUpdateEveryMinutes
+ * @method integer	getPage
  * @method string	getHtml
  * @method string	getCreatedAt
  * @method string	getUpdatedAt
@@ -22,6 +23,7 @@ namespace diCore\Entity\CommentCache;
  * @method bool hasTargetType
  * @method bool hasTargetId
  * @method bool hasUpdateEveryMinutes
+ * @method bool hasPage
  * @method bool hasHtml
  * @method bool hasCreatedAt
  * @method bool hasUpdatedAt
@@ -30,6 +32,7 @@ namespace diCore\Entity\CommentCache;
  * @method Model setTargetType($value)
  * @method Model setTargetId($value)
  * @method Model setUpdateEveryMinutes($value)
+ * @method Model setPage($value)
  * @method Model setHtml($value)
  * @method Model setCreatedAt($value)
  * @method Model setUpdatedAt($value)

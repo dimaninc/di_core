@@ -28,7 +28,7 @@ class Comments extends \diCore\Admin\BasePage
 		$this->setTable('comments');
 	}
 
-	protected function getUsedTargetTypes()
+	public static function getUsedTargetTypes()
 	{
 		return array_keys(Types::titles());
 	}

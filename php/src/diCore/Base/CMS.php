@@ -11,6 +11,7 @@ use diCore\Entity\Content\Model;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 use diCore\Tool\Auth;
+use diCore\Tool\Debug\Timing;
 
 abstract class CMS
 {
@@ -28,7 +29,10 @@ abstract class CMS
 	const OG_IMAGE_W = 1200;
 	const OG_IMAGE_H = 623;
 
-	/** @var \FastTemplate */
+	/**
+	 * @var \FastTemplate
+	 * @deprecated
+	 */
 	public $tpl;
 
 	/**
@@ -37,6 +41,9 @@ abstract class CMS
 	private $Twig;
 	private $twigBasicsAssigned = false;
 	private $indexTemplateName = 'index';
+
+	/** @var Timing */
+	protected $timing;
 
 	/** @var \diDB */
 	protected $db;
@@ -240,6 +247,8 @@ abstract class CMS
 	public function __construct($tpl_dir = false, $tpl_cache_php = false, $tables_cache_fn_ar = false, $ct_cache_fn_ar = false)
 	{
 		global $db;
+
+		$this->timing = new Timing();
 
 		$this->db = $db;
 
@@ -1324,6 +1333,8 @@ abstract class CMS
 				->errorNotFound();
 		}
 
+		$this->timing->save('init_tpl');
+
 		return $this;
 	}
 
@@ -1416,6 +1427,8 @@ abstract class CMS
 
 		$this->initTplAssigns();
 
+		$this->timing->save('initTplDefines');
+
 		return $this;
 	}
 
@@ -1447,7 +1460,10 @@ abstract class CMS
 			$fullAddress = \diRequest::requestUri();
 		}
 
-		$fullAddress = StringHelper::removeQueryStringParameter($fullAddress, [], [\diPagesNavy::PAGE_PARAM, \diComments::PAGE_PARAM]);
+		$fullAddress = StringHelper::removeQueryStringParameter($fullAddress, [], [
+			\diPagesNavy::PAGE_PARAM,
+			\diComments::PAGE_PARAM,
+		]);
 
 		return $fullAddress;
 	}
@@ -1554,6 +1570,8 @@ abstract class CMS
 		}
 
 		$this->cleanupEmptyRoutes();
+
+		$this->timing->save('populateRoutes');
 
 		return $this;
 	}
@@ -2168,6 +2186,8 @@ abstract class CMS
 		}
 
 		include($this->tables_cache_fn_ar[$this->content_table]);
+
+		$this->timing->save('load_content_table_cache');
 
 		return $this;
 	}

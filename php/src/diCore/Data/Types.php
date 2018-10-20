@@ -44,7 +44,6 @@ class Types
 	const payment_receipt = 2023;
 	const feedback = 2025;
 	const banner_daily_stat = 2026;
-	const geo_ip_cache = 2027;
 	const redirect = 2028;
 	const localization = 2029;
 	const module_cache = 2030;
@@ -89,7 +88,6 @@ class Types
 		self::payment_receipt => 'payment_receipts',
 		self::feedback => 'feedback',
 		self::banner_daily_stat => 'banner_daily_stat',
-		self::geo_ip_cache => 'geo_ip_cache',
 		self::redirect => 'redirects',
 		self::localization => 'localization',
 		self::module_cache => 'module_cache',
@@ -135,7 +133,6 @@ class Types
 		self::payment_receipt => 'payment_receipt',
 		self::feedback => 'feedback',
 		self::banner_daily_stat => 'banner_daily_stat',
-		self::geo_ip_cache => 'geo_ip_cache',
 		self::redirect => 'redirect',
 		self::localization => 'localization',
 		self::module_cache => 'module_cache',
@@ -181,7 +178,6 @@ class Types
 		self::payment_receipt => 'Квитанция платежа',
 		self::feedback => 'Сообщение обратной связи',
 		self::banner_daily_stat => 'Статистика баннера за день',
-		self::geo_ip_cache => 'Кеш IP регионов',
 		self::redirect => 'Редирект',
 		self::localization => 'Локализация',
 		self::module_cache => 'Кеш страницы модуля',
