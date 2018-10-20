@@ -2066,7 +2066,8 @@ abstract class CMS
 		}
 
 		// adding page to the end
-		$page = \diRequest::get(\diPagesNavy::PAGE_PARAM, \diRequest::get(\diComments::PAGE_PARAM, 0));
+		//$page = \diRequest::get(\diPagesNavy::PAGE_PARAM, \diRequest::get(\diComments::PAGE_PARAM, 0));
+		$page = \diRequest::get(\diPagesNavy::PAGE_PARAM, 0);
 
 		if ($page > 1 && $this->isPageTitleSuffixNeeded())
 		{
