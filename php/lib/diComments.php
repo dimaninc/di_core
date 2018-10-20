@@ -34,6 +34,7 @@ class diComments
 	const CACHE_PERIODICAL = 3;
 
 	const cacheMode = self::CACHE_DISABLED;
+	const useCollectionCache = false;
 	const useHtmlCache = false;
 	const createHtmlCacheIfNotExists = true;
 
@@ -565,6 +566,11 @@ class diComments
 
 	public function cacheNeededByTargetType()
 	{
+		if (!static::useCollectionCache)
+		{
+			return false;
+		}
+
 		$res = false;
 
 		if (!static::$cachedTargetTypes || in_array($this->targetType, static::$cachedTargetTypes))
