@@ -1568,7 +1568,7 @@ class Submit
 			dierror("Unable to copy file {$F['name']} to {$fn}");
 		}
 
-		chmod($fn, Submit::FILE_CHMOD);
+		chmod($fn, self::FILE_CHMOD);
 
 		$info = getimagesize($fn);
 		$obj
@@ -1642,7 +1642,7 @@ class Submit
 		FileSystemHelper::createTree($root, [
 			$folder . get_big_folder(),
 			$folder . get_orig_folder(),
-		], Submit::DIR_CHMOD);
+		], self::DIR_CHMOD);
 
 		$mode = $F['tmp_name'] == $orig_fn ? 'rebuilding' : 'uploading';
 
@@ -1689,11 +1689,16 @@ class Submit
 						}
 					}
 
-					$tnWM = $Submit->getWatermarkOptionsFor($field, constant('diAdminSubmit::IMAGE_TYPE_PREVIEW' . $suffix));
-
 					$fileOptionsTn = extend([
 						'resize' => DI_THUMB_CROP, //| DI_THUMB_EXPAND_TO_SIZE
+						'watermark' => [],
 					], $getFileOptions($i));
+					$tnWM = $Submit->getWatermarkOptionsFor($field, constant('self::IMAGE_TYPE_PREVIEW' . $suffix));
+
+					if (!$tnWM['name'])
+					{
+						$tnWM = extend($tnWM, $fileOptionsTn['watermark']);
+					}
 
 					$I->make_thumb($fileOptionsTn['resize'], $tn_fn,
 						\diConfiguration::safeGet($widthParam),
@@ -1702,7 +1707,7 @@ class Submit
 						$tnWM['name'], $tnWM['x'], $tnWM['y']
 					);
 
-					chmod($tn_fn, Submit::FILE_CHMOD);
+					chmod($tn_fn, self::FILE_CHMOD);
 					list(
 						$ar['pic_tn' . $suffix . '_w'],
 						$ar['pic_tn' . $suffix . '_h'],
@@ -1713,8 +1718,13 @@ class Submit
 
 			$fileOptionsMain = extend([
 				'resize' => DI_THUMB_FIT,
-			], $getFileOptions(Submit::IMAGE_TYPE_MAIN));
-			$mainWM = $Submit->getWatermarkOptionsFor($field, Submit::IMAGE_TYPE_MAIN);
+				'watermark' => [],
+			], $getFileOptions(self::IMAGE_TYPE_MAIN));
+			$mainWM = $Submit->getWatermarkOptionsFor($field, self::IMAGE_TYPE_MAIN);
+			if (!$mainWM['name'])
+			{
+				$mainWM = extend($mainWM, $fileOptionsMain['watermark']);
+			}
 			$I->make_thumb_or_copy($fileOptionsMain['resize'], $full_fn,
 				\diConfiguration::safeGet([$table . '_' . $groupField . '_' . $field . '_width', $table . '_' . $groupField . '_width', $table . '_width']),
 				\diConfiguration::safeGet([$table . '_' . $groupField . '_' . $field . '_height', $table . '_' . $groupField . '_height', $table . '_height']),
@@ -1724,8 +1734,13 @@ class Submit
 
 			$fileOptionsBig = extend([
 				'resize' => DI_THUMB_FIT,
-			], $getFileOptions(Submit::IMAGE_TYPE_BIG));
-			$bigWM = $Submit->getWatermarkOptionsFor($field, Submit::IMAGE_TYPE_BIG);
+				'watermark' => [],
+			], $getFileOptions(self::IMAGE_TYPE_BIG));
+			$bigWM = $Submit->getWatermarkOptionsFor($field, self::IMAGE_TYPE_BIG);
+			if (!$bigWM['name'])
+			{
+				$bigWM = extend($bigWM, $fileOptionsBig['watermark']);
+			}
 			$I->make_thumb_or_copy($fileOptionsBig['resize'], $big_fn,
 				\diConfiguration::safeGet([$table . '_' . $groupField . '_' . $field . '_big_width', $table . '_' . $groupField . '_big_width', $table . '_big_width'], 10000),
 				\diConfiguration::safeGet([$table . '_' . $groupField . '_' . $field . '_big_height', $table . '_' . $groupField . '_big_height', $table . '_big_height'], 10000),
@@ -1739,9 +1754,9 @@ class Submit
 				move_uploaded_file($F['tmp_name'], $orig_fn);
 			}
 
-			chmod($full_fn, Submit::FILE_CHMOD);
-			chmod($big_fn, Submit::FILE_CHMOD);
-			chmod($orig_fn, Submit::FILE_CHMOD);
+			chmod($full_fn, self::FILE_CHMOD);
+			chmod($big_fn, self::FILE_CHMOD);
+			chmod($orig_fn, self::FILE_CHMOD);
 
 			list($ar['pic_w'], $ar['pic_h'], $ar['pic_t']) = getimagesize($full_fn);
 		}
