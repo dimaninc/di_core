@@ -50,14 +50,14 @@ class GeoLiteLocation extends GeoIpLocation
         if ($d)
         {
             $this->data = [
-                'city' => $d['city']['names'][$this->language],
+                'city' => isset($d['city']['names'][$this->language]) ? $d['city']['names'][$this->language] : null,
                 'country_code' => $d['country']['iso_code'],
                 'country_name' => $d['country']['names'][$this->language],
-                'region_code' => $d['subdivisions'][0]['iso_code'],
-                'region_name' => $d['subdivisions'][0]['names'][$this->language],
-                'zip_code' => $d['postal']['code'],
-                'latitude' => $d['location']['latitude'],
-                'longitude' => $d['location']['longitude'],
+                'region_code' => isset($d['subdivisions'][0]['iso_code']) ? $d['subdivisions'][0]['iso_code'] : null,
+                'region_name' => isset($d['subdivisions'][0]['names'][$this->language]) ? $d['subdivisions'][0]['names'][$this->language] : null,
+                'zip_code' => isset($d['postal']['code']) ? $d['postal']['code'] : null,
+                'latitude' => isset($d['location']['latitude']) ? $d['location']['latitude'] : null,
+                'longitude' => isset($d['location']['longitude']) ? $d['location']['longitude'] : null,
                 'metro_code' => null,
             ];
         }
