@@ -8,6 +8,8 @@
 
 namespace diCore\Payment\Mixplat;
 
+use diCore\Data\Config;
+
 class Helper
 {
     const serviceId = null;
@@ -16,7 +18,7 @@ class Helper
     const logFolder = 'log/mixplat/';
 
     private static $class;
-    
+
     /**
      * @return Helper|string
      */
@@ -37,7 +39,7 @@ class Helper
 
     public static function logFolder()
     {
-        return \diPaths::fileSystem() . static::logFolder;
+        return Config::getLogFolder() . static::logFolder;
     }
 
     /**
