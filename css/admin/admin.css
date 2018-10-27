@@ -2243,11 +2243,15 @@ body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-act
   background-image: url("/assets/images/_core/admin/skin/entrine/list/del.svg");
 }
 body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="active"][data-state="0"],
-body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="visible"][data-state="0"] {
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="visible"][data-state="0"],
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="active"][data-state="false"],
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="visible"][data-state="false"] {
   background-image: url("/assets/images/_core/admin/skin/entrine/list/visible-0.svg");
 }
 body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="active"][data-state="1"],
-body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="visible"][data-state="1"] {
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="visible"][data-state="1"],
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="active"][data-state="true"],
+body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="visible"][data-state="true"] {
   background-image: url("/assets/images/_core/admin/skin/entrine/list/visible-1.svg");
 }
 body[data-skin="entrine"] table.dinicetable tr td.btn .nicetable-button[data-action="up"],

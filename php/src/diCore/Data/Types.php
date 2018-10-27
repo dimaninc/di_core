@@ -42,6 +42,7 @@ class Types
 	const o_auth2_profile = 2021;
 	const payment_draft = 2022;
 	const payment_receipt = 2023;
+	const page_cache = 2024;
 	const feedback = 2025;
 	const banner_daily_stat = 2026;
 	const redirect = 2028;
@@ -86,6 +87,7 @@ class Types
 		self::o_auth2_profile => '#no table',
 		self::payment_draft => 'payment_drafts',
 		self::payment_receipt => 'payment_receipts',
+		self::page_cache => 'page_cache',
 		self::feedback => 'feedback',
 		self::banner_daily_stat => 'banner_daily_stat',
 		self::redirect => 'redirects',
@@ -131,6 +133,7 @@ class Types
 		self::o_auth2_profile => 'o_auth2_profile',
 		self::payment_draft => 'payment_draft',
 		self::payment_receipt => 'payment_receipt',
+		self::page_cache => 'page_cache',
 		self::feedback => 'feedback',
 		self::banner_daily_stat => 'banner_daily_stat',
 		self::redirect => 'redirect',
@@ -176,6 +179,7 @@ class Types
 		self::o_auth2_profile => 'Профиль из соц.сети',
 		self::payment_draft => 'Заготовка под платеж',
 		self::payment_receipt => 'Квитанция платежа',
+		self::page_cache => 'Кеш страницы',
 		self::feedback => 'Сообщение обратной связи',
 		self::banner_daily_stat => 'Статистика баннера за день',
 		self::redirect => 'Редирект',

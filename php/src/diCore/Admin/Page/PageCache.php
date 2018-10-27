@@ -1,15 +1,15 @@
 <?php
 /**
  * Created by \diAdminPagesManager
- * Date: 08.06.2017
- * Time: 17:37
+ * Date: 27.10.2018
+ * Time: 13:20
  */
 
 namespace diCore\Admin\Page;
 
-use diCore\Entity\ModuleCache\Model;
+use diCore\Entity\PageCache\Model;
 
-class ModuleCache extends \diCore\Admin\BasePage
+class PageCache extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		'filters' => [
@@ -22,46 +22,16 @@ class ModuleCache extends \diCore\Admin\BasePage
 
 	protected function initTable()
 	{
-		$this->setTable('module_cache');
+		$this->setTable('page_cache');
 	}
 
 	public function renderList()
 	{
 		$this->getList()->addColumns([
 			'id' => 'ID',
-			'module_id' => [
+			'uri' => [
 				'headAttrs' => [
-					'width' => '10%',
-				],
-			],
-			'title' => [
-				'headAttrs' => [
-					'width' => '10%',
-				],
-				'bodyAttrs' => [
-					'class' => 'lite',
-				],
-			],
-			'query_string' => [
-				'headAttrs' => [
-					'width' => '25%',
-				],
-				'bodyAttrs' => [
-					'class' => 'lite',
-				],
-			],
-			'bootstrap_settings' => [
-				'headAttrs' => [
-					'width' => '25%',
-				],
-				'bodyAttrs' => [
-					'class' => 'lite',
-				],
-			],
-			'update_every_minutes' => [
-				'title' => 'Обновление, мин',
-				'headAttrs' => [
-					'width' => '10%',
+					'width' => '80%',
 				],
 			],
 			'content' => [
@@ -131,33 +101,9 @@ class ModuleCache extends \diCore\Admin\BasePage
 	public function getFormFields()
 	{
 		return [
-			'module_id' => [
+			'uri' => [
 				'type'		=> 'string',
-				'title'		=> 'Модуль',
-				'default'	=> '',
-			],
-
-			'query_string' => [
-				'type'		=> 'string',
-				'title'		=> 'Query string',
-				'default'	=> '',
-			],
-
-			'bootstrap_settings' => [
-				'type'		=> 'string',
-				'title'		=> 'Bootstrap-настройки',
-				'default'	=> '',
-			],
-
-			'title' => [
-				'type'		=> 'string',
-				'title'		=> 'Пояснение',
-				'default'	=> '',
-			],
-
-			'update_every_minutes' => [
-				'type'		=> 'int',
-				'title'		=> 'Частота обновления, в минутах',
+				'title'		=> 'URI',
 				'default'	=> '',
 			],
 
@@ -165,7 +111,7 @@ class ModuleCache extends \diCore\Admin\BasePage
 				'type'		=> 'text',
 				'title'		=> 'Кеш',
 				'default'	=> '',
-				'flags'     => ['static'],
+				//'flags'     => ['static'],
 			],
 
 			'created_at' => [
@@ -181,6 +127,12 @@ class ModuleCache extends \diCore\Admin\BasePage
 				'default'	=> '',
 				'flags'		=> ['static', 'untouchable'],
 			],
+
+			'active' => [
+				'type'		=> 'checkbox',
+				'title'		=> 'Активен',
+				'default'	=> 1,
+			],
 		];
 	}
 
@@ -191,6 +143,6 @@ class ModuleCache extends \diCore\Admin\BasePage
 
 	public function getModuleCaption()
 	{
-		return 'Кеш модулей';
+		return 'Кеш страниц';
 	}
 }

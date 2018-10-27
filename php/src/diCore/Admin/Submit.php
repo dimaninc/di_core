@@ -652,19 +652,29 @@ class Submit
 				}
 			}
 
-			$this->id = $this->getDb()->insert($this->table, $dbAr);
-			if ($this->id === false)
+			if ($this->getSubmittedModel() instanceof MongoModel)
 			{
-				$this->getDb()->dierror();
+				$this->getSubmittedModel()->
+					save();
+
+				$this->id = $this->getSubmittedModel()->getId();
+			}
+			else
+			{
+				$this->id = $this->getDb()->insert($this->table, $dbAr);
+				if ($this->id === false)
+				{
+					$this->getDb()->dierror();
+				}
+
+				$this->getSubmittedModel()
+					->setId($this->id);
 			}
 
 			if ($this->AdminPage)
 			{
 				$this->AdminPage->setId($this->id);
 			}
-
-			$this->getSubmittedModel()
-				->setId($this->id);
 
 			$this->set_redirect_param("id", $this->id);
 		}

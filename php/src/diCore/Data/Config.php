@@ -125,6 +125,18 @@ class Config
 		return Environment::getMainPort() ?: $class::mainPort;
 	}
 
+	final public static function getMainProtocol()
+	{
+		switch (static::getMainPort())
+		{
+			case 443:
+				return 'https://';
+
+			default:
+				return 'http://';
+		}
+	}
+
 	final public static function getMainLanguage()
 	{
 		/** @var Config $class */

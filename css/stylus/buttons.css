@@ -23,12 +23,12 @@
   height: 30px;
   background: url("/_core/i/admin/buttons.png?1488189708300") 0px -30px no-repeat;
 }
-.nicetable-button[data-action="active"][data-state="0"] {
+.nicetable-button[data-action="active"][data-state="0"],.nicetable-button[data-action="active"][data-state="false"] {
   width: 30px;
   height: 30px;
   background: url("/_core/i/admin/buttons.png?1488189708300") -30px -30px no-repeat;
 }
-.nicetable-button[data-action="active"][data-state="1"] {
+.nicetable-button[data-action="active"][data-state="1"],.nicetable-button[data-action="active"][data-state="true"] {
   width: 30px;
   height: 30px;
   background: url("/_core/i/admin/buttons.png?1488189708300") -88px 0px no-repeat;
@@ -78,12 +78,12 @@
   height: 30px;
   background: url("/_core/i/admin/buttons.png?1488189708300") -30px -90px no-repeat;
 }
-.nicetable-button[data-action="en_visible"][data-state="0"] {
+.nicetable-button[data-action="en_visible"][data-state="0"],.nicetable-button[data-action="en_visible"][data-state="false"] {
   width: 30px;
   height: 30px;
   background: url("/_core/i/admin/buttons.png?1488189708300") -60px -90px no-repeat;
 }
-.nicetable-button[data-action="en_visible"][data-state="1"] {
+.nicetable-button[data-action="en_visible"][data-state="1"],.nicetable-button[data-action="en_visible"][data-state="true"] {
   width: 30px;
   height: 30px;
   background: url("/_core/i/admin/buttons.png?1488189708300") -90px -90px no-repeat;
@@ -223,12 +223,12 @@
   height: 30px;
   background: url("/_core/i/admin/buttons.png?1488189708300") -150px -180px no-repeat;
 }
-.nicetable-button[data-action="visible"][data-state="0"] {
+.nicetable-button[data-action="visible"][data-state="0"],.nicetable-button[data-action="visible"][data-state="false"] {
   width: 30px;
   height: 30px;
   background: url("/_core/i/admin/buttons.png?1488189708300") -180px -180px no-repeat;
 }
-.nicetable-button[data-action="visible"][data-state="1"] {
+.nicetable-button[data-action="visible"][data-state="1"],.nicetable-button[data-action="visible"][data-state="true"] {
   width: 30px;
   height: 30px;
   background: url("/_core/i/admin/buttons.png?1488189708300") -237px 0px no-repeat;

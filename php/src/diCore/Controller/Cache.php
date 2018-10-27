@@ -13,6 +13,7 @@ use diCore\Entity\CommentCache\Model as CacheModel;
 use diCore\Entity\CommentCache\Collection as CacheCol;
 use diCore\Tool\Cache\Comment;
 use diCore\Tool\Cache\Module;
+use diCore\Tool\Cache\Page;
 
 class Cache extends \diBaseAdminController
 {
@@ -53,6 +54,29 @@ class Cache extends \diBaseAdminController
 				$MC->rebuild($cacheModuleId);
 			} else {
 				$MC->rebuildAll();
+			}
+		} catch (\Exception $e) {
+			return [
+				'done' => false,
+				'error' => $e->getMessage(),
+			];
+		}
+
+		return [
+			'done' => true,
+		];
+	}
+
+	public function updatePageAction()
+	{
+		try {
+			$PC = Page::basicCreate();
+			$id = $this->param(0, \diRequest::get('id', 0));
+
+			if ($id) {
+				$PC->rebuild($id);
+			} else {
+				$PC->rebuildAll();
 			}
 		} catch (\Exception $e) {
 			return [

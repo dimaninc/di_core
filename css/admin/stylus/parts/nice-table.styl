@@ -113,12 +113,16 @@ table.dinicetable
                             background-image url(/assets/images/_core/admin/skin/entrine/list/create.svg)
                         &[data-action="del"]
                             background-image url(/assets/images/_core/admin/skin/entrine/list/del.svg)
-                        &[data-action="active"][data-state="0"]
-                        &[data-action="visible"][data-state="0"]
-                            background-image url(/assets/images/_core/admin/skin/entrine/list/visible-0.svg)
-                        &[data-action="active"][data-state="1"]
-                        &[data-action="visible"][data-state="1"]
-                            background-image url(/assets/images/_core/admin/skin/entrine/list/visible-1.svg)
+                        &[data-action="active"]
+                        &[data-action="visible"]
+                            &[data-state="0"]
+                            &[data-state="false"]
+                                background-image url(/assets/images/_core/admin/skin/entrine/list/visible-0.svg)
+                        &[data-action="active"]
+                        &[data-action="visible"]
+                            &[data-state="1"]
+                            &[data-state="true"]
+                                background-image url(/assets/images/_core/admin/skin/entrine/list/visible-1.svg)
                         &[data-action="up"]
                         &[data-action="down"]
                         &[data-action="play"]
