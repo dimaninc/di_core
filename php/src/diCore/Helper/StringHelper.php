@@ -150,6 +150,11 @@ class StringHelper
 		return $result;
 	}
 
+	public static function getUrlParamGlue($url)
+	{
+		return self::contains($url, '?') ? '&' : '?';
+	}
+
 	public static function startsWith($haystack, $needle)
 	{
 		if (is_array($haystack))

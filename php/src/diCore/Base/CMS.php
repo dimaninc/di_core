@@ -11,6 +11,7 @@ use diCore\Entity\Content\Model;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 use diCore\Tool\Auth;
+use diCore\Tool\Cache\Page;
 
 abstract class CMS
 {
@@ -108,6 +109,7 @@ abstract class CMS
 	protected static $skipGetParams = [
 		\diPagesNavy::PAGE_PARAM,
 		\diComments::PAGE_PARAM,
+		Page::FLUSH_PARAM,
 
 		// yandex.direct
 		'yclid',

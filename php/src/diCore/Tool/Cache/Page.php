@@ -12,12 +12,15 @@ use diCore\Data\Config;
 use diCore\Data\Types;
 use diCore\Entity\PageCache\Collection;
 use diCore\Entity\PageCache\Model;
+use diCore\Helper\StringHelper;
 use diCore\Tool\Auth;
 use diCore\Traits\BasicCreate;
 
 class Page
 {
     use BasicCreate;
+
+    const FLUSH_PARAM = 'no_page_cache';
 
     /** @var  Model */
     protected $cache;
@@ -28,7 +31,7 @@ class Page
 
     protected function canBeUsed()
     {
-        return !Auth::i()->authorized();
+        return !Auth::i()->authorized() && !\diRequest::get(static::FLUSH_PARAM);
     }
 
     protected function getCache()
@@ -102,6 +105,7 @@ class Page
     protected function rebuildWorker(Model $cacheModel)
     {
         $uri = Config::getMainProtocol() . Config::getMainDomain() . $cacheModel->getUri();
+        $uri .= StringHelper::getUrlParamGlue($uri) . static::FLUSH_PARAM . '=1';
         $content = file_get_contents($uri);
 
         $this->storeContent($cacheModel, $content);
