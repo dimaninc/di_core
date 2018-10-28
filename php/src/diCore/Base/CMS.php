@@ -1649,12 +1649,6 @@ abstract class CMS
 	{
 	    $qs = \diRequest::requestQueryString() ? '?' . \diRequest::requestQueryString() : '';
 
-	    if ($qs) {
-            $qs = StringHelper::removeQueryStringParameter($qs, [
-                Page::FLUSH_PARAM,
-            ]);
-        }
-
 		return $qs;
 	}
 

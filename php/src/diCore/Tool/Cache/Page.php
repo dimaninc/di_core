@@ -27,6 +27,20 @@ class Page
 
     public function __construct()
     {
+        $this
+            ->cleanServerVarsFromFlushParam();
+    }
+
+    protected function cleanServerVarsFromFlushParam()
+    {
+        $_SERVER['REQUEST_URI'] = StringHelper::removeQueryStringParameter($_SERVER['REQUEST_URI'], [
+            static::FLUSH_PARAM,
+        ]);
+        $_SERVER['QUERY_STRING'] = StringHelper::removeQueryStringParameter($_SERVER['QUERY_STRING'], [
+            static::FLUSH_PARAM,
+        ]);
+
+        return $this;
     }
 
     protected function canBeUsed()
