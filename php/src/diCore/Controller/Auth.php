@@ -84,6 +84,8 @@ class Auth extends \diBaseController
         ];
 
         try {
+            $this->initAdmin();
+
             if (!$this->isAdminAuthorized() || $this->getAdminModel()->getLevel() != 'root') {
                 throw new \Exception('This action is allowed only for root admins');
             }
