@@ -1647,7 +1647,15 @@ abstract class CMS
 
 	protected function getRequestQueryStringForLanguageLinks($language)
 	{
-		return \diRequest::requestQueryString() ? '?' . \diRequest::requestQueryString() : '';
+	    $qs = \diRequest::requestQueryString() ? '?' . \diRequest::requestQueryString() : '';
+
+	    if ($qs) {
+            $qs = StringHelper::removeQueryStringParameter($qs, [
+                Page::FLUSH_PARAM,
+            ]);
+        }
+
+		return $qs;
 	}
 
 	/**
