@@ -25,10 +25,24 @@ class PageCache extends \diCore\Admin\BasePage
 		$this->setTable('page_cache');
 	}
 
+    protected function setupFilters()
+    {
+        // todo: mongo collections to support filters
+        $this->getFilters()
+            ->addFilter([
+                'field' => 'uri',
+                'type' => 'string',
+                'title' => 'URI',
+                'where_tpl' => 'diaf_substr',
+            ])
+            ->buildQuery();
+    }
+
 	public function renderList()
 	{
 		$this->getList()->addColumns([
 			'id' => 'ID',
+			'#href' => [],
 			'uri' => [
 				'headAttrs' => [
 					'width' => '80%',

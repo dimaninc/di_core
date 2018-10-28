@@ -77,6 +77,52 @@ class Auth extends \diBaseController
 		$this->redirect();
 	}
 
+	public function loginForAdminAction()
+    {
+        $res = [
+            'ok' => false,
+        ];
+
+        try {
+            if (!$this->isAdminAuthorized() || $this->getAdminModel()->getLevel() != 'root') {
+                throw new \Exception('This action is allowed only for root admins');
+            }
+
+            $userId = $this->param(0);
+            $key = $this->param(1);
+            $back = \diRequest::get('back');
+
+            /** @var Model $user */
+            $user = \diModel::create(Types::user, $userId);
+
+            if (!$user->exists()) {
+                throw new \Exception('User not found, ID=' . $userId);
+            }
+
+            if (!$user->hasActive()) {
+                throw new \Exception('User is not active');
+            }
+
+            if ($user->getActivationKey() != $key) {
+                throw new \Exception('User key not match');
+            }
+
+            $A = new AuthTool();
+            $A->forceAuthorize($user);
+
+            if ($back) {
+                header('Location: ' . $back);
+                die();
+            }
+
+            $res['ok'] = true;
+        } catch (\Exception $e) {
+            $res['message'] = $e->getMessage();
+        }
+
+        return $res;
+    }
+
 	protected function getOAuth()
 	{
 		return \diOAuth2::create($this->param(0));

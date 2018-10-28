@@ -111,7 +111,10 @@ class Page
 
     protected function storeContent(Model $cacheModel, $content)
     {
-        $cacheModel->setContent($content);
+        if ($content)
+        {
+            $cacheModel->setContent($content);
+        }
 
         return $this;
     }

@@ -89,7 +89,7 @@ class Model extends \diBaseUserModel
 
 	public function getActivationHref()
 	{
-		return '/api/auth/activate/' . $this->getSlug() . '/' . $this->getActivationKey() . '/';
+		return '/api/auth/activate/' . $this->getSlug() . '/' . $this->getActivationKey();
 	}
 
 	public function getFullEnterNewPasswordHref()
@@ -99,8 +99,15 @@ class Model extends \diBaseUserModel
 
 	public function getEnterNewPasswordHref()
 	{
-		return '/' . CMS::ct('enter_new_password') . '/' . $this->getEmail() . '/' . $this->getActivationKey() . '/';
+		return '/' . CMS::ct('enter_new_password') . '/' . $this->getEmail() .
+            '/' . $this->getActivationKey() . '/';
 	}
+
+	public function getLoginForAdminHref($back = '')
+    {
+        return '/api/auth/login_for_admin/' . $this->getId() . '/' . $this->getActivationKey() .
+            ($back ? '?back=' . urlencode($back) : '');
+    }
 
 	public function importDataFromOAuthProfile(\diOAuth2ProfileModel $profile)
 	{

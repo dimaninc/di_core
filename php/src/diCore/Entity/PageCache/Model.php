@@ -61,4 +61,9 @@ class Model extends \diCore\Database\Entity\Mongo\Model
 
         return $col->getFirstItem();
     }
+
+    public function getHref()
+    {
+        return $this->getUri();
+    }
 }
