@@ -33,11 +33,14 @@ class Page
 
     protected function cleanServerVarsFromFlushParam()
     {
-        $_SERVER['REQUEST_URI'] = StringHelper::removeQueryStringParameter($_SERVER['REQUEST_URI'], [
-            static::FLUSH_PARAM,
-        ]);
+        if (!empty($_SERVER['REQUEST_URI']))
+        {
+            $_SERVER['REQUEST_URI'] = StringHelper::removeQueryStringParameter($_SERVER['REQUEST_URI'], [
+                static::FLUSH_PARAM,
+            ]);
+        }
 
-        if ($_SERVER['QUERY_STRING'])
+        if (!empty($_SERVER['QUERY_STRING']))
         {
             $_SERVER['QUERY_STRING'] = ltrim(StringHelper::removeQueryStringParameter('?' . $_SERVER['QUERY_STRING'], [
                 static::FLUSH_PARAM,
