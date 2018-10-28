@@ -36,9 +36,13 @@ class Page
         $_SERVER['REQUEST_URI'] = StringHelper::removeQueryStringParameter($_SERVER['REQUEST_URI'], [
             static::FLUSH_PARAM,
         ]);
-        $_SERVER['QUERY_STRING'] = StringHelper::removeQueryStringParameter($_SERVER['QUERY_STRING'], [
-            static::FLUSH_PARAM,
-        ]);
+
+        if ($_SERVER['QUERY_STRING'])
+        {
+            $_SERVER['QUERY_STRING'] = ltrim(StringHelper::removeQueryStringParameter('?' . $_SERVER['QUERY_STRING'], [
+                static::FLUSH_PARAM,
+            ]), '?');
+        }
 
         return $this;
     }
