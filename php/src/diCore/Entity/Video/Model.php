@@ -123,8 +123,8 @@ class Model extends \diModel
 	public function getHtmlVideoSources()
 	{
 		return \diWebVideoPlayer::getFormatRowsHtml([
-			'getFilenameCallback' => function($format) {
-				return $this->getVideoFileByFormat($format);
+			'getFilenameCallback' => function($formatId) {
+				return $this->getVideoFileByFormat(\diWebVideoFormats::$extensions[$formatId]);
 			},
 		]);
 	}

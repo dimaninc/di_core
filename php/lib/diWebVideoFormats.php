@@ -24,6 +24,6 @@ class diWebVideoFormats
 		self::M4V => "video/mp4",
 		self::OGV => "video/ogg",
 		self::WEBM => "video/webm",
-		self::MP4 => null,
+		self::MP4 => "video/mp4",
 	);
 }

@@ -13,21 +13,28 @@ class diWebVideoPlayer
 		$rows = [];
 
 		$options = extend([
-			"getFilenameCallback" => function($format) {},
+			'getFilenameCallback' => function($format) {},
+            'getTypeCallback' => null,
 		], $options);
 
-		foreach (diWebVideoFormats::$extensions as $formatId => $format)
+		$defaultTypeCallback = function($formatId, $fillMp4 = false) {
+		    return $fillMp4 || $formatId != \diWebVideoFormats::MP4
+                ? ' type="' . \diWebVideoFormats::$videoTagMimeTypes[$formatId] . '"'
+                : '';
+        };
+
+		foreach (\diWebVideoFormats::$extensions as $formatId => $format)
 		{
-			$file = $options["getFilenameCallback"]($format);
+			$file = $options['getFilenameCallback']($formatId);
 
 			if (!$file)
 			{
 				continue;
 			}
 
-			$typeAttr = diWebVideoFormats::$videoTagMimeTypes[$formatId]
-				? ' type="' . diWebVideoFormats::$videoTagMimeTypes[$formatId] . '"'
-				: '';
+            $typeAttr = $options['getTypeCallback']
+                ? $options['getTypeCallback']($formatId, $defaultTypeCallback)
+                : $defaultTypeCallback($formatId);
 
 			$rows[] = '<source src="' . $file . '"' . $typeAttr . '>';
 		}
