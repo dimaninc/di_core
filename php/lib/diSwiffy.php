@@ -6,6 +6,9 @@
  * Time: 18:10
  */
 
+use diCore\Helper\ArrayHelper;
+use diCore\Helper\StringHelper;
+
 class diSwiffy
 {
 	const dimensionsRegEx = "/<div id=\"swiffycontainer\" style=\"width: (\d+)px; height: (\d+)px\">/i";
@@ -17,26 +20,30 @@ class diSwiffy
 
 	public static function is($filename)
 	{
-		return strtolower(get_file_ext(self::normalizeFilename($filename))) == "html";
+		return strtolower(StringHelper::fileExtension(self::normalizeFilename($filename))) == "html";
 	}
 
 	public static function getDimensions($filename)
 	{
 		if (preg_match(self::dimensionsRegEx, file_get_contents(self::normalizeFilename($filename)), $regs))
 		{
-			return array($regs[1], $regs[2], diImage::TYPE_SWIFFY);
-		}
-		else
+            return [$regs[1], $regs[2], \diImage::TYPE_SWIFFY];
+        } else
 		{
-			return array(0, 0, diImage::TYPE_HTML5);
-		}
-	}
+            return [0, 0, \diImage::TYPE_HTML5];
+        }
+    }
 
-	public static function getHtml($filename, $w = null, $h = null)
+	public static function getHtml($filename, $w = null, $h = null, $options = [])
 	{
+	    $options = extend([
+	        'style' => '',
+            'attributes' => [],
+        ], $options);
+
 		if ($w === null || $h === null)
 		{
-			list($w, $h) = self::getDimensions(diPaths::fileSystem() . $filename);
+			list($w, $h) = self::getDimensions(\diPaths::fileSystem() . $filename);
 		}
 
 		if (!$w && !$h)
@@ -54,6 +61,11 @@ class diSwiffy
 			$h = $h . "px";
 		}
 
-		return "<iframe src=\"$filename\" style=\"width: {$w}; height: {$h}; border: 0;\"></iframe>";
+		$attributes = extend([
+            'src' => $filename,
+            'style' => "width:{$w};height:{$h};border:0;" . $options['style'],
+        ], $options['attributes']);
+
+		return sprintf('<iframe %s></iframe>', ArrayHelper::toAttributesString($attributes, false));
 	}
 }
