@@ -11,8 +11,9 @@ CREATE TABLE IF NOT EXISTS payment_receipts(
 	outer_number VARCHAR(32) DEFAULT '',
 	date_reserved datetime DEFAULT NULL,
 	date_payed timestamp DEFAULT CURRENT_TIMESTAMP,
+	date_uploaded timestamp DEFAULT NULL,
 	draft_id bigint,
-	index idx(target_type,target_id,user_id,date_reserved,date_payed),
+	index idx(target_type,target_id,user_id,date_reserved,date_payed,date_uploaded),
 	unique draft_idx(draft_id),
 	PRIMARY KEY(id)
 )

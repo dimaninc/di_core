@@ -36,7 +36,8 @@ class PaymentReceipts extends PaymentDrafts
 		$this->getList()
 			->removeColumn(['paid'])
 			->setColumnAttr('date_reserved', 'value', function(Model $m) {
-				return \diDateTime::format('d.m.Y H:i', $m->getDatePayed());
+				return \diDateTime::simpleFormat($m->getDatePayed()) .
+                    ($m->hasDateUploaded() ? '<br>' . \diDateTime::simpleFormat($m->getDateUploaded()) : '');
 			})
 			->insertColumnsAfter('date_reserved', [
 				'outer_number' => [
@@ -66,7 +67,7 @@ class PaymentReceipts extends PaymentDrafts
 			],
 
 			'outer_number' => [
-				'type' => 'int',
+				'type' => 'string',
 				'title' => 'Внешний номер платежа',
 				'default' => '',
 				'flags' => 'static',
@@ -78,6 +79,13 @@ class PaymentReceipts extends PaymentDrafts
 				'default' => '',
 				'flags' => 'static',
 			],
+
+            'date_uploaded' => [
+                'type' => 'datetime_str',
+                'title' => 'Дата загрузки в ОФД',
+                'default' => '',
+                'flags' => 'static',
+            ],
 
 			'draft_id' => [
 				'type' => 'int',
