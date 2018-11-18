@@ -11,23 +11,26 @@ class diVideoVendors
 	const Own = 0;
 	const YouTube = 1;
 	const Vimeo = 2;
+	const RuTube = 3;
 
 	public static $titles = [
 		self::Own => "Собственное видео",
 		self::YouTube => "YouTube",
 		self::Vimeo => "Vimeo",
+        self::RuTube => 'RuTube',
 	];
 
 	public static $patterns = [
 		self::YouTube => '/^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#\&\?\"\']*).*/',
 		self::Vimeo => '/(https?:\/\/)?(www\.)?(player\.)?vimeo\.com\/([a-z]*\/)*([0-9]{6,11})[?]?.*/',
+        self::RuTube => '#(https?://)rutube.ru/video/([^/]+)/#',
 	];
 
 	public static function extractInfoFromEmbed($embed)
 	{
 		$ar = [
-			"vendor" => null,
-			"video_uid" => null,
+			'vendor' => null,
+			'video_uid' => null,
 		];
 
 		foreach (self::$patterns as $vendor => $pattern)
@@ -36,15 +39,19 @@ class diVideoVendors
 
 			if ($vendor == self::YouTube && isset($r[7]))
 			{
-				$ar["video_uid"] = $r[7];
-				$ar["vendor"] = $vendor;
+				$ar['video_uid'] = $r[7];
+				$ar['vendor'] = $vendor;
 			}
-
-			if ($vendor == self::Vimeo && isset($r[5]))
+			elseif ($vendor == self::Vimeo && isset($r[5]))
 			{
-				$ar["video_uid"] = $r[5];
-				$ar["vendor"] = $vendor;
+				$ar['video_uid'] = $r[5];
+				$ar['vendor'] = $vendor;
 			}
+            elseif ($vendor == self::RuTube && isset($r[2]))
+            {
+                $ar['video_uid'] = $r[2];
+                $ar['vendor'] = $vendor;
+            }
 		}
 
 		return $ar;
@@ -60,6 +67,11 @@ class diVideoVendors
 		return unserialize(self::getFile(sprintf("http://vimeo.com/api/v2/video/%s.php", $videoUid)));
 	}
 
+	private static function getRuTubeData($videoUid)
+    {
+        return (array)json_decode(self::getFile(sprintf('https://rutube.ru/api/video/%s?format=json', $videoUid)));
+    }
+
 	public static function getThumbnail($vendor, $videoUid)
 	{
 		switch ($vendor)
@@ -73,6 +85,9 @@ class diVideoVendors
 				return isset($info[0]["thumbnail_medium"])
 					? $info[0]["thumbnail_medium"]
 					: null;
+
+            case self::RuTube:
+                return self::getPoster($vendor, $videoUid);
 		}
 
 		return null;
@@ -91,6 +106,13 @@ class diVideoVendors
 				return isset($info[0]["thumbnail_large"])
 					? str_replace('http://', 'https://', $info[0]["thumbnail_large"])
 					: null;
+
+            case self::RuTube:
+                $info = self::getRuTubeData($videoUid);
+
+                return isset($info['thumbnail_url'])
+                    ? $info['thumbnail_url']
+                    : null;
 		}
 
 		return null;
@@ -120,6 +142,13 @@ class diVideoVendors
 				return isset($info[0]['title'])
 					? $info[0]['title']
 					: null;
+
+            case self::RuTube:
+                $info = self::getRuTubeData($videoUid);
+
+                return isset($info['title'])
+                    ? $info['title']
+                    : null;
 		}
 
 		return null;
@@ -138,6 +167,13 @@ class diVideoVendors
 				return isset($info[0]['description'])
 					? $info[0]['description']
 					: null;
+
+            case self::RuTube:
+                $info = self::getRuTubeData($videoUid);
+
+                return isset($info['description'])
+                    ? $info['description']
+                    : null;
 		}
 
 		return null;
@@ -148,10 +184,13 @@ class diVideoVendors
 		switch ($vendor)
 		{
 			case self::YouTube:
-				return sprintf("https://www.youtube.com/watch?v=%s", $videoUid);
+				return sprintf('https://www.youtube.com/watch?v=%s', $videoUid);
 
 			case self::Vimeo:
-				return sprintf("https://vimeo.com/%s", $videoUid);
+				return sprintf('https://vimeo.com/%s', $videoUid);
+
+            case self::RuTube:
+                return sprintf('https://rutube.ru/video/%s/', $videoUid);
 		}
 
 		return null;
@@ -162,10 +201,13 @@ class diVideoVendors
 		switch ($vendor)
 		{
 			case self::YouTube:
-				return sprintf("https://www.youtube.com/embed/%s", $videoUid);
+				return sprintf('https://www.youtube.com/embed/%s', $videoUid);
 
 			case self::Vimeo:
-				return sprintf("https://player.vimeo.com/video/%s", $videoUid);
+				return sprintf('https://player.vimeo.com/video/%s', $videoUid);
+
+            case self::RuTube:
+                return sprintf('https://rutube.ru/play/embed/%s', $videoUid);
 		}
 
 		return null;

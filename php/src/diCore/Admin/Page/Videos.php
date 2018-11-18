@@ -45,7 +45,10 @@ class Videos extends \diCore\Admin\BasePage
 				'default_value' => static::FILTER_DEFAULT_ALBUM_ID,
 			])
 			->buildQuery()
-			->setSelectFromDbInput('album_id', $this->getDb()->rs('albums', 'ORDER BY order_num ASC'), [0 => 'Все альбомы']);
+			->setSelectFromCollectionInput('album_id',
+                \diCollection::create(\diTypes::album)->orderByTitle(),
+                [0 => 'Все альбомы']
+            );
 	}
 
 	public function orderChangeAllowed()
@@ -119,7 +122,7 @@ class Videos extends \diCore\Admin\BasePage
 			'date' => [
 				'title' => 'Дата',
 				'value' => function(Model $v) {
-					return \diDateTime::format('d.m.Y H:i', $v->getDate());
+					return \diDateTime::simpleFormat($v->getDate());
 				},
 				'attrs' => [
 					'width' => '10%',
@@ -201,7 +204,7 @@ class Videos extends \diCore\Admin\BasePage
 		}
 
 		$this->getForm()
-			->setSelectFromDbInput('album_id', $this->getDb()->rs('albums', 'ORDER BY title ASC'))
+			->setSelectFromCollectionInput('album_id', \diCollection::create(\diTypes::album)->orderByTitle())
 			->setSelectFromArrayInput('vendor', \diVideoVendors::$titles);
 	}
 
@@ -396,7 +399,7 @@ class Videos extends \diCore\Admin\BasePage
 			'date' => [
 				'type' => 'datetime_str',
 				'title' => 'Дата добавления',
-				'default' => '',
+				'default' => \diDateTime::sqlFormat(),
 				'flags' => ['static'],
 			],
 
