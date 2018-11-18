@@ -118,6 +118,13 @@ body[data-skin="entrine"] .login-form {
 body[data-skin="entrine"] .login-form > div:not(:first-child) {
   margin-top: 20px;
 }
+.login-form > .error {
+  color: #f00;
+  text-align: center;
+}
+body[data-skin="entrine"] .login-form > .error {
+  color: #faa;
+}
 .login-form label {
   font-size: 14px;
 }

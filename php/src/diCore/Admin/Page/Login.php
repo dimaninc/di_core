@@ -29,15 +29,23 @@ class Login extends \diCore\Admin\BasePage
 
     public function renderForm()
     {
-        $this->getAdmin()->setHeadPrinter(function(\diCore\Admin\Base $A) {
-            return $A->getTwig()->parse('admin/_index/head_of_login', []);
-        });
+        $errors = [];
 
-        $this->getTpl()
-            ->define('`login/form', [
-                'index',
-                'page',
-            ]);
+        if (\diRequest::post(\diAdminUser::POST_LOGIN_FIELD)) {
+            $errors['password'] = [
+                'en' => 'Login/password not match',
+                'ru' => 'Логин/пароль введены неверно',
+            ];
+        }
+
+        $this->getTwig()
+            ->assign([
+                'login_errors' => $errors,
+                'login_credentials' => [
+                    'login' => \diRequest::post(\diAdminUser::POST_LOGIN_FIELD),
+                ],
+            ])
+            ->setTemplateForIndex('admin/login/index');
     }
 
     public function getFormFields()

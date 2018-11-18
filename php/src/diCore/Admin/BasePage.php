@@ -185,7 +185,7 @@ abstract class BasePage
 					]);
 			}
 		}
-		elseif ($o->getTwig()->has(\diTwig::TOKEN_FOR_PAGE))
+		elseif ($o->getTwig()->hasPage())
 		{
 			$o->getTpl()
 				->assign([
@@ -324,6 +324,7 @@ abstract class BasePage
 	}
 
 	/**
+     * @deprecated
 	 * @return \FastTemplate
 	 */
 	public function getTpl()

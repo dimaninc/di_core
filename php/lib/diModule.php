@@ -51,7 +51,7 @@ abstract class diModule
 
 		$o->$afterM();
 
-		if ($o->getTwig()->has(\diTwig::TOKEN_FOR_PAGE))
+		if ($o->getTwig()->hasPage())
 		{
 			if ($Z::templateEngineIsFastTemplate())
 			{

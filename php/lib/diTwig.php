@@ -17,6 +17,7 @@ class diTwig
 	const CACHE_FOLDER = '_cfg/cache/twig';
 
 	const TOKEN_FOR_PAGE = '_page';
+    const TOKEN_FOR_INDEX = '_index';
 
 	const FILE_EXTENSION = '.html.twig';
 
@@ -39,6 +40,12 @@ class diTwig
 	 * @var array
 	 */
 	private $data = [];
+
+    /**
+     * @var string
+     * This template will be used in renderIndex by default, if set
+     */
+	private $templateForIndex;
 
 	/**
 	 * diTwig constructor.
@@ -172,6 +179,11 @@ class diTwig
 		return $this->get(self::TOKEN_FOR_PAGE);
 	}
 
+    public function getIndex()
+    {
+        return $this->get(self::TOKEN_FOR_INDEX);
+    }
+
 	/**
 	 * Check if context data item exists by key
 	 *
@@ -182,6 +194,16 @@ class diTwig
 	{
 		return !!$this->get($key);
 	}
+
+	public function hasPage()
+    {
+        return $this->has(self::TOKEN_FOR_PAGE);
+    }
+
+    public function hasIndex()
+    {
+        return $this->has(self::TOKEN_FOR_INDEX);
+    }
 
 	/**
 	 * Add context data
@@ -284,6 +306,37 @@ class diTwig
 				'Z' => isset($Z) ? $Z : null,
 			], $data));
 	}
+
+    /**
+     * @param null|string $template
+     * @param array $data
+     * @return diTwig
+     */
+    public function renderIndex($template = null, $data = [])
+    {
+        global $Z;
+
+        $template = $template ?: $this->templateForIndex;
+
+        if (!$template) {
+            throw new \Exception('Template not defined for diTwig->renderIndex');
+        }
+
+        return $this
+            ->render($template, self::TOKEN_FOR_INDEX, extend([
+                'Z' => isset($Z) ? $Z : null,
+            ], $data));
+    }
+
+    /**
+     * @param string $templateForIndex
+     */
+    public function setTemplateForIndex($templateForIndex)
+    {
+        $this->templateForIndex = $templateForIndex;
+
+        return $this;
+    }
 
 	public function importFromFastTemplate(FastTemplate $tpl, $tokens = [], $clear = true)
 	{

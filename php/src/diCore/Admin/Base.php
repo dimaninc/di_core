@@ -267,8 +267,20 @@ class Base
 			->printHead()
 			->printFooter();
 
-		echo $this->getTpl()->parse('index');
+		echo $this->getFinalHtml();
 	}
+
+	protected function getFinalHtml()
+    {
+        try {
+            return $this->getTwig()
+                ->renderIndex()
+                ->getIndex();
+        } catch (\Exception $e) {
+            return $this->getTpl()
+                ->parse('index');
+        }
+    }
 
 	protected function getStaticTimestampEnding()
 	{
