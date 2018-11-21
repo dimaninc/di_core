@@ -1796,7 +1796,7 @@ abstract class CMS
 			{
 				if (static::debugMode())
 				{
-					simple_debug('Query param not allowed: ' . $k);
+					simple_debug('Query param not allowed: ' . $k . ', Page type: ' . $this->getContentModel()->getType());
 				}
 
 				$this->errorExtraQueryParams();
