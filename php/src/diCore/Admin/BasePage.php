@@ -1292,7 +1292,10 @@ abstract class BasePage
 		{
 			$ar[\diAdminTableEditLogModel::ADMIN_TAB_NAME] = [
 				'type' => 'string',
-				'title' => 'Журнал изменений',
+				'title' => $this->localized([
+				    'ru' => 'Журнал изменений',
+                    'en' => 'Edit log',
+                ]),
 				'default' => '',
 				'flags' => ['virtual', 'static'],
 				'tab' => \diAdminTableEditLogModel::ADMIN_TAB_NAME,

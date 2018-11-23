@@ -330,13 +330,14 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 * @param $type
 	 * @param $id
 	 * @param int $cacheKind
-	 * @return diModel
-	 * @throws Exception
+	 * @return \diModel
+	 * @throws \Exception
 	 */
 	public static function createModelFromCache($type, $id, $cacheKind = self::CACHE_ALL)
 	{
 		$col = \diCollection::createFromCache($type, [], $cacheKind);
-		return $col[$id];
+
+		return $col[$id] ?: \diModel::create($type);
 	}
 
 	/**
