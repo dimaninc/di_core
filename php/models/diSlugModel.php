@@ -68,6 +68,12 @@ class diSlugModel extends \diModel
 			$targetType = diTypes::getId($targetType->getTable());
 		}
 
-		return diCollection::create(diTypes::slug, "WHERE target_type='$targetType' AND target_id='$targetId'")->getFirstItem();
+        /** @var \diSlugCollection $col */
+        $col = \diCollection::create(static::type);
+
+        return $col
+            ->filterByTargetType($targetType)
+            ->filterByTargetId($targetId)
+            ->getFirstItem();
 	}
 }
