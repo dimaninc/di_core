@@ -397,7 +397,7 @@ class Submit
 				$v['default'] = '';
 			}
 
-			switch($v['type'])
+			switch ($v['type'])
 			{
 				case 'password':
 					$this
@@ -428,7 +428,10 @@ class Submit
 					break;
 
 				default:
-					$this->setData($f, \diRequest::post($f, $v['default']));
+				    $type = in_array($v['type'], ['float', 'double', 'int'])
+                        ? $v['type']
+                        : null;
+					$this->setData($f, \diRequest::post($f, $v['default'], $type));
 					break;
 			}
 		}
