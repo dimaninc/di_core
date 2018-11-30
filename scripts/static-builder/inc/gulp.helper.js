@@ -12,6 +12,7 @@ Helper = {
   },
   masks: {
     stylus: '**/*.styl',
+    sass: '**/*.scss',
     less: '**/*.less',
     sprite: 'images/sprite-src/**/*.png',
     coffee: '**/**/*.coffee',
@@ -235,6 +236,29 @@ Helper = {
           use: nib(),
           'include css': true
         })).on('error', console.log).pipe(gulp.dest(_this.fullPath(opts.buildFolder))).on('end', function() {
+          return done();
+        });
+      };
+    })(this));
+    return this;
+  },
+  assignSassTaskToGulp: function(gulp, opts) {
+    var sass;
+    if (opts == null) {
+      opts = {};
+    }
+    if (!sass) {
+      sass = this.req('gulp-sass');
+      sass.compiler = this.req('node-sass');
+    }
+    opts = this.extend({
+      fn: null,
+      buildFolder: null,
+      taskName: 'sass'
+    }, opts);
+    gulp.task(opts.taskName, (function(_this) {
+      return function(done) {
+        return gulp.src(_this.fullPath(opts.fn)).pipe(sass().on('error', sass.logError)).pipe(gulp.dest(_this.fullPath(opts.buildFolder))).on('end', function() {
           return done();
         });
       };

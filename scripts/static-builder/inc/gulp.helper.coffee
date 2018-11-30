@@ -7,6 +7,7 @@ Helper =
         inner: '../_core/'
     masks:
         stylus: '**/*.styl'
+        sass: '**/*.scss'
         less: '**/*.less'
         sprite: 'images/sprite-src/**/*.png'
         coffee: '**/**/*.coffee'
@@ -172,6 +173,19 @@ Helper =
             .on 'error', console.log
             .pipe gulp.dest @fullPath opts.buildFolder
             .on 'end', -> done()
+        @
+
+    assignSassTaskToGulp: (gulp, opts = {}) ->
+        unless sass
+            sass = @req 'gulp-sass'
+            sass.compiler = @req 'node-sass'
+        opts = @extend {fn: null, buildFolder: null, taskName: 'sass'}, opts
+        gulp.task opts.taskName, (done) =>
+            gulp.src @fullPath opts.fn
+                .pipe sass().on 'error', sass.logError
+                #.on 'error', console.log
+                .pipe gulp.dest @fullPath opts.buildFolder
+                .on 'end', -> done()
         @
 
     assignPngSpritesTaskToGulp: (gulp, opts = {}) ->
