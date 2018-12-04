@@ -3,9 +3,9 @@
 namespace diCore\Admin\Page;
 
 use diCore\Data\Types;
-use diCore\Tool\CollectionCache;
 use diCore\Entity\DynamicPic\Collection as dpCol;
 use diCore\Entity\AdminTask\Model;
+use diCore\Tool\CollectionCache;
 
 /**
  * Created by PhpStorm.

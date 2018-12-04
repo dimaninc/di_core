@@ -6,7 +6,9 @@ var diDynamicRows = function(opts) {
 		$wrapper,
 		$formRow,
 		$dropAreas,
-		droppedFiles;
+		droppedFiles,
+		$lastCreatedRow,
+		lastCreatedRowId;
 
     var local = {
         ru: {
@@ -45,17 +47,17 @@ var diDynamicRows = function(opts) {
 	}
 
     this.L = function(name) {
-        return typeof local[opts.language][name] != 'undefined'
+        return typeof local[opts.language][name] !== 'undefined'
             ? local[opts.language][name]
             : name;
     };
 
-	function setupEvents() {
+	this.setupEvents = function() {
 		var validatePassword = function() {
 			var $password = $(this).parent().find('input[type="password"]:not(.password-confirm)'),
 				$password2 = $(this).parent().find('input[type="password"].password-confirm');
 
-			$password2.get(0).setCustomValidity($password.val() != $password2.val()
+			$password2.get(0).setCustomValidity($password.val() !== $password2.val()
 				? self.L('passwords_not_match')
 				: ''
 			);
@@ -63,7 +65,9 @@ var diDynamicRows = function(opts) {
 
 		$anc.parent().on('change', 'input[type="password"]:not(.password-confirm)', validatePassword);
 		$anc.parent().on('keyup', 'input[type="password"].password-confirm', validatePassword);
-	}
+
+		return this;
+	};
 
 	function isDragAndDropSupported() {
 		return $formRow.data('drag-and-drop-uploading') && di.supported.advancedUploading;
@@ -118,7 +122,7 @@ var diDynamicRows = function(opts) {
 		});
 	}
 
-	function setupDragAndDropUploads() {
+	this.setupDragAndDropUploads = function() {
 		if (isDragAndDropSupported()) {
 			// todo: https://css-tricks.com/drag-and-drop-file-uploading/
 			/*
@@ -140,35 +144,74 @@ var diDynamicRows = function(opts) {
 				});
 			*/
 		}
-	}
 
-	this.init = function(field, field_title, sign, counter)
-	{
-		this.counters[field] = typeof counter == 'undefined' ? 0 : counter * 1;
+		return this;
+	};
+
+	this.createExistingPicHolder = function(imgUrl, $row) {
+		$row = $row || this.getLastCreatedRow();
+        var $inp = $row.find('input[type="file"]').first();
+        // adding pic holder
+        $inp.closest('div').before('<div class="existing-pic-holder"><div class="container embed"><img src="{0}" alt="pics"></div></div>'.format(imgUrl));
+        // saving base64 encoded binary data to input
+		var $base64Inp = $(
+			'<input type="hidden" name="{0}" value="{1}">'.format('base64_' + $inp.attr('name'), imgUrl)
+		).insertBefore($inp);
+
+        return this;
+	};
+
+	this.addWithPicBase64 = function(base64) {
+		this.add(opts.field);
+
+		this.createExistingPicHolder(base64);
+
+		return this;
+	};
+
+	this.setupPasteImage = function() {
+		$(document).on('paste.didynamicrows', function(event) {
+            var items = (event.clipboardData  || event.originalEvent.clipboardData).items;
+
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].type.indexOf('image') === -1) continue;
+
+                var format = items[i].type;
+                var blob = items[i].getAsFile();
+
+                var mycanvas = document.createElement('canvas');
+                var ctx = mycanvas.getContext('2d');
+
+                var img = new Image();
+                img.onload = function() {
+                    mycanvas.width = this.width;
+                    mycanvas.height = this.height;
+
+                    ctx.drawImage(this, 0, 0);
+
+					self.addWithPicBase64(mycanvas.toDataURL(format || 'image/png'));
+                };
+
+                var URLObj = window.URL || window.webkitURL;
+                img.src = URLObj.createObjectURL(blob);
+            }
+
+            event.stopPropagation();
+		});
+
+		return this;
+	};
+
+	this.init = function(field, field_title, sign, counter) {
+		this.counters[field] = typeof counter === 'undefined' ? 0 : ~~counter;
 		this.field_titles[field] = field_title;
-		this.signs[field] = typeof sign == 'undefined' || sign > 0 ? 1 : -1;
+		this.signs[field] = typeof sign === 'undefined' || sign > 0 ? 1 : -1;
 
 		// back compatibility
-		if (!opts.field)
-		{
-			opts.field = field;
-		}
-
-		if (!opts.fieldTitle)
-		{
-			opts.fieldTitle = field_title;
-		}
-
-		if (!opts.sign)
-		{
-			opts.sign = sign;
-		}
-
-		if (!opts.counter)
-		{
-			opts.counter = counter;
-		}
-		//
+		opts.field = opts.field || field;
+		opts.fieldTitle = opts.fieldTitle || field_title;
+		opts.sign = opts.sign || sign;
+		opts.counter = opts.counter || counter;
 
 		$jsSrc = $('#js_' + opts.field + '_js_resource');
 		$src = $('#js_' + opts.field + '_resource');
@@ -182,16 +225,13 @@ var diDynamicRows = function(opts) {
 			setupMultipleUploads();
 		}, 0);
 
-		setupEvents();
-		setupDragAndDropUploads();
+		this
+			.setupEvents()
+			.setupDragAndDropUploads()
+			.setupPasteImage();
 
-		if (opts.afterInit) {
-			opts.afterInit(this);
-		}
-
-		if (opts.sortable) {
-			this.setupSortable();
-		}
+		opts.afterInit && opts.afterInit(this);
+		opts.sortable && this.setupSortable();
 
 		return this;
 	};
@@ -243,22 +283,26 @@ var diDynamicRows = function(opts) {
 		return $anc.parent().find('.dynamic-row');
 	};
 
-	this.is_field_inited = function(field)
-	{
-		return typeof this.counters[field] != 'undefined';
+	this.is_field_inited = function(field) {
+		return typeof this.counters[field] !== 'undefined';
 	};
 
-	this.add = function(field)
-	{
-		if (!this.is_field_inited(field))
-		{
+	this.getLastCreatedRow = function() {
+		return $lastCreatedRow;
+	};
+
+    this.getLastCreatedRowId = function() {
+        return lastCreatedRowId;
+    };
+
+	this.add = function(field) {
+		if (!this.is_field_inited(field)) {
 			console.log('diDynamicRows: field {0} not initialized'.format(field));
 
 			return false;
 		}
 
-		if (!$src.length || !$anc.length)
-		{
+		if (!$src.length || !$anc.length) {
 			console.log('diDynamicRows: no $src or $anc');
 
 			return false;
@@ -267,12 +311,12 @@ var diDynamicRows = function(opts) {
 		this.counters[field] += this.signs[field];
 
 		var id = - this.counters[field];
-		var html = $src.html();
+		var html = $src.html() || '';
 		html = html.substr(html.indexOf('>') + 1);
 		html = html.substr(0, html.length - 6);
 		html = html.replace(/%NEWID%/g, id);
 
-		var js = $jsSrc.html();
+		var js = $jsSrc.html() || '';
 		js = js.replace(/%NEWID%/g, id);
 
 		var $e = $('<div />');
@@ -288,16 +332,14 @@ var diDynamicRows = function(opts) {
 
 		$e.find(':checkbox,:radio').diControls();
 
-		$(_ge(field + '_order_num[' + id + ']')).val(- id);
+		$('#' + field + '_order_num\\[' + id + '\\]').val(-id);
 
-		if (Math.abs(id) == 1)
-		{
-			$(_ge(field + '_by_default[' + id + ']')).prop('checked', true);
+		if (Math.abs(id) === 1) {
+			$('#' + field + '_by_default\\[' + id + '\\]').prop('checked', true);
 			$('input[type="radio"][name="{0}_default"][value="{1}"]'.format(field, id)).prop('checked', true);
 		}
 
-		if (admin_form)
-		{
+		if (admin_form) {
 			$e.find('[data-purpose="color-picker"]').each(function() {
 				admin_form.setupColorPicker($(this));
 			});
@@ -307,35 +349,27 @@ var diDynamicRows = function(opts) {
 			scrollTop: $e.offset().top - 5
 		});
 
-		if (opts.afterAddRow) {
-			opts.afterAddRow(this, $e, id);
-		}
+		$lastCreatedRow = $e;
+        lastCreatedRowId = id;
 
-		if (opts.sortable) {
-			this.refreshSortable();
-		}
+        opts.afterAddRow && opts.afterAddRow(this, $e, id);
+        opts.sortable && this.refreshSortable();
 
 		return false;
 	};
 
-	this.remove = function(field, id)
-	{
-		if (!this.is_field_inited(field))
-		{
+	this.remove = function(field, id) {
+		if (!this.is_field_inited(field)) {
 			return false;
 		}
 
-		if (!confirm('Удалить ' + this.field_titles[field] + '?'))
-		{
+		if (!confirm('Удалить ' + this.field_titles[field] + '?')) {
 			return false;
 		}
 
-		$(_ge(field + '_div[' + id + ']')).remove();
+		$('#' + field + '_div\\[' + id + '\\]').remove();
 
-		if (opts.afterDelRow)
-		{
-			opts.afterDelRow(this, id);
-		}
+        opts.afterDelRow && opts.afterDelRow(this, id);
 
 		return false;
 	};

@@ -1212,6 +1212,32 @@ class Submit
 		return $this;
 	}
 
+	public static function checkBase64Files($field, $id)
+    {
+        if (empty($_FILES[$field]['name'][$id]) && !empty($_POST['base64_' . $field][$id]))
+        {
+            $base64 = $_POST['base64_' . $field][$id];
+            preg_match("#^data:(.+/[^;]+);base64,(.+)$#", $base64, $regs);
+            $raw = $regs[2];
+
+            $_FILES[$field]['name'][$id] = 'clipboard-image.png';
+            $_FILES[$field]['type'][$id] = $regs[1];
+            $_FILES[$field]['tmp_name'][$id] = tempnam(sys_get_temp_dir(), 'clipboard-image');
+            $_FILES[$field]['error'][$id] = 0;
+
+            if (!$_FILES[$field]['tmp_name'][$id])
+            {
+                throw new \Exception('Unable to create temporary file for clipboard image');
+            }
+
+            file_put_contents($_FILES[$field]['tmp_name'][$id], base64_decode($raw));
+
+            $_FILES[$field]['size'][$id] = filesize($_FILES[$field]['tmp_name'][$id]);
+
+            unset($_POST['base64_' . $field][$id]);
+        }
+    }
+
 	private function store_dynamic_pics($field)
 	{
 		if (empty($_POST["{$field}_order_num"]))
@@ -1243,15 +1269,15 @@ class Submit
 
 			$test_r = $id > 0 ? $this->getDb()->r(self::dynamicPicsTable, "WHERE $w and id='$id'") : false;
 
-			$db_ar = array(
+			$db_ar = [
 				"order_num" => (int)$order_num,
 				"by_default" => isset($_POST[$field."_by_default"]) && $_POST[$field."_by_default"] == $id ? 1 : 0,
 				"visible" => !empty($_POST[$field."_visible"][$id]) ? 1 : 0,
 				"title" => isset($_POST[$field."_title"][$id]) ? str_in($_POST[$field."_title"][$id]) : "",
 				"content" => isset($_POST[$field."_content"][$id]) ? str_in($_POST[$field."_content"][$id]) : "",
-			);
+			];
 
-			if (isset($_POST[$field."_alt_title"][$id]))
+            if (isset($_POST[$field."_alt_title"][$id]))
 			{
 				$db_ar["alt_title"] = str_in($_POST[$field."_alt_title"][$id]);
 			}
@@ -1263,6 +1289,8 @@ class Submit
 
 			// pic
 			$f = "pic";
+
+            self::checkBase64Files("{$field}_{$f}", $id);
 
 			if (isset($_FILES["{$field}_{$f}"]["name"][$id]) && !$_FILES["{$field}_{$f}"]["error"][$id])
 			{
@@ -1306,7 +1334,9 @@ class Submit
 			// pic tn
 			$f = "pic_tn";
 
-			if (isset($_FILES["{$field}_{$f}"]["name"][$id]) && !$_FILES["{$field}_{$f}"]["error"][$id])
+            self::checkBase64Files("{$field}_{$f}", $id);
+
+            if (isset($_FILES["{$field}_{$f}"]["name"][$id]) && !$_FILES["{$field}_{$f}"]["error"][$id])
 			{
 				if ($test_r && $test_r->$f)
 				{
@@ -1496,7 +1526,7 @@ class Submit
 				unlink($fn);
 			}
 
-			if (!$opts["resize"] && move_uploaded_file($F["tmp_name"], $fn))
+			if (!$opts["resize"] && (move_uploaded_file($F["tmp_name"], $fn) || rename($F["tmp_name"], $fn)))
 			{
 				$needToUnlink = false;
 			}
@@ -1576,7 +1606,7 @@ class Submit
 			unlink($fn);
 		}
 
-		if (!move_uploaded_file($F['tmp_name'], $fn))
+		if (!(move_uploaded_file($F['tmp_name'], $fn) || rename($F['tmp_name'], $fn)))
 		{
 			dierror("Unable to copy file {$F['name']} to {$fn}");
 		}
@@ -1764,7 +1794,7 @@ class Submit
 
 			if ($mode == 'uploading')
 			{
-				move_uploaded_file($F['tmp_name'], $orig_fn);
+				move_uploaded_file($F['tmp_name'], $orig_fn) || rename($F['tmp_name'], $orig_fn);
 			}
 
 			chmod($full_fn, self::FILE_CHMOD);
@@ -1779,7 +1809,7 @@ class Submit
 
 			if ($mode == 'uploading')
 			{
-				move_uploaded_file($F['tmp_name'], $full_fn);
+				move_uploaded_file($F['tmp_name'], $full_fn) || rename($F['tmp_name'], $orig_fn);
 			}
 		}
 	}

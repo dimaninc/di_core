@@ -767,8 +767,14 @@ table.banners_stat td.sel, table.banners_stat th.sel
     margin 10px 24px 3px 24px
     background-color #edf0f4
     text-align center
-    padding 10px 0 10px 0
+    padding 10px 0
     border-radius 8px
+    @media screen and (max-width: 767px)
+        margin-left 0
+        margin-right 0
+        border 0
+        border-radius 0
+        background none
     body[data-skin="entrine"] &
         border 0
         border-radius 0
@@ -778,10 +784,13 @@ table.banners_stat td.sel, table.banners_stat th.sel
         @media screen and (max-width: 767px)
             margin-left 12px
     button
-        margin 0 10px
+        margin 0 10px 10px 10px
         padding 5px 10px
         cursor pointer
         box-sizing border-box
+        @media screen and (max-width: 767px)
+            &:not(:last-of-type)
+                margin-right 0
         &:hover
             background-color #A1DFFF
         body[data-skin="entrine"] &
@@ -818,7 +827,6 @@ table.banners_stat td.sel, table.banners_stat th.sel
     .submit-status-line
         height 20px
         background #edf0f4
-        margin-top 10px
         border-top 1px solid #CFCFCF
         padding-top 5px
         font-style italic

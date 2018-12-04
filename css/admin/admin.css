@@ -1027,8 +1027,17 @@ body[data-skin="entrine"] #btn-save {
   margin: 10px 24px 3px 24px;
   background-color: #edf0f4;
   text-align: center;
-  padding: 10px 0 10px 0;
+  padding: 10px 0;
   border-radius: 8px;
+}
+@media screen and (max-width: 767px) {
+  .submit-block {
+    margin-left: 0;
+    margin-right: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+  }
 }
 body[data-skin="entrine"] .submit-block {
   border: 0;
@@ -1043,12 +1052,17 @@ body[data-skin="entrine"] .submit-block {
   }
 }
 .submit-block button {
-  margin: 0 10px;
+  margin: 0 10px 10px 10px;
   padding: 5px 10px;
   cursor: pointer;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
+}
+@media screen and (max-width: 767px) {
+  .submit-block button:not(:last-of-type) {
+    margin-right: 0;
+  }
 }
 .submit-block button:hover {
   background-color: #a1dfff;
@@ -1097,7 +1111,6 @@ body[data-skin="entrine"] .submit-block button:hover > svg path {
 .submit-block .submit-status-line {
   height: 20px;
   background: #edf0f4;
-  margin-top: 10px;
   border-top: 1px solid #cfcfcf;
   padding-top: 5px;
   font-style: italic;
@@ -1787,13 +1800,15 @@ body[data-skin="entrine"] .diadminform-row .value .static-text {
   max-width: 100%;
 }
 .diadminform-row[data-type="dynamic"] .title,
-.diadminform-row[data-type="dynamic_pics"] .title {
+.diadminform-row[data-type="dynamic_pics"] .title,
+.diadminform-row[data-type="dynamic_files"] .title {
   width: auto;
   float: none;
   padding-bottom: 10px;
 }
 body[data-skin="entrine"] .diadminform-row[data-type="dynamic"] .title,
-body[data-skin="entrine"] .diadminform-row[data-type="dynamic_pics"] .title {
+body[data-skin="entrine"] .diadminform-row[data-type="dynamic_pics"] .title,
+body[data-skin="entrine"] .diadminform-row[data-type="dynamic_files"] .title {
   width: auto;
   float: none;
   padding-bottom: 10px;
@@ -1801,12 +1816,14 @@ body[data-skin="entrine"] .diadminform-row[data-type="dynamic_pics"] .title {
   font-weight: bold;
 }
 .diadminform-row[data-type="dynamic"] .value,
-.diadminform-row[data-type="dynamic_pics"] .value {
+.diadminform-row[data-type="dynamic_pics"] .value,
+.diadminform-row[data-type="dynamic_files"] .value {
   display: block;
   margin-left: 0 !important;
 }
 body[data-skin="entrine"] .diadminform-row[data-type="dynamic"] .value,
-body[data-skin="entrine"] .diadminform-row[data-type="dynamic_pics"] .value {
+body[data-skin="entrine"] .diadminform-row[data-type="dynamic_pics"] .value,
+body[data-skin="entrine"] .diadminform-row[data-type="dynamic_files"] .value {
   display: block;
   padding: 5px 0 5px 20px;
   border-left: 3px solid #5ab5df;
@@ -2473,6 +2490,12 @@ table.actions-log tr:last-of-type td {
 }
 .dynamic-row div.m {
   margin: 10px 0;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: box;
+  display: flex;
 }
 .dynamic-row .remove {
   float: right;
