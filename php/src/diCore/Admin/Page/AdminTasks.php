@@ -5,6 +5,7 @@ namespace diCore\Admin\Page;
 use diCore\Data\Types;
 use diCore\Entity\DynamicPic\Collection as dpCol;
 use diCore\Entity\AdminTask\Model;
+use diCore\Helper\StringHelper;
 use diCore\Tool\CollectionCache;
 
 /**
@@ -17,16 +18,16 @@ use diCore\Tool\CollectionCache;
 class AdminTasks extends \diCore\Admin\BasePage
 {
 	protected $options = [
-		"filters" => [
-			"defaultSorter" => [
-				"sortBy" => "priority",
-				"dir" => "DESC",
+		'filters' => [
+			'defaultSorter' => [
+				'sortBy' => 'priority',
+				'dir' => 'DESC',
 			],
-			"sortByAr" => [
-				"priority" => "По приоритету",
-				"due_date" => "По сроку сдачи",
-				"date" => "По дате добавления",
-				"id" => "По ID",
+			'sortByAr' => [
+				'priority' => 'По приоритету',
+				'due_date' => 'По сроку сдачи',
+				'date' => 'По дате добавления',
+				'id' => 'По ID',
 			],
 		],
 	];
@@ -38,41 +39,41 @@ class AdminTasks extends \diCore\Admin\BasePage
 
 	protected function initTable()
 	{
-		$this->setTable("admin_tasks");
+		$this->setTable('admin_tasks');
 	}
 
 	protected function setupFilters()
 	{
 		$this->getFilters()
 			->addFilter([
-				"field" => "id",
-				"type" => "string",
-				"title" => "ID задачи",
-				"where_tpl" => "diaf_several_ints",
+				'field' => 'id',
+				'type' => 'string',
+				'title' => 'ID задачи',
+				'where_tpl' => 'diaf_several_ints',
 			])
 			->addFilter([
-				"field" => "title",
-				"type" => "string",
-				"title" => "Название",
-				"where_tpl" => "diaf_substr",
+				'field' => 'title',
+				'type' => 'string',
+				'title' => 'Название',
+				'where_tpl' => 'diaf_substr',
 			])
 			->addFilter([
-				"field" => "admin_id",
-				"type" => "int",
-				"title" => "Исполнитель",
-				"where_tpl" => "diaf_minus_one",
+				'field' => 'admin_id',
+				'type' => 'int',
+				'title' => 'Исполнитель',
+				'where_tpl' => 'diaf_minus_one',
 			])
 			->addFilter([
-				"field" => "priority",
-				"type" => "int",
-				"title" => "Приоритет",
+				'field' => 'priority',
+				'type' => 'int',
+				'title' => 'Приоритет',
 			])
 			->addFilter([
-				"field" => "status",
-				"type" => "string",
-				"title" => "Статус",
-				"where_tpl" => "diaf_several_ints",
-				"default_value" => join(",", Model::statusesActual()),
+				'field' => 'status',
+				'type' => 'string',
+				'title' => 'Статус',
+				'where_tpl' => 'diaf_several_ints',
+				'default_value' => join(',', Model::statusesActual()),
 				'strict' => true,
 			])
 			->buildQuery()
@@ -85,16 +86,16 @@ class AdminTasks extends \diCore\Admin\BasePage
 					];
 				},
 				[
-					0 => "Все исполнители",
-					-1 => "Не присвоен",
+					0 => 'Все исполнители',
+					-1 => 'Не присвоен',
 				]
 			)
-			->setSelectFromArrayInput("status", Model::statusStr(), [
-				//0 => "Все",
-				join(",", Model::statusesActual()) => "[ Текущие задачи ]",
+			->setSelectFromArrayInput('status', Model::statusStr(), [
+				//0 => 'Все',
+				join(',', Model::statusesActual()) => '[ Текущие задачи ]',
 			])
-			->setSelectFromArrayInput("priority", Model::$priorities, [
-				0 => "Все",
+			->setSelectFromArrayInput('priority', Model::$priorities, [
+				0 => 'Все',
 			]);
 	}
 
@@ -103,12 +104,12 @@ class AdminTasks extends \diCore\Admin\BasePage
 	{
 		$options = $this->extendListQueryOptions($options);
 
-		$orderBy = $options["sortBy"] ? " ORDER BY t.{$options["sortBy"]} t.{$options["dir"]}" : "";
+		$orderBy = $options['sortBy'] ? " ORDER BY t.{$options["sortBy"]} t.{$options["dir"]}" : '';
 
 		$col = diCollection::create(Types::admin_task, $this->getDb()->rs(
 			$this->getTable() . ' t INNER JOIN admin_task_participants p INNER JOIN admins a '.
 			'ON t.id = p.task_id AND a.id = p.admin_id',
-			$options["query"] . $orderBy . $options["limit"],
+			$options['query'] . $orderBy . $options['limit'],
 			't.*,' . join(',', diAdminModel::getFieldsWithTablePrefix('a.', diAdminModel::COMPLEX_QUERY_PREFIX))
 		));
 
@@ -128,90 +129,91 @@ class AdminTasks extends \diCore\Admin\BasePage
 	public function renderList()
 	{
 		$this->getList()->addColumns([
-			"id" => "ID",
-			"admin_id" => [
-				"value" => function(Model $model) {
+			'id' => 'ID',
+			'admin_id' => [
+				'value' => function(Model $model) {
 					/** @var \diCore\Entity\Admin\Model $admin */
 					$admin = CollectionCache::getModel(Types::admin, $model->getAdminId());
 
-					return $admin->exists() ? $admin->getLogin() : "&ndash;";
+					return $admin->exists() ? $admin->getLogin() : '&ndash;';
 				},
-				"headAttrs" => [
-					"width" => "10%",
+				'headAttrs' => [
+					'width' => '10%',
 				],
 			],
-			"priority" => [
-				"title" => "Приоритет",
-				"value" => function(Model $model) {
+			'priority' => [
+				'title' => 'Приоритет',
+				'value' => function(Model $model) {
 					$icon = "<span class=\"admin-task-priority p{$model->getPriority()}\"></span>";
 
 					return $icon . $model->getPriorityStr();
 				},
-				"headAttrs" => [
-					"width" => "10%",
+				'headAttrs' => [
+					'width' => '10%',
 				],
-				"bodyAttrs" => [
-					"class" => "lite",
+				'bodyAttrs' => [
+					'class' => 'lite',
 				],
 			],
-			"status" => [
-				"title" => "Статус",
-				"value" => function(Model $model) {
+			'status' => [
+				'title' => 'Статус',
+				'value' => function(Model $model) {
 					return $model->getStatusStr();
 				},
-				"headAttrs" => [
-					"width" => "10%",
+				'headAttrs' => [
+					'width' => '10%',
 				],
-				"bodyAttrs" => [
-					"class" => "lite",
+				'bodyAttrs' => [
+					'class' => 'lite',
 				],
 			],
-			"attaches" => [
-				"title" => "*",
-				"value" => function(Model $model) {
+			'attaches' => [
+				'title' => '*',
+				'value' => function(Model $model) {
 					$pics = $this->getAttachedPicsCollection($model->getId());
 
-					return count($pics) ?: "";
+					return count($pics) ?: '';
 				},
-				"bodyAttrs" => [
-					"class" => "lite",
+				'bodyAttrs' => [
+					'class' => 'lite',
 				],
 			],
-			"title" => [
-				"title" => "Задача",
-				"value" => function(Model $model) {
-					return $model->getTitle() . "<div class='lite'>" . str_cut_end($model->getContent(), 150) . "</div>";
+			'title' => [
+				'title' => 'Задача',
+				'value' => function(Model $model) {
+					return $model->getTitle() . '<div class="lite">' .
+                        StringHelper::out(str_cut_end($model->getContent(), 150)) . '</div>';
 				},
-				"headAttrs" => [
-					"width" => "50%",
+				'headAttrs' => [
+					'width' => '50%',
 				],
 			],
-			"date" => [
-				"title" => "Добавлено",
-				"value" => function(Model $model, $field) {
-					return \diDateTime::format("d.m.Y H:i", $model->get($field));
+			'date' => [
+				'title' => 'Добавлено',
+				'value' => function(Model $model, $field) {
+					return \diDateTime::simpleFormat($model->get($field));
 				},
-				"headAttrs" => [
-					"width" => "10%",
+				'headAttrs' => [
+					'width' => '10%',
 				],
-				"bodyAttrs" => [
-					"class" => "dt",
+				'bodyAttrs' => [
+					'class' => 'dt',
 				],
 			],
-			"due_date" => [
-				"title" => "Срок сдачи",
-				"value" => function(Model $model, $field) {
-					return \diDateTime::format("d.m.Y H:i", $model->get($field));
+			'due_date' => [
+				'title' => 'Срок сдачи',
+				'value' => function(Model $model, $field) {
+					return \diDateTime::simpleFormat($model->get($field));
 				},
-				"headAttrs" => [
-					"width" => "10%",
+				'headAttrs' => [
+					'width' => '10%',
 				],
-				"bodyAttrs" => [
-					"class" => "dt",
+				'bodyAttrs' => [
+					'class' => 'dt',
 				],
 			],
-			"#edit" => "",
-			"#del" => "",
+			'#edit' => '',
+			'#del' => '',
 		]);
 
 		if (!$this->getAdmin()->isAdminSuper())
@@ -233,21 +235,21 @@ class AdminTasks extends \diCore\Admin\BasePage
 						'text' => $admin->getLogin(),
 					];
 				},
-				['' => "Не выбран"]
+				['' => 'Не выбран']
 			)
-			->setSelectFromArrayInput("status", Model::statusStr())
-			->setSelectFromArrayInput("priority", Model::priorityStr());
+			->setSelectFromArrayInput('status', Model::statusStr())
+			->setSelectFromArrayInput('priority', Model::priorityStr());
 
 		if (!$this->getId())
 		{
 			$this->getForm()
-				->setHiddenInput("log")
-				->setHiddenInput("id");
+				->setHiddenInput('log')
+				->setHiddenInput('id');
 		}
 		else
 		{
 			$this->getForm()
-				->setTemplateForInput("log", "`_snippets/actions_log", "block");
+				->setTemplateForInput('log', '`_snippets/actions_log', 'block');
 		}
 	}
 
@@ -255,25 +257,25 @@ class AdminTasks extends \diCore\Admin\BasePage
 	{
 		if ($this->getId())
 		{
-			if ($this->getSubmit()->wasFieldChanged("status"))
+			if ($this->getSubmit()->wasFieldChanged('status'))
 			{
 				\diActionsLog::act(Types::admin_task, $this->getId(), \diActionsLog::aStatusChanged,
-					$this->getSubmit()->getCurRec("status") . "," . $this->getSubmit()->getData("status"));
+					$this->getSubmit()->getCurRec('status') . ',' . $this->getSubmit()->getData('status'));
 			}
 
-			if ($this->getSubmit()->wasFieldChanged("priority"))
+			if ($this->getSubmit()->wasFieldChanged('priority'))
 			{
 				\diActionsLog::act(Types::admin_task, $this->getId(), \diActionsLog::aPriorityChanged,
-					$this->getSubmit()->getCurRec("priority") . "," . $this->getSubmit()->getData("priority"));
+					$this->getSubmit()->getCurRec('priority') . ',' . $this->getSubmit()->getData('priority'));
 			}
 
-			if ($this->getSubmit()->wasFieldChanged("admin_id"))
+			if ($this->getSubmit()->wasFieldChanged('admin_id'))
 			{
 				\diActionsLog::act(Types::admin_task, $this->getId(), \diActionsLog::aOwned,
-					$this->getSubmit()->getCurRec("admin_id") . "," . $this->getSubmit()->getData("admin_id"));
+					$this->getSubmit()->getCurRec('admin_id') . ',' . $this->getSubmit()->getData('admin_id'));
 			}
 
-			if ($this->getSubmit()->wasFieldChanged(["title", "content", "date", "due_date"]))
+			if ($this->getSubmit()->wasFieldChanged(['title', 'content', 'date', 'due_date']))
 			{
 				\diActionsLog::act(Types::admin_task, $this->getId(), \diActionsLog::aEdited);
 			}
@@ -286,7 +288,7 @@ class AdminTasks extends \diCore\Admin\BasePage
 	 */
 	public function getAttachedPicsCollection($id = null)
 	{
-		return dpCol::createByTarget($this->getTable(), $id ?: $this->getId(), "pics")->load();
+		return dpCol::createByTarget($this->getTable(), $id ?: $this->getId(), 'pics')->load();
 	}
 
 	protected function beforeSubmitForm()
@@ -314,7 +316,7 @@ class AdminTasks extends \diCore\Admin\BasePage
 			foreach ($this->getDeletedPics() as $pic)
 			{
 				\diActionsLog::act(Types::admin_task, $this->getId(), \diActionsLog::aUploadDeleted, [
-					"info" => $pic->getOrigFn(),
+					'info' => $pic->getOrigFn(),
 				]);
 			}
 
@@ -322,7 +324,7 @@ class AdminTasks extends \diCore\Admin\BasePage
 			foreach ($this->getNewPics() as $pic)
 			{
 				\diActionsLog::act(Types::admin_task, $this->getId(), \diActionsLog::aUploaded, [
-					"info" => $pic->getOrigFn(),
+					'info' => $pic->getOrigFn(),
 				]);
 			}
 		}
@@ -376,67 +378,67 @@ class AdminTasks extends \diCore\Admin\BasePage
 	public function getFormFields()
 	{
 		return [
-			"admin_id" => [
-				"type" => "int",
-				"title" => "Исполнитель",
-				"default" => 0,
+			'admin_id' => [
+				'type' => 'int',
+				'title' => 'Исполнитель',
+				'default' => 0,
 			],
 
-			"priority" => [
-				"type" => "int",
-				"title" => "Приоритет",
-				"default" => 0,
+			'priority' => [
+				'type' => 'int',
+				'title' => 'Приоритет',
+				'default' => 0,
 			],
 
-			"status" => [
-				"type" => "int",
-				"title" => "Статус",
-				"default" => 0,
+			'status' => [
+				'type' => 'int',
+				'title' => 'Статус',
+				'default' => 0,
 			],
 
-			"id" => [
-				"type" => "int",
-				"title" => "ID",
-				"default" => "",
-				"flags" => ["static"],
+			'id' => [
+				'type' => 'int',
+				'title' => 'ID',
+				'default' => '',
+				'flags' => ['static'],
 			],
 
-			"title" => [
-				"type" => "string",
-				"title" => "Название",
-				"default" => "",
+			'title' => [
+				'type' => 'string',
+				'title' => 'Название',
+				'default' => '',
 			],
 
-			"content" => [
-				"type" => "text",
-				"title" => "Описание",
-				"default" => "",
+			'content' => [
+				'type' => 'text',
+				'title' => 'Описание',
+				'default' => '',
 			],
 
-			"pics" => [
-				"type" => "dynamic_files",
-				"title" => "Подгруженные файлы",
-				"default" => "",
+			'pics' => [
+				'type' => 'dynamic_files',
+				'title' => 'Подгруженные файлы',
+				'default' => '',
 			],
 
-			"due_date" => [
-				"type" => "datetime_str",
-				"title" => "Дата выполнения",
-				"default" => date("Y-m-d H:i", strtotime("+2 weeks")),
+			'due_date' => [
+				'type' => 'datetime_str',
+				'title' => 'Дата выполнения',
+				'default' => \diDateTime::sqlFormat('+2 weeks'),
 			],
 
-			"date" => [
-				"type" => "datetime_str",
-				"title" => "Дата добавления",
-				"default" => date("Y-m-d H:i"),
-				"flags" => ["static"],
+			'date' => [
+				'type' => 'datetime_str',
+				'title' => 'Дата добавления',
+				'default' => \diDateTime::sqlFormat(),
+				'flags' => ['static'],
 			],
 
-			"log" => [
-				"type" => "string",
-				"title" => "Журнал изменений",
-				"default" => "",
-				"flags" => ["virtual", "static"],
+			'log' => [
+				'type' => 'string',
+				'title' => 'Журнал изменений',
+				'default' => '',
+				'flags' => ['virtual', 'static'],
 			],
 		];
 	}
@@ -448,6 +450,6 @@ class AdminTasks extends \diCore\Admin\BasePage
 
 	public function getModuleCaption()
 	{
-		return "Задачи";
+		return 'Задачи';
 	}
 }
