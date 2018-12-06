@@ -67,8 +67,13 @@ class diAdminTableEditLogModel extends diModel
 		{
 			$newValue = $newData[$field];
 
-			$diff = new FineDiff($oldValue, $newValue, FineDiff::$characterGranularity);
-			$diffs[$field] = $diff->renderDiffToHTML();;
+			$origEnc = 'UTF-8';
+			$enc = 'HTML-ENTITIES';
+			$oldValue = mb_convert_encoding($oldValue, $enc, $origEnc);
+			$newValue = mb_convert_encoding($newValue, $enc, $origEnc);
+
+			$diff = new FineDiff($oldValue, $newValue, FineDiff::$paragraphGranularity);
+			$diffs[$field] = html_entity_decode(mb_convert_encoding($diff->renderDiffToHTML(), $origEnc, $enc));
 		}
 
 		$this->setDataDiff($diffs);
