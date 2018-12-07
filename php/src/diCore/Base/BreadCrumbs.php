@@ -161,6 +161,37 @@ class BreadCrumbs
 		return $this;
 	}
 
+	protected function prepareElement($element)
+    {
+        /** @var \diModel $m */
+        $m = $element['model'];
+
+        if ($m->exists())
+        {
+            if (!$element['title'])
+            {
+                $element['title'] = $m->localized('title');
+            }
+
+            if (!$element['href'] && $this->hrefNeeded($m))
+            {
+                $element['href'] = $m->getHref();
+            }
+        }
+
+        if ($element['position'] < 0)
+        {
+            $element['position'] += count($this->elements) + 1;
+        }
+
+        if ($element['wordWrap'])
+        {
+            $element['title'] = trim(word_wrap($element['title'], \diConfiguration::get('page_title_word_max_len'), ' '));
+        }
+
+        return $element;
+    }
+
 	public function add($titleOrElement, $href = '', $class = '', $word_wrap = false)
 	{
 		$element = extend([
@@ -181,31 +212,7 @@ class BreadCrumbs
 			: $titleOrElement
 		);
 
-		/** @var \diModel $m */
-		$m = $element['model'];
-
-		if ($m->exists())
-		{
-			if (!$element['title'])
-			{
-				$element['title'] = $m->localized('title');
-			}
-
-			if (!$element['href'] && $this->hrefNeeded($m))
-			{
-				$element['href'] = $m->getHref();
-			}
-		}
-
-		if ($element['position'] < 0)
-		{
-			$element['position'] += count($this->elements) + 1;
-		}
-
-		if ($element['wordWrap'])
-		{
-			$element['title'] = trim(word_wrap($element['title'], \diConfiguration::get('page_title_word_max_len'), ' '));
-		}
+		$element = $this->prepareElement($element);
 
 		array_splice($this->elements, $element['position'], 0, [$element]);
 
@@ -221,7 +228,7 @@ class BreadCrumbs
 
 		if (isset($this->elements[$index]))
 		{
-			$this->elements[$index] = extend($this->elements[$index], $options);
+			$this->elements[$index] = $this->prepareElement(extend($this->elements[$index], $options));
 		}
 
 		return $this;
