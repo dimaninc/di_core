@@ -10,6 +10,7 @@ namespace diCore\Admin;
 
 use diCore\Admin\Data\Skin;
 use diCore\Data\Config;
+use diCore\Entity\AdminTableEditLog\Model as TableEditLog;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 use diCore\Helper\FileSystemHelper;
@@ -693,7 +694,7 @@ EOF;
 
 			if ($this->AdminPage->useEditLog() && $this->getId())
 			{
-				$formTabs[\diAdminTableEditLogModel::ADMIN_TAB_NAME] = \diAdminTableEditLogModel::ADMIN_TAB_TITLE;
+				$formTabs[TableEditLog::ADMIN_TAB_NAME] = TableEditLog::ADMIN_TAB_TITLE;
 			}
 		}
 		else

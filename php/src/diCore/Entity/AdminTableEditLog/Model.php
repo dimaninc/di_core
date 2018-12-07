@@ -5,8 +5,10 @@
  * Time: 17:58
  */
 
+namespace diCore\Entity\AdminTableEditLog;
+
 /**
- * Class diAdminTableEditLogModel
+ * Class Model
  * Methods list for IDE
  *
  * @method string	getTargetTable
@@ -23,20 +25,20 @@
  * @method bool hasNewData
  * @method bool hasCreatedAt
  *
- * @method diAdminTableEditLogModel setTargetTable($value)
- * @method diAdminTableEditLogModel setTargetId($value)
- * @method diAdminTableEditLogModel setAdminId($value)
- * @method diAdminTableEditLogModel setOldData($value)
- * @method diAdminTableEditLogModel setNewData($value)
- * @method diAdminTableEditLogModel setCreatedAt($value)
+ * @method Model setTargetTable($value)
+ * @method Model setTargetId($value)
+ * @method Model setAdminId($value)
+ * @method Model setOldData($value)
+ * @method Model setNewData($value)
+ * @method Model setCreatedAt($value)
  */
-class diAdminTableEditLogModel extends diModel
+class Model extends \diModel
 {
 	const ADMIN_TAB_NAME = 'admin_edit_log';
 	const ADMIN_TAB_TITLE = 'История изменений';
 
-	const type = diTypes::admin_table_edit_log;
-	protected $table = "admin_table_edit_log";
+	const type = \diTypes::admin_table_edit_log;
+	protected $table = 'admin_table_edit_log';
 
 	private $dataParsed = false;
 
@@ -72,7 +74,7 @@ class diAdminTableEditLogModel extends diModel
 			$oldValue = mb_convert_encoding($oldValue, $enc, $origEnc);
 			$newValue = mb_convert_encoding($newValue, $enc, $origEnc);
 
-			$diff = new FineDiff($oldValue, $newValue, FineDiff::$paragraphGranularity);
+			$diff = new \FineDiff($oldValue, $newValue, \FineDiff::$wordGranularity);
 			$diffs[$field] = html_entity_decode(mb_convert_encoding($diff->renderDiffToHTML(), $origEnc, $enc));
 		}
 
@@ -177,7 +179,7 @@ class diAdminTableEditLogModel extends diModel
 		return true;
 	}
 
-	public function setBothData(diModel $model, diModel $oldModel = null)
+	public function setBothData(\diModel $model, \diModel $oldModel = null)
 	{
 		if ($oldModel)
 		{
@@ -213,27 +215,27 @@ class diAdminTableEditLogModel extends diModel
 	{
 		if (!$this->hasTargetTable())
 		{
-			$this->addValidationError("Table required");
+			$this->addValidationError('Table required');
 		}
 
 		if (!$this->hasTargetId())
 		{
-			$this->addValidationError("Id required");
+			$this->addValidationError('Id required');
 		}
 
 		if (!$this->hasAdminId())
 		{
-			$this->addValidationError("Admin required");
+			$this->addValidationError('Admin required');
 		}
 
 		if (!$this->hasOldData())
 		{
-			$this->addValidationError("Old data required");
+			$this->addValidationError('Old data required');
 		}
 
 		if (!$this->hasNewData())
 		{
-			$this->addValidationError("New data required");
+			$this->addValidationError('New data required');
 		}
 
 		return parent::validate();

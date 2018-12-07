@@ -7,8 +7,9 @@
 
 namespace diCore\Admin\Page;
 
-use diCore\Tool\CollectionCache;
+use diCore\Entity\AdminTableEditLog\Model;
 use diCore\Helper\ArrayHelper;
+use diCore\Tool\CollectionCache;
 
 class AdminTableEditLog extends \diCore\Admin\BasePage
 {
@@ -108,16 +109,16 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
 				'headAttrs' => [
 					'width' => '15%',
 				],
-				'value' => function(\diAdminTableEditLogModel $model) {
+				'value' => function(Model $model) {
 					return $model->getTargetTable() . '#' . $model->getTargetId();
 				},
 			],
 			'admin_id' => [
-				'value' => function(\diAdminTableEditLogModel $model) {
+				'value' => function(Model $model) {
 					/** @var \diCore\Entity\Admin\Model $admin */
 					$admin = CollectionCache::getModel(\diTypes::admin, $model->getAdminId());
 
-					return $admin->exists() ? $admin->getLogin() : '&ndash;';
+					return $admin->exists() ? $admin->getLogin() : '&mdash;';
 				},
 				'headAttrs' => [
 					'width' => '15%',
@@ -127,7 +128,7 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
 				'headAttrs' => [
 					'width' => '60%',
 				],
-				'value' => function(\diAdminTableEditLogModel $model) {
+				'value' => function(Model $model) {
 					$model->parseData();
 
 					$ar = [];
@@ -142,8 +143,8 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
 			],
 			'created_at' => [
 				'title' => $this->getVocabularyTerm('created_at.title'),
-				'value' => function(\diAdminTableEditLogModel $m) {
-					return \diDateTime::format('d.m.Y H:i', $m->getCreatedAt());
+				'value' => function(Model $m) {
+					return \diDateTime::simpleFormat($m->getCreatedAt());
 				},
 				'headAttrs' => [
 					'width' => '10%',
@@ -154,7 +155,7 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
 			],
 			'#edit' => '',
 			'#del' => [
-				'active' => function(\diAdminTableEditLogModel $m, $field) {
+				'active' => function(Model $m, $field) {
 					return $this->getAdmin()->isAdminSuper();
 				},
 			],
@@ -163,7 +164,7 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
 
 	public function renderForm()
 	{
-		/** @var \diAdminTableEditLogModel $model */
+		/** @var Model $model */
 		$model = $this->getForm()->getModel();
 		$model->parseData();
 

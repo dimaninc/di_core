@@ -8,6 +8,8 @@
 
 namespace diCore\Admin;
 
+use diCore\Entity\AdminTableEditLog\Collection as TableEditLogs;
+use diCore\Entity\AdminTableEditLog\Model as TableEditLog;
 use diCore\Helper\ArrayHelper;
 
 abstract class BasePage
@@ -1048,7 +1050,7 @@ abstract class BasePage
 	{
 		if ($this->useEditLog() && $this->getId())
 		{
-			/** @var \diAdminTableEditLogCollection $records */
+			/** @var TableEditLogs $records */
 			$records = \diCollection::create(\diTypes::admin_table_edit_log);
 			$records
 				->filterByTargetTable($this->getTable())
@@ -1058,14 +1060,14 @@ abstract class BasePage
 			/** @var \diCore\Entity\Admin\Collection $admins */
 			$admins = \diCollection::create(\diTypes::admin);
 
-			/** @var \diAdminTableEditLogModel $rec */
+			/** @var TableEditLog $rec */
 			foreach ($records as $rec)
 			{
 				$rec->parseData();
 			}
 
 			$this->getForm()
-				->setInput(\diAdminTableEditLogModel::ADMIN_TAB_NAME,
+				->setInput(TableEditLog::ADMIN_TAB_NAME,
 					$this->getTwig()->parse('admin/admin_table_edit_log/form_field', [
 						'records' => $records,
 						'admins' => $admins,
@@ -1143,7 +1145,7 @@ abstract class BasePage
 		if ($this->useEditLog())
 		{
 			try {
-				/** @var \diAdminTableEditLogModel $log */
+				/** @var TableEditLog $log */
 				$log = \diModel::create(\diTypes::admin_table_edit_log);
 
 				$log->setRelated('formFields', $this->getFormFieldsFiltered());
@@ -1290,7 +1292,7 @@ abstract class BasePage
 
 		if ($this->useEditLog() && $this->getId())
 		{
-			$ar[\diAdminTableEditLogModel::ADMIN_TAB_NAME] = [
+			$ar[TableEditLog::ADMIN_TAB_NAME] = [
 				'type' => 'string',
 				'title' => $this->localized([
 				    'ru' => 'Журнал изменений',
@@ -1298,7 +1300,7 @@ abstract class BasePage
                 ]),
 				'default' => '',
 				'flags' => ['virtual', 'static'],
-				'tab' => \diAdminTableEditLogModel::ADMIN_TAB_NAME,
+				'tab' => TableEditLog::ADMIN_TAB_NAME,
 			];
 		}
 
