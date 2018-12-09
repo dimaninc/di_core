@@ -168,7 +168,7 @@ class AdminTasks extends \diCore\Admin\BasePage
 				],
 			],
 			'attaches' => [
-				'title' => '*',
+				'title' => '&#128206;',
 				'value' => function(Model $model) {
 					$pics = $this->getAttachedPicsCollection($model->getId());
 
@@ -375,13 +375,18 @@ class AdminTasks extends \diCore\Admin\BasePage
 		return $ar;
 	}
 
+	protected function getDefaultAdminId()
+    {
+        return 0;
+    }
+
 	public function getFormFields()
 	{
 		return [
 			'admin_id' => [
 				'type' => 'int',
 				'title' => 'Исполнитель',
-				'default' => 0,
+				'default' => $this->getDefaultAdminId(),
 			],
 
 			'priority' => [
