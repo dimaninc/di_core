@@ -61,7 +61,7 @@ var diAudioPlayer = function(_opts)
 			audio.crossOrigin = 'anonymous';
 			this.setSource(src);
 
-			console.log('diAudioPlayer: CORS fixed');
+			//console.log('diAudioPlayer: CORS fixed');
 		}
 
 		return this;
@@ -88,7 +88,7 @@ var diAudioPlayer = function(_opts)
 
 	this.play = function()
 	{
-		if (typeof audio.play != 'undefined')
+		if (typeof audio.play !== 'undefined')
 		{
 			if (!audioLoaded)
 			{
