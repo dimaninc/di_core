@@ -39,9 +39,13 @@ class Cash extends \diBaseController
 
     public function _postGetNewReceiptsAction()
     {
-        return $this
+        $receipts = $this
             ->checkSecret()
             ->getReceipts();
+
+        return [
+            'receipts' => $receipts,
+        ];
     }
 
     public function _postSetReceiptUploadedAction()
