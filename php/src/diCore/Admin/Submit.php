@@ -1703,6 +1703,8 @@ class Submit
 			$I = new \diImage();
 			$I->open($F['tmp_name']);
 
+			// thumbnail photos
+
 			for ($i = 1; $i < 10; $i++)
 			{
 				$suffix = $i > 1 ? "$i" : '';
@@ -1759,6 +1761,21 @@ class Submit
 				}
 			}
 
+			// main photo
+
+			$widthParam = \diConfiguration::exists([
+				$table . '_' . $groupField . '_' . $field . '_width',
+				$table . '_' . $groupField . '_width',
+				$table . '_width',
+				$groupField . '_width',
+			]);
+			$heightParam = \diConfiguration::exists([
+				$table . '_' . $groupField . '_' . $field . '_height',
+				$table . '_' . $groupField . '_height',
+				$table . '_height',
+				$groupField . '_height',
+			]);
+
 			$fileOptionsMain = extend([
 				'resize' => DI_THUMB_FIT,
 				'watermark' => [],
@@ -1769,11 +1786,26 @@ class Submit
 				$mainWM = extend($mainWM, $fileOptionsMain['watermark']);
 			}
 			$I->make_thumb_or_copy($fileOptionsMain['resize'], $full_fn,
-				\diConfiguration::safeGet([$table . '_' . $groupField . '_' . $field . '_width', $table . '_' . $groupField . '_width', $table . '_width']),
-				\diConfiguration::safeGet([$table . '_' . $groupField . '_' . $field . '_height', $table . '_' . $groupField . '_height', $table . '_height']),
+				\diConfiguration::safeGet($widthParam),
+				\diConfiguration::safeGet($heightParam),
 				false,
 				$mainWM['name'], $mainWM['x'], $mainWM['y']
 			);
+
+			// big photo
+
+			$widthParam = \diConfiguration::exists([
+				$table . '_' . $groupField . '_' . $field . '_big_width',
+				$table . '_' . $groupField . '_big_width',
+				$table . '_big_width',
+				$groupField . '_big_width',
+			]);
+			$heightParam = \diConfiguration::exists([
+				$table . '_' . $groupField . '_' . $field . '_big_height',
+				$table . '_' . $groupField . '_big_height',
+				$table . '_big_height',
+				$groupField . '_big_height',
+			]);
 
 			$fileOptionsBig = extend([
 				'resize' => DI_THUMB_FIT,
@@ -1785,12 +1817,14 @@ class Submit
 				$bigWM = extend($bigWM, $fileOptionsBig['watermark']);
 			}
 			$I->make_thumb_or_copy($fileOptionsBig['resize'], $big_fn,
-				\diConfiguration::safeGet([$table . '_' . $groupField . '_' . $field . '_big_width', $table . '_' . $groupField . '_big_width', $table . '_big_width'], 10000),
-				\diConfiguration::safeGet([$table . '_' . $groupField . '_' . $field . '_big_height', $table . '_' . $groupField . '_big_height', $table . '_big_height'], 10000),
+				\diConfiguration::safeGet($widthParam, 10000),
+				\diConfiguration::safeGet($heightParam, 10000),
 				false,
 				$bigWM['name'], $bigWM['x'], $bigWM['y']
 			);
 			$I->close();
+
+			// orig photo
 
 			if ($mode == 'uploading')
 			{
