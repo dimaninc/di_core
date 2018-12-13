@@ -36,8 +36,11 @@ class PaymentReceipts extends PaymentDrafts
 		$this->getList()
 			->removeColumn(['paid'])
 			->setColumnAttr('date_reserved', 'value', function(Model $m) {
-				return \diDateTime::simpleFormat($m->getDatePayed()) .
-                    ($m->hasDateUploaded() ? '<br>' . \diDateTime::simpleFormat($m->getDateUploaded()) : '');
+				return
+                    '<div style="white-space: nowrap">' . \diDateTime::simpleFormat($m->getDatePayed()) . '</div>' .
+                    ($m->hasDateUploaded()
+                        ? '<div style="background: green; color: white;white-space: nowrap">' . \diDateTime::simpleFormat($m->getDateUploaded()) . '</div>'
+                        : '');
 			})
 			->insertColumnsAfter('date_reserved', [
 				'outer_number' => [
@@ -46,6 +49,10 @@ class PaymentReceipts extends PaymentDrafts
 					],
 				],
 				'draft_id' => [
+                    'bodyAttrs' => [
+                        'class' => 'lite',
+                    ],
+                    'title' => 'Draft',
 				],
 			])
 			->setColumnAttr('vendor', 'headAttrs', ['width' => '10%']);

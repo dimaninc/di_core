@@ -6,6 +6,9 @@
  */
 
 namespace diCore\Entity\PaymentReceipt;
+use diCore\Data\Types;
+use diCore\Helper\ArrayHelper;
+use diCore\Tool\CollectionCache;
 
 /**
  * Class Model
@@ -51,9 +54,30 @@ class Model extends \diCore\Entity\PaymentDraft\Model
 
 	public function asArrayForCashDesk()
     {
+        $user = CollectionCache::getModel(Types::user, $this->getUserId(), true);
+        $userData = ArrayHelper::filterByKey((array)$user->get(), [
+            'name',
+            'email',
+            'phone',
+        ]);
+
+        if ($userData['phone'] && substr($userData['phone'], 0, 1) != '+') {
+            $userData['phone'] = '+' . $userData['phone'];
+        }
+
+        $target = $this->getTargetModel();
+
         return [
             'id' => $this->getId(),
             'user_id' => $this->getUserId(),
+            'user' => $userData,
+            'positions' => [
+                [
+                    'name' => \diTypes::getTitle($target->modelType()),
+                    'amount' => 1,
+                    'price' => $this->getAmount(),
+                ],
+            ],
         ];
     }
 }

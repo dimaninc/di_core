@@ -11,11 +11,13 @@ namespace diCore\Controller;
 use diCore\Data\Types;
 use diCore\Entity\PaymentReceipt\Collection;
 use diCore\Entity\PaymentReceipt\Model;
+use diCore\Tool\CollectionCache;
 
 class Cash extends \diBaseController
 {
     const secret = null;
     const maxReceiptsAtOnce = null;
+    const dates = '-1 month';
 
     public static function secret()
     {
@@ -57,19 +59,26 @@ class Cash extends \diBaseController
             ->setReceiptUploaded($receiptId);
     }
 
+    protected function getMaxReceiptsCount()
+    {
+        return \diRequest::post('limit', 0) ?: static::maxReceiptsAtOnce;
+    }
+
     protected function getReceipts()
     {
         /** @var Collection $receipts */
         $receipts = \diCollection::create(Types::payment_receipt);
         $receipts
-            ->filterByDatePayed(\diDateTime::sqlFormat('-1 month'), '>=')
+            ->filterByDatePayed(\diDateTime::sqlFormat(static::dates), '>=')
             ->filterByDateUploaded(null);
 
-        if (static::maxReceiptsAtOnce)
+        if ($this->getMaxReceiptsCount())
         {
             $receipts
-                ->setPageSize(static::maxReceiptsAtOnce);
+                ->setPageSize($this->getMaxReceiptsCount());
         }
+
+        CollectionCache::addManual(Types::user, 'id', $receipts->map('user_id'));
 
         $ar = $receipts->map(function(Model $r) {
             return $r->asArrayForCashDesk();

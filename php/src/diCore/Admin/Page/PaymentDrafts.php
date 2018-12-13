@@ -73,6 +73,9 @@ class PaymentDrafts extends BasePage
 				'headAttrs' => [
 					'width' => '20%',
 				],
+                'bodyAttrs' => [
+                    'class' => 'lite',
+                ],
 				'value' => function(Model $m) {
 					return $m->hasTargetType() ? \diTypes::getTitle($m->getTargetType()) : '&mdash;';
 				},
@@ -81,6 +84,9 @@ class PaymentDrafts extends BasePage
 				'headAttrs' => [
 					'width' => '10%',
 				],
+                'bodyAttrs' => [
+                    'class' => 'lite',
+                ],
 			],
 			'user_id' => [
 				'headAttrs' => [
@@ -104,6 +110,9 @@ class PaymentDrafts extends BasePage
 				'headAttrs' => [
 					'width' => '20%',
 				],
+                'bodyAttrs' => [
+                    'class' => 'lite',
+                ],
 				'value' => function(Model $m) {
 					return join(' / ', array_filter([$m->getPaySystemStr(), $m->getVendorStr()]));
 				},
@@ -112,6 +121,9 @@ class PaymentDrafts extends BasePage
 				'headAttrs' => [
 					'width' => '10%',
 				],
+                'bodyAttrs' => [
+                    'class' => 'lite',
+                ],
 				'value' => function(Model $m) {
 					return $m->getCurrencyStr();
 				},
@@ -124,7 +136,7 @@ class PaymentDrafts extends BasePage
 			'date_reserved' => [
 				'title' => 'Дата',
 				'value' => function(Model $m) {
-					return \diDateTime::format('d.m.Y H:i', $m->getDateReserved());
+					return \diDateTime::simpleFormat($m->getDateReserved());
 				},
 				'headAttrs' => [
 					'width' => '10%',
