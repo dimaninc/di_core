@@ -41,12 +41,12 @@ class Cash extends \diBaseController
 
     public function _postGetNewReceiptsAction()
     {
-        $receipts = $this
+        $receiptsCol = $this
             ->checkSecret()
             ->getReceipts();
 
         return [
-            'receipts' => $receipts,
+            'receipts' => $this->processReceipts($receiptsCol),
         ];
     }
 
@@ -64,6 +64,21 @@ class Cash extends \diBaseController
         return \diRequest::post('limit', 0) ?: static::maxReceiptsAtOnce;
     }
 
+    protected function processReceipts(Collection $receipts)
+    {
+        CollectionCache::addManual(Types::user, 'id', $receipts->map('user_id'));
+
+        $ar = $receipts->map(function(Model $r) {
+            return $r->asArrayForCashDesk();
+        });
+
+        return $ar;
+    }
+
+    /**
+     * @return Collection
+     * @throws \Exception
+     */
     protected function getReceipts()
     {
         /** @var Collection $receipts */
@@ -78,13 +93,7 @@ class Cash extends \diBaseController
                 ->setPageSize($this->getMaxReceiptsCount());
         }
 
-        CollectionCache::addManual(Types::user, 'id', $receipts->map('user_id'));
-
-        $ar = $receipts->map(function(Model $r) {
-            return $r->asArrayForCashDesk();
-        });
-
-        return $ar;
+        return $receipts;
     }
 
     protected function setReceiptUploaded($receiptId)
