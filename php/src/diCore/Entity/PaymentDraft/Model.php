@@ -50,7 +50,7 @@ class Model extends \diModel
 	protected $table = 'payment_drafts';
 
 	const TARGET_IS_NECESSARY = true;
-	protected $customDateFields = ['date_reserved', 'date_payed'];
+	protected $customDateFields = ['date_reserved', 'date_payed', 'date_uploaded'];
 
 	public function validate()
 	{
