@@ -37,6 +37,9 @@ class Model extends \diCore\Entity\PaymentDraft\Model
 	const type = \diTypes::payment_receipt;
 	protected $table = 'payment_receipts';
 
+	/** @var \diCore\Entity\User\Model */
+	protected $user;
+
 	public function validate()
 	{
 		if (!$this->hasOuterNumber())
@@ -52,19 +55,30 @@ class Model extends \diCore\Entity\PaymentDraft\Model
 		return parent::validate();
 	}
 
-	public function asArrayForCashDesk()
+	public function getUser()
     {
-        $user = CollectionCache::getModel(Types::user, $this->getUserId(), true);
-        $userData = ArrayHelper::filterByKey((array)$user->get(), [
+        if (!$this->user)
+        {
+            $this->user = CollectionCache::getModel(Types::user, $this->getUserId(), true);
+        }
+
+        return $this->user;
+    }
+
+    public function getUserData()
+    {
+        $userData = ArrayHelper::filterByKey($this->getUser()->get(), [
             'name',
             'email',
             'phone',
         ]);
 
-        if ($userData['phone'] && substr($userData['phone'], 0, 1) != '+') {
-            $userData['phone'] = '+' . $userData['phone'];
-        }
+        return $userData;
+    }
 
+	public function asArrayForCashDesk()
+    {
+        $userData = $this->getUserData();
         $target = $this->getTargetModel();
 
         return [
