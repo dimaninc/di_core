@@ -39,6 +39,15 @@ trait TargetInside
 			$this->getTargetId() == $model->getTargetId();
 	}
 
+    public function isTarget(\diModel $model)
+    {
+        return
+            $this->hasTargetType() &&
+            $this->hasTargetId() &&
+            $this->getTargetType() == $model->modelType() &&
+            $this->getTargetId() == $model->getId();
+    }
+
 	public function getTargetModel()
 	{
 		if (!$this->target)
