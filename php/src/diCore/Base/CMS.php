@@ -96,13 +96,21 @@ abstract class CMS
 	 */
 	public static $stageDomains = [];
 
+    /**
+     * Domains to detect 'stage' environment
+     * @var array
+     */
+    public static $stage2Domains = [];
+
 	const ENV_DEV = 1;
 	const ENV_STAGE = 2;
+    const ENV_STAGE2 = 22;
 	const ENV_PROD = 3;
 
 	public static $envNames = [
 		self::ENV_DEV => 'dev',
 		self::ENV_STAGE => 'stage',
+        self::ENV_STAGE2 => 'stage2',
 		self::ENV_PROD => 'prod',
 	];
 
@@ -403,6 +411,10 @@ abstract class CMS
 		{
 			return self::ENV_STAGE;
 		}
+        elseif (in_array($domain, $class::$stage2Domains))
+        {
+            return self::ENV_STAGE2;
+        }
 
 		return self::ENV_PROD;
 	}
