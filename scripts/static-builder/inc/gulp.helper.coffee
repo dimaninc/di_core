@@ -188,6 +188,17 @@ Helper =
                 .on 'end', -> done()
         @
 
+    assignImageMinTaskToGulp: (gulp, opts = {}) ->
+        imagemin = @req 'gulp-imagemin' unless imagemin
+        opts = @extend {mask: null, outputFolder: null, taskName: 'imagemin'}, opts
+        gulp.task opts.taskName, (done) =>
+            gulp.src @fullPath opts.mask
+                .pipe imagemin()
+                .on 'error', console.log
+                .pipe gulp.dest @fullPath opts.outputFolder
+                .on 'end', -> done()
+        @
+
     assignPngSpritesTaskToGulp: (gulp, opts = {}) ->
         spriteSmith = @req 'gulp.spritesmith' unless spriteSmith
         opts = @extend {mask: null, imgName: null, cssName: null, cssFormat: 'stylus', imgFolder: null, cssFolder: null, taskName: 'stylus-sprite'}, opts

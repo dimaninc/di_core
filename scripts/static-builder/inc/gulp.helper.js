@@ -265,6 +265,28 @@ Helper = {
     })(this));
     return this;
   },
+  assignImageMinTaskToGulp: function(gulp, opts) {
+    var imagemin;
+    if (opts == null) {
+      opts = {};
+    }
+    if (!imagemin) {
+      imagemin = this.req('gulp-imagemin');
+    }
+    opts = this.extend({
+      mask: null,
+      outputFolder: null,
+      taskName: 'imagemin'
+    }, opts);
+    gulp.task(opts.taskName, (function(_this) {
+      return function(done) {
+        return gulp.src(_this.fullPath(opts.mask)).pipe(imagemin()).on('error', console.log).pipe(gulp.dest(_this.fullPath(opts.outputFolder))).on('end', function() {
+          return done();
+        });
+      };
+    })(this));
+    return this;
+  },
   assignPngSpritesTaskToGulp: function(gulp, opts) {
     var spriteSmith;
     if (opts == null) {

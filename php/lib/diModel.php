@@ -631,8 +631,9 @@ class diModel implements \ArrayAccess
 
 				if ($v)
 				{
-					$ar[$k . '_time'] = date('H:i', $v);
-					$ar[$k . '_date'] = date('d.m.Y', $v);
+					$ar[$k . '_time'] = \diDateTime::format('H:i', $v);
+					$ar[$k . '_date'] = \diDateTime::format('d.m.Y', $v);
+                    $ar[$k . '_iso'] = \diDateTime::isoFormat($v);
 					$ar[$k . '_str'] = \diDateTime::format(static::getDateStrFormat(), $v);
 					$ar[$k . '_passed_by'] = \diDateTime::passedBy($v);
 

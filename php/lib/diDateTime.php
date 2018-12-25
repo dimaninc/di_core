@@ -120,6 +120,13 @@ class diDateTime
 		return self::format(self::FORMAT_SQL_DATE_TIME, $dt);
 	}
 
+	public static function isoFormat($dt = null)
+    {
+        $datetime = new \DateTime(static::sqlFormat($dt));
+
+        return $datetime->format(\DateTime::ATOM);
+    }
+
 	public static function simpleFormat($dt = null)
 	{
 		return self::format(self::FORMAT_SIMPLE_DATE_TIME, $dt);
