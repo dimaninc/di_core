@@ -55,7 +55,7 @@ trait TargetInside
 			$this->target = method_exists($this, 'getRelated') && $this->getRelated('target_model')
 				? $this->getRelated('target_model')
 				: ($this->getTargetType()
-					? \diModel::create($this->getTargetType(), $this->getTargetId())
+					? \diModel::create($this->getTargetType(), $this->getTargetId(), 'id')
 					: new \diModel()
 				);
 		}
