@@ -6,9 +6,13 @@
  * Time: 14:27
  */
 
-class diDiLibModelsPage extends \diCore\Admin\BasePage
+namespace diCore\Admin\Page;
+
+use diCore\Tool\Code\ModelsManager;
+
+class DiLibModels extends \diCore\Admin\BasePage
 {
-	/** @var diModelsManager */
+	/** @var ModelsManager */
 	private $Manager;
 
 	private $pseudoTable = "di_lib_models";
@@ -17,7 +21,7 @@ class diDiLibModelsPage extends \diCore\Admin\BasePage
 	{
 		$this->setTable($this->pseudoTable);
 
-		$this->Manager = new diModelsManager();
+		$this->Manager = new ModelsManager();
 	}
 
 	public function getManager()
@@ -32,22 +36,22 @@ class diDiLibModelsPage extends \diCore\Admin\BasePage
 	public function renderForm()
 	{
 		$this->getForm()
-			->setData('namespace', diLib::getFirstNamespace())
+			->setData('namespace', \diLib::getFirstNamespace())
 			->setSelectFromDbInput("table", $this->getDb()->q("SHOW TABLE STATUS"), "%Name%", "%Name%")
-			->setSelectFromArray2Input('namespace', array_merge([''], diLib::getAllNamespaces()));
+			->setSelectFromArray2Input('namespace', array_merge([''], \diLib::getAllNamespaces()));
 
-		/** @var diSelect $sel */
+		/** @var \diSelect $sel */
 		$sel = $this->getForm()->getInput("table");
 		$tablesInfoAr = [];
 
 		foreach ($sel->getItemsAr() as $a)
 		{
 			$table = $a["value"];
-			$name = diModelsManager::getModelNameByTable($table);
+			$name = ModelsManager::getModelNameByTable($table);
 
 			$tablesInfoAr[$table] = [
-				"model" => diModel::existsFor($name),
-				"collection" => diCollection::existsFor($name),
+				"model" => \diModel::existsFor($name),
+				"collection" => \diCollection::existsFor($name),
 			];
 		}
 

@@ -6,11 +6,13 @@
  * Time: 18:38
  */
 
+namespace diCore\Tool\Code;
+
 use diCore\Helper\StringHelper;
 use diCore\Helper\FileSystemHelper;
 use diCore\Data\Config;
 
-class diAdminPagesManager
+class AdminPagesManager
 {
 	const fileChmod = 0664;
 
@@ -174,7 +176,7 @@ EOF;
 
 		$fields = $this->getFieldsOfTable($table);
 		$className = $className ?: self::getClassNameByTable($table, $this->getNamespace());
-		$caption = $caption ?: diTypes::getTitle(diTypes::getId($table));
+		$caption = $caption ?: \diTypes::getTitle(\diTypes::getId($table));
 		$fieldsInfo = $this->getFieldsInfo($fields);
 		$columns = $this->getColumns($table);
 		$sortBy = isset($fields['order_num']) ? 'order_num' : 'id';
@@ -183,7 +185,7 @@ EOF;
 		$contents = sprintf($contents,
 			date('d.m.Y'),
 			date('H:i'),
-			basename($className),
+            ModelsManager::extractClass($className),
 			$table,
 			$caption,
 			join("\n\n", $fieldsInfo['form']),
@@ -191,8 +193,8 @@ EOF;
 			join("\n", $columns),
 			$sortBy,
 			$dir,
-			$this->getNamespace() ? "\nnamespace " . dirname($className) . ";\n" : '',
-			$this->getNamespace() ? "use " . diModelsManager::getModelClassNameByTable($table, $this->getNamespace()) . ";\n" : ''
+			$this->getNamespace() ? "\nnamespace " . ModelsManager::extractNamespace($className) . ";\n" : '',
+			$this->getNamespace() ? "use " . ModelsManager::getModelClassNameByTable($table, $this->getNamespace()) . ";\n" : ''
 		);
 
 		$fn = $this->getPageFilename($className);
@@ -219,7 +221,7 @@ EOF;
 	{
 		if ($this->getNamespace())
 		{
-			$className = basename($className);
+			$className = ModelsManager::extractClass($className);
 		}
 
 		return $this->getFolder() . $className . '.php';
@@ -363,7 +365,7 @@ EOF;
 
 	protected function getColumns($table)
 	{
-		$modelName = basename(diModelsManager::getModelClassNameByTable($table, $this->getNamespace()));
+		$modelName = ModelsManager::extractClass(ModelsManager::getModelClassNameByTable($table, $this->getNamespace()));
 
 		$ar = [];
 

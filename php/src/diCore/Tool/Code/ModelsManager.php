@@ -6,11 +6,14 @@
  * Time: 14:38
  */
 
+namespace diCore\Tool\Code;
+
+use diCore\Database\Connection;
 use diCore\Helper\StringHelper;
 use diCore\Helper\FileSystemHelper;
 use diCore\Data\Config;
 
-class diModelsManager
+class ModelsManager
 {
 	const fileChmod = 0664;
 
@@ -28,16 +31,6 @@ class diModelsManager
 	];
 
 	public static $skippedInCollectionAnnotationFields = [];
-
-	/** @var diDB */
-	private $db;
-
-	public function __construct()
-	{
-		global $db;
-
-		$this->db = $db;
-	}
 
 	protected function getModelTemplate()
 	{
@@ -115,7 +108,7 @@ EOF;
 			$contents = sprintf($this->getModelTemplate(),
 				date('d.m.Y'),
 				date('H:i'),
-				basename($className),
+				self::extractClass($className),
 				$table,
 				join("\n", $annotations["get"]),
 				join("\n", $annotations["has"]),
@@ -128,7 +121,7 @@ EOF;
 					"];" : '',
 				$slugFieldName,
 				$typeName,
-				$this->getNamespace() ? "\nnamespace " . dirname($className) . ";\n" : ''
+				$this->getNamespace() ? "\nnamespace " . self::extractNamespace($className) . ";\n" : ''
 			);
 
 			$fn = $this->getModelFilename($className);
@@ -153,13 +146,13 @@ EOF;
 			$contents = sprintf($this->getCollectionTemplate(),
 				date('d.m.Y'),
 				date('H:i'),
-				basename($collectionClassName),
+				self::extractClass($collectionClassName),
 				$table,
 				$typeName,
 				join("\n", $collectionAnnotations["filterBy"]),
 				join("\n", $collectionAnnotations["orderBy"]),
 				join("\n", $collectionAnnotations["select"]),
-				$this->getNamespace() ? "\nnamespace " . dirname($collectionClassName) . ";\n" : '',
+				$this->getNamespace() ? "\nnamespace " . self::extractNamespace($collectionClassName) . ";\n" : '',
 				$collectionAnnotations["filterByLocalized"]
 					? "\n *\n" . join("\n", $collectionAnnotations["filterByLocalized"]) .
 					  "\n *\n" . join("\n", $collectionAnnotations["orderByLocalized"]) .
@@ -171,7 +164,7 @@ EOF;
 
 			if (is_file(Config::getSourcesFolder() . $fn))
 			{
-				throw new Exception("Collection $fn already exists");
+				throw new \Exception("Collection $fn already exists");
 			}
 
 			FileSystemHelper::createTree(Config::getSourcesFolder(), dirname($fn));
@@ -226,7 +219,7 @@ EOF;
 
 		if ($this->getNamespace())
 		{
-			$className = basename($className);
+			$className = self::extractClass($className);
 		}
 
 		foreach ($fields as $field => $type)
@@ -243,7 +236,7 @@ EOF;
 			// localization tests
 			$fieldComponents = explode("_", $field);
 
-			if ($fieldComponents && in_array($fieldComponents[0], diCurrentCMS::$possibleLanguages))
+			if ($fieldComponents && in_array($fieldComponents[0], \diCurrentCMS::$possibleLanguages))
 			{
 				$f = substr($field, strlen($fieldComponents[0]) + 1);
 
@@ -277,7 +270,7 @@ EOF;
 
 		if ($this->getNamespace())
 		{
-			$className = basename($className);
+			$className = self::extractClass($className);
 		}
 
 		foreach ($fields as $field => $type)
@@ -294,7 +287,7 @@ EOF;
 			// localization tests
 			$fieldComponents = explode("_", $field);
 
-			if ($fieldComponents && in_array($fieldComponents[0], diCurrentCMS::$possibleLanguages))
+			if ($fieldComponents && in_array($fieldComponents[0], \diCurrentCMS::$possibleLanguages))
 			{
 				$f = substr($field, strlen($fieldComponents[0]) + 1);
 
@@ -362,14 +355,14 @@ EOF;
 
 	protected function getDb()
 	{
-		return $this->db;
+		return Connection::get()->getDb();
 	}
 
 	protected function getModelFilename($className)
 	{
 		if ($this->getNamespace())
 		{
-			$className = basename(dirname($className));
+			$className = self::extractClass(self::extractNamespace($className));
 		}
 
 		return $this->getModelFolder() . $className . ($this->getNamespace()
@@ -381,7 +374,7 @@ EOF;
 	{
 		if ($this->getNamespace())
 		{
-			$className = basename(dirname($className));
+            $className = self::extractClass(self::extractNamespace($className));
 		}
 
 		return $this->getCollectionFolder() . $className . ($this->getNamespace()
@@ -413,6 +406,16 @@ EOF;
 			? $this->getFolderForNamespace()
 			: static::defaultCollectionFolder);
 	}
+
+	public static function extractNamespace($className)
+    {
+        return \diLib::parentNamespace($className);
+    }
+
+    public static function extractClass($className)
+    {
+        return \diLib::childNamespace($className);
+    }
 
 	/**
 	 * @return string

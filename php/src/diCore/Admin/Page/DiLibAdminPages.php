@@ -6,9 +6,13 @@
  * Time: 18:27
  */
 
-class diDiLibAdminPagesPage extends \diCore\Admin\BasePage
+namespace diCore\Admin\Page;
+
+use diCore\Tool\Code\AdminPagesManager;
+
+class DiLibAdminPages extends \diCore\Admin\BasePage
 {
-	/** @var diAdminPagesManager */
+	/** @var AdminPagesManager */
 	private $Manager;
 
 	private $pseudoTable = "di_lib_admin_pages";
@@ -17,7 +21,7 @@ class diDiLibAdminPagesPage extends \diCore\Admin\BasePage
 	{
 		$this->setTable($this->pseudoTable);
 
-		$this->Manager = new diAdminPagesManager();
+		$this->Manager = new AdminPagesManager();
 	}
 
 	public function getManager()
