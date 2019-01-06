@@ -54,7 +54,10 @@ class diMYSQL extends diDB
 
 	protected function __q($q)
 	{
-		return mysql_query($q, $this->link);
+        $res = mysql_query($q, $this->link);
+        $this->lastInsertId = $this->__insert_id() ?: $this->lastInsertId;
+
+        return $res;
 	}
 
 	protected function __rq($q)
@@ -64,7 +67,7 @@ class diMYSQL extends diDB
 
 	protected function __mq($q)
 	{
-		throw new Exception("Unable to exec multi-query in simple mysql, mysqli needed");
+		throw new \Exception("Unable to exec multi-query in simple mysql, mysqli needed");
 	}
 
 	protected function __mq_flush()
@@ -80,17 +83,17 @@ class diMYSQL extends diDB
 
 	protected function __fetch($rs)
 	{
-		return mysql_fetch_object($rs);
+		return $rs ? mysql_fetch_object($rs) : false;
 	}
 
 	protected function __fetch_array($rs)
 	{
-		return mysql_fetch_assoc($rs);
+		return $rs ? mysql_fetch_assoc($rs) : false;
 	}
 
 	protected function __count($rs)
 	{
-		return mysql_num_rows($rs);
+		return $rs ? mysql_num_rows($rs) : false;
 	}
 
 	protected function __insert_id()

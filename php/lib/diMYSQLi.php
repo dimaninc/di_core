@@ -55,47 +55,47 @@ class diMYSQLi extends diMYSQL
 
 	protected function __q($q)
 	{
-		return $this->link->query($q);
+        $res = $this->link->query($q);
+        $this->lastInsertId = $this->__insert_id() ?: $this->lastInsertId;
+
+        return $res;
 	}
 
 	protected function __rq($q)
 	{
-		return $this->link->real_query($q);
+        $res = $this->link->real_query($q);
+        $this->lastInsertId = $this->__insert_id() ?: $this->lastInsertId;
+
+        return $res;
 	}
 
 	protected function __mq($q)
 	{
-		$ar = array();
+        $ar = [];
 
-		if ($this->link->multi_query($q))
-		{
-			do
-			{
-				$a = $this->link->store_result();
+        if ($this->link->multi_query($q)) {
+            do {
+                $a = $this->link->store_result();
 
-				if ($a)
-				{
-					$ar[] = $a;
+                if ($a) {
+                    $ar[] = $a;
 
-					$a->free();
-				}
-			}
-			while ($this->link->more_results() && $this->link->next_result());
-		}
+                    $a->free();
+                }
+            } while ($this->link->more_results() && $this->link->next_result());
+        }
 
-		if ($this->link->errno)
-		{
-			return false;
-		}
-		else
-		{
-			return $ar;
-		}
-	}
+        if ($this->link->errno) {
+            return false;
+        } else {
+            return $ar;
+        }
+    }
 
-	protected function __mq_flush()
+    protected function __mq_flush()
 	{
-		while ($this->link->next_result()) {;}
+        while ($this->link->next_result()) {
+        }
 	}
 
 	/**

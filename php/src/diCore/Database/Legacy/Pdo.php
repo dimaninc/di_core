@@ -8,7 +8,6 @@
 
 namespace diCore\Database\Legacy;
 
-
 abstract class Pdo extends \diDB
 {
 	protected $charset = 'utf8';
@@ -69,7 +68,10 @@ abstract class Pdo extends \diDB
 	protected function __q($q)
 	{
 		try {
-			return $this->lastResult = $this->link->query($q);
+			$this->lastResult = $this->link->query($q);
+            $this->lastInsertId = $this->__insert_id() ?: $this->lastInsertId;
+
+            return $this->lastResult;
 		} catch (\PDOException $e) {
 			return $this->_log("Unable to execute query `{$q}`");
 		}

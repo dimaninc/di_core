@@ -100,6 +100,8 @@ abstract class diDB
 	public $affected_rows = 0;
 	public $cached_db_data = [];
 
+	protected $lastInsertId;
+
 	public function __construct($settingsOrHost, $username = null, $password = null, $dbname = null)
 	{
 		if (is_array($settingsOrHost) && $username === null && $password === null && $dbname === null)
@@ -807,42 +809,45 @@ abstract class diDB
 	}
 
 	public function insert($table, $fields_values = [])
-	{
-		$t = $this->get_table_name($table);
+    {
+        $t = $this->get_table_name($table);
 
-		if (!is_array(current($fields_values))) // preparing for multi-insert
-		{
-			$fields_values = array($fields_values);
-		}
+        if (!is_array(current($fields_values))) // preparing for multi-insert
+        {
+            $fields_values = [$fields_values];
+        }
 
-		$q1 = "(".self::fields_to_string_for_insert(current($fields_values)).")";
-		$q2_ar = array();
+        $q1 = "(" . self::fields_to_string_for_insert(current($fields_values)) . ")";
+        $q2_ar = [];
 
-		foreach ($fields_values as $ar)
-		{
-			$q2_ar[] = "(".self::values_to_string_for_insert($ar).")";
-		}
+        foreach ($fields_values as $ar) {
+            $q2_ar[] = "(" . self::values_to_string_for_insert($ar) . ")";
+        }
 
-		$time1 = utime();
+        $time1 = utime();
 
-		$this->__q("LOCK TABLES $t WRITE");
-		if (!$this->__rq("INSERT INTO {$t}{$q1} VALUES" . join(",", $q2_ar) . ";"))
-		{
-			$this->_log("unable to insert into table $t");
+        $this->__q("LOCK TABLES $t WRITE");
+        if (!$this->__rq("INSERT INTO {$t}{$q1} VALUES" . join(",", $q2_ar) . ";")) {
+            $this->_log("unable to insert into table $t");
 
-			$this->__q("UNLOCK TABLES");
+            $this->__q("UNLOCK TABLES");
 
-			return false;
-		}
-		$id = $this->__insert_id();
-		$this->__q("UNLOCK TABLES");
+            return false;
+        }
+        $this->lastInsertId = $this->__insert_id();
+        $this->__q("UNLOCK TABLES");
 
-		$time2 = utime();
-		$this->execution_time += $time2 - $time1;
-		$this->time_log("insert", $time2 - $time1);
+        $time2 = utime();
+        $this->execution_time += $time2 - $time1;
+        $this->time_log("insert", $time2 - $time1);
 
-		return $id;
+        return $this->lastInsertId;
 	}
+
+	public function getLastInsertId()
+    {
+        return $this->lastInsertId;
+    }
 
 	public function update($table, $fields_values = array(), $q_ending = "")
 	{
