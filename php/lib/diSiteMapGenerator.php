@@ -10,34 +10,34 @@ use diCore\Entity\Content\Model;
 
 class diSiteMapGenerator
 {
-	protected static $className = "diCustomSiteMapGenerator";
+	protected static $className = 'diCustomSiteMapGenerator';
 	protected $folder = null; // null == root
-	protected $filename = "sitemap.xml";
+	protected $filename = 'sitemap.xml';
 	protected $domain;
 	protected $protocol;
 
 	public static $skippedContentTypes = [
-		//"home",
-		"href",
-		"sitemap",
-		"search",
-		"registration",
-		"enter_new_password",
-		"forgotten_password",
-		"payment_callback",
+		//'home',
+		'href',
+		'sitemap',
+		'search',
+		'registration',
+		'enter_new_password',
+		'forgotten_password',
+		'payment_callback',
 	];
 	public static $customSkippedContentTypes = [];
 
 	protected $items = [
-		"url" => [],
-		"image" => [],
-		"video" => [],
+		'url' => [],
+		'image' => [],
+		'video' => [],
 	];
 
 	public function __construct()
 	{
-		$this->domain = $_SERVER["HTTP_HOST"];
-		$this->protocol = $_SERVER["SERVER_PORT"] == 443 ? "https://" : "http://";
+		$this->domain = \diRequest::domain();
+		$this->protocol = \diRequest::protocol() . '://';
 	}
 
 	/**
@@ -45,7 +45,7 @@ class diSiteMapGenerator
 	 */
 	public static function create()
 	{
-		if (!diLib::exists(self::$className))
+		if (!\diLib::exists(self::$className))
 		{
 			self::$className = get_called_class();
 		}
@@ -66,14 +66,14 @@ class diSiteMapGenerator
 
 	public function generate()
 	{
-		$this->generateForCollection(diCollection::create(diTypes::content)->orderBy('order_num'));
+		$this->generateForCollection(\diCollection::create(\diTypes::content)->orderBy('order_num'));
 
 		return $this;
 	}
 
-	public function generateForCollection(diCollection $collection)
+	public function generateForCollection(\diCollection $collection)
 	{
-		/** @var diModel $model */
+		/** @var \diModel $model */
 		foreach ($collection as $model)
 		{
 			$this->addUrlItem($model);
@@ -82,7 +82,7 @@ class diSiteMapGenerator
 		return $this;
 	}
 
-	protected function addUrlItem(diModel $model)
+	protected function addUrlItem(\diModel $model)
 	{
 		if ($this->isRowSkipped($model))
 		{
@@ -92,19 +92,19 @@ class diSiteMapGenerator
 		switch ($model->getTable())
 		{
 			default:
-				$this->items["url"][] = $this->getUrlItem($model);
+				$this->items['url'][] = $this->getUrlItem($model);
 				break;
 		}
 
 		return $this;
 	}
 
-	protected function getUrlItem(diModel $model)
+	protected function getUrlItem(\diModel $model)
 	{
 		return [
 			[
-				"key" => "loc",
-				"value" => $this->protocol . $this->domain . $model->getHref(),
+				'key' => 'loc',
+				'value' => $this->protocol . $this->domain . $model->getHref(),
 			]
 		];
 	}
@@ -117,19 +117,19 @@ class diSiteMapGenerator
 		{
 			switch ($type)
 			{
-				case "url":
+				case 'url':
 					$out[$type] = join("\n", array_map(function($value) use($type) {
 						$a = array();
 
 						foreach ($value as $opts)
 						{
-							$attrs = "";
-							$k = $opts["key"];
-							$value = isset($opts["value"]) ? $opts["value"] : null;
+							$attrs = '';
+							$k = $opts['key'];
+							$value = isset($opts['value']) ? $opts['value'] : null;
 
-							if (!empty($opts["attrs"]))
+							if (!empty($opts['attrs']))
 							{
-								foreach ($opts["attrs"] as $attrKey => $attrValue)
+								foreach ($opts['attrs'] as $attrKey => $attrValue)
 								{
 									$attrs .= " {$attrKey}=\"" . htmlspecialchars($attrValue, ENT_COMPAT, 'UTF-8') . "\"";
 								}
@@ -149,7 +149,7 @@ class diSiteMapGenerator
 
 	protected function getXmlAdditionAttributes()
 	{
-		return "";
+		return '';
 	}
 
 	public function getXml()
@@ -162,8 +162,8 @@ class diSiteMapGenerator
 
 	protected function store()
 	{
-		$folder = $this->folder === null ? diPaths::fileSystem() : $this->folder;
-		$filename = add_ending_slash($folder) . $this->filename;
+		$folder = $this->folder === null ? \diPaths::fileSystem() : $this->folder;
+		$filename = \diCore\Helper\StringHelper::slash($folder) . $this->filename;
 
 		$xml = $this->getXml();
 
@@ -176,14 +176,14 @@ class diSiteMapGenerator
 	{
 		return in_array($model->getType(), static::$skippedContentTypes) ||
 			in_array($model->getType(), static::$customSkippedContentTypes) ||
-			diContentTypes::getParam($model->getType(), "logged_in");
+			\diContentTypes::getParam($model->getType(), 'logged_in');
 	}
 
-	protected function isRowSkipped(diModel $model)
+	protected function isRowSkipped(\diModel $model)
 	{
 		switch ($model->getTable())
 		{
-			case "content":
+			case 'content':
 				return static::isContentRowSkipped($model);
 		}
 
