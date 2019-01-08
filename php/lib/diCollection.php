@@ -776,6 +776,16 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this;
 	}
 
+	public function merge(\diCollection $col)
+    {
+        foreach ($col as $model)
+        {
+            $this->addItem($model);
+        }
+
+        return $this;
+    }
+
 	/**
 	 * @return \diModel
 	 * @throws \Exception
