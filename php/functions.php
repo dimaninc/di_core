@@ -481,7 +481,7 @@ function publish_email($email, $doggy_replacer = "&#64", $unique_function_name_e
   return array("lines" => $lines, "script" => join("\n", $lines), "email" => $_email, "a" => $a);
 }
 
-function transliterate_rus_to_eng($text)
+function transliterate_rus_to_eng($text, $lowerCase = true)
 {
 	$trans_table = array(
 		"клу" => "clu",
@@ -566,8 +566,11 @@ function transliterate_rus_to_eng($text)
 		"Я" => "ya",
 	);
 
-	$text = mb_strtolower($text);
-	return str_replace(array_keys($trans_table), array_values($trans_table), $text);
+    if ($lowerCase) {
+        $text = mb_strtolower($text);
+    }
+
+    return str_replace(array_keys($trans_table), array_values($trans_table), $text);
 }
 
 function get_user_ip()

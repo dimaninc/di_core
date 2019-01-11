@@ -350,8 +350,9 @@ body[data-skin="entrine"] .admin-layout > .content > .caption {
 }
 @media screen and (max-width: 767px) {
   .admin-layout > .content > .caption {
-    padding-left: 12px;
-    padding-right: 12px;
+    padding: 5px 12px;
+    height: auto;
+    line-height: 20px;
   }
 }
 .admin-layout > .content > .caption b {
@@ -959,6 +960,10 @@ body[data-skin="entrine"] textarea {
   body[data-skin="entrine"] textarea {
     padding: 5px;
   }
+}
+select {
+  font-family: Verdana, sans-serif;
+  font-size: 14px;
 }
 body[data-skin="entrine"] select {
   padding: 15px;
@@ -2580,7 +2585,7 @@ ul.admin-grid > li img {
 .filter-block {
   font-family: Verdana, sans-serif;
   color: #000;
-  font-size: 11px;
+  font-size: 12px;
   background-color: #fff;
   padding: 0 0 20px 24px;
   border-bottom: 1px solid #ccc;
@@ -2610,6 +2615,7 @@ ul.admin-grid > li img {
   float: left;
   padding-top: 5px;
   width: 150px;
+  font-weight: normal;
 }
 .filter-block button[name="export"] {
   margin-left: 30px;

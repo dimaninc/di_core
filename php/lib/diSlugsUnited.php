@@ -89,20 +89,21 @@ class diSlugsUnited
 		);
 	}
 
-	protected function prepare($source)
+	protected function prepare($source, $lowerCase = true)
 	{
-		return \diSlug::prepare($source);
+		return \diSlug::prepare($source, $lowerCase);
 	}
 
 	public function generate($source, $options = [])
 	{
 		$options = extend([
 			'prepare' => true,
+            'lowerCase' => true,
 		], $options);
 
 		if ($options['prepare'])
 		{
-			$source = $this->prepare($source);
+			$source = $this->prepare($source, $options['lowerCase']);
 		}
 
 		$this->setShortSlug($this->unique($source));

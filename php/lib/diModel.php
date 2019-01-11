@@ -8,6 +8,7 @@
 
 use diCore\Base\CMS;
 use diCore\Data\Config;
+use diCore\Helper\Slug;
 
 class diModel implements \ArrayAccess
 {
@@ -24,6 +25,7 @@ class diModel implements \ArrayAccess
 	const table = null;
 	const id_field_name = 'id';
 	const slug_field_name = null; //self::SLUG_FIELD_NAME_LEGACY; get this back when all models are updated
+    const slug_lower_case = true;
 	const order_field_name = 'order_num';
 	const use_data_cache = false;
 
@@ -417,10 +419,18 @@ class diModel implements \ArrayAccess
 		return $this->get('slug_source') ?: $this->get('en_title') ?: $this->get('title');
 	}
 
-	public function generateSlug($source = null, $delimiter = '-')
+	public function generateSlug($source = null, $delimiter = '-', $extraOptions = [])
 	{
-		$this->setSlug(\diSlug::generate($source ?: $this->getSourceForSlug(), $this->getTable(), $this->getId(),
-			$this->getIdFieldName(), $this->getSlugFieldName(), $delimiter
+		$this->setSlug(Slug::generate(
+		    $source ?: $this->getSourceForSlug(),
+            $this->getTable(),
+            $this->getId(),
+			$this->getIdFieldName(),
+            $this->getSlugFieldName(),
+            $delimiter,
+            extend([
+			    'lowerCase' => static::slug_lower_case,
+            ], $extraOptions)
 		));
 
 		return $this;
@@ -1117,7 +1127,7 @@ class diModel implements \ArrayAccess
 
 	public function isEqualTo(\diModel $m)
 	{
-		return $this->hasId() && $this->getId() == $m->getId();
+		return $this->modelType() == $m->modelType() && $this->hasId() && $this->getId() == $m->getId();
 	}
 
 	public function set($field, $value = null)
