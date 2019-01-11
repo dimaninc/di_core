@@ -26,6 +26,7 @@ class diModel implements \ArrayAccess
 	const id_field_name = 'id';
 	const slug_field_name = null; //self::SLUG_FIELD_NAME_LEGACY; get this back when all models are updated
     const slug_lower_case = true;
+    const slug_regenerate_if_duplicate = false;
 	const order_field_name = 'order_num';
 	const use_data_cache = false;
 
@@ -421,6 +422,19 @@ class diModel implements \ArrayAccess
 
 	public function generateSlug($source = null, $delimiter = '-', $extraOptions = [])
 	{
+        $extraOptions = extend([
+            'lowerCase' => static::slug_lower_case,
+            'regenerateIfDuplicate' => static::slug_regenerate_if_duplicate,
+        ], $extraOptions);
+
+        if ($extraOptions['regenerateIfDuplicate'] && empty($extraOptions['uniqueMaker'])) {
+            $extraOptions['uniqueMaker'] = function($origSlug, $delimiter, $index) {
+                return $this->getSourceForSlug();
+            };
+
+            unset($extraOptions['regenerateIfDuplicate']);
+        }
+
 		$this->setSlug(Slug::generate(
 		    $source ?: $this->getSourceForSlug(),
             $this->getTable(),
@@ -428,9 +442,7 @@ class diModel implements \ArrayAccess
 			$this->getIdFieldName(),
             $this->getSlugFieldName(),
             $delimiter,
-            extend([
-			    'lowerCase' => static::slug_lower_case,
-            ], $extraOptions)
+            $extraOptions
 		));
 
 		return $this;
