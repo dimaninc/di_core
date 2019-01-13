@@ -1143,7 +1143,7 @@ abstract class CMS
 			'_tech' => [
 				'html_base' => $this->getBaseAddress() . '/',
 				'html_base_wo_slash' => $this->getBaseAddress(),
-			]
+			],
 		], true);
 
 		return $this->getTwig()->parse($this->getIndexTemplateName(), [
@@ -1953,6 +1953,26 @@ abstract class CMS
 
 	public function setHeaderImage($imagePath, $imageHtmlBase = null, $width = '', $height = '')
 	{
+	    if ($imagePath instanceof \diModel) {
+            $imagePath = [$imagePath];
+        }
+
+        if (is_array($imagePath)) {
+	        $pic = null;
+	        $fs = null;
+
+	        /** @var \diModel $model */
+            foreach ($imagePath as $model) {
+	            $pic = $pic ?: $model->getPicForOpenGraph(true);
+	            $fs = $fs ?: $model->getPicForOpenGraph(false);
+            }
+
+            $imagePath = $pic;
+            if ($fs && (!$width || !$height)) {
+                list($width, $height) = @getimagesize($fs);
+            }
+        }
+
 		$this->getTpl()
 			->assign([
 				"HEADER_IMAGE_URI" => $imagePath,
@@ -2029,11 +2049,11 @@ abstract class CMS
 	 *
 	 * todo: add pics support
 	 *
-	 * @param \diModel|null $model
+	 * @param \diModel|array|null $models
 	 * @param array $defaults
 	 * @return $this
 	 */
-	public function assignMeta(\diModel $model = null, $defaults = [])
+	public function assignMeta($models = null, $defaults = [])
 	{
 		$defaults = extend([
 			'title' => null,
@@ -2041,30 +2061,40 @@ abstract class CMS
 			'keywords' => null,
 		], $defaults);
 
-		if (!$model)
-		{
-			$model = $this->getContentModel();
-		}
+		if (!$models) {
+			$models = [$this->getContentModel()];
+		} elseif (!is_array($models)) {
+            $models = [$models];
+        }
 
-		foreach ($defaults as $field => $defaultValue)
+        foreach ($defaults as $field => $defaultValue)
 		{
-			$value = $model->localized($this->getFullMetaField($field), $this->getLanguage())
-				?: $model->localized($this->getFullMetaField($field, true), $this->getLanguage())
-				?: $defaultValue;
+		    $value = null;
 
-			if ($field == 'title' && !$value)
-			{
-				$value = $model->localized('title', $this->getLanguage());
+		    /** @var \diModel $model */
+            foreach ($models as $model) {
+                $value = $value
+                    ?: $model->localized($this->getFullMetaField($field), $this->getLanguage())
+                    ?: $model->localized($this->getFullMetaField($field, true), $this->getLanguage());
+            }
+
+			$value = $value ?: $defaultValue;
+
+			if ($field == 'title' && !$value) {
+                foreach ($models as $model) {
+                    $value = $value ?: $model->localized('title', $this->getLanguage());
+                }
 			}
 
-			if ($field == 'description' && !$value)
-			{
-				$value = $model->localized('short_content', $this->getLanguage())
-					?: $model->localized('content', $this->getLanguage());
+			if ($field == 'description' && !$value) {
+                foreach ($models as $model) {
+                    $value = $value
+                        ?: $model->localized('short_content', $this->getLanguage())
+                        ?: $model->localized('content', $this->getLanguage());
+                }
 			}
 
-			if ($value)
-			{
+			if ($value) {
 				$this->setMeta($value, $field);
 			}
 		}

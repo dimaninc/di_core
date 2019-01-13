@@ -29,6 +29,7 @@ class diModel implements \ArrayAccess
     const slug_regenerate_if_duplicate = false;
 	const order_field_name = 'order_num';
 	const use_data_cache = false;
+	const open_graph_pic_field = 'pic';
 
 	// this should be redefined
 	protected $table;
@@ -312,6 +313,11 @@ class diModel implements \ArrayAccess
 			: null;
 	}
 
+	public function getPicForOpenGraph($httpPath = true)
+    {
+        return $this->wrapFileWithPath($this->get(static::open_graph_pic_field), $httpPath);
+    }
+
 	public function getHref()
 	{
 		return null;
@@ -550,21 +556,25 @@ class diModel implements \ArrayAccess
 		return isset($this->picsTnFolders[$index]) ? $this->picsTnFolders[$index] : get_tn_folder($index);
 	}
 
-	public function wrapFileWithPath($filename, $previewIdx = null)
+	public function wrapFileWithPath($filename, $previewIdx = null, $httpPath = true)
 	{
 		$tnFolder = $previewIdx === null
 			? ''
 			: $this->getTnFolder($previewIdx);
 
+		$pathPrefix = $httpPath
+            ? \diPaths::http($this)
+            : \diPaths::fileSystem($this);
+
 		return $filename
-			? \diPaths::http($this) . $this->getPicsFolder() . $tnFolder . $filename
+			? $pathPrefix . $this->getPicsFolder() . $tnFolder . $filename
 			: '';
 	}
 
 	public function getFilesForRotation($field)
 	{
 		return [
-			$this[$field . '_with_path'],
+			$this->wrapFileWithPath($this->get($field)),
 		];
 	}
 
