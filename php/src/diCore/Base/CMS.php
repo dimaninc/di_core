@@ -124,6 +124,7 @@ abstract class CMS
 
 		// facebook
 		'_openstat',
+        'fbclid',
 
 		// viber/google
 		'utm_source',
