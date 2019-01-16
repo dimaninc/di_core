@@ -716,6 +716,7 @@ EOF;
 							'name' => $field,
 							'value' => $ar['value'],
 							'size' => $size,
+                            'type' => 'text',
 						]));
 					}
 

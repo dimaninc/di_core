@@ -2,7 +2,7 @@ body
     background white
     margin 0
     padding 0
-    font-family Verdana, sans-serif
+    font-family $classicFont
     color black
     font-size 11px
     font-weight normal
@@ -257,7 +257,7 @@ u
             line-height @height
             font-family Tahoma, sans-serif
             font-size 12px
-            background #fff
+            background white
             border-bottom 1px solid #CCCCCC
             margin-bottom 20px
             box-sizing border-box
@@ -272,8 +272,9 @@ u
                     padding-left 12px
                     padding-right 12px
             @media screen and (max-width: 767px)
-                padding-left 12px
-                padding-right 12px
+                padding 5px 12px
+                height auto
+                line-height 20px
             b
                 text-transform uppercase
                 a
@@ -610,7 +611,7 @@ u
                 display none
 
 button
-    font-family Verdana, sans-serif
+    font-family $classicFont
     font-size 14px
     font-weight normal
     background #fff
@@ -690,7 +691,7 @@ input[type="number"]
 input[type="password"]
 input[type="url"]
 textarea
-    font-family Verdana, sans-serif
+    font-family $classicFont
     font-size 14px
     font-weight normal
     background-color white
@@ -707,6 +708,8 @@ textarea
             padding 5px
 
 select
+    font-family $classicFont
+    font-size 14px
     body[data-skin="entrine"] &
         padding 15px
         border-color $entrineColorTableBorder

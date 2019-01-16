@@ -27,7 +27,7 @@ class diSitemapModule extends diModule
 		return diSiteMapGenerator::isContentRowSkipped($model);
 	}
 
-	protected function printChildRows(Model $model)
+	protected function printChildRows(\diModel $model)
 	{
 		return $this;
 	}
@@ -50,14 +50,14 @@ class diSitemapModule extends diModule
 		}
 	}
 
-	protected function printSubRow(diModel $m, Model $page = null, $printLink = true)
+	protected function printSubRow(\diModel $m, \diModel $page = null, $printLink = true, $levelNum = null)
 	{
 		$this->getTpl()->assign($m->getTemplateVars(), "M_");
 
 		if ($page)
 		{
 			$this->getTpl()->assign([
-				"LEVEL_NUM" => $page->getLevelNum() + 1,
+				"LEVEL_NUM" => $levelNum !== null ? $levelNum : $page->getLevelNum() + 1,
 			], "M_");
 		}
 

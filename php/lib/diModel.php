@@ -8,6 +8,7 @@
 
 use diCore\Base\CMS;
 use diCore\Data\Config;
+use diCore\Helper\Slug;
 
 class diModel implements \ArrayAccess
 {
@@ -24,8 +25,11 @@ class diModel implements \ArrayAccess
 	const table = null;
 	const id_field_name = 'id';
 	const slug_field_name = null; //self::SLUG_FIELD_NAME_LEGACY; get this back when all models are updated
+    const slug_lower_case = true;
+    const slug_regenerate_if_duplicate = false;
 	const order_field_name = 'order_num';
 	const use_data_cache = false;
+	const open_graph_pic_field = 'pic';
 
 	// this should be redefined
 	protected $table;
@@ -309,6 +313,11 @@ class diModel implements \ArrayAccess
 			: null;
 	}
 
+	public function getPicForOpenGraph($httpPath = true)
+    {
+        return $this->wrapFileWithPath($this->get(static::open_graph_pic_field), $httpPath);
+    }
+
 	public function getHref()
 	{
 		return null;
@@ -417,10 +426,29 @@ class diModel implements \ArrayAccess
 		return $this->get('slug_source') ?: $this->get('en_title') ?: $this->get('title');
 	}
 
-	public function generateSlug($source = null, $delimiter = '-')
+	public function generateSlug($source = null, $delimiter = '-', $extraOptions = [])
 	{
-		$this->setSlug(\diSlug::generate($source ?: $this->getSourceForSlug(), $this->getTable(), $this->getId(),
-			$this->getIdFieldName(), $this->getSlugFieldName(), $delimiter
+        $extraOptions = extend([
+            'lowerCase' => static::slug_lower_case,
+            'regenerateIfDuplicate' => static::slug_regenerate_if_duplicate,
+        ], $extraOptions);
+
+        if ($extraOptions['regenerateIfDuplicate'] && empty($extraOptions['uniqueMaker'])) {
+            $extraOptions['uniqueMaker'] = function($origSlug, $delimiter, $index) {
+                return $this->getSourceForSlug();
+            };
+
+            unset($extraOptions['regenerateIfDuplicate']);
+        }
+
+		$this->setSlug(Slug::generate(
+		    $source ?: $this->getSourceForSlug(),
+            $this->getTable(),
+            $this->getId(),
+			$this->getIdFieldName(),
+            $this->getSlugFieldName(),
+            $delimiter,
+            $extraOptions
 		));
 
 		return $this;
@@ -528,21 +556,25 @@ class diModel implements \ArrayAccess
 		return isset($this->picsTnFolders[$index]) ? $this->picsTnFolders[$index] : get_tn_folder($index);
 	}
 
-	public function wrapFileWithPath($filename, $previewIdx = null)
+	public function wrapFileWithPath($filename, $previewIdx = null, $httpPath = true)
 	{
 		$tnFolder = $previewIdx === null
 			? ''
 			: $this->getTnFolder($previewIdx);
 
+		$pathPrefix = $httpPath
+            ? \diPaths::http($this)
+            : \diPaths::fileSystem($this);
+
 		return $filename
-			? \diPaths::http($this) . $this->getPicsFolder() . $tnFolder . $filename
+			? $pathPrefix . $this->getPicsFolder() . $tnFolder . $filename
 			: '';
 	}
 
 	public function getFilesForRotation($field)
 	{
 		return [
-			$this[$field . '_with_path'],
+			$this->wrapFileWithPath($this->get($field)),
 		];
 	}
 
@@ -1117,7 +1149,7 @@ class diModel implements \ArrayAccess
 
 	public function isEqualTo(\diModel $m)
 	{
-		return $this->hasId() && $this->getId() == $m->getId();
+		return $this->modelType() == $m->modelType() && $this->hasId() && $this->getId() == $m->getId();
 	}
 
 	public function set($field, $value = null)

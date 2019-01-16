@@ -12,6 +12,7 @@ use diCore\Data\Config;
 use diCore\Data\Types;
 use diCore\Database\Entity\Mongo\Model as MongoModel;
 use diCore\Helper\FileSystemHelper;
+use diCore\Helper\Slug;
 use diCore\Helper\StringHelper;
 
 class Submit
@@ -23,33 +24,33 @@ class Submit
 	const FILE_NAME_GLUE = '-';
 
 	public static $defaultDynamicPicCallback = [self::class, 'storeDynamicPicCallback'];
-	const dynamicPicsTable = "dipics";
+	const dynamicPicsTable = 'dipics';
 
-	public static $defaultSlugSourceFieldsAr = ["slug_source", "menu_title", "title"];
+	public static $defaultSlugSourceFieldsAr = ['slug_source', 'menu_title', 'title'];
 	public static $allowedDynamicPicsFieldsAr = [
-		"id",
-		"_table",
-		"_field",
-		"_id",
-		"title",
-		"content",
-		"orig_fn",
-		"pic",
-		"pic_t",
-		"pic_w",
-		"pic_h",
-		"pic_tn",
-		"pic_tn_t",
-		"pic_tn_w",
-		"pic_tn_h",
-		"pic_tn2_t",
-		"pic_tn2_w",
-		"pic_tn2_h",
-		"date",
-		"by_default",
-		"visible",
-		"order_num",
-		"color_id",
+		'id',
+		'_table',
+		'_field',
+		'_id',
+		'title',
+		'content',
+		'orig_fn',
+		'pic',
+		'pic_t',
+		'pic_w',
+		'pic_h',
+		'pic_tn',
+		'pic_tn_t',
+		'pic_tn_w',
+		'pic_tn_h',
+		'pic_tn2_t',
+		'pic_tn2_w',
+		'pic_tn2_h',
+		'date',
+		'by_default',
+		'visible',
+		'order_num',
+		'color_id',
 	];
 
 	const FILE_CHMOD = 0664;
@@ -84,7 +85,7 @@ class Submit
 	public $page;
 	public $redirect_href_ar;
 
-	private $slugFieldName = "clean_title";
+	private $slugFieldName = 'clean_title';
 
 	/** @var \diModel */
 	private $curModel;
@@ -96,7 +97,7 @@ class Submit
 	{
 		global $db;
 
-		if (gettype($table) == "object")
+		if (gettype($table) == 'object')
 		{
 			$this->AdminPage = $table;
 
@@ -115,42 +116,42 @@ class Submit
 			$this->table = $table;
 			$this->id = $id;
 
-			$this->_form_fields = isset($GLOBALS[$this->table . "_form_fields"]) ? $GLOBALS[$this->table . "_form_fields"] : [];
-			$this->_local_fields = isset($GLOBALS[$this->table . "_local_fields"]) ? $GLOBALS[$this->table . "_local_fields"] : [];
-			$this->_all_fields = isset($GLOBALS[$this->table . "_all_fields"]) ? $GLOBALS[$this->table . "_all_fields"] : [];
-			$this->_ff = isset($GLOBALS[$this->table . "_ff"]) ? $GLOBALS[$this->table . "_ff"] : [];
-			$this->_lf = isset($GLOBALS[$this->table . "_lf"]) ? $GLOBALS[$this->table . "_lf"] : [];
-			$this->_af = isset($GLOBALS[$this->table . "_af"]) ? $GLOBALS[$this->table . "_af"] : [];
+			$this->_form_fields = isset($GLOBALS[$this->table . '_form_fields']) ? $GLOBALS[$this->table . '_form_fields'] : [];
+			$this->_local_fields = isset($GLOBALS[$this->table . '_local_fields']) ? $GLOBALS[$this->table . '_local_fields'] : [];
+			$this->_all_fields = isset($GLOBALS[$this->table . '_all_fields']) ? $GLOBALS[$this->table . '_all_fields'] : [];
+			$this->_ff = isset($GLOBALS[$this->table . '_ff']) ? $GLOBALS[$this->table . '_ff'] : [];
+			$this->_lf = isset($GLOBALS[$this->table . '_lf']) ? $GLOBALS[$this->table . '_lf'] : [];
+			$this->_af = isset($GLOBALS[$this->table . '_af']) ? $GLOBALS[$this->table . '_af'] : [];
 		}
 
 		$this->setSlugFieldName();
 
 		$this->db = $db;
-		$this->page = \diRequest::post("page", 0);
+		$this->page = \diRequest::post('page', 0);
 
 		$this->redirect_href_ar = [
-			"path" => $this->table,
+			'path' => $this->table,
 		];
 
 		if ($this->page)
 		{
-			$this->redirect_href_ar["page"] = $this->page;
+			$this->redirect_href_ar['page'] = $this->page;
 		}
 
-		if (!empty($_POST["make_preview"]))
+		if (!empty($_POST['make_preview']))
 		{
-			foreach ($_POST["make_preview"] as $k => $_tmp)
+			foreach ($_POST['make_preview'] as $k => $_tmp)
 			{
-				if ($this->isFlag($k, "preview"))
+				if ($this->isFlag($k, 'preview'))
 				{
-					$this->redirect_href_ar["path"] = "{$this->table}_form";
-					$this->redirect_href_ar["id"] = $this->id;
+					$this->redirect_href_ar['path'] = "{$this->table}_form";
+					$this->redirect_href_ar['id'] = $this->id;
 					$this->redirect_href_ar["make_preview[$k]"] = 1;
 				}
 			}
 		}
 
-		$this->curModel = \diModel::createForTableNoStrict($this->getTable(), $this->getId(), "id");
+		$this->curModel = \diModel::createForTableNoStrict($this->getTable(), $this->getId(), 'id');
 		$this->submittedModel = \diModel::createForTableNoStrict($this->getTable());
 
 		if ($this->getCurModel()->hasId())
@@ -172,9 +173,9 @@ class Submit
 			return $this;
 		}
 
-		if ($this->_af && in_array("slug", $this->_af))
+		if ($this->_af && in_array('slug', $this->_af))
 		{
-			$this->slugFieldName = "slug";
+			$this->slugFieldName = 'slug';
 		}
 
 		return $this;
@@ -230,22 +231,22 @@ class Submit
 		switch ($type)
 		{
 			case self::IMAGE_TYPE_MAIN:
-				return "";
+				return '';
 
 			case self::IMAGE_TYPE_PREVIEW:
-				return "_tn";
+				return '_tn';
 
 			case self::IMAGE_TYPE_PREVIEW2:
-				return "_tn2";
+				return '_tn2';
 
 			case self::IMAGE_TYPE_PREVIEW3:
-				return "_tn3";
+				return '_tn3';
 
 			case self::IMAGE_TYPE_ORIG:
-				return "_orig";
+				return '_orig';
 
 			case self::IMAGE_TYPE_BIG:
-				return "_big";
+				return '_big';
 
 			default:
 				throw new \Exception("Unknown type '$type'");
@@ -286,7 +287,7 @@ class Submit
 			$params_ar[] = "$k=$v";
 		}
 
-		$params = join("&", $params_ar);
+		$params = join('&', $params_ar);
 
 		header("Location: ../index.php?$params");
 	}
@@ -571,29 +572,29 @@ class Submit
 			foreach ($this->_all_fields as $f => $v)
 			{
 				if (
-					(in_array($v["type"], ["pic", "file"]) && !$this->getData($f)) ||
-					//(in_array($f, $this->_lf) && (!$this->data[$f] || $this->data[$f] == $v["default"])) ||
-					in_array($v["type"], ["separator"]) ||
-					$this->isFlag($f, "virtual") ||
-					$this->isFlag($f, "untouchable")
+					(in_array($v['type'], ['pic', 'file']) && !$this->getData($f)) ||
+					//(in_array($f, $this->_lf) && (!$this->data[$f] || $this->data[$f] == $v['default'])) ||
+					in_array($v['type'], ['separator']) ||
+					$this->isFlag($f, 'virtual') ||
+					$this->isFlag($f, 'untouchable')
 				)
 				{
 					// just ignore
 				}
-				elseif (in_array($v["type"], array("date_str", "time_str", "datetime_str")) && !$this->getData($f))
+				elseif (in_array($v['type'], array('date_str', 'time_str', 'datetime_str')) && !$this->getData($f))
 				{
-					$dbAr["*$f"] = "NULL";
+					$dbAr["*$f"] = 'NULL';
 
 					$this->getSubmittedModel()
 						->set($f, null);
 				}
 				else
 				{
-					if (in_array($v["type"], array("dynamic_pics", "dynamic_files")))
+					if (in_array($v['type'], array('dynamic_pics', 'dynamic_files')))
 					{
 						$dynamicPicsFields[] = $f;
 					}
-					elseif ($v["type"] == "dynamic")
+					elseif ($v['type'] == 'dynamic')
 					{
 						$dynamicFields[] = $f;
 					}
@@ -624,24 +625,24 @@ class Submit
 		{
 			foreach ($this->_all_fields as $f => $v)
 			{
-				if ($this->isFlag($f, "virtual") || $this->isFlag($f, "untouchable") || in_array($v['type'], ['separator']))
+				if ($this->isFlag($f, 'virtual') || $this->isFlag($f, 'untouchable') || in_array($v['type'], ['separator']))
 				{
 					// just ignore
 				}
-				elseif (in_array($v["type"], ["date_str", "time_str", "datetime_str"]) && !$this->getData($f))
+				elseif (in_array($v['type'], ['date_str', 'time_str', 'datetime_str']) && !$this->getData($f))
 				{
-					$dbAr["*$f"] = "NULL";
+					$dbAr["*$f"] = 'NULL';
 
 					$this->getSubmittedModel()
 						->set($f, null);
 				}
 				else
 				{
-					if (in_array($v["type"], ["dynamic_pics", "dynamic_files"]))
+					if (in_array($v['type'], ['dynamic_pics', 'dynamic_files']))
 					{
 						$dynamicPicsFields[] = $f;
 					}
-					elseif ($v["type"] == "dynamic")
+					elseif ($v['type'] == 'dynamic')
 					{
 						$dynamicFields[] = $f;
 					}
@@ -679,7 +680,7 @@ class Submit
 				$this->AdminPage->setId($this->id);
 			}
 
-			$this->set_redirect_param("id", $this->id);
+			$this->set_redirect_param('id', $this->id);
 		}
 
 		foreach ($dynamicPicsFields as $f)
@@ -694,7 +695,7 @@ class Submit
 
 		foreach ($this->_all_fields as $f => $v)
 		{
-			if ($v["type"] == "tags")
+			if ($v['type'] == 'tags')
 			{
 				$this->storeTags($f);
 			}
@@ -706,7 +707,7 @@ class Submit
 	function storeTags($field)
 	{
 		/** @var \diTags $class */
-		$class = $this->getFieldOption($field, "class") ?: "diTags";
+		$class = $this->getFieldOption($field, 'class') ?: 'diTags';
 
 		$class::saveFromPost(\diTypes::getId($this->getTable()), $this->getId(), $field);
 
@@ -722,11 +723,11 @@ class Submit
 	{
 		$opts = $this->getOptionsFor($field);
 
-		if ($opts && isset($opts["watermarks"]))
+		if ($opts && isset($opts['watermarks']))
 		{
-			foreach ($opts["watermarks"] as $o)
+			foreach ($opts['watermarks'] as $o)
 			{
-				if (isset($o["type"]) && $o["type"] == $type)
+				if (isset($o['type']) && $o['type'] == $type)
 				{
 					return $o;
 				}
@@ -734,9 +735,9 @@ class Submit
 		}
 
 		return [
-			"name" => null,
-			"x" => null,
-			"y" => null,
+			'name' => null,
+			'x' => null,
+			'y' => null,
 		];
 	}
 
@@ -758,8 +759,8 @@ class Submit
 
 	public function getFieldOption($field, $option = null)
 	{
-		$o = isset($this->_all_fields[$field]["options"])
-			? (array)$this->_all_fields[$field]["options"]
+		$o = isset($this->_all_fields[$field]['options'])
+			? (array)$this->_all_fields[$field]['options']
 			: [];
 
 		if (is_null($option))
@@ -780,13 +781,13 @@ class Submit
 
 	public function isFlag($field, $flag)
 	{
-		if (is_string($field) && isset($this->_all_fields[$field]["flags"]))
+		if (is_string($field) && isset($this->_all_fields[$field]['flags']))
 		{
-			$f_ar = $this->_all_fields[$field]["flags"];
+			$f_ar = $this->_all_fields[$field]['flags'];
 		}
-		elseif (isset($field["flags"]))
+		elseif (isset($field['flags']))
 		{
-			$f_ar = $field["flags"];
+			$f_ar = $field['flags'];
 		}
 		else
 		{
@@ -824,8 +825,8 @@ class Submit
 			}
 		}
 
-		$this->setData($this->slugFieldName, \diSlug::generate($origin, $this->getTable(), $this->getId(),
-			"id", $this->slugFieldName
+		$this->setData($this->slugFieldName, Slug::generate($origin, $this->getTable(), $this->getId(),
+			'id', $this->slugFieldName
 		));
 
 		return $this;
@@ -838,22 +839,22 @@ class Submit
 	}
 
 	// dir == -1/+1, shows - to increase or decrease new value's order num
-	function make_order_num($dir, $q_ending = "", $force_recount = false)
+	function make_order_num($dir, $q_ending = '', $force_recount = false)
 	{
 		if (!$this->id || $force_recount)
 		{
 			$init_value = $dir > 0 ? 1 : 65000;
 			$sign = $dir > 0 ? 1 : -1;
-			$min_max = $dir > 0 ? "MAX" : "MIN";
+			$min_max = $dir > 0 ? 'MAX' : 'MIN';
 
 			$order_r = $this->getDb()->r($this->table, $q_ending, "$min_max(order_num) AS num,COUNT(id) AS cc");
-			$this->setData("order_num", $order_r && $order_r->cc ? intval($order_r->num) + $sign : $init_value);
+			$this->setData('order_num', $order_r && $order_r->cc ? intval($order_r->num) + $sign : $init_value);
 		}
 		else
 		{
 			if ($this->getCurRec())
 			{
-				$this->setData("order_num", $this->getCurRec("order_num"));
+				$this->setData('order_num', $this->getCurRec('order_num'));
 			}
 		}
 
@@ -866,70 +867,70 @@ class Submit
 		{
 			$h = new \diHierarchyTable($this->getTable());
 
-			$skipIdsAr = $this->getData("parent")
-				? $h->getChildrenIdsAr($this->getData("parent"), [$this->getData("parent")])
+			$skipIdsAr = $this->getData('parent')
+				? $h->getChildrenIdsAr($this->getData('parent'), [$this->getData('parent')])
 				: [];
 
-			$r = $this->getDb()->r($this->getTable(), $skipIdsAr ?: "", "MAX(order_num) AS num");
+			$r = $this->getDb()->r($this->getTable(), $skipIdsAr ?: '', 'MAX(order_num) AS num');
 
 			$this
-				->setData("level_num", $h->getChildLevelNum($this->getData("parent")))
-				->setData("order_num", (int)$r->num + 1);
+				->setData('level_num', $h->getChildLevelNum($this->getData('parent')))
+				->setData('order_num', (int)$r->num + 1);
 
 			$this->getDb()->update($this->getTable(), [
-				"*order_num" => "order_num + 1",
-			], "WHERE order_num>='{$this->getData("order_num")}'");
+				'*order_num' => 'order_num + 1',
+			], "WHERE order_num >= '{$this->getData('order_num')}'");
 		}
 		else
 		{
-			$r = $this->getDb()->r($this->getTable(), $this->getId(), "level_num,order_num");
+			$r = $this->getDb()->r($this->getTable(), $this->getId(), 'level_num,order_num');
 			if ($r)
 			{
 				$this
-					->setData("level_num", $r->level_num)
-					->setData("order_num", $r->order_num);
+					->setData('level_num', $r->level_num)
+					->setData('order_num', $r->order_num);
 			}
 		}
 
 		return $this;
 	}
 
-	static function get_datetime_from_ar($post, $date = true, $time = false, $format = "int")
+	static function get_datetime_from_ar($post, $date = true, $time = false, $format = 'int')
 	{
 		$ar = getdate();
 
 		if ($date)
 		{
-			if (isset($post["dd"])) $ar["mday"] = (int)$post["dd"];
-			if (isset($post["dm"])) $ar["mon"] = (int)$post["dm"];
-			if (isset($post["dy"])) $ar["year"] = (int)$post["dy"];
+			if (isset($post['dd'])) $ar['mday'] = (int)$post['dd'];
+			if (isset($post['dm'])) $ar['mon'] = (int)$post['dm'];
+			if (isset($post['dy'])) $ar['year'] = (int)$post['dy'];
 		}
 
 		if ($time)
 		{
-			if (isset($post["th"])) $ar["hours"] = (int)$post["th"];
-			if (isset($post["tm"])) $ar["minutes"] = (int)$post["tm"];
-			if (isset($post["ts"])) $ar["seconds"] = (int)$post["ts"];
+			if (isset($post['th'])) $ar['hours'] = (int)$post['th'];
+			if (isset($post['tm'])) $ar['minutes'] = (int)$post['tm'];
+			if (isset($post['ts'])) $ar['seconds'] = (int)$post['ts'];
 		}
 
-		$ar["seconds"] = 0;
+		$ar['seconds'] = 0;
 		$value = null;
 
 		if (
-			($date && $ar["mday"] && $ar["mon"] && $ar["year"]) ||
+			($date && $ar['mday'] && $ar['mon'] && $ar['year']) ||
 			($time && $post['th'] !== '' && $post['tm'] !== '')
 		   )
 		{
-			$value = mktime($ar["hours"], $ar["minutes"], $ar["seconds"], $ar["mon"], $ar["mday"], $ar["year"]);
+			$value = mktime($ar['hours'], $ar['minutes'], $ar['seconds'], $ar['mon'], $ar['mday'], $ar['year']);
 		}
 
 		/*
 		$value = !$date || ()
-			? mktime($ar["hours"], $ar["minutes"], $ar["seconds"], $ar["mon"], $ar["mday"], $ar["year"])
+			? mktime($ar['hours'], $ar['minutes'], $ar['seconds'], $ar['mon'], $ar['mday'], $ar['year'])
 			: 0;
 		*/
 
-		if ($format == "str")
+		if ($format == 'str')
 		{
 			$tpl = [];
 
@@ -953,11 +954,11 @@ class Submit
 
 	function make_datetime($field, $date = true, $time = false)
 	{
-		if ($this->isFlag($field, "static") || $this->isFlag($field, "hidden"))
+		if ($this->isFlag($field, 'static') || $this->isFlag($field, 'hidden'))
 		{
-			if (substr($this->_all_fields[$field]["type"], -4) == "_str")
+			if (substr($this->_all_fields[$field]['type'], -4) == '_str')
 			{
-				$this->setData($field, \diRequest::post($field, ""));
+				$this->setData($field, \diRequest::post($field, ''));
 			}
 			else
 			{
@@ -970,7 +971,7 @@ class Submit
 				isset($_POST[$field]) ? $_POST[$field] : [],
 				$date,
 				$time,
-				substr($this->_all_fields[$field]["type"], -4) == "_str" ? "str" : "int"
+				substr($this->_all_fields[$field]['type'], -4) == '_str' ? 'str' : 'int'
 			));
 		}
 
@@ -992,7 +993,7 @@ class Submit
 			case self::IMAGE_TYPE_PREVIEW:
 			case self::IMAGE_TYPE_PREVIEW2:
 			case self::IMAGE_TYPE_PREVIEW3:
-				return ${"tn" . ($type != self::IMAGE_TYPE_PREVIEW ? $type : "") . "_folder"};
+				return ${'tn' . ($type != self::IMAGE_TYPE_PREVIEW ? $type : '') . '_folder'};
 
 			case self::IMAGE_TYPE_ORIG:
 				return $orig_folder;
@@ -1086,7 +1087,7 @@ class Submit
 				{
 					foreach ($filesOptions as &$opts)
 					{
-						$suffix = self::getPreviewSuffix($opts["type"]);
+						$suffix = self::getPreviewSuffix($opts['type']);
 
 						$widthParam = \diConfiguration::exists([
 							$this->getTable() . '_' . $f . $suffix . '_width',
@@ -1270,31 +1271,29 @@ class Submit
 			$test_r = $id > 0 ? $this->getDb()->r(self::dynamicPicsTable, "WHERE $w and id='$id'") : false;
 
 			$db_ar = [
-				"order_num" => (int)$order_num,
-				"by_default" => isset($_POST[$field."_by_default"]) && $_POST[$field."_by_default"] == $id ? 1 : 0,
-				"visible" => !empty($_POST[$field."_visible"][$id]) ? 1 : 0,
-				"title" => isset($_POST[$field."_title"][$id]) ? str_in($_POST[$field."_title"][$id]) : "",
-				"content" => isset($_POST[$field."_content"][$id]) ? str_in($_POST[$field."_content"][$id]) : "",
+                'order_num' => (int)$order_num,
+                'by_default' => isset($_POST[$field . '_by_default']) && $_POST[$field . '_by_default'] == $id ? 1 : 0,
+                'visible' => !empty($_POST[$field . '_visible'][$id]) ? 1 : 0,
+                'title' => isset($_POST[$field . '_title'][$id]) ? str_in($_POST[$field . '_title'][$id]) : '',
+                'content' => isset($_POST[$field . '_content'][$id]) ? str_in($_POST[$field . '_content'][$id]) : '',
 			];
 
-            if (isset($_POST[$field."_alt_title"][$id]))
-			{
-				$db_ar["alt_title"] = str_in($_POST[$field."_alt_title"][$id]);
-			}
+            if (isset($_POST[$field . '_alt_title'][$id])) {
+                $db_ar['alt_title'] = str_in($_POST[$field . '_alt_title'][$id]);
+            }
 
-			if (isset($_POST[$field."_html_title"][$id]))
-			{
-				$db_ar["html_title"] = str_in($_POST[$field."_html_title"][$id]);
-			}
+            if (isset($_POST[$field . '_html_title'][$id])) {
+                $db_ar['html_title'] = str_in($_POST[$field . '_html_title'][$id]);
+            }
 
 			// pic
-			$f = "pic";
+			$f = 'pic';
 
             self::checkBase64Files("{$field}_{$f}", $id);
 
-			if (isset($_FILES["{$field}_{$f}"]["name"][$id]) && !$_FILES["{$field}_{$f}"]["error"][$id])
+			if (isset($_FILES["{$field}_{$f}"]['name'][$id]) && !$_FILES["{$field}_{$f}"]['error'][$id])
 			{
-				$ext = "." . strtolower(get_file_ext($_FILES["{$field}_{$f}"]["name"][$id]));
+				$ext = '.' . strtolower(get_file_ext($_FILES["{$field}_{$f}"]['name'][$id]));
 
 				if ($test_r && $test_r->$f)
 				{
@@ -1304,39 +1303,39 @@ class Submit
 				{
 					$db_ar[$f] = self::getGeneratedFilename(
 						\diPaths::fileSystem($this->getSubmittedModel()) . $pics_folder,
-						$_FILES["{$field}_{$f}"]["name"][$id],
+						$_FILES["{$field}_{$f}"]['name'][$id],
 						$this->getFieldProperty($field, 'naming')
 					);
 				}
 
-				$db_ar["orig_fn"] = str_in($_FILES["{$field}_{$f}"]["name"][$id]);
+				$db_ar['orig_fn'] = str_in($_FILES["{$field}_{$f}"]['name'][$id]);
 
-				$callback = isset($this->_all_fields[$field]["callback"]) ? $this->_all_fields[$field]["callback"] : self::$defaultDynamicPicCallback;
+				$callback = isset($this->_all_fields[$field]['callback']) ? $this->_all_fields[$field]['callback'] : self::$defaultDynamicPicCallback;
 
 				$F = [
-					"name" => $_FILES["{$field}_{$f}"]["name"][$id],
-					"type" => $_FILES["{$field}_{$f}"]["type"][$id],
-					"tmp_name" => $_FILES["{$field}_{$f}"]["tmp_name"][$id],
-					"error" => $_FILES["{$field}_{$f}"]["error"][$id],
-					"size" => $_FILES["{$field}_{$f}"]["size"][$id],
+					'name' => $_FILES["{$field}_{$f}"]['name'][$id],
+					'type' => $_FILES["{$field}_{$f}"]['type'][$id],
+					'tmp_name' => $_FILES["{$field}_{$f}"]['tmp_name'][$id],
+					'error' => $_FILES["{$field}_{$f}"]['error'][$id],
+					'size' => $_FILES["{$field}_{$f}"]['size'][$id],
 				];
 
 				if (is_callable($callback))
 				{
 					$callback($F, $this, [
-						"field" => $field,
-						"what" => $f,
+						'field' => $field,
+						'what' => $f,
 					], $db_ar, $pics_folder);
 				}
 			}
 			//
 
 			// pic tn
-			$f = "pic_tn";
+			$f = 'pic_tn';
 
             self::checkBase64Files("{$field}_{$f}", $id);
 
-            if (isset($_FILES["{$field}_{$f}"]["name"][$id]) && !$_FILES["{$field}_{$f}"]["error"][$id])
+            if (isset($_FILES["{$field}_{$f}"]['name'][$id]) && !$_FILES["{$field}_{$f}"]['error'][$id])
 			{
 				if ($test_r && $test_r->$f)
 				{
@@ -1346,32 +1345,36 @@ class Submit
 				{
 					$db_ar[$f] = self::getGeneratedFilename(
 						\diPaths::fileSystem($this->getSubmittedModel()) . $pics_folder,
-						$_FILES["{$field}_{$f}"]["name"][$id],
+						$_FILES["{$field}_{$f}"]['name'][$id],
 						$this->getFieldProperty($field, 'naming')
 					);
 				}
 
-				$callback = isset($this->_all_fields[$field]["callback"]) ? $this->_all_fields[$field]["callback"]."_tn" : "";
+                $callback = isset($this->_all_fields[$field]['callback'])
+                    ? $this->_all_fields[$field]['callback'] . '_tn'
+                    : '';
 
 				$F = [
-					"name" => $_FILES["{$field}_{$f}"]["name"][$id],
-					"type" => $_FILES["{$field}_{$f}"]["type"][$id],
-					"tmp_name" => $_FILES["{$field}_{$f}"]["tmp_name"][$id],
-					"error" => $_FILES["{$field}_{$f}"]["error"][$id],
-					"size" => $_FILES["{$field}_{$f}"]["size"][$id],
+					'name' => $_FILES["{$field}_{$f}"]['name'][$id],
+					'type' => $_FILES["{$field}_{$f}"]['type'][$id],
+					'tmp_name' => $_FILES["{$field}_{$f}"]['tmp_name'][$id],
+					'error' => $_FILES["{$field}_{$f}"]['error'][$id],
+					'size' => $_FILES["{$field}_{$f}"]['size'][$id],
 				];
 
 				if ($callback && is_callable($callback))
 				{
 					$callback($F, $this, [
-						"field" => $field,
-						"what" => $f,
+						'field' => $field,
+						'what' => $f,
 					], $db_ar, $pics_folder);
 				}
 			}
 			//
 
-			$callback = isset($this->_all_fields[$field]["after_submit_callback"]) ? $this->_all_fields[$field]["after_submit_callback"] : "";
+			$callback = isset($this->_all_fields[$field]['after_submit_callback'])
+                ? $this->_all_fields[$field]['after_submit_callback']
+                : '';
 
 			if ($callback && is_callable($callback))
 			{
@@ -1388,9 +1391,9 @@ class Submit
 			}
 			else
 			{
-				$db_ar["_table"] = $this->getTable();
-				$db_ar["_field"] = $field;
-				$db_ar["_id"] = $this->getId();
+				$db_ar['_table'] = $this->getTable();
+				$db_ar['_field'] = $field;
+				$db_ar['_id'] = $this->getId();
 
 				$ids_ar[] = $this->getDb()->insert(self::dynamicPicsTable, $db_ar) or $this->getDb()->dierror();
 			}
@@ -1465,22 +1468,22 @@ class Submit
 			$ar[] = $fn;
 
 			$F = [
-				"name" => $pic->getOrigFn(),
-				"type" => "image/jpeg",
-				"tmp_name" => $fn,
-				"error" => 0,
-				"size" => filesize($fn),
+				'name' => $pic->getOrigFn(),
+				'type' => 'image/jpeg',
+				'tmp_name' => $fn,
+				'error' => 0,
+				'size' => filesize($fn),
 			];
 
 			$db_ar = [
-				"pic" => $pic->getPic(),
+				'pic' => $pic->getPic(),
 			];
 
 			if (is_callable($callback))
 			{
 				$callback($F, $Submit, [
-					"field" => $pic->getTargetField(),
-					"what" => "pic",
+					'field' => $pic->getTargetField(),
+					'what' => 'pic',
 				], $db_ar, get_pics_folder($Page->getTable()));
 			}
 
@@ -1512,21 +1515,21 @@ class Submit
 		$needToUnlink = true;
 
 		$I = new \diImage();
-		$I->open($F["tmp_name"]);
+		$I->open($F['tmp_name']);
 
 		foreach ($options as $opts)
 		{
-			$suffix = Submit::getPreviewSuffix($opts["type"]);
+			$suffix = Submit::getPreviewSuffix($opts['type']);
 
 			$fn = \diPaths::fileSystem($obj->getSubmittedModel(), true, $field) .
-				$opts["folder"] . $opts["subfolder"] . $obj->getData($field);
+				$opts['folder'] . $opts['subfolder'] . $obj->getData($field);
 
 			if (is_file($fn))
 			{
 				unlink($fn);
 			}
 
-			if (!$opts["resize"] && (move_uploaded_file($F["tmp_name"], $fn) || rename($F["tmp_name"], $fn)))
+			if (!$opts['resize'] && (move_uploaded_file($F['tmp_name'], $fn) || rename($F['tmp_name'], $fn)))
 			{
 				$needToUnlink = false;
 			}
@@ -1538,10 +1541,10 @@ class Submit
 				}
 
 				$I->make_thumb(
-					$opts["resize"],
+					$opts['resize'],
 					$fn,
-					$opts["width"],
-					$opts["height"],
+					$opts['width'],
+					$opts['height'],
 					false,
 					$opts['watermark']['name'], $opts['watermark']['x'], $opts['watermark']['y']
 				);
@@ -1559,9 +1562,9 @@ class Submit
 			}
 
 			$obj->setData([
-				$field . $suffix . "_w" => (int)$w,
-				$field . $suffix . "_h" => (int)$h,
-				$field . $suffix . "_t" => (int)$t,
+				$field . $suffix . '_w' => (int)$w,
+				$field . $suffix . '_h' => (int)$h,
+				$field . $suffix . '_t' => (int)$t,
 			]);
 
 			if (!empty($opts['afterSave']))
@@ -1580,7 +1583,7 @@ class Submit
 
 		if ($needToUnlink)
 		{
-			unlink($F["tmp_name"]);
+			unlink($F['tmp_name']);
 		}
 	}
 
