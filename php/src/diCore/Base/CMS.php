@@ -1213,7 +1213,7 @@ abstract class CMS
 				$route = [$route];
 			}
 
-			$this->routes = $route;
+			$this->routes = array_values($route);
 		}
 		else
 		{
@@ -1561,7 +1561,7 @@ abstract class CMS
 
 		if ($this->routes && in_array($this->routes[0], static::$possibleLanguages))
 		{
-			array_splice($this->routes, 0, 1);
+		    $this->removeRoute(0);
 		}
 
 		if (!$this->routes)
@@ -1581,11 +1581,13 @@ abstract class CMS
 
 	private function cleanupEmptyRoutes()
 	{
+	    $this->routes = array_values($this->routes);
+
 		for ($i = 0; $i < count($this->routes); $i++)
 		{
 			if ($this->routes[$i] === '')
 			{
-				array_splice($this->routes, $i, 1);
+			    $this->removeRoute($i);
 				$i--;
 			}
 			else
