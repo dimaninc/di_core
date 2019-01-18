@@ -87,6 +87,7 @@ table
 a
     text-decoration none
     color #7601AC
+    transition .3s
     &:hover
         text-decoration none
         color red
@@ -200,6 +201,9 @@ u
     border-radius 3px
     background-color #ddd
     padding 5px 10px
+    transition .3s
+    &:hover
+        background-color #aaa
     body[data-skin="entrine"] &
         border-radius 2px
         color white
@@ -702,7 +706,7 @@ textarea
     body[data-skin="entrine"] &
         font-family $entrineFont
         border-radius 0
-        padding 15px
+        padding 5px
         border-color $entrineColorTableBorder
         @media screen and (max-width: 767px)
             padding 5px
@@ -791,6 +795,7 @@ table.banners_stat td.sel, table.banners_stat th.sel
         padding 5px 10px
         cursor pointer
         box-sizing border-box
+        transition .3s
         @media screen and (max-width: 767px)
             &:not(:last-of-type)
                 margin-right 0
