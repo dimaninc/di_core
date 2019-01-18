@@ -367,6 +367,13 @@ EOF;
 		return $this;
 	}
 
+	public function removeFilter($field)
+    {
+        unset($this->ar[$field]);
+
+        return $this;
+    }
+
 	public function add_where_condition($condition)
 	{
 		$this->where_ar[] = $condition;

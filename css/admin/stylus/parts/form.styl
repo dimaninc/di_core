@@ -84,10 +84,40 @@
                 top 25px
                 @media screen and (max-width: 767px)
                     top 15px
+        .file-input-wrapper
+            body[data-skin="entrine"] &
+                position relative
+                width 50%
+                background-color $entrineColorTextMenuSelected
+                transition .3s
+                cursor pointer
+                @media screen and (max-width: 767px)
+                    width auto
+                &:before
+                    content attr(data-caption)
+                    position absolute
+                    cursor pointer
+                    color white
+                    left 50%
+                    top 50%
+                    transform translate(-50%, -50%)
+                &:hover
+                    background-color $entrineColorBgDark
+                input
+                    &[type="file"]
+                        position relative
+                        opacity 0
+                        z-index 20
+                        box-sizing border-box
+                        width 100%
+                        cursor pointer
         input:not([type="checkbox"]):not([type="radio"]):not([size])
         textarea
             flex 1
-            padding 15px
+        input:not([type="checkbox"]):not([type="radio"])
+        textarea
+            body[data-skin="entrine"] &
+                padding 15px
         input[type="checkbox"]
         input[type="radio"]
             body[data-skin="entrine"] &
@@ -152,6 +182,8 @@
         .value
             display block
             margin-left 0 !important
+            border-left 3px solid $classicColorLink
+            padding 5px 0 5px 10px
             body[data-skin="entrine"] &
                 display block
                 padding 5px 0 5px 20px

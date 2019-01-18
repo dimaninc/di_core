@@ -43,6 +43,8 @@ class BreadCrumbs
 		$this->Z = $Z;
 		$this->type = $this->getZ()->content_table;
 		$this->useTpl = $this->getTpl() && $this->getTpl()->exists('top_title_divider');
+
+		$this->reset();
 	}
 
 	/**
@@ -89,7 +91,7 @@ class BreadCrumbs
 		return $this;
 	}
 
-	private function hrefNeeded(\diModel $m)
+	protected function hrefNeeded(\diModel $m)
 	{
 		return
 			!$m->exists('to_show_content') ||

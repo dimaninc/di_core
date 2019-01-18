@@ -76,6 +76,8 @@ class Form
 			'link' => 'Link',
 
 			'tab_general' => 'General',
+
+            'choose_file' => 'Choose file...',
 		],
 
 		'ru' => [
@@ -117,6 +119,8 @@ class Form
 			'link' => 'Ссылка',
 
 			'tab_general' => 'Основное',
+
+            'choose_file' => 'Выбрать файл...',
 		],
 	];
 
@@ -2004,7 +2008,7 @@ EOF;
 
 			$this->inputs[$field] = $this->isFlag($field, 'static')
 				? "<input type=\"hidden\" name=\"$field\" value=\"$v\">"
-				: "<input type=\"file\" name=\"$name\" value=\"\" size=\"70\" {$attributes}>";
+				: "<div class=\"file-input-wrapper\" data-caption=\"{$this->L('choose_file')}\"><input type=\"file\" name=\"$name\" value=\"\" size=\"70\" {$attributes}></div>";
 
 			$this->force_inputs_fields[$field] = true;
 		}
@@ -2096,7 +2100,9 @@ EOF;
 
 			$this->inputs[$field] = $this->isFlag($field, 'static')
 				? '<input type="hidden" name="' . $field . '" value="' . $v . '">'
-				: '<input type="file" name="' . $name . '" value="" size="70"' . $this->getInputAttributesString($field) . '>';
+				: '<div class="file-input-wrapper" data-caption="' . $this->L('choose_file') .
+                '"><input type="file" name="' . $name . '" value="" size="70"' .
+                $this->getInputAttributesString($field) . '></div>';
 
 			$this->force_inputs_fields[$field] = true;
 		}
