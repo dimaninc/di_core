@@ -1,16 +1,17 @@
-<form name="comment_form" action="" method="post" class="comments-form">
+<form name="comment_form" id="admin_comment_form" action="" method="post">
 
-	<input type="hidden" name="action" value="add" />
-	<input type="hidden" name="target_type" value="{COMMENT_TARGET_TYPE}" />
-	<input type="hidden" name="target_id" value="{COMMENT_TARGET_ID}" />
-	<input type="hidden" name="parent" value="{COMMENT_PARENT}" />
-	<input type="hidden" name="l" value="{SITE_LANGUAGE}" id="l" />
+	<input type="hidden" form="admin_comment_form" name="action" value="add" />
+	<input type="hidden" form="admin_comment_form" name="target_type" value="{COMMENT_TARGET_TYPE}" />
+	<input type="hidden" form="admin_comment_form" name="target_id" value="{COMMENT_TARGET_ID}" />
+	<input type="hidden" form="admin_comment_form" name="parent" value="{COMMENT_PARENT}" />
+	<input type="hidden" form="admin_comment_form" name="l" value="{SITE_LANGUAGE}" id="l" />
 
-	<div class="comment-submit-block">
-		<button type="submit">Отправить</button>
-		<span class="loading-ico"></span>
+	<div class="comments-form">
+		<textarea placeholder="Ваш комментарий" name="content" form="admin_comment_form" rows="3"></textarea>
+		<div class="comment-submit-block">
+			<button type="submit" form="admin_comment_form">Отправить</button>
+			<span class="loading-ico"></span>
+		</div>
 	</div>
-
-	<div><textarea name="content" rows="3" onkeypress="return check_ctrl_enter(event, this.form);"></textarea></div>
 
 </form>

@@ -1,0 +1,51 @@
+.comments-block
+    margin-top 10px
+    padding 10px
+    background #ddd
+    border-radius 10px
+    .comment-rows
+        .comment-row
+            padding 10px 0
+            border-bottom 1px dotted #777
+            .timestamp
+                float right
+            .name
+            .content
+                padding 5px 0
+            .actions
+                i
+                    font-style normal
+                    border-bottom 1px dashed #000
+                    cursor pointer
+            for $i in (1..8)
+                &[data-level-num=\"{$i}\"]
+                    margin-left (25 * $i)px
+    .comments-form
+        display flex
+        justify-content flex-end
+        padding-top 10px
+        @media screen and (max-width: 767px)
+            flex-wrap wrap
+        textarea
+            flex 1
+        .comment-submit-block
+            margin-left 10px
+            @media screen and (max-width: 767px)
+                margin-left 0
+                margin-top 10px
+                flex-basis 100%
+            button
+                padding 5px 15px
+                @media screen and (max-width: 767px)
+                    width 50%
+.loading
+.loading-ico
+    background url(/_core/i/ani/loading.gif) center center no-repeat
+.loading-ico
+    width 32px
+    height 32px
+    display inline-block
+    visibility hidden
+    .comments-form &
+        position absolute
+        margin 5px 0 0 0

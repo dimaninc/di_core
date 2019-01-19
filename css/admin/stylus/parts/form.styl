@@ -1,10 +1,11 @@
 .diadminform-row
     position relative
+    display flex
     border 1px solid #CFCFCF
     border-radius 8px
     background-color #FAFAFA
     margin 0 20px 3px 20px
-    padding 8px 20px
+    padding 8px 10px
     min-height 18px
     clearing-after()
     body[data-skin="entrine"] &
@@ -37,9 +38,7 @@
         body[data-skin="entrine"] &
             font-family $entrineFont
     .title
-        float left
-        display block
-        width 220px
+        width 200px
         padding 3px 10px 0 0
         box-sizing border-box
         body[data-skin="entrine"] &
@@ -58,10 +57,9 @@
             padding-bottom 7px
             font-weight bolder
     .value
-        margin 0 0 0 225px
+        flex 1
         display flex
         body[data-skin="entrine"] &
-            margin-left 145px
             @media screen and (max-width: 767px)
                 margin-left 12px
                 margin-right 12px
@@ -113,6 +111,7 @@
                         cursor pointer
         input:not([type="checkbox"]):not([type="radio"]):not([size])
         textarea
+            width 100%
             flex 1
         input:not([type="checkbox"]):not([type="radio"])
         textarea
@@ -154,9 +153,9 @@
             textarea
                 //width 99%
                 height 450px
-        .textarea
-            textarea
-                width 99%
+        //.textarea
+        //    textarea
+        //        width 99%
         .error
             background red
             color white
@@ -170,25 +169,19 @@
     &[data-type="dynamic"]
     &[data-type="dynamic_pics"]
     &[data-type="dynamic_files"]
+        flex-wrap wrap
         .title
-            width auto
-            float none
+            flex-basis 100%
             padding-bottom 10px
             body[data-skin="entrine"] &
-                width auto
-                float none
-                padding-bottom 10px
                 text-align left
                 font-weight bold
         .value
-            display block
-            margin-left 0 !important
             border-left 3px solid $classicColorLink
             padding 5px 0 5px 10px
             body[data-skin="entrine"] &
-                display block
                 padding 5px 0 5px 20px
-                border-left 3px solid $entrineColorTextMenuSelected //$entrineColorBgDark
+                border-color $entrineColorTextMenuSelected
     .tags-grid
         margin-bottom 15px
     .new-tag
@@ -206,10 +199,9 @@
                     padding 2px 5px
                     border-radius 5px
                     font-style normal
-    &[data-type="file"]
-    &[data-type="pic"]
-        .value
-            display block
+    [data-table="admin_tasks"] &[data-field="log"]
+        .title
+            display none
 
 .admin-form-uploading-area
     background rgba(25, 187, 251, .5)
@@ -259,12 +251,12 @@
     padding 10px
 
 .diadminform-separator
-    margin 10px 24px 10px 24px
+    margin 10px 20px
     border-top 1px dotted #000
 
 .diadminform_tabs
     > ul
-        margin 0 24px 5px 24px
+        margin 0 20px 5px 20px
         list-style none
         padding 0
         body[data-skin="entrine"] &
