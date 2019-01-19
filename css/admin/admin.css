@@ -1877,6 +1877,8 @@ body[data-skin="entrine"] .diadminform-row .value .static-text {
 }
 .diadminform-row .value select {
   max-width: 100%;
+}
+body[data-skin="entrine"] .diadminform-row .value select {
   margin-top: 15px;
 }
 .diadminform-row[data-type="dynamic"] .title,
