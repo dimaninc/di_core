@@ -1,5 +1,11 @@
 <?php
-class diConfigurationPage extends \diCore\Admin\BasePage
+
+namespace diCore\Admin\Page;
+
+use diCore\Data\Configuration as Cfg;
+use diCore\Helper\StringHelper;
+
+class Configuration extends \diCore\Admin\BasePage
 {
 	protected $vocabulary = [
 		'ru' => [
@@ -14,29 +20,16 @@ class diConfigurationPage extends \diCore\Admin\BasePage
 		],
 	];
 
-	/** @var \diConfiguration */
-	protected $cfg;
-
-	public function __construct($X)
-	{
-		global $cfg;
-
-		parent::__construct($X);
-
-		$this->cfg = $cfg;
-    }
-
 	protected function initTable()
 	{
 		$this->setTable("configuration");
 	}
 
-	public function renderList()
-	{
-	}
-
 	public function printList()
 	{
+	    Cfg::getInstance()
+            ->loadAllFromDB();
+
 		$this->getTpl()
 			->define("`configuration", [
 				"page",
@@ -71,7 +64,7 @@ class diConfigurationPage extends \diCore\Admin\BasePage
 
 	public function printConfigurationTable()
 	{
-		$this->cfg
+		Cfg::getInstance()
 			->setAdminPage($this)
 			->checkOtherTabInList(true);
 
@@ -87,9 +80,9 @@ class diConfigurationPage extends \diCore\Admin\BasePage
 
 		$tabPagesAr = [];
 
-		foreach (diConfiguration::getData() as $k => $v)
+		foreach (Cfg::getData() as $k => $v)
 		{
-			if (!isset($v["title"]) || diConfiguration::hasFlag($k, "hidden"))
+			if (!isset($v["title"]) || Cfg::hasFlag($k, "hidden"))
 			{
 				continue;
 			}
@@ -100,8 +93,8 @@ class diConfigurationPage extends \diCore\Admin\BasePage
 			$this->getTpl()->clear("P_NOTE_ROWS");
 
 			$htmlFieldName = str_replace(
-				array_keys(\diConfiguration::$inputNameReplaces),
-				array_values(\diConfiguration::$inputNameReplaces),
+				array_keys(Cfg::$inputNameReplaces),
+				array_values(Cfg::$inputNameReplaces),
 				$k
 			);
 
@@ -118,7 +111,7 @@ class diConfigurationPage extends \diCore\Admin\BasePage
 					$template_text = isset($v["select_template_text"]) ? $v["select_template_text"] : "%title%";
 					$template_value = isset($v["select_template_value"]) ? $v["select_template_value"] : "%id%";
 
-					$value = diSelect::fastCreate($htmlFieldName, $v["value"], $v["select_values"], $prefix_ar, $suffix_ar, $template_text, $template_value);
+					$value = \diSelect::fastCreate($htmlFieldName, $v["value"], $v["select_values"], $prefix_ar, $suffix_ar, $template_text, $template_value);
 					break;
 
 				case "text":
@@ -127,9 +120,9 @@ class diConfigurationPage extends \diCore\Admin\BasePage
 
 				case "pic":
 				case "file":
-					$ff = \diPaths::fileSystem() . $this->cfg->getFolder() . $v["value"];
-					$ff_orig = "/" . $this->cfg->getFolder() . $v["value"];
-					$path = "/" . $this->cfg->getFolder();
+					$ff = \diPaths::fileSystem() . Cfg::getInstance()->getFolder() . $v["value"];
+					$ff_orig = "/" . Cfg::getInstance()->getFolder() . $v["value"];
+					$path = "/" . Cfg::getInstance()->getFolder();
 					$ext = strtoupper(get_file_ext($ff));
 
 					$info = "$ext";
@@ -168,7 +161,7 @@ class diConfigurationPage extends \diCore\Admin\BasePage
 					}
 
 					$valueSuffix = $v["value"]
-						? "<div>$img_tag</div><div class=\"file-info\">$info <a href=\"" . diLib::getAdminWorkerPath("configuration", "del_pic", $k) . "\">удалить</a></div>"
+						? "<div>$img_tag</div><div class=\"file-info\">$info <a href=\"" . \diLib::getAdminWorkerPath("configuration", "del_pic", $k) . "\">удалить</a></div>"
 						: "";
 
 					$value = "<input type=\"file\" name=\"$htmlFieldName\" id='$k' size=\"40\" />";
@@ -176,12 +169,12 @@ class diConfigurationPage extends \diCore\Admin\BasePage
 
 				default:
 					$value = isset($v["flags"]) && in_array("static", $v["flags"])
-						? diStringHelper::out($v["value"], true)
-						: "<input type=\"text\" name=\"$htmlFieldName\" id='$k' value=\"" . diStringHelper::out($v["value"], true) . "\" />";
+						? StringHelper::out($v["value"], true)
+						: "<input type=\"text\" name=\"$htmlFieldName\" id='$k' value=\"" . StringHelper::out($v["value"], true) . "\" />";
 					break;
 			}
 
-			$tab = isset($v["tab"]) ? $v["tab"] : $this->cfg->getOtherTabName();
+			$tab = isset($v["tab"]) ? $v["tab"] : Cfg::getInstance()->getOtherTabName();
 			if (!isset($tabPagesAr[$tab]))
 			{
 				$tabPagesAr[$tab] = "";
@@ -226,12 +219,12 @@ class diConfigurationPage extends \diCore\Admin\BasePage
 		}
 
 		$this->getTpl()->assign([
-			"TABS_LIST" => join(",", array_keys($this->cfg->getTabsAr())),
-			"FIRST_TAB" => current(array_keys($this->cfg->getTabsAr())),
+			"TABS_LIST" => join(",", array_keys(Cfg::getInstance()->getTabsAr())),
+			"FIRST_TAB" => current(array_keys(Cfg::getInstance()->getTabsAr())),
 			"WORKER_URI" => \diLib::getAdminWorkerPath("configuration", "store"),
 		]);
 
-		foreach ($this->cfg->getTabsAr() as $k => $v)
+		foreach (Cfg::getInstance()->getTabsAr() as $k => $v)
 		{
 			if (empty($tabPagesAr[$k]))
 			{

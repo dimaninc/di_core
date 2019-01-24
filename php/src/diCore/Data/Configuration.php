@@ -24,9 +24,11 @@
 		* auto table creating added
 */
 
+namespace diCore\Data;
+
 use diCore\Admin\BasePage;
 
-class diConfiguration
+class Configuration
 {
 	private $tableName = 'configuration';	// table name of values to get stored in
 	private $nameField = 'name';
@@ -51,6 +53,8 @@ class diConfiguration
 	public static $data = [];
 	public static $cacheLoaded = false;
 
+	private static $instance;
+
 	public static $inputNameReplaces = [
 		'.' => '---DOT---',
 	];
@@ -58,7 +62,18 @@ class diConfiguration
 	public function __construct()
 	{
 		self::$folder = getSettingsFolder();
+		self::$instance = $this;
 	}
+
+	public static function getInstance()
+    {
+        if (!self::$instance)
+        {
+            new static();
+        }
+
+        return self::$instance;
+    }
 
 	public function setInitialData($ar)
 	{
@@ -148,8 +163,10 @@ class diConfiguration
 
 		if (!self::$cacheLoaded)
 		{
-			$this->getAllFromDB();
-			$this->updateCache();
+			$this
+                ->loadAllFromDB()
+			    ->updateCache();
+
 			include $this->getFullCacheFilename();
 		}
 
@@ -158,9 +175,9 @@ class diConfiguration
 
 	/**
 	 * @param string|array $name
-	 * @param string $property   can be 'value' or 'width/height/type' (for images)
+	 * @param string $property can be 'value' or 'width/height/type' (for images)
 	 * @return mixed|null
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public static function get($name, $property = 'value')
 	{
@@ -278,7 +295,7 @@ class diConfiguration
 		return $this;
 	}
 
-	public function getAllFromDB()
+	public function loadAllFromDB()
 	{
 		$rs = $this->getDB()->rs($this->tableName);
 		while ($r = $this->getDB()->fetch_array($rs))
@@ -324,9 +341,10 @@ class diConfiguration
 			return null;
 		}
 
-		$r = $this->getDB()->r($this->tableName, "WHERE {$this->nameField} = '$name'");
+		$r = $this->getDB()->ar($this->tableName, "WHERE {$this->nameField} = '$name'");
 
-		return $this->adjustAfterDB($r ? $r->{$this->valueField} : self::$data[$name]['value'], self::getPropertyType($name));
+        return $this->adjustAfterDB($r ? $r[$this->valueField] : self::$data[$name]['value'],
+            self::getPropertyType($name));
 	}
 
 	public function setToDB($name, $value)
@@ -348,8 +366,8 @@ class diConfiguration
 		foreach ($_POST as $k => $v)
 		{
 			$k = str_replace(
-				array_values(\diConfiguration::$inputNameReplaces),
-				array_keys(\diConfiguration::$inputNameReplaces),
+				array_values(static::$inputNameReplaces),
+				array_keys(static::$inputNameReplaces),
 				$k
 			);
 

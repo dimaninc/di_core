@@ -15,6 +15,8 @@ class diBaseAdminController extends diBaseController
 	{
 		$back = \diRequest::get('back', \diRequest::referrer('/_admin/'));
 
-		header("Location: $back");
+        $this->redirectTo($back);
+
+        return $this;
 	}
 }

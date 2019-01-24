@@ -1540,7 +1540,7 @@ class Submit
 					$I->set_jpeg_quality($opts['quality']);
 				}
 
-				$I->make_thumb(
+				$I->make_thumb_or_copy(
 					$opts['resize'],
 					$fn,
 					$opts['width'],
@@ -1748,7 +1748,7 @@ class Submit
 						$tnWM = extend($tnWM, $fileOptionsTn['watermark']);
 					}
 
-					$I->make_thumb($fileOptionsTn['resize'], $tn_fn,
+					$I->make_thumb_or_copy($fileOptionsTn['resize'], $tn_fn,
 						\diConfiguration::safeGet($widthParam),
 						\diConfiguration::safeGet($heightParam),
 						false,

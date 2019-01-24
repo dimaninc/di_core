@@ -2,26 +2,24 @@
 
 namespace diCore\Controller;
 
+use diCore\Data\Configuration as Cfg;
+
 class Configuration extends \diBaseAdminController
 {
 	public function storeAction()
 	{
-	    global $cfg;
+		Cfg::getInstance()->store();
 
-		$cfg->store();
-
-		$this->redirect();
+		$this->redirectBack();
 	}
 
 	public function delPicAction()
 	{
-	    global $cfg;
-
 		$k = $this->param(0);
 
-		if ($k && \diConfiguration::exists($k) && \diConfiguration::get($k))
+		if ($k && Cfg::exists($k) && Cfg::get($k))
 		{
-			$fn = \diConfiguration::getFolder() . \diConfiguration::get($k);
+			$fn = Cfg::getFolder() . Cfg::get($k);
 			$full_fn = \diPaths::fileSystem() . $fn;
 
 			if (is_file($full_fn))
@@ -29,15 +27,16 @@ class Configuration extends \diBaseAdminController
 				unlink($full_fn);
 			}
 
-			$cfg->setToDB($k, "");
-			$cfg->updateCache();
+            Cfg::getInstance()
+                ->setToDB($k, '')
+			    ->updateCache();
 		}
 
-		$this->redirect();
+		$this->redirectBack();
 	}
 
-	protected function redirect()
+	protected function redirectBack()
 	{
-		header("Location: " . \diCore\Admin\Base::getPageUri("configuration", "", ["saved" => 1]));
+		return $this->redirectTo(\diCore\Admin\Base::getPageUri("configuration", "", ["saved" => 1]));
 	}
 }
