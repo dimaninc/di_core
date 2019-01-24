@@ -846,6 +846,9 @@ table.banners_stat td.sel, table.banners_stat th.sel
         font-style italic
         flex-basis 100%
         text-align center
+        @media screen and (max-width: 767px)
+            padding-bottom 5px
+            border-bottom 1px solid #CFCFCF
         body[data-skin="entrine"] &
             background none
             border-top 0
@@ -854,8 +857,8 @@ table.banners_stat td.sel, table.banners_stat th.sel
 .save_frame
     display none
 
-.new_admin_block
-    padding 0 0 20px 0
+//.new_admin_block
+//    padding 0 0 20px 0
 
 .admin_help_link
     img

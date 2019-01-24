@@ -1167,6 +1167,12 @@ body[data-skin="entrine"] .submit-block button:hover > svg path {
   flex-basis: 100%;
   text-align: center;
 }
+@media screen and (max-width: 767px) {
+  .submit-block .submit-status-line {
+    padding-bottom: 5px;
+    border-bottom: 1px solid #cfcfcf;
+  }
+}
 body[data-skin="entrine"] .submit-block .submit-status-line {
   background: none;
   border-top: 0;
@@ -1174,9 +1180,6 @@ body[data-skin="entrine"] .submit-block .submit-status-line {
 }
 .save_frame {
   display: none;
-}
-.new_admin_block {
-  padding: 0 0 20px 0;
 }
 .admin_help_link img {
   border: none;
@@ -1857,13 +1860,13 @@ body[data-skin="entrine"] .diadminform-row .value .static {
   padding-top: 18px;
 }
 .diadminform-row .value .static-text {
-  padding: 10px;
+  padding: 8px;
+  border-radius: 8px;
   background: #ddd;
-  margin: 5px 5px 5px 0;
-  border-radius: 10px;
 }
 body[data-skin="entrine"] .diadminform-row .value .static-text {
   margin: -18px 0 0 0;
+  padding: 10px;
   border-radius: 0;
 }
 .diadminform-row .value .wysiwyg,
@@ -1927,6 +1930,7 @@ body[data-skin="entrine"] .diadminform-row[data-type="dynamic_files"] .title {
 .diadminform-row[data-type="dynamic_files"] .value {
   border-left: 3px solid #7601ac;
   padding: 5px 0 5px 10px;
+  display: block;
 }
 body[data-skin="entrine"] .diadminform-row[data-type="dynamic"] .value,
 body[data-skin="entrine"] .diadminform-row[data-type="dynamic_pics"] .value,

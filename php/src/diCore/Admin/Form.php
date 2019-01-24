@@ -1166,7 +1166,7 @@ EOF;
 		StringHelper::out($this->getData($field)) . "</textarea>";
 	}
 
-	protected function getRow($field, $title, $value, $rowAttrs = "")
+	protected function getRow($field, $title, $value, $rowAttrs = '')
 	{
 		if (is_array($rowAttrs))
 		{
@@ -1177,6 +1177,11 @@ EOF;
 		{
 			$rowAttrs .= ' data-drag-and-drop-uploading="true"';
 		}
+
+		if ($this->isStatic($field))
+        {
+            $rowAttrs .= ' data-static="true"';
+        }
 
 		return <<<EOF
 <div id="tr_{$field}" class="diadminform-row"{$rowAttrs} data-field="$field" data-type="{$this->getFieldType($field)}">
@@ -2657,7 +2662,7 @@ EOF;
 
 		$input = "";
 		if ($date) $input .= $d;
-		if ($input) $input .= " ";
+		if ($input) $input .= "&nbsp;";
 		if ($time) $input .= $t;
 
 		if ($date && $calendar_cfg)
