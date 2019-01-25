@@ -36,6 +36,7 @@ ul.left-menu
             text-transform uppercase
             box-sizing border-box
             width 200px
+            transition .3s
             body[data-skin="entrine"] &
                 font-family $entrineFont
                 font-weight 600
@@ -54,7 +55,7 @@ ul.left-menu
             &:hover
                 background-color #dde5e5
                 body[data-skin="entrine"] &
-                    background-color $entrineColorBgDarker
+                    //background-color $entrineColorBgDarker
                     color $entrineColorTextMenuSelected
         > ul
             ul-norm()
@@ -66,7 +67,6 @@ ul.left-menu
                 border-bottom 0 solid #edf0f4
                 font normal 11px / 11px Verdana, sans-serif
                 color #0059B2
-                //ellipsis()
                 body[data-skin="entrine"] &
                     font normal 12px / 16px Montserrat, sans-serif
                     color $entrineColorTextMenu
@@ -87,12 +87,13 @@ ul.left-menu
                         body[data-skin="entrine"] &
                             color $entrineColorTextMenuSelected
                             background $entrineColorBgDarker
-        &[state="1"]
+        &[data-state="1"]
             > b
                 body[data-skin="entrine"] &
                     //background-color $entrineColorBgDarker
                     //color $entrineColorTextMenuSelected
                     &:after
                         transform rotate(90deg)
+        &[data-sub-menu-state="1"]
             > ul
                 display block

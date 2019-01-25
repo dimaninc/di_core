@@ -16,14 +16,17 @@ var diAdminBase = function() {
 			var $this = $(this),
 				$parent = $this.parent('li'),
 				$subMenu = $this.next('ul'),
-				state = parseInt($parent.attr('state')) ? 0 : 1;
+				state = $parent.data('state') ? 0 : 1,
+				method = state ? 'slideDown' : 'slideUp';
 
-			$subMenu.slideToggle(function() {
-				$parent.attr('state', state);
+            $parent
+                .data('state', state)
+				.attr('data-state', state);
 
+			$subMenu[method](function() {
 				$.cookie('admin_visible_left_menu_ids',
 					$('ul.left-menu > li').map(function() {
-						return parseInt($(this).attr('state')) ? $(this).data('id') : '';
+						return $(this).data('state') ? $(this).data('id') : '';
 					}).get().join(','), {
 						expires: 365,
 						path: '/_admin/'

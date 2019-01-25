@@ -1543,6 +1543,11 @@ ul.left-menu > li > b {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   width: 200px;
+  -webkit-transition: 0.3s;
+  -moz-transition: 0.3s;
+  -o-transition: 0.3s;
+  -ms-transition: 0.3s;
+  transition: 0.3s;
 }
 body[data-skin="entrine"] ul.left-menu > li > b {
   font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
@@ -1574,7 +1579,6 @@ ul.left-menu > li > b:hover {
   background-color: #dde5e5;
 }
 body[data-skin="entrine"] ul.left-menu > li > b:hover {
-  background-color: #2a3246;
   color: #5ab5df;
 }
 ul.left-menu > li > ul {
@@ -1617,14 +1621,14 @@ body[data-skin="entrine"] ul.left-menu > li > ul > li a:hover {
   color: #5ab5df;
   background: #2a3246;
 }
-body[data-skin="entrine"] ul.left-menu > li[state="1"] > b:after {
+body[data-skin="entrine"] ul.left-menu > li[data-state="1"] > b:after {
   -webkit-transform: rotate(90deg);
   -moz-transform: rotate(90deg);
   -o-transform: rotate(90deg);
   -ms-transform: rotate(90deg);
   transform: rotate(90deg);
 }
-ul.left-menu > li[state="1"] > ul {
+ul.left-menu > li[data-sub-menu-state="1"] > ul {
   display: block;
 }
 .diadminform-row {
