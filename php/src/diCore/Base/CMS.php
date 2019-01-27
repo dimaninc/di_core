@@ -6,6 +6,7 @@ use diCore\Base\Exception\HttpException;
 use diCore\Data\Config;
 use diCore\Data\Http\HttpCode;
 use diCore\Data\Types;
+use diCore\Database\Connection;
 use diCore\Entity\Ad\Helper;
 use diCore\Entity\Content\Model;
 use diCore\Helper\ArrayHelper;
@@ -41,9 +42,6 @@ abstract class CMS
 	private $Twig;
 	private $twigBasicsAssigned = false;
 	private $indexTemplateName = 'index';
-
-	/** @var \diDB */
-	protected $db;
 
 	/** @var \diModule */
 	private $module;
@@ -253,10 +251,6 @@ abstract class CMS
 
 	public function __construct($tpl_dir = false, $tpl_cache_php = false, $tables_cache_fn_ar = false, $ct_cache_fn_ar = false)
 	{
-		global $db;
-
-		$this->db = $db;
-
 		if ($this->authUsed)
 		{
 			$this->initAuth();
@@ -341,6 +335,7 @@ abstract class CMS
 		return $this;
 	}
 
+	/** @deprecated  */
 	public static function fast_lite_create($options = [])
 	{
 		$options = extend([
@@ -529,11 +524,12 @@ abstract class CMS
 	}
 
 	/**
+     * @deprecated
 	 * @return \diDB
 	 */
 	public function getDb()
 	{
-		return $this->db;
+		return Connection::get()->getDb();
 	}
 
 	/**

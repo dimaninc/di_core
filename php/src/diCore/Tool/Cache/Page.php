@@ -9,6 +9,7 @@
 namespace diCore\Tool\Cache;
 
 use diCore\Data\Config;
+use diCore\Data\Http\HttpCode;
 use diCore\Data\Types;
 use diCore\Entity\PageCache\Collection;
 use diCore\Entity\PageCache\Model;
@@ -24,6 +25,9 @@ class Page
 
     /** @var  Model */
     protected $cache;
+
+    /** @var bool Force use cache */
+    protected $force = false;
 
     public function __construct()
     {
@@ -52,7 +56,9 @@ class Page
 
     protected function canBeUsed()
     {
-        return !Auth::i()->authorized() && !\diRequest::get(static::FLUSH_PARAM);
+        return
+            ($this->force || !Auth::i()->authorized()) &&
+            !\diRequest::get(static::FLUSH_PARAM);
     }
 
     protected function getCache()
@@ -65,10 +71,26 @@ class Page
         return $this->cache;
     }
 
-    public function work()
+    public function work($forceUri = null)
     {
+        if ($forceUri)
+        {
+            $this->force = true;
+            $this->cache = Model::createForCurrentUri($forceUri);
+        }
+
         if ($this->canBeUsed() && $this->getCache()->hasContent())
         {
+            if ($forceUri)
+            {
+                $code = Model::getHttpErrorCodeByUri($forceUri);
+
+                if ($code)
+                {
+                    HttpCode::header($code);
+                }
+            }
+
             echo $this->getCacheFromModel($this->getCache());
 
             die();
@@ -125,9 +147,12 @@ class Page
 
     protected function rebuildWorker(Model $cacheModel)
     {
-        $uri = Config::getMainProtocol() . Config::getMainDomain() . $cacheModel->getUri();
-        $uri .= StringHelper::getUrlParamGlue($uri) . static::FLUSH_PARAM . '=1';
-        $content = file_get_contents($uri);
+        $uri = Config::getMainProtocol() . Config::getMainDomain() . $cacheModel->getRebuildUri();
+        $content = file_get_contents($uri, false, stream_context_create([
+            'http' => [
+                'ignore_errors' => true,
+            ],
+        ]));
 
         $this->storeContent($cacheModel, $content);
 
