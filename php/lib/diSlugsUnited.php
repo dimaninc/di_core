@@ -91,7 +91,7 @@ class diSlugsUnited
 
 	protected function prepare($source, $lowerCase = true)
 	{
-		return \diSlug::prepare($source, $lowerCase);
+		return \diSlug::prepare($source, '-', $lowerCase);
 	}
 
 	public function generate($source, $options = [])
