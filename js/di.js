@@ -6,50 +6,47 @@ var di = {
 	workerPrefix: '/api/',
 	workerAdminPrefix: '/api/',
 
-	getWorkerBasePath: function(controller, action, params, options) {
-		options = $.extend({
-			underscoreSuffix: true
-		}, options || {});
-		suffixAr = [];
+    getWorkerBasePath: function (controller, action, params, options) {
+        options = $.extend({
+            underscoreSuffix: true
+        }, options || {});
+        suffixAr = [];
 
-		if (controller)
-		{
-			if (di.isArray(controller) && !action && !params)
-			{
-				suffixAr = controller;
-			}
-			else
-			{
-				suffixAr.push(controller);
+        if (controller) {
+            if (di.isArray(controller) && !action && !params) {
+                suffixAr = controller;
+            } else {
+                suffixAr.push(controller);
 
-				if (action)
-				{
-					suffixAr.push(action);
-				}
+                if (action) {
+                    suffixAr.push(action);
+                }
 
-				if (params)
-				{
-					if (!di.isArray(params))
-					{
-						params = [params];
-					}
+                if (params) {
+                    if (!di.isArray(params)) {
+                        params = [params];
+                    }
 
-					suffixAr = suffixAr.concat(params);
-				}
-			}
-		}
+                    suffixAr = suffixAr.concat(params);
+                }
+            }
+        }
 
-		if (suffixAr)
-		{
-			if (options.underscoreSuffix) {
-				suffixAr = suffixAr.map(di.underscore);
-			}
+        if (suffixAr) {
+            if (options.underscoreSuffix) {
+            	if (suffixAr.length >= 1) {
+                    suffixAr[0] = di.underscore(suffixAr[0]);
+                }
 
-			suffixAr.push('');
-		}
+                if (suffixAr.length >= 2) {
+                    suffixAr[1] = di.underscore(suffixAr[1]);
+                }
+            }
 
-		return suffixAr.join('/');
+            suffixAr.push('');
+        }
 
+        return suffixAr.join('/');
 	},
 
 	getWorkerPath: function(controller, action, params, options) {
@@ -70,7 +67,7 @@ var di = {
 				},
 				maxTries: maxTries,
 				delay: delay || 50
-			}, typeof whenToStart == 'object' ? whenToStart : {}),
+			}, typeof whenToStart === 'object' ? whenToStart : {}),
 			interval,
 			tries = 0;
 
@@ -79,7 +76,7 @@ var di = {
 				if (opts.whenToStart()) {
 					opts.whatToDo();
 					stop();
-				} else if (opts.maxTries && ++tries == opts.maxTries) {
+				} else if (opts.maxTries && ++tries === opts.maxTries) {
 					stop();
 				}
 			}, opts.delay);
