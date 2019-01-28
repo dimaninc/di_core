@@ -1833,6 +1833,9 @@ body[data-skin="entrine"] .diadminform-row .value .file-input-wrapper input[type
   -webkit-flex: 1;
   -ms-flex: 1;
   flex: 1;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
 }
 body[data-skin="entrine"] .diadminform-row .value input:not([type="checkbox"]):not([type="radio"]),
 body[data-skin="entrine"] .diadminform-row .value textarea {
