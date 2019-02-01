@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS albums(
 	pic_w int default '0',
 	pic_h int default '0',
 	pic_t tinyint default '0',
-	date timestamp DEFAULT CURRENT_TIMESTAMP,
+	date timestamp NULL DEFAULT CURRENT_TIMESTAMP,
 	order_num int,
 	visible tinyint default '1',
 	top tinyint default '0',
