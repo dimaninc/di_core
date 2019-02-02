@@ -11,6 +11,7 @@ namespace diCore\Admin;
 use diCore\Admin\Data\Skin;
 use diCore\Base\CMS;
 use diCore\Data\Config;
+use diCore\Database\Connection;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 
@@ -29,9 +30,6 @@ class Base
 	private $Twig;
 
 	protected $twigCreateOptions = [];
-
-	/** @var \diDB */
-	private $db;
 
 	/** @var \diAdminUser */
 	protected $adminUser;
@@ -163,7 +161,6 @@ class Base
 		$this->adminUser = \diAdminUser::create();
 
 		$this
-			->initDb()
 			->readUri()
 			->readParams()
 			->checkRights()
@@ -174,9 +171,6 @@ class Base
 
 	private function liteInit()
 	{
-		$this
-			->initDb();
-
 		return $this;
 	}
 
@@ -277,6 +271,7 @@ class Base
                 ->renderIndex()
                 ->getIndex();
         } catch (\Exception $e) {
+            echo 'fasttemplate';
             return $this->getTpl()
                 ->parse('index');
         }
@@ -347,11 +342,15 @@ class Base
 		if ($this->Twig === null)
 		{
 			$this->Twig = \diTwig::create($this->twigCreateOptions);
-			$this->Twig->assign([
-				'lang' => static::getVocabulary(),
-				'admin' => $this->getAdminModel(),
-				'asset_locations' => \diLib::getAssetLocations(),
-			]);
+            $this->Twig
+                ->assign([
+                    'X' => $this,
+                    'lang' => static::getVocabulary(),
+                    'admin' => $this->getAdminModel(),
+                    'asset_locations' => \diLib::getAssetLocations(),
+                    'caption' => $this->caption,
+                ])
+                ->setTemplateForIndex('admin/_index/index');
 		}
 
 		$this->Twig->assign([
@@ -362,20 +361,12 @@ class Base
 	}
 
 	/**
+     * @deprecated
 	 * @return \diDB
 	 */
 	public function getDb()
 	{
-		return $this->db;
-	}
-
-	private function initDb()
-	{
-		global $db;
-
-		$this->db = $db;
-
-		return $this;
+		return Connection::get()->getDb();
 	}
 
 	/**
@@ -533,9 +524,15 @@ class Base
 		return $this->getSiteTitle() . ': Admin / ' . strip_tags($this->caption);
 	}
 
+	public function expandCollapseBlockNeeded()
+    {
+        return in_array($this->getTable(), ['content', 'categories', 'orders']) || $this->forceShowExpandCollapse;
+    }
+
+    /** @deprecated  */
 	protected function printExpandCollapseBlock()
 	{
-		if (in_array($this->getTable(), ['content', 'categories', 'orders']) || $this->forceShowExpandCollapse)
+		if ($this->expandCollapseBlockNeeded())
 		{
 			$this->getTpl()->parse('EXPAND_COLLAPSE_BLOCK');
 		}
@@ -560,6 +557,10 @@ class Base
 			$this->getTpl()->assign([
 				'PAGE' => ob_get_contents(),
 			]);
+
+			$this->getTwig()->assign([
+                'PAGE' => ob_get_contents(),
+            ]);
 
 			ob_end_clean();
 		}
@@ -757,12 +758,14 @@ class Base
 
 		if ($alias = Form::getWysiwygAlias($this->getWysiwygVendor()))
 		{
-			$script = $this->getTwig()->parse($this->getWysiwygTemplateName($alias), [
+		    $this->getTwig()->render($this->getWysiwygTemplateName($alias), 'wysiwyg_head_script', [
 				'needed' => [
 					'rfm' => $this->responsiveFileManagerNeeded(),
 				],
 				'extra_wysiwyg_settings' => $this->getExtraWysiwygSettings(),
 			]);
+
+            $script = $this->getTwig()->getAssigned('wysiwyg_head_script');
 		}
 
 		$this->getTpl()
@@ -783,19 +786,13 @@ class Base
 
 	public function printHead()
 	{
-		if ($this->hasHeadPrinter())
-		{
-			$cb = $this->getHeadPrinter();
+        $head = $this->getPrintedHead();
 
-			$head = $cb($this);
-		}
-		else
+		if (!$head)
 		{
 			$this->printWysiwygHeadScript();
 
-			$head = $this->getTwig()->parse('admin/_index/head', [
-				'wysiwyg_head_script' => $this->getTpl()->getAssigned('WYSIWYG_HEAD_SCRIPT'),
-			]);
+			$head = $this->getTwig()->parse('admin/_index/head');
 		}
 
 		$this->getTpl()
@@ -806,6 +803,7 @@ class Base
 		return $this;
 	}
 
+	/** @deprecated */
 	public function printFooter()
 	{
 		$this->getTpl()->process('footer');
@@ -979,7 +977,7 @@ class Base
 					in_array($this->getAdminModel()->getLevel(), $group_ar['permissions']) &&
 					(empty($group_ar['super']) || $this->isAdminSuper())
 				)
-			)
+			   )
 			{
 				$i++;
 
@@ -1036,6 +1034,11 @@ class Base
 
 		$this->getTpl()
 			->process('left_menu');
+
+		$this->getTwig()
+            ->assign([
+                'left_menu' => $this->getTpl()->getAssigned('LEFT_MENU'),
+            ]);
 
 		return $this;
 	}
@@ -1120,4 +1123,16 @@ class Base
 
 		return $this;
 	}
+
+	public function getPrintedHead()
+    {
+        if ($this->hasHeadPrinter())
+        {
+            $cb = $this->getHeadPrinter();
+
+            return $cb($this);
+        }
+
+        return null;
+    }
 }

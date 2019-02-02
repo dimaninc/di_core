@@ -1094,7 +1094,7 @@ EOF;
 						$caption = $this->L("notes_caption");
 						$caption = $caption[(count($v["notes"]) > 1)];
 
-						$html .= $this->getRow($field, "{$caption}:", $_notes);
+						$html .= $this->getRow($field, "{$caption}:", $_notes, 'data-purpose="notes"');
 					}
 				}
 			}

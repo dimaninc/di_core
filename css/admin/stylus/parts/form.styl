@@ -50,6 +50,9 @@
                 width auto
                 text-align left
                 padding-left 12px
+        ^[0][data-purpose="notes"] ^[-1..1]
+            body[data-skin="entrine"] &
+                padding-top 0
         @media screen and (max-width: 767px)
             float none
             width auto
@@ -59,6 +62,9 @@
     .value
         flex 1
         display flex
+        ^[0][data-type="pic"] ^[1..-1]
+        ^[0][data-type="file"] ^[1..-1]
+            flex-wrap wrap
         body[data-skin="entrine"] &
             @media screen and (max-width: 767px)
                 margin-left 12px
@@ -83,32 +89,37 @@
                 @media screen and (max-width: 767px)
                     top 15px
         .file-input-wrapper
+            position relative
+            width 50%
+            background-color $classicColorLink
+            transition .3s
+            cursor pointer
             body[data-skin="entrine"] &
-                position relative
-                width 50%
                 background-color $entrineColorTextMenuSelected
-                transition .3s
+            @media screen and (max-width: 767px)
+                width auto
+            &:before
+                content attr(data-caption)
+                position absolute
+                white-space nowrap
                 cursor pointer
-                @media screen and (max-width: 767px)
-                    width auto
-                &:before
-                    content attr(data-caption)
-                    position absolute
-                    cursor pointer
-                    color white
-                    left 50%
-                    top 50%
-                    transform translate(-50%, -50%)
-                &:hover
+                color white
+                left 50%
+                top 50%
+                transform translate(-50%, -50%)
+            &:hover
+                background-color $classicColorLinkHover
+                body[data-skin="entrine"] &
                     background-color $entrineColorBgDark
-                input
-                    &[type="file"]
-                        position relative
-                        opacity 0
-                        z-index 20
-                        box-sizing border-box
-                        width 100%
-                        cursor pointer
+            input
+                &[type="file"]
+                    position relative
+                    opacity 0
+                    z-index 20
+                    box-sizing border-box
+                    width 100%
+                    cursor pointer
+                    padding 15px
         input:not([type="checkbox"]):not([type="radio"]):not([size])
         textarea
             width 100%
@@ -322,14 +333,14 @@
 
 .existing-pic-holder
     display inline-block
-    max-width 98%
+    max-width 100%
     border 1px solid #CFCFCF
     padding 10px
-    background #fff
+    background white
     text-align center
     margin-bottom 10px
-    margin-right 10px
     border-radius 8px
+    box-sizing border-box
     .container
         max-width 100%
         display inline-block
@@ -338,16 +349,18 @@
         box-shadow 0 0 6px 0 rgba(0,0,0,.6)
         overflow hidden
         &:not(.no-zoom-feature)
-            cursor zoom-in
+            @media screen and (min-width: 768px)
+                cursor zoom-in
         > img
             max-width 100%
             height auto
         &.img-full-size
-            overflow-x auto
-            &:not(.no-zoom-feature)
-                cursor zoom-out
-            > img
-                max-width none
+            @media screen and (min-width: 768px)
+                overflow-x auto
+                &:not(.no-zoom-feature)
+                    cursor zoom-out
+                > img
+                    max-width none
         &.embed
             font-size 0
             line-height 0
@@ -398,8 +411,6 @@ ul.table-edit-log
         > .author
             padding 10px
             border-bottom 1px dotted #777
-            b
-            i
         > table
             width 100%
             border-collapse collapse

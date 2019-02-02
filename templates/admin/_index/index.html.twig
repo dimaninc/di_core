@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+
+{% if X.hasHeadPrinter() %}
+    {{ X.getPrintedHead() }}
+{% else %}
+    {% include 'admin/_index/head.html.twig' %}
+{% endif %}
+
+<body data-skin="{{ _tech['admin_skin'] }}" data-subfolder="{{ _tech['site_subfolder'] }}" data-language="{{ _tech['site_language'] }}">
+
+<div class="admin-layout">
+
+    <div class="logo"><b>diCMS {{ _tech['xx_version'] }}</b><div class="menu-toggle"></div></div>
+    <div class="head-auth-info"><span>{{ admin['login'] }}</span> <i>{{ admin['level_str'] }}</i></div>
+    <a href="{{ _tech['site_path'] }}" class="head-href go-to-face" target="_blank"><span>{{ lang['go_to_site'] }}</span></a>
+    <a href="{{ _tech['logout_href'] }}" class="head-href logout"><span>{{ lang['sign_out'] }}</span></a>
+    <div class="site-title">{{ _tech['site_title'] }}</div>
+
+    <div class="nav">
+        <div class="above_lm">{{ lang['main_menu'] }}</div>
+        <ul class="left-menu">{{ left_menu|raw }}</ul>
+    </div>
+
+    <div class="content">
+        {% if X.expandCollapseBlockNeeded() %}
+            <div class="expand-collapse-block" data-table="{{ _tech['xx_table'] }}">
+                <u data-action="collapse"></u>
+                <u data-action="expand"></u>
+            </div>
+        {% endif %}
+
+        <div class="caption">
+            <b>{{ caption.get()|raw }}</b>
+            {% if caption.hasButtons() %}
+                <span class="buttons">{{ caption.getButtons()|raw }}</span>
+            {% endif %}
+        </div>
+
+        {{ _page|raw }}
+    </div>
+
+</div>
+
+<div class="footer">
+    <div class="copyright">
+        <div>&copy; diCMS 2002-{{ _tech['current_year'] }}</div>
+        <div><a href="mailto:dicms.support@gmail.com">dicms.support@gmail.com</a></div>
+    </div>
+    <div class="console-container">
+        <div class="up">&#x25B2;</div>
+        <div class="down">&#x25BC;</div>
+        <div class="console" id="status_line"></div>
+    </div>
+</div>
+
+</body>
+</html>

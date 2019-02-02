@@ -13,7 +13,7 @@ class Caption
 	/** @var \diCore\Admin\Base */
 	private $X;
 	/** @var string */
-	protected $delimiter = ' / ';
+	protected $delimiter = '<s>/</s>';
 
 	public function __construct($X)
 	{
@@ -38,7 +38,7 @@ class Caption
 
 		return $method != 'list'
 			? sprintf('<a href="%s">%s</a>', $href, $caption)
-			: $caption;
+			: sprintf('<i>%s</i>', $caption);
 	}
 
 	public function get()
@@ -47,7 +47,7 @@ class Caption
 		{
 			$ar = [];
 			$ar[] = $this->getModuleCaptionHtml();
-			$ar[] = $this->getX()->getPage()->getCurrentMethodCaption();
+			$ar[] = sprintf('<i>%s</i>', $this->getX()->getPage()->getCurrentMethodCaption());
 
 			return join($this->delimiter, array_filter($ar));
 		}
@@ -106,14 +106,19 @@ class Caption
 			$this->getX()->getRefinedMethod() == 'list';
 	}
 
+	public function hasButtons()
+    {
+        global $admin_captions_ar;
+
+        return
+            $this->addButtonNeeded() ||
+            // back compatibility
+            isset($admin_captions_ar[$this->getX()->getLanguage()][$this->getX()->getPath() . '_form']['add']);
+    }
+
 	public function getButtons()
 	{
-		global $admin_captions_ar;
-
-		if (
-			$this->addButtonNeeded() ||
-			isset($admin_captions_ar[$this->getX()->getLanguage()][$this->getX()->getPath().'_form']['add']) // back compatibility
-		   )
+	    if ($this->hasButtons())
 		{
 		    $href = $this->getX()->getCurrentPageUri('form');
             $bracketsNeeded = false; //Config::getAdminSkin() == Skin::classic;

@@ -176,6 +176,7 @@ abstract class BasePage
 
 		if ($o->hasRenderCallback())
 		{
+            echo 1;
 			$cb = $o->getRenderCallback();
 			$result = $cb();
 
@@ -185,6 +186,11 @@ abstract class BasePage
 					->assign([
 						'PAGE' => $result,
 					]);
+
+                $o->getTwig()
+                    ->assign([
+                        \diTwig::TOKEN_FOR_PAGE => $result,
+                    ]);
 			}
 		}
 		elseif ($o->getTwig()->hasPage())
@@ -197,6 +203,11 @@ abstract class BasePage
 		elseif ($o->getTpl()->defined('page'))
 		{
 			$o->getTpl()->process('page');
+
+            $o->getTwig()
+                ->assign([
+                    \diTwig::TOKEN_FOR_PAGE => $o->getTpl()->getAssigned('page'),
+                ]);
 		}
 
 		return $o;
