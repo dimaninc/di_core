@@ -19,6 +19,7 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 	this.able_to_leave_page = true; // false
 
 	this.e = {
+	    $window: $(window),
 		status: _ge('submit_status_line_'+this.table+'_'+this.id),
 		form: document.forms[table+'_form']
 	};
@@ -43,14 +44,56 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 		initColorPickers();
         initTypeChange();
 		initDelLinks();
-        self.initPicHolders().initRotateAndWaterMarkLinks();
+        self.initPicHolders().initRotateAndWaterMarkLinks().initFileInputs();
 
         initiating = false;
 	}
 
+	this.isMobile = function() {
+	    return this.e.$window.width() < 768;
+    };
+
     this.initPicHolders = function() {
-        $('.existing-pic-holder .container:not(.no-zoom-feature)').on('click', function() {
-            $(this).toggleClass('img-full-size');
+                                        //:not(.no-zoom-feature)
+        $('.existing-pic-holder .container').on('click', function() {
+            if (self.isMobile() || !$(this).hasClass('no-zoom-feature')) {
+                $(this).toggleClass('img-full-size');
+            }
+        });
+
+        return this;
+    };
+
+    this.initFileInputs = function() {
+        $('.diadminform-row .value .file-input-wrapper > input[type="file"]').on('change', function() {
+            var $wrapper = $(this).closest('.file-input-wrapper');
+            var $previewArea = $('<div class="existing-pic-holder"/>').insertBefore($wrapper);
+
+            if (this.files.length) {
+                $wrapper
+                    .addClass('selected')
+                    .attr('data-caption', basename(this.value));
+
+                if (in_array(get_file_ext(this.value || '').toLowerCase(), ['jpeg', 'jpg', 'png', 'gif', 'svg'])) {
+                    for (var i in this.files) {
+                        if (this.files.hasOwnProperty(i)) {
+                            var $row = $('<div class="container embed no-bottom-margin"><img src=""></div>');
+
+                            $previewArea
+                                .append($row);
+
+                            (function($row, file) {
+                                var reader = new FileReader();
+
+                                reader.onload = function(e) {
+                                    $row.find('img').attr('src', e.target.result);
+                                };
+                                reader.readAsDataURL(file);
+                            })($row, this.files[i]);
+                        }
+                    }
+                }
+            }
         });
 
         return this;

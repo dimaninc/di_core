@@ -1753,6 +1753,7 @@ body[data-skin="entrine"] .diadminform-row[data-purpose="notes"] .title {
 }
 @media screen and (max-width: 767px) {
   .diadminform-row .title {
+    display: block;
     float: none;
     width: auto;
     padding-left: 7px;
@@ -1834,13 +1835,15 @@ body[data-skin="entrine"] .diadminform-row .value .time-sep {
   -ms-transition: 0.3s;
   transition: 0.3s;
   cursor: pointer;
+  border-radius: 8px;
 }
 body[data-skin="entrine"] .diadminform-row .value .file-input-wrapper {
   background-color: #5ab5df;
+  border-radius: 0;
 }
 @media screen and (max-width: 767px) {
   .diadminform-row .value .file-input-wrapper {
-    width: auto;
+    width: 100%;
   }
 }
 .diadminform-row .value .file-input-wrapper:before {
@@ -1862,6 +1865,9 @@ body[data-skin="entrine"] .diadminform-row .value .file-input-wrapper {
 }
 body[data-skin="entrine"] .diadminform-row .value .file-input-wrapper:hover {
   background-color: #374254;
+}
+.diadminform-row .value .file-input-wrapper.selected {
+  background-color: #008000;
 }
 .diadminform-row .value .file-input-wrapper input[type="file"] {
   position: relative;
@@ -2183,7 +2189,6 @@ body[data-skin="entrine"] .diadminform_tabs > ul li > a.selected {
   max-width: 100%;
   display: inline-block;
   position: relative;
-  margin-bottom: 10px;
   -webkit-box-shadow: 0 0 6px 0 rgba(0,0,0,0.6);
   box-shadow: 0 0 6px 0 rgba(0,0,0,0.6);
   overflow: hidden;
@@ -2192,6 +2197,9 @@ body[data-skin="entrine"] .diadminform_tabs > ul li > a.selected {
   .existing-pic-holder .container:not(.no-zoom-feature) {
     cursor: zoom-in;
   }
+}
+.existing-pic-holder .container:not(.no-bottom-margin) {
+  margin-bottom: 10px;
 }
 .existing-pic-holder .container > img {
   max-width: 100%;

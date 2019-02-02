@@ -54,6 +54,7 @@
             body[data-skin="entrine"] &
                 padding-top 0
         @media screen and (max-width: 767px)
+            display block
             float none
             width auto
             padding-left 7px
@@ -94,10 +95,12 @@
             background-color $classicColorLink
             transition .3s
             cursor pointer
+            border-radius 8px
             body[data-skin="entrine"] &
                 background-color $entrineColorTextMenuSelected
+                border-radius 0
             @media screen and (max-width: 767px)
-                width auto
+                width 100%
             &:before
                 content attr(data-caption)
                 position absolute
@@ -111,6 +114,8 @@
                 background-color $classicColorLinkHover
                 body[data-skin="entrine"] &
                     background-color $entrineColorBgDark
+            &.selected
+                background-color green
             input
                 &[type="file"]
                     position relative
@@ -345,12 +350,13 @@
         max-width 100%
         display inline-block
         position relative
-        margin-bottom 10px
         box-shadow 0 0 6px 0 rgba(0,0,0,.6)
         overflow hidden
         &:not(.no-zoom-feature)
             @media screen and (min-width: 768px)
                 cursor zoom-in
+        &:not(.no-bottom-margin)
+            margin-bottom 10px
         > img
             max-width 100%
             height auto
