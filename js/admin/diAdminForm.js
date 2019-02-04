@@ -67,6 +67,10 @@ var diAdminForm = function(table, id, auto_save_timeout) {
     this.initFileInputs = function() {
         $('.diadminform-row .value').on('change', 'input[type="file"]', function() {
             var $wrapper = $(this).closest('.file-input-wrapper');
+            var $existingPreviewArea = $wrapper.siblings('.existing-pic-holder');
+            if (!$existingPreviewArea.length) {
+                $existingPreviewArea = $wrapper.parent().siblings('.existing-pic-holder');
+            }
             var $previewArea = $('<div class="existing-pic-holder"/>').insertBefore($wrapper);
 
             if (this.files.length) {
@@ -78,6 +82,8 @@ var diAdminForm = function(table, id, auto_save_timeout) {
                     for (var i in this.files) {
                         if (this.files.hasOwnProperty(i)) {
                             var $row = $('<div class="container embed no-bottom-margin"><img src=""></div>');
+
+                            $existingPreviewArea.remove();
 
                             $previewArea
                                 .append($row);

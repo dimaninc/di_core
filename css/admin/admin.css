@@ -1849,9 +1849,13 @@ body[data-skin="entrine"] .diadminform-row .value .file-input-wrapper {
 .diadminform-row .value .file-input-wrapper:before {
   content: attr(data-caption);
   position: absolute;
+  -o-text-overflow: ellipsis;
+  text-overflow: ellipsis;
+  overflow: hidden;
   white-space: nowrap;
   cursor: pointer;
   color: #fff;
+  max-width: 90%;
   left: 50%;
   top: 50%;
   -webkit-transform: translate(-50%, -50%);
