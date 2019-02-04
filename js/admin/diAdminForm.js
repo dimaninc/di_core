@@ -65,7 +65,7 @@ var diAdminForm = function(table, id, auto_save_timeout) {
     };
 
     this.initFileInputs = function() {
-        $('.diadminform-row .value .file-input-wrapper > input[type="file"]').on('change', function() {
+        $('.diadminform-row .value').on('change', 'input[type="file"]', function() {
             var $wrapper = $(this).closest('.file-input-wrapper');
             var $previewArea = $('<div class="existing-pic-holder"/>').insertBefore($wrapper);
 
@@ -272,7 +272,7 @@ var diAdminForm = function(table, id, auto_save_timeout) {
     if (confirm(this.get_cancel_message()))
     {
       this.set_able_to_leave_page(true);
-      window.location.href = 'index.php?path='+this.table+(typeof href_ending != 'undefined' ? href_ending : '');
+      window.location.href = 'index.php?path='+this.table+(typeof href_ending !== 'undefined' ? href_ending : '');
     }
   };
 
@@ -395,7 +395,7 @@ var diAdminForm = function(table, id, auto_save_timeout) {
       password_ok = true;
     }
 
-    if (typeof manage_submit_btn == 'function')
+    if (typeof manage_submit_btn === 'function')
       manage_submit_btn();
   };
 

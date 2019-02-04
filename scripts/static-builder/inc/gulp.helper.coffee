@@ -6,14 +6,18 @@ Helper =
         beyond: '../vendor/dimaninc/di_core/'
         inner: '../_core/'
     masks:
+        css: '**/**/*.css'
         stylus: '**/*.styl'
         sass: '**/*.scss'
         less: '**/*.less'
         sprite: 'images/sprite-src/**/*.png'
+        js: '**/**/*.js'
         coffee: '**/**/*.coffee'
         react: '**/**/*.jsx'
     folders:
+        css: 'css/'
         stylus: 'css/admin/stylus/'
+        js: 'js/'
     copyGroups: {}
 
     setHtDocsFolder: (@htDocsFolder) -> @
@@ -314,6 +318,11 @@ Helper =
         watch =
             'admin-stylus':
                 mask: @getCoreFolder() + @folders.stylus + Helper.masks.stylus
+                hasProcess: true
+            'admin-css':
+                mask: @getCoreFolder() + @folders.css + Helper.masks.css
+            'admin-js':
+                mask: @getCoreFolder() + @folders.js + Helper.masks.js
 
         # main + login
         @assignStylusTaskToGulp gulp,
@@ -325,10 +334,14 @@ Helper =
             buildFolder: @getCoreFolder() + 'css/admin/'
 
         # watch
-        gulp.task 'admin-stylus-watch', (done) ->
+        gulp.task 'admin-assets-watch', (done) ->
             for process of watch
-                do (process, mask = watch[process].mask) ->
-                    gulp.watch mask, gulp.series(process, 'copy-core-assets')
+                do (process, mask = watch[process].mask, hasProcess = watch[process].hasProcess) ->
+                    if hasProcess
+                        task = gulp.series process, 'copy-core-assets'
+                    else
+                        task = gulp.series 'copy-core-assets'
+                    gulp.watch mask, task
                     true
             done()
         @

@@ -49,21 +49,26 @@ class diDynamicRows
 
     const NEW_ID_STRING = '%NEWID%';
 
-  public $table, $id, $field;
-  public $static_mode;
-  public $inputs, $scripts, $data, $inputs_params;
-  public $language = "ru";
-  public $input_objects = array();
-  public $current_id;
-  public $current_field;
-  public $sortby = "";
-  public $info_ar;
-  public $abs_path;
-  public $data_table, $data_id;
+    public $table, $id, $field;
+    public $static_mode;
+    public $inputs, $scripts, $data, $inputs_params;
+    public $language = "ru";
+    public $input_objects = [];
+    public $current_id;
+    public $current_field;
+    public $sortby = "";
+    public $info_ar;
+    public $abs_path;
+    public $data_table, $data_id;
 
-  protected $subquery;
-  protected $dicontrols_code_needed = false;
-  protected $max_feed_count_to_show_static_checkboxes = 20;
+    private $uploaded_images = [];
+    private $uploaded_files = [];
+    private $uploaded_images_w = [];
+    private $checked_static_ar = [];
+
+    protected $subquery;
+    protected $dicontrols_code_needed = false;
+    protected $max_feed_count_to_show_static_checkboxes = 20;
 
 	private $options = [
 		'en' => [
@@ -1136,7 +1141,7 @@ EOF;
 				$ext,
 				$ff_w && $ff_h ? $ff_w . "x" . $ff_h : null,
 				size_in_bytes($ff_s),
-				diDateTime::format("d.m.Y H:i", filemtime($f))
+				\diDateTime::simpleFormat(filemtime($f))
 			]));
 
 			if ($imgTag)
@@ -1200,14 +1205,12 @@ EOF;
 		$this->uploaded_images[$field] = $file_info;
 
 		$this->inputs[$field] = $this->is_flag($field, "static") || $this->static_mode
-			? "$file_info<input type=\"hidden\" name=\"$field\" value=\"$v\" />"
-			: "$file_info<br /><input type=\"file\" name=\"$field\" value=\"\" size=\"40\" />";
+			? "$file_info<input type=\"hidden\" name=\"$field\" value=\"$v\">"
+			: "$file_info<div class=\"file-input-wrapper\" data-caption=\"{$this->L('choose_file')}\"><input type=\"file\" name=\"$field\" value=\"\" size=\"40\"></div>";
 	}
 
 	function set_file_input($field, $path = false, $hide_if_no_file = false)
 	{
-		global $dynamic_pics_folder;
-
 		if ($path === false)
 		{
 			$path = '/' . $this->getPicsFolder();
@@ -1223,8 +1226,8 @@ EOF;
 		$field2 = substr($field2, 0, strpos($field2, "["));
 
 		$this->inputs[$field] = $this->is_flag($field, "static") || $this->static_mode
-			? "$file_info<input type=\"hidden\" name=\"$field\" value=\"$v\" />"
-			: "$file_info<br /><input type=\"file\" name=\"$field\" value=\"\" size=\"40\" " . $this->getInputAttributesString($field2) . " />";
+			? "$file_info<input type=\"hidden\" name=\"$field\" value=\"$v\">"
+			: "$file_info<div class=\"file-input-wrapper\" data-caption=\"{$this->L('choose_file')}\"><input type=\"file\" name=\"$field\" value=\"\" size=\"40\" " . $this->getInputAttributesString($field2) . "></div>";
 	}
 
 	private function getInputAttributesString($field, $forceAttributes = [])

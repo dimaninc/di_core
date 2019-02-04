@@ -11,15 +11,19 @@ Helper = {
     inner: '../_core/'
   },
   masks: {
+    css: '**/**/*.css',
     stylus: '**/*.styl',
     sass: '**/*.scss',
     less: '**/*.less',
     sprite: 'images/sprite-src/**/*.png',
+    js: '**/**/*.js',
     coffee: '**/**/*.coffee',
     react: '**/**/*.jsx'
   },
   folders: {
-    stylus: 'css/admin/stylus/'
+    css: 'css/',
+    stylus: 'css/admin/stylus/',
+    js: 'js/'
   },
   copyGroups: {},
   setHtDocsFolder: function(htDocsFolder) {
@@ -519,7 +523,14 @@ Helper = {
     var watch;
     watch = {
       'admin-stylus': {
-        mask: this.getCoreFolder() + this.folders.stylus + Helper.masks.stylus
+        mask: this.getCoreFolder() + this.folders.stylus + Helper.masks.stylus,
+        hasProcess: true
+      },
+      'admin-css': {
+        mask: this.getCoreFolder() + this.folders.css + Helper.masks.css
+      },
+      'admin-js': {
+        mask: this.getCoreFolder() + this.folders.js + Helper.masks.js
       }
     };
     this.assignStylusTaskToGulp(gulp, {
@@ -527,14 +538,20 @@ Helper = {
       fn: [this.getCoreFolder() + this.folders.stylus + 'admin.styl', this.getCoreFolder() + this.folders.stylus + 'login.styl'],
       buildFolder: this.getCoreFolder() + 'css/admin/'
     });
-    gulp.task('admin-stylus-watch', function(done) {
+    gulp.task('admin-assets-watch', function(done) {
       var fn, process;
-      fn = function(process, mask) {
-        gulp.watch(mask, gulp.series(process, 'copy-core-assets'));
+      fn = function(process, mask, hasProcess) {
+        var task;
+        if (hasProcess) {
+          task = gulp.series(process, 'copy-core-assets');
+        } else {
+          task = gulp.series('copy-core-assets');
+        }
+        gulp.watch(mask, task);
         return true;
       };
       for (process in watch) {
-        fn(process, watch[process].mask);
+        fn(process, watch[process].mask, watch[process].hasProcess);
       }
       return done();
     });

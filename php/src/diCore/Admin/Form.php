@@ -2325,7 +2325,7 @@ EOF;
 			$tn_img_tag.
 			"<div>".
 			"# <input type=\"text\" id=\"{$field}_order_num[{$id}]\" name=\"{$field}_order_num[{$id}]\" value=\"{$order_num}\" size=\"4\" /> ".
-			"Загрузить: <input type=\"file\" id=\"{$field}_pic[{$id}]\" name=\"{$field}_pic[{$id}]\" size=\"5\" /> ".
+			"Загрузить: <div class=\"file-input-wrapper\" data-caption=\"{$this->L('choose_file')}\"><input type=\"file\" id=\"{$field}_pic[{$id}]\" name=\"{$field}_pic[{$id}]\" size=\"5\"></div> ".
 			//"Название: <input type=\"text\" id=\"{$field}_title[{$id}]\" name=\"{$field}_title[{$id}]\" value=\"{$title}\" size=\"20\" />, ".
 			$additional_html.
 			"<input type=\"radio\" id=\"{$field}_by_default[{$id}]\" name=\"{$field}_by_default\" value=\"$id\"$by_default_checked style=\"border:0;\" /> <label for=\"{$field}_by_default[{$id}]\">Заглавная</label> ".
@@ -2410,7 +2410,7 @@ EOF;
 			//$tn_img_tag.
 			"<div>".
 			"# <input type=\"text\" id=\"{$field}_order_num[{$id}]\" name=\"{$field}_order_num[{$id}]\" value=\"{$order_num}\" size=\"4\" /> ".
-			"Загрузить: <input type=\"file\" id=\"{$field}_pic[{$id}]\" name=\"{$field}_pic[{$id}]\" size=\"10\" /> ".
+			"Загрузить: <div class=\"file-input-wrapper\" data-caption=\"{$this->L('choose_file')}\"><input type=\"file\" id=\"{$field}_pic[{$id}]\" name=\"{$field}_pic[{$id}]\" size=\"10\"></div> ".
 			//"Название: <input type=\"text\" id=\"{$field}_title[{$id}]\" name=\"{$field}_title[{$id}]\" value=\"{$title}\" size=\"20\" />, ".
 			//"<input type=\"radio\" id=\"{$field}_by_default[{$id}]\" name=\"{$field}_by_default\" value=\"$id\"$by_default_checked style=\"border:0;\" /> <label for=\"{$field}_by_default[{$id}]\">Заглавная</label>, ".
 			"<input type=\"checkbox\" id=\"{$field}_visible[{$id}]\" name=\"{$field}_visible[{$id}]\" value=\"1\"$visible_checked /> <label for=\"{$field}_visible[{$id}]\">Отображать</label>".
