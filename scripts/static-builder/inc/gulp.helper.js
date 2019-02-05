@@ -270,7 +270,7 @@ Helper = {
     return this;
   },
   assignImageMinTaskToGulp: function(gulp, opts) {
-    var imagemin;
+    var compressOpts, imagemin;
     if (opts == null) {
       opts = {};
     }
@@ -280,11 +280,28 @@ Helper = {
     opts = this.extend({
       mask: null,
       outputFolder: null,
-      taskName: 'imagemin'
+      taskName: 'imagemin',
+      gif: null,
+      jpeg: null,
+      png: null,
+      svg: null
     }, opts);
+    compressOpts = [];
+    if (opts.gif) {
+      compressOpts.push(imagemin.gifsicle(opts.gif));
+    }
+    if (opts.jpeg) {
+      compressOpts.push(imagemin.jpegtran(opts.jpeg));
+    }
+    if (opts.png) {
+      compressOpts.push(imagemin.optipng(opts.png));
+    }
+    if (opts.svg) {
+      compressOpts.push(imagemin.svgo(opts.svg));
+    }
     gulp.task(opts.taskName, (function(_this) {
       return function(done) {
-        return gulp.src(_this.fullPath(opts.mask)).pipe(imagemin()).on('error', console.log).pipe(gulp.dest(_this.fullPath(opts.outputFolder))).on('end', function() {
+        return gulp.src(_this.fullPath(opts.mask)).pipe(compressOpts.length ? imagemin(compressOpts) : imagemin()).on('error', console.log).pipe(gulp.dest(_this.fullPath(opts.outputFolder))).on('end', function() {
           return done();
         });
       };
@@ -292,7 +309,7 @@ Helper = {
     return this;
   },
   assignPngSpritesTaskToGulp: function(gulp, opts) {
-    var spriteSmith;
+    var cssFolder, imgFolder, mask, spriteSmith, taskName;
     if (opts == null) {
       opts = {};
     }
@@ -300,38 +317,42 @@ Helper = {
       spriteSmith = this.req('gulp.spritesmith');
     }
     opts = this.extend({
+      taskName: 'stylus-sprite',
+      imgFolder: null,
+      cssFolder: null,
       mask: null,
       imgName: null,
       cssName: null,
       cssFormat: 'stylus',
-      imgFolder: null,
-      cssFolder: null,
-      taskName: 'stylus-sprite'
+      algorithm: 'binary-tree',
+      cssTemplate: function(data) {
+        var item, j, len, ref, template, timestamp;
+        timestamp = (new Date).getTime();
+        template = "$sprite-timestamp = " + timestamp + "\n";
+        ref = data.items;
+        for (j = 0, len = ref.length; j < len; j++) {
+          item = ref[j];
+          template += "$sprite-" + item.name + " = " + item.px.offset_x + " " + item.px.offset_y + " " + item.px.width + " " + item.px.height + "\n";
+        }
+        return template;
+      }
     }, opts);
-    gulp.task(opts.taskName, (function(_this) {
+    taskName = opts.taskName;
+    mask = opts.mask;
+    imgFolder = opts.imgFolder;
+    cssFolder = opts.cssFolder;
+    delete opts.taskName;
+    delete opts.mask;
+    delete opts.cssFolder;
+    delete opts.imgFolder;
+    gulp.task(taskName, (function(_this) {
       return function(done) {
         var spriteData;
-        spriteData = gulp.src(_this.fullPath(opts.mask)).pipe(spriteSmith({
-          imgName: opts.imgName,
-          cssName: opts.cssName,
-          cssFormat: opts.cssFormat,
-          algorithm: 'binary-tree',
-          cssTemplate: function(data) {
-            var item, j, len, ref, template, timestamp;
-            timestamp = (new Date).getTime();
-            template = "$sprite-timestamp = " + timestamp + "\n";
-            ref = data.items;
-            for (j = 0, len = ref.length; j < len; j++) {
-              item = ref[j];
-              template += "$sprite-" + item.name + " = " + item.px.offset_x + " " + item.px.offset_y + " " + item.px.width + " " + item.px.height + "\n";
-            }
-            return template;
-          }
-        })).on('error', console.log).on('end', function() {
+        spriteData = gulp.src(_this.fullPath(mask)).pipe(spriteSmith(opts)).on('error', console.log).on('end', function() {
           return done();
         });
-        spriteData.img.pipe(gulp.dest(_this.fullPath(opts.imgFolder)));
-        return spriteData.css.pipe(gulp.dest(_this.fullPath(opts.cssFolder)));
+        spriteData.img.pipe(gulp.dest(_this.fullPath(imgFolder)));
+        return spriteData.css.pipe(gulp.dest(_this.fullPath(cssFolder)));
       };
     })(this));
     return this;

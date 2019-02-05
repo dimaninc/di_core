@@ -194,10 +194,23 @@ Helper =
 
     assignImageMinTaskToGulp: (gulp, opts = {}) ->
         imagemin = @req 'gulp-imagemin' unless imagemin
-        opts = @extend {mask: null, outputFolder: null, taskName: 'imagemin'}, opts
+        opts = @extend
+            mask: null
+            outputFolder: null
+            taskName: 'imagemin'
+            gif: null # gif settings
+            jpeg: null # jpeg settings
+            png: null # png settings
+            svg: null # svg settings
+        , opts
+        compressOpts = []
+        compressOpts.push imagemin.gifsicle opts.gif if opts.gif
+        compressOpts.push imagemin.jpegtran opts.jpeg if opts.jpeg
+        compressOpts.push imagemin.optipng opts.png if opts.png
+        compressOpts.push imagemin.svgo opts.svg if opts.svg
         gulp.task opts.taskName, (done) =>
             gulp.src @fullPath opts.mask
-                .pipe imagemin()
+                .pipe if compressOpts.length then imagemin(compressOpts) else imagemin()
                 .on 'error', console.log
                 .pipe gulp.dest @fullPath opts.outputFolder
                 .on 'end', -> done()
@@ -205,26 +218,38 @@ Helper =
 
     assignPngSpritesTaskToGulp: (gulp, opts = {}) ->
         spriteSmith = @req 'gulp.spritesmith' unless spriteSmith
-        opts = @extend {mask: null, imgName: null, cssName: null, cssFormat: 'stylus', imgFolder: null, cssFolder: null, taskName: 'stylus-sprite'}, opts
-        gulp.task opts.taskName, (done) =>
-            spriteData = gulp.src @fullPath opts.mask
-            .pipe spriteSmith
-                imgName: opts.imgName
-                cssName: opts.cssName
-                cssFormat: opts.cssFormat
-                algorithm: 'binary-tree'
-                cssTemplate: (data) ->
-                    timestamp = (new Date).getTime()
-                    template = "$sprite-timestamp = #{timestamp}\n"
-
-                    for item in data.items
-                        template += "$sprite-#{item.name} = #{item.px.offset_x} #{item.px.offset_y} #{item.px.width} #{item.px.height}\n"
-
-                    template
+        opts = @extend
+            taskName: 'stylus-sprite'
+            imgFolder: null
+            cssFolder: null
+            mask: null
+            imgName: null
+            cssName: null
+            cssFormat: 'stylus'
+            algorithm: 'binary-tree'
+            #imgOpts: {quality: 75}
+            cssTemplate: (data) ->
+                timestamp = (new Date).getTime()
+                template = "$sprite-timestamp = #{timestamp}\n"
+                for item in data.items
+                    template += "$sprite-#{item.name} = #{item.px.offset_x} #{item.px.offset_y} #{item.px.width} #{item.px.height}\n"
+                template
+        , opts
+        taskName = opts.taskName
+        mask = opts.mask
+        imgFolder = opts.imgFolder
+        cssFolder = opts.cssFolder
+        delete opts.taskName
+        delete opts.mask
+        delete opts.cssFolder
+        delete opts.imgFolder
+        gulp.task taskName, (done) =>
+            spriteData = gulp.src @fullPath mask
+            .pipe spriteSmith opts
             .on 'error', console.log
             .on 'end', -> done()
-            spriteData.img.pipe gulp.dest @fullPath opts.imgFolder
-            spriteData.css.pipe gulp.dest @fullPath opts.cssFolder
+            spriteData.img.pipe gulp.dest @fullPath imgFolder
+            spriteData.css.pipe gulp.dest @fullPath cssFolder
         @
 
     assignCssConcatTaskToGulp: (gulp, opts = {}) ->
