@@ -315,7 +315,18 @@ class diAdminList
 
 		foreach ($this->columnsAr as $name => $properties)
 		{
-			if ($name == 'id')
+		    // converting callbacks to its resulting arrays
+		    if (isset($properties['headAttrs']) && is_callable($properties['headAttrs']))
+            {
+                $properties['headAttrs'] = $properties['headAttrs']($r);
+            }
+
+            if (isset($properties['bodyAttrs']) && is_callable($properties['bodyAttrs']))
+            {
+                $properties['bodyAttrs'] = $properties['bodyAttrs']($r);
+            }
+
+            if ($name == 'id')
 			{
 				$html .= $this->T->idCell(true, false, false);
 			}
@@ -487,7 +498,7 @@ class diAdminList
 				'List' => $this,
 			]);
 	}
-	
+
 	public function getHtml()
 	{
 		$this->getAdminPage()->getTpl()

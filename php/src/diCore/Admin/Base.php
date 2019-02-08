@@ -253,9 +253,9 @@ class Base
 	public function work()
 	{
 		$this
+            ->assignTplBase()
 			->printContentPage()
 			->printMainMenu()
-			->assignTplBase()
 			->printExpandCollapseBlock()
 			->printCaption()
 			->printHead()
@@ -322,7 +322,7 @@ class Base
 			->assign(static::getVocabulary(), 'LANG.')
 			->assign($this->getAdminModel()->getTemplateVars(), 'ADMIN_');
 
-		return $this;
+        return $this;
 	}
 
 	/**

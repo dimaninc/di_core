@@ -176,7 +176,6 @@ abstract class BasePage
 
 		if ($o->hasRenderCallback())
 		{
-            echo 1;
 			$cb = $o->getRenderCallback();
 			$result = $cb();
 
@@ -202,7 +201,7 @@ abstract class BasePage
 		}
 		elseif ($o->getTpl()->defined('page'))
 		{
-			$o->getTpl()->process('page');
+		    $o->getTpl()->process('page');
 
             $o->getTwig()
                 ->assign([
