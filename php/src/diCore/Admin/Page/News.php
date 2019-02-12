@@ -115,7 +115,7 @@ class News extends \diCore\Admin\BasePage
 	{
 		$mq = Queue::basicCreate();
 		/** @var Model $m */
-		$m = \diModel::create(Types::news, $this->getSubmit()->getSubmittedModel()->getId());
+		$m = \diModel::create(Types::news, $this->getSubmit()->getModel()->getId());
 
 		if (!\diRequest::post('dispatch', 0) && !\diRequest::post('dispatch_test', 0))
 		{

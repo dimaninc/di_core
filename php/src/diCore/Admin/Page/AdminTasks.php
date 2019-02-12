@@ -257,25 +257,28 @@ class AdminTasks extends \diCore\Admin\BasePage
 	{
 		if ($this->getId())
 		{
-			if ($this->getSubmit()->wasFieldChanged('status'))
+		    /** @var Model $m */
+		    $m = $this->getSubmit()->getModel();
+
+			if ($m->changed('status'))
 			{
 				\diActionsLog::act(Types::admin_task, $this->getId(), \diActionsLog::aStatusChanged,
-					$this->getSubmit()->getCurRec('status') . ',' . $this->getSubmit()->getData('status'));
+					$m->getOrigData('status') . ',' . $m->getStatus());
 			}
 
-			if ($this->getSubmit()->wasFieldChanged('priority'))
+			if ($m->changed('priority'))
 			{
 				\diActionsLog::act(Types::admin_task, $this->getId(), \diActionsLog::aPriorityChanged,
-					$this->getSubmit()->getCurRec('priority') . ',' . $this->getSubmit()->getData('priority'));
+                    $m->getOrigData('priority') . ',' . $m->getPriority());
 			}
 
-			if ($this->getSubmit()->wasFieldChanged('admin_id'))
+			if ($m->changed('admin_id'))
 			{
 				\diActionsLog::act(Types::admin_task, $this->getId(), \diActionsLog::aOwned,
-					$this->getSubmit()->getCurRec('admin_id') . ',' . $this->getSubmit()->getData('admin_id'));
+                    $m->getOrigData('admin_id') . ',' . $m->getAdminId());
 			}
 
-			if ($this->getSubmit()->wasFieldChanged(['title', 'content', 'date', 'due_date']))
+			if ($m->changed(['title', 'content', 'date', 'due_date']))
 			{
 				\diActionsLog::act(Types::admin_task, $this->getId(), \diActionsLog::aEdited);
 			}

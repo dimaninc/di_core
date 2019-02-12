@@ -225,7 +225,7 @@ class Videos extends \diCore\Admin\BasePage
 			->storeFile($this->videoFields, function($F, $field, $folder, $fn, Submit &$obj) {
 				$folder = get_files_folder($obj->getTable());
 
-				FileSystemHelper::createTree(\diPaths::fileSystem($this->getSubmit()->getSubmittedModel()),
+				FileSystemHelper::createTree(\diPaths::fileSystem($this->getSubmit()->getModel()),
 					$folder, Submit::DIR_CHMOD);
 
 				Submit::storeFileCallback($obj, $field, [

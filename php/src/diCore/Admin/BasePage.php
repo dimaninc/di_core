@@ -610,7 +610,7 @@ abstract class BasePage
 		}
 		elseif ($this->hasSubmit())
 		{
-			return $this->getSubmit()->getSubmittedModel();
+			return $this->getSubmit()->getModel();
 		}
 
 		throw new \Exception('Where the hell are we? No current model detected');
@@ -1164,7 +1164,7 @@ abstract class BasePage
 					->setTargetTable($this->getTable())
 					->setTargetId($this->getId())
 					->setAdminId($this->getAdmin()->getAdminModel()->getId())
-					->setBothData($this->getSubmit()->getSubmittedModel(), $this->getSubmit()->getCurModel())
+					->setBothData($this->getSubmit()->getModel())
 					->save();
 			} catch (\Exception $e) {
 				// validation failed -> no changes

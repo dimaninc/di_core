@@ -9,8 +9,10 @@
 namespace diCore\Admin;
 
 use diCore\Data\Config;
+use diCore\Data\Configuration;
 use diCore\Data\Types;
-use diCore\Database\Entity\Mongo\Model as MongoModel;
+use diCore\Database\Connection;
+use diCore\Helper\ArrayHelper;
 use diCore\Helper\FileSystemHelper;
 use diCore\Helper\Slug;
 use diCore\Helper\StringHelper;
@@ -63,14 +65,10 @@ class Submit
 	const IMAGE_TYPE_ORIG = 10;
 	const IMAGE_TYPE_BIG = 11;
 
-	/** @var \diDB */
-	private $db;
-
 	/** @var \diCore\Admin\BasePage */
 	private $AdminPage;
 
 	public $table;
-	public $id;
 
 	/** @deprecated */
 	public $data;
@@ -87,22 +85,17 @@ class Submit
 
 	private $slugFieldName = 'clean_title';
 
-	/** @var \diModel */
-	private $curModel;
-
-	/** @var \diModel */
-	private $submittedModel;
+    /** @var \diModel */
+	private $model;
 
 	public function __construct($table, $id = 0)
 	{
-		global $db;
-
 		if (gettype($table) == 'object')
 		{
 			$this->AdminPage = $table;
 
 			$this->table = $this->AdminPage->getTable();
-			$this->id = $this->AdminPage->getId();
+			$id = $this->AdminPage->getId();
 
 			$this->_form_fields = $this->AdminPage->getFormFieldsFiltered();
 			$this->_local_fields = $this->AdminPage->getLocalFieldsFiltered();
@@ -114,7 +107,6 @@ class Submit
 		else //back compatibility
 		{
 			$this->table = $table;
-			$this->id = $id;
 
 			$this->_form_fields = isset($GLOBALS[$this->table . '_form_fields']) ? $GLOBALS[$this->table . '_form_fields'] : [];
 			$this->_local_fields = isset($GLOBALS[$this->table . '_local_fields']) ? $GLOBALS[$this->table . '_local_fields'] : [];
@@ -124,9 +116,14 @@ class Submit
 			$this->_af = isset($GLOBALS[$this->table . '_af']) ? $GLOBALS[$this->table . '_af'] : [];
 		}
 
-		$this->setSlugFieldName();
+        $this->model = \diModel::createForTableNoStrict($this->getTable(), $id, 'id');
+		$this->model
+            ->setFieldsOnSaveCallback(function($ar) {
+                return ArrayHelper::filterByKey($ar, $this->_af);
+            });
 
-		$this->db = $db;
+        $this->setSlugFieldName();
+
 		$this->page = \diRequest::post('page', 0);
 
 		$this->redirect_href_ar = [
@@ -145,23 +142,11 @@ class Submit
 				if ($this->isFlag($k, 'preview'))
 				{
 					$this->redirect_href_ar['path'] = "{$this->table}_form";
-					$this->redirect_href_ar['id'] = $this->id;
+					$this->redirect_href_ar['id'] = $this->getId();
 					$this->redirect_href_ar["make_preview[$k]"] = 1;
 				}
 			}
 		}
-
-		$this->curModel = \diModel::createForTableNoStrict($this->getTable(), $this->getId(), 'id');
-		$this->submittedModel = \diModel::createForTableNoStrict($this->getTable());
-
-		if ($this->getCurModel()->hasId())
-		{
-			$this->getSubmittedModel()
-				->setId($this->getCurModel()->getId());
-		}
-
-		// todo: work only with model, not with data array
-		$this->setData($this->getCurModel()->get());
 	}
 
 	private function setSlugFieldName($field = null)
@@ -183,42 +168,23 @@ class Submit
 
 	public function getDb()
 	{
-		return $this->db;
+		return Connection::get()->getDb();
 	}
 
-	public function getCurModel()
-	{
-		return $this->curModel;
-	}
+	public function getModel()
+    {
+        return $this->model;
+    }
 
-	public function getSubmittedModel()
-	{
-		return $this->submittedModel;
-	}
-
+	/** @deprecated  */
 	public function getCurRec($field = null)
 	{
-		return $this->getCurModel()->get($field);
+		return $this->getModel()->getOrigData($field);
 	}
 
 	public function wasFieldChanged($field)
 	{
-		if (is_array($field))
-		{
-			foreach ($field as $f)
-			{
-				if ($this->getData($f) != $this->getCurRec($f))
-				{
-					return true;
-				}
-			}
-
-			return false;
-		}
-		else
-		{
-			return $this->getData($field) != $this->getCurRec($field);
-		}
+	    return $this->getModel()->changed($field);
 	}
 
 	/**
@@ -335,10 +301,10 @@ class Submit
 	{
 		if (!is_array($field))
 		{
-			$field = array($field);
-		}
+            $field = [$field];
+        }
 
-		foreach ($field as $f)
+        foreach ($field as $f)
 		{
 			$this->setData($f, $callback($this->getData($f), $f));
 		}
@@ -348,16 +314,7 @@ class Submit
 
 	public function setData($field, $value = null)
 	{
-		if (is_array($field) || is_object($field))
-		{
-			$this->data = extend($this->data, (array)$field);
-		}
-		else
-		{
-			$this->data[$field] = $value;
-		}
-
-		$this->getSubmittedModel()
+		$this->getModel()
 			->set($field, $value);
 
 		return $this;
@@ -365,17 +322,12 @@ class Submit
 
 	public function getData($field = null)
 	{
-		if (is_null($field))
-		{
-			return $this->data;
-		}
-
-		return isset($this->data[$field]) ? $this->data[$field] : null;
+	    return $this->getModel()->get($field);
 	}
 
 	public function getId()
 	{
-		return $this->id;
+		return $this->getModel()->getId();
 	}
 
 	public function getTable()
@@ -531,7 +483,7 @@ class Submit
 					}
 					else
 					{
-						$this->setData($f, $this->getCurRec($f) ?: '');
+						$this->setData($f, $this->getModel()->getOrigData($f) ?: '');
 					}
 					break;
 
@@ -563,7 +515,7 @@ class Submit
 
 	public function storeData()
 	{
-		$dbAr = [];
+		//$dbAr = [];
 		$dynamicFields = [];
 		$dynamicPicsFields = [];
 
@@ -577,91 +529,96 @@ class Submit
 					in_array($v['type'], ['separator']) ||
 					$this->isFlag($f, 'virtual') ||
 					$this->isFlag($f, 'untouchable')
-				)
-				{
+				) {
 					// just ignore
 				}
-				elseif (in_array($v['type'], array('date_str', 'time_str', 'datetime_str')) && !$this->getData($f))
-				{
-					$dbAr["*$f"] = 'NULL';
+				elseif (
+				    in_array($v['type'], ['date_str', 'time_str', 'datetime_str']) &&
+                    !$this->getData($f)
+                ) {
+					//$dbAr["*$f"] = 'NULL';
 
-					$this->getSubmittedModel()
+					$this->getModel()
 						->set($f, null);
 				}
 				else
 				{
-					if (in_array($v['type'], array('dynamic_pics', 'dynamic_files')))
-					{
-						$dynamicPicsFields[] = $f;
-					}
-					elseif ($v['type'] == 'dynamic')
-					{
-						$dynamicFields[] = $f;
-					}
-					else
-					{
-						$dbAr[$f] = StringHelper::in($this->getData($f));
+                    if (in_array($v['type'], ['dynamic_pics', 'dynamic_files'])) {
+                        $dynamicPicsFields[] = $f;
+                    } elseif ($v['type'] == 'dynamic') {
+                        $dynamicFields[] = $f;
+                    } else {
+                        //$dbAr[$f] = StringHelper::in($this->getData($f));
 
-						$this->getSubmittedModel()
-							->set($f, $this->getData($f));
-					}
+                        $this->getModel()
+                            ->set($f, $this->getData($f));
+                    }
 				}
 			}
 
-			if ($this->getSubmittedModel() instanceof MongoModel)
-			{
-				$this->getSubmittedModel()->
-					save();
-			}
-			else
-			{
-				if (!$this->getDb()->update($this->table, $dbAr, $this->id))
-				{
-					$this->getDb()->dierror();
-				}
-			}
+            $this->getModel()
+                ->save();
+
+            /*
+            if ($this->getModel() instanceof MongoModel)
+            {
+                $this->getModel()
+                    ->save();
+            }
+            else
+            {
+                if (!$this->getDb()->update($this->table, $dbAr, $this->id))
+                {
+                    $this->getDb()->dierror();
+                }
+            }
+            */
 		}
 		else
 		{
 			foreach ($this->_all_fields as $f => $v)
 			{
-				if ($this->isFlag($f, 'virtual') || $this->isFlag($f, 'untouchable') || in_array($v['type'], ['separator']))
-				{
-					// just ignore
-				}
-				elseif (in_array($v['type'], ['date_str', 'time_str', 'datetime_str']) && !$this->getData($f))
-				{
-					$dbAr["*$f"] = 'NULL';
+                if (
+                    $this->isFlag($f, 'virtual') || $this->isFlag($f, 'untouchable') ||
+                    in_array($v['type'], ['separator'])
+                ) {
+                    // just ignore
+                } elseif (
+                    in_array($v['type'], ['date_str', 'time_str', 'datetime_str']) &&
+                    !$this->getData($f)
+                ) {
+                    //$dbAr["*$f"] = 'NULL';
 
-					$this->getSubmittedModel()
-						->set($f, null);
-				}
-				else
-				{
-					if (in_array($v['type'], ['dynamic_pics', 'dynamic_files']))
-					{
-						$dynamicPicsFields[] = $f;
-					}
-					elseif ($v['type'] == 'dynamic')
-					{
-						$dynamicFields[] = $f;
-					}
-					else
-					{
-						$dbAr[$f] = StringHelper::in($this->getData($f));
+                    $this->getModel()
+                        ->set($f, null);
+                } else {
+                    if (in_array($v['type'], ['dynamic_pics', 'dynamic_files'])) {
+                        $dynamicPicsFields[] = $f;
+                    } elseif ($v['type'] == 'dynamic') {
+                        $dynamicFields[] = $f;
+                    }
+                    /*
+                    else
+                    {
+                        //$dbAr[$f] = StringHelper::in($this->getData($f));
 
-						$this->getSubmittedModel()
-							->set($f, $this->getData($f));
-					}
-				}
-			}
+                        $this->getModel()
+                            ->set($f, $this->getData($f));
+                    }
+                    */
+                }
+            }
 
-			if ($this->getSubmittedModel() instanceof MongoModel)
+            $this->getModel()
+                ->save();
+
+            /*
+            if ($this->getModel() instanceof MongoModel)
 			{
-				$this->getSubmittedModel()->
-					save();
+				$this->getModel()
+                    ->save();
 
-				$this->id = $this->getSubmittedModel()->getId();
+				$this->id = $this->getModel()->getId();
 			}
 			else
 			{
@@ -674,13 +631,14 @@ class Submit
 				$this->getSubmittedModel()
 					->setId($this->id);
 			}
+            */
 
 			if ($this->AdminPage)
 			{
-				$this->AdminPage->setId($this->id);
+				$this->AdminPage->setId($this->getId());
 			}
 
-			$this->set_redirect_param('id', $this->id);
+			$this->set_redirect_param('id', $this->getId());
 		}
 
 		foreach ($dynamicPicsFields as $f)
@@ -701,7 +659,7 @@ class Submit
 			}
 		}
 
-		return $this->id;
+		return $this->getId();
 	}
 
 	function storeTags($field)
@@ -785,7 +743,7 @@ class Submit
 		{
 			$f_ar = $this->_all_fields[$field]['flags'];
 		}
-		elseif (isset($field['flags']))
+		elseif (is_array($field) && isset($field['flags']))
 		{
 			$f_ar = $field['flags'];
 		}
@@ -794,12 +752,14 @@ class Submit
 			return false;
 		}
 
-		return is_array($f_ar) ? in_array($flag, $f_ar) : $f_ar == $flag;
+		return is_array($f_ar)
+            ? in_array($flag, $f_ar)
+            : $f_ar == $flag;
 	}
 
 	public function getOriginForSlug()
 	{
-		return $this->getSubmittedModel()->getSourceForSlug() ?: self::$defaultSlugSourceFieldsAr;
+		return $this->getModel()->getSourceForSlug() ?: self::$defaultSlugSourceFieldsAr;
 	}
 
 	public function getSlugFieldName()
@@ -839,9 +799,9 @@ class Submit
 	}
 
 	// dir == -1/+1, shows - to increase or decrease new value's order num
-	function make_order_num($dir, $q_ending = '', $force_recount = false)
+	function make_order_num($dir, $q_ending = '', $force = false)
 	{
-		if (!$this->id || $force_recount)
+		if (!$this->getId() || $force)
 		{
 			$init_value = $dir > 0 ? 1 : 65000;
 			$sign = $dir > 0 ? 1 : -1;
@@ -850,13 +810,15 @@ class Submit
 			$order_r = $this->getDb()->r($this->table, $q_ending, "$min_max(order_num) AS num,COUNT(id) AS cc");
 			$this->setData('order_num', $order_r && $order_r->cc ? intval($order_r->num) + $sign : $init_value);
 		}
+		/*
 		else
 		{
-			if ($this->getCurRec())
+			if ($this->getModel()->existsOrig())
 			{
-				$this->setData('order_num', $this->getCurRec('order_num'));
+				$this->setData('order_num', $this->getModel()->getOrigData('order_num'));
 			}
 		}
+		*/
 
 		return $this;
 	}
@@ -1031,7 +993,8 @@ class Submit
 		{
 			$opts = extend([
 				'type' => self::IMAGE_TYPE_MAIN,
-				'folder' => $this->getSubmittedModel()->getPicsFolder() ?: get_pics_folder($this->getTable(), Config::getUserAssetsFolder()),
+				'folder' => $this->getModel()->getPicsFolder()
+                    ?: get_pics_folder($this->getTable(), Config::getUserAssetsFolder()),
 				'subfolder' => null,
 				'resize' => null,
 				'quality' => null,
@@ -1048,7 +1011,7 @@ class Submit
 				$opts['subfolder'] = self::getFolderByImageType($opts['type']);
 			}
 
-			FileSystemHelper::createTree(\diPaths::fileSystem($this->getSubmittedModel(), true, $field),
+			FileSystemHelper::createTree(\diPaths::fileSystem($this->getModel(), true, $field),
 				$opts['folder'] . $opts['subfolder'], self::DIR_CHMOD);
 		}
 		//
@@ -1067,7 +1030,7 @@ class Submit
 
 		foreach ($field as $f)
 		{
-			$this->setData($f, $this->getCurRec($f));
+			//$this->setData($f, $this->getCurRec($f));
 
 			if (!empty($_FILES[$f]) && empty($_FILES[$f]['error']))
 			{
@@ -1089,20 +1052,20 @@ class Submit
 					{
 						$suffix = self::getPreviewSuffix($opts['type']);
 
-						$widthParam = \diConfiguration::exists([
+						$widthParam = Configuration::exists([
 							$this->getTable() . '_' . $f . $suffix . '_width',
 							$this->getTable() . $suffix . '_width',
 							$this->getTable() . '_width',
 						]);
-						$heightParam = \diConfiguration::exists([
+						$heightParam = Configuration::exists([
 							$this->getTable() . '_' . $f . $suffix . '_height',
 							$this->getTable() . $suffix . '_height',
 							$this->getTable() . '_height',
 						]);
 
 						$opts = extend([
-							'width' => \diConfiguration::safeGet($widthParam),
-							'height' => \diConfiguration::safeGet($heightParam),
+							'width' => Configuration::safeGet($widthParam),
+							'height' => Configuration::safeGet($heightParam),
 						], $opts);
 					}
 
@@ -1151,7 +1114,7 @@ class Submit
 	protected function generateFilename($field, $folder, $origFilename)
 	{
 		$this->setData($field, self::getGeneratedFilename(
-			\diPaths::fileSystem($this->getSubmittedModel(), true, $field) . $folder,
+			\diPaths::fileSystem($this->getModel(), true, $field) . $folder,
 			$origFilename,
 			$this->getFieldProperty($field, 'naming')
 		));
@@ -1169,7 +1132,7 @@ class Submit
 
 		$pic_fields_ar = is_array($pic_fields) ? $pic_fields : explode(',', $pic_fields);
 
-		FileSystemHelper::createTree(\diPaths::fileSystem($this->getSubmittedModel(), true, $pic_fields_ar[0]),
+		FileSystemHelper::createTree(\diPaths::fileSystem($this->getModel(), true, $pic_fields_ar[0]),
 			$folder . get_tn_folder(),
 			self::DIR_CHMOD);
 
@@ -1180,7 +1143,7 @@ class Submit
 				continue;
 			}
 
-			$this->setData($field, $this->getCurRec($field));
+			//$this->setData($field, $this->getCurRec($field));
 
 			if (isset($_FILES[$field]) && !$_FILES[$field]['error'])
 			{
@@ -1249,7 +1212,7 @@ class Submit
 		$ar = $_POST["{$field}_order_num"];
 		$pics_folder = get_pics_folder($this->getTable());
 
-		$root = \diPaths::fileSystem($this->getSubmittedModel());
+		$root = \diPaths::fileSystem($this->getModel());
 
 		$ids_ar = array();
 
@@ -1302,7 +1265,7 @@ class Submit
 				else
 				{
 					$db_ar[$f] = self::getGeneratedFilename(
-						\diPaths::fileSystem($this->getSubmittedModel()) . $pics_folder,
+						\diPaths::fileSystem($this->getModel()) . $pics_folder,
 						$_FILES["{$field}_{$f}"]['name'][$id],
 						$this->getFieldProperty($field, 'naming')
 					);
@@ -1344,7 +1307,7 @@ class Submit
 				else
 				{
 					$db_ar[$f] = self::getGeneratedFilename(
-						\diPaths::fileSystem($this->getSubmittedModel()) . $pics_folder,
+						\diPaths::fileSystem($this->getModel()) . $pics_folder,
 						$_FILES["{$field}_{$f}"]['name'][$id],
 						$this->getFieldProperty($field, 'naming')
 					);
@@ -1521,7 +1484,7 @@ class Submit
 		{
 			$suffix = Submit::getPreviewSuffix($opts['type']);
 
-			$fn = \diPaths::fileSystem($obj->getSubmittedModel(), true, $field) .
+			$fn = \diPaths::fileSystem($obj->getModel(), true, $field) .
 				$opts['folder'] . $opts['subfolder'] . $obj->getData($field);
 
 			if (is_file($fn))
@@ -1573,7 +1536,7 @@ class Submit
 
 				if (is_callable($afterSave))
 				{
-					$afterSave($field, $fn, $obj->getSubmittedModel());
+					$afterSave($field, $fn, $obj->getModel());
 				}
 			}
 		}
@@ -1601,7 +1564,7 @@ class Submit
 			'filename' => '',
 		], $options);
 
-		$fn = \diPaths::fileSystem($obj->getSubmittedModel(), true, $field) .
+		$fn = \diPaths::fileSystem($obj->getModel(), true, $field) .
 			$options['folder'] . $options['subfolder'] . ($options['filename'] ?: $obj->getData($field));
 
 		if (is_file($fn))
@@ -1712,13 +1675,13 @@ class Submit
 			{
 				$suffix = $i > 1 ? "$i" : '';
 
-				$widthParam = \diConfiguration::exists([
+				$widthParam = Configuration::exists([
 					$table . '_' . $groupField . '_' . $field . '_tn' . $suffix . '_width',
 					$table . '_' . $groupField . '_tn' . $suffix . '_width',
 					$table . '_tn' . $suffix . '_width',
 					$groupField . '_tn' . $suffix . '_width',
 				]);
-				$heightParam = \diConfiguration::exists([
+				$heightParam = Configuration::exists([
 					$table . '_' . $groupField . '_' . $field . '_tn' . $suffix . '_height',
 					$table . '_' . $groupField . '_tn' . $suffix . '_height',
 					$table . '_tn' . $suffix . '_height',
@@ -1749,8 +1712,8 @@ class Submit
 					}
 
 					$I->make_thumb_or_copy($fileOptionsTn['resize'], $tn_fn,
-						\diConfiguration::safeGet($widthParam),
-						\diConfiguration::safeGet($heightParam),
+						Configuration::safeGet($widthParam),
+						Configuration::safeGet($heightParam),
 						false,
 						$tnWM['name'], $tnWM['x'], $tnWM['y']
 					);
@@ -1766,13 +1729,13 @@ class Submit
 
 			// main photo
 
-			$widthParam = \diConfiguration::exists([
+			$widthParam = Configuration::exists([
 				$table . '_' . $groupField . '_' . $field . '_width',
 				$table . '_' . $groupField . '_width',
 				$table . '_width',
 				$groupField . '_width',
 			]);
-			$heightParam = \diConfiguration::exists([
+			$heightParam = Configuration::exists([
 				$table . '_' . $groupField . '_' . $field . '_height',
 				$table . '_' . $groupField . '_height',
 				$table . '_height',
@@ -1789,21 +1752,21 @@ class Submit
 				$mainWM = extend($mainWM, $fileOptionsMain['watermark']);
 			}
 			$I->make_thumb_or_copy($fileOptionsMain['resize'], $full_fn,
-				\diConfiguration::safeGet($widthParam),
-				\diConfiguration::safeGet($heightParam),
+				Configuration::safeGet($widthParam),
+				Configuration::safeGet($heightParam),
 				false,
 				$mainWM['name'], $mainWM['x'], $mainWM['y']
 			);
 
 			// big photo
 
-			$widthParam = \diConfiguration::exists([
+			$widthParam = Configuration::exists([
 				$table . '_' . $groupField . '_' . $field . '_big_width',
 				$table . '_' . $groupField . '_big_width',
 				$table . '_big_width',
 				$groupField . '_big_width',
 			]);
-			$heightParam = \diConfiguration::exists([
+			$heightParam = Configuration::exists([
 				$table . '_' . $groupField . '_' . $field . '_big_height',
 				$table . '_' . $groupField . '_big_height',
 				$table . '_big_height',
@@ -1820,8 +1783,8 @@ class Submit
 				$bigWM = extend($bigWM, $fileOptionsBig['watermark']);
 			}
 			$I->make_thumb_or_copy($fileOptionsBig['resize'], $big_fn,
-				\diConfiguration::safeGet($widthParam, 10000),
-				\diConfiguration::safeGet($heightParam, 10000),
+				Configuration::safeGet($widthParam, 10000),
+				Configuration::safeGet($heightParam, 10000),
 				false,
 				$bigWM['name'], $bigWM['x'], $bigWM['y']
 			);

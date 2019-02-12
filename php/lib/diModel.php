@@ -92,6 +92,9 @@ class diModel implements \ArrayAccess
 
 	private $insertOrUpdateAllowed = false;
 
+	/** @var callable */
+	private $fieldsOnSaveCallback;
+
 	/**
 	 * @param null|array|object $ar
 	 * @param null|string $table
@@ -1625,6 +1628,12 @@ class diModel implements \ArrayAccess
 			$v = $this->getDb()->escape_string($v);
 		}
 
+		if ($this->fieldsOnSaveCallback) {
+		    $cb = $this->fieldsOnSaveCallback;
+
+		    $ar = $cb($ar);
+        }
+
 		return $ar;
 	}
 
@@ -2160,6 +2169,14 @@ class diModel implements \ArrayAccess
 
 		return $this;
 	}
+
+    public function setFieldsOnSaveCallback(callable $fieldsOnSaveCallback)
+    {
+        $this->fieldsOnSaveCallback = $fieldsOnSaveCallback;
+
+        return $this;
+    }
+
 
 	public function getAppearanceFeedForAdmin()
 	{

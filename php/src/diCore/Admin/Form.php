@@ -749,7 +749,10 @@ EOF;
 				$v["flags"][] = "hidden";
 			}
 
-			if (in_array($field, array_keys($this->getFormFields())) || in_array($field, array_keys($this->force_inputs_fields)))
+			if (
+			    in_array($field, array_keys($this->getFormFields())) ||
+                in_array($field, array_keys($this->force_inputs_fields))
+               )
 			{
 				if (!$this->hasInputAttribute($field, "size") && in_array($v["type"], self::$numericTypes))
 				{
@@ -889,13 +892,6 @@ EOF;
 
 							default:
 								$s = StringHelper::out($this->data[$field]);
-								/*
-								if (!$s)
-								{
-									// ie bugfix
-									$s = "&nbsp;";
-								}
-								*/
 								break;
 						}
 					}
@@ -1417,7 +1413,7 @@ EOF;
 		else
 		{
 			$this
-				->setInput($field, "<a href='{$this->getModel()->getHref()}' target='_blank'>{$this->getModel()->getFullHref()}</a>");
+				->setInput($field, "<div class=\"static\"><a href='{$this->getModel()->getHref()}' target='_blank'>{$this->getModel()->getFullHref()}</a></div>");
 		}
 
 		return $this;
@@ -2810,12 +2806,12 @@ EOF;
 	{
 		if (!is_array($fields))
 		{
-			$fields = explode(",", $fields);
+			$fields = explode(',', $fields);
 		}
 
 		foreach ($fields as $field)
 		{
-			$this->setManualFieldFlag($field, "static");
+			$this->setManualFieldFlag($field, 'static');
 
 			$this->force_inputs_fields[$field] = true;
 		}
@@ -2826,7 +2822,7 @@ EOF;
 	function set_dynamic_input($field)
 	{
 		$dr = new \diDynamicRows($this->AdminPage, $field);
-		$dr->static_mode = $this->static_mode || $this->isFlag($field, "static");
+		$dr->static_mode = $this->static_mode || $this->isFlag($field, 'static');
 
 		$this->inputs[$field] = $dr->get_html();
 		$this->force_inputs_fields[$field] = true;
