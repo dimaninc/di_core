@@ -598,27 +598,31 @@ class diDynamicRows
 	    $format = isset($ar["format"]) ? $ar["format"] : null;
 	    $prefix_ar = isset($ar["prefix_ar"]) ? $ar["prefix_ar"] : [];
 	    $suffix_ar = isset($ar["suffix_ar"]) ? $ar["suffix_ar"] : [];
+        $columns = isset($ar["columns"]) ? $ar["columns"] : null;
 
-      if ($ar["type"] == "checkboxes")
-      {
-        $this->set_cb_list_input($name, $ar["feed"], isset($ar["columns"]) ? $ar["columns"] : 2);
-      }
-      elseif (is_array($ar["feed"]))
-      {
-        $this->set_select_from_array_input($name, $ar["feed"], $prefix_ar, $suffix_ar);
-      }
-      elseif (\diDB::is_rs($ar["feed"]))
-      {
-        $this->set_select_from_db_input($name, $ar["feed"], $template_text, $template_value, $prefix_ar, $suffix_ar);
-      }
-      elseif ($ar['feed'] instanceof diCollection)
-      {
-	      $this->setSelectFromCollectionInput($name, $ar['feed'], $format, $prefix_ar, $suffix_ar);
-      }
-      else
-      {
-        throw new Exception("Unknown feed for \${$this->table}_form_fields[\"{$this->field}\"][\"fields\"][\"$field\"] in '/_inc/tables.php'</b>");
-      }
+        if ($ar["type"] == "checkboxes") {
+            $options = [];
+
+            if ($columns) {
+                $options['columns'] = $columns;
+            }
+
+            if ($format) {
+                $options['format'] = $format;
+            } elseif ($template_text) {
+                $options['format'] = $template_text;
+            }
+
+            $this->set_cb_list_input($name, $ar["feed"], $options);
+        } elseif (is_array($ar["feed"])) {
+            $this->set_select_from_array_input($name, $ar["feed"], $prefix_ar, $suffix_ar);
+        } elseif (\diDB::is_rs($ar["feed"])) {
+            $this->set_select_from_db_input($name, $ar["feed"], $template_text, $template_value, $prefix_ar, $suffix_ar);
+        } elseif ($ar['feed'] instanceof diCollection) {
+            $this->setSelectFromCollectionInput($name, $ar['feed'], $format, $prefix_ar, $suffix_ar);
+        } else {
+            throw new \Exception("Unknown feed for \${$this->table}_form_fields[\"{$this->field}\"][\"fields\"][\"$field\"]");
+        }
     }
 
 	  if ($this->isFlag($field, "hidden"))
@@ -869,113 +873,161 @@ class diDynamicRows
 		}
 	}
 
-  function get_checkbox_code($opts)
-  {
-    //$this->dicontrols_code_needed = true;
-
-    $opts = extend(array(
-    	"name"	=> "",
-    	"id"	=> "",
-    	"value"	=> "",
-    	"text"	=> "",
-    	"checked" => false,
-    	"disabled" => false,
-    ), $opts);
-
-    //if ($this->static_mode) $checked .= " disabled=true";
-    //return "<label><input type='checkbox' name='{$name}' value='$id'$checked /> $r->title</label>";
-
-    $classes_ar = array("dicheckbox");
-
-    if ($opts["checked"])
+    function get_checkbox_code($opts)
     {
-    	$classes_ar[] = "checked";
+        //$this->dicontrols_code_needed = true;
 
-    	if (isset($this->checked_static_ar))
- 	       $this->checked_static_ar[] = $opts["text"];
+        $opts = extend([
+            "name" => "",
+            "id" => "",
+            "value" => "",
+            "text" => "",
+            "checked" => false,
+            "disabled" => false,
+            'attributes' => [],
+        ], $opts);
+
+        //if ($this->static_mode) $checked .= " disabled=true";
+        //return "<label><input type='checkbox' name='{$name}' value='$id'$checked /> $r->title</label>";
+
+        $classes = [
+            "dicheckbox",
+        ];
+
+        if ($opts["checked"]) {
+            $classes[] = "checked";
+
+            if (isset($this->checked_static_ar))
+                $this->checked_static_ar[] = $opts["text"];
+        }
+
+        if ($opts["disabled"])
+            $classes[] = "disabled";
+
+        if ($opts["checked"]) {
+            $opts['attributes']['checked'] = 'checked';
+        }
+
+        $attrs = ArrayHelper::toAttributesString($opts['attributes']);
+
+        return //"<s class=\"" . join(" ", $classes) . "\" id=\"dicontrol-{$opts["id"]}\"></s>" .
+            "<input type=\"checkbox\" id=\"{$opts["id"]}\" name=\"{$opts["name"]}\" value=\"{$opts["value"]}\" {$attrs}>" .
+            "<label for=\"{$opts["id"]}\">{$opts["text"]}</label>";
     }
 
-    if ($opts["disabled"])
-    	$classes_ar[] = "disabled";
-
-    $checked_attr = $opts["checked"] ? " checked=\"checked\"" : "";
-
-    return "<s class=\"".join(" ", $classes_ar)."\" id=\"dicontrol-{$opts["id"]}\"></s>".
-    	"<input type=\"checkbox\" id=\"{$opts["id"]}\" name=\"{$opts["name"]}\" value=\"{$opts["value"]}\"{$checked_attr} />".
-    	"<label for=\"{$opts["id"]}\">{$opts["text"]}</label>";
-  }
-
-  function set_cb_list_input($field, $feed, $columns = 2)
-  {
-    $tags_ar = array();
-    $this->checked_static_ar = array();
-
-    if (is_rs($feed))
+    public function set_cb_list_input($field, $feed, $options = [])
     {
-      while ($r = $this->getDb()->fetch($feed))
-      {
-        $checked = strpos($this->data[$field], ",$r->id,") !== false;
+        $options = extend([
+            'columns' => 2,
+            'format' => \diSelect::getDefaultCollectionFormatter(),
+        ], $options);
 
-        $tags_ar[] = $this->get_checkbox_code(array(
-        	"name" => "{$field}[]",
-        	"id" => "{$field}-{$r->id}",
-        	"value" => $r->id,
-        	"text" => $r->title,
-        	"checked" => $checked,
-        	"disabled" => $this->static_mode,
-        ));
-      }
+        $format = $options['format'];
+        $tags_ar = [];
+        $this->checked_static_ar = [];
 
-      $this->getDb()->reset($feed);
-      $feed_rc = $this->getDb()->count($feed);
+        if (\diDB::is_rs($feed)) {
+            while ($r = $this->getDb()->fetch($feed)) {
+                $checked = strpos($this->data[$field], ",$r->id,") !== false;
+
+                $tags_ar[] = $this->get_checkbox_code([
+                    "name" => "{$field}[]",
+                    "id" => "{$field}-{$r->id}",
+                    "value" => $r->id,
+                    "text" => $r->title,
+                    "checked" => $checked,
+                    "disabled" => $this->static_mode,
+                ]);
+            }
+
+            $this->getDb()->reset($feed);
+            $feed_rc = $this->getDb()->count($feed);
+        } elseif (is_array($feed)) {
+            foreach ($feed as $k => $v) {
+                $checked = strpos($this->data[$field], ",$k,") !== false;
+
+                $tags_ar[] = $this->get_checkbox_code([
+                    "name" => "{$field}[]",
+                    "id" => "{$field}-{$k}",
+                    "value" => $k,
+                    "text" => $v,
+                    "checked" => $checked,
+                    "disabled" => $this->static_mode,
+                ]);
+            }
+
+            $feed_rc = count($feed);
+        } elseif ($feed instanceof \diCollection) {
+            /** @var \diModel $m */
+            foreach ($feed as $m) {
+                $checked = strpos($this->data[$field], ",{$m->getId()},") !== false;
+
+                $data = [
+                    'value' => $m->getId(),
+                    'text' => $m->get('title'),
+                    'attributes' => [],
+                ];
+
+                if (is_callable($format)) {
+                    $data = extend($data, call_user_func($format, $m));
+                } else {
+                    $ar1 = $ar2 = [];
+
+                    foreach ($m->get() as $k => $v) {
+                        $ar1[] = "%$k%";
+                        $ar2[] = $v;
+                    }
+
+                    $data['text'] = str_replace($ar1, $ar2, $format);
+                }
+
+                $tags_ar[] = $this->get_checkbox_code([
+                    "name" => "{$field}[]",
+                    "id" => "{$field}-{$data['value']}",
+                    "value" => $data['value'],
+                    "text" => $data['text'],
+                    "checked" => $checked,
+                    "disabled" => $this->static_mode,
+                    'attributes' => $data['attributes'],
+                ]);
+            }
+
+            $feed_rc = $feed->count();
+        } else {
+            echo "unknown feed for field $field";
+            $feed_rc = 0;
+        }
+
+        // table
+        $table = "<table><tr>";
+
+        $per_column = ceil(count($tags_ar) / $options['columns']);
+
+        for ($i = 0; $i < $options['columns']; $i++) {
+            $table .= "<td style=\"padding-right: 20px; vertical-align: top;\">" .
+                join("<br />", array_slice($tags_ar, $per_column * $i, $per_column)) .
+                "</td>";
+        }
+
+        $table .= "</tr></table>";
+        //
+
+        if ($feed_rc > $this->max_feed_count_to_show_static_checkboxes) {
+            if (!$this->checked_static_ar) {
+                $this->checked_static_ar[] = $this->L('not_selected');
+            }
+
+            $title = $this->info_ar[$this->field]["fields"][$this->current_field]["title"];
+
+            $table = "<div class=\"didynamic-static-checkboxes\"><b>{$title}</b> " .
+                join(", ", $this->checked_static_ar) .
+                "</div><div class=\"didynamic-checkboxes\">$table</div>";
+        }
+
+        $this->inputs[$field] = $table; //."<div style=\"margin: 5px 0;\"><input type=\"text\" name=\"{$field}{$new_field_suffix}\" value=\"\" style=\"width:100%;\" /></div>";
+
+        return $this;
     }
-    elseif (is_array($feed))
-    {
-      foreach ($feed as $k => $v)
-      {
-        $checked = strpos($this->data[$field], ",$k,") !== false;
-
-        $tags_ar[] = $this->get_checkbox_code(array(
-        	"name" => "{$field}[]",
-        	"id" => "{$field}-{$k}",
-        	"value" => $k,
-        	"text" => $v,
-        	"checked" => $checked,
-        	"disabled" => $this->static_mode,
-        ));
-      }
-
-      $feed_rc = count($feed);
-    }
-    else
-    {
-      echo "unknown feed for field $field";
-      $feed_rc = 0;
-    }
-
-    //
-    $table = "<table><tr>";
-
-    $per_column = ceil(count($tags_ar) / $columns);
-
-    for ($i = 0; $i < $columns; $i++)
-    {
-      $table .= "<td style=\"padding-right: 20px; vertical-align: top;\">".join("<br />", array_slice($tags_ar, $per_column * $i, $per_column))."</td>";
-    }
-
-    $table .= "</tr></table>";
-    //
-
-    if ($feed_rc > $this->max_feed_count_to_show_static_checkboxes)
-    {
-        if (!$this->checked_static_ar)
-        	$this->checked_static_ar[] = "Не выбрано";
-
-    	$table = "<div class=\"didynamic-static-checkboxes\"><b>{$this->info_ar[$this->field]["fields"][$this->current_field]["title"]}</b> ".join(", ", $this->checked_static_ar)."</div><div class=\"didynamic-checkboxes\">$table</div>";
-    }
-
-    $this->inputs[$field] = $table; //."<div style=\"margin: 5px 0;\"><input type=\"text\" name=\"{$field}{$new_field_suffix}\" value=\"\" style=\"width:100%;\" /></div>";
-  }
 
   function set_datetime_input($field, $date = true, $time = false, $calendar_cfg = true)
   {
@@ -1141,7 +1193,7 @@ EOF;
 				$ext,
 				$ff_w && $ff_h ? $ff_w . "x" . $ff_h : null,
 				size_in_bytes($ff_s),
-				\diDateTime::simpleFormat(filemtime($f))
+				\diDateTime::simpleFormat(filemtime($f)),
 			]));
 
 			if ($imgTag)

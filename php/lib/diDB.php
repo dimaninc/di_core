@@ -59,8 +59,9 @@ use diCore\Data\Config;
 use diCore\Helper\FileSystemHelper;
 use diCore\Helper\StringHelper;
 
-/* back compatibility */
-/** @deprecated */
+/**
+ * @deprecated
+ */
 function is_rs($rs)
 {
     return diDB::is_rs($rs);
@@ -234,17 +235,18 @@ abstract class diDB
 	 */
 	public static function _in($s)
 	{
-		return diStringHelper::in($s);
+		return StringHelper::in($s);
 	}
 
 	public static function _out($s, $replaceAmp = false)
 	{
-		return diStringHelper::out($s, $replaceAmp);
+		return StringHelper::out($s, $replaceAmp);
 	}
 
 	public static function is_rs($rs)
 	{
-		return is_resource($rs) || (is_object($rs) && method_exists($rs, "fetch_object"));
+        //(is_object($rs) && method_exists($rs, "fetch_object"));
+		return is_resource($rs) || $rs instanceof \MySQLi;
 	}
 
 	public function getHost()

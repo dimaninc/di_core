@@ -74,6 +74,7 @@ class Form
 			'or_enter' => 'or enter',
 			'add_item' => 'Add',
 			'link' => 'Link',
+            'not_selected' => 'Not selected',
 
 			'tab_general' => 'General',
 
@@ -117,8 +118,9 @@ class Form
 			'or_enter' => 'или введите',
 			'add_item' => 'Добавить',
 			'link' => 'Ссылка',
+            'not_selected' => 'Не выбрано',
 
-			'tab_general' => 'Основное',
+            'tab_general' => 'Основное',
 
             'choose_file' => 'Выбрать файл...',
 		],
