@@ -1708,6 +1708,12 @@ EOF;
         $this->store_pic($f, $id, $v);
         break;
 
+        case 'checkboxes':
+            $this->data[$f] = !empty($_POST[$ff][$id])
+                ? ',' . join(',', $_POST[$ff][$id]) . ','
+                : '';
+            break;
+
       default:
         $this->data[$f] = isset($_POST[$ff][$id])
 	        ? $_POST[$ff][$id]
