@@ -8,6 +8,7 @@
 
 namespace diCore\Tool\Mail;
 
+use diCore\Helper\StringHelper;
 use diCore\Traits\BasicCreate;
 use diCore\Tool\Logger;
 use PHPMailer\PHPMailer\PHPMailer;
@@ -113,6 +114,12 @@ class Sender
 
 		if ($attachments)
 		{
+		    $attachmentIds = [];
+
+		    while (empty($attachment['content_id']) || in_array($attachment['content_id'], $attachmentIds)) {
+                $attachment['content_id'] = static::generateAttachmentId();
+            }
+
 			foreach ($attachments as $attachment)
 			{
 				$attachment = static::prepareAttachment($attachment);
@@ -121,7 +128,7 @@ class Sender
 				{
 					$mail->addStringEmbeddedImage(
 						$attachment['data'],
-						!empty($attachment['content_id']) ? $attachment['content_id'] : '',
+						$attachment['content_id'],
 						$attachment['filename'],
 						'base64',
 						$attachment['content_type']
@@ -131,7 +138,7 @@ class Sender
 				{
 					$mail->addEmbeddedImage(
 						$attachment['path'],
-						!empty($attachment['content_id']) ? $attachment['content_id'] : '',
+						$attachment['content_id'],
 						$attachment['filename']
 					);
 				}
@@ -141,6 +148,8 @@ class Sender
 						->log('attachment error: no file contents')
 						->variable($attachment);
 				}
+
+				$attachmentIds[] = $attachment['content_id'];
 			}
 		}
 
@@ -153,6 +162,11 @@ class Sender
 
 		return $res;
 	}
+
+	protected static function generateAttachmentId()
+    {
+        return StringHelper::random(8);
+    }
 
 	protected static function prepareAttachment($attachment)
 	{
