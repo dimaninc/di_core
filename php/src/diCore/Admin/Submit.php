@@ -119,7 +119,15 @@ class Submit
         $this->model = \diModel::createForTableNoStrict($this->getTable(), $id, 'id');
 		$this->model
             ->setFieldsOnSaveCallback(function($ar) {
-                return ArrayHelper::filterByKey($ar, $this->_af);
+                $ar = ArrayHelper::filterByKey($ar, $this->_af);
+
+                foreach ($ar as $field => $value) {
+                    if ($this->isFlag($field, 'virtual') || $this->isFlag($field, 'untouchable')) {
+                        unset($ar[$field]);
+                    }
+                }
+
+                return $ar;
             });
 
         $this->setSlugFieldName();
