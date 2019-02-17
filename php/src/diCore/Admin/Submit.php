@@ -70,9 +70,6 @@ class Submit
 
 	public $table;
 
-	/** @deprecated */
-	public $data;
-
 	public $_form_fields;
 	public $_local_fields;
 	public $_all_fields;
@@ -385,6 +382,8 @@ class Submit
 					$this->setData($f, \diRequest::post($f) ? 1 : 0);
 					break;
 
+                case 'file':
+                case 'pic':
 				case 'separator':
 					break;
 
@@ -397,7 +396,7 @@ class Submit
 			}
 		}
 
-		// new fields
+        // new fields
 		foreach ($this->_ff as $f)
 		{
 			if (!empty($_POST[$f . Form::NEW_FIELD_SUFFIX]))
@@ -406,7 +405,7 @@ class Submit
 			}
 		}
 
-		// local fields
+        // local fields
 		foreach ($this->_local_fields as $f => $v)
 		{
 			if (!$this->getData($f))
@@ -1038,8 +1037,6 @@ class Submit
 
 		foreach ($field as $f)
 		{
-			//$this->setData($f, $this->getCurRec($f));
-
 			if (!empty($_FILES[$f]) && empty($_FILES[$f]['error']))
 			{
 				$oldExt = strtolower(StringHelper::fileExtension($this->getData($f)));
@@ -1081,7 +1078,7 @@ class Submit
 				}
 				else
 				{
-					throw new \Exception('Callback is now callable: ' . print_r($callback, true));
+					throw new \Exception('Callback is not callable: ' . print_r($callback, true));
 				}
 			}
 		}
@@ -1222,9 +1219,9 @@ class Submit
 
 		$root = \diPaths::fileSystem($this->getModel());
 
-		$ids_ar = array();
+        $ids_ar = [];
 
-		FileSystemHelper::createTree($root, [
+        FileSystemHelper::createTree($root, [
 			$pics_folder . get_tn_folder(),
 			$pics_folder . get_tn_folder(2),
 			$pics_folder . get_tn_folder(3),
@@ -1259,12 +1256,13 @@ class Submit
 
 			// pic
 			$f = 'pic';
+            $varName = $field . '_' . $f;
 
-            self::checkBase64Files("{$field}_{$f}", $id);
+            self::checkBase64Files($varName, $id);
 
-			if (isset($_FILES["{$field}_{$f}"]['name'][$id]) && !$_FILES["{$field}_{$f}"]['error'][$id])
+			if (isset($_FILES[$varName]['name'][$id]) && !$_FILES[$varName]['error'][$id])
 			{
-				$ext = '.' . strtolower(get_file_ext($_FILES["{$field}_{$f}"]['name'][$id]));
+				$ext = '.' . strtolower(get_file_ext($_FILES[$varName]['name'][$id]));
 
 				if ($test_r && $test_r->$f)
 				{
@@ -1274,21 +1272,23 @@ class Submit
 				{
 					$db_ar[$f] = self::getGeneratedFilename(
 						\diPaths::fileSystem($this->getModel()) . $pics_folder,
-						$_FILES["{$field}_{$f}"]['name'][$id],
+						$_FILES[$varName]['name'][$id],
 						$this->getFieldProperty($field, 'naming')
 					);
 				}
 
-				$db_ar['orig_fn'] = str_in($_FILES["{$field}_{$f}"]['name'][$id]);
+				$db_ar['orig_fn'] = str_in($_FILES[$varName]['name'][$id]);
 
-				$callback = isset($this->_all_fields[$field]['callback']) ? $this->_all_fields[$field]['callback'] : self::$defaultDynamicPicCallback;
+				$callback = isset($this->_all_fields[$field]['callback'])
+                    ? $this->_all_fields[$field]['callback']
+                    : self::$defaultDynamicPicCallback;
 
 				$F = [
-					'name' => $_FILES["{$field}_{$f}"]['name'][$id],
-					'type' => $_FILES["{$field}_{$f}"]['type'][$id],
-					'tmp_name' => $_FILES["{$field}_{$f}"]['tmp_name'][$id],
-					'error' => $_FILES["{$field}_{$f}"]['error'][$id],
-					'size' => $_FILES["{$field}_{$f}"]['size'][$id],
+					'name' => $_FILES[$varName]['name'][$id],
+					'type' => $_FILES[$varName]['type'][$id],
+					'tmp_name' => $_FILES[$varName]['tmp_name'][$id],
+					'error' => $_FILES[$varName]['error'][$id],
+					'size' => $_FILES[$varName]['size'][$id],
 				];
 
 				if (is_callable($callback))
@@ -1303,10 +1303,11 @@ class Submit
 
 			// pic tn
 			$f = 'pic_tn';
+            $varName = $field . '_' . $f;
 
-            self::checkBase64Files("{$field}_{$f}", $id);
+            self::checkBase64Files($varName, $id);
 
-            if (isset($_FILES["{$field}_{$f}"]['name'][$id]) && !$_FILES["{$field}_{$f}"]['error'][$id])
+            if (isset($_FILES[$varName]['name'][$id]) && !$_FILES[$varName]['error'][$id])
 			{
 				if ($test_r && $test_r->$f)
 				{
@@ -1316,7 +1317,7 @@ class Submit
 				{
 					$db_ar[$f] = self::getGeneratedFilename(
 						\diPaths::fileSystem($this->getModel()) . $pics_folder,
-						$_FILES["{$field}_{$f}"]['name'][$id],
+						$_FILES[$varName]['name'][$id],
 						$this->getFieldProperty($field, 'naming')
 					);
 				}
@@ -1326,11 +1327,11 @@ class Submit
                     : '';
 
 				$F = [
-					'name' => $_FILES["{$field}_{$f}"]['name'][$id],
-					'type' => $_FILES["{$field}_{$f}"]['type'][$id],
-					'tmp_name' => $_FILES["{$field}_{$f}"]['tmp_name'][$id],
-					'error' => $_FILES["{$field}_{$f}"]['error'][$id],
-					'size' => $_FILES["{$field}_{$f}"]['size'][$id],
+					'name' => $_FILES[$varName]['name'][$id],
+					'type' => $_FILES[$varName]['type'][$id],
+					'tmp_name' => $_FILES[$varName]['tmp_name'][$id],
+					'error' => $_FILES[$varName]['error'][$id],
+					'size' => $_FILES[$varName]['size'][$id],
 				];
 
 				if ($callback && is_callable($callback))

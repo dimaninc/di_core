@@ -1125,7 +1125,8 @@ abstract class BasePage
 
 		if ($this->getSubmit()->isSubmit() && !$this->getOption('staticMode'))
 		{
-			$this->getSubmit()->gatherData();
+			$this->getSubmit()
+                ->gatherData();
 
 			return true;
 		}

@@ -8,7 +8,10 @@
 */
 
 var diAdminForm = function(table, id, auto_save_timeout) {
-	var self = this,
+	var extensions = {
+	    pic: ['jpeg', 'jpg', 'png', 'gif', 'svg']
+    };
+    var self = this,
         initiating = true,
 		Tabs;
 
@@ -71,21 +74,34 @@ var diAdminForm = function(table, id, auto_save_timeout) {
             if (!$existingPreviewArea.length) {
                 $existingPreviewArea = $wrapper.parent().siblings('.existing-pic-holder');
             }
-            var $previewArea = $('<div class="existing-pic-holder"/>').insertBefore($wrapper);
+            var $previewArea;
+            var ext;
+            var isPic;
+
+            var getPreviewArea = function() {
+                if (!$previewArea) {
+                    $previewArea = $('<div class="existing-pic-holder"/>').insertBefore($wrapper);
+                }
+
+                return $previewArea;
+            };
 
             if (this.files.length) {
                 $wrapper
                     .addClass('selected')
                     .attr('data-caption', basename(this.value));
 
-                if (in_array(get_file_ext(this.value || '').toLowerCase(), ['jpeg', 'jpg', 'png', 'gif', 'svg'])) {
+                ext = get_file_ext(this.value || '').toLowerCase();
+                isPic = in_array(ext, extensions.pic);
+
+                if (isPic) {
                     for (var i in this.files) {
                         if (this.files.hasOwnProperty(i)) {
                             var $row = $('<div class="container embed no-bottom-margin"><img src=""></div>');
 
                             $existingPreviewArea.remove();
 
-                            $previewArea
+                            getPreviewArea()
                                 .append($row);
 
                             (function($row, file) {
