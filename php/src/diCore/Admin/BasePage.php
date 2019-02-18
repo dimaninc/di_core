@@ -1138,7 +1138,11 @@ abstract class BasePage
 	{
 		if ($this->reallySubmit() && $this->getSubmit()->isSubmit())
 		{
-			$this->getSubmit()->storeData();
+            $this
+                ->addEditLogRecord();
+
+			$this->getSubmit()
+                ->storeData();
 		}
 
 		if ($this->getOption('updateSearchIndexOnSubmit'))
@@ -1147,7 +1151,7 @@ abstract class BasePage
 		}
 
 		$this
-			->addEditLogRecord()
+			//->addEditLogRecord()
 			->redirectAfterSubmit();
 	}
 

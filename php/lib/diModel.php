@@ -1050,37 +1050,33 @@ class diModel implements \ArrayAccess
 	 * @param null|array|string $field
 	 * @return bool
 	 */
-	public function changed($field = null)
+	public function changed($field = null, $strict = false)
 	{
-		if (is_array($field))
-		{
-			$keys = $field;
-		}
-		elseif ($field === null)
-		{
-			$keys = array_merge(
-				[$this->getIdFieldName()],
-				array_keys($this->ar) ?: array_keys($this->origData)
-			);
-		}
-		else
-		{
-			$keys = [$field];
-		}
+        if (is_array($field)) {
+            $keys = $field;
+        } elseif ($field === null) {
+            $keys = array_merge(
+                [$this->getIdFieldName()],
+                array_keys($this->ar) ?: array_keys($this->origData)
+            );
+        } else {
+            $keys = [$field];
+        }
 
-		foreach ($keys as $key)
-		{
-			// todo:             !==
-			if ($this->get($key) != $this->getOrigData($key))
-			{
-				return true;
-			}
-		}
+        foreach ($keys as $key) {
+            $changed = $strict
+                ? $this->get($key) !== $this->getOrigData($key)
+                : $this->get($key) != $this->getOrigData($key);
+
+            if ($changed) {
+                return true;
+            }
+        }
 
 		return false;
 	}
 
-	public function changedFields($exclude = [])
+	public function changedFields($exclude = [], $strict = false)
 	{
 		$keys = array_merge(
 			[$this->getIdFieldName()],
@@ -1089,28 +1085,26 @@ class diModel implements \ArrayAccess
 
 		$changedKeys = [];
 
-		foreach ($keys as $key)
-		{
-			// todo:             !==
-			if ($this->get($key) != $this->getOrigData($key) && !in_array($key, $exclude))
-			{
-				$changedKeys[] = $key;
-			}
-		}
+        foreach ($keys as $key) {
+            $changed = $strict
+                ? $this->get($key) !== $this->getOrigData($key)
+                : $this->get($key) != $this->getOrigData($key);
+
+            if ($changed && !in_array($key, $exclude)) {
+                $changedKeys[] = $key;
+            }
+        }
 
 		return $changedKeys;
 	}
 
 	public static function normalizeLang($lang = null, $field = null)
 	{
-		if ($lang === null)
-		{
-			$lang = static::__getLanguage();
-		}
-		elseif (is_object($lang) && $lang instanceof CMS)
-		{
-			$lang = $lang->getLanguage();
-		}
+        if ($lang === null) {
+            $lang = static::__getLanguage();
+        } elseif (is_object($lang) && $lang instanceof CMS) {
+            $lang = $lang->getLanguage();
+        }
 
 		return $lang;
 	}
@@ -1623,16 +1617,13 @@ class diModel implements \ArrayAccess
 	{
 		$ar = $this->getRawDataForDb();
 
-		foreach ($ar as $k => &$v)
-		{
-			$v = $this->getDb()->escape_string($v);
-		}
-
-		if ($this->fieldsOnSaveCallback) {
-		    $cb = $this->fieldsOnSaveCallback;
-
-		    $ar = $cb($ar);
+        foreach ($ar as $k => &$v) {
+            if (is_scalar($v)) {
+                $v = $this->getDb()->escape_string($v);
+            }
         }
+
+        $ar = $this->processFieldsOnSave($ar);
 
 		return $ar;
 	}
@@ -2177,6 +2168,16 @@ class diModel implements \ArrayAccess
         return $this;
     }
 
+    public function processFieldsOnSave($ar)
+    {
+        if ($this->fieldsOnSaveCallback) {
+            $cb = $this->fieldsOnSaveCallback;
+
+            $ar = $cb($ar);
+        }
+
+        return $ar;
+    }
 
 	public function getAppearanceFeedForAdmin()
 	{

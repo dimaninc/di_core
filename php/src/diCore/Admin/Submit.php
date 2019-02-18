@@ -554,12 +554,15 @@ class Submit
                         $dynamicPicsFields[] = $f;
                     } elseif ($v['type'] == 'dynamic') {
                         $dynamicFields[] = $f;
-                    } else {
+                    }
+                    /*
+                    else {
                         //$dbAr[$f] = StringHelper::in($this->getData($f));
 
                         $this->getModel()
                             ->set($f, $this->getData($f));
                     }
+                    */
 				}
 			}
 

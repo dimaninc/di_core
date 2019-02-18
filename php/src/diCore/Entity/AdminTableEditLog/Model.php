@@ -190,7 +190,7 @@ class Model extends \diModel
 		$fields = $model->changedFields(['id']);
 		$old = $new = [];
 
-		foreach ($fields as $field)
+        foreach ($fields as $field)
 		{
 			if ($this->isFieldSkipped($field))
 			{
@@ -200,6 +200,9 @@ class Model extends \diModel
 			$old[$field] = $model->getOrigData($field);
 			$new[$field] = $model->get($field);
 		}
+
+		$old = $model->processFieldsOnSave($old);
+        $new = $model->processFieldsOnSave($new);
 
 		if ($old && $new)
 		{
