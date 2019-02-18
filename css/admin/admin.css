@@ -1778,12 +1778,7 @@ body[data-skin="entrine"] .diadminform-row[data-purpose="notes"] .title {
 }
 .diadminform-row[data-type="pic"] .value,
 .diadminform-row[data-type="file"] .value {
-  -webkit-box-lines: multiple;
-  -moz-box-lines: multiple;
-  -o-box-lines: multiple;
-  -webkit-flex-wrap: wrap;
-  -ms-flex-wrap: wrap;
-  flex-wrap: wrap;
+  display: block;
 }
 @media screen and (max-width: 767px) {
   body[data-skin="entrine"] .diadminform-row .value {
