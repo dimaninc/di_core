@@ -1192,6 +1192,9 @@ class diModel implements \ArrayAccess
 			}
 		}
 
+		$this
+            ->checkOrigId();
+
 		return $this;
 	}
 
@@ -1960,6 +1963,18 @@ class diModel implements \ArrayAccess
 
 		return $this;
 	}
+
+    protected function checkOrigId()
+    {
+        if (isset($this->origData[static::getIdFieldName()]))
+        {
+            $this->origId = $this->origData[static::getIdFieldName()];
+
+            $this->killOrig(static::getIdFieldName());
+        }
+
+        return $this;
+    }
 
 	/**
 	 * Returns query conditions array for order_num calculating
