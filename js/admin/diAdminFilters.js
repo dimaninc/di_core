@@ -21,7 +21,7 @@ var diAdminFilters = function(_opts) {
 	    }
 
 	    baseUri = kill_uri_params(window.location.href, opts.fields);
-	    uriGlue = baseUri.indexOf('?') == -1 ? '?' : '&';
+	    uriGlue = baseUri.indexOf('?') === -1 ? '?' : '&';
 
 	    e.$form.submit(function() {
             return apply();
@@ -38,9 +38,9 @@ var diAdminFilters = function(_opts) {
 		$('[data-purpose="reset-filter"]').on('click', function() {
 			var $this = $(this),
 				field = $this.data('field'),
-				$input = e.$form.find('input[name="{0}"]'.format(field));
+				$input = e.$form.find('input,select,textarea').filter('[name="{0}"],[name="admin_filter\\[{0}\\]"]'.format(field));
 
-			if ($input.val()) {
+			if ($input.val() && $input.val() !== '0') {
 				$input.val('');
 
 				apply();

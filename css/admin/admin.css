@@ -2806,6 +2806,12 @@ ul.admin-grid > li img {
   border-bottom: 1px solid #ccc;
   margin-bottom: 20px;
 }
+@media screen and (max-width: 767px) {
+  .filter-block {
+    padding-left: 12px;
+    padding-right: 5px;
+  }
+}
 .filter-block .buttons {
   padding: 10px 0 0 0;
 }
@@ -2813,24 +2819,50 @@ ul.admin-grid > li img {
   vertical-align: top;
 }
 .filter-block .row {
-  padding: 0 0 7px 0;
-  margin: 0;
-  zoom: 1;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: box;
+  display: flex;
+  padding-bottom: 7px;
 }
-.filter-block .row:after {
-  content: '';
-  display: block;
-  height: 0;
-  line-height: 0;
-  font-size: 0;
-  clear: both;
+@media screen and (max-width: 767px) {
+  .filter-block .row {
+    -webkit-box-lines: multiple;
+    -moz-box-lines: multiple;
+    -o-box-lines: multiple;
+    -webkit-flex-wrap: wrap;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+  }
 }
 .filter-block .row > b {
   display: block;
-  float: left;
   padding-top: 5px;
   width: 150px;
   font-weight: normal;
+}
+@media screen and (max-width: 767px) {
+  .filter-block .row > b {
+    width: 100%;
+    font-weight: bold;
+  }
+}
+.filter-block .row select + select {
+  margin-left: 10px;
+}
+@media screen and (max-width: 767px) {
+  .filter-block .row input {
+    -webkit-box-flex: 1;
+    -moz-box-flex: 1;
+    -o-box-flex: 1;
+    box-flex: 1;
+    -webkit-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+    min-width: 0;
+  }
 }
 .filter-block button[name="export"] {
   margin-left: 30px;
@@ -2840,24 +2872,47 @@ ul.admin-grid > li img {
   cursor: pointer;
   position: relative;
   margin-left: 10px;
-}
-.filter-block [data-purpose="reset-filter"]:after {
-  content: 'X';
-  display: inline-block;
   border-radius: 50%;
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  -o-box-flex: 1;
+  box-flex: 1;
+  -webkit-flex: 0 1 auto;
+  -ms-flex: 0 1 auto;
+  flex: 0 1 auto;
+  width: 20px;
+  height: 20px;
   background-color: #bbb;
   -webkit-transition: background-color 0.5s ease;
   -moz-transition: background-color 0.5s ease;
   -o-transition: background-color 0.5s ease;
   -ms-transition: background-color 0.5s ease;
   transition: background-color 0.5s ease;
-  color: #fff;
-  width: 21px;
-  line-height: 21px;
-  text-align: center;
 }
-.filter-block [data-purpose="reset-filter"]:hover:after {
+@media screen and (max-width: 767px) {
+  .filter-block [data-purpose="reset-filter"] {
+    margin-left: 5px;
+  }
+}
+.filter-block [data-purpose="reset-filter"]:hover {
   background-color: #777;
+}
+.filter-block [data-purpose="reset-filter"]:after {
+  content: '+';
+  position: absolute;
+  display: inline-block;
+  color: #fff;
+  -webkit-transform: rotate(45deg);
+  -moz-transform: rotate(45deg);
+  -o-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  text-align: center;
+  line-height: 20px;
 }
 .filter-block .upload-area {
   display: inline-block;

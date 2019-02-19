@@ -65,12 +65,14 @@ class diAdminFilters
 
 	public static $lngStrings = [
 		'en' => [
+		    'form.caption' => 'Sort by',
 			'form.submit.title' => 'Apply filter',
 			'form.reset.title' => 'Reset',
             'calendar' => 'Calendar',
 		],
 
 		'ru' => [
+            'form.caption' => 'Сортировать',
 			'form.submit.title' => 'Применить фильтр',
 			'form.reset.title' => 'Сбросить',
             'calendar' => 'Календарь',
@@ -136,15 +138,16 @@ class diAdminFilters
 
 		$this->db = $db;
 
-		$this->applied_date = isset($_COOKIE["admin_filter_applied"][$this->table]) ? (int)$_COOKIE["admin_filter_applied"][$this->table] : false;
+		$this->applied_date = isset($_COOKIE["admin_filter_applied"][$this->table])
+            ? (int)$_COOKIE["admin_filter_applied"][$this->table]
+            : false;
 
-		$this->possible_sortby_ar = is_string($possible_sortby_ar) ? explode(",", $possible_sortby_ar) : $possible_sortby_ar;
+		$this->possible_sortby_ar = is_string($possible_sortby_ar)
+            ? explode(",", $possible_sortby_ar)
+            : $possible_sortby_ar;
 		$this->set_default_sorter($sortby, $dir);
 
-		if (!empty($_GET["__diaf_reset"]))
-		{
-			$this->reset = true;
-		}
+        $this->reset = !!\diRequest::get("__diaf_reset");
 	}
 
 	public function setSortableState($state)
@@ -213,10 +216,8 @@ class diAdminFilters
 	{
 		$this->inputs_ar[$field] = $input;
 
-		if (gettype($input) == "object" && get_class($input) == "diSelect")
+		if (gettype($input) == "object" && $input instanceof \diSelect)
 		{
-			/** @var $input diSelect */
-
 			// setting clean name for 'get' submit
 			if (strpos($input->getAttr("name"), "admin_filter[") === 0)
 			{
@@ -266,19 +267,17 @@ class diAdminFilters
 
 	public function getBlockHtml()
 	{
-		if ($this->getInput("sortby"))
-		{
-			$sorterBlock = $this->getRowHtml($this->getFieldHtml("Сортировать", $this->getInput("sortby")." ".$this->getInput("dir")));
+        if ($this->getInput("sortby")) {
+            $sorterBlock = $this->getRowHtml($this->getFieldHtml($this->L('form.caption'),
+                $this->getInput("sortby") . " " . $this->getInput("dir"))
+            );
 
-			if ($this->getNote("sortby"))
-			{
-				$sorterBlock .= $this->getRowHtml($this->getNote("sortby"));
-			}
-		}
-		else
-		{
-			$sorterBlock = "";
-		}
+            if ($this->getNote("sortby")) {
+                $sorterBlock .= $this->getRowHtml($this->getNote("sortby"));
+            }
+        } else {
+            $sorterBlock = "";
+        }
 
 		$filterRowsAr = [];
 
@@ -540,7 +539,7 @@ EOF;
 				? is_array($_COOKIE["admin_filter"][$this->table][$a["field"]]) ? $_COOKIE["admin_filter"][$this->table][$a["field"]] : urldecode($_COOKIE["admin_filter"][$this->table][$a["field"]])
 				: $this->getPredefinedData($a["field"]);
 
-			$value = diRequest::get($a["field"], $value);
+			$value = \diRequest::get($a["field"], $value);
 
 			$value = isset($_GET["admin_filter"][$a["field"]])
 				? $_GET["admin_filter"][$a["field"]]
@@ -873,13 +872,12 @@ EOF;
 			$sel->addItemArray($suffix_ar);
 		}
 
-		$this->setInput($field, $sel);
+		$this->setInput($field, $sel . $this->getResetButton($field));
 
 		$this->values_ar[$field] = $sel->getSimpleItemsAr();
 
 		return $this;
 	}
-
 
 	public function setSelectFromCollectionInput($field, diCollection $collection, $format = null, $prefixAr = [], $suffixAr = [])
 	{
@@ -913,7 +911,7 @@ EOF;
 			$sel->addItemArray($suffixAr);
 		}
 
-		$this->setInput($field, $sel);
+		$this->setInput($field, $sel . $this->getResetButton($field));
 
 		return $this;
 	}
@@ -978,7 +976,9 @@ EOF;
 			}
 		}
 
-		$this->setInput($field, $sel);
+		$resetNeeded = !in_array($field, ['sortby', 'dir']);
+
+		$this->setInput($field, $sel . ($resetNeeded ? $this->getResetButton($field) : ''));
 
 		$this->values_ar[$field] = $sel->getSimpleItemsAr();
 
@@ -1015,7 +1015,7 @@ EOF;
 			$sel->addItemArray($suffix_ar);
 		}
 
-		$this->setInput($field, $sel);
+		$this->setInput($field, $sel . $this->getResetButton($field));
 
 		$this->values_ar[$field] = $sel->getSimpleItemsAr();
 

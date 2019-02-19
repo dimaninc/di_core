@@ -119,7 +119,31 @@ class Submit
                 $ar = ArrayHelper::filterByKey($ar, $this->_af);
 
                 foreach ($ar as $field => $value) {
-                    if ($this->isFlag($field, 'virtual') || $this->isFlag($field, 'untouchable')) {
+                    $type = $this->getFieldProperty($field, 'type');
+
+                    $skip = false;
+
+                    if (!$skip && in_array($type, [
+                            'separator',
+                            'dynamic_pics',
+                            'dynamic_files',
+                            'dynamic',
+                        ])) {
+                        $skip = true;
+                    }
+
+                    if ($this->getId() && !$skip && !$value && in_array($type, [
+                            'pic',
+                            'file',
+                        ])) {
+                        $skip = true;
+                    }
+
+                    if (!$skip && $this->isFlag($field, 'virtual') || $this->isFlag($field, 'untouchable')) {
+                        $skip = true;
+                    }
+
+                    if ($skip) {
                         unset($ar[$field]);
                     }
                 }
@@ -146,7 +170,7 @@ class Submit
 			{
 				if ($this->isFlag($k, 'preview'))
 				{
-					$this->redirect_href_ar['path'] = "{$this->table}_form";
+					$this->redirect_href_ar['path'] = $this->table . '_form';
 					$this->redirect_href_ar['id'] = $this->getId();
 					$this->redirect_href_ar["make_preview[$k]"] = 1;
 				}
@@ -461,6 +485,15 @@ class Submit
 					});
 					break;
 
+                case 'date_str':
+                case 'time_str':
+                case 'datetime_str':
+                    if (!$this->getModel()->has($f)) {
+                        $this->getModel()
+                            ->set($f, null);
+                    }
+                    break;
+
 				case 'float':
 					$this->processData($f, function($v) {
 						return floatval(StringHelper::fixFloatDot($v));
@@ -475,9 +508,9 @@ class Submit
 
 				case 'pic':
 				case 'file':
-					if (!$this->getData($f))
-					{
-						$this->setData($f, '');
+                    if (!$this->getModel()->has($f)) {
+						$this->getModel()
+                            ->set($f, '');
 					}
 					break;
 
@@ -522,152 +555,42 @@ class Submit
 
 	public function storeData()
 	{
-		//$dbAr = [];
 		$dynamicFields = [];
 		$dynamicPicsFields = [];
 
-		if ($this->getId())
-		{
-			foreach ($this->_all_fields as $f => $v)
-			{
-				if (
-					(in_array($v['type'], ['pic', 'file']) && !$this->getData($f)) ||
-					//(in_array($f, $this->_lf) && (!$this->data[$f] || $this->data[$f] == $v['default'])) ||
-					in_array($v['type'], ['separator']) ||
-					$this->isFlag($f, 'virtual') ||
-					$this->isFlag($f, 'untouchable')
-				) {
-					// just ignore
-				}
-				elseif (
-				    in_array($v['type'], ['date_str', 'time_str', 'datetime_str']) &&
-                    !$this->getData($f)
-                ) {
-					//$dbAr["*$f"] = 'NULL';
-
-					$this->getModel()
-						->set($f, null);
-				}
-				else
-				{
-                    if (in_array($v['type'], ['dynamic_pics', 'dynamic_files'])) {
-                        $dynamicPicsFields[] = $f;
-                    } elseif ($v['type'] == 'dynamic') {
-                        $dynamicFields[] = $f;
-                    }
-                    /*
-                    else {
-                        //$dbAr[$f] = StringHelper::in($this->getData($f));
-
-                        $this->getModel()
-                            ->set($f, $this->getData($f));
-                    }
-                    */
-				}
-			}
-
-            $this->getModel()
-                ->save();
-
-            /*
-            if ($this->getModel() instanceof MongoModel)
-            {
-                $this->getModel()
-                    ->save();
+        foreach ($this->_all_fields as $f => $v) {
+            if (in_array($v['type'], ['dynamic_pics', 'dynamic_files'])) {
+                $dynamicPicsFields[] = $f;
+            } elseif ($v['type'] == 'dynamic') {
+                $dynamicFields[] = $f;
             }
-            else
-            {
-                if (!$this->getDb()->update($this->table, $dbAr, $this->id))
-                {
-                    $this->getDb()->dierror();
-                }
+        }
+
+		$orig = $this->getModel()->getOrigWithId();
+
+        $this->getModel()
+            ->save()
+            ->setOrigData($orig);
+
+        if ($this->AdminPage) {
+            $this->AdminPage->setId($this->getId());
+        }
+
+        $this->set_redirect_param('id', $this->getId());
+
+        foreach ($dynamicPicsFields as $f) {
+            $this->store_dynamic_pics($f);
+        }
+
+        foreach ($dynamicFields as $f) {
+            $this->store_dynamic($f);
+        }
+
+        foreach ($this->_all_fields as $f => $v) {
+            if ($v['type'] == 'tags') {
+                $this->storeTags($f);
             }
-            */
-		}
-		else
-		{
-			foreach ($this->_all_fields as $f => $v)
-			{
-                if (
-                    $this->isFlag($f, 'virtual') || $this->isFlag($f, 'untouchable') ||
-                    in_array($v['type'], ['separator'])
-                ) {
-                    // just ignore
-                } elseif (
-                    in_array($v['type'], ['date_str', 'time_str', 'datetime_str']) &&
-                    !$this->getData($f)
-                ) {
-                    //$dbAr["*$f"] = 'NULL';
-
-                    $this->getModel()
-                        ->set($f, null);
-                } else {
-                    if (in_array($v['type'], ['dynamic_pics', 'dynamic_files'])) {
-                        $dynamicPicsFields[] = $f;
-                    } elseif ($v['type'] == 'dynamic') {
-                        $dynamicFields[] = $f;
-                    }
-                    /*
-                    else
-                    {
-                        //$dbAr[$f] = StringHelper::in($this->getData($f));
-
-                        $this->getModel()
-                            ->set($f, $this->getData($f));
-                    }
-                    */
-                }
-            }
-
-            $this->getModel()
-                ->save();
-
-            /*
-            if ($this->getModel() instanceof MongoModel)
-			{
-				$this->getModel()
-                    ->save();
-
-				$this->id = $this->getModel()->getId();
-			}
-			else
-			{
-				$this->id = $this->getDb()->insert($this->table, $dbAr);
-				if ($this->id === false)
-				{
-					$this->getDb()->dierror();
-				}
-
-				$this->getSubmittedModel()
-					->setId($this->id);
-			}
-            */
-
-			if ($this->AdminPage)
-			{
-				$this->AdminPage->setId($this->getId());
-			}
-
-			$this->set_redirect_param('id', $this->getId());
-		}
-
-		foreach ($dynamicPicsFields as $f)
-		{
-			$this->store_dynamic_pics($f);
-		}
-
-		foreach ($dynamicFields as $f)
-		{
-			$this->store_dynamic($f);
-		}
-
-		foreach ($this->_all_fields as $f => $v)
-		{
-			if ($v['type'] == 'tags')
-			{
-				$this->storeTags($f);
-			}
-		}
+        }
 
 		return $this->getId();
 	}

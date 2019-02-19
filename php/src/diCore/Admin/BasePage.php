@@ -1138,9 +1138,6 @@ abstract class BasePage
 	{
 		if ($this->reallySubmit() && $this->getSubmit()->isSubmit())
 		{
-            $this
-                ->addEditLogRecord();
-
 			$this->getSubmit()
                 ->storeData();
 		}
@@ -1151,7 +1148,7 @@ abstract class BasePage
 		}
 
 		$this
-			//->addEditLogRecord()
+			->addEditLogRecord()
 			->redirectAfterSubmit();
 	}
 

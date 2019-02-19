@@ -6,20 +6,32 @@
 	padding 0 0 20px 24px
 	border-bottom 1px solid #CCCCCC
 	margin-bottom 20px
+	@media screen and (max-width: 767px)
+		padding-left 12px
+		padding-right 5px
 	.buttons
 		padding 10px 0 0 0
 		> *
 			vertical-align top
 	.row
-		padding 0 0 7px 0
-		margin 0
-		clearing-after()
+		display flex
+		padding-bottom 7px
+		@media screen and (max-width: 767px)
+			flex-wrap wrap
 		> b
 			display block
-			float left
 			padding-top 5px
 			width 150px
 			font-weight normal
+			@media screen and (max-width: 767px)
+				width 100%
+				font-weight bold
+		select + select
+			margin-left 10px
+		input
+			@media screen and (max-width: 767px)
+				flex 1
+				min-width 0
 	button[name="export"]
 		margin-left 30px
 	[data-purpose="reset-filter"]
@@ -27,19 +39,28 @@
 		cursor pointer
 		position relative
 		margin-left 10px
-		&:after
-			content 'X'
-			display inline-block
-			border-radius 50%
-			background-color #bbb
-			transition background-color .5s ease
-			color white
-			width 21px
-			line-height 21px
-			text-align center
+		border-radius 50%
+		flex 0 1 auto
+		width 20px
+		height @width
+		background-color #bbb
+		transition background-color .5s ease
+		@media screen and (max-width: 767px)
+			margin-left 5px
 		&:hover
-			&:after
-				background-color #777
+			background-color #777
+		&:after
+			content '+'
+			position absolute
+			display inline-block
+			color white
+			transform rotate(45deg)
+			left 0
+			top 0
+			right 0
+			bottom 0
+			text-align center
+			line-height 20px
 	.upload-area
 		display inline-block
 		border-radius 8px
