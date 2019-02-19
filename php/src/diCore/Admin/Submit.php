@@ -123,7 +123,7 @@ class Submit
 
                     $skip = false;
 
-                    if (!$skip && in_array($type, [
+                    if (in_array($type, [
                             'separator',
                             'dynamic_pics',
                             'dynamic_files',
@@ -132,14 +132,14 @@ class Submit
                         $skip = true;
                     }
 
-                    if ($this->getId() && !$skip && !$value && in_array($type, [
+                    if ($this->getId() && !$value && in_array($type, [
                             'pic',
                             'file',
                         ])) {
                         $skip = true;
                     }
 
-                    if (!$skip && $this->isFlag($field, 'virtual') || $this->isFlag($field, 'untouchable')) {
+                    if ($this->isFlag($field, 'virtual') || $this->isFlag($field, 'untouchable')) {
                         $skip = true;
                     }
 
