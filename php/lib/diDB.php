@@ -245,8 +245,7 @@ abstract class diDB
 
 	public static function is_rs($rs)
 	{
-        //(is_object($rs) && method_exists($rs, "fetch_object"));
-		return is_resource($rs) || $rs instanceof \MySQLi;
+		return is_resource($rs) || (is_object($rs) && method_exists($rs, "fetch_object"));
 	}
 
 	public function getHost()
