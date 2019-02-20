@@ -16,7 +16,7 @@ use diCore\Traits\BasicCreate;
 class PhotosOfAlbum
 {
     use BasicCreate;
-    
+
 	protected static $table = 'photos';
 
 	public static function getFormFieldArray()
@@ -71,6 +71,10 @@ class PhotosOfAlbum
 					'type' => 'checkbox',
 					'default' => 1,
 				],
+                'top' => [
+                    'type' => 'checkbox',
+                    'default' => 1,
+                ],
 				'order_num' => [
 					'type' => 'int',
 					//'flags' => ['local'],
@@ -87,6 +91,7 @@ class PhotosOfAlbum
 			'template' => '<ul class="line">' .
 				'<li>Подпись: {TITLE}</li>' .
 				'<li>Отображать: {VISIBLE}</li>' .
+                '<li>Выделить: {TOP}</li>' .
 				'<li>Порядковый номер: {ORDER_NUM}</li>' .
 				'</ul><ul class="line">' .
 				'<li>Изображение: {PIC}</li>' .

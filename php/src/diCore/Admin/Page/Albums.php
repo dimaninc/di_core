@@ -222,7 +222,7 @@ class Albums extends \diCore\Admin\BasePage
                     'ru' => 'Дата создания',
                 ]),
 				'default' => '',
-				'flags' => ['static'],
+				'flags' => ['static', 'untouchable', 'initially_hidden'],
 			],
 
 			'photos_count' => [

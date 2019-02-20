@@ -27,6 +27,7 @@ use diCore\Helper\FileSystemHelper;
  * @method integer	getPicTnW
  * @method integer	getPicTnH
  * @method string	getVisible
+ * @method string	getTop
  * @method integer	getCommentsEnabled
  * @method string	getCommentsLastDate
  * @method integer	getCommentsCount
@@ -44,6 +45,7 @@ use diCore\Helper\FileSystemHelper;
  * @method bool hasPicTnW
  * @method bool hasPicTnH
  * @method bool hasVisible
+ * @method bool hasTop
  * @method bool hasCommentsEnabled
  * @method bool hasCommentsLastDate
  * @method bool hasCommentsCount
@@ -61,6 +63,7 @@ use diCore\Helper\FileSystemHelper;
  * @method Model setPicTnW($value)
  * @method Model setPicTnH($value)
  * @method Model setVisible($value)
+ * @method Model setTop($value)
  * @method Model setCommentsEnabled($value)
  * @method Model setCommentsLastDate($value)
  * @method Model setCommentsCount($value)
