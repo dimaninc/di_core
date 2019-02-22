@@ -46,19 +46,28 @@ class Localization extends \diCore\Admin\BasePage
 			->addFilter([
 				'field' => 'name',
 				'type' => 'string',
-				'title' => 'Токен',
+				'title' => [
+				    'ru' => 'Токен',
+                    'en' => 'Token',
+				],
 				'where_tpl' => 'diaf_substr',
 			])
 			->addFilter([
 				'field' => 'value',
 				'type' => 'string',
-				'title' => 'Рус.значение',
+				'title' => [
+				    'ru' => 'Рус.значение',
+                    'en' => 'Value',
+				],
 				'where_tpl' => 'diaf_substr',
 			])
 			->addFilter([
 				'field' => 'en_value',
 				'type' => 'string',
-				'title' => 'Eng.значение',
+				'title' => [
+				    'ru' => 'Eng.значение',
+                    'en' => 'Eng.value',
+				],
 				'where_tpl' => 'diaf_substr',
 			])
 			->buildQuery();

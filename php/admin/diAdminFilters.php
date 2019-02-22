@@ -257,6 +257,12 @@ class diAdminFilters
 
 	private function getFieldHtml($title, $input)
 	{
+	    if (is_array($title)) {
+	        $title = $title[$this->language];
+        } elseif (is_callable($title)) {
+	        $title = $title($this);
+        }
+
 		return "<b>$title:</b> $input";
 	}
 
