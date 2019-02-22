@@ -77,6 +77,7 @@ var diAdminForm = function(table, id, auto_save_timeout) {
             var $previewArea;
             var ext;
             var isPic;
+            var isSvg;
 
             var getPreviewArea = function() {
                 if (!$previewArea) {
@@ -93,6 +94,7 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 
                 ext = get_file_ext(this.value || '').toLowerCase();
                 isPic = in_array(ext, extensions.pic);
+                isSvg = ext === 'svg';
 
                 if (isPic) {
                     for (var i in this.files) {
@@ -104,14 +106,21 @@ var diAdminForm = function(table, id, auto_save_timeout) {
                             getPreviewArea()
                                 .append($row);
 
-                            (function($row, file) {
+                            (function($row, file, isSvg) {
                                 var reader = new FileReader();
 
                                 reader.onload = function(e) {
-                                    $row.find('img').attr('src', e.target.result);
+                                    var $img = $row.find('img');
+
+                                    $img.attr('src', e.target.result);
+                                    if (isSvg) {
+                                        $img.css({
+                                            width: '200px'
+                                        });
+                                    }
                                 };
                                 reader.readAsDataURL(file);
-                            })($row, this.files[i]);
+                            })($row, this.files[i], isSvg);
                         }
                     }
                 }
