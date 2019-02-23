@@ -11,6 +11,7 @@ namespace diCore\Admin\Page;
 use diCore\Data\Types;
 use diCore\Entity\Comment\Model;
 use diCore\Helper\ArrayHelper;
+use diCore\Tool\CollectionCache;
 
 class Comments extends \diCore\Admin\BasePage
 {
@@ -70,15 +71,20 @@ class Comments extends \diCore\Admin\BasePage
 			->setSelectFromArrayInput('target_type', $this->getUsedTargetTypesTitles(), [0 => 'Все типы']);
 	}
 
+    protected function cacheDataForList()
+    {
+        parent::cacheDataForList();
+
+        CollectionCache::addManual(Types::user, 'id', $this->getListCollection()->map('user_id'));
+
+        return $this;
+    }
+
 	public function renderList()
 	{
 		$this->getList()->addColumns([
 			'id' => 'ID',
-			'#href' => [
-				'href' => function (Model $m) {
-					return $m->getTargetModel()->getHref();
-				},
-			],
+			'#href' => [],
 			'target_id' => [
 				'headAttrs' => [
 					'width' => '30%',
@@ -106,7 +112,7 @@ class Comments extends \diCore\Admin\BasePage
 			'date' => [
 				'title' => 'Дата',
 				'value' => function (Model $m) {
-					return \diDateTime::format('d.m.Y H:i', strtotime($m->getDate()));
+					return \diDateTime::simpleFormat(strtotime($m->getDate()));
 				},
 				'headAttrs' => [
 					'width' => '10%',
@@ -223,7 +229,10 @@ class Comments extends \diCore\Admin\BasePage
 
 	public function getModuleCaption()
 	{
-		return 'Комментарии';
+		return [
+		    'ru' => 'Комментарии',
+            'en' => 'Comments',
+        ];
 	}
 
 	public function addButtonNeededInCaption()

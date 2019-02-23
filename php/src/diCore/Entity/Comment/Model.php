@@ -8,6 +8,7 @@
 namespace diCore\Entity\Comment;
 
 use diCore\Helper\StringHelper;
+use diCore\Tool\CollectionCache;
 
 /**
  * Class Model
@@ -208,10 +209,10 @@ class Model extends \diModel
 		{
 			if (!($this->user = $this->getRelated('user')))
 			{
-				$this->user = \diModel::create(
+				$this->user = CollectionCache::getModel(
 					$this->getUserType() == \diComments::utAdmin ? \diTypes::admin : \diTypes::user,
 					$this->getUserId(),
-					'id'
+					true
 				);
 			}
 		}
@@ -276,7 +277,7 @@ class Model extends \diModel
 		$user = $user ?: $this->getUserModel();
 		$typeSuffix = $this->getUserType() == \diComments::utAdmin ? ' (Admin)' : '';
 
-		return ($user->get('name') ?: $user->get('login') ?: $user->get('email')) . $typeSuffix;
+		return $user->getStringAppearanceForAdmin() . $typeSuffix;
 	}
 
 	public function getDescriptionForAdmin()
