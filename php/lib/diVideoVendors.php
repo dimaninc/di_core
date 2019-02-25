@@ -83,7 +83,7 @@ class diVideoVendors
 				$info = self::getVimeoData($videoUid);
 
 				return isset($info[0]["thumbnail_medium"])
-					? $info[0]["thumbnail_medium"]
+					? str_replace('http://', 'https://', $info[0]["thumbnail_medium"])
 					: null;
 
             case self::RuTube:

@@ -58,11 +58,21 @@ class Files extends \diBaseAdminController
 		];
 	}
 
+	private function getDefaultSubTableForDelDynamic()
+    {
+        return StringHelper::in($this->param(2));
+    }
+
+	protected function getSubTableForDelDynamic($table, $id)
+    {
+        return $this->getDefaultSubTableForDelDynamic();
+    }
+
 	public function delDynamicAction()
 	{
 		$table = StringHelper::in($this->param(0)); // todo: make a check if the model belongs to $table#$id
 		$id  = (int)$this->param(1);
-		$subTable = StringHelper::in($this->param(2));
+		$subTable = $this->getSubTableForDelDynamic($table, $id);
 		$field = StringHelper::in($this->param(3));
 		$subId  = (int)$this->param(4);
 
@@ -83,7 +93,8 @@ class Files extends \diBaseAdminController
 			'ok' => $ok,
 			'table' => $table,
 			'id' => $id,
-			'subTable' => $subTable,
+			'subTable' => $this->getDefaultSubTableForDelDynamic(),
+            'realSubTable' => $subTable,
 			'field' => $field,
 			'subId' => $subId,
 		];
