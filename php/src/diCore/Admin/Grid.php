@@ -197,7 +197,9 @@ class Grid
                     'allowed' => null,
                 ], $settings);
 
-                $options = [];
+                $options = [
+                    'language' => $this->getLanguage(),
+                ];
 
                 switch ($action)
                 {

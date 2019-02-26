@@ -41,13 +41,18 @@ class Videos extends \diCore\Admin\BasePage
 			->addFilter([
 				'field' => 'album_id',
 				'type' => 'int',
-				'title' => 'Альбом',
+				'title' => [
+				    'ru' => 'Альбом',
+                    'en' => 'Album',
+				],
 				'default_value' => static::FILTER_DEFAULT_ALBUM_ID,
 			])
 			->buildQuery()
 			->setSelectFromCollectionInput('album_id',
                 \diCollection::create(\diTypes::album)->orderByTitle(),
-                [0 => 'Все альбомы']
+                [
+                    0 => $this->getLanguage() == 'ru' ? 'Все альбомы' : 'All albums',
+                ]
             );
 	}
 
@@ -120,7 +125,6 @@ class Videos extends \diCore\Admin\BasePage
 				},
 			],
 			'date' => [
-				'title' => 'Дата',
 				'value' => function(Model $v) {
 					return \diDateTime::simpleFormat($v->getDate());
 				},
@@ -272,7 +276,10 @@ class Videos extends \diCore\Admin\BasePage
 	public function getFormTabs()
 	{
 		return [
-			'video' => 'Видео',
+			'video' => [
+			    'ru' => 'Видео',
+                'en' => 'Video',
+            ],
 		];
 	}
 
@@ -281,72 +288,105 @@ class Videos extends \diCore\Admin\BasePage
 		return [
 			'token' => [
 				'type' => 'string',
-				'title' => 'Токен',
+				'title' => $this->localized([
+				    'ru' => 'Токен',
+                    'en' => 'Token',
+				]),
 				'default' => '',
 				'flags' => ['static', 'virtual'],
 			],
 
 			'album_id' => [
 				'type' => 'int',
-				'title' => 'Альбом',
+				'title' => $this->localized([
+                    'ru' => 'Альбом',
+                    'en' => 'Album',
+                ]),
 				'default' => 0,
 			],
 
 			'title' => [
 				'type' => 'string',
-				'title' => 'Название',
+				'title' => $this->localized([
+                    'ru' => 'Название',
+                    'en' => 'Title',
+                ]),
 				'default' => '',
 			],
 
 			'slug_source' => [
 				'type' => 'string',
-				'title' => 'Название для URL',
+				'title' => $this->localized([
+                    'ru' => 'Название для URL',
+                    'en' => 'Slug source',
+                ]),
 				'default' => '',
 			],
 
 			'content' => [
 				'type' => 'wysiwyg',
-				'title' => 'Описание',
+				'title' => $this->localized([
+                    'ru' => 'Описание',
+                    'en' => 'Description',
+                ]),
 				'default' => '',
 			],
 
 			'vendor' => [
 				'type' => 'int',
-				'title' => 'Видео-хостинг',
+				'title' => $this->localized([
+                    'ru' => 'Видео-хостинг',
+                    'en' => 'Video-hosting',
+                ]),
 				'default' => 0,
 				'tab' => 'video',
 			],
 
 			'embed' => [
 				'type' => 'text',
-				'title' => 'EMBED-код видео',
+				'title' => $this->localized([
+                    'ru' => 'EMBED-код видео',
+                    'en' => 'Embed code for video',
+                ]),
 				'default' => '',
 				'tab' => 'video',
 			],
 
 			'vendor_video_uid' => [
 				'type' => 'string',
-				'title' => 'UID видео',
+				'title' => $this->localized([
+                    'ru' => 'UID видео',
+                    'en' => 'UID of video',
+                ]),
 				'default' => '',
 				'tab' => 'video',
 			],
 
 			'pic' => [
 				'type' => 'pic',
-				'title' => 'Превью',
+				'title' => $this->localized([
+                    'ru' => 'Превью',
+                    'en' => 'Preview',
+                ]),
 				'default' => '',
 			],
 
 			'vendor_pic' => [
 				'type' => 'string',
-				'title' => 'Превью с видео-хостинга',
+				'title' => $this->localized([
+                    'ru' => 'Превью с видео-хостинга',
+                    'en' => 'Preview from video-hosting',
+                ]),
 				'default' => '',
 				'flags' => ['virtual', 'static'],
 			],
 
 			'video_mp4' => [
 				'type' => 'file',
-				'title' => 'Видео в формате MP4',
+				'title' => $this->localized([
+                    'ru' => 'Видео в формате MP4',
+                    'en' => 'Video, MP4',
+                ]),
 				'default' => '',
 				'attrs' => ['accept' => '.mp4'],
 				'tab' => 'video',
@@ -354,7 +394,10 @@ class Videos extends \diCore\Admin\BasePage
 
 			'video_m4v' => [
 				'type' => 'file',
-				'title' => 'Видео в формате M4V',
+				'title' => $this->localized([
+                    'ru' => 'Видео в формате M4V',
+                    'en' => 'Video, M4V',
+                ]),
 				'default' => '',
 				'attrs' => ['accept' => '.m4v'],
 				'tab' => 'video',
@@ -362,7 +405,10 @@ class Videos extends \diCore\Admin\BasePage
 
 			'video_ogv' => [
 				'type' => 'file',
-				'title' => 'Видео в формате OGV',
+				'title' => $this->localized([
+                    'ru' => 'Видео в формате OGV',
+                    'en' => 'Video, OGV',
+                ]),
 				'default' => '',
 				'attrs' => ['accept' => '.ogv'],
 				'tab' => 'video',
@@ -370,7 +416,10 @@ class Videos extends \diCore\Admin\BasePage
 
 			'video_webm' => [
 				'type' => 'file',
-				'title' => 'Видео в формате WEBM',
+				'title' => $this->localized([
+                    'ru' => 'Видео в формате WEBM',
+                    'en' => 'Video, WEBM',
+                ]),
 				'default' => '',
 				'attrs' => ['accept' => '.webm'],
 				'tab' => 'video',
@@ -378,56 +427,80 @@ class Videos extends \diCore\Admin\BasePage
 
 			'video_w' => [
 				'type' => 'int',
-				'title' => 'Ширина видео, px',
+				'title' => $this->localized([
+                    'ru' => 'Ширина видео, px',
+                    'en' => 'Video width, px',
+                ]),
 				'default' => 0,
 				'tab' => 'video',
 			],
 
 			'video_h' => [
 				'type' => 'int',
-				'title' => 'Высота видео, px',
+				'title' => $this->localized([
+                    'ru' => 'Высота видео, px',
+                    'en' => 'Video height, px',
+                ]),
 				'default' => 0,
 				'tab' => 'video',
 			],
 
 			'visible' => [
 				'type' => 'checkbox',
-				'title' => 'Отображать на сайте',
+				'title' => $this->localized([
+                    'ru' => 'Отображать на сайте',
+                    'en' => 'Visible',
+                ]),
 				'default' => 1,
 			],
 
 			'date' => [
 				'type' => 'datetime_str',
-				'title' => 'Дата добавления',
+				'title' => $this->localized([
+                    'ru' => 'Дата добавления',
+                    'en' => 'Created at',
+                ]),
 				'default' => \diDateTime::sqlFormat(),
 				'flags' => ['static'],
 			],
 
 			'comments_enabled' => [
 				'type' => 'checkbox',
-				'title' => 'Разрешено комментировать',
+				'title' => $this->localized([
+                    'ru' => 'Разрешено комментировать',
+                    'en' => 'Comments enabled',
+                ]),
 				'default' => 1,
 			],
 
 			'comments_count' => [
 				'type' => 'int',
-				'title' => 'Кол-во комментариев',
+				'title' => $this->localized([
+                    'ru' => 'Кол-во комментариев',
+                    'en' => 'Comments count',
+                ]),
 				'default' => 0,
-				'flags' => ['static'],
+                'flags'		=> ['static', 'untouchable', 'initially_hidden'],
 			],
 
 			'comments_last_date' => [
 				'type' => 'datetime_str',
-				'title' => 'Дата последнего комментария',
-				'default' => '',
-				'flags' => ['static'],
+				'title' => $this->localized([
+                    'ru' => 'Дата последнего комментария',
+                    'en' => 'Last comment date',
+                ]),
+				'default' => null,
+                'flags'		=> ['static', 'untouchable', 'initially_hidden'],
 			],
 
 			'views_count' => [
 				'type' => 'int',
-				'title' => 'Кол-во просмотров',
+				'title' => $this->localized([
+                    'ru' => 'Кол-во просмотров',
+                    'en' => 'Views count',
+                ]),
 				'default' => 0,
-				'flags' => ['static'],
+                'flags'		=> ['static', 'untouchable', 'initially_hidden'],
 			],
 		];
 	}

@@ -117,19 +117,34 @@ class diSelect
 
 	public function getAttr($name)
 	{
-		return isset($this->attrsAr[$name]) ? $this->attrsAr[$name] : null;
+		return isset($this->attrsAr[$name])
+            ? $this->attrsAr[$name]
+            : null;
 	}
 
-	public function addItem($value, $text, $attrsAr = [])
+	public function addItem($value, $text, $attrsAr = [], $index = null)
 	{
-		$this->itemsAr[] = [
-			"value" => trim($value),
-			"text" => trim($text),
-			"attrs" => $attrsAr,
-		];
+	    $ar = [
+            "value" => trim($value),
+            "text" => trim($text),
+            "attrs" => $attrsAr,
+        ];
+
+	    if ($index !== null) {
+	        $this->itemsAr[$index] = $ar;
+        } else {
+	        $this->itemsAr[] = $ar;
+        }
 
 		return $this;
 	}
+
+	public function replaceItem($value, $text, $attrsAr = [])
+    {
+        $key = array_search($value, array_column($this->itemsAr, 'value'));
+
+        return $this->addItem($value, $text, $attrsAr, $key !== false ? $key : null);
+    }
 
 	public function addItemsFromDB($db_rs, $prefix_ar = [], $suffix_ar = [], $template_text = "%title%", $template_value = "%id%")
 	{

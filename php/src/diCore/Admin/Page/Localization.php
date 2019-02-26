@@ -163,13 +163,19 @@ class Localization extends \diCore\Admin\BasePage
 		return [
 			'name' => [
 				'type' => 'string',
-				'title' => 'Токен',
+				'title' => $this->localized([
+                    'ru' => 'Токен',
+                    'en' => 'Token',
+                ]),
 				'default' => '',
 			],
 
 			'value' => [
 				'type' => 'text',
-				'title' => 'Значение (RUS)',
+				'title' => $this->localized([
+                    'ru' => 'Значение (RUS)',
+                    'en' => 'Value (Rus)',
+                ]),
 				'default' => '',
 				'options' => [
 					'rows' => 3,
@@ -178,7 +184,10 @@ class Localization extends \diCore\Admin\BasePage
 
 			'en_value' => [
 				'type' => 'text',
-				'title' => 'Значение (ENG)',
+				'title' => $this->localized([
+                    'ru' => 'Значение (ENG)',
+                    'en' => 'Value (Eng)',
+                ]),
 				'default' => '',
 				'options' => [
 					'rows' => 3,
@@ -194,7 +203,10 @@ class Localization extends \diCore\Admin\BasePage
 
 	public function getModuleCaption()
 	{
-		return 'Локализация';
+		return [
+		    'ru' => 'Локализация',
+            'en' => 'Localization',
+        ];
 	}
 
 	public function useEditLog()

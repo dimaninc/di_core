@@ -705,50 +705,52 @@ EOF;
 		}
 		else
 		{
-			$formTabs = isset($GLOBALS["tables_tabs_ar"][$this->table]) ? $GLOBALS["tables_tabs_ar"][$this->table] : array();
-		}
+			$formTabs = isset($GLOBALS['tables_tabs_ar'][$this->table])
+                ? $GLOBALS['tables_tabs_ar'][$this->table]
+                : [];
+        }
 
-		$tabsExist = !!$formTabs;
+        $tabsExist = !!$formTabs;
 
 		if ($tabsExist)
 		{
-			if (!isset($formTabs["general"]))
+			if (!isset($formTabs['general']))
 			{
 				$formTabs = array_merge([
-					"general" => $this->L("tab_general"),
+					'general' => $this->L('tab_general'),
 				], $formTabs);
 			}
 		}
 
 		$tabs = [];
-		$notesStarsCounter = "";
+		$notesStarsCounter = '';
 
 		foreach ($this->getAllFields() as $field => $v)
 		{
-			$html = "";
+			$html = '';
 			unset($input);
 
-			if (empty($v["tab"]) || empty($formTabs[$v["tab"]]))
+			if (empty($v['tab']) || empty($formTabs[$v['tab']]))
 			{
-				$v["tab"] = "general";
+				$v['tab'] = 'general';
 			}
 
-			if (!isset($tabs[$v["tab"]]))
+			if (!isset($tabs[$v['tab']]))
 			{
-				$tabs[$v["tab"]] = "";
+				$tabs[$v['tab']] = '';
 			}
 
 			if ($v['type'] == 'separator')
 			{
 				$html .= $this->getSeparatorRow();
-				$tabs[$v["tab"]] .= $html;
+				$tabs[$v['tab']] .= $html;
 
 				continue;
 			}
 
-			if ($v["type"] == "password" && ($this->static_mode || $this->isFlag($v, "static")))
+			if ($v['type'] == 'password' && ($this->static_mode || $this->isFlag($v, 'static')))
 			{
-				$v["flags"][] = "hidden";
+				$v['flags'][] = 'hidden';
 			}
 
 			if (
@@ -756,43 +758,43 @@ EOF;
                 in_array($field, array_keys($this->force_inputs_fields))
                )
 			{
-				if (!$this->hasInputAttribute($field, "size") && in_array($v["type"], self::$numericTypes))
+				if (!$this->hasInputAttribute($field, 'size') && in_array($v['type'], self::$numericTypes))
 				{
-					$this->setInputAttribute($field, ["size" => 15]);
+					$this->setInputAttribute($field, ['size' => 15]);
 				}
-				elseif (in_array($v["type"], self::$stringTypes))
+				elseif (in_array($v['type'], self::$stringTypes))
 				{
-					if (!$this->hasInputAttribute($field, "style"))
+					if (!$this->hasInputAttribute($field, 'style'))
 					{
-						$this->setInputAttribute($field, ["style" => "width: 100%;"]);
+						$this->setInputAttribute($field, ['style' => 'width: 100%;']);
 					}
 
-					if ($v["type"] == "email")
+					if ($v['type'] == 'email')
 					{
-						$this->setInputAttribute($field, ["type" => "email"]);
+						$this->setInputAttribute($field, ['type' => 'email']);
 					}
 
-					if ($v["type"] == "tel")
+					if ($v['type'] == 'tel')
 					{
-						$this->setInputAttribute($field, ["type" => "tel"]);
+						$this->setInputAttribute($field, ['type' => 'tel']);
 					}
 
-					if ($v["type"] == "url")
+					if ($v['type'] == 'url')
 					{
-						$this->setInputAttribute($field, ["type" => "url"]);
+						$this->setInputAttribute($field, ['type' => 'url']);
 					}
 				}
-				elseif ($v["type"] == "password")
+				elseif ($v['type'] == 'password')
 				{
 					$this->setInputAttribute($field, [
-						"value" => "",
-						"type" => "password",
-						"onkeyup" => "admin_form_{$this->table}_{$this->id}.check_password('$field');",
-						"style" => "width: 300px;",
+						'value' => '',
+						'type' => 'password',
+						'onkeyup' => "admin_form_{$this->table}_{$this->id}.check_password('$field');",
+						'style' => 'width: 300px;',
 					]);
 				}
 
-				if ($this->isFlag($v, "static") || $this->static_mode)
+				if ($this->isFlag($v, 'static') || $this->static_mode)
 				{
 					if (isset($this->inputs[$field])) // already set, we'll leave it alone
 					{
@@ -1110,6 +1112,11 @@ EOF;
 			{
 				if (!empty($tabs[$field]))
 				{
+				    // multilingual support
+				    if (is_array($v)) {
+				        $v = $v[$this->getX()->getLanguage()];
+                    }
+
 					$tab_head_ar[] = "<li data-tab='{$field}'><a data-tab=\"{$field}\" href=\"{$_SERVER["REQUEST_URI"]}#$field\"><div>$v</div></a></li>";
 				}
 			}

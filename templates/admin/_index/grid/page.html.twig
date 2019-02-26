@@ -9,7 +9,7 @@
 		{% block title %}
 			<div class="title">
 				{% block title_prefix %}{% endblock %}
-				{{ row['title'] }}
+                {% block title_element %}{{ row['title'] }}{% endblock %}
 				{% block title_suffix %}{% endblock %}
 			</div>
 		{% endblock %}
