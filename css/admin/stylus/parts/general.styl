@@ -272,7 +272,7 @@ u
                 height $entrineBaseHeight
                 background-color $entrineColorBgLightGray
                 border-bottom 0
-                padding 0 0 0 65px
+                padding 0 0 0 35px
                 margin-bottom 20px
                 @media screen and (max-width: 767px)
                     padding-left 12px
@@ -467,11 +467,12 @@ u
         position absolute
         text-align center
         width 200px
-        height $entrineBaseHeight
+        height $classicBaseHeight
         box-sizing border-box
         body[data-skin="entrine"] &
             font-family $entrineFont
             width $entrineMenuWidth
+            height $entrineBaseHeight
             background $entrineColorBgDarker
             text-align left
             padding-left 27px
@@ -492,12 +493,13 @@ u
             display block
             color white
             font-size 30px
-            line-height $entrineBaseHeight
+            line-height $classicBaseHeight
             font-weight normal
             body[data-skin="entrine"] &
                 font-weight bold
                 font-size 16px
                 color white
+                line-height $entrineBaseHeight
             @media screen and (max-width: 450px)
                 font-size 14px
                 line-height 30px
@@ -517,19 +519,21 @@ u
     > .site-title
         background #333
         color white
-        height $entrineBaseHeight
-        line-height @height
+        height $classicBaseHeight
+        line-height $classicBaseHeight
         font-size 24px
         font-family Arial, Helvetica, sans-serif
         margin 0 282px 0 200px
         padding-left 20px
         padding-right 10px
         body[data-skin="entrine"] &
+            height $entrineBaseHeight
+            line-height $entrineBaseHeight
             font-family $entrineFont
             background $entrineColorBgDark
             font-size 20px
             font-weight 400
-            padding-left 65px
+            padding-left 35px
             margin-left $entrineMenuWidth
             margin-right $entrineMenuWidth * 3
             ellipsis()
@@ -810,13 +814,19 @@ table.banners_stat td.sel, table.banners_stat th.sel
         cursor pointer
         box-sizing border-box
         transition .3s
+        > svg
+            path
+                transition .3s
         @media screen and (max-width: 767px)
             &:not(:last-of-type)
                 margin-right 0
         &:hover
             background-color #A1DFFF
         body[data-skin="entrine"] &
-            width $entrineMenuWidth
+            display inline-flex
+            justify-content space-between
+            align-items center
+            width $entrineBaseWidth
             height $entrineBaseHeight
             text-transform uppercase
             text-align left
@@ -834,7 +844,7 @@ table.banners_stat td.sel, table.banners_stat th.sel
                 font-size 12px
                 text-transform none
             > svg
-                float right
+                order 10
                 @media screen and (max-width: 767px)
                     display none
             &:last-child
@@ -846,6 +856,32 @@ table.banners_stat td.sel, table.banners_stat th.sel
                 > svg
                     path
                         fill white
+            &[id]:hover
+                > svg
+                    path
+                        fill white
+            &[id="btn-save"]
+                border-color $entrineColorSave
+                > svg
+                    path
+                        fill $entrineColorSave
+                &:hover
+                    background-color $entrineColorSave
+            &[id="btn-cancel"]
+                border-color $entrineColorCancel
+                > svg
+                    path
+                        fill $entrineColorCancel
+                &:hover
+                    background-color $entrineColorCancel
+            &[id="btn-quick-save"]
+                border-color $entrineColorQuickSave
+                > svg
+                    path
+                        fill $entrineColorQuickSave
+                &:hover
+                    background-color $entrineColorQuickSave
+
     .submit-status-line
         font-size 11px
         line-height @font-size
@@ -884,9 +920,10 @@ table.banners_stat td.sel, table.banners_stat th.sel
         background #A1DFFF
 
 .list-control-panel
-    padding 10px
-    border-radius 10px
-    background-color  #D4D0C8
+    display flex
+    padding 8px
+    border-radius 8px
+    background-color #D4D0C8
     margin 0 24px 20px 24px
     min-height 22px
     body[data-skin="entrine"] &
@@ -914,13 +951,13 @@ table.banners_stat td.sel, table.banners_stat th.sel
             font-size 14px
             font-weight bold
     .toggle-all
-        float left
-        padding-right 50px
+        padding-right 40px
         line-height 22px
+        display flex
         input[type="checkbox"]
             position relative
             top 2px
-            margin-right 5px
+            margin-right 8px
         label
             cursor pointer
     .notes
@@ -972,22 +1009,32 @@ iframe
     width 200px
 
 .navy
+    margin 0 24px
     text-align center
-    a
-        background white
-        &:hover
-            background #eee
-            border 1px solid #aaa
-
-.navy
+    body[data-skin="entrine"] &
+        text-align left
     a
     b
     span
         display inline-block
         padding 3px 8px
         font-size 12px
-        margin 0 5px
+        margin 0 5px 5px 0
         border 1px dotted #aaa
+        body[data-skin="entrine"] &
+            border 0
+            padding 10px 15px
+            background #f9f9f9
+            margin 0 15px 5px 0
+    a
+        background white
+        &:hover
+            background #eee
+            border 1px solid #aaa
+        body[data-skin="entrine"] &
+            background #eee
+            &:hover
+                background #ddd
 
 .cb_level_any
     margin 5px 5px 5px 0

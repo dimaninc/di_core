@@ -41,7 +41,7 @@ class diAdminList
             'copy' => 'Copy',
             'move' => 'Move',
             'delete' => 'Delete',
-            'toggle_all' => 'Select/deselect all',
+            'toggle_all' => 'Toggle all',
             'notes_about_children' => 'Warning: if selected row has subrows, all actions will be applied to them as well',
         ],
 
