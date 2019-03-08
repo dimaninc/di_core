@@ -406,6 +406,11 @@ class Submit
 					$this->setData($f, \diRequest::post($f) ? 1 : 0);
 					break;
 
+                case 'checkboxes':
+                    $saver = $this->getFieldProperty($f, 'saverBeforeSubmit') ?: [self::class, 'checkboxesSaver'];
+                    $saver($this, $f);
+                    break;
+
                 case 'file':
                 case 'pic':
 				case 'separator':
@@ -587,8 +592,17 @@ class Submit
         }
 
         foreach ($this->_all_fields as $f => $v) {
-            if ($v['type'] == 'tags') {
-                $this->storeTags($f);
+            switch ($v['type']) {
+                case 'checkboxes':
+                    $saver = $this->getFieldProperty($f, 'saverAfterSubmit');
+                    if ($saver) {
+                        $saver($this, $f);
+                    }
+                    break;
+
+                case 'tags':
+                    $this->storeTags($f);
+                    break;
             }
         }
 
@@ -1748,6 +1762,19 @@ class Submit
 			}
 		}
 	}
+
+    public static function checkboxesSaver(Submit $Submit, $field)
+    {
+        $sep = $Submit->getFieldOption($field, 'separator') ?: ',';
+        $value = join($sep, \diRequest::post($field, []));
+
+        if ($value && $Submit->getFieldOption($field, 'externalSeparators'))
+        {
+            $value = $sep . $value . $sep;
+        }
+
+        $Submit->setData($field, $value);
+    }
 }
 
 /* @deprecated */

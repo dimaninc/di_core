@@ -27,8 +27,8 @@ body {
 }
 body[data-skin="entrine"] {
   font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
-  background: #374254;
-  color: #fff;
+  background: #fff;
+  color: #374254;
 }
 form {
   margin: 0;
@@ -40,12 +40,32 @@ a {
 a:hover {
   text-decoration: none;
 }
+body[data-skin="entrine"] .login-form-wrapper {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  margin: 50px auto;
+  padding: 120px 20px;
+  width: 500px;
+  -webkit-box-shadow: 0 2px 39px 6px rgba(0,0,0,0.09);
+  box-shadow: 0 2px 39px 6px rgba(0,0,0,0.09);
+}
+@media screen and (max-width: 767px) {
+  body[data-skin="entrine"] .login-form-wrapper {
+    width: auto;
+    margin: 0;
+    padding: 20px;
+    -webkit-box-shadow: none;
+    box-shadow: none;
+  }
+}
 .logo {
   font-size: 50px;
   line-height: 100px;
   text-align: center;
 }
 body[data-skin="entrine"] .logo {
+  display: none;
   font-size: 16px;
   line-height: 60px;
 }
@@ -75,6 +95,7 @@ body[data-skin="entrine"] .logo b {
 }
 body[data-skin="entrine"] .site-title {
   display: block;
+  line-height: 30px;
 }
 .description {
   text-align: center;
@@ -82,7 +103,7 @@ body[data-skin="entrine"] .site-title {
 }
 body[data-skin="entrine"] .description {
   font-size: 16px;
-  line-height: 40px;
+  line-height: 30px;
 }
 .login-form {
   position: relative;
@@ -149,7 +170,7 @@ body[data-skin="entrine"] .login-form input[type="text"],
 body[data-skin="entrine"] .login-form input[type="email"],
 body[data-skin="entrine"] .login-form input[type="password"] {
   font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
-  border: 1px solid #fff;
+  border: 1px solid #d3d3d3;
   border-radius: 3px;
   height: 48px;
   color: #fff;
@@ -180,15 +201,23 @@ body[data-skin="entrine"] .login-form input[type="password"] {
 }
 body[data-skin="entrine"] .login-form button {
   background-color: #5ab5df;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg height=%2215%22 viewBox=%220 0 18 15%22 width=%2218%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cpath d=%22m10.5 12.75v-.06225c-.8835.51375-1.9065.81225-3 .81225-3.30825 0-6-2.69175-6-6s2.69175-6 6-6c1.0935 0 2.1165.2985 3 .81225v-1.68375c-.9195-.402-1.932-.6285-3-.6285-4.1415 0-7.5 3.35775-7.5 7.5s3.3585 7.5 7.5 7.5c1.068 0 2.0805-.2265 3-.6285zm3-7.194 2.22225 1.944-2.22225 1.944v-1.194h-6v-1.5h6zm-1.5-3.306v3h-6v4.5h6v3l6-5.25z%22 fill=%22%23fff%22/%3E%3C/svg%3E");
+  background-position: right 18px center;
+  background-repeat: no-repeat;
   color: #fff;
   text-align: left;
-  padding-left: 38px;
+  padding-left: 18px;
   border: 0;
 }
 .login-form input[type="text"],
 .login-form input[type="email"],
 .login-form input[type="password"] {
   padding: 0 15px;
+}
+body[data-skin="entrine"] .login-form input[type="text"],
+body[data-skin="entrine"] .login-form input[type="email"],
+body[data-skin="entrine"] .login-form input[type="password"] {
+  padding: 0 18px;
 }
 .forgotten {
   margin: 10px 0 0 0;

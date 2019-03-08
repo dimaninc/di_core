@@ -110,14 +110,7 @@ class Ads extends \diCore\Admin\BasePage
 
 	public function submitForm()
 	{
-		$weekdays = join(',', \diRequest::post('show_on_weekdays', []));
-		if ($weekdays)
-		{
-			$weekdays = ',' . $weekdays . ',';
-		}
-
 		$this->getSubmit()
-			->setData('show_on_weekdays', $weekdays)
 			->store_pics('pic');
 	}
 
@@ -263,6 +256,9 @@ class Ads extends \diCore\Admin\BasePage
 				'title' => 'Дни недели для показа',
 				'default' => '',
 				'feed' => \diDateTime::$weekDays,
+                'options' => [
+                    'externalSeparators' => true,
+                ],
 				'tab' => 'schedule',
 			],
 
@@ -276,7 +272,7 @@ class Ads extends \diCore\Admin\BasePage
 			'date' => [
 				'type' => 'datetime_str',
 				'title' => 'Дата создания',
-				'default' => date('Y-m-d H:i:s'),
+				'default' => \diDateTime::sqlFormat(),
 				'flags' => ['static'],
 			],
 		];

@@ -2500,10 +2500,11 @@ EOF;
 			unset($tmpFeed);
 		}
 
-		$values = $this->getData($field);
+		$values = $this->getFieldProperty($field, 'values') ?: $this->getData($field);
 
-		if (!is_array($values))
-		{
+		if (is_callable($values)) {
+		    $values = $values($this->getTable(), $field, $this->getId());
+        } elseif (!is_array($values))  {
 			$values = explode(',', $values);
 		}
 
@@ -2540,6 +2541,18 @@ EOF;
 					}
 				}
 
+				$checked =
+                    (
+                        is_string($this->getData($field)) &&
+                        StringHelper::contains(',' . $this->getData($field) . ',', ',' . $k . ',')
+                    ) ||
+                    in_array($k, $values);
+
+                $disabled =
+                    $this->static_mode ||
+                    (is_array($v) && empty($v['enabled'])) ||
+                    ($v instanceof \diModel && !$v->getRelated('enabled'));
+
 				$attributes = [
 					'type' => 'checkbox',
 					'name' => $field . '[]',
@@ -2547,22 +2560,9 @@ EOF;
 					'id' => $field . '[' . $k . ']',
 				];
 
-				if (
-					(is_string($this->getData($field)) && StringHelper::contains(',' . $this->getData($field) . ',', ',' . $k . ',')) ||
-					(in_array($k, $values))
-				   )
+				if ($checked)
 				{
 					$attributes['checked'] = 'checked';
-				}
-
-				$disabled = $this->static_mode;
-
-				if (
-					(is_array($v) && empty($v['enabled'])) ||
-					($v instanceof \diModel && !$v->getRelated('enabled'))
-				   )
-				{
-					$disabled = true;
 				}
 
 				if ($disabled)
