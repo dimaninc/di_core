@@ -577,7 +577,9 @@ class Form
 			$buttons["show"] = ["save", "quick_save", "cancel"];
 		}
 
-		$show_ar = isset($buttons["show_additional"]) ? array_merge($buttons["show"], $buttons["show_additional"]) : $buttons["show"];
+		$show_ar = isset($buttons["show_additional"])
+            ? array_merge($buttons["show"], $buttons["show_additional"])
+            : $buttons["show"];
 		$hide_ar = isset($buttons["hide"]) ? $buttons["hide"] : [];
 
 		$help_link = $this->show_help

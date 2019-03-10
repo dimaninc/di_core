@@ -88,6 +88,22 @@ class diSelect
 		return $sel;
 	}
 
+	public function setId($id) {
+	    return $this->setAttr('id', $id);
+    }
+
+    public function setName($id) {
+        return $this->setAttr('name', $id);
+    }
+
+    public function removeId() {
+	    return $this->removeAttr('id');
+    }
+
+    public function removeName() {
+        return $this->removeAttr('id');
+    }
+
 	public function setAttr($name, $value = null)
 	{
 		if (!is_array($name))
@@ -121,6 +137,19 @@ class diSelect
             ? $this->attrsAr[$name]
             : null;
 	}
+
+	public function removeAttr($name)
+    {
+        if (!is_array($name)) {
+            $name = [$name];
+        }
+
+        foreach ($name as $n) {
+            unset($this->attrsAr[$n]);
+        }
+
+        return $this;
+    }
 
 	public function addItem($value, $text, $attrsAr = [], $index = null)
 	{
