@@ -349,40 +349,75 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	}
 
 	/**
+     * Maps collection
 	 * @param string|callable $callback Callback or field name of model
 	 * @return array
 	 */
-	public function map($callback)
-	{
-		$this->load();
+    public function map($callback)
+    {
+        $this->load();
 
-		$ar = [];
+        $ar = [];
 
-		$obj = new ArrayObject($this->items);
-		$it = $obj->getIterator();
+        $obj = new ArrayObject($this->items);
+        $it = $obj->getIterator();
 
-		//foreach ($this as $k => $v)
-		while ($it->valid())
-		{
-			$k = $it->key();
-			$v = $it->current();
+        //foreach ($this as $k => $v)
+        while ($it->valid()) {
+            $k = $it->key();
+            $v = $it->current();
 
-			if (is_callable($callback))
-			{
-				$ar[] = $callback($v, $k);
-			}
-			else
-			{
-				$ar[] = $v[$callback];
-			}
+            if (is_callable($callback)) {
+                $ar[] = $callback($v, $k);
+            } else {
+                $ar[] = $v[$callback];
+            }
 
-			$it->next();
-		}
+            $it->next();
+        }
 
-		return $ar;
-	}
+        return $ar;
+    }
 
-	public function slice($start = 0, $length = null)
+    /**
+     * Filters collection, returns filtered array of models
+     * @param callable|string $callback Callback or field name of model
+     * @return array
+     */
+    public function filter($callback)
+    {
+        $this->load();
+
+        $ar = [];
+
+        $obj = new ArrayObject($this->items);
+        $it = $obj->getIterator();
+
+        while ($it->valid()) {
+            $k = $it->key();
+            $v = $it->current();
+
+            if (is_callable($callback)) {
+                $result = $callback($v, $k);
+            } else {
+                $result = !!$v[$callback];
+            }
+
+            if ($result) {
+                if ($this->isIdUnique) {
+                    $ar[$v->getId()] = $v;
+                } else {
+                    $ar[] = $v;
+                }
+            }
+
+            $it->next();
+        }
+
+        return $ar;
+    }
+
+    public function slice($start = 0, $length = null)
 	{
 		$this->load();
 
