@@ -427,7 +427,7 @@ abstract class CMS
 
 	public static function ignoreCaches()
 	{
-		return false;
+		return static::debugMode();
 	}
 
 	public static function isHardDebug()
