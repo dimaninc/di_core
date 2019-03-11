@@ -441,6 +441,35 @@ Helper = {
     })(this));
     return this;
   },
+  assignEs6TaskToGulp: function(gulp, opts) {
+    var babel, sourcemaps;
+    if (opts == null) {
+      opts = {};
+    }
+    if (!babel) {
+      babel = this.req('gulp-babel');
+    }
+    if (!sourcemaps) {
+      sourcemaps = this.req('gulp-sourcemaps');
+    }
+    opts = this.extend({
+      folder: null,
+      mask: null,
+      jsBuildFolder: null,
+      taskName: 'es6'
+    }, opts);
+    gulp.task(opts.taskName, (function(_this) {
+      return function(done) {
+        return gulp.src(_this.fullPath(opts.folder + opts.mask)).pipe(sourcemaps.init()).pipe(babel({
+          compact: false,
+          presets: ['@babel/env']
+        })).pipe(sourcemaps.write('.')).pipe(gulp.dest(_this.fullPath(opts.jsBuildFolder))).on('end', function() {
+          return done();
+        });
+      };
+    })(this));
+    return this;
+  },
   assignJavascriptConcatTaskToGulp: function(gulp, opts) {
     var concat;
     if (opts == null) {

@@ -291,6 +291,19 @@ Helper =
             .on 'end', -> done()
         @
 
+    assignEs6TaskToGulp: (gulp, opts = {}) ->
+        babel = @req 'gulp-babel' unless babel
+        sourcemaps = @req 'gulp-sourcemaps' unless sourcemaps
+        opts = @extend {folder: null, mask: null, jsBuildFolder: null, taskName: 'es6'}, opts
+        gulp.task opts.taskName, (done) =>
+            gulp.src @fullPath opts.folder + opts.mask
+            .pipe sourcemaps.init()
+            .pipe babel compact: false, presets: ['@babel/env']
+            .pipe sourcemaps.write '.'
+            .pipe gulp.dest @fullPath opts.jsBuildFolder
+            .on 'end', -> done()
+        @
+
     assignJavascriptConcatTaskToGulp: (gulp, opts = {}) ->
         concat = @req 'gulp-concat' unless concat
         opts = @extend {files: [], output: null, taskName: 'js-concat'}, opts
