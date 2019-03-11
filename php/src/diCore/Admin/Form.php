@@ -1424,7 +1424,8 @@ EOF;
 		else
 		{
 			$this
-				->setInput($field, "<div class=\"static\"><a href='{$this->getModel()->getHref()}' target='_blank'>{$this->getModel()->getFullHref()}</a></div>");
+                ->setStaticInput($field)
+				->setInput($field, "<a href='{$this->getModel()->getHref()}' target='_blank'>{$this->getModel()->getFullHref()}</a>");
 		}
 
 		return $this;

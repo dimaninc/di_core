@@ -217,7 +217,7 @@ u
             left 12px
             top 50%
             transform translateY(-50%)
-            background url(/assets/images/_core/admin/skin/entrine/plus.svg)
+            background embedurl('../../../i/admin/skin/entrine/plus.svg')
             background-size cover
         &:hover
             background-color $entrineColorBgDark
@@ -272,7 +272,7 @@ u
                 height $entrineBaseHeight
                 background-color $entrineColorBgLightGray
                 border-bottom 0
-                padding 0 0 0 35px
+                padding 0 0 0 24px
                 margin-bottom 20px
                 @media screen and (max-width: 767px)
                     padding-left 12px
@@ -318,6 +318,7 @@ u
             right $entrineMenuWidth * 2
             top 0
             line-height $entrineBaseHeight
+            height $entrineBaseHeight
             background $entrineColorBgDark
             color white
             padding 0
@@ -326,6 +327,9 @@ u
             @media screen and (max-width: 1470px)
                 width $entrineMenuWidthNarrow1
                 right $entrineMenuWidthNarrow1 * 2
+            @media screen and (max-width: 1024px)
+                width $entrineMenuWidthNarrow2
+                right $entrineMenuWidthNarrow2 * 2
             @media screen and (max-width: 767px)
                 width 100px
                 right 0
@@ -374,7 +378,7 @@ u
                 background $entrineColorBgDarker
                 padding 7px
                 max-width 100px
-            @media screen and (max-width: 767px)
+            @media screen and (max-width: 1024px)
                 display none
     > .head-href
         line-height 35px
@@ -398,19 +402,26 @@ u
             font-weight 400
             width $entrineMenuWidth
             line-height $entrineBaseHeight
+            height $entrineBaseHeight
             font-size 16px
             background $entrineColorBgDark
             @media screen and (max-width: 1470px)
                 width $entrineMenuWidthNarrow1
                 font-size 14px
+            @media screen and (max-width: 1024px)
+                width $entrineMenuWidthNarrow2
             @media screen and (max-width: 767px)
                 width 100px
                 line-height 24px
+                height 24px
                 padding-left 5px
                 font-size 13px
                 text-align left
             &:hover
                 background $entrineColorBgDarker
+            > span
+                display inline-block
+                height $entrineBaseHeight
         @media screen and (max-width: 767px)
             width 100px
             height 23px
@@ -426,6 +437,8 @@ u
                 color $entrineColorTextMenuSelected
                 @media screen and (max-width: 1470px)
                     right $entrineMenuWidthNarrow1
+                @media screen and (max-width: 1024px)
+                    right $entrineMenuWidthNarrow2
                 @media screen and (max-width: 767px)
                     right 0
                     color white
@@ -434,6 +447,8 @@ u
                 top 24px
             > span
                 body[data-skin="entrine"] &
+                    @media screen and (max-width: 767px)
+                        font-size 12px
                     &:before
                         content ''
                         position absolute
@@ -533,12 +548,14 @@ u
             background $entrineColorBgDark
             font-size 20px
             font-weight 400
-            padding-left 35px
+            padding-left 24px
             margin-left $entrineMenuWidth
             margin-right $entrineMenuWidth * 3
             ellipsis()
             @media screen and (max-width: 1470px)
                 margin-right $entrineMenuWidthNarrow1 * 3
+            @media screen and (max-width: 1024px)
+                margin-right $entrineMenuWidthNarrow2 * 3
             @media screen and (max-width: 767px)
                 margin-right 101px
                 padding-left 15px
@@ -805,7 +822,7 @@ table.banners_stat td.sel, table.banners_stat th.sel
         border-radius 0
         background-color transparent
         text-align left
-        margin-left 165px
+        margin-left 160px
         @media screen and (max-width: 767px)
             margin-left 12px
     button
@@ -830,7 +847,7 @@ table.banners_stat td.sel, table.banners_stat th.sel
             height $entrineBaseHeight
             text-transform uppercase
             text-align left
-            padding-left 32px
+            padding-left 18px
             border 3px solid $entrineColorBgDark
             border-radius 0
             color $entrineColorBgDark

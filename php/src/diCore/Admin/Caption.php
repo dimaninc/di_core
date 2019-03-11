@@ -45,9 +45,14 @@ class Caption
 	{
 		if ($this->getX()->getPage())
 		{
+		    $methodCaption = $this->getX()->getPage()->getCurrentMethodCaption();
+
 			$ar = [];
 			$ar[] = $this->getModuleCaptionHtml();
-			$ar[] = sprintf('<i>%s</i>', $this->getX()->getPage()->getCurrentMethodCaption());
+
+			if ($methodCaption) {
+                $ar[] = sprintf('<i>%s</i>', $methodCaption);
+            }
 
 			return join($this->delimiter, array_filter($ar));
 		}
