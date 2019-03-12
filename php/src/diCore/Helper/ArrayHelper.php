@@ -169,7 +169,7 @@ class ArrayHelper
 	/**
 	 * Returns element of array by idx, setting proper type, if it exists, else returns default value
 	 *
-	 * @param array $ar
+	 * @param mixed $ar
 	 * @param int|string|bool $idx
 	 * @param mixed $defaultValue
 	 * @param string $type
@@ -177,6 +177,8 @@ class ArrayHelper
 	 */
 	public static function getValue($ar, $idx, $defaultValue = null, $type = null)
 	{
+	    $ar = (array)$ar;
+
 		$type = $type ?: gettype($defaultValue);
 
 		if (isset($ar[$idx]))

@@ -1151,7 +1151,7 @@ class diModel implements \ArrayAccess
 
 	public function set($field, $value = null)
 	{
-		if (is_null($value))
+		if (is_array($field))
 		{
 			$this->ar = extend($this->ar, $field);
 		}

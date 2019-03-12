@@ -68,7 +68,7 @@ class diBaseController
 	{
 		if (!$this->isAdminAuthorized())
 		{
-			die('You have no access to this controller/action');
+			throw new \Exception('You have no access to this controller/action');
 		}
 
 		return $this;

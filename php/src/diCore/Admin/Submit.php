@@ -855,7 +855,7 @@ class Submit
 
 			$value = $value
 				? date(join(' ', $tpl), $value)
-				: '';
+				: null;
 		}
 
 		return $value;
@@ -877,7 +877,7 @@ class Submit
 		else
 		{
 			$this->setData($field, $this->get_datetime_from_ar(
-				isset($_POST[$field]) ? $_POST[$field] : [],
+			    \diRequest::post($field, []),
 				$date,
 				$time,
 				substr($this->_all_fields[$field]['type'], -4) == '_str' ? 'str' : 'int'

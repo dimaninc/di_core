@@ -86,6 +86,29 @@ class diRequest
 		return static::server('QUERY_STRING');
 	}
 
+	public static function header($name)
+    {
+        $name = strtoupper($name);
+        $name = str_replace('-', '_', $name);
+
+        return self::server('HTTP_' . $name);
+    }
+
+    public static function allHeaders()
+    {
+        $headers = [];
+
+        foreach ($_SERVER as $name => $value)
+        {
+            if (substr($name, 0, 5) == 'HTTP_')
+            {
+                $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+            }
+        }
+
+        return $headers;
+    }
+
 	public static function request($name, $defaultValue = null, $type = null)
 	{
 		return self::post($name, self::get($name, self::rawPost($name, $defaultValue, $type), $type), $type);

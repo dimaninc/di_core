@@ -6,9 +6,14 @@ class diBaseAdminController extends diBaseController
 	{
 	    parent::__construct($params);
 
-		$this
-			->initAdmin()
-			->adminRightsHardCheck();
+	    try {
+            $this
+                ->initAdmin()
+                ->adminRightsHardCheck();
+        } catch (\Exception $e) {
+            static::autoError($e);
+            die();
+        }
 	}
 
 	protected function redirect()
