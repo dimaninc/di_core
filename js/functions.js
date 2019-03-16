@@ -941,7 +941,7 @@ function strip_tags(input, allowed)
  */
 function urlencode(s)
 {
-	return di.urldecode(s);
+	return di.urlencode(s);
 }
 
 /**
