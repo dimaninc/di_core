@@ -119,8 +119,10 @@ abstract class CMS
 
 		// yandex.direct
 		'yclid',
+        'test-tag',
+        'banner-test-tags',
 
-		// facebook
+        // facebook
 		'_openstat',
         'fbclid',
 
@@ -1757,12 +1759,12 @@ abstract class CMS
 			->killGetParams();
 
 		$fb_ar = [
-			"fb_action_ids",
-			"fb_action_types",
-			"fb_source",
-			"action_object_map",
-			"action_type_map",
-			"action_ref_map",
+			'fb_action_ids',
+			'fb_action_types',
+			'fb_source',
+			'action_object_map',
+			'action_type_map',
+			'action_ref_map',
 		];
 		$from_fb = false;
 

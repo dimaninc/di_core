@@ -386,35 +386,33 @@ function arrayKeys(ar)
 	return output;
 }
 
-function arraySum(ar)
-{
-	var key, sum = 0;
+function arraySum(ar, recursive) {
+    var key, sum = 0;
 
-	if (ar && typeof ar === 'object' && ar.change_key_case)
-	{
-		return ar.sum.apply(ar, Array.prototype.slice.call(arguments, 0));
-	}
+    if (ar && !recursive && typeof ar === 'object' && ar.change_key_case) {
+        return ar.sum.apply(ar, Array.prototype.slice.call(arguments, 0));
+    }
 
-	// input sanitation
-	if (typeof ar !== 'object')
-	{
-		return null;
-	}
+    // input sanitation
+    if (typeof ar !== 'object') {
+        return null;
+    }
 
-	for (key in ar)
-	{
-		if (!ar.hasOwnProperty(key))
-		{
-			continue;
-		}
+    for (key in ar) {
+        if (!ar.hasOwnProperty(key)) {
+            continue;
+        }
 
-		if (!isNaN(parseFloat(ar[key])))
-		{
-			sum += parseFloat(ar[key]);
-		}
-	}
+        if (typeof ar[key] === 'object') {
+        	sum += arraySum(ar[key], true);
+		} else if (typeof ar[key] === 'boolean') {
+        	sum += ar[key] ? 1 : 0;
+		} else if (!isNaN(parseFloat(ar[key]))) {
+            sum += parseFloat(ar[key]);
+        }
+    }
 
-	return sum;
+    return sum;
 }
 
 /**
