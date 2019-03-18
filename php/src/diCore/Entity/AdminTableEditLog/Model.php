@@ -35,7 +35,14 @@ namespace diCore\Entity\AdminTableEditLog;
 class Model extends \diModel
 {
 	const ADMIN_TAB_NAME = 'admin_edit_log';
-	const ADMIN_TAB_TITLE = 'История изменений';
+	protected static $lang = [
+	    'ru' => [
+	        'admin_tab_title' => 'История изменений',
+        ],
+        'en' => [
+            'admin_tab_title' => 'Changes log',
+        ],
+    ];
 
 	const type = \diTypes::admin_table_edit_log;
 	protected $table = 'admin_table_edit_log';
@@ -45,6 +52,11 @@ class Model extends \diModel
 	protected static $skipFields = [
 		//'table' => ['field1', 'field2'],
 	];
+
+	public static function adminTabTitle($lang)
+    {
+        return static::$lang[$lang]['admin_tab_title'];
+    }
 
 	public function getTargetAdminHref()
 	{

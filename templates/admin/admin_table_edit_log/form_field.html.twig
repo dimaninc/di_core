@@ -23,5 +23,7 @@
 	{% endfor %}
 	</ul>
 {% else %}
-	<div>История изменений пуста</div>
+	<div>
+        {% if X.getLanguage() == 'ru' %}История изменений пуста{% else %}Changes log is empty{% endif %}
+	</div>
 {% endif %}

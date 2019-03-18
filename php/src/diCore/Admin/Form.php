@@ -702,7 +702,7 @@ EOF;
 
 			if ($this->AdminPage->useEditLog() && $this->getId())
 			{
-				$formTabs[TableEditLog::ADMIN_TAB_NAME] = TableEditLog::ADMIN_TAB_TITLE;
+				$formTabs[TableEditLog::ADMIN_TAB_NAME] = TableEditLog::adminTabTitle($this->getX()->getLanguage());
 			}
 		}
 		else

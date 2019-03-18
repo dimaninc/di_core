@@ -16,10 +16,23 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 		Tabs;
 
 	this.table = table;
-	this.id = id*1;
-	this.auto_save_timeout = auto_save_timeout*1;
+	this.id = ~~id;
+	this.auto_save_timeout = ~~auto_save_timeout;
 	this.timer_id = false;
 	this.able_to_leave_page = true; // false
+    this.language = $('body').data('language');
+
+    var local = {
+        ru: {
+            field_href: 'Ссылка',
+            field_slug_source: 'Название для URL'
+        },
+
+        en: {
+            field_href: 'Href',
+            field_slug_source: 'Slug source'
+        }
+    };
 
 	this.e = {
 	    $window: $(window),
@@ -47,10 +60,22 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 		initColorPickers();
         initTypeChange();
 		initDelLinks();
-        self.initPicHolders().initRotateAndWaterMarkLinks().initFileInputs();
+        self.initPicHolders()
+        .initRotateAndWaterMarkLinks()
+        .initFileInputs();
 
         initiating = false;
 	}
+
+    this.L = function(name) {
+        return typeof local[this.getLanguage()][name] !== 'undefined'
+            ? local[this.getLanguage()][name]
+            : name;
+    };
+
+	this.getLanguage = function() {
+	    return this.language;
+    };
 
 	this.isMobile = function() {
 	    return this.e.$window.width() < 768;
@@ -227,6 +252,20 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 		});
 	}
 
+	this.getFieldTitle = function(field, options) {
+	    options = options || {};
+
+	    switch (field) {
+            case 'menu_title':
+                return options.href
+                    ? this.L('field_href')
+                    : this.L('field_slug_source');
+
+            default:
+                return null;
+        }
+    };
+
     function initTypeChange() {
 	    var $type = $('select[name="type"],input:hidden[name="type"]');
 
@@ -252,9 +291,9 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 	        $('.diadminform-row[data-field="menu_title"]')
 		        .toggle(!in_array(type, ['nohref']))
 		        .find('.title')
-                    .text(is_href ? 'Ссылка:' : 'Название для URL:');
+                    .text(self.getFieldTitle('menu_title', {href: is_href}));
 
-            if (!is_href && $('[name="id"]').val()*1 == 0 && !initiating)
+            if (!is_href && ~~$('[name="id"]').val() === 0 && !initiating)
             {
                 if (!$title.val())
                 {
@@ -443,7 +482,7 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 			if (inp.value && /^\#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(inp.value))
 			{
 				var s = inp.value;
-				if (s[0] != '#') s = '#'+s;
+				if (s[0] !== '#') s = '#'+s;
 
 				img.style.backgroundColor = s;
 				img.style.visibility = 'visible';
