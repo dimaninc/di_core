@@ -1758,9 +1758,11 @@ ul.left-menu > li > ul {
   padding: 0;
   display: none;
   border-bottom: 1px solid #cfcfcf;
+  width: 199px;
 }
 body[data-skin="entrine"] ul.left-menu > li > ul {
   border-bottom: 0;
+  width: auto;
 }
 ul.left-menu > li > ul > li {
   border-bottom: 0 solid #edf0f4;
