@@ -298,20 +298,19 @@ class diAdminList
 		return $this->curModel;
 	}
 
-	public function addRow($r)
+	public function addRow($r, $options = [])
 	{
 		if (!$this->columnsInited)
 	    {
 	    	$this->initColumns();
 	    }
 
-		$this->setCurRec($r);
-
-	    $this->prepareReplaceAr();
+		$this
+            ->setCurRec($r)
+            ->prepareReplaceAr();
 
 		$html = '';
-
-		$html .= $this->T->openRow($r);
+		$html .= $this->T->openRow($r, $options);
 
 		foreach ($this->columnsAr as $name => $properties)
 		{

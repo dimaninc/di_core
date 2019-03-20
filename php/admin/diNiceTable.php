@@ -343,31 +343,65 @@ class diNiceTable
 		return $s;
 	}
 
-	public function openRow($r = null, $row_id_prefix = "section", $row_class_prefix = "")
+	public function openRow($r = null, $row_id_prefix = 'section', $row_class_prefix = '', $options = [])
 	{
-		$this->setRowRec($r);
+        $this->setRowRec($r);
+
+	    if (is_array($row_id_prefix) && !$row_class_prefix && !$options) {
+	        $options = $row_id_prefix;
+
+            $options = extend([
+                'idPrefix' => 'section',
+                'classPrefix' => '',
+            ], $options);
+
+            $row_id_prefix = $options['idPrefix'];
+            $row_class_prefix = $options['classPrefix'];
+        }
+
+        $options = extend([
+            'classes' => null,
+            'attributes' => [],
+        ], $options);
+
+        if (is_string($options['classes'])) {
+            $classes = explode(' ', $options['classes']);
+        } elseif (is_callable($options['classes'])) {
+            $classes = $options['classes']($this->getRowModel(), $this);
+        } else {
+            $classes = [];
+        }
+
+        if (is_string($options['attributes'])) {
+            $attributes = explode(' ', $options['attributes']);
+        } elseif (is_callable($options['attributes'])) {
+            $attributes = $options['attributes']($this->getRowModel(), $this);
+        } else {
+            $attributes = [];
+        }
 
 		$id = \diCore\Helper\StringHelper::out($this->getRowModel()->getId());
 
 		$this->col_idx = 0;
 		$this->anchorPlaced = false;
 
-		$this->row_class_prefix = $row_class_prefix ?: "level" . ((int)$this->getRowModel()->get("level_num") + 1);
+		$this->row_class_prefix = $row_class_prefix ?: 'level' . ((int)$this->getRowModel()->get('level_num') + 1);
 		$this->row_id_prefix = $row_id_prefix;
 
-		$attributes = [
-			"class" => $this->row_class_prefix,
-		];
+		$classes[] = $this->row_class_prefix;
 
-		if ($this->getRowModel()->has("parent") && in_array($this->getRowModel()->get("parent"), $this->collapsedIds))
-		{
-			$attributes["class"] .= " collapsed";
+		if (
+		    $this->getRowModel()->has('parent') &&
+            in_array($this->getRowModel()->get('parent'), $this->collapsedIds)
+        ) {
+			$classes[] = 'collapsed';
 		}
 
-		if ($this->row_id_prefix)
-		{
-			$attributes["id"] = $this->row_class_prefix . ($id ?: "");
+		if ($this->row_id_prefix) {
+			$attributes['id'] = $this->row_class_prefix . ($id ?: '');
 		}
+
+        $attributes['class'] = join(' ', $classes);
 
 		return sprintf(
 			"<tr %s data-role=\"row\" data-id=\"%s\" data-level=\"%d\">\n",

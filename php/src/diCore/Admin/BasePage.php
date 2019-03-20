@@ -743,20 +743,28 @@ abstract class BasePage
 		return $this->listCollection;
 	}
 
+	protected function defaultPrintListRow($model, $options = [])
+    {
+        $this->getList()
+            ->addRow($model, $options);
+
+        return $this;
+    }
+
 	protected function defaultPrintListRows($rs)
 	{
 		if ($rs instanceof \diCollection)
 		{
 			foreach ($rs as $model)
 			{
-				$this->getList()->addRow($model);
+				$this->defaultPrintListRow($model);
 			}
 		}
 		else
 		{
 			while ($r = $this->getDb()->fetch($rs))
 			{
-				$this->getList()->addRow($r);
+                $this->defaultPrintListRow($r);
 			}
 		}
 
