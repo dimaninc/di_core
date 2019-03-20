@@ -1057,13 +1057,7 @@ select {
   -ms-flex-item-align: center;
 }
 body[data-skin="entrine"] select {
-  padding: 15px;
   border-color: #dbdbdb;
-}
-@media screen and (max-width: 767px) {
-  body[data-skin="entrine"] select {
-    padding: 5px;
-  }
 }
 textarea {
   padding-top: 5px;
