@@ -3015,6 +3015,9 @@ ul.admin-grid > li img {
 .filter-block .row select + select {
   margin-left: 10px;
 }
+.filter-block .row select + button {
+  margin-left: 10px;
+}
 @media screen and (max-width: 767px) {
   .filter-block .row input {
     -webkit-box-flex: 1;

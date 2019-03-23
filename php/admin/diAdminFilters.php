@@ -44,6 +44,7 @@
 
 use diCore\Admin\BasePage;
 use diCore\Helper\ArrayHelper;
+use diCore\Helper\StringHelper;
 
 class diAdminFilters
 {
@@ -325,7 +326,13 @@ EOF;
 
 	public function getFilter($field)
 	{
-		return isset($this->ar[$field]) ? $this->ar[$field] : null;
+	    foreach ($this->ar as $ar) {
+	        if ($ar['field'] === $field) {
+	            return $ar;
+            }
+        }
+
+		return null;
 	}
 
 	public function getFilters()
@@ -345,6 +352,7 @@ EOF;
 	{
 		$opts = [
 			"field" => is_array($field) ? "" : $field,
+            'alias' => null,
 			"type" => $type,
 			"where_tpl" => $where_tpl,
 			"title" => $title,
@@ -367,14 +375,18 @@ EOF;
 			$opts["where_tpl"] = self::DEFAULT_WHERE_TPL;
 		}
 
-		$this->ar[$opts["field"]] = $opts;
+		$this->ar[$opts['alias'] ?: $opts["field"]] = $opts;
 
 		return $this;
 	}
 
 	public function removeFilter($field)
     {
-        unset($this->ar[$field]);
+        $idx = $this->get_idx_by_field($field);
+
+        if ($idx !== null) {
+            array_splice($this->ar, $idx, 1);
+        }
 
         return $this;
     }
@@ -633,7 +645,7 @@ EOF;
 					default:
 					case "str":
 					case "string":
-						$value = diStringHelper::in($value);
+						$value = StringHelper::in($value);
 						break;
 				}
 
@@ -692,10 +704,13 @@ EOF;
 			return $this->inputs_ar[$field];
 		}
 
-		if (isset($this->ar[$field]))
+		if ($ar = $this->getFilter($field))
 		{
-			$ar = $this->ar[$field];
-			$fieldName = 'admin_filter[' . $field . ']';
+		    // todo: aliases for same field name
+		    //$name = $ar['alias'] ?: $field;
+		    $name = $field;
+
+			$fieldName = 'admin_filter[' . $name . ']';
 
 			switch ($ar["type"])
 			{
@@ -782,8 +797,11 @@ EOF;
 						$y2_sel->addItem($i, $i);
 					}
 
-					$s = $d1_sel . "." . $m1_sel . "." . $y1_sel . " &ndash; " .
-						$d2_sel . "." . $m2_sel . "." . $y2_sel;
+					$glue = '<span>.</span>';
+
+					$s = join($glue, [$d1_sel, $m1_sel, $y1_sel]) .
+                        " &ndash; " .
+                        join($glue, [$d2_sel, $m2_sel, $y2_sel]);
 
 					// js
 					$uid = substr(get_unique_id(), 0, 8);
@@ -801,10 +819,10 @@ EOF;
 		return null;
 	}
 
-	public function set_input_params($field, $params_ar = array())
+	public function set_input_params($field, $params_ar = [])
 	{
 		if (!isset($this->input_params_ar[$field]))
-			$this->input_params_ar[$field] = array();
+			$this->input_params_ar[$field] = [];
 
 		$this->input_params_ar[$field] = array_merge($this->input_params_ar[$field], $params_ar);
 
