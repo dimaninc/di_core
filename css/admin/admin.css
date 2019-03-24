@@ -226,6 +226,11 @@ u:hover {
   width: 18px;
   height: 18px;
   background: url("/_core/i/admin/buttons/close.png") 0 0 no-repeat;
+  -webkit-transition: none;
+  -moz-transition: none;
+  -o-transition: none;
+  -ms-transition: none;
+  transition: none;
 }
 body[data-skin="entrine"] .close {
   background-image: url("/assets/images/_core/admin/skin/entrine/list/del.svg");
@@ -235,6 +240,11 @@ body[data-skin="entrine"] .close {
   background-position: center center;
   width: 36px;
   height: 36px;
+  -webkit-transition: 0.3s;
+  -moz-transition: 0.3s;
+  -o-transition: 0.3s;
+  -ms-transition: 0.3s;
+  transition: 0.3s;
 }
 .close:hover {
   background-position: 0 -18px;
@@ -1913,6 +1923,14 @@ body[data-skin="entrine"] .diadminform-row[data-purpose="notes"] .title {
 .diadminform-row[data-type="pic"] .value,
 .diadminform-row[data-type="file"] .value {
   display: block;
+}
+.diadminform-row[data-purpose="notes"] .value {
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -o-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
 }
 @media screen and (max-width: 767px) {
   body[data-skin="entrine"] .diadminform-row .value {
