@@ -2982,7 +2982,7 @@ ul.admin-grid > li img {
   color: #000;
   font-size: 12px;
   background-color: #fff;
-  padding: 0 0 20px 24px;
+  padding: 0 0 10px 24px;
   border-bottom: 1px solid #ccc;
   margin-bottom: 20px;
 }
@@ -2993,11 +2993,29 @@ ul.admin-grid > li img {
   }
 }
 .filter-block .buttons {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: box;
+  display: flex;
+  -webkit-box-lines: multiple;
+  -moz-box-lines: multiple;
+  -o-box-lines: multiple;
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
   padding: 10px 0 0 0;
   margin-left: 150px;
 }
+@media screen and (max-width: 767px) {
+  .filter-block .buttons {
+    margin-left: 0;
+  }
+}
 .filter-block .buttons > * {
   vertical-align: top;
+  margin: 0 10px 10px 0;
 }
 .filter-block .row {
   display: -webkit-box;
@@ -3047,6 +3065,11 @@ ul.admin-grid > li img {
     flex: 1;
     min-width: 0;
   }
+}
+.filter-block .row .date-sep {
+  -webkit-align-self: flex-end;
+  align-self: flex-end;
+  -ms-flex-item-align: end;
 }
 body[data-skin="entrine"] .filter-block button {
   display: -webkit-inline-box;
@@ -3122,6 +3145,9 @@ body[data-skin="entrine"] .filter-block button[data-purpose="reset"]:after {
   -o-transition: background-color 0.5s ease;
   -ms-transition: background-color 0.5s ease;
   transition: background-color 0.5s ease;
+  -webkit-align-self: center;
+  align-self: center;
+  -ms-flex-item-align: center;
 }
 @media screen and (max-width: 767px) {
   .filter-block [data-purpose="reset-filter"] {

@@ -109,6 +109,9 @@ class diAdminFilters
 	public $where_ar = [];
 	public $inputs_ar = [];
 	public $input_params_ar = [];
+	protected $inputPrefixes = [];
+	protected $inputSuffixes = [];
+	protected $inputResetButtons = [];
 	public $andor = "and";
 	public $static_mode = false;
 	public $static_inputs_ar = [];
@@ -236,6 +239,48 @@ class diAdminFilters
 
 		return $this;
 	}
+
+	public function setInputPrefix($field, $prefix)
+    {
+        $this->inputPrefixes[$field] = $prefix;
+
+        return $this;
+    }
+
+    public function setInputSuffix($field, $suffix)
+    {
+        $this->inputSuffixes[$field] = $suffix;
+
+        return $this;
+    }
+
+    public function getInputPrefix($field)
+    {
+        return isset($this->inputPrefixes[$field])
+            ? $this->inputPrefixes[$field]
+            : '';
+    }
+
+    public function getInputSuffix($field)
+    {
+        return isset($this->inputSuffixes[$field])
+            ? $this->inputSuffixes[$field]
+            : '';
+    }
+
+    public function getInputResetButton($field)
+    {
+        return isset($this->inputResetButtons[$field])
+            ? $this->getResetButton($field)
+            : '';
+    }
+
+    public function setInputResetButton($field, $value = true)
+    {
+        $this->inputResetButtons[$field] = $value;
+
+        return $this;
+    }
 
 	public function set_static_input($field, $input)
 	{
@@ -697,7 +742,16 @@ EOF;
 		return $this->getInput($field);
 	}
 
-	public function getInput($field)
+    public function getInput($field)
+    {
+        return
+            $this->getInputPrefix($field) .
+            $this->getInputBody($field) .
+            $this->getInputSuffix($field) .
+            $this->getInputResetButton($field);
+    }
+
+    protected function getInputBody($field)
 	{
 		if (isset($this->inputs_ar[$field]))
 		{
@@ -747,10 +801,7 @@ EOF;
 						]));
 					}
 
-					if (true)
-					{
-						$input .= $this->getResetButton($field);
-					}
+					$this->setInputResetButton($field);
 
 					return $input;
 
@@ -763,22 +814,19 @@ EOF;
 					$m2_sel = new diSelect("admin_filter[{$field}][2][dm]", $ar["value"]["m2"]);
 					$y2_sel = new diSelect("admin_filter[{$field}][2][dy]", $ar["value"]["y2"]);
 
-					for ($i = 1; $i <= 31; $i++)
-					{
+					for ($i = 1; $i <= 31; $i++) {
 						$d1_sel->addItem(lead0($i), lead0($i));
 						$d2_sel->addItem(lead0($i), lead0($i));
 					}
 
-					for ($i = 1; $i <= 12; $i++)
-					{
+					for ($i = 1; $i <= 12; $i++) {
 						$m1_sel->addItem(lead0($i), lead0($i));
 						$m2_sel->addItem(lead0($i), lead0($i));
 					}
 
 					$r1 = $this->getDb()->r($this->table, "", "MIN($field) as d1_min,MAX($field) as d1_max");
 
-					if ($ar["type"] == "date_str_range")
-					{
+					if ($ar["type"] == "date_str_range") {
 						$r1->d1_min = strtotime($r1->d1_min);
 						$r1->d1_max = strtotime($r1->d1_max);
 					}
@@ -791,16 +839,15 @@ EOF;
 					if ($ar["value"]["y2"] > $y2) $y2 = $ar["value"]["y2"];
 					if ($r1 && date("Y", $r1->d1_max) > $y2) $y2 = date("Y", $r1->d1_max);
 
-					for ($i = $y1; $i <= $y2; $i++)
-					{
+					for ($i = $y1; $i <= $y2; $i++) {
 						$y1_sel->addItem($i, $i);
 						$y2_sel->addItem($i, $i);
 					}
 
-					$glue = '<span>.</span>';
+					$glue = '<span class="date-sep">.</span>';
 
 					$s = join($glue, [$d1_sel, $m1_sel, $y1_sel]) .
-                        " &ndash; " .
+                        '<span class="date-sep">...</span>' .
                         join($glue, [$d2_sel, $m2_sel, $y2_sel]);
 
 					// js
@@ -896,7 +943,9 @@ EOF;
 			$sel->addItemArray($suffix_ar);
 		}
 
-		$this->setInput($field, $sel . $this->getResetButton($field));
+		$this
+            ->setInput($field, $sel)
+            ->setInputResetButton($field);
 
 		$this->values_ar[$field] = $sel->getSimpleItemsAr();
 
@@ -935,7 +984,9 @@ EOF;
 			$sel->addItemArray($suffixAr);
 		}
 
-		$this->setInput($field, $sel . $this->getResetButton($field));
+		$this
+            ->setInput($field, $sel)
+            ->setInputResetButton($field);
 
 		return $this;
 	}
@@ -1002,7 +1053,9 @@ EOF;
 
 		$resetNeeded = !in_array($field, ['sortby', 'dir']);
 
-		$this->setInput($field, $sel . ($resetNeeded ? $this->getResetButton($field) : ''));
+		$this
+            ->setInput($field, $sel)
+            ->setInputResetButton($field, $resetNeeded);
 
 		$this->values_ar[$field] = $sel->getSimpleItemsAr();
 
@@ -1039,7 +1092,9 @@ EOF;
 			$sel->addItemArray($suffix_ar);
 		}
 
-		$this->setInput($field, $sel . $this->getResetButton($field));
+		$this
+            ->setInput($field, $sel)
+            ->setInputResetButton($field);
 
 		$this->values_ar[$field] = $sel->getSimpleItemsAr();
 

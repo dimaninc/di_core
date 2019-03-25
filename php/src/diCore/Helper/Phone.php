@@ -19,9 +19,9 @@ class Phone
 		return preg_match('/^\d{10,15}$/', $phone);
 	}
 
-	public static function clean($phone)
+	public static function clean($phone, $prefix = '')
 	{
-		$phone = preg_replace('/[+()\-\/\\\s\x20\t.:]+/', '', $phone);
+		$phone = preg_replace('/[^\d]+/', '', $phone);
 
 		if (substr($phone, 0, 2) == '00')
 		{
@@ -38,6 +38,8 @@ class Phone
 			$phone = '7' . substr($phone, 1); // 8 -> default Russian code
 		}
 
-		return $phone;
+		return $phone
+            ? $prefix . $phone
+            : '';
 	}
 }
