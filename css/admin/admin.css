@@ -3129,6 +3129,7 @@ body[data-skin="entrine"] .filter-block button[data-purpose="reset"]:after {
   cursor: pointer;
   position: relative;
   margin-left: 10px;
+  margin-right: 10px;
   border-radius: 50%;
   -webkit-box-flex: 1;
   -moz-box-flex: 1;
