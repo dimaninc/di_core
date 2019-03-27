@@ -937,7 +937,7 @@ button {
   font-family: Verdana, sans-serif;
   font-size: 14px;
   font-weight: normal;
-  background: #fff;
+  background-color: #fff;
   color: #000;
   border: 1px solid #b2b2b2;
   border-top-color: #000;
@@ -948,74 +948,48 @@ button {
   -webkit-align-self: center;
   align-self: center;
   -ms-flex-item-align: center;
+  -webkit-transition: 0.3s;
+  -moz-transition: 0.3s;
+  -o-transition: 0.3s;
+  -ms-transition: 0.3s;
+  transition: 0.3s;
 }
 body[data-skin="entrine"] button {
   font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
 }
 button:hover {
-  background: #a1dfff;
+  background-color: #a1dfff;
 }
 button.blue {
   background-color: #00c;
+}
+button.violet {
+  background-color: #9600db;
+}
+button.gray {
+  background-color: #848484;
+}
+button.red {
+  background-color: #f00;
+}
+button.blue,
+button.violet,
+button.gray,
+button.red {
   padding: 7px 10px;
   color: #fff;
   font-size: 11px;
   font-weight: bold;
   border: 0;
 }
-button.blue:hover {
+button.blue:hover,
+button.violet:hover,
+button.gray:hover,
+button.red:hover {
   background-color: #f00;
 }
 .mce-tinymce button {
   border-radius: 0;
-}
-.violet {
-  background-color: #9600db;
-  border: 0;
-  padding: 7px 10px;
-  font-size: 11px;
-  color: #fff;
-  vertical-align: middle;
-  font-weight: bold;
-}
-.violet:hover {
-  background-color: #f00;
-}
-.gray {
-  background-color: #848484;
-  border: 0;
-  padding: 7px 10px;
-  font-size: 11px;
-  color: #fff;
-  vertical-align: middle;
-  font-weight: bold;
-}
-.gray:hover {
-  background-color: #f00;
-}
-.violet2 {
-  background-color: #9600db;
-  border: 0;
-  padding: 7px 10px;
-  font-size: 14px;
-  color: #fff;
-  vertical-align: middle;
-  font-weight: bold;
-}
-.violet2:hover {
-  background-color: #f00;
-}
-.gray2 {
-  background-color: #848484;
-  border: 0;
-  padding: 7px 10px;
-  font-size: 14px;
-  color: #fff;
-  vertical-align: middle;
-  font-weight: bold;
-}
-.gray2:hover {
-  background-color: #f00;
 }
 input[type="text"],
 input[type="email"],

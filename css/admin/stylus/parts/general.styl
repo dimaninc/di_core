@@ -652,21 +652,32 @@ button
     font-family $classicFont
     font-size 14px
     font-weight normal
-    background #fff
-    color #000
+    background-color white
+    color black
     border 1px solid #B2B2B2
-    border-top-color #000
-    border-left-color #000
+    border-top-color black
+    border-left-color black
     border-radius 8px
     cursor pointer
     outline none
     align-self center
+    transition .3s
     body[data-skin="entrine"] &
         font-family $entrineFont
     &:hover
-        background #A1DFFF
+        background-color #A1DFFF
     &.blue
         background-color #0000CC
+    &.violet
+        background-color #9600DB
+    &.gray
+        background-color #848484
+    &.red
+        background-color red
+    &.blue
+    &.violet
+    &.gray
+    &.red
         padding 7px 10px
         color white
         font-size 11px
@@ -678,50 +689,6 @@ button
 .mce-tinymce
     button
         border-radius 0
-
-.violet
-    background-color #9600DB
-    border 0
-    padding 7px 10px
-    font-size 11px
-    color white
-    vertical-align middle
-    font-weight bold
-    &:hover
-        background-color red
-
-.gray
-    background-color #848484
-    border 0
-    padding 7px 10px
-    font-size 11px
-    color white
-    vertical-align middle
-    font-weight bold
-    &:hover
-        background-color red
-
-.violet2
-    background-color #9600DB
-    border 0
-    padding 7px 10px
-    font-size 14px
-    color white
-    vertical-align middle
-    font-weight bold
-    &:hover
-        background-color red
-
-.gray2
-    background-color #848484
-    border 0
-    padding 7px 10px
-    font-size 14px
-    color white
-    vertical-align middle
-    font-weight bold
-    &:hover
-        background-color red
 
 input[type="text"]
 input[type="email"]

@@ -13,7 +13,7 @@ class diAdminList
 	private $AdminPage;
 
 	/** @var array */
-	private $columnsAr;
+	private $columnsAr = [];
 
 	/** @var bool */
 	private $columnsInited = false;
