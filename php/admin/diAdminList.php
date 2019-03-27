@@ -130,27 +130,22 @@ class diAdminList
 	 */
 	public function setColumnAttr($names, $attr, $value = null)
 	{
-		if (!is_array($names))
-		{
+		if (!is_array($names)) {
 			$names = [$names];
 		}
 
-		foreach ($names as $name)
-		{
-			if (!$this->columnExists($name))
-			{
+		foreach ($names as $name) {
+			if (!$this->columnExists($name)) {
 				$this->columnsAr[$name] = [];
 			}
 
-			if (!is_array($this->columnsAr[$name]))
-			{
+			if (!is_array($this->columnsAr[$name])) {
 				$this->columnsAr[$name] = [
 					'title' => $this->columnsAr[$name],
 				];
 			}
 
-			if (!is_array($attr))
-			{
+			if (!is_array($attr)) {
 				$attr = [
 					$attr => $value,
 				];
@@ -161,6 +156,29 @@ class diAdminList
 
 		return $this;
 	}
+
+	public function setColumnWidth($names, $width, $head = true, $body = false)
+    {
+        $ar = [];
+
+        if ($head) {
+            $ar['headAttrs'] = [
+                'width' => $width,
+            ];
+        }
+
+        if ($body) {
+            $ar['bodyAttrs'] = [
+                'width' => $width,
+            ];
+        }
+
+        if ($ar) {
+            $this->setColumnAttr($names, $ar);
+        }
+
+        return $this;
+    }
 
 	public function removeColumn($names)
 	{

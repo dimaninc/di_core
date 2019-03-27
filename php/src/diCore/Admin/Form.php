@@ -2470,32 +2470,32 @@ EOF;
 
 	public function setCheckboxesListInput($field, $feed = null, $columns = null, $ableToAddNew = null)
 	{
-		if (is_null($feed))
-		{
+		if (is_null($feed)) {
 			$feed = $this->getFieldProperty($field, 'feed') ?: $this->getFieldOption($field, 'feed');
 		}
 
-		if (!$feed)
-		{
+		if (!$feed) {
 			throw new \Exception('Checkboxes feed not defined');
 		}
 
-		if (is_null($columns))
-		{
+		if (is_null($columns)) {
 			$columns = $this->getFieldOption($field, 'columns') ?: 2;
 		}
 
-		if (is_null($ableToAddNew))
-		{
+		if (is_null($ableToAddNew)) {
 			$ableToAddNew = $this->getFieldOption($field, 'ableToAddNew') ?: false;
 		}
 
-		if (\diDB::is_rs($feed))
-		{
+		// field name or function
+		$titleGetter = $this->getFieldOption($field, 'titleGetter') ?: 'title';
+		$defaultTitleField = is_string($titleGetter)
+            ? $titleGetter
+            : 'title';
+
+		if (\diDB::is_rs($feed)) {
 			$tmpFeed = [];
 
-			while ($r = $this->getDb()->fetch($feed))
-			{
+			while ($r = $this->getDb()->fetch($feed)) {
 				$tmpFeed[$r->id] = $r->title;
 			}
 
@@ -2511,35 +2511,30 @@ EOF;
 			$values = explode(',', $values);
 		}
 
-		if ($this->isStatic($field))
-		{
+		if ($this->isStatic($field)) {
 			$ar = [];
 
-			foreach ($values as $k)
-			{
+			foreach ($values as $k) {
 				$ar[] = isset($feed[$k]) ? $feed[$k] : "[tag#{$k}]";
 			}
 
 			$table = $ar ? join(', ', $ar) : '&mdash;';
-		}
-		else
-		{
+		} else {
 			$tags = [];
 
-			foreach ($feed as $k => $v)
-			{
-				$v = is_array($v) || $v instanceof \diModel ? $v : ['title' => $v];
+			foreach ($feed as $k => $v) {
+                $v = is_array($v) || $v instanceof \diModel
+                    ? $v
+                    : [
+                        $defaultTitleField => $v,
+                    ];
 
-				if (is_array($v))
-				{
+				if (is_array($v)) {
 					$v = extend([
 						'enabled' => true,
 					], $v);
-				}
-				elseif ($v instanceof \diModel)
-				{
-					if ($v->getRelated('enabled') === null)
-					{
+				} elseif ($v instanceof \diModel) {
+					if ($v->getRelated('enabled') === null) {
 						$v->setRelated('enabled', true);
 					}
 				}
@@ -2563,34 +2558,34 @@ EOF;
 					'id' => $field . '[' . $k . ']',
 				];
 
-				if ($checked)
-				{
+				if ($checked) {
 					$attributes['checked'] = 'checked';
 				}
 
-				if ($disabled)
-				{
+				if ($disabled) {
 					$attributes['disabled'] = 'true';
 				}
+
+				$title = is_callable($titleGetter)
+                    ? $titleGetter($v, $this->getTable(), $field, $this->getId())
+                    : $v[$titleGetter];
 
 				$tags[] = sprintf(
 					'<input %s> <label for="%s">%s</label>',
 					ArrayHelper::toAttributesString($attributes),
 					$attributes['id'],
-					$v['title']
+					$title
 				);
 			}
 
 			$table = '';
 
-			if ($tags)
-			{
+			if ($tags) {
 				$table = '<div class="tags-grid"><table><tr>';
 
 				$per_column = ceil(count($tags) / $columns);
 
-				for ($i = 0; $i < $columns; $i++)
-				{
+				for ($i = 0; $i < $columns; $i++) {
 					$table .= '<td style="padding-right: 20px; vertical-align: top;">' .
 						join('<br />', array_slice($tags, $per_column * $i, $per_column)) .
 						'</td>';
@@ -2599,8 +2594,7 @@ EOF;
 				$table .= '</tr></table></div>';
 			}
 
-			if ($ableToAddNew)
-			{
+			if ($ableToAddNew) {
 				$table .=
 					'<div class="new-tag">' .
 					'<input type="text" name="' . $field . self::NEW_FIELD_SUFFIX . '" value="" placeholder="Добавить новые теги, через запятую">' .
@@ -2609,7 +2603,6 @@ EOF;
 		}
 
 		$this->inputs[$field] = $table;
-
 		$this->force_inputs_fields[$field] = true;
 
 		return $this;

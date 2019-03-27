@@ -326,6 +326,24 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $o;
 	}
 
+	public static function createEmpty($type)
+    {
+        $o = static::create($type);
+        $o->makeEmpty();
+
+        return $o;
+    }
+
+    public function makeEmpty()
+    {
+        $this->loaded = true;
+        $this->items = [];
+        $this->count = 0;
+        $this->realCount = 0;
+
+        return $this;
+    }
+
 	/**
 	 * @param $type
 	 * @param $id
