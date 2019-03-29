@@ -3,6 +3,7 @@
 namespace diCore\Admin\Page;
 
 use diCore\Data\Configuration as Cfg;
+use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 
 class Configuration extends \diCore\Admin\BasePage
@@ -115,7 +116,18 @@ class Configuration extends \diCore\Admin\BasePage
 					break;
 
 				case "text":
-					$value = "<textarea name=\"$htmlFieldName\" id='$k'>{$v["value"]}</textarea>";
+				    $attrs = [
+				        'name' => $htmlFieldName,
+                        'id' => $k,
+                    ];
+
+				    if (isset($v['rows'])) {
+				        $attrs['rows'] = $v['rows'];
+                    }
+
+				    $attrs = ArrayHelper::toAttributesString($attrs);
+
+					$value = "<textarea {$attrs}>{$v["value"]}</textarea>";
 					break;
 
 				case "pic":

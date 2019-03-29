@@ -3440,3 +3440,75 @@ ul.filters-of-cat > li {
   position: absolute;
   margin: 5px 0 0 0;
 }
+.configuration [data-tab] {
+  margin: 0 24px;
+}
+.configuration .grid {
+  border-collapse: collapse;
+  width: 100%;
+}
+.configuration .grid tbody tr td {
+  width: 50%;
+  padding: 5px;
+  border: 1px solid #fff;
+  background: #dfdfd0;
+  font-size: 12px;
+}
+.configuration .grid tbody tr td:first-child {
+  text-align: right;
+  vertical-align: top;
+  padding-top: 8px;
+}
+body[data-skin="entrine"] .configuration .grid tbody tr td:first-child {
+  vertical-align: middle;
+}
+.configuration .grid tbody tr td .conf-value {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: box;
+  display: flex;
+}
+.configuration .grid tbody tr td input:not([type="checkbox"]):not([type="radio"]),
+.configuration .grid tbody tr td textarea {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  -o-box-flex: 1;
+  box-flex: 1;
+  -webkit-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
+}
+.configuration .grid tbody tr td textarea:not([rows]) {
+  height: 90px;
+}
+.configuration .grid tbody tr td label {
+  display: block;
+}
+.configuration .grid tbody tr:nth-child(even) td {
+  background: #e7e7e0;
+}
+.configuration .grid tbody tr:hover td {
+  background: #f3f3f3;
+}
+.configuration .grid .file-info {
+  background: rgba(255,255,255,0.5);
+  padding: 10px;
+  text-align: center;
+  margin-top: 5px;
+}
+.configuration .grid .uploaded-pic img {
+  max-width: 100%;
+  max-height: 300px;
+  cursor: zoom-in;
+}
+.configuration .grid .uploaded-pic.zoomed {
+  width: 550px;
+  overflow-x: auto;
+}
+.configuration .grid .uploaded-pic.zoomed img {
+  max-width: none;
+  max-height: none;
+  cursor: zoom-out;
+}

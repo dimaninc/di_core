@@ -337,7 +337,68 @@ class StringHelper
 		return $res;
 	}
 
-	public static function fileBaseName($filename)
+    public static function wrapUrlWithTag($text, $options = [])
+    {
+        $options = extend([
+            'cutLength' => 0, // words with length greater will get cut up to the len, if 0 - no cutting
+            'cutAllWords' => false, // if true - all words in $text get cut, if 'false' - only urls
+            'tagAttrs' => [ // attributes for tags
+                'target' => '_blank',
+            ],
+            'emails' => false, // wrap emails with tags
+        ], $options);
+
+        $lines = explode("\n", $text);
+
+        for ($i = 0; $i < sizeof($lines); $i++) {
+            $words = explode(' ', $lines[$i]);
+
+            for ($j = 0; $j < sizeof($words); $j++) {
+                $words[$j] = trim($words[$j]);
+                $len = mb_strlen($words[$j]);
+
+                $prefix = mb_strtolower(mb_substr($words[$j], 0, 8));
+                $isEmail = \diEmail::isValid($words[$j]);
+
+                if (
+                    mb_substr($prefix, 0, 7) == 'http://' ||
+                    mb_substr($prefix, 0, 8) == 'https://' ||
+                    mb_substr($prefix, 0, 6) == 'ftp://' ||
+                    mb_substr($prefix, 0, 4) == 'www.' ||
+                    ($options['emails'] && $isEmail)
+                ) {
+                    $href = $words[$j];
+
+                    if ($isEmail) {
+                        $href = 'mailto:' . $href;
+                    } else {
+                        if (mb_substr($prefix, 0, 4) == 'www.') {
+                            $href = 'http://' . $href;
+                        }
+                    }
+
+                    $options['tagAttrs']['href'] = $href;
+                    $attributes = \diCore\Helper\ArrayHelper::toAttributesString($options['tagAttrs']);
+
+                    $innerText = $len > $options['cutLength'] && $options['cutLength'] > 0
+                        ? mb_substr($words[$j], 0, $options['cutLength'] - 3) . '...'
+                        : $words[$j];
+
+                    $words[$j] = '<a ' . $attributes . '>' . $innerText . '</a>';
+                } elseif ($options['cutAllWords'] && $options['cutLength'] > 0 && $len > $options['cutLength']) {
+                    $words[$j] = mb_substr($words[$j], 0, $options['cutLength']);
+                }
+            }
+
+            $lines[$i] = join(' ', $words);
+        }
+
+        $text = join("\n", $lines);
+
+        return $text;
+    }
+
+    public static function fileBaseName($filename)
 	{
 		$x = mb_strrpos($filename, '.');
 

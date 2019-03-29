@@ -1,0 +1,53 @@
+.configuration
+    [data-tab]
+        margin 0 24px
+    .grid
+        border-collapse collapse
+        width 100%
+        tbody
+            tr
+                td
+                    width 50%
+                    padding 5px
+                    border 1px solid #fff
+                    background #dfdfd0
+                    font-size 12px
+                    &:first-child
+                        text-align right
+                        vertical-align top
+                        padding-top 8px
+                        body[data-skin="entrine"] &
+                            vertical-align middle
+                    .conf-value
+                        display flex
+                    input:not([type="checkbox"]):not([type="radio"])
+                    textarea
+                        flex 1
+                    textarea
+                        &:not([rows])
+                            height 90px
+                    label
+                        display block
+                &:nth-child(even)
+                    td
+                        background #e7e7e0
+                &:hover
+                    td
+                        background #f3f3f3
+        .file-info
+            background rgba(255, 255, 255, .5)
+            padding 10px
+            text-align center
+            margin-top 5px
+        .uploaded-pic
+            img
+                max-width 100%
+                max-height 300px
+                cursor zoom-in
+            &.zoomed
+                width 550px
+                overflow-x auto
+                img
+                    max-width none
+                    max-height none
+                    cursor zoom-out

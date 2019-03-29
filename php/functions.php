@@ -294,56 +294,14 @@ function isLeapYear($year)
 	return diDateTime::isLeapYear($year);
 }
 
-// $cut_len - words with length greater than $cut_len will get cut up to the len
-//            if 0 - no cutting
-// $cut_all_words - if set 'true', all words in $text get cut. if 'false' - only urls
-function highlight_urls($text, $cut_len = 0, $cut_all_words = false, $paramz = array("target" => "_blank"))
+/** @deprecated  */
+function highlight_urls($text, $cut_len = 0, $cut_all_words = false, $tagAttrs = [])
 {
-	$lines_ar = explode("\n", $text);
-
-	for ($i = 0; $i < sizeof($lines_ar); $i++)
-	{
-		$words_ar = explode(" ", $lines_ar[$i]);
-
-		for ($j = 0; $j < sizeof($words_ar); $j++)
-		{
-			$words_ar[$j] = trim($words_ar[$j]);
-
-			$prefix = mb_strtolower(mb_substr($words_ar[$j], 0, 8));
-
-			if (
-				mb_substr($prefix, 0, 7) == "http://" ||
-				mb_substr($prefix, 0, 8) == "https://" ||
-				mb_substr($prefix, 0, 6) == "ftp://" ||
-				mb_substr($prefix, 0, 4) == "www."
-			)
-			{
-				if (mb_substr($prefix, 0, 4) == "www.") $words_ar[$j] = "http://".$words_ar[$j];
-
-				$s_paramz = "";
-				foreach ($paramz as $n => $v)
-				{
-					$s_paramz .= " ".$n."=\"".$v."\"";
-				}
-
-				$inner_text = (mb_strlen($words_ar[$j]) > $cut_len && $cut_len > 0)
-					? mb_substr($words_ar[$j], 0, $cut_len - 3)."..."
-					: $words_ar[$j];
-
-				$words_ar[$j] = "<a href=\"".$words_ar[$j]."\"".$s_paramz.">".$inner_text."</a>";
-			}
-			elseif ($cut_all_words && $cut_len > 0 && mb_strlen($words_ar[$j]) > $cut_len)
-			{
-				$words_ar[$j] = mb_substr($words_ar[$j], 0, $cut_len);
-			}
-		}
-
-		$lines_ar[$i] = join(" ", $words_ar);
-	}
-
-	$text = join("\n", $lines_ar);
-
-	return $text;
+    return StringHelper::wrapUrlWithTag($text, [
+        'cutLength' => $cut_len,
+        'cutAllWords' => $cut_all_words,
+        'tagAttrs' => $tagAttrs,
+    ]);
 }
 
 /** @deprecated  */
