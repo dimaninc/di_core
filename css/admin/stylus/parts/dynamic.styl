@@ -33,23 +33,23 @@
 		> li
 			display inline-block
 			margin 5px 15px 5px 0
-			input[type="text"]
+			input:not([type="checkbox"]):not([type="radio"]):not([size])
 			textarea
 				width 300px
 			&:last-child
 				margin-right 0
 			&.wider
-				input[type="text"]
+				input:not([type="checkbox"]):not([type="radio"]):not([size])
 				textarea
 					width 500px
 			&.wide
-				input[type="text"]
+				input:not([type="checkbox"]):not([type="radio"]):not([size])
 				textarea
 					width 750px
 			&.full-width
 				display block
-				input[type="text"]
+				input:not([type="checkbox"]):not([type="radio"]):not([size])
 				textarea
 					width 90%
-			input[type="text"][size],textarea[cols]
+			input:not([type="checkbox"]):not([type="radio"])[size],textarea[cols]
 				width auto
