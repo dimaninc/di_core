@@ -318,7 +318,7 @@ class diModel implements \ArrayAccess
 
 	public function getPicForOpenGraph($httpPath = true)
     {
-        return $this->wrapFileWithPath($this->get(static::open_graph_pic_field), $httpPath);
+        return $this->wrapFileWithPath($this->get(static::open_graph_pic_field), null, $httpPath);
     }
 
 	public function getHref()
