@@ -461,6 +461,19 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $ar;
 	}
 
+	public function getModelByIdx($idx = 0)
+    {
+        if ($idx < 0) {
+            $idx += $this->count();
+        }
+
+        $ar = $this->slice($idx, 1);
+
+        return count($ar)
+            ? $ar[0]
+            : $this->getNewEmptyItem();
+    }
+
 	public function asArray()
 	{
 		return $this->slice();
