@@ -6,10 +6,10 @@
  * Time: 10:19
  */
 
-namespace diCore\Traits\Tagged;
+namespace diCore\Traits\Collection;
 
 /**
- * Class Collection
+ * Trait Collection
  * @package diCore\Entity\Tagged
  *
  * @method $this resetAlias
@@ -21,7 +21,7 @@ namespace diCore\Traits\Tagged;
  * @method $this groupBy($fields)
  * @method string getTable
  */
-trait Collection
+trait Tagged
 {
     protected $tagId = null;
 

@@ -6,16 +6,17 @@
  * Time: 10:19
  */
 
-namespace diCore\Traits\Tagged;
+namespace diCore\Traits\Model;
 
 use diCore\Data\Types;
 
 /**
- * Class Model
+ * Trait Model
  * @package diCore\Entity\Tagged
+ *
  * @method array prepareIdAndFieldForGetRecord($id, $fieldAlias = null)
  */
-trait Model
+trait Tagged
 {
     private $tagsField = 'tags';
 
@@ -67,12 +68,12 @@ trait Model
 
         if ($tags && is_string($tags))
         {
-            $tags = trim($tags, Collection::$TAG_INFO_SEPARATOR . Collection::$TAG_SEPARATOR);
-            $tags = array_filter(explode(Collection::$TAG_SEPARATOR, $tags));
+            $tags = trim($tags, Tagged::$TAG_INFO_SEPARATOR . Tagged::$TAG_SEPARATOR);
+            $tags = array_filter(explode(Tagged::$TAG_SEPARATOR, $tags));
 
             foreach ($tags as &$tag)
             {
-                $info = explode(Collection::$TAG_INFO_SEPARATOR, $tag);
+                $info = explode(Tagged::$TAG_INFO_SEPARATOR, $tag);
 
                 $tag = \diModel::create(Types::tag, [
                     'id' => $info[0],

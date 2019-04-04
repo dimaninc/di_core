@@ -20,7 +20,9 @@ class diDateTime
 	const SATURDAY = 6;
 	const SUNDAY = 7;
 
-	const FORMAT_SQL_DATE_TIME = 'Y-m-d H:i:s';
+    const FORMAT_SQL_DATE = 'Y-m-d';
+    const FORMAT_SQL_TIME = 'H:i:s';
+	const FORMAT_SQL_DATE_TIME = self::FORMAT_SQL_DATE . ' ' . self::FORMAT_SQL_TIME;
 	const FORMAT_SIMPLE_DATE_TIME = 'd.m.Y H:i';
 	const FORMAT_SIMPLE_DATE = 'd.m.Y';
 	const FORMAT_SIMPLE_TIME = 'H:i';
@@ -119,6 +121,16 @@ class diDateTime
 	{
 		return self::format(self::FORMAT_SQL_DATE_TIME, $dt);
 	}
+
+    public static function sqlDateFormat($dt = null)
+    {
+        return self::format(self::FORMAT_SQL_DATE, $dt);
+    }
+
+    public static function sqlTimeFormat($dt = null)
+    {
+        return self::format(self::FORMAT_SQL_TIME, $dt);
+    }
 
 	public static function isoFormat($dt = null)
     {

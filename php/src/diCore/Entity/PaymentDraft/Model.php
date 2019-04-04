@@ -9,7 +9,7 @@ namespace diCore\Entity\PaymentDraft;
 
 use diCore\Payment\System;
 use diCore\Payment\Payment;
-use diCore\Traits\TargetInside;
+use diCore\Traits\Model\TargetInside;
 
 /**
  * Class Model

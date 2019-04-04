@@ -12,6 +12,7 @@ use diCore\Data\Http\HttpCode;
 use diCore\Database\FieldType;
 use diCore\Helper\StringHelper;
 use diCore\Tool\Cache\Page;
+use diCore\Traits\Model\AutoTimestamps;
 
 /**
  * Class Model
@@ -19,24 +20,20 @@ use diCore\Tool\Cache\Page;
  *
  * @method string	getUri
  * @method string	getContent
- * @method string	getCreatedAt
- * @method string	getUpdatedAt
  * @method integer	getActive
  *
  * @method bool hasUri
  * @method bool hasContent
- * @method bool hasCreatedAt
- * @method bool hasUpdatedAt
  * @method bool hasActive
  *
  * @method Model setUri($value)
  * @method Model setContent($value)
- * @method Model setCreatedAt($value)
- * @method Model setUpdatedAt($value)
  * @method Model setActive($value)
  */
 class Model extends \diCore\Database\Entity\Mongo\Model
 {
+    use AutoTimestamps;
+
     const type = \diTypes::page_cache;
     const connection_name = 'mongo_main';
     const table = 'page_cache';
@@ -57,7 +54,7 @@ class Model extends \diCore\Database\Entity\Mongo\Model
     protected static $fieldTypes = [
         'uri' => FieldType::string,
         'content' => FieldType::string,
-        'created_at' => FieldType::timestamp,
+        'created_at' => FieldType::datetime,
         'updated_at' => FieldType::timestamp,
         'active' => FieldType::bool,
     ];

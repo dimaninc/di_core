@@ -6,7 +6,7 @@
  * Time: 22:54
  */
 
-namespace diCore\Traits;
+namespace diCore\Traits\Model;
 
 /**
  * Class TargetInside

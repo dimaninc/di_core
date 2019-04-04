@@ -28,6 +28,8 @@ class Model extends \diModel
 
 	protected static $fieldTypes = [];
 
+	protected $upsertFields = [];
+
 	public static function getFieldTypes()
 	{
 		return static::$fieldTypes;
@@ -39,6 +41,13 @@ class Model extends \diModel
 
 		return isset($ar[$field]) ? $ar[$field] : null;
 	}
+
+	public function setUpsertFields(array $fields)
+    {
+        $this->upsertFields = $fields;
+
+        return $this;
+    }
 
 	/**
 	 * @return \MongoDB\Collection
@@ -177,12 +186,21 @@ class Model extends \diModel
 			return $this;
 		}
 
-		if ($this->isInsertOrUpdateAllowed())
-		{
-			throw new \Exception('isInsertOrUpdateAllowed not implemented for Mongo yet');
-		}
-		elseif ($this->getId() && ($this->idAutoIncremented || (!$this->idAutoIncremented && $this->getOrigId())))
-		{
+		if ($this->isInsertOrUpdateAllowed()) {
+            $keys = array_combine($this->upsertFields, array_map(function ($field) {
+                return $this->get($field);
+            }, $this->upsertFields));
+
+            $replaceResult = $this->getCollectionResource()->replaceOne($keys, $ar, [
+                'upsert' => true,
+            ]);
+            /** @var \MongoDB\BSON\ObjectId $id */
+            $id = $replaceResult->getUpsertedId();
+
+            if ($id) {
+                $this->setId((string)$id);
+            }
+		} elseif ($this->getId() && ($this->idAutoIncremented || (!$this->idAutoIncremented && $this->getOrigId()))) {
 			$a = $this->prepareIdAndFieldForGetRecord($this->getId(), 'id');
 
 			$this->getCollectionResource()->updateOne([
@@ -190,15 +208,12 @@ class Model extends \diModel
 			], [
 				'$set' => $ar,
 			]);
-		}
-		else
-		{
+		} else {
 			$insertResult = $this->getCollectionResource()->insertOne($ar); //['fsync' => true,]
 			/** @var \MongoDB\BSON\ObjectId $id */
 			$id = $insertResult->getInsertedId();
 
-			if ($id)
-			{
+			if ($id) {
 				$this->setId((string)$id);
 			}
 		}

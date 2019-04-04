@@ -1446,6 +1446,10 @@ class diModel implements \ArrayAccess
 	 */
 	public function beforeSave()
 	{
+	    if (method_exists($this, 'generateTimestamps')) {
+	        $this->generateTimestamps();
+        }
+
 		return $this;
 	}
 

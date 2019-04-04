@@ -6,12 +6,12 @@
  * Time: 9:28
  */
 
-namespace diCore\Traits\TargetInside;
+namespace diCore\Traits\Admin;
 
 use diCore\Data\Types;
 use diCore\Admin\BasePage;
 
-trait ForAdminPage
+trait TargetInside
 {
 	protected $defaultTypes = [
 		Types::content,
