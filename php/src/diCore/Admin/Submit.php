@@ -1429,49 +1429,40 @@ class Submit
 		$I = new \diImage();
 		$I->open($F['tmp_name']);
 
-		foreach ($options as $opts)
-		{
+		foreach ($options as $opts) {
 			$suffix = Submit::getPreviewSuffix($opts['type']);
 
 			$fn = \diPaths::fileSystem($obj->getModel(), true, $field) .
 				$opts['folder'] . $opts['subfolder'] . $obj->getData($field);
 
-			if (is_file($fn))
-			{
-				unlink($fn);
-			}
+            if (is_file($fn)) {
+                unlink($fn);
+            }
 
-			if (!$opts['resize'] && (move_uploaded_file($F['tmp_name'], $fn) || rename($F['tmp_name'], $fn)))
-			{
-				$needToUnlink = false;
-			}
-			else
-			{
-				if (!empty($opts['quality']))
-				{
-					$I->set_jpeg_quality($opts['quality']);
-				}
+            if (!$opts['resize']) {
+                copy($F['tmp_name'], $fn);
+            } else {
+                if (!empty($opts['quality'])) {
+                    $I->set_jpeg_quality($opts['quality']);
+                }
 
-				$I->make_thumb_or_copy(
-					$opts['resize'],
-					$fn,
-					$opts['width'],
-					$opts['height'],
-					false,
-					$opts['watermark']['name'], $opts['watermark']['x'], $opts['watermark']['y']
-				);
-			}
+                $I->make_thumb_or_copy(
+                    $opts['resize'],
+                    $fn,
+                    $opts['width'],
+                    $opts['height'],
+                    false,
+                    $opts['watermark']['name'], $opts['watermark']['x'], $opts['watermark']['y']
+                );
+            }
 
 			chmod($fn, Submit::FILE_CHMOD);
 
-			if (\diSwiffy::is($fn))
-			{
-				list($w, $h, $t) = \diSwiffy::getDimensions($fn);
-			}
-			else
-			{
-				list($w, $h, $t) = getimagesize($fn);
-			}
+            if (\diSwiffy::is($fn)) {
+                list($w, $h, $t) = \diSwiffy::getDimensions($fn);
+            } else {
+                list($w, $h, $t) = getimagesize($fn);
+            }
 
 			$obj->setData([
 				$field . $suffix . '_w' => (int)$w,
@@ -1479,12 +1470,10 @@ class Submit
 				$field . $suffix . '_t' => (int)$t,
 			]);
 
-			if (!empty($opts['afterSave']))
-			{
+			if (!empty($opts['afterSave'])) {
 				$afterSave = $opts['afterSave'];
 
-				if (is_callable($afterSave))
-				{
+				if (is_callable($afterSave)) {
 					$afterSave($field, $fn, $obj->getModel());
 				}
 			}
@@ -1493,8 +1482,7 @@ class Submit
 		$I->close();
 		unset($I);
 
-		if ($needToUnlink)
-		{
+		if ($needToUnlink) {
 			unlink($F['tmp_name']);
 		}
 	}
