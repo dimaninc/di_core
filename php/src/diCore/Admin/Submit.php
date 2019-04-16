@@ -948,17 +948,19 @@ class Submit
             }
         }
 
-        if (empty($filesOptions[0]['folder'])) {
-            throw new \Exception("You should define non-empty 'folder'");
-        }
-
         return $filesOptions;
     }
 
 	public function storeImage($field, $filesOptions = [])
 	{
+	    if (!is_array($field)) {
+            $field = explode(',', $field);
+        }
+
+	    $hasFilesOptions = $filesOptions || $this->getModel()->getPicStoreSettings(current($field));
+
 		// back compatibility
-		if (is_callable($filesOptions) || (is_string($filesOptions) && $filesOptions))
+		if (is_callable($filesOptions) || !$hasFilesOptions || (is_string($filesOptions) && $filesOptions))
 		{
 			return $filesOptions
 				? $this->store_pics($field, $filesOptions)
@@ -972,13 +974,9 @@ class Submit
             throw new \Exception('Callback is not callable: ' . print_r($callback, true));
         }
 
-        if (!is_array($field)) {
-            $field = explode(',', $field);
-        }
-
         foreach ($field as $f) {
 		    $fieldFileOptions = self::prepareFileOptions(
-		        $filesOptions ?: $this->getModel()->getPicStoreSettings($f),
+		        $filesOptions ?: $this->getModel()->getPicStoreSettings($f) ?: [],
                 $this->getModel(),
                 $this->getTable()
             );
@@ -1068,12 +1066,17 @@ class Submit
 	{
 		$defaultCallback = [static::class, 'storeFileCallback'];
 
-		$callback = is_callable($callbackOrFolder) ? $callbackOrFolder : $defaultCallback;
-		$folder = is_callable($callbackOrFolder) || !$callbackOrFolder ? get_pics_folder($this->table) : $callbackOrFolder;
+		$callback = is_callable($callbackOrFolder)
+            ? $callbackOrFolder
+            : $defaultCallback;
+		$folder = is_callable($callbackOrFolder) || !$callbackOrFolder
+            ? get_pics_folder($this->table)
+            : $callbackOrFolder;
 
 		$pic_fields_ar = is_array($pic_fields) ? $pic_fields : explode(',', $pic_fields);
 
-		FileSystemHelper::createTree(\diPaths::fileSystem($this->getModel(), true, $pic_fields_ar[0]),
+		FileSystemHelper::createTree(
+		    \diPaths::fileSystem($this->getModel(), true, $pic_fields_ar[0]),
 			$folder . get_tn_folder(),
 			self::DIR_CHMOD);
 
