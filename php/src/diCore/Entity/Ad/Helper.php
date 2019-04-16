@@ -65,11 +65,21 @@ class Helper
 	 */
 	private $block;
 
-	public static function printBlock($blockId, $token = null, CMS $CMS = null)
+	public static function printBlock($blockId = null, $token = null, CMS $CMS = null)
 	{
 		global $Z;
 
 		$a = new static($CMS ?: $Z);
+
+		if (!$blockId) {
+		    /** @var Collection $blocks */
+		    $blocks = \diCollection::create(Types::ad_block);
+		    $blocks
+                ->filterByVisible(1)
+                ->orderByOrderNum();
+
+		    $blockId = $blocks->getFirstItem();
+        }
 
 		return $a->render($blockId, $token);
 	}
