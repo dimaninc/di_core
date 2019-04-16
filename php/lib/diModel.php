@@ -6,9 +6,11 @@
  * Time: 18:51
  */
 
+use diCore\Admin\Submit;
 use diCore\Base\CMS;
 use diCore\Data\Config;
 use diCore\Helper\Slug;
+use diCore\Helper\StringHelper;
 
 class diModel implements \ArrayAccess
 {
@@ -68,6 +70,11 @@ class diModel implements \ArrayAccess
 	protected $picFields = ['pic', 'pic2', 'ico'];
 	/* redefine this in child class */
 	protected $customPicFields = [];
+
+    /**
+     * @var array Settings for Submit, for each pic field, what previews to generate
+     */
+	protected static $picStoreSettings = [];
 
 	protected $fileFields = ['pic', 'pic2', 'pic3', 'pic_main', 'ico', 'flv', 'mp3', 'swf', 'final_pic'];
 	protected $customFileFields = [];
@@ -561,25 +568,101 @@ class diModel implements \ArrayAccess
 
 	public function wrapFileWithPath($filename, $previewIdx = null, $httpPath = true)
 	{
-		$tnFolder = $previewIdx === null
-			? ''
-			: $this->getTnFolder($previewIdx);
+		$subFolder = '';
+
+		if ($previewIdx !== null) {
+		    $subFolder = isInteger($previewIdx)
+                ? $this->getTnFolder($previewIdx) # preview folder if numeric idx passed
+                : StringHelper::slash($previewIdx); # full subfolder name otherwise
+        }
 
 		$pathPrefix = $httpPath
             ? \diPaths::http($this)
             : \diPaths::fileSystem($this);
 
 		return $filename
-			? $pathPrefix . $this->getPicsFolder() . $tnFolder . $filename
+			? $pathPrefix . $this->getPicsFolder() . $subFolder . $filename
 			: '';
 	}
 
 	public function getFilesForRotation($field)
 	{
 		return [
-			$this->wrapFileWithPath($this->get($field)),
+			$this->getOrigFileForRebuilding($field),
 		];
 	}
+
+    public function getOrigFileSettingsForRebuilding($field)
+    {
+        $types = [
+            Submit::IMAGE_TYPE_ORIG,
+            Submit::IMAGE_TYPE_BIG,
+            Submit::IMAGE_TYPE_MAIN,
+        ];
+
+        foreach ($types as $type) {
+            $o = static::findPicStoreSettingsByType($field, $type);
+
+            if ($o) {
+                return $o;
+            }
+        }
+
+        throw new \Exception('Orig file not found for field ' . $field);
+    }
+
+    public function getOrigFileForRebuilding($field)
+    {
+        $settings = $this->getOrigFileSettingsForRebuilding($field);
+
+        return $this->wrapFileWithPath($this->get($field), Submit::getFolderByImageType($settings['type']), false);
+    }
+
+    public static function findPicStoreSettingsByType($field, $type)
+    {
+        $settings = static::getPicStoreSettings($field);
+
+        if ($settings) {
+            foreach ($settings as $o) {
+                if ($o['type'] == $type) {
+                    return $o;
+                }
+            }
+        }
+
+        return null;
+    }
+
+	public static function getPicStoreSettings($field)
+    {
+        return isset(static::$picStoreSettings[$field])
+            ? static::$picStoreSettings[$field]
+            : null;
+    }
+
+    public function rebuildPics($field)
+    {
+        $Submit = new Submit($this->getTable(), $this->getId());
+        $callback = [Submit::class, 'storeImageCallback'];;
+
+        $opts = $this->getOrigFileSettingsForRebuilding($field);
+        $fn = $this->getOrigFileForRebuilding($field);
+
+        $fieldFileOptions = Submit::prepareFileOptions($this->getPicStoreSettings($field), $this);
+
+        $F = [
+            'name' => $this->get($field),
+            'type' => 'image/jpeg',
+            'tmp_name' => $fn,
+            'error' => 0,
+            'size' => filesize($fn),
+            'diOrigType' => $opts['type'],
+        ];
+
+        $callback($Submit, $field, $fieldFileOptions, $F);
+
+        return $this;
+    }
 
 	public function getTemplateVars()
 	{

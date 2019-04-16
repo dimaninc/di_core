@@ -429,7 +429,9 @@ EOF;
     {
         $idx = $this->get_idx_by_field($field);
 
-        if ($idx !== null) {
+        if (isset($this->ar[$field])) {
+            unset($this->ar[$field]);
+        } elseif (isInteger($idx)) {
             array_splice($this->ar, $idx, 1);
         }
 

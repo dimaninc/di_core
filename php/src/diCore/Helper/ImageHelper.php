@@ -37,7 +37,12 @@ class ImageHelper
 
 	public static function rotate($angle, $inFilename, $outFilename = null, $backgroundColor = self::DEFAULT_BACKGROUND_COLOR)
 	{
-		$inFilename = realpath($inFilename);
+        $origInFilename = $inFilename;
+        $inFilename = realpath($inFilename);
+
+		if (!$inFilename) {
+		    throw new \Exception('File not found: ' . $origInFilename . ', ' . $inFilename);
+        }
 
 		switch (self::vendor())
 		{

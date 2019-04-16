@@ -145,8 +145,10 @@ class Files extends \diBaseAdminController
 
 		foreach ($files as $fn)
 		{
-			static::doRotate($angle, \diPaths::fileSystem($this) . $fn);
+			static::doRotate($angle, $fn);
 		}
+
+		$model->rebuildPics($field);
 
 		$ar['ok'] = true;
 		$ar['files'] = $files;

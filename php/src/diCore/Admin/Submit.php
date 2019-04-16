@@ -25,6 +25,9 @@ class Submit
 	const FILE_NAME_RANDOM_LENGTH = 10;
 	const FILE_NAME_GLUE = '-';
 
+	const IMAGE_STORE_MODE_UPLOAD = 1;
+    const IMAGE_STORE_MODE_REBUILD = 2;
+
 	public static $defaultDynamicPicCallback = [self::class, 'storeDynamicPicCallback'];
 	const dynamicPicsTable = 'dipics';
 
@@ -922,10 +925,40 @@ class Submit
 		return $this->storeImage($field, $callbackOrFolder);
 	}
 
+	public static function prepareFileOptions($filesOptions, \diModel $model, $table = null)
+    {
+        foreach ($filesOptions as &$opts) {
+            $opts = extend([
+                'type' => self::IMAGE_TYPE_MAIN,
+                'folder' => $model->getPicsFolder()
+                    ?: get_pics_folder($table ?: $model->getTable(), Config::getUserAssetsFolder()),
+                'subfolder' => null,
+                'resize' => null,
+                'quality' => null,
+                'afterSave' => null,
+                'watermark' => [
+                    'name' => null,
+                    'x' => null,
+                    'y' => null,
+                ],
+            ], $opts);
+
+            if ($opts['type'] != self::IMAGE_TYPE_MAIN && is_null($opts['subfolder'])) {
+                $opts['subfolder'] = self::getFolderByImageType($opts['type']);
+            }
+        }
+
+        if (empty($filesOptions[0]['folder'])) {
+            throw new \Exception("You should define non-empty 'folder'");
+        }
+
+        return $filesOptions;
+    }
+
 	public function storeImage($field, $filesOptions = [])
 	{
 		// back compatibility
-		if (is_callable($filesOptions) || !$filesOptions || (is_string($filesOptions) && $filesOptions))
+		if (is_callable($filesOptions) || (is_string($filesOptions) && $filesOptions))
 		{
 			return $filesOptions
 				? $this->store_pics($field, $filesOptions)
@@ -935,106 +968,70 @@ class Submit
 
 		$callback = [static::class, 'storeImageCallback'];
 
-		// preparing options
-		foreach ($filesOptions as &$opts)
-		{
-			$opts = extend([
-				'type' => self::IMAGE_TYPE_MAIN,
-				'folder' => $this->getModel()->getPicsFolder()
-                    ?: get_pics_folder($this->getTable(), Config::getUserAssetsFolder()),
-				'subfolder' => null,
-				'resize' => null,
-				'quality' => null,
-				'afterSave' => null,
-				'watermark' => [
-					'name' => null,
-					'x' => null,
-					'y' => null,
-				],
-			], $opts);
+        if (!is_callable($callback)) {
+            throw new \Exception('Callback is not callable: ' . print_r($callback, true));
+        }
 
-			if ($opts['type'] != self::IMAGE_TYPE_MAIN && is_null($opts['subfolder']))
-			{
-				$opts['subfolder'] = self::getFolderByImageType($opts['type']);
-			}
+        if (!is_array($field)) {
+            $field = explode(',', $field);
+        }
 
-			FileSystemHelper::createTree(\diPaths::fileSystem($this->getModel(), true, $field),
-				$opts['folder'] . $opts['subfolder'], self::DIR_CHMOD);
-		}
-		//
+        foreach ($field as $f) {
+		    $fieldFileOptions = self::prepareFileOptions(
+		        $filesOptions ?: $this->getModel()->getPicStoreSettings($f),
+                $this->getModel(),
+                $this->getTable()
+            );
+            $baseFolder = $fieldFileOptions[0]['folder'];
 
-		if (!is_array($field))
-		{
-			$field = explode(',', $field);
-		}
-
-		if (empty($filesOptions[0]['folder']))
-		{
-			throw new \Exception("You should define non-empty 'folder'");
-		}
-
-		$baseFolder = $filesOptions[0]['folder'];
-
-		foreach ($field as $f)
-		{
-			if (!empty($_FILES[$f]) && empty($_FILES[$f]['error']))
-			{
+			if (!empty($_FILES[$f]) && empty($_FILES[$f]['error'])) {
 				$oldExt = strtolower(StringHelper::fileExtension($this->getData($f)));
 				$newExt = strtolower(StringHelper::fileExtension($_FILES[$f]['name']));
 
-				if (!$this->getData($f))
-				{
+				if (!$this->getData($f)) {
 					$this->generateFilename($f, $baseFolder, $_FILES[$f]['name']);
-				}
-				elseif ($oldExt != $newExt)
-				{
+				} elseif ($oldExt != $newExt) {
 					$this->setData($f, StringHelper::replaceFileExtension($this->getData($f), $newExt));
 				}
 
-				if (is_callable($callback))
-				{
-					foreach ($filesOptions as &$opts)
-					{
-						$suffix = self::getPreviewSuffix($opts['type']);
+                foreach ($fieldFileOptions as &$opts) {
+                    FileSystemHelper::createTree(\diPaths::fileSystem($this->getModel(), true, $field),
+                        $opts['folder'] . $opts['subfolder'], self::DIR_CHMOD);
 
-						$widthParam = Configuration::exists([
-							$this->getTable() . '_' . $f . $suffix . '_width',
-							$this->getTable() . $suffix . '_width',
-							$this->getTable() . '_width',
-						]);
-						$heightParam = Configuration::exists([
-							$this->getTable() . '_' . $f . $suffix . '_height',
-							$this->getTable() . $suffix . '_height',
-							$this->getTable() . '_height',
-						]);
+                    $suffix = self::getPreviewSuffix($opts['type']);
 
-						$opts = extend([
-							'width' => Configuration::safeGet($widthParam),
-							'height' => Configuration::safeGet($heightParam),
-						], $opts);
-					}
+                    $widthParam = Configuration::exists([
+                        $this->getTable() . '_' . $f . $suffix . '_width',
+                        $this->getTable() . $suffix . '_width',
+                        $this->getTable() . '_width',
+                    ]);
+                    $heightParam = Configuration::exists([
+                        $this->getTable() . '_' . $f . $suffix . '_height',
+                        $this->getTable() . $suffix . '_height',
+                        $this->getTable() . '_height',
+                    ]);
 
-					$callback($this, $f, $filesOptions, $_FILES[$f]);
-				}
-				else
-				{
-					throw new \Exception('Callback is not callable: ' . print_r($callback, true));
-				}
+                    $opts = extend([
+                        'width' => Configuration::safeGet($widthParam),
+                        'height' => Configuration::safeGet($heightParam),
+                    ], $opts);
+                }
+
+                $callback($this, $f, $fieldFileOptions, $_FILES[$f]);
 			}
 		}
 
 		return $this;
 	}
 
-	public static function getGeneratedFilename($folder, $origFilename, $naming)
+    public static function getGeneratedFilename($folder, $origFilename, $naming)
 	{
 		$baseName = transliterate_rus_to_eng(StringHelper::fileBaseName($origFilename)) ?: get_unique_id(self::FILE_NAME_RANDOM_LENGTH);
 		$endingIdx = 0;
 		$extension = '.' . strtolower(StringHelper::fileExtension($origFilename));
 
 		do {
-			switch ($naming)
-			{
+			switch ($naming) {
 				default:
 				case self::FILE_NAMING_RANDOM:
 					$filename = get_unique_id(self::FILE_NAME_RANDOM_LENGTH);
@@ -1043,8 +1040,7 @@ class Submit
 				case self::FILE_NAMING_ORIGINAL:
 					$filename = $baseName;
 
-					if ($endingIdx)
-					{
+					if ($endingIdx) {
 						$filename .= self::FILE_NAME_GLUE . $endingIdx;
 					}
 
@@ -1424,12 +1420,24 @@ class Submit
 	 */
 	public static function storeImageCallback(&$obj, $field, $options, $F)
 	{
-		$needToUnlink = true;
+	    $origType = isset($F['diOrigType'])
+            ? $F['diOrigType']
+            : null;
+
+	    $mode = $origType
+            ? self::IMAGE_STORE_MODE_REBUILD
+            : self::IMAGE_STORE_MODE_UPLOAD;
+
+		$needToUnlink = $mode == self::IMAGE_STORE_MODE_UPLOAD;
 
 		$I = new \diImage();
 		$I->open($F['tmp_name']);
 
 		foreach ($options as $opts) {
+		    if ($mode === self::IMAGE_STORE_MODE_REBUILD && $opts['type'] === $origType) {
+		        continue;
+            }
+
 			$suffix = Submit::getPreviewSuffix($opts['type']);
 
 			$fn = \diPaths::fileSystem($obj->getModel(), true, $field) .
@@ -1590,9 +1598,11 @@ class Submit
 			$folder . get_orig_folder(),
 		], self::DIR_CHMOD);
 
-		$mode = $F['tmp_name'] == $orig_fn ? 'rebuilding' : 'uploading';
+		$mode = $F['tmp_name'] == $orig_fn
+            ? self::IMAGE_STORE_MODE_REBUILD
+            : self::IMAGE_STORE_MODE_UPLOAD;
 
-		if ($mode == 'uploading')
+		if ($mode == self::IMAGE_STORE_MODE_UPLOAD)
 		{
 			if (is_file($full_fn)) unlink($full_fn);
 			if (is_file($big_fn)) unlink($big_fn);
@@ -1629,7 +1639,7 @@ class Submit
 				{
 					$tn_fn = $root . $folder . get_tn_folder($i) . $fn;
 
-					if ($mode == 'uploading')
+					if ($mode == self::IMAGE_STORE_MODE_UPLOAD)
 					{
 						if (is_file($tn_fn))
 						{
@@ -1729,7 +1739,7 @@ class Submit
 
 			// orig photo
 
-			if ($mode == 'uploading')
+			if ($mode == self::IMAGE_STORE_MODE_UPLOAD)
 			{
 				move_uploaded_file($F['tmp_name'], $orig_fn) || rename($F['tmp_name'], $orig_fn);
 			}
@@ -1744,7 +1754,7 @@ class Submit
 		{
 			list($ar['pic_w'], $ar['pic_h'], $ar['pic_t']) = [0, 0, 0];
 
-			if ($mode == 'uploading')
+			if ($mode == self::IMAGE_STORE_MODE_UPLOAD)
 			{
 				move_uploaded_file($F['tmp_name'], $full_fn) || rename($F['tmp_name'], $orig_fn);
 			}

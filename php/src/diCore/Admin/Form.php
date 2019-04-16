@@ -574,7 +574,12 @@ class Form
 
 		if (empty($buttons["show"]))
 		{
-			$buttons["show"] = ["save", "quick_save", "cancel"];
+			$buttons["show"] = ["save", "cancel"];
+
+			// showing Apply button only for existing records
+			if ($this->getId()) {
+			    $buttons['show'][] = "quick_save";
+            }
 		}
 
 		$show_ar = isset($buttons["show_additional"])

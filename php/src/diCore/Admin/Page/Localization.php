@@ -131,14 +131,15 @@ class Localization extends \diCore\Admin\BasePage
 	{
 		$this->setAfterFormTemplate('admin/localization/after_form');
 
-		if (!$this->getAdmin()->isAdminSuper() && $this->getId())
-		{
+		if (!$this->getAdmin()->isAdminSuper() && $this->getId()) {
 			$this->getForm()->setStaticInput('name');
 		}
 
-		$this->getForm()->setSubmitButtonsOptions([
-			'show_additional' => 'clone',
-		]);
+		if ($this->getAdmin()->isAdminSuper() && $this->getId()) {
+            $this->getForm()->setSubmitButtonsOptions([
+                'show_additional' => 'clone',
+            ]);
+        }
 	}
 
 	public function submitForm()
