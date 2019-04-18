@@ -476,7 +476,7 @@ class diDynamicRows
 
     $kill_div = $this->static_mode
 		? ""
-	    : "<a class=\"close\" title=\"Удалить\" href=\"#\" onclick=\"return {$this->js_var_name}.remove('{$this->field}',{$id});\"></a>";
+	    : "<a class=\"close\" title=\"{$this->L('delete')}\" href=\"#\" onclick=\"return {$this->js_var_name}.remove('{$this->field}',{$id});\"></a>";
 
     $order_num_div = !isset($this->info_ar[$this->field]["fields"]["order_num"]) && isset($r->order_num)
       ? "<input type=hidden name=\"{$this->field}_order_num[$id]\" value=\"".($r ? $r->order_num : "")."\" />"

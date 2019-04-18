@@ -84,7 +84,7 @@ table.dinicetable
                 white-space nowrap
                 padding 0 5px
                 body[data-skin="entrine"] &
-                    background-color none //!important
+                    background-color transparent //!important
                     font-weight 500
                     font-size 12px //!important
                     padding 7px
@@ -118,7 +118,7 @@ table.dinicetable
                         &:not([data-action])
                             cursor default
                         &[data-action]:hover
-                            background-color $entrineColorTextMenuSelected
+                            background-color alpha($entrineColorTextMenuSelected, .2)
                         &[data-action="edit"]
                             background-image url(/assets/images/_core/admin/skin/entrine/list/edit.svg)
                         &[data-action="create"]
@@ -200,6 +200,8 @@ table.dinicetable
         &.delete
             > td
                 background-color #fbb
+                body[data-skin="entrine"] &
+                    background-color alpha(red, .1)
         &.highlight
             > td
                 background-color #ffd
