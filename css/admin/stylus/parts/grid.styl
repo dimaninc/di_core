@@ -1,27 +1,44 @@
 ul.admin-grid
-	list-style none
+	ul-norm()
 	margin 0 24px 20px 24px
-	padding 0
+	display flex
+	flex-wrap wrap
+	justify-content space-between
+	@media screen and (max-width: 767px)
+		margin 0 12px 10px 12px
 	> li
-		display inline-block
-		background #DFDFD0
-		padding 10px
-		border-radius 10px
 		width 24%
-		margin-right 1%
+		background-color $classicColorBgBrown
+		padding 10px
+		margin-bottom 15px
+		border-radius 10px
 		box-sizing border-box
 		vertical-align top
 		text-align center
-		margin-bottom 15px
+		@media screen and (max-width: 1350px)
+			width 32%
+		@media screen and (max-width: 1024px)
+			width 49%
+		@media screen and (max-width: 550px)
+			width 100%
+		body[data-skin="entrine"] &
+			border-radius 0
+			background-color $entrineColorBgLightGray
 		.nicetable-button
-			&[data-action="up"]
-			&[data-action="down"]
-				transform rotate(-90deg)
+			@media screen and (min-width: 551px)
+				&[data-action="up"]
+				&[data-action="down"]
+					transform rotate(-90deg)
+				&[data-action="down"]
+					body[data-skin="entrine"] &
+						transform rotate(90deg)
 		&.highlight
 			background-color #ffd
 		&.delete
 			background-color #fbb
 		.buttons-panel
 			margin 10px 0 0 0
+			display flex
+			justify-content center
 		img
 			max-width 100%

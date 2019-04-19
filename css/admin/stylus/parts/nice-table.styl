@@ -6,7 +6,6 @@ div.dinicetable_div
         max-width 100%
         overflow-x auto
 
-
 table.dinicetable
     border-collapse collapse
     tr
@@ -59,7 +58,7 @@ table.dinicetable
             font-family Tahoma, sans-serif
             color black
             font-size 12px
-            background #dfdfd0
+            background $classicColorBgBrown
             font-weight normal
             padding 0 5px
             vertical-align middle
@@ -108,55 +107,6 @@ table.dinicetable
                     background $entrineColorBgLightGray
                     &:not(:last-child)
                         border-right-color $entrineColorBgLightGray
-                    .nicetable-button
-                        width 48px
-                        height 48px
-                        background none
-                        background-size 18px 18px
-                        background-repeat no-repeat
-                        background-position center center
-                        &:not([data-action])
-                            cursor default
-                        &[data-action]:hover
-                            background-color alpha($entrineColorTextMenuSelected, .2)
-                        &[data-action="edit"]
-                            background-image url(/assets/images/_core/admin/skin/entrine/list/edit.svg)
-                        &[data-action="create"]
-                            background-image url(/assets/images/_core/admin/skin/entrine/list/create.svg)
-                        &[data-action="del"]
-                            background-image url(/assets/images/_core/admin/skin/entrine/list/del.svg)
-                        &[data-action="active"]
-                        &[data-action="visible"]
-                            &[data-state="0"]
-                            &[data-state="false"]
-                                background-image url(/assets/images/_core/admin/skin/entrine/list/visible-0.svg)
-                        &[data-action="active"]
-                        &[data-action="visible"]
-                            &[data-state="1"]
-                            &[data-state="true"]
-                                background-image url(/assets/images/_core/admin/skin/entrine/list/visible-1.svg)
-                        &[data-action="visible_top"]
-                            &[data-state="0"]
-                            &[data-state="false"]
-                                background-image url(/assets/images/_core/admin/skin/entrine/list/visible_top-0.svg)
-                            &[data-state="1"]
-                            &[data-state="true"]
-                                background-image url(/assets/images/_core/admin/skin/entrine/list/visible_top-1.svg)
-                        &[data-action="visible_bottom"]
-                            &[data-state="0"]
-                            &[data-state="false"]
-                                background-image url(/assets/images/_core/admin/skin/entrine/list/visible_bottom-0.svg)
-                            &[data-state="1"]
-                            &[data-state="true"]
-                                background-image url(/assets/images/_core/admin/skin/entrine/list/visible_bottom-1.svg)
-                        &[data-action="up"]
-                        &[data-action="down"]
-                        &[data-action="play"]
-                        &[data-action="rollback"]
-                            background-image url(/assets/images/_core/admin/skin/entrine/list/up.svg)
-                        &[data-action="down"]
-                        &[data-action="rollback"]
-                            transform rotate(180deg)
                 a
                     display block
                     line-height 2px
@@ -228,6 +178,68 @@ table.dinicetable
                     background-color white
                     body[data-skin="entrine"] &
                         background-color none
+
+.nicetable-button
+    width 30px
+    height 30px
+    display inline-block
+    cursor pointer
+    &:not([data-action])
+    [data-action="empty"]
+        cursor default
+    body[data-skin="entrine"] &
+        width 48px
+        height 48px
+        background none
+        background-size 18px 18px !important
+        background-repeat no-repeat !important
+        background-position center center !important
+        &[data-action]
+            &:hover
+                background-color white //alpha($entrineColorTextMenuSelected, .2)
+        &[data-action="edit"]
+            background-image embedurl('../../../i/admin/skin/entrine/list/edit.svg')
+        &[data-action="create"]
+            background-image embedurl('../../../i/admin/skin/entrine/list/create.svg')
+        &[data-action="del"]
+            background-image embedurl('../../../i/admin/skin/entrine/list/del.svg')
+        &[data-action="active"]
+        &[data-action="visible"]
+            &[data-state="0"]
+            &[data-state="false"]
+                background-image embedurl('../../../i/admin/skin/entrine/list/visible-0.svg')
+            &[data-state="1"]
+            &[data-state="true"]
+                background-image embedurl('../../../i/admin/skin/entrine/list/visible-1.svg')
+        &[data-action="visible_top"]
+            &[data-state="0"]
+            &[data-state="false"]
+                background-image embedurl('../../../admin/skin/entrine/list/visible_top-0.svg')
+            &[data-state="1"]
+            &[data-state="true"]
+                background-image embedurl('../../../admin/skin/entrine/list/visible_top-1.svg')
+        &[data-action="visible_bottom"]
+            &[data-state="0"]
+            &[data-state="false"]
+                background-image embedurl('../../../admin/skin/entrine/list/visible_bottom-0.svg')
+            &[data-state="1"]
+            &[data-state="true"]
+                background-image embedurl('../../../admin/skin/entrine/list/visible_bottom-1.svg')
+        &[data-action="top"]
+            &[data-state="0"]
+            &[data-state="false"]
+                background-image embedurl('../../../i/admin/skin/entrine/list/top-0.svg')
+            &[data-state="1"]
+            &[data-state="true"]
+                background-image embedurl('../../../i/admin/skin/entrine/list/top-1.svg')
+        &[data-action="up"]
+        &[data-action="down"]
+        &[data-action="play"]
+        &[data-action="rollback"]
+            background-image embedurl('../../../i/admin/skin/entrine/list/up.svg')
+        &[data-action="down"]
+        &[data-action="rollback"]
+            transform rotate(180deg)
 
 .dinicetable_div
     .parent-anchor
