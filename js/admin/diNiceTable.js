@@ -2,6 +2,7 @@ var diNiceTable = function(opts)
 {
 	var self = this,
 		CP,
+		language,
         subfolder,
 		workerBase = '/api/list/',
 		settings = $.extend({
@@ -9,8 +10,20 @@ var diNiceTable = function(opts)
 			table: ''
 		}, opts);
 
-    if (subfolder = $(document.body).data('subfolder'))
-    {
+	var localization = {
+		ru: {
+			delete: 'Удалить?',
+			are_you_sure: 'Вы уверены?',
+			deleted: 'Удалено'
+		},
+		en: {
+            delete: 'Delete?',
+            are_you_sure: 'Are you sure?',
+            deleted: 'Deleted'
+		}
+	};
+
+    if (subfolder = $(document.body).data('subfolder')) {
         workerBase = '/' + subfolder + workerBase;
     }
 
@@ -18,6 +31,18 @@ var diNiceTable = function(opts)
 	{
 		settings.$table = $('.dinicetable_div > table[data-table="{0}"],ul.admin-grid[data-table="{0}"]'.format(settings.table));
 	}
+
+	this.getLanguage = function() {
+    	if (!language) {
+    		language = $(document.body).data('language');
+		}
+
+		return language;
+	};
+
+    this.L = function(token) {
+    	return localization[this.getLanguage()][token];
+	};
 
 	this.getWorkerBase = function()
 	{
@@ -105,11 +130,11 @@ var diNiceTable = function(opts)
 		$rows.addClass('delete');
 
 		setTimeout(function() {
-			if (confirm('Удалить?') && confirm('Вы уверены?')) {
+			if (confirm(self.L('delete')) && confirm(self.L('are_you_sure'))) {
 				call('delete', id, function(res, $row) {
 					$row.remove();
 
-					log('Deleted');
+					log(self.L('deleted'));
 				});
 			} else {
 				$rows.removeClass('delete');
@@ -158,8 +183,7 @@ var diNiceTable = function(opts)
 
 	function getRow(ids)
 	{
-		if (!is_array(ids))
-		{
+		if (!di.isArray(ids)) {
 			ids = [ids];
 		}
 
@@ -174,19 +198,16 @@ var diNiceTable = function(opts)
 	{
 		var params = {};
 
-		if (typeof id == 'object')
-		{
+		if (typeof id === 'object') {
 			params = id;
 			id = params.id || '';
 		}
 
 		$.post(workerBase + action + '/' + settings.table + '/' + id, params, function(res) {
-			if (!res.ok)
-			{
+			if (!res.ok) {
 				log('Error while requesting action "' + action + '" for #' + id);
 
-				if (typeof res.message != 'undefined')
-				{
+				if (typeof res.message !== 'undefined') {
 					log(res.message);
 				}
 
@@ -205,8 +226,7 @@ diNiceTable.typeSelectors = {
 	grid: '.admin-grid[data-table]'
 };
 
-diNiceTable.getInstance = function(type)
-{
+diNiceTable.getInstance = function(type) {
 	var s = type
 			? diNiceTable.typeSelectors[type]
 			: di.values(diNiceTable.typeSelectors).join(',');
@@ -214,8 +234,7 @@ diNiceTable.getInstance = function(type)
 	return $(s).data('obj');
 };
 
-diNiceTable.initLists = function()
-{
+diNiceTable.initLists = function() {
 	$(diNiceTable.typeSelectors.list).each(function() {
 		var $this = $(this);
 
@@ -226,8 +245,7 @@ diNiceTable.initLists = function()
 	});
 };
 
-diNiceTable.initGrids = function()
-{
+diNiceTable.initGrids = function() {
 	$(diNiceTable.typeSelectors.grid).each(function() {
 		var $this = $(this);
 
@@ -238,8 +256,7 @@ diNiceTable.initGrids = function()
 	});
 };
 
-diNiceTable.create = function()
-{
+diNiceTable.create = function() {
 	$(function() {
 		diNiceTable.initLists();
 		diNiceTable.initGrids();

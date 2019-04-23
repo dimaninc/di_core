@@ -10,11 +10,13 @@ class Configuration extends \diCore\Admin\BasePage
 {
 	protected $vocabulary = [
 		'ru' => [
+            'delete' => 'Удалить',
 			'form.submit.title' => 'Сохранить',
 			'form.cancel.title' => 'Закрыть',
             'saved' => 'Изменения сохранены',
 		],
 		'en' => [
+            'delete' => 'Delete',
 			'form.submit.title' => 'Save',
 			'form.cancel.title' => 'Cancel',
             'saved' => 'Changes saved',
@@ -165,7 +167,7 @@ class Configuration extends \diCore\Admin\BasePage
 					{
 						$mime_type = \diCore\Admin\Form::get_mime_type_by_ext($ext);
 																										// type=\"$mime_type\"
-						$img_tag = "<div><video preload=\"none\" controls width=400 height=225><source src=\"$ff_orig\" /></video></div>";
+						$img_tag = "<div><video preload=\"none\" controls width=400 height=225><source src=\"$ff_orig\"></video></div>";
 					}
 					else
 					{
@@ -173,16 +175,22 @@ class Configuration extends \diCore\Admin\BasePage
 					}
 
 					$valueSuffix = $v["value"]
-						? "<div>$img_tag</div><div class=\"file-info\">$info <a href=\"" . \diLib::getAdminWorkerPath("configuration", "del_pic", $k) . "\">удалить</a></div>"
+						? sprintf(
+						    '<div>%s</div><div class="file-info">%s <a href="%s">%s</a></div>',
+                            $img_tag,
+                            $info,
+                            \diLib::getAdminWorkerPath("configuration", "del_pic", $k),
+                            $this->getVocabularyTerm('delete')
+                        )
 						: "";
 
-					$value = "<input type=\"file\" name=\"$htmlFieldName\" id='$k' size=\"40\" />";
+					$value = "<input type=\"file\" name=\"$htmlFieldName\" id='$k' size=\"40\">";
 					break;
 
 				default:
 					$value = isset($v["flags"]) && in_array("static", $v["flags"])
 						? StringHelper::out($v["value"], true)
-						: "<input type=\"text\" name=\"$htmlFieldName\" id='$k' value=\"" . StringHelper::out($v["value"], true) . "\" />";
+						: "<input type=\"text\" name=\"$htmlFieldName\" id='$k' value=\"" . StringHelper::out($v["value"], true) . "\">";
 					break;
 			}
 
