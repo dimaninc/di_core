@@ -908,7 +908,14 @@ abstract class CMS
 		return static::getEnvironment() == self::ENV_PROD;
 	}
 
-	protected function shareBlockNeeded()
+    public function setShareBlockNeeded($state)
+    {
+        $this->print_share_block = $state;
+
+        return $this;
+    }
+
+    protected function shareBlockNeeded()
 	{
 		return
 			$this->isResponseCode(HttpCode::OK) &&
@@ -975,24 +982,35 @@ abstract class CMS
 			$img = $this->getHeaderImage();
 			$content_ending_for_lj = "<div><img src=\"$img\" /></div>";
 
-			$this->getTpl()
-				->assign([
-					"TITLE" => $title,
-					"TITLE_ESCAPED" => urlencode($title),
-					"TITLE0_ESCAPED" => urlencode($title0),
+			$this->getTwig()
+                ->assign([
+                    'share' => [
+                        'title' => $title0,
+                        'content' => $content0,
+                        'href' => $href,
+                    ],
+                ]);
 
-					"CONTENT" => $content,
-					"CONTENT_ESCAPED" => urlencode($content),
-					"CONTENT0_ESCAPED" => urlencode($content0),
-					//"HREF_FOR_LJ" => urlencode("<a href=$href>").$content.$content_ending_for_lj.urlencode("</a>"), // str_out(iconv('cp1251','utf-8',$this->tpl->get_assigned("PAGE_DESCRIPTION")))
-					"HREF_FOR_LJ" => urlencode("<a href=$href>$content0$content_ending_for_lj</a>"),
-					"HREF" => $href,
-					"HREF_ESCAPED" => urlencode($href),
-					"HREF_ESCAPED2" => urlencode($href . (preg_match('/[&?]/', $href) ? "&" : "")),
+			if ($this->getTpl()->defined('share_block')) {
+                $this->getTpl()
+                    ->assign([
+                        "TITLE" => $title,
+                        "TITLE_ESCAPED" => urlencode($title),
+                        "TITLE0_ESCAPED" => urlencode($title0),
 
-					//"HREF_TINY" => urlencode(get_tiny_url("http://{$_SERVER["SERVER_NAME"]}{$_SERVER["REQUEST_URI"]}")),
-				], "SHARE_")
-				->process("PAGE_SHARE_BLOCK", "share_block");
+                        "CONTENT" => $content,
+                        "CONTENT_ESCAPED" => urlencode($content),
+                        "CONTENT0_ESCAPED" => urlencode($content0),
+                        //"HREF_FOR_LJ" => urlencode("<a href=$href>").$content.$content_ending_for_lj.urlencode("</a>"), // str_out(iconv('cp1251','utf-8',$this->tpl->get_assigned("PAGE_DESCRIPTION")))
+                        "HREF_FOR_LJ" => urlencode("<a href=$href>$content0$content_ending_for_lj</a>"),
+                        "HREF" => $href,
+                        "HREF_ESCAPED" => urlencode($href),
+                        "HREF_ESCAPED2" => urlencode($href . (preg_match('/[&?]/', $href) ? "&" : "")),
+
+                        //"HREF_TINY" => urlencode(get_tiny_url("http://{$_SERVER["SERVER_NAME"]}{$_SERVER["REQUEST_URI"]}")),
+                    ], "SHARE_")
+                    ->process("PAGE_SHARE_BLOCK", "share_block");
+            }
 		}
 
 		return $this;
