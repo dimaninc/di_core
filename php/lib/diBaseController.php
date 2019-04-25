@@ -210,12 +210,14 @@ class diBaseController
 
 		$paramsStr = trim($paramsStr, '/');
 
+		/*
 		if ($subFolder = \diLib::getSubFolder()) {
 			if (StringHelper::startsWith($paramsStr, $subFolder)) {
 				$paramsStr = substr($paramsStr, mb_strlen($subFolder));
 				$paramsStr = trim($paramsStr, '/');
 			}
 		}
+		*/
 
 		return explode('/', $paramsStr);
 	}
