@@ -368,7 +368,7 @@ class diModel implements \ArrayAccess
 			$prefix = '';
 		}
 
-		return $prefix;
+		return \diLib::getSubFolder(true) . $prefix;
 	}
 
 	protected static function __getLanguage()
