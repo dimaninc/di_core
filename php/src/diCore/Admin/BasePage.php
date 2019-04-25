@@ -882,7 +882,7 @@ abstract class BasePage
 			{
 				$this->getFilters()
 					->setSelectFromArrayInput('sortby', $filters['sortByAr'])
-					->setSelectFromArrayInput('dir', \diAdminFilters::$dirAr);
+					->setSelectFromArrayInput('dir', \diAdminFilters::$dirAr[$this->getLanguage()]);
 			}
 		}
 

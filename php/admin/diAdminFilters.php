@@ -51,8 +51,15 @@ class diAdminFilters
 	const DEFAULT_WHERE_TPL = "[-field-]='[-value-]'";
 
 	public static $dirAr = [
-		"ASC" => "По возрастанию",
-		"DESC" => "По убыванию",
+	    'ru' => [
+            "ASC" => "По возрастанию",
+            "DESC" => "По убыванию",
+        ],
+
+        'en' => [
+            "ASC" => "Ascending",
+            "DESC" => "Descending",
+        ],
 	];
 
 	public static $dateRangeAr = [
