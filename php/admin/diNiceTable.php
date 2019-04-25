@@ -96,6 +96,9 @@ class diNiceTable
 	/** @var string|null Used for editBtn href, if differs with table */
 	private $formPathBase;
 
+	/** @var \diAdminList */
+	protected $List;
+
 	/**
 	 * @param string $table
 	 * @param diPagesNavy $pn
@@ -105,7 +108,13 @@ class diNiceTable
 	{
 		global $lite, $db;
 
-		$this->table = $table;
+		if ($table instanceof \diAdminList) {
+		    $this->List = $table;
+            $this->table = $this->List->getTable();
+        } else {
+            $this->table = $table;
+        }
+
 		$this->db = $db;
 
 		if (is_object($pn))
@@ -129,6 +138,16 @@ class diNiceTable
 		$this->lite = !empty($lite) ? $lite : 0;
 		$this->collapsedIds = isset($_COOKIE["list_collapsed"][$this->table]) ? explode(",", $_COOKIE["list_collapsed"][$this->table]) : array();
 	}
+
+	public function getList()
+    {
+        return $this->List;
+    }
+
+    public function L($token)
+    {
+        return $this->getList() ? $this->getList()->L($token) : $token;
+    }
 
 	protected function getDb()
 	{
@@ -633,6 +652,10 @@ class diNiceTable
 					break;
 			}
 		}
+
+		if (!$title) {
+		    $title = $this->L('open');
+        }
 
 		$s = $href
 			? " <a target=\"_blank\" href=\"$href\" title=\"$title\"><img src=\"/_core/i/admin/icon_external_link.gif\" width=15 height=14></a>"

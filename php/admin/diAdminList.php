@@ -37,6 +37,7 @@ class diAdminList
 
     public static $lngStrings = [
         'en' => [
+            'open' => 'Open',
             'choose_action' => 'Choose action with selected rows',
             'copy' => 'Copy',
             'move' => 'Move',
@@ -46,6 +47,7 @@ class diAdminList
         ],
 
         'ru' => [
+            'open' => 'Открыть',
             'choose_action' => 'Операции с выделенными строками',
             'copy' => 'Копировать',
             'move' => 'Переместить',
@@ -73,7 +75,8 @@ class diAdminList
 
 		$this->printParts = array_keys($this->htmlAr);
 
-		$this->T = new \diNiceTable($this->getAdminPage()->getTable(),
+		$this->T = new \diNiceTable(
+		    $this,
 			$this->getAdminPage()->getPagesNavy(false),
 			$this->getAdminPage()->getLanguage()
 		);
@@ -107,7 +110,7 @@ class diAdminList
 
 	public function getTable()
 	{
-		return $this->T->getTable();
+		return $this->getAdminPage()->getTable() ?: $this->T->getTable();
 	}
 
 	public function addColumns($ar)
