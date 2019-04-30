@@ -710,6 +710,16 @@ abstract class CMS
 		return $this;
 	}
 
+	public function getModuleContents($module)
+    {
+        /** @var \diModule $class */
+        $class = static::getModuleClassName($module);
+        /** @var \diModule $module */
+        $module = $class::create($this);
+
+        return $module->getResultPage();
+    }
+
 	/**
 	 * @return \diCurrentCMS
 	 */
