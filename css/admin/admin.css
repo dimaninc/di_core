@@ -117,6 +117,24 @@ table.cover_video_select a.cover_pic_selected img {
   background: none !important;
   padding: 0 !important;
 }
+table.general-data {
+  margin: 0;
+  padding: 0;
+}
+table.general-data td,
+table.general-data th {
+  border: 1px solid #cfcfcf;
+  padding: 5px 10px;
+}
+table.general-data th {
+  font-weight: bold;
+}
+table.general-data thead td {
+  font-weight: bold;
+}
+table.general-data tbody td {
+  text-align: left;
+}
 a {
   text-decoration: none;
   color: #7601ac;
