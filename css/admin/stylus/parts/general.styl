@@ -98,6 +98,30 @@ table
         tbody
             td
                 text-align left
+    // todo: why doesn't this work?
+    &.cross-highlight
+        $highlightColor = #ffc
+        overflow hidden
+        tr
+            &:hover
+                td
+                th
+                    background-color $highlightColor
+        tr
+            td
+            th
+                position relative
+                outline 0
+                &:hover
+                    &:before
+                        content ''
+                        position absolute
+                        background-color $highlightColor
+                        left 0
+                        top -5000px
+                        height 10000px
+                        width 100%
+                        z-index -1
 
 a
     text-decoration none

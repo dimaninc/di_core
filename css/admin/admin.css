@@ -135,6 +135,29 @@ table.general-data thead td {
 table.general-data tbody td {
   text-align: left;
 }
+table.cross-highlight {
+  overflow: hidden;
+}
+table.cross-highlight tr:hover td,
+table.cross-highlight tr:hover th {
+  background-color: #ffc;
+}
+table.cross-highlight tr td,
+table.cross-highlight tr th {
+  position: relative;
+  outline: 0;
+}
+table.cross-highlight tr td:hover:before,
+table.cross-highlight tr th:hover:before {
+  content: '';
+  position: absolute;
+  background-color: #ffc;
+  left: 0;
+  top: -5000px;
+  height: 10000px;
+  width: 100%;
+  z-index: -1;
+}
 a {
   text-decoration: none;
   color: #7601ac;
