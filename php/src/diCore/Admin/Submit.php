@@ -717,26 +717,24 @@ class Submit
 		return $this->slugFieldName;
 	}
 
-	public function makeSlug($origin = null)
+	public function makeSlug($origin = null, $slugField = null)
 	{
-		if (is_null($origin))
-		{
+        $slugField = $slugField ?: $this->slugFieldName;
+
+		if (is_null($origin)) {
 			$origin = $this->getOriginForSlug();
 		}
 
-		if (is_array($origin))
-		{
-			foreach ($origin as $field)
-			{
-				if ($origin = $this->getData($field))
-				{
+		if (is_array($origin)) {
+			foreach ($origin as $field) {
+				if ($origin = $this->getData($field)) {
 					break;
 				}
 			}
 		}
 
-		$this->setData($this->slugFieldName, Slug::generate($origin, $this->getTable(), $this->getId(),
-			'id', $this->slugFieldName
+		$this->setData($slugField, Slug::generate($origin, $this->getTable(), $this->getId(),
+			'id', $slugField
 		));
 
 		return $this;
