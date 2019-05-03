@@ -31,9 +31,14 @@ class Queue
 
 	private $lastError = Error::NONE;
 
+	public static function isRecipient($ar)
+    {
+        return !is_array($ar) || isset($ar['email']);
+    }
+
 	public function add($from, $to, $subject, $body, $settings = [], $attachments = [], $incutIds = [])
 	{
-		if (!is_array($to))
+		if (static::isRecipient($to))
 		{
 			$to = [$to];
 		}
