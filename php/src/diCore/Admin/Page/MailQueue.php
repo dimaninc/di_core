@@ -83,9 +83,19 @@ class MailQueue extends \diCore\Admin\BasePage
 					'width' => '40%',
 				],
 			],
+            'attachment' => [
+                'title' => '&#128206;',
+                'value' => function (Model $m) {
+		            $att = $m->hasAttachment()
+                        ? unserialize($m->getAttachment())
+                        : [];
+
+                    return $att ? count($att) : '';
+                },
+            ],
 			'date' => [
 				'value' => function (Model $m) {
-					return date('d.m.Y H:i', strtotime($m->getDate()));
+					return \diDateTime::simpleFormat($m->getDate());
 				},
 				'attrs' => [
 					'width' => '10%',
@@ -193,6 +203,7 @@ class MailQueue extends \diCore\Admin\BasePage
 				'default' => '',
 			],
 
+            /*
 			'attachment' => [
 				'type' => 'text',
 				'title' => $this->localized([
@@ -202,6 +213,7 @@ class MailQueue extends \diCore\Admin\BasePage
 				'default' => '',
 				'flags' => ['static'],
 			],
+            */
 
 			'visible' => [
 				'type' => 'checkbox',
