@@ -13,6 +13,7 @@ use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 use diCore\Tool\Auth;
 use diCore\Tool\Cache\Page;
+use diCore\Tool\Logger;
 
 abstract class CMS
 {
@@ -123,10 +124,16 @@ abstract class CMS
         'banner-test-tags',
 
         // facebook
-		'_openstat',
+        'fb_action_ids',
+        'fb_action_types',
+        'fb_source',
+        'action_object_map',
+        'action_type_map',
+        'action_ref_map',
+        '_openstat',
         'fbclid',
 
-		// viber/google
+		// UTM
 		'utm_source',
 		'utm_medium',
 		'utm_campaign',
@@ -1786,58 +1793,23 @@ abstract class CMS
 			->detect()
 			->killGetParams();
 
-		$fb_ar = [
-			'fb_action_ids',
-			'fb_action_types',
-			'fb_source',
-			'action_object_map',
-			'action_type_map',
-			'action_ref_map',
-		];
-		$from_fb = false;
+		$ar = (array)\diContentTypes::getParam($this->getContentModel()->getType(), 'possible_get_params');
 
-		foreach ($_GET as $k => $v)
-		{
-			if (in_array($k, $fb_ar))
-			{
-				$from_fb = true;
-
-				unset($_GET[$k]);
-			}
-		}
-
-		if ($from_fb)
-		{
-			$uri = substr($_SERVER["REQUEST_URI"], 0, strpos($_SERVER["REQUEST_URI"], "?"));
-			$get_ar = [];
-
-			foreach ($_GET as $k => $v)
-			{
-				$get_ar[] = "$k=$v";
-			}
-
-			if ($get_ar)
-			{
-				$uri .= "?" . join("&", $get_ar);
-			}
-
-			$this->redirect_301($uri, 'CMS/redundant-params');
-		}
-
-		$ar = (array)\diContentTypes::getParam($this->getContentModel()->getType(), "possible_get_params");
-
-		if (in_array("*", $ar))
-		{
+		if (in_array('*', $ar)) {
 			return $this;
 		}
 
-		foreach ($_GET as $k => $v)
-		{
-			if (!in_array($k, $ar) && !in_array($k, array_merge(static::$skipGetParams, static::$customSkipGetParams)))
-			{
-				if (static::debugMode())
-				{
-					simple_debug('Query param not allowed: ' . $k . ', Page type: ' . $this->getContentModel()->getType());
+		$params = array_merge(
+		    static::$skipGetParams,
+            static::$customSkipGetParams,
+            $ar
+        );
+
+		foreach ($_GET as $k => $v) {
+			if (!in_array($k, $params)) {
+				if (static::debugMode()) {
+				    Logger::getInstance()->log('Query param not allowed: ' . $k .
+                        ', Page type: ' . $this->getContentModel()->getType());
 				}
 
 				$this->errorExtraQueryParams();
@@ -2562,17 +2534,22 @@ abstract class CMS
 
 	public static function contentIdByType($type)
 	{
-		/** @var CMS $Z */
-		global $Z;
-
-		if (!isset($Z))
-		{
-			$Z = new \diTemporaryCMS();
-			$Z->load_content_table_cache();
-		}
-
-		return $Z->get_id_by_type('content', $type);
+	    return static::contentModelByType($type)->getId();
 	}
+
+    public static function contentModelByType($type)
+    {
+        /** @var CMS $Z */
+        global $Z;
+
+        if (!isset($Z))
+        {
+            $Z = new static();
+            $Z->load_content_table_cache();
+        }
+
+        return $Z->getModelByType($type);
+    }
 
   function get_id_by_type($table, $type)
   {
