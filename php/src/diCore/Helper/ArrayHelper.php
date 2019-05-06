@@ -277,4 +277,9 @@ class ArrayHelper
 
 		return $out;
 	}
+
+    public static function mapAssoc(callable $f, array $a)
+    {
+        return array_column(array_map($f, array_keys($a), $a), 1, 0);
+    }
 }

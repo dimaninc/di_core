@@ -57,7 +57,7 @@ class Auth
 	 * Ids of super users
 	 * @var array
 	 */
-	protected $superUsers = [];
+	protected static $superUsers = [];
 
 	public function __construct($redirectAllowed = true)
 	{
@@ -75,6 +75,11 @@ class Auth
 		static::$instance = $this;
 	}
 
+	public static function getSuperUserIds()
+    {
+        return static::$superUsers;
+    }
+
 	/**
 	 * @return Auth
 	 */
@@ -88,8 +93,7 @@ class Auth
 	 */
 	public static function i()
 	{
-		if (!static::$instance)
-		{
+		if (!static::$instance) {
 			static::$instance = static::create();
 		}
 
@@ -133,7 +137,7 @@ class Auth
 
 	public function isSuperUser()
 	{
-		return in_array($this->getUserId(), $this->superUsers);
+		return in_array($this->getUserId(), self::getSuperUserIds());
 	}
 
 	public function isRedirectAllowed()

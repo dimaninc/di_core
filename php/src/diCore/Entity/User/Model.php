@@ -192,11 +192,11 @@ class Model extends \diBaseUserModel
 		return $this;
 	}
 
-	protected function sendEmail($from, $to, $subj, $body)
+	protected function sendEmail($from, $to, $subj, $body, $settings = [], $attaches = [])
 	{
 		return $this->instantSend
-			? Queue::basicCreate()->addAndSend($from, $to, $subj, $body)
-			: Queue::basicCreate()->add($from, $to, $subj, $body);
+			? Queue::basicCreate()->addAndSend($from, $to, $subj, $body, $settings, $attaches)
+			: Queue::basicCreate()->add($from, $to, $subj, $body, $settings, $attaches);
 	}
 
 	protected function getSender($reason)
@@ -230,12 +230,28 @@ class Model extends \diBaseUserModel
 		]));
 	}
 
-	public function notifyAboutRegistrationByEmail(\diTwig $twig)
+	protected function getMailSettings(\diTwig $twig, $reason)
+    {
+        return [];
+    }
+
+    protected function getMailAttaches(\diTwig $twig, $reason)
+    {
+        return [];
+    }
+
+    public function notifyAboutRegistrationByEmail(\diTwig $twig)
 	{
 		if ($this->hasEmail())
 		{
-			$this->sendEmail($this->getSender('sign_up'), $this->getEmail(),
-				$this->getMailSubject('sign_up'), $this->getMailBody($twig, 'sign_up'));
+			$this->sendEmail(
+			    $this->getSender('sign_up'),
+                $this->getEmail(),
+				$this->getMailSubject('sign_up'),
+                $this->getMailBody($twig, 'sign_up'),
+                $this->getMailSettings($twig, 'sign_up'),
+                $this->getMailAttaches($twig, 'sign_up')
+            );
 		}
 
 		return $this;
@@ -256,8 +272,14 @@ class Model extends \diBaseUserModel
 				'reset_href' => $this->getFullEnterNewPasswordHref(),
 			]);
 
-			$this->sendEmail($this->getSender('password_forgotten'), $this->getEmail(),
-				$this->getMailSubject('password_forgotten'), $this->getMailBody($twig, 'password_forgotten'));
+			$this->sendEmail(
+			    $this->getSender('password_forgotten'),
+                $this->getEmail(),
+				$this->getMailSubject('password_forgotten'),
+                $this->getMailBody($twig, 'password_forgotten'),
+                $this->getMailSettings($twig, 'password_forgotten'),
+                $this->getMailAttaches($twig, 'password_forgotten')
+            );
 		}
 
 		return $this;
