@@ -566,7 +566,12 @@ class diModel implements \ArrayAccess
 		return isset($this->picsTnFolders[$index]) ? $this->picsTnFolders[$index] : get_tn_folder($index);
 	}
 
-	public function wrapFileWithPath($filename, $previewIdx = null, $httpPath = true)
+    public function getFolderForField($field)
+    {
+        return $this->getPicsFolder();
+    }
+
+    public function wrapFileWithPath($filename, $previewIdx = null, $httpPath = true, $field = null)
 	{
 		$subFolder = '';
 
@@ -581,7 +586,7 @@ class diModel implements \ArrayAccess
             : \diPaths::fileSystem($this);
 
 		return $filename
-			? $pathPrefix . $this->getPicsFolder() . $subFolder . $filename
+			? $pathPrefix . $this->getFolderForField($field) . $subFolder . $filename
 			: '';
 	}
 
@@ -728,7 +733,7 @@ class diModel implements \ArrayAccess
 			{
 				if ($v)
 				{
-					$v = $this->wrapFileWithPath($v);
+					$v = $this->wrapFileWithPath($v, null, true, $k);
 				}
 
 				$ar[$k . '_with_path'] = $v;

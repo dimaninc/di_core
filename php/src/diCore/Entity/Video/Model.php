@@ -113,10 +113,19 @@ class Model extends \diModel
 			: null;
 	}
 
+	public function getFolderForField($field)
+    {
+        if (in_array($field, $this->getFileFields())) {
+            return $this->getFilesFolder();
+        }
+
+        return parent::getFolderForField($field);
+    }
+
 	public function getVideoFileByFormat($formatExt)
 	{
 		return $this->has('video_' . $formatExt)
-			? get_files_folder($this->getTable()) . $this->get('video_' . $formatExt)
+			? $this->getFilesFolder() . $this->get('video_' . $formatExt)
 			: '';
 	}
 
