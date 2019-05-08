@@ -16,7 +16,20 @@ class diAdminUser extends diAuth
 
 	const SESSION_USER_ID_FIELD = 'admin_id';
 
-	/**
+    /** @var $this */
+    protected static $instance2;
+    // todo: investigate why this was happening
+
+    public static function i()
+    {
+        if (!static::$instance2) {
+            static::$instance2 = static::create();
+        }
+
+        return static::$instance2;
+    }
+
+    /**
 	 * @return \diCore\Entity\Admin\Model
 	 */
 	public function getModel()
