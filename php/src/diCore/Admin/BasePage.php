@@ -594,26 +594,23 @@ abstract class BasePage
 		return $this;
 	}
 
-	protected function getCurrentModel()
+	protected function getCurrentModel($strict = true)
 	{
-		if ($this->hasList())
-		{
+		if ($this->hasList()) {
 			return $this->getList()->getCurModel();
-		}
-		elseif ($this->hasGrid())
-		{
+		} elseif ($this->hasGrid()) {
 			return $this->getGrid()->getCurModel();
-		}
-		elseif ($this->hasForm())
-		{
+		} elseif ($this->hasForm()) {
 			return $this->getForm()->getModel();
-		}
-		elseif ($this->hasSubmit())
-		{
+		} elseif ($this->hasSubmit()) {
 			return $this->getSubmit()->getModel();
 		}
 
-		throw new \Exception('Where the hell are we? No current model detected');
+		if ($strict) {
+            throw new \Exception('Where the hell are we? No current model detected');
+        }
+
+        return new \diModel();
 	}
 
 	/**
@@ -1053,8 +1050,9 @@ abstract class BasePage
 
 		$this->Form = new Form($this);
 		$this->getForm()
-			->setStaticMode($this->getOption('staticMode'))
-			->read_data();
+            ->afterInit([
+                'static_mode' => $this->getOption('staticMode'),
+            ]);
 
 		return true;
 	}

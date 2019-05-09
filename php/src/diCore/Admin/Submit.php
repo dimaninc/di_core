@@ -205,7 +205,7 @@ class Submit
 
 	public function getModel()
     {
-        return $this->model;
+        return $this->model ?: new \diModel();
     }
 
 	/** @deprecated  */

@@ -162,7 +162,7 @@ class Grid
 
     public function getCurModel()
     {
-        return $this->curModel;
+        return $this->curModel ?: new \diModel();
     }
 
     public function setTemplateName($templateName)

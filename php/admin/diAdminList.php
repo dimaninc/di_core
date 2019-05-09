@@ -316,7 +316,7 @@ class diAdminList
 
 	public function getCurModel()
 	{
-		return $this->curModel;
+		return $this->curModel ?: new \diModel();
 	}
 
 	public function addRow($r, $options = [])

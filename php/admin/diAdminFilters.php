@@ -961,7 +961,15 @@ EOF;
 		return $this;
 	}
 
-	public function setSelectFromCollectionInput($field, diCollection $collection, $format = null, $prefixAr = [], $suffixAr = [])
+    /**
+     * @param string $field
+     * @param \diCollection|array $collection
+     * @param array|callable $format
+     * @param array $prefixAr
+     * @param array $suffixAr
+     * @return $this
+     */
+	public function setSelectFromCollectionInput($field, $collection, $format = null, $prefixAr = [], $suffixAr = [])
 	{
 		if ($format === null || is_array($format))
 		{
@@ -974,7 +982,7 @@ EOF;
 			$format = null;
 		}
 
-		$sel = new diSelect("admin_filter[$field]", $this->getData($field));
+		$sel = new \diSelect("admin_filter[$field]", $this->getData($field));
 
 		if (isset($this->input_params_ar[$field]))
 		{

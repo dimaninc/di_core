@@ -222,7 +222,14 @@ class diSelect
 		];
 	}
 
-	public function addItemsCollection(diCollection $collection, $format = null, $prefixAr = [], $suffixAr = [])
+    /**
+     * @param \diCollection|array $collection
+     * @param array|callable $format
+     * @param array $prefixAr
+     * @param array $suffixAr
+     * @return $this
+     */
+	public function addItemsCollection($collection, $format = null, $prefixAr = [], $suffixAr = [])
 	{
 		if ($format === null || is_array($format))
 		{

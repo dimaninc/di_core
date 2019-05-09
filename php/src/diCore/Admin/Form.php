@@ -174,15 +174,12 @@ class Form
 
 		$this->db = $db;
 
-		if (gettype($table) == 'object')
-		{
+		if (gettype($table) == 'object') {
 			$this->AdminPage = $table;
 			$this->table = $this->AdminPage->getTable();
 			$this->id = $this->AdminPage->getId();
 			self::$language = $this->AdminPage->getAdmin()->getLanguage();
-		}
-		else
-		{
+		} else {
 			$this->table = $table;
 			$this->id = $id;
 			$this->module_id = $module_id;
@@ -205,16 +202,30 @@ class Form
 			$this->allFields = $GLOBALS[$this->table . "_all_fields"];
 			$this->formFields = $GLOBALS[$this->table . "_form_fields"];
 		}
+    }
 
-		$this->setAutoInputAttributes();
-	}
+	public function afterInit($options = [])
+    {
+        $options = extend([
+            'static_mode' => false,
+            'read_data' => true,
+        ], $options);
+
+        $this
+            ->setAutoInputAttributes()
+            ->setStaticMode($options['static_mode']);
+
+        if ($options['read_data']) {
+            $this->read_data();
+        }
+
+        return $this;
+    }
 
 	private function setAutoInputAttributes()
 	{
-		foreach ($this->getAllFields() as $field => $v)
-		{
-			if ($this->getFieldProperty($field, "required"))
-			{
+		foreach ($this->getAllFields() as $field => $v) {
+			if ($this->getFieldProperty($field, "required")) {
 				$this->setInputAttribute($field, ["required" => "required"]);
 			}
 		}
@@ -422,6 +433,10 @@ class Form
 
 	public function getModel()
 	{
+	    if (!$this->model || !$this->model->exists()) {
+	        $this->model = \diModel::createForTableNoStrict($this->getTable(), $this->getId(), 'id');
+        }
+
 		return $this->model;
 	}
 
@@ -455,59 +470,42 @@ class Form
 
 	function read_data()
 	{
-		if ($this->getId())
-		{
-			$this->model = \diModel::createForTableNoStrict($this->getTable(), $this->getId(), 'id');
-
-			if ($this->getModel()->exists())
-			{
+		if ($this->getId()) {
+			if ($this->getModel()->exists()) {
 				$this->rec = (object)$this->getModel()->get();
-			}
-			else
-			{
+			} else {
 				$this->rec = $this->getDb()->r($this->getTable(), $this->getId());
 			}
 
-			if ($this->rec)
-			{
-				foreach ($this->getAllFields() as $k => $v)
-				{
-					if (isset($this->rec->$k))
-					{
+			if ($this->rec) {
+				foreach ($this->getAllFields() as $k => $v) {
+					if (isset($this->rec->$k)) {
 						$this->data[$k] = $this->rec->$k;
-					}
-					elseif ($this->isFlag($v, "virtual"))
-					{
+					} elseif ($this->isFlag($v, 'virtual')) {
 						$this->data[$k] = $this->getFieldDefaultValue($k);
 
 						$this->processDefaultValue($k);
-					}
-					else
-					{
-						$this->data[$k] = "";
+					} else {
+						$this->data[$k] = '';
 					}
 				}
+			} else {
+				throw new \Exception("There's no such record ($this->table#'$this->id')");
 			}
-			else
-			{
-				dierror("There's no such record ($this->table#'$this->id')");
-			}
-		}
-		else
-		{
-			foreach ($this->getAllFields() as $k => $v)
-			{
+		} else {
+			foreach ($this->getAllFields() as $k => $v) {
 				$this->data[$k] = \diRequest::get($k, $this->getFieldDefaultValue($k));
 
 				$this->processDefaultValue($k);
 			}
 		}
 
-		$this->model = \diModel::createForTableNoStrict($this->getTable(), extend((array)$this->rec, $this->data));
+		$this->getModel()
+            ->set(extend($this->rec, $this->data));
 
-		if ($this->id)
-		{
-			$this->model->setId($this->id);
+		if ($this->id) {
+			$this->getModel()
+                ->setId($this->id);
 		}
 
 		return $this;
@@ -524,15 +522,14 @@ class Form
 		return $this;
 	}
 
-	public function get_submit_buttons($buttons_ar = [], $prefix_div = "", $suffix_div = "")
+	public function get_submit_buttons($buttons_ar = [], $prefix_div = '', $suffix_div = '')
 	{
 		return $this->getSubmitButtons($buttons_ar, $prefix_div, $suffix_div);
 	}
 
     protected function getButtonIcon($name)
     {
-        switch (Config::getAdminSkin())
-        {
+        switch (Config::getAdminSkin()) {
             case Skin::entrine:
                 $icons = [
                     'save' => '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M16 10.975v13.025l-6-5.269-6 5.269v-24h6.816c-.553.576-1.004 1.251-1.316 2h-3.5v17.582l4-3.512 4 3.512v-8.763c.805.19 1.379.203 2 .156zm-.5-10.975c-2.486 0-4.5 2.015-4.5 4.5s2.014 4.5 4.5 4.5c2.484 0 4.5-2.015 4.5-4.5s-2.016-4.5-4.5-4.5zm-.469 6.484l-1.688-1.637.695-.697.992.94 2.115-2.169.697.696-2.811 2.867z"/></svg>',
@@ -1663,7 +1660,15 @@ EOF;
 		return $this;
 	}
 
-	public function setSelectFromCollectionInput($field, \diCollection $collection, $format = null, $prefixAr = [], $suffixAr = [])
+    /**
+     * @param string $field
+     * @param \diCollection|array $collection
+     * @param array|callable $format
+     * @param array $prefixAr
+     * @param array $suffixAr
+     * @return $this
+     */
+	public function setSelectFromCollectionInput($field, $collection, $format = null, $prefixAr = [], $suffixAr = [])
 	{
 		if ($format === null || is_array($format))
 		{
