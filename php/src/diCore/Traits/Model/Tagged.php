@@ -9,6 +9,7 @@
 namespace diCore\Traits\Model;
 
 use diCore\Data\Types;
+use diCore\Traits\Collection\Tagged as Collection;
 
 /**
  * Trait Model
@@ -68,12 +69,12 @@ trait Tagged
 
         if ($tags && is_string($tags))
         {
-            $tags = trim($tags, Tagged::$TAG_INFO_SEPARATOR . Tagged::$TAG_SEPARATOR);
-            $tags = array_filter(explode(Tagged::$TAG_SEPARATOR, $tags));
+            $tags = trim($tags, Collection::$TAG_INFO_SEPARATOR . Collection::$TAG_SEPARATOR);
+            $tags = array_filter(explode(Collection::$TAG_SEPARATOR, $tags));
 
             foreach ($tags as &$tag)
             {
-                $info = explode(Tagged::$TAG_INFO_SEPARATOR, $tag);
+                $info = explode(Collection::$TAG_INFO_SEPARATOR, $tag);
 
                 $tag = \diModel::create(Types::tag, [
                     'id' => $info[0],
