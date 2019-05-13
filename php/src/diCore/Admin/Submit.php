@@ -733,8 +733,13 @@ class Submit
 			}
 		}
 
-		$this->setData($slugField, Slug::generate($origin, $this->getTable(), $this->getId(),
-			'id', $slugField
+		$this->setData($slugField, Slug::generate(
+		    $origin,
+            $this->getTable(),
+            $this->getId(),
+			'id',
+            $slugField,
+            $this->getModel()::slug_delimiter
 		));
 
 		return $this;

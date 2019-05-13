@@ -37,24 +37,19 @@ class Slug
 
 		$i = 1;
 
-		if ($slug)
-		{
+		if ($slug) {
 			$origSlug = $slug;
-		}
-		else
-		{
+		} else {
 			$origSlug = self::prepare(\diTypes::getNameByTable($table), $options['delimiter'], $options['lowerCase']);
 			$slug = $origSlug . $options['delimiter'] . strval($i++);
 		}
 
 		$queryAr = array_merge(["`{$options['slugFieldName']}` = '{$slug}'"], $options['queryConditions']);
 
-		while (true)
-		{
+		while (true) {
 			$model = \diCollection::createForTable($table, 'WHERE ' . join(' AND ', $queryAr))->getFirstItem();
 
-			if (!$model->exists() || $id == $model->get($options['idFieldName']))
-			{
+			if (!$model->exists() || $id == $model->get($options['idFieldName'])) {
 				break;
 			}
 
@@ -70,8 +65,7 @@ class Slug
 	                                $idFieldName = 'id', $slugFieldName = 'slug',
 	                                $delimiter = '-', $extraOptions = [])
 	{
-		if (is_object($table) && $table instanceof \diModel)
-		{
+		if (is_object($table) && $table instanceof \diModel) {
 			$delimiter = $id ?: $delimiter;
 			$id = $table->getId();
 			$idFieldName = $table->getIdFieldName();
@@ -87,6 +81,9 @@ class Slug
             'lowerCase' => true,
         ], $extraOptions);
 
-		return self::unique(self::prepare($source, $delimiter, $extraOptions['lowerCase']), $table, $id, $extraOptions);
+		return self::unique(
+		    self::prepare($source, $extraOptions['delimiter'], $extraOptions['lowerCase']),
+            $table, $id, $extraOptions
+        );
 	}
 }
