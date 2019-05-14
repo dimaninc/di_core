@@ -7,10 +7,18 @@ abstract class diOAuth2Facebook extends diOAuth2
 
 	protected $vendorId = diOAuth2Vendors::facebook;
 
+	protected function getScopeArray()
+    {
+        return [
+            'email',
+            'public_profile',
+        ];
+    }
+
 	protected function getLoginUrlParams()
 	{
 		return extend(parent::getLoginUrlParams(), [
-			'scope' => 'email,public_profile',
+			'scope' => join(',', $this->getScopeArray()),
 		]);
 	}
 
