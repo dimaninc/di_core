@@ -26,6 +26,11 @@ trait TargetInside
 	/** @var \diModel */
 	private $target;
 
+	protected function getTunedTargetType()
+    {
+        return $this->getTargetType();
+    }
+
 	/**
 	 * @param TargetInside $model
 	 * @return bool
@@ -55,7 +60,7 @@ trait TargetInside
 			$this->target = method_exists($this, 'getRelated') && $this->getRelated('target_model')
 				? $this->getRelated('target_model')
 				: ($this->getTargetType()
-					? \diModel::create($this->getTargetType(), $this->getTargetId(), 'id')
+					? \diModel::create($this->getTunedTargetType(), $this->getTargetId(), 'id')
 					: new \diModel()
 				);
 		}
