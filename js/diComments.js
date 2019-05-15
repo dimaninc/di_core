@@ -21,6 +21,7 @@ var diComments = function(_opts)
 			moderated: null,
 			beforeSubmit: null,
 			afterSubmit: null,
+            afterRenderCommentRow: null,
             showAfterSubmitMessage: function(o) {
                 o.e.$form.find('[data-purpose="after-submit-message"]')
                     .html(opts.afterSubmitMessage)
@@ -686,7 +687,9 @@ var diComments = function(_opts)
 				}, opts.scrollToNewCommentTimeout);
 			}, 50);
 		}
-	}
+
+        opts.afterRenderCommentRow && opts.afterRenderCommentRow(self, $e);
+    }
 
 	function showProgress(state)
 	{
