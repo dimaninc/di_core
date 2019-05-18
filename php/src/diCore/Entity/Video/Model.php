@@ -184,12 +184,22 @@ class Model extends \diModel
 			$ar = extend($ar, [
 				'pic_tn' => $this->getVideoVendorPreview(),
 				'pic_tn_safe' => $this->hasPic() ? $this->getPicsFolder() . $this->getPic() : $this->getVideoVendorPreview(),
-				'vendor_link' => \diVideoVendors::getLink($this->getVendor(), $this->getVendorVideoUid()),
-				'vendor_embed_link' => \diVideoVendors::getEmbedLink($this->getVendor(), $this->getVendorVideoUid()),
+				'vendor_link' => $this->getVendorLink(),
+				'vendor_embed_link' => $this->getVendorEmbedLink(),
 			]);
 		}
 
 		return $ar;
+	}
+
+	public function getVendorLink()
+	{
+		return \diVideoVendors::getLink($this->getVendor(), $this->getVendorVideoUid());
+	}
+
+	public function getVendorEmbedLink()
+	{
+		return \diVideoVendors::getEmbedLink($this->getVendor(), $this->getVendorVideoUid());
 	}
 
 	/**
