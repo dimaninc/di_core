@@ -799,7 +799,7 @@ body[data-skin="entrine"] .admin-layout > .logo > b {
   top: 50%;
   left: 12px;
   margin-top: -12px;
-  background: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxMiIgdmlld0JveD0iMCAwIDE4IDEyIj4KICAgIDxnIGZpbGw9IiNGRkZGRkYiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPHBhdGggZD0iTTE3LjEwNSA1SC44OTVDLjQwNSA1IDAgNS4zNiAwIDUuODA2YzAgLjQzOC40MDUuNzk2Ljg5NS43OTZoMTYuMjFjLjQ5IDAgLjg5NS0uMzU4Ljg5NS0uNzk2QzE4IDUuMzYgMTcuNTk1IDUgMTcuMTA1IDV6TS44OTUgMS42MDJoMTYuMjFjLjQ5IDAgLjg5NS0uMzYuODk1LS44MDZDMTggLjM2IDE3LjU5NSAwIDE3LjEwNSAwSC44OTVDLjQwNSAwIDAgLjM2IDAgLjc5NmMwIC40NDYuNDA1LjgwNi44OTUuODA2ek0xNy4xMDUgMTBILjg5NWMtLjQ5IDAtLjg5NS4zNTgtLjg5NS43OTYgMCAuNDQ2LjQwNS44MDYuODk1LjgwNmgxNi4yMWMuNDkgMCAuODk1LS4zNi44OTUtLjgwNiAwLS40MzgtLjQwNS0uNzk2LS44OTUtLjc5NnoiLz4KICAgIDwvZz4KPC9zdmc+Cg==") center center no-repeat;
+  background: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxMiIgdmlld0JveD0iMCAwIDE4IDEyIj4NCiAgICA8ZyBmaWxsPSIjRkZGRkZGIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPg0KICAgICAgICA8cGF0aCBkPSJNMTcuMTA1IDVILjg5NUMuNDA1IDUgMCA1LjM2IDAgNS44MDZjMCAuNDM4LjQwNS43OTYuODk1Ljc5NmgxNi4yMWMuNDkgMCAuODk1LS4zNTguODk1LS43OTZDMTggNS4zNiAxNy41OTUgNSAxNy4xMDUgNXpNLjg5NSAxLjYwMmgxNi4yMWMuNDkgMCAuODk1LS4zNi44OTUtLjgwNkMxOCAuMzYgMTcuNTk1IDAgMTcuMTA1IDBILjg5NUMuNDA1IDAgMCAuMzYgMCAuNzk2YzAgLjQ0Ni40MDUuODA2Ljg5NS44MDZ6TTE3LjEwNSAxMEguODk1Yy0uNDkgMC0uODk1LjM1OC0uODk1Ljc5NiAwIC40NDYuNDA1LjgwNi44OTUuODA2aDE2LjIxYy40OSAwIC44OTUtLjM2Ljg5NS0uODA2IDAtLjQzOC0uNDA1LS43OTYtLjg5NS0uNzk2eiIvPg0KICAgIDwvZz4NCjwvc3ZnPg0K") center center no-repeat;
   -webkit-background-size: contain;
   -moz-background-size: contain;
   background-size: contain;
@@ -3056,6 +3056,17 @@ ul.admin-grid > li.highlight {
 }
 ul.admin-grid > li.delete {
   background-color: #fbb;
+}
+ul.admin-grid > li.layout-helper {
+  height: 0;
+  padding: 0;
+  margin-bottom: 0;
+  background: none;
+}
+@media screen and (max-width: 550px) {
+  ul.admin-grid > li.layout-helper {
+    display: none;
+  }
 }
 ul.admin-grid > li .buttons-panel {
   margin: 10px 0 0 0;
