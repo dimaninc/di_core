@@ -59,7 +59,7 @@ class diVideoVendors
 
 	private static function getFile($url)
 	{
-		return file_get_contents($url);
+		return @file_get_contents($url);
 	}
 
 	private static function getVimeoData($videoUid)
