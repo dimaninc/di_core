@@ -8,6 +8,7 @@
 
 namespace diCore\Payment\Paypal;
 
+use diCore\Tool\Logger;
 
 class Transport
 {
@@ -161,6 +162,6 @@ class Transport
 
 	public static function log($message)
 	{
-		simple_debug($message, "PayPal Transport", "-payment");
+        Logger::getInstance()->log($message, "PayPal Transport", "-payment");
 	}
 }

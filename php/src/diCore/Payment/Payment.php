@@ -13,6 +13,7 @@ use diCore\Entity\PaymentDraft\Model as Draft;
 use diCore\Payment\Mixplat\Helper as Mixplat;
 use diCore\Payment\Paypal\Helper as Paypal;
 use diCore\Payment\Robokassa\Helper as Robokassa;
+use diCore\Payment\Tinkoff\Helper as Tinkoff;
 use diCore\Payment\Yandex\Kassa;
 use diCore\Tool\Auth as AuthTool;
 use diCore\Tool\Logger;
@@ -392,9 +393,13 @@ EOF;
 
     public function initTinkoff(Draft $draft)
     {
-        throw new \Exception('Not implemented yet');
+        $tin = Tinkoff::create();
 
-        return [];
+        return $tin->getFormUri($draft, [
+            'customerEmail' => $this->getCustomerEmail(),
+            'customerPhone' => $this->getCustomerPhone(),
+            'description' => static::ORDER_DESCRIPTION,
+        ]);
     }
 
     public function initPaypal(Draft $draft)

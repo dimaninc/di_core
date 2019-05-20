@@ -10,44 +10,66 @@
 
 namespace diCore\Payment\Tinkoff;
 
-use diCore\Traits\BasicCreate;
+use diCore\Tool\Logger;
 
 class Helper
 {
-	use BasicCreate;
+    const testMode = false;
 
 	const login = null;
 	const password = null;
 
-	const productionUrl = 'https://securepay.tinkoff.ru/v2';
+    const loginDemo = null;
+    const passwordDemo = null;
+
+    /** @var MerchantApi */
+    protected $api;
 
 	protected $options = [
 		'onSuccessPayment' => null,
 	];
 
-	public function __construct($options = [])
+	/**
+     * @return Helper
+     */
+    public static function create($options = [])
+    {
+        $className = \diLib::getChildClass(self::class, 'Settings');
+
+        $helper = new $className($options);
+
+        return $helper;
+    }
+
+    public function __construct($options = [])
 	{
 		$this->options = extend($this->options, $options);
+
+		$this->api = new MerchantApi(static::getLogin(), static::getPassword());
 	}
 
-	public static function getUrl()
-	{
-		return static::productionUrl;
-	}
+	protected function getApi()
+    {
+        return $this->api;
+    }
 
 	public static function log($message)
 	{
-		simple_debug($message, 'Tinkoff', "-payment");
+		Logger::getInstance()->log($message, 'Tinkoff', '-payment');
 	}
 
-	public static function getMerchantLogin()
+	public static function getLogin()
 	{
-		return static::login;
+		return static::testMode
+            ? static::loginDemo
+            : static::login;
 	}
 
 	public static function getPassword()
 	{
-		return static::password;
+		return static::testMode
+            ? static::passwordDemo
+            : static::password;
 	}
 
 	/**
@@ -55,69 +77,45 @@ class Helper
 	 * @param array $opts
 	 * @return string
 	 */
-	public static function getForm(\diCore\Entity\PaymentDraft\Model $draft, $opts = [])
+	public function getFormUri(\diCore\Entity\PaymentDraft\Model $draft, $opts = [])
 	{
-		$action = static::getUrl();
-
 		$opts = extend([
 			'amount' => $draft->getAmount(),
 			'userId' => $draft->getUserId(),
 			'draftId' => $draft->getId(),
+			'description' => '',
 			'customerEmail' => '',
 			'customerPhone' => '',
-			'autoSubmit' => false,
-			'buttonCaption' => 'Заплатить',
 			'paymentVendor' => '',
 			'additionalParams' => [],
 		], $opts);
 
-		array_walk($opts, function(&$item) {
-			$item = \diDB::_out($item);
-		});
+		$params = [
+            'OrderId' => $opts['draftId'],
+            'Amount' => sprintf('%d', $opts['amount'] * 100),
+            'Description' => $opts['description'],
+            'Language' => 'ru',
+            'DATA' => $opts['additionalParams'],
+        ];
 
-		$button = !$opts['autoSubmit'] ? "<button type=\"submit\">{$opts["buttonCaption"]}</button>" : '';
-		$redirectScript = $opts['autoSubmit'] ? \diCore\Payment\Payment::getAutoSubmitScript() : '';
+		$response = $this->getApi()->init(array_filter($params));
 
-		$params = extend([
-			'MrchLogin' => static::getMerchantLogin(),
-			'OutSum' => sprintf('%.2f', $opts['amount']),
-			'customerNumber' => $opts['userId'],
-			'InvId' => $opts['draftId'],
-			'Desc' => '',
-			'SignatureValue' => static::getSignature($draft),
-			'IncCurrLabel' => $opts['paymentVendor'] ? Vendor::code($opts['paymentVendor']) : null,
-			'Culture' => 'ru',
-			'Encoding' => 'utf-8',
-		], $opts['additionalParams']);
+        static::log("Init:\n" . print_r($params, true));
+        static::log("Response:\n" . print_r($response, true));
 
-		$paramsStr = join("\n\t", array_filter(array_map(function($name, $value) {
-			return $value !== null ? \diCore\Payment\Payment::getHiddenInput($name, $value) : '';
-		}, array_keys($params), $params)));
+		if ($this->getApi()->getError()) {
+            throw new \Exception('Tinkoff init error: ' . $this->getApi()->getError());
+        }
 
-		$form = <<<EOF
-<form action="{$action}" method="post" target="_top">
-	{$paramsStr}
-	{$button}
-</form>
-$redirectScript
-EOF;
-
-		static::log("Tinkoff form:\n" . $form);
-
-		return $form;
+        return $this->getApi()->getPaymentUrl();
 	}
 
-	public static function getSignature(\diCore\Entity\PaymentDraft\Model $draft)
-	{
-		$cost = sprintf('%.2f', $draft->getAmount());
-
-		$source = [
-			static::getMerchantLogin(),
-			$cost,
-			$draft->getId(),
-			static::getPassword(),
-		];
-
-		return md5(join(':', $source));
-	}
+	/*
+	public function getState(\diCore\Entity\PaymentDraft\Model $draft)
+    {
+        $this->getApi()->getState([
+            'PaymentId' => $draft->get
+        ]);
+    }
+	*/
 }

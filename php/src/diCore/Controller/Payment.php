@@ -11,6 +11,7 @@ namespace diCore\Controller;
 use diCore\Entity\PaymentDraft\Model as DraftModel;
 use diCore\Entity\PaymentReceipt\Model as ReceiptModel;
 use diCore\Helper\StringHelper;
+use diCore\Payment\Tinkoff\Helper as Tinkoff;
 use diCore\Payment\Yandex\Kassa;
 use diCore\Payment\System;
 use diCore\Tool\Auth as AuthTool;
@@ -301,6 +302,46 @@ class Payment extends \diBaseController
 				];
 		}
 	}
+
+    public function tinkoffAction()
+    {
+        $this->system = System::tinkoff;
+        $this->subAction = $this->param(0);
+
+        $t = Tinkoff::create();
+
+        Tinkoff::log($this->subAction, print_r($_REQUEST));
+
+        switch ($this->subAction)
+        {
+            case 'notification':
+                /*
+                return $t->result(function(\diCore\Payment\Robokassa\Helper $rk) {
+                    $this->createReceipt(1);
+                });
+                */
+
+            case 'success':
+                /*
+                return $t->success(function(\diCore\Payment\Robokassa\Helper $rk) {
+                    $this->redirectTo($this->getTargetHref(self::STATUS_SUCCESS));
+                });
+                */
+
+            case 'fail':
+                /*
+                return $t->fail(function(\diCore\Payment\Robokassa\Helper $rk) {
+                    $this->redirectTo($this->getTargetHref(self::STATUS_FAIL));
+                });
+                */
+
+            default:
+                return [
+                    'ok' => false,
+                    'message' => 'Unknown action: ' . $this->subAction,
+                ];
+        }
+    }
 
 	protected function getTargetHref($status)
 	{
