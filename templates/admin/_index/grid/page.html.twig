@@ -3,8 +3,9 @@
 {{ before_table|raw }}
 
 <ul class="admin-grid" data-table="{{ table }}">
-	{% for row in rows %}<li data-id="{{ row['id'] }}" data-role="row">
-		{% block tn %}<div class="tn"><a href="{{ row.getRelated('edit_href') }}"><img src="{{ row.getRelated('img_url_prefix') }}{{ row['pic_tn'] ?: '/' ~ row['pic_tn_safe'] }}"></a></div>{% endblock %}
+	{% for row in rows %}
+	<li data-id="{{ row['id'] }}" data-role="row">
+		{% block tn %}<div class="tn"><a href="{{ row.getRelated('edit_href') }}"><img src="{{ row['pic_tn'] ? row.getRelated('img_url_prefix') ~ row['pic_tn'] : row['pic_tn_safe'] }}"></a></div>{% endblock %}
 		{% block before_title %}{% if row['token'] %}<div class="token">Токен для вставки: <b>{{ row['token'] }}</b></div>{% endif %}{% endblock %}
 		{% block title %}
 			<div class="title">
@@ -15,7 +16,8 @@
 		{% endblock %}
 		{% block after_title %}{% endblock %}
 		{% block buttons %}<div class="buttons-panel">{{ row.getRelated('buttons')|join(' ')|raw }}</div>{% endblock %}
-	</li>{% endfor %}
+	</li>
+	{% endfor %}
 	{% for i in 1..3 %}<li class="layout-helper"></li>{% endfor %}
 </ul>
 

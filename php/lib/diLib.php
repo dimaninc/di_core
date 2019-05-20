@@ -464,6 +464,11 @@ class diLib
 		return self::$location;
 	}
 
+    /**
+     * @param bool|string $openingSlash
+     * @return string
+     * @throws Exception
+     */
     public static function getSubFolder($openingSlash = false)
     {
         if (self::$subFolder === null)
@@ -471,7 +476,9 @@ class diLib
             self::getLocation();
         }
 
-        return (self::$subFolder && $openingSlash ? '/' : '') . self::$subFolder;
+        $slash = $openingSlash === 'force' || (self::$subFolder && $openingSlash) ? '/' : '';
+
+        return $slash . self::$subFolder;
     }
 
 	public static function getAssetLocations()
@@ -489,11 +496,7 @@ class diLib
 
 			default:
 			case self::LOCATION_HTDOCS:
-                $subFolder = \diLib::getSubFolder();
-                if ($subFolder)
-                {
-                    $subFolder = '/' . $subFolder;
-                }
+                $subFolder = \diLib::getSubFolder(true);
 				return [
 					'css' => $subFolder . '/_core/css/',
 					'fonts' => $subFolder . '/_core/fonts/',

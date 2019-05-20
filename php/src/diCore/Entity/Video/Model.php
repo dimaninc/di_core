@@ -183,7 +183,9 @@ class Model extends \diModel
 		{
 			$ar = extend($ar, [
 				'pic_tn' => $this->getVideoVendorPreview(),
-				'pic_tn_safe' => $this->hasPic() ? $this->getPicsFolder() . $this->getPic() : $this->getVideoVendorPreview(),
+				'pic_tn_safe' => $this->hasPic()
+                    ? \diLib::getSubFolder('force') . $this->getPicsFolder() . $this->getPic()
+                    : $this->getVideoVendorPreview(),
 				'vendor_link' => $this->getVendorLink(),
 				'vendor_embed_link' => $this->getVendorEmbedLink(),
 			]);
