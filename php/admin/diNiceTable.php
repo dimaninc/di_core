@@ -605,108 +605,99 @@ class diNiceTable
 		return $this->btnCell($this->getButton("video", $opts["href"]));
 	}
 
-	public function manageBtnCell($href = null)
-	{
-		switch ($this->getTable())
-		{
-			case "albums":
-				$path = "photos";
-				$suffix = "?album_id={$this->getRowModel()->getId()}";
-				break;
+    public function manageBtnCell($href = null)
+    {
+        switch ($this->getTable()) {
+            case 'albums':
+                $path = 'photos';
+                $suffix = "?album_id={$this->getRowModel()->getId()}";
+                break;
 
-			default:
-				$path = "";
-				$suffix = "";
-				break;
-		}
-
-		if (is_null($href))
-		{
-			if (!$path)
-			{
-				throw new Exception("manageBtnCell path not defined");
-			}
-
-			$opts["href"] = "/" . \diAdmin::getSubFolder() . "/" . $path . "/" . $suffix;
-		}
-
-		return $this->btnCell($this->getButton("manage", $href));
-	}
-
-	public function hrefCell($href = "", $title = "")
-	{
-		if (!$href)
-		{
-			switch ($this->getRowModel()->get("type"))
-			{
-				case "href":
-					$href = $this->getRowModel()->get("menu_title");
-					break;
-
-				case "nohref":
-					$href = "";
-					break;
-
-				default:
-					$href = "/{$this->getRowModel()->getSlug()}/";
-					break;
-			}
-		}
-
-		if (!$title) {
-		    $title = $this->L('open');
+            default:
+                $path = '';
+                $suffix = '';
+                break;
         }
 
-		$s = $href
-			? " <a target=\"_blank\" href=\"$href\" title=\"$title\"><img src=\"/_core/i/admin/icon_external_link.gif\" width=15 height=14></a>"
-			: "";
+        if (is_null($href)) {
+            if (!$path) {
+                throw new Exception('manageBtnCell path not defined');
+            }
 
-		return $this->textCell($s, array("class" => "href",));
-	}
+            $opts['href'] = '/' . \diAdmin::getSubFolder() . '/' . $path . '/' . $suffix;
+        }
 
-	public function createBtnCell($maxLevelNum, $queryParams = array())
-	{
-		if (
-			$this->getRowModel()->get("level_num") < $maxLevelNum
-		   )
-		{
-			$s = $this->getButton("create", \diCore\Admin\Base::getPageUri($this->getTable(), "form", extend(array(
-				"parent" => $this->getRowModel()->getId(),
-			), $queryParams)));
-		}
-		else
-		{
-			$s = $this->getEmptyButton();
-		}
+        return $this->btnCell($this->getButton('manage', $href));
+    }
 
-		return $this->btnCell($s);
-	}
+    public function hrefCell($href = '', $title = '')
+    {
+        if (!$href) {
+            switch ($this->getRowModel()->get('type')) {
+                case 'href':
+                    $href = $this->getRowModel()->get('menu_title');
+                    break;
 
-	public function printBtnCell($state = 1)
-	{
-		$s = $state
-			? $this->getButton("print", \diCore\Admin\Base::getPageUri($this->getTable(), "form", array(
-				"id" => $this->getRowModel()->getId(),
-				"print" => 1,
-			)))
-			: $this->getEmptyButton();
+                case 'nohref':
+                    $href = '';
+                    break;
 
-		return $this->btnCell($s);
-	}
+                default:
+                    $href = "/{$this->getRowModel()->getSlug()}/";
+                    break;
+            }
+        }
 
-	public function toShowContentBtnCell($levelNumsToShow = array())
-	{
-	    if (!is_array($levelNumsToShow))
-	    {
-	    	$levelNumsToShow = array($levelNumsToShow);
-	    }
+        if (!$title) {
+            $title = $this->L('open');
+        }
 
-		return in_array($this->getRowModel()->get("level_num"), $levelNumsToShow)
-			? $this->toggleBtnCell("to_show_content")
-			: $this->emptyBtnCell();
-	}
+        $s = $href
+            ? " <a target=\"_blank\" href=\"$href\" title=\"$title\"></a>"
+            : '';
 
-	public function emptyBtnCell()
+        return $this->textCell($s, [
+            'class' => 'href',
+        ]);
+    }
+
+    public function createBtnCell($maxLevelNum, $queryParams = [])
+    {
+        if ($this->getRowModel()->get('level_num') < $maxLevelNum) {
+            $s = $this->getButton('create', \diCore\Admin\Base::getPageUri($this->getTable(), 'form', extend([
+                'parent' => $this->getRowModel()->getId(),
+            ], $queryParams)));
+        } else {
+            $s = $this->getEmptyButton();
+        }
+
+        return $this->btnCell($s);
+    }
+
+    public function printBtnCell($state = 1)
+    {
+        $s = $state
+            ? $this->getButton('print', \diCore\Admin\Base::getPageUri($this->getTable(), 'form', [
+                'id' => $this->getRowModel()->getId(),
+                'print' => 1,
+            ]))
+            : $this->getEmptyButton();
+
+        return $this->btnCell($s);
+    }
+
+    public function toShowContentBtnCell($levelNumsToShow = [])
+    {
+        if (!is_array($levelNumsToShow)) {
+            $levelNumsToShow = [$levelNumsToShow];
+        }
+
+        return in_array($this->getRowModel()->get('level_num'), $levelNumsToShow)
+            ? $this->toggleBtnCell('to_show_content')
+            : $this->emptyBtnCell();
+    }
+
+    public function emptyBtnCell()
 	{
 		return $this->btnCell($this->getEmptyButton());
 	}
