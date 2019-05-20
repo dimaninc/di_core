@@ -107,7 +107,9 @@ class Helper
             throw new \Exception('Tinkoff init error: ' . $this->getApi()->getError());
         }
 
-        return $this->getApi()->getPaymentUrl();
+        header('Location: ' . $this->getApi()->getPaymentUrl());
+
+		return null;
 	}
 
 	/*

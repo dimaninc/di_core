@@ -310,7 +310,7 @@ class Payment extends \diBaseController
 
         $t = Tinkoff::create();
 
-        Tinkoff::log($this->subAction, print_r($_REQUEST));
+        Tinkoff::log($this->subAction . "\n" . print_r($_REQUEST));
 
         switch ($this->subAction)
         {
