@@ -10,6 +10,7 @@ namespace diCore\Controller;
 
 use diCore\Entity\PaymentDraft\Model as DraftModel;
 use diCore\Entity\PaymentReceipt\Model as ReceiptModel;
+use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 use diCore\Payment\Tinkoff\Helper as Tinkoff;
 use diCore\Payment\Yandex\Kassa;
@@ -135,6 +136,7 @@ class Payment extends \diBaseController
 		$targetId = $this->getTargetIdForRedirect();
 
 		$Payment = \diCore\Payment\Payment::basicCreate($targetType, $targetId, AuthTool::i()->getUserId());
+
 		return $Payment->initiateProcess($this->getAmountForRedirect(), $paymentSystemName, $paymentVendorName);
 	}
 
@@ -305,35 +307,40 @@ class Payment extends \diBaseController
 
     public function tinkoffAction()
     {
+        // todo
         $this->system = System::tinkoff;
         $this->subAction = $this->param(0);
 
         $t = Tinkoff::create();
 
-        Tinkoff::log($this->subAction . "\n" . print_r($_REQUEST));
+        Tinkoff::log($this->subAction . "\n" . print_r(\diRequest::rawPost(), true));
 
         switch ($this->subAction)
         {
             case 'notification':
-                /*
-                return $t->result(function(\diCore\Payment\Robokassa\Helper $rk) {
-                    $this->createReceipt(1);
-                });
-                */
+                $params = \diRequest::rawPostParsed();
+
+                if ($t->checkToken($params)) {
+                    if (ArrayHelper::getValue($params, 'Status') === 'CONFIRMED') {
+                        $this->createReceipt(\diRequest::rawPost('OrderId', 0));
+                    }
+
+                    return 'OK';
+                } else {
+                    $t->log('Token not match');
+                }
+
+                return 'ERROR';
 
             case 'success':
-                /*
-                return $t->success(function(\diCore\Payment\Robokassa\Helper $rk) {
+                return $t->success(function(\diCore\Payment\Tinkoff\Helper $rk) {
                     $this->redirectTo($this->getTargetHref(self::STATUS_SUCCESS));
                 });
-                */
 
             case 'fail':
-                /*
-                return $t->fail(function(\diCore\Payment\Robokassa\Helper $rk) {
+                return $t->fail(function(\diCore\Payment\Tinkoff\Helper $rk) {
                     $this->redirectTo($this->getTargetHref(self::STATUS_FAIL));
                 });
-                */
 
             default:
                 return [
@@ -554,6 +561,14 @@ class Payment extends \diBaseController
 				}
 				*/
 				break;
+
+            case System::tinkoff:
+                // todo
+                /*
+                $this->getDraft()
+                    ->setOuterNumber($data['OrderId']);
+                */
+                break;
 		}
 
 		$this->getDraft()

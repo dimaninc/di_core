@@ -10,67 +10,25 @@
 
 namespace diCore\Payment\Tinkoff;
 
-use diCore\Tool\Logger;
+use diCore\Helper\ArrayHelper;
+use diCore\Payment\BaseHelper;
+use diCore\Payment\System;
 
-class Helper
+class Helper extends BaseHelper
 {
-    const testMode = false;
-
-	const login = null;
-	const password = null;
-
-    const loginDemo = null;
-    const passwordDemo = null;
+    const system = System::tinkoff;
 
     /** @var MerchantApi */
     protected $api;
 
-	protected $options = [
-		'onSuccessPayment' => null,
-	];
-
-	/**
-     * @return Helper
-     */
-    public static function create($options = [])
-    {
-        $className = \diLib::getChildClass(self::class, 'Settings');
-
-        $helper = new $className($options);
-
-        return $helper;
-    }
-
-    public function __construct($options = [])
-	{
-		$this->options = extend($this->options, $options);
-
-		$this->api = new MerchantApi(static::getLogin(), static::getPassword());
-	}
-
 	protected function getApi()
     {
+        if (!$this->api) {
+            $this->api = new MerchantApi(static::getLogin(), static::getPassword());
+        }
+
         return $this->api;
     }
-
-	public static function log($message)
-	{
-		Logger::getInstance()->log($message, 'Tinkoff', '-payment');
-	}
-
-	public static function getLogin()
-	{
-		return static::testMode
-            ? static::loginDemo
-            : static::login;
-	}
-
-	public static function getPassword()
-	{
-		return static::testMode
-            ? static::passwordDemo
-            : static::password;
-	}
 
 	/**
 	 * @param \diCore\Entity\PaymentDraft\Model $draft
@@ -107,10 +65,68 @@ class Helper
             throw new \Exception('Tinkoff init error: ' . $this->getApi()->getError());
         }
 
-        header('Location: ' . $this->getApi()->getPaymentUrl());
-
-		return null;
+        return $this->getApi()->getPaymentUrl();
 	}
+
+	public function generateToken($params)
+    {
+        unset($params['Token']);
+        $params['Password'] = static::getPassword();
+        ksort($params);
+
+        $line = join('', $params);
+        $hash = hash('sha256', $line);
+
+        return $hash;
+    }
+
+    public function checkToken($params)
+    {
+        $token = ArrayHelper::getValue($params, 'Token');
+
+        return $token && $this->generateToken($params) === $token;
+    }
+
+    public function success(callable $successCallback)
+    {
+        try {
+            /*
+            $signature = strtolower(\diRequest::post('SignatureValue'));
+
+            if (!$this->getDraft()->exists())
+            {
+                throw new \Exception('No draft found');
+            }
+
+            if ($signature != static::getSignatureSuccess($this->getDraft()))
+            {
+                throw new \Exception('Signature not matched');
+            }
+            */
+
+            if (\diRequest::get('Success') === 'true') {
+                self::log('Success method OK');
+            } else {
+                throw new \Exception('Success method not OK: ' . print_r($_GET, true));
+            }
+
+            return $successCallback($this);
+        } catch (\Exception $e) {
+            self::log('Error during `success`: ' . $e->getMessage());
+
+            return [
+                'ok' => false,
+                'message' => $e->getMessage(),
+            ];
+        }
+    }
+
+    public function fail(callable $failCallback)
+    {
+        self::log('Fail method OK: ' . print_r($_GET, true));
+
+        return $failCallback($this);
+    }
 
 	/*
 	public function getState(\diCore\Entity\PaymentDraft\Model $draft)

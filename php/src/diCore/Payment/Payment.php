@@ -9,10 +9,12 @@
 namespace diCore\Payment;
 
 use diCore\Base\CMS;
+use diCore\Data\Configuration;
 use diCore\Entity\PaymentDraft\Model as Draft;
 use diCore\Payment\Mixplat\Helper as Mixplat;
 use diCore\Payment\Paypal\Helper as Paypal;
 use diCore\Payment\Robokassa\Helper as Robokassa;
+use diCore\Payment\Sberbank\Helper as Sberbank;
 use diCore\Payment\Tinkoff\Helper as Tinkoff;
 use diCore\Payment\Yandex\Kassa;
 use diCore\Tool\Auth as AuthTool;
@@ -80,7 +82,7 @@ class Payment
 
     public static function enabled()
     {
-        return \diConfiguration::get('epay_enabled');
+        return Configuration::get('epay_enabled');
     }
 
     public static function getPaymentVendorsUsed()
@@ -154,12 +156,12 @@ class Payment
 
     public static function getCurrentSystems()
     {
-        return \diCore\Payment\System::$titles;
+        return System::$titles;
     }
 
     public static function systemTitle($systemId)
     {
-        return \diCore\Payment\System::title($systemId) ?: 'Unknown payment system #' . $systemId;
+        return System::title($systemId) ?: 'Unknown payment system #' . $systemId;
     }
 
     public static function currencyTitle($currencyId)
@@ -200,6 +202,9 @@ class Payment
 
             case System::tinkoff:
                 return $this->initTinkoff($draft);
+
+            case System::sberbank:
+                return $this->initSberbank($draft);
 
             default:
                 throw new \Exception('Unsupported payment system #' . $draft->getPaySystem());
@@ -393,13 +398,28 @@ EOF;
 
     public function initTinkoff(Draft $draft)
     {
-        $tin = Tinkoff::create();
+        $t = Tinkoff::create();
 
-        return $tin->getFormUri($draft, [
+        header('Location: ' . $t->getFormUri($draft, [
             'customerEmail' => $this->getCustomerEmail(),
             'customerPhone' => $this->getCustomerPhone(),
             'description' => static::ORDER_DESCRIPTION,
-        ]);
+        ]));
+
+        return null;
+    }
+
+    public function initSberbank(Draft $draft)
+    {
+        $sb = Sberbank::create();
+
+        header('Location: ' . $sb->getFormUri($draft, [
+            'customerEmail' => $this->getCustomerEmail(),
+            'customerPhone' => $this->getCustomerPhone(),
+            'description' => static::ORDER_DESCRIPTION,
+        ]));
+
+        return null;
     }
 
     public function initPaypal(Draft $draft)

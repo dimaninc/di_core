@@ -173,22 +173,36 @@ class diRequest
 		}
 	}
 
+	private static function processRawPost()
+    {
+        if (self::$postRawData === null)
+        {
+            self::$postRawData = file_get_contents('php://input');
+        }
+
+        if (self::$postRawParsed === null)
+        {
+            self::$postRawParsed = self::$postRawData
+                ? (array)json_decode(self::$postRawData)
+                : null;
+        }
+    }
+
 	public static function rawPost($name = null, $defaultValue = null, $type = null)
 	{
-		if (self::$postRawData === null)
-		{
-			self::$postRawData = file_get_contents('php://input');
-		}
-
-		if (self::$postRawParsed === null)
-		{
-			self::$postRawParsed = (array)json_decode(self::$postRawData);
-		}
+	    self::processRawPost();
 
 		return $name === null
 			? self::$postRawData
 			: ArrayHelper::getValue(self::$postRawParsed, $name, $defaultValue, $type);
 	}
+
+	public static function rawPostParsed()
+    {
+        self::processRawPost();
+
+        return self::$postRawParsed;
+    }
 
 	public static function isHttps()
 	{
