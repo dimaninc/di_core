@@ -62,7 +62,8 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 		initDelLinks();
         self.initPicHolders()
         .initRotateAndWaterMarkLinks()
-        .initFileInputs();
+        .initFileInputs()
+        .initCheckboxesToggles();
 
         initiating = false;
 	}
@@ -79,6 +80,27 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 
 	this.isMobile = function() {
 	    return this.e.$window.width() < 768;
+    };
+
+	this.initCheckboxesToggles = function() {
+	    var $rows = $('.diadminform-row[data-type="checkboxes"]');
+
+	    $rows.each(function() {
+	        var $row = $(this);
+	        var $on = $row.find('.tags-toggle > span[data-purpose="toggle-on"]');
+            var $off = $row.find('.tags-toggle > span[data-purpose="toggle-off"]');
+            var $checkboxes = $row.find('.tags-grid input[type="checkbox"]');
+
+            $on.on('click', function() {
+                $checkboxes.prop('checked', true);
+            });
+
+            $off.on('click', function() {
+                $checkboxes.prop('checked', false);
+            });
+        });
+
+	    return this;
     };
 
     this.initPicHolders = function() {

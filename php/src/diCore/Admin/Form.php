@@ -79,6 +79,10 @@ class Form
 			'tab_general' => 'General',
 
             'choose_file' => 'Choose file...',
+
+            'tag.enter_new' => 'Add new items, comma separated',
+            'tag.toggle_on' => 'All on',
+            'tag.toggle_off' => 'All off',
 		],
 
 		'ru' => [
@@ -123,6 +127,10 @@ class Form
             'tab_general' => 'Основное',
 
             'choose_file' => 'Выбрать файл...',
+
+            'tag.enter_new' => 'Добавить новые, через запятую',
+            'tag.toggle_on' => 'Выделить все',
+            'tag.toggle_off' => 'Снять все',
 		],
 	];
 
@@ -2156,7 +2164,7 @@ EOF;
 			$class = !$this->getData($field) ? " class=\"cover_pic_selected\"" : "";
 			$img0 = $this->rec->pic
 				? $this->get_pic_html_tag(3, $path2.$this->rec->pic, $this->rec->pic_w, $this->rec->pic_h)
-				: "<div class=\"cover-note\" style=\"width: ".(diConfiguration::get($this->table."_tn_width") + 8)."px;\">Обложка будет<br>автоматически создана</div>".$this->get_pic_html_tag(3, "/i/z.gif", \diConfiguration::get($this->table."_tn_width"), \diConfiguration::get($this->table."_tn_height"));
+				: "<div class=\"cover-note\" style=\"width: ".(\diConfiguration::get($this->table."_tn_width") + 8)."px;\">Обложка будет<br>автоматически создана</div>".$this->get_pic_html_tag(3, "/i/z.gif", \diConfiguration::get($this->table."_tn_width"), \diConfiguration::get($this->table."_tn_height"));
 
 			$ar[] = " <td><a href=\"javascript:set_cover_pic('$field', 0);\" id=\"a_{$field}_0\"$class>".$img0."</a></td>";
 		}
@@ -2591,7 +2599,13 @@ EOF;
 			$table = '';
 
 			if ($tags) {
-				$table = '<div class="tags-grid"><table><tr>';
+			    $toggle = sprintf(
+			        '<div class="tags-toggle"><span data-purpose="toggle-on">%s</span><span data-purpose="toggle-off">%s</span></div>',
+                    self::L('tag.toggle_on'),
+                    self::L('tag.toggle_off')
+                );
+
+				$table = '<div class="tags-grid">' . $toggle . '<table><tr>';
 
 				$per_column = ceil(count($tags) / $columns);
 
@@ -2607,7 +2621,8 @@ EOF;
 			if ($ableToAddNew) {
 				$table .=
 					'<div class="new-tag">' .
-					'<input type="text" name="' . $field . self::NEW_FIELD_SUFFIX . '" value="" placeholder="Добавить новые теги, через запятую">' .
+					'<input type="text" name="' . $field . self::NEW_FIELD_SUFFIX . '" value="" placeholder="' .
+                    $this->L('tag.enter_new') . '">' .
 					'</div>';
 			}
 		}
