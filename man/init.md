@@ -54,4 +54,16 @@ Reload admin page in browser, it should ask you the login and password for admin
 
 In admin, open left menu item `Settings` and click on `Rebuild cache` link
 
+### To set up static
+
+Install `gulp` and `gulp-cli` globally: `npm i -g gulp gulp-cli`
+
+Change directory to `{your_project_dir}/assets`
+
+* If there exists `yarn.lock`, then install yarn `npm i -g yarn` and then run `yarn`
+* If there exists `package-lock.json`, then run `npm ci`
+* Else just run `npm i`
+
+After that run gulp and rebuild the static: `gulp build`
+
 ### Congrats, the project has been set up on your local machine 
