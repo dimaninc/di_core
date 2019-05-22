@@ -12,30 +12,51 @@ var diAdminBase = function() {
 	}
 
 	function initMainMenu() {
-		$('ul.left-menu > li > b').click(function()	{
-			var $this = $(this),
-				$parent = $this.parent('li'),
-				$subMenu = $this.next('ul'),
-				state = $parent.data('state') ? 0 : 1,
-				method = state ? 'slideDown' : 'slideUp';
+		var $menuRows = $('ul.left-menu > li');
 
-            $parent
+		var toggleMenuRow = function($row, state) {
+			var $subMenu = $row.find('> ul'),
+                method;
+
+			if (typeof state === 'undefined') {
+                state = $row.data('state') ? 0 : 1;
+			}
+
+			method = state ? 'slideDown' : 'slideUp';
+
+			$row
                 .data('state', state)
-				.attr('data-state', state);
+                .attr('data-state', state);
 
-			$subMenu[method](function() {
-				$.cookie('admin_visible_left_menu_ids',
-					$('ul.left-menu > li').map(function() {
-						return $(this).data('state') ? $(this).data('id') : '';
-					}).get().join(','), {
-						expires: 365,
-						path: '/_admin/'
-					}
-				);
-			});
+            $subMenu[method](function() {
+                $.cookie('admin_visible_left_menu_ids',
+                    $menuRows.map(function() {
+                        return $(this).data('state') ? $(this).data('id') : '';
+                    }).get().join(','), {
+                        expires: 365,
+                        path: '/_admin/'
+                    }
+                );
+            });
+		};
+
+		$menuRows.find('> b').click(function() {
+			toggleMenuRow($(this).parent('li'));
 		});
 
-		$('.admin-layout .logo,.admin-layout .site-title').on('click', function() {
+		$('.menu-panel > [data-purpose="collapse"]').click(function() {
+			$menuRows.each(function() {
+				toggleMenuRow($(this), 0);
+            });
+		});
+
+        $('.menu-panel > [data-purpose="expand"]').click(function() {
+            $menuRows.each(function() {
+                toggleMenuRow($(this), 1);
+            });
+        });
+
+        $('.admin-layout .logo,.admin-layout .site-title').on('click', function() {
 			if (isSideMenuMode()) {
 				$('.admin-layout').toggleClass('nav-shown');
 			}

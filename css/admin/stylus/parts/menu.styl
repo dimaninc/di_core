@@ -1,16 +1,28 @@
-.above_lm
+$menuPanelHeight = 40px
+$buttonSize = 24px
+
+.menu-panel
+    display flex
+    align-items center
     background white
-    color black
-    padding-left 22px
-    font-family $classicMenuFont
-    font-size 12px
-    font-weight bold
+    padding-left $classicStandardPadding
     border-bottom 1px solid #CCCCCC
-    margin-bottom 0
-    text-transform uppercase
-    height 40px
-    line-height @height
-    box-sizing border-box
+    height $menuPanelHeight
+    //@media screen and (max-width: 767px)
+    //    display none
+    > span
+        display block
+        position relative
+        font-size 16px
+        cursor pointer
+        width $buttonSize
+        height $buttonSize
+        line-height $buttonSize
+        border-radius 3px
+        border 1px solid #ccc
+        text-align center
+        & + span
+            margin-left (($menuPanelHeight - $buttonSize) / 2)
     body[data-skin="entrine"] &
         font-family $entrineFont
         background $entrineColorBgDark
@@ -35,7 +47,7 @@ ul.left-menu
             cursor pointer
             text-transform uppercase
             box-sizing border-box
-            width 199px
+            width $classicMenuWidth
             transition .3s
             body[data-skin="entrine"] &
                 font-family $entrineFont

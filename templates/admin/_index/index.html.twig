@@ -18,7 +18,10 @@
     <div class="site-title">{{ _tech['site_title'] }}</div>
 
     <div class="nav">
-        <div class="above_lm">{{ lang['main_menu'] }}</div>
+        <div class="menu-panel">
+            <span data-purpose="expand" title="{{ lang['menu.expand_all'] }}">+</span>
+            <span data-purpose="collapse" title="{{ lang['menu.collapse_all'] }}">&ndash;</span>
+        </div>
         <ul class="left-menu">{{ left_menu|raw }}</ul>
     </div>
 

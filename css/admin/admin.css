@@ -731,19 +731,18 @@ body[data-skin="entrine"] .admin-layout > .head-href.logout > span:before {
   background: #7601ac;
   font-family: Tahoma, Verdana, Segoe, sans-serif;
   position: absolute;
-  text-align: center;
   width: 200px;
   height: 71px;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
+  padding-left: 22px;
 }
 body[data-skin="entrine"] .admin-layout > .logo {
   font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
   width: 230px;
   height: 48px;
   background: #2a3246;
-  text-align: left;
   padding-left: 27px;
 }
 @media screen and (max-width: 767px) {
@@ -1687,23 +1686,40 @@ del {
   -moz-background-size: 20% 20%;
   background-size: 20% 20%;
 }
-.above_lm {
+.menu-panel {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: box;
+  display: flex;
+  -webkit-box-align: center;
+  -moz-box-align: center;
+  -o-box-align: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
+  align-items: center;
   background: #fff;
-  color: #000;
   padding-left: 22px;
-  font-family: Tahoma, sans-serif;
-  font-size: 12px;
-  font-weight: bold;
   border-bottom: 1px solid #ccc;
-  margin-bottom: 0;
-  text-transform: uppercase;
   height: 40px;
-  line-height: 40px;
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
 }
-body[data-skin="entrine"] .above_lm {
+.menu-panel > span {
+  display: block;
+  position: relative;
+  font-size: 16px;
+  cursor: pointer;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  border-radius: 3px;
+  border: 1px solid #ccc;
+  text-align: center;
+}
+.menu-panel > span + span {
+  margin-left: 8px;
+}
+body[data-skin="entrine"] .menu-panel {
   font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
   background: #374254;
   color: #fff;
@@ -1731,7 +1747,7 @@ ul.left-menu > li > b {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
-  width: 199px;
+  width: 200px;
   -webkit-transition: 0.3s;
   -moz-transition: 0.3s;
   -o-transition: 0.3s;
