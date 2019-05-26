@@ -1,35 +1,65 @@
 $menuPanelHeight = 40px
-$buttonSize = 24px
+$buttonSize = 26px
+$gapSize = (($menuPanelHeight - $buttonSize) / 2)
 
 .menu-panel
     display flex
     align-items center
+    justify-content center
     background white
-    padding-left $classicStandardPadding
+    padding 0 $gapSize
     border-bottom 1px solid #CCCCCC
-    height $menuPanelHeight
-    //@media screen and (max-width: 767px)
-    //    display none
+    height ($menuPanelHeight - 1px)
+    //max-width 200px
     > span
         display block
+        flex-shrink 0
         position relative
         font-size 16px
         cursor pointer
         width $buttonSize
         height $buttonSize
-        line-height $buttonSize
-        border-radius 3px
+        line-height ($buttonSize - 2px)
+        border-radius 4px
         border 1px solid #ccc
+        box-sizing border-box
         text-align center
-        & + span
-            margin-left (($menuPanelHeight - $buttonSize) / 2)
+        margin-left $gapSize
+        body[data-skin="entrine"] &
+            border-radius 0
+    .search
+        flex 1
+        position relative
+        z-index 1
+        height $buttonSize
+        input
+            display block
+            position absolute
+            width 100%
+            font-size 13px
+            border-radius 4px
+            border 1px solid #ccc
+            height $buttonSize
+            padding 4px
+            outline none
+            box-sizing border-box
+            body[data-skin="entrine"] &
+                border-radius 0
+                border 0
+                font-family $entrineFont
+                padding-left 7px
+                padding-right 7px
+    &.searching
+        .search
+            flex 1
+        > span
+            position absolute
+            opacity 0
     body[data-skin="entrine"] &
         font-family $entrineFont
-        background $entrineColorBgDark
+        background $entrineColorBgDarker
         color white
-        padding-left 27px
-        height 71px
-        line-height @height
+        height 48px
         font-weight 600
         border-bottom 0
 
@@ -47,7 +77,7 @@ ul.left-menu
             cursor pointer
             text-transform uppercase
             box-sizing border-box
-            width $classicMenuWidth
+            //width $classicMenuWidth
             transition .3s
             body[data-skin="entrine"] &
                 font-family $entrineFont
@@ -55,7 +85,7 @@ ul.left-menu
                 border-bottom 0
                 background-color $entrineColorBgDark
                 color $entrineColorTextMenu
-                width auto //$entrineMenuWidth
+                //width auto //$entrineMenuWidth
                 padding-left 27px
                 padding-right 35px
                 &:after

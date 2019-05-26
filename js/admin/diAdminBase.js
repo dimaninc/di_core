@@ -1,17 +1,99 @@
 var diAdminBase = function() {
+	var self = this;
 	this.console = new diAdminConsole();
 
 	function constructor() {
-		initMainMenu();
-		initControls();
-		initExpandCollapse();
+        self
+            .initMainMenu()
+            .initMainMenuSearch()
+            .initControls()
+            .initExpandCollapse();
 	}
 
-	function isSideMenuMode() {
+	this.isSideMenuMode = function() {
 		return $('.admin-layout .logo .menu-toggle').is(':visible');
-	}
+	};
 
-	function initMainMenu() {
+	this.initMainMenuSearch = function() {
+        var $container = $('.nav .menu-panel');
+        var $wrapper = $('.search', $container);
+		var $searchInput = $('input', $wrapper);
+        var $reset = $('.reset', $wrapper);
+        var $menuRows = $('.nav > ul > li');
+
+        var filterRows = function() {
+        	var query = di.trim($searchInput.val());
+        	var showAll = !query;
+        	var words = query ? query.split(/\s+/) : [];
+
+        	$menuRows.each(function() {
+        		var $menuRow = $(this);
+        		var $menuTitle = $('> b', $menuRow);
+                var $menuItems = $('> ul > li > a', $menuRow);
+
+                if (showAll) {
+                	$menuRow.show();
+
+                	return true;
+				}
+
+				var foundTitle = false;
+                var foundItems = false;
+
+				for (var i = 0; i < words.length; i++) {
+					var menuTitle = $menuTitle.text() || '';
+
+					if (menuTitle.toLowerCase().indexOf(words[i]) > -1) {
+						foundTitle = true;
+					}
+
+					$menuItems.each(function() {
+						var $item = $(this);
+						var item = $item.text() || '';
+
+                        if (item.toLowerCase().indexOf(words[i]) > -1) {
+                            foundItems = true;
+
+                            return false;
+                        }
+					});
+				}
+
+				$menuRow.toggle(foundTitle || foundItems);
+			});
+		};
+
+        var toggleSearchingMode = function(state) {
+            $container.toggleClass('searching', !!state);
+		};
+
+        $searchInput
+			.focus(function() {
+				toggleSearchingMode(true);
+			})
+			.blur(function() {
+                toggleSearchingMode(false);
+			})
+			.on('blur focus input', function() {
+				filterRows();
+			})
+			.keyup(function(e) {
+				e = e || window.event;
+
+				if (e.keyCode === 27) {
+					$searchInput.val('').blur();
+				}
+			});
+
+        $reset.click(function() {
+            $searchInput.val('');
+            toggleSearchingMode(false);
+		});
+
+		return this;
+	};
+
+	this.initMainMenu = function() {
 		var $menuRows = $('ul.left-menu > li');
 
 		var toggleMenuRow = function($row, state) {
@@ -57,31 +139,37 @@ var diAdminBase = function() {
         });
 
         $('.admin-layout .logo,.admin-layout .site-title').on('click', function() {
-			if (isSideMenuMode()) {
+			if (self.isSideMenuMode()) {
 				$('.admin-layout').toggleClass('nav-shown');
 			}
 		});
-	}
 
-	function initControls() {
+        return this;
+	};
+
+	this.initControls = function() {
 		$(':radio,:checkbox').diControls();
-	}
 
-	function initExpandCollapse() {
+        return this;
+	};
+
+	this.initExpandCollapse = function() {
 		$('.expand-collapse-block u').click(function() {
 
 			var action = $(this).data('action'),
 				table = $(this).parent().data('table');
 
-			if (table == 'orders')
-				expand_collapse_all_orders(action == 'expand');
+			if (table === 'orders')
+				expand_collapse_all_orders(action === 'expand');
 			else
-				dint_expand_collapse_all(table, di_last_id, 'section', action == 'collapse');
+				dint_expand_collapse_all(table, di_last_id, 'section', action === 'collapse');
 
 			return false;
 
 		});
-	}
+
+        return this;
+	};
 
 	constructor();
 };
