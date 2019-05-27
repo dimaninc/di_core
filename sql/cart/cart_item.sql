@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS cart_item (
   target_type INT,
   target_id   BIGINT,
   quantity    INT             DEFAULT '1',
+  data        TEXT COMMENT 'JSON with item details if needed',
   created_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,
   KEY idx(cart_id, target_type, target_id),
   PRIMARY KEY (id)

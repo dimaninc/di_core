@@ -8,6 +8,7 @@ CREATE TABLE order_item (
   quantity    INT                 DEFAULT '1',
   status      TINYINT(4)          DEFAULT '0',
   created_at  TIMESTAMP           DEFAULT CURRENT_TIMESTAMP,
+  data        TEXT COMMENT 'JSON with item details if needed',
   PRIMARY KEY (id),
   KEY order_id(order_id, target_type, target_id, price, status)
 )
