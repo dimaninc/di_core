@@ -265,20 +265,18 @@ class diAdminList
 		return $this;
 	}
 
-	private function prepareReplaceAr()
-	{
-		$this->replaceAr = [];
+    private function prepareReplaceAr()
+    {
+        $this->replaceAr = [];
 
-		foreach ($this->getCurRec() as $k => $v)
-		{
-			if (is_scalar($v))
-			{
-				$this->replaceAr['%' . $k . '%'] = $v;
-			}
-		}
+        foreach ($this->getCurRec() as $k => $v) {
+            if (is_scalar($v) || !$v) {
+                $this->replaceAr['%' . $k . '%'] = $v ?: '';
+            }
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
 	private function replaceValues($s)
 	{

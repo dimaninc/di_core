@@ -53,7 +53,6 @@ class diModel implements \ArrayAccess
 	protected $id;
 	/** @var int|null */
 	protected $origId;
-	/** @deprecated */
 	protected $idAutoIncremented = true;
 	/** @deprecated */
 	protected $slugFieldName = self::SLUG_FIELD_NAME_LEGACY;
@@ -88,6 +87,12 @@ class diModel implements \ArrayAccess
 	protected $dateFields = ['date', 'created_at', 'edited_at', 'updated_at'];
 	/* redefine this in child class */
 	protected $customDateFields = [];
+
+    /**
+     * @var array Fields which should be compared strict in saveToDb() method
+     */
+	protected $strictChangeOnSaveFields = [];
+    protected $customStrictChangeOnSaveFields = [];
 
 	protected $ipFields = ['ip'];
 	/* redefine this in child class */
@@ -1681,31 +1686,42 @@ class diModel implements \ArrayAccess
 		return false;
 	}
 
-	/**
+    protected function getStrictChangeOnSaveFields()
+    {
+        return array_merge($this->strictChangeOnSaveFields, $this->customStrictChangeOnSaveFields);
+    }
+
+    protected function isStrictChangeOnSave($field)
+    {
+        return in_array($field, $this->getStrictChangeOnSaveFields());
+    }
+
+    /**
 	 * @return array
 	 */
-	protected function getRawDataForDb()
-	{
-		$ar = [];
+    protected function getRawDataForDb()
+    {
+        $ar = [];
 
-		foreach ($this->ar as $k => $v)
-		{
-			if (
-				($this->saveAllFields() || !$this->hasId() || $this->changed($k)) &&
-				!$this->isFieldExcludedOnSave($k)
-			   )
-			{
-				$ar[$k] = $v;
-			}
-		}
+        foreach ($this->ar as $k => $v) {
+            if (
+                (
+                    $this->saveAllFields() ||
+                    !$this->hasId() ||
+                    $this->changed($k, $this->isStrictChangeOnSave($k))
+                ) &&
+                !$this->isFieldExcludedOnSave($k)
+            ) {
+                $ar[$k] = $v;
+            }
+        }
 
-		if (!$this->idAutoIncremented && $this->changed(static::getIdFieldName()))
-		{
-			$ar[static::getIdFieldName()] = $this->getId();
-		}
+        if (!$this->isIdAutoIncremented() && $this->changed(static::getIdFieldName())) {
+            $ar[static::getIdFieldName()] = $this->getId();
+        }
 
-		return $ar;
-	}
+        return $ar;
+    }
 
 	/**
 	 * @return array
@@ -1758,7 +1774,7 @@ class diModel implements \ArrayAccess
 				throw $e;
 			}
 		}
-		elseif ($this->getId() && ($this->idAutoIncremented || (!$this->idAutoIncremented && $this->getOrigId())))
+		elseif ($this->getId() && ($this->isIdAutoIncremented() || (!$this->isIdAutoIncremented() && $this->getOrigId())))
 		{
 			$result = $this->getDb()->update($this->getTable(), $ar, "WHERE `{$this->getIdFieldName()}` = '{$this->getId()}'");
 

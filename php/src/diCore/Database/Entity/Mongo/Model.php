@@ -177,16 +177,15 @@ class Model extends \diModel
 		return $ar;
 	}
 
-	protected function saveToDb()
-	{
-		$ar = $this->getDataForDb();
+    protected function saveToDb()
+    {
+        $ar = $this->getDataForDb();
 
-		if (!count($ar))
-		{
-			return $this;
-		}
+        if (!count($ar)) {
+            return $this;
+        }
 
-		if ($this->isInsertOrUpdateAllowed()) {
+        if ($this->isInsertOrUpdateAllowed()) {
             $keys = array_combine($this->upsertFields, array_map(function ($field) {
                 return $this->get($field);
             }, $this->upsertFields));
@@ -200,26 +199,35 @@ class Model extends \diModel
             if ($id) {
                 $this->setId((string)$id);
             }
-		} elseif ($this->getId() && ($this->idAutoIncremented || (!$this->idAutoIncremented && $this->getOrigId()))) {
-			$a = $this->prepareIdAndFieldForGetRecord($this->getId(), 'id');
+        } elseif (
+            $this->getId() &&
+            (
+                $this->isIdAutoIncremented() ||
+                (
+                    !$this->isIdAutoIncremented() &&
+                    $this->getOrigId()
+                )
+            )
+        ) {
+            $a = $this->prepareIdAndFieldForGetRecord($this->getId(), 'id');
 
-			$this->getCollectionResource()->updateOne([
-				$a['field'] => $a['id'],
-			], [
-				'$set' => $ar,
-			]);
-		} else {
-			$insertResult = $this->getCollectionResource()->insertOne($ar); //['fsync' => true,]
-			/** @var \MongoDB\BSON\ObjectId $id */
-			$id = $insertResult->getInsertedId();
+            $this->getCollectionResource()->updateOne([
+                $a['field'] => $a['id'],
+            ], [
+                '$set' => $ar,
+            ]);
+        } else {
+            $insertResult = $this->getCollectionResource()->insertOne($ar); //['fsync' => true,]
+            /** @var \MongoDB\BSON\ObjectId $id */
+            $id = $insertResult->getInsertedId();
 
-			if ($id) {
-				$this->setId((string)$id);
-			}
-		}
+            if ($id) {
+                $this->setId((string)$id);
+            }
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
 	protected function processIdBeforeGetRecord($id, $field)
 	{
