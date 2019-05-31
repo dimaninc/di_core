@@ -91,12 +91,13 @@ class CollectionCache
 	{
 		$modelType = \diTypes::getId($modelType);
 
+		if (!isset(self::$data[$modelType]) && $force) {
+            self::$data[$modelType] = \diCollection::create($modelType);
+        }
+
 		return isset(self::$data[$modelType])
 			? self::$data[$modelType]
-			: ($force
-                ? \diCollection::create($modelType)
-                : null
-            );
+			: null;
 	}
 
 	/**
