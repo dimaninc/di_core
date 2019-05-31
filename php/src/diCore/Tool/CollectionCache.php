@@ -87,13 +87,16 @@ class CollectionCache
 	 * @param int|string $modelType
 	 * @return \diCollection
 	 */
-	public static function get($modelType)
+	public static function get($modelType, $force = false)
 	{
 		$modelType = \diTypes::getId($modelType);
 
 		return isset(self::$data[$modelType])
 			? self::$data[$modelType]
-			: null;
+			: ($force
+                ? \diCollection::create($modelType)
+                : null
+            );
 	}
 
 	/**
