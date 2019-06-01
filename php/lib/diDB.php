@@ -771,16 +771,14 @@ abstract class diDB
 
 	public static function values_to_string_for_insert($ar)
 	{
-		$outAr = array();
+        $outAr = [];
 
-		foreach ($ar as $f => $v)
-		{
-			if ($f{0} == "*")
-			{
+        foreach ($ar as $f => $v) {
+			if ($f{0} == "*") {
 				$outAr[] = $v;
-			}
-			else
-			{
+			} elseif ($v === null) {
+			    $outAr[] = 'NULL';
+            } else {
 				$outAr[] = "'$v'";
 			}
 		}
@@ -790,9 +788,9 @@ abstract class diDB
 
 	public static function fields_and_values_to_string_for_update($ar)
 	{
-		$q_ar = array();
+        $q_ar = [];
 
-		foreach ($ar as $f => $v)
+        foreach ($ar as $f => $v)
 		{
 			if ($v === null)
 			{
