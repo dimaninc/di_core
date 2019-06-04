@@ -448,6 +448,15 @@ class StringHelper
 		return $string . str_repeat($char, $length - mb_strlen($string));
 	}
 
+    public static function ucFirst($string)
+    {
+        $len = mb_strlen($string);
+        $first = mb_substr($string, 0, 1);
+        $rest = mb_substr($string, 1, $len - 1);
+
+        return mb_strtoupper($first) . $rest;
+    }
+
 	public static function mimeTypeByFilename($filename)
 	{
 		$ext = strtolower(self::fileExtension($filename));

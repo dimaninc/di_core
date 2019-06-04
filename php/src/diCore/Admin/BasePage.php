@@ -687,11 +687,18 @@ abstract class BasePage
 		], $options);
 	}
 
+	protected function createListCollection($options = [])
+    {
+        $this->listCollection = \diCollection::createForTable($this->getTable(), $options['query']);
+
+        return $this;
+    }
+
 	protected function getDefaultListRows($options = [])
 	{
 		$options = $this->extendListQueryOptions($options);
 
-		$this->listCollection = \diCollection::createForTable($this->getTable(), $options['query']);
+		$this->createListCollection($options);
 
 		if ($options['sortBy'])
 		{

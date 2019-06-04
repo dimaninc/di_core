@@ -853,50 +853,59 @@ class Base
 		return $admin_left_menu;
 	}
 
-	protected static function getAdminMenuRow($moduleName, $options = [])
+	protected static function getAdminMenuRow($moduleName, $moduleOptions = [])
 	{
-		$options = extend([
-			'permissions' => ['root'],
-			'showList' => true,
-			'showForm' => true,
-			'listTitle' => static::getVocabulary('menu.list'),
-			'formTitle' => static::getVocabulary('menu.add'),
-			'listTitleSuffix' => '',
-			'formTitleSuffix' => '',
-			'extraPaths' => [],
-			'prefixRows' => [],
-			'suffixRows' => [],
-		], $options);
+	    $names = is_array($moduleName)
+            ? $moduleName
+            : [$moduleName => $moduleOptions];
 
-		$ar = [
-			'items' => [],
-			'permissions' => $options['permissions'],
-			'paths' => array_merge([$moduleName, $moduleName . '_form'], $options['extraPaths']),
-		];
+        $ar = [
+            'items' => [],
+            'permissions' => [],
+            'paths' => [],
+        ];
 
-		if ($options['showList'])
-		{
-			$ar['items'][$options['listTitle'] . ' ' . $options['listTitleSuffix']] = [
-				'module' => $moduleName,
-			];
-		}
+        foreach ($names as $moduleName => $opts) {
+            $options = extend([
+                'permissions' => ['root'],
+                'showList' => true,
+                'showForm' => true,
+                'listTitle' => static::getVocabulary('menu.list'),
+                'formTitle' => static::getVocabulary('menu.add'),
+                'listTitleSuffix' => '',
+                'formTitleSuffix' => '',
+                'extraPaths' => [],
+                'prefixRows' => [],
+                'suffixRows' => [],
+            ], $moduleOptions, $opts);
 
-		if ($options['showForm'])
-		{
-			$ar['items'][$options['formTitle'] . ' ' . $options['formTitleSuffix']] = [
-				'module' => $moduleName . '/form',
-			];
-		}
+            $ar['permissions'] = $options['permissions'];
+            $ar['paths'] = array_merge(
+                $ar['paths'],
+                [$moduleName, $moduleName . '_form'],
+                $options['extraPaths']
+            );
 
-		if ($options['prefixRows'])
-		{
-			$ar['items'] = array_merge($options['prefixRows'], $ar['items']);
-		}
+            if ($options['showList']) {
+                $ar['items'][$options['listTitle'] . ' ' . $options['listTitleSuffix']] = [
+                    'module' => $moduleName,
+                ];
+            }
 
-		if ($options['suffixRows'])
-		{
-			$ar['items'] = array_merge($ar['items'], $options['suffixRows']);
-		}
+            if ($options['showForm']) {
+                $ar['items'][$options['formTitle'] . ' ' . $options['formTitleSuffix']] = [
+                    'module' => $moduleName . '/form',
+                ];
+            }
+
+            if ($options['prefixRows']) {
+                $ar['items'] = array_merge($options['prefixRows'], $ar['items']);
+            }
+
+            if ($options['suffixRows']) {
+                $ar['items'] = array_merge($ar['items'], $options['suffixRows']);
+            }
+        }
 
 		return $ar;
 	}
