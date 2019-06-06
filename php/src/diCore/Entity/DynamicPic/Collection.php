@@ -92,14 +92,35 @@ class Collection extends \diCollection
 			->filterByTargetTable($table)
 			->filterByTargetId((int)$id);
 
-		if ($field !== null)
-		{
+		if ($field !== null) {
 			$col
 				->filterByTargetField($field);
 		}
 
 		return $col;
 	}
+
+    /**
+     * @param $table
+     * @param $id
+     * @param $field
+     * @return Collection
+     * @throws \Exception
+     */
+    public static function createByTargetTable($table, $field = null)
+    {
+        /** @var Collection $col */
+        $col = static::create(static::type);
+        $col
+            ->filterByTargetTable($table);
+
+        if ($field !== null) {
+            $col
+                ->filterByTargetField($field);
+        }
+
+        return $col;
+    }
 
 	/**
 	 * @param $value
