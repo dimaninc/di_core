@@ -757,17 +757,12 @@ abstract class BasePage
 
 	protected function defaultPrintListRows($rs)
 	{
-		if ($rs instanceof \diCollection)
-		{
-			foreach ($rs as $model)
-			{
+		if (is_array($rs) || $rs instanceof \diCollection) {
+			foreach ($rs as $model) {
 				$this->defaultPrintListRow($model);
 			}
-		}
-		else
-		{
-			while ($r = $this->getDb()->fetch($rs))
-			{
+		} else {
+			while ($r = $this->getDb()->fetch($rs)) {
                 $this->defaultPrintListRow($r);
 			}
 		}

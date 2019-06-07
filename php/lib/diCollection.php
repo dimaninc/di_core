@@ -461,6 +461,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $ar;
 	}
 
+	public function sort($callback)
+    {
+        uasort($this->items, $callback);
+
+        return $this;
+    }
+
 	public function getModelByIdx($idx = 0)
     {
         if ($idx < 0) {
