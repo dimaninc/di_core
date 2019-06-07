@@ -30,7 +30,7 @@ use diCore\Tool\Mail\Queue;
 class Model extends \diBaseUserModel
 {
 	const type = Types::user;
-	const slug_field_name = 'login';
+	const slug_field_name = 'email';
 	protected $table = 'users';
 
 	const MIN_PASSWORD_LENGTH = 6;
