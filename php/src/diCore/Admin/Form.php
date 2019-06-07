@@ -2368,20 +2368,19 @@ EOF;
 	{
 		$s = ""; //"<div style=\"margin: 9px 0 5px 0;\">[<a href=\"#\" onclick=\"return dipics_{$this->table}.add('$field');\">Добавить +</a>]:</div>\n";
 		$last_ref_idx = 0;
+		$btnAdd = "<div class='dynamic-add'><a href='#' onclick=\"return dipics_{$this->table}.add('$field');\" class=\"simple-button\">{$this->L('add_item')}</a></div>\n";
 
 		$pic_rs = $this->getDb()->rs($this->pics_table, "WHERE _table='$this->table' and _field='$field' and _id='$this->id' ORDER BY order_num ASC");
 
 		if ($this->getDb()->count($pic_rs))
 		{
-			$s .= "<div class='dynamic-add'><a href='#' onclick=\"return dipics_{$this->table}.add('$field');\" class=\"simple-button\">{$this->L('add_item')}</a></div>\n";
+			$s .= $btnAdd;
 		}
 
-		while ($pic_r = $this->getDb()->fetch($pic_rs))
-		{
+		while ($pic_r = $this->getDb()->fetch($pic_rs)) {
 			$s .= $this->get_dynamic_pic_row($pic_r->id, $field, $pic_r);
 
-			if ($pic_r->order_num > $last_ref_idx)
-			{
+			if ($pic_r->order_num > $last_ref_idx) {
 				$last_ref_idx = $pic_r->order_num;
 			}
 		}
@@ -2390,10 +2389,8 @@ EOF;
 
 		$s .= "<div id=\"{$field}_anchor_div\"></div>";
 		$s .= "<div id=\"js_{$field}_resource\" style=\"display:none;\">".$this->get_dynamic_pic_row("%NEWID%", $field, false)."</div>";
-
 		$s .= "<script type=\"text/javascript\">\nif (typeof dipics_{$this->table} == 'undefined') var dipics_{$this->table} = new diDynamicRows();\ndipics_{$this->table}.init('$field', 'изображение', 1, $last_ref_idx);\n</script>\n";
-
-		$s .= "<div class='dynamic-add'>[<a href='#' onclick=\"return dipics_{$this->table}.add('$field');\">{$this->L('add_item')}</a>]</div>\n";
+		$s .= $btnAdd;
 
 		$this->inputs[$field] = $s;
 
