@@ -18,8 +18,8 @@ namespace diCore\Traits\Model;
  * @method bool hasTargetType
  * @method bool hasTargetId
  *
- * @method TargetInside setTargetType($value)
- * @method TargetInside setTargetId($value)
+ * @method $this setTargetType($value)
+ * @method $this setTargetId($value)
  */
 trait TargetInside
 {
