@@ -175,6 +175,14 @@ var di = {
 		return Object.prototype.toString.call(ar) === '[object Array]';
 	},
 
+	arrayFilter: function(ar, callback) {
+        callback = callback || function() {
+            return !!e;
+		};
+
+        return ar.filter(callback);
+	},
+
 	keys: function(array) {
 		return $.map(array, function(val, key) { return key; });
 	},
