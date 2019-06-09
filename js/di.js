@@ -176,7 +176,7 @@ var di = {
 	},
 
 	arrayFilter: function(ar, callback) {
-        callback = callback || function() {
+        callback = callback || function(e) {
             return !!e;
 		};
 
