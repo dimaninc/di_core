@@ -344,6 +344,18 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
         return $this;
     }
 
+    /**
+     * This is needed when collection should be filled with items manually
+     * @return $this
+     */
+    public function emulateLoad()
+    {
+        $this->loaded = true;
+        $this->items = [];
+
+        return $this;
+    }
+
 	/**
 	 * @param $type
 	 * @param $id
@@ -841,6 +853,15 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 		return $this;
 	}
+
+	public function addItems($items)
+    {
+        foreach ($items as $item) {
+            $this->addItem($item);
+        }
+
+        return $this;
+    }
 
 	private function removeItems()
 	{
