@@ -36,7 +36,7 @@ class Caption
 			$caption = $caption[$this->getX()->getLanguage()];
 		}
 
-		return $method != 'list'
+		return $this->getX()->getPage()->linkNeededInCaption($method)
 			? sprintf('<a href="%s">%s</a>', $href, $caption)
 			: sprintf('<i>%s</i>', $caption);
 	}

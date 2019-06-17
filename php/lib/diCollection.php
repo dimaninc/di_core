@@ -410,6 +410,39 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
     }
 
     /**
+     * Maps collection into associative array
+     * @param array|callable $callback Callback or field name of model
+     * @return array
+     */
+    public function mapAssoc($callback)
+    {
+        $this->load();
+
+        $ar = [];
+
+        $obj = new ArrayObject($this->items);
+        $it = $obj->getIterator();
+
+        while ($it->valid()) {
+            $k = $it->key();
+            $v = $it->current();
+
+            if (is_callable($callback)) {
+                $ar = extend($ar, $callback($v, $k));
+            } else {
+                $key = $v->get(current(array_keys($callback)));
+                $value = $v->get(current(array_values($callback)));
+
+                $ar[$key] = $value;
+            }
+
+            $it->next();
+        }
+
+        return $ar;
+    }
+
+    /**
      * Filters collection, returns filtered array of models
      * @param callable|string $callback Callback or field name of model
      * @return array

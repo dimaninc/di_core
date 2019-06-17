@@ -415,6 +415,7 @@ EOF;
 			"not" => false,
 			'queryPrefix' => '',
 			'querySuffix' => '',
+            'feed' => null,
 		];
 
 		if (is_array($field))
@@ -429,7 +430,19 @@ EOF;
 
 		$this->ar[$opts['alias'] ?: $opts["field"]] = $opts;
 
-		return $this;
+        // getting first option
+        if (!empty($opts["strict"]) && $opts['feed'])
+        {
+            $sel = \diSelect::fastCreate('', '', $opts['feed']);
+
+            $this
+                ->setPredefinedData($opts['alias'] ?: $opts["field"], $sel->getItem(0, 'value'));
+
+            unset($sel);
+        }
+
+
+        return $this;
 	}
 
 	public function removeFilter($field)

@@ -1522,6 +1522,11 @@ abstract class BasePage
 		return $this->getMethodCaption($this->getRefinedMethod());
 	}
 
+    public function linkNeededInCaption($method)
+    {
+        return $method != 'list';
+    }
+
 	public function addButtonNeededInCaption()
 	{
 		return true;
