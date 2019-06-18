@@ -40,6 +40,21 @@ trait OrderItem
 
     protected $data;
 
+    public static function createByTarget($targetType, $targetId = null)
+    {
+        if ($targetType instanceof \diModel && $targetId === null) {
+            $targetId = $targetType->getId();
+            $targetType = $targetType->modelType();
+        }
+
+        $col = \diCollection::create(static::modelTypeName());
+        $col
+            ->filterBy('target_type', $targetType)
+            ->filterBy('target_id', $targetId);
+
+        return $col->getFirstItem();
+    }
+
     protected function initItem()
     {
         if (!$this->item) {
