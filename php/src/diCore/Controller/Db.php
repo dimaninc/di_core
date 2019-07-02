@@ -224,6 +224,11 @@ class Db extends \diBaseAdminController
 		}
 	}
 
+	protected function keepDefaultGenerated()
+    {
+        return false;
+    }
+
 	public function createAction()
 	{
 		$table_case_sensitivity = false;
@@ -357,6 +362,10 @@ EOF;
 					$null = $r->Null == "YES" ? " NULL" : " NOT NULL";
 					$def  = $r->Default != NULL ? " DEFAULT ".$r->Default."" : "";
 					$extra = $r->Extra ? " " . $r->Extra : "";
+
+					if (!$this->keepDefaultGenerated()) {
+					    $extra = trim(str_replace('DEFAULT_GENERATED', '', $extra));
+                    }
 
 					$fieldsAr[$r->Field] = $r->Type;
 					$createFieldsAr[] = "\t`" . $name . "` " . $type . $null . $def . $extra;
