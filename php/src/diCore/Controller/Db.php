@@ -365,6 +365,9 @@ EOF;
 
 					if (!$this->keepDefaultGenerated()) {
 					    $extra = trim(str_replace('DEFAULT_GENERATED', '', $extra));
+					    if ($extra) {
+					        $extra = ' ' . $extra;
+                        }
                     }
 
 					$fieldsAr[$r->Field] = $r->Type;
