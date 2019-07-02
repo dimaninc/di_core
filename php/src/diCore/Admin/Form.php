@@ -64,6 +64,12 @@ class Form
 			'watermark_pic_confirmation' => 'Watermark the pic? Are you sure?',
 			'watermark_pic' => 'Watermark pic',
 
+            'placeholder.date.day' => 'DD',
+            'placeholder.date.month' => 'MM',
+            'placeholder.date.year' => 'YY',
+            'placeholder.time.hour' => 'HH',
+            'placeholder.time.minute' => 'MM',
+
 			'yes' => 'Yes',
 			'no' => 'No',
 
@@ -111,6 +117,12 @@ class Form
 			'rotate_pic.cw' => 'Повернуть на 90° по часовой стрелке',
 			'watermark_pic_confirmation' => 'Наложить водяной знак?',
 			'watermark_pic' => 'Наложить водяной знак',
+
+            'placeholder.date.day' => 'ДД',
+            'placeholder.date.month' => 'ММ',
+            'placeholder.date.year' => 'ГГГГ',
+            'placeholder.time.hour' => 'ЧЧ',
+            'placeholder.time.minute' => 'ММ',
 
 			'yes' => 'Да',
 			'no' => 'Нет',
@@ -2676,12 +2688,23 @@ EOF;
 			$tm = "";
 		}
 
-		$d = "<input type=\"text\" name=\"{$field}[dd]\" id=\"{$field}[dd]\" value=\"$dd\" size=\"2\"><span class='date-sep'>.</span>".
-			"<input type=\"text\" name=\"{$field}[dm]\" id=\"{$field}[dm]\" value=\"$dm\" size=\"2\"><span class='date-sep'>.</span>".
-			"<input type=\"text\" name=\"{$field}[dy]\" id=\"{$field}[dy]\" value=\"$dy\" size=\"4\">";
+		$ph = [
+		    'dd' => $this->getFieldOption($field, 'use_placeholder') ? self::L('placeholder.date.day') : '',
+            'dm' => $this->getFieldOption($field, 'use_placeholder') ? self::L('placeholder.date.month') : '',
+            'dy' => $this->getFieldOption($field, 'use_placeholder') ? self::L('placeholder.date.year') : '',
+            'th' => $this->getFieldOption($field, 'use_placeholder') ? self::L('placeholder.time.hour') : '',
+            'tm' => $this->getFieldOption($field, 'use_placeholder') ? self::L('placeholder.time.minute') : '',
+        ];
 
-		$t = "<input type=\"text\" name=\"{$field}[th]\" id=\"{$field}[th]\" value=\"$th\" size=\"2\"><span class='time-sep'>:</span>".
-			"<input type=\"text\" name=\"{$field}[tm]\" id=\"{$field}[tm]\" value=\"$tm\" size=\"2\">";
+		$d = "<input type=\"text\" name=\"{$field}[dd]\" id=\"{$field}[dd]\" value=\"$dd\" size=\"2\" placeholder=\"{$ph['dd']}\">" .
+            "<span class='date-sep'>.</span>" .
+			"<input type=\"text\" name=\"{$field}[dm]\" id=\"{$field}[dm]\" value=\"$dm\" size=\"2\" placeholder=\"{$ph['dm']}\">" .
+            "<span class='date-sep'>.</span>" .
+			"<input type=\"text\" name=\"{$field}[dy]\" id=\"{$field}[dy]\" value=\"$dy\" size=\"4\" placeholder=\"{$ph['dy']}\">";
+
+		$t = "<input type=\"text\" name=\"{$field}[th]\" id=\"{$field}[th]\" value=\"$th\" size=\"2\" placeholder=\"{$ph['th']}\">" .
+            "<span class='time-sep'>:</span>" .
+			"<input type=\"text\" name=\"{$field}[tm]\" id=\"{$field}[tm]\" value=\"$tm\" size=\"2\" placeholder=\"{$ph['tm']}\">";
 
 		$input = "";
 		if ($date) $input .= $d;
