@@ -217,10 +217,14 @@ EOF;
 		];
 		$localizedNeeded = [];
 
+		/*
 		if ($this->getNamespace())
 		{
 			$className = self::extractClass($className);
 		}
+		*/
+
+        $className = '$this';
 
 		foreach ($fields as $field => $type)
 		{
@@ -268,10 +272,14 @@ EOF;
 		];
 		$localizedNeeded = [];
 
+		/*
 		if ($this->getNamespace())
 		{
 			$className = self::extractClass($className);
 		}
+		*/
+
+		$className = '$this';
 
 		foreach ($fields as $field => $type)
 		{

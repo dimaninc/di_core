@@ -208,7 +208,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 * @param integer|string $type
 	 * @param array $options
 	 * @param string|null $queryFields
-	 * @return diCollection
+	 * @return $this
 	 * @throws \Exception
 	 */
 	public static function create($type, $options = [], $queryFields = null)
@@ -273,7 +273,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	/**
 	 * @param $table
 	 * @param array $options
-	 * @return diCollection
+	 * @return $this
 	 * @throws Exception
 	 */
 	public static function createForTableNoStrict($table, $options = [])
@@ -301,7 +301,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	/**
 	 * @param integer|string $type
-	 * @return diCollection
+	 * @return $this
 	 * @throws \Exception
 	 */
 	public static function createFromCache($type, $options = [], $cacheKind = self::CACHE_ALL)
@@ -365,7 +365,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	public static function createModelFromCache($type, $id, $cacheKind = self::CACHE_ALL)
 	{
-		$col = \diCollection::createFromCache($type, [], $cacheKind);
+		$col = static::createFromCache($type, [], $cacheKind);
 
 		return $col[$id] ?: \diModel::create($type);
 	}

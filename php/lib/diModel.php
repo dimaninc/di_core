@@ -153,7 +153,7 @@ class diModel implements \ArrayAccess
 	 * @param $type
 	 * @param null|array|object $ar
 	 * @param array $options
-	 * @return diModel
+	 * @return $this
 	 * @throws \Exception
 	 */
 	public static function create($type, $ar = null, $options = [])
@@ -193,7 +193,7 @@ class diModel implements \ArrayAccess
 	 * @param $table
 	 * @param null|array|object $ar
 	 * @param array $options
-	 * @return diModel
+	 * @return $this
 	 * @throws \Exception
 	 */
 	public static function createForTable($table, $ar = null, $options = [])
@@ -205,7 +205,7 @@ class diModel implements \ArrayAccess
 	 * @param $table
 	 * @param null|array|object $ar
 	 * @param array $options
-	 * @return diModel
+	 * @return $this
 	 * @throws \Exception
 	 */
 	public static function createForTableNoStrict($table, $ar = null, $options = [])
@@ -2032,9 +2032,6 @@ class diModel implements \ArrayAccess
 		return $this;
 	}
 
-	/**
-	 * @return diModel
-	 */
 	private function startTransaction()
 	{
 		$this->getDb()->startTransaction();
@@ -2042,9 +2039,6 @@ class diModel implements \ArrayAccess
 		return $this;
 	}
 
-	/**
-	 * @return diModel
-	 */
 	private function commitTransaction()
 	{
 		$this->getDb()->commitTransaction();
@@ -2052,9 +2046,6 @@ class diModel implements \ArrayAccess
 		return $this;
 	}
 
-	/**
-	 * @return diModel
-	 */
 	private function rollbackTransaction()
 	{
 		$this->getDb()->rollbackTransaction();
