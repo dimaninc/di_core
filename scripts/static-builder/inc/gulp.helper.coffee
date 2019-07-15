@@ -266,10 +266,10 @@ Helper =
     assignCssMinTaskToGulp: (gulp, opts = {}) ->
         csso = @req 'gulp-csso' unless csso
         rename = @req 'gulp-rename' unless rename
-        opts = @extend {input: null, outputFolder: null, taskName: 'css-min'}, opts
+        opts = @extend {input: null, outputFolder: null, taskName: 'css-min', options: {}}, opts
         gulp.task opts.taskName, (done) =>
             gulp.src @fullPath opts.input
-            .pipe csso()
+            .pipe csso opts.options
             .on 'error', console.log
             .pipe rename suffix: '.min'
             .pipe gulp.dest @fullPath opts.outputFolder

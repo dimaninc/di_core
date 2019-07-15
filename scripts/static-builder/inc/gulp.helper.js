@@ -395,11 +395,12 @@ Helper = {
     opts = this.extend({
       input: null,
       outputFolder: null,
-      taskName: 'css-min'
+      taskName: 'css-min',
+      options: {}
     }, opts);
     gulp.task(opts.taskName, (function(_this) {
       return function(done) {
-        return gulp.src(_this.fullPath(opts.input)).pipe(csso()).on('error', console.log).pipe(rename({
+        return gulp.src(_this.fullPath(opts.input)).pipe(csso(opts.options)).on('error', console.log).pipe(rename({
           suffix: '.min'
         })).pipe(gulp.dest(_this.fullPath(opts.outputFolder))).on('end', function() {
           return done();
