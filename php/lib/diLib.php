@@ -22,6 +22,11 @@ class diLib
 	const LOCATION_VENDOR_BEYOND = 1; // composer beyond htdocs
     const LOCATION_VENDOR_HTDOCS = 2; // composer inside htdocs
 
+    /** @deprecated  */
+    const LOCATION_BEYOND = self::LOCATION_VENDOR_BEYOND;
+    /** @deprecated  */
+    const LOCATION_HTDOCS = self::LOCATION_SUBMODULE_HTDOCS;
+
 	private static $location = null;
 	private static $locationMarkers = [
 		self::LOCATION_SUBMODULE_HTDOCS => ['_core', 'php', 'lib'],

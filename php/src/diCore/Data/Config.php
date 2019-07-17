@@ -31,7 +31,7 @@ class Config
     const adminSkin = Skin::classic;
 	const initiating = false; // if true, then DB is auto-created and admin works w/o password
 
-    protected static $location = \diLib::LOCATION_SUBMODULE_HTDOCS;
+    protected static $location = \diLib::LOCATION_VENDOR_BEYOND;
 	protected static $useModuleCache = false;
 
 	private static $databaseDumpPaths = [
