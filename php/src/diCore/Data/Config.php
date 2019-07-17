@@ -31,12 +31,13 @@ class Config
     const adminSkin = Skin::classic;
 	const initiating = false; // if true, then DB is auto-created and admin works w/o password
 
-    protected static $location = \diLib::LOCATION_HTDOCS;
+    protected static $location = \diLib::LOCATION_SUBMODULE_HTDOCS;
 	protected static $useModuleCache = false;
 
 	private static $databaseDumpPaths = [
-		\diLib::LOCATION_HTDOCS => '_admin/db/dump/',
-		\diLib::LOCATION_BEYOND => 'db/dump/',
+		\diLib::LOCATION_SUBMODULE_HTDOCS => '_admin/db/dump/',
+		\diLib::LOCATION_VENDOR_BEYOND => 'db/dump/',
+        \diLib::LOCATION_VENDOR_HTDOCS => '_admin/db/dump/',
 	];
 
 	private static $class;
@@ -302,26 +303,26 @@ class Config
 
 	public static function __getTwigCorePath()
 	{
-		switch (static::getLocation())
-		{
-			case \diLib::LOCATION_BEYOND:
+		switch (static::getLocation()) {
+			case \diLib::LOCATION_VENDOR_BEYOND:
+            case \diLib::LOCATION_VENDOR_HTDOCS:
 				return '../vendor/dimaninc/di_core/templates';
 
-			default:
-			case \diLib::LOCATION_HTDOCS:
+            default:
+			case \diLib::LOCATION_SUBMODULE_HTDOCS:
 				return '../_core/templates';
 		}
 	}
 
 	public static function __getPhpFolder()
 	{
-		switch (static::getLocation())
-		{
-			case \diLib::LOCATION_BEYOND:
+		switch (static::getLocation()) {
+			case \diLib::LOCATION_VENDOR_BEYOND:
 				return StringHelper::slash(dirname(Paths::fileSystem()));
 
 			default:
-			case \diLib::LOCATION_HTDOCS:
+			case \diLib::LOCATION_SUBMODULE_HTDOCS:
+            case \diLib::LOCATION_VENDOR_HTDOCS:
 				return Paths::fileSystem();
 		}
 	}

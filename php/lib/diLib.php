@@ -18,13 +18,15 @@ class diLib
 {
 	const AUTOLOAD = true;
 
-	const LOCATION_HTDOCS = 0;
-	const LOCATION_BEYOND = 1;
+	const LOCATION_SUBMODULE_HTDOCS = 0; // submodule _core
+	const LOCATION_VENDOR_BEYOND = 1; // composer beyond htdocs
+    const LOCATION_VENDOR_HTDOCS = 2; // composer inside htdocs
 
 	private static $location = null;
 	private static $locationMarkers = [
-		self::LOCATION_HTDOCS => ['_core', 'php', 'lib'],
-		self::LOCATION_BEYOND => ['vendor', 'dimaninc', 'di_core', 'php', 'lib'],
+		self::LOCATION_SUBMODULE_HTDOCS => ['_core', 'php', 'lib'],
+		self::LOCATION_VENDOR_BEYOND => ['vendor', 'dimaninc', 'di_core', 'php', 'lib'],
+        self::LOCATION_VENDOR_HTDOCS => ['vendor', 'dimaninc', 'di_core', 'php', 'lib'],
 	];
     private static $subFolder = null;
 
@@ -423,14 +425,13 @@ class diLib
 
 	public static function getLocation()
 	{
-		if (self::$location === null)
-		{
-			foreach (self::$locationMarkers as $locationId => $markerAr)
-			{
+        $root = $_SERVER['DOCUMENT_ROOT'];
+
+		if (self::$location === null) {
+			foreach (self::$locationMarkers as $locationId => $markerAr) {
 				$marker = DIRECTORY_SEPARATOR . join(DIRECTORY_SEPARATOR, $markerAr) . DIRECTORY_SEPARATOR;
 
-				if (strpos(__FILE__, $marker) !== false)
-				{
+				if (strpos(__FILE__, $marker) !== false) {
 					self::$location = $locationId;
 
 					break;
@@ -438,26 +439,28 @@ class diLib
 			}
 		}
 
-        if (self::$location === self::LOCATION_HTDOCS && isset($marker))
-        {
+		if (
+		    self::$location === self::LOCATION_VENDOR_BEYOND &&
+            substr(__FILE__, 0, strlen($root)) === $root
+        ) {
+		    self::$location = self::LOCATION_VENDOR_HTDOCS;
+        }
+
+        if (self::$location === self::LOCATION_SUBMODULE_HTDOCS && isset($marker)) {
             $file = str_replace('\\', '/', __FILE__);
             $marker = str_replace('\\', '/', $marker);
-            $root = $_SERVER['DOCUMENT_ROOT'];
 
-            if (substr($file, 0, strlen($root)) === $root)
-            {
+            if (substr($file, 0, strlen($root)) === $root) {
                 $file = substr($file, strlen($root));
                 self::$subFolder = trim(substr($file, 0, strpos($file, $marker)), '/');
             }
         }
 
-		if (self::$location === null)
-		{
-			throw new Exception('Unknown diCore location: ' . __FILE__);
+		if (self::$location === null) {
+			throw new \Exception('Unknown diCore location: ' . __FILE__);
 		}
 
-        if (self::$subFolder === null)
-        {
+        if (self::$subFolder === null) {
             self::$subFolder = '';
         }
 
@@ -485,7 +488,7 @@ class diLib
 	{
 		switch (self::getLocation())
 		{
-			case self::LOCATION_BEYOND:
+			case self::LOCATION_VENDOR_BEYOND:
 				return [
 					'css' => '/assets/styles/_core/',
 					'fonts' => '/assets/fonts/',
@@ -494,8 +497,18 @@ class diLib
 					'vendor' => '/assets/vendor/'
 				];
 
+            case self::LOCATION_VENDOR_HTDOCS:
+                $subFolder = \diLib::getSubFolder(true);
+                return [
+                    'css' => $subFolder . '/vendor/dimaninc/di_core/css/',
+                    'fonts' => $subFolder . '/vendor/dimaninc/di_core/fonts/',
+                    'images' => $subFolder . '/vendor/dimaninc/di_core/i/',
+                    'js' => $subFolder . '/vendor/dimaninc/di_core/js/',
+                    'vendor' => $subFolder . '/vendor/dimaninc/di_core/vendor/'
+                ];
+
 			default:
-			case self::LOCATION_HTDOCS:
+			case self::LOCATION_SUBMODULE_HTDOCS:
                 $subFolder = \diLib::getSubFolder(true);
 				return [
 					'css' => $subFolder . '/_core/css/',
@@ -518,15 +531,16 @@ class diLib
 		$path = null;
 		$libSubFolderProcessor = null;
 
-        if (self::getSubFolder())
-        {
+        if (self::getSubFolder()) {
             $root .= '/' . self::getSubFolder();
         }
 
-		switch (self::getLocation())
-		{
-			case self::LOCATION_BEYOND:
-				$root = dirname($root);
+		switch (self::getLocation()) {
+			case self::LOCATION_VENDOR_BEYOND:
+            case self::LOCATION_VENDOR_HTDOCS:
+                if (self::getLocation() === self::LOCATION_VENDOR_BEYOND) {
+                    $root = dirname($root);
+                }
 
 				$libSubFolderProcessor = function($subFolder) {
 					return preg_replace("#^/_core#", '/vendor/dimaninc/di_core', $subFolder);
@@ -627,23 +641,21 @@ class diLib
 
 	public static function realInc($className, $subFolder = '')
 	{
-		if (class_exists($className))
-		{
+		if (class_exists($className)) {
 			return true;
 		}
 
-		$fileName = self::getClassFilename($className, $subFolder);
+		$__fileName = self::getClassFilename($className, $subFolder);
 
-		if ($fileName)
-		{
-			require $fileName;
+		if ($__fileName) {
+			require $__fileName;
+
+			unset($__fileName);
 
 			$ar = get_defined_vars();
 
-			foreach ($ar as $k => $v)
-			{
-				if (in_array($k, ['class_name', 'path_prefix']))
-				{
+			foreach ($ar as $k => $v) {
+				if (in_array($k, ['class_name', 'path_prefix'])) {
 					continue;
 				}
 
