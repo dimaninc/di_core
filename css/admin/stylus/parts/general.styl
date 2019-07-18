@@ -742,7 +742,7 @@ textarea
     font-weight normal
     background-color white
     color black
-    border 1px solid #B2B2B2
+    border 1px solid $classicColorInputBorder
     padding 2px 5px
     border-radius 4px
     align-self center
@@ -750,7 +750,7 @@ textarea
         font-family $entrineFont
         border-radius 0
         padding 5px
-        border-color $entrineColorTableBorder
+        border-color $entrineColorInputBorder
         @media screen and (max-width: 767px)
             padding 5px
 
@@ -758,9 +758,10 @@ select
     font-family $classicFont
     font-size 14px
     align-self center
+    border-color $classicColorInputBorder
     body[data-skin="entrine"] &
         //padding 15px
-        border-color $entrineColorTableBorder
+        border-color $entrineColorInputBorder
         //@media screen and (max-width: 767px)
         //    padding 5px
 

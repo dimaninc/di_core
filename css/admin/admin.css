@@ -1083,6 +1083,7 @@ select {
   -webkit-align-self: center;
   align-self: center;
   -ms-flex-item-align: center;
+  border-color: #b2b2b2;
 }
 body[data-skin="entrine"] select {
   border-color: #dbdbdb;
@@ -2195,6 +2196,7 @@ body[data-skin="entrine"] .diadminform-row .value > input[type="radio"] {
   -webkit-flex: 1;
   -ms-flex: 1;
   flex: 1;
+  max-width: 100%;
 }
 body[data-skin="entrine"] .diadminform-row .value .static {
   padding-top: 18px;
@@ -2965,16 +2967,19 @@ ul.mini-tabs > li.selected {
 ul.mini-pages {
   margin: 0;
   padding: 0;
+  max-width: 100%;
 }
 ul.mini-pages > li {
   margin: 0;
   padding: 0;
+  max-width: 100%;
+  overflow-x: auto;
 }
 table.actions-log {
   margin: 15px 0;
   padding: 0;
   border-collapse: collapse;
-  width: 100%;
+  width: 99%;
 }
 table.actions-log thead th {
   border: 0 !important;

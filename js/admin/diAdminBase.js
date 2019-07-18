@@ -39,6 +39,7 @@ var diAdminBase = function() {
 
 				var foundTitle = false;
                 var foundItems = false;
+                var foundHref = false;
 
 				for (var i = 0; i < words.length; i++) {
 					var menuTitle = $menuTitle.text() || '';
@@ -50,16 +51,21 @@ var diAdminBase = function() {
 					$menuItems.each(function() {
 						var $item = $(this);
 						var item = $item.text() || '';
+						var href = $item.attr('href').replace(/^\/?_admin\//, '');
 
                         if (item.toLowerCase().indexOf(words[i]) > -1) {
                             foundItems = true;
+
+                            return false;
+                        } else if (href.toLowerCase().indexOf(words[i]) > -1) {
+                            foundHref = true;
 
                             return false;
                         }
 					});
 				}
 
-				$menuRow.toggle(foundTitle || foundItems);
+				$menuRow.toggle(foundTitle || foundItems || foundHref);
 			});
 		};
 
