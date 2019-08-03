@@ -64,10 +64,8 @@ class ArrayHelper
 	{
 		$i = 0;
 
-		foreach ($ar as $k => $v)
-		{
-			if ($k === $key)
-			{
+		foreach ($ar as $k => $v) {
+			if ($k === $key) {
 				return self::addItemsToAssocArray($ar, $i + 1, $newItems);
 			}
 
@@ -89,10 +87,8 @@ class ArrayHelper
 	{
 		$i = 0;
 
-		foreach ($ar as $k => $v)
-		{
-			if ($k === $key)
-			{
+		foreach ($ar as $k => $v) {
+			if ($k === $key) {
 				return self::addItemsToAssocArray($ar, $i, $newItems);
 			}
 
@@ -132,8 +128,7 @@ class ArrayHelper
 	 */
 	public static function toAttributesString($ar, $skipNull = true, $escapeMethod = self::ESCAPE_NONE)
 	{
-		if ($skipNull)
-		{
+		if ($skipNull) {
 			$ar = array_filter($ar, function($v) {
 				return $v !== null;
 			});
@@ -148,8 +143,7 @@ class ArrayHelper
 				? $value
 				: json_encode($value);
 
-			switch ($escapeMethod)
-			{
+			switch ($escapeMethod) {
 				default:
 				case self::ESCAPE_NONE:
 					$value = str_replace($quote, "\\" . $quote, $value);
@@ -181,19 +175,15 @@ class ArrayHelper
 
 		$type = $type ?: gettype($defaultValue);
 
-		if (isset($ar[$idx]))
-		{
+		if (isset($ar[$idx])) {
 			$value = $ar[$idx];
 
-			if ($type != 'NULL' && is_scalar($value))
-			{
+			if ($type != 'NULL' && is_scalar($value)) {
 				settype($value, $type);
 			}
 
 			return $value;
-		}
-		else
-		{
+		} else {
 			return $defaultValue;
 		}
 	}
@@ -208,8 +198,7 @@ class ArrayHelper
 		$keys = array_keys($array);
 		shuffle($keys);
 
-		foreach($keys as $key)
-		{
+		foreach($keys as $key) {
 			$new[$key] = $array[$key];
 		}
 
@@ -223,8 +212,7 @@ class ArrayHelper
 	 */
 	public static function removeByValue($array, $value)
 	{
-		if (($key = array_search($value, $array)) !== false)
-		{
+		if (($key = array_search($value, $array)) !== false) {
 			unset($array[$key]);
 		}
 
@@ -241,10 +229,13 @@ class ArrayHelper
 	{
 		$ar = array_filter($ar);
 
-		foreach ($ar as $glue => &$value)
-		{
-			if (is_array($value))
-			{
+		foreach ($ar as $glue => &$value) {
+		    // assoc array has `glue => array` structure, using default glue for simple arrays
+		    if (!self::isAssoc($ar)) {
+		        $glue = $defaultGlue;
+            }
+
+			if (is_array($value)) {
 				$value = self::recursiveJoin($value, $glue);
 			}
 		}
@@ -262,21 +253,28 @@ class ArrayHelper
 	 */
 	public static function random(array $ar, $count = 1)
 	{
-		if ($count >= count($ar))
-		{
+		if ($count >= count($ar)) {
 			return $ar;
 		}
 
 		$keys = array_rand($ar, $count);
 		$out = [];
 
-		foreach ($keys as $key)
-		{
+		foreach ($keys as $key) {
 			$out[] = $ar[$key];
 		}
 
 		return $out;
 	}
+
+    public static function isAssoc(array $ar)
+    {
+        if ([] === $ar) {
+            return false;
+        }
+
+        return array_keys($ar) !== range(0, count($ar) - 1);
+    }
 
     public static function mapAssoc(callable $f, array $a)
     {
