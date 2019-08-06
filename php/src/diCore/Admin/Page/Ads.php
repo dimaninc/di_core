@@ -273,7 +273,7 @@ class Ads extends \diCore\Admin\BasePage
 				'type' => 'datetime_str',
 				'title' => 'Дата создания',
 				'default' => \diDateTime::sqlFormat(),
-				'flags' => ['static'],
+				'flags' => ['static', 'untouchable', 'initially_hidden'],
 			],
 		];
 	}

@@ -151,8 +151,8 @@ class AdBlocks extends BasePage
 			'date' => [
 				'type' => 'datetime_str',
 				'title' => 'Дата создания',
-				'default' => date('Y-m-d H:i:s'),
-				'flags' => ['static'],
+                'default' => \diDateTime::sqlFormat(),
+                'flags' => ['static', 'untouchable', 'initially_hidden'],
 			],
 		];
 	}
