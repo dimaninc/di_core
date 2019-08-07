@@ -70,6 +70,8 @@
         ^[0][data-type="checkboxes"] ^[1..-1]
         ^[0][data-purpose="notes"] ^[1..-1]
             flex-direction column
+        ^[0][data-type="password"] ^[1..-1]
+            flex-wrap wrap
         body[data-skin="entrine"] &
             @media screen and (max-width: 767px)
                 margin-left 12px
@@ -196,17 +198,15 @@
             flex 1
         .wysiwyg
             textarea
-                //width 99%
                 height 450px
-        //.textarea
-        //    textarea
-        //        width 99%
         .error
             background red
             color white
-            padding 5px
+            padding 3px 5px
             border-radius 5px
-            margin-bottom 5px
+            align-self center
+            &:empty
+                display none
         select
             max-width 100%
             body[data-skin="entrine"] &

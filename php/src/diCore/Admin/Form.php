@@ -814,7 +814,8 @@ EOF;
 						'value' => '',
 						'type' => 'password',
 						'onkeyup' => "admin_form_{$this->table}_{$this->id}.check_password('$field');",
-						'style' => 'width: 300px;',
+						'size' => 32,
+                        'autocomplete' => 'new-password',
 					]);
 				}
 
@@ -828,7 +829,7 @@ EOF;
 					{
 						$s = false;
 
-						switch ($v["type"])
+						switch ($v['type'])
 						{
 							case "date":
 								$s = $this->data[$field] ? date("d.m.Y", $this->data[$field]) : "---";
@@ -1063,7 +1064,7 @@ EOF;
 								$t2 = mb_strtolower(mb_substr($t2, 0, 1)) . mb_substr($t2, 1);
 							}
 
-							$html .= $this->getRow($field, "{$v["title"]}{$notesStar}:", "$input1 &nbsp;<span id=\"{$field}_console\" class=\"err_console\"></span>");
+							$html .= $this->getRow($field, "{$v["title"]}{$notesStar}:", "$input1 &nbsp;<span id=\"{$field}_console\" class=\"error\"></span>");
 							$html .= $this->getRow($field . "2", "{$this->L("confirm")} {$t2}{$notesStar}:", $input2);
 
 							break;
