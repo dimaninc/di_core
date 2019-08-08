@@ -24,9 +24,9 @@ use diCore\Tool\Auth;
  * @method bool hasUserId
  * @method bool hasCreatedAt
  *
- * @method Model setSessionId($value)
- * @method Model setUserId($value)
- * @method Model setCreatedAt($value)
+ * @method $this setSessionId($value)
+ * @method $this setUserId($value)
+ * @method $this setCreatedAt($value)
  */
 class Model extends \diModel
 {
@@ -40,7 +40,7 @@ class Model extends \diModel
 	{
 		if ($id)
 		{
-			/** @var Model $model */
+			/** @var $this $model */
 			$model = self::create(self::type, $id);
 		}
 		else
