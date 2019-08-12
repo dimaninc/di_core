@@ -83,7 +83,7 @@ var diAdminForm = function(table, id, auto_save_timeout) {
     };
 
 	this.initCheckboxesToggles = function() {
-	    var $rows = $('.diadminform-row[data-type="checkboxes"]');
+	    var $rows = $('.diadminform-row'); //[data-type="checkboxes"]
 
 	    $rows.each(function() {
 	        var $row = $(this);

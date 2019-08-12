@@ -79,27 +79,26 @@
         @media screen and (max-width: 767px)
             width auto
             margin-left 7px
-        ^[0][data-type="checkboxes"] ^[1..-1]
-            .tags-grid
-                .tags-toggle
-                    margin-bottom 10px
-                    > span
-                        font-size 12px
-                        cursor pointer
-                        border-radius 5px
-                        padding 3px 5px
-                        background-color #ddd
-                        color $classicColorLink
-                        transition .3s
-                        &:hover
-                            background-color #e7e7e7
-                            color $classicColorLinkHover
-                        & + span
-                            margin-left 15px
-            .new-tag
-                margin-top 10px
-                input[type="text"]
-                    width 100%
+        .tags-grid
+            .tags-toggle
+                margin-bottom 10px
+                > span
+                    font-size 12px
+                    cursor pointer
+                    border-radius 5px
+                    padding 3px 5px
+                    background-color #ddd
+                    color $classicColorLink
+                    transition .3s
+                    &:hover
+                        background-color #e7e7e7
+                        color $classicColorLinkHover
+                    & + span
+                        margin-left 15px
+        .new-tag
+            margin-top 10px
+            input[type="text"]
+                width 100%
         .calendar-toggle
             margin-left 5px
             body[data-skin="entrine"] &

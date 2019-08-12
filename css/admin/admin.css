@@ -2046,10 +2046,10 @@ body[data-skin="entrine"] .diadminform-row[data-purpose="notes"] .title {
     margin-left: 7px;
   }
 }
-.diadminform-row[data-type="checkboxes"] .value .tags-grid .tags-toggle {
+.diadminform-row .value .tags-grid .tags-toggle {
   margin-bottom: 10px;
 }
-.diadminform-row[data-type="checkboxes"] .value .tags-grid .tags-toggle > span {
+.diadminform-row .value .tags-grid .tags-toggle > span {
   font-size: 12px;
   cursor: pointer;
   border-radius: 5px;
@@ -2062,17 +2062,17 @@ body[data-skin="entrine"] .diadminform-row[data-purpose="notes"] .title {
   -ms-transition: 0.3s;
   transition: 0.3s;
 }
-.diadminform-row[data-type="checkboxes"] .value .tags-grid .tags-toggle > span:hover {
+.diadminform-row .value .tags-grid .tags-toggle > span:hover {
   background-color: #e7e7e7;
   color: #f00;
 }
-.diadminform-row[data-type="checkboxes"] .value .tags-grid .tags-toggle > span + span {
+.diadminform-row .value .tags-grid .tags-toggle > span + span {
   margin-left: 15px;
 }
-.diadminform-row[data-type="checkboxes"] .value .new-tag {
+.diadminform-row .value .new-tag {
   margin-top: 10px;
 }
-.diadminform-row[data-type="checkboxes"] .value .new-tag input[type="text"] {
+.diadminform-row .value .new-tag input[type="text"] {
   width: 100%;
 }
 .diadminform-row .value .calendar-toggle {
