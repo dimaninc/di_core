@@ -198,73 +198,106 @@ class Photos extends \diCore\Admin\BasePage
 		return [
 			'token' => [
 				'type' => 'text',
-				'title' => 'Токен для вставки',
+                'title' => $this->localized([
+                    'en' => 'Token',
+                    'ru' => 'Токен для вставки',
+                ]),
 				'default' => '',
 				'flags' => ['static', 'virtual'],
 			],
 
 			'album_id' => [
 				'type' => 'int',
-				'title' => 'Альбом',
+                'title' => $this->localized([
+                    'en' => 'Album',
+                    'ru' => 'Альбом',
+                ]),
 				'default' => 0,
 			],
 
 			'title' => [
 				'type' => 'string',
-				'title' => 'Название',
+                'title' => $this->localized([
+                    'en' => 'Title',
+                    'ru' => 'Название',
+                ]),
 				'default' => '',
 			],
 
 			'slug_source' => [
 				'type' => 'string',
-				'title' => 'Название для URL',
+                'title' => $this->localized([
+                    'en' => 'Slug source',
+                    'ru' => 'Название для URL',
+                ]),
 				'default' => '',
 			],
 
 			'content' => [
 				'type' => 'wysiwyg',
-				'title' => 'Описание',
+                'title' => $this->localized([
+                    'en' => 'Description',
+                    'ru' => 'Описание',
+                ]),
 				'default' => '',
 			],
 
 			'pic' => [
 				'type' => 'pic',
-				'title' => 'Фото',
+                'title' => $this->localized([
+                    'en' => 'Pic',
+                    'ru' => 'Фото',
+                ]),
 				'default' => '',
 			],
 
 			'visible' => [
 				'type' => 'checkbox',
-				'title' => 'Отображать на сайте',
+                'title' => $this->localized([
+                    'en' => 'Visible',
+                    'ru' => 'Отображать на сайте',
+                ]),
 				'default' => 1,
 			],
 
 			'date' => [
 				'type' => 'datetime_str',
-				'title' => 'Дата добавления',
+                'title' => $this->localized([
+                    'en' => 'Created at',
+                    'ru' => 'Дата создания',
+                ]),
 				'default' => '',
-				'flags' => ['static'],
+                'flags' => ['static', 'untouchable', 'initially_hidden'],
 			],
 
-			'comments_enabled' => [
-				'type' => 'checkbox',
-				'title' => 'Разрешено комментировать',
-				'default' => 1,
-			],
+            'comments_enabled' => [
+                'type' => 'checkbox',
+                'title' => $this->localized([
+                    'en' => 'Comments enabled',
+                    'ru' => 'Разрешено комментировать',
+                ]),
+                'default' => 1,
+            ],
 
-			'comments_count' => [
-				'type' => 'int',
-				'title' => 'Кол-во комментариев',
-				'default' => 0,
-				'flags' => ['static'],
-			],
+            'comments_count' => [
+                'type' => 'int',
+                'title' => $this->localized([
+                    'en' => 'Comments count',
+                    'ru' => 'Кол-во комментариев',
+                ]),
+                'default' => 0,
+                'flags' => ['static'],
+            ],
 
-			'comments_last_date' => [
-				'type' => 'datetime_str',
-				'title' => 'Дата последнего комментария',
-				'default' => '',
-				'flags' => ['static'],
-			],
+            'comments_last_date' => [
+                'type' => 'datetime_str',
+                'title' => $this->localized([
+                    'en' => 'Last comment date',
+                    'ru' => 'Дата последнего комментария',
+                ]),
+                'default' => '',
+                'flags' => ['static'],
+            ],
 		];
 	}
 
