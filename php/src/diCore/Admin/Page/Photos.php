@@ -113,11 +113,19 @@ class Photos extends \diCore\Admin\BasePage
 			);
 	}
 
+	protected function forceOrderAllowed(Model $m, $action)
+    {
+        return false;
+    }
+
 	public function renderList()
 	{
 		$orderAllowed = function(Model $m, $action) {
-			if (!$this->getFilters()->getData('album_id'))
-			{
+		    if ($this->forceOrderAllowed($m, $action)) {
+		        return true;
+            }
+
+			if (!$this->getFilters()->getData('album_id')) {
 				return false;
 			}
 
