@@ -3326,8 +3326,15 @@ body[data-skin="entrine"] .filter-block button {
   margin: 0 20px 20px 0;
   background: none;
 }
+body[data-skin="entrine"] .filter-block button:after {
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+}
 body[data-skin="entrine"] .filter-block button[type="submit"] {
   border-color: #90e273;
+}
+body[data-skin="entrine"] .filter-block button[type="submit"]:hover {
+  background-color: rgba(144,226,115,0.2);
 }
 body[data-skin="entrine"] .filter-block button[type="submit"]:after {
   content: '';
@@ -3338,6 +3345,9 @@ body[data-skin="entrine"] .filter-block button[type="submit"]:after {
 }
 body[data-skin="entrine"] .filter-block button[data-purpose="reset"] {
   border-color: #6ea3bf;
+}
+body[data-skin="entrine"] .filter-block button[data-purpose="reset"]:hover {
+  background-color: rgba(110,163,191,0.2);
 }
 body[data-skin="entrine"] .filter-block button[data-purpose="reset"]:after {
   content: '';

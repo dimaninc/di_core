@@ -57,8 +57,12 @@
 			color $entrineColorBgDark
 			margin 0 20px 20px 0
 			background none
+			&:after
+				flex-shrink 0
 			&[type="submit"]
 				border-color #90e273
+				&:hover
+					background-color alpha(#90e273, .2)
 				&:after
 					content ''
 					width 24px
@@ -67,6 +71,8 @@
 					background-repeat no-repeat
 			&[data-purpose="reset"]
 				border-color #6ea3bf
+				&:hover
+					background-color alpha(#6ea3bf, .2)
 				&:after
 					content ''
 					width 24px
