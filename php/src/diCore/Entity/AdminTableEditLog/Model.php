@@ -50,15 +50,18 @@ class Model extends \diModel
 
 	private $dataParsed = false;
 
+	private $useAllFields = false;
+
 	protected static $skipFields = [
 		//'table' => ['field1', 'field2'],
 	];
 
-	public static function createForModel(\diModel $m, $adminId = 0)
+	public static function createForModel(\diModel $m, $adminId = 0, $useAllFields = true)
     {
         $log = static::create(static::type);
 
         $log
+            ->setUseAllFields($useAllFields)
             ->setTargetTable($m->getTable())
             ->setTargetId($m->getId())
             ->setAdminId($adminId)
@@ -76,6 +79,13 @@ class Model extends \diModel
 	{
 		return '/_admin/' . $this->getTargetTable() . '/form/' . $this->getTargetId() . '/';
 	}
+
+	public function setUseAllFields($state)
+    {
+        $this->useAllFields = $state;
+
+        return $this;
+    }
 
 	public function parseData()
 	{
@@ -187,18 +197,20 @@ class Model extends \diModel
 			? static::$skipFields[$this->getTargetTable()]
 			: [];
 
-		if (in_array($field, $skipFields) || in_array('*', $skipFields))
-		{
+		if (in_array($field, $skipFields) || in_array('*', $skipFields)) {
 			return true;
 		}
+
+		if ($this->useAllFields) {
+		    return false;
+        }
 
 		$formFields = $this->getRelated('formFields') ?: [];
 
 		if (
 			isset($formFields[$field]) &&
 		    (!isset($formFields[$field]['flags']) || !in_array('virtual', $formFields[$field]['flags']))
-		   )
-		{
+        ) {
 			return false;
 		}
 
@@ -207,8 +219,7 @@ class Model extends \diModel
 
 	public function setBothData(\diModel $model, \diModel $oldModel = null)
 	{
-		if ($oldModel)
-		{
+		if ($oldModel) {
 			$model = clone $model;
 			$model->setOrigData($oldModel->get());
 		}
@@ -216,14 +227,12 @@ class Model extends \diModel
 		$fields = $model->changedFields(['id']);
 		$old = $new = [];
 
-        foreach ($fields as $field)
-		{
-			if ($this->isFieldSkipped($field))
-			{
+        foreach ($fields as $field) {
+			if ($this->isFieldSkipped($field)) {
 				continue;
 			}
 
-			$old[$field] = $model->getOrigData($field);
+            $old[$field] = $model->getOrigData($field);
 			$new[$field] = $model->get($field);
 		}
 
@@ -242,28 +251,23 @@ class Model extends \diModel
 
 	public function validate()
 	{
-		if (!$this->hasTargetTable())
-		{
+		if (!$this->hasTargetTable()) {
 			$this->addValidationError('Table required');
 		}
 
-		if (!$this->hasTargetId())
-		{
+		if (!$this->hasTargetId()) {
 			$this->addValidationError('Id required');
 		}
 
-		if (!$this->hasAdminId())
-		{
+		if (!$this->hasAdminId()) {
 			$this->addValidationError('Admin required');
 		}
 
-		if (!$this->hasOldData())
-		{
+		if (!$this->hasOldData()) {
 			$this->addValidationError('Old data required');
 		}
 
-		if (!$this->hasNewData())
-		{
+		if (!$this->hasNewData()) {
 			$this->addValidationError('New data required');
 		}
 
