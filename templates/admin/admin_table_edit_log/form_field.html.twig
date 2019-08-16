@@ -3,7 +3,7 @@
 	{% for rec in records %}
 		<li>
 			<div class="author">
-				<b>{{ admins[rec['admin_id']]['login'] }}</b>
+				<b>{% if admins[rec['admin_id']].exists() %}<a href="{{ admins[rec['admin_id']]['admin_href'] }}">{% endif %}{{ admins[rec['admin_id']]['login'] ?: 'Robot' }}{% if admins[rec['admin_id']].exists() %}</a>{% endif %}</b>
 				<i>{{ rec['created_at_date'] }} {{ rec['created_at_time'] }}</i>
 			</div>
 			<table>

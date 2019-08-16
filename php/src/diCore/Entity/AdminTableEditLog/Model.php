@@ -25,12 +25,12 @@ namespace diCore\Entity\AdminTableEditLog;
  * @method bool hasNewData
  * @method bool hasCreatedAt
  *
- * @method Model setTargetTable($value)
- * @method Model setTargetId($value)
- * @method Model setAdminId($value)
- * @method Model setOldData($value)
- * @method Model setNewData($value)
- * @method Model setCreatedAt($value)
+ * @method $this setTargetTable($value)
+ * @method $this setTargetId($value)
+ * @method $this setAdminId($value)
+ * @method $this setOldData($value)
+ * @method $this setNewData($value)
+ * @method $this setCreatedAt($value)
  */
 class Model extends \diModel
 {
@@ -45,6 +45,7 @@ class Model extends \diModel
     ];
 
 	const type = \diTypes::admin_table_edit_log;
+    const table = 'admin_table_edit_log';
 	protected $table = 'admin_table_edit_log';
 
 	private $dataParsed = false;
@@ -52,6 +53,19 @@ class Model extends \diModel
 	protected static $skipFields = [
 		//'table' => ['field1', 'field2'],
 	];
+
+	public static function createForModel(\diModel $m, $adminId = 0)
+    {
+        $log = static::create(static::type);
+
+        $log
+            ->setTargetTable($m->getTable())
+            ->setTargetId($m->getId())
+            ->setAdminId($adminId)
+            ->setBothData($m);
+
+        return $log;
+    }
 
 	public static function adminTabTitle($lang)
     {
