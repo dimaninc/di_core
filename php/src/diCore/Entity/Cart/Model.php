@@ -188,4 +188,16 @@ class Model extends \diModel
 
 		return $item;
 	}
+
+	public function killRelatedData()
+    {
+        parent::killRelatedData();
+
+        /** @var CartItem $item */
+        foreach ($this->getItems() as $item) {
+            $item->hardDestroy();
+        }
+
+        return $this;
+    }
 }

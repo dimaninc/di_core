@@ -13,20 +13,20 @@ use diCore\Traits\Collection\OrderItem;
  * Class Collection
  * Methods list for IDE
  *
- * @method Collection filterByOrderId($value, $operator = null)
- * @method Collection filterByPrice($value, $operator = null)
- * @method Collection filterByOrigPrice($value, $operator = null)
- * @method Collection filterByStatus($value, $operator = null)
+ * @method $this filterByOrderId($value, $operator = null)
+ * @method $this filterByPrice($value, $operator = null)
+ * @method $this filterByOrigPrice($value, $operator = null)
+ * @method $this filterByStatus($value, $operator = null)
  *
- * @method Collection orderByOrderId($direction = null)
- * @method Collection orderByPrice($direction = null)
- * @method Collection orderByOrigPrice($direction = null)
- * @method Collection orderByStatus($direction = null)
+ * @method $this orderByOrderId($direction = null)
+ * @method $this orderByPrice($direction = null)
+ * @method $this orderByOrigPrice($direction = null)
+ * @method $this orderByStatus($direction = null)
  *
- * @method Collection selectOrderId()
- * @method Collection selectPrice()
- * @method Collection selectOrigPrice()
- * @method Collection selectStatus()
+ * @method $this selectOrderId()
+ * @method $this selectPrice()
+ * @method $this selectOrigPrice()
+ * @method $this selectStatus()
  */
 class Collection extends \diCollection
 {

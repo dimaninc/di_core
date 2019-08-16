@@ -353,7 +353,7 @@ EOF;
 		{
 			$this->fieldsByTable[$table] = [];
 
-			$rs = $this->getDb()->q("SHOW FIELDS FROM " . $table);
+			$rs = $this->getDb()->q("SHOW FIELDS FROM " . $this->getDb()->escapeTable($table));
 			while ($r = $this->getDb()->fetch($rs))
 			{
 				$this->fieldsByTable[$table][$r->Field] = $r->Type;

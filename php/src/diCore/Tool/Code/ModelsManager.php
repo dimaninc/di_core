@@ -340,13 +340,11 @@ EOF;
 
 	protected function getFieldsOfTable($table)
 	{
-		if (!isset($this->fieldsByTable[$table]))
-		{
+		if (!isset($this->fieldsByTable[$table])) {
 			$this->fieldsByTable[$table] = [];
 
-			$rs = $this->getDb()->q("SHOW FIELDS FROM " . $table);
-			while ($r = $this->getDb()->fetch($rs))
-			{
+			$rs = $this->getDb()->q("SHOW FIELDS FROM " . $this->getDb()->escapeTable($table));
+			while ($r = $this->getDb()->fetch($rs)) {
 				$this->fieldsByTable[$table][$r->Field] = $r->Type;
 			}
 		}

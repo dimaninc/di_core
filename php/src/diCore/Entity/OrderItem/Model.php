@@ -23,10 +23,10 @@ use diCore\Traits\Model\OrderItem;
  * @method bool hasOrigPrice
  * @method bool hasStatus
  *
- * @method Model setOrderId($value)
- * @method Model setPrice($value)
- * @method Model setOrigPrice($value)
- * @method Model setStatus($value)
+ * @method $this setOrderId($value)
+ * @method $this setPrice($value)
+ * @method $this setOrigPrice($value)
+ * @method $this setStatus($value)
  */
 class Model extends \diModel
 {

@@ -227,8 +227,7 @@ class diModel implements \ArrayAccess
 		$method = substr($fullMethod, 0, $x);
 		$field = substr($fullMethod, $x + 1);
 
-		switch ($method)
-		{
+		switch ($method) {
 			case 'get':
 				return $this->get($field);
 
@@ -249,8 +248,7 @@ class diModel implements \ArrayAccess
 		}
 
 		// for twig empty properties
-		if (!$arguments && ($value = $this->getExtendedTemplateVar($fullMethod)) !== null)
-		{
+		if (!$arguments && ($value = $this->getExtendedTemplateVar($fullMethod)) !== null) {
 			return $value;
 		}
 
@@ -261,12 +259,9 @@ class diModel implements \ArrayAccess
 
 	public function initFrom($r)
 	{
-		if (is_object($r) && $r instanceof \diModel)
-		{
+		if (is_object($r) && $r instanceof \diModel) {
 			$r = (array)$r->get();
-		}
-		elseif (is_object($r) || is_array($r))
-		{
+		} elseif (is_object($r) || is_array($r)) {
 			$r = (array)$r;
 		}
 
@@ -274,17 +269,14 @@ class diModel implements \ArrayAccess
 			? $r
 			: ($r || $this->forceGetRecord ? $this->getRecord($r) : []);
 
-		if ($this->ar instanceof \diModel)
-		{
+		if ($this->ar instanceof \diModel) {
 			$m = $this->ar;
 			$this->ar = [];
 
 			$this
 				->set($m->get())
 				->setRelated($m->getRelated());
-		}
-		else
-		{
+		} else {
 			$this->ar = $this->ar ? (array)$this->ar : [];
 		}
 
@@ -297,8 +289,7 @@ class diModel implements \ArrayAccess
 
 	public function initFromRequest($method = 'post')
 	{
-		foreach (\diRequest::all($method) as $key => $value)
-		{
+		foreach (\diRequest::all($method) as $key => $value) {
 			$this->set($key, $value);
 		}
 
@@ -364,13 +355,9 @@ class diModel implements \ArrayAccess
 			$GLOBALS['CURRENT_LANGUAGE'] != 'ru'
 		) {
 			$prefix = '/' . $GLOBALS['CURRENT_LANGUAGE'];
-		}
-		elseif (!empty($Z))
-		{
+		} elseif (!empty($Z)) {
 			$prefix = $Z->language_href_prefix;
-		}
-		else
-		{
+		} else {
 			$prefix = '';
 		}
 
@@ -390,17 +377,11 @@ class diModel implements \ArrayAccess
 			$GLOBALS['CURRENT_LANGUAGE'] != \diCurrentCMS::$defaultLanguage
 		) {
 			$language = $GLOBALS['CURRENT_LANGUAGE'];
-		}
-		elseif (!empty($Z))
-		{
+		} elseif (!empty($Z)) {
 			$language = $Z->getLanguage();
-		}
-		elseif (!empty($X))
-		{
+		} elseif (!empty($X)) {
 			$language = $X->getLanguage();
-		}
-		else
-		{
+		} else {
 			$language = \diCurrentCMS::$defaultLanguage;
 		}
 
@@ -902,17 +883,12 @@ class diModel implements \ArrayAccess
 		// identifying wood
 		$fieldAlias = $fieldAlias ?: $this->identityFieldName;
 
-		if ($fieldAlias == 'id')
-		{
+		if ($fieldAlias == 'id') {
 			$field = $this->getIdFieldName();
 			$id = $this->processIdBeforeGetRecord($id, $fieldAlias);
-		}
-		elseif ($fieldAlias == 'slug')
-		{
+		} elseif ($fieldAlias == 'slug') {
 			$field = $this->getSlugFieldName();
-		}
-		else
-		{
+		} else {
 			$field = static::isProperId($id)
 				? $this->getIdFieldName()
 				: $this->getSlugFieldName();
@@ -938,7 +914,7 @@ class diModel implements \ArrayAccess
 		}
 
 		$a = $this->prepareIdAndFieldForGetRecord($id, $fieldAlias);
-		$ar = $this->getDb()->ar($this->getTable(), "WHERE {$a['field']} = '{$a['id']}'");
+		$ar = $this->getDb()->ar($this->getDb()->escapeTable($this->getTable()), "WHERE {$a['field']} = '{$a['id']}'");
 
 		return $this->tuneDataAfterFetch($ar);
 	}
@@ -950,8 +926,7 @@ class diModel implements \ArrayAccess
 
 	public function moveFieldToRelated($field)
 	{
-		if ($this->exists($field))
-		{
+		if ($this->exists($field)) {
 			$this
 				->setRelated($field, $this->get($field))
 				->kill($field);
@@ -1750,58 +1725,65 @@ class diModel implements \ArrayAccess
 	{
 		$ar = $this->getDataForDb();
 
-		if (!count($ar))
-		{
+		if (!count($ar)) {
 			return $this;
 		}
 
-		if ($this->isInsertOrUpdateAllowed())
-		{
-			$result = $this->getDb()->insert_or_update($this->getTable(), $ar);
+		if ($this->isInsertOrUpdateAllowed()) {
+			$result = $this->getDb()->insert_or_update(
+                $this->getDb()->escapeTable($this->getTable()),
+                $ar
+            );
 
 			$this->disallowInsertOrUpdate();
 
-			if ($result)
-			{
+			if ($result) {
 				$this->setId((int)$result);
-			}
-			else
-			{
-				$e = new \diDatabaseException('Unable to insert/update ' . get_class($this) . ' in DB: ' .
-					join("\n", $this->getDb()->getLog()));
+			} else {
+				$e = new \diDatabaseException(
+				    'Unable to insert/update ' . get_class($this) . ' in DB: ' .
+					join("\n", $this->getDb()->getLog())
+                );
 				$e->setErrors($this->getDb()->getLog());
 
 				throw $e;
 			}
-		}
-		elseif ($this->getId() && ($this->isIdAutoIncremented() || (!$this->isIdAutoIncremented() && $this->getOrigId())))
-		{
-			$result = $this->getDb()->update($this->getTable(), $ar, "WHERE `{$this->getIdFieldName()}` = '{$this->getId()}'");
+		} elseif (
+		    $this->getId() &&
+            ($this->isIdAutoIncremented() || (!$this->isIdAutoIncremented() && $this->getOrigId()))
+        ) {
+			$result = $this->getDb()->update(
+                $this->getDb()->escapeTable($this->getTable()),
+                $ar,
+                "WHERE `{$this->getIdFieldName()}` = '{$this->getId()}' LIMIT 1"
+            );
 
-			if (!$result)
-			{
-				$e = new \diDatabaseException('Unable to update ' . get_class($this) . ' in DB: ' .
-					join("\n", $this->getDb()->getLog()));
+			if (!$result) {
+				$e = new \diDatabaseException(
+				    'Unable to update ' . get_class($this) . ' in DB: ' .
+					join("\n", $this->getDb()->getLog())
+                );
 				$e->setErrors($this->getDb()->getLog());
 
 				throw $e;
 			}
-		}
-		else
-		{
-			$id = $this->getDb()->insert($this->getTable(), $ar);
+		} else {
+			$id = $this->getDb()->insert(
+                $this->getDb()->escapeTable($this->getTable()),
+                $ar
+            );
 
-			if ($id === false)
-			{
-				$e = new \diDatabaseException('Unable to insert ' . get_class($this) . ' into DB: ' .
-					join("\n", $this->getDb()->getLog()));
+			if ($id === false) {
+				$e = new \diDatabaseException(
+				    'Unable to insert ' . get_class($this) . ' into DB: ' .
+					join("\n", $this->getDb()->getLog())
+                );
 				$e->setErrors($this->getDb()->getLog());
 
 				throw $e;
 			}
 
-			if ($id)
-			{
+			if ($id) {
 				$this->setId($id);
 			}
 		}
@@ -1811,9 +1793,11 @@ class diModel implements \ArrayAccess
 
 	protected function killFromDb()
 	{
-		if ($this->hasId())
-		{
-			$this->getDb()->delete($this->getTable(), $this->getId());
+		if ($this->hasId()) {
+			$this->getDb()->delete(
+			    $this->getDb()->escapeTable($this->getTable()),
+                $this->getId()
+            );
 		}
 
 		return $this;
@@ -2108,8 +2092,11 @@ class diModel implements \ArrayAccess
 		$query = $qAr ? 'WHERE ' . join(' AND ', $qAr) : '';
 		$field = static::order_field_name ?: $this->orderFieldName;
 
-		$order_r = $this->getDb()->r($this->getTable(), $query,
-			"{$min_max}({$field}) AS num,COUNT(id) AS cc");
+		$order_r = $this->getDb()->r(
+            $this->getDb()->escapeTable($this->getTable()),
+            $query,
+			"{$min_max}({$field}) AS num,COUNT(id) AS cc"
+        );
 		$this->set($field, $order_r && $order_r->cc ? intval($order_r->num) + $sign : $init_value);
 
 		return $this;
@@ -2124,8 +2111,7 @@ class diModel implements \ArrayAccess
 	 */
 	public function offsetSet($offset, $value)
 	{
-		if ($offset == $this->getIdFieldName())
-		{
+		if ($offset == $this->getIdFieldName()) {
 			return $this->setId($value);
 		}
 
@@ -2141,8 +2127,7 @@ class diModel implements \ArrayAccess
 	 */
 	public function offsetExists($offset)
 	{
-		if ($offset == $this->getIdFieldName())
-		{
+		if ($offset == $this->getIdFieldName()) {
 			return !!$this->getId();
 		}
 
@@ -2155,8 +2140,7 @@ class diModel implements \ArrayAccess
 	 * @link http://www.php.net/manual/en/arrayaccess.offsetunset.php
 	 * @param string $offset
 	 */
-	public function offsetUnset($offset)
-	{
+	public function offsetUnset($offset){
 		return $this->kill($offset);
 	}
 
