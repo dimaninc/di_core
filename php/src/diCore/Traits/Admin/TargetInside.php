@@ -26,8 +26,7 @@ trait TargetInside
 		};
 
 		$defaultMapCollectionCallback = function (\diModel $m, $id) {
-			if ($m instanceof \diCore\Entity\Content\Model)
-			{
+			if ($m instanceof \diCore\Entity\Content\Model) {
 				return [
 					'id' => $m->getId(),
 					'title' => sprintf('%s (%s)', $m->getTitle(), $m->getType()),
@@ -49,12 +48,10 @@ trait TargetInside
 		$types = [];
 		$targets = [];
 
-		foreach ($_types as $type)
-		{
+		foreach ($_types as $type) {
 			$col = \diCollection::create($type);
 
-			if (is_callable($options['setupCollectionCallback']))
-			{
+			if (is_callable($options['setupCollectionCallback'])) {
 				// use default callback if null returned
 				$col = $options['setupCollectionCallback']($col) ?: $defaultSetupCollectionCallback($col);
 			}

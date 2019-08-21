@@ -9,8 +9,8 @@
 namespace diCore\Traits\Model;
 
 /**
- * Class TargetInside
- * @package diCore\Traits
+ * Trait TargetInside
+ * @package diCore\Traits\Model
  *
  * @method integer	getTargetType
  * @method integer	getTargetId
