@@ -2187,6 +2187,12 @@ body[data-skin="entrine"] .diadminform-row .value > input[type="checkbox"],
 body[data-skin="entrine"] .diadminform-row .value > input[type="radio"] {
   margin-top: 20px;
 }
+.diadminform-row .value select {
+  max-width: 100%;
+}
+body[data-skin="entrine"] .diadminform-row .value select[size="1"] {
+  height: 48px;
+}
 .diadminform-row .value.ui-sortable .ui-state-highlight {
   min-height: 50px;
   margin: 0 0 5px 0;
@@ -2251,11 +2257,8 @@ body[data-skin="entrine"] .diadminform-row .value .static-text {
 .diadminform-row .value .error:empty {
   display: none;
 }
-.diadminform-row .value select {
-  max-width: 100%;
-}
-body[data-skin="entrine"] .diadminform-row .value select {
-  margin-top: 15px;
+.diadminform-row .value .input-suffix {
+  margin-left: 10px;
 }
 .diadminform-row[data-type="dynamic"],
 .diadminform-row[data-type="dynamic_pics"],

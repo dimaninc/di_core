@@ -165,6 +165,12 @@
         > input[type="radio"]
             body[data-skin="entrine"] &
                 margin-top 20px
+        select
+            max-width 100%
+            &[size="1"]
+                body[data-skin="entrine"] &
+                    //margin-top 15px
+                    height 48px
         &.ui-sortable
             .ui-state-highlight
                 min-height 50px
@@ -206,10 +212,8 @@
             align-self center
             &:empty
                 display none
-        select
-            max-width 100%
-            body[data-skin="entrine"] &
-                margin-top 15px
+        .input-suffix
+            margin-left 10px
     &[data-type="dynamic"]
     &[data-type="dynamic_pics"]
     &[data-type="dynamic_files"]

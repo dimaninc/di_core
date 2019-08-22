@@ -8,6 +8,7 @@
 namespace diCore\Entity\CartItem;
 
 use diCore\Traits\Model\OrderItem;
+use diCore\Traits\Model\TargetInside;
 
 /**
  * Class Model
@@ -22,6 +23,7 @@ use diCore\Traits\Model\OrderItem;
 class Model extends \diModel
 {
     use OrderItem;
+    use TargetInside;
 
 	const type = \diTypes::cart_item;
 	protected $table = 'cart_item';

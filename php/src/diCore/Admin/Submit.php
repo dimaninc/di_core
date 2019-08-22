@@ -1772,8 +1772,7 @@ class Submit
         $sep = $Submit->getFieldOption($field, 'separator') ?: ',';
         $value = join($sep, \diRequest::post($field, []));
 
-        if ($value && $Submit->getFieldOption($field, 'externalSeparators'))
-        {
+        if ($value && $Submit->getFieldOption($field, 'externalSeparators')) {
             $value = $sep . $value . $sep;
         }
 

@@ -2514,7 +2514,8 @@ EOF;
 			$ableToAddNew = $this->getFieldOption($field, 'ableToAddNew') ?: false;
 		}
 
-		// field name or function
+		// field name or function($feedModel, $targetTable, $targetField, $targetId)
+        // todo: use ($Form, $field) here after feedModel
 		$titleGetter = $this->getFieldOption($field, 'titleGetter') ?: 'title';
 		$defaultTitleField = is_string($titleGetter)
             ? $titleGetter
@@ -2538,6 +2539,16 @@ EOF;
         } elseif (!is_array($values))  {
 			$values = explode(',', $values);
 		}
+
+        $checkedHelper = $this->getFieldOption($field, 'checkedHelper') ?:
+            function($k, $v, Form $Form, $field) use($values) {
+                return
+                    (
+                        is_string($this->getData($field)) &&
+                        StringHelper::contains(',' . $this->getData($field) . ',', ',' . $k . ',')
+                    ) ||
+                    in_array($k, $values);
+            };
 
 		if ($this->isStatic($field)) {
 			$ar = [];
@@ -2567,12 +2578,7 @@ EOF;
 					}
 				}
 
-				$checked =
-                    (
-                        is_string($this->getData($field)) &&
-                        StringHelper::contains(',' . $this->getData($field) . ',', ',' . $k . ',')
-                    ) ||
-                    in_array($k, $values);
+				$checked = $checkedHelper($k, $v, $this, $field);
 
                 $disabled =
                     $this->static_mode ||
@@ -2598,11 +2604,37 @@ EOF;
                     ? $titleGetter($v, $this->getTable(), $field, $this->getId())
                     : $v[$titleGetter];
 
+                // string or function($feedModel, $callbackParams)
+				$outerPrefix = $this->getFieldOption($field, 'outerPrefix') ?: '';
+				$outerSuffix = $this->getFieldOption($field, 'outerSuffix') ?: '';
+                $innerPrefix = $this->getFieldOption($field, 'innerPrefix') ?: '';
+                $innerSuffix = $this->getFieldOption($field, 'innerSuffix') ?: '';
+
+                if (is_callable($outerPrefix)) {
+                    $outerPrefix = $outerPrefix($v, $this, $field);
+                }
+
+                if (is_callable($outerSuffix)) {
+                    $outerSuffix = $outerSuffix($v, $this, $field);
+                }
+
+                if (is_callable($innerPrefix)) {
+                    $innerPrefix = $innerPrefix($v, $this, $field);
+                }
+
+                if (is_callable($innerSuffix)) {
+                    $innerSuffix = $innerSuffix($v, $this, $field);
+                }
+
 				$tags[] = sprintf(
-					'<input %s> <label for="%s">%s</label>',
+					'<input %s> %s<label for="%s">%s%s%s</label>%s',
 					ArrayHelper::toAttributesString($attributes),
+					$outerPrefix,
 					$attributes['id'],
-					$title
+					$innerPrefix,
+					$title,
+                    $innerSuffix,
+                    $outerSuffix
 				);
 			}
 

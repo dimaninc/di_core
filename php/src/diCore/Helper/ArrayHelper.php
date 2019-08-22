@@ -160,6 +160,17 @@ class ArrayHelper
 		return join(' ', $ar);
 	}
 
+	public static function toString($ar, $pairSymbol = '=', $spaceSymbol = ' ')
+    {
+        $ar2 = [];
+
+        foreach ($ar as $k => $v) {
+            $ar2[] = $k . $pairSymbol . $v;
+        }
+
+        return join($spaceSymbol, $ar2);
+    }
+
 	/**
 	 * Returns element of array by idx, setting proper type, if it exists, else returns default value
 	 *
