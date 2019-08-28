@@ -1448,12 +1448,15 @@ class Submit
 
 			$fn = \diPaths::fileSystem($obj->getModel(), true, $field) .
 				$opts['folder'] . $opts['subfolder'] . $obj->getData($field);
+			$fileExt = StringHelper::fileExtension($fn);
+			$isSvg = in_array($fileExt, ['svg']);
+			$resizeAvailable = !$isSvg;
 
             if (is_file($fn)) {
                 unlink($fn);
             }
 
-            if (!$opts['resize']) {
+            if (!$opts['resize'] || !$resizeAvailable) {
                 copy($F['tmp_name'], $fn);
             } else {
                 if (!empty($opts['quality'])) {
