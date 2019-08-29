@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS cart_item (
   cart_id     BIGINT,
   target_type INT,
   target_id   BIGINT,
+  price       FLOAT,
   quantity    INT             DEFAULT '1',
   data        TEXT COMMENT 'JSON with item details if needed',
   created_at  TIMESTAMP       DEFAULT CURRENT_TIMESTAMP,

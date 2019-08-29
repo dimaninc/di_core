@@ -8,93 +8,120 @@
 namespace diCore\Entity\Cart;
 
 use diCore\Data\Types;
-use diCore\Entity\CartItem\Collection as CartItems;
 use diCore\Entity\CartItem\Model as CartItem;
 use diCore\Tool\Auth;
+use diCore\Traits\Model\CartOrder;
 
 /**
  * Class Model
  * Methods list for IDE
  *
  * @method string	getSessionId
- * @method integer	getUserId
- * @method string	getCreatedAt
  *
  * @method bool hasSessionId
- * @method bool hasUserId
- * @method bool hasCreatedAt
  *
  * @method $this setSessionId($value)
- * @method $this setUserId($value)
- * @method $this setCreatedAt($value)
  */
-class Model extends \diModel
+class Model extends \diModel implements \diCore\Interfaces\CartOrder
 {
-	const type = \diTypes::cart;
+    use CartOrder {
+        getItem as protected parentGetItem;
+    }
+
+	const type = Types::cart;
 	protected $table = 'cart';
 
-	/** @var array|null */
-	protected $items = null;
+	/** @var $this */
+	protected static $instance;
+	const only_one_instance = true;
+
+    /**
+     * CartOrder settings
+     */
+    const item_filter_field = 'cart_id';
+    const item_type = Types::cart_item;
+	const pre_cache_needed = false;
 
 	public static function autoCreate($id = null, $sessionId = null, $userId = null)
 	{
-		if ($id)
-		{
+	    if (static::only_one_instance && static::$instance) {
+	        return static::$instance;
+        }
+
+		if ($id) {
 			/** @var $this $model */
 			$model = self::create(self::type, $id);
-		}
-		else
-		{
+		} else {
 			$q = [
 				"session_id = '" . ($sessionId ?: \diSession::id()) . "'",
 			];
 
-			if (Auth::i()->getUserId())
-			{
+			if (Auth::i()->getUserId()) {
 				$q[] = "user_id = '" . ($userId ?: Auth::i()->getUserId()) . "'";
 			}
 
 			$model = \diCollection::create(self::type)->filterManual(join(' OR ', $q))->getFirstItem();
 		}
 
-		if (!$model->exists())
-		{
+		if (!$model->exists()) {
 			$model
-				->setSessionId($sessionId ?: \diSession::id())
-				->setUserId($userId ?: Auth::i()->getUserId());
+				->setSessionId($sessionId ?: \diSession::id());
 		}
+
+		if (!$model->hasUserId() && ($userId || Auth::i()->getUserId())) {
+            $model
+                ->setUserId($userId ?: Auth::i()->getUserId());
+        }
+
+        if (static::only_one_instance) {
+            static::$instance = $model;
+        }
 
 		return $model;
 	}
 
-	public function getItems()
-	{
-		if ($this->items === null && $this->exists())
-		{
-			/** @var CartItems $items */
-			$items = \diCollection::create(Types::cart_item);
-			$items
-				->filterByCartId($this->getId())
-				->orderById();
+	protected function prepareOptions($options)
+    {
+        return $options;
+    }
 
-			foreach ($items as $item)
-			{
-				$this->items[] = $item;
-			}
-		}
+    /**
+     * @param $item CartItem
+     * @param $options array
+     * @return integer
+     */
+	public function getQuantityOfItem($item, $options)
+    {
+        return $item->getQuantity();
+    }
 
-		return $this->items ?: [];
-	}
+    /**
+     * @param $item CartItem
+     * @param $options array
+     * @return float
+     */
+    public function getCostOfItem($item, $options)
+    {
+        return $item->getCost();
+    }
+
+    /**
+     * @param $item CartItem
+     * @param $options array
+     * @return integer
+     */
+    public function getRowCountOfItem($item, $options)
+    {
+        return 1;
+    }
 
 	public static function migrateToUser($sessionId = null, $userId = null)
 	{
-		if ($sessionId === null)
-		{
+		if ($sessionId === null) {
 			$sessionId = \diSession::id();
 		}
 
-		if ($userId === null && Auth::i()->authorized())
-		{
+		if ($userId === null && Auth::i()->authorized()) {
 			$userId = Auth::i()->getUserId();
 		}
 
@@ -114,8 +141,7 @@ class Model extends \diModel
 				->filterBySessionId($sessionId)
 				->getFirstItem();
 
-			if ($userCart->exists())
-			{
+			if ($userCart->exists()) {
 				/** @var CartItem $item */
 				foreach ($sessionCart->getItems() as $item)
 				{
@@ -127,9 +153,7 @@ class Model extends \diModel
 				$sessionCart->hardDestroy();
 
 				return $userCart;
-			}
-			else
-			{
+			} else {
 				$sessionCart
 					->setUserId($userId)
 					->save();
@@ -143,44 +167,16 @@ class Model extends \diModel
 
 	public function getItem($targetType, $targetId, $additionalFields = [])
 	{
-		/** @var CartItem $i */
-		foreach ($this->getItems() as $i)
-		{
-			if ($i->getTargetType() == $targetType && $i->getTargetId() == $targetId)
-			{
-				$ok = true;
+        /** @var CartItem $item */
+	    $item = $this->parentGetItem($targetType, $targetId, $additionalFields);
 
-				foreach ($additionalFields as $k => $v)
-				{
-					if ($i->get($k) != $v)
-					{
-						$ok = false;
-
-						break;
-					}
-				}
-
-				if ($ok)
-				{
-					$item = $i;
-
-					break;
-				}
-			}
-		}
-
-		if (!isset($item))
-		{
-			/** @var CartItem $item */
-			$item = \diModel::create(Types::cart_item);
-
+		if (!$item->exists()) {
 			$item
 				->setCartId($this->getId())
 				->setTargetType($targetType)
 				->setTargetId($targetId);
 
-			foreach ($additionalFields as $k => $v)
-			{
+			foreach ($additionalFields as $k => $v) {
 				$item
 					->set($k, $v);
 			}
@@ -193,10 +189,7 @@ class Model extends \diModel
     {
         parent::killRelatedData();
 
-        /** @var CartItem $item */
-        foreach ($this->getItems() as $item) {
-            $item->hardDestroy();
-        }
+        $this->killItems();
 
         return $this;
     }

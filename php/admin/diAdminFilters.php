@@ -681,7 +681,9 @@ EOF;
 
 					case "date_range":
 					case "date_str_range":
-						$r1 = $a["default_value"] === null ? $this->getDb()->r($this->table, "", "MIN({$a["field"]}) as d1_min") : null; //,MAX($a["field"]) as d1_max
+						$r1 = $a["default_value"] === null
+                            ? $this->getDb()->r($this->getDb()->escapeTable($this->table), "", "MIN({$a["field"]}) as d1_min")
+                            : null; //,MAX($a["field"]) as d1_max
 
 						if ($a["type"] == "date_str_range")
 						{
@@ -846,7 +848,7 @@ EOF;
 						$m2_sel->addItem(lead0($i), lead0($i));
 					}
 
-					$r1 = $this->getDb()->r($this->table, "", "MIN($field) as d1_min,MAX($field) as d1_max");
+					$r1 = $this->getDb()->r($this->getDb()->escapeTable($this->table), "", "MIN($field) as d1_min,MAX($field) as d1_max");
 
 					if ($ar["type"] == "date_str_range") {
 						$r1->d1_min = strtotime($r1->d1_min);
@@ -1498,7 +1500,7 @@ EOF;
         $w .= $w ? " and " : "WHERE ";
         $w .= "visible='1'";
         //$visible_r = $F->getDb()->r("$table i", $w, "COUNT(id) AS cc");
-        $visible_r = $F->getDb()->r($F->table, $w, "COUNT(id) AS cc");
+        $visible_r = $F->getDb()->r($F->getDb()->escapeTable($F->table), $w, "COUNT(id) AS cc");
 
         /*
         <div style="padding-top: 10px;"><button type=button class="w_hover" onclick="refresh_table_summary('users');">Обновить</button></div>

@@ -17,18 +17,21 @@ use diCore\Tool\CollectionCache;
  *
  * @method integer	getTargetType
  * @method integer	getTargetId
+ * @method double	getPrice
  * @method integer	getQuantity
  * @method string	getCreatedAt
  * @method string	getData
  *
  * @method bool hasTargetType
  * @method bool hasTargetId
+ * @method bool hasPrice
  * @method bool hasQuantity
  * @method bool hasCreatedAt
  * @method bool hasData
  *
  * @method $this setTargetType($value)
  * @method $this setTargetId($value)
+ * @method $this setPrice($value)
  * @method $this setQuantity($value)
  * @method $this setCreatedAt($value)
  * @method $this setData($value)
@@ -78,5 +81,10 @@ trait OrderItem
         return $key === null
             ? $this->data
             : ArrayHelper::getValue($this->data, $key);
+    }
+
+    public function getCost()
+    {
+        return $this->getPrice() * $this->getQuantity();
     }
 }

@@ -18,7 +18,7 @@ use diCore\Traits\Model\TargetInside;
  *
  * @method bool hasCartId
  *
- * @method Model setCartId($value)
+ * @method $this setCartId($value)
  */
 class Model extends \diModel
 {

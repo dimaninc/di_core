@@ -55,9 +55,8 @@ class Cart extends \diBaseController
 	{
 		$this->action = 'delete';
 
-		if (!$this->getCartItem()->hasId())
-		{
-			throw new \Exception('Cart item not loaded from DB');
+		if (!$this->getCartItem()->hasId()) {
+			throw new \Exception('Cart item not loaded from DB ' . print_r($this->getCartItem()->get(), true));
 		}
 
 		$this->getCartItem()
@@ -98,8 +97,7 @@ class Cart extends \diBaseController
 			'target_type' => $this->targetType,
 			'target_id' => $this->targetId,
 			'quantity' => $this->quantity,
-			'totals' => [
-			],
+			'totals' => $this->getCart()->getTotals(),
 		];
 	}
 }

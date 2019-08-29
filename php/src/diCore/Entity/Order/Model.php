@@ -7,11 +7,14 @@
 
 namespace diCore\Entity\Order;
 
+use diCore\Data\Types;
+use diCore\Entity\OrderItem\Model as OrderItem;
+use diCore\Traits\Model\CartOrder;
+
 /**
  * Class Model
  * Methods list for IDE
  *
- * @method integer	getUserId
  * @method integer	getType
  * @method integer	getInvoice
  * @method integer	getStatus
@@ -23,9 +26,7 @@ namespace diCore\Entity\Order;
  * @method string	getComments
  * @method string	getUploadDate
  * @method integer	getExportedTo1c
- * @method string	getCreatedAt
  *
- * @method bool hasUserId
  * @method bool hasType
  * @method bool hasInvoice
  * @method bool hasStatus
@@ -37,9 +38,7 @@ namespace diCore\Entity\Order;
  * @method bool hasComments
  * @method bool hasUploadDate
  * @method bool hasExportedTo1c
- * @method bool hasCreatedAt
  *
- * @method $this setUserId($value)
  * @method $this setType($value)
  * @method $this setInvoice($value)
  * @method $this setStatus($value)
@@ -51,11 +50,63 @@ namespace diCore\Entity\Order;
  * @method $this setComments($value)
  * @method $this setUploadDate($value)
  * @method $this setExportedTo1c($value)
- * @method $this setCreatedAt($value)
  */
-class Model extends \diModel
+class Model extends \diModel implements \diCore\Interfaces\CartOrder
 {
-	const type = \diTypes::order;
+    use CartOrder;
+
+	const type = Types::order;
 	const table = 'order';
 	protected $table = 'order';
+
+    /**
+     * CartOrder settings
+     */
+    const item_filter_field = 'order_id';
+    const item_type = Types::order_item;
+    const pre_cache_needed = false;
+
+    protected function prepareOptions($options)
+    {
+        return $options;
+    }
+
+    /**
+     * @param $item OrderItem
+     * @param $options array
+     * @return integer
+     */
+    public function getQuantityOfItem($item, $options)
+    {
+        return $item->getQuantity();
+    }
+
+    /**
+     * @param $item OrderItem
+     * @param $options array
+     * @return float
+     */
+    public function getCostOfItem($item, $options)
+    {
+        return $item->getCost();
+    }
+
+    /**
+     * @param $item OrderItem
+     * @param $options array
+     * @return integer
+     */
+    public function getRowCountOfItem($item, $options)
+    {
+        return 1;
+    }
+
+    public function killRelatedData()
+    {
+        parent::killRelatedData();
+
+        $this->killItems();
+
+        return $this;
+    }
 }
