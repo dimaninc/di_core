@@ -10,6 +10,7 @@ namespace diCore\Entity\Cart;
 use diCore\Data\Types;
 use diCore\Entity\CartItem\Model as CartItem;
 use diCore\Tool\Auth;
+use diCore\Tool\CollectionCache;
 use diCore\Traits\Model\CartOrder;
 
 /**
@@ -174,12 +175,25 @@ class Model extends \diModel implements \diCore\Interfaces\CartOrder
 			$item
 				->setCartId($this->getId())
 				->setTargetType($targetType)
-				->setTargetId($targetId);
+				->setTargetId($targetId)
+                ->updateTargetData();
 
 			foreach ($additionalFields as $k => $v) {
 				$item
 					->set($k, $v);
 			}
+
+			$this->items[] = $item;
+
+			if (static::pre_cache_needed) {
+                $cachedCol = CollectionCache::get($item->getTargetType());
+
+                if ($cachedCol) {
+                    $cachedCol->addItem($item->getTargetModel());
+                } else {
+                    CollectionCache::addManual($item->getTargetType(), 'id', $item->getTargetId());
+                }
+            }
 		}
 
 		return $item;

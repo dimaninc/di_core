@@ -44,4 +44,12 @@ class Model extends \diModel
 			'id_for_cart' => $this->getIdForCart(),
 		]);
 	}
+
+	public function updateTargetData()
+    {
+        $this
+            ->setPrice($this->getTargetModel()->getPrice());
+
+        return $this;
+    }
 }
