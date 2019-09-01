@@ -1300,6 +1300,10 @@ EOF;
 			$templateName = $field;
 		}
 
+		if ($templateName === null) {
+            $templateName = $field;
+        }
+
 		if (!StringHelper::contains($templateName, '/'))
 		{
 			$templateName = 'admin/' . $this->getTable() . '/' . $templateName;
