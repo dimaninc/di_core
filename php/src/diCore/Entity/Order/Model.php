@@ -25,7 +25,6 @@ use diCore\Traits\Model\CartOrder;
  * @method integer	getPaymentId
  * @method string	getComments
  * @method string	getUploadDate
- * @method integer	getExportedTo1c
  *
  * @method bool hasType
  * @method bool hasInvoice
@@ -37,7 +36,6 @@ use diCore\Traits\Model\CartOrder;
  * @method bool hasPaymentId
  * @method bool hasComments
  * @method bool hasUploadDate
- * @method bool hasExportedTo1c
  *
  * @method $this setType($value)
  * @method $this setInvoice($value)
@@ -49,7 +47,6 @@ use diCore\Traits\Model\CartOrder;
  * @method $this setPaymentId($value)
  * @method $this setComments($value)
  * @method $this setUploadDate($value)
- * @method $this setExportedTo1c($value)
  */
 class Model extends \diModel implements \diCore\Interfaces\CartOrder
 {
@@ -108,5 +105,20 @@ class Model extends \diModel implements \diCore\Interfaces\CartOrder
         $this->killItems();
 
         return $this;
+    }
+
+    public function getExportedTo1c()
+    {
+        return $this->get('exported_to_1c');
+    }
+
+    public function hasExportedTo1c()
+    {
+        return $this->has('exported_to_1c');
+    }
+
+    public function setExportedTo1c($value)
+    {
+        return $this->set('exported_to_1c', $value);
     }
 }
