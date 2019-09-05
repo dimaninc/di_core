@@ -55,6 +55,15 @@ class MailQueue extends \diCore\Admin\BasePage
 		$this->getList()->addColumns([
 			'id' => 'ID',
 			'_checkbox' => '',
+            'send' => [
+                'title' => '✉️',
+                'value' => function (Model $m) {
+                    return sprintf(
+                        '<a href="/api/mail/send/%s" style="color: green; display: block; font-size: 16px" title="Send">⇒</a>',
+                        $m->getId()
+                    );
+                },
+            ],
 			'sender' => [
 				'attrs' => [
 					'width' => '20%',
@@ -62,8 +71,7 @@ class MailQueue extends \diCore\Admin\BasePage
 				'value' => function (Model $m) {
 					$s = StringHelper::out($m->getSender());
 
-					if ($m->hasReplyTo())
-					{
+					if ($m->hasReplyTo()) {
 						$s .= '<div class="lite">' . StringHelper::out('Reply-To: ' . $m->getReplyTo()) . '</div>';
 					}
 
@@ -116,8 +124,7 @@ class MailQueue extends \diCore\Admin\BasePage
 		$user_id = \diRequest::get('user_id', 0);
 		$user_r = !$this->getForm()->getId() && $user_id ? $this->getDb()->r('users', $user_id) : false;
 
-		if ($user_r)
-		{
+		if ($user_r) {
 			$this->getForm()->setData('recipient', StringHelper::out($user_r->email));
 		}
 

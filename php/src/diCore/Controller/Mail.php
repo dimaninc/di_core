@@ -26,6 +26,16 @@ class Mail extends \diBaseAdminController
 		return "$cc email(s) sent";
 	}
 
+    public function sendAction()
+    {
+        $mq = Queue::basicCreate();
+        $id = $this->param(0, 0);
+
+        $mq->send($id);
+
+        $this->redirect();
+    }
+
 	public function setVisibleAction()
 	{
 		$mq = Queue::basicCreate();
