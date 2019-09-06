@@ -29,10 +29,10 @@ class diOAuth2Vendors extends diSimpleContainer
 
 	public static $titles = array(
 		self::facebook => "Facebook",
-		self::google => "Google+",
-		self::ok => "Odnoklassniki.ru",
+		self::google => "Google",
+		self::ok => "Odnoklassniki",
 		self::twitter => "Twitter",
-		self::vk => "Vkontakte",
+		self::vk => 'VK',
 		self::mailru => "Mail.ru",
 		self::yandex => "Yandex",
 		self::instagram => "Instagram",
@@ -63,13 +63,10 @@ class diOAuth2Vendors extends diSimpleContainer
 				return "https://facebook.com/$login";
 
 			case "vk":
-				return "http://vk.com/$login";
-
-			case "google":
-				return "https://plus.google.com/$login";
+				return "https://vk.com/$login";
 
 			case "twitter":
-				return "http://twitter.com/$login";
+				return "https://twitter.com/$login";
 
 			default:
 				return false;

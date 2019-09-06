@@ -1313,6 +1313,7 @@ abstract class CMS
 				'html_base_wo_slash' => $this->getBaseAddress(),
 				'env' => static::getEnvironmentName(),
                 'sub_folder' => \diLib::getSubFolder(true),
+                'logout_href' => \diLib::getAdminWorkerPath('auth', 'logout') . '?back=' . \diRequest::requestUri(),
 			],
 		]);
 

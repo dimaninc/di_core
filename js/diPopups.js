@@ -10,6 +10,14 @@ var diPopups = function() {
 		states = {},
 		events = {};
 
+	var globalOptions = {
+        positioning: true,
+        positioningX: true,
+        positioningY: true,
+        mobilePositioning: true,
+        livePosition: true
+    };
+
 	this.e = {
 		$bg: $('#gray-bg')
 	};
@@ -40,6 +48,22 @@ var diPopups = function() {
 				});
 			});
 	}
+
+	this.setGlobalOptions = function(o) {
+		globalOptions = $.extend(globalOptions, o || {});
+
+		return this;
+	};
+
+	this.disableAutoPosition = function() {
+		return this.setGlobalOptions({
+            positioning: false,
+            positioningX: false,
+            positioningY: false,
+            mobilePositioning: false,
+            livePosition: false
+		});
+	};
 
 	this.setEvent = function(id, eventName, callback) {
 		if (typeof events[id] == 'undefined') {
@@ -130,16 +154,18 @@ var diPopups = function() {
 		var opts = {
 			showBackground: true,
 			content: null,
-			positioning: true,
-			positioningX: true,
-			positioningY: true,
+            positioning: globalOptions.positioning,
+            positioningX: globalOptions.positioningX,
+            positioningY: globalOptions.positioningY,
+            mobilePositioning: globalOptions.mobilePositioning,
+            livePosition: globalOptions.livePosition,
 			afterUpdatePosition: null
 		};
 		var $e = this.getPopupElement(name);
 
-		if (typeof _opts == 'object') {
+		if (typeof _opts === 'object') {
 			opts = $.extend(opts, _opts);
-		} else if (typeof _opts != 'undefined') {
+		} else if (typeof _opts !== 'undefined') {
 			opts.showBackground = _opts;
 		}
 
@@ -189,7 +215,7 @@ var diPopups = function() {
 	};
 
 	this.create = function (name/* or options*/, content/* = null*/, options/* = null*/) {
-		if (typeof name == 'object' && typeof content == 'undefined' && typeof options == 'undefined') {
+		if (typeof name === 'object' && typeof content === 'undefined' && typeof options === 'undefined') {
 			options = name;
 		} else {
 			options = options || {};
@@ -201,11 +227,11 @@ var diPopups = function() {
 			name: null,
 			content: null,
 			showCloseButton: true,
-			positioning: true, // calc position on show
-			positioningX: true, // calc x-position on show
-			positioningY: true, // calc y-position on show
-			mobilePositioning: true, // calc position on mobiles on show
-			livePosition: true, // auto update position on window resize
+			positioning: globalOptions.positioning, // calc position on show
+			positioningX: globalOptions.positioningX, // calc x-position on show
+			positioningY: globalOptions.positioningY, // calc y-position on show
+			mobilePositioning: globalOptions.mobilePositioning, // calc position on mobiles on show
+			livePosition: globalOptions.livePosition, // auto update position on window resize
 			afterUpdatePosition: null // after update position callback
 		}, options);
 
@@ -238,7 +264,7 @@ var diPopups = function() {
 	};
 
 	this.exists = function (name) {
-		if (typeof this.$e_ar[name] == 'undefined') {
+		if (typeof this.$e_ar[name] === 'undefined') {
 			this.$e_ar[name] = $([
 				'#' + this.id_prefix + name + this.id_suffix,
 				'.dipopup[data-name="' + name + '"]',
