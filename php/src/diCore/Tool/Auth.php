@@ -361,8 +361,7 @@ class Auth
 
 	private function redirectIfNeeded()
 	{
-		if ($this->isRedirectAllowed() && $this->redirectNeeded())
-		{
+		if ($this->isRedirectAllowed() && $this->redirectNeeded()) {
 			header('Location: ' . \diRequest::requestUri());
 
 			die();
@@ -376,6 +375,7 @@ class Auth
 		return in_array($this->authSource, [self::SOURCE_POST]); //, self::SOURCE_COOKIE
 	}
 
+	/** @deprecated  */
 	public function assignTemplateVariables(\FastTemplate $tpl)
 	{
 		$this->tpl = $tpl;
@@ -395,12 +395,8 @@ class Auth
 		}
 		else
 		{
-			if ($tpl->exists('auth_panel') && $tpl->exists('auth_popup'))
-			{
-				$tpl
-					->process('LOGIN_PANEL', 'auth_panel')
-					->process('LOGIN_POPUP', 'auth_popup');
-			}
+            $tpl->exists('auth_panel') && $tpl->process('LOGIN_PANEL', 'auth_panel');
+            $tpl->exists('auth_popup') && $tpl->process('LOGIN_POPUP', 'auth_popup');
 		}
 
 		return $this;
@@ -413,8 +409,7 @@ class Auth
 				'authUser' => $this->getUserModel(),
 			]);
 
-		if (!$this->tpl)
-		{
+		if (!$this->tpl) {
 			return $this;
 		}
 
