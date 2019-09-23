@@ -207,11 +207,18 @@ Helper = {
     opts = this.extend({
       fn: null,
       buildFolder: null,
+      postCss: false,
       taskName: 'less'
     }, opts);
     gulp.task(opts.taskName, (function(_this) {
       return function(done) {
-        return gulp.src(_this.fullPath(opts.fn)).pipe(less()).on('error', console.log).pipe(gulp.dest(_this.fullPath(opts.buildFolder))).on('end', function() {
+        var l, postcss;
+        l = gulp.src(_this.fullPath(opts.fn)).pipe(less());
+        if (opts.postCss) {
+          postcss = _this.req('gulp-postcss');
+          l = l.pipe(postcss([_this.req('precss'), _this.req('postcss-cssnext'), _this.req('cssnano')]));
+        }
+        return l.on('error', console.log).pipe(gulp.dest(_this.fullPath(opts.buildFolder))).on('end', function() {
           return done();
         });
       };

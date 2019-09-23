@@ -158,11 +158,20 @@ Helper =
 
     assignLessTaskToGulp: (gulp, opts = {}) ->
         less = @req 'gulp-less' unless less
-        opts = @extend {fn: null, buildFolder: null, taskName: 'less'}, opts
+        opts = @extend {fn: null, buildFolder: null, postCss: false, taskName: 'less'}, opts
         gulp.task opts.taskName, (done) =>
-            gulp.src @fullPath opts.fn
+            l = gulp.src @fullPath opts.fn
             .pipe less()
-            .on 'error', console.log
+
+            if opts.postCss
+                postcss  = @req 'gulp-postcss'
+                l = l.pipe postcss [
+                    @req 'precss'
+                    @req 'postcss-cssnext'
+                    @req 'cssnano'
+                ]
+
+            l.on 'error', console.log
             .pipe gulp.dest @fullPath opts.buildFolder
             .on 'end', -> done()
         @
