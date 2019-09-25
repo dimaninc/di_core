@@ -253,7 +253,7 @@ class diModel implements \ArrayAccess
 		}
 
 		throw new \Exception(
-			sprintf('Invalid method %s::%s(%s)', get_class($this), $method, print_r($arguments, 1))
+			sprintf('diModel invalid method %s::%s/%s(%s) %s', get_class($this), $method, $fullMethod, print_r($arguments, 1))
 		);
 	}
 
