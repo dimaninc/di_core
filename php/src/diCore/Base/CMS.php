@@ -1142,7 +1142,7 @@ abstract class CMS
 			->parse("index");
 	}
 
-	protected function getNeededSwitches()
+	public function getNeededSwitches()
 	{
 		return [
 			'open_graph' => $this->openGraphNeeded(),
