@@ -19,6 +19,13 @@ class Phone
 		return preg_match('/^\d{10,15}$/', $phone);
 	}
 
+	public static function isRussian($phone)
+    {
+        $cleanPhone = Phone::clean($phone);
+
+        return $cleanPhone && substr($cleanPhone, 0, 1) === '7' && strlen($cleanPhone) == 11;
+    }
+
 	public static function clean($phone, $prefix = '')
 	{
 		$phone = preg_replace('/[^\d]+/', '', $phone);
