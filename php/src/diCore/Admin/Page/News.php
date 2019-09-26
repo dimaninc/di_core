@@ -236,31 +236,46 @@ EOF;
 		return [
 			'date' => [
 				'type' => 'datetime_str',
-				'title' => 'Дата публикации',
-				'default' => date('Y-m-d H:i:s'),
+                'title' => $this->localized([
+                    'ru' => 'Дата публикации',
+                    'en' => 'Date/time',
+                ]),
+				'default' => \diDateTime::sqlFormat(),
 			],
 
 			'title' => [
 				'type' => 'string',
-				'title' => 'Заголовок',
+                'title' => $this->localized([
+                    'ru' => 'Заголовок',
+                    'en' => 'Title',
+                ]),
 				'default' => '',
 			],
 
 			$this->slugSourceFieldName => [
 				'type' => 'string',
-				'title' => 'Название для URL',
+                'title' => $this->localized([
+                    'ru' => 'Название для URL',
+                    'en' => 'Slug source',
+                ]),
 				'default' => '',
 			],
 
 			'short_content' => [
 				'type' => 'text',
-				'title' => 'Краткий текст',
+                'title' => $this->localized([
+                    'ru' => 'Краткое наполнение',
+                    'en' => 'Short content',
+                ]),
 				'default' => '',
 			],
 
 			'content' => [
 				'type' => 'wysiwyg',
-				'title' => 'Полный текст',
+                'title' => $this->localized([
+                    'ru' => 'Полный текст',
+                    'en' => 'Content',
+                ]),
 				'default' => '',
 				//'notes'		=> array('Токен {PIC} будет заменен на подгруженную картинку'),
 			],
@@ -274,21 +289,30 @@ EOF;
 
 			'html_title' => [
 				'type' => 'string',
-				'title' => 'Meta-заголовок',
+                'title' => $this->localized([
+                    'ru' => 'Meta-заголовок',
+                    'en' => 'Meta title',
+                ]),
 				'default' => '',
 				'tab' => 'meta',
 			],
 
 			'html_keywords' => [
 				'type' => 'string',
-				'title' => 'Meta-ключевые слова',
+                'title' => $this->localized([
+                    'ru' => 'Meta-ключевые слова',
+                    'en' => 'Meta keywords',
+                ]),
 				'default' => '',
 				'tab' => 'meta',
 			],
 
 			'html_description' => [
 				'type' => 'string',
-				'title' => 'Meta-описание',
+                'title' => $this->localized([
+                    'ru' => 'Meta-описание',
+                    'en' => 'Meta description',
+                ]),
 				'default' => '',
 				'tab' => 'meta',
 			],
