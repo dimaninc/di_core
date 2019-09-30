@@ -727,9 +727,6 @@ abstract class CMS
         return $module->getResultPage();
     }
 
-	/**
-	 * @return \diCurrentCMS
-	 */
 	public function renderPage()
 	{
 		if (!$this->beforeRenderPage())
@@ -1073,11 +1070,6 @@ abstract class CMS
 		return $this;
 	}
 
-	/**
-	 * @param null $default_page_type
-	 * @param null $defaultLanguage
-	 * @return \diCurrentCMS
-	 */
 	public function start($default_page_type = null, $defaultLanguage = null)
 	{
 		if ($default_page_type)
@@ -1239,6 +1231,9 @@ abstract class CMS
 	 */
 	public function setRoute($route, $idx = null)
 	{
+        //var_dump($route, $idx, debug_backtrace());
+        //die();
+
 		if ($idx === null)
 		{
 			if (!is_array($route))
@@ -1541,9 +1536,6 @@ abstract class CMS
 		return $this->device;
 	}
 
-	/**
-	 * @return \diCurrentCMS
-	 */
 	protected function setupDeviceDetector()
 	{
 		$device = [
@@ -1701,9 +1693,6 @@ abstract class CMS
 		return $qs;
 	}
 
-	/**
-	 * @return \diCurrentCMS
-	 */
 	protected function assign_top_language_links()
 	{
 		$links = [];
@@ -1776,9 +1765,6 @@ abstract class CMS
 		return $this;
 	}
 
-	/**
-	 * @return \diCurrentCMS
-	 */
   public function load_content_rec()
   {
 	  $this->ContentFamily->init();
@@ -1905,8 +1891,6 @@ abstract class CMS
 	/**
 	 * @param string|array $text
 	 * @param string $field
-	 *
-	 * @return \diCurrentCMS
 	 */
 	public function setMeta($text, $field = 'title')
 	{
@@ -2155,9 +2139,6 @@ abstract class CMS
 		}
 	}
 
-	/**
-	 * @return \diCurrentCMS
-	 */
 	public function assign_ct_ar()
 	{
 		foreach ($this->getCleanTitlesAr() as $t => $ct)
@@ -2187,9 +2168,6 @@ abstract class CMS
 		return $this;
 	}
 
-	/**
-	 * @return \diCurrentCMS
-	 */
 	public function initBreadCrumbs()
 	{
 		$this->BreadCrumbs->init();
@@ -2202,9 +2180,6 @@ abstract class CMS
 		return !in_array($this->getContentModel()->getType(), [$this->defaultPageType]);
 	}
 
-	/**
-	 * @return \diCurrentCMS
-	 */
 	public function printBreadCrumbs()
 	{
 		$this->getBreadCrumbs()->finish();
@@ -2212,9 +2187,6 @@ abstract class CMS
 		return $this;
 	}
 
-	/**
-	 * @return \diCurrentCMS
-	 */
 	public function load_content_table_cache($forceRebuild = false)
 	{
 		if ($forceRebuild)
