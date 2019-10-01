@@ -211,8 +211,15 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 * @return $this
 	 * @throws \Exception
 	 */
-	public static function create($type, $options = [], $queryFields = null)
+	public static function create($type = null, $options = [], $queryFields = null)
 	{
+	    $type = $type ?: static::type;
+
+        if (!$type)
+        {
+            throw new \Exception("Type of collection not defined: " . $type);
+        }
+
 		if (\diDB::is_rs($options))
 		{
 			$options = [
