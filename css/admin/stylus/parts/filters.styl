@@ -12,7 +12,7 @@
 	.buttons
 		display flex
 		flex-wrap wrap
-		padding 10px 0 0 0
+		padding 10px 0
 		margin-left 150px
 		@media screen and (max-width: 767px)
 			margin-left 0
@@ -24,6 +24,9 @@
 		padding-bottom 7px
 		@media screen and (max-width: 767px)
 			flex-wrap wrap
+		{$entrineSkin} &
+			padding-bottom 15px
+			align-items center
 		> b
 			display block
 			padding-top 5px
@@ -42,45 +45,8 @@
 				min-width 0
 		.date-sep
 			align-self flex-end
-	button
-		body[data-skin="entrine"] &
-			display inline-flex
-			justify-content space-between
-			align-items center
-			width $entrineBaseWidth
-			height $entrineBaseHeight
-			text-transform uppercase
-			text-align left
-			padding-left 18px
-			border 3px solid $entrineColorBgDark
-			border-radius 0
-			color $entrineColorBgDark
-			margin 0 20px 20px 0
-			background none
-			&:after
-				flex-shrink 0
-			&[type="submit"]
-				border-color #90e273
-				&:hover
-					background-color alpha(#90e273, .2)
-				&:after
-					content ''
-					width 24px
-					height 24px
-					background-image embedurl('../../../i/admin/skin/entrine/filter/apply.svg', 'utf8')
-					background-repeat no-repeat
-			&[data-purpose="reset"]
-				border-color #6ea3bf
-				&:hover
-					background-color alpha(#6ea3bf, .2)
-				&:after
-					content ''
-					width 24px
-					height 24px
-					background-image embedurl('../../../i/admin/skin/entrine/filter/reset.svg', 'utf8')
-					background-repeat no-repeat
-		&[name="export"]
-			margin-left 30px
+			{$entrineSkin} &
+				align-self center
 	[data-purpose="reset-filter"]
 		display inline-block
 		cursor pointer

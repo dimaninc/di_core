@@ -1,0 +1,168 @@
+button
+  font-family $classicFont
+  font-size 14px
+  font-weight normal
+  background-color white
+  color black
+  border 1px solid #B2B2B2
+  border-top-color black
+  border-left-color black
+  border-radius 8px
+  cursor pointer
+  outline none
+  align-self center
+  padding 5px 10px
+  transition .3s
+  {$entrineSkin} &
+    font-family $entrineFont
+  &:hover
+    background-color #A1DFFF
+  &.blue
+    background-color #0000CC
+  &.violet
+    background-color #9600DB
+  &.gray
+    background-color #848484
+  &.red
+    background-color red
+  &.blue
+  &.violet
+  &.gray
+  &.red
+    padding 7px 10px
+    color white
+    font-size 11px
+    font-weight bold
+    border 0
+    &:hover
+      background-color red
+
+.filter-block
+.diadminform-row:not([data-type="wysiwyg"]) // do not use the styles for wysiwyg editor
+.submit-block
+  button
+    //margin-right 10px
+    //margin 0 10px 10px 10px
+    cursor pointer
+    box-sizing border-box
+    transition .3s
+    + button
+      margin-left 10px
+    /*
+    @media screen and (max-width: 767px)
+      &:not(:last-of-type)
+        margin-right 0
+    */
+    > svg
+      path
+        transition .3s
+    &.calendar-toggle
+      margin-left 5px
+      padding-top 2px
+      padding-bottom 2px
+      {$entrineSkin} &
+        margin-left 15px
+    &[id="btn-save"]
+      font-weight bold
+      body[data-skin="entrine"] &
+        font-weight normal
+    {$entrineSkin} &
+      display inline-flex
+      justify-content space-between
+      align-items center
+      width $entrineBaseWidth
+      height $entrineBaseHeight
+      text-transform uppercase
+      text-align left
+      padding-left 18px
+      border 3px solid $entrineColorBgDark
+      border-radius 0
+      color $entrineColorBgDark
+      //margin 0 20px 20px 0
+      background none
+      + button
+        margin-left 20px
+        @media screen and (max-width: 767px)
+          margin-right 12px
+      @media screen and (max-width: 767px)
+        //margin 0 12px 12px 0
+        padding 6px
+        border-width 2px
+        width auto
+        height auto
+        font-size 12px
+        text-transform none
+      &:last-child
+        margin-right 0
+      > svg
+        order 10
+        @media screen and (max-width: 767px)
+          display none
+      &:hover
+        background-color alpha($entrineColorTextMenuSelected, .2)
+        border-color $entrineColorTextMenuSelected
+      &:after
+        flex-shrink 0
+        @media screen and (max-width: 767px)
+          margin-left 5px
+      // form
+      &[id]:hover
+        > svg
+          path
+            fill white
+      &[id="btn-save"]
+        border-color $entrineColorSave
+        > svg
+          path
+            fill $entrineColorSave
+        &:hover
+          background-color $entrineColorSave
+      &[id="btn-cancel"]
+        border-color $entrineColorCancel
+        > svg
+          path
+            fill $entrineColorCancel
+        &:hover
+          background-color $entrineColorCancel
+      &[id="btn-quick-save"]
+        border-color $entrineColorQuickSave
+        > svg
+          path
+            fill $entrineColorQuickSave
+        &:hover
+          background-color $entrineColorQuickSave
+      // filters
+      &[data-purpose="apply"]
+        border-color #90e273
+        &:hover
+          background-color alpha(#90e273, .2)
+        &:after
+          content ''
+          width 24px
+          height 24px
+          background-image embedurl('../../../i/admin/skin/entrine/filter/apply.svg', 'utf8')
+          background-repeat no-repeat
+      &[data-purpose="reset"]
+        border-color #6ea3bf
+        &:hover
+          background-color alpha(#6ea3bf, .2)
+        &:after
+          content ''
+          width 24px
+          height 24px
+          background-image embedurl('../../../i/admin/skin/entrine/filter/reset.svg', 'utf8')
+          background-repeat no-repeat
+      &[name="export"]
+        margin-left 30px
+      &.calendar-toggle
+        border-color #df5a5a
+        @media screen and (max-width: 767px)
+          margin-left 5px
+        &:hover
+          background-color alpha(#df5a5a, .2)
+        &:after
+          content ''
+          width 24px
+          height 24px
+          background-image embedurl('../../../i/admin/skin/entrine/calendar.svg', 'utf8')
+          background-repeat no-repeat

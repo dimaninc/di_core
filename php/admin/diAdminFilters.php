@@ -52,23 +52,23 @@ class diAdminFilters
 
 	public static $dirAr = [
 	    'ru' => [
-            "ASC" => "По возрастанию",
-            "DESC" => "По убыванию",
+            'ASC' => 'По возрастанию',
+            'DESC' => 'По убыванию',
         ],
 
         'en' => [
-            "ASC" => "Ascending",
-            "DESC" => "Descending",
+            'ASC' => 'Ascending',
+            'DESC' => 'Descending',
         ],
 	];
 
 	public static $dateRangeAr = [
-		"d1" => "mday",
-		"m1" => "mon",
-		"y1" => "year",
-		"d2" => "mday",
-		"m2" => "mon",
-		"y2" => "year",
+		'd1' => 'mday',
+		'm1' => 'mon',
+		'y1' => 'year',
+		'd2' => 'mday',
+		'm2' => 'mon',
+		'y2' => 'year',
 	];
 
 	public static $lngStrings = [
@@ -108,18 +108,18 @@ class diAdminFilters
 	public $applied_date = false;
 	private $predefinedData = [];
 	public $data = [];
-	public $sortby = "";
-	public $dir = "";
-	public $default_sortby = "";
-	public $default_dir = "";
-	public $where = "";
+	public $sortby = '';
+	public $dir = '';
+	public $default_sortby = '';
+	public $default_dir = '';
+	public $where = '';
 	public $where_ar = [];
 	public $inputs_ar = [];
 	public $input_params_ar = [];
 	protected $inputPrefixes = [];
 	protected $inputSuffixes = [];
 	protected $inputResetButtons = [];
-	public $andor = "and";
+	public $andor = 'and';
 	public $static_mode = false;
 	public $static_inputs_ar = [];
 	public $values_ar = [];
@@ -131,11 +131,11 @@ class diAdminFilters
 	private $buttonsPrefix = null;
 	private $buttonsSuffix = null;
 
-	public function __construct($table, $sortby = "id", $dir = "ASC", $possible_sortby_ar = false)
+	public function __construct($table, $sortby = 'id', $dir = 'ASC', $possible_sortby_ar = false)
 	{
 		global $db;
 
-		if (gettype($table) == "object")
+		if (gettype($table) == 'object')
 		{
 			$this->AdminPage = $table;
 
@@ -566,7 +566,7 @@ EOF;
 		return <<<EOF
 <div class="buttons">
 {$opts["prefix"]}
-	<button type="submit" class="violet">{$this->L('form.submit.title')}</button>
+	<button type="submit" class="violet" data-purpose="apply">{$this->L('form.submit.title')}</button>
 	<button type="button" class="gray" data-purpose="reset">{$this->L('form.reset.title')}</button>
 {$opts["suffix"]}
 </div>
@@ -879,7 +879,7 @@ EOF;
 
 					$calendar_cfg_js = "months_to_show: 2, date1: 'admin_filter[{$field}][1]', date2: 'admin_filter[{$field}][2]', able_to_go_to_past: true, language: '{$this->language}'";
 
-					$s .= " <button type=button onclick=\"c_{$uid}.toggle();\">{$this->L('calendar')}</button>" .
+					$s .= " <button type=button onclick=\"c_{$uid}.toggle();\" class=\"calendar-toggle\">{$this->L('calendar')}</button>" .
 						"<script type=\"text/javascript\">var c_{$uid} = new diCalendar({instance_name: 'c_{$uid}', $calendar_cfg_js});</script>";
 					//
 

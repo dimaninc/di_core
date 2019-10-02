@@ -612,7 +612,7 @@ u
         @media screen and (max-width: 450px)
             position absolute
             z-index 102
-            top 30px
+            top 0
             left 50px
             right 101px
             margin-left 0
@@ -688,91 +688,10 @@ u
             .up, .down
                 display none
 
-button
-    font-family $classicFont
-    font-size 14px
-    font-weight normal
-    background-color white
-    color black
-    border 1px solid #B2B2B2
-    border-top-color black
-    border-left-color black
-    border-radius 8px
-    cursor pointer
-    outline none
-    align-self center
-    transition .3s
-    body[data-skin="entrine"] &
-        font-family $entrineFont
-    &:hover
-        background-color #A1DFFF
-    &.blue
-        background-color #0000CC
-    &.violet
-        background-color #9600DB
-    &.gray
-        background-color #848484
-    &.red
-        background-color red
-    &.blue
-    &.violet
-    &.gray
-    &.red
-        padding 7px 10px
-        color white
-        font-size 11px
-        font-weight bold
-        border 0
-        &:hover
-            background-color red
-
 .mce-tinymce
     button
         border-radius 0
 
-input[type="text"]
-input[type="email"]
-input[type="tel"]
-input[type="number"]
-input[type="password"]
-input[type="url"]
-textarea
-    font-family $classicFont
-    font-size 14px
-    font-weight normal
-    background-color white
-    color black
-    border 1px solid $classicColorInputBorder
-    padding 2px 5px
-    border-radius 4px
-    align-self center
-    body[data-skin="entrine"] &
-        font-family $entrineFont
-        border-radius 0
-        padding 5px
-        border-color $entrineColorInputBorder
-        @media screen and (max-width: 767px)
-            padding 5px
-
-select
-    font-family $classicFont
-    font-size 14px
-    align-self center
-    border-color $classicColorInputBorder
-    body[data-skin="entrine"] &
-        //padding 15px
-        border-color $entrineColorInputBorder
-        //@media screen and (max-width: 767px)
-        //    padding 5px
-
-textarea
-    padding-top 5px
-    padding-bottom 5px
-    align-self stretch
-    body[data-skin="entrine"] &
-        padding 15px
-        @media screen and (max-width: 767px)
-            padding 5px
 
 table.banners_stat td.sel, table.banners_stat th.sel
     background #ffd
@@ -810,133 +729,6 @@ table.banners_stat td.sel, table.banners_stat th.sel
                 > td
                     vertical-align top
 
-#btn-save
-    font-weight bold
-    body[data-skin="entrine"] &
-        font-weight normal
-
-.submit-block
-    display flex
-    justify-content center
-    flex-wrap wrap
-    border 1px solid #CFCFCF
-    margin 10px 20px
-    background-color #edf0f4
-    padding 10px 0
-    border-radius 8px
-    @media screen and (max-width: 767px)
-        margin-left 0
-        margin-right 0
-        border 0
-        border-radius 0
-        background none
-    body[data-skin="entrine"] &
-        justify-content flex-start
-        border 0
-        border-radius 0
-        background-color transparent
-        text-align left
-        margin-left 160px
-        @media screen and (max-width: 767px)
-            margin-left 12px
-    button
-        margin 0 10px 10px 10px
-        padding 5px 10px
-        cursor pointer
-        box-sizing border-box
-        transition .3s
-        > svg
-            path
-                transition .3s
-        @media screen and (max-width: 767px)
-            &:not(:last-of-type)
-                margin-right 0
-        &:hover
-            background-color #A1DFFF
-        body[data-skin="entrine"] &
-            display inline-flex
-            justify-content space-between
-            align-items center
-            width $entrineBaseWidth
-            height $entrineBaseHeight
-            text-transform uppercase
-            text-align left
-            padding-left 18px
-            border 3px solid $entrineColorBgDark
-            border-radius 0
-            color $entrineColorBgDark
-            margin 0 20px 20px 0
-            @media screen and (max-width: 767px)
-                margin 0 12px 12px 0
-                padding 6px
-                border-width 2px
-                width auto
-                height auto
-                font-size 12px
-                text-transform none
-            > svg
-                order 10
-                @media screen and (max-width: 767px)
-                    display none
-            &:last-child
-                margin-right 0
-            &:hover
-                background-color $entrineColorTextMenuSelected
-                border-color $entrineColorTextMenuSelected
-                color white
-                > svg
-                    path
-                        fill white
-            &[id]:hover
-                > svg
-                    path
-                        fill white
-            &[id="btn-save"]
-                border-color $entrineColorSave
-                > svg
-                    path
-                        fill $entrineColorSave
-                &:hover
-                    background-color $entrineColorSave
-            &[id="btn-cancel"]
-                border-color $entrineColorCancel
-                > svg
-                    path
-                        fill $entrineColorCancel
-                &:hover
-                    background-color $entrineColorCancel
-            &[id="btn-quick-save"]
-                border-color $entrineColorQuickSave
-                > svg
-                    path
-                        fill $entrineColorQuickSave
-                &:hover
-                    background-color $entrineColorQuickSave
-
-    .submit-status-line
-        font-size 11px
-        line-height @font-size
-        height @font-size
-        background #edf0f4
-        border-top 1px solid #CFCFCF
-        padding-top 5px
-        font-style italic
-        flex-basis 100%
-        text-align center
-        @media screen and (max-width: 767px)
-            padding-bottom 5px
-            border-bottom 1px solid #CFCFCF
-        body[data-skin="entrine"] &
-            background none
-            border-top 0
-            text-align left
-
-.save_frame
-    display none
-
-//.new_admin_block
-//    padding 0 0 20px 0
-
 .admin_help_link
     img
         border none
@@ -945,10 +737,6 @@ table.banners_stat td.sel, table.banners_stat th.sel
 
 .bg_eee
     background #eee
-
-.w_hover
-    &:hover
-        background #A1DFFF
 
 .list-control-panel
     display flex
@@ -1101,8 +889,6 @@ iframe
     background #fff
     button
         margin 5px 10px
-        &:hover
-            background #A1DFFF
 
 .notice
     background #dd7 !important
