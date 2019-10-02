@@ -10,6 +10,7 @@ use diCore\Admin\Submit;
 use diCore\Base\CMS;
 use diCore\Data\Config;
 use diCore\Helper\Slug;
+use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 
 class diModel implements \ArrayAccess
@@ -742,11 +743,12 @@ class diModel implements \ArrayAccess
 
 				if ($v)
 				{
-					$ar[$k . '_time'] = \diDateTime::format('H:i', $v);
-					$ar[$k . '_date'] = \diDateTime::format('d.m.Y', $v);
-                    $ar[$k . '_iso'] = \diDateTime::isoFormat($v);
-					$ar[$k . '_str'] = \diDateTime::format(static::getDateStrFormat(), $v);
-					$ar[$k . '_passed_by'] = \diDateTime::passedBy($v);
+				    $ar = extend($ar, ArrayHelper::mapAssoc(function($field, $value) use($k) {
+                        return [
+                            $k . '_' . $field,
+                            $value,
+                        ];
+                    }, static::getTemplateDateVars($v)));
 
 					$v = $ar[$k . '_date'];
 				}
@@ -777,6 +779,17 @@ class diModel implements \ArrayAccess
 
 		return $ar;
 	}
+
+	public static function getTemplateDateVars($v)
+    {
+        return [
+            'time' => \diDateTime::format('H:i', $v),
+            'date' => \diDateTime::format('d.m.Y', $v),
+            'iso' => \diDateTime::isoFormat($v),
+            'str' => \diDateTime::format(static::getDateStrFormat(), $v),
+            'passed_by' => \diDateTime::passedBy($v),
+        ];
+    }
 
 	public static function getDateStrFormat()
 	{
