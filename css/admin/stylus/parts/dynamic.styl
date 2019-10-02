@@ -1,16 +1,25 @@
 .dynamic-add
 	margin 10px 0
+	{$entrineSkin} &
+		margin 20px 0
 
 .dynamic-row
-	margin 0 0 5px 0
 	border 1px solid #aaa
 	padding 10px
 	border-radius 10px
-	display inline-block
-	width 97%
-	transition background-color .25s ease
-	body[data-skin="entrine"] &
+	//display inline-block
+	//width 97%
+	transition background-color .3s ease
+	{$entrineSkin} &
 		border-radius 0
+		border-width 3px
+		padding 20px
+		@media screen and (max-width: 767px)
+			padding 10px
+	+ .dynamic-row
+		margin-top 10px
+		{$entrineSkin} &
+			margin-top 20px
 	&:hover
 		background-color #ffe
 	&.ui-sortable-helper
@@ -33,13 +42,16 @@
 		padding 0
 		list-style none
 		> li
-			display inline-block
-			margin 5px 15px 5px 0
+			display inline-flex //inline-block
+			align-items center
+			margin 5px 0
+			+ li
+				margin-left 15px
+			> *
+				margin-left 5px
 			input:not([type="checkbox"]):not([type="radio"]):not([size])
 			textarea
 				width 300px
-			&:last-child
-				margin-right 0
 			&.wider
 				input:not([type="checkbox"]):not([type="radio"]):not([size])
 				textarea
@@ -53,5 +65,9 @@
 				input:not([type="checkbox"]):not([type="radio"]):not([size])
 				textarea
 					width 90%
+			&.pic-line
+				align-items flex-start
 			input:not([type="checkbox"]):not([type="radio"])[size],textarea[cols]
 				width auto
+			.existing-pic-holder
+				margin-bottom 0

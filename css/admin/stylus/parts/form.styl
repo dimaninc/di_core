@@ -257,7 +257,9 @@
     border-radius 8px
     font-size 16px
     position relative
-    margin-right 10px
+    //margin-right 10px
+    {$entrineSkin} &
+        border-radius 0
     input[type="file"]
         position absolute
         display block
@@ -278,8 +280,11 @@
     border-radius 8px 8px 0 0
     position relative
     margin-top 10px
-    margin-right 10px
+    //margin-right 10px
     margin-bottom 0
+    {$entrineSkin} &
+        border-radius 0
+        margin-top 20px
     > li
         display inline-block
         vertical-align top
@@ -293,9 +298,14 @@
     background rgba(251, 194, 73, .5)
     border-radius 0 0 8px 8px
     position relative
-    margin-right 10px
+    //margin-right 10px
     text-align center
     padding 10px
+    {$entrineSkin} &
+        border-radius 0
+    button
+        {$entrineSkin} &
+            width auto !important
 
 .diadminform-separator
     margin 10px 20px
@@ -377,11 +387,17 @@
     margin-bottom 10px
     border-radius 8px
     box-sizing border-box
+    {$entrineSkin} &
+        border-radius 0
+    + .file-input-wrapper
+        margin-left 10px
+        {$entrineSkin} &
+            margin-left 20px
     .container
         max-width 100%
         display inline-block
         position relative
-        box-shadow 0 0 6px 0 rgba(0,0,0,.6)
+        box-shadow 0 0 6px 0 alpha(black, .6)
         overflow hidden
         &:not(.no-zoom-feature)
             @media screen and (min-width: 768px)
@@ -412,6 +428,8 @@
             padding 5px 10px
             border-radius 5px 5px 0 0
             border-bottom 1px dotted #999
+            {$entrineSkin} &
+                border-radius 0
     .info
         margin 0
         padding 5px 10px
@@ -420,6 +438,8 @@
             border-bottom 1px dotted #999
         &:last-child
             border-radius 0 0 5px 5px
+            {$entrineSkin} &
+                border-radius 0
         .rotate-block
         .watermark-block
             display inline-block

@@ -94,7 +94,7 @@ class PhotosOfAlbum
                 '<li>Выделить: {TOP}</li>' .
 				'<li>Порядковый номер: {ORDER_NUM}</li>' .
 				'</ul><ul class="line">' .
-				'<li>Изображение: {PIC}</li>' .
+				'<li class="pic-line">Изображение: {PIC}</li>' .
 				'</ul>',
 		];
 	}

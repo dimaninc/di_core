@@ -2387,7 +2387,9 @@ body[data-skin="entrine"] .time-sep {
   border-radius: 8px;
   font-size: 16px;
   position: relative;
-  margin-right: 10px;
+}
+body[data-skin="entrine"] .admin-form-uploading-area {
+  border-radius: 0;
 }
 .admin-form-uploading-area input[type="file"] {
   position: absolute;
@@ -2412,8 +2414,11 @@ body[data-skin="entrine"] .time-sep {
   border-radius: 8px 8px 0 0;
   position: relative;
   margin-top: 10px;
-  margin-right: 10px;
   margin-bottom: 0;
+}
+body[data-skin="entrine"] .admin-form-uploading-area-preview {
+  border-radius: 0;
+  margin-top: 20px;
 }
 .admin-form-uploading-area-preview > li {
   display: inline-block;
@@ -2429,9 +2434,14 @@ body[data-skin="entrine"] .time-sep {
   background: rgba(251,194,73,0.5);
   border-radius: 0 0 8px 8px;
   position: relative;
-  margin-right: 10px;
   text-align: center;
   padding: 10px;
+}
+body[data-skin="entrine"] .admin-form-uploading-area-submit {
+  border-radius: 0;
+}
+body[data-skin="entrine"] .admin-form-uploading-area-submit button {
+  width: auto !important;
 }
 .diadminform-separator {
   margin: 10px 20px;
@@ -2565,6 +2575,15 @@ body[data-skin="entrine"] .diadminform_tabs > ul li > a.selected {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
+body[data-skin="entrine"] .existing-pic-holder {
+  border-radius: 0;
+}
+.existing-pic-holder + .file-input-wrapper {
+  margin-left: 10px;
+}
+body[data-skin="entrine"] .existing-pic-holder + .file-input-wrapper {
+  margin-left: 20px;
+}
 .existing-pic-holder .container {
   max-width: 100%;
   display: inline-block;
@@ -2612,6 +2631,9 @@ body[data-skin="entrine"] .diadminform_tabs > ul li > a.selected {
   border-radius: 5px 5px 0 0;
   border-bottom: 1px dotted #999;
 }
+body[data-skin="entrine"] .existing-pic-holder a.link {
+  border-radius: 0;
+}
 .existing-pic-holder .info {
   margin: 0;
   padding: 5px 10px;
@@ -2622,6 +2644,9 @@ body[data-skin="entrine"] .diadminform_tabs > ul li > a.selected {
 }
 .existing-pic-holder .info:last-child {
   border-radius: 0 0 5px 5px;
+}
+body[data-skin="entrine"] .existing-pic-holder .info:last-child {
+  border-radius: 0;
 }
 .existing-pic-holder .info .rotate-block,
 .existing-pic-holder .info .watermark-block {
@@ -3163,21 +3188,34 @@ table.actions-log tr:last-of-type td {
 .dynamic-add {
   margin: 10px 0;
 }
+body[data-skin="entrine"] .dynamic-add {
+  margin: 20px 0;
+}
 .dynamic-row {
-  margin: 0 0 5px 0;
   border: 1px solid #aaa;
   padding: 10px;
   border-radius: 10px;
-  display: inline-block;
-  width: 97%;
-  -webkit-transition: background-color 0.25s ease;
-  -moz-transition: background-color 0.25s ease;
-  -o-transition: background-color 0.25s ease;
-  -ms-transition: background-color 0.25s ease;
-  transition: background-color 0.25s ease;
+  -webkit-transition: background-color 0.3s ease;
+  -moz-transition: background-color 0.3s ease;
+  -o-transition: background-color 0.3s ease;
+  -ms-transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease;
 }
 body[data-skin="entrine"] .dynamic-row {
   border-radius: 0;
+  border-width: 3px;
+  padding: 20px;
+}
+@media screen and (max-width: 767px) {
+  body[data-skin="entrine"] .dynamic-row {
+    padding: 10px;
+  }
+}
+.dynamic-row + .dynamic-row {
+  margin-top: 10px;
+}
+body[data-skin="entrine"] .dynamic-row + .dynamic-row {
+  margin-top: 20px;
 }
 .dynamic-row:hover {
   background-color: #ffe;
@@ -3213,15 +3251,29 @@ body[data-skin="entrine"] .dynamic-row {
   list-style: none;
 }
 .dynamic-row ul.line > li {
-  display: inline-block;
-  margin: 5px 15px 5px 0;
+  display: -webkit-inline-box;
+  display: -moz-inline-box;
+  display: -webkit-inline-flex;
+  display: -ms-inline-flexbox;
+  display: inline-box;
+  display: inline-flex;
+  -webkit-box-align: center;
+  -moz-box-align: center;
+  -o-box-align: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  margin: 5px 0;
+}
+.dynamic-row ul.line > li + li {
+  margin-left: 15px;
+}
+.dynamic-row ul.line > li > * {
+  margin-left: 5px;
 }
 .dynamic-row ul.line > li input:not([type="checkbox"]):not([type="radio"]):not([size]),
 .dynamic-row ul.line > li textarea {
   width: 300px;
-}
-.dynamic-row ul.line > li:last-child {
-  margin-right: 0;
 }
 .dynamic-row ul.line > li.wider input:not([type="checkbox"]):not([type="radio"]):not([size]),
 .dynamic-row ul.line > li.wider textarea {
@@ -3238,9 +3290,20 @@ body[data-skin="entrine"] .dynamic-row {
 .dynamic-row ul.line > li.full-width textarea {
   width: 90%;
 }
+.dynamic-row ul.line > li.pic-line {
+  -webkit-box-align: start;
+  -moz-box-align: start;
+  -o-box-align: start;
+  -ms-flex-align: start;
+  -webkit-align-items: flex-start;
+  align-items: flex-start;
+}
 .dynamic-row ul.line > li input:not([type="checkbox"]):not([type="radio"])[size],
 .dynamic-row ul.line > li textarea[cols] {
   width: auto;
+}
+.dynamic-row ul.line > li .existing-pic-holder {
+  margin-bottom: 0;
 }
 ul.admin-grid {
   list-style: none;
