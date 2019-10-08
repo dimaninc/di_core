@@ -133,12 +133,40 @@ class %s extends \diCore\Database\Tool\Migration
 EOF;
 	}
 
+    protected function getLocalizationTemplate()
+    {
+        return <<<EOF
+<?php
+class %s extends \diCore\Database\Tool\LocalizationMigration
+{
+	public static \$idx = "%s";
+	public static \$name = "%s";
+
+	protected \$names = [
+		'',
+		'',
+	];
+
+	public function up()
+	{
+		// migration code here
+	}
+}
+EOF;
+    }
+
 	protected function getTemplate($idx, $name, $folder)
 	{
-		return $this->getSimpleTemplate();
+        switch ($folder) {
+            case 'localization':
+                return $this->getLocalizationTemplate();
+
+            default:
+                return $this->getSimpleTemplate();
+        }
 	}
 
-	public function createMigration($idx, $name, $folder = "")
+	public function createMigration($idx, $name, $folder = '')
 	{
 		$contents = $this->getTemplate($idx, $name, $folder);
 
@@ -163,10 +191,10 @@ EOF;
 
 	public static function getMigrationFileName($idx, $name)
 	{
-		$s = $idx . "_" . $name;
+		$s = $idx . '_' . $name;
 
-		$s = str_replace(array(" ", "/", "\\"), "-", $s);
-		$s = preg_replace("/\&\#?[a-z0-9]+\;/", "", $s);
+        $s = str_replace([" ", "/", "\\"], "-", $s);
+        $s = preg_replace("/\&\#?[a-z0-9]+\;/", "", $s);
 		$s = transliterate_rus_to_eng($s);
 		$s = preg_replace('/[^a-z0-9_-]/i', '', $s);
 		$s = preg_replace('/-{2,}/', "-", $s);
@@ -215,7 +243,10 @@ EOF;
 
 	private function initTables()
 	{
-		$res = $this->getDb()->q("CREATE TABLE IF NOT EXISTS `".static::logTable."`(
+	    $charset = Config::getDbEncoding();
+	    $collation = Config::getDbCollation();
+
+        $res = $this->getDb()->q("CREATE TABLE IF NOT EXISTS `" . static::logTable . "`(
 			id bigint not null auto_increment,
 			admin_id bigint,
 			idx varchar(100),
@@ -224,10 +255,9 @@ EOF;
 			date timestamp not null default CURRENT_TIMESTAMP,
 			index main_idx(idx),
 			primary key(id)
-		) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci");
+		) ENGINE=InnoDB DEFAULT CHARSET={$charset} COLLATE={$collation}");
 
-		if (!$res)
-		{
+		if (!$res) {
 			throw new Exception("Unable to init Table: " . $this->getDb()->getLogStr());
 		}
 

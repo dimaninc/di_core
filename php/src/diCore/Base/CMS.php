@@ -2139,6 +2139,9 @@ abstract class CMS
 		}
 	}
 
+    /**
+     * @return \diCurrentCMS
+     */
 	public function assign_ct_ar()
 	{
 		foreach ($this->getCleanTitlesAr() as $t => $ct)
