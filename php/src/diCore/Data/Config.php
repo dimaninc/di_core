@@ -20,7 +20,7 @@ use diCore\Helper\StringHelper;
 class Config
 {
 	const siteTitle = null;
-	const apiQueryPrefix = null;
+	const apiQueryPrefix = '/api/';
 	const folderForAssets = '';
 	const folderForUserAssets = 'uploads/';
 	const mainDomain = null;
