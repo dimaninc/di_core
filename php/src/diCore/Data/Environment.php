@@ -23,12 +23,14 @@ class Environment
 	const useModuleCache = null;
 	const initiating = null;
 
+    const dbEncoding = null;
+    const dbCollation = null;
+
 	private static $class;
 
 	private static function getClass()
 	{
-		if (!self::$class)
-		{
+		if (!self::$class) {
 			self::$class = \diLib::getChildClass(self::class);
 		}
 
@@ -71,4 +73,20 @@ class Environment
 
 		return $class::initiating;
 	}
+
+    final public static function getDbEncoding()
+    {
+        /** @var Environment $class */
+        $class = self::getClass();
+
+        return $class::dbEncoding;
+    }
+
+    final public static function getDbCollation()
+    {
+        /** @var Environment $class */
+        $class = self::getClass();
+
+        return $class::dbCollation;
+    }
 }

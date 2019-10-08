@@ -211,19 +211,18 @@ abstract class diDB
 
 	protected function getCreateDatabaseQuery()
 	{
-		return "CREATE DATABASE IF NOT EXISTS `$this->dbname` /*!40100 COLLATE '" . strtolower(DIENCODING) . "_general_ci' */";
+		return "CREATE DATABASE IF NOT EXISTS `$this->dbname` /*!40100 COLLATE '" . Config::getDbCollation() . "' */";
 	}
 
 	protected function initCharset()
 	{
-		if (!static::CHARSET_INIT_NEEDED)
-		{
+		if (!static::CHARSET_INIT_NEEDED) {
 			return $this;
 		}
 
-		$enc = defined("DIENCODING") ? DIENCODING : "UTF8";
+		$enc = Config::getDbEncoding() ?: 'UTF8';
 
-		$this->q("SET NAMES " . $enc);
+		$this->q('SET NAMES ' . $enc . ' COLLATE' . Config::getDbCollation());
 		$this->set_charset($enc);
 
 		return $this;

@@ -31,6 +31,9 @@ class Config
     const adminSkin = Skin::classic;
 	const initiating = false; // if true, then DB is auto-created and admin works w/o password
 
+    const dbEncoding = 'utf8';
+    const dbCollation = 'utf8_general_ci';
+
     protected static $location = \diLib::LOCATION_VENDOR_BEYOND;
 	protected static $useModuleCache = false;
 
@@ -168,7 +171,23 @@ class Config
 		return $val;
 	}
 
-	final public static function getSourcesFolder()
+    final public static function getDbEncoding()
+    {
+        /** @var Config $class */
+        $class = self::getClass();
+
+        return Environment::getDbEncoding() ?: $class::dbEncoding;
+    }
+
+    final public static function getDbCollation()
+    {
+        /** @var Config $class */
+        $class = self::getClass();
+
+        return Environment::getDbCollation() ?: $class::dbCollation;
+    }
+
+    final public static function getSourcesFolder()
 	{
 		/** @var Config $class */
 		$class = self::getClass();

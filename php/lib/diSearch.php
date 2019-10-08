@@ -22,6 +22,8 @@
         * $_di_min_word_length variable added
 */
 
+use diCore\Data\Config;
+
 $disearch_min_word_length = 3;
 
 $disearch_endings_ar = array(
@@ -549,15 +551,16 @@ class diDBSearch extends diSearch
 
     if (!$rs || !$this->getDb()->count($rs))
     {
-      $e = strtolower(DIENCODING);
+        $charset = Config::getDbEncoding();
+        $collation = Config::getDbCollation();
 
 	    $this->getDb()->q("CREATE TABLE IF NOT EXISTS $this->index_table(
                id bigint not null,
-               primary_content text character set $e collate {$e}_general_ci,
-               content text character set $e collate {$e}_general_ci,
+               primary_content text character set $charset collate {$collation},
+               content text character set $charset collate {$collation},
                fulltext(content),
                primary key(id)
-              ) ENGINE=MyISAM CHARSET={$e} COLLATE={$e}_general_ci;");
+              ) ENGINE=MyISAM CHARSET={$charset} COLLATE={$collation};");
     }
   }
 

@@ -232,7 +232,7 @@ class Db extends \diBaseAdminController
 	public function createAction()
 	{
 		$table_case_sensitivity = false;
-		$table_case_sensitivity_str = $table_case_sensitivity ? "cs" : "ci";
+		//$table_case_sensitivity_str = $table_case_sensitivity ? "cs" : "ci";
 
 		$compress = \diRequest::get("compress", 0);
 		$drops = \diRequest::get("drops", 0);
@@ -437,8 +437,8 @@ EOF;
 					}
 				}
 
-				$sql .= "\n)\nENGINE=$engine\nDEFAULT CHARSET=" . strtolower(DIENCODING) .
-					"\nCOLLATE=" . strtolower(DIENCODING) . "_general_{$table_case_sensitivity_str};\n\n";
+				$sql .= "\n)\nENGINE=$engine\nDEFAULT CHARSET=" . Config::getDbEncoding() .
+					"\nCOLLATE=" . Config::getDbCollation() . ";\n\n";
 			}
 
 			if ($data)
@@ -652,7 +652,7 @@ EOF;
 					}
 					elseif (substr($query, -23) == "DEFAULT CHARSET=latin1;")
 					{
-						$query = substr($query, 0, -7) . DIENCODING . ";";
+						$query = substr($query, 0, -7) . Config::getDbEncoding() . ";";
 					}
 
 					$this->getDb()->resetLog();

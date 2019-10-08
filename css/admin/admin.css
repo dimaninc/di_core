@@ -230,6 +230,28 @@ body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button[id]
 body[data-skin="entrine"] .submit-block button[id]:hover > svg path {
   fill: #fff;
 }
+body[data-skin="entrine"] .filter-block button[id="btn-save"]:hover,
+body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button[id="btn-save"]:hover,
+body[data-skin="entrine"] .submit-block button[id="btn-save"]:hover,
+body[data-skin="entrine"] .filter-block button[id="btn-cancel"]:hover,
+body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button[id="btn-cancel"]:hover,
+body[data-skin="entrine"] .submit-block button[id="btn-cancel"]:hover,
+body[data-skin="entrine"] .filter-block button[id="btn-quick-save"]:hover,
+body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button[id="btn-quick-save"]:hover,
+body[data-skin="entrine"] .submit-block button[id="btn-quick-save"]:hover {
+  color: #fff;
+}
+body[data-skin="entrine"] .filter-block button[id="btn-save"]:hover > svg path,
+body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button[id="btn-save"]:hover > svg path,
+body[data-skin="entrine"] .submit-block button[id="btn-save"]:hover > svg path,
+body[data-skin="entrine"] .filter-block button[id="btn-cancel"]:hover > svg path,
+body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button[id="btn-cancel"]:hover > svg path,
+body[data-skin="entrine"] .submit-block button[id="btn-cancel"]:hover > svg path,
+body[data-skin="entrine"] .filter-block button[id="btn-quick-save"]:hover > svg path,
+body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button[id="btn-quick-save"]:hover > svg path,
+body[data-skin="entrine"] .submit-block button[id="btn-quick-save"]:hover > svg path {
+  fill: #fff;
+}
 body[data-skin="entrine"] .filter-block button[id="btn-save"],
 body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button[id="btn-save"],
 body[data-skin="entrine"] .submit-block button[id="btn-save"] {
@@ -2758,12 +2780,6 @@ body[data-skin="entrine"] .submit-block {
   body[data-skin="entrine"] .submit-block {
     margin-left: 12px;
   }
-}
-body[data-skin="entrine"] .submit-block button:hover {
-  color: #fff;
-}
-body[data-skin="entrine"] .submit-block button:hover > svg path {
-  fill: #fff;
 }
 .submit-block .submit-status-line {
   font-size: 11px;

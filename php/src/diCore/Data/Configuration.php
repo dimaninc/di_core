@@ -478,7 +478,8 @@ class Configuration
 
 	private function createTable()
 	{
-		$e = strtolower(DIENCODING);
+		$charset = Config::getDbEncoding();
+		$collation = Config::getDbCollation();
 
 		$this->getDB()->q("CREATE TABLE IF NOT EXISTS `{$this->tableName}`(
 			`id` int not null auto_increment,
@@ -486,7 +487,7 @@ class Configuration
 			`{$this->valueField}` text,
 			unique key `idx`(`{$this->nameField}`),
 			primary key(`id`)
-		) ENGINE=InnoDB DEFAULT CHARSET={$e} COLLATE={$e}_general_ci;");
+		) ENGINE=InnoDB DEFAULT CHARSET={$charset} COLLATE={$collation};");
 
 		return $this;
 	}
