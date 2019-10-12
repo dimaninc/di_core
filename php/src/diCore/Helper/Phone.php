@@ -16,32 +16,48 @@ class Phone
 
 	public static function isValid($phone)
 	{
-		return preg_match('/^\d{10,15}$/', $phone);
+		return preg_match('/^\d{9,15}$/', $phone);
 	}
 
 	public static function isRussian($phone)
+    {
+        return self::isRussianAndMore($phone) && !self::isKazakh($phone) && !self::isAbkhaz($phone);
+    }
+
+    public static function isRussianAndMore($phone)
     {
         $cleanPhone = Phone::clean($phone);
 
         return $cleanPhone && substr($cleanPhone, 0, 1) === '7' && strlen($cleanPhone) == 11;
     }
 
+    public static function isKazakh($phone)
+    {
+        $cleanPhone = Phone::clean($phone);
+
+        return self::isRussianAndMore($phone) && in_array(substr($cleanPhone, 1, 1), [6, 7]);
+    }
+
+    public static function isAbkhaz($phone)
+    {
+        $cleanPhone = Phone::clean($phone);
+
+        return self::isRussianAndMore($phone) && in_array(substr($cleanPhone, 1, 3), [940]);
+    }
+
 	public static function clean($phone, $prefix = '')
 	{
 		$phone = preg_replace('/[^\d]+/', '', $phone);
 
-		if (substr($phone, 0, 2) == '00')
-		{
+		if (substr($phone, 0, 2) == '00') {
 			$phone = substr($phone, 2);
 		}
 
-		if (strlen($phone) == 10 && static::isValid($phone))
-		{
+		if (strlen($phone) == 10 && static::isValid($phone)) {
 			$phone = '7' . $phone; // default Russian code
 		}
 
-		if (strlen($phone) == 11 && static::isValid($phone) && substr($phone, 0, 1) == '8')
-		{
+		if (strlen($phone) == 11 && static::isValid($phone) && substr($phone, 0, 1) == '8') {
 			$phone = '7' . substr($phone, 1); // 8 -> default Russian code
 		}
 
