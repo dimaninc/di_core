@@ -411,7 +411,7 @@ class diModel implements \ArrayAccess
 
 	public function hasSlug()
 	{
-		return $this->exists($this->getSlugFieldName());
+		return $this->has($this->getSlugFieldName());
 	}
 
 	public function killSlug()

@@ -52,8 +52,7 @@ class Model extends \diModel
 
 	public function prepareForSave()
 	{
-		if (!$this->hasSlug())
-		{
+		if (!$this->hasSlug()) {
 			$this->generateSlug();
 		}
 
@@ -62,13 +61,11 @@ class Model extends \diModel
 
 	public function validate()
 	{
-		if (!$this->getTitle())
-		{
+		if (!$this->getTitle()) {
 			$this->addValidationError('Title required');
 		}
 
-		if (!$this->getSlug())
-		{
+		if (!$this->getSlug()) {
 			$this->addValidationError('Slug required');
 		}
 

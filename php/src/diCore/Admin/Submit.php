@@ -90,8 +90,7 @@ class Submit
 
 	public function __construct($table, $id = 0)
 	{
-		if (gettype($table) == 'object')
-		{
+		if (gettype($table) == 'object') {
 			$this->AdminPage = $table;
 
 			$this->table = $this->AdminPage->getTable();
@@ -103,9 +102,7 @@ class Submit
 			$this->_ff = $this->AdminPage->getFormFieldNames();
 			$this->_lf = $this->AdminPage->getLocalFieldNames();
 			$this->_af = $this->AdminPage->getAllFieldNames();
-		}
-		else //back compatibility
-		{
+		} else { //back compatibility
 			$this->table = $table;
 
 			$this->_form_fields = isset($GLOBALS[$this->table . '_form_fields']) ? $GLOBALS[$this->table . '_form_fields'] : [];
@@ -162,17 +159,13 @@ class Submit
 			'path' => $this->table,
 		];
 
-		if ($this->page)
-		{
+		if ($this->page) {
 			$this->redirect_href_ar['page'] = $this->page;
 		}
 
-		if (!empty($_POST['make_preview']))
-		{
-			foreach ($_POST['make_preview'] as $k => $_tmp)
-			{
-				if ($this->isFlag($k, 'preview'))
-				{
+		if (!empty($_POST['make_preview'])) {
+			foreach ($_POST['make_preview'] as $k => $_tmp) {
+				if ($this->isFlag($k, 'preview')) {
 					$this->redirect_href_ar['path'] = $this->table . '_form';
 					$this->redirect_href_ar['id'] = $this->getId();
 					$this->redirect_href_ar["make_preview[$k]"] = 1;
@@ -183,15 +176,13 @@ class Submit
 
 	private function setSlugFieldName($field = null)
 	{
-		if ($field)
-		{
+		if ($field) {
 			$this->slugFieldName = $field;
 
 			return $this;
 		}
 
-		if ($this->_af && in_array('slug', $this->_af))
-		{
+		if ($this->_af && in_array('slug', $this->_af)) {
 			$this->slugFieldName = 'slug';
 		}
 
@@ -226,8 +217,7 @@ class Submit
 	 */
 	public static function getPreviewSuffix($type)
 	{
-		switch ($type)
-		{
+		switch ($type) {
 			case self::IMAGE_TYPE_MAIN:
 				return '';
 
@@ -253,14 +243,10 @@ class Submit
 
 	public static function parseImageType($name)
 	{
-		if (isInteger($name))
-		{
+		if (isInteger($name)) {
 			return $name;
-		}
-		else
-		{
-			switch ($name)
-			{
+		} else {
+			switch ($name) {
 				case 'orig':
 					return self::IMAGE_TYPE_ORIG;
 
@@ -280,8 +266,7 @@ class Submit
 	function redirect()
 	{
 		$params_ar = [];
-		foreach ($this->redirect_href_ar as $k => $v)
-		{
+		foreach ($this->redirect_href_ar as $k => $v) {
 			$params_ar[] = "$k=$v";
 		}
 
@@ -305,16 +290,14 @@ class Submit
 
 	public function isSubmit()
 	{
-		foreach ($this->_form_fields as $f => $v)
-		{
+		foreach ($this->_form_fields as $f => $v) {
 			if (
 				!isset($_POST[$f]) &&
 				!isset($_POST[$f . Form::NEW_FIELD_SUFFIX]) &&
 				!isset($_FILES[$f]) &&
 				!in_array($v['type'], ['checkbox', 'checkboxes', 'dynamic', 'dynamic_pics', 'dynamic_files', 'separator']) &&
 				!$this->isFlag($f, 'virtual')
-			)
-			{
+			) {
 				//echo $f;
 
 				return false;
@@ -331,13 +314,11 @@ class Submit
 	 */
 	public function processData($field, $callback)
 	{
-		if (!is_array($field))
-		{
+		if (!is_array($field)) {
             $field = [$field];
         }
 
-        foreach ($field as $f)
-		{
+        foreach ($field as $f) {
 			$this->setData($f, $callback($this->getData($f), $f));
 		}
 
@@ -375,15 +356,12 @@ class Submit
 
 	public function gatherData()
 	{
-		foreach ($this->_form_fields as $f => $v)
-		{
-			if (!isset($v['default']))
-			{
+		foreach ($this->_form_fields as $f => $v) {
+			if (!isset($v['default'])) {
 				$v['default'] = '';
 			}
 
-			switch ($v['type'])
-			{
+			switch ($v['type']) {
 				case 'password':
 					$this
 						->setData($f, \diRequest::post($f, $v['default'], 'string'))
@@ -429,51 +407,41 @@ class Submit
 		}
 
         // new fields
-		foreach ($this->_ff as $f)
-		{
-			if (!empty($_POST[$f . Form::NEW_FIELD_SUFFIX]))
-			{
+		foreach ($this->_ff as $f) {
+			if (!empty($_POST[$f . Form::NEW_FIELD_SUFFIX])) {
 				$this->setData($f, \diRequest::post($f . Form::NEW_FIELD_SUFFIX));
 			}
 		}
 
         // local fields
-		foreach ($this->_local_fields as $f => $v)
-		{
-			if (!$this->getData($f))
-			{
+		foreach ($this->_local_fields as $f => $v) {
+			if (!$this->getData($f)) {
 				$this->setData($f, $v['default']);
 			}
 		}
 
 		// adjusting fields type
-		foreach ($this->_all_fields as $f => $v)
-		{
-			if ($this->isFlag($f, 'virtual') || in_array($v['type'], ['separator']))
-			{
+		foreach ($this->_all_fields as $f => $v) {
+			if ($this->isFlag($f, 'virtual') || in_array($v['type'], ['separator'])) {
 				continue;
 			}
 
-			switch ($v['type'])
-			{
+			switch ($v['type']) {
 				case 'order_num':
 					$direction = isset($v['direction']) ? $v['direction'] : 1;
 					$queryEnding = isset($v['queryEnding']) ? $v['queryEnding'] : '';
 					$force = !empty($v['force']);
 
-					if (is_callable($queryEnding))
-					{
+					if (is_callable($queryEnding)) {
 						$queryEnding = $queryEnding($this);
 					}
 
-					if (!$queryEnding)
-					{
+					if (!$queryEnding) {
 						$model = \diModel::createForTableNoStrict($this->getTable())->initFromRequest();
 
 						$qAr = $model->getQueryArForMove();
 
-						if ($qAr)
-						{
+						if ($qAr) {
 							$queryEnding = 'WHERE ' . join(' AND ', $qAr);
 						}
 					}
@@ -523,14 +491,11 @@ class Submit
 					break;
 
 				case 'password':
-					if ($this->getData($f) && $this->getData($f) == $this->getData($f . '2'))
-					{
+					if ($this->getData($f) && $this->getData($f) == $this->getData($f . '2')) {
 						$this->processData($f, function($v) {
 							return md5($v);
 						});
-					}
-					else
-					{
+					} else {
 						$this->setData($f, $this->getModel()->getOrigData($f) ?: '');
 					}
 					break;
@@ -544,8 +509,7 @@ class Submit
 					break;
 
 				case 'enum':
-					if (!in_array($this->getData($f), $v['values']))
-					{
+					if (!in_array($this->getData($f), $v['values'])) {
 						$this->setData($f, $v['default']);
 					}
 					break;
@@ -631,12 +595,9 @@ class Submit
 	{
 		$opts = $this->getOptionsFor($field);
 
-		if ($opts && isset($opts['watermarks']))
-		{
-			foreach ($opts['watermarks'] as $o)
-			{
-				if (isset($o['type']) && $o['type'] == $type)
-				{
+		if ($opts && isset($opts['watermarks'])) {
+			foreach ($opts['watermarks'] as $o) {
+				if (isset($o['type']) && $o['type'] == $type) {
 					return $o;
 				}
 			}
@@ -655,12 +616,9 @@ class Submit
 			? (array)$this->_all_fields[$field]
 			: [];
 
-		if (is_null($property))
-		{
+		if (is_null($property)) {
 			return $o;
-		}
-		else
-		{
+		} else {
 			return isset($o[$property]) ? $o[$property] : null;
 		}
 	}
@@ -671,12 +629,9 @@ class Submit
 			? (array)$this->_all_fields[$field]['options']
 			: [];
 
-		if (is_null($option))
-		{
+		if (is_null($option)) {
 			return $o;
-		}
-		else
-		{
+		} else {
 			return isset($o[$option]) ? $o[$option] : null;
 		}
 	}
@@ -689,16 +644,11 @@ class Submit
 
 	public function isFlag($field, $flag)
 	{
-		if (is_string($field) && isset($this->_all_fields[$field]['flags']))
-		{
+		if (is_string($field) && isset($this->_all_fields[$field]['flags'])) {
 			$f_ar = $this->_all_fields[$field]['flags'];
-		}
-		elseif (is_array($field) && isset($field['flags']))
-		{
+		} elseif (is_array($field) && isset($field['flags'])) {
 			$f_ar = $field['flags'];
-		}
-		else
-		{
+		} else {
 			return false;
 		}
 
