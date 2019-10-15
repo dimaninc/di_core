@@ -451,7 +451,13 @@ class diLib
 		    self::$location = self::LOCATION_VENDOR_HTDOCS;
         }
 
-        if (self::$location === self::LOCATION_SUBMODULE_HTDOCS && isset($marker)) {
+        if (
+            in_array(self::$location, [
+                self::LOCATION_SUBMODULE_HTDOCS,
+                self::LOCATION_VENDOR_HTDOCS,
+            ]) &&
+            isset($marker)
+        ) {
             $file = str_replace('\\', '/', __FILE__);
             $marker = str_replace('\\', '/', $marker);
 
