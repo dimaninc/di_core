@@ -222,7 +222,7 @@ abstract class diDB
 
 		$enc = Config::getDbEncoding() ?: 'UTF8';
 
-		$this->q('SET NAMES ' . $enc . ' COLLATE' . Config::getDbCollation());
+		$this->q('SET NAMES ' . $enc . ' COLLATE ' . Config::getDbCollation());
 		$this->set_charset($enc);
 
 		return $this;
