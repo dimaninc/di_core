@@ -15,8 +15,8 @@ class Localization extends \diCore\Admin\BasePage
     protected $options = [
         'filters' => [
             'defaultSorter' => [
-                'sortBy' => 'id',
-                'dir' => 'DESC',
+                'sortBy' => 'name',
+                'dir' => 'ASC',
             ],
             'buttonOptions' => [
                 'suffix' => '<button type="button" name="export" class="blue">Экспорт</button>',

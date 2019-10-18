@@ -402,6 +402,16 @@ abstract class CMS
 		}
 	}
 
+	public function getContentTitlesAr()
+    {
+        return ArrayHelper::mapAssoc(function($id, Model $content) {
+            return [
+                $content->getType(),
+                $content->localized('title'),
+            ];
+        }, $this->getCachedContentCollection());
+    }
+
 	public static function getEnvironment()
 	{
 		$domain = \diRequest::domain() ?: Config::getMainDomain();
