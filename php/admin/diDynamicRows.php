@@ -652,10 +652,16 @@ class diDynamicRows
       "rows" => 10,
     ), $attributes);
 
+    if (!empty($this->info_ar[$this->field]["fields"][$this->current_field]['placeholder'])) {
+        $attributes['placeholder'] = $this->info_ar[$this->field]["fields"][$this->current_field]['placeholder'];
+    }
+
     $ar = array();
     foreach ($attributes as $k => $v)
     {
-      $ar[] = "$k=\"$v\"";
+        if ($v !== null) {
+            $ar[] = "$k=\"$v\"";
+        }
     }
 
     $this->inputs[$field] = !$this->static_mode
@@ -1143,6 +1149,7 @@ EOF;
 
 		$f = remove_ending_slash(\diCore\Data\Config::getPublicFolder()) . $fullName;
 		$ext = strtoupper(get_file_ext($fullName));
+		$imgWrapperNeeded = false;
 
 		if (is_file($f))
 		{
@@ -1163,6 +1170,8 @@ EOF;
 				list($ff_w, $ff_h) = diSwiffy::getDimensions($f);
 
 				$imgTag = diSwiffy::getHtml($fullName, $ff_w, $ff_h);
+
+                $imgWrapperNeeded = true;
 			}
 			elseif (in_array($ext, ["MP4", "M4V", "OGV", "WEBM", "AVI"]))
 			{
@@ -1186,6 +1195,8 @@ EOF;
 				elseif ($ff_t)
 				{
 					$imgTag = "<img src=\"$httpName\" width=\"$ff_w\" height=\"$ff_h\" alt=\"$field\" />";
+
+                    $imgWrapperNeeded = true;
 				}
 			}
 
@@ -1196,7 +1207,7 @@ EOF;
 				\diDateTime::simpleFormat(filemtime($f)),
 			]));
 
-			if ($imgTag)
+			if ($imgTag && $imgWrapperNeeded)
 			{
 				$additionalClassName = $previewWithText ? "text" : "embed";
 
