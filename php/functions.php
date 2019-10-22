@@ -1148,7 +1148,7 @@ function ee($s)
 
 function lc_all_but_first_letters($s, $only_sentence_uc = false)
 {
-    $space_ar = array(" ", "\t", "\n", "\r");
+    $space_ar = array(" ", "\t", "\n", "\r", '-', '+');
     $sentence_end_ar = array(false, ".", ",", "?", "!");
     $word_end_ar = array_merge($space_ar, $sentence_end_ar);
 
