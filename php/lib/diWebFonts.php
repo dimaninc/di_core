@@ -26,6 +26,14 @@ class diWebFonts
 		'Verdana' => 'verdana.ttf',
 	];
 
+	public static $families = [
+        'Arial' => 'Helvetica, sans-serif',
+        'Georgia' => 'serif',
+        'Tahoma' => 'Geneva, sans-serif',
+        'Times New Roman' => 'Times, serif',
+        'Verdana' => 'Geneva, sans-serif',
+    ];
+
 	public static function exists($fontTitle)
 	{
 		return isset(self::$files[$fontTitle]);
@@ -37,4 +45,16 @@ class diWebFonts
 			? self::FOLDER . self::$files[$fontTitle]
 			: null;
 	}
+
+	public static function getFamilyOfFont($fontTitle)
+    {
+        return self::exists($fontTitle)
+            ? self::$families[$fontTitle]
+            : null;
+    }
+
+    public static function getFullFamily($fontTitle)
+    {
+        return join(', ', array_filter([$fontTitle, self::getFamilyOfFont($fontTitle)]));
+    }
 }
