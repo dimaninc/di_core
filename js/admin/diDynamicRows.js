@@ -238,7 +238,7 @@ var diDynamicRows = function(opts) {
 	};
 
 	this.setupCheckboxes = function() {
-        $('.didynamic-static-checkboxes').on('click', function() {
+        $formRow.on('click', '.didynamic-static-checkboxes', function() {
         	$(this).addClass('hidden');
             $(this).siblings('.didynamic-checkboxes').removeClass('hidden');
 		});
