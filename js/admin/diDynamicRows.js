@@ -227,11 +227,21 @@ var diDynamicRows = function(opts) {
 
 		this
 			.setupEvents()
+			.setupCheckboxes()
 			.setupDragAndDropUploads()
 			.setupPasteImage();
 
 		opts.afterInit && opts.afterInit(this);
 		opts.sortable && this.setupSortable();
+
+		return this;
+	};
+
+	this.setupCheckboxes = function() {
+        $('.didynamic-static-checkboxes').on('click', function() {
+        	$(this).addClass('hidden');
+            $(this).siblings('.didynamic-checkboxes').removeClass('hidden');
+		});
 
 		return this;
 	};

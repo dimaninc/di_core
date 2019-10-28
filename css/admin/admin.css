@@ -3321,6 +3321,17 @@ body[data-skin="entrine"] .dynamic-row + .dynamic-row {
 .dynamic-row ul.line > li .existing-pic-holder {
   margin-bottom: 0;
 }
+.dynamic-row ul.line > li .hidden {
+  display: none;
+}
+.dynamic-row ul.line > li .didynamic-checkboxes,
+.dynamic-row ul.line > li .didynamic-static-checkboxes {
+  cursor: pointer;
+}
+.dynamic-row ul.line > li .didynamic-checkboxes > span,
+.dynamic-row ul.line > li .didynamic-static-checkboxes > span {
+  border-bottom: 1px dotted;
+}
 ul.admin-grid {
   list-style: none;
   margin: 0;

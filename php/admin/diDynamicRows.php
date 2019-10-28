@@ -1018,16 +1018,16 @@ class diDynamicRows
         $table .= "</tr></table>";
         //
 
-        if ($feed_rc > $this->max_feed_count_to_show_static_checkboxes) {
+        $maxTags = $this->info_ar[$this->field]["fields"][$this->current_field]['max_count_for_static'] ?? $this->max_feed_count_to_show_static_checkboxes;
+
+        if ($maxTags && $feed_rc > $maxTags) {
             if (!$this->checked_static_ar) {
                 $this->checked_static_ar[] = $this->L('not_selected');
             }
 
-            $title = $this->info_ar[$this->field]["fields"][$this->current_field]["title"];
-
-            $table = "<div class=\"didynamic-static-checkboxes\"><b>{$title}</b> " .
+            $table = "<div class=\"didynamic-static-checkboxes\"><span>" .
                 join(", ", $this->checked_static_ar) .
-                "</div><div class=\"didynamic-checkboxes\">$table</div>";
+                "</span></div><div class=\"didynamic-checkboxes hidden\">$table</div>";
         }
 
         $this->inputs[$field] = $table; //."<div style=\"margin: 5px 0;\"><input type=\"text\" name=\"{$field}{$new_field_suffix}\" value=\"\" style=\"width:100%;\" /></div>";
