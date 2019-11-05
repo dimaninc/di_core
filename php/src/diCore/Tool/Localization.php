@@ -19,6 +19,7 @@ class Localization
 {
 	use BasicCreate;
 
+	const USE_FILE_CACHE = false;
 	const DEFAULT_LANGUAGE = 'ru';
 	const CACHE_FOLDER = '_cfg/cache/localization/';
 
@@ -39,8 +40,7 @@ class Localization
 
 	protected static function checkLanguage($language)
 	{
-		if (!in_array($language, \diCurrentCMS::$possibleLanguages))
-		{
+		if (!in_array($language, \diCurrentCMS::$possibleLanguages)) {
 			$language = \diCurrentCMS::getBrowserLanguage();
 		}
 
@@ -52,30 +52,30 @@ class Localization
 		return Config::__getPhpFolder() . static::CACHE_FOLDER . $language . '.php';
 	}
 
+	protected static function getAllStrings($language)
+    {
+        $locals = Collection::create()->orderByName();
+        $cache = [];
+
+        /** @var Model $l */
+        foreach ($locals as $l) {
+            $cache[strtolower($l->getName())] = $l->getValueForLanguage($language);
+        }
+
+        return $cache;
+    }
+
 	public static function createCache()
 	{
-		/** @var \diCore\Entity\Localization\Collection $locals */
-		$locals = \diCollection::create(\diTypes::localization);
-		$locals->orderByName();
-
-		$cache = [];
-
-		/** @var Model $l */
-		foreach ($locals as $l)
-		{
-			$cache[strtolower($l->getName())] = $l;
-		}
-
 		FileSystemHelper::createTree(Config::__getPhpFolder(), static::CACHE_FOLDER, 0777);
 
-		foreach (\diCurrentCMS::$possibleLanguages as $language)
-		{
+		foreach (\diCurrentCMS::$possibleLanguages as $language) {
 			$file = '<?php ';
-			foreach ($cache as $name => $l)
-			{
+
+			foreach (static::getAllStrings($language) as $name => $value) {
 				$file .= sprintf('self::$cache[\'%s\']=%s;',
 					$name,
-					\diModel::escapeValueForFile($l->getValueForLanguage($language))
+					\diModel::escapeValueForFile($value)
 				);
 			}
 
@@ -86,17 +86,20 @@ class Localization
 
 	public static function preCache($language)
 	{
-		if (self::$cache && self::$cacheLanguage === $language)
-		{
+		if (self::$cache && self::$cacheLanguage === $language) {
 			return false;
 		}
 
-		if (!is_file(static::getCacheFilename($language)))
-		{
-			static::createCache();
-		}
+		if (static::USE_FILE_CACHE) {
+            if (!is_file(static::getCacheFilename($language))) {
+                static::createCache();
+            }
 
-		include static::getCacheFilename($language);
+            include static::getCacheFilename($language);
+        } else {
+            self::$cache = static::getAllStrings($language);
+        }
+
 		self::$cacheLanguage = $language;
 
 		return true;
@@ -115,10 +118,7 @@ class Localization
 	 */
 	protected static function getModel($token)
 	{
-		/** @var Collection $col */
-		$col = \diCollection::create(\diTypes::localization);
-		$col
-			->filterByName($token);
+		$col = Collection::create()->filterByName($token);
 
 		return $col->getFirstItem();
 	}
@@ -136,12 +136,9 @@ class Localization
 
 		self::preCache($language);
 
-		if ($token === null)
-		{
+		if ($token === null) {
 			return self::$cache;
-		}
-		else
-		{
+		} else {
 			return isset(self::$cache[$token])
 				? self::$cache[$token]
 				: ($default !== null ? $default : $token);
