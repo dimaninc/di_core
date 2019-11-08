@@ -1128,16 +1128,18 @@ EOF;
 	{
 		preg_match('/^([^[]+)\[(\d+)\]$/', $field, $matches);
 
-		if (!$matches)
-		{
+		if (!$matches) {
 			return '';
 		}
 
 		$field2 = substr($matches[1], strlen($this->field) + 1);
 		$id = $matches[2];
+		$message = StringHelper::isWebPicFilename($this->getData($field))
+            ? $this->L("delete_pic_confirmation")
+            : $this->L("delete_file_confirmation");
 
 		return ", <a href=\"" . diLib::getAdminWorkerPath("files", "del_dynamic", [$this->table, $this->id, $this->field, $field2, $id]) . "\" " .
-		"data-field=\"$field\" data-confirm=\"{$this->L("delete_pic_confirmation")}\" " .
+		"data-field=\"$field\" data-confirm=\"{$message}\" " .
 		"class=\"del-file\" data>{$this->L("delete")}</a>";
 	}
 

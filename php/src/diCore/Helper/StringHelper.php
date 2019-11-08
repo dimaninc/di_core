@@ -475,6 +475,18 @@ class StringHelper
 		return $contentType;
 	}
 
+	public static function isWebPicFilename($filename)
+    {
+        $ext = strtolower(self::fileExtension($filename));
+
+        return in_array($ext, [
+            'jpeg',
+            'jpg',
+            'gif',
+            'png',
+        ]);
+    }
+
 	public static function digitCase($x, $s1, $s2, $s3 = null, $returnOnlySuffix = false)
 	{
 		if ($s3 === null)
