@@ -363,7 +363,7 @@ $config = array(
 	/******************
 	* AVIARY config
 	*******************/
-	'aviary_active'                           => true,
+	'aviary_active'                           => false,
 	'aviary_apiKey'                           => "2444282ef4344e3dacdedc7a78f8877d",
 	'aviary_language'                         => "en",
 	'aviary_theme'                            => "light",
