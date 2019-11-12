@@ -616,6 +616,7 @@ foreach($files as $k=>$file){
 
 // Should lazy loading be enabled
 $lazy_loading_enabled= ($lazy_loading_file_number_threshold == 0 || $lazy_loading_file_number_threshold != -1 && $n_files > $lazy_loading_file_number_threshold) ? true : false;
+$lazy_loading_enabled = false;
 
 function filenameSort($x, $y) {
 	return $x['file_lcase'] <  $y['file_lcase'];
@@ -807,6 +808,7 @@ $files=$sorted;
 		<?php
 		$jplayer_ext=array("mp4","flv","webmv","webma","webm","m4a","m4v","ogv","oga","mp3","midi","mid","ogg","wav");
 
+        $file_number_limit_js = 10000000;
 
 		foreach ($files as $file_array) {
 			$file=$file_array['file'];
