@@ -562,6 +562,7 @@ foreach($files as $k=>$file){
 			$file_ext=trans('Type_dir');
 		}
 		$sorted[$k]=array(
+            'dir' => $file['type']!='file',
 			'file'=>$file['name'],
 			'file_lcase'=>strtolower($file['name']),
 			'date'=>$date,
@@ -570,8 +571,6 @@ foreach($files as $k=>$file){
 			'extension'=>strtolower($file_ext)
 		);
 	}else{
-
-
 		if($file!="." && $file!=".."){
 			if(is_dir($current_path.$rfm_subfolder.$subdir.$file)){
 				$date=filemtime($current_path.$rfm_subfolder.$subdir. $file);
@@ -583,6 +582,7 @@ foreach($files as $k=>$file){
 				}
 				$file_ext=trans('Type_dir');
 				$sorted[$k]=array(
+				    'dir' => true,
 					'file'=>$file,
 					'file_lcase'=>strtolower($file),
 					'date'=>$date,
@@ -601,6 +601,7 @@ foreach($files as $k=>$file){
 				$size=filesize($file_path);
 				$file_ext = substr(strrchr($file,'.'),1);
 				$sorted[$k]=array(
+                    'dir'=>false,
 					'file'=>$file,
 					'file_lcase'=>strtolower($file),
 					'date'=>$date,
@@ -810,11 +811,27 @@ $files=$sorted;
 
         $file_number_limit_js = 10000000;
 
+        // folders
 		foreach ($files as $file_array) {
-			$file=$file_array['file'];
-			if($file == '.' || ( substr($file, 0, 1) == '.' && isset( $file_array[ 'extension' ] ) && $file_array[ 'extension' ] == strtolower(trans( 'Type_dir' ) )) || (isset($file_array['extension']) && $file_array['extension']!=strtolower(trans('Type_dir'))) || ($file == '..' && $subdir == '') || in_array($file, $hidden_folders) || ($filter!='' && $n_files>$file_number_limit_js && $file!=".." && stripos($file,$filter)===false)){
-				continue;
-			}
+			$file = $file_array['file'];
+			$c1 = $file == '.';
+			$isDir = $file_array['dir'];
+			$c2 = substr($file, 0, 1) == '.' && $isDir;
+			$c3 = !$isDir; //isset($file_array['extension']) && $file_array['extension'] != strtolower(trans('Type_dir'));
+			$c4 = $file == '..' && $subdir == '';
+			$c5 = in_array($file, $hidden_folders);
+			$c6 = $filter != '' && $file != ".." && stripos($file, $filter) === false; // && $n_files > $file_number_limit_js
+            if (
+                    $c1 ||
+                    $c2 ||
+                    $c3 ||
+                    $c4 ||
+                    $c5 ||
+                    $c6
+            ) {
+                //var_dump('cont:', $c1, $c2, $c3, $c4, $c5, $c6, $file_array['extension']);
+                continue;
+            }
 			$new_name=fix_filename($file,$config);
 			if($ftp && $file!='..' && $file!=$new_name){
 				//rename
@@ -899,13 +916,27 @@ $files=$sorted;
 			<?php
 			}
 
-
+            // files
 			$files_prevent_duplicate = array();
 			foreach ($files as $nu=>$file_array) {
 				$file=$file_array['file'];
 
-				if($file == '.' || $file == '..' || $file_array['extension']==trans('Type_dir') || in_array($file, $hidden_files) || !in_array(fix_strtolower($file_array['extension']), $ext) || ($filter!='' && $n_files>$file_number_limit_js && stripos($file,$filter)===false))
-					continue;
+        $c1 = $file == '.' || $file == '..';
+        $c2 = !in_array(fix_strtolower($file_array['extension']), $ext);
+        $c3 = $isDir; //isset($file_array['extension']) && $file_array['extension'] != strtolower(trans('Type_dir'));
+        $c5 = in_array($file, $hidden_files);
+        $c6 = $filter != '' && stripos($file, $filter) === false; // && $n_files > $file_number_limit_js
+        if (
+            $c1 ||
+            $c2 ||
+            $c3 ||
+            //$c4 ||
+            $c5 ||
+            $c6
+        ) {
+            //var_dump('cont:', $c1, $c2, $c3, $c4, $c5, $c6, $file_array['extension']);
+            continue;
+        }
 
 				$filename=substr($file, 0, '-' . (strlen($file_array['extension']) + 1));
 				if(!$ftp){
