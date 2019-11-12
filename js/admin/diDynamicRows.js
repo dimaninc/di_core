@@ -25,14 +25,14 @@ var diDynamicRows = function(opts) {
 	opts = opts || {};
 
 	this.counters = {};
-	this.signs = {};
+	this.directions = {};
 	this.field_titles = {};
 
 	function constructor() {
 		opts = $.extend({
 			field: null,
 			fieldTitle: null,
-			sign: 1,
+			direction: 1,
 			counter: 0,
 			sortable: false,
             language: 'ru',
@@ -42,7 +42,7 @@ var diDynamicRows = function(opts) {
 		}, opts);
 
 		if (opts.field) {
-			self.init(opts.field, opts.fieldTitle, opts.sign, opts.counter);
+			self.init(opts.field, opts.fieldTitle, opts.direction, opts.counter);
 		}
 	}
 
@@ -202,20 +202,23 @@ var diDynamicRows = function(opts) {
 		return this;
 	};
 
-	this.init = function(field, field_title, sign, counter) {
+	this.init = function(field, field_title, direction, counter) {
 		this.counters[field] = typeof counter === 'undefined' ? 0 : ~~counter;
 		this.field_titles[field] = field_title;
-		this.signs[field] = typeof sign === 'undefined' || sign > 0 ? 1 : -1;
+		this.directions[field] = typeof direction === 'undefined' || direction > 0 ? 1 : -1;
 
 		// back compatibility
 		opts.field = opts.field || field;
 		opts.fieldTitle = opts.fieldTitle || field_title;
-		opts.sign = opts.sign || sign;
+		opts.direction = opts.direction || direction;
 		opts.counter = opts.counter || counter;
 
 		$jsSrc = $('#js_' + opts.field + '_js_resource');
 		$src = $('#js_' + opts.field + '_resource');
-		$anc = $('#' + opts.field + '_anchor_div');
+		$anc = $('[data-purpose="anchor"][data-field="{0}"][data-position="{1}"]'.format(
+			opts.field,
+			opts.direction > 0 ? 'bottom' : 'top'
+		));
 		$wrapper = $anc.parent();
 		$formRow = $wrapper.closest('.diadminform-row');
 
@@ -318,9 +321,11 @@ var diDynamicRows = function(opts) {
 			return false;
 		}
 
-		this.counters[field] += this.signs[field];
+		this.counters[field] += this.directions[field];
 
-		var id = - this.counters[field];
+		var id = - Math.abs(this.counters[field]) - 1000;
+		var orderNum = this.counters[field];
+
 		var html = $src.html() || '';
 		html = html.substr(html.indexOf('>') + 1);
 		html = html.substr(0, html.length - 6);
@@ -332,9 +337,18 @@ var diDynamicRows = function(opts) {
 		var $e = $('<div />');
 		var $eJs = $('<script type="text/javascript">' + js + '</script>');
 
-		$e.attr('id', field + '_div[' + id + ']').attr('data-id', id).data('id', id).addClass('dynamic-row')
-			.html(html)
-			.insertBefore($anc);
+		$e
+			.attr('id', field + '_div[' + id + ']')
+			.attr('data-id', id)
+			.data('id', id)
+			.addClass('dynamic-row')
+			.html(html);
+
+		if (this.directions[field] > 0) {
+            $e.insertBefore($anc);
+		} else {
+            $e.insertAfter($anc);
+		}
 
 		setTimeout(function() {
 			$eJs.insertBefore($anc);
@@ -342,7 +356,7 @@ var diDynamicRows = function(opts) {
 
 		$e.find(':checkbox,:radio').diControls();
 
-		$('#' + field + '_order_num\\[' + id + '\\]').val(-id);
+		$('#' + field + '_order_num\\[' + id + '\\]').val(orderNum);
 
 		if (Math.abs(id) === 1) {
 			$('#' + field + '_by_default\\[' + id + '\\]').prop('checked', true);

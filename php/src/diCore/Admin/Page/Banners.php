@@ -129,6 +129,7 @@ class Banners extends \diCore\Admin\BasePage
             {
                 $uri_inputs = '';
                 $ref_field = "{$sign}";
+                $uri_inputs .= "<div data-purpose=\"anchor\" data-field=\"{$ref_field}\" data-position=\"top\"></div>";
 
                 for ($i = 0; $i < count($ar); $i++)
                 {
@@ -142,7 +143,7 @@ class Banners extends \diCore\Admin\BasePage
                     }
                 }
 
-                $uri_inputs .= "<div id=\"{$ref_field}_anchor_div\"></div>";
+                $uri_inputs .= "<div data-purpose=\"anchor\" data-field=\"{$ref_field}\" data-position=\"bottom\"></div>";
                 $uri_inputs .= "<div id=\"js_{$ref_field}_resource\" style=\"display:none;\">" .
                     $this->getForm()->get_dynamic_row("%NEWID%", $ref_field, "") .
                     "</div>";

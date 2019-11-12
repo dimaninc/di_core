@@ -269,56 +269,62 @@ class diDynamicRows
 		  'afterDelRow',
 	  ];
 
-    $s = "";
-    $last_ref_idx = 0;
+	  $direction = $this->info_ar[$this->field]['direction'] ?? 1;
 
-	  if (!isset($this->info_ar[$this->field]["after_rows"]))
-	  {
-		  $this->info_ar[$this->field]["after_rows"] = "";
-	  }
+      $s = '';
 
-    $rs = $this->getDb()->rs($this->data_table, "WHERE $this->subquery".$this->getOrderBy());
+      $edgeOrderNumber = 0;
 
-	  if (!$this->static_mode && $this->getDb()->count($rs))
-	  {
-		  $s .= $this->getAdvancedUploadingArea();
-		  $s .= $this->getAddRowHtml();
-	  }
+      if (!isset($this->info_ar[$this->field]['after_rows'])) {
+          $this->info_ar[$this->field]['after_rows'] = '';
+      }
 
-    while ($r = $this->getDb()->fetch($rs))
-    {
-      $this->data_id = (int)$r->id;
+      $rs = $this->getDb()->rs($this->data_table, "WHERE $this->subquery" . $this->getOrderBy());
 
-      $s .= $this->get_row($r);
+      if (!$this->static_mode && $this->getDb()->count($rs)) {
+          $s .= $this->getAdvancedUploadingArea();
+          $s .= $this->getAddRowHtml();
+      }
 
-      if (isset($r->order_num)) $x = $r->order_num;
-      elseif (isset($r->idx)) $x = $r->idx;
-      else $x = $r->id;
+      $s .= "<div data-purpose=\"anchor\" data-field=\"{$this->field}\" data-position=\"top\"></div>";
 
-      if ($x > $last_ref_idx)
-        $last_ref_idx = $x;
-    }
+      while ($r = $this->getDb()->fetch($rs)) {
+          $this->data_id = (int)$r->id;
 
-	  $jsOpts = "field: '$this->field', fieldTitle: 'запись', sign: 1, counter: $last_ref_idx, language: '{$this->language}'";
+          $s .= $this->get_row($r);
 
-	  foreach ($eventNames as $eventName)
-	  {
-		  if (!empty($this->info_ar[$this->field]['jsEvents'][$eventName]))
-		  {
-			  $jsOpts .= ", $eventName: {$this->info_ar[$this->field]['jsEvents'][$eventName]}";
+          if (isset($r->order_num)) $x = $r->order_num;
+          elseif (isset($r->idx)) $x = $r->idx;
+          else $x = $r->id;
+
+          if (
+              ($direction > 0 && $x > $edgeOrderNumber) ||
+              ($direction < 0 && $x < $edgeOrderNumber)
+          ) {
+              $edgeOrderNumber = $x;
+          }
+      }
+
+	  $jsOpts = [
+	      'field' => $this->field,
+          'fieldTitle' => 'запись',
+          'counter' => $edgeOrderNumber,
+          'direction' => $direction,
+          'language' => $this->language,
+          'sortable' => !empty($this->info_ar[$this->field]['sortable']),
+      ];
+
+	  foreach ($eventNames as $eventName) {
+		  if (!empty($this->info_ar[$this->field]['jsEvents'][$eventName])) {
+			  $jsOpts[$eventName] = $this->info_ar[$this->field]['jsEvents'][$eventName];
 		  }
 	  }
 
-	  if (!empty($this->info_ar[$this->field]['sortable']))
-	  {
-		  $jsOpts .= ', sortable: true';
-	  }
-
-    $s .= "<div id=\"{$this->field}_anchor_div\"></div>";
+    $s .= "<div data-purpose=\"anchor\" data-field=\"{$this->field}\" data-position=\"bottom\"></div>";
     $s .= "<div id=\"js_{$this->field}_resource\" style=\"display:none;\">".$this->get_row(self::NEW_ID_STRING)."</div>";
     $s .= "<div id=\"js_{$this->field}_js_resource\" style=\"display:none;\">".join("\n", $this->scripts)."</div>";
 
-    $s .= '<script type="text/javascript">var ' . $this->js_var_name . ' = new diDynamicRows({' . $jsOpts . '});</script>';
+    $s .= '<script type="text/javascript">var ' . $this->js_var_name . ' = new diDynamicRows(' . json_encode($jsOpts) . ');</script>';
 
     if (!$this->static_mode)
     {

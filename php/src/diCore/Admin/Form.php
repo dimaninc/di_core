@@ -2394,7 +2394,9 @@ EOF;
 			$s .= $btnAdd;
 		}
 
-		while ($pic_r = $this->getDb()->fetch($pic_rs)) {
+        $s .= "<div data-purpose=\"anchor\" data-field=\"{$field}\" data-position=\"top\"></div>";
+
+        while ($pic_r = $this->getDb()->fetch($pic_rs)) {
 			$s .= $this->get_dynamic_pic_row($pic_r->id, $field, $pic_r);
 
 			if ($pic_r->order_num > $last_ref_idx) {
@@ -2404,7 +2406,7 @@ EOF;
 
 		//$this->uploaded_images[$field] = $s;
 
-		$s .= "<div id=\"{$field}_anchor_div\"></div>";
+        $s .= "<div data-purpose=\"anchor\" data-field=\"{$field}\" data-position=\"bottom\"></div>";
 		$s .= "<div id=\"js_{$field}_resource\" style=\"display:none;\">".$this->get_dynamic_pic_row("%NEWID%", $field, false)."</div>";
 		$s .= "<script type=\"text/javascript\">\nif (typeof dipics_{$this->table} == 'undefined') var dipics_{$this->table} = new diDynamicRows();\ndipics_{$this->table}.init('$field', 'изображение', 1, $last_ref_idx);\n</script>\n";
 		$s .= $btnAdd;
@@ -2480,7 +2482,7 @@ EOF;
 
 		$this->uploaded_images[$field] = $s;
 
-		$s .= "<div id=\"{$field}_anchor_div\"></div>";
+        $s .= "<div data-purpose=\"anchor\" data-field=\"{$field}\" data-position=\"bottom\"></div>";
 		$s .= "<div id=\"js_{$field}_resource\" style=\"display:none;\">".$this->get_dynamic_pic_row("%NEWID%", $field, false)."</div>";
 
 		$s .= "<script type=\"text/javascript\">\nif (typeof dipics_{$this->table} == 'undefined') var dipics_{$this->table} = new diDynamicRows();\ndipics_{$this->table}.init('$field', 'файл', 1, $last_ref_idx);\n</script>\n";
