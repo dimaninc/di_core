@@ -19,8 +19,19 @@ class PhotosOfAlbum
 
 	protected static $table = 'photos';
 
-	public static function getFormFieldArray()
+	public static function getFormFieldArray($options = [])
 	{
+        $options = extend($options, [
+            'extraFields' => [
+                /*
+                'top' => [
+                    'type' => 'checkbox',
+                    'default' => 1,
+                ],
+                */
+            ],
+        ]);
+
 		return [
 			'type' => 'dynamic',
 			'title' => 'Фотографии',
@@ -60,7 +71,7 @@ class PhotosOfAlbum
 					'content' => '',
 				];
 			},
-			'fields' => [
+			'fields' => extend([
 				'slug' => 'string',
 				'slug_source' => 'string',
 				'content' => 'text',
@@ -71,10 +82,6 @@ class PhotosOfAlbum
 					'type' => 'checkbox',
 					'default' => 1,
 				],
-                'top' => [
-                    'type' => 'checkbox',
-                    'default' => 1,
-                ],
 				'order_num' => [
 					'type' => 'int',
 					//'flags' => ['local'],
@@ -87,12 +94,12 @@ class PhotosOfAlbum
 					'callback' => [\diDynamicRows::class, 'storePicSimple'],
 					'fileOptions' => Model::getPicOptions(),
 				],
-			],
+			], $options['extraFields']),
 			'template' => '<ul class="line">' .
-				'<li>Подпись: {TITLE}</li>' .
-				'<li>Отображать: {VISIBLE}</li>' .
-                '<li>Выделить: {TOP}</li>' .
-				'<li>Порядковый номер: {ORDER_NUM}</li>' .
+				'<li data-field="title">Подпись: {TITLE}</li>' .
+				'<li data-field="visible">Отображать: {VISIBLE}</li>' .
+                '<li data-field="top">Выделить: {TOP}</li>' .
+				'<li data-field="order_num">Порядковый номер: {ORDER_NUM}</li>' .
 				'</ul><ul class="line">' .
 				'<li class="pic-line">Изображение: {PIC}</li>' .
 				'</ul>',

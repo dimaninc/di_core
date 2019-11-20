@@ -1492,20 +1492,18 @@ class Submit
 
 	public static function storeDynamicPicCallback($F, $tableOrSubmit, $options, &$ar, $folder)
 	{
-		if (is_object($tableOrSubmit))
-		{
+		if (is_object($tableOrSubmit)) {
 			/** @var Submit $Submit */
 			$Submit = $tableOrSubmit;
 			$table = $Submit->getTable();
-		}
-		else
-		{
+		} else {
 			$Submit = null;
 			$table = $tableOrSubmit;
 		}
 
-		if (is_array($options))
-		{
+		$isCustom = $table !== 'dipics';
+
+		if (is_array($options)) {
 			$options = extend([
 				'field' => null,
 				'what' => null,
@@ -1515,9 +1513,7 @@ class Submit
 			$field = $options['field'];
 			$groupField = $options['group_field'];
 			$what = $options['what'];
-		}
-		else
-		{
+		} else {
 			$what = $options;
 			$field = null;
 			$groupField = null;
@@ -1531,12 +1527,9 @@ class Submit
 		$getFileOptions = function($imageType) use($options) {
 			$type = static::parseImageType($imageType);
 
-			if ($options['fileOptions'])
-			{
-				foreach ($options['fileOptions'] as $o)
-				{
-					if (isset($o['type']) && $o['type'] == $type)
-					{
+			if ($options['fileOptions']) {
+				foreach ($options['fileOptions'] as $o) {
+					if (isset($o['type']) && $o['type'] == $type) {
 						return $o;
 					}
 				}
@@ -1561,8 +1554,7 @@ class Submit
             ? self::IMAGE_STORE_MODE_REBUILD
             : self::IMAGE_STORE_MODE_UPLOAD;
 
-		if ($mode == self::IMAGE_STORE_MODE_UPLOAD)
-		{
+		if ($mode == self::IMAGE_STORE_MODE_UPLOAD) {
 			if (is_file($full_fn)) unlink($full_fn);
 			if (is_file($big_fn)) unlink($big_fn);
 			if (is_file($orig_fn)) unlink($orig_fn);
@@ -1570,8 +1562,7 @@ class Submit
 
 		list($tmp, $tmp, $imgType) = getimagesize($F['tmp_name']);
 
-		if (\diImage::isImageType($imgType))
-		{
+		if (\diImage::isImageType($imgType)) {
 			$I = new \diImage();
 			$I->open($F['tmp_name']);
 
@@ -1579,6 +1570,14 @@ class Submit
 
 			for ($i = 1; $i < 10; $i++)
 			{
+			    $fOpts = $getFileOptions($i);
+			    // this tn needed if it's in list or for dipics
+			    $needed = $fOpts || !$isCustom;
+
+			    if (!$needed) {
+			        continue;
+                }
+
 				$suffix = $i > 1 ? "$i" : '';
 
 				$widthParam = Configuration::exists([
@@ -1594,14 +1593,11 @@ class Submit
 					$groupField . '_tn' . $suffix . '_height',
 				]);
 
-				if ($widthParam || $heightParam)
-				{
+				if ($widthParam || $heightParam) {
 					$tn_fn = $root . $folder . get_tn_folder($i) . $fn;
 
-					if ($mode == self::IMAGE_STORE_MODE_UPLOAD)
-					{
-						if (is_file($tn_fn))
-						{
+					if ($mode == self::IMAGE_STORE_MODE_UPLOAD) {
+						if (is_file($tn_fn)) {
 							unlink($tn_fn);
 						}
 					}
@@ -1609,11 +1605,10 @@ class Submit
 					$fileOptionsTn = extend([
 						'resize' => DI_THUMB_CROP, //| DI_THUMB_EXPAND_TO_SIZE
 						'watermark' => [],
-					], $getFileOptions($i));
+					], $fOpts);
 					$tnWM = $Submit->getWatermarkOptionsFor($field, constant('self::IMAGE_TYPE_PREVIEW' . $suffix));
 
-					if (!$tnWM['name'])
-					{
+					if (!$tnWM['name']) {
 						$tnWM = extend($tnWM, $fileOptionsTn['watermark']);
 					}
 
@@ -1634,87 +1629,96 @@ class Submit
 			}
 
 			// main photo
+            $fOpts = $getFileOptions(self::IMAGE_TYPE_MAIN);
+            // this tn needed if it's in list or for dipics
+            $needed = $fOpts || !$isCustom;
 
-			$widthParam = Configuration::exists([
-				$table . '_' . $groupField . '_' . $field . '_width',
-				$table . '_' . $groupField . '_width',
-				$table . '_width',
-				$groupField . '_width',
-			]);
-			$heightParam = Configuration::exists([
-				$table . '_' . $groupField . '_' . $field . '_height',
-				$table . '_' . $groupField . '_height',
-				$table . '_height',
-				$groupField . '_height',
-			]);
+            if ($needed) {
+                $widthParam = Configuration::exists([
+                    $table . '_' . $groupField . '_' . $field . '_width',
+                    $table . '_' . $groupField . '_width',
+                    $table . '_width',
+                    $groupField . '_width',
+                ]);
+                $heightParam = Configuration::exists([
+                    $table . '_' . $groupField . '_' . $field . '_height',
+                    $table . '_' . $groupField . '_height',
+                    $table . '_height',
+                    $groupField . '_height',
+                ]);
 
-			$fileOptionsMain = extend([
-				'resize' => DI_THUMB_FIT,
-				'watermark' => [],
-			], $getFileOptions(self::IMAGE_TYPE_MAIN));
-			$mainWM = $Submit->getWatermarkOptionsFor($field, self::IMAGE_TYPE_MAIN);
-			if (!$mainWM['name'])
-			{
-				$mainWM = extend($mainWM, $fileOptionsMain['watermark']);
-			}
-			$I->make_thumb_or_copy($fileOptionsMain['resize'], $full_fn,
-				Configuration::safeGet($widthParam),
-				Configuration::safeGet($heightParam),
-				false,
-				$mainWM['name'], $mainWM['x'], $mainWM['y']
-			);
+                $fileOptionsMain = extend([
+                    'resize' => DI_THUMB_FIT,
+                    'watermark' => [],
+                ], $fOpts);
+                $mainWM = $Submit->getWatermarkOptionsFor($field, self::IMAGE_TYPE_MAIN);
+                if (!$mainWM['name']) {
+                    $mainWM = extend($mainWM, $fileOptionsMain['watermark']);
+                }
+                $I->make_thumb_or_copy($fileOptionsMain['resize'], $full_fn,
+                    Configuration::safeGet($widthParam),
+                    Configuration::safeGet($heightParam),
+                    false,
+                    $mainWM['name'], $mainWM['x'], $mainWM['y']
+                );
+                chmod($full_fn, self::FILE_CHMOD);
+            }
 
 			// big photo
+            $fOpts = $getFileOptions(self::IMAGE_TYPE_BIG);
+            // this tn needed if it's in list or for dipics
+            $needed = $fOpts || !$isCustom;
 
-			$widthParam = Configuration::exists([
-				$table . '_' . $groupField . '_' . $field . '_big_width',
-				$table . '_' . $groupField . '_big_width',
-				$table . '_big_width',
-				$groupField . '_big_width',
-			]);
-			$heightParam = Configuration::exists([
-				$table . '_' . $groupField . '_' . $field . '_big_height',
-				$table . '_' . $groupField . '_big_height',
-				$table . '_big_height',
-				$groupField . '_big_height',
-			]);
+            if ($needed) {
+                $widthParam = Configuration::exists([
+                    $table . '_' . $groupField . '_' . $field . '_big_width',
+                    $table . '_' . $groupField . '_big_width',
+                    $table . '_big_width',
+                    $groupField . '_big_width',
+                ]);
+                $heightParam = Configuration::exists([
+                    $table . '_' . $groupField . '_' . $field . '_big_height',
+                    $table . '_' . $groupField . '_big_height',
+                    $table . '_big_height',
+                    $groupField . '_big_height',
+                ]);
 
-			$fileOptionsBig = extend([
-				'resize' => DI_THUMB_FIT,
-				'watermark' => [],
-			], $getFileOptions(self::IMAGE_TYPE_BIG));
-			$bigWM = $Submit->getWatermarkOptionsFor($field, self::IMAGE_TYPE_BIG);
-			if (!$bigWM['name'])
-			{
-				$bigWM = extend($bigWM, $fileOptionsBig['watermark']);
-			}
-			$I->make_thumb_or_copy($fileOptionsBig['resize'], $big_fn,
-				Configuration::safeGet($widthParam, 10000),
-				Configuration::safeGet($heightParam, 10000),
-				false,
-				$bigWM['name'], $bigWM['x'], $bigWM['y']
-			);
-			$I->close();
+                $fileOptionsBig = extend([
+                    'resize' => DI_THUMB_FIT,
+                    'watermark' => [],
+                ], $fOpts);
+                $bigWM = $Submit->getWatermarkOptionsFor($field, self::IMAGE_TYPE_BIG);
+                if (!$bigWM['name']) {
+                    $bigWM = extend($bigWM, $fileOptionsBig['watermark']);
+                }
+                $I->make_thumb_or_copy($fileOptionsBig['resize'], $big_fn,
+                    Configuration::safeGet($widthParam, 10000),
+                    Configuration::safeGet($heightParam, 10000),
+                    false,
+                    $bigWM['name'], $bigWM['x'], $bigWM['y']
+                );
+                chmod($big_fn, self::FILE_CHMOD);
+            }
+
+            $I->close();
 
 			// orig photo
+            $fOpts = $getFileOptions(self::IMAGE_TYPE_ORIG);
+            // this tn needed if it's in list or for dipics
+            $needed = $fOpts || !$isCustom;
 
-			if ($mode == self::IMAGE_STORE_MODE_UPLOAD)
-			{
-				move_uploaded_file($F['tmp_name'], $orig_fn) || rename($F['tmp_name'], $orig_fn);
-			}
-
-			chmod($full_fn, self::FILE_CHMOD);
-			chmod($big_fn, self::FILE_CHMOD);
-			chmod($orig_fn, self::FILE_CHMOD);
+            if ($needed) {
+                if ($mode == self::IMAGE_STORE_MODE_UPLOAD) {
+                    move_uploaded_file($F['tmp_name'], $orig_fn) || rename($F['tmp_name'], $orig_fn);
+                    chmod($orig_fn, self::FILE_CHMOD);
+                }
+            }
 
 			list($ar['pic_w'], $ar['pic_h'], $ar['pic_t']) = getimagesize($full_fn);
-		}
-		else
-		{
+		} else {
 			list($ar['pic_w'], $ar['pic_h'], $ar['pic_t']) = [0, 0, 0];
 
-			if ($mode == self::IMAGE_STORE_MODE_UPLOAD)
-			{
+			if ($mode == self::IMAGE_STORE_MODE_UPLOAD) {
 				move_uploaded_file($F['tmp_name'], $full_fn) || rename($F['tmp_name'], $orig_fn);
 			}
 		}
