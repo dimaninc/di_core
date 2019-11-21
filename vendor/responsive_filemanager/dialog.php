@@ -1120,10 +1120,10 @@ $files=$sorted;
 			</figure>
 		</li>
 			<?php
-			}
+				}
 			}
 
-	?></div>
+	?>
 		</ul>
 		<?php } ?>
 	</div>

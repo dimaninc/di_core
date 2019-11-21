@@ -2722,23 +2722,24 @@ class imageLib {
 		// *** Get extension
 		$extension = strrchr($file, '.');
 		$extension = fix_strtolower($extension);
+		list($w, $h, $t) = getimagesize($file);
 		switch ($extension)
 		{
 			case '.jpg':
 			case '.jpeg':
-				$img = @imagecreatefromjpeg($file);
+				$img = $t == IMAGETYPE_JPEG ? imagecreatefromjpeg($file) : false;
 				break;
 			case '.gif':
-				$img = @imagecreatefromgif($file);
+				$img = $t == IMAGETYPE_GIF ? imagecreatefromgif($file) : false;
 				break;
 			case '.png':
-				$img = @imagecreatefrompng($file);
+				$img = $t == IMAGETYPE_PNG ? imagecreatefrompng($file) : false;
 				break;
 			case '.bmp':
-				$img = @$this->imagecreatefrombmp($file);
+				$img = $this->imagecreatefrombmp($file);
 				break;
 			case '.psd':
-				$img = @$this->imagecreatefrompsd($file);
+				$img = $this->imagecreatefrompsd($file);
 				break;
 
 
