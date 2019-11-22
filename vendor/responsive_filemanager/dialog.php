@@ -617,7 +617,7 @@ foreach($files as $k=>$file){
 
 // Should lazy loading be enabled
 $lazy_loading_enabled= ($lazy_loading_file_number_threshold == 0 || $lazy_loading_file_number_threshold != -1 && $n_files > $lazy_loading_file_number_threshold) ? true : false;
-$lazy_loading_enabled = false;
+//$lazy_loading_enabled = false;
 
 function filenameSort($x, $y) {
 	return $x['file_lcase'] <  $y['file_lcase'];
@@ -809,7 +809,7 @@ $files=$sorted;
 		<?php
 		$jplayer_ext=array("mp4","flv","webmv","webma","webm","m4a","m4v","ogv","oga","mp3","midi","mid","ogg","wav");
 
-        $file_number_limit_js = 10000000;
+        //$file_number_limit_js = 10000000;
 
         // folders
 		foreach ($files as $file_array) {
@@ -820,7 +820,7 @@ $files=$sorted;
 			$c3 = !$isDir; //isset($file_array['extension']) && $file_array['extension'] != strtolower(trans('Type_dir'));
 			$c4 = $file == '..' && $subdir == '';
 			$c5 = in_array($file, $hidden_folders);
-			$c6 = $filter != '' && $file != ".." && stripos($file, $filter) === false; // && $n_files > $file_number_limit_js
+			$c6 = $filter != '' && $file != ".." && stripos($file, $filter) === false && $n_files > $file_number_limit_js;
             if (
                     $c1 ||
                     $c2 ||
@@ -924,15 +924,14 @@ $files=$sorted;
         $c1 = $file == '.' || $file == '..';
         $c2 = !in_array(fix_strtolower($file_array['extension']), $ext);
         $c3 = $isDir; //isset($file_array['extension']) && $file_array['extension'] != strtolower(trans('Type_dir'));
-        $c5 = in_array($file, $hidden_files);
-        $c6 = $filter != '' && stripos($file, $filter) === false; // && $n_files > $file_number_limit_js
+        $c4 = in_array($file, $hidden_files);
+        $c5 = $filter != '' && stripos($file, $filter) === false && $n_files > $file_number_limit_js;
         if (
             $c1 ||
             $c2 ||
             $c3 ||
-            //$c4 ||
-            $c5 ||
-            $c6
+            $c4 ||
+            $c5
         ) {
             //var_dump('cont:', $c1, $c2, $c3, $c4, $c5, $c6, $file_array['extension']);
             continue;
