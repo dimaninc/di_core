@@ -1544,7 +1544,8 @@ EOF;
 
 		$ids_ar = [];
 
-		$atLeastOneUploaded = array_sum($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['size']) > 0;
+		$atLeastOneUploaded = isset($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['size']) &&
+            array_sum($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['size']) > 0;
 
 		if ($atLeastOneUploaded)
 		{
