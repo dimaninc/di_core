@@ -1454,7 +1454,7 @@ EOF;
 
 			if (is_callable($beforeSaveCallback))
 			{
-				$_a = $beforeSaveCallback($this);
+				$_a = $beforeSaveCallback($this, $id);
 
 				$data_for_db = extend($data_for_db, $_a);
 				$this->data = extend($this->data, $_a);
