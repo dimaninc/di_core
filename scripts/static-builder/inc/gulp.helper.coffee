@@ -236,6 +236,7 @@ Helper =
             cssName: null
             cssFormat: 'stylus'
             algorithm: 'binary-tree'
+            webp: false
             #imgOpts: {quality: 75}
             cssTemplate: (data) ->
                 timestamp = (new Date).getTime()
@@ -248,10 +249,12 @@ Helper =
         mask = opts.mask
         imgFolder = opts.imgFolder
         cssFolder = opts.cssFolder
+        webpOpts = opts.webp
         delete opts.taskName
         delete opts.mask
         delete opts.cssFolder
         delete opts.imgFolder
+        delete opts.webp
         gulp.task taskName, (done) =>
             spriteData = gulp.src @fullPath mask
             .pipe spriteSmith opts
@@ -259,6 +262,15 @@ Helper =
             .on 'end', -> done()
             spriteData.img.pipe gulp.dest @fullPath imgFolder
             spriteData.css.pipe gulp.dest @fullPath cssFolder
+
+            if webpOpts
+                webp = @req 'gulp-webp' unless webp
+                rename = @req 'gulp-rename' unless rename
+                gulp
+                .src(imgFolder + opts.imgName)
+                .pipe webp()
+                .pipe rename suffix: '.png'
+                .pipe gulp.dest(imgFolder)
         @
 
     assignCssConcatTaskToGulp: (gulp, opts = {}) ->

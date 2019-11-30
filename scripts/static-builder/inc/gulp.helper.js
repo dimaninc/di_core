@@ -316,7 +316,7 @@ Helper = {
     return this;
   },
   assignPngSpritesTaskToGulp: function(gulp, opts) {
-    var cssFolder, imgFolder, mask, spriteSmith, taskName;
+    var cssFolder, imgFolder, mask, spriteSmith, taskName, webpOpts;
     if (opts == null) {
       opts = {};
     }
@@ -332,6 +332,7 @@ Helper = {
       cssName: null,
       cssFormat: 'stylus',
       algorithm: 'binary-tree',
+      webp: false,
       cssTemplate: function(data) {
         var item, j, len, ref, template, timestamp;
         timestamp = (new Date).getTime();
@@ -348,18 +349,31 @@ Helper = {
     mask = opts.mask;
     imgFolder = opts.imgFolder;
     cssFolder = opts.cssFolder;
+    webpOpts = opts.webp;
     delete opts.taskName;
     delete opts.mask;
     delete opts.cssFolder;
     delete opts.imgFolder;
+    delete opts.webp;
     gulp.task(taskName, (function(_this) {
       return function(done) {
-        var spriteData;
+        var rename, spriteData, webp;
         spriteData = gulp.src(_this.fullPath(mask)).pipe(spriteSmith(opts)).on('error', console.log).on('end', function() {
           return done();
         });
         spriteData.img.pipe(gulp.dest(_this.fullPath(imgFolder)));
-        return spriteData.css.pipe(gulp.dest(_this.fullPath(cssFolder)));
+        spriteData.css.pipe(gulp.dest(_this.fullPath(cssFolder)));
+        if (webpOpts) {
+          if (!webp) {
+            webp = _this.req('gulp-webp');
+          }
+          if (!rename) {
+            rename = _this.req('gulp-rename');
+          }
+          return gulp.src(imgFolder + opts.imgName).pipe(webp()).pipe(rename({
+            suffix: '.png'
+          })).pipe(gulp.dest(imgFolder));
+        }
       };
     })(this));
     return this;
