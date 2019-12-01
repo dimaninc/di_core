@@ -260,17 +260,21 @@ Helper =
             .pipe spriteSmith opts
             .on 'error', console.log
             .on 'end', -> done()
-            spriteData.img.pipe gulp.dest @fullPath imgFolder
-            spriteData.css.pipe gulp.dest @fullPath cssFolder
 
-            if webpOpts
-                webp = @req 'gulp-webp' unless webp
-                rename = @req 'gulp-rename' unless rename
-                gulp
-                .src(imgFolder + opts.imgName)
-                .pipe webp()
-                .pipe rename suffix: '.png'
-                .pipe gulp.dest(imgFolder)
+            spriteData.img
+            .pipe gulp.dest @fullPath imgFolder
+            .on 'end', =>
+                if webpOpts
+                    webp = @req 'gulp-webp' unless webp
+                    rename = @req 'gulp-rename' unless rename
+                    gulp
+                    .src(imgFolder + opts.imgName)
+                    .pipe webp()
+                    .pipe rename suffix: '.png'
+                    .pipe gulp.dest(imgFolder)
+
+            spriteData.css
+            .pipe gulp.dest @fullPath cssFolder
         @
 
     assignCssConcatTaskToGulp: (gulp, opts = {}) ->

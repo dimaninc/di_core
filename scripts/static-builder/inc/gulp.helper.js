@@ -357,23 +357,25 @@ Helper = {
     delete opts.webp;
     gulp.task(taskName, (function(_this) {
       return function(done) {
-        var rename, spriteData, webp;
+        var spriteData;
         spriteData = gulp.src(_this.fullPath(mask)).pipe(spriteSmith(opts)).on('error', console.log).on('end', function() {
           return done();
         });
-        spriteData.img.pipe(gulp.dest(_this.fullPath(imgFolder)));
-        spriteData.css.pipe(gulp.dest(_this.fullPath(cssFolder)));
-        if (webpOpts) {
-          if (!webp) {
-            webp = _this.req('gulp-webp');
+        spriteData.img.pipe(gulp.dest(_this.fullPath(imgFolder))).on('end', function() {
+          var rename, webp;
+          if (webpOpts) {
+            if (!webp) {
+              webp = _this.req('gulp-webp');
+            }
+            if (!rename) {
+              rename = _this.req('gulp-rename');
+            }
+            return gulp.src(imgFolder + opts.imgName).pipe(webp()).pipe(rename({
+              suffix: '.png'
+            })).pipe(gulp.dest(imgFolder));
           }
-          if (!rename) {
-            rename = _this.req('gulp-rename');
-          }
-          return gulp.src(imgFolder + opts.imgName).pipe(webp()).pipe(rename({
-            suffix: '.png'
-          })).pipe(gulp.dest(imgFolder));
-        }
+        });
+        return spriteData.css.pipe(gulp.dest(_this.fullPath(cssFolder)));
       };
     })(this));
     return this;
