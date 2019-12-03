@@ -50,6 +50,9 @@ class diAdminFilters
 {
 	const DEFAULT_WHERE_TPL = "[-field-]='[-value-]'";
 
+	const DEFAULT_INPUT_SIZE_STRING = 40;
+	const DEFAULT_INPUT_SIZE_NUMBER = 6;
+
 	public static $dirAr = [
 	    'ru' => [
             'ASC' => 'По возрастанию',
@@ -406,6 +409,7 @@ EOF;
 			"field" => is_array($field) ? "" : $field,
             'alias' => null,
 			"type" => $type,
+            'input_size' => null, // force <input size> if needed
 			"where_tpl" => $where_tpl,
 			"title" => $title,
 			"default_value" => $default_value,
@@ -777,45 +781,41 @@ EOF;
 
     protected function getInputBody($field)
 	{
-		if (isset($this->inputs_ar[$field]))
-		{
+		if (isset($this->inputs_ar[$field])) {
 			return $this->inputs_ar[$field];
 		}
 
-		if ($ar = $this->getFilter($field))
-		{
+		if ($ar = $this->getFilter($field)) {
 		    // todo: aliases for same field name
 		    //$name = $ar['alias'] ?: $field;
 		    $name = $field;
 
 			$fieldName = 'admin_filter[' . $name . ']';
 
-			switch ($ar["type"])
-			{
+			switch ($ar["type"]) {
 				default:
-					if (!$ar["value"] && in_array($ar["type"], ['int', 'float', 'double']))
-					{
+					if (!$ar["value"] && in_array($ar["type"], ['int', 'float', 'double'])) {
 						$ar["value"] = "";
 					}
 
-					switch ($ar['type'])
-					{
-						case 'int':
-						case 'float':
-						case 'double':
-							$size = 6;
-							break;
+					if ($ar['input_size']) {
+					    $size = $ar['input_size'];
+                    } else {
+                        switch ($ar['type']) {
+                            case 'int':
+                            case 'float':
+                            case 'double':
+                                $size = self::DEFAULT_INPUT_SIZE_NUMBER;
+                                break;
 
-						default:
-							$size = 35;
-					}
+                            default:
+                                $size = self::DEFAULT_INPUT_SIZE_STRING;
+                        }
+                    }
 
-					if (isset($ar['feed']))
-					{
+					if (isset($ar['feed'])) {
 						$input = \diSelect::fastCreate($fieldName, $ar['value'], $ar['feed']);
-					}
-					else
-					{
+					} else {
 						$input = sprintf('<input %s>', ArrayHelper::toAttributesString([
 							'id' => $fieldName,
 							'name' => $field,
