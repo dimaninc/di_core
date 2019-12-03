@@ -1188,6 +1188,7 @@ class Submit
 					$callback($F, $this, [
 						'field' => $field,
 						'what' => $f,
+                        'custom' => false,
 					], $db_ar, $pics_folder);
 				}
 			}
@@ -1501,23 +1502,24 @@ class Submit
 			$table = $tableOrSubmit;
 		}
 
-		$isCustom = $table !== 'dipics';
-
 		if (is_array($options)) {
 			$options = extend([
 				'field' => null,
 				'what' => null,
+				'custom' => true,
 				'group_field' => null,
 			], $options);
 
 			$field = $options['field'];
 			$groupField = $options['group_field'];
 			$what = $options['what'];
+            $isCustom = $options['custom'];
 		} else {
 			$what = $options;
 			$field = null;
 			$groupField = null;
 			$options = [];
+            $isCustom = true;
 		}
 
 		$options = extend([
