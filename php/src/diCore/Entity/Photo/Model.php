@@ -52,28 +52,29 @@ use diCore\Helper\FileSystemHelper;
  * @method bool hasDate
  * @method bool hasOrderNum
  *
- * @method Model setAlbumId($value)
- * @method Model setSlugSource($value)
- * @method Model setTitle($value)
- * @method Model setContent($value)
- * @method Model setPic($value)
- * @method Model setPicW($value)
- * @method Model setPicH($value)
- * @method Model setPicT($value)
- * @method Model setPicTnW($value)
- * @method Model setPicTnH($value)
- * @method Model setVisible($value)
- * @method Model setTop($value)
- * @method Model setCommentsEnabled($value)
- * @method Model setCommentsLastDate($value)
- * @method Model setCommentsCount($value)
- * @method Model setDate($value)
- * @method Model setOrderNum($value)
+ * @method $this setAlbumId($value)
+ * @method $this setSlugSource($value)
+ * @method $this setTitle($value)
+ * @method $this setContent($value)
+ * @method $this setPic($value)
+ * @method $this setPicW($value)
+ * @method $this setPicH($value)
+ * @method $this setPicT($value)
+ * @method $this setPicTnW($value)
+ * @method $this setPicTnH($value)
+ * @method $this setVisible($value)
+ * @method $this setTop($value)
+ * @method $this setCommentsEnabled($value)
+ * @method $this setCommentsLastDate($value)
+ * @method $this setCommentsCount($value)
+ * @method $this setDate($value)
+ * @method $this setOrderNum($value)
  */
 class Model extends \diModel
 {
 	const type = Types::photo;
 	const slug_field_name = self::SLUG_FIELD_NAME;
+	const table = 'photos';
 	protected $table = 'photos';
 
 	public static $tokenAlignments = [
