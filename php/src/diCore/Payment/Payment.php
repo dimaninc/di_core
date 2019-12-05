@@ -478,6 +478,16 @@ EOF;
 
             switch ($result->getErrorCode())
             {
+                case 8: //Operator is not active
+                    // todo: Localization here
+                    $message = 'Технические проблемы на стороне оператора связи';
+
+                    $draft
+                        ->setStatus(\diCore\Payment\Mixplat\ResultStatus::OPSOS_NOT_SUPPORTED)
+                        ->save();
+
+                    break;
+
                 case 18: //No available operator for specified phone
                     // todo: Localization here
                     $message = 'Платёж невозможен для Вашего оператора связи';
