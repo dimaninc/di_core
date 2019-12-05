@@ -71,6 +71,11 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
 				'type' => 'string',
 				'title' => $this->getVocabularyTerm('target_table.title'),
 			])
+            ->addFilter([
+                'field' => 'target_id',
+                'type' => 'string',
+                'title' => $this->getVocabularyTerm('target_id.title'),
+            ])
 			->buildQuery()
 			->setSelectFromCollectionInput('admin_id',
 				\diCollection::create(\diTypes::admin)->orderBy('login'),
