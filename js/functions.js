@@ -965,7 +965,16 @@ function size_in_bytes(size, mb, kb, b)
 
 function from_size_in_bytes(s)
 {
-	var ar = {'bytes': 1, 'байт': 1, 'kb': 1024, 'кб': 1024, 'mb': 1048576, 'мб': 1048576};
+	var ar = {
+		'bytes': 1,
+		'байт': 1,
+		'kb': 1024,
+		'кб': 1024,
+		'mb': 1048576,
+		'мб': 1048576,
+		'gb': 1073741824,
+        'гб': 1073741824
+	};
 
 	s = trim(s).toLowerCase();
 
@@ -975,6 +984,7 @@ function from_size_in_bytes(s)
 		{
 			s = trim(s.substr(0, s.length - i.length));
 			s = s.replace(',','.');
+			s = parseFloat(s);
 			s *= ar[i];
 
 			break;

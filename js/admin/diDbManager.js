@@ -330,10 +330,10 @@ function diDbManager(_opts)
 			{
 				var ar = (this.innerHTML || this.text).match(/^[a-z0-9_]+,\s([^\s]+)\s\([^\s]+\s([^\s]+)\)/i);
 
-				if (ar && ar.length == 3)
+				if (ar && ar.length === 3)
 				{
-					s1 += from_size_in_bytes(ar[1]);
-					s2 += from_size_in_bytes(ar[2]);
+					s1 += ~~from_size_in_bytes(ar[1]);
+					s2 += ~~from_size_in_bytes(ar[2]);
 				}
 			}
 		});
