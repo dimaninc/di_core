@@ -14,6 +14,7 @@ CREATE TABLE module_cache (
   active               TINYINT               DEFAULT '1',
 
   KEY idx(module_id, active, updated_at, update_every_minutes),
+  KEY search_idx(module_id,query_string,bootstrap_settings),
   PRIMARY KEY (id)
 )
   DEFAULT CHARSET = 'utf8'
