@@ -492,16 +492,18 @@ function shuffle(array)
 	return array;
 }
 
-function in_array(search_term, ar)
+function in_array(search_term, ar, strict)
 {
-	var i = ar.length;
+	var i = ar.length - 1;
+	var eq;
 
-	if (i > 0)
-	{
-		do
-		{
-			if (ar[i] == search_term)
-			{
+	if (i >= 0) {
+		do {
+			eq = strict
+				? ar[i] === search_term
+				: ar[i] == search_term;
+
+			if (eq) {
 				return true;
 			}
 		} while (i--);
