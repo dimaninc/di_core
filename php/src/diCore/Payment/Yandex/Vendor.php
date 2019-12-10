@@ -25,6 +25,7 @@ class Vendor extends VendorContainer
 	const PROM_SVYAZ_BANK = 11;
 	const TINKOFF = 12;
 	const QPPI = 13;
+	const GOOGLE_PAY = 14;
 
 	public static $titles = [
 		self::YANDEX_MONEY => 'Яндекс.Деньги',
@@ -40,6 +41,7 @@ class Vendor extends VendorContainer
 		self::PROM_SVYAZ_BANK => 'ПромСвязьБанк',
 		self::TINKOFF => 'КупиВКредит (Тинькофф Банк)',
 		self::QPPI => 'Куппи.ру',
+        self::GOOGLE_PAY => 'Google Pay',
 	];
 
 	public static $names = [
@@ -56,6 +58,7 @@ class Vendor extends VendorContainer
 		self::PROM_SVYAZ_BANK => 'prom-svyaz-bank',
 		self::TINKOFF => 'tinkoff',
 		self::QPPI => 'qppi',
+        self::GOOGLE_PAY => 'google-pay',
 	];
 
 	public static $codes = [
@@ -72,6 +75,7 @@ class Vendor extends VendorContainer
 		self::PROM_SVYAZ_BANK => 'PB',
 		self::TINKOFF => 'KV',
 		self::QPPI => 'QP',
+        self::GOOGLE_PAY => 'AC',
 	];
 
 	public static $minLimits = [
@@ -88,5 +92,6 @@ class Vendor extends VendorContainer
 		self::PROM_SVYAZ_BANK => null,
 		self::TINKOFF => 3000,
 		self::QPPI => 100,
+        self::GOOGLE_PAY => null,
 	];
 }
