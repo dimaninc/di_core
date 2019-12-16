@@ -25,6 +25,11 @@ class Vendor extends VendorContainer
 	//const SBERBANK_ONLINE = 20;
 	const ALPHA_CLICK = 21;
 
+	const MOBILE_BEELINE = 31;
+    const MOBILE_MEGAFON = 32;
+    const MOBILE_MTS = 33;
+    const MOBILE_TELE2 = 34;
+
 	public static $titles = [
 		self::YANDEX_MONEY => 'Яндекс.Деньги',
 		self::WEBMONEY => 'Webmoney',
@@ -38,6 +43,11 @@ class Vendor extends VendorContainer
 
 		//self::SBERBANK_ONLINE => 'Сбербанк-онлайн',
 		self::ALPHA_CLICK => 'Альфа-клик',
+
+        self::MOBILE_BEELINE => 'Билайн',
+        self::MOBILE_MEGAFON => 'Мегафон',
+        self::MOBILE_MTS => 'МТС',
+        self::MOBILE_TELE2 => 'Теле2',
 	];
 
 	public static $names = [
@@ -53,6 +63,11 @@ class Vendor extends VendorContainer
 
 		//self::SBERBANK_ONLINE => 'sberbank-online',
 		self::ALPHA_CLICK => 'alpha-click',
+
+        self::MOBILE_BEELINE => 'mobile-beeline',
+        self::MOBILE_MEGAFON => 'mobile-megafon',
+        self::MOBILE_MTS => 'mobile-mts',
+        self::MOBILE_TELE2 => 'mobile-tele2',
 	];
 
 	public static $codes = [
@@ -80,22 +95,14 @@ class Vendor extends VendorContainer
 
 		//self::SBERBANK_ONLINE => 'BankSberBank',
 		self::ALPHA_CLICK => 'AlfaBank',
+
+        self::MOBILE_BEELINE => 'MixplatBeelineRIBR',
+        self::MOBILE_MEGAFON => 'MixplatMegafonRIBR',
+        self::MOBILE_MTS => 'MixplatMTSRIBR',
+        self::MOBILE_TELE2 => 'MixplatTele2RIBR',
 	];
 
-	public static $minLimits = [
-		self::YANDEX_MONEY => null,
-		self::WEBMONEY => null,
-		self::QIWI => null,
-		self::ELECSNET => null,
-		self::W1 => null,
-
-		self::CARD => null,
-		self::APPLE_PAY => null,
-		self::SAMSUNG_PAY => null,
-
-		//self::SBERBANK_ONLINE => null,
-		self::ALPHA_CLICK => null,
-	];
+	public static $minLimits = [];
 
 }
 /**
