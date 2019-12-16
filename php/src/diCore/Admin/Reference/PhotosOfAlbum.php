@@ -32,6 +32,8 @@ class PhotosOfAlbum
             ],
         ]);
 
+        $model = Model::create(Model::type);
+
 		return [
 			'type' => 'dynamic',
 			'title' => 'Фотографии',
@@ -92,7 +94,7 @@ class PhotosOfAlbum
 					//'naming' => Submit::FILE_NAMING_ORIGINAL,
 					'showImageType' => Submit::IMAGE_TYPE_PREVIEW,
 					'callback' => [\diDynamicRows::class, 'storePicSimple'],
-					'fileOptions' => Model::getPicOptions(),
+					'fileOptions' => $model::getPicOptions(),
 				],
 			], $options['extraFields']),
 			'template' => '<ul class="line">' .
