@@ -1251,8 +1251,7 @@ abstract class BasePage
 	{
 		$ar = $this->getAllFields();
 
-		if (!isset($ar[$field]))
-		{
+		if (!isset($ar[$field])) {
 			throw new \Exception("No field '$field' in " . get_class($this));
 		}
 

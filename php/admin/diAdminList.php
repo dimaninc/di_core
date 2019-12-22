@@ -237,6 +237,7 @@ class diAdminList
 	{
 		return $this->getAdminPage()->doesFieldExist($name)
 			? $this->getAdminPage()->getFieldProperty($name, 'title')
+                ?: \diCore\Admin\Form::getFieldTitle($name, $this->getAdminPage()->getFieldProperty($name), $this->getAdminPage()->getLanguage())
 			: null;
 	}
 

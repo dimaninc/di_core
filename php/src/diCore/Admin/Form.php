@@ -188,6 +188,86 @@ class Form
 		'hide' => [],
 	];
 
+	protected static $defaultFieldTitles = [
+        'id' => 'ID',
+        'slug' => [
+            'ru' => 'Слаг',
+            'en' => 'Slug',
+        ],
+        'slug_source' => [
+            'ru' => 'Название для URL',
+            'en' => 'Slug source',
+        ],
+        'type' => [
+            'ru' => 'Тип',
+            'en' => 'Type',
+        ],
+        'title' => [
+            'ru' => 'Название',
+            'en' => 'Title',
+        ],
+        'short_content' => [
+            'ru' => 'Краткий текст',
+            'en' => 'Short content',
+        ],
+        'content' => [
+            'ru' => 'Полный текст',
+            'en' => 'Content',
+        ],
+        'pic' => [
+            'ru' => 'Изображение',
+            'en' => 'Pic',
+        ],
+        'visible' => [
+            'ru' => 'Отображать на сайте',
+            'en' => 'Visible',
+        ],
+        'like_count' => [
+            'ru' => 'Количество лайков',
+            'en' => 'Likes count',
+        ],
+        'dislike_count' => [
+            'ru' => 'Количество дизлайков',
+            'en' => 'Dislikes count',
+        ],
+        'comment_count' => [
+            'ru' => 'Количество комментариев',
+            'en' => 'Comments count',
+        ],
+        'comment_last_date' => [
+            'ru' => 'Дата/время последнего комментария',
+            'en' => 'Date/time of last comment',
+        ],
+        'comment_enabled' => [
+            'ru' => 'Комментарии разрешены',
+            'en' => 'Comments enabled',
+        ],
+        'meta_title' => [
+            'ru' => 'Meta-заголовок',
+            'en' => 'Meta-title',
+        ],
+        'meta_keywords' => [
+            'ru' => 'Meta-ключевые слова',
+            'en' => 'Meta-keywords',
+        ],
+        'meta_description' => [
+            'ru' => 'Meta-описание',
+            'en' => 'Meta-description',
+        ],
+        'created_at' => [
+            'ru' => 'Дата/время создания',
+            'en' => 'Date/time of creation',
+        ],
+        'updated_at' => [
+            'ru' => 'Дата/время последнего изменения',
+            'en' => 'Date/time of update',
+        ],
+        'deleted_at' => [
+            'ru' => 'Дата/время удаления',
+            'en' => 'Date/time of deletion',
+        ],
+    ];
+
 	public function __construct($table, $id = 0, $module_id = 0)
 	{
 		global $lite, $db;
@@ -716,6 +796,22 @@ EOF;
 		}
 	}
 
+	public static function getFieldTitle($fieldName, $fieldProps, $language = 'ru')
+    {
+        if (!empty($fieldProps['title'])) {
+            return $fieldProps['title'];
+        }
+
+
+        if (isset(self::$defaultFieldTitles[$fieldName])) {
+            return is_array(self::$defaultFieldTitles[$fieldName])
+                ? self::$defaultFieldTitles[$fieldName][$language]
+                : self::$defaultFieldTitles[$fieldName];
+        }
+
+        return $fieldName;
+    }
+
 	public function get_html()
 	{
 		if ($this->AdminPage)
@@ -754,26 +850,24 @@ EOF;
 			$html = '';
 			unset($input);
 
-			if (empty($v['tab']) || empty($formTabs[$v['tab']]))
-			{
+			if (empty($v['tab']) || empty($formTabs[$v['tab']])) {
 				$v['tab'] = 'general';
 			}
 
-			if (!isset($tabs[$v['tab']]))
-			{
+			if (!isset($tabs[$v['tab']])) {
 				$tabs[$v['tab']] = '';
 			}
 
-			if ($v['type'] == 'separator')
-			{
+			if ($v['type'] == 'separator') {
 				$html .= $this->getSeparatorRow();
 				$tabs[$v['tab']] .= $html;
 
 				continue;
 			}
 
-			if ($v['type'] == 'password' && ($this->static_mode || $this->isFlag($v, 'static')))
-			{
+			$fieldTitle = self::getFieldTitle($field, $v, $this->getX()->getLanguage());
+
+			if ($v['type'] == 'password' && ($this->static_mode || $this->isFlag($v, 'static'))) {
 				$v['flags'][] = 'hidden';
 			}
 
@@ -1058,13 +1152,13 @@ EOF;
 							$input1 = $this->getSimpleInput("password");
 							$input2 = $this->getSimpleInput("password", ["name" => "password2"]);
 
-							$t2 = $v["title"];
+							$t2 = $fieldTitle;
 							if ($t2)
 							{
 								$t2 = mb_strtolower(mb_substr($t2, 0, 1)) . mb_substr($t2, 1);
 							}
 
-							$html .= $this->getRow($field, "{$v["title"]}{$notesStar}:", "$input1 &nbsp;<span id=\"{$field}_console\" class=\"error\"></span>");
+							$html .= $this->getRow($field, "{$fieldTitle}{$notesStar}:", "$input1 &nbsp;<span id=\"{$field}_console\" class=\"error\"></span>");
 							$html .= $this->getRow($field . "2", "{$this->L("confirm")} {$t2}{$notesStar}:", $input2);
 
 							break;
@@ -1086,18 +1180,14 @@ EOF;
 							$input = $this->wrapInput($field, $input);
 
 							//(isset($this->uploaded_images_w[$k]) && $this->uploaded_images_w[$k] > 200 || ( &&
-							$html .= $this->getRow($field, "{$v["title"]}{$notesStar}:",
+							$html .= $this->getRow($field, "{$fieldTitle}{$notesStar}:",
 								$tag && ($this->static_mode || $this->data[$field]) ? "$tag<div>$input</div>" : $input);
 
 							break;
 
 						default:
 							$input = $this->wrapInput($field, $input);
-
-							$title = isset($v["title"])
-								? "{$v["title"]}{$notesStar}:"
-								: '';
-							$html .= $this->getRow($field, $title, $input);
+							$html .= $this->getRow($field, $fieldTitle . $notesStar . ':', $input);
 
 							break;
 					}
