@@ -571,8 +571,8 @@ class diModel implements \ArrayAccess
         }
 
 		$pathPrefix = $httpPath
-            ? \diPaths::http($this)
-            : \diPaths::fileSystem($this);
+            ? \diPaths::http($this, true, $field)
+            : \diPaths::fileSystem($this, true, $field);
 
 		return $filename
 			? $pathPrefix . $this->getFolderForField($field) . $subFolder . $filename
@@ -656,6 +656,15 @@ class diModel implements \ArrayAccess
         $callback($Submit, $field, $fieldFileOptions, $F);
 
         return $this;
+    }
+
+    public function getFileContents($field, $previewIdx = null)
+    {
+        if (!$this->has($field)) {
+            return null;
+        }
+
+        return file_get_contents($this->wrapFileWithPath($this->get($field), $previewIdx, false, $field));
     }
 
 	public function getTemplateVars()

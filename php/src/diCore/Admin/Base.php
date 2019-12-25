@@ -525,7 +525,7 @@ class Base
 
 	public function getPageTitle()
 	{
-		return $this->getSiteTitle() . ': Admin / ' . strip_tags($this->caption);
+		return strip_tags($this->caption) . ': ' . $this->getSiteTitle() . ' admin';
 	}
 
 	public function expandCollapseBlockNeeded()

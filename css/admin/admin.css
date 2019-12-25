@@ -2626,6 +2626,9 @@ body[data-skin="entrine"] .existing-pic-holder + .file-input-wrapper {
   max-width: 100%;
   height: auto;
 }
+.existing-pic-holder .container > img[src$="\.svg"] {
+  width: 200px;
+}
 @media screen and (min-width: 768px) {
   .existing-pic-holder .container.img-full-size {
     overflow-x: auto;
