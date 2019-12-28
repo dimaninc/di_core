@@ -1668,7 +1668,7 @@ EOF;
 				$this->inputs[$field] = $suffix_ar[$this->getData($field)];
 			}
 
-			if ($this->inputs[$field])
+			if (!empty($this->inputs[$field]))
 			{
 				$this->inputs[$field] = StringHelper::out($this->inputs[$field]);
 			}
