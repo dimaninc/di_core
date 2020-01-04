@@ -2313,7 +2313,8 @@ body[data-skin="entrine"] .diadminform-row .value .static-text {
 .diadminform-row .value .wysiwyg textarea {
   height: 450px;
 }
-.diadminform-row .value .error {
+.diadminform-row .value .error,
+.filter-block .row .error {
   background: #f00;
   color: #fff;
   padding: 3px 5px;
@@ -2322,7 +2323,8 @@ body[data-skin="entrine"] .diadminform-row .value .static-text {
   align-self: center;
   -ms-flex-item-align: center;
 }
-.diadminform-row .value .error:empty {
+.diadminform-row .value .error:empty,
+.filter-block .row .error:empty {
   display: none;
 }
 .diadminform-row .value .input-suffix {
