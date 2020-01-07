@@ -398,6 +398,15 @@ class StringHelper
         return $text;
     }
 
+    public static function cutUrl($url, $options = [])
+    {
+        $options = extend([
+            'cutLength' => 40,
+        ], $options);
+
+        return self::cutEnd($url, $options['cutLength']);
+    }
+
     public static function fileBaseName($filename)
 	{
 		$x = mb_strrpos($filename, '.');
