@@ -29,6 +29,7 @@ abstract class diModule
 	{
 		$options = extend([
 			'noCache' => false,
+			'ignoreRealRoutes' => false,
 			'bootstrapSettings' => null,
 		], $options);
 
@@ -257,7 +258,9 @@ abstract class diModule
 	 */
 	public function getRoute($idx = null)
 	{
-		return $this->getZ()->getRoute($idx);
+		return $this->getRenderOption('ignoreRealRoutes')
+            ? null
+            : $this->getZ()->getRoute($idx);
 	}
 
 	/**

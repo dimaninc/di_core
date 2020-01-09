@@ -46,8 +46,7 @@ class Tags extends \diCore\Admin\BasePage
 				],
 			],
 			'date' => [
-				'value' => function (Model $tag)
-				{
+				'value' => function (Model $tag) {
 					return \diDateTime::simpleFormat($tag->getDate());
 				},
 				'headAttrs' => [
