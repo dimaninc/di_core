@@ -68,6 +68,14 @@ Helper = {
     }
     return arguments[0];
   },
+  filesOfFolder: function(folder, files) {
+    if (files == null) {
+      files = [];
+    }
+    return files.map(function(file) {
+      return folder + file;
+    });
+  },
   req: function(module) {
     return require(this.workFolder + '/node_modules/' + module);
   },

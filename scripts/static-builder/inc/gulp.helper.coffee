@@ -39,6 +39,8 @@ Helper =
                         arguments[0][key] = arguments[i][key]
         arguments[0]
 
+    filesOfFolder: (folder, files = []) -> files.map (file) -> folder + file
+
     req: (module) -> require @workFolder + '/node_modules/' + module
 
     fullPath: (path) ->

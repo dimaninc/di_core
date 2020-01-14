@@ -21,6 +21,8 @@ class Auth
 	const SOURCE_COOKIE = 2;
 	const SOURCE_SESSION = 3;
 
+	const CLEAR_USER_ID_COOKIE_ON_SIGN_OUT = true;
+
 	const COOKIE_LIFE_TIME_REMEMBERED = '+2 weeks';
 	const COOKIE_LIFE_TIME_GUEST = '+30 min';
 
@@ -99,6 +101,18 @@ class Auth
 
 		return static::$instance;
 	}
+
+	public static function isFirstVisit()
+    {
+        if (
+            \diRequest::cookie(static::COOKIE_USER_ID) ||
+            self::i()->authorized()
+        ) {
+            return false;
+        }
+
+        return true;
+    }
 
 	/**
 	 * @return \diCore\Entity\User\Model
@@ -198,7 +212,7 @@ class Auth
 		return $force || in_array($this->authSource, [self::SOURCE_POST, self::SOURCE_COOKIE]);
 	}
 
-	private function setCookie($name, $value = null, $date = null, $path = null, $domain = null)
+	protected function setCookie($name, $value = null, $date = null, $path = null, $domain = null)
 	{
 		/** @var \diCookie $className */
 		$className = static::COOKIE_PROVIDER;
@@ -207,7 +221,7 @@ class Auth
 		return $this;
 	}
 
-	private function removeCookie($name, $path = null, $domain = null)
+	protected function removeCookie($name, $path = null, $domain = null)
 	{
 		/** @var \diCookie $className */
 		$className = static::COOKIE_PROVIDER;
@@ -216,10 +230,9 @@ class Auth
 		return $this;
 	}
 
-	private function storeCookies($remember = false)
+	protected function storeCookies($remember = false)
 	{
-		if ($this->reallyAuthorized() && $this->needToStoreCookies($remember))
-		{
+		if ($this->reallyAuthorized() && $this->needToStoreCookies($remember)) {
 			$cookieTime = strtotime($this->rememberUser() || $remember ? static::COOKIE_LIFE_TIME_REMEMBERED : static::COOKIE_LIFE_TIME_GUEST);
 
 			$id = $this->getUserId();
@@ -229,8 +242,7 @@ class Auth
 				->setCookie(static::COOKIE_USER_ID, $id, $cookieTime)
 				->setCookie(static::COOKIE_SECRET, $secret, $cookieTime);
 
-			if ($this->rememberUser() || $remember)
-			{
+			if ($this->rememberUser() || $remember) {
 				$this->setCookie(static::COOKIE_REMEMBER, 1, $cookieTime);
 			}
 		}
@@ -238,12 +250,16 @@ class Auth
 		return $this;
 	}
 
-	private function clearCookies()
+	protected function clearCookies()
 	{
 		$this
-			->removeCookie(static::COOKIE_USER_ID)
-			->removeCookie(static::COOKIE_SECRET)
-			->removeCookie(static::COOKIE_REMEMBER);
+            ->removeCookie(static::COOKIE_SECRET)
+            ->removeCookie(static::COOKIE_REMEMBER);
+
+		if (static::CLEAR_USER_ID_COOKIE_ON_SIGN_OUT) {
+		    $this
+                ->removeCookie(static::COOKIE_USER_ID);
+        }
 
 		return $this;
 	}
@@ -251,22 +267,22 @@ class Auth
 	// todo: check activated status
 	private function authorize($id, $passwordHash, $source = self::SOURCE_POST)
 	{
-		if ($this->authorized())
-		{
+		if ($this->authorized()) {
 			return false;
 		}
 
 		$this->user = \diModel::create(static::USER_MODEL_TYPE, $id);
 		$sourceStr = $source == self::SOURCE_POST ? 'raw' : 'cookie';
 
-		if ($this->getUserModel()->exists() && $this->getUserModel()->active() && $this->getUserModel()->isPasswordOk($passwordHash, $sourceStr))
-		{
+		if (
+		    $this->getUserModel()->exists() &&
+            $this->getUserModel()->active() &&
+            $this->getUserModel()->isPasswordOk($passwordHash, $sourceStr)
+        ) {
 			$this->storeSession();
 
 			return true;
-		}
-		else
-		{
+		} else {
 			$this->getUserModel()->destroy();
 		}
 
@@ -286,8 +302,7 @@ class Auth
 
 	protected function updateAuthorizedUserData()
 	{
-		if ($this->authorized())
-		{
+		if ($this->authorized()) {
 			$this->getUserModel()
 				->setValidationNeeded(false)
 				->setLastVisitDate(\diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME))
@@ -305,14 +320,11 @@ class Auth
 
 		$this->user = \diModel::create(static::USER_MODEL_TYPE, $id, 'id');
 
-		if ($this->authorized())
-		{
+		if ($this->authorized()) {
 			$this->authSource = self::SOURCE_SESSION;
 
 			$this->updateAuthorizedUserData();
-		}
-		else
-		{
+		} else {
 			$this->getUserModel()->destroy();
 		}
 
@@ -321,16 +333,14 @@ class Auth
 
 	private function authUsingCookies()
 	{
-		if ($this->authorized())
-		{
+		if ($this->authorized()) {
 			return $this;
 		}
 
 		$id = (int)\diCookie::get(static::COOKIE_USER_ID);
 		$password = \diCookie::get(static::COOKIE_SECRET);
 
-		if ($this->authorize($id, $password, self::SOURCE_COOKIE))
-		{
+		if ($this->authorize($id, $password, self::SOURCE_COOKIE)) {
 			$this->authSource = self::SOURCE_COOKIE;
 
 			$this->updateAuthorizedUserData();
@@ -341,16 +351,14 @@ class Auth
 
 	private function authUsingPost()
 	{
-		if ($this->authorized())
-		{
+		if ($this->authorized()) {
 			return $this;
 		}
 
 		$login = \diRequest::post(static::POST_LOGIN_FIELD, '');
 		$password = \diRequest::post(static::POST_PASSWORD_FIELD, '');
 
-		if ($login && $password && $this->authorize($login, $password, self::SOURCE_POST))
-		{
+		if ($login && $password && $this->authorize($login, $password, self::SOURCE_POST)) {
 			$this->authSource = self::SOURCE_POST;
 
 			$this->updateAuthorizedUserData();
@@ -386,15 +394,11 @@ class Auth
 				'BOOLEAN' => $this->authorized() ? 'true' : 'false',
 			], static::TEMPLATE_VAR_PREFIX);
 
-		if ($this->authorized())
-		{
-			if ($tpl->exists('user_panel'))
-			{
+		if ($this->authorized()) {
+			if ($tpl->exists('user_panel')) {
 				$tpl->process('LOGIN_PANEL', 'user_panel');
 			}
-		}
-		else
-		{
+		} else {
             $tpl->exists('auth_panel') && $tpl->process('LOGIN_PANEL', 'auth_panel');
             $tpl->exists('auth_popup') && $tpl->process('LOGIN_POPUP', 'auth_popup');
 		}
