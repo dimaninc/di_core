@@ -316,14 +316,7 @@ abstract class CMS
 		} catch (\Exception $e) {
 			$this
 				->setResponseCode(HttpCode::INTERNAL_SERVER_ERROR)
-				->renderBeforeError();
-
-			$this->getTwig()
-				->renderPage('errors/basic', [
-					'exception' => $e,
-				]);
-
-			$this->renderAfterError();
+				->renderBasicError($e);
 
 			HttpCode::header($this->getResponseCode());
 		} finally {
@@ -343,6 +336,22 @@ abstract class CMS
 	{
 		return $this;
 	}
+
+	public function renderBasicError(\Exception $e)
+    {
+        $this
+            //->setResponseCode(HttpCode::INTERNAL_SERVER_ERROR)
+            ->renderBeforeError();
+
+        $this->getTwig()
+            ->renderPage('errors/basic', [
+                'exception' => $e,
+            ]);
+
+        $this->renderAfterError();
+
+        return $this;
+    }
 
 	/** @deprecated  */
 	public static function fast_lite_create($options = [])
@@ -1189,10 +1198,9 @@ abstract class CMS
 		]);
 	}
 
-	protected function finish()
+	public function finish()
 	{
-		if (static::templateEngineIsFastTemplate())
-		{
+		if (static::templateEngineIsFastTemplate()) {
 			$this->getTpl()
 				->assign($this->metaFields, 'META_');
 		}

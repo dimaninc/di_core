@@ -202,6 +202,14 @@ class Form
             'ru' => 'Тип',
             'en' => 'Type',
         ],
+        'user_id' => [
+            'ru' => 'Пользователь',
+            'en' => 'User',
+        ],
+        'email' => [
+            'ru' => 'E-mail',
+            'en' => 'E-mail',
+        ],
         'title' => [
             'ru' => 'Название',
             'en' => 'Title',
@@ -217,6 +225,10 @@ class Form
         'pic' => [
             'ru' => 'Изображение',
             'en' => 'Pic',
+        ],
+        'color' => [
+            'ru' => 'Цвет',
+            'en' => 'Color',
         ],
         'visible' => [
             'ru' => 'Отображать на сайте',
@@ -261,6 +273,10 @@ class Form
         'updated_at' => [
             'ru' => 'Дата/время последнего изменения',
             'en' => 'Date/time of update',
+        ],
+        'applied_at' => [
+            'ru' => 'Дата/время применения',
+            'en' => 'Date/time of use',
         ],
         'deleted_at' => [
             'ru' => 'Дата/время удаления',

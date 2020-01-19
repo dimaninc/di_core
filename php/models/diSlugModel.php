@@ -8,23 +8,19 @@
  * Class diSlugModel
  * Methods list for IDE
  *
- * @method integer	getTargetType
- * @method integer	getTargetId
  * @method string	getFullSlug
  * @method integer	getLevelNum
  *
- * @method bool hasTargetType
- * @method bool hasTargetId
  * @method bool hasFullSlug
  * @method bool hasLevelNum
  *
- * @method diSlugModel setTargetType($value)
- * @method diSlugModel setTargetId($value)
  * @method diSlugModel setFullSlug($value)
  * @method diSlugModel setLevelNum($value)
  */
 class diSlugModel extends \diModel
 {
+    use \diCore\Traits\Model\TargetInside;
+
 	const type = \diTypes::slug;
 	const slug_field_name = self::SLUG_FIELD_NAME;
 	protected $table = "slugs";

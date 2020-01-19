@@ -107,13 +107,11 @@ class ArrayHelper
 	 */
 	public static function filterByKey($ar, $allowedKeys = [], $disallowedKeys = [])
 	{
-		if ($allowedKeys)
-		{
+		if ($allowedKeys) {
 			$ar = array_intersect_key($ar, array_flip($allowedKeys));
 		}
 
-		if ($disallowedKeys)
-		{
+		if ($disallowedKeys) {
 			$ar = array_diff_key($ar, array_flip($disallowedKeys));
 		}
 

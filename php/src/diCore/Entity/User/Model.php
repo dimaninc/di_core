@@ -139,8 +139,7 @@ class Model extends \diBaseUserModel
 
 	public function fastSignUp($options = [])
 	{
-		if ($options instanceof \diTwig)
-		{
+		if ($options instanceof \diTwig) {
 			$options = [
 				'twig' => $options,
 			];
@@ -150,8 +149,7 @@ class Model extends \diBaseUserModel
 			'twig' => null,
 		], $options);
 
-		if (!$options['twig'])
-		{
+		if (!$options['twig']) {
 			$options['twig'] = \diTwig::create();
 		}
 
@@ -170,18 +168,15 @@ class Model extends \diBaseUserModel
 		$newPassword = \diRequest::post('new_password', '');
 		$newPassword2 = \diRequest::post('new_password2', '');
 
-		if (!$oldPassword || static::hash($oldPassword, 'db') != $this->getPassword())
-		{
+		if (!$oldPassword || static::hash($oldPassword, 'db') != $this->getPassword()) {
 			throw new \Exception(Cabinet::L('set_password.wrong_old_password'));
 		}
 
-		if (!static::isPasswordValid($newPassword))
-		{
+		if (!static::isPasswordValid($newPassword)) {
 			throw new \Exception(Cabinet::L('set_password.password_not_valid'));
 		}
 
-		if ($newPassword != $newPassword2)
-		{
+		if ($newPassword != $newPassword2) {
 			throw new \Exception(Cabinet::L('set_password.passwords_not_match'));
 		}
 
@@ -242,8 +237,7 @@ class Model extends \diBaseUserModel
 
     public function notifyAboutRegistrationByEmail(\diTwig $twig)
 	{
-		if ($this->hasEmail())
-		{
+		if ($this->hasEmail()) {
 			$this->sendEmail(
 			    $this->getSender('sign_up'),
                 $this->getEmail(),
@@ -259,15 +253,13 @@ class Model extends \diBaseUserModel
 
 	public function notifyAboutResetPasswordByEmail(\diTwig $twig)
 	{
-		if (!$this->hasActivationKey())
-		{
+		if (!$this->hasActivationKey()) {
 			$this
 				->setActivationKey(static::generateActivationKey())
 				->save();
 		}
 
-		if ($this->hasEmail())
-		{
+		if ($this->hasEmail()) {
 			$twig->assign([
 				'reset_href' => $this->getFullEnterNewPasswordHref(),
 			]);
