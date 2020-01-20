@@ -239,10 +239,11 @@ Helper =
             cssFormat: 'stylus'
             algorithm: 'binary-tree'
             webp: false
+            timestampVarSuffix: ''
             #imgOpts: {quality: 75}
             cssTemplate: (data) ->
                 timestamp = (new Date).getTime()
-                template = "$sprite-timestamp = #{timestamp}\n"
+                template = "$sprite#{opts.timestampVarSuffix}-timestamp = #{timestamp}\n"
                 for item in data.items
                     template += "$sprite-#{item.name} = #{item.px.offset_x} #{item.px.offset_y} #{item.px.width} #{item.px.height}\n"
                 template

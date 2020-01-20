@@ -341,10 +341,11 @@ Helper = {
       cssFormat: 'stylus',
       algorithm: 'binary-tree',
       webp: false,
+      timestampVarSuffix: '',
       cssTemplate: function(data) {
         var item, j, len, ref, template, timestamp;
         timestamp = (new Date).getTime();
-        template = "$sprite-timestamp = " + timestamp + "\n";
+        template = "$sprite" + opts.timestampVarSuffix + "-timestamp = " + timestamp + "\n";
         ref = data.items;
         for (j = 0, len = ref.length; j < len; j++) {
           item = ref[j];
