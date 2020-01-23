@@ -626,20 +626,24 @@ u
     bottom 0
     left 0
     right 0
-    height 40px
+    height $classicFooterHeight
     border-top 1px solid #B1B1B1
     color black
     font-size 11px
     background-color #ddd
-    line-height 40px
+    //line-height 40px
     body[data-skin="entrine"] &
         background white
         color $entrineColorBgDarker
         font-size 10px
+        height $entrineFooterHeight
     .copyright
+        display flex
+        flex-direction column
+        justify-content center
         box-sizing border-box
-        width 200px
-        height 40px
+        width $classicMenuWidth
+        height $classicFooterHeight
         padding-top 5px
         float left
         border-right 1px solid #B1B1B1
@@ -647,6 +651,7 @@ u
         line-height 150%
         body[data-skin="entrine"] &
             width $entrineMenuWidth
+            height $entrineFooterHeight
     .console-container
         margin-left 201px
         background-color inherit

@@ -768,7 +768,7 @@ EOF;
                 ? "<button type=\"button\" id=\"btn-cancel\" onclick=\"admin_form_{$this->table}_{$this->id}.cancel(".($this->lite ? "'&lite={$this->lite}'" : "").");\">{$this->getButtonIcon('cancel')}{$this->L("cancel")}</button>"
                 : "";
 
-			$submit_status_line = $this->isButtonShown("quick_save", $show_ar, $hide_ar)
+			$submit_status_line = $this->isButtonShown("quick_save", $show_ar, $hide_ar) && false
                 ? "<div id=\"submit_status_line_{$this->table}_{$this->id}\" class=\"submit-status-line\"></div>"
                 : "";
 

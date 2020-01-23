@@ -37,7 +37,7 @@ class Base
 	/** @var BasePage */
 	protected $adminPage;
 
-	private $version = '4.6';
+	private $version = '4.7';
 
 	protected $defaultSuperUsersAr = ['dimaninc'];
 	protected $superUsersAr = [];

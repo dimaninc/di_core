@@ -488,29 +488,43 @@ ul.table-edit-log
         max-width 90%
 
 .submit-block
+    position fixed
+    left $classicMenuWidth
+    right 0
+    bottom 0
+    z-index 1
     display flex
-    justify-content center
-    flex-wrap wrap
-    border 1px solid #CFCFCF
-    margin 10px 20px
-    background-color #edf0f4
-    padding 10px 0
-    border-radius 8px
+    justify-content flex-start //center
+    align-items center
+    //flex-wrap wrap
+    //border 1px solid #CFCFCF
+    //margin 10px 20px
+    background-color #ddd //#edf0f4
+    padding 0 20px
+    height $classicFooterHeight
+    //border-radius 8px
     @media screen and (max-width: 767px)
-        margin-left 0
-        margin-right 0
-        border 0
-        border-radius 0
-        background none
+        left 0
+        //margin-left 0
+        //margin-right 0
+        //border 0
+        //border-radius 0
+        //background none
+        padding 0 5px
+        justify-content center
     body[data-skin="entrine"] &
-        justify-content flex-start
-        border 0
-        border-radius 0
-        background-color transparent
-        text-align left
-        margin-left 160px
+        left $entrineMenuWidth
+        //justify-content flex-start
+        height $entrineFooterHeight
+        //border 0
+        //border-radius 0
+        background-color white
+        //text-align left
+        //margin-left 160px
+        //@media screen and (max-width: 767px)
+        //    margin-left 12px
         @media screen and (max-width: 767px)
-            margin-left 12px
+            left 0
     .submit-status-line
         font-size 11px
         line-height @font-size
