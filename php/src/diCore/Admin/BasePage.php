@@ -52,6 +52,8 @@ abstract class BasePage
 	/** @var callable|null */
 	private $renderCallback;
 
+	private $floatingSubmit = false;
+
 	const LIST_LIST = 1;
 	const LIST_GRID = 2;
 
@@ -266,6 +268,18 @@ abstract class BasePage
 
 		return $this;
 	}
+
+	protected function setFloatingSubmit($state = true)
+    {
+        $this->floatingSubmit = !!$state;
+
+        return $this;
+    }
+
+    public function getFloatingSubmit()
+    {
+        return $this->floatingSubmit;
+    }
 
 	public function tryToInitTable()
 	{

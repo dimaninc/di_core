@@ -272,6 +272,13 @@ class Base
     {
         try {
             return $this->getTwig()
+                ->assign([
+                    '_settings' => [
+                        'floating_submit' => $this->getPage()
+                            ? json_encode($this->getPage()->getFloatingSubmit())
+                            : null,
+                    ],
+                ])
                 ->renderIndex()
                 ->getIndex();
         } catch (\Exception $e) {
@@ -284,7 +291,7 @@ class Base
 	protected function getStaticTimestampEnding()
 	{
 		return class_exists('diStaticBuild')
-			? '?' . \diStaticBuild::VERSION
+			? '?v=' . \diStaticBuild::VERSION
 			: '';
 	}
 

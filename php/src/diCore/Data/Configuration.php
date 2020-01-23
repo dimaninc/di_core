@@ -518,7 +518,7 @@ class Configuration
 			}
 
 			$type = self::getPropertyType($name);
-			$s = $this->adjustBeforeDB($r->{$this->valueField}, $type);
+			$s = $this->adjustBeforeDB($r->{$this->valueField}, $type, true);
 
 			if (!in_array($type, ['int', 'integer', 'float', 'double', 'checkbox']))
 			{
@@ -554,12 +554,12 @@ class Configuration
 		return $this;
 	}
 
-	private function adjustBeforeDB($value, $type)
+	private function adjustBeforeDB($value, $type, $forCache = false)
 	{
 		switch ($type)
 		{
 			default:
-				return addslashes($value);
+				return $forCache ? addcslashes($value, '"') : addslashes($value);
 
 			case 'checkbox':
 			case 'int':
