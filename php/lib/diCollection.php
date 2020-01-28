@@ -1395,22 +1395,32 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	public function hardDestroy()
 	{
 		/** @var \diModel $model */
-		foreach ($this as $model)
-		{
+		foreach ($this as $model) {
 			$model->killRelatedFilesAndData();
 		}
 
-		$ids = $this->getIds();
-
-		if (count($ids))
-		{
-			$this->getDb()->delete($this->getTable(), $ids);
-		}
-
-		$this->destroy();
+		$this->softDestroy();
 
 		return $this;
 	}
+
+    /**
+     * Removes collection data and database records
+     *
+     * @return $this
+     */
+	public function softDestroy()
+    {
+        $ids = $this->getIds();
+
+        if (count($ids)) {
+            $this->getDb()->delete($this->getTable(), $ids);
+        }
+
+        $this->destroy();
+
+        return $this;
+    }
 
 	public function update($newData = [])
 	{

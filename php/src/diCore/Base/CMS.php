@@ -31,6 +31,8 @@ abstract class CMS
 	const OG_IMAGE_W = 1200;
 	const OG_IMAGE_H = 623;
 
+	const LANGUAGE_MODE = Language::URL;
+
 	/**
 	 * @var \FastTemplate
 	 * @deprecated
@@ -112,6 +114,12 @@ abstract class CMS
         self::ENV_STAGE2 => 'stage2',
 		self::ENV_PROD => 'prod',
 	];
+
+    /**
+     * Assoc array: 'lang' => ['domain1', 'domain2'],
+     * @var array
+     */
+    public static $languageDomains = [];
 
 	protected static $skipGetParams = [
 		\diPagesNavy::PAGE_PARAM,
@@ -1592,29 +1600,21 @@ abstract class CMS
 		$url = $this->getFullRoute();
 
 		$x = strpos($url, '?');
-		if ($x !== false)
-		{
+		if ($x !== false) {
 			$url = rtrim(substr($url, 0, $x), '/');
 		}
 
 		$this->origRoutes = $this->routes = array_values(array_filter(explode('/', $url)));
 
 		$this
-			->define_language($this->getRoute(0))
+            ->detectLanguage()
 			->define_language_vars();
 
-		if ($this->routes && in_array($this->routes[0], static::$possibleLanguages))
-		{
-		    $this->removeRoute(0);
-		}
-
-		if (!$this->routes)
-		{
+		if (!$this->routes) {
 			$this->routes[] = $this->ct($this->defaultPageType);
 		}
 
-		if (!$this->routes || !$this->routes[0])
-		{
+		if (!$this->routes || !$this->routes[0]) {
 			$this->errorNotFound();
 		}
 
@@ -1641,27 +1641,66 @@ abstract class CMS
 		}
 	}
 
+	public function detectLanguage()
+    {
+        switch (static::LANGUAGE_MODE) {
+            case Language::URL:
+                $language = $this->getRoute(0);
+
+                if ($this->routes && in_array($this->routes[0], static::$possibleLanguages)) {
+                    $this->removeRoute(0);
+                }
+
+                break;
+
+            case Language::DOMAIN:
+                foreach (static::$languageDomains as $lang => $domains) {
+                    if (!is_array($domains)) {
+                        $domains = [$domains];
+                    }
+
+                    if (in_array(\diRequest::domain(), $domains)) {
+                        $language = $lang;
+                        break;
+                    }
+                }
+                break;
+        }
+
+        if (!isset($language)) {
+            $language = static::$defaultLanguage;
+        }
+
+        $this->define_language($language);
+
+        return $this;
+    }
+
 	public function define_language($language)
 	{
-		if (!$language)
-		{
+		if (!$language) {
 			return $this;
 		}
 
 		$this->language = $language;
 
-		if (!in_array($language, static::$possibleLanguages))
-		{
+		if (!in_array($language, static::$possibleLanguages)) {
 			$this->language = static::$defaultLanguage;
 		}
 
-		$this->language_href_prefix = static::languageHrefPrefix($this->language);
+		if (static::LANGUAGE_MODE == Language::URL) {
+            $this->language_href_prefix = static::languageHrefPrefix($this->language);
+        }
 
 		return $this;
 	}
 
 	public static function languageHrefPrefix($language = null)
 	{
+        if (static::LANGUAGE_MODE != Language::URL) {
+            return '';
+        }
+
 		return !$language || $language == static::$defaultLanguage ? '' : '/' . $language;
 	}
 
