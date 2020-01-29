@@ -142,7 +142,8 @@ class diSlugsUnited
 
 	public function save()
 	{
-		\diCore\Tool\Logger::getInstance()->variable($this->getModel());
+		\diCore\Tool\Logger::getInstance()->log('Slug model: ' . print_r($this->getModel()->get(), true),
+            'diSlugsUnited');
 
 		$this->getModel()->save();
 
