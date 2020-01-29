@@ -1022,7 +1022,7 @@ EOF;
 							case "integer":
 							case "float":
 							case "double":
-								$s = $this->data[$field];
+								$s = $this->getData($field);
 								break;
 
 							case "tags":
@@ -1030,19 +1030,18 @@ EOF;
 								break;
 
 							default:
-								$s = StringHelper::out($this->data[$field]);
+								$s = $this->formatValue($field);
 								break;
 						}
 					}
 
-					if ($s === false)
-					{
+					if ($s === false) {
 						$s = isset($this->inputs[$field]) ? $this->inputs[$field] : $this->getData($field);
 					}
 
 					$this->setInputAttribute($field, [
 						'type' => 'hidden',
-						'value' => StringHelper::out($this->data[$field]),
+						'value' => $this->formatValue($field),
 						'id' => $field,
 						'name' => $field,
 					]);
@@ -1148,7 +1147,7 @@ EOF;
 				if ($hidden)
 				{
 					$html .= "\n<input type=\"hidden\" id=\"$field\" name=\"$field\" value=\"" .
-						StringHelper::out($this->data[$field]) . "\">\n";
+						$this->formatValue($field) . "\">\n";
 				}
 				else
 				{
@@ -1282,9 +1281,9 @@ EOF;
 	public function getSimpleInput($field, $attributes = [])
 	{
 		$attributes = extend([
-			"type" => "text",
-			"name" => $field,
-			"value" => StringHelper::out($this->getData($field)),
+			'type' => 'text',
+			'name' => $field,
+			'value' => $this->formatValue($field),
 		], $this->getInputAttributes($field), $attributes);
 
 		return "<input " . $this->getInputAttributesString($field, $attributes) . ">";
@@ -1298,9 +1297,26 @@ EOF;
 			'rows' => $this->getFieldOption($field, 'rows') ?: 10,
 		], $this->getInputAttributes($field), $attributes);
 
-		return "<textarea " . $this->getInputAttributesString($field, $attributes) . ">" .
-		StringHelper::out($this->getData($field)) . "</textarea>";
+        return "<textarea " . $this->getInputAttributesString($field, $attributes) . ">" .
+            $this->formatValue($field) . "</textarea>";
 	}
+
+	protected function formatValue($field)
+    {
+        $formatter = $this->getFieldOption($field, 'valueFormatter') ?: [self::class, 'defaultValueFormatter'];
+
+        return $formatter($this->getData($field), $field);
+    }
+
+	public static function defaultValueFormatter($value, $field)
+    {
+        return StringHelper::out($value);
+    }
+
+    public static function valueFormatterEscapeAmp($value, $field)
+    {
+        return StringHelper::out($value, true);
+    }
 
 	protected function getRow($field, $title, $value, $rowAttrs = '')
 	{
@@ -1628,11 +1644,9 @@ EOF;
 
 		$values = [];
 
-		foreach ($field_ar as $field)
-		{
+		foreach ($field_ar as $field) {
 			$rs = $db->rs($this->table, "ORDER BY $field ASC", "DISTINCT $field");
-			while ($r = $db->fetch($rs))
-			{
+			while ($r = $db->fetch($rs)) {
 				$values[] = $r->$field;
 			}
 		}
@@ -1640,12 +1654,10 @@ EOF;
 		$values = array_unique($values);
 		sort($values, SORT_STRING);
 
-		foreach ($field_ar as $field)
-		{
+		foreach ($field_ar as $field) {
 			$sel = new \diSelect($field, StringHelper::out($this->getData($field)));
 
-			foreach ($values as $v)
-			{
+			foreach ($values as $v) {
 				$sel->addItem(StringHelper::out($v), StringHelper::out($v));
 			}
 
@@ -1856,7 +1868,7 @@ EOF;
 				'rows' => 10,
 			]);
 
-			$this->inputs[$field] = "<div class='wysiwyg'><textarea {$attrs}>{$this->getData($field)}</textarea></div>";
+			$this->inputs[$field] = "<div class='wysiwyg'><textarea {$attrs}>{$this->formatValue($field)}</textarea></div>";
 
 			if ($this->getWysiwygVendor() == self::wysiwygCK)
 			{

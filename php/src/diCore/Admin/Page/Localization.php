@@ -8,6 +8,7 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Admin\Form;
 use diCore\Entity\Localization\Model;
 
 class Localization extends \diCore\Admin\BasePage
@@ -161,6 +162,8 @@ class Localization extends \diCore\Admin\BasePage
 
 	public function getFormFields()
 	{
+	    $formatter = [Form::class, 'valueFormatterEscapeAmp'];
+
 		return [
 			'name' => [
 				'type' => 'string',
@@ -180,6 +183,7 @@ class Localization extends \diCore\Admin\BasePage
 				'default' => '',
 				'options' => [
 					'rows' => 3,
+                    'valueFormatter' => $formatter,
 				],
 			],
 
@@ -192,6 +196,7 @@ class Localization extends \diCore\Admin\BasePage
 				'default' => '',
 				'options' => [
 					'rows' => 3,
+                    'valueFormatter' => $formatter,
 				],
 			],
 		];
