@@ -878,9 +878,16 @@ class Submit
 		return $this->storeImage($field, $callbackOrFolder);
 	}
 
-	public static function prepareFileOptions($filesOptions, \diModel $model, $table = null)
+	public static function prepareFileOptions($field, $filesOptions, \diModel $model, $table = null)
     {
         foreach ($filesOptions as &$opts) {
+            $widthParam = Configuration::getDimensionParam(
+                'width', $table ?: $model->getTable(), $field, $opts['type'] ?? self::IMAGE_TYPE_MAIN
+            );
+            $heightParam = Configuration::getDimensionParam(
+                'height', $table ?: $model->getTable(), $field, $opts['type'] ?? self::IMAGE_TYPE_MAIN
+            );
+
             $opts = extend([
                 'type' => self::IMAGE_TYPE_MAIN,
                 'folder' => $model->getPicsFolder()
@@ -894,6 +901,8 @@ class Submit
                     'x' => null,
                     'y' => null,
                 ],
+                'width' => Configuration::safeGet($widthParam),
+                'height' => Configuration::safeGet($heightParam),
             ], $opts);
 
             if ($opts['type'] != self::IMAGE_TYPE_MAIN && is_null($opts['subfolder'])) {
@@ -929,6 +938,7 @@ class Submit
 
         foreach ($field as $f) {
 		    $fieldFileOptions = self::prepareFileOptions(
+		        $f,
 		        $filesOptions ?: $this->getModel()->getPicStoreSettings($f) ?: [],
                 $this->getModel(),
                 $this->getTable()
@@ -949,18 +959,8 @@ class Submit
                     FileSystemHelper::createTree(\diPaths::fileSystem($this->getModel(), true, $field),
                         $opts['folder'] . $opts['subfolder'], self::DIR_CHMOD);
 
-                    $suffix = self::getPreviewSuffix($opts['type']);
-
-                    $widthParam = Configuration::exists([
-                        $this->getTable() . '_' . $f . $suffix . '_width',
-                        $this->getTable() . $suffix . '_width',
-                        $this->getTable() . '_width',
-                    ]);
-                    $heightParam = Configuration::exists([
-                        $this->getTable() . '_' . $f . $suffix . '_height',
-                        $this->getTable() . $suffix . '_height',
-                        $this->getTable() . '_height',
-                    ]);
+                    $widthParam = Configuration::getDimensionParam('width', $this->getTable(), $f, $opts['type']);
+                    $heightParam = Configuration::getDimensionParam('height', $this->getTable(), $f, $opts['type']);
 
                     $opts = extend([
                         'width' => Configuration::safeGet($widthParam),
@@ -1381,7 +1381,7 @@ class Submit
             ? $F['diOrigType']
             : null;
 
-	    $mode = $origType
+	    $mode = $origType !== null
             ? self::IMAGE_STORE_MODE_REBUILD
             : self::IMAGE_STORE_MODE_UPLOAD;
 

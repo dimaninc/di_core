@@ -27,6 +27,7 @@
 namespace diCore\Data;
 
 use diCore\Admin\BasePage;
+use diCore\Admin\Submit;
 
 class Configuration
 {
@@ -254,6 +255,24 @@ class Configuration
 
 		return isset(self::$data[$name]) ? $name : null;
 	}
+
+    /**
+     * @param string $dimension width/height
+     * @param string $table table name
+     * @param string $field field name
+     * @param int $imageType Submit::IMAGE_TYPE_MAIN, etc.
+     * @return bool|string|null
+     */
+	public static function getDimensionParam($dimension, $table, $field, $imageType)
+    {
+        $suffix = Submit::getPreviewSuffix($imageType);
+
+        return Configuration::exists([
+            $table . '_' . $field . $suffix . '_' . $dimension,
+            $table . $suffix . '_' . $dimension,
+            $table . '_' . $dimension,
+        ]);
+    }
 
 	public static function getFilename($name)
 	{
