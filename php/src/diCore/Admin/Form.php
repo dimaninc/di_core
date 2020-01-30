@@ -1937,9 +1937,15 @@ EOF;
 
 	private function getDelLinkCode($field)
 	{
+	    $confirmMessage = $this->L(
+	        $this->getFieldProperty($field, 'type') == 'pic'
+                ? 'delete_pic_confirmation'
+                : 'delete_file_confirmation'
+        );
+
 		return ", <a href=\"" . \diLib::getAdminWorkerPath("files", "del", [$this->table, $this->id, $field]) . "\" " .
-		"data-field=\"$field\" data-confirm=\"{$this->L("delete_pic_confirmation")}\" " .
-		"class=\"del-file\">{$this->L("delete")}</a>";
+		    "data-field=\"$field\" data-confirm=\"{$confirmMessage}\" " .
+		    "class=\"del-file\">{$this->L("delete")}</a>";
 	}
 
 	private function getRotateBlockCode($field)
