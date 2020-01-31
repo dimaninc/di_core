@@ -2653,7 +2653,8 @@ EOF;
 		}
 
 		if (!$feed) {
-			throw new \Exception('Checkboxes feed not defined for field ' . $field);
+			//throw new \Exception('Checkboxes feed not defined for field ' . $field);
+            return $this;
 		}
 
 		if (is_null($columns)) {
