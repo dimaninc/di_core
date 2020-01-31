@@ -449,6 +449,60 @@ EOF;
         return $this;
 	}
 
+	public function setFilterAttr($fields, $attr, $value = null)
+    {
+        if (!is_array($fields)) {
+            $fields = [$fields];
+        }
+
+        foreach ($fields as $field) {
+            if (!is_array($attr)) {
+                $attr = [
+                    $attr => $value,
+                ];
+            }
+
+            $this->ar[$field] = extend($this->ar[$field], $attr);
+        }
+
+        return $this;
+    }
+
+    public function replaceFilter($name, array $newFilters)
+    {
+        $this
+            ->insertFiltersBefore($name, $newFilters)
+            ->removeFilter($name);
+
+        return $this;
+    }
+
+    public function renameFilter($name, $newName)
+    {
+        $this
+            ->insertFiltersBefore($name, [$newName => $this->ar[$name]])
+            ->removeFilter($name)
+            ->setFilterAttr($newName, [
+                'field' => $newName,
+            ]);
+
+        return $this;
+    }
+
+    public function insertFiltersBefore($name, array $newFilters)
+    {
+        $this->ar = ArrayHelper::addItemsToAssocArrayBeforeKey($this->ar, $name, $newFilters);
+
+        return $this;
+    }
+
+    public function insertFiltersAfter($name, array $newFilters)
+    {
+        $this->ar = ArrayHelper::addItemsToAssocArrayAfterKey($this->ar, $name, $newFilters);
+
+        return $this;
+    }
+
 	public function removeFilter($field)
     {
         $idx = $this->get_idx_by_field($field);
