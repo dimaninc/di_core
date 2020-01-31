@@ -333,12 +333,17 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $o;
 	}
 
-	public static function createEmpty($type)
+	public static function createEmpty($type = null)
     {
         $o = static::create($type);
         $o->makeEmpty();
 
         return $o;
+    }
+
+    public static function createFromArray($ar)
+    {
+        return static::createEmpty()->addItems($ar);
     }
 
     public function makeEmpty()
@@ -452,13 +457,16 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
     /**
      * Filters collection, returns filtered array of models
      * @param callable|string $callback Callback or field name of model
-     * @return array
+     * @param bool $asArray If true, an array returned, if false – Collection
+     * @return array|$this
      */
-    public function filter($callback)
+    public function filter($callback, $asArray = false)
     {
         $this->load();
 
-        $ar = [];
+        $col = $asArray
+            ? []
+            : static::createEmpty();
 
         $obj = new ArrayObject($this->items);
         $it = $obj->getIterator();
@@ -474,17 +482,21 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
             }
 
             if ($result) {
-                if ($this->isIdUnique) {
-                    $ar[$v->getId()] = $v;
+                if ($asArray) {
+                    if ($this->isIdUnique) {
+                        $col[$v->getId()] = $v;
+                    } else {
+                        $col[] = $v;
+                    }
                 } else {
-                    $ar[] = $v;
+                    $col->addItem($v);
                 }
             }
 
             $it->next();
         }
 
-        return $ar;
+        return $col;
     }
 
     public function slice($start = 0, $length = null)
@@ -879,17 +891,19 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function addItem($item)
 	{
-		if (!$item instanceof \diModel)
-		{
+		if (!$item instanceof \diModel) {
 			$item = $this->getNewItem($item);
 		}
 
-		if ($this->options['modelAfterCreate'] && is_callable($this->options['modelAfterCreate']))
-		{
+		if (
+		    $this->options['modelAfterCreate'] &&
+            is_callable($this->options['modelAfterCreate'])) {
 			$this->options['modelAfterCreate']($item);
 		}
 
 		$this->offsetSet($this->isIdUnique ? $this->getId($item) : null, $item);
+
+		$this->count = count($this->items);
 
 		return $this;
 	}
@@ -906,18 +920,14 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	private function removeItems()
 	{
 		$this->items = [];
+        $this->count = 0;
 
 		return $this;
 	}
 
 	public function merge(\diCollection $col)
     {
-        foreach ($col as $model)
-        {
-            $this->addItem($model);
-        }
-
-        return $this;
+        return $this->addItems($col);
     }
 
 	/**

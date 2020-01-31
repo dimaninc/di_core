@@ -178,6 +178,8 @@ class Form
 	private $formFields = [];
 	private $allFields = [];
 
+	private $fieldProperties = [];
+
 	private $manualFieldFlags = [];
 
 	private $pics_table = 'dipics';
@@ -376,18 +378,36 @@ class Form
 		return $this->getFieldProperty($field, 'type');
 	}
 
+    public function setFieldProperty($field, $properties = [])
+    {
+        $this->fieldProperties = extend($this->fieldProperties, [
+            $field => $properties,
+        ]);
+
+        return $this;
+    }
+
 	public function getFieldProperty($field = null, $property = null)
 	{
 		$a = $this->getAllFields();
 
-		if ($field !== null && $property !== null && isset($a[$field][$property]))
-		{
+        if (isset($this->fieldProperties[$field][$property])) {
+            return $this->fieldProperties[$field][$property];
+        } elseif (
+		    $field !== null &&
+            $property !== null &&
+            isset($a[$field][$property])
+        ) {
 			return $a[$field][$property];
-		}
-		elseif ($field && $property === null && isset($a[$field]))
-		{
+		} elseif (
+		    $field &&
+            $property === null &&
+            isset($a[$field])
+        ) {
 			return $a[$field];
-		}
+		} elseif ($field === null) {
+		    return $a;
+        }
 
 		return null;
 	}
@@ -2633,7 +2653,7 @@ EOF;
 		}
 
 		if (!$feed) {
-			throw new \Exception('Checkboxes feed not defined');
+			throw new \Exception('Checkboxes feed not defined for field ' . $field);
 		}
 
 		if (is_null($columns)) {
