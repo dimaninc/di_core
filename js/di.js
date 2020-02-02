@@ -117,6 +117,30 @@ var di = {
 		return s.replace(/\s+$/, '');
 	},
 
+	startsWith: function(haystack, needle) {
+		if (!haystack || !needle) {
+			return false;
+		}
+
+		return haystack.substr(0, needle.length) === needle;
+	},
+
+    endsWith: function(haystack, needle) {
+        if (!haystack || !needle) {
+            return false;
+        }
+
+        return haystack.substr(- needle.length) === needle;
+    },
+
+    contains: function(haystack, needle) {
+        if (!haystack || !needle) {
+            return false;
+        }
+
+        return haystack.indexOf(needle) > -1;
+    },
+
 	nl2br: function(s) {
 		return s.replace(/[\r\n]+/, '<br>\n');
 	},

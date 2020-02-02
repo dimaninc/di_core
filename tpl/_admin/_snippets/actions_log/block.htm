@@ -15,8 +15,7 @@
 			$container = $('.diadminform-row[data-field="{I_FIELD}"] .value .static'),
 			Tabs;
 
-		if (id)
-		{
+		if (id) {
 			Tabs = new diTabs({
 				$tabsContainer: $container.find('ul.mini-tabs'),
 				$pagesContainer: $container.find('ul[data-purpose="tab-pages"]'),
@@ -31,6 +30,8 @@
 
 			new diComments({
 				$container: $container.find('ul[data-purpose="tab-pages"] li[data-tab="comments"]'),
+                //addEventToForm: false,
+                inputNamePrefix: '__comment__',
 				loadOnInit: true,
 				submitOnCtrlEnter: true,
 				afterWork: function(action, response) {

@@ -9,6 +9,7 @@ var diComments = function(_opts)
 		opts = $.extend({
 			backend: null,
 			diForm: null,
+			inputNamePrefix: '',
 			addEventToForm: true,
 			submitOnCtrlEnter: false,
 			loadOnInit: false,
@@ -100,36 +101,36 @@ var diComments = function(_opts)
         }
 
         self.e.$rows_container = $('.comment-rows', self.e.$block);
-        self.e.$form = $('form[name="comment_form"]', self.e.$block);
-        self.e.$parent = $('[name=parent]', self.e.$form);
-        self.e.$content = $('[name=content]', self.e.$form);
+        self.e.$form = $('form[name="comment_form"],[data-purpose="comment_form"]', self.e.$block);
+        self.e.$parent = self.el('parent');
+        self.e.$content = self.el('content');
         self.e.$progress = $('.loading-ico,.loading', self.e.$form);
 	}
 
 	function initEvents()
 	{
-		if (opts.addEventToForm)
-		{
-			self.e.$form.off('submit.diComments').on('submit.diComments', function() {
-				return self.onSubmit();
-			});
+		if (opts.addEventToForm) {
+			if (self.e.$form.is('form')) {
+                self.e.$form.off('submit.diComments').on('submit.diComments', function() {
+                    return self.onSubmit();
+                });
+			} else {
+				self.e.$form.find('button,submit').on('click', function() {
+                    return self.onSubmit();
+				});
+			}
 		}
 
-		if (opts.submitOnCtrlEnter)
-		{
+		if (opts.submitOnCtrlEnter) {
 			self.e.$content.off('keypress.diComments').on('keypress.diComments', function(event) {
 				event = event || window.event;
 
-				if (in_array(event.keyCode, [10, 13]) && event.ctrlKey)
-				{
+				if (in_array(event.keyCode, [10, 13]) && event.ctrlKey) {
 					event.preventDefault();
 
-					if (opts.addEventToForm)
-					{
+					if (opts.addEventToForm || !self.e.$form.is('form')) {
 						return self.onSubmit();
-					}
-					else
-					{
+					} else {
 						self.e.$form.submit();
 
 						return false;
@@ -257,21 +258,16 @@ var diComments = function(_opts)
 
 				showProgress(false);
 
-				if (data.reload)
-				{
+				if (data.reload) {
 					window.location.reload();
 				}
 
-				if (data.ok)
-				{
-					if (data.action == 'edit')
-					{
-						self.getCommentRow(self.e.$form.attr('data-id')).find('.content').text(self.e.$form.find('[name="content"]').val());
+				if (data.ok) {
+					if (data.action == 'edit') {
+						self.getCommentRow(self.e.$form.attr('data-id')).find('.content').text(self.val('content'));
 
 						self.e.$form.removeAttr('data-id');
-					}
-					else if (data.action == 'add')
-					{
+					} else if (data.action == 'add') {
 						var totalCount = self.e.$block.data('total-count') || 0;
 						totalCount++;
 
@@ -282,12 +278,9 @@ var diComments = function(_opts)
 
 					self.e.$content.val('').blur();
 
-					if (opts.hideFormAfterSubmit)
-					{
+					if (opts.hideFormAfterSubmit) {
 						toggleElement(self.e.$form, false);
-					}
-					else
-					{
+					} else {
 						self.showForm();
 					}
 
@@ -462,20 +455,19 @@ var diComments = function(_opts)
 				this.e.$form
 					.insertAfter($e)
 					.attr('data-level-num', $e.data('level-num'))
-					.attr('data-id', options.id)
-                    .find('[name="content"]')
-						.val($e.find('.content').text());
+					.attr('data-id', options.id);
+
+				this.el('content').val($e.find('.content').text());
 
 				break;
 		}
 
-		this.e.$form.find('[name="action"]').val(options.action);
+		this.el('action').val(options.action);
 
 		toggleElement(this.e.$form, true);
 		this.e.$parent.val(options.parent);
 
-		if (options.parent > 0 || options.action == 'edit')
-		{
+		if (options.parent > 0 || options.action == 'edit') {
 			this.e.$content.focus();
 		}
 
@@ -570,10 +562,7 @@ var diComments = function(_opts)
 
 			initActions();
 
-			console.log(self.e.$rows_container.find('.comment-row').length, self.e.$block.data('total-count'));
-
-			if (self.e.$rows_container.find('.comment-row').length == self.e.$block.data('total-count'))
-			{
+			if (self.e.$rows_container.find('.comment-row').length == self.e.$block.data('total-count')) {
 				self.hideLoadPreviousBlock();
 			}
 	    });
@@ -679,8 +668,7 @@ var diComments = function(_opts)
 
 		toggleElement($e, true);
 
-		if (_opts.scrollTo && opts.scrollToNewCommentTimeout !== null && $e.position().top)
-		{
+		if (_opts.scrollTo && opts.scrollToNewCommentTimeout !== null && $e.position().top) {
 			setTimeout(function() {
 				$('html, body').animate({
 					scrollTop: $e.offset().top //$e.position().top
@@ -702,29 +690,39 @@ var diComments = function(_opts)
 		$('button[type="submit"]', self.e.$form).prop('disabled', !!state);
 	}
 
+    this.el = function(name) {
+        return this.e.$form.find('[name="{0}"]'.format(opts.inputNamePrefix + name));
+    };
+
+	this.val = function(name) {
+		return this.el(name).val();
+	};
+
 	this.onSubmit = function()
 	{
-		if (opts.diForm && !opts.diForm.onSubmit())
-		{
+		if (opts.diForm && !opts.diForm.onSubmit()) {
 			return false;
 		}
 
 		showProgress(true);
 
-		if (opts.beforeSubmit)
-		{
+		if (opts.beforeSubmit) {
 			opts.beforeSubmit(self);
 		}
 
-		var q_ar = this.e.$form.serializeArray().reduce(function(a, x) { a[x.name] = x.value; return a; }, {}),
-			action = this.e.$form.find('[name="action"]').val();
+        var q_ar = this.e.$form.find('*').serializeArray().reduce(function (a, x) {
+            var name = x.name;
+            if (di.startsWith(name, opts.inputNamePrefix)) {
+                name = name.substr(opts.inputNamePrefix.length);
+            }
+            a[name] = x.value;
+            return a;
+        }, {});
+		var action = this.val('action');
 
-		if (action == 'edit')
-		{
-			for (var i in q_ar)
-			{
-				if (q_ar.hasOwnProperty(i) && !in_array(i, ['action','content']))
-				{
+		if (action === 'edit') {
+			for (var i in q_ar) {
+				if (q_ar.hasOwnProperty(i) && !in_array(i, ['action','content'])) {
 					delete q_ar[i];
 				}
 			}

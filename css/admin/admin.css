@@ -3929,6 +3929,18 @@ ul.filters-of-cat > li {
 }
 .comments-block .comments-form .comment-submit-block {
   margin-left: 10px;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: box;
+  display: flex;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -o-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
 }
 @media screen and (max-width: 767px) {
   .comments-block .comments-form .comment-submit-block {
@@ -3957,7 +3969,6 @@ ul.filters-of-cat > li {
   visibility: hidden;
 }
 .comments-form .loading-ico {
-  position: absolute;
   margin: 5px 0 0 0;
 }
 .configuration [data-tab] {

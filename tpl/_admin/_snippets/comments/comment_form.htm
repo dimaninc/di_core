@@ -1,17 +1,15 @@
-<form name="comment_form" id="admin_comment_form" action="" method="post">
-
-	<input type="hidden" form="admin_comment_form" name="action" value="add" />
-	<input type="hidden" form="admin_comment_form" name="target_type" value="{COMMENT_TARGET_TYPE}" />
-	<input type="hidden" form="admin_comment_form" name="target_id" value="{COMMENT_TARGET_ID}" />
-	<input type="hidden" form="admin_comment_form" name="parent" value="{COMMENT_PARENT}" />
-	<input type="hidden" form="admin_comment_form" name="l" value="{SITE_LANGUAGE}" id="l" />
+<div data-purpose="comment_form">
+	<input type="hidden" name="__comment__action" value="add">
+	<input type="hidden" name="__comment__target_type" value="{COMMENT_TARGET_TYPE}">
+	<input type="hidden" name="__comment__target_id" value="{COMMENT_TARGET_ID}">
+	<input type="hidden" name="__comment__parent" value="{COMMENT_PARENT}">
+	<input type="hidden" name="__comment__l" value="{SITE_LANGUAGE}">
 
 	<div class="comments-form">
-		<textarea placeholder="Ваш комментарий" name="content" form="admin_comment_form" rows="3"></textarea>
+		<textarea placeholder="Ваш комментарий" name="__comment__content" rows="3"></textarea>
 		<div class="comment-submit-block">
-			<button type="submit" form="admin_comment_form">Отправить</button>
+			<button type="button">Отправить</button>
 			<span class="loading-ico"></span>
 		</div>
 	</div>
-
-</form>
+</div>
