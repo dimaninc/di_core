@@ -727,7 +727,7 @@ EOF;
 					case "float":
 					case "double":
 						$value = str_replace(",", ".", $value);
-						$value = ${"{$a["type"]}val"}($value);
+						$value = doubleval($value);
 						break;
 
 					case "checkboxes":
