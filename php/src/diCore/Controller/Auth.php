@@ -129,7 +129,7 @@ class Auth extends \diBaseController
 	{
 		return \diOAuth2::create($this->param(0));
 	}
-	
+
 	public function oauth2Action()
 	{
 		$a = $this->getOAuth();
@@ -249,7 +249,7 @@ class Auth extends \diBaseController
 
 			AuthTool::i()->forceAuthorize($user, true);
 		} catch (\diValidationException $e) {
-			$ar['errors'] = $e->getErrors();
+			$ar['errors'] = $user::getMessagesOfValidationException($e);
 		}
 
 		/*

@@ -1503,14 +1503,33 @@ class diModel implements \ArrayAccess
 	public function validate()
 	{
 		/* example
-		if (!$this->hasTitle())
-		{
+		if (!$this->hasTitle()) {
 			$this->addValidationError('Title required');
 		}
 		*/
 
 		return $this;
 	}
+
+    /**
+     * Override this if you need to update error message (e.g. localize it)
+     * @var $exception \Exception
+     * @return string
+     */
+	public static function getMessageOfSaveException($exception)
+    {
+        return $exception->getMessage();
+    }
+
+    /**
+     * Override this if you need to update error message (e.g. localize it)
+     * @var $exception \diValidationException
+     * @return array
+     */
+    public static function getMessagesOfValidationException($exception)
+    {
+        return $exception->getErrors();
+    }
 
 	/**
 	 * If 'true' returned, all fields are saved on ->save()
