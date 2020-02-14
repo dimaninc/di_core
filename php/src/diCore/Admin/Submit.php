@@ -1508,23 +1508,31 @@ class Submit
 				'what' => null,
 				'custom' => true,
 				'group_field' => null,
+                'data_table' => null,
 			], $options);
 
 			$field = $options['field'];
 			$groupField = $options['group_field'];
+			$dataTable = $options['data_table'];
 			$what = $options['what'];
             $isCustom = $options['custom'];
 		} else {
 			$what = $options;
 			$field = null;
 			$groupField = null;
+            $dataTable = null;
 			$options = [];
             $isCustom = true;
 		}
 
-		$options = extend([
-			'fileOptions' => [],
-		], $options);
+		if (empty($options['fileOptions'])) {
+            $testModel = \diModel::createForTableNoStrict($dataTable);
+            $defaultFileOptions = $testModel::getPicStoreSettings($field) ?: [];
+
+            $options = extend($options, [
+                'fileOptions' => $defaultFileOptions,
+            ]);
+        }
 
 		$getFileOptions = function($imageType) use($options) {
 			$type = static::parseImageType($imageType);

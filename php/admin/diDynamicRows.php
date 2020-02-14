@@ -220,6 +220,11 @@ class diDynamicRows
 		return $this;
 	}
 
+	public function getDataTable()
+    {
+        return $this->data_table;
+    }
+
 	public function getCurrentModel()
 	{
 		return \diModel::createForTableNoStrict($this->data_table, $this->getAllData());
@@ -1900,16 +1905,17 @@ EOF;
 		return $this;
 	}
 
-	public static function storePicSimple($F, $folder, $field, &$ar, \diDynamicRows $DR = null, $options = [])
+	public static function storePicSimple($F, $folder, $field, &$ar, \diDynamicRows $DR, $options = [])
 	{
 		Submit::storeDynamicPicCallback($F, $DR->getAdminPage()->getSubmit(), extend([
 			'what' => $field,
 			'field' => $field,
 			'group_field' => $DR->getField(),
+            'data_table' => $DR->getDataTable(),
 		], $options), $ar, $folder);
 	}
 
-	public static function storeFileSimple($F, $folder, $field, &$ar, diDynamicRows $DR = null, $options = [])
+	public static function storeFileSimple($F, $folder, $field, &$ar, diDynamicRows $DR, $options = [])
 	{
 		$fn = $ar[$field];
 
@@ -1930,13 +1936,13 @@ EOF;
 }
 
 /** @deprecated  */
-function simple_dyn_pic_store($F, $pics_folder, $field, &$ar, diDynamicRows $DynamicRows = null)
+function simple_dyn_pic_store($F, $pics_folder, $field, &$ar, \diDynamicRows $DynamicRows)
 {
 	diDynamicRows::storePicSimple($F, $pics_folder, $field, $ar, $DynamicRows);
 }
 
 /** @deprecated  */
-function simple_dyn_file_store($F, $pics_folder, $field, &$ar, diDynamicRows $DynamicRows = null)
+function simple_dyn_file_store($F, $pics_folder, $field, &$ar, \diDynamicRows $DynamicRows)
 {
 	diDynamicRows::storeFileSimple($F, $pics_folder, $field, $ar, $DynamicRows);
 }
