@@ -366,6 +366,15 @@ class FastTemplate
 
 	public function get_template($template, $val = "")
 	{
+        if (!isset($this->TEMPLATES[$template]))
+        {
+            $html = $this->get_template_from_file($template);
+
+            if ($html) {
+                $this->TEMPLATES[$template] = $html;
+            }
+        }
+
 		if (!isset($this->TEMPLATES[$template]))
 		{
 			$this->error("No such template cached ($template - $val)", 1);
