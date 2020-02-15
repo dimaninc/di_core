@@ -1226,6 +1226,9 @@ abstract class BasePage
 			$ar['page'] = $page;
 		}
 
+		// to prevent hasList() === true
+		$this->List = $this->Grid = null;
+
 		return $ar;
 	}
 
