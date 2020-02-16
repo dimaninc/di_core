@@ -2794,11 +2794,12 @@ EOF;
 			$table = '';
 
 			if ($tags) {
-			    $toggle = sprintf(
-			        '<div class="tags-toggle"><span data-purpose="toggle-on">%s</span><span data-purpose="toggle-off">%s</span></div>',
-                    self::L('tag.toggle_on'),
-                    self::L('tag.toggle_off')
-                );
+                $toggle = $multiple
+                    ? sprintf(
+                        '<div class="tags-toggle"><span data-purpose="toggle-on">%s</span><span data-purpose="toggle-off">%s</span></div>',
+                        self::L('tag.toggle_on'),
+                        self::L('tag.toggle_off'))
+                    : '';
 
 				$table = '<div class="tags-grid">' . $toggle . '<table><tr>';
 
