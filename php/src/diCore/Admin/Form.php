@@ -2665,6 +2665,8 @@ EOF;
 			$ableToAddNew = $this->getFieldOption($field, 'ableToAddNew') ?: false;
 		}
 
+		$multiple = $this->getFieldOption($field, 'multiple') ?? $this->getFieldProperty($field, 'multiple') ?? true;
+
 		// field name or function($feedModel, $targetTable, $targetField, $targetId)
         // todo: use ($Form, $field) here after feedModel
 		$titleGetter = $this->getFieldOption($field, 'titleGetter') ?: 'title';
@@ -2737,7 +2739,7 @@ EOF;
                     ($v instanceof \diModel && !$v->getRelated('enabled'));
 
 				$attributes = [
-					'type' => 'checkbox',
+					'type' => $multiple ? 'checkbox' : 'radio',
 					'name' => $field . '[]',
 					'value' => $k,
 					'id' => $field . '[' . $k . ']',
