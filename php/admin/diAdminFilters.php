@@ -743,7 +743,7 @@ EOF;
                             ? $this->getDb()->r($this->getDb()->escapeTable($this->table), "", "MIN({$a["field"]}) as d1_min")
                             : null; //,MAX($a["field"]) as d1_max
 
-						if ($a["type"] == "date_str_range")
+						if ($a["type"] == "date_str_range" && $r1)
 						{
 							$r1->d1_min = strtotime($r1->d1_min);
 						}
@@ -904,7 +904,7 @@ EOF;
 
 					$r1 = $this->getDb()->r($this->getDb()->escapeTable($this->table), "", "MIN($field) as d1_min,MAX($field) as d1_max");
 
-					if ($ar["type"] == "date_str_range") {
+					if ($ar["type"] == "date_str_range" && $r1) {
 						$r1->d1_min = strtotime($r1->d1_min);
 						$r1->d1_max = strtotime($r1->d1_max);
 					}
