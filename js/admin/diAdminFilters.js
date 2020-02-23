@@ -76,14 +76,14 @@ var diAdminFilters = function(_opts) {
 	}
 
 	function reset() {
-		var k;
+		var k, name;
 
 		for (var i = 0; i < opts.fields.length; i++) {
 			k = opts.fields[i];
+			name = 'admin_filter[' + opts.table + '][' + k + ']';
 
-			$.removeCookie('admin_filter[' + opts.table + '][' + k + ']', {
-                //path: '/_admin/'
-			});
+			$.removeCookie(name, { path: '/_admin/' });
+            $.removeCookie(name);
 		}
 
 		if (opts.mode == self.MODE_COOKIE) {
