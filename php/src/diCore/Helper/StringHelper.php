@@ -13,7 +13,7 @@ class StringHelper
 	public static function random($length = 8)
 	{
 		$characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-		$charactersLength = strlen($characters);
+		$charactersLength = mb_strlen($characters);
 		$randomString = '';
 
 		for ($i = 0; $i < $length; $i++)
@@ -61,8 +61,7 @@ class StringHelper
 		$arr = str_split($hexStr, 4);
 		$dec = [];
 
-		foreach ($arr as $grp)
-		{
+		foreach ($arr as $grp) {
 			$dec[] = str_pad(hexdec($grp), 5, '0', STR_PAD_LEFT);
 		}
 
@@ -74,8 +73,7 @@ class StringHelper
 		$arr = str_split($decStr, 5);
 		$hex = [];
 
-		foreach ($arr as $grp)
-		{
+		foreach ($arr as $grp) {
 			$hex[] = str_pad(dechex($grp), 4, '0', STR_PAD_LEFT);
 		}
 
@@ -101,33 +99,27 @@ class StringHelper
 	 */
 	public static function removeQueryStringParameter($url, $removeParamNames = [], $keepParamNames = [])
 	{
-		if (!is_array($removeParamNames))
-		{
+		if (!is_array($removeParamNames)) {
 			$removeParamNames = [$removeParamNames];
 		}
 
-		if (!is_array($keepParamNames))
-		{
+		if (!is_array($keepParamNames)) {
 			$keepParamNames = [$keepParamNames];
 		}
 
 		$parsedUrl = parse_url($url);
 		$query = [];
 
-		if (isset($parsedUrl['query']))
-		{
+		if (isset($parsedUrl['query'])) {
 			parse_str($parsedUrl['query'], $query);
 
-			foreach ($removeParamNames as $name)
-			{
-				if (isset($query[$name]))
-				{
+			foreach ($removeParamNames as $name) {
+				if (isset($query[$name])) {
 					unset($query[$name]);
 				}
 			}
 
-			if ($keepParamNames)
-			{
+			if ($keepParamNames) {
 				$query = ArrayHelper::filterByKey($query, $keepParamNames);
 			}
 		}
@@ -157,63 +149,54 @@ class StringHelper
 
 	public static function startsWith($haystack, $needle)
 	{
-		if (is_array($haystack))
-		{
+		if (is_array($haystack)) {
 			foreach ($haystack as $h) if (self::startsWith($h, $needle)) return true;
 			return false;
 		}
 
-		if (is_array($needle))
-		{
+		if (is_array($needle)) {
 			foreach ($needle as $n) if (self::startsWith($haystack, $n)) return true;
 			return false;
 		}
 
-		return substr($haystack, 0, strlen($needle)) === $needle;
+		return mb_substr($haystack, 0, mb_strlen($needle)) === $needle;
 	}
 
 	public static function endsWith($haystack, $needle)
 	{
-		if (is_array($haystack))
-		{
+		if (is_array($haystack)) {
 			foreach ($haystack as $h) if (self::endsWith($h, $needle)) return true;
 			return false;
 		}
 
-		if (is_array($needle))
-		{
+		if (is_array($needle)) {
 			foreach ($needle as $n) if (self::endsWith($haystack, $n)) return true;
 			return false;
 		}
 
-		return substr($haystack, - strlen($needle)) === $needle;
+		return mb_substr($haystack, - mb_strlen($needle)) === $needle;
 	}
 
 	public static function contains($haystack, $needle)
 	{
-		if (is_array($haystack))
-		{
+		if (is_array($haystack)) {
 			foreach ($haystack as $h) if (self::contains($h, $needle)) return true;
 			return false;
 		}
 
-		if (is_array($needle))
-		{
+		if (is_array($needle)) {
 			foreach ($needle as $n) if (self::contains($haystack, $n)) return true;
 			return false;
 		}
 
-		return strpos($haystack, $needle) !== false;
+		return mb_strpos($haystack, $needle) !== false;
 	}
 
 	public static function slash($path, $ending = true)
 	{
-		if ($ending && mb_substr($path, mb_strlen($path) - 1, 1) != '/')
-		{
+		if ($ending && mb_substr($path, mb_strlen($path) - 1, 1) != '/') {
 			$path .= '/';
-		}
-		elseif (!$ending && mb_substr($path, 0, 1) != '/')
-		{
+		} elseif (!$ending && mb_substr($path, 0, 1) != '/') {
 			$path = '/' . $path;
 		}
 
@@ -222,12 +205,9 @@ class StringHelper
 
 	public static function unslash($path, $ending = true)
 	{
-		if ($ending && mb_substr($path, mb_strlen($path) - 1, 1) == '/')
-		{
+		if ($ending && mb_substr($path, mb_strlen($path) - 1, 1) == '/') {
 			$path = mb_substr($path, 0, mb_strlen($path) - 1);
-		}
-		elseif (!$ending && mb_substr($path, 0, 1) == '/')
-		{
+		} elseif (!$ending && mb_substr($path, 0, 1) == '/') {
 			$path = mb_substr($path, 1);
 		}
 
@@ -236,8 +216,7 @@ class StringHelper
 
 	public static function cutEnd($s, $maxLength, $trailer = '...')
 	{
-		if (mb_strlen($s) > $maxLength)
-		{
+		if (mb_strlen($s) > $maxLength) {
 			$s = rtrim(mb_substr(ltrim($s), 0, $maxLength - mb_strlen($trailer))) . $trailer;
 		}
 
@@ -252,12 +231,9 @@ class StringHelper
 
 		$res = '';
 
-		if (mb_strlen($s) > $maxLength)
-		{
+		if (mb_strlen($s) > $maxLength) {
 			$maxLength -= mb_strlen($trailer);
-		}
-		else
-		{
+		} else {
 			$trailer = '';
 		}
 
@@ -273,8 +249,7 @@ class StringHelper
 			// Print text leading up to the tag.
 			$str = mb_substr($s, $position, $tagPosition - $position);
 
-			if ($printedLength + mb_strlen($str) > $maxLength)
-			{
+			if ($printedLength + mb_strlen($str) > $maxLength) {
 				$res .= mb_substr($str, 0, $maxLength - $printedLength);
 				$printedLength = $maxLength;
 
@@ -285,31 +260,23 @@ class StringHelper
 			$printedLength += mb_strlen($str);
 			if ($printedLength >= $maxLength) break;
 
-			if ($tag[0] == '&' || ord($tag) >= 0x80)
-			{
+			if ($tag[0] == '&' || ord($tag) >= 0x80) {
 				// Pass the entity or UTF-8 multibyte sequence through unchanged.
 				$res .= $tag;
 				$printedLength++;
-			}
-			else
-			{
+			} else {
 				// Handle the tag.
 				$tagName = $match[1][0];
-				if ($tag[1] == '/')
-				{
+				if ($tag[1] == '/') {
 					// This is a closing tag.
 					$openingTag = array_pop($tags);
 					assert($openingTag == $tagName); // check that tags are properly nested.
 
 					$res .= $tag;
-				}
-				else if ($tag[mb_strlen($tag) - 2] == '/')
-				{
+				} elseif ($tag[mb_strlen($tag) - 2] == '/') {
 					// Self-closing tag.
 					$res .= $tag;
-				}
-				else
-				{
+				} else {
 					// Opening tag.
 					$res .= $tag;
 					$tags[] = $tagName;
@@ -321,14 +288,12 @@ class StringHelper
 		}
 
 		// Print any remaining text.
-		if ($printedLength < $maxLength && $position < mb_strlen($s))
-		{
+		if ($printedLength < $maxLength && $position < mb_strlen($s)) {
 			$res .= mb_substr($s, $position, $maxLength - $printedLength);
 		}
 
 		// Close any open tags.
-		while (!empty($tags))
-		{
+		while (!empty($tags)) {
 			$res .= sprintf('</%s>', array_pop($tags));
 		}
 
@@ -423,16 +388,14 @@ class StringHelper
 
 	public static function replaceFileExtension($fn, $newExtension = '')
 	{
-		if ($newExtension && $newExtension{0} != '.')
-		{
+		if ($newExtension && $newExtension{0} != '.') {
 			$newExtension = '.' . $newExtension;
 		}
 
-		$x = strrpos($fn, '.');
+		$x = mb_strrpos($fn, '.');
 
-		if ($x !== false)
-		{
-			$fn = substr($fn, 0, $x);
+		if ($x !== false) {
+			$fn = mb_substr($fn, 0, $x);
 		}
 
 		return $fn . $newExtension;
@@ -486,7 +449,7 @@ class StringHelper
 
 	public static function isWebPicFilename($filename)
     {
-        $ext = strtolower(self::fileExtension($filename));
+        $ext = mb_strtolower(self::fileExtension($filename));
 
         return in_array($ext, [
             'jpeg',
@@ -498,8 +461,7 @@ class StringHelper
 
 	public static function digitCase($x, $s1, $s2, $s3 = null, $returnOnlySuffix = false)
 	{
-		if ($s3 === null)
-		{
+		if ($s3 === null) {
 			$s3 = $s2;
 		}
 
