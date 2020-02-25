@@ -756,7 +756,7 @@ body[data-skin="entrine"] .simple-button:hover {
 .admin-layout > .nav {
   position: absolute;
   border-right: #ccc solid 1px;
-  margin-bottom: 50px;
+  margin-bottom: 40px;
   width: 200px;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
@@ -765,6 +765,7 @@ body[data-skin="entrine"] .simple-button:hover {
 body[data-skin="entrine"] .admin-layout > .nav {
   border-right: 0;
   width: 230px;
+  margin-bottom: 60px;
 }
 @media screen and (max-width: 767px) {
   .admin-layout > .nav {
@@ -824,7 +825,7 @@ body[data-skin="entrine"] .admin-layout > .content {
   font-size: 12px;
   background: #fff;
   border-bottom: 1px solid #ccc;
-  margin-bottom: 10px;
+  margin-bottom: 20px;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
@@ -834,8 +835,6 @@ body[data-skin="entrine"] .admin-layout > .content > .caption {
   height: 48px;
   background-color: #f1f1f1;
   border-bottom: 0;
-  padding: 0 0 0 24px;
-  margin-bottom: 20px;
 }
 @media screen and (max-width: 767px) {
   body[data-skin="entrine"] .admin-layout > .content > .caption {
@@ -1155,7 +1154,7 @@ body[data-skin="entrine"] .admin-layout > .head-href.logout > span:before {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
-  padding-left: 22px;
+  padding-left: 20px;
 }
 body[data-skin="entrine"] .admin-layout > .logo {
   font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
@@ -1245,7 +1244,6 @@ body[data-skin="entrine"] .admin-layout > .site-title {
   background: #374254;
   font-size: 20px;
   font-weight: 400;
-  padding-left: 24px;
   margin-left: 230px;
   margin-right: 690px;
   -o-text-overflow: ellipsis;
@@ -1302,6 +1300,18 @@ body[data-skin="entrine"] .admin-layout > .site-title {
 }
 .footer {
   position: fixed;
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: box;
+  display: flex;
+  -webkit-box-align: start;
+  -moz-box-align: start;
+  -o-box-align: start;
+  -ms-flex-align: start;
+  -webkit-align-items: flex-start;
+  align-items: flex-start;
   bottom: 0;
   left: 0;
   right: 0;
@@ -1341,29 +1351,35 @@ body[data-skin="entrine"] .footer {
   box-sizing: border-box;
   width: 200px;
   height: 40px;
-  padding-top: 5px;
-  float: left;
   border-right: 1px solid #b1b1b1;
   text-align: center;
   line-height: 150%;
+}
+@media screen and (max-width: 450px) {
+  .footer .copyright {
+    display: none;
+  }
 }
 body[data-skin="entrine"] .footer .copyright {
   width: 230px;
   height: 60px;
 }
 .footer .console-container {
-  margin-left: 201px;
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  -o-box-flex: 1;
+  box-flex: 1;
+  -webkit-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
   background-color: inherit;
-  padding: 5px 0 5px 50px;
+  padding: 5px 20px;
   height: 30px;
   -webkit-transition: background-color 1s linear;
   -moz-transition: background-color 1s linear;
   -o-transition: background-color 1s linear;
   -ms-transition: background-color 1s linear;
   transition: background-color 1s linear;
-}
-body[data-skin="entrine"] .footer .console-container {
-  margin-left: 230px;
 }
 .footer .console-container.highlighted {
   background-color: #ffe;
@@ -1437,7 +1453,7 @@ table.banners_stat th.sel {
 }
 .buttons_block {
   text-align: left;
-  padding: 25px 0 25px 22px;
+  padding: 25px 0 25px 20px;
   border-top: 1px solid #ccc;
   border-bottom: 1px solid #ccc;
   margin: 50px 0;
@@ -1467,7 +1483,7 @@ table.banners_stat th.sel {
   padding: 8px;
   border-radius: 8px;
   background-color: #d4d0c8;
-  margin: 0 24px 10px 24px;
+  margin: 0 20px 10px 20px;
   min-height: 22px;
 }
 body[data-skin="entrine"] .list-control-panel {
@@ -1570,7 +1586,7 @@ iframe.comments-iframe {
   width: 200px;
 }
 .navy {
-  margin: 0 24px;
+  margin: 0 20px;
   text-align: center;
 }
 body[data-skin="entrine"] .navy {
@@ -2875,7 +2891,7 @@ body[data-skin="entrine"] .submit-block .submit-status-line {
   display: none;
 }
 div.dinicetable_div {
-  margin: 0 24px 20px 24px;
+  margin: 0 20px 20px 20px;
 }
 @media screen and (max-width: 767px) {
   div.dinicetable_div {
@@ -3515,7 +3531,7 @@ ul.admin-grid > li img {
   color: #000;
   font-size: 12px;
   background-color: #fff;
-  padding: 0 0 10px 24px;
+  padding-left: 20px;
   border-bottom: 1px solid #ccc;
   margin-bottom: 20px;
 }

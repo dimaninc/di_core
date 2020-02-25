@@ -268,12 +268,13 @@ u
     > .nav
         position absolute
         border-right #ccc solid 1px
-        margin-bottom 50px
+        margin-bottom $classicFooterHeight
         width $classicMenuWidth
         box-sizing border-box
         body[data-skin="entrine"] &
             border-right 0
             width $entrineMenuWidth
+            margin-bottom $entrineFooterHeight
         @media screen and (max-width: 767px)
             display none
             z-index 100
@@ -301,22 +302,20 @@ u
         > .caption
             display flex
             align-items center
-            padding-left 20px
+            padding-left $classicStandardPadding
             height 40px
             line-height 1.5
             font-family Tahoma, sans-serif
             font-size 12px
             background white
             border-bottom 1px solid #CCCCCC
-            margin-bottom 10px
+            margin-bottom $classicStandardPadding
             box-sizing border-box
             body[data-skin="entrine"] &
                 font-family $entrineFont
                 height $entrineBaseHeight
                 background-color $entrineColorBgLightGray
                 border-bottom 0
-                padding 0 0 0 24px
-                margin-bottom 20px
                 @media screen and (max-width: 767px)
                     padding-left 12px
                     padding-right 12px
@@ -581,7 +580,7 @@ u
         font-size 24px
         font-family Arial, Helvetica, sans-serif
         margin 0 282px 0 200px
-        padding-left 20px
+        padding-left $classicStandardPadding
         padding-right 10px
         body[data-skin="entrine"] &
             height $entrineBaseHeight
@@ -590,7 +589,6 @@ u
             background $entrineColorBgDark
             font-size 20px
             font-weight 400
-            padding-left 24px
             margin-left $entrineMenuWidth
             margin-right $entrineMenuWidth * 3
             ellipsis()
@@ -623,6 +621,8 @@ u
 
 .footer
     position fixed
+    display flex
+    align-items flex-start
     bottom 0
     left 0
     right 0
@@ -632,7 +632,7 @@ u
     font-size 11px
     background-color #ddd
     //line-height 40px
-    body[data-skin="entrine"] &
+    {$entrineSkin} &
         background white
         color $entrineColorBgDarker
         font-size 10px
@@ -644,22 +644,20 @@ u
         box-sizing border-box
         width $classicMenuWidth
         height $classicFooterHeight
-        padding-top 5px
-        float left
         border-right 1px solid #B1B1B1
         text-align center
         line-height 150%
-        body[data-skin="entrine"] &
+        @media $mqPhone
+            display none
+        {$entrineSkin} &
             width $entrineMenuWidth
             height $entrineFooterHeight
     .console-container
-        margin-left 201px
+        flex 1
         background-color inherit
-        padding 5px 0 5px 50px
+        padding 5px $classicStandardPadding
         height 30px
         transition background-color 1s linear
-        body[data-skin="entrine"] &
-            margin-left $entrineMenuWidth
         &.highlighted
             background-color #ffe
         .console
@@ -696,7 +694,6 @@ u
 .mce-tinymce
     button
         border-radius 0
-
 
 table.banners_stat td.sel, table.banners_stat th.sel
     background #ffd
@@ -748,7 +745,7 @@ table.banners_stat td.sel, table.banners_stat th.sel
     padding 8px
     border-radius 8px
     background-color #D4D0C8
-    margin 0 24px 10px 24px
+    margin 0 $classicStandardPadding 10px $classicStandardPadding
     min-height 22px
     body[data-skin="entrine"] &
         background-color $entrineColorBgLightGray
@@ -834,7 +831,7 @@ iframe
     width 200px
 
 .navy
-    margin 0 24px
+    margin 0 $classicStandardPadding
     text-align center
     body[data-skin="entrine"] &
         text-align left
