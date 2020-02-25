@@ -789,6 +789,7 @@ body[data-skin="entrine"] .admin-layout > .nav {
 }
 body[data-skin="entrine"] .admin-layout > .content {
   margin-left: 230px;
+  padding-bottom: 40px;
 }
 @media screen and (max-width: 767px) {
   body[data-skin="entrine"] .admin-layout > .content {
