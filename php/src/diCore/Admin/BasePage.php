@@ -87,6 +87,7 @@ abstract class BasePage
 		'ru' => [],
 		'en' => [],
 	];
+	private $vocabularyAssigned = false;
 
 	/*
 	 * override this in child classed
@@ -360,6 +361,14 @@ abstract class BasePage
 
 	public function getTwig()
 	{
+	    if (!$this->vocabularyAssigned) {
+	        $this->X->getTwig()->assign([
+	            'page_lang' => $this->vocabulary[$this->getLanguage()],
+            ]);
+
+            $this->vocabularyAssigned = true;
+        }
+
 		return $this->X->getTwig();
 	}
 

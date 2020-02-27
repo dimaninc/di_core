@@ -23,43 +23,31 @@ function diDbManager(_opts)
 	function bindEvents()
 	{
 	    $('.db-list form.create').submit(function() {
-
 	    	self.createDump();
 
 	    	return false;
-
 	    });
 
 	    $('[data-purpose="select-all"]').click(function() {
-
 	    	self.selectAllTables(true);
-
 	    });
 
 	    $('[data-purpose="deselect-all"]').click(function() {
-
 	    	self.selectAllTables(false);
-
 	    });
 
 	    $('input#system').on('click change', function() {
-
 			$('.dump-settings').css('visibility', this.checked ? 'hidden' : 'visible');
-
 		});
 
 		$('button[data-action="execute"]').click(function() {
-
 			self.executeQuery('here the query');
-
 		});
 
 		$('iframe[name="upload_container"]').load(function() {
-
 			self.status('Dump has been uploaded');
 
 			addDumpRow($.parseJSON($(this).contents().text()));
-
 		});
 
 		$(document.body)
@@ -77,7 +65,6 @@ function diDbManager(_opts)
 			});
 
 		$e.tables.on('click change', function() {
-
 			self.refreshTableSizes();
 
 			var $this = $(this),
@@ -85,31 +72,26 @@ function diDbManager(_opts)
 				selectedCount = 0,
 				lastTable = null;
 
-			if ($options.length < 2)
-			{
+			if ($options.length < 2) {
 				return false;
 			}
 
 			$options.each(function() {
-				if (this.selected)
-				{
+				if (this.selected) {
 					selectedCount++;
 					lastTable = this.value;
 				}
 			});
 
-			if (selectedCount == 1)
-			{
+			if (selectedCount == 1) {
 				$e.dumpFileName.val(lastTable);
 			}
-
 		});
 	}
 
 	function worker(action, options)
 	{
-		if (typeof options != 'object')
-		{
+		if (typeof options != 'object') {
 			options = {
 				file: options
 			}
@@ -122,8 +104,7 @@ function diDbManager(_opts)
 
 		var urlBase = workerScript + action + '/';
 
-	    if (action == 'download')
-	    {
+	    if (action == 'download') {
 	        options.headers = 1;
 
 	    	window.location.href = urlBase + '?' + $.param(options);

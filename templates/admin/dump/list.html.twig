@@ -1,0 +1,155 @@
+<center>
+    <h2>{{ page_lang['caption.files'] }}</h2>
+
+    <div>
+        <button type="button" data-action="create.files">{{ page_lang['button.create.files'] }}</button>
+    </div>
+
+    <table class="db-dump-rows">
+        {% for folder in file_folders %}
+            <tbody data-folder-id>
+            <tr>
+                <td colspan="2">
+                    <b>{{ folder['name'] }}</b>
+                </td>
+            </tr>
+            {% for file in folder['files'] %}
+                {% if file['type'] == 'folder' %}
+                    <tr class="subfolder">
+                        <td colspan="2">
+                            <b>{{ file['name'] }}/</b>
+                        </td>
+                    </tr>
+                {% elseif file['type'] == 'file' %}
+                    <tr data-format="{{ file['info']['ext'] }}" data-filename="{{ file['info']['filename'] }}">
+                        <td>
+                            <b>{{ file['info']['name'] }}</b>
+                            <small>({{ file['info']['date'] }} {{ file['info']['time'] }},
+                                {{ file['info']['size'] }}) [{{ file['info']['ext'] }}]</small>
+                        </td>
+                        <td>
+                            <button type="button" data-action="restore">{{ page_lang['dump.restore'] }}</button>
+                            <button type="button" data-action="download">{{ page_lang['dump.download'] }}</button>
+                            <button type="button" data-action="delete">{{ page_lang['dump.delete'] }}</button>
+                        </td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        {% endfor %}
+    </table>
+
+    <h2>{{ page_lang['caption.db'] }}</h2>
+
+    <table class="db-list">
+        <tr>
+            <td rowspan="3">
+                <form class="create" method="get" action="">
+
+                    <h2>Select tables</h2>
+                    <div style="margin-bottom: 10px;">
+                        <div>{{ tables['select']|raw }}</div>
+                        <div>
+                            <u data-purpose="select-all">select</u>/<u data-purpose="deselect-all">deselect</u> all
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <input type="checkbox" id="system" name="system" checked> <label for="system">use system routine</label>
+                        <input type="checkbox" id="compress_dump" name="compress_dump" checked> <label for="compress_dump">GZIP compression</label>
+                    </div>
+
+                    <div class="dump-settings">
+                        <input type="checkbox" id="dump_drops" checked> <label for="dump_drops">drops</label>
+                        <input type="checkbox" id="dump_creates" checked> <label for="dump_creates">creates</label>
+                        <input type="checkbox" id="dump_fields" checked> <label for="dump_fields">fields</label>
+                        <input type="checkbox" id="dump_data" checked> <label for="dump_data">data</label>
+                        <input type="checkbox" id="dump_multiple" checked> <label for="dump_multiple">multi-insert</label>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">Custom dump filename: <input type="text" id="dump_fn" style="width: 250px;"></div>
+
+                    <div align=center><button type="submit">{{ page_lang['button.create.db'] }}</button></div>
+
+                </form>
+            </td>
+            <td style="vertical-align: top;"><h3>Total size: {{ tables['total_size'] }} (+index: {{ tables['total_index_size'] }})</h3></td>
+        </tr>
+        <tr>
+            <td style="vertical-align: top;"><div><b>Selected size: <span id="total_size_selected"></span> (+index: <span id="total_idx_size_selected"></span>)</b></div></td>
+        </tr>
+        <tr>
+            <td valign=top>
+                <iframe name="upload_container"></iframe>
+                <form name="dump_upload" enctype="multipart/form-data" method="post" action="{WORKER_URI_UPLOAD}" target="upload_container">
+                    <div style="margin-bottom: 10px;">
+                        <font size=-2>you can upload <b>.sql</b> and <b>.gz</b> files only!</font><br>
+                        <input type="file" name="dump" value="" accept=".gz,.sql">
+                    </div>
+
+                    <div align=center>
+                        <button type="submit">Upload DB dump</button>
+                    </div>
+                </form>
+            </td>
+        </tr>
+    </table>
+
+    <div class="db-errors-console"></div>
+
+    <table class="db-dump-rows">
+        {% for folder in db_folders %}
+            <tbody data-folder-id="{{ folder['id'] }}">
+            <tr>
+                <td colspan="2">
+                    <b>{{ folder['name'] }}</b>
+                </td>
+            </tr>
+            {% for file in folder['files'] %}
+                {% if file['type'] == 'folder' %}
+                    <tr class="subfolder">
+                        <td colspan="2">
+                            <b>{{ file['name_slashed'] }}</b>
+                        </td>
+                    </tr>
+                {% elseif file['type'] == 'file' %}
+                    <tr data-format="{{ file['info']['ext'] }}" data-filename="{{ file['info']['filename'] }}">
+                        <td>
+                            <b>{{ file['info']['name'] }}</b>
+                            <small>({{ file['info']['date'] }} {{ file['info']['time'] }},
+                                {{ file['info']['size'] }}) [{{ file['info']['ext'] }}]</small>
+                        </td>
+                        <td>
+                            <button type="button" data-action="restore">{{ page_lang['dump.restore'] }}</button>
+                            <button type="button" data-action="download">{{ page_lang['dump.download'] }}</button>
+                            <button type="button" data-action="delete">{{ page_lang['dump.delete'] }}</button>
+                            <button type="button" data-action="view">{{ page_lang['dump.view'] }}</button>
+                        </td>
+                    </tr>
+                {% endif %}
+            {% endfor %}
+            </tbody>
+        {% endfor %}
+    </table>
+
+</center>
+
+<div class="dipopup" data-name="view-sql" data-positioning="false"><div class="scroller"><code></code></div></div>
+
+<link href="{{ asset_locations['css'] }}admin/db.css" rel="stylesheet" type="text/css">
+<script src="{{ asset_locations['js'] }}admin/diDbManager.js" type="text/javascript" charset="utf-8"></script>
+<script src="{{ asset_locations['js'] }}admin/FileDump.js" type="text/javascript" charset="utf-8"></script>
+
+<script type="text/javascript">
+    var manager;
+
+    $(function() {
+        manager = new diDbManager({
+            workerUri: '{{ worker_uri }}'
+        });
+
+        new FileDump({
+            workerUri: '{{ worker_uri }}'
+        });
+    });
+</script>

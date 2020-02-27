@@ -39,8 +39,7 @@ class Db extends \diBaseAdminController
 	 */
 	public static function getFolderById($id)
 	{
-		switch ($id)
-		{
+		switch ($id) {
 			case self::FOLDER_LOCAL:
 				return static::getDumpsFolder();
 
@@ -62,7 +61,12 @@ class Db extends \diBaseAdminController
 		return dirname(dirname(dirname(dirname(dirname(__FILE__))))) . '/sql/';
 	}
 
-	public function deleteAction()
+    public static function getFileDumpsFolder()
+    {
+        return Config::getFileDumpPath();
+    }
+
+    public function deleteAction()
 	{
 		$ar = [
 			"file" => $this->file,

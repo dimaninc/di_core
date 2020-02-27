@@ -43,12 +43,17 @@ class Config
         \diLib::LOCATION_VENDOR_HTDOCS => '_admin/db/dump/',
 	];
 
-	private static $class;
+    private static $fileDumpPaths = [
+        \diLib::LOCATION_SUBMODULE_HTDOCS => '_admin/db/files/',
+        \diLib::LOCATION_VENDOR_BEYOND => 'db/files/',
+        \diLib::LOCATION_VENDOR_HTDOCS => '_admin/db/files/',
+    ];
+
+    private static $class;
 
 	private static function getClass()
 	{
-		if (!self::$class)
-		{
+		if (!self::$class) {
 			self::$class = \diLib::getChildClass(self::class);
 		}
 
@@ -65,8 +70,7 @@ class Config
 		/** @var Config $class */
 		$class = self::getClass();
 
-		if ($class == self::class)
-		{
+		if ($class == self::class) {
 			$class::$location = \diLib::getLocation();
 		}
 
@@ -131,8 +135,7 @@ class Config
 
 	final public static function getMainProtocol()
 	{
-		switch (static::getMainPort())
-		{
+		switch (static::getMainPort()) {
 			case 443:
 				return 'https://';
 
@@ -163,8 +166,7 @@ class Config
 		$class = self::getClass();
 
 		$val = Environment::getUseModuleCache();
-		if ($val === null)
-		{
+		if ($val === null) {
 			$val = $class::$useModuleCache;
 		}
 
@@ -215,6 +217,11 @@ class Config
 	{
 		return static::getDatabaseDumpFolder() . static::$databaseDumpPaths[static::getLocation()];
 	}
+
+    final public static function getFileDumpPath()
+    {
+        return static::getDatabaseDumpFolder() . static::$fileDumpPaths[static::getLocation()];
+    }
 
 	final public static function getOldTplFolder()
 	{

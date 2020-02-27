@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "FileDump.js",
+  "sourceRoot": "",
+  "sources": [
+    "FileDump.coffee"
+  ],
+  "names": [],
+  "mappings": ";AAAA,IAAA;;AAAM,WAAN,MAAA,SAAA;EACI,WAAa,CAAC,IAAD,CAAA;IACT,IAAC,CAAA,IAAD,GAAQ,CAAC,CAAC,MAAF,CACJ;MAAA,SAAA,EAAW;IAAX,CADI,EAEN,IAFM;IAGR,IAAC,CAAA,iBAAD,CAAA;EAJS;;EAMb,iBAAmB,CAAA,CAAA;IACf,CAAA,CAAE,8BAAF,CACA,CAAC,EADD,CACI,OADJ,EACa,CAAA,CAAA,GAAA;MACT,IAAC,CAAA,GAAD,CAAK,wBAAL;MACA,CAAC,CAAC,IAAF,CAAO,IAAC,CAAA,IAAI,CAAC,SAAb,EAAwB,CAAA,CAAxB,EAA4B,CAAC,GAAD,CAAA,GAAA;QACxB,IAAG,GAAG,CAAC,EAAP;iBACI,IAAC,CAAA,GAAD,CAAK,oBAAL,EADJ;SAAA,MAAA;iBAGI,IAAC,CAAA,GAAD,CAAK,SAAA,GAAY,GAAG,CAAC,OAArB,EAHJ;;MADwB,CAA5B;aAKA;IAPS,CADb;WASA;EAVe;;EAYnB,GAAK,CAAC,OAAD,CAAA;IACD,CAAC,CAAC,OAAO,CAAC,GAAV,CAAc,OAAd;WACA;EAFC;;EAIL,KAAO,CAAC,OAAD,CAAA;IACH,KAAA,CAAM,OAAN;WACA;EAFG;;AAvBX",
+  "sourcesContent": [
+    "class FileDump\n    constructor: (opts) ->\n        @opts = $.extend\n            workerUri: null\n        , opts\n        @setupCreateButton()\n\n    setupCreateButton: ->\n        $ '[data-action=\"create.files\"]'\n        .on 'click', =>\n            @log 'Creating files dump...'\n            $.post @opts.workerUri, {}, (res) =>\n                if res.ok\n                    @log 'Files dump created'\n                else\n                    @log 'Error: ' + res.message\n            false\n        @\n\n    log: (message) ->\n        A.console.add message\n        @\n\n    error: (message) ->\n        alert message\n        @\n"
+  ]
+}

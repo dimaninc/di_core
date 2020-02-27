@@ -931,7 +931,7 @@ class Base
 			static::getVocabulary('menu.db') => [
 				'items' => [
 					static::getVocabulary('menu.db.dump') => [
-						'module' => 'db',
+						'module' => 'dump',
 					],
 					static::getVocabulary('menu.db.migrations.log') => [
 						'module' => 'migrations/log',
@@ -950,7 +950,7 @@ class Base
 					],
 				],
 				'permissions' => ['root'],
-				'paths' => ['db', 'migrations', 'migrations_form', 'migrations_log', 'di_lib_models_form', 'di_lib_admin_pages_form'],
+				'paths' => ['dump', 'migrations', 'migrations_form', 'migrations_log', 'di_lib_models_form', 'di_lib_admin_pages_form'],
 			],
 		];
 	}
