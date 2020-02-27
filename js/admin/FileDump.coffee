@@ -38,6 +38,7 @@ class FileDump
             '</td></tr>'
 
         $('.db-dump-rows[data-type="file"] tbody tr:first-child').after html
+        $('.db-dump-rows[data-type="file"] tbody tr[data-no-files]').remove()
 
         $size = $('.db-dump-rows[data-type="file"] tr[data-filename="{0}"] [data-field="size"]'.format(res.file))
         prev_size = 0

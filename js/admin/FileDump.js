@@ -41,6 +41,7 @@ FileDump = (function() {
     var $size, html, interval, prev_size;
     html = '<tr data-filename="{0}">'.format(res.file) + '<td><b>' + res.file + '</b> ' + '<small>(' + (new Date().toLocaleString()) + ' , <span data-field="size">⏳</span>)</small></td>' + '<td>' + '<button type="button" data-action="download">{0}</button> '.format(this.l('dump.download')) + '<button type="button" data-action="delete">{0}</button>'.format(this.l('dump.delete')) + '</td></tr>';
     $('.db-dump-rows[data-type="file"] tbody tr:first-child').after(html);
+    $('.db-dump-rows[data-type="file"] tbody tr[data-no-files]').remove();
     $size = $('.db-dump-rows[data-type="file"] tr[data-filename="{0}"] [data-field="size"]'.format(res.file));
     prev_size = 0;
     interval = setInterval((function(_this) {
