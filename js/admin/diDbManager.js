@@ -51,16 +51,16 @@ function diDbManager(_opts)
 		});
 
 		$(document.body)
-			.on('click', 'button[data-action="restore"]', function() {
+			.on('click', '[data-type="database"] button[data-action="restore"]', function() {
 				self.restoreDump($(this).closest('[data-filename]').data('filename'), $(this).closest('[data-folder-id]').data('folder-id'));
 			})
-			.on('click', 'button[data-action="download"]', function() {
+			.on('click', '[data-type="database"] button[data-action="download"]', function() {
 				self.downloadDump($(this).closest('[data-filename]').data('filename'), $(this).closest('[data-folder-id]').data('folder-id'));
 			})
-			.on('click', 'button[data-action="delete"]', function() {
+			.on('click', '[data-type="database"] button[data-action="delete"]', function() {
 				self.deleteDump($(this).closest('[data-filename]').data('filename'));
 			})
-			.on('click', 'button[data-action="view"]', function() {
+			.on('click', '[data-type="database"] button[data-action="view"]', function() {
 				self.viewDump($(this).closest('[data-filename]').data('filename'), $(this).closest('[data-folder-id]').data('folder-id'));
 			});
 
@@ -162,7 +162,7 @@ function diDbManager(_opts)
 						self.status(res.file+' has been deleted');
 					}
 
-					$('.db-dump-rows tbody tr[data-filename="'+res.file+'"]').fadeOut();
+					$('.db-dump-rows[data-type="database"] tbody tr[data-filename="'+res.file+'"]').fadeOut();
 
 					break;
 
@@ -180,7 +180,7 @@ function diDbManager(_opts)
 			? ', ' + size_in_bytes(res.size)
 			: '';
 
-		$('.db-dump-rows tbody[data-folder-id="1"] tr:first-child').after(
+		$('.db-dump-rows[data-type="database"] tbody[data-folder-id="1"] tr:first-child').after(
 			'<tr data-format="' + res.format + '" data-filename="' + res.file + '">' +
 			'<td><b>' + (res.name || res.file) + '</b> ' +
 			'<small>(' + (new Date().toLocaleString()) + sizeStr + ') [' + res.format + ']</small></td>' +

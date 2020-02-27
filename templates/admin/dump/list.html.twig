@@ -1,11 +1,11 @@
 <center>
     <h2>{{ page_lang['caption.files'] }}</h2>
 
-    <div>
+    <div class="create-wrapper">
         <button type="button" data-action="create.files">{{ page_lang['button.create.files'] }}</button>
     </div>
 
-    <table class="db-dump-rows">
+    <table class="db-dump-rows" data-type="file">
         {% for folder in file_folders %}
             <tbody data-folder-id>
             <tr>
@@ -21,19 +21,25 @@
                         </td>
                     </tr>
                 {% elseif file['type'] == 'file' %}
-                    <tr data-format="{{ file['info']['ext'] }}" data-filename="{{ file['info']['filename'] }}">
+                    <tr data-filename="{{ file['info']['name'] }}">
                         <td>
                             <b>{{ file['info']['name'] }}</b>
                             <small>({{ file['info']['date'] }} {{ file['info']['time'] }},
-                                {{ file['info']['size'] }}) [{{ file['info']['ext'] }}]</small>
+                                {{ file['info']['size'] }})</small>
                         </td>
                         <td>
+                            {#
                             <button type="button" data-action="restore">{{ page_lang['dump.restore'] }}</button>
+                            #}
                             <button type="button" data-action="download">{{ page_lang['dump.download'] }}</button>
                             <button type="button" data-action="delete">{{ page_lang['dump.delete'] }}</button>
                         </td>
                     </tr>
                 {% endif %}
+            {% else %}
+                <tr data-no-files>
+                    <td colspan="2">Пока не сделано ни одной копии</td>
+                </tr>
             {% endfor %}
             </tbody>
         {% endfor %}
@@ -81,7 +87,7 @@
         <tr>
             <td valign=top>
                 <iframe name="upload_container"></iframe>
-                <form name="dump_upload" enctype="multipart/form-data" method="post" action="{WORKER_URI_UPLOAD}" target="upload_container">
+                <form name="dump_upload" enctype="multipart/form-data" method="post" action="{{ worker_uri['db_upload'] }}" target="upload_container">
                     <div style="margin-bottom: 10px;">
                         <font size=-2>you can upload <b>.sql</b> and <b>.gz</b> files only!</font><br>
                         <input type="file" name="dump" value="" accept=".gz,.sql">
@@ -97,7 +103,7 @@
 
     <div class="db-errors-console"></div>
 
-    <table class="db-dump-rows">
+    <table class="db-dump-rows" data-type="database">
         {% for folder in db_folders %}
             <tbody data-folder-id="{{ folder['id'] }}">
             <tr>
@@ -145,11 +151,11 @@
 
     $(function() {
         manager = new diDbManager({
-            workerUri: '{{ worker_uri }}'
+            workerUri: '{{ worker_uri['db'] }}'
         });
 
         new FileDump({
-            workerUri: '{{ worker_uri }}'
+            workerUri: '{{ worker_uri['dump'] }}'
         });
     });
 </script>

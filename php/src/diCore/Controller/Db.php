@@ -3,12 +3,13 @@
 namespace diCore\Controller;
 
 use diCore\Data\Config;
+use diCore\Traits\Admin\DumpActions;
 
 class Db extends \diBaseAdminController
 {
-	private $file;
-	private $folder;
-	private $folderId;
+    use DumpActions;
+
+	protected $folderId;
 
 	const MAX_TIMEOUT = 25;
 	const MYSQL_SYSTEM_HOST = null;
@@ -61,49 +62,6 @@ class Db extends \diBaseAdminController
 		return dirname(dirname(dirname(dirname(dirname(__FILE__))))) . '/sql/';
 	}
 
-    public static function getFileDumpsFolder()
-    {
-        return Config::getFileDumpPath();
-    }
-
-    public function deleteAction()
-	{
-		$ar = [
-			"file" => $this->file,
-			"ok" => false,
-		];
-
-		if ($this->file)
-		{
-			$fn = $this->folder.$this->file;
-
-			if (is_file($fn))
-			{
-				unlink($fn);
-
-				$ar["ok"] = true;
-			}
-		}
-
-		return $ar;
-	}
-
-	public function downloadAction()
-	{
-		$headers = \diRequest::get("headers", 1);
-
-		if ($headers)
-		{
-			header("Content-Type: application/download");
-			header("Content-Disposition: attachment; filename=\"$this->file\"");
-			header("Content-Length: " . filesize($this->folder . $this->file));
-			header("Pragma: no-cache");
-			header("Expires: 0");
-		}
-
-		readfile($this->folder . $this->file);
-	}
-
 	/**
 	 * @param $db \diDB
 	 * @return array
@@ -117,8 +75,7 @@ class Db extends \diBaseAdminController
 		];
 
 		$table_rs = $db->q("SHOW TABLE STATUS");
-		while ($table_r = $db->fetch($table_rs))
-		{
+		while ($table_r = $db->fetch($table_rs)) {
 			$size = size_in_bytes($table_r->Data_length);
 			$idx_size = size_in_bytes($table_r->Index_length);
 
@@ -127,19 +84,13 @@ class Db extends \diBaseAdminController
 
 			$rows = "";
 
-			if ($table_r->Data_length === null)
-			{
-				if ($table_r->Comment == "VIEW")
-				{
+			if ($table_r->Data_length === null) {
+				if ($table_r->Comment == "VIEW") {
 					$size_str = " [view]";
-				}
-				else
-				{
+				} else {
 					$size_str = " [DAMAGED!]";
 				}
-			}
-			else
-			{
+			} else {
 				$size_str = ", $size (+index: $idx_size)";
 
 				$rows = ", $table_r->Rows rows";
@@ -164,65 +115,53 @@ class Db extends \diBaseAdminController
 			"text" => "",
 		];
 
-		if (
-			isset($_FILES["dump"]) &&
-			trim($_FILES["dump"]["name"]) != "" &&
-			$_FILES["dump"]["size"] &&
-			in_array(strtolower(get_file_ext($_FILES["dump"]["name"])), array("gz", "sql"))
-			)
-		{
-			$fn = $this->folder.$_FILES["dump"]["name"];
+        if (
+            isset($_FILES["dump"]) &&
+            trim($_FILES["dump"]["name"]) != "" &&
+            $_FILES["dump"]["size"] &&
+            in_array(strtolower(get_file_ext($_FILES["dump"]["name"])), ["gz", "sql"])
+        ) {
+            $fn = $this->folder . $_FILES["dump"]["name"];
 
-			if (move_uploaded_file($_FILES["dump"]["tmp_name"], $fn))
-			{
-			    $ar["ok"] = 1;
-			}
-			else
-			{
-				$ar["text"] = "Unable to copy {$_FILES["dump"]["tmp_name"]} � $fn";
-			}
+            if (move_uploaded_file($_FILES["dump"]["tmp_name"], $fn)) {
+                $ar["ok"] = 1;
+            } else {
+                $ar["text"] = "Unable to copy {$_FILES["dump"]["tmp_name"]} � $fn";
+            }
 
-			$ar = extend($ar, $this->getDumpInfo($fn));
-		}
-		else
-		{
-			$ar["code"] = $_FILES["dump"]["error"];
-		}
+            $ar = extend($ar, $this->getDumpInfo($fn));
+        } else {
+            $ar["code"] = $_FILES["dump"]["error"];
+        }
 
 		return $ar;
 	}
 
-	private function prepareString($s)
-	{
-		for ($i = 0; $i < count($s); $i++)
-		{
-			if ($s[$i] === null)
-			{
-				$s[$i] = 'NULL';
-			}
-			else
-			{
-				$s[$i] = addslashes($s[$i]);
-				$s[$i] = str_replace("\r\n", "\\r\\n", $s[$i]);
-				$s[$i] = str_replace("\r", "\\r", $s[$i]);
-				$s[$i] = str_replace("\n", "\\n", $s[$i]);
-				$s[$i] = "'" . $s[$i] . "'";
-			}
-		}
+    private function prepareString($s)
+    {
+        for ($i = 0; $i < count($s); $i++) {
+            if ($s[$i] === null) {
+                $s[$i] = 'NULL';
+            } else {
+                $s[$i] = addslashes($s[$i]);
+                $s[$i] = str_replace("\r\n", "\\r\\n", $s[$i]);
+                $s[$i] = str_replace("\r", "\\r", $s[$i]);
+                $s[$i] = str_replace("\n", "\\n", $s[$i]);
+                $s[$i] = "'" . $s[$i] . "'";
+            }
+        }
 
-		return $s;
-	}
+        return $s;
+    }
 
 	private function tryToFlush(&$fp, &$sql, $compress, $len = 2500000)
 	{
-		if (strlen($sql) > $len)
-		{
+		if (strlen($sql) > $len) {
 			$bytesWritten = $compress ? gzwrite($fp, $sql) : fwrite($fp, $sql);
 
 			$sql = "";
 
-			if (!$compress)
-			{
+			if (!$compress) {
 				fflush($fp);
 			}
 		}
@@ -246,14 +185,12 @@ class Db extends \diBaseAdminController
 		$multiple = \diRequest::get("multiple", 0);
 		$system = \diRequest::get("system", 0);
 
-		if (!function_exists('gzopen'))
-		{
+		if (!function_exists('gzopen')) {
 			$compress = 0;
 		}
 
 		$fn = preg_replace('/[^A-Za-z0-9_\-\(\)\!]/', "", $this->file);
-		if (!$fn)
-		{
+		if (!$fn) {
 			$fn = $this->getDb()->getDatabase();
 		}
 
@@ -264,8 +201,7 @@ class Db extends \diBaseAdminController
 		$date_sql_comment = "Y/m/d H:i:s";
 
 		$filename = $this->folder . $fn . "__dump_" . date($date_fn_format) . ".sql";
-		if ($compress)
-		{
+		if ($compress) {
 			$filename .= ".gz";
 		}
 
@@ -280,8 +216,7 @@ class Db extends \diBaseAdminController
 		];
 
 		// trying to exec system command
-		if ($system)
-		{
+		if ($system) {
 			$command_suffix = $compress ? " | gzip" : "";
 
 			$command = "mysqldump --host=" . $this->getDb()->getHost() . " --user=" . $this->getDb()->getUsername() .
@@ -290,8 +225,7 @@ class Db extends \diBaseAdminController
 
 			system($command, $a);
 
-			if (!$a)
-			{
+			if (!$a) {
 				$ar["ok"] = true;
 				$ar["system"] = true;
 
@@ -308,14 +242,12 @@ class Db extends \diBaseAdminController
 		$allTablesAr = array_keys($a["tablesForSelectAr"]);
 		unset($a);
 
-		if (!$tablesAr)
-		{
+		if (!$tablesAr) {
 			$tablesAr = $allTablesAr;
 		}
 
 		$fp = $compress ? gzopen($filename, "w9") : fopen($filename, "w");
-		if (!$fp)
-		{
+		if (!$fp) {
 			throw new \Exception("Unable to create db dump $filename");
 		}
 

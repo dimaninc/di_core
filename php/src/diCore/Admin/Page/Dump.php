@@ -3,6 +3,7 @@
 namespace diCore\Admin\Page;
 
 use diCore\Controller\Db as dbController;
+use diCore\Controller\Dump as dumpController;
 use diCore\Helper\FileSystemHelper;
 use diCore\Helper\StringHelper;
 
@@ -41,8 +42,12 @@ class Dump extends \diCore\Admin\BasePage
 	{
         $this->getTwig()
             ->renderPage('admin/dump/list', [
-                'worker_uri' => \diLib::getAdminWorkerPath('db'),
-                'worker_uri_upload' => \diLib::getAdminWorkerPath('db', 'upload'),
+                'worker_uri' => [
+                    'db' => \diLib::getAdminWorkerPath('db'),
+                    'db_upload' => \diLib::getAdminWorkerPath('db', 'upload'),
+                    'dump' => \diLib::getAdminWorkerPath('dump'),
+                    'dump_upload' => \diLib::getAdminWorkerPath('dump', 'upload'),
+                ],
                 'tables' => $this->getTablesData(),
                 'db_folders' => $this->getDbFolders(),
                 'file_folders' => $this->getFileFolders(),
@@ -78,9 +83,8 @@ class Dump extends \diCore\Admin\BasePage
 
 	private function getFileFolders()
     {
-        /** @var dbController $controllerClass */
-        $controllerClass = \diLib::getChildClass(dbController::class);
-
+        /** @var dumpController $controllerClass */
+        $controllerClass = \diLib::getChildClass(dumpController::class);
         $folder = $controllerClass::getFileDumpsFolder();
 
         $dir = FileSystemHelper::folderContents($folder, true, true);

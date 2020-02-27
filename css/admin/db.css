@@ -1,3 +1,12 @@
+.create-wrapper {
+	margin-bottom: 15px;
+}
+
+.in-progress {
+    background: yellow;
+    padding: 3px;
+}
+
 .db-errors-console {
 	display: none;
 	border: 1px solid #999;
