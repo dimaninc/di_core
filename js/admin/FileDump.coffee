@@ -44,7 +44,7 @@ class FileDump
 
         interval = setInterval =>
             $.get @opts.workerUri + 'update_size/', { file: res.file }, (res) =>
-                return unless interval
+                return if not interval or res.size is false
                 $size
                 .addClass 'in-progress'
                 .html size_in_bytes res.size

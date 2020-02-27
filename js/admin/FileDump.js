@@ -48,7 +48,7 @@ FileDump = (function() {
         return $.get(_this.opts.workerUri + 'update_size/', {
           file: res.file
         }, function(res) {
-          if (!interval) {
+          if (!interval || res.size === false) {
             return;
           }
           $size.addClass('in-progress').html(size_in_bytes(res.size));
