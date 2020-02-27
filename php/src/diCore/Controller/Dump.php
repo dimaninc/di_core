@@ -20,8 +20,7 @@ class Dump extends \diBaseAdminController
     const CHMOD_FILE = 0664;
 
     protected static $fileFolders = [
-        //'uploads',
-        'favicon'
+        'uploads',
     ];
     protected static $customFileFolders = [];
 

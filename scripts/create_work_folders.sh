@@ -8,6 +8,9 @@ chmod -R 777 _cfg/cache
 mkdir -p db/dump
 chmod -R 777 db/dump
 
+mkdir -p db/files
+chmod -R 777 db/files
+
 mkdir -p htdocs/uploads
 chmod -R 777 htdocs/uploads
 
