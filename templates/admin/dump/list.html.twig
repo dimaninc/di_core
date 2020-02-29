@@ -38,7 +38,7 @@
                 {% endif %}
             {% else %}
                 <tr data-no-files>
-                    <td colspan="2">Пока не сделано ни одной копии</td>
+                    <td colspan="2">{{ page_lang['message.no_dumps'] }}</td>
                 </tr>
             {% endfor %}
             </tbody>
@@ -52,11 +52,13 @@
             <td rowspan="3">
                 <form class="create" method="get" action="">
 
-                    <h2>Select tables</h2>
+                    <h2>{{ page_lang['caption.select_tables'] }}</h2>
                     <div style="margin-bottom: 10px;">
                         <div>{{ tables['select']|raw }}</div>
                         <div>
-                            <u data-purpose="select-all">select</u>/<u data-purpose="deselect-all">deselect</u> all
+                            <u data-purpose="select-all">{{ page_lang['word.select_all'] }}</u>
+                            /
+                            <u data-purpose="deselect-all">{{ page_lang['word.deselect_all'] }}</u>
                         </div>
                     </div>
 

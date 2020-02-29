@@ -13,22 +13,38 @@ class Dump extends \diCore\Admin\BasePage
         'ru' => [
             'caption.files' => 'Копии файлов',
             'caption.db' => 'Копии базы данных',
+            'caption.select_tables' => 'Выберите таблицы',
+
             'button.create.files' => 'Создать архив с копией файлов',
             'button.create.db' => 'Создать копию базы данных',
+
             'dump.delete' => 'Удалить',
             'dump.download' => 'Скачать',
             'dump.restore' => 'Восстановить',
             'dump.view' => 'Просмотр',
+
+            'message.no_dumps' => 'Пока не сделано ни одной копии',
+
+            'word.select_all' => 'Выбрать все',
+            'word.deselect_all' => 'Снять выделение',
         ],
         'en' => [
-            'caption.files' => 'Копии файлов',
-            'caption.db' => 'Копии базы данных',
+            'caption.files' => 'User files dumps',
+            'caption.db' => 'Database dumps',
+            'caption.select_tables' => 'Select tables',
+
             'button.create.files' => 'Create user files archive',
             'button.create.db' => 'Create database dump',
+
             'dump.delete' => 'Delete',
             'dump.download' => 'Download',
             'dump.restore' => 'Restore',
             'dump.view' => 'View',
+
+            'message.no_dumps' => 'No dumps made yet',
+
+            'word.select_all' => 'Select all',
+            'word.deselect_all' => 'Deselect all',
         ],
     ];
 
