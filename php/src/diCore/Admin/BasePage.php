@@ -8,6 +8,7 @@
 
 namespace diCore\Admin;
 
+use diCore\Base\CMS;
 use diCore\Entity\AdminTableEditLog\Collection as TableEditLogs;
 use diCore\Entity\AdminTableEditLog\Model as TableEditLog;
 use diCore\Helper\ArrayHelper;
@@ -174,7 +175,11 @@ abstract class BasePage
 
 			$o->$afterM();
 		} catch (\Exception $e) {
-			die($e->getMessage());
+			if (CMS::getEnvironment() == CMS::ENV_DEV) {
+                throw $e;
+            } else {
+                die($e->getMessage());
+            }
 		}
 
 		if ($o->hasRenderCallback())
