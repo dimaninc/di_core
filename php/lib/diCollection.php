@@ -1249,15 +1249,15 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		if ($this->realCount === null)
 		{
-			$this->count();
+			$this->count(true);
 		}
 
-		return $this->realCount ?? $this->count();
+		return $this->realCount;
 	}
 
-	public function count()
+	public function count($force = false)
 	{
-		if ($this->count === null)
+		if ($this->count === null || $force)
 		{
 			if ($this->hasGroupBy())
 			{
@@ -1282,7 +1282,11 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 				);
 			}
 
-			$this->realCount = $this->count = $r ? (int)$r->cc : 0;
+			$this->realCount = $r ? (int)$r->cc : 0;
+
+			if ($this->count === null) {
+                $this->count = $this->realCount;
+            }
 		}
 
 		if ($this->pageSize && $this->count > $this->pageSize)
