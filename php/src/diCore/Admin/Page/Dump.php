@@ -103,6 +103,10 @@ class Dump extends \diCore\Admin\BasePage
         $controllerClass = \diLib::getChildClass(dumpController::class);
         $folder = $controllerClass::getFileDumpsFolder();
 
+        if (!is_dir($folder)) {
+            return null;
+        }
+
         $dir = FileSystemHelper::folderContents($folder, true, true);
         $filesAr = array_map(function($v) use($folder) {
             return substr($v, 0, strlen($folder)) == $folder ? substr($v, strlen($folder)) : $v;

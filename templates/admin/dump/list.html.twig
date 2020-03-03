@@ -1,4 +1,5 @@
 <center class="dump-wrapper" data-vocabulary="{{ page_lang|json_encode }}">
+    {% if file_folders != null %}
     <h2>{{ page_lang['caption.files'] }}</h2>
 
     <div class="create-wrapper">
@@ -44,6 +45,7 @@
             </tbody>
         {% endfor %}
     </table>
+    {% endif %}
 
     <h2>{{ page_lang['caption.db'] }}</h2>
 

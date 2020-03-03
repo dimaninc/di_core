@@ -1252,7 +1252,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 			$this->count();
 		}
 
-		return $this->realCount;
+		return $this->realCount ?? $this->count();
 	}
 
 	public function count()
