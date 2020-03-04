@@ -493,7 +493,7 @@ class diDynamicRows
       ? "<input type=hidden name=\"{$this->field}_order_num[$id]\" value=\"".($r ? $r->order_num : "")."\" />"
       : "";
 
-    return "<div id=\"{$this->field}_div[{$id}]\" class=\"dynamic-row\" data-id='$id'>".
+    return "<div id=\"{$this->field}_div[{$id}]\" class=\"dynamic-row\" data-id=\"$id\" data-main-field=\"{$this->field}\">".
       "<input type=hidden name=\"{$this->field}_ids_ar[]\" value=\"{$id}\" />".
       join("\n", $hiddens) .
       $kill_div.
@@ -1148,10 +1148,16 @@ EOF;
 		$message = StringHelper::isWebPicFilename($this->getData($field))
             ? $this->L("delete_pic_confirmation")
             : $this->L("delete_file_confirmation");
+		$path = diLib::getAdminWorkerPath("files", "del_dynamic", [
+		    $this->table,
+            $this->id,
+            $this->getCurrentModel()->getTable() ?: $this->field,
+            $field2,
+            $id,
+        ]);
 
-		return ", <a href=\"" . diLib::getAdminWorkerPath("files", "del_dynamic", [$this->table, $this->id, $this->field, $field2, $id]) . "\" " .
-		"data-field=\"$field\" data-confirm=\"{$message}\" " .
-		"class=\"del-file\" data>{$this->L("delete")}</a>";
+		return ", <a href=\"{$path}\" data-field=\"{$field}\" data-confirm=\"{$message}\" " .
+		    "class=\"del-file\">{$this->L("delete")}</a>";
 	}
 
 	function get_pic_html_for_input($field, $fullName, $hideIfNoFile = false, $showDelLink = true)

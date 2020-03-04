@@ -220,13 +220,15 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 	function initDelLinks() {
 		$('a.del-file').click(function() {
 			var $this = $(this);
+			var $row = $this.closest('.dynamic-row');
+			var mainField = $row.data('main-field');
 
 			if (confirm($this.data('confirm'))) {
 				$.get($this.attr('href'), {redirect: 0}, function(res) {
 					if (res.ok) {
 						var $e = res.field && res.subId
                             // dynamic rows
-							? $('.diadminform-row[data-field="{0}"] .dynamic-row[data-id="{1}"] .existing-pic-holder[data-field="{2}"]'.format(res.subTable, res.subId, res.field))
+							? $('.diadminform-row[data-field="{0}"] .dynamic-row[data-id="{1}"] .existing-pic-holder[data-field="{2}"]'.format(mainField, res.subId, res.field))
 							: $('.diadminform-row[data-field="{0}"] .existing-pic-holder'.format($this.data('field')));
 						$e.remove();
 					} else {
