@@ -4060,3 +4060,132 @@ body[data-skin="entrine"] .configuration .grid tbody tr td:first-child {
   max-height: none;
   cursor: zoom-out;
 }
+.dump-wrapper .create-wrapper {
+  margin-bottom: 15px;
+}
+.dump-wrapper .in-progress {
+  background: #ff0;
+  padding: 3px;
+}
+.dump-wrapper .db-errors-console {
+  display: none;
+  border: 1px solid #999;
+  background: #ddc;
+  padding: 10px;
+  border-radius: 10px;
+  text-align: left;
+  margin: 20px;
+}
+.dump-wrapper table.db-list {
+  margin: 15px 0;
+  border-collapse: collapse;
+}
+.dump-wrapper table.db-list tbody tr td {
+  padding: 10px 0;
+  border: 1px solid #fff;
+  width: 350px;
+  background: #dfdfd0;
+  text-align: center;
+  vertical-align: bottom;
+}
+.dump-wrapper table.db-list tbody tr td .dump-settings {
+  margin-bottom: 10px;
+}
+.dump-wrapper table.db-dump-rows {
+  border-collapse: collapse;
+}
+.dump-wrapper table.db-dump-rows tbody tr td {
+  text-align: left;
+  padding: 5px;
+  border: 1px solid #777;
+  font-size: 12px;
+}
+.dump-wrapper table.db-dump-rows tbody tr td small {
+  font-size: 10px;
+}
+.dump-wrapper table.db-dump-rows tbody tr:nth-child(even) td {
+  background: #eee;
+}
+.dump-wrapper table.db-dump-rows tbody tr.subfolder td {
+  padding-left: 20px;
+}
+.dump-wrapper table.db-dump-rows tbody tr[data-format="gz"] td button[data-action="view"] {
+  display: none;
+}
+.dump-wrapper table.db-dump-rows tbody[data-folder-id="2"] tr td button[data-action="delete"] {
+  display: none;
+}
+.dump-wrapper table.db-dump-rows tbody tr.subfolder td,
+.dump-wrapper table.db-dump-rows tbody[data-folder-id] tr:first-child td {
+  background: #dfdfd0;
+}
+.dump-wrapper iframe[name="upload_container"] {
+  display: none;
+}
+.dump-wrapper .disk-stat {
+  max-width: 500px;
+}
+@media screen and (max-width: 650px) {
+  .dump-wrapper .disk-stat {
+    max-width: none;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+.dipopup[data-name="view-sql"] {
+  left: 100px;
+  right: 100px;
+  top: 50px;
+  bottom: 50px;
+  margin: 0;
+}
+.dipopup[data-name="view-sql"] .scroller {
+  overflow: auto;
+  height: 100%;
+}
+.dipopup[data-name="view-sql"] code {
+  white-space: pre;
+}
+ul.disk-stat {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+ul.disk-stat > li {
+  position: relative;
+  text-align: center;
+  font-size: 14px;
+  line-height: 140%;
+  border-radius: 10px;
+  padding: 5px 10px;
+  border: 1px solid #6495ed;
+  background-color: #fff;
+}
+@media screen and (min-width: 551px) {
+  ul.disk-stat > li {
+    -webkit-box-flex: 1;
+    -moz-box-flex: 1;
+    -o-box-flex: 1;
+    box-flex: 1;
+    -webkit-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+  }
+}
+@media screen and (min-width: 551px) {
+  ul.disk-stat > li:not(:last-child) {
+    margin-bottom: 10px;
+  }
+}
+ul.disk-stat > li > div {
+  position: relative;
+}
+ul.disk-stat > li > div.progress-bar {
+  position: absolute;
+  background-color: rgba(173,216,230,0.5);
+  left: 0;
+  top: 1px;
+  bottom: 1px;
+  z-index: 0;
+  border-radius: 10px 0 0 10px;
+}

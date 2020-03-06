@@ -1,4 +1,14 @@
 <center class="dump-wrapper" data-vocabulary="{{ page_lang|json_encode }}">
+    <ul class="disk-stat">
+        {% for disk in disks %}
+        <li>
+            <div class="progress-bar" style="width: {{ disk.used_percent }}%;"></div>
+            <div class="disk-title"><b>{{ disk.title }}</b></div>
+            <div class="disk-usage">Свободно: {{ disk.free }} / {{ disk.total }}</div>
+        </li>
+        {% endfor %}
+    </ul>
+
     {% if file_folders != null %}
     <h2>{{ page_lang['caption.files'] }}</h2>
 
@@ -146,7 +156,6 @@
 
 <div class="dipopup" data-name="view-sql" data-positioning="false"><div class="scroller"><code></code></div></div>
 
-<link href="{{ asset_locations['css'] }}admin/db.css" rel="stylesheet" type="text/css">
 <script src="{{ asset_locations['js'] }}admin/diDbManager.js" type="text/javascript" charset="utf-8"></script>
 <script src="{{ asset_locations['js'] }}admin/FileDump.js" type="text/javascript" charset="utf-8"></script>
 

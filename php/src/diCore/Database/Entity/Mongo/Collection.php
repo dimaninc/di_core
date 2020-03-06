@@ -154,19 +154,20 @@ class Collection extends \diCollection
 		return $this->cursor;
 	}
 
-	public function count()
+	public function count($force = false)
 	{
-		if ($this->count === null)
-		{
-			$this->realCount = $this->count =
-				$this->getDb()->count([
-					'collectionName' => $this->getQueryTable(),
-					'filters' => $this->getFullQuery(),
-				]);
+		if ($this->count === null || $force) {
+			$this->realCount = $this->getDb()->count([
+                'collectionName' => $this->getQueryTable(),
+                'filters' => $this->getFullQuery(),
+            ]);
+
+            if ($this->count === null) {
+                $this->count = $this->realCount;
+            }
 		}
 
-		if ($this->pageSize && $this->count > $this->pageSize)
-		{
+		if ($this->pageSize && $this->count > $this->pageSize) {
 			$this->count = $this->pageSize;
 		}
 

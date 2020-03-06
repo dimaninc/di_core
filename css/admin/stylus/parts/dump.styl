@@ -1,0 +1,112 @@
+.dump-wrapper
+  .create-wrapper
+    margin-bottom 15px
+
+  .in-progress
+    background yellow
+    padding 3px
+
+  .db-errors-console
+    display none
+    border 1px solid #999
+    background #ddc
+    padding 10px
+    border-radius 10px
+    text-align left
+    margin 20px
+
+  table
+    &.db-list
+      margin 15px 0
+      border-collapse collapse
+      tbody
+        tr
+          td
+            padding 10px 0
+            border 1px solid #FFF
+            width 350px
+            background #DFDFD0
+            text-align center
+            vertical-align bottom
+            .dump-settings
+              margin-bottom 10px
+    &.db-dump-rows
+      border-collapse collapse
+      tbody
+        tr
+          td
+            text-align left
+            padding 5px
+            border 1px solid #777
+            font-size 12px
+            small
+              font-size 10px
+          &:nth-child(even)
+            td
+              background #eee
+          &.subfolder
+            td
+              padding-left 20px
+        tr[data-format="gz"]
+          td
+            button[data-action="view"]
+              display none
+      tbody[data-folder-id="2"]
+        tr
+          td
+            button[data-action="delete"]
+              display none
+
+  table.db-dump-rows tbody tr.subfolder td,
+  table.db-dump-rows tbody[data-folder-id] tr:first-child td
+    background #DFDFD0
+
+  iframe[name="upload_container"]
+    display none
+
+  .disk-stat
+    max-width 500px
+    @media screen and (max-width: 650px)
+      max-width none
+      padding-left 10px
+      padding-right 10px
+
+.dipopup
+  &[data-name="view-sql"]
+    left 100px
+    right 100px
+    top 50px
+    bottom 50px
+    margin 0
+    .scroller
+      overflow auto
+      height 100%
+    code
+      white-space pre
+
+ul.disk-stat
+  ul-norm()
+  > li
+    position relative
+    text-align center
+    font-size 14px
+    line-height 140%
+    border-radius 10px
+    padding 5px 10px
+    border 1px solid cornflowerblue
+    background-color white
+    @media screen and (min-width: 551px)
+      flex 1
+    &:not(:last-child)
+      @media screen and (min-width: 551px)
+        margin-bottom 10px
+    > div
+      position relative
+      &.progress-bar
+        position absolute
+        background-color alpha(lightblue, .5)
+        left 0
+        top 1px
+        bottom 1px
+        z-index 0
+        border-radius 10px 0 0 10px

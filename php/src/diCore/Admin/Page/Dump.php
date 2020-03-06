@@ -67,6 +67,7 @@ class Dump extends \diCore\Admin\BasePage
                 'tables' => $this->getTablesData(),
                 'db_folders' => $this->getDbFolders(),
                 'file_folders' => $this->getFileFolders(),
+                'disks' => $this->getDisksUsage(),
             ]);
 	}
 
@@ -75,7 +76,29 @@ class Dump extends \diCore\Admin\BasePage
 		throw new \Exception('No form in ' . get_class($this));
 	}
 
-	private function getTablesData()
+    protected function getDisksUsage()
+    {
+        $disks = [];
+
+        $path = \diPaths::fileSystem();
+
+        $total = disk_total_space($path);
+        $free = disk_free_space($path);
+        $totalStr = size_in_bytes($total);
+        $freeStr = size_in_bytes($free);
+
+        $disks[] = [
+            'title' => 'Server',
+            'total' => $totalStr,
+            'free' => $freeStr,
+            'free_percent' => sprintf('%.2f', $free / $total * 100),
+            'used_percent' => sprintf('%.2f', ($total - $free) / $total * 100),
+        ];
+
+        return $disks;
+    }
+
+    private function getTablesData()
 	{
 		$tablesAr = dbController::getTablesList($this->getDb());
 
