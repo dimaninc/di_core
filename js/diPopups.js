@@ -22,6 +22,7 @@ var diPopups = function() {
 		$bg: $('#gray-bg')
 	};
 	this.$e_ar = {};
+	this.optsAr = {};
 	this.id_prefix = '';
 	this.id_suffix = '-dipopup';
 
@@ -66,7 +67,7 @@ var diPopups = function() {
 	};
 
 	this.setEvent = function(id, eventName, callback) {
-		if (typeof events[id] == 'undefined') {
+		if (typeof events[id] === 'undefined') {
 			events[id] = {};
 		}
 
@@ -76,7 +77,7 @@ var diPopups = function() {
 	};
 
 	this.fireEvent = function(id, eventName) {
-		if (typeof events[id] != 'undefined' && typeof events[id][eventName] != 'undefined') {
+		if (typeof events[id] !== 'undefined' && typeof events[id][eventName] !== 'undefined') {
 			events[id][eventName]({
 				name: eventName,
 				id: id,
@@ -150,8 +151,21 @@ var diPopups = function() {
 		self.getCallback('realHide')(self, id);
 	}
 
+	this.setOptsFor = function(name, opts) {
+		this.optsAr[name] = opts;
+
+		var $e = this.getPopupElement(name);
+
+		if ($e) {
+            this.copyOptsToDom(name, $e);
+        }
+
+		return this;
+	};
+
 	this.show = function(name, _opts/* or showBackground */) {
 		var opts = {
+            showCloseButton: true,
 			showBackground: true,
 			content: null,
             positioning: globalOptions.positioning,
@@ -182,7 +196,9 @@ var diPopups = function() {
 			});
 		}
 
-		if ($e.data('detach') && !$e.parent().is('body')) {
+        this.setOptsFor(name, opts);
+
+        if ($e.data('detach') && !$e.parent().is('body')) {
 			$(document.body).append($e.detach());
 		}
 
@@ -236,29 +252,38 @@ var diPopups = function() {
 		}, options);
 
 		var $el = $('<div/>');
+		this.copyOptsToDom(name, $el);
 		$el
 			.addClass('dipopup')
 			.data('type', 'dipopup')
 			.attr('data-type', 'dipopup')
-			.data('name', options.name)
-			.attr('data-name', options.name)
-			.attr('data-no-close', !options.showCloseButton)
-			.data('no-close', !options.showCloseButton)
-			.data('after-update-position', options.afterUpdatePosition)
-			.data('positioning', options.positioning)
-			.attr('data-positioning', options.positioning)
-			.data('positioning-x', options.positioningX)
-			.attr('data-positioning-x', options.positioningX)
-			.data('positioning-y', options.positioningY)
-			.attr('data-positioning-y', options.positioningY)
-			.data('mobile-positioning', options.mobilePositioning)
-			.attr('data-mobile-positioning', options.mobilePositioning)
-			.data('live-position', options.livePosition)
-			.attr('data-live-position', options.livePosition)
 			.html(options.content)
 			.appendTo(document.body);
 
 		this.$e_ar[options.name] = $el;
+
+		return this;
+	};
+
+	this.copyOptsToDom = function(name, $el) {
+		var options = this.optsAr[name];
+
+        $el
+            .data('name', options.name)
+            .attr('data-name', options.name)
+            .attr('data-no-close', !options.showCloseButton)
+            .data('no-close', !options.showCloseButton)
+            .data('after-update-position', options.afterUpdatePosition)
+            .data('positioning', options.positioning)
+            .attr('data-positioning', options.positioning)
+            .data('positioning-x', options.positioningX)
+            .attr('data-positioning-x', options.positioningX)
+            .data('positioning-y', options.positioningY)
+            .attr('data-positioning-y', options.positioningY)
+            .data('mobile-positioning', options.mobilePositioning)
+            .attr('data-mobile-positioning', options.mobilePositioning)
+            .data('live-position', options.livePosition)
+            .attr('data-live-position', options.livePosition);
 
 		return this;
 	};
