@@ -219,6 +219,26 @@ class diModel implements \ArrayAccess
 			: new static($ar, $table);
 	}
 
+    /**
+     * @param $slug
+     * @return $this
+     * @throws \Exception
+     */
+    public static function createBySlug($slug)
+    {
+        return self::create(static::type, $slug, 'slug');
+    }
+
+    /**
+     * @param $id
+     * @return $this
+     * @throws \Exception
+     */
+    public static function createById($id)
+    {
+        return self::create(static::type, $id, 'id');
+    }
+
 	public function __call($method, $arguments)
 	{
 		$fullMethod = underscore($method);
