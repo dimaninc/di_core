@@ -152,7 +152,7 @@ var diPopups = function() {
 	}
 
 	this.setOptsFor = function(name, opts) {
-		this.optsAr[name] = opts;
+		this.optsAr[name] = opts || {};
 
 		var $e = this.getPopupElement(name);
 
@@ -165,6 +165,7 @@ var diPopups = function() {
 
 	this.show = function(name, _opts/* or showBackground */) {
 		var opts = {
+			name: name,
             showCloseButton: true,
 			showBackground: true,
 			content: null,
@@ -252,7 +253,9 @@ var diPopups = function() {
 		}, options);
 
 		var $el = $('<div/>');
-		this.copyOptsToDom(name, $el);
+		this
+			.setOptsFor(options.name, options)
+			.copyOptsToDom(name, $el);
 		$el
 			.addClass('dipopup')
 			.data('type', 'dipopup')
@@ -266,11 +269,11 @@ var diPopups = function() {
 	};
 
 	this.copyOptsToDom = function(name, $el) {
-		var options = this.optsAr[name];
+		var options = this.optsAr[name] || {};
 
         $el
-            .data('name', options.name)
-            .attr('data-name', options.name)
+            .data('name', name || options.name)
+            .attr('data-name', name || options.name)
             .attr('data-no-close', !options.showCloseButton)
             .data('no-close', !options.showCloseButton)
             .data('after-update-position', options.afterUpdatePosition)
