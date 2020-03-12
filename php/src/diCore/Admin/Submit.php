@@ -667,8 +667,13 @@ class Submit
 		return $this->slugFieldName;
 	}
 
-	public function makeSlug($origin = null, $slugField = null)
+	public function makeSlug($origin = null, $slugField = null, $extraOptions = [])
 	{
+	    if (is_array($origin) && !$extraOptions) {
+	        $extraOptions = $origin;
+	        $origin = null;
+        }
+
         $slugField = $slugField ?: $this->slugFieldName;
 
 		if (is_null($origin)) {
@@ -689,7 +694,8 @@ class Submit
             $this->getId(),
 			'id',
             $slugField,
-            $this->getModel()::slug_delimiter
+            $this->getModel()::slug_delimiter,
+            $extraOptions
 		));
 
 		return $this;
