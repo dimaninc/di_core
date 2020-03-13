@@ -3,6 +3,7 @@ var diDynamicRows = function(opts) {
 		$anc,
 		$src,
 		$jsSrc,
+		$rowsWrapper,
 		$wrapper,
 		$formRow,
 		$dropAreas,
@@ -221,6 +222,7 @@ var diDynamicRows = function(opts) {
 		));
 		$wrapper = $anc.parent();
 		$formRow = $wrapper.closest('.diadminform-row');
+        $rowsWrapper = $wrapper.find('.dynamic-wrapper');
 
 		setTimeout(function() {
 			$dropAreas = $formRow.find('.admin-form-uploading-area');
@@ -345,9 +347,11 @@ var diDynamicRows = function(opts) {
 			.html(html);
 
 		if (this.directions[field] > 0) {
-            $e.insertBefore($anc);
+            //$e.insertBefore($anc);
+			$e.appendTo($rowsWrapper);
 		} else {
-            $e.insertAfter($anc);
+            //$e.insertAfter($anc);
+            $e.prependTo($rowsWrapper);
 		}
 
 		setTimeout(function() {

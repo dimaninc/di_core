@@ -122,6 +122,11 @@ abstract class BasePage
 		'formBasePath',
 	];
 
+	protected $staticInjections = [
+	    'js' => [],
+        'css' => [],
+    ];
+
 	public function __construct(Base $X)
 	{
 		$this->X = $X;
@@ -153,23 +158,19 @@ abstract class BasePage
 		$afterM = Base::getClassMethodName($o->getMethod(), 'after');
 
 		try {
-			if (!method_exists($o, $m))
-			{
+			if (!method_exists($o, $m)) {
 				throw new \Exception("Class " . get_class($o) . " doesn't have '$m' method");
 			}
 
-			if (!method_exists($o, $beforeM))
-			{
+			if (!method_exists($o, $beforeM)) {
 				throw new \Exception("Class " . get_class($o) . " doesn't have '$beforeM' method");
 			}
 
-			if (!method_exists($o, $afterM))
-			{
+			if (!method_exists($o, $afterM)) {
 				throw new \Exception("Class " . get_class($o) . " doesn't have '$afterM' method");
 			}
 
-			if ($o->$beforeM())
-			{
+			if ($o->$beforeM()) {
 				$o->$m();
 			}
 
@@ -182,13 +183,13 @@ abstract class BasePage
             }
 		}
 
-		if ($o->hasRenderCallback())
-		{
+		$o->assignStaticInjections();
+
+		if ($o->hasRenderCallback()) {
 			$cb = $o->getRenderCallback();
 			$result = $cb();
 
-			if ($result)
-			{
+			if ($result) {
 				$o->getTpl()
 					->assign([
 						'PAGE' => $result,
@@ -199,16 +200,12 @@ abstract class BasePage
                         \diTwig::TOKEN_FOR_PAGE => $result,
                     ]);
 			}
-		}
-		elseif ($o->getTwig()->hasPage())
-		{
+		} elseif ($o->getTwig()->hasPage()) {
 			$o->getTpl()
 				->assign([
 					'PAGE' => $o->getTwig()->getPage(),
 				]);
-		}
-		elseif ($o->getTpl()->defined('page'))
-		{
+		} elseif ($o->getTpl()->defined('page')) {
 		    $o->getTpl()->process('page');
 
             $o->getTwig()
@@ -994,6 +991,30 @@ abstract class BasePage
 
 		return $this;
 	}
+
+	public function injectJs($className)
+    {
+        $this->staticInjections['js'][] = $className;
+
+        return $this;
+    }
+
+    public function injectCss($fileName)
+    {
+        $this->staticInjections['css'][] = $fileName;
+
+        return $this;
+    }
+
+    public function assignStaticInjections()
+    {
+        $this->getTwig()
+            ->assign([
+                'static_injections' => $this->staticInjections,
+            ]);
+
+        return $this;
+    }
 
 	protected function beforeRenderFilters()
 	{

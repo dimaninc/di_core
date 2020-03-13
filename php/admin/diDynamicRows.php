@@ -292,6 +292,7 @@ class diDynamicRows
       }
 
       $s .= "<div data-purpose=\"anchor\" data-field=\"{$this->field}\" data-position=\"top\"></div>";
+      $s .= "<div class=\"dynamic-wrapper\">";
 
       while ($r = $this->getDb()->fetch($rs)) {
           $this->data_id = (int)$r->id;
@@ -309,6 +310,8 @@ class diDynamicRows
               $edgeOrderNumber = $x;
           }
       }
+
+      $s .= "</div>";
 
 	  $jsOpts = [
 	      'field' => $this->field,

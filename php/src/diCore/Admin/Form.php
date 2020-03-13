@@ -2539,6 +2539,7 @@ EOF;
 		}
 
         $s .= "<div data-purpose=\"anchor\" data-field=\"{$field}\" data-position=\"top\"></div>";
+        $s .= "<div class=\"dynamic-wrapper\">";
 
         while ($pic_r = $this->getDb()->fetch($pic_rs)) {
 			$s .= $this->get_dynamic_pic_row($pic_r->id, $field, $pic_r);
@@ -2548,6 +2549,7 @@ EOF;
 			}
 		}
 
+		$s .= "</div>";
 		//$this->uploaded_images[$field] = $s;
 
         $s .= "<div data-purpose=\"anchor\" data-field=\"{$field}\" data-position=\"bottom\"></div>";
