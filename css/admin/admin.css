@@ -3370,22 +3370,22 @@ body[data-skin="entrine"] .dynamic-row + .dynamic-row {
 .dynamic-row ul.line > li > * {
   margin-left: 5px;
 }
-.dynamic-row ul.line > li input:not([type="checkbox"]):not([type="radio"]):not([size]),
+.dynamic-row ul.line > li input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
 .dynamic-row ul.line > li textarea {
   width: 300px;
 }
-.dynamic-row ul.line > li.wider input:not([type="checkbox"]):not([type="radio"]):not([size]),
+.dynamic-row ul.line > li.wider input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
 .dynamic-row ul.line > li.wider textarea {
   width: 500px;
 }
-.dynamic-row ul.line > li.wide input:not([type="checkbox"]):not([type="radio"]):not([size]),
+.dynamic-row ul.line > li.wide input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
 .dynamic-row ul.line > li.wide textarea {
   width: 750px;
 }
 .dynamic-row ul.line > li.full-width {
   display: block;
 }
-.dynamic-row ul.line > li.full-width input:not([type="checkbox"]):not([type="radio"]):not([size]),
+.dynamic-row ul.line > li.full-width input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
 .dynamic-row ul.line > li.full-width textarea {
   width: 90%;
 }
@@ -3397,7 +3397,7 @@ body[data-skin="entrine"] .dynamic-row + .dynamic-row {
   -webkit-align-items: flex-start;
   align-items: flex-start;
 }
-.dynamic-row ul.line > li input:not([type="checkbox"]):not([type="radio"])[size],
+.dynamic-row ul.line > li input:not([type="checkbox"]):not([type="radio"]):not([type="file"])[size],
 .dynamic-row ul.line > li textarea[cols] {
   width: auto;
 }

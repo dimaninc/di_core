@@ -49,25 +49,25 @@
 				margin-left 15px
 			> *
 				margin-left 5px
-			input:not([type="checkbox"]):not([type="radio"]):not([size])
+			input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size])
 			textarea
 				width 300px
 			&.wider
-				input:not([type="checkbox"]):not([type="radio"]):not([size])
+				input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size])
 				textarea
 					width 500px
 			&.wide
-				input:not([type="checkbox"]):not([type="radio"]):not([size])
+				input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size])
 				textarea
 					width 750px
 			&.full-width
 				display block
-				input:not([type="checkbox"]):not([type="radio"]):not([size])
+				input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size])
 				textarea
 					width 90%
 			&.pic-line
 				align-items flex-start
-			input:not([type="checkbox"]):not([type="radio"])[size],textarea[cols]
+			input:not([type="checkbox"]):not([type="radio"]):not([type="file"])[size],textarea[cols]
 				width auto
 			.existing-pic-holder
 				margin-bottom 0
