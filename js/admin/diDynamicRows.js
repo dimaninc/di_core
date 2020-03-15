@@ -53,6 +53,20 @@ var diDynamicRows = function(opts) {
             : name;
     };
 
+	this.setEvent = function(eventName, callback) {
+		if (di.isArray(eventName)) {
+			for (var i in eventName) {
+				if (eventName.hasOwnProperty(i)) {
+					this.setEvent(eventName[i], callback);
+				}
+			}
+		} else {
+            opts[eventName] = callback;
+        }
+
+		return this;
+	};
+
 	this.setupEvents = function() {
 		var validatePassword = function() {
 			var $password = $(this).parent().find('input[type="password"]:not(.password-confirm)'),
@@ -66,6 +80,12 @@ var diDynamicRows = function(opts) {
 
 		$anc.parent().on('change', 'input[type="password"]:not(.password-confirm)', validatePassword);
 		$anc.parent().on('keyup', 'input[type="password"].password-confirm', validatePassword);
+		$anc.parent().on('click', '.dynamic-row .close', function(event) {
+			var $this = $(this);
+			//event = event || window.event;
+			//event.preventDefault();
+			self.remove($this.data('field'), $this.data('id'));
+		});
 
 		return this;
 	};
@@ -388,18 +408,16 @@ var diDynamicRows = function(opts) {
 
 	this.remove = function(field, id) {
 		if (!this.is_field_inited(field)) {
-			return false;
+			return;
 		}
 
 		if (!confirm('Удалить ' + this.field_titles[field] + '?')) {
-			return false;
+			return;
 		}
 
 		$('#' + field + '_div\\[' + id + '\\]').remove();
 
         opts.afterDelRow && opts.afterDelRow(this, id);
-
-		return false;
 	};
 
 	constructor();
