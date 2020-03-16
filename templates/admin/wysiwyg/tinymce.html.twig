@@ -18,7 +18,7 @@ tinymce.init({
     ],
     toolbar: '| insertfile undo redo | styleselect | bold italic | forecolor backcolor | ' +
         'alignleft aligncenter alignright alignjustify | ' +
-        'bullist numlist outdent indent | link {% if needed['rfm'] %}responsivefilemanager{% endif %} {% block toolbar_file_manager %}{% endblock %}', // image
+        'bullist numlist outdent indent | link media {% if needed['rfm'] %}responsivefilemanager{% endif %} {% block toolbar_file_manager %}{% endblock %}', // image
 {% if needed['rfm'] %}
     external_filemanager_path: '{{ asset_locations['vendor'] }}responsive_filemanager/',
     filemanager_title: 'File Manager',
