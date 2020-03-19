@@ -109,6 +109,16 @@ class Model extends \diModel implements \diCore\Interfaces\CartOrder
     /**
      * @param $item CartItem
      * @param $options array
+     * @return float
+     */
+    public function getAdditionalCostOfItem($item, $options)
+    {
+        return 0;
+    }
+
+    /**
+     * @param $item CartItem
+     * @param $options array
      * @return integer
      */
     public function getRowCountOfItem($item, $options)

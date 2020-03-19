@@ -134,6 +134,7 @@ trait CartOrder
 
         foreach ($this->getItems() as $item) {
             $cost += $this->getCostOfItem($item, $options);
+            $cost += $this->getAdditionalCostOfItem($item, $options);
         }
 
         return $cost;

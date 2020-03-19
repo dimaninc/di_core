@@ -12,5 +12,6 @@ interface CartOrder
 {
     public function getQuantityOfItem($item, $options);
     public function getCostOfItem($item, $options);
+    public function getAdditionalCostOfItem($item, $options);
     public function getRowCountOfItem($item, $options);
 }
