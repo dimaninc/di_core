@@ -57,9 +57,9 @@ trait CartOrder
         return $this;
     }
 
-    public function getItems()
+    public function getItems($forceRefresh = true)
     {
-        if ($this->items === null && $this->exists()) {
+        if (($this->items === null && $this->exists()) || $forceRefresh) {
             $items = \diCollection::create(static::item_type);
             $items
                 ->filterBy(self::item_filter_field, $this->getId())
@@ -120,7 +120,7 @@ trait CartOrder
         $count = 0;
         $options = $this->prepareOptions($options);
 
-        foreach ($this->getItems() as $item) {
+        foreach ($this->getItems(true) as $item) {
             $count += $this->getRowCountOfItem($item, $options);
         }
 
