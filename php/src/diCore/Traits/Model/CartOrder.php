@@ -57,7 +57,7 @@ trait CartOrder
         return $this;
     }
 
-    public function getItems($forceRefresh = true)
+    public function getItems($forceRefresh = false)
     {
         if (($this->items === null && $this->exists()) || $forceRefresh) {
             $items = \diCollection::create(static::item_type);
