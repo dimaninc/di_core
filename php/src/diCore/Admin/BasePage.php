@@ -339,8 +339,7 @@ abstract class BasePage
 	{
 		$opt = $this->getPageOptions();
 
-		if (empty($keys))
-		{
+		if (empty($keys)) {
 			return $opt;
 		}
 
@@ -376,12 +375,9 @@ abstract class BasePage
 
 	public function getData($field = null)
 	{
-		if ($this->Submit)
-		{
+		if ($this->Submit) {
 			return $this->getSubmit()->getData($field);
-		}
-		elseif ($this->Form)
-		{
+		} elseif ($this->Form) {
 			return $this->getForm()->getData($field);
 		}
 
@@ -398,8 +394,7 @@ abstract class BasePage
 			(!$this->PagesNavy && $this->isPagesNavyNeeded()) ||
 			// && $this->hasFilters()
 			($this->PagesNavy && !$this->PagesNavy->getWhere() && $this->getFilters()->get_where())
-		   )
-		{
+        ) {
 			$this->PagesNavy = new \diPagesNavy(
 				$this->getTable(),
 				$this->getCountPerPage(),
@@ -439,8 +434,7 @@ abstract class BasePage
 	{
 		$this->initPagesNavy();
 
-		if (!$this->PagesNavy && $strict)
-	    {
+		if (!$this->PagesNavy && $strict) {
 	    	throw new \Exception('diPagesNavy not initialized');
 	    }
 
@@ -461,8 +455,7 @@ abstract class BasePage
 	 */
 	public function getList()
 	{
-	    if (!$this->hasList())
-	    {
+	    if (!$this->hasList()) {
 	    	throw new \Exception('diAdminList not initialized');
 	    }
 
@@ -483,8 +476,7 @@ abstract class BasePage
 	 */
 	public function getGrid()
 	{
-		if (!$this->hasGrid())
-		{
+		if (!$this->hasGrid()) {
 			throw new \Exception('Admin Grid not initialized');
 		}
 
@@ -505,8 +497,7 @@ abstract class BasePage
 	 */
 	public function getForm()
 	{
-	    if (!$this->Form)
-	    {
+	    if (!$this->Form) {
 	    	throw new \Exception('diAdminForm not initialized');
 		}
 
@@ -540,8 +531,7 @@ abstract class BasePage
 	{
 		$this->initFilters();
 
-		if (!$this->hasFilters())
-		{
+		if (!$this->hasFilters()) {
 			throw new \Exception('Filters not initialized');
 		}
 
@@ -562,8 +552,7 @@ abstract class BasePage
 	 */
 	public function getSubmit()
 	{
-	    if (!$this->Submit)
-	    {
+	    if (!$this->Submit) {
 	    	throw new \Exception('Submit not initialized');
 		}
 

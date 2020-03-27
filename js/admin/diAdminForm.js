@@ -1,12 +1,3 @@
-/*
-
-    // dimaninc admin form class
-
-    * 2011/03/17
-        * password type fields support
-
-*/
-
 var diAdminForm = function(table, id, auto_save_timeout) {
 	var extensions = {
 	    pic: ['jpeg', 'jpg', 'png', 'gif', 'svg']

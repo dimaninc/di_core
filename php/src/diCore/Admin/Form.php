@@ -1913,14 +1913,9 @@ EOF;
 
 	public function setTextareaInput($field)
 	{
-		if ($this->static_mode || $this->isFlag($field, "static"))
-		{
-			$this->inputs[$field] = "<div class=\"static-text\">" . nl2br($this->getData($field)) . "</div>";
-		}
-		else
-		{
-			$this->inputs[$field] = "<div class='textarea'>" . $this->getTextareaInput($field) . "</div>";
-		}
+        $this->inputs[$field] = $this->isStatic($field)
+            ? "<div class=\"static-text\">" . nl2br($this->getData($field)) . "</div>"
+			: "<div class='textarea'>" . $this->getTextareaInput($field) . "</div>";
 
 		$this->force_inputs_fields[$field] = true;
 
@@ -2005,12 +2000,10 @@ EOF;
 		$imgTag = '';
 		$previewInfoBlock = '';
 
-		if (is_file($f))
-		{
+		if (is_file($f)) {
 			$httpName = \diPaths::http($this->getModel(), false, $field) . '/' . StringHelper::unslash($fullName, false);
 
-            if (!StringHelper::contains($httpName, '://') && \diLib::getSubFolder())
-            {
+            if (!StringHelper::contains($httpName, '://') && \diLib::getSubFolder()) {
                 $httpName = '/' . $httpName;
             }
 
@@ -2018,30 +2011,23 @@ EOF;
 			$ff_s = filesize($f);
 			$previewWithText = false;
 
-			// swiffy
-			if (\diSwiffy::is($f))
-			{
+			if (\diSwiffy::is($f)) {
+                // swiffy
 				list($ff_w, $ff_h) = \diSwiffy::getDimensions($f);
 
 				$imgTag = \diSwiffy::getHtml($httpName, $ff_w, $ff_h);
-			}
-			// video
-			elseif (in_array($ext, ['MP4', 'M4V', 'OGV', 'WEBM', 'AVI']))
-			{
+			} elseif (in_array($ext, ['MP4', 'M4V', 'OGV', 'WEBM', 'AVI'])) {
+                // video
 				//$mime_type = self::get_mime_type_by_ext($ext);
 				// type=\"$mime_type\"
 				$imgTag = "<div><video preload=\"none\" controls width=400 height=225><source src=\"$httpName\" /></video></div>";
-			}
-			// audio
-			elseif (in_array($ext, ["MP3", "OGG"]))
-			{
+			} elseif (in_array($ext, ["MP3", "OGG"])) {
+                // audio
 				$mimeType = self::get_mime_type_by_ext($ext);
 
 				$imgTag = "<div><audio preload=\"none\" controls=\"controls\" type=\"$mimeType\"><source src=\"$httpName\" type=\"$mimeType\" /></audio></div>";
-			}
-			// font
-			elseif (in_array($ext, ["TTF", "EOT", "WOFF", "OTF"]))
-			{
+			} elseif (in_array($ext, ["TTF", "EOT", "WOFF", "OTF"])) {
+                // font
 				$uid = get_unique_id(10);
 				$className = "font-preview-" . $uid;
 				$fontFamily = "font-" . $uid;
@@ -2065,20 +2051,14 @@ EOF;
 					"<style type='text/css'>{$fontDefinition}\n.{$className} {font-family: {$fontFamily};}</style>";
 
 				$previewWithText = true;
-			}
-			// picture
-			else
-			{
+			} else {
+                // picture
 				list($ff_w, $ff_h, $ff_t) = getimagesize($f);
 
-				if (\diImage::isFlashType($ff_t))
-				{
+				if (\diImage::isFlashType($ff_t)) {
 					$imgTag = "<script type=\"text/javascript\">run_movie(\"$httpName\", \"$ff_w\", \"$ff_h\", \"opaque\");</script>";
-				}
-				elseif (\diImage::isImageType($ff_t) || $ext == 'SVG')
-				{
-					if ($options['showPreviewWithLink'])
-					{
+				} elseif (\diImage::isImageType($ff_t) || $ext == 'SVG') {
+					if ($options['showPreviewWithLink']) {
 						$subFolder = Submit::getFolderByImageType($options['showPreviewWithLink']);
 						$previewHttpName = StringHelper::slash(dirname($httpName)) . $subFolder . basename($httpName);
 						$previewFullName = StringHelper::slash(dirname($f)) . $subFolder . basename($f);
@@ -2087,16 +2067,14 @@ EOF;
 						$sizeTn = filesize($previewFullName);
 
 						$previewInfoBlock = "<div class='info'>Preview: " . join(", ", array_filter([
-								$ext,
-								$wTn && $hTn ? $wTn . "x" . $hTn : null,
-								size_in_bytes($sizeTn),
-								//diDateTime::format("d.m.Y H:i", filemtime($previewFullName))
-							])) . '</div>';
+                            $ext,
+                            $wTn && $hTn ? $wTn . "x" . $hTn : null,
+                            size_in_bytes($sizeTn),
+                            //diDateTime::format("d.m.Y H:i", filemtime($previewFullName))
+                        ])) . '</div>';
 
 						$imgTag = "<a href='$httpName' target='_blank'><img src=\"$previewHttpName\" width='$wTn' height='$hTn' alt=\"$field\"></a>";
-					}
-					else
-					{
+					} else {
 						$imgTag = "<img src=\"$httpName\" alt=\"$field\">"; // width=\"$ff_w\" height=\"$ff_h\"
 					}
 				}
@@ -2109,20 +2087,16 @@ EOF;
 				\diDateTime::simpleFormat(filemtime($f))
 			]));
 
-			if ($imgTag)
-			{
+			if ($imgTag) {
 				$additionalClassName = $previewWithText ? 'text' : 'embed';
 
-				if ($this->getFieldOption($field, 'noZoomFeature'))
-				{
+				if ($this->getFieldOption($field, 'noZoomFeature')) {
 					$additionalClassName .= ' no-zoom-feature img-full-size';
 				}
 
 				$imgTag = "<div class=\"container {$additionalClassName}\">$imgTag</div>";
 			}
-		}
-		else
-		{
+		} else {
 			$info = "No file ($f)";
 
 			$httpName = '#no-file';
@@ -2158,23 +2132,23 @@ EOF;
 	}
 
 	/**
-	 * @param string|array $field
+	 * @param string|array $fields
 	 * @param bool|string $path
 	 * @param bool $hideIfNoFile
 	 *
 	 * @return Form
 	 */
-	public function setPicInput($field, $path = false, $hideIfNoFile = false)
+	public function setPicInput($fields, $path = false, $hideIfNoFile = false)
 	{
-		if ($path === false)
-		{
+		if ($path === false) {
 			$path = StringHelper::slash($this->getModel()->getPicsFolder() ?: get_pics_folder($this->table), false);
 		}
 
-		$fields = is_array($field) ? $field : [$field];
+		if (!is_array($fields)) {
+            $fields = [$fields];
+        }
 
-		foreach ($fields as $field)
-		{
+		foreach ($fields as $field) {
 			$v = $this->getData($field) ?: '';
 
 			$this->uploaded_images[$field] = $v
@@ -2189,8 +2163,7 @@ EOF;
 
 			$name = $field;
 
-			if ($this->hasInputAttribute($field, 'multiple'))
-			{
+			if ($this->hasInputAttribute($field, 'multiple')) {
 				$name .= '[]';
 			}
 
@@ -2212,8 +2185,7 @@ EOF;
 	{
 		$ext = strtolower($ext);
 
-		switch ($ext)
-		{
+		switch ($ext) {
 			case "mp4":
 			case "webm":
 			default:
@@ -2256,25 +2228,30 @@ EOF;
 	 *
 	 * @return Form
 	 */
-	public function setFileInput($field, $path = false, $hideIfNoFile = false, $showDelLink = true)
+	public function setFileInput($fields, $path = false, $hideIfNoFile = false, $showDelLink = true)
 	{
-		$pics_folder = get_pics_folder($this->table);
+        if ($path === false) {
+            $path = StringHelper::slash($this->getModel()->getPicsFolder() ?: get_pics_folder($this->table), false);
+        }
+		/*
+        $pics_folder = get_pics_folder($this->table);
 		//$files_folder = get_files_folder($this->table);
 
-		if ($path === false && !empty($files_folder))
-		{
+		if ($path === false && !empty($files_folder)) {
 			$path = StringHelper::slash($files_folder, false);
-		}
-		elseif ($path === false && !empty($pics_folder))
-		{
+		} elseif ($path === false && !empty($pics_folder)) {
 			$path = StringHelper::slash($pics_folder, false);
 		}
+		*/
 
-		$fields = is_array($field) ? $field : [$field];
 
-		foreach ($fields as $field)
-		{
+		if (!is_array($fields)) {
+		    $fields = [$fields];
+		}
+
+		foreach ($fields as $field) {
 			$v = $this->getData($field) ?: '';
+            $chunk = $this->getFieldOption($field, 'chunk');
 
 			$this->uploaded_files[$field] = $v
 				? $this->getPreviewHtmlForFile($field, $path . $v, [
@@ -2285,16 +2262,31 @@ EOF;
 
 			$name = $field;
 
-			if ($this->hasInputAttribute($field, 'multiple'))
-			{
+			if ($this->hasInputAttribute($field, 'multiple')) {
 				$name .= '[]';
 			}
+
+            $attrs = $this->getInputAttributes($field, [
+                'type' => 'file',
+                'name' => $name,
+                'size' => 70,
+            ]);
+			$suffix = '';
+
+            if ($chunk) {
+			    $attrs['data-chunk'] = $chunk;
+			    // to store chunk uploaded filename in tmp folder
+			    $suffix = '<input type="hidden" name="__uploaded[' . $field . ']" value="">';
+			    // todo: make own subdir $table/$field/ in tmp folder and clean up it before every upload
+                // https://stackoverflow.com/questions/55553496/ajax-php-upload-a-large-file-in-segments-in-pure-javascript
+                // https://code-boxx.com/upload-large-files-php/
+            }
 
 			$this->inputs[$field] = $this->isFlag($field, 'static')
 				? '<input type="hidden" name="' . $field . '" value="' . $v . '">'
 				: '<div class="file-input-wrapper" data-caption="' . $this->L('choose_file') .
-                '"><input type="file" name="' . $name . '" value="" size="70"' .
-                $this->getInputAttributesString($field) . '></div>';
+                '"><input ' . ArrayHelper::toAttributesString($attrs, true, ArrayHelper::ESCAPE_HTML) . '>' .
+                $suffix . '</div>';
 
 			$this->force_inputs_fields[$field] = true;
 		}
@@ -2310,18 +2302,17 @@ EOF;
 		$orig_r = false;
 
 		$ar = array();
-		while ($r = $db->fetch($rs))
-		{
+		while ($r = $db->fetch($rs)) {
 			$class = $r->id == $this->getData($field) ? " class=\"cover_pic_selected\"" : "";
 
-			if ($class)
-				$orig_r = $r;
+			if ($class) {
+                $orig_r = $r;
+            }
 
 			$ar[] = " <td><a href=\"javascript:set_cover_pic('$field', $r->id);\" id=\"a_{$field}_$r->id\"$class>".$this->get_pic_html_tag(3, $path.$r->pic, $r->pic_tn_w, $r->pic_tn_h)."</a></td>";
 		}
 
-		if (isset($this->rec->pic) && !empty($path2))
-		{
+		if (isset($this->rec->pic) && !empty($path2)) {
 			$class = !$this->getData($field) ? " class=\"cover_pic_selected\"" : "";
 			$img0 = $this->rec->pic
 				? $this->get_pic_html_tag(3, $path2.$this->rec->pic, $this->rec->pic_w, $this->rec->pic_h)
@@ -2331,14 +2322,14 @@ EOF;
 		}
 
 		$html = "<input type=\"hidden\" id=\"$field\" name=\"$field\" value=\"{$this->getData($field)}\" />\n";
-		if ($orig_r)
-			$html .= "<div id=\"current_img_{$field}\" style=\"margin: 5px 0;\">".$this->get_pic_html_tag(3, $path.$orig_r->pic, $orig_r->pic_tn_w, $orig_r->pic_tn_h)."</div>\n";
+		if ($orig_r) {
+            $html .= "<div id=\"current_img_{$field}\" style=\"margin: 5px 0;\">" . $this->get_pic_html_tag(3, $path . $orig_r->pic, $orig_r->pic_tn_w, $orig_r->pic_tn_h) . "</div>\n";
+        }
 		$html .= "<div id=\"current_a_{$field}\" style=\"margin: 5px 0;\">[ <a href=\"javascript:show_cover_pic_table('$field');\">Выбрать".($orig_r ? " другую" : "")."</a> ]</div>\n";
 		$html .= "<table class=\"cover_pic_select\" id=\"table_{$field}\">\n";
 
 		$rows_count = ceil(count($ar) / $cols);
-		for ($i = 0; $i < $rows_count; $i++)
-		{
+		for ($i = 0; $i < $rows_count; $i++) {
 			$html .= "<tr>".join("\n", array_slice($ar, $i * $cols, $cols))."</tr>\n";
 		}
 

@@ -1021,7 +1021,7 @@ class Submit
 	}
 
 	// $callback is a function($_FILES[$f], $field, $pics_folder, $fn, &$this)
-	public function store_pics($pic_fields, $callbackOrFolder = null)
+	public function store_pics($picFields, $callbackOrFolder = null)
 	{
 		$defaultCallback = [static::class, 'storeFileCallback'];
 
@@ -1029,48 +1029,42 @@ class Submit
             ? $callbackOrFolder
             : $defaultCallback;
 		$folder = is_callable($callbackOrFolder) || !$callbackOrFolder
-            ? get_pics_folder($this->table)
+            ? ($this->getModel()->getPicsFolder()
+                ?: get_pics_folder($this->getTable() ?: $this->getModel()->getTable(), Config::getUserAssetsFolder()))
             : $callbackOrFolder;
 
-		$pic_fields_ar = is_array($pic_fields) ? $pic_fields : explode(',', $pic_fields);
+		if (!is_array($picFields)) {
+		    $picFields = explode(',', $picFields);
+        }
 
 		FileSystemHelper::createTree(
-		    \diPaths::fileSystem($this->getModel(), true, $pic_fields_ar[0]),
+		    \diPaths::fileSystem($this->getModel(), true, $picFields[0]),
 			$folder . get_tn_folder(),
 			self::DIR_CHMOD);
 
-		foreach ($pic_fields_ar as $field)
-		{
-			if (!$field)
-			{
+		foreach ($picFields as $field) {
+			if (!$field) {
 				continue;
 			}
 
 			//$this->setData($field, $this->getCurRec($field));
 
-			if (isset($_FILES[$field]) && !$_FILES[$field]['error'])
-			{
+			if (isset($_FILES[$field]) && !$_FILES[$field]['error']) {
 				$old_file_ext = $this->getData($field) ? strtolower(get_file_ext($this->getData($field))) : '';
 				$new_file_ext = strtolower(get_file_ext($_FILES[$field]['name']));
 
-				if (!$this->getData($field))
-				{
+				if (!$this->getData($field)) {
 					$this->generateFilename($field, $folder, $_FILES[$field]['name']);
-				}
-				elseif ($old_file_ext != $new_file_ext)
-				{
+				} elseif ($old_file_ext != $new_file_ext) {
 					$this->setData($field, StringHelper::replaceFileExtension($this->getData($field), $new_file_ext));
 				}
 
 				// new arguments order for static method callback
-				if (is_array($callback))
-				{
+				if (is_array($callback)) {
 					$callback($this, $field, [
 						'folder' => $folder,
 					], $_FILES[$field]);
-				}
-				else
-				{
+				} else {
 					$callback($_FILES[$field], $field, $folder, $this->getData($field), $this);
 				}
 			}
