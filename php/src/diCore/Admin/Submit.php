@@ -919,10 +919,32 @@ class Submit
         return $filesOptions;
     }
 
+    protected function tryToEmulateChunkFile($field)
+    {
+        $tmpFilename = \diRequest::post('__uploaded__' . $field);
+        $origFilename = \diRequest::post('__orig_filename__' . $field);
+        $tmpPath = get_tmp_folder() . $this->getTable() . '/' . $field . '/';
+
+        if ($tmpFilename && $origFilename) {
+            $_FILES[$field] = [
+                'name' => $origFilename,
+                'tmp_name' => \diPaths::fileSystem() . $tmpPath . $tmpFilename,
+                'error' => 0,
+                'size' => filesize(\diPaths::fileSystem() . $tmpPath . $tmpFilename),
+            ];
+        }
+
+        return $this;
+    }
+
 	public function storeImage($field, $filesOptions = [])
 	{
 	    if (!is_array($field)) {
             $field = explode(',', $field);
+        }
+
+        foreach ($field as $f) {
+	        $this->tryToEmulateChunkFile($f);
         }
 
 	    $hasFilesOptions = $filesOptions || $this->getModel()->getPicStoreSettings(current($field));

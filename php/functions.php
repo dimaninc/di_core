@@ -216,7 +216,7 @@ function get_tmp_folder()
 {
 	global $tmp_folder;
 
-	return $tmp_folder;
+	return $tmp_folder ?? "uploads/tmp/";
 }
 
 function getSettingsFolder()

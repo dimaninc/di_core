@@ -126,6 +126,17 @@
                 left 50%
                 top 50%
                 transform translate(-50%, -50%)
+            &:after
+                content attr(data-progress)
+                position absolute
+                //white-space nowrap
+                padding 5px
+                color white
+                background orange
+                cursor pointer
+                right 5px
+                top 50%
+                transform translateY(-50%)
             &:hover
                 background-color $classicColorLinkHover
                 body[data-skin="entrine"] &

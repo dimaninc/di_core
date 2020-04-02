@@ -2276,10 +2276,8 @@ EOF;
             if ($chunk) {
 			    $attrs['data-chunk'] = $chunk;
 			    // to store chunk uploaded filename in tmp folder
-			    $suffix = '<input type="hidden" name="__uploaded[' . $field . ']" value="">';
-			    // todo: make own subdir $table/$field/ in tmp folder and clean up it before every upload
-                // https://stackoverflow.com/questions/55553496/ajax-php-upload-a-large-file-in-segments-in-pure-javascript
-                // https://code-boxx.com/upload-large-files-php/
+                $suffix = '<input type="hidden" name="__orig_filename__' . $field . '" value="">' .
+			        '<input type="hidden" name="__uploaded__' . $field . '" value="">';
             }
 
 			$this->inputs[$field] = $this->isFlag($field, 'static')

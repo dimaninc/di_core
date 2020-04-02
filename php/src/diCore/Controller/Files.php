@@ -2,6 +2,7 @@
 
 namespace diCore\Controller;
 
+use diCore\Helper\FileSystemHelper;
 use diCore\Helper\ImageHelper;
 use diCore\Helper\StringHelper;
 use diCore\Admin\Submit;
@@ -217,4 +218,45 @@ class Files extends \diBaseAdminController
 
 		ImageHelper::watermark(static::getWatermarkFilename($table, $field, $type), $fn, null, $xy['x'], $xy['y']);
 	}
+
+	protected function scavengeChunkUploads($folder, $days = 1)
+    {
+        $files = FileSystemHelper::folderContents($folder, true, true)['f'];
+        $timestamp = time() - 60 * 60 * 24 * $days;
+
+        foreach ($files as $file) {
+            if (filemtime($file) <= $timestamp) {
+                unlink($file);
+            }
+        }
+
+        return $this;
+    }
+
+	public function _postChunkUploadAction()
+    {
+        $table = \diRequest::get('table');
+        $field = \diRequest::get('field');
+        $tmpFilename = \diRequest::get('tmp_filename');
+        $tmpPath = get_tmp_folder() . $table . '/' . $field . '/';
+
+        if (!$tmpFilename) {
+            throw new \Exception('No tmp filename defined');
+        }
+
+        if (!$table) {
+            throw new \Exception('No table defined');
+        }
+
+        if (!$field) {
+            throw new \Exception('No field name defined');
+        }
+
+        FileSystemHelper::createTree(\diPaths::fileSystem(), $tmpPath, 0777);
+
+        file_put_contents(\diPaths::fileSystem() . $tmpPath . $tmpFilename,
+            file_get_contents("php://input"), FILE_APPEND);
+
+        $this->scavengeChunkUploads(\diPaths::fileSystem() . get_tmp_folder() . $table);
+    }
 }
