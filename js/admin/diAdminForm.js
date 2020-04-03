@@ -179,7 +179,7 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 
                     sendFileChunk(file, tmpFilename, chunkSize, chunkIdx, chunksCount, resetInput);
 
-                    $wrapper.attr('data-progress', '...');
+                    $wrapper.attr('data-progress', '+');
                 }
 
                 $wrapper
