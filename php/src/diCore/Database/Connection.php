@@ -58,8 +58,7 @@ abstract class Connection
 	 */
 	public static function get($name = self::DEFAULT_NAME)
 	{
-		if (!self::exists($name))
-		{
+		if (!self::exists($name)) {
 			throw new \diRuntimeException("Connection '$name' not found");
 		}
 
@@ -71,19 +70,28 @@ abstract class Connection
 		return isset(self::$connections[$name]);
 	}
 
+	public static function localMysqlConnData($database)
+    {
+        $password = gethostname() == 'Mac-mini.local'
+            ? ''
+            : '11111111';
+
+        return [
+            'host' => 'localhost',
+            'login' => 'root',
+            'password' => $password,
+            'database' => $database,
+        ];
+    }
+
 	private static function add($name, Connection $conn)
 	{
-		if (is_array($name))
-		{
-			foreach ($name as $n)
-			{
+		if (is_array($name)) {
+			foreach ($name as $n) {
 				self::add($n, $conn);
 			}
-		}
-		else
-		{
-			if (self::exists($name))
-			{
+		} else {
+			if (self::exists($name)) {
 				throw new \diRuntimeException("Connection '$name' already exists");
 			}
 
