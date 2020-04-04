@@ -47,7 +47,16 @@ class diSession
 
 	public static function shortIntId()
 	{
-		return diStringHelper::hexToDec(self::shortId());
+	    $stringId = substr(self::id(), 0, 8);
+
+        $arr = str_split($stringId, 2);
+        $dec = [];
+
+        foreach ($arr as $grp) {
+            $dec[] = str_pad(base_convert($grp, 34, 10), 4, '0', STR_PAD_LEFT);
+        }
+
+        return implode('', $dec);
 	}
 
 	public static function set($name, $value)

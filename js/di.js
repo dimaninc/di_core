@@ -175,6 +175,12 @@ var di = {
 		});
 	},
 
+	getUrlGlue: function (href) {
+		return (href || '').indexOf('?') > -1
+			? '&'
+			: '?';
+	},
+
 	round: function (number, precision) {
 		if (!precision) {
 			return Math.round(number);

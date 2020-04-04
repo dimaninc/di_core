@@ -764,7 +764,7 @@ abstract class diDB
 	public static function fields_to_string_for_insert($ar)
 	{
 		return join(",", array_map(function($k) {
-			return "`" . ($k && $k{0} == "*" ? substr($k, 1) : $k) . "`";
+			return "`" . ($k && $k[0] == "*" ? substr($k, 1) : $k) . "`";
 		}, array_keys($ar)));
 	}
 
@@ -773,7 +773,7 @@ abstract class diDB
         $outAr = [];
 
         foreach ($ar as $f => $v) {
-			if ($f{0} == "*") {
+			if ($f[0] == "*") {
 				$outAr[] = $v;
 			} elseif ($v === null) {
 			    $outAr[] = 'NULL';
@@ -798,7 +798,7 @@ abstract class diDB
 				continue;
 			}
 
-			$q_ar[] = $f{0} == "*"
+			$q_ar[] = $f[0] == "*"
 				? "`" . substr($f, 1) . "`=$v"
 				: "`$f`='$v'";
 		}

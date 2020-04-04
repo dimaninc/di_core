@@ -388,7 +388,7 @@ class StringHelper
 
 	public static function replaceFileExtension($fn, $newExtension = '')
 	{
-		if ($newExtension && $newExtension{0} != '.') {
+		if ($newExtension && $newExtension[0] != '.') {
 			$newExtension = '.' . $newExtension;
 		}
 

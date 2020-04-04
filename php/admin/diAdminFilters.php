@@ -550,8 +550,8 @@ EOF;
 			{
 				foreach (self::$dateRangeAr as $_f => $_r)
 				{
-					$_ff = "d".$_f{0};
-					$_idx = $_f{1};
+					$_ff = "d".$_f[0];
+					$_idx = $_f[1];
 
 					$ar[] = "{$a["field"]}][{$_idx}][{$_ff}";
 				}
@@ -705,7 +705,7 @@ EOF;
 					case "int":
 					case "float":
 					case "double":
-						if ($value && $value{0} == "!")
+						if ($value && $value[0] == "!")
 						{
 							$a["not"] = $this->ar[$idx]["not"] = true;
 							$value = substr($value, 1);
@@ -756,12 +756,12 @@ EOF;
 
 						foreach (self::$dateRangeAr as $_f => $_r)
 						{
-							$_ff = "d".$_f{0};
-							$_idx = $_f{1};
+							$_ff = "d".$_f[0];
+							$_idx = $_f[1];
 
 							$value[$_f] = !$this->reset && isset($_COOKIE["admin_filter"][$this->table]["{$a["field"]}"][$_idx][$_ff])
 								? (int)$_COOKIE["admin_filter"][$this->table]["{$a["field"]}"][$_idx][$_ff]
-								: ($_f{1} == "1" ? $dt1[$_r] : $dt2[$_r]);
+								: ($_f[1] == "1" ? $dt1[$_r] : $dt2[$_r]);
 						}
 
 						$value["timestamp1"] = $value["d1"] && $value["m1"] && $value["y1"] ? mktime(0,0,0,$value["m1"],$value["d1"],$value["y1"]) : 0;

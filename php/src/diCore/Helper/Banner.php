@@ -191,7 +191,7 @@ class Banner
 
 				if ($uri)
 				{
-					if ($uri{0} != "/" && $uri{0} != "*")
+					if ($uri[0] != "/" && $uri[0] != "*")
 					{
 						$uri = "/$uri";
 					}

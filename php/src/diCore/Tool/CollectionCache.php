@@ -24,8 +24,7 @@ class CollectionCache
 		$values = [];
 
 		/** @var \diModel $model */
-		foreach ($col as $model)
-		{
+		foreach ($col as $model) {
 			$values[] = $callback($model);
 		}
 
@@ -36,14 +35,12 @@ class CollectionCache
 
 	public static function add($collections)
 	{
-		if (!is_array($collections))
-		{
+		if (!is_array($collections)) {
 			$collections = [$collections];
 		}
 
 		/** @var \diCollection $col */
-		foreach ($collections as $col)
-		{
+		foreach ($collections as $col) {
 			$modelType = \diTypes::getId($col->getModelType());
 
 			self::$data[$modelType] = $col;
@@ -60,23 +57,17 @@ class CollectionCache
 
 	public static function remove($modelTypes = null)
 	{
-		if ($modelTypes === null)
-		{
+		if ($modelTypes === null) {
 			self::$data = [];
-		}
-		else
-		{
-			if (!is_array($modelTypes))
-			{
+		} else {
+			if (!is_array($modelTypes)) {
 				$modelTypes = [$modelTypes];
 			}
 
-			foreach ($modelTypes as $modelType)
-			{
+			foreach ($modelTypes as $modelType) {
 				$modelType = \diTypes::getId($modelType);
 
-				if (isset(self::$data[$modelType]))
-				{
+				if (isset(self::$data[$modelType])) {
 					unset(self::$data[$modelType]);
 				}
 			}
@@ -121,6 +112,8 @@ class CollectionCache
 	{
 		$col = self::get($modelType);
 
-		return $col[$modelId] ?: \diModel::create($modelType, $force ? $modelId : null, 'id');
+		return $col && $col[$modelId]
+            ? $col[$modelId]
+            : \diModel::create($modelType, $force ? $modelId : null, 'id');
 	}
 }

@@ -1206,17 +1206,22 @@ abstract class CMS
 		]);
 	}
 
+	protected function getContentsForFinish()
+    {
+        if (static::templateEngineIsFastTemplate()) {
+            $this->getTpl()
+                ->assign($this->metaFields, 'META_');
+        }
+
+        return $this
+            ->assignCanonicalAddress()
+            ->finalParse()
+            ->getWholeFinalPage();
+    }
+
 	public function finish()
 	{
-		if (static::templateEngineIsFastTemplate()) {
-			$this->getTpl()
-				->assign($this->metaFields, 'META_');
-		}
-
-		echo $this
-			->assignCanonicalAddress()
-			->finalParse()
-			->getWholeFinalPage();
+	    echo $this->getContentsForFinish();
 
 		return $this;
 	}

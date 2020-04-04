@@ -727,7 +727,7 @@ function di_ucwords($s)
 
   for ($i = 0; $i < mb_strlen($s); $i++)
   {
-    $ch = $s{$i};
+    $ch = $s[$i];
 
     if ((ord($ch) > 64 && ord($ch) < 123) || (ord($ch) > 48 && ord($ch) < 58) || (ord($ch) >= 192 && ord($ch) <= 255) || ord($ch) == 184 || ord($ch) == 168)
     {

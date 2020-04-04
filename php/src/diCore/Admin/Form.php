@@ -539,7 +539,7 @@ class Form
 	{
 		return $field === null
 			? $this->data
-			: isset($this->data[$field]) ? $this->data[$field] : null;
+			: (isset($this->data[$field]) ? $this->data[$field] : null);
 	}
 
 	public function getDb()
@@ -3122,15 +3122,12 @@ EOF;
 
 	function set_select_file_input($field, $path, $ext_ar = array(), $kill_ext = true)
 	{
-		if (!is_array($ext_ar))
-		{
+		if (!is_array($ext_ar)) {
 			$ext_ar = [$ext_ar];
 		}
 
-		foreach ($ext_ar as $k => $v)
-		{
-			if ($ext_ar[$k] && $ext_ar[$k]{0} != ".")
-			{
+		foreach ($ext_ar as $k => $v) {
+			if ($ext_ar[$k] && $ext_ar[$k][0] != ".") {
 				$ext_ar[$k] = "." . $ext_ar[$k];
 			}
 		}
