@@ -1507,10 +1507,12 @@ class Submit
 		chmod($fn, self::FILE_CHMOD);
 
 		$info = getimagesize($fn);
-		$obj
-			->setData($field . '_w', $info[0])
-			->setData($field . '_h', $info[1])
-			->setData($field . '_t', $info[2]);
+		if ($info) {
+            $obj
+                ->setData($field . '_w', $info[0])
+                ->setData($field . '_h', $info[1])
+                ->setData($field . '_t', $info[2]);
+        }
 	}
 
 	public static function storeDynamicPicCallback($F, $tableOrSubmit, $options, &$ar, $folder)
