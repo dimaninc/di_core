@@ -984,7 +984,7 @@ class Submit
 				}
 
                 foreach ($fieldFileOptions as &$opts) {
-                    FileSystemHelper::createTree(\diPaths::fileSystem($this->getModel(), true, $field),
+                    FileSystemHelper::createTree(\diPaths::fileSystem($this->getModel(), true, $f),
                         $opts['folder'] . $opts['subfolder'], self::DIR_CHMOD);
 
                     $widthParam = Configuration::getDimensionParam('width', $this->getTable(), $f, $opts['type']);
