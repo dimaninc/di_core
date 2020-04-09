@@ -9,6 +9,7 @@
 namespace diCore\Admin\Page;
 
 use diCore\Admin\Submit;
+use diCore\Entity\Video\Vendor;
 use diCore\Helper\FileSystemHelper;
 use diCore\Entity\Video\Model;
 
@@ -157,8 +158,7 @@ class Videos extends \diCore\Admin\BasePage
 	 */
 	public function getImgUrlPrefix(\diModel $model)
 	{
-		if ($model->getVendor() != \diVideoVendors::Own)
-		{
+		if ($model->getVendor() != Vendor::OWN) {
 			return '';
 		}
 
@@ -179,37 +179,24 @@ class Videos extends \diCore\Admin\BasePage
 
 		$filesFolder = '/' . $this->getFilesFolder();
 
-		if (!$this->getId())
-		{
-			$this->getForm()
-				->setHiddenInput([
-					'token',
-					'date',
-					'comments_last_date',
-					'comments_count',
-				]);
-		}
-		else
-		{
+		if ($this->getId()) {
 			/** @var Model $m */
 			$m = $this->getForm()->getModel();
 
-			if ($m->getVendor() != \diVideoVendors::Own)
-			{
+			if ($m->getVendor() != Vendor::OWN) {
 				$this->getForm()
 					->setInput('vendor_pic', sprintf('<img src="%s">',
-						\diVideoVendors::getPoster($m->getVendor(), $m->getVendorVideoUid())));
+						Vendor::getPoster($m->getVendor(), $m->getVendorVideoUid())));
 			}
 		}
 
-		foreach ($this->videoFields as $field)
-		{
+		foreach ($this->videoFields as $field) {
 			$this->getForm()->setFileInput($field, $filesFolder);
 		}
 
 		$this->getForm()
 			->setSelectFromCollectionInput('album_id', \diCollection::create(\diTypes::album)->orderByTitle())
-			->setSelectFromArrayInput('vendor', \diVideoVendors::$titles);
+			->setSelectFromArrayInput('vendor', Vendor::$titles);
 	}
 
 	public function submitForm()
@@ -238,23 +225,19 @@ class Videos extends \diCore\Admin\BasePage
 				], $F);
 			});
 
-		if ($this->getSubmit()->getData('vendor') != \diVideoVendors::Own)
-		{
-			$videoInfo = \diVideoVendors::extractInfoFromEmbed(stripslashes($this->getSubmit()->getData('embed')));
+		if ($this->getSubmit()->getData('vendor') != Vendor::OWN) {
+			$videoInfo = Vendor::extractInfoFromEmbed(stripslashes($this->getSubmit()->getData('embed')));
 
-			if (!$videoInfo['video_uid'])
-			{
-				$videoInfo = \diVideoVendors::extractInfoFromEmbed(stripslashes($this->getSubmit()->getData('vendor_video_uid')));
+			if (!$videoInfo['video_uid']) {
+				$videoInfo = Vendor::extractInfoFromEmbed(stripslashes($this->getSubmit()->getData('vendor_video_uid')));
 			}
 
-			if ($videoInfo['video_uid'])
-			{
+			if ($videoInfo['video_uid']) {
 				$this->getSubmit()
 					->setData('vendor_video_uid', $videoInfo['video_uid']);
 			}
 
-			if ($videoInfo['vendor'])
-			{
+			if ($videoInfo['vendor']) {
 				$this->getSubmit()
 					->setData('vendor', $videoInfo['vendor']);
 			}
@@ -263,9 +246,8 @@ class Videos extends \diCore\Admin\BasePage
 				!$this->getSubmit()->getData('title') &&
 				$this->getSubmit()->getData('vendor') &&
 				$this->getSubmit()->getData('vendor_video_uid')
-			   )
-			{
-				$this->getSubmit()->setData('title', \diVideoVendors::getTitle(
+            ) {
+				$this->getSubmit()->setData('title', Vendor::getTitle(
 					$this->getSubmit()->getData('vendor'),
 					$this->getSubmit()->getData('vendor_video_uid')
 				));
@@ -293,7 +275,7 @@ class Videos extends \diCore\Admin\BasePage
                     'en' => 'Token',
 				]),
 				'default' => '',
-				'flags' => ['static', 'virtual'],
+				'flags' => ['static', 'virtual', 'initially_hidden'],
 			],
 
 			'album_id' => [
@@ -378,7 +360,7 @@ class Videos extends \diCore\Admin\BasePage
                     'en' => 'Preview from video-hosting',
                 ]),
 				'default' => '',
-				'flags' => ['virtual', 'static'],
+				'flags' => ['virtual', 'static', 'initially_hidden'],
 			],
 
 			'video_mp4' => [
@@ -461,7 +443,7 @@ class Videos extends \diCore\Admin\BasePage
                     'en' => 'Created at',
                 ]),
 				'default' => \diDateTime::sqlFormat(),
-				'flags' => ['static'],
+				'flags' => ['static', 'initially_hidden'],
 			],
 
 			'comments_enabled' => [

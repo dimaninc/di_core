@@ -160,12 +160,12 @@ class Model extends \diModel
 
 	public function getVideoVendorPreview()
 	{
-		if ($this->getVendor() == \diVideoVendors::Own)
+		if ($this->getVendor() == Vendor::OWN)
 		{
 			return null;
 		}
 
-		return \diVideoVendors::getPoster($this->getVendor(), $this->getVendorVideoUid());
+		return Vendor::getPoster($this->getVendor(), $this->getVendorVideoUid());
 	}
 
 	/**
@@ -179,8 +179,7 @@ class Model extends \diModel
 			'token' => $this->getToken(),
 		]);
 
-		if ($this->getVendor() != \diVideoVendors::Own)
-		{
+		if ($this->getVendor() != Vendor::OWN) {
 			$ar = extend($ar, [
 				'pic_tn' => $this->getVideoVendorPreview(),
 				'pic_tn_safe' => $this->hasPic()
@@ -196,12 +195,12 @@ class Model extends \diModel
 
 	public function getVendorLink()
 	{
-		return \diVideoVendors::getLink($this->getVendor(), $this->getVendorVideoUid());
+		return Vendor::getLink($this->getVendor(), $this->getVendorVideoUid());
 	}
 
 	public function getVendorEmbedLink()
 	{
-		return \diVideoVendors::getEmbedLink($this->getVendor(), $this->getVendorVideoUid());
+		return Vendor::getEmbedLink($this->getVendor(), $this->getVendorVideoUid());
 	}
 
 	/**
