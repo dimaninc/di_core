@@ -49,7 +49,7 @@ class Vendor extends SimpleContainer
     ];
 
     protected static $patterns = [
-        self::YOU_TUBE => '/^.*((youtu\.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#\&\?\"\']*).*/',
+        self::YOU_TUBE => '/^.*((youtu\.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??(v=)?([^#\&\?\"\']+)/',
         self::VIMEO => '/(https?:\/\/)?(www\.)?(player\.)?vimeo\.com\/([a-z]*\/)*([0-9]{6,11})[?]?.*/',
         self::RU_TUBE => '#(https?://)rutube\.ru/video/([^/]+)/#',
         self::FACEBOOK => '#facebook\.com/watch/\?v=(\d+)#',
@@ -89,7 +89,7 @@ class Vendor extends SimpleContainer
 
             switch ($vendor) {
                 case self::YOU_TUBE:
-                    $idx = 7;
+                    $idx = 8;
                     break;
 
                 case self::VIMEO:
