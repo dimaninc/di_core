@@ -38,20 +38,34 @@
 	.diaf_clear
 		clear right
 	ul.line
+		display flex
+		flex-wrap wrap
+		align-items flex-start
 		margin 0
 		padding 0
 		list-style none
 		> li
-			display inline-flex //inline-block
+			display flex
 			align-items center
 			margin 5px 0
-			+ li
-				margin-left 15px
+			&:not(:last-child)
+				margin-right 15px
+			//+ li
+			//	margin-left 15px
 			> *
 				margin-left 5px
 			input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size])
 			textarea
 				width 300px
+			code
+				display block
+				white-space pre
+				color black
+				padding 5px
+				border 1px solid darkgray
+			&.as-column
+				flex-direction column
+				align-items flex-start
 			&.wider
 				input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size])
 				textarea
