@@ -188,6 +188,10 @@ class ArrayHelper
 			$value = $ar[$idx];
 
 			if ($type != 'NULL' && is_scalar($value)) {
+			    if (in_array(strtolower($type), ['float', 'double'])) {
+			        $value = StringHelper::fixFloatDot($value);
+                }
+
 				settype($value, $type);
 			}
 
