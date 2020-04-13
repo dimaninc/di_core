@@ -227,43 +227,53 @@ class diPagesNavy
 		$this->page = \diRequest::get($this->page_param,
 			$this->reverse || $this->init_on_last_page ? ((int)$this->total_pages ?: 1) : 1);
 
-		$sortby_ar = isset($pagesnavy_sortby_ar[$this->table]) ? $pagesnavy_sortby_ar[$this->table] : $pagesnavy_sortby_ar["*default"];
-		$sortby_defaults_ar = isset($pagesnavy_sortby_defaults_ar[$this->table]) ? $pagesnavy_sortby_defaults_ar[$this->table] : $pagesnavy_sortby_defaults_ar["*default"];
+		/*
+		$sortby_ar = isset($pagesnavy_sortby_ar[$this->table])
+            ? $pagesnavy_sortby_ar[$this->table]
+            : $pagesnavy_sortby_ar["*default"];
+		$sortby_defaults_ar = isset($pagesnavy_sortby_defaults_ar[$this->table])
+            ? $pagesnavy_sortby_defaults_ar[$this->table]
+            : $pagesnavy_sortby_defaults_ar["*default"];
+		*/
 
-		$this->sortby = \diRequest::get($this->sortby_param, $sortby_defaults_ar["sortby"]);
-		$this->dir = strtolower(\diRequest::get($this->dir_param, $sortby_defaults_ar["dir"]));
+		$this->sortby = \diRequest::get($this->sortby_param); //, $sortby_defaults_ar["sortby"]
+		$this->dir = strtolower(\diRequest::get($this->dir_param)); //, $sortby_defaults_ar["dir"]
 
-		if (!in_array($this->dir, ["asc", "desc"]))
-		{
+        /*
+		if (!in_array($this->dir, ["asc", "desc"])) {
 			$this->dir = $sortby_defaults_ar["dir"];
 		}
+        */
 
-		if (isset($pagesnavy_sortby_ar[$this->table]) && !in_array($this->sortby, array_keys($pagesnavy_sortby_ar[$this->table])))
-		{
+		if (
+		    isset($pagesnavy_sortby_ar[$this->table]) &&
+            !in_array($this->sortby, array_keys($pagesnavy_sortby_ar[$this->table]))
+        ) {
 			$this->sortby = current(array_keys($pagesnavy_sortby_ar[$this->table]));
 		}
 
-		if (($this->page < 1 || $this->page > $this->total_pages) && empty($GLOBALS["DIPAGESNAVY_FORCE_NO_404"]))
-		{
-			if ($this->total_records || (!$this->total_records && $this->page != 1))
-			{
+		if (
+		    ($this->page < 1 || $this->page > $this->total_pages) &&
+            empty($GLOBALS["DIPAGESNAVY_FORCE_NO_404"])
+        ) {
+			if ($this->total_records || (!$this->total_records && $this->page != 1)) {
 				$f = $this->wrong_page_error_handler;
 				$f();
 			}
 			$this->page = $this->reverse || $this->init_on_last_page ? $this->total_pages : 1;
 		}
 
-		if (isset($_GET[$this->page_param]) &&
-				(
-				 (!$this->reverse && !$this->init_on_last_page && $this->page == 1) ||
-				 (($this->reverse || $this->init_on_last_page) && $this->page == $this->total_pages)
-				) &&
-				empty($GLOBALS["DIPAGESNAVY_FORCE_NO_404"])
-			 )
-		{
-			$f = $this->wrong_page_error_handler;
-			$f();
-		}
+        if (
+            isset($_GET[$this->page_param]) &&
+            (
+                (!$this->reverse && !$this->init_on_last_page && $this->page == 1) ||
+                (($this->reverse || $this->init_on_last_page) && $this->page == $this->total_pages)
+            ) &&
+            empty($GLOBALS["DIPAGESNAVY_FORCE_NO_404"])
+        ) {
+            $f = $this->wrong_page_error_handler;
+            $f();
+        }
 
 		$this->start = ($this->reverse ? $this->total_pages - $this->page : $this->page - 1) * $this->per_page;
 		//
@@ -296,13 +306,10 @@ class diPagesNavy
 
 		$col = $this->getInitialCollection();
 
-		if ($col->getQuery())
-		{
+		if ($col->getQuery()) {
 			$col
 				->setQuery($col->getQuery() . " AND `$orderByField` $sign '$orderByValue'");
-		}
-		else
-		{
+		} else {
 			$col
 				->filterBy($orderByField, $sign, $orderByValue);
 		}
