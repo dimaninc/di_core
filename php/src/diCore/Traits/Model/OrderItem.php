@@ -62,6 +62,8 @@ trait OrderItem
     {
         if (!$this->item) {
             $this->item = CollectionCache::getModel($this->getTargetType(), $this->getTargetId(), true);
+            $this->item
+                ->setRelated('user_id', $this->getRelated('user_id'));
         }
 
         return $this;
