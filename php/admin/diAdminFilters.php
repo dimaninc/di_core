@@ -322,20 +322,24 @@ class diAdminFilters
 		return "<b>$title:</b> $input";
 	}
 
-	private function getRowHtml($html)
+	private function getRowHtml($html, $field)
 	{
-		return "<div class=\"row\">$html</div>";
+		return "<div class=\"row\" data-field=\"$field\">$html</div>";
 	}
 
 	public function getBlockHtml()
 	{
         if ($this->getInput("sortby")) {
-            $sorterBlock = $this->getRowHtml($this->getFieldHtml($this->L('form.caption'),
-                $this->getInput("sortby") . " " . $this->getInput("dir"))
+            $sorterBlock = $this->getRowHtml(
+                $this->getFieldHtml(
+                    $this->L('form.caption'),
+                    $this->getInput("sortby") . " " . $this->getInput("dir")
+                ),
+                'sortby'
             );
 
             if ($this->getNote("sortby")) {
-                $sorterBlock .= $this->getRowHtml($this->getNote("sortby"));
+                $sorterBlock .= $this->getRowHtml($this->getNote("sortby"), 'sortby-note');
             }
         } else {
             $sorterBlock = "";
@@ -343,13 +347,17 @@ class diAdminFilters
 
 		$filterRowsAr = [];
 
-		foreach ($this->ar as $a)
-		{
-			$filterRowsAr[] = $this->getRowHtml($this->getFieldHtml($a["title"], $this->getInput($a["field"])));
+		foreach ($this->ar as $a) {
+			$filterRowsAr[] = $this->getRowHtml(
+			    $this->getFieldHtml($a["title"], $this->getInput($a["field"])),
+                $a['field']
+            );
 
-			if ($this->getNote($a["field"]))
-			{
-				$filterRowsAr[] = $this->getRowHtml($this->getNote($a["field"]));
+			if ($this->getNote($a["field"])) {
+				$filterRowsAr[] = $this->getRowHtml(
+				    $this->getNote($a["field"]),
+                    $a['field']
+                );
 			}
 		}
 
