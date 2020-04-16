@@ -202,14 +202,14 @@ function get_orig_folder()
 {
 	global $orig_folder;
 
-	return $orig_folder;
+	return $orig_folder ?? 'orig/';
 }
 
 function get_big_folder()
 {
 	global $big_folder;
 
-	return $big_folder;
+	return $big_folder ?? 'big/';
 }
 
 function get_tmp_folder()
@@ -230,7 +230,7 @@ function getFilesFolder()
 {
 	global $files_folder;
 
-	return $files_folder;
+    return isset($files_folder) ? $files_folder : 'files/';
 }
 
 function getDynamicPicsFolder()
