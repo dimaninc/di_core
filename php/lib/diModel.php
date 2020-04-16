@@ -85,7 +85,7 @@ class diModel implements \ArrayAccess
 	protected $localizedFields = [];
 	protected $customLocalizedFields = [];
 
-	protected $dateFields = ['date', 'created_at', 'edited_at', 'updated_at'];
+	protected $dateFields = ['date', 'created_at', 'edited_at', 'updated_at', 'deleted_at'];
 	/* redefine this in child class */
 	protected $customDateFields = [];
 
