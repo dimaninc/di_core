@@ -157,10 +157,13 @@ class diModel implements \ArrayAccess
 	 * @return $this
 	 * @throws \Exception
 	 */
-	public static function create($type, $ar = null, $options = [])
+	public static function create($type = null, $ar = null, $options = [])
 	{
-		if (is_scalar($options))
-		{
+	    if (!$type) {
+	        $type = static::type;
+        }
+
+		if (is_scalar($options)) {
 			$options = [
 				'identityFieldName' => $options,
 			];
@@ -172,16 +175,14 @@ class diModel implements \ArrayAccess
 
 		$className = self::existsFor($type);
 
-		if (!$className)
-		{
+		if (!$className) {
 			throw new \Exception("Model class doesn't exist: " . ($className ?: $type));
 		}
 
 		/** @var diModel $o */
 		$o = new $className();
 
-		if ($options['identityFieldName'])
-		{
+		if ($options['identityFieldName']) {
 			$o->setIdentityFieldName($options['identityFieldName']);
 		}
 
@@ -794,8 +795,7 @@ class diModel implements \ArrayAccess
 			$ar[$k] = $v;
 		}
 
-		foreach ($this->getAllLocalizedFields() as $f)
-		{
+		foreach ($this->getAllLocalizedFields() as $f) {
 			$ar[static::LOCALIZED_PREFIX . $f] = $this->localized($f);
 		}
 
@@ -822,8 +822,7 @@ class diModel implements \ArrayAccess
 
 	public static function getDateStrFormat()
 	{
-		switch (self::normalizeLang())
-		{
+		switch (self::normalizeLang()) {
 			default:
 			case 'ru':
 				return 'd %месяца% Y';
@@ -845,18 +844,14 @@ class diModel implements \ArrayAccess
 
 	final public function getTemplateVarsExtended()
 	{
-		if (static::use_data_cache)
-		{
-			if (!$this->existsCached())
-			{
+		if (static::use_data_cache) {
+			if (!$this->existsCached()) {
 				$this
 					->setCachedData($this->getCustomTemplateVars());
 			}
 
 			$customVars = $this->getCachedData();
-		}
-		else
-		{
+		} else {
 			$customVars = $this->getCustomTemplateVars();
 		}
 
@@ -867,8 +862,7 @@ class diModel implements \ArrayAccess
 	{
 		$templateVars = $this->getTemplateVarsExtended();
 
-		if (isset($templateVars[$key]))
-		{
+		if (isset($templateVars[$key])) {
 			return $templateVars[$key];
 		}
 
@@ -1089,21 +1083,17 @@ class diModel implements \ArrayAccess
 
 	/**
 	 * @param string|null $field
-	 * @return string|int|null|object
+	 * @return string|int|null|array
 	 */
 	public function get($field = null)
 	{
-		if (is_null($field))
-		{
+		if (is_null($field)) {
 			return $this->getWithId();
 		}
 
-		if ($field == static::getIdFieldName())
-		{
+		if ($field == static::getIdFieldName()) {
 			return $this->getId();
-		}
-		elseif (!$this->exists($field))
-		{
+		} elseif (!$this->exists($field)) {
 			//throw new Exception("Field '$field' is undefined in ".get_class($this));
 
 			return null;
@@ -1114,27 +1104,20 @@ class diModel implements \ArrayAccess
 
 	public function getOrigData($field = null)
 	{
-		if (is_null($field))
-		{
+		if (is_null($field)) {
 			return $this->getOrigWithId();
-		}
-
-		if ($field == static::getIdFieldName())
-		{
+		} elseif ($field == static::getIdFieldName()) {
 			return $this->getOrigId();
-		}
-		elseif (!$this->existsOrig($field))
-		{
+		} elseif (!$this->existsOrig($field)) {
 			return null;
-		}
-
-		return $this->origData[$field];
+		} else {
+            return $this->origData[$field];
+        }
 	}
 
 	public function getCachedData($field = null)
 	{
-		if (is_null($field))
-		{
+		if (is_null($field)) {
 			return $this->cachedData;
 		}
 
