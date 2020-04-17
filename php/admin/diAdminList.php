@@ -443,35 +443,36 @@ class diAdminList
 							: ($p['active'] ? $this->T->$method($p) : $this->T->emptyBtnCell());
 						break;
 				}
-			}
-			else
-			{
+			} else {
 				$p = extend([
 					'bodyAttrs' => [],
 				], $properties);
 
-				$method = empty($properties['noLink']) && empty($properties['noHref']) ? 'textLinkCell' : 'textCell';
+				$method = empty($properties['noLink']) && empty($properties['noHref'])
+                    ? 'textLinkCell'
+                    : 'textCell';
 
-				if (empty($properties['value']))
-				{
+				if (empty($properties['value'])) {
 					$value = '%' . $name . '%';
-				}
-				else
-				{
+				} else {
 					$value = $properties['value'];
 
-					if (is_callable($value))
-					{
+					if (is_callable($value)) {
 						$value = $value($this->getCurModel(), $name, $this);
 					}
 				}
 
 				$value = $this->replaceValues($value);
 
-				if (!isset($p['bodyAttrs']['data-field']))
-				{
+				if (!isset($p['bodyAttrs']['data-field'])) {
 					$p['bodyAttrs']['data-field'] = $name;
 				}
+
+				foreach ($p['bodyAttrs'] as $k => $attr) {
+				    if ($attr instanceof Closure) {
+                        $p['bodyAttrs'][$k] = $attr($this->getCurModel(), $name, $this);
+                    }
+                }
 
 				$html .= $this->T->$method($value, $p['bodyAttrs']);
 			}
