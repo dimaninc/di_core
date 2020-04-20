@@ -201,7 +201,27 @@ class ArrayHelper
 		}
 	}
 
-	/**
+    public static function get($deepArray, array $path, $defaultValue = null, $type = null)
+    {
+        $reduce = function (array $xs, $x) {
+            return array_key_exists($x, $xs) ? $xs[$x] : null;
+        };
+
+        $value = array_reduce($path, $reduce, self::fromObject($deepArray)) ?: $defaultValue;
+        $type = $type ?: gettype($defaultValue);
+
+        if ($type != 'NULL' && is_scalar($value)) {
+            if (in_array(strtolower($type), ['float', 'double'])) {
+                $value = StringHelper::fixFloatDot($value);
+            }
+
+            settype($value, $type);
+        }
+
+        return $value;
+    }
+
+    /**
 	 * @param array $array
 	 * @return array
 	 */
@@ -297,5 +317,20 @@ class ArrayHelper
     public static function mapAssoc(callable $f, array $a)
     {
         return array_column(array_map($f, array_keys($a), $a), 1, 0);
+    }
+
+    public static function fromObject($obj)
+    {
+        if (is_object($obj) || is_array($obj)) {
+            $ret = (array)$obj;
+
+            foreach ($ret as &$item) {
+                $item = self::fromObject($item);
+            }
+
+            return $ret;
+        } else {
+            return $obj;
+        }
     }
 }
