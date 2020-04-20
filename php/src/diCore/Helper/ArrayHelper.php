@@ -201,11 +201,15 @@ class ArrayHelper
 		}
 	}
 
-    public static function get($deepArray, array $path, $defaultValue = null, $type = null)
+    public static function get($deepArray, $path, $defaultValue = null, $type = null)
     {
         $reduce = function (array $xs, $x) {
             return array_key_exists($x, $xs) ? $xs[$x] : null;
         };
+
+        if (!is_array($path)) {
+            $path = [$path];
+        }
 
         $value = array_reduce($path, $reduce, self::fromObject($deepArray)) ?: $defaultValue;
         $type = $type ?: gettype($defaultValue);
