@@ -87,6 +87,17 @@ trait OrderItem
 
     public function getCost()
     {
-        return $this->getPrice() * $this->getQuantity();
+        $quantity = method_exists($this, 'getTunedQuantity')
+            ? $this->getTunedQuantity()
+            : $this->getQuantity();
+
+        /*
+        $price = method_exists($this, 'getActualPrice')
+            ? $this->getActualPrice()
+            : $this->getPrice();
+        */
+        $price = $this->getPrice();
+
+        return $price * $quantity;
     }
 }
