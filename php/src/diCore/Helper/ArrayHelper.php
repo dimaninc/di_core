@@ -172,6 +172,7 @@ class ArrayHelper
 	/**
 	 * Returns element of array by idx, setting proper type, if it exists, else returns default value
 	 *
+     * @deprecated use get() instead
 	 * @param mixed $ar
 	 * @param int|string|bool $idx
 	 * @param mixed $defaultValue
@@ -208,7 +209,7 @@ class ArrayHelper
         };
 
         if (!is_array($path)) {
-            $path = [$path];
+            $path = explode('.', $path);
         }
 
         $value = array_reduce($path, $reduce, self::fromObject($deepArray)) ?: $defaultValue;
