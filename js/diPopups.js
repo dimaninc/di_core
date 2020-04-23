@@ -255,7 +255,7 @@ var diPopups = function() {
 		var $el = $('<div/>');
 		this
 			.setOptsFor(options.name, options)
-			.copyOptsToDom(name, $el);
+			.copyOptsToDom(options.name, $el);
 		$el
 			.addClass('dipopup')
 			.data('type', 'dipopup')
