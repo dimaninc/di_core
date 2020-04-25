@@ -40,10 +40,12 @@ class Model extends \diBaseUserModel
 	protected $mailBodyTemplates = [
 		'sign_up' => 'emails/sign_up/customer',
 		'password_forgotten' => 'emails/password_forgotten/customer',
+        'password_changed' => 'emails/password_changed/customer',
 	];
 	protected $mailSubjects = [
 		'sign_up' => 'Регистрация',
 		'password_forgotten' => 'Восстановление пароля',
+        'password_changed' => 'Ваш пароль изменён',
 	];
 
 	public function __toString()
@@ -220,6 +222,10 @@ class Model extends \diBaseUserModel
 
 	protected function getMailBody(\diTwig $twig, $reason)
 	{
+	    if (!$twig->exists($this->mailBodyTemplates[$reason])) {
+	        return null;
+        }
+
 		return $twig->parse('emails/email_html_base', extend($this->getMailBodyData($reason), [
 			'body' => $this->getMailInnerBody($twig, $reason),
 		]));
@@ -276,6 +282,22 @@ class Model extends \diBaseUserModel
 
 		return $this;
 	}
+
+    public function notifyAboutPasswordChangeByEmail(\diTwig $twig)
+    {
+        if ($this->hasEmail() && $body = $this->getMailBody($twig, 'password_changed')) {
+            $this->sendEmail(
+                $this->getSender('password_changed'),
+                $this->getEmail(),
+                $this->getMailSubject('password_changed'),
+                $body,
+                $this->getMailSettings($twig, 'password_changed'),
+                $this->getMailAttaches($twig, 'password_changed')
+            );
+        }
+
+        return $this;
+    }
 
     public function deactivate()
     {

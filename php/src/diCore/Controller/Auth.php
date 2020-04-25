@@ -326,21 +326,18 @@ class Auth extends \diBaseController
 		];
 
 		try {
-			if (AuthTool::i()->authorized())
-			{
+			if (AuthTool::i()->authorized()) {
 				throw new \Exception('Вы не можете сбросить пароль, т.к. вы авторизованы');
 			}
 
 			/** @var Model $user */
 			$user = $this->getUserForReset();
 
-			if (!$user->exists())
-			{
+			if (!$user->exists()) {
 				throw new \Exception('Пользователь не найден');
 			}
 
-			if (!$user->active())
-			{
+			if (!$user->active()) {
 				throw new \Exception('Аккаунт отключён, свяжитесь с администратором');
 			}
 
@@ -366,46 +363,38 @@ class Auth extends \diBaseController
 		$password2 = \diRequest::post('password2', '');
 
 		try {
-			if (AuthTool::i()->authorized())
-			{
+			if (AuthTool::i()->authorized()) {
 				throw new \Exception(self::L('enter_new_password.sign_out_first'));
 			}
 
-			if (!\diEmail::isValid($email))
-			{
+			if (!\diEmail::isValid($email)) {
 				throw new \Exception(self::L('enter_new_password.email_not_valid'));
 			}
 
-			if (!Model::isActivationKeyValid($key))
-			{
+			if (!Model::isActivationKeyValid($key)) {
 				throw new \Exception(self::L('enter_new_password.key_not_valid'));
 			}
 
-			if (Model::isPasswordValid($password))
-			{
+			if (Model::isPasswordValid($password)) {
 				throw new \Exception(self::L('enter_new_password.password_not_valid'));
 			}
 
-			if ($password != $password2)
-			{
+			if ($password != $password2) {
 				throw new \Exception(self::L('enter_new_password.passwords_not_match'));
 			}
 
 			/** @var \diCore\Entity\User\Model $user */
 			$user = \diModel::create(\diTypes::user, $email, 'slug');
 
-			if (!$user->exists())
-			{
+			if (!$user->exists()) {
 				throw new \Exception(self::L('enter_new_password.user_not_exist'));
 			}
 
-			if (!$user->active())
-			{
+			if (!$user->active()) {
 				throw new \Exception(self::L('enter_new_password.user_not_active'));
 			}
 
-			if ($user->getActivationKey() != $key)
-			{
+			if ($user->getActivationKey() != $key) {
 				throw new \Exception(self::L('enter_new_password.keys_not_match'));
 			}
 
@@ -414,8 +403,7 @@ class Auth extends \diBaseController
 				->setActivationKey(Model::generateActivationKey())
 				->save();
 
-			if ($user->authenticateAfterEnteringNewPassword())
-			{
+			if ($user->authenticateAfterEnteringNewPassword()) {
 				AuthTool::i()->forceAuthorize($user, true);
 			}
 
@@ -426,4 +414,29 @@ class Auth extends \diBaseController
 
 		return $ar;
 	}
+
+    public function setPasswordAction()
+    {
+        $ar = [
+            'ok' => false,
+        ];
+
+        if (!AuthTool::i()->authorized()) {
+            $ar['message'] = 'Авторизуйтесь для смены пароля';
+        } else {
+            try {
+                /** @var Model $user */
+                $user = AuthTool::i()->getUserModel();
+                $user
+                    ->cabinetSubmitPassword()
+                    ->notifyAboutPasswordChangeByEmail($this->getTwig());
+
+                $ar['ok'] = true;
+            } catch (\Exception $e) {
+                $ar['message'] = $e->getMessage();
+            }
+        }
+
+        return $ar;
+    }
 }
