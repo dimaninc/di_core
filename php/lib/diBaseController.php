@@ -401,8 +401,7 @@ class diBaseController
 
 	public static function L($key, $lang = null)
 	{
-		if ($lang === null)
-		{
+		if ($lang === null) {
 			$lang = Config::getMainLanguage();
 		}
 

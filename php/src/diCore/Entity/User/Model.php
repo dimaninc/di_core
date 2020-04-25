@@ -277,7 +277,14 @@ class Model extends \diBaseUserModel
 		return $this;
 	}
 
-	public function authenticateAfterEnteringNewPassword()
+    public function deactivate()
+    {
+        $this->hardDestroy();
+
+        return $this;
+    }
+
+    public function authenticateAfterEnteringNewPassword()
 	{
 		return true;
 	}

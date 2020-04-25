@@ -20,6 +20,7 @@ class Auth extends \diBaseController
 	protected static $language = [
 		'en' => [
 			'common.enter_email' => 'Enter E-mail',
+            'sign_in.unsuccessful' => 'E-mail or password is wrong',
 
 			'enter_new_password.sign_out_first' => 'You are signed in, enter new password in cabinet',
 			'enter_new_password.email_not_valid' => 'E-mail is not valid',
@@ -40,6 +41,7 @@ class Auth extends \diBaseController
 		],
 		'ru' => [
 			'common.enter_email' => 'Введите E-mail',
+            'sign_in.unsuccessful' => 'E-mail или пароль не подходят',
 
 			'enter_new_password.sign_out_first' => 'Вы авторизованы, задайте новый пароль в личном кабинете',
 			'enter_new_password.email_not_valid' => 'Некорректный E-mail',
@@ -62,10 +64,14 @@ class Auth extends \diBaseController
 
 	public function loginAction()
 	{
+	    $lang = \diRequest::post('language');
 		$Auth = AuthTool::create(false);
 
 		return [
 			'ok' => $Auth->authorized(),
+            'message' => $Auth->authorized()
+                ? ''
+                : self::L('sign_in.unsuccessful', $lang),
 		];
 	}
 
@@ -164,13 +170,12 @@ class Auth extends \diBaseController
 		];
 
 		try {
-			if (!AuthTool::i()->authorized())
-			{
+			if (!AuthTool::i()->authorized()) {
 				throw new \Exception('Для удаления аккаунта необходимо войти в систему');
 			}
 
 			AuthTool::i()->getUserModel()
-				->hardDestroy();
+				->deactivate();
 
 			$ar['ok'] = true;
 		} catch (\diValidationException $e) {
