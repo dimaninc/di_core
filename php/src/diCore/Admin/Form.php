@@ -2603,7 +2603,9 @@ EOF;
 	{
 		global $db;
 
-		$s = ""; //"<div style=\"margin: 9px 0 5px 0;\">[<a href=\"#\" onclick=\"return dipics_{$this->table}.add('$field');\">Добавить +</a>]:</div>\n";
+        $s = ""; //"<div style=\"margin: 9px 0 5px 0;\">[<a href=\"#\" onclick=\"return dipics_{$this->table}.add('$field');\">Добавить +</a>]:</div>\n";
+        $s .= "<div data-purpose=\"anchor\" data-field=\"{$field}\" data-position=\"top\"></div>";
+        $s .= "<div class=\"dynamic-wrapper\">";
 		$last_ref_idx = 0;
 
 		$pic_rs = $db->rs($this->pics_table, "WHERE _table='$this->table' and _field='$field' and _id='$this->id' ORDER BY order_num ASC");
@@ -2615,6 +2617,7 @@ EOF;
 				$last_ref_idx = $pic_r->order_num;
 		}
 
+        $s .= "</div>";
 		$this->uploaded_images[$field] = $s;
 
         $s .= "<div data-purpose=\"anchor\" data-field=\"{$field}\" data-position=\"bottom\"></div>";
