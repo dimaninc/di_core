@@ -1023,7 +1023,8 @@ abstract class BasePage
                 $this->getTpl()
                     ->assign([
                         'PAGES_NAVY' => $this->getPagesNavy()->print_pages(
-                            Base::getPageUri($this->getModule())
+                            $this->getAdmin()->getCurrentPageUri()
+                            //Base::getPageUri($this->getModule())
                         ),
                     ])
                     ->parse('navy');
