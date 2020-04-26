@@ -150,6 +150,7 @@ abstract class BasePage
 	{
 		/** @var BasePage $o */
 		$o = new static($X);
+		$X->setAdminPage($o);
 
 		$o->tryToInitTable();
 
@@ -1017,21 +1018,20 @@ abstract class BasePage
 
 	protected function afterRenderList()
 	{
-		if ($this->hasList() || $this->hasGrid())
-		{
-			if ($this->hasPagesNavy())
-			{
-				$this->getTpl()
-					->assign([
-						'PAGES_NAVY' => $this->getPagesNavy()->print_pages(Base::getPageUri($this->getModule())),
-					])
-					->parse('navy');
-			}
+		if ($this->hasList() || $this->hasGrid()) {
+            if ($this->hasPagesNavy()) {
+                $this->getTpl()
+                    ->assign([
+                        'PAGES_NAVY' => $this->getPagesNavy()->print_pages(
+                            Base::getPageUri($this->getModule())
+                        ),
+                    ])
+                    ->parse('navy');
+            }
 
 			$this->printList();
 
-			if ($this->hasList())
-			{
+			if ($this->hasList()) {
 				$this->getTpl()->assign([
 					'TABLE' => $this->getList()->getHtml(),
 				]);
@@ -1040,30 +1040,24 @@ abstract class BasePage
 
 		$this->beforeRenderFilters();
 
-		if ($this->filtersBlockNeeded())
-		{
+		if ($this->filtersBlockNeeded()) {
 			$this->getTpl()->assign([
-				'FILTERS' => $this->getFilters()->getBlockHtml() . $this->getFilters()->get_js_data(true),
+				'FILTERS' => $this->getFilters()->getBlockHtml() .
+                    $this->getFilters()->get_js_data(true),
 			]);
 		}
 
-		$this->afterRenderFilters();
+        $this->afterRenderFilters();
 
-		if ($this->getTwig()->assigned('before_table'))
-		{
+        if ($this->getTwig()->assigned('before_table')) {
 			$this->getTpl()->assign('before_table', $this->getTwig()->getAssigned('before_table'));
-		}
-		elseif ($this->getTpl()->defined('before_table'))
-		{
+		} elseif ($this->getTpl()->defined('before_table')) {
 			$this->getTpl()->parse('before_table');
 		}
 
-		if ($this->getTwig()->assigned('after_table'))
-		{
+		if ($this->getTwig()->assigned('after_table')) {
 			$this->getTpl()->assign('after_table', $this->getTwig()->getAssigned('after_table'));
-		}
-		elseif ($this->getTpl()->defined('after_table'))
-		{
+		} elseif ($this->getTpl()->defined('after_table')) {
 			$this->getTpl()->parse('after_table');
 		}
 	}

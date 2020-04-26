@@ -37,7 +37,7 @@ class Base
 	/** @var BasePage */
 	protected $adminPage;
 
-	private $version = '4.7';
+	private $version = '4.8';
 
 	protected $defaultSuperUsersAr = ['dimaninc'];
 	protected $superUsersAr = [];
@@ -146,8 +146,7 @@ class Base
 
 		$this->superUsersAr = array_merge($this->defaultSuperUsersAr, $this->superUsersAr);
 
-		switch ($mode)
-		{
+		switch ($mode) {
 			case self::INIT_MODE_LITE:
 				$this->liteInit();
 				break;
@@ -509,18 +508,17 @@ class Base
 	{
 		$methodPart = in_array($method, ['', 'list']) ? '' : '/' . $method;
 
-		if ($method == 'form' && isset($params['id']))
-		{
+		if ($method == 'form' && isset($params['id'])) {
 			$idPart = $params['id'] . '/';
 
 			unset($params['id']);
-		}
-		else
-		{
+		} else {
 			$idPart = '';
 		}
 
-		$queryPart = $params ? '?' . (is_array($params) ? http_build_query($params) : $params) : '';
+		$queryPart = $params
+            ? '?' . (is_array($params) ? http_build_query($params) : $params)
+            : '';
 
 		return '/' . self::getSubFolder() . '/' . $module . $methodPart . '/' . $idPart . $queryPart;
 	}
@@ -584,10 +582,17 @@ class Base
 		/** @var BasePage $class */
 		$class = self::getModuleClassName($this->getModule());
 
-		$this->adminPage = $class::create($this);
+		$this->setAdminPage($class::create($this));
 
 		return $this;
 	}
+
+	public function setAdminPage(BasePage $page)
+    {
+        $this->adminPage = $page;
+
+        return $this;
+    }
 
 	protected function printCaption()
 	{
@@ -654,21 +659,18 @@ class Base
 	private function readUri()
 	{
 		$m = \diRequest::requestUri();
-		$x = strpos($m, '?');
-		if ($x !== false)
-		{
-			$m = substr($m, 0, $x);
+		$x = mb_strpos($m, '?');
+		if ($x !== false) {
+			$m = mb_substr($m, 0, $x);
 		}
 
 		$this->uriParams = array_map('addslashes', explode('/', trim($m, '/')));
 
-        if (\diLib::getSubFolder() && isset($this->uriParams[0]) && $this->uriParams[0] == \diLib::getSubFolder())
-        {
+        if (\diLib::getSubFolder() && isset($this->uriParams[0]) && $this->uriParams[0] == \diLib::getSubFolder()) {
             array_splice($this->uriParams, 0, count(explode('/', \diLib::getSubFolder())));
         }
 
-		if ($this->uriParams && $this->uriParams[0] == self::SUBFOLDER)
-		{
+		if ($this->uriParams && $this->uriParams[0] == self::SUBFOLDER) {
 			array_splice($this->uriParams, 0, 1);
 		}
 
@@ -676,8 +678,7 @@ class Base
 		$this->method = $this->getUriParam(1, self::DEFAULT_METHOD);
 
 		// back compatibility
-		if (\diRequest::get('path'))
-		{
+		if (\diRequest::get('path')) {
 			$this->path = \diRequest::get('path', '');
 			$this->filename = 'content.php';
 
@@ -689,9 +690,7 @@ class Base
 
 			$this->module = $this->path;
 			$this->method = $this->filename == 'form.php' ? 'form' : 'list';
-		}
-		else
-		{
+		} else {
 			$this->path = $this->module;
 			$this->filename = $this->method == 'form' ? 'form.php' : 'content.php';
 		}
