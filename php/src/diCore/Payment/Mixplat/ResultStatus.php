@@ -67,7 +67,7 @@ class ResultStatus extends SimpleContainer
 	public static $titles = [
 		self::PENDING => 'Ожидает обработки',
 		self::SUCCESS => 'Оплачен',
-		self::NO_FUNDS => 'Недостаточно средств на счёте',
+		self::NO_FUNDS => 'Недостаточно средств на счёте, либо Вы используете корпоративный тариф. Пополните баланс Вашего телефона и произведите платёж повторно',
 		self::INTERNAL_ERROR => 'Внутренняя ошибка системы',
 		self::CANCELLED_BY_CUSTOMER => 'Отменено покупателем',
 		self::CANCELLED_BY_VENDOR => 'Отменено продавцом',
@@ -83,7 +83,7 @@ class ResultStatus extends SimpleContainer
 		self::PREV_PAYMENT_NOT_FINISHED => 'Предыдущий платеж не завершён',
 		self::SERVICE_UNAVAILABLE => 'Услуга недоступна для абонента',
 		self::TIMEOUT_EXCEEDED => 'Время ожидания абонента истекло',
-		self::OTHER_LIMITS_EXCEEDED => 'Недостаточно средств на счёте',
+		self::OTHER_LIMITS_EXCEEDED => 'Недостаточно средств на счёте, либо Вы используете корпоративный тариф. Пополните баланс Вашего телефона и произведите платёж повторно',
 		self::NOT_PAID_OTHER_REASON => 'Не оплачен (по другой причине)',
 		self::LOW_SUM_OF_PAYMENTS => 'Сумма платежа меньше допустимой',
 		self::REDIRECTED_TO_PAY_PER_CLICK => 'Платеж перенаправлен на Pay-Per-Click',
