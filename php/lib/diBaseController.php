@@ -113,6 +113,7 @@ class diBaseController
 
 		$this->getTwig()->assign([
 			'asset_locations' => \diLib::getAssetLocations(),
+            'url_base' => \diRequest::urlBase(),
 		]);
 
 		return $this;
