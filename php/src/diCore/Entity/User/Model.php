@@ -222,10 +222,11 @@ class Model extends \diBaseUserModel
 
 	protected function getMailBody(\diTwig $twig, $reason)
 	{
+	    /*
 	    if (!$twig->exists($this->mailBodyTemplates[$reason])) {
 	        return null;
         }
-
+        */
 		return $twig->parse('emails/email_html_base', extend($this->getMailBodyData($reason), [
 			'body' => $this->getMailInnerBody($twig, $reason),
 		]));
