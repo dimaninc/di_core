@@ -1701,28 +1701,19 @@ EOF;
 
 	public function setSelectFromArrayInput($field, $ar, $prefix_ar = [], $suffix_ar = [])
 	{
-		if ($this->static_mode || $this->isFlag($field, "static"))
-		{
-			if (isset($ar[$this->getData($field)]))
-			{
+		if ($this->static_mode || $this->isFlag($field, "static")) {
+			if (isset($ar[$this->getData($field)])) {
 				$this->inputs[$field] = $ar[$this->getData($field)];
-			}
-			elseif (isset($prefix_ar[$this->getData($field)]))
-			{
+			} elseif (isset($prefix_ar[$this->getData($field)])) {
 				$this->inputs[$field] = $prefix_ar[$this->getData($field)];
-			}
-			elseif (isset($suffix_ar[$this->getData($field)]))
-			{
+			} elseif (isset($suffix_ar[$this->getData($field)])) {
 				$this->inputs[$field] = $suffix_ar[$this->getData($field)];
 			}
 
-			if (!empty($this->inputs[$field]))
-			{
+			if (!empty($this->inputs[$field])) {
 				$this->inputs[$field] = StringHelper::out($this->inputs[$field]);
 			}
-		}
-		else
-		{
+		} else {
 			$sel = \diSelect::fastCreate($field, $this->getData($field), $ar, $prefix_ar, $suffix_ar);
 			$sel->setAttr($this->getInputAttributes($field));
 
@@ -1740,16 +1731,12 @@ EOF;
 		return $this->setSelectFromArray2Input($field, $ar);
 	}
 
-	public function setSelectFromArray2Input($field, $ar)
+	public function setSelectFromArray2Input($field, $ar, $prefix_ar = [], $suffix_ar = [])
 	{
-		if ($this->static_mode || $this->isFlag($field, "static"))
-		{
+		if ($this->static_mode || $this->isFlag($field, 'static')) {
 			$this->inputs[$field] = StringHelper::out($this->getData($field));
-		}
-		else
-		{
-			$sel = new \diSelect($field, $this->getData($field));
-
+		} else {
+            $sel = \diSelect::fastCreate($field, $this->getData($field), [], $prefix_ar, $suffix_ar);
 			$sel
 				->setAttr($this->getInputAttributes($field))
 				->addItemArray2($ar);
@@ -1763,15 +1750,14 @@ EOF;
 	}
 
 	/** @deprecated */
-	public function set_select_from_db_input($field, $db_rs, $template_text = "%title%", $template_value = "%id%", $prefix_ar = array(), $suffix_ar = array())
+	public function set_select_from_db_input($field, $db_rs, $template_text = '%title%', $template_value = '%id%', $prefix_ar = array(), $suffix_ar = array())
 	{
 		return $this->setSelectFromDbInput($field, $db_rs, $template_text, $template_value, $prefix_ar, $suffix_ar);
 	}
 
-	public function setSelectFromDbInput($field, $db_rs, $template_text = "%title%", $template_value = "%id%", $prefix_ar = [], $suffix_ar = [])
+	public function setSelectFromDbInput($field, $db_rs, $template_text = '%title%', $template_value = '%id%', $prefix_ar = [], $suffix_ar = [])
 	{
-		if (is_array($template_text))
-		{
+		if (is_array($template_text)) {
 			$prefix_ar = $template_text;
 			$template_text = "%title%";
 			$template_value = "%id%";
@@ -1781,23 +1767,19 @@ EOF;
 
 		$sel->setAttr($this->getInputAttributes($field));
 
-		if ($prefix_ar)
-		{
+		if ($prefix_ar) {
 			$sel->addItemArray($prefix_ar);
 		}
 
-		while ($db_rs && $db_r = $this->getDb()->fetch($db_rs))
-		{
+		while ($db_rs && $db_r = $this->getDb()->fetch($db_rs)) {
 			$ar1 = [];
 			$ar2 = [];
 
-			foreach ($db_r as $k => $v)
-			{
+			foreach ($db_r as $k => $v) {
 				$ar1[] = "%$k%";
 				$ar2[] = $v;
 
-				if ($k == "level_num")
-				{
+				if ($k == "level_num") {
 					$ar1[] = "%[left-padding]%";
 					$ar2[] = str_repeat("&nbsp;", $db_r->$k * 4);
 				}
@@ -1809,8 +1791,7 @@ EOF;
 			$sel->addItem($value, $text);
 		}
 
-		if ($suffix_ar)
-		{
+		if ($suffix_ar) {
 			$sel->addItemArray($suffix_ar);
 		}
 

@@ -263,10 +263,8 @@ class diSelect
 
 	public function addItemArray($ar)
 	{
-		if (is_array($ar))
-		{
-			foreach ($ar as $value => $text)
-			{
+		if (is_array($ar)) {
+			foreach ($ar as $value => $text) {
 				$this->addItem($value, $text);
 			}
 		}
@@ -276,10 +274,8 @@ class diSelect
 
 	public function addItemArray2($ar)
 	{
-		if (is_array($ar))
-		{
-			foreach($ar as $text)
-			{
+		if (is_array($ar)) {
+			foreach($ar as $text) {
 				$this->addItem($text, $text);
 			}
 		}
