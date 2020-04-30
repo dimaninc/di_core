@@ -243,7 +243,7 @@ class Auth extends \diBaseController
 		];
 
 		/** @var Model $user */
-		$user = \diModel::create(Types::user);
+		$user = Model::create();
 
 		try {
 			$user->fastSignUp([
@@ -255,7 +255,9 @@ class Auth extends \diBaseController
 			AuthTool::i()->forceAuthorize($user, true);
 		} catch (\diValidationException $e) {
 			$ar['errors'] = $user::getMessagesOfValidationException($e);
-		}
+		} catch (\Exception $e) {
+            $ar['message'] = $user::getMessageOfSaveException($e);
+        }
 
 		/*
 		if ($ar['ok'])
