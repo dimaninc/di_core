@@ -130,6 +130,18 @@ trait CartOrder
         return $count;
     }
 
+    public function getTotalItemsCount($options = [])
+    {
+        $count = 0;
+        $options = $this->prepareOptions($options);
+
+        foreach ($this->getItems(true) as $item) {
+            $count += $this->getQuantityOfItem($item, $options);
+        }
+
+        return $count;
+    }
+
     public function getTotalCost($options = [])
     {
         $cost = 0;
