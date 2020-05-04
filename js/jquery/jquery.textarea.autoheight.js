@@ -1,21 +1,12 @@
 jQuery.fn.extend({
-	autoHeight: function ()
-	{
-		function worker(element)
-		{
-			element.style.height = 'auto';
-
-			if (element.scrollHeight) {
-				element.style.height = element.scrollHeight + 'px';
-			}
+	autoHeight: function () {
+		function worker(element) {
+			return jQuery(element)
+				.css({ 'height': 'auto', 'overflow-y': 'hidden' })
+				.height(element.scrollHeight);
 		}
-
 		return this.each(function() {
-			this.setAttribute('style', 'height: ' + this.scrollHeight + 'px; overflow-y: hidden;');
-
-			worker(this);
-
-			jQuery(this).on('input', function() {
+			worker(this).on('input', function() {
 				worker(this);
 			});
 		});
