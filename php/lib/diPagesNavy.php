@@ -47,6 +47,7 @@ class diPagesNavy
 
 	public $tpl_ar = [
 		'link' => '<a href="{HREF}">{PAGE}</a>',
+        'border-link' => '<a href="{HREF}" class="navy--border">{PAGE}</a>',
 		'selected' => '<b>{PAGE}</b>',
 		'inactive' => '<span>{PAGE}</span>',
 		'dots' => '{DOTS}',
@@ -555,8 +556,8 @@ class diPagesNavy
 
 		if ($this->reverse)
 		{
-			$prev_tpl = $prev_page <= $this->total_pages ? "link" : "inactive";
-			$next_tpl = $next_page >= 1 ? "link" : "inactive";
+			$prev_tpl = $prev_page <= $this->total_pages ? "border-link" : "inactive";
+			$next_tpl = $next_page >= 1 ? "border-link" : "inactive";
 
 			$prev_page_s = $this->str_ar["prev_symb"] ? str_replace([
 				"{PAGE}",
@@ -575,8 +576,8 @@ class diPagesNavy
 		}
 		else
 		{
-			$prev_tpl = $prev_page >= 1 ? "link" : "inactive";
-			$next_tpl = $next_page <= $this->total_pages ? "link" : "inactive";
+			$prev_tpl = $prev_page >= 1 ? "border-link" : "inactive";
+			$next_tpl = $next_page <= $this->total_pages ? "border-link" : "inactive";
 
 			$prev_page_s = $this->str_ar["prev_symb"] ? str_replace([
 				"{PAGE}",
