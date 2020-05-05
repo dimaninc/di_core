@@ -361,10 +361,20 @@ class Submit
 				$v['default'] = '';
 			}
 
+            $type = in_array($v['type'], ['float', 'double', 'int'])
+                ? $v['type']
+                : null;
+            $value = \diRequest::post($f, $v['default'], $type);
+
+			if (!empty($v['preprocessor'])) {
+                $value = \diRequest::post($f) ?: $v['default'];
+			    $value = $v['preprocessor']($value, $f, $this);
+            }
+
 			switch ($v['type']) {
 				case 'password':
 					$this
-						->setData($f, \diRequest::post($f, $v['default'], 'string'))
+						->setData($f, $value ?: '')
 						->setData($f . '2', \diRequest::post($f . '2', $v['default'], 'string'));
 					break;
 
@@ -388,7 +398,8 @@ class Submit
 					break;
 
                 case 'checkboxes':
-                    $saver = $this->getFieldProperty($f, 'saverBeforeSubmit') ?: [self::class, 'checkboxesSaver'];
+                    $saver = $this->getFieldProperty($f, 'saverBeforeSubmit')
+                        ?: [self::class, 'checkboxesSaver'];
                     $saver($this, $f);
                     break;
 
@@ -398,10 +409,7 @@ class Submit
 					break;
 
 				default:
-				    $type = in_array($v['type'], ['float', 'double', 'int'])
-                        ? $v['type']
-                        : null;
-					$this->setData($f, \diRequest::post($f, $v['default'], $type));
+					$this->setData($f, $value);
 					break;
 			}
 		}

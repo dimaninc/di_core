@@ -6,6 +6,7 @@
  * Time: 13:06
  */
 
+use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 
 class diDateTime
@@ -176,8 +177,7 @@ class diDateTime
 
 	public static function timestamp($dt = null)
 	{
-		if ($dt === null)
-		{
+		if ($dt === null) {
 			return time();
 		}
 
@@ -215,8 +215,7 @@ class diDateTime
 
 	public static function yearDay($dt = null)
 	{
-		if (!$dt)
-		{
+		if (!$dt) {
 			return 0;
 		}
 
@@ -236,7 +235,7 @@ class diDateTime
 	public static function passedBy($timestamp, $now = null, $vocabulary = null)
 	{
 		$vocabulary = extend([
-			'long_term_limit' => '+1 month',
+			'long_term_limit' => '+1 year',
 			'long_term_date_format' => 'd.m.Y H:i',
 			'just_now' => 'только что',
 			'second1' => 'секунду',
@@ -273,57 +272,43 @@ class diDateTime
 			);
 		};
 
-		if (!$seconds)
-		{
+		if (!$seconds) {
 			return $vocabulary['just_now'];
-		}
-		elseif (strtotime($vocabulary['long_term_limit'], $timestamp) < $now) // more than a month ago
-		{
+		} elseif (strtotime($vocabulary['long_term_limit'], $timestamp) < $now) {
+            // more than a month ago
 			return self::format($vocabulary['long_term_date_format'], $timestamp);
-		}
-		else
-		{
-			if ($seconds < 60) // secs
-			{
+		} else {
+            // secs
+			if ($seconds < 60) {
 				$s = $getCase($seconds, 'second');
-			}
-			else
-			{
+			} else {
 				$seconds = round($seconds / 60);
 
-				if ($seconds < 60) //mins
-				{
+                //mins
+				if ($seconds < 60) {
 					$s = $getCase($seconds, 'minute');
-				}
-				else
-				{
+				} else {
 					$seconds = round($seconds / 60);
 
-					if ($seconds < 24) // hours
-					{
+                    // hours
+					if ($seconds < 24) {
 						$s = $getCase($seconds, 'hour');
-					}
-					else
-					{
+					} else {
 						$seconds = round($seconds / 24);
 
-						if ($seconds < 30) // days
-						{
+                        // days
+						if ($seconds < 30) {
 							$s = $getCase($seconds, 'day');
-						}
-						else
-						{
+						} else {
 							$seconds = round($seconds / 30);
 
-							if ($seconds < 12) // months
-							{
-								$s = $getCase($seconds, 'day');
-							}
-							else
-							{
+							if ($seconds < 12) {
+                                // months
+								$s = $getCase($seconds, 'month');
+							} else {
 								$seconds = round($seconds / 12);
 
-								$s = $getCase($seconds, 'day');
+								$s = $getCase($seconds, 'year');
 							}
 						}
 					}
@@ -360,4 +345,19 @@ class diDateTime
 			'ago' => 'ago',
 		], (array)$vocabulary));
 	}
+
+	public static function minSecToSeconds($time)
+    {
+        preg_match('/^((\d*):)?(\d*)([,.](\d+))?$/', $time, $regs);
+        $min = 2;
+        $sec = 3;
+        $msec = 5;
+
+        $m = floatval('0.' . ArrayHelper::get($regs, $msec, 0));
+
+        return
+            ArrayHelper::get($regs, $min, 0) * 60 +
+            ArrayHelper::get($regs, $sec, 0) +
+            ($m ?: 0);
+    }
 }
