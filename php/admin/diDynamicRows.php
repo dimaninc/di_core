@@ -1706,118 +1706,114 @@ EOF;
 		return $ids_ar;
 	}
 
-  function set_data($f, $v, $id)
-  {
-	  if ($this->isFlag($f, "local"))
-	  {
-		  return $this;
-	  }
-
-    $ff = "{$this->field}_$f";
-
-    switch($v["type"])
+    public function set_data($f, $v, $id)
     {
-      case "password":
-        $this->data[$f] = isset($_POST[$ff][$id]) ? $_POST[$ff][$id] : $v["default"];
-        $this->data[$f."2"] = isset($_POST[$ff."2"][$id]) ? $_POST[$ff."2"][$id] : $v["default"];
-        break;
-
-      case "date":
-      case "date_str":
-        $this->make_datetime($f, $id, true, false);
-        break;
-
-      case "time":
-      case "time_str":
-        $this->make_datetime($f, $id, false, true);
-        break;
-
-      case "datetime":
-      case "datetime_str":
-        $this->make_datetime($f, $id, true, true);
-        break;
-
-      case "pic":
-      case "file":
-        $this->store_pic($f, $id, $v);
-        break;
-
-        case 'checkboxes':
-            $this->data[$f] = !empty($_POST[$ff][$id])
-                ? ',' . join(',', $_POST[$ff][$id]) . ','
-                : '';
-            break;
-
-      default:
-        $this->data[$f] = isset($_POST[$ff][$id])
-	        ? $_POST[$ff][$id]
-	        : ($v["type"] == "checkbox" ? 0 : $v["default"]); //(int)
-    }
-
-    switch ($v["type"])
-    {
-      case "int":
-      case "tinyint":
-      case "smallint":
-      case "integer":
-      case "date":
-      case "time":
-      case "datetime":
-        $this->data[$f] = intval($this->data[$f]);
-        break;
-
-      case "float":
-        $this->data[$f] = str_replace(",", ".", $this->data[$f]);
-        $this->data[$f] = floatval($this->data[$f]);
-        break;
-
-      case "double":
-        $this->data[$f] = str_replace(",", ".", $this->data[$f]);
-        $this->data[$f] = doubleval($this->data[$f]);
-        break;
-
-      default:
-      case "string":
-      case "str":
-      case "varchar":
-        $this->data[$f] = str_in($this->data[$f]);
-        break;
-
-      case "text":
-      case "blob":
-      case "wysiwyg":
-        $this->data[$f] = addslashes($this->data[$f]);
-        break;
-
-      case "pic":
-      case "file":
-        if (empty($this->data[$f]))
-          $this->data[$f] = "";
-        break;
-
-      case "password":
-        if ($this->data[$f] && $this->data[$f] == $this->data[$f."2"])
-        {
-          $this->data[$f] = md5($this->data[$f]);
+        if ($this->isFlag($f, "local")) {
+            return $this;
         }
-        else
-        {
-          $r = $this->getDb()->r($this->data_table, $id, $f);
-          $this->data[$f] = $r ? $r->$f : "";
+
+        $ff = "{$this->field}_$f";
+
+        switch ($v["type"]) {
+            case "password":
+                $this->data[$f] = isset($_POST[$ff][$id]) ? $_POST[$ff][$id] : $v["default"];
+                $this->data[$f . "2"] = isset($_POST[$ff . "2"][$id]) ? $_POST[$ff . "2"][$id] : $v["default"];
+                break;
+
+            case "date":
+            case "date_str":
+                $this->make_datetime($f, $id, true, false);
+                break;
+
+            case "time":
+            case "time_str":
+                $this->make_datetime($f, $id, false, true);
+                break;
+
+            case "datetime":
+            case "datetime_str":
+                $this->make_datetime($f, $id, true, true);
+                break;
+
+            case "pic":
+            case "file":
+                $this->store_pic($f, $id, $v);
+                break;
+
+            case 'checkboxes':
+                $this->data[$f] = !empty($_POST[$ff][$id])
+                    ? ',' . join(',', $_POST[$ff][$id]) . ','
+                    : '';
+                break;
+
+            default:
+                $this->data[$f] = isset($_POST[$ff][$id])
+                    ? $_POST[$ff][$id]
+                    : ($v["type"] == "checkbox" ? 0 : $v["default"]); //(int)
         }
-        break;
 
-      case "checkbox":
-	  case "radio":
-        $this->data[$f] = $this->data[$f] ? 1 : 0;
-        break;
+        if (empty($v['no_input_adjust'])) {
+            switch ($v["type"]) {
+                case "int":
+                case "tinyint":
+                case "smallint":
+                case "integer":
+                case "date":
+                case "time":
+                case "datetime":
+                    $this->data[$f] = intval($this->data[$f]);
+                    break;
+
+                case "float":
+                    $this->data[$f] = str_replace(",", ".", $this->data[$f]);
+                    $this->data[$f] = floatval($this->data[$f]);
+                    break;
+
+                case "double":
+                    $this->data[$f] = str_replace(",", ".", $this->data[$f]);
+                    $this->data[$f] = doubleval($this->data[$f]);
+                    break;
+
+                default:
+                case "string":
+                case "str":
+                case "varchar":
+                    $this->data[$f] = str_in($this->data[$f]);
+                    break;
+
+                case "text":
+                case "blob":
+                case "wysiwyg":
+                    $this->data[$f] = addslashes($this->data[$f]);
+                    break;
+
+                case "pic":
+                case "file":
+                    if (empty($this->data[$f]))
+                        $this->data[$f] = "";
+                    break;
+
+                case "password":
+                    if ($this->data[$f] && $this->data[$f] == $this->data[$f . "2"]) {
+                        $this->data[$f] = md5($this->data[$f]);
+                    } else {
+                        $r = $this->getDb()->r($this->data_table, $id, $f);
+                        $this->data[$f] = $r ? $r->$f : "";
+                    }
+                    break;
+
+                case "checkbox":
+                case "radio":
+                    $this->data[$f] = $this->data[$f] ? 1 : 0;
+                    break;
+            }
+        }
+
+        $this->getStoredModel()
+            ->set($f, $this->data[$f]);
+
+        return $this;
     }
-
-	  $this->getStoredModel()
-		  ->set($f, $this->data[$f]);
-
-	  return $this;
-  }
 
   function make_datetime($field, $id, $date = true, $time = false)
   {
