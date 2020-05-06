@@ -1,0 +1,75 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: dimaninc
+ * Date: 06.05.2020
+ * Time: 10:32
+ */
+
+namespace diCore\Admin;
+
+use diCore\Tool\SimpleContainer;
+
+class FilterRule extends SimpleContainer
+{
+    const contains = 1;
+    const startsWith = 2;
+    const endsWith = 3;
+
+    public static $names = [
+        self::contains => 'contains',
+        self::startsWith => 'startsWith',
+        self::endsWith => 'endsWith',
+    ];
+
+    public static function callback($id)
+    {
+        if (is_callable($id)) {
+            return $id;
+        }
+
+        $method = [static::class, static::name($id)];
+
+        if (is_callable($method)) {
+            return $method;
+        }
+
+        return null;
+    }
+
+    public static function extProps($props = [])
+    {
+        return extend([
+            'field' => null,
+            'value' => null,
+            'negative' => null,
+        ], $props);
+    }
+
+    public static function contains($props = [])
+    {
+        $props = self::extProps($props);
+
+        return function (\diCollection $col) use ($props) {
+            $col->contains($props['field'], $props['value']);
+        };
+    }
+
+    public static function startsWith($props = [])
+    {
+        $props = self::extProps($props);
+
+        return function (\diCollection $col) use ($props) {
+            $col->startsWith($props['field'], $props['value']);
+        };
+    }
+
+    public static function endsWith($props = [])
+    {
+        $props = self::extProps($props);
+
+        return function (\diCollection $col) use ($props) {
+            $col->endsWith($props['field'], $props['value']);
+        };
+    }
+}

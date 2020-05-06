@@ -37,18 +37,17 @@ class Page
 
     protected function cleanServerVarsFromFlushParam()
     {
-        if (!empty($_SERVER['REQUEST_URI']))
-        {
+        if (!empty($_SERVER['REQUEST_URI'])) {
             $_SERVER['REQUEST_URI'] = StringHelper::removeQueryStringParameter($_SERVER['REQUEST_URI'], [
                 static::FLUSH_PARAM,
             ]);
         }
 
-        if (!empty($_SERVER['QUERY_STRING']))
-        {
-            $_SERVER['QUERY_STRING'] = ltrim(StringHelper::removeQueryStringParameter('?' . $_SERVER['QUERY_STRING'], [
-                static::FLUSH_PARAM,
-            ]), '?');
+        if (!empty($_SERVER['QUERY_STRING'])) {
+            $_SERVER['QUERY_STRING'] = ltrim(StringHelper::removeQueryStringParameter(
+                '?' . $_SERVER['QUERY_STRING'], [
+                    static::FLUSH_PARAM,
+                ]), '?');
         }
 
         return $this;
@@ -63,8 +62,7 @@ class Page
 
     protected function getCache()
     {
-        if (!$this->cache)
-        {
+        if (!$this->cache) {
             $this->cache = Model::createForCurrentUri();
         }
 
@@ -73,20 +71,16 @@ class Page
 
     public function work($forceUri = null)
     {
-        if ($forceUri)
-        {
+        if ($forceUri) {
             $this->force = true;
             $this->cache = Model::createForCurrentUri($forceUri);
         }
 
-        if ($this->canBeUsed() && $this->getCache()->hasContent())
-        {
-            if ($forceUri)
-            {
+        if ($this->canBeUsed() && $this->getCache()->hasContent()) {
+            if ($forceUri) {
                 $code = Model::getHttpErrorCodeByUri($forceUri);
 
-                if ($code)
-                {
+                if ($code) {
                     HttpCode::header($code);
                 }
             }
@@ -113,26 +107,21 @@ class Page
         $col
             ->filterByActive(1);
         /** @var Model $cache */
-        foreach ($col as $cache)
-        {
+        foreach ($col as $cache) {
             $this->rebuild($cache);
         }
     }
 
     public function rebuild($id)
     {
-        if ($id instanceof Model)
-        {
+        if ($id instanceof Model) {
             $cacheModel = $id;
-        }
-        else
-        {
+        } else {
             /** @var Model $cacheModel */
             $cacheModel = Model::create(Types::page_cache, $id);
         }
 
-        if (!$cacheModel->exists())
-        {
+        if (!$cacheModel->exists()) {
             throw new \Exception("Page #{$id} doesn't exist");
         }
 
@@ -161,8 +150,7 @@ class Page
 
     protected function storeContent(Model $cacheModel, $content)
     {
-        if ($content)
-        {
+        if ($content) {
             $cacheModel->setContent($content);
         }
 

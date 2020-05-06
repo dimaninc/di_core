@@ -1602,6 +1602,11 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		*/
 	}
 
+    public function endsWith($field, $value)
+    {
+        return $this->extFilterBy($field, 'REGEXP', $value . '$');
+    }
+
 	public function contains($field, $value)
 	{
 		return $this->filterManual("INSTR(" . $field . ", '" . $value . "') > 0");

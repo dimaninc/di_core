@@ -43,6 +43,7 @@
 */
 
 use diCore\Admin\BasePage;
+use diCore\Admin\FilterRule;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 
@@ -117,6 +118,7 @@ class diAdminFilters
 	public $default_dir = '';
 	public $where = '';
 	public $where_ar = [];
+	protected $ruleCallbacks = [];
 	public $inputs_ar = [];
 	public $input_params_ar = [];
 	protected $inputPrefixes = [];
@@ -418,6 +420,7 @@ EOF;
             'alias' => null,
 			"type" => $type,
             'input_size' => null, // force <input size> if needed
+            'rule' => null, // callback or constant for predefined callback, instead of where_tpl
 			"where_tpl" => $where_tpl,
 			"title" => $title,
 			"default_value" => $default_value,
@@ -430,21 +433,14 @@ EOF;
             'feed' => null,
 		];
 
-		if (is_array($field))
-		{
+		if (is_array($field)) {
 			$opts = extend($opts, $field);
-		}
-
-		if ($opts["where_tpl"] === null)
-		{
-			$opts["where_tpl"] = self::DEFAULT_WHERE_TPL;
 		}
 
 		$this->ar[$opts['alias'] ?: $opts["field"]] = $opts;
 
         // getting first option
-        if (!empty($opts["strict"]) && $opts['feed'])
-        {
+        if (!empty($opts["strict"]) && $opts['feed']) {
             $sel = \diSelect::fastCreate('', '', $opts['feed']);
 
             $this
@@ -452,7 +448,6 @@ EOF;
 
             unset($sel);
         }
-
 
         return $this;
 	}
@@ -651,6 +646,11 @@ EOF;
 		return $this->where;
 	}
 
+	public function getRuleCallbacks()
+    {
+        return $this->ruleCallbacks;
+    }
+
 	public function buildQuery($table_prefix = "")
 	{
 		// sorter
@@ -686,6 +686,8 @@ EOF;
 
 		foreach ($this->ar as $idx => $a)
 		{
+		    $where_tpl = $a["where_tpl"] ?: self::DEFAULT_WHERE_TPL;
+
 			$value = !$this->reset && isset($_COOKIE["admin_filter"][$this->table][$a["field"]])
 				? is_array($_COOKIE["admin_filter"][$this->table][$a["field"]]) ? $_COOKIE["admin_filter"][$this->table][$a["field"]] : urldecode($_COOKIE["admin_filter"][$this->table][$a["field"]])
 				: $this->getPredefinedData($a["field"]);
@@ -696,38 +698,31 @@ EOF;
 				? $_GET["admin_filter"][$a["field"]]
 				: $value;
 
-			if (in_array($a["type"], ["date_range", "date_str_range"]))
-			{
+			if (in_array($a["type"], ["date_range", "date_str_range"])) {
 				$value = [];
 			}
 
-			if ($value === null && $a["default_value"] !== null)
-			{
+			if ($value === null && $a["default_value"] !== null) {
 				$value = $a["default_value"];
 			}
 
-			if ($value !== null)
-			{
-				switch ($a["type"])
-				{
+			if ($value !== null) {
+				switch ($a["type"]) {
 					case "int":
 					case "float":
 					case "double":
-						if ($value && $value[0] == "!")
-						{
+						if ($value && $value[0] == "!") {
 							$a["not"] = $this->ar[$idx]["not"] = true;
 							$value = substr($value, 1);
 
-							if (!is_callable($a["where_tpl"]))
-							{
-								$a["where_tpl"] = str_replace("=", "!=", $a["where_tpl"]);
+							if (!is_callable($where_tpl)) {
+								$where_tpl = str_replace("=", "!=", $where_tpl);
 							}
 						}
 						break;
 				}
 
-				switch ($a["type"])
-				{
+				switch ($a["type"]) {
 					case "int":
 						$value = intval($value);
 						break;
@@ -739,9 +734,8 @@ EOF;
 						break;
 
 					case "checkboxes":
-						if (empty($a["where_tpl"]))
-						{
-							$a["where_tpl"] = "[-field-] in ([-value-])";
+						if (empty($where_tpl)) {
+							$where_tpl = "[-field-] in ([-value-])";
 						}
 						break;
 
@@ -751,8 +745,7 @@ EOF;
                             ? $this->getDb()->r($this->getDb()->escapeTable($this->table), "", "MIN({$a["field"]}) as d1_min")
                             : null; //,MAX($a["field"]) as d1_max
 
-						if ($a["type"] == "date_str_range" && $r1)
-						{
+						if ($a["type"] == "date_str_range" && $r1) {
 							$r1->d1_min = strtotime($r1->d1_min);
 						}
 
@@ -762,8 +755,7 @@ EOF;
 						$dt1 = getdate($t1);
 						$dt2 = getdate($t2);
 
-						foreach (self::$dateRangeAr as $_f => $_r)
-						{
+						foreach (self::$dateRangeAr as $_f => $_r) {
 							$_ff = "d".$_f[0];
 							$_idx = $_f[1];
 
@@ -786,30 +778,39 @@ EOF;
 
 				$this->ar[$idx]["value"] = $value;
 
-				if ($value || ($value == "0" && substr($a["type"], 0, 3) == "str"))
-				{
+				if ($value || ($value == "0" && substr($a["type"], 0, 3) == "str")) {
 					$replace_ar = [
 						"[-field-]" => $table_prefix . $a["field"],
 						"[-value-]" => $value,
 					];
 
-					if (in_array($a["type"], ["date_range", "date_str_range"]) && $a["where_tpl"] == self::DEFAULT_WHERE_TPL)
-					{
-						if ($a["type"] == "date_range")
-						{
-							$a["where_tpl"] = "diaf_get_date_range_filter";
-						}
-						elseif ($a["type"] == "date_str_range")
-						{
-							$a["where_tpl"] = "diaf_get_date_str_range_filter";
+					if (
+					    in_array($a["type"], ["date_range", "date_str_range"]) &&
+                        $where_tpl == self::DEFAULT_WHERE_TPL
+                    ) {
+						if ($a["type"] == "date_range") {
+							$where_tpl = "diaf_get_date_range_filter";
+						} elseif ($a["type"] == "date_str_range") {
+							$where_tpl = "diaf_get_date_str_range_filter";
 						}
 					}
 
-					$w = is_callable($a["where_tpl"])
-						? $a["where_tpl"]($a["field"], $value, $a["not"], $table_prefix, $a['queryPrefix'], $a['querySuffix'])
-						: str_replace(array_keys($replace_ar), array_values($replace_ar), $a["where_tpl"]);
+					if ($a['rule'] && $ruleCallback = FilterRule::callback($a['rule'])) {
+					    $this->ruleCallbacks[] = $ruleCallback([
+                            'field' => $a['field'],
+                            'value' => $value,
+                            'negative' => $a['not'],
+                        ]);
+					    $w = null;
+                    } else {
+                        $w = is_callable($where_tpl)
+                            ? $where_tpl($a["field"], $value, $a["not"], $table_prefix, $a['queryPrefix'], $a['querySuffix'])
+                            : str_replace(array_keys($replace_ar), array_values($replace_ar), $where_tpl);
+                    }
 
-					if ($w) $where_ar[] = $w;
+					if ($w) {
+					    $where_ar[] = $w;
+                    }
 				}
 			}
 

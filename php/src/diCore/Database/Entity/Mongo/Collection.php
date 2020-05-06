@@ -32,6 +32,7 @@ class Collection extends \diCollection
 		'>=' => '$gte',
 		'<' => '$lt',
 		'<=' => '$lte',
+        'regexp' => '$regex',
 	];
 
 	public function addAliasToTable($table, $alias = null)
@@ -41,8 +42,7 @@ class Collection extends \diCollection
 
 	public function addAliasToField($field, $alias = null)
 	{
-		if ($field == 'id')
-		{
+		if ($field == 'id') {
 			/** @var Model $m */
 			$m = $this->getNewEmptyItem();
 
@@ -72,12 +72,9 @@ class Collection extends \diCollection
 		/** @var Model $modelClass */
 		$modelClass = static::getModelClass();
 
-		if ($this->sqlParts['where'])
-		{
-			foreach ($this->sqlParts['where'] as $val)
-			{
-				if ($val['value'] !== null)
-				{
+		if ($this->sqlParts['where']) {
+			foreach ($this->sqlParts['where'] as $val) {
+				if ($val['value'] !== null) {
 					$val['value'] = $modelClass::tuneFieldValueByTypeBeforeDb($val['field'], $val['value']);
 				}
 
@@ -87,38 +84,29 @@ class Collection extends \diCollection
 
 				$val['operator'] = mb_strtolower($val['operator']);
 
-				if (isset(self::$operators[$val['operator']]))
-				{
+				if (isset(self::$operators[$val['operator']])) {
 					$operator = self::$operators[$val['operator']];
 
 					$newFilter = [
 						$operator => $val['value'],
 					];
-				}
-				elseif ($val['operator'] == 'between')
-				{
-					if (is_array($val['value']) && count($val['value']) == 2)
-					{
+				} elseif ($val['operator'] == 'between') {
+					if (is_array($val['value']) && count($val['value']) == 2) {
 						$newFilter = [
-							'$gte' => ArrayHelper::getValue($val['value'], 0),
-							'$lte' => ArrayHelper::getValue($val['value'], 1),
+							'$gte' => ArrayHelper::get($val['value'], 0),
+							'$lte' => ArrayHelper::get($val['value'], 1),
 						];
-					}
-					else
-					{
+					} else {
 						throw new \Exception('Operator "' . $val['operator'] .
 							'" supports only array with 2 values, but given: ' . print_r($val['value'], true));
 					}
-				}
-				else
-				{
+				} else {
 					throw new \Exception('Operator "' . $val['operator'] . '" not supported yet');
 				}
 
 				$existingFilter = array_merge($existingFilter, $newFilter);
 
-				if ($existingFilter)
-				{
+				if ($existingFilter) {
 					$filter[$val['field']] = $existingFilter;
 				}
 			}
@@ -131,10 +119,8 @@ class Collection extends \diCollection
 	{
 		$sort = [];
 
-		if ($this->sqlParts['orderBy'])
-		{
-			foreach ($this->sqlParts['orderBy'] as $val)
-			{
+		if ($this->sqlParts['orderBy']) {
+			foreach ($this->sqlParts['orderBy'] as $val) {
 				$sort[$val['field']] = Mongo::convertDirection($val['direction']);
 			}
 		}
@@ -173,4 +159,14 @@ class Collection extends \diCollection
 
 		return $this->count;
 	}
+
+    public function startsWith($field, $value)
+    {
+        return $this->extFilterBy($field, 'REGEXP', '^' . $value);
+    }
+
+    public function contains($field, $value)
+    {
+        return $this->extFilterBy($field, 'REGEXP', $value);
+    }
 }

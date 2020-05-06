@@ -10,9 +10,11 @@ namespace diCore\Entity\PageCache;
 
 use diCore\Data\Http\HttpCode;
 use diCore\Database\FieldType;
+use diCore\Helper\FileSystemHelper;
 use diCore\Helper\StringHelper;
 use diCore\Tool\Cache\Page;
 use diCore\Traits\Model\AutoTimestamps;
+use Romantic\Data\Config;
 
 /**
  * Class Model
@@ -38,6 +40,10 @@ class Model extends \diCore\Database\Entity\Mongo\Model
     const connection_name = 'mongo_main';
     const table = 'page_cache';
     protected $table = 'page_cache';
+
+    const SAVE_TO_FILESYSTEM = false;
+    const CACHE_FOLDER = '_cfg/cache/page/';
+    const CACHE_EXT = '.html';
 
     const ERROR_401_URI = '#error_401';
     const ERROR_403_URI = '#error_403';
@@ -100,5 +106,55 @@ class Model extends \diCore\Database\Entity\Mongo\Model
         $uri .= StringHelper::getUrlParamGlue($uri) . Page::FLUSH_PARAM . '=1';
 
         return $uri;
+    }
+
+    public function afterSave()
+    {
+        if (static::SAVE_TO_FILESYSTEM) {
+            $this->saveToFile();
+        }
+
+        return parent::afterSave();
+    }
+
+    protected function beforeKill()
+    {
+        $fn = $this->getCacheFolder() . $this->getCacheFilename();
+
+        if (is_file($fn)) {
+            unlink($fn);
+        }
+
+        return parent::beforeKill();
+    }
+
+    public function getCacheFolder()
+    {
+        return Config::getCacheFolder() . static::CACHE_FOLDER;
+    }
+
+    public function getCacheFilename()
+    {
+        $fn = trim($this->getUri(), '/');
+        $fn = str_replace('#', '__', $fn);
+
+        if (!$fn) {
+            $fn = '__home';
+        }
+
+        return $fn . static::CACHE_EXT;
+    }
+
+    public function saveToFile()
+    {
+        $fn = $this->getCacheFolder() . $this->getCacheFilename();
+        $dir = dirname($fn);
+
+        FileSystemHelper::createTree('', $dir);
+
+        file_put_contents($fn, $this->getContent());
+        @chmod($fn, 0775);
+
+        return $this;
     }
 }

@@ -19,20 +19,15 @@ class FileSystemHelper
 			'd' => [],
 		];
 
-		while ($f = readdir($handle))
-		{
+		while ($f = readdir($handle)) {
 			$f2 = $returnFullPath ? StringHelper::slash($path) . $f : $f;
 
-			if ($f && is_file(StringHelper::slash($path) . $f))
-			{
+			if ($f && is_file(StringHelper::slash($path) . $f)) {
 				$result['f'][] = $f2;
-			}
-			elseif ($f && is_dir(StringHelper::slash($path) . $f) && $f != '.' && $f != '..')
-			{
+			} elseif ($f && is_dir(StringHelper::slash($path) . $f) && $f != '.' && $f != '..') {
 				$result['d'][] = $f2;
 
-				if ($recursive)
-				{
+				if ($recursive) {
 					$result = array_merge_recursive($result,
 						self::folderContents(StringHelper::slash($path) . $f, $returnFullPath, $recursive)
 					);
@@ -50,26 +45,21 @@ class FileSystemHelper
 
 	public static function createTree($basePath, $pathEndingsToCreate, $mod = 0775)
 	{
-		if (!is_array($pathEndingsToCreate))
-		{
+		if (!is_array($pathEndingsToCreate)) {
 			$pathEndingsToCreate = [$pathEndingsToCreate];
 		}
 
-		foreach ($pathEndingsToCreate as $path)
-		{
+		foreach ($pathEndingsToCreate as $path) {
 			$folders = explode('/', $path);
 			$fullPath = $basePath;
 
 			$oldMask = umask(0);
 
-			foreach ($folders as $f)
-			{
-				if ($f)
-				{
+			foreach ($folders as $f) {
+				if ($f) {
 					$fullPath = StringHelper::slash($fullPath) . $f;
 
-					if (!is_dir($fullPath))
-					{
+					if (!is_dir($fullPath)) {
 						mkdir($fullPath, $mod);
 					}
 				}
@@ -81,27 +71,22 @@ class FileSystemHelper
 
 	public static function delTree($path, $killRootFolder = true)
 	{
-		if (!$path)
-		{
+		if (!$path) {
 			throw new \InvalidArgumentException("Path can't be empty");
 		}
 
-		if (!is_dir($path))
-		{
+		if (!is_dir($path)) {
 			throw new \InvalidArgumentException("$path must be a directory");
 		}
 
 		$contents = self::folderContents($path, true, true);
 
-		foreach ($contents['f'] as $file)
-		{
+		foreach ($contents['f'] as $file) {
 			unlink($file);
 		}
 
-		foreach ($contents['d'] as $dir)
-		{
-			if ($dir == $path && !$killRootFolder)
-			{
+		foreach ($contents['d'] as $dir) {
+			if ($dir == $path && !$killRootFolder) {
 				continue;
 			}
 

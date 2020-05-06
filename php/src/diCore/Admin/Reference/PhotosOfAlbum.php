@@ -52,8 +52,7 @@ class PhotosOfAlbum
 				];
 			},
 			'beforeSave' => function(\diDynamicRows $DR) {
-				if ($DR->getData('slug'))
-				{
+				if ($DR->getData('slug')) {
 					return [];
 				}
 

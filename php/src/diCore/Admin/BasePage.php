@@ -674,6 +674,11 @@ abstract class BasePage
 		return $this->hasFilters() ? $this->getFilters()->getQuery() : '';
 	}
 
+    protected function getListRuleCallbacks()
+    {
+        return $this->hasFilters() ? $this->getFilters()->getRuleCallbacks() : [];
+    }
+
 	protected function getListQueryLimit()
 	{
 		return $this->hasPagesNavy() ? $this->getPagesNavy()->getSqlLimit() : '';
@@ -693,6 +698,7 @@ abstract class BasePage
 	{
 		return extend([
 			'query' => '', // deprecated
+            'ruleCallbacks' => [],
 			'filterBy' => [],
 			'limit' => '',
 			'pageNumber' => null,
@@ -706,6 +712,10 @@ abstract class BasePage
     {
         $this->listCollection = \diCollection::createForTable($this->getTable(), $options['query']);
 
+        foreach ($options['ruleCallbacks'] as $cb) {
+            $cb($this->listCollection);
+        }
+
         return $this;
     }
 
@@ -715,28 +725,21 @@ abstract class BasePage
 
 		$this->createListCollection($options);
 
-		if ($options['sortBy'])
-		{
-			if (is_array($options['sortBy']))
-			{
-				foreach ($options['sortBy'] as $field => $direction)
-				{
+		if ($options['sortBy']) {
+			if (is_array($options['sortBy'])) {
+				foreach ($options['sortBy'] as $field => $direction) {
 					$this->listCollection->orderBy($field, $direction);
 				}
-			}
-			else
-			{
+			} else {
 				$this->listCollection->orderBy($options['sortBy'], $options['dir']);
 			}
 		}
 
-		if ($options['pageSize'])
-		{
+		if ($options['pageSize']) {
 			$this->listCollection->setPageSize($options['pageSize']);
 		}
 
-		if ($options['pageNumber'])
-		{
+		if ($options['pageNumber']) {
 			$this->listCollection->setPageNumber($options['pageNumber']);
 		}
 
@@ -789,6 +792,7 @@ abstract class BasePage
 	{
 		return extend([
 			'query' => $this->getListQueryFilters(),
+			'ruleCallbacks' => $this->getListRuleCallbacks(),
 			'limit' => $this->getListQueryLimit(),
 			'pageNumber' => $this->getListPageNumber(),
 			'pageSize' => $this->getListPageSize(),

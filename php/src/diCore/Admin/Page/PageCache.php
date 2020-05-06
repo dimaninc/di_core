@@ -7,6 +7,7 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Admin\FilterRule;
 use diCore\Entity\PageCache\Model;
 
 class PageCache extends \diCore\Admin\BasePage
@@ -27,13 +28,12 @@ class PageCache extends \diCore\Admin\BasePage
 
     protected function setupFilters()
     {
-        // todo: mongo collections to support filters
         $this->getFilters()
             ->addFilter([
                 'field' => 'uri',
                 'type' => 'string',
                 'title' => 'URI',
-                'where_tpl' => 'diaf_substr',
+                'rule' => FilterRule::contains,
             ])
             ->buildQuery();
     }
