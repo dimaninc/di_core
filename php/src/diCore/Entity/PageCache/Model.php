@@ -136,7 +136,7 @@ class Model extends \diCore\Database\Entity\Mongo\Model
     public function getCacheFilename()
     {
         $fn = trim($this->getUri(), '/');
-        $fn = str_replace(['#', '/'], '__', $fn);
+        $fn = str_replace(['#'], '__', $fn);
 
         if (!$fn) {
             $fn = '__home';
