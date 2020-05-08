@@ -1,11 +1,12 @@
-$widthTablet = 767px
-$widthPhoneSmall = 349px
+$widthTablet = 768px
+$widthTabletLandscape = 1024px
+$widthPhoneSmall = 350px
 $widthPhone = 450px
 $widthPhoneX = 812px
-$widthHiDPI = 1439px
-$widthMDPI = 1279px
+$widthHiDPI = 1440px
+$widthMDPI = 1280px
 $widthLaptopTiny = 920px
-$widthLaptopSmall = 1199px
+$widthLaptopSmall = 1200px
 
 $mqIe = " and (-ms-high-contrast: active), (-ms-high-contrast: none)"
 $mqPartPortrait = " and (max-aspect-ratio: 13/9)"
@@ -14,6 +15,8 @@ $mqPortrait = "screen" + $mqPartPortrait
 $mqLandscape = "screen" + $mqPartLandscape
 $mqTablet = "screen and (max-width: " + $widthTablet + ")"
 $mqNoTablet = "screen and (min-width: " + ($widthTablet + 1px) + ")"
+$mqTabletLandscape = "screen and (max-width: " + $widthTabletLandscape + ")"
+$mqNoTabletLandscape = "screen and (min-width: " + ($widthTabletLandscape + 1px) + ")"
 $mqPhone = "screen and (max-width: " + $widthPhone + ")"
 $mqPhoneSmall = "screen and (max-width: " + $widthPhoneSmall + ")"
 $mqPhoneX = "screen and (max-width: " + $widthPhoneX + ")"
