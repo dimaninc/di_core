@@ -26,6 +26,7 @@ class Vendor extends VendorContainer
 	const TINKOFF = 12;
 	const QPPI = 13;
 	const GOOGLE_PAY = 14;
+    const APPLE_PAY = 15;
 
 	public static $titles = [
 		self::YANDEX_MONEY => 'Яндекс.Деньги',
@@ -42,6 +43,7 @@ class Vendor extends VendorContainer
 		self::TINKOFF => 'КупиВКредит (Тинькофф Банк)',
 		self::QPPI => 'Куппи.ру',
         self::GOOGLE_PAY => 'Google Pay',
+        self::APPLE_PAY => 'Apple Pay',
 	];
 
 	public static $names = [
@@ -59,6 +61,7 @@ class Vendor extends VendorContainer
 		self::TINKOFF => 'tinkoff',
 		self::QPPI => 'qppi',
         self::GOOGLE_PAY => 'google-pay',
+        self::APPLE_PAY => 'apple-pay',
 	];
 
 	public static $codes = [
@@ -76,6 +79,7 @@ class Vendor extends VendorContainer
 		self::TINKOFF => 'KV',
 		self::QPPI => 'QP',
         self::GOOGLE_PAY => 'AC',
+        self::APPLE_PAY => 'AC',
 	];
 
 	public static $minLimits = [
@@ -93,5 +97,6 @@ class Vendor extends VendorContainer
 		self::TINKOFF => 3000,
 		self::QPPI => 100,
         self::GOOGLE_PAY => null,
+        self::APPLE_PAY => null,
 	];
 }
