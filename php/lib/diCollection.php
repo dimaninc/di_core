@@ -1537,13 +1537,11 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 			'raw' => false,
 		], $options);
 
-		if ($options['addAlias'])
-		{
+		if ($options['addAlias']) {
 			$field = $this->addAliasToField($field);
 		}
 
-		if (!$append)
-		{
+		if (!$append) {
 			$this->resetSelect();
 		}
 
@@ -1554,8 +1552,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function filterBy($field, $operator, $value = null)
 	{
-		if (func_num_args() == 2)
-		{
+		if (func_num_args() == 2) {
 			$value = $operator;
 			$operator = is_array($value) ? 'in' : '=';
 		}
@@ -1569,20 +1566,16 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		$field = \diModel::getLocalizedFieldName($field);
 
-		if (func_num_args() == 2)
-		{
+		if (func_num_args() == 2) {
 			return $this->filterBy($field, $operator);
-		}
-		else
-		{
+		} else {
 			return $this->filterBy($field, $operator, $value);
 		}
 	}
 
 	public function filterByExpression($field, $operator, $value = null)
 	{
-		if (func_num_args() == 2)
-		{
+		if (func_num_args() == 2) {
 			$value = $operator;
 			$operator = is_array($value) ? 'in' : '=';
 		}
@@ -1594,7 +1587,10 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function startsWith($field, $value)
 	{
-		return $this->filterManual("INSTR(" . $field . ", '" . $value . "') = 1");
+	    $field = $this->getDb()->escapeField($field);
+	    $value = $this->getDb()->escapeValue($value);
+
+		return $this->filterManual("INSTR(" . $field . ", " . $value . ") = 1");
 		/* for non-MySql
 		return $this->extFilterBy($field, 'LIKE', $value . '%', [
 			'rawValue' => true,
@@ -1609,7 +1605,10 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function contains($field, $value)
 	{
-		return $this->filterManual("INSTR(" . $field . ", '" . $value . "') > 0");
+        $field = $this->getDb()->escapeField($field);
+        $value = $this->getDb()->escapeValue($value);
+
+        return $this->filterManual("INSTR(" . $field . ", " . $value . ") > 0");
 		/* for non-MySql
 		return $this->extFilterBy($field, 'LIKE', '%' . $value . '%', [
 			'rawValue' => true,
@@ -1636,12 +1635,23 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this;
 	}
 
+	public function filterOr($expressionsAr)
+    {
+        $ar = [];
+
+        foreach ($expressionsAr as $k => $v) {
+            $ar[] = $this->getDb()->escapeField($k) . '=' .
+                $this->getDb()->escapeValue($v);
+        }
+
+        return $this->filterManual(join(' OR ', $ar));
+    }
+
 	public function orderBy($field, $direction = null)
 	{
 		$direction = strtoupper($direction ?: 'ASC');
 
-		if (!in_array($direction, $this->possibleDirections))
-		{
+		if (!in_array($direction, $this->possibleDirections)) {
 			throw new Exception("Unknown direction '{$direction}'");
 		}
 
@@ -1665,8 +1675,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		$direction = strtoupper($direction ?: 'ASC');
 
-		if (!in_array($direction, $this->possibleDirections))
-		{
+		if (!in_array($direction, $this->possibleDirections)) {
 			throw new Exception("Unknown direction '{$direction}'");
 		}
 
@@ -1693,13 +1702,11 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	public function groupBy($fields)
 	{
-		if (!is_array($fields))
-		{
+		if (!is_array($fields)) {
 			$fields = [$fields];
 		}
 
-		foreach ($fields as $field)
-		{
+		foreach ($fields as $field) {
 			$field = $this->addAliasToField($field);
 
 			$this->sqlParts['groupBy'][] = compact('field');
@@ -1717,18 +1724,15 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	public function select($fields, $append = false)
 	{
-		if (!is_array($fields))
-		{
+		if (!is_array($fields)) {
 			$fields = [$fields];
 		}
 
-		if (!$append)
-		{
+		if (!$append) {
 			$this->resetSelect();
 		}
 
-		foreach ($fields as $field)
-		{
+		foreach ($fields as $field) {
 			$this->extSelect($field, true);
 		}
 
@@ -1776,53 +1780,37 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	protected function getBuiltQueryWhere()
 	{
-		if ($this->sqlParts['where'])
-		{
+		if ($this->sqlParts['where']) {
 			return 'WHERE ' . join(' AND ', array_filter(array_map(function($val) {
 				$value = $val['value'];
 
-				if (!empty($val['options']['manual']))
-				{
+				if (!empty($val['options']['manual'])) {
 					return $val['expression'];
-				}
-				elseif (!empty($val['options']['rawValue']))
-				{
-					if (is_array($value))
-					{
+				} elseif (!empty($val['options']['rawValue'])) {
+					if (is_array($value)) {
 						$value = '(' . join(',', $value) . ')';
 					}
-				}
-				else
-				{
-					if (is_array($value))
-					{
-						if (strtolower($val['operator']) == 'between')
-						{
+				} else {
+					if (is_array($value)) {
+						if (strtolower($val['operator']) == 'between') {
 							$value = join(' AND ', array_map(function($v) {
 								return $this->getDb()->escapeValue($v);
 							}, $value));
-						}
-						else
-						{
+						} else {
 							$value = count($value)
 								? '(' . join(',', array_map(function($v) {
 							            return $this->getDb()->escapeValue($v);
 						            }, $value)) . ')'
 								: null;
 						}
-					}
-					else
-					{
+					} else {
 						$value = $this->getDb()->escapeValue($val['value']);
 					}
 				}
 
-				if (is_array($val['value']))
-				{
-					if (count($val['value']))
-					{
-						switch ($val['operator'])
-						{
+				if (is_array($val['value'])) {
+					if (count($val['value'])) {
+						switch ($val['operator']) {
 							case '=':
 								$val['operator'] = 'in';
 								break;
@@ -1831,11 +1819,8 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 								$val['operator'] = 'not in';
 								break;
 						}
-					}
-					else
-					{
-						switch (trim(strtolower($val['operator'])))
-						{
+					} else {
+						switch (trim(strtolower($val['operator']))) {
 							case '=':
 							case 'in':
 								return '1 = 0';
@@ -1845,9 +1830,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 								return null;
 						}
 					}
-				}
-				elseif (is_null($val['value']))
-				{
+				} elseif (is_null($val['value'])) {
 					switch ($val['operator'])
 					{
 						case '=':
@@ -1874,8 +1857,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	protected function getBuiltQueryOrderBy()
 	{
-		if ($this->sqlParts['orderBy'])
-		{
+		if ($this->sqlParts['orderBy']) {
 			return 'ORDER BY ' . join(',', array_map(function($val) {
 				$field = empty($val['options']['rawValue'])
 					? $this->getDb()->escapeField($val['field'])

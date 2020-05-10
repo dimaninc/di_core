@@ -28,7 +28,7 @@ abstract class diOAuth2Facebook extends diOAuth2
 
 		$tokenInfo = json_decode($response = static::makeHttpRequest(static::authUrlBase, $this->getAuthUrlParams()));
 
-		if (!empty($tokenInfo))
+		if (!empty($tokenInfo->access_token))
 		{
 			$token = $tokenInfo->access_token;
 

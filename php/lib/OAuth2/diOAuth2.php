@@ -1,4 +1,7 @@
 <?php
+
+use diCore\Tool\Logger;
+
 abstract class diOAuth2
 {
 	const REQUEST_GET = 1;
@@ -253,13 +256,13 @@ abstract class diOAuth2
 				->retrieveProfile()
 				->syncWithUser();
 
-			if (!diAuth::i()->authorized())
-			{
+			if (!diAuth::i()->authorized()) {
 				diAuth::i()->forceAuthorize($user);
+
+				Logger::getInstance()->log('force auth, ip=' . get_user_ip());
 			}
 
-			if (is_callable($callback = $this->postCallback))
-			{
+			if (is_callable($callback = $this->postCallback)) {
 				$callback($this, $user);
 			}
 		}
@@ -269,27 +272,37 @@ abstract class diOAuth2
 
 	protected function getUserModelByProfile()
 	{
-		if (diAuth::i()->authorized())
-		{
-			$user = diAuth::i()->getUserModel();
-		}
-		else
-		{
+        Logger::getInstance()->log('authorized? ' . (\diAuth::i()->authorized() ? 1 : 0));
+
+		if (\diAuth::i()->authorized()) {
+			$user = \diAuth::i()->getUserModel();
+
+            Logger::getInstance()->variable('authorized user', $user->get());
+		} else {
 			$q = [];
 
-			if ($this->getProfile()->getUid())
-			{
-				$q[] = diOAuth2Vendors::name($this->vendorId) . "_id = '" . $this->getProfile()->getUid() . "'";
+			if ($this->getProfile()->getUid()) {
+				$q[diOAuth2Vendors::name($this->vendorId) . '_id'] =
+                    $this->getProfile()->getUid();
 			}
 
-			if ($this->getProfile()->hasEmail())
-			{
-				$q[] = "email = '{$this->getProfile()->getEmail()}'";
+			if ($this->getProfile()->hasEmail()) {
+				$q['email'] = $this->getProfile()->getEmail();
 			}
 
-			$user = $q
-				? \diCollection::create(\diTypes::user, "WHERE " . join(" OR ", $q))->getFirstItem()
-				: \diModel::create(\diTypes::user);
+            Logger::getInstance()->variable('user query', $q);
+
+            $col = \diCollection::create(\diTypes::user);
+
+            if ($q) {
+                $col->filterOr($q);
+            } else {
+			    $col->makeEmpty();
+            }
+
+			$user = $col->getFirstItem();
+
+            Logger::getInstance()->variable('user found', $user->get());
 		}
 
 		return $user;
@@ -301,8 +314,7 @@ abstract class diOAuth2
 	 */
 	protected function syncWithUser()
 	{
-		if (!$this->getProfile()->exists())
-		{
+		if (!$this->getProfile()->exists()) {
 			throw new \Exception("No profile retrieved");
 		}
 
@@ -357,9 +369,8 @@ abstract class diOAuth2
 	{
 		$this->profileRawData = $data;
 
-		if ($data)
-		{
-			var_debug("OAuth2 data " . diOAuth2Vendors::name($this->getVendorId()), $data);
+		if ($data) {
+			Logger::getInstance()->variable("OAuth2 data " . diOAuth2Vendors::name($this->getVendorId()), $data);
 		}
 
 		return $this;
