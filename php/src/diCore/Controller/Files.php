@@ -123,12 +123,11 @@ class Files extends \diBaseAdminController
 		];
 
 		$table = StringHelper::in($this->param(0));
-		$id  = (int)$this->param(1);
+		$id  = StringHelper::in($this->param(1));
 		$field = StringHelper::in($this->param(2));
-		$direction = strtolower(StringHelper::in($this->param(3)));
+		$direction = mb_strtolower(StringHelper::in($this->param(3)));
 
-		switch ($direction)
-		{
+		switch ($direction) {
 			case 'cw':
 				$angle = 90;
 				break;
@@ -144,8 +143,7 @@ class Files extends \diBaseAdminController
 		$model = \diModel::createForTableNoStrict($table, $id, 'id');
 		$files = $model->getFilesForRotation($field);
 
-		foreach ($files as $fn)
-		{
+		foreach ($files as $fn) {
 			static::doRotate($angle, $fn);
 		}
 

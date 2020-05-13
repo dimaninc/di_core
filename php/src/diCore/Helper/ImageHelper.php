@@ -19,16 +19,11 @@ class ImageHelper
 
 	protected static function vendor()
 	{
-		if (class_exists('\phMagick\Core\Runner') && false)
-		{
+		if (class_exists('\phMagick\Core\Runner') && false) {
 			return self::PH_MAGICK;
-		}
-		elseif (class_exists('\Imagick'))
-		{
+		} elseif (class_exists('\Imagick')) {
 			return self::IMAGICK;
-		}
-		elseif (function_exists('imagepng'))
-		{
+		} elseif (function_exists('imagepng')) {
 			return self::GD;
 		}
 
@@ -44,8 +39,7 @@ class ImageHelper
 		    throw new \Exception('File not found: ' . $origInFilename . ', ' . $inFilename);
         }
 
-		switch (self::vendor())
-		{
+		switch (self::vendor()) {
 			case self::PH_MAGICK:
 				self::rotatePhMagick($angle, $inFilename, $outFilename, $backgroundColor);
 				break;
@@ -71,12 +65,12 @@ class ImageHelper
 
 	public static function rotateIMagick($angle, $inFilename, $outFilename = null, $backgroundColor = self::DEFAULT_BACKGROUND_COLOR)
 	{
-		if ($outFilename === null)
-		{
+		if ($outFilename === null) {
 			$outFilename = $inFilename;
 		}
 
 		$im = new \Imagick($inFilename);
+		$im->stripImage();
 		$im->rotateImage($backgroundColor, $angle);
 		$im->writeImage($outFilename);
 		$im->clear();
@@ -84,29 +78,24 @@ class ImageHelper
 
 	public static function rotateGd($angle, $inFilename, $outFilename = null, $backgroundColor = self::DEFAULT_BACKGROUND_COLOR)
 	{
-		if ($outFilename === null)
-		{
+		if ($outFilename === null) {
 			$outFilename = $inFilename;
 		}
 
 		$img = new \diImage();
 		$source = $img->open($inFilename);
 
-		if ($img->isImageType(\diImage::TYPE_PNG))
-		{
+		if ($img->isImageType(\diImage::TYPE_PNG)) {
 			imagealphablending($source, false);
 			imagesavealpha($source, true);
 			$color = imagecolorallocatealpha($source, 0, 0, 0, 127);
-		}
-		else
-		{
+		} else {
 			$color = rgb_allocate($source, $backgroundColor);
 		}
 
 		$rotation = imagerotate($source, -$angle, $color);
 
-		if ($img->isImageType(\diImage::TYPE_PNG))
-		{
+		if ($img->isImageType(\diImage::TYPE_PNG)) {
 			imagealphablending($rotation, false);
 			imagesavealpha($rotation, true);
 		}
@@ -122,8 +111,7 @@ class ImageHelper
 		$watermarkFilename = realpath($watermarkFilename);
 		$inFilename = realpath($inFilename);
 
-		switch (self::vendor())
-		{
+		switch (self::vendor()) {
 			case self::PH_MAGICK:
 				self::watermarkPhMagick($watermarkFilename, $inFilename, $outFilename, $x, $y);
 				break;
@@ -166,8 +154,7 @@ class ImageHelper
 
 	public static function watermarkIMagick($watermarkFilename, $inFilename, $outFilename = null, $x = 'right', $y = 'bottom')
 	{
-		if ($outFilename === null)
-		{
+		if ($outFilename === null) {
 			$outFilename = $inFilename;
 		}
 
@@ -185,8 +172,7 @@ class ImageHelper
 
 	public static function watermarkGd($watermarkFilename, $inFilename, $outFilename = null, $x = 'right', $y = 'bottom')
 	{
-		if ($outFilename === null)
-		{
+		if ($outFilename === null) {
 			$outFilename = $inFilename;
 		}
 
