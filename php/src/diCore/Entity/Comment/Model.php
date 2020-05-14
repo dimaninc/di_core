@@ -120,7 +120,7 @@ class Model extends \diModel
 
 	public function getContentHtmlWithLinks()
 	{
-		return nl2br(highlight_urls(StringHelper::out($this->getContent())));
+		return nl2br(StringHelper::wrapUrlWithTag(StringHelper::out($this->getContent())));
 	}
 
 	public function beforeSave()
