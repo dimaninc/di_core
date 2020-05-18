@@ -9,9 +9,10 @@
 namespace diCore\Payment;
 
 use diCore\Payment\Mixplat\MobileVendors;
+use diCore\Payment\Paymaster\Vendor as PaymasterVendor;
 use diCore\Payment\Robokassa\Vendor as RobokassaVendor;
-use diCore\Payment\Yandex\Vendor as YandexKassaVendor;
 use diCore\Payment\Tinkoff\Vendor as TinkoffVendor;
+use diCore\Payment\Yandex\Vendor as YandexKassaVendor;
 use diCore\Tool\SimpleContainer;
 
 class System extends SimpleContainer
@@ -24,6 +25,7 @@ class System extends SimpleContainer
 	const sms_online = 6;
 	const tinkoff = 7;
 	const sberbank = 8;
+	const paymaster = 9;
 
 	public static $titles = [
 		self::webmoney => 'Webmoney',
@@ -34,6 +36,7 @@ class System extends SimpleContainer
 		self::sms_online => 'SMS online',
 		self::tinkoff => 'Тинькофф',
         self::sberbank => 'Сбербанк',
+        self::paymaster => 'Paymaster',
 	];
 
 	public static $names = [
@@ -45,6 +48,7 @@ class System extends SimpleContainer
 		self::sms_online => 'sms_online',
 		self::tinkoff => 'tinkoff',
         self::sberbank => 'sberbank',
+        self::paymaster => 'paymaster',
 	];
 
 	public static function getSystemClass($systemId, $vendorId = null)
@@ -65,6 +69,9 @@ class System extends SimpleContainer
 			case self::webmoney:
 			case self::paypal:
 				return self::class;
+
+            case self::paymaster:
+                return PaymasterVendor::class;
 
 			default:
 				throw new \Exception('System ' . self::name($systemId) . ' not supported yet');
