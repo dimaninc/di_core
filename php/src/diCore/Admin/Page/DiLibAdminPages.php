@@ -8,6 +8,7 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Database\Connection;
 use diCore\Tool\Code\AdminPagesManager;
 
 class DiLibAdminPages extends \diCore\Admin\BasePage
@@ -15,7 +16,7 @@ class DiLibAdminPages extends \diCore\Admin\BasePage
 	/** @var AdminPagesManager */
 	private $Manager;
 
-	private $pseudoTable = "di_lib_admin_pages";
+	private $pseudoTable = 'di_lib_admin_pages';
 
 	protected function initTable()
 	{
@@ -35,57 +36,70 @@ class DiLibAdminPages extends \diCore\Admin\BasePage
 
 	public function renderForm()
 	{
+        $tables = [];
+
+        /**
+         * @var string $name
+         * @var Connection $conn
+         */
+        foreach (Connection::getAll() as $name => $conn) {
+            foreach ($conn->getTableNames() as $table) {
+                $n = $name . '::' . $table;
+
+                $tables[] = $n;
+            }
+        }
 		$this->getTpl()
 			->assign([
-				"ACTION" => \diCore\Admin\Base::getPageUri($this->pseudoTable, "submit"),
-			], "ADMIN_FORM_");
+				'ACTION' => \diCore\Admin\Base::getPageUri($this->pseudoTable, 'submit'),
+			], 'ADMIN_FORM_');
 
 		$this->getForm()
 			->setData('namespace', \diLib::getFirstNamespace())
-			->setSelectFromDbInput("table", $this->getDb()->q("SHOW TABLE STATUS"), "%Name%", "%Name%")
+            ->setSelectFromArray2Input('table', $tables)
 			->setSelectFromArray2Input('namespace', array_merge([''], \diLib::getAllNamespaces()));
 	}
 
 	public function submitForm()
 	{
 		$this->getManager()->createPage(
-			$this->getSubmit()->getData("table"),
-			$this->getSubmit()->getData("caption"),
-			$this->getSubmit()->getData("classname"),
-			$this->getSubmit()->getData("namespace")
+            explode('::', $this->getSubmit()->getData('table')),
+			$this->getSubmit()->getData('caption'),
+			$this->getSubmit()->getData('classname'),
+			$this->getSubmit()->getData('namespace')
 		);
 	}
 
 	protected function afterSubmitForm()
 	{
-		$this->redirectTo(\diCore\Admin\Base::getPageUri($this->pseudoTable, "form"));
+		$this->redirectTo(\diCore\Admin\Base::getPageUri($this->pseudoTable, 'form'));
 	}
 
 	public function getFormFields()
 	{
 		return [
-			"table" => [
-				"type" => "string",
-				"title" => "Таблица",
-				"default" => "",
+			'table' => [
+				'type' => 'string',
+				'title' => 'Таблица',
+				'default' => '',
 			],
 
-			"namespace" => [
-				"type" => "string",
-				"title" => "Местоположение",
-				"default" => "",
+			'namespace' => [
+				'type' => 'string',
+				'title' => 'Местоположение',
+				'default' => '',
 			],
 
-			"caption" => [
-				"type" => "string",
-				"title" => "Название модуля (необязательно)",
-				"default" => "",
+			'caption' => [
+				'type' => 'string',
+				'title' => 'Название модуля (необязательно)',
+				'default' => '',
 			],
 
-			"classname" => [
-				"type" => "string",
-				"title" => "Имя класса (необязательно)",
-				"default" => "",
+			'classname' => [
+				'type' => 'string',
+				'title' => 'Имя класса (необязательно)',
+				'default' => '',
 			],
 		];
 	}
@@ -97,6 +111,6 @@ class DiLibAdminPages extends \diCore\Admin\BasePage
 
 	public function getModuleCaption()
 	{
-		return "Админ.страницы";
+		return 'Админ.страницы';
 	}
 }

@@ -1,0 +1,19 @@
+<script type="text/javascript">
+    $(function() {
+        var tablesInfoAr = {{ tables_info|json_encode|raw }},
+            $table = $('select[name="table"]'),
+            $info = $('<span class="model-info"></span>');
+
+        function show() {
+            var t = $table.val(),
+                m = tablesInfoAr[t]['model'] || '<i>&ndash;</i>',
+                c = tablesInfoAr[t]['collection'] || '<i>&ndash;</i>';
+
+            $info.html('<b>Model:</b> ' + m + ', <b>Collection:</b> ' + c);
+        }
+
+        $table.on('change blur focus click', show).closest('.value').append($info);
+
+        show();
+    });
+</script>

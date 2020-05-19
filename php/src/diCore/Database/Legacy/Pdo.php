@@ -37,8 +37,7 @@ abstract class Pdo extends \diDB
 			return $this->_log("unable to connect to host $this->host: " . $e->getMessage());
 		}
 
-		if (\diCore\Data\Config::isInitiating())
-		{
+		if (\diCore\Data\Config::isInitiating()) {
 			$this->__q($this->getCreateDatabaseQuery());
 		}
 
@@ -142,8 +141,7 @@ abstract class Pdo extends \diDB
 	{
 		$s = $this->link->quote($s);
 
-		if (strlen($s) > 2)
-		{
+		if (strlen($s) > 2) {
 			$s = substr($s, 1, strlen($s) - 2);
 		}
 

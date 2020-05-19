@@ -8,6 +8,8 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Admin\Base;
+use diCore\Database\Connection;
 use diCore\Tool\Code\ModelsManager;
 
 class DiLibModels extends \diCore\Admin\BasePage
@@ -15,7 +17,7 @@ class DiLibModels extends \diCore\Admin\BasePage
 	/** @var ModelsManager */
 	private $Manager;
 
-	private $pseudoTable = "di_lib_models";
+	private $pseudoTable = 'di_lib_models';
 
 	protected function initTable()
 	{
@@ -35,92 +37,103 @@ class DiLibModels extends \diCore\Admin\BasePage
 
 	public function renderForm()
 	{
+        $tables = [];
+
+        /**
+         * @var string $name
+         * @var Connection $conn
+         */
+        foreach (Connection::getAll() as $name => $conn) {
+            foreach ($conn->getTableNames() as $table) {
+                $n = $name . '::' . $table;
+
+                $tables[] = $n;
+            }
+        }
+
 		$this->getForm()
 			->setData('namespace', \diLib::getFirstNamespace())
-			->setSelectFromDbInput("table", $this->getDb()->q("SHOW TABLE STATUS"), "%Name%", "%Name%")
+			->setSelectFromArray2Input('table', $tables)
 			->setSelectFromArray2Input('namespace', array_merge([''], \diLib::getAllNamespaces()));
 
 		/** @var \diSelect $sel */
-		$sel = $this->getForm()->getInput("table");
+		$sel = $this->getForm()->getInput('table');
 		$tablesInfoAr = [];
 
-		foreach ($sel->getItemsAr() as $a)
-		{
-			$table = $a["value"];
+		foreach ($sel->getItemsAr() as $a) {
+			list($connName, $table) = explode('::', $a['value']);
 			$name = ModelsManager::getModelNameByTable($table);
 
-			$tablesInfoAr[$table] = [
-				"model" => \diModel::existsFor($name),
-				"collection" => \diCollection::existsFor($name),
+			$tablesInfoAr[$a['value']] = [
+				'model' => \diModel::existsFor($name),
+				'collection' => \diCollection::existsFor($name),
 			];
 		}
 
+		$this->setAfterFormTemplate([
+		    'tables_info' => $tablesInfoAr,
+        ]);
+
 		$this->getTpl()
-			->define("`di_lib_models/form", [
-				"after_form",
-			])
 			->assign([
-				"TABLES_INFO_AR" => json_encode($tablesInfoAr),
-			])
-			->assign([
-				"ACTION" => \diCore\Admin\Base::getPageUri($this->pseudoTable, "submit"),
-			], "ADMIN_FORM_");
+				'ACTION' => Base::getPageUri($this->pseudoTable, 'submit'),
+			], 'ADMIN_FORM_');
 	}
 
 	public function submitForm()
 	{
 		$this->getManager()->createModel(
-			$this->getSubmit()->getData("table"),
-			$this->getSubmit()->getData("needed"),
-			$this->getSubmit()->getData("classname"),
-			$this->getSubmit()->getData("collection_needed"),
-			$this->getSubmit()->getData("collection_classname"),
-			$this->getSubmit()->getData("namespace")
+			explode('::', $this->getSubmit()->getData('table')),
+			$this->getSubmit()->getData('needed'),
+			$this->getSubmit()->getData('classname'),
+			$this->getSubmit()->getData('collection_needed'),
+			$this->getSubmit()->getData('collection_classname'),
+			$this->getSubmit()->getData('namespace')
 		);
 	}
 
 	protected function afterSubmitForm()
 	{
-		$this->redirectTo(\diCore\Admin\Base::getPageUri($this->pseudoTable, "form"));
+		$this->redirectTo(Base::getPageUri($this->pseudoTable, 'form'));
 	}
 
 	public function getFormFields()
 	{
 		return [
-			"table" => [
-				"type" => "string",
-				"title" => "Таблица",
-				"default" => "",
+			'table' => [
+				'type' => 'string',
+				'title' => 'Таблица',
+				'default' => '',
 			],
 
-			"namespace" => [
-				"type" => "string",
-				"title" => "Местоположение",
-				"default" => "",
+			'namespace' => [
+				'type' => 'string',
+				'title' => 'Местоположение',
+				'default' => '',
 			],
 
-			"needed" => [
-				"type" => "checkbox",
-				"title" => "Создать модель",
-				"default" => 1,
+			'needed' => [
+				'type' => 'checkbox',
+				'title' => 'Создать модель',
+				'default' => 1,
 			],
 
-			"classname" => [
-				"type" => "string",
-				"title" => "Имя класса модели (необязательно)",
-				"default" => "",
+			'classname' => [
+				'type' => 'string',
+				'title' => 'Имя класса модели (необязательно)',
+				'default' => '',
 			],
 
-			"collection_needed" => [
-				"type" => "checkbox",
-				"title" => "Создать коллекцию",
-				"default" => 1,
+			'collection_needed' => [
+				'type' => 'checkbox',
+				'title' => 'Создать коллекцию',
+				'default' => 1,
 			],
 
-			"collection_classname" => [
-				"type" => "string",
-				"title" => "Имя класса коллекции (необязательно)",
-				"default" => "",
+			'collection_classname' => [
+				'type' => 'string',
+				'title' => 'Имя класса коллекции (необязательно)',
+				'default' => '',
 			],
 		];
 	}
@@ -132,6 +145,6 @@ class DiLibModels extends \diCore\Admin\BasePage
 
 	public function getModuleCaption()
 	{
-		return "Модели и коллекции";
+		return 'Модели и коллекции';
 	}
 }

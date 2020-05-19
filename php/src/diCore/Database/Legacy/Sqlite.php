@@ -8,7 +8,6 @@
 
 namespace diCore\Database\Legacy;
 
-
 class Sqlite extends Pdo
 {
 	protected $driver = 'sqlite';
@@ -24,11 +23,22 @@ class Sqlite extends Pdo
 		$ar = [];
 
 		$tables = $this->q("SELECT * FROM sqlite_master WHERE type = 'table'");
-		while ($table = $this->fetch_array($tables))
-		{
+		while ($table = $this->fetch_array($tables)) {
 			$ar[] = $table['name'];
 		}
 
 		return $ar;
 	}
+
+    public function getFields($table)
+    {
+        $fields = [];
+
+        $rs = $this->q("PRAGMA table_info(" . $this->escapeTable($table) . ")");
+        while ($r = $this->fetch_array($rs)) {
+            $fields[$r['name']] = $r['type'];
+        }
+
+        return $fields;
+    }
 }

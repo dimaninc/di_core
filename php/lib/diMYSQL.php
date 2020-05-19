@@ -126,11 +126,22 @@ class diMYSQL extends diDB
 		$ar = [];
 
 		$tables = $this->q("SHOW TABLES");
-		while ($table = $this->fetch_array($tables))
-		{
+		while ($table = $this->fetch_array($tables)) {
 			$ar[] = current($table);
 		}
 
 		return $ar;
 	}
+
+	public function getFields($table)
+    {
+        $fields = [];
+
+        $rs = $this->q("SHOW FIELDS FROM " . $this->escapeTable($table));
+        while ($r = $this->fetch($rs)) {
+            $fields[$r->Field] = $r->Type;
+        }
+
+        return $fields;
+    }
 }

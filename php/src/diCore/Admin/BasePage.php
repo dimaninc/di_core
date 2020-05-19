@@ -839,8 +839,7 @@ abstract class BasePage
 
 	protected function beforeRenderList()
 	{
-		if ($this->listMode == self::LIST_LIST)
-		{
+		if ($this->listMode == self::LIST_LIST) {
 			$this->getTpl()
 				->define("`_default/list", [
 					"page",
@@ -857,12 +856,10 @@ abstract class BasePage
 				"GRID_ROWS" => "",
 			]);
 
-		if ($this->hasTable())
-	    {
+		if ($this->hasTable()) {
 		    $this->initFilters();
 
-		    switch ($this->listMode)
-		    {
+		    switch ($this->listMode) {
 			    case self::LIST_LIST:
 				    $listOptions = $this->getOptions(self::$listOptions);
 				    $this->List = new \diAdminList($this, $listOptions);
@@ -879,25 +876,21 @@ abstract class BasePage
 
 	protected function initFilters()
 	{
-		if (!$this->Filters && $filters = $this->getOption('filters'))
-		{
+		if (!$this->Filters && $filters = $this->getOption('filters')) {
 			$this->Filters = new \diAdminFilters($this);
 			$this->getFilters()->setSortableState(isset($filters['sortByAr']));
 
-			if (isset($filters['defaultSorter']))
-			{
+			if (isset($filters['defaultSorter'])) {
 				$this->getFilters()->set_default_sorter($filters['defaultSorter']);
 			}
 
-			if (isset($filters['buttonOptions']))
-			{
+			if (isset($filters['buttonOptions'])) {
 				$this->getFilters()->setButtonOptions($filters['buttonOptions']);
 			}
 
 			$this->setupFilters();
 
-			if ($this->getFilters()->getSortableState())
-			{
+			if ($this->getFilters()->getSortableState()) {
 				$this->getFilters()
 					->setSelectFromArrayInput('sortby', $filters['sortByAr'])
 					->setSelectFromArrayInput('dir', \diAdminFilters::$dirAr[$this->getLanguage()]);
@@ -909,8 +902,7 @@ abstract class BasePage
 
 	protected function setupFilters()
 	{
-		if ($this->filtersBlockNeeded())
-		{
+		if ($this->filtersBlockNeeded()) {
 			$this->getFilters()
 				->buildQuery();
 		}
@@ -920,8 +912,7 @@ abstract class BasePage
 
 	public function setListControlPanelTemplate($template = null, $data = [])
 	{
-		if ($template === null)
-		{
+		if ($template === null) {
 			$template = 'admin/' . $this->getTable() . '/list_control_panel';
 		}
 
@@ -936,8 +927,13 @@ abstract class BasePage
 
 	public function setBeforeTableTemplate($template = null, $data = [])
 	{
-		if ($template === null)
-		{
+        if (is_array($template) && !$data) {
+            $data = $template;
+            $template = null;
+        }
+
+
+        if ($template === null) {
 			$template = 'admin/' . $this->getTable() . '/before_list';
 		}
 
@@ -949,8 +945,12 @@ abstract class BasePage
 
 	public function setAfterTableTemplate($template = null, $data = [])
 	{
-		if ($template === null)
-		{
+        if (is_array($template) && !$data) {
+            $data = $template;
+            $template = null;
+        }
+
+        if ($template === null) {
 			$template = 'admin/' . $this->getTable() . '/after_list';
 		}
 
@@ -962,8 +962,13 @@ abstract class BasePage
 
 	public function setBeforeFormTemplate($template = null, $data = [])
 	{
-		if ($template === null)
-		{
+        if (is_array($template) && !$data) {
+            $data = $template;
+            $template = null;
+        }
+
+
+        if ($template === null) {
 			$template = 'admin/' . $this->getTable() . '/before_form';
 		}
 
@@ -975,8 +980,12 @@ abstract class BasePage
 
 	public function setAfterFormTemplate($template = null, $data = [])
 	{
-		if ($template === null)
-		{
+	    if (is_array($template) && !$data) {
+	        $data = $template;
+	        $template = null;
+        }
+
+		if ($template === null) {
 			$template = 'admin/' . $this->getTable() . '/after_form';
 		}
 

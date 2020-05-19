@@ -49,15 +49,13 @@ class Mongo extends \diDB
 	{
 		$s = 'mongodb://';
 
-		if ($this->getUsername())
-		{
+		if ($this->getUsername()) {
 			$s .= $this->getUsername() . ':' . $this->getPassword() . '@';
 		}
 
 		$s .= $this->getHost();
 
-		if ($this->getPort())
-		{
+		if ($this->getPort()) {
 			$s .= ':' . $this->getPort();
 		}
 
@@ -96,8 +94,7 @@ class Mongo extends \diDB
 
 	public static function convertDirection($direction)
 	{
-		switch (mb_strtolower($direction))
-		{
+		switch (mb_strtolower($direction)) {
 			case 'asc':
 				$direction = 1;
 				break;
@@ -112,8 +109,7 @@ class Mongo extends \diDB
 
 	public function rs($table, $q_ending = "", $q_fields = "*")
 	{
-		if (is_array($q_ending))
-		{
+		if (is_array($q_ending)) {
 			$ar = extend([
 				'filter' => [],
 				'sort' => [],
@@ -121,8 +117,7 @@ class Mongo extends \diDB
 				'limit' => null,
 			], $q_ending);
 
-			foreach ($ar['sort'] as $field => &$direction)
-			{
+			foreach ($ar['sort'] as $field => &$direction) {
 				$direction = static::convertDirection($direction);
 			}
 
@@ -133,9 +128,7 @@ class Mongo extends \diDB
 			$cursor = $this->getCollectionResource($table)->find($ar['filter'], $options);
 
 			return $cursor;
-		}
-		else
-		{
+		} else {
 			throw new \Exception('Mongo can not execute queries, array filter needed');
 		}
 	}
@@ -245,11 +238,22 @@ class Mongo extends \diDB
 		$ar = [];
 
 		/** @var CollectionInfo $col */
-		foreach ($this->getLink()->listCollections() as $col)
-		{
+		foreach ($this->getLink()->listCollections() as $col) {
 			$ar[] = $col->getName();
 		}
 
 		return $ar;
 	}
+
+    public function getFields($table)
+    {
+        $fields = [];
+
+        $ar = $this->ar($table) ?: [];
+        foreach ($ar as $name => $value) {
+            $fields[$name] = gettype($value);
+        }
+
+        return $fields;
+    }
 }

@@ -8,6 +8,7 @@
 
 namespace diCore\Tool\Code;
 
+use diCore\Database\Connection;
 use diCore\Helper\StringHelper;
 use diCore\Helper\FileSystemHelper;
 use diCore\Data\Config;
@@ -99,6 +100,13 @@ class AdminPagesManager
 
 	public function createPage($table, $caption, $className, $namespace = '')
 	{
+        // connection::table
+        if (is_array($table)) {
+            list($connName, $table) = $table;
+        } else {
+            $connName = null;
+        }
+
 		$this->setNamespace($namespace);
 
 		$contents = <<<'EOF'
@@ -174,11 +182,11 @@ class %3$s extends \diCore\Admin\BasePage
 }
 EOF;
 
-		$fields = $this->getFieldsOfTable($table);
+		$fields = $this->getFieldsOfTable($connName, $table);
 		$className = $className ?: self::getClassNameByTable($table, $this->getNamespace());
 		$caption = $caption ?: \diTypes::getTitle(\diTypes::getId($table));
 		$fieldsInfo = $this->getFieldsInfo($fields);
-		$columns = $this->getColumns($table);
+		$columns = $this->getColumns($connName, $table);
 		$sortBy = isset($fields['order_num']) ? 'order_num' : 'id';
 		$dir = isset($fields['order_num']) ? 'ASC' : 'DESC';
 
@@ -199,8 +207,7 @@ EOF;
 
 		$fn = $this->getPageFilename($className);
 
-		if (is_file(Config::getSourcesFolder() . $fn))
-		{
+		if (is_file(Config::getSourcesFolder() . $fn)) {
 			throw new \Exception("Admin page $fn already exists");
 		}
 
@@ -219,8 +226,7 @@ EOF;
 
 	protected function getPageFilename($className)
 	{
-		if ($this->getNamespace())
-		{
+		if ($this->getNamespace()) {
 			$className = ModelsManager::extractClass($className);
 		}
 
@@ -234,10 +240,8 @@ EOF;
 			'local' => [],
 		];
 
-		foreach ($fields as $field => $type)
-		{
-			if (in_array($field, ['id']))
-			{
+		foreach ($fields as $field => $type) {
+			if (in_array($field, ['id'])) {
 				continue;
 			}
 
@@ -305,27 +309,19 @@ EOF;
 
 	protected function tuneType($field, $type)
 	{
-		if (in_array($field, $this->checkboxFieldNames))
-		{
+		if (in_array($field, $this->checkboxFieldNames)) {
 			return 'checkbox';
-		}
- 		elseif (in_array($field, $this->dateTimeFieldNames))
-		{
+		} elseif (in_array($field, $this->dateTimeFieldNames)) {
 			return 'datetime_str';
-		}
-		elseif (in_array($field, $this->picFieldNames))
-		{
+		} elseif (in_array($field, $this->picFieldNames)) {
 			return 'pic';
-		}
-		elseif (in_array($field, $this->orderNumFieldNames))
-		{
+		} elseif (in_array($field, $this->orderNumFieldNames)) {
 			return 'order_num';
 		}
 
 		$type = preg_replace('/\(.+$/', '', mb_strtolower($type));
 
-		switch ($type)
-		{
+		switch ($type) {
 			case 'timestamp':
 			case 'datetime':
 				return 'datetime_str';
@@ -336,6 +332,11 @@ EOF;
 			case 'time':
 				return 'time_str';
 
+            case 'double':
+            case 'float':
+                return $type;
+
+            case 'integer':
 			case 'tinyint':
 			case 'mediumint':
 			case 'int':
@@ -347,37 +348,32 @@ EOF;
 		}
 	}
 
-	protected function getFieldsOfTable($table)
+	protected function getFieldsOfTable($connName, $table)
 	{
-		if (!isset($this->fieldsByTable[$table]))
-		{
-			$this->fieldsByTable[$table] = [];
-
-			$rs = $this->getDb()->q("SHOW FIELDS FROM " . $this->getDb()->escapeTable($table));
-			while ($r = $this->getDb()->fetch($rs))
-			{
-				$this->fieldsByTable[$table][$r->Field] = $r->Type;
-			}
+		if (!isset($this->fieldsByTable[$table])) {
+			$this->fieldsByTable[$table] = $this->getDb($connName)->getFields($table);
 		}
 
 		return $this->fieldsByTable[$table];
 	}
 
-	protected function getColumns($table)
+	protected function getColumns($connName, $table)
 	{
-		$modelName = ModelsManager::extractClass(ModelsManager::getModelClassNameByTable($table, $this->getNamespace()));
+		$modelName = ModelsManager::extractClass(
+		    ModelsManager::getModelClassNameByTable(
+		        $table,
+                $this->getNamespace()
+            )
+        );
 
 		$ar = [];
 
-		foreach ($this->getFieldsOfTable($table) as $field => $type)
-		{
-			if (in_array($field, $this->skipInColumnsFields))
-			{
+		foreach ($this->getFieldsOfTable($connName, $table) as $field => $type) {
+			if (in_array($field, $this->skipInColumnsFields)) {
 				continue;
 			}
 
-			if (in_array($field, $this->dateTimeFieldNames))
-			{
+			if (in_array($field, $this->dateTimeFieldNames)) {
 				$methodName = camelize('get_' . $field);
 
 				$ar[] = <<<EOF
@@ -409,9 +405,9 @@ EOF;
 		return $ar;
 	}
 
-	protected function getDb()
+	protected function getDb($connName = null)
 	{
-		return \diCore\Database\Connection::get()->getDb();
+		return Connection::get($connName)->getDb();
 	}
 
 	protected function getFolderForNamespace()

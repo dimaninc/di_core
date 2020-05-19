@@ -56,8 +56,12 @@ abstract class Connection
 	 * @param $name
 	 * @return Connection
 	 */
-	public static function get($name = self::DEFAULT_NAME)
+	public static function get($name = null)
 	{
+	    if ($name === null) {
+	        $name = self::DEFAULT_NAME;
+        }
+
 		if (!self::exists($name)) {
 			throw new \diRuntimeException("Connection '$name' not found");
 		}
@@ -69,6 +73,11 @@ abstract class Connection
 	{
 		return isset(self::$connections[$name]);
 	}
+
+	public static function getAll()
+    {
+        return self::$connections;
+    }
 
 	public static function localMysqlConnData($database)
     {
@@ -109,8 +118,7 @@ abstract class Connection
 
 	public static function getChildClassName($engine)
 	{
-		if (!$name = Engine::name($engine))
-		{
+		if (!$name = Engine::name($engine)) {
 			throw new \diRuntimeException('Unknown engine ' . $engine);
 		}
 
@@ -238,4 +246,9 @@ abstract class Connection
 
 		return $this;
 	}
+
+	public function getTableNames()
+    {
+        return $this->getDb()->getTableNames();
+    }
 }

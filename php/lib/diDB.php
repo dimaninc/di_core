@@ -1118,4 +1118,5 @@ abstract class diDB
 	abstract protected function __set_charset($name);
 	abstract protected function __get_charset();
 	abstract public function getTableNames();
+    abstract public function getFields($table);
 }

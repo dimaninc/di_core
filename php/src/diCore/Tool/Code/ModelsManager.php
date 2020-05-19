@@ -42,6 +42,9 @@ class ModelsManager
  * Time: %2$s
  */
 %12$s
+
+use diCore\Database\FieldType;
+
 /**
  * Class %3$s
  * Methods list for IDE
@@ -54,9 +57,9 @@ class ModelsManager
  */
 class %3$s extends \diModel
 {
-	const type = \diTypes::%11$s;
+	const type = \diTypes::%11$s;%13$s
 	const table = '%4$s';
-	protected $table = '%4$s';%10$s%9$s
+	protected $table = '%4$s';%10$s%9$s%14$s
 }
 EOF;
 	}
@@ -83,25 +86,38 @@ EOF;
  */
 class %3$s extends \diCollection
 {
-	const type = \diTypes::%5$s;
+	const type = \diTypes::%5$s;%11$s
 	protected $table = '%4$s';
 	protected $modelType = '%5$s';
 }
 EOF;
 	}
 
-	public function createModel($table, $needed, $className, $collectionNeeded = false, $collectionClassName = '',
-		$namespace = '')
-	{
+    public function createModel($table, $needed, $className,
+                                $collectionNeeded = false, $collectionClassName = '',
+                                $namespace = '')
+    {
+        // connection::table
+        if (is_array($table)) {
+            list($connName, $table) = $table;
+        } else {
+            $connName = null;
+        }
+
 		$this->setNamespace($namespace);
 
-		if ($needed)
-		{
+        $connectionNameStr = $connName ? "\n\tconst connection_name = '{$connName}';" : '';
+        $fields = $this->getFieldsOfTable($connName, $table);
+
+		if ($needed) {
 			$typeName = self::getModelNameByTable($table);
 			$className = $className ?: self::getModelClassNameByTable($table, $this->getNamespace());
-			$annotations = $this->getModelMethodsAnnotations($this->getFieldsOfTable($table), $className);
+			$annotations = $this->getModelMethodsAnnotations(
+                $fields,
+                $className
+            );
 
-			$slugFieldName = $this->doesTableHaveField($table, 'slug')
+			$slugFieldName = $this->doesTableHaveField($connName, $table, 'slug')
 				? "\n\tconst slug_field_name = self::SLUG_FIELD_NAME;"
 				: '';
 
@@ -121,13 +137,14 @@ EOF;
 					"];" : '',
 				$slugFieldName,
 				$typeName,
-				$this->getNamespace() ? "\nnamespace " . self::extractNamespace($className) . ";\n" : ''
+				$this->getNamespace() ? "\nnamespace " . self::extractNamespace($className) . ";\n" : '',
+                $connectionNameStr,
+                $this->getFieldTypesArrayStr($fields)
 			);
 
 			$fn = $this->getModelFilename($className);
 
-			if (is_file(Config::getSourcesFolder() . $fn))
-			{
+			if (is_file(Config::getSourcesFolder() . $fn)) {
 				throw new \Exception("Model $fn already exists");
 			}
 
@@ -137,11 +154,13 @@ EOF;
 			chmod(Config::getSourcesFolder() . $fn, self::fileChmod);
 		}
 
-		if ($collectionNeeded)
-		{
+		if ($collectionNeeded) {
 			$typeName = self::getModelNameByTable($table);
 			$collectionClassName = $collectionClassName ?: self::getCollectionClassNameByTable($table, $this->getNamespace());
-			$collectionAnnotations = $this->getCollectionMethodsAnnotations($this->getFieldsOfTable($table), $collectionClassName);
+			$collectionAnnotations = $this->getCollectionMethodsAnnotations(
+                $fields,
+                $collectionClassName
+            );
 
 			$contents = sprintf($this->getCollectionTemplate(),
 				date('d.m.Y'),
@@ -157,13 +176,13 @@ EOF;
 					? "\n *\n" . join("\n", $collectionAnnotations["filterByLocalized"]) .
 					  "\n *\n" . join("\n", $collectionAnnotations["orderByLocalized"]) .
 					  "\n *\n" . join("\n", $collectionAnnotations["selectLocalized"])
-					: ""
+					: "",
+                $connectionNameStr
 			);
 
 			$fn = $this->getCollectionFilename($collectionClassName);
 
-			if (is_file(Config::getSourcesFolder() . $fn))
-			{
+			if (is_file(Config::getSourcesFolder() . $fn)) {
 				throw new \Exception("Collection $fn already exists");
 			}
 
@@ -176,17 +195,13 @@ EOF;
 
 	public static function getModelNameByTable($table)
 	{
-		if (in_array($table, ['news']))
-		{
+		if (in_array($table, ['news'])) {
 			return $table;
 		}
 
-		if (substr($table, -3) == 'ies')
-		{
+		if (substr($table, -3) == 'ies') {
 			$table = substr($table, 0, -3) . 'y';
-		}
-		elseif (substr($table, -1) == 's' && !in_array(substr($table, -2), ['ss', 'us', 'os', 'as', 'ys', 'is']))
-		{
+		} elseif (substr($table, -1) == 's' && !in_array(substr($table, -2), ['ss', 'us', 'os', 'as', 'ys', 'is'])) {
 			$table = substr($table, 0, -1);
 		}
 
@@ -207,6 +222,20 @@ EOF;
 			: camelize("di_" . self::getModelNameByTable($table) . "_collection");
 	}
 
+	protected function getFieldTypesArrayStr($fields)
+    {
+        $s = "\n\n\tprotected static \$fieldTypes = [";
+
+        foreach ($fields as $field => $type) {
+            $type = self::tuneTypeForModel($type);
+            $s .= "\n\t\t'{$field}' => FieldType::{$type},";
+        }
+
+        $s .= "\nч\t];";
+
+        return $s;
+    }
+
 	protected function getModelMethodsAnnotations($fields, $className)
 	{
 		$ar = [
@@ -226,34 +255,35 @@ EOF;
 
         $className = '$this';
 
-		foreach ($fields as $field => $type)
-		{
-			if (in_array($field, static::$skippedInAnnotationFields))
-			{
+		foreach ($fields as $field => $type) {
+			if (in_array($field, static::$skippedInAnnotationFields)) {
 				continue;
 			}
 
-			$ar["get"][] = " * @method " . self::tuneType($type) . "\t" . camelize("get_" . $field);
-			$ar["has"][] = " * @method bool " . camelize("has_" . $field);
-			$ar["set"][] = " * @method $className " . camelize("set_" . $field) . "(\$value)";
+			$ar["get"][] = " * @method " . self::tuneType($type) . "\t" .
+                camelize("get_" . $field);
+			$ar["has"][] = " * @method bool " .
+                camelize("has_" . $field);
+			$ar["set"][] = " * @method $className " .
+                camelize("set_" . $field) . "(\$value)";
 
 			// localization tests
 			$fieldComponents = explode("_", $field);
 
-			if ($fieldComponents && in_array($fieldComponents[0], \diCurrentCMS::$possibleLanguages))
-			{
+			if (
+			    $fieldComponents &&
+                in_array($fieldComponents[0], \diCurrentCMS::$possibleLanguages)
+            ) {
 				$f = substr($field, strlen($fieldComponents[0]) + 1);
 
-				if (isset($fields[$f]))
-				{
+				if (isset($fields[$f])) {
 					$localizedNeeded[$f] = $type;
 				}
 			}
 			//
 		}
 
-		foreach ($localizedNeeded as $field => $type)
-		{
+		foreach ($localizedNeeded as $field => $type) {
 			$ar["localized"][$field] = " * @method " . self::tuneType($type) . "\t" . camelize("localized_" . $field);
 		}
 
@@ -281,37 +311,38 @@ EOF;
 
 		$className = '$this';
 
-		foreach ($fields as $field => $type)
-		{
-			if (in_array($field, static::$skippedInCollectionAnnotationFields))
-			{
+		foreach ($fields as $field => $type) {
+			if (in_array($field, static::$skippedInCollectionAnnotationFields)) {
 				continue;
 			}
 
-			$ar["filterBy"][] = " * @method $className " . camelize("filter_by_" . $field) . "(\$value, \$operator = null)";
-			$ar["orderBy"][] = " * @method $className " . camelize("order_by_" . $field) . "(\$direction = null)";
-			$ar["select"][] = " * @method $className " . camelize("select_" . $field) . "()";
+			$ar["filterBy"][] = " * @method $className " .
+                camelize("filter_by_" . $field) . "(\$value, \$operator = null)";
+			$ar["orderBy"][] = " * @method $className " .
+                camelize("order_by_" . $field) . "(\$direction = null)";
+			$ar["select"][] = " * @method $className " .
+                camelize("select_" . $field) . "()";
 
 			// localization tests
 			$fieldComponents = explode("_", $field);
 
-			if ($fieldComponents && in_array($fieldComponents[0], \diCurrentCMS::$possibleLanguages))
-			{
+			if ($fieldComponents && in_array($fieldComponents[0], \diCurrentCMS::$possibleLanguages)) {
 				$f = substr($field, strlen($fieldComponents[0]) + 1);
 
-				if (isset($fields[$f]))
-				{
+				if (isset($fields[$f])) {
 					$localizedNeeded[$f] = $type;
 				}
 			}
 			//
 		}
 
-		foreach ($localizedNeeded as $field => $type)
-		{
-			$ar["filterByLocalized"][] = " * @method $className " . camelize("filter_by_localized_" . $field) . "(\$value, \$operator = null)";
-			$ar["orderByLocalized"][] = " * @method $className " . camelize("order_by_localized_" . $field) . "(\$direction = null)";
-			$ar["selectLocalized"][] = " * @method $className " . camelize("select_localized_" . $field) . "()";
+		foreach ($localizedNeeded as $field => $type) {
+			$ar["filterByLocalized"][] = " * @method $className " .
+                camelize("filter_by_localized_" . $field) . "(\$value, \$operator = null)";
+			$ar["orderByLocalized"][] = " * @method $className " .
+                camelize("order_by_localized_" . $field) . "(\$direction = null)";
+			$ar["selectLocalized"][] = " * @method $className " .
+                camelize("select_localized_" . $field) . "()";
 		}
 
 		return $ar;
@@ -321,47 +352,71 @@ EOF;
 	{
 		$type = preg_replace("/\(\d+\)(\sunsigned)?$/", '', strtolower($type));
 
-		switch ($type)
-		{
-			case "tinyint":
-			case "mediumint":
-			case "int":
-			case "bigint":
-				return "integer";
+		switch ($type) {
+            case 'integer':
+			case 'tinyint':
+			case 'mediumint':
+			case 'int':
+			case 'bigint':
+				return 'integer';
 
-			case "float":
-			case "double":
-				return "double";
+			case 'float':
+			case 'double':
+				return 'double';
 
 			default:
-				return "string";
+				return 'string';
 		}
 	}
 
-	protected function getFieldsOfTable($table)
+    public static function tuneTypeForModel($type)
+    {
+        $type = preg_replace("/\(\d+\)(\sunsigned)?$/", '', strtolower($type));
+
+        switch ($type) {
+            case 'integer':
+            case 'tinyint':
+            case 'mediumint':
+            case 'int':
+            case 'bigint':
+                return 'int';
+
+            case 'date':
+            case 'time':
+            case 'datetime':
+            case 'timestamp':
+            case 'float':
+            case 'double':
+                return $type;
+
+            case 'bool':
+            case 'boolean':
+                return 'bool';
+
+            default:
+                return 'string';
+        }
+    }
+
+	protected function getFieldsOfTable($connName, $table)
 	{
 		if (!isset($this->fieldsByTable[$table])) {
-			$this->fieldsByTable[$table] = [];
-
-			$rs = $this->getDb()->q("SHOW FIELDS FROM " . $this->getDb()->escapeTable($table));
-			while ($r = $this->getDb()->fetch($rs)) {
-				$this->fieldsByTable[$table][$r->Field] = $r->Type;
-			}
+			$this->fieldsByTable[$table] = $this->getDb($connName)->getFields($table);
 		}
 
 		return $this->fieldsByTable[$table];
 	}
 
-	protected function doesTableHaveField($table, $field)
+	protected function doesTableHaveField($connName, $table, $field)
 	{
-		$allFields = $this->getFieldsOfTable($table);
+		$allFields = $this->getFieldsOfTable($connName, $table);
 
 		return isset($allFields[$field]);
 	}
 
-	protected function getDb()
+	protected function getDb($connName = null)
 	{
-		return Connection::get()->getDb();
+		return Connection::get($connName)->getDb();
 	}
 
 	protected function getModelFilename($className)

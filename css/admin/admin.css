@@ -2510,6 +2510,9 @@ body[data-skin="entrine"] .diadminform-row[data-type="dynamic_files"] .value {
 }
 .diadminform-row[data-field="table"] .value .model-info {
   margin-left: 20px;
+  -webkit-align-self: center;
+  align-self: center;
+  -ms-flex-item-align: center;
 }
 .diadminform-row[data-field="table"] .value .model-info i {
   background: #f00;
