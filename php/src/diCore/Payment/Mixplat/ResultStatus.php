@@ -84,7 +84,7 @@ class ResultStatus extends SimpleContainer
 		self::SERVICE_UNAVAILABLE => 'Услуга недоступна для абонента',
 		self::TIMEOUT_EXCEEDED => 'Время ожидания абонента истекло',
 		self::OTHER_LIMITS_EXCEEDED => 'Недостаточно средств на счёте, либо Вы используете корпоративный тариф. Пополните баланс Вашего телефона и произведите платёж повторно',
-		self::NOT_PAID_OTHER_REASON => 'Не оплачен (по другой причине)',
+		self::NOT_PAID_OTHER_REASON => 'Технические проблемы оператора связи', //'Не оплачен (по другой причине)',
 		self::LOW_SUM_OF_PAYMENTS => 'Сумма платежа меньше допустимой',
 		self::REDIRECTED_TO_PAY_PER_CLICK => 'Платеж перенаправлен на Pay-Per-Click',
 		self::OPSOS_TIMEOUT_EXCEEDED => 'Превышено время ожидания статуса платежа от оператора. Платёж неуспешен',
