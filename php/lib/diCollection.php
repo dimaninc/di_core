@@ -6,6 +6,8 @@
  * Time: 14:25
  */
 
+use diCore\Database\Connection;
+use diCore\Database\Engine;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\FileSystemHelper;
 
@@ -170,8 +172,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function __construct($table = null)
 	{
-		if ($table !== null && empty($this->table))
-		{
+		if ($table !== null && empty($this->table)) {
 			$this->table = $table;
 		}
 	}
@@ -184,15 +185,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	public static function existsFor($type, $return = 'class')
 	{
-		if (isInteger($type))
-		{
+		if (isInteger($type)) {
 			$type = \diTypes::getName($type);
 		}
 
 		$className = \diLib::getClassNameFor($type, \diLib::COLLECTION);
 
-		if (!\diLib::exists($className))
-		{
+		if (!\diLib::exists($className)) {
 			return false;
 		}
 
@@ -203,6 +202,16 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		return \diLib::getChildClass(static::class, 'Model');
 	}
+
+    public static function getConnection()
+    {
+        return Connection::get(static::connection_name);
+    }
+
+    public static function getConnectionEngine()
+    {
+        return static::getConnection()::getEngine();
+    }
 
 	/**
 	 * @param integer|string $type
@@ -215,19 +224,15 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 	    $type = $type ?: static::type;
 
-        if (!$type)
-        {
+        if (!$type) {
             throw new \Exception("Type of collection not defined: " . $type);
         }
 
-		if (\diDB::is_rs($options))
-		{
+		if (\diDB::is_rs($options)) {
 			$options = [
 				'cachedRecords' => $options,
 			];
-		}
-		elseif (is_scalar($options))
-		{
+		} elseif (is_scalar($options)) {
 			$options = [
 				'query' => $options,
 			];
@@ -241,28 +246,24 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 		$className = self::existsFor($type);
 
-		if (!$className)
-		{
+		if (!$className) {
 			throw new \Exception("Collection class doesn't exist: " . ($className ?: $type));
 		}
 
 		/** @var diCollection $o */
 		$o = new $className();
 
-		if ($options['query'])
-		{
+		if ($options['query']) {
 			$o->setQuery($options['query']);
 			unset($options['query']);
 		}
 
-		if ($options['queryFields'])
-		{
+		if ($options['queryFields']) {
 			$o->setQueryFields($options['queryFields']);
 			unset($options['queryFields']);
 		}
 
-		if ($options['cachedRecords'])
-		{
+		if ($options['cachedRecords']) {
 			$o->setCachedRecords($options['cachedRecords']);
 			unset($options['cachedRecords']);
 		}
@@ -288,15 +289,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		$type = \diTypes::getNameByTable($table);
 		$typeName = self::existsFor($type, 'type');
 
-		if ($typeName)
-		{
+		if ($typeName) {
 			return static::create($typeName, $options);
 		}
 
 		$c = new static($table);
 
-		if (isset($options['query']))
-		{
+		if (isset($options['query'])) {
 			$c->setQuery($options['query']);
 			unset($options['query']);
 		}
@@ -766,7 +765,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	protected function getDb()
 	{
-		return \diCore\Database\Connection::get(static::connection_name ?: \diCore\Database\Connection::DEFAULT_NAME)
+		return Connection::get(static::connection_name ?: Connection::DEFAULT_NAME)
 			->getDb();
 	}
 
@@ -1603,17 +1602,26 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
         return $this->extFilterBy($field, 'REGEXP', $value . '$');
     }
 
+    protected static function supportedInstr()
+    {
+        return in_array(static::getConnectionEngine(), [
+            Engine::MYSQL,
+            Engine::MYSQL_OLD,
+            //Engine::SQLITE,
+        ]);
+    }
+
 	public function contains($field, $value)
 	{
-        $field = $this->getDb()->escapeField($field);
-        $value = $this->getDb()->escapeValue($value);
+        if (static::supportedInstr()) {
+            $field = $this->getDb()->escapeField($field);
+            $value = $this->getDb()->escapeValue($value);
+            return $this->filterManual("INSTR(" . $field . ", " . $value . ") > 0");
+        }
 
-        return $this->filterManual("INSTR(" . $field . ", " . $value . ") > 0");
-		/* for non-MySql
-		return $this->extFilterBy($field, 'LIKE', '%' . $value . '%', [
+        return $this->extFilterBy($field, 'LIKE', "'%{$value}%'", [
 			'rawValue' => true,
 		]);
-		*/
 	}
 
 	/**
@@ -1748,13 +1756,11 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	public function selectLocalized($fields, $append = false)
 	{
-		if (!is_array($fields))
-		{
+		if (!is_array($fields)) {
 			$fields = [$fields];
 		}
 
-		foreach ($fields as &$field)
-		{
+		foreach ($fields as &$field) {
 			$field = \diModel::getLocalizedFieldName($field);
 		}
 
@@ -1831,8 +1837,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 						}
 					}
 				} elseif (is_null($val['value'])) {
-					switch ($val['operator'])
-					{
+					switch ($val['operator']) {
 						case '=':
 							$val['operator'] = 'IS';
 							$value = 'NULL';
@@ -1871,8 +1876,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	protected function getBuiltQueryGroupBy()
 	{
-		if ($this->sqlParts['groupBy'])
-		{
+		if ($this->sqlParts['groupBy']) {
 			return 'GROUP BY ' . join(',', array_map(function($val) {
 				return $this->getDb()->escapeField($val['field']);
 			}, $this->sqlParts['groupBy']));
@@ -1883,11 +1887,9 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	protected function getBuiltQueryFields()
 	{
-		if ($this->sqlParts['select'])
-		{
+		if ($this->sqlParts['select']) {
 			return join(',', array_map(function($opt) {
-				if (is_scalar($opt['field']))
-				{
+				if (is_scalar($opt['field'])) {
 					return !empty($opt['options']['raw'])
 						? $opt['field']
 						: $this->getDb()->escapeField($opt['field']);
@@ -1909,8 +1911,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		$s = "<?php\n";
 
 		/** @var \diModel $model */
-		foreach ($this as $model)
-		{
+		foreach ($this as $model) {
 			$s .= "\$this->addItem(" . $model->asPhp() . ");\n";
 		}
 
@@ -1930,8 +1931,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 			empty(static::$cacheFileNames[$cacheKind]) &&
 			empty(static::$commonCacheFileNames[$cacheKind]) &&
 			!empty(static::$cacheNames[$cacheKind])
-		   )
-		{
+        ) {
 			$subFolder = $this->getBaseCacheSubFolder($cacheKind) . '/';
 		}
 
@@ -1945,24 +1945,15 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	protected function getCacheFilename($cacheKind = self::CACHE_ALL)
 	{
-		if ($cacheKind == self::CACHE_ALL)
-		{
+		if ($cacheKind == self::CACHE_ALL) {
 			$fn = $this->getTable();
-		}
-		elseif (!empty(static::$cacheFileNames[$cacheKind]))
-		{
+		} elseif (!empty(static::$cacheFileNames[$cacheKind])) {
 			$fn = static::$cacheFileNames[$cacheKind];
-		}
-		elseif (!empty(static::$commonCacheFileNames[$cacheKind]))
-		{
+		} elseif (!empty(static::$commonCacheFileNames[$cacheKind])) {
 			$fn = static::$commonCacheFileNames[$cacheKind];
-		}
-		elseif (!empty(static::$cacheNames[$cacheKind]))
-		{
+		} elseif (!empty(static::$cacheNames[$cacheKind])) {
 			$fn = static::$cacheNames[$cacheKind];
-		}
-		else
-		{
+		} else {
 			throw new \Exception('Undefined cache kind: ' . $cacheKind);
 		}
 
@@ -1994,8 +1985,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function loadCache($cacheKind = self::CACHE_ALL, $forceRebuild = false)
 	{
-		if ($forceRebuild)
-		{
+		if ($forceRebuild) {
 			$this->buildCache($cacheKind);
 		}
 

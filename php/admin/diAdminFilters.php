@@ -672,8 +672,7 @@ EOF;
 		if (isset($_GET["admin_filter"]["dir"]))
 			$this->dir = str_in(strtoupper($_GET["admin_filter"]["dir"]));
 
-		if ($this->possible_sortby_ar !== false)
-		{
+		if ($this->possible_sortby_ar !== false) {
 			if (!in_array($this->sortby, $this->possible_sortby_ar))
 				$this->sortby = $this->default_sortby;
 		}
@@ -683,9 +682,9 @@ EOF;
 		//
 
 		$where_ar = $this->where_ar;
+        $this->ruleCallbacks = [];
 
-		foreach ($this->ar as $idx => $a)
-		{
+		foreach ($this->ar as $idx => $a) {
 		    $where_tpl = $a["where_tpl"] ?: self::DEFAULT_WHERE_TPL;
 
 			$value = !$this->reset && isset($_COOKIE["admin_filter"][$this->table][$a["field"]])

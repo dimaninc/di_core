@@ -2164,8 +2164,7 @@ abstract class CMS
 	{
 	    global $content_pics_folder;
 
-	    if (!$folder)
-	    {
+	    if (!$folder) {
 		    $folder = $content_pics_folder;
 	    }
 
@@ -2191,23 +2190,19 @@ abstract class CMS
 	{
 		$s2 = str_cut_end($s, $max_len, $trailer);
 
-		if ($s != $s2)
-		{
+		if ($s != $s2) {
 			return "<span title=\"".str_out($s)."\">".str_out($s2)."</span>";
-		}
-		else
-		{
+		} else {
 			return str_out($s);
 		}
 	}
 
     /**
-     * @return \diCurrentCMS
+     * @return $this
      */
 	public function assign_ct_ar()
 	{
-		foreach ($this->getCleanTitlesAr() as $t => $ct)
-		{
+		foreach ($this->getCleanTitlesAr() as $t => $ct) {
 			$this->getTpl()->assign([
 				strtoupper($t) . "_CLEAN_TITLE" => $ct,
 				strtoupper($t) . "_SLUG" => $ct,
@@ -2254,8 +2249,7 @@ abstract class CMS
 
 	public function load_content_table_cache($forceRebuild = false)
 	{
-		if ($forceRebuild)
-		{
+		if ($forceRebuild) {
 			$this->build_content_table_cache();
 		}
 
@@ -2272,19 +2266,16 @@ abstract class CMS
 
 		$col = \diCollection::createForTable($this->content_table)->orderBy('order_num');
 		/** @var Model $model */
-		foreach ($col as $model)
-		{
+		foreach ($col as $model) {
 			$cache_file .= "\$this->tables['{$this->content_table}']['{$model->getId()}'] = " .
 				$model->asPhp($this->fieldsExcludedFromCache) . ";\n\n";
 
-			if ($model->getType() != "user")
-			{
+			if ($model->getType() != "user") {
 				$this->ct_ar[$model->getType()] = $model->getRawSlug();
 			}
 		}
 
-		foreach ($this->ct_ar as $t => $ct)
-		{
+		foreach ($this->ct_ar as $t => $ct) {
 			$ct_rows .= "\$this->ct_ar['$t'] = '$ct';\n";
 		}
 
@@ -2326,8 +2317,7 @@ abstract class CMS
 	{
 		$this->setResponseCode(HttpCode::NOT_FOUND);
 
-		if ($this->notFoundBackTraceNeeded())
-		{
+		if ($this->notFoundBackTraceNeeded()) {
 			echo "<p><b>Debug back trace:</b></p><pre>";
 			debug_print_backtrace();
 			echo "</pre>";

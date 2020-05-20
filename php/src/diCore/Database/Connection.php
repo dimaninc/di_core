@@ -35,6 +35,11 @@ abstract class Connection
 			->connect();
 	}
 
+	public static function getEngine()
+    {
+        return static::engine;
+    }
+
 	/**
 	 * @param string|array $connData
 	 * @param int $engine

@@ -212,6 +212,14 @@ class Form
             'ru' => 'E-mail',
             'en' => 'E-mail',
         ],
+        'phone' => [
+            'ru' => 'Телефон',
+            'en' => 'Phone',
+        ],
+        'address' => [
+            'ru' => 'Адрес',
+            'en' => 'Address',
+        ],
         'title' => [
             'ru' => 'Название',
             'en' => 'Title',
@@ -227,6 +235,10 @@ class Form
         'pic' => [
             'ru' => 'Изображение',
             'en' => 'Pic',
+        ],
+        'logo' => [
+            'ru' => 'Логотип',
+            'en' => 'Logo',
         ],
         'color' => [
             'ru' => 'Цвет',

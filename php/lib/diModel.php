@@ -9,6 +9,7 @@
 use diCore\Admin\Submit;
 use diCore\Base\CMS;
 use diCore\Data\Config;
+use diCore\Database\Connection;
 use diCore\Helper\Slug;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
@@ -115,8 +116,7 @@ class diModel implements \ArrayAccess
 	 */
 	public function __construct($ar = null, $table = null)
 	{
-		if ($table)
-		{
+		if ($table) {
 			$this->table = $table;
 		}
 
@@ -130,15 +130,13 @@ class diModel implements \ArrayAccess
 	 */
 	public static function existsFor($type, $return = 'class')
 	{
-		if (isInteger($type))
-		{
+		if (isInteger($type)) {
 			$type = \diTypes::getName($type);
 		}
 
 		$className = \diLib::getClassNameFor($type, \diLib::MODEL);
 
-		if (!\diLib::exists($className))
-		{
+		if (!\diLib::exists($className)) {
 			return false;
 		}
 
@@ -149,6 +147,16 @@ class diModel implements \ArrayAccess
 	{
 		return \diLib::getChildClass(static::class, 'Collection');
 	}
+
+	public static function getConnection()
+    {
+        return Connection::get(static::connection_name);
+    }
+
+    public static function getConnectionEngine()
+    {
+        return static::getConnection()::getEngine();
+    }
 
 	/**
 	 * @param $type
@@ -1026,7 +1034,7 @@ class diModel implements \ArrayAccess
 	 */
 	protected function getDb()
 	{
-		return \diCore\Database\Connection::get(static::connection_name ?: \diCore\Database\Connection::DEFAULT_NAME)
+		return Connection::get(static::connection_name ?: Connection::DEFAULT_NAME)
 			->getDb();
 	}
 
