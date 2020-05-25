@@ -268,6 +268,7 @@ class diDynamicRows
 
   function get_html()
   {
+      // todo: now these treated as strings, remake as plain code
 	  $eventNames = [
 		  'afterInit',
 		  'afterAddRow',
