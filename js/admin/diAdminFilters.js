@@ -56,8 +56,8 @@ var diAdminFilters = function(_opts) {
 
 			$.each(filters, function(k, v) {
 				$.cookie('admin_filter[' + opts.table + '][' + k + ']', v, {
-					expires: 365
-                    //path: '/_admin/'
+					expires: 365,
+                    path: '/_admin/'
 				});
 			});
 
