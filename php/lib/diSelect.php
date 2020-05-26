@@ -62,26 +62,19 @@ class diSelect
 	{
 		$sel = new static($name, $value);
 
-		if ($prefixAr)
-		{
+		if ($prefixAr) {
 			$sel->addItemArray($prefixAr);
 		}
 
-		if (diDB::is_rs($dataFeed))
-		{
+		if (diDB::is_rs($dataFeed)) {
 			$sel->addItemsFromDB($dataFeed, [], [], $templateTextOrFormatCallback ?: "%title%", $templateValue ?: "%id%");
-		}
-		elseif (is_array($dataFeed))
-		{
+		} elseif (is_array($dataFeed)) {
 			$sel->addItemArray($dataFeed);
-		}
-		elseif ($dataFeed instanceof diCollection)
-		{
+		} elseif ($dataFeed instanceof diCollection) {
 			$sel->addItemsCollection($dataFeed, $templateTextOrFormatCallback);
 		}
 
-		if ($suffixAr)
-		{
+		if ($suffixAr) {
 			$sel->addItemArray($suffixAr);
 		}
 
@@ -106,23 +99,15 @@ class diSelect
 
 	public function setAttr($name, $value = null)
 	{
-		if (!is_array($name))
-		{
+		if (!is_array($name)) {
 			$this->attrsAr[$name] = is_null($value) ? $name : $value;
-		}
-		else
-		{
-			if (is_null($value))
-			{
-				foreach ($name as $n => $v)
-				{
+		} else {
+			if (is_null($value)) {
+				foreach ($name as $n => $v) {
 					$this->attrsAr[$n] = $v;
 				}
-			}
-			else
-			{
-				foreach ($name as $n)
-				{
+			} else {
+				foreach ($name as $n) {
 					$this->attrsAr[$n] = $value;
 				}
 			}
@@ -179,20 +164,17 @@ class diSelect
 	{
 		global $db;
 
-		if (diDB::is_rs($db_rs))
-		{
+		if (diDB::is_rs($db_rs)) {
 			$db->reset($db_rs);
 		}
 
 		$this->addItemArray($prefix_ar);
 
-		while ($db_rs && $db_r = $db->fetch($db_rs))
-		{
+		while ($db_rs && $db_r = $db->fetch($db_rs)) {
 			$ar1 = [];
 			$ar2 = [];
 
-			foreach ($db_r as $k => $v)
-			{
+			foreach ($db_r as $k => $v) {
 				$ar1[] = "%$k%";
 				$ar2[] = $v;
 			}
@@ -231,10 +213,8 @@ class diSelect
      */
 	public function addItemsCollection($collection, $format = null, $prefixAr = [], $suffixAr = [])
 	{
-		if ($format === null || is_array($format))
-		{
-			if (is_array($format))
-			{
+		if ($format === null || (is_array($format) && !is_callable($format))) {
+			if (is_array($format)) {
 				$suffixAr = $prefixAr;
 				$prefixAr = $format;
 			}
@@ -245,8 +225,7 @@ class diSelect
 		$this->addItemArray($prefixAr);
 
 		/** @var diModel $model */
-		foreach ($collection as $model)
-		{
+		foreach ($collection as $model) {
 			$data = extend([
 				'value' => $model->getId(),
 				'text' => $model->get('title'),
@@ -287,30 +266,23 @@ class diSelect
 	{
 		$html = $this->indent."<select";
 
-		foreach ($this->attrsAr as $name => $value)
-		{
+		foreach ($this->attrsAr as $name => $value) {
 		    $html .= " {$name}";
 
-			if ($value)
-			{
+			if ($value) {
 				$html .= "=\"{$value}\"";
 			}
 		}
 
 		$html .= ">\n";
 
-		foreach ($this->itemsAr as $item)
-		{
+		foreach ($this->itemsAr as $item) {
 			$attrs = $this->getSelected($item["value"])." value=\"{$item["value"]}\"";
 
-			if ($item["attrs"])
-			{
-				if (is_array($item["attrs"]))
-				{
+			if ($item["attrs"]) {
+				if (is_array($item["attrs"])) {
 					$attrs .= " " . ArrayHelper::toAttributesString($item["attrs"], true, ArrayHelper::ESCAPE_HTML);
-				}
-				else
-				{
+				} else {
 					$attrs .= " " . $item["attrs"];
 				}
 			}
@@ -325,20 +297,13 @@ class diSelect
 
 	public function isSelected($value)
 	{
-		if (is_array($this->currentValue))
-		{
+		if (is_array($this->currentValue)) {
 			return in_array($value, $this->currentValue);
-		}
-		elseif ($this->currentValue === true || $this->currentValue === false)
-		{
+		} elseif ($this->currentValue === true || $this->currentValue === false) {
 			return $this->currentValue;
-		}
-		elseif (is_callable($this->currentValue) && gettype($this->currentValue) == "object")
-		{
+		} elseif (is_callable($this->currentValue) && gettype($this->currentValue) == "object") {
 			return call_user_func($this->currentValue, $value);
-		}
-		else
-		{
+		} else {
 			return $value == $this->currentValue;
 		}
 	}
@@ -367,8 +332,7 @@ class diSelect
 
 	public function getItem($index, $what = null)
 	{
-		if (!isset($this->itemsAr[$index]))
-		{
+		if (!isset($this->itemsAr[$index])) {
 			return null;
 		}
 
@@ -381,8 +345,7 @@ class diSelect
 	{
 		$ar = [];
 
-		foreach ($this->itemsAr as $item)
-		{
+		foreach ($this->itemsAr as $item) {
 			$ar[$item["value"]] = $item["text"];
 		}
 
@@ -391,10 +354,8 @@ class diSelect
 
 	public function getTextByValue($value)
 	{
-		foreach ($this->itemsAr as $item)
-		{
-			if ($item["value"] == $value)
-			{
+		foreach ($this->itemsAr as $item) {
+			if ($item["value"] == $value) {
 				return $item["text"];
 			}
 		}

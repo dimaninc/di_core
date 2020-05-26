@@ -1048,10 +1048,8 @@ EOF;
      */
 	public function setSelectFromCollectionInput($field, $collection, $format = null, $prefixAr = [], $suffixAr = [])
 	{
-		if ($format === null || is_array($format))
-		{
-			if (is_array($format))
-			{
+		if ($format === null || (is_array($format) && !is_callable($format))) {
+			if (is_array($format)) {
 				$suffixAr = $prefixAr;
 				$prefixAr = $format;
 			}
@@ -1061,20 +1059,17 @@ EOF;
 
 		$sel = new \diSelect("admin_filter[$field]", $this->getData($field));
 
-		if (isset($this->input_params_ar[$field]))
-		{
+		if (isset($this->input_params_ar[$field])) {
 			$sel->setAttr($this->input_params_ar[$field]);
 		}
 
-		if ($prefixAr)
-		{
+		if ($prefixAr) {
 			$sel->addItemArray($prefixAr);
 		}
 
 		$sel->addItemsCollection($collection, $format);
 
-		if ($suffixAr)
-		{
+		if ($suffixAr) {
 			$sel->addItemArray($suffixAr);
 		}
 

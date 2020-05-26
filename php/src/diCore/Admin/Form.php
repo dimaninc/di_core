@@ -1826,10 +1826,8 @@ EOF;
      */
 	public function setSelectFromCollectionInput($field, $collection, $format = null, $prefixAr = [], $suffixAr = [])
 	{
-		if ($format === null || is_array($format))
-		{
-			if (is_array($format))
-			{
+		if ($format === null || (is_array($format) && !is_callable($format))) {
+			if (is_array($format)) {
 				$suffixAr = $prefixAr;
 				$prefixAr = $format;
 			}
@@ -1840,15 +1838,13 @@ EOF;
 		$sel = new \diSelect($field, $this->getData($field));
 		$sel->setAttr($this->getInputAttributes($field));
 
-		if ($prefixAr)
-		{
+		if ($prefixAr) {
 			$sel->addItemArray($prefixAr);
 		}
 
 		$sel->addItemsCollection($collection, $format);
 
-		if ($suffixAr)
-		{
+		if ($suffixAr) {
 			$sel->addItemArray($suffixAr);
 		}
 
@@ -3028,13 +3024,11 @@ EOF;
 
 	public function setStaticInput($fields)
 	{
-		if (!is_array($fields))
-		{
+		if (!is_array($fields)) {
 			$fields = explode(',', $fields);
 		}
 
-		foreach ($fields as $field)
-		{
+		foreach ($fields as $field) {
 			$this->setManualFieldFlag($field, 'static');
 
 			$this->force_inputs_fields[$field] = true;
@@ -3056,21 +3050,17 @@ EOF;
 
 	public function setColorInput($field)
 	{
-		if (preg_match("/^[a-f0-9]{6}$/i", $this->getData($field)))
-		{
+		if (preg_match("/^[a-f0-9]{6}$/i", $this->getData($field))) {
 			$this->setData($field, "#" . $this->getData($field));
 		}
 
 		$view = "<div data-purpose=\"color-view\" data-field=\"$field\" style=\"background: {$this->getData($field)}\"></div>";
 
-		if (!$this->static_mode)
-		{
+		if (!$this->static_mode) {
 			$this->inputs[$field] = "<input type=\"hidden\" name=\"$field\" value=\"{$this->getData($field)}\" />" .
 				$view .
 				"<div data-purpose=\"color-picker\" data-field=\"$field\"></div>";
-		}
-		else
-		{
+		} else {
 			$this->inputs[$field] = $view . " " . $this->getData($field);
 		}
 
@@ -3101,15 +3091,13 @@ EOF;
 	public function setIpInput($field)
 	{
 		$ip = $this->getData($field);
-		if (is_numeric($ip))
-		{
+		if (is_numeric($ip)) {
 			$ip = bin2ip($this->getData($field));
 		}
 
 		$this->setData($field, $ip);
 
-		if (!$this->isStatic($field))
-		{
+		if (!$this->isStatic($field)) {
 			$this->setSimpleInput($field);
 		}
 

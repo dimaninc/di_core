@@ -8,6 +8,7 @@
 namespace diCore\Entity\Admin;
 
 use diCore\Admin\Page\Admins as Guide;
+use diCore\Data\Config;
 
 /**
  * Class Model
@@ -87,10 +88,23 @@ class Model extends \diBaseUserModel
 		return $ar;
 	}
 
+    public function isRoot()
+    {
+        return $this->getLevel() === 'root' || Config::isInitiating();
+    }
+
 	public function getName()
 	{
-		return sprintf('%s %s', $this->getFirstName(), $this->getLastName());
+		return join(' ', array_filter($this->getNameElements()));
 	}
+
+	public function getNameElements()
+    {
+        return [
+            $this->getFirstName(),
+            $this->getLastName(),
+        ];
+    }
 
 	public function getLevelStr()
 	{
