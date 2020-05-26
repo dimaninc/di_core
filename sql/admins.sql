@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS admins(
   last_name varchar(50),
   email varchar(60),
   phone varchar(32),
+  address varchar(255) default '',
   date timestamp default CURRENT_TIMESTAMP,
   ip bigint,
   host varchar(50),

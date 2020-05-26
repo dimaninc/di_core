@@ -36,10 +36,8 @@ class Admins extends \diCore\Admin\BasePage
 
 	public static function translateLevels($levels = [], $language = null)
 	{
-		foreach ($levels as $name => &$title)
-		{
-			if (is_array($title))
-			{
+		foreach ($levels as $name => &$title) {
+			if (is_array($title)) {
 				$title = $title[$language];
 			}
 		}
@@ -152,6 +150,15 @@ class Admins extends \diCore\Admin\BasePage
 				]),
 				'default' => '',
 			],
+
+            'address' => [
+                'type' => 'string',
+                'title' => $this->localized([
+                    'ru' => 'Адрес',
+                    'en' => 'Address',
+                ]),
+                'default' => '',
+            ],
 
 			'level' => [
 				'type' => 'enum',

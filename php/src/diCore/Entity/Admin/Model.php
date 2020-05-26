@@ -19,6 +19,7 @@ use diCore\Admin\Page\Admins as Guide;
  * @method string	getLastName
  * @method string	getEmail
  * @method string	getPhone
+ * @method string	getAddress
  * @method string	getHost
  * @method string	getLevel
  * @method integer	getActive
@@ -31,23 +32,25 @@ use diCore\Admin\Page\Admins as Guide;
  * @method bool hasLastName
  * @method bool hasEmail
  * @method bool hasPhone
+ * @method bool hasAddress
  * @method bool hasHost
  * @method bool hasLevel
  * @method bool hasActive
  * @method bool hasDate
  * @method bool hasIp
  *
- * @method Model setLogin($value)
- * @method Model setPassword($value)
- * @method Model setFirstName($value)
- * @method Model setLastName($value)
- * @method Model setEmail($value)
- * @method Model setPhone($value)
- * @method Model setHost($value)
- * @method Model setLevel($value)
- * @method Model setActive($value)
- * @method Model setDate($value)
- * @method Model setIp($value)
+ * @method $this setLogin($value)
+ * @method $this setPassword($value)
+ * @method $this setFirstName($value)
+ * @method $this setLastName($value)
+ * @method $this setEmail($value)
+ * @method $this setPhone($value)
+ * @method $this setAddress($value)
+ * @method $this setHost($value)
+ * @method $this setLevel($value)
+ * @method $this setActive($value)
+ * @method $this setDate($value)
+ * @method $this setIp($value)
  */
 class Model extends \diBaseUserModel
 {
@@ -91,8 +94,7 @@ class Model extends \diBaseUserModel
 
 	public function getLevelStr()
 	{
-		if (!$this->exists())
-		{
+		if (!$this->exists()) {
 			return null;
 		}
 
@@ -105,17 +107,13 @@ class Model extends \diBaseUserModel
 
 	protected function cacheLevels()
 	{
-		if ($this->levels === null)
-		{
+		if ($this->levels === null) {
 			/** @var Guide $adminPageClassName */
 			$adminPageClassName = \diLib::getClassNameFor('admins', \diLib::ADMIN_PAGE);
 
-			if (class_exists($adminPageClassName))
-			{
+			if (class_exists($adminPageClassName)) {
 				$this->levels = $adminPageClassName::$levelsAr;
-			}
-			else
-			{
+			} else {
 				$this->levels = Guide::$levelsAr;
 			}
 
