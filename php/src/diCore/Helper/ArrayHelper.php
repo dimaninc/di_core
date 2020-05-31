@@ -204,6 +204,10 @@ class ArrayHelper
 
     public static function get($deepArray, $path, $defaultValue = null, $type = null)
     {
+        if (!$deepArray || is_scalar($deepArray)) {
+            return $defaultValue;
+        }
+
         $reduce = function (array $xs, $x) {
             return array_key_exists($x, $xs) ? $xs[$x] : null;
         };

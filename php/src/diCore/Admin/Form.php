@@ -1977,6 +1977,8 @@ EOF;
 	public function getPreviewHtmlForFile($field, $fullName, $options = [])
 	{
 		$options = extend([
+		    'infoPrefix' => '',
+            'infoSuffix' => '',
 			'hideIfNoFile' => false,
 			'showDelLink' => true,
 			'showRotateBlock' => false,
@@ -1990,7 +1992,8 @@ EOF;
 		$previewInfoBlock = '';
 
 		if (is_file($f)) {
-			$httpName = \diPaths::http($this->getModel(), false, $field) . '/' . StringHelper::unslash($fullName, false);
+			$httpName = \diPaths::http($this->getModel(), false, $field) .
+                '/' . StringHelper::unslash($fullName, false);
 
             if (!StringHelper::contains($httpName, '://') && \diLib::getSubFolder()) {
                 $httpName = '/' . $httpName;
@@ -2109,7 +2112,8 @@ EOF;
 			? '<div class="existing-pic-holder">' . $imgTag .
 				'<a href="' . $httpName . '" class="link">' . basename($fullName) . '</a>' .
 				$previewInfoBlock .
-				'<div class="info">' . $info . $delLink . $rotateBlock . $watermarkBlock . '</div>' .
+				'<div class="info">' . $options['infoPrefix'] . $info . $options['infoSuffix'] .
+                    $delLink . $rotateBlock . $watermarkBlock . '</div>' .
 			'</div>'
 			: '';
 	}
