@@ -494,11 +494,11 @@ class diDynamicRows
 	    : "<span class=\"close\" title=\"{$this->L('delete')}\" data-field=\"{$this->field}\" data-id=\"{$id}\"></span>";
 
     $order_num_div = !isset($this->info_ar[$this->field]["fields"]["order_num"]) && isset($r->order_num)
-      ? "<input type=hidden name=\"{$this->field}_order_num[$id]\" value=\"".($r ? $r->order_num : "")."\" />"
+      ? "<input type=hidden name=\"{$this->field}_order_num[$id]\" value=\"".($r ? $r->order_num : "")."\" data-field-name='order_num'>"
       : "";
 
     return "<div id=\"{$this->field}_div[{$id}]\" class=\"dynamic-row\" data-id=\"$id\" data-main-field=\"{$this->field}\">".
-      "<input type=hidden name=\"{$this->field}_ids_ar[]\" value=\"{$id}\" />".
+      "<input type=hidden name=\"{$this->field}_ids_ar[]\" value=\"{$id}\" data-field-name=\"ids_ar\">".
       join("\n", $hiddens) .
       $kill_div.
       $order_num_div.
@@ -598,6 +598,8 @@ class diDynamicRows
 			  $type = "text";
 		  }
 
+            $input_params .= " data-field-name='{$field}'";
+
 		  $static = $this->static_mode || $this->isFlag($ar, 'static');
 
           $this->inputs[$name] = $static
@@ -630,11 +632,11 @@ class diDynamicRows
 
             $this->set_cb_list_input($name, $ar["feed"], $options);
         } elseif (is_array($ar["feed"])) {
-            $this->set_select_from_array_input($name, $ar["feed"], $prefix_ar, $suffix_ar);
+            $this->set_select_from_array_input(['name' => $name, 'field' => $field], $ar["feed"], $prefix_ar, $suffix_ar);
         } elseif (\diDB::is_rs($ar["feed"])) {
-            $this->set_select_from_db_input($name, $ar["feed"], $template_text, $template_value, $prefix_ar, $suffix_ar);
+            $this->set_select_from_db_input(['name' => $name, 'field' => $field], $ar["feed"], $template_text, $template_value, $prefix_ar, $suffix_ar);
         } elseif ($ar['feed'] instanceof diCollection) {
-            $this->setSelectFromCollectionInput($name, $ar['feed'], $format, $prefix_ar, $suffix_ar);
+            $this->setSelectFromCollectionInput(['name' => $name, 'field' => $field], $ar['feed'], $format, $prefix_ar, $suffix_ar);
         } else {
             throw new \Exception("Unknown feed for \${$this->table}_form_fields[\"{$this->field}\"][\"fields\"][\"$field\"]");
         }
@@ -665,6 +667,7 @@ class diDynamicRows
       "name" => $field,
       "cols" => 50,
       "rows" => 10,
+        'data-field-name' => $field,
     ), $attributes);
 
     if (!empty($this->info_ar[$this->field]["fields"][$this->current_field]['placeholder'])) {
@@ -684,41 +687,55 @@ class diDynamicRows
       : nl2br(str_out($this->data[$field]));
   }
 
-  function set_select_from_array_input($field, $ar, $prefix_ar = array(), $suffix_ar = array())
+  function set_select_from_array_input($name, $ar, $prefix_ar = array(), $suffix_ar = array())
   {
+      if (is_array($name)) {
+          list('field' => $field, 'name' => $name) = $name;
+      } else {
+          $field = '';
+      }
+
     if ($this->static_mode)
     {
-      $this->inputs[$field] = isset($ar[$this->data[$field]]) ? str_out($ar[$this->data[$field]]) : "---";
+      $this->inputs[$name] = isset($ar[$this->data[$name]]) ? str_out($ar[$this->data[$name]]) : "---";
     }
     else
     {
-      $sel = new diSelect($field, $this->data[$field]);
+      $sel = new diSelect($name, $this->data[$name]);
+      $sel->setAttr('data-field-name', $field);
 
-      if (isset($this->inputs_params[$field]))
+      if (isset($this->inputs_params[$name]))
       {
-	      $sel->setAttr($this->inputs_params[$field]);
+	      $sel->setAttr($this->inputs_params[$name]);
       }
 
 	    $sel->addItemArray($prefix_ar);
 	    $sel->addItemArray($ar);
 	    $sel->addItemArray($suffix_ar);
 
-      $this->inputs[$field] = $sel;
+      $this->inputs[$name] = $sel;
     }
   }
 
-  function set_select_from_db_input($field, $db_rs, $template_text = "%title%", $template_value = "%id%", $prefix_ar = array(), $suffix_ar = array())
+  function set_select_from_db_input($name, $db_rs, $template_text = "%title%", $template_value = "%id%", $prefix_ar = array(), $suffix_ar = array())
   {
-    $field2 = substr($field, strlen($this->field) + 1);
+      if (is_array($name)) {
+          list('field' => $field, 'name' => $name) = $name;
+      } else {
+          $field = '';
+      }
+
+    $field2 = substr($name, strlen($this->field) + 1);
     $field2 = substr($field2, 0, strpos($field2, "["));
 
     if (!isset($this->input_objects[$field2]))
     {
-      $sel = new diSelect($field, $this->data[$field]);
+      $sel = new diSelect($name, $this->data[$name]);
+        $sel->setAttr('data-field-name', $field);
 
-      if (isset($this->inputs_params[$field]))
+      if (isset($this->inputs_params[$name]))
       {
-	      $sel->setAttr($this->inputs_params[$field]);
+	      $sel->setAttr($this->inputs_params[$name]);
       }
 
       if ($prefix_ar)
@@ -742,7 +759,7 @@ class diDynamicRows
         $text = str_replace($ar1, $ar2, $template_text);
         $value = str_replace($ar1, $ar2, $template_value);
 
-        if ($value == $this->data[$field])
+        if ($value == $this->data[$name])
           $static_text = $text;
 
         $sel->addItem($value, $text);
@@ -762,35 +779,42 @@ class diDynamicRows
 
 	    $sel
 		    ->setAttr(array(
-		        "name" => $field,
-		        "id" => $field,
+		        "name" => $name,
+		        "id" => $name,
 	        ))
-	        ->setCurrentValue($this->data[$field]);
+	        ->setCurrentValue($this->data[$name]);
 
       $a1 = $sel->getSimpleItemsAr();
       $static_text = isset($a1[$sel->getCurrentValue()]) ? $a1[$sel->getCurrentValue()] : "---";
     }
 
-    $this->inputs[$field] = $sel->getHTML();
+    $this->inputs[$name] = $sel->getHTML();
 
     if ($this->static_mode)
     {
-      $this->inputs[$field] = $static_text;
+      $this->inputs[$name] = $static_text;
     }
   }
 
-	public function setSelectFromCollectionInput($field, diCollection $col, $format = null, $prefixAr = [], $suffixAr = [])
+	public function setSelectFromCollectionInput($name, diCollection $col, $format = null, $prefixAr = [], $suffixAr = [])
 	{
-		$field2 = substr($field, strlen($this->field) + 1);
+        if (is_array($name)) {
+            list('field' => $field, 'name' => $name) = $name;
+        } else {
+            $field = '';
+        }
+
+		$field2 = substr($name, strlen($this->field) + 1);
 		$field2 = substr($field2, 0, strpos($field2, "["));
 
 		if (!isset($this->input_objects[$field2]))
 		{
-			$sel = diSelect::fastCreate($field, $this->data[$field], $col, $prefixAr, $suffixAr, $format);
+			$sel = diSelect::fastCreate($name, $this->data[$name], $col, $prefixAr, $suffixAr, $format);
+            $sel->setAttr('data-field-name', $field);
 
-			if (isset($this->inputs_params[$field]))
+			if (isset($this->inputs_params[$name]))
 			{
-				$sel->setAttr($this->inputs_params[$field]);
+				$sel->setAttr($this->inputs_params[$name]);
 			}
 
 			$this->input_objects[$field2] = $sel;
@@ -801,23 +825,24 @@ class diDynamicRows
 		{
 			/** @var diSelect $sel */
 			$sel = $this->input_objects[$field2];
+            $sel->setAttr('data-field-name', $field);
 
 			$sel
 				->setAttr([
-					"name" => $field,
-					"id" => $field,
+					"name" => $name,
+					"id" => $name,
 				])
-				->setCurrentValue($this->data[$field]);
+				->setCurrentValue($this->data[$name]);
 
 			$a1 = $sel->getSimpleItemsAr();
 			$static_text = isset($a1[$sel->getCurrentValue()]) ? $a1[$sel->getCurrentValue()] : "---";
 		}
 
-		$this->inputs[$field] = $sel;
+		$this->inputs[$name] = $sel;
 
 		if ($this->static_mode)
 		{
-			$this->inputs[$field] = $static_text;
+			$this->inputs[$name] = $static_text;
 		}
 
 		return $this;
@@ -865,7 +890,7 @@ class diDynamicRows
       }
 
       $checked = (int)$this->data[$field] ? " checked" : "";
-      $this->inputs[$field] = "<input type='checkbox' name='$field' id='$field'{$checked}{$input_params}>";
+      $this->inputs[$field] = "<input type='checkbox' name='$field' id='$field'{$checked}{$input_params} data-field-name='$field'>";
     }
   }
 
@@ -890,7 +915,7 @@ class diDynamicRows
 			}
 
 			$checked = (int)$this->data[$field] ? " checked=checked" : "";
-			$this->inputs[$field] = "<input type='radio' name='$name' id='$field' value='{$id}' {$checked}{$input_params}>";
+			$this->inputs[$field] = "<input type='radio' name='$name' id='$field' value='{$id}' {$checked}{$input_params} data-field-name='$field'>";
 		}
 	}
 
@@ -928,6 +953,8 @@ class diDynamicRows
         if ($opts["checked"]) {
             $opts['attributes']['checked'] = 'checked';
         }
+
+        $opts['data-field-name'] = $opts['name'];
 
         $attrs = ArrayHelper::toAttributesString($opts['attributes']);
 
