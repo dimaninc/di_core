@@ -748,6 +748,9 @@ abstract class CMS
     {
         /** @var \diModule $class */
         $class = static::getModuleClassName($module);
+        if (!class_exists($class)) {
+            $class = static::getModuleClassName('user');
+        }
         /** @var \diModule $module */
         $module = $class::create($this);
 
