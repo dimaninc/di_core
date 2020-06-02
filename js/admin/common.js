@@ -1,5 +1,8 @@
 var dip;
 
 $(function() {
-	dip = typeof diPopups !== 'undefined' ? new diPopups() : null;
+	if (typeof diPopups !== 'undefined') {
+		dip = new diPopups();
+		dip.disableAutoPosition();
+	}
 });

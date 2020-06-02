@@ -262,33 +262,26 @@ class Db extends \diBaseAdminController
 
 EOF;
 
-		foreach ($tablesAr as $table)
-		{
-			if (!in_array($table, $allTablesAr))
-			{
+		foreach ($tablesAr as $table) {
+			if (!in_array($table, $allTablesAr)) {
 				continue;
 			}
 
 			$fieldsAr = [];
 
-			if ($drops)
-			{
+			if ($drops) {
 				$sql .= "DROP TABLE IF EXISTS `$table`;\n";
 			}
 
-			if ($creates)
-			{
+			if ($creates) {
 				$sql .= "CREATE TABLE `$table` (\n";
 
 				$createFieldsAr = [];
 
 				$rs = $this->getDb()->q("SHOW FIELDS FROM `$table`");
-				while ($r = $this->getDb()->fetch($rs))
-				{
-					if ($r->Default != NULL)
-					{
-						if (!in_array($r->Default, ["CURRENT_TIMESTAMP"]))
-						{
+				while ($r = $this->getDb()->fetch($rs)) {
+					if ($r->Default != NULL) {
+						if (!in_array($r->Default, ["CURRENT_TIMESTAMP"])) {
 							$r->Default = "'$r->Default'";
 						}
 					}
@@ -317,17 +310,14 @@ EOF;
 				$indexAr = array();
 
 				$rs_keys = $this->getDb()->q("SHOW KEYS FROM `$table`");
-				while ($r_key = $this->getDb()->fetch($rs_keys))
-				{
+				while ($r_key = $this->getDb()->fetch($rs_keys)) {
 					$key_name = $r_key->Key_name;
 
-					if ($key_name != "PRIMARY" && $r_key->Non_unique == 0)
-					{
+					if ($key_name != "PRIMARY" && $r_key->Non_unique == 0) {
 						$key_name = "UNIQUE|" . $key_name;
 					}
 
-					if (!isset($indexAr[$key_name]) || !is_array($indexAr[$key_name]))
-					{
+					if (!isset($indexAr[$key_name]) || !is_array($indexAr[$key_name])) {
 						$indexAr[$key_name] = array();
 					}
 
@@ -337,19 +327,15 @@ EOF;
 				$engine = substr($table, 0, 13) == "search_index_" ? "MyISAM" : "InnoDB";
 
 				// get each key info
-				foreach ($indexAr as $key_name => $columns)
-				{
+				foreach ($indexAr as $key_name => $columns) {
 					$sql .= ",\n";
 					$col_names = "`".join("`,`", $columns)."`";
 
 					$prefix = "";
 
-					foreach ($columns as $_c)
-					{
-						foreach ($fieldsAr as $field => $type)
-						{
-							if (strtolower($field) == strtolower($_c) && strtolower($type) == "text")
-							{
+					foreach ($columns as $_c) {
+						foreach ($fieldsAr as $field => $type) {
+							if (strtolower($field) == strtolower($_c) && strtolower($type) == "text") {
 								$prefix = "FULLTEXT ";
 								$engine = "MyISAM";
 
@@ -358,14 +344,10 @@ EOF;
 						}
 					}
 
-					if ($key_name == "PRIMARY")
-					{
+					if ($key_name == "PRIMARY") {
 						$sql .= "\tPRIMARY KEY ($col_names)";
-					}
-					else
-					{
-						if (substr($key_name, 0, 6) == "UNIQUE")
-						{
+					} else {
+						if (substr($key_name, 0, 6) == "UNIQUE") {
 							$key_name = substr($key_name, 7);
 						}
 
@@ -377,17 +359,14 @@ EOF;
 					"\nCOLLATE=" . Config::getDbCollation() . ";\n\n";
 			}
 
-			if ($data)
-			{
-				$rs = $this->getDb()->rs($table);
+			if ($data) {
+				$rs = $this->getDb()->rs($this->getDb()->escapeTable($table));
 				$rc = $this->getDb()->count($rs);
 
-				if ($fields && empty($fieldsAr))
-				{
+				if ($fields && empty($fieldsAr)) {
 					$r = $this->getDb()->fetch($rs);
 
-					foreach ($r as $Field => $Value)
-					{
+					foreach ($r as $Field => $Value) {
 						$fieldsAr[$Field] = 1;
 					}
 
@@ -398,31 +377,27 @@ EOF;
 						return '`' . $field . '`';
 					}, array_keys($fieldsAr))) . ')' : '';
 
-				if ($multiple && $rc)
-				{
+				if ($multiple && $rc) {
 					$sql .= "INSERT INTO `{$table}`{$fieldsListString} VALUES";
 				}
 
 				$end_symbol = $multiple ? ',' : ';';
 
-				for ($j = 0; $j < $rc; $j++)
-				{
-					$r = $this->getDb()->fetch_array($rs);
+                for ($j = 0; $j < $rc; $j++) {
+                    $r = $this->getDb()->fetch_array($rs);
 
-					if (!$multiple)
-					{
-						$sql .= "INSERT INTO `{$table}`{$fieldsListString} VALUES";
-					}
+                    if (!$multiple) {
+                        $sql .= "INSERT INTO `{$table}`{$fieldsListString} VALUES";
+                    }
 
-					if ($j == $rc - 1)
-					{
-						$end_symbol = ';';
-					}
+                    if ($j == $rc - 1) {
+                        $end_symbol = ';';
+                    }
 
-					$sql .= '(' . join(',', $this->prepareString(array_values($r))) . "){$end_symbol}\n";
+                    $sql .= '(' . join(',', $this->prepareString(array_values($r))) . "){$end_symbol}\n";
 
-					$this->tryToFlush($fp, $sql, $compress);
-				}
+                    $this->tryToFlush($fp, $sql, $compress);
+                }
 
 				$sql .= "\n";
 			}

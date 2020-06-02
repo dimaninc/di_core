@@ -904,8 +904,7 @@ class diModel implements \ArrayAccess
 		$ar = [];
 
 		$rs = $this->getDb()->rs('dipics', 'WHERE ' . join(' AND ', $queryAr) . ' ORDER BY ' . $options['orderBy'] . $limit);
-		while ($r = $this->getDb()->fetch($rs))
-		{
+		while ($r = $this->getDb()->fetch($rs)) {
 			$m = static::create(\diTypes::dynamic_pic, $r);
 			$m->setRelated('table', $this->getTable());
 
@@ -913,7 +912,7 @@ class diModel implements \ArrayAccess
 		}
 
 		return $options['onlyFirstRecord']
-			? (isset($ar[0]) ? $ar[0] : null)
+			? ($ar[0] ?? null)
 			: $ar;
 	}
 
@@ -954,13 +953,15 @@ class diModel implements \ArrayAccess
 
 	protected function getRecord($id, $fieldAlias = null)
 	{
-		if (!$this->getTable())
-		{
+		if (!$this->getTable()) {
 			throw new \Exception('Table not defined');
 		}
 
 		$a = $this->prepareIdAndFieldForGetRecord($id, $fieldAlias);
-		$ar = $this->getDb()->ar($this->getDb()->escapeTable($this->getTable()), "WHERE {$a['field']} = '{$a['id']}'");
+		$ar = $this->getDb()->ar(
+		    $this->getDb()->escapeTable($this->getTable()),
+            "WHERE {$a['field']} = '{$a['id']}'"
+        );
 
 		return $this->tuneDataAfterFetch($ar);
 	}
@@ -993,10 +994,8 @@ class diModel implements \ArrayAccess
 	 */
 	public function removeUnnecessaryFields()
 	{
-		foreach ($this->ar as $field => $value)
-		{
-			if (!in_array($field, $this->fields))
-			{
+		foreach ($this->ar as $field => $value) {
+			if (!in_array($field, $this->fields)) {
 				$this->removeUnnecessaryField($field);
 			}
 		}
@@ -1011,10 +1010,8 @@ class diModel implements \ArrayAccess
 	 */
 	protected function simpleValidate()
 	{
-		foreach ($this->fields as $field)
-		{
-			if (!$this->exists($field))
-			{
+		foreach ($this->fields as $field) {
+			if (!$this->exists($field)) {
 				$this->addValidationError("Field '{$field}' should be defined in " . get_class($this));
 			}
 		}
@@ -1073,8 +1070,7 @@ class diModel implements \ArrayAccess
 
 	public function has($field)
 	{
-		if ($field == static::getIdFieldName())
-		{
+		if ($field == static::getIdFieldName()) {
 			return !!$this->getId();
 		}
 
@@ -1083,8 +1079,7 @@ class diModel implements \ArrayAccess
 
 	public function hasOrig($field)
 	{
-		if ($field == static::getIdFieldName())
-		{
+		if ($field == static::getIdFieldName()) {
 			return !!$this->getOrigId();
 		}
 
@@ -1256,12 +1251,9 @@ class diModel implements \ArrayAccess
 
 	public function set($field, $value = null)
 	{
-		if (is_array($field))
-		{
+		if (is_array($field)) {
 			$this->ar = extend($this->ar, $field);
-		}
-		else
-		{
+		} else {
 			$this->ar[$field] = $value;
 		}
 
@@ -1279,20 +1271,14 @@ class diModel implements \ArrayAccess
 	 */
 	public function setOrigData($field = null, $value = null)
 	{
-		if (is_null($field))
-		{
+		if (is_null($field)) {
 			$this->origData = $this->ar;
 			$this->origId = $this->id;
-		}
-		else
-		{
-			if (is_scalar($field))
-			{
+		} else {
+			if (is_scalar($field)) {
 				$field = strtolower($field);
 				$this->origData[$field] = $value;
-			}
-			else
-			{
+			} else {
 				$this->origData = extend($this->origData, (array)$field);
 			}
 		}
@@ -1310,13 +1296,10 @@ class diModel implements \ArrayAccess
 	 */
 	public function setCachedData($field, $value = null)
 	{
-		if (is_scalar($field))
-		{
+		if (is_scalar($field)) {
 			$field = strtolower($field);
 			$this->cachedData[$field] = $value;
-		}
-		else
-		{
+		} else {
 			$this->cachedData = extend($this->cachedData, (array)$field);
 		}
 
@@ -1330,24 +1313,17 @@ class diModel implements \ArrayAccess
 	 */
 	public function kill($field = null)
 	{
-		if (is_null($field))
-		{
-			$this->destroy();
-		}
-		elseif (is_string($field))
-		{
-			if ($this->exists($field))
-			{
-				unset($this->ar[$field]);
-			}
-		}
-		elseif (is_array($field))
-		{
-			foreach ($field as $f)
-			{
-				$this->kill($f);
-			}
-		}
+        if (is_null($field)) {
+            $this->destroy();
+        } elseif (is_string($field)) {
+            if ($this->exists($field)) {
+                unset($this->ar[$field]);
+            }
+        } elseif (is_array($field)) {
+            foreach ($field as $f) {
+                $this->kill($f);
+            }
+        }
 
 		return $this;
 	}
@@ -1359,24 +1335,17 @@ class diModel implements \ArrayAccess
 	 */
 	public function killOrig($field = null)
 	{
-		if (is_null($field))
-		{
-			$this->destroyOrig();
-		}
-		elseif (is_string($field))
-		{
-			if ($this->existsOrig($field))
-			{
-				unset($this->origData[$field]);
-			}
-		}
-		elseif (is_array($field))
-		{
-			foreach ($field as $f)
-			{
-				$this->killOrig($f);
-			}
-		}
+        if (is_null($field)) {
+            $this->destroyOrig();
+        } elseif (is_string($field)) {
+            if ($this->existsOrig($field)) {
+                unset($this->origData[$field]);
+            }
+        } elseif (is_array($field)) {
+            foreach ($field as $f) {
+                $this->killOrig($f);
+            }
+        }
 
 		return $this;
 	}
@@ -1388,62 +1357,49 @@ class diModel implements \ArrayAccess
 	 */
 	public function killCached($field = null)
 	{
-		if (is_null($field))
-		{
-			$this->destroyCached();
-		}
-		elseif (is_string($field))
-		{
-			if ($this->existsCached($field))
-			{
-				unset($this->cachedData[$field]);
-			}
-		}
-		elseif (is_array($field))
-		{
-			foreach ($field as $f)
-			{
-				$this->killCached($f);
-			}
-		}
+        if (is_null($field)) {
+            $this->destroyCached();
+        } elseif (is_string($field)) {
+            if ($this->existsCached($field)) {
+                unset($this->cachedData[$field]);
+            }
+        } elseif (is_array($field)) {
+            foreach ($field as $f) {
+                $this->killCached($f);
+            }
+        }
 
 		return $this;
 	}
 
 	public function getRelated($field = null)
 	{
-		if (is_null($field))
-		{
-			return $this->relatedData;
-		}
+        if (is_null($field)) {
+            return $this->relatedData;
+        }
 
-		if (!isset($this->relatedData[$field]))
-		{
-			//throw new \Exception("Field '$field' is undefined in related data of " . get_class($this));
-			return null;
-		}
+        if (!isset($this->relatedData[$field])) {
+            //throw new \Exception("Field '$field' is undefined in related data of " . get_class($this));
+            return null;
+        }
 
 		return $this->relatedData[$field];
 	}
 
 	public function setRelated($field, $value = null)
 	{
-		if (is_null($value))
-		{
-			$this->relatedData = (array)extend($this->relatedData, $field);
-		}
-		else
-		{
-			$this->relatedData[$field] = $value;
-		}
+        if (is_null($value)) {
+            $this->relatedData = (array)extend($this->relatedData, $field);
+        } else {
+            $this->relatedData[$field] = $value;
+        }
 
 		return $this;
 	}
 
 	public function killRelated($field)
 	{
-		if (isset($this->relatedData[$field]))
-		{
+		if (isset($this->relatedData[$field])) {
 			unset($this->relatedData[$field]);
 		}
 
@@ -1482,22 +1438,20 @@ class diModel implements \ArrayAccess
 
 	protected function doValidate()
 	{
-		if (!$this->isValidationNeeded())
-		{
-			return $this;
-		}
+        if (!$this->isValidationNeeded()) {
+            return $this;
+        }
 
-		$this
-			->clearValidationErrors()
-			->validate();
+        $this
+            ->clearValidationErrors()
+            ->validate();
 
-		if ($this->validationErrors)
-		{
-			$e = new \diValidationException('Unable to validate ' . get_class($this) . ': ' . join("\n", $this->preparedValidationErrors()));
-			$e->setErrors($this->validationErrors);
+        if ($this->validationErrors) {
+            $e = new \diValidationException('Unable to validate ' . get_class($this) . ': ' . join("\n", $this->preparedValidationErrors()));
+            $e->setErrors($this->validationErrors);
 
-			throw $e;
-		}
+            throw $e;
+        }
 
 		return $this;
 	}
@@ -2025,23 +1979,19 @@ class diModel implements \ArrayAccess
 			'_tn3',
 		];
 
-		foreach ($fileFields as $field)
-		{
-			if ($this->exists($field))
-			{
-				$this->set($field, '');
-			}
+        foreach ($fileFields as $field) {
+            if ($this->exists($field)) {
+                $this->set($field, '');
+            }
 
-			foreach ($fieldSuffixes as $suffix)
-			{
-				if ($this->exists($field . $suffix . '_w') && $this->exists($field . $suffix . '_h'))
-				{
-					$this
-						->set($field . $suffix . '_w', 0)
-						->set($field . $suffix . '_h', 0);
-				}
-			}
-		}
+            foreach ($fieldSuffixes as $suffix) {
+                if ($this->exists($field . $suffix . '_w') && $this->exists($field . $suffix . '_h')) {
+                    $this
+                        ->set($field . $suffix . '_w', 0)
+                        ->set($field . $suffix . '_h', 0);
+                }
+            }
+        }
 
 		return $this;
 	}
@@ -2056,16 +2006,15 @@ class diModel implements \ArrayAccess
 
 		$ext = get_file_ext($origFilename);
 
-		if ($options['force'] || !$this->has($field))
-		{
-			do {
-				$this->set($field, get_unique_id($options['length']) . '.' . $ext);
+        if ($options['force'] || !$this->has($field)) {
+            do {
+                $this->set($field, get_unique_id($options['length']) . '.' . $ext);
 
-				$exists = $options['checkMode'] == 'db'
-					? \diCollection::create(static::type)->filterBy($field, $this->get($field))->count() > 0
-					: is_file(\diPaths::fileSystem($this) . $this->getPicsFolder() . $this->get($field));
-			} while ($exists);
-		}
+                $exists = $options['checkMode'] == 'db'
+                    ? \diCollection::create(static::type)->filterBy($field, $this->get($field))->count() > 0
+                    : is_file(\diPaths::fileSystem($this) . $this->getPicsFolder() . $this->get($field));
+            } while ($exists);
+        }
 
 		return $this;
 	}
@@ -2093,8 +2042,7 @@ class diModel implements \ArrayAccess
 
 	protected function checkId()
 	{
-		if (isset($this->ar[static::getIdFieldName()]))
-		{
+		if (isset($this->ar[static::getIdFieldName()])) {
 			$this->id = $this->ar[static::getIdFieldName()];
 
 			$this->kill(static::getIdFieldName());
@@ -2105,8 +2053,7 @@ class diModel implements \ArrayAccess
 
     protected function checkOrigId()
     {
-        if (isset($this->origData[static::getIdFieldName()]))
-        {
+        if (isset($this->origData[static::getIdFieldName()])) {
             $this->origId = $this->origData[static::getIdFieldName()];
 
             $this->killOrig(static::getIdFieldName());
@@ -2207,20 +2154,17 @@ class diModel implements \ArrayAccess
 	 */
 	public function offsetGet($offset)
 	{
-		if ($this->has($offset))
-		{
-			return $this->get($offset);
-		}
+        if ($this->has($offset)) {
+            return $this->get($offset);
+        }
 
-		if ($this->has(underscore($offset)))
-		{
-			return $this->get(underscore($offset));
-		}
+        if ($this->has(underscore($offset))) {
+            return $this->get(underscore($offset));
+        }
 
-		if ($this->has(camelize($offset)))
-		{
-			return $this->get(camelize($offset));
-		}
+        if ($this->has(camelize($offset))) {
+            return $this->get(camelize($offset));
+        }
 
 		return $this->getExtendedTemplateVar($offset);
 	}
@@ -2244,38 +2188,33 @@ class diModel implements \ArrayAccess
 		return '';
 	}
 
-	public static function escapeValueForFile($value)
-	{
-		if (strpos($value, "\n") !== false)
-		{
-			$value = "<<<'EOF'\n" . $value . "\nEOF\n";
-		}
-		else
-		{
-			$value = "'" . str_replace("'", "\\'", str_replace('\\', '\\\\', $value)) . "'";
-		}
+    public static function escapeValueForFile($value)
+    {
+        if (strpos($value, "\n") !== false) {
+            $value = "<<<'EOF'\n" . $value . "\nEOF\n";
+        } else {
+            $value = "'" . str_replace("'", "\\'", str_replace('\\', '\\\\', $value)) . "'";
+        }
 
-		return $value;
-	}
+        return $value;
+    }
 
-	public function asPhpArray($excludeFields = [])
-	{
-		$s = '';
+    public function asPhpArray($excludeFields = [])
+    {
+        $s = '';
 
-		foreach ($this->get() as $field => $value)
-		{
-			if (in_array($field, $excludeFields))
-			{
-				continue;
-			}
+        foreach ($this->get() as $field => $value) {
+            if (in_array($field, $excludeFields)) {
+                continue;
+            }
 
-			$value = static::escapeValueForFile($value);
+            $value = static::escapeValueForFile($value);
 
-			$s .= "'$field'=>$value,\n";
-		}
+            $s .= "'$field'=>$value,\n";
+        }
 
-		return "[\n" . $s . "]";
-	}
+        return "[\n" . $s . "]";
+    }
 
 	public function allowInsertOrUpdate()
 	{
