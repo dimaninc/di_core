@@ -16,7 +16,7 @@ class diAdminList
 	private $columnsAr = [];
 
 	/** @var bool */
-	private $columnsInited = false;
+	private $columnsInitiated = false;
 
 	/** @var array */
 	private $printParts;
@@ -81,8 +81,7 @@ class diAdminList
 			$this->getAdminPage()->getLanguage()
 		);
 
-		if ($this->options['formBasePath'])
-		{
+		if ($this->options['formBasePath']) {
 			$this->T->setFormPathBase($this->options['formBasePath']);
 		}
 
@@ -93,12 +92,10 @@ class diAdminList
     {
         $language = $language ?: self::$language;
 
-        return isset(self::$lngStrings[$language][$token])
-            ? self::$lngStrings[$language][$token]
-            : $token;
+        return self::$lngStrings[$language][$token] ?? $token;
     }
 
-	protected function getAdminPage()
+	public function getAdminPage()
 	{
 		return $this->AdminPage;
 	}
@@ -261,7 +258,7 @@ class diAdminList
 			$this->T->addColumn($p['title'], array_merge($p['attrs'], $p['headAttrs']));
 		}
 
-		$this->columnsInited = true;
+		$this->columnsInitiated = true;
 
 		return $this;
 	}
@@ -320,7 +317,7 @@ class diAdminList
 
 	public function addRow($r, $options = [])
 	{
-		if (!$this->columnsInited)
+		if (!$this->columnsInitiated)
 	    {
 	    	$this->initColumns();
 	    }

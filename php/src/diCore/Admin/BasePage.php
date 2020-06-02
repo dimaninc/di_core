@@ -90,6 +90,19 @@ abstract class BasePage
 	];
 	private $vocabularyAssigned = false;
 
+	public static $customListButtonTitles = [
+	    /*
+	    'en' => [
+	        'create' => 'My own create title',
+            'visible' => [0 => 'Invisible', 1 => 'Visible'],
+        ],
+        'ru' => [
+            'create' => 'Самосоздание',
+            'visible' => [0 => 'Скрыто', 1 => 'Видно'],
+        ],
+	    */
+    ];
+
 	/*
 	 * override this in child classed
 	 * possible keys:
@@ -1192,14 +1205,12 @@ abstract class BasePage
 
 	protected function afterSubmitForm()
 	{
-		if ($this->reallySubmit() && $this->getSubmit()->isSubmit())
-		{
+		if ($this->reallySubmit() && $this->getSubmit()->isSubmit()) {
 			$this->getSubmit()
                 ->storeData();
 		}
 
-		if ($this->getOption('updateSearchIndexOnSubmit'))
-		{
+		if ($this->getOption('updateSearchIndexOnSubmit')) {
 			\diSearch::makeRecordIndex($this->getTable(), $this->getId());
 		}
 
@@ -1210,8 +1221,7 @@ abstract class BasePage
 
 	protected function addEditLogRecord()
 	{
-		if ($this->useEditLog())
-		{
+		if ($this->useEditLog()) {
 			try {
 				/** @var TableEditLog $log */
 				$log = \diModel::create(\diTypes::admin_table_edit_log);
@@ -1255,8 +1265,7 @@ abstract class BasePage
 			? $this->getPagesNavy()->get_page_of($this->getId(), $sortBy, $dir)
 			: null;
 
-		if ($page)
-		{
+		if ($page) {
 			$ar['page'] = $page;
 		}
 
@@ -1307,16 +1316,15 @@ abstract class BasePage
 		}
 
 		return $property
-			? (isset($ar[$field][$property]) ? $ar[$field][$property] : null)
+			? ($ar[$field][$property] ?? null)
 			: $ar[$field];
 	}
 
 	public static function getFieldFlags($fieldsAr, $field)
 	{
-		$flags = isset($fieldsAr[$field]['flags']) ? $fieldsAr[$field]['flags'] : [];
+		$flags = $fieldsAr[$field]['flags'] ?? [];
 
-		if (!is_array($flags))
-		{
+		if (!is_array($flags)) {
 			$flags = [$flags];
 		}
 
@@ -1594,8 +1602,11 @@ abstract class BasePage
 
 	public function getVocabularyTerm($name)
 	{
-		return isset($this->vocabulary[$this->getLanguage()][$name])
-			? $this->vocabulary[$this->getLanguage()][$name]
-			: $name;
+		return $this->vocabulary[$this->getLanguage()][$name] ?? $name;
 	}
+
+	public static function getCustomListButtonTitles()
+    {
+        return static::$customListButtonTitles;
+    }
 }

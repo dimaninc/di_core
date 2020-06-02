@@ -117,13 +117,10 @@ class diNiceTable
 
 		$this->db = $db;
 
-		if (is_object($pn))
-		{
+		if (is_object($pn)) {
 			$this->pn = $pn;
 			$this->page = $pn->page;
-		}
-		else
-		{
+		} else {
 			$this->pn = null;
 			$this->page = $pn ?: 1;
 		}
@@ -136,7 +133,9 @@ class diNiceTable
 		$this->lng = $lng;
 
 		$this->lite = !empty($lite) ? $lite : 0;
-		$this->collapsedIds = isset($_COOKIE["list_collapsed"][$this->table]) ? explode(",", $_COOKIE["list_collapsed"][$this->table]) : array();
+		$this->collapsedIds = isset($_COOKIE["list_collapsed"][$this->table])
+            ? explode(",", $_COOKIE["list_collapsed"][$this->table])
+            : [];
 	}
 
 	public function getList()
@@ -146,7 +145,9 @@ class diNiceTable
 
     public function L($token)
     {
-        return $this->getList() ? $this->getList()->L($token) : $token;
+        return $this->getList()
+            ? $this->getList()->L($token)
+            : $token;
     }
 
 	protected function getDb()
@@ -181,20 +182,16 @@ class diNiceTable
 
 	protected function setRowRec($r)
 	{
-		if ($r instanceof diModel)
-		{
+		if ($r instanceof diModel) {
 			$this->rowModel = $r;
-		}
-		else
-		{
-			$type = diTypes::getNameByTable($this->getTable());
+		} else {
+			$type = \diTypes::getNameByTable($this->getTable());
 			$this->rowModel = $type && diModel::existsFor($type)
-				? diModel::create($type, $r)
+				? \diModel::create($type, $r)
 				: new diModel($r, $this->getTable());
 		}
 
-		if ($this->getRowModel()->exists())
-		{
+		if ($this->getRowModel()->exists()) {
 			$this->treeView = $this->getRowModel()->exists("level_num");
 		}
 
@@ -219,8 +216,7 @@ class diNiceTable
 
 	public function addColumn($title = "&nbsp;", $more_params = [])
 	{
-		if (!is_array($more_params))
-		{
+		if (!is_array($more_params)) {
 			$more_params = [];
 		}
 
@@ -273,20 +269,13 @@ class diNiceTable
 
 		$td_params = array_merge($this->cols[$this->col_idx]["more_params"], $td_params);
 
-		foreach ($td_params as $p => $v)
-		{
-			if ($p)
-			{
-				$s .= " $p=\"$v\"";
-			}
-			else
-			{
-				$s .= " $v";
-			}
+		foreach ($td_params as $p => $v) {
+            $s .= $p
+                ? " $p=\"$v\""
+                : " $v";
 		}
 
-		if (!$this->anchorPlaced)
-		{
+		if (!$this->anchorPlaced) {
 			$anchorName = self::getRowAnchorName($this->getRowModel()->getId());
 			$anchor = "<a name='{$anchorName}' class='anchor'></a>";
 
@@ -308,15 +297,15 @@ class diNiceTable
 	 */
 	public function getButton($action, $options = [])
 	{
-		if (gettype($options) == "string")
-		{
+		if (gettype($options) == 'string') {
 			$options = [
-				"href" => $options,
+				'href' => $options,
 			];
 		}
 
 		return diNiceTableButtons::getButton($action, extend([
-			"language" => $this->getLanguage(),
+			'language' => $this->getLanguage(),
+            'customTitles' => $this->getList()->getAdminPage()->getCustomListButtonTitles(),
 		], $options));
 	}
 
@@ -327,8 +316,7 @@ class diNiceTable
 
 	public function openTable($print_headline = null)
 	{
-		if ($print_headline === null)
-		{
+		if ($print_headline === null) {
 			$print_headline = self::PRINT_HEADLINE;
 		}
 
@@ -338,14 +326,12 @@ class diNiceTable
 		$s .= "<div class=\"dinicetable_div\">" .
 			"<table class=\"dinicetable\" data-table=\"{$this->table}\"><tbody>\n";
 
-		if ($print_headline == self::PRINT_HEADLINE)
-		{
-			$head_ar = array();
+		if ($print_headline == self::PRINT_HEADLINE) {
+            $head_ar = [];
 
 			$s .= $this->openRow(null, "", "headline");
 
-			foreach ($this->cols as $col)
-			{
+			foreach ($this->cols as $col) {
 				$head_ar[] = $this->textCell($col["title"]);
 			}
 
@@ -442,31 +428,27 @@ class diNiceTable
 
 	public function idCell($show_id = true, $show_checkbox = false, $show_expand_collapse = true)
 	{
-		if (!$this->getRowModel()->exists())
-		{
+		if (!$this->getRowModel()->exists()) {
 			throw new Exception("diNiceTable::idCell(): no current rec");
 		}
 
 		$inner = "";
 
-		if ($show_id)
-		{
+		if ($show_id) {
 			$inner .= $this->getRowId();
 		}
 
-		if ($show_checkbox)
-		{
+		if ($show_checkbox) {
 			$inner .= " <input type=\"checkbox\" data-purpose=\"toggle\" data-id=\"{$this->getRowId()}\">";
 		}
 
-		if ($this->getRowModel()->exists("level_num") && $show_expand_collapse)
-		{
+		if ($this->getRowModel()->exists("level_num") && $show_expand_collapse) {
 			$expandClassName = in_array($this->getRowModel()->getId(), $this->collapsedIds) ? "expand" : "collapse";
 
 			$inner .= "<u class=\"tree {$expandClassName}\"></u>";
 		}
 
-		return $this->textCell($inner, array("class" => "id"));
+		return $this->textCell($inner, ["class" => "id"]);
 	}
 
 	public function setFormPathBase($formPathBase)
@@ -488,8 +470,7 @@ class diNiceTable
 			//'edit' => 1,
 		];
 
-		if ($this->lite)
-		{
+		if ($this->lite) {
 			$queryParams['lite'] = $this->lite;
 		}
 
@@ -506,9 +487,9 @@ class diNiceTable
 	public function toggleBtnCell($field, $active = true)
 	{
 		return $active
-			? $this->btnCell($this->getButton($field, array(
+			? $this->btnCell($this->getButton($field, [
 				"state" => $this->getRowModel()->get($field),
-			)))
+            ]))
 			: $this->emptyBtnCell();
 	}
 
@@ -541,15 +522,15 @@ class diNiceTable
 		);
 
 		$s = $r->cc
-			? $this->getButton("comments", array(
+			? $this->getButton("comments", [
 				"text" => $r->cc,
-			))
+            ])
 			: $this->getEmptyButton();
 
 		return $this->btnCell($s);
 	}
 
-	public function picBtnCell($opts = array())
+	public function picBtnCell($opts = [])
 	{
 		switch ($this->getTable())
 		{
@@ -564,10 +545,8 @@ class diNiceTable
 				break;
 		}
 
-		if (!$opts["href"])
-		{
-			if (!$path)
-			{
+		if (!$opts["href"]) {
+			if (!$path) {
 				throw new Exception("picBtnCell path not defined");
 			}
 
@@ -577,10 +556,9 @@ class diNiceTable
 		return $this->btnCell($this->getButton("pic", $opts["href"]));
 	}
 
-	public function videoBtnCell($opts = array())
+	public function videoBtnCell($opts = [])
 	{
-		switch ($this->getTable())
-		{
+		switch ($this->getTable()) {
 			case "albums":
 				$path = "videos";
 				$suffix = "?album_id={$this->getRowModel()->getId()}";
@@ -592,10 +570,8 @@ class diNiceTable
 				break;
 		}
 
-		if (!$opts["href"])
-		{
-			if (!$path)
-			{
+		if (!$opts["href"]) {
+			if (!$path) {
 				throw new Exception("videoBtnCell path not defined");
 			}
 
