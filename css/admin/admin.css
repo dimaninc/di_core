@@ -1439,23 +1439,37 @@ body[data-skin="entrine"] .footer .copyright {
   -ms-flex: 1;
   flex: 1;
   background-color: inherit;
-  padding: 5px 20px;
-  height: 30px;
-  -webkit-transition: background-color 1s linear;
-  -moz-transition: background-color 1s linear;
-  -o-transition: background-color 1s linear;
-  -ms-transition: background-color 1s linear;
-  transition: background-color 1s linear;
+  border-top: 5px solid #ddd;
+  border-bottom: 5px solid #ddd;
+  padding: 0 5px 0 40px;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  height: 40px;
+  -webkit-transition: 0.5s;
+  -moz-transition: 0.5s;
+  -o-transition: 0.5s;
+  -ms-transition: 0.5s;
+  transition: 0.5s;
+  overflow: hidden;
+}
+body[data-skin="entrine"] .footer .console-container {
+  height: 60px;
+  border-top-color: #fff;
+  border-top-width: 6px;
+  border-bottom-color: #fff;
+  border-bottom-width: 6px;
 }
 .footer .console-container.highlighted {
   background-color: #ffe;
-}
-.footer .console-container .console {
-  height: 30px;
-  overflow: hidden;
+  border-top-color: #ffe;
+  border-bottom-color: #ffe;
 }
 .footer .console-container .console > div {
   line-height: 15px;
+}
+body[data-skin="entrine"] .footer .console-container .console > div {
+  line-height: 16px;
 }
 .footer .console-container .console > div > i {
   font-style: normal;
@@ -1478,7 +1492,6 @@ body[data-skin="entrine"] .footer .copyright {
   -ms-transition: all 0.5s ease;
   transition: all 0.5s ease;
   background: #eee;
-  margin-top: -1px;
   margin-left: -30px;
 }
 .footer .console-container .up:hover,
@@ -1487,7 +1500,7 @@ body[data-skin="entrine"] .footer .copyright {
   box-shadow: 0 0 2px #000;
 }
 .footer .console-container .down {
-  margin-top: 16px;
+  margin-top: 15px;
 }
 .footer .console-container:not(.navy-needed) .up,
 .footer .console-container:not(.navy-needed) .down {

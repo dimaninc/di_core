@@ -2,7 +2,6 @@ var diAdminConsole = function(_opts) {
 	var self = this,
 		lines = 0,
 		opts = $.extend({
-			lineHeight: 15,
 			highLightTimeout: 2,
 			scrollTimeout: 1
 		}, _opts || {}),
@@ -15,10 +14,11 @@ var diAdminConsole = function(_opts) {
 	{
 		e.$container.find('.up,.down').click(function() {
 			var sign = $(this).hasClass('up') ? -1 : 1;
+			var diff = sign * e.$container.height();
 
-			e.$console.stop(true, true).animate({
-				scrollTop: e.$console.get(0).scrollTop + sign * opts.lineHeight * 2
-			}, opts.scrollTimeout * 500);
+			e.$container.stop(true, true).animate({
+				scrollTop: e.$container.get(0).scrollTop + diff
+			}, opts.scrollTimeout * 300);
 		});
 	}
 

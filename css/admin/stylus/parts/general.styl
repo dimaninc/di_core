@@ -657,16 +657,33 @@ u
     .console-container
         flex 1
         background-color inherit
-        padding 5px $classicStandardPadding
-        height 30px
-        transition background-color 1s linear
+        border-top 5px solid #ddd
+        border-bottom 5px solid #ddd
+        padding 0 5px 0 40px
+        box-sizing border-box
+        height $classicFooterHeight
+        transition .5s
+        overflow hidden
+        {$entrineSkin} &
+            height $entrineFooterHeight
+            border-top-color white
+            border-top-width 6px
+            border-bottom-color white
+            border-bottom-width 6px
         &.highlighted
             background-color #ffe
+            border-top-color #ffe
+            border-bottom-color #ffe
         .console
-            height 30px
-            overflow hidden
+            /*
+            height $classicFooterHeight
+            {$entrineSkin} &
+                height $entrineFooterHeight
+            */
             > div
                 line-height 15px
+                {$entrineSkin} &
+                    line-height 16px
                 > i
                     font-style normal
                     margin-right 15px
@@ -683,12 +700,12 @@ u
             line-height 15px
             transition all .5s ease
             background #eee
-            margin-top -1px
+            //margin-top -1px
             margin-left -30px
             &:hover
                 box-shadow 0 0 2px black
         .down
-            margin-top 16px
+            margin-top 15px
         &:not(.navy-needed)
             .up, .down
                 display none
