@@ -377,18 +377,18 @@ class diModel implements \ArrayAccess
 		return \diPaths::defaultHttp() . $this->getAdminHref();
 	}
 
-	protected function __getPrefixForHref()
+	public static function __getPrefixForHref($language = null)
 	{
 		global $Z;
 
-		if (
-			!empty($GLOBALS['CURRENT_LANGUAGE']) &&
-			in_array($GLOBALS['CURRENT_LANGUAGE'], \diCurrentCMS::$possibleLanguages) &&
-			$GLOBALS['CURRENT_LANGUAGE'] != 'ru'
-		) {
-			$prefix = '/' . $GLOBALS['CURRENT_LANGUAGE'];
+		if (!$language) {
+            $language = static::__getLanguage();
+        }
+
+		if ($language) {
+			$prefix = '/' . $language;
 		} elseif (!empty($Z)) {
-			$prefix = $Z->language_href_prefix;
+			$prefix = $Z->getLanguageHrefPrefix();
 		} else {
 			$prefix = '';
 		}
