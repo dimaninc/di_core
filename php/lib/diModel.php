@@ -385,7 +385,7 @@ class diModel implements \ArrayAccess
             $language = static::__getLanguage();
         }
 
-		if ($language) {
+		if ($language && $language != \diCurrentCMS::$defaultLanguage) {
 			$prefix = '/' . $language;
 		} elseif (!empty($Z)) {
 			$prefix = $Z->getLanguageHrefPrefix();
