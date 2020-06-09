@@ -132,6 +132,7 @@ class diAdminFilters
 	public $reset = false;
 
 	protected $sortable = true;
+	protected $hidden = false;
 
 	private $buttonsPrefix = null;
 	private $buttonsSuffix = null;
@@ -140,15 +141,12 @@ class diAdminFilters
 	{
 		global $db;
 
-		if (gettype($table) == 'object')
-		{
+		if (gettype($table) == 'object') {
 			$this->AdminPage = $table;
 
 			$this->table = $this->AdminPage->getTable();
 			$this->language = $this->AdminPage->getAdmin()->getLanguage();
-		}
-		else
-		{
+		} else {
 			$this->table = $table;
 		}
 
@@ -222,6 +220,13 @@ class diAdminFilters
 		return $this;
 	}
 
+	public function hideBlock()
+    {
+        $this->hidden = true;
+
+        return $this;
+    }
+
 	/** @deprecated */
 	public function set_input($field, $input)
 	{
@@ -232,17 +237,14 @@ class diAdminFilters
 	{
 		$this->inputs_ar[$field] = $input;
 
-		if (gettype($input) == "object" && $input instanceof \diSelect)
-		{
+		if (gettype($input) == "object" && $input instanceof \diSelect) {
 			// setting clean name for 'get' submit
-			if (strpos($input->getAttr("name"), "admin_filter[") === 0)
-			{
+			if (strpos($input->getAttr("name"), "admin_filter[") === 0) {
 				$input->setAttr("name", substr($input->getAttr("name"), 13, -1));
 			}
 
 			// getting first option
-			if (!empty($this->ar[$field]["strict"]))
-			{
+			if (!empty($this->ar[$field]["strict"])) {
 				$this
 					->setPredefinedData($field, $input->getItem(0, "value"))
 					->buildQuery();
@@ -364,9 +366,12 @@ class diAdminFilters
 		}
 
 		$filterRows = join("\n", $filterRowsAr);
+		$style = $this->hidden
+            ? 'style="display: none;"'
+            : '';
 
 		return <<<EOF
-<form name="admin_filter_form[{$this->table}]" method="get" action="">
+<form name="admin_filter_form[{$this->table}]" method="get" action="" {$style}>
 <div class="filter-block">
 
 	{$filterRows}
