@@ -249,7 +249,9 @@ class Mongo extends \diDB
     {
         $fields = [];
 
-        $ar = $this->ar($table) ?: [];
+        $ar = ArrayHelper::get($this->rs($table, [
+            'limit' => 1,
+        ])->toArray(), 0, []);
         foreach ($ar as $name => $value) {
             $fields[$name] = gettype($value);
         }

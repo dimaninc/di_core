@@ -248,6 +248,10 @@ class Form
             'ru' => 'Отображать на сайте',
             'en' => 'Visible',
         ],
+        'active' => [
+            'ru' => 'Активно',
+            'en' => 'Active',
+        ],
         'like_count' => [
             'ru' => 'Количество лайков',
             'en' => 'Likes count',
@@ -1081,14 +1085,10 @@ EOF;
 					$this->inputs[$field] = "<div class=\"static\">$s</div><input " . $this->getInputAttributesString($field) . ">";
 				}
 
-				if (isset($this->inputs[$field]))
-				{
+				if (isset($this->inputs[$field])) {
 					$input = $this->inputs[$field];
-				}
-				else
-				{
-					switch ($v["type"])
-					{
+				} else {
+					switch ($v["type"]) {
 						case "date":
 						case "date_str":
 							$this->set_datetime_input($field, true, false);
@@ -1166,8 +1166,7 @@ EOF;
 							break;
 					}
 
-					if (!isset($input))
-					{
+					if (!isset($input)) {
 						$input = $this->getInput($field);
 					}
 				}
@@ -1176,32 +1175,24 @@ EOF;
 					$this->isFlag($field, 'hidden') ||
 					($this->isFlag($field, 'initially_hidden') && !$this->getId());
 
-				if ($hidden)
-				{
+				if ($hidden) {
 					$html .= "\n<input type=\"hidden\" id=\"$field\" name=\"$field\" value=\"" .
 						$this->formatValue($field) . "\">\n";
-				}
-				else
-				{
-					if (!empty($v["notes"]))
-					{
+				} else {
+					if (!empty($v["notes"])) {
 						$notesStarsCounter .= "*";
 						$notesStar = $notesStarsCounter;
-					}
-					else
-					{
+					} else {
 						$notesStar = "";
 					}
 
-					switch ($v["type"])
-					{
+					switch ($v["type"]) {
 						case "password":
 							$input1 = $this->getSimpleInput("password");
 							$input2 = $this->getSimpleInput("password", ["name" => "password2"]);
 
 							$t2 = $fieldTitle;
-							if ($t2)
-							{
+							if ($t2) {
 								$t2 = mb_strtolower(mb_substr($t2, 0, 1)) . mb_substr($t2, 1);
 							}
 
@@ -1239,17 +1230,14 @@ EOF;
 							break;
 					}
 
-					if (!empty($v["notes"]))
-					{
-						if (!is_array($v["notes"]))
-						{
+					if (!empty($v["notes"])) {
+						if (!is_array($v["notes"])) {
 							$v["notes"] = array($v["notes"]);
 						}
 
 						$_notes = "";
 
-						foreach ($v["notes"] as $_note)
-						{
+						foreach ($v["notes"] as $_note) {
 							$_notes .= "<div><i>{$notesStar} {$_note}</i></div>";
 						}
 
@@ -1265,15 +1253,12 @@ EOF;
 		}
 
 		// tabs
-		if ($tabsExist)
-		{
+		if ($tabsExist) {
 			$tab_head_ar = [];
 			$tab_head_separator = "";
 
-			foreach ($formTabs as $field => $v)
-			{
-				if (!empty($tabs[$field]))
-				{
+			foreach ($formTabs as $field => $v) {
+				if (!empty($tabs[$field])) {
 				    // multilingual support
 				    if (is_array($v)) {
 				        $v = $v[$this->getX()->getLanguage()];
@@ -1287,17 +1272,14 @@ EOF;
 
 			$result .= "<div data-purpose=\"tab-pages\">\n";
 
-			foreach ($formTabs as $field => $v)
-			{
+			foreach ($formTabs as $field => $v) {
 				$result .= "<div data-tab=\"{$field}\">" .
 					(isset($tabs[$field]) ? $tabs[$field] : "") .
 					"</div>\n\n";
 			}
 
 			$result .= "</div>\n";
-		}
-		else
-		{
+		} else {
 			$result = isset($tabs["general"]) ? $tabs["general"] : "";
 		}
 		//
@@ -1352,18 +1334,15 @@ EOF;
 
 	protected function getRow($field, $title, $value, $rowAttrs = '')
 	{
-		if (is_array($rowAttrs))
-		{
+		if (is_array($rowAttrs)) {
 			$rowAttrs = ArrayHelper::toAttributesString($rowAttrs);
 		}
 
-		if ($this->getFieldProperty($field, 'drag_and_drop_uploading'))
-		{
+		if ($this->getFieldProperty($field, 'drag_and_drop_uploading')) {
 			$rowAttrs .= ' data-drag-and-drop-uploading="true"';
 		}
 
-		if ($this->isStatic($field))
-        {
+		if ($this->isStatic($field)) {
             $rowAttrs .= ' data-static="true"';
         }
 
@@ -1400,12 +1379,9 @@ EOF;
 	{
 		$o = (array)$this->getFieldProperty($field, "options");
 
-		if (is_null($option))
-		{
+		if (is_null($option)) {
 			return $o;
-		}
-		else
-		{
+		} else {
 			return isset($o[$option]) ? $o[$option] : null;
 		}
 	}
@@ -1425,8 +1401,7 @@ EOF;
 
 	public function setInput($field, $input, $static_input = "")
 	{
-		if ($input instanceof \diModel)
-		{
+		if ($input instanceof \diModel) {
 			$input = $input->appearanceForAdmin();
 		}
 
