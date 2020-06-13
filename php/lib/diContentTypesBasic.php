@@ -67,6 +67,6 @@ class diContentTypesBasic
 
 	public static function getParam($type, $param)
 	{
-		return static::get()[$type][$param] ? static::get()[$type][$param] : null;
+		return static::get()[$type][$param] ?? null;
 	}
 }

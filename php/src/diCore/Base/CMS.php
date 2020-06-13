@@ -388,7 +388,8 @@ abstract class CMS
 
 	public static function getBrowserLanguage($default = 'ru')
 	{
-		$l = \diRequest::cookie('lang', '') ?: mb_strtolower(mb_substr(\diRequest::server('HTTP_ACCEPT_LANGUAGE', ''), 0, 2));
+		$l = \diRequest::cookie('lang', '')
+            ?: mb_strtolower(mb_substr(\diRequest::server('HTTP_ACCEPT_LANGUAGE', ''), 0, 2));
 
 		return in_array($l, static::$possibleLanguages) ? $l : $default;
 	}
@@ -1017,8 +1018,7 @@ abstract class CMS
 			$href = "$this->protocol://{$_SERVER["HTTP_HOST"]}{$_SERVER["REQUEST_URI"]}";
 			$href = $this->processShareBlockHref($href);
 
-			if (!$content)
-			{
+			if (!$content) {
 				$content = $title;
 				$content0 = $title0;
 			}
@@ -1102,13 +1102,11 @@ abstract class CMS
 
 	public function start($default_page_type = null, $defaultLanguage = null)
 	{
-		if ($default_page_type)
-		{
+		if ($default_page_type) {
 			$this->defaultPageType = $default_page_type;
 		}
 
-		if ($defaultLanguage)
-		{
+		if ($defaultLanguage) {
 			static::$defaultLanguage = $defaultLanguage;
 		}
 
@@ -1129,16 +1127,15 @@ abstract class CMS
 			? 'open_graph_default_pic'
 			: 'smm_logo';
 
-		if (\diConfiguration::exists($key) && \diConfiguration::getFilename($key))
-		{
+		if (\diConfiguration::exists($key) && \diConfiguration::getFilename($key)) {
 			$this->setHeaderImage(\diConfiguration::getFilename($key), null,
 				\diConfiguration::get($key, 'img_width'),
 				\diConfiguration::get($key, 'img_height')
 			);
-		}
-		elseif (static::OG_IMAGE)
-		{
-			$this->setHeaderImage(\diRequest::urlBase(true) . static::OG_IMAGE, null,
+		} elseif (static::OG_IMAGE) {
+			$this->setHeaderImage(
+			    \diRequest::urlBase(true) . static::OG_IMAGE,
+                null,
 				static::OG_IMAGE_W,
 				static::OG_IMAGE_H
 			);
@@ -1190,8 +1187,7 @@ abstract class CMS
 
 	protected function getWholeFinalPage()
 	{
-		if (static::templateEngineIsFastTemplate())
-		{
+		if (static::templateEngineIsFastTemplate()) {
 			return $this->getFastTemplateFinalPage();
 		}
 
@@ -1248,8 +1244,7 @@ abstract class CMS
 	 */
 	public function getRoute($idx = null)
 	{
-		if ($idx < 0)
-		{
+		if ($idx < 0) {
 			$idx += count($this->routes);
 		}
 
@@ -1268,17 +1263,14 @@ abstract class CMS
         //var_dump($route, $idx, debug_backtrace());
         //die();
 
-		if ($idx === null)
-		{
+		if ($idx === null) {
 			if (!is_array($route))
 			{
 				$route = [$route];
 			}
 
 			$this->routes = array_values($route);
-		}
-		else
-		{
+		} else {
 			$this->routes[$idx] = $route;
 		}
 
@@ -1293,13 +1285,11 @@ abstract class CMS
 	 */
 	public function removeRoute($idx)
 	{
-		if ($idx < 0)
-		{
+		if ($idx < 0) {
 			$idx += count($this->routes);
 		}
 
-		if (isset($this->routes[$idx]))
-		{
+		if (isset($this->routes[$idx])) {
 			array_splice($this->routes, $idx, 1);
 		}
 
@@ -1351,8 +1341,7 @@ abstract class CMS
 
 	protected function assignTwigBasics()
 	{
-		if ($this->twigBasicsAssigned)
-		{
+		if ($this->twigBasicsAssigned) {
 			return $this;
 		}
 
@@ -1360,8 +1349,10 @@ abstract class CMS
 			? !!count($this->getCachedContentCollection())
 			: $this->getContentModel()->exists();
 
-		if ($contentReady && !$this->Twig->getAssigned('content_page'))
-		{
+		if (
+		    $contentReady &&
+            !$this->Twig->getAssigned('content_page')
+        ) {
 			$this->Twig->assign($this->getTwigBasicsData());
 
 			$this->twigBasicsAssigned = true;
@@ -1388,8 +1379,7 @@ abstract class CMS
 			str_replace("%LANGUAGE%", $this->language, $this->tpl_cache_php)
 		);
 
-		if (static::ignoreCaches())
-		{
+		if (static::ignoreCaches()) {
 			$this->getTpl()->rebuild_cache();
 		}
 
@@ -1397,8 +1387,7 @@ abstract class CMS
 			->no_strict()
 			->load_cache();
 
-		if (isset($_GET["404"]))
-		{
+		if (isset($_GET["404"])) {
 			$this
 				->define_templates()
 				->initTplDefines()
@@ -1503,8 +1492,7 @@ abstract class CMS
 	/** @deprecated  */
 	protected function defineIndexTemplates()
 	{
-		if (!static::templateEngineIsFastTemplate())
-		{
+		if (!static::templateEngineIsFastTemplate()) {
 			return $this;
 		}
 
@@ -1538,8 +1526,7 @@ abstract class CMS
 
 	protected function getBaseAddress()
 	{
-        if ($subFolder = \diLib::getSubFolder())
-        {
+        if ($subFolder = \diLib::getSubFolder()) {
             $subFolder = '/' . $subFolder;
         }
         //$subFolder = '';
@@ -1562,8 +1549,7 @@ abstract class CMS
 	 */
 	public function getDeviceDetector()
 	{
-		if (!$this->device)
-		{
+		if (!$this->device) {
 			$this->device = \diDeviceDetector::create();
 		}
 
@@ -1595,8 +1581,10 @@ abstract class CMS
 	{
         $r = trim(\diRequest::requestUri(), '/');
 
-        if (\diLib::getSubFolder() && StringHelper::startsWith($r, \diLib::getSubFolder()))
-        {
+        if (
+            \diLib::getSubFolder() &&
+            StringHelper::startsWith($r, \diLib::getSubFolder())
+        ) {
             $r = ltrim(substr($r, strlen(\diLib::getSubFolder())), '/');
         }
 
@@ -1635,15 +1623,11 @@ abstract class CMS
 	{
 	    $this->routes = array_values($this->routes);
 
-		for ($i = 0; $i < count($this->routes); $i++)
-		{
-			if ($this->routes[$i] === '')
-			{
+		for ($i = 0; $i < count($this->routes); $i++) {
+			if ($this->routes[$i] === '') {
 			    $this->removeRoute($i);
 				$i--;
-			}
-			else
-			{
+			} else {
 				$this->{'m' . $i} = $this->routes[$i];
 			}
 		}
@@ -1656,6 +1640,24 @@ abstract class CMS
                 $language = $this->getRoute(0);
 
                 if ($this->routes && in_array($this->routes[0], static::$possibleLanguages)) {
+                    // check if this is safe first
+                    /*
+                    if ($language === static::$defaultLanguage) {
+                        $newRoute = $this->getFullRoute() . $this->getRequestQueryStringForLanguageLinks();
+                        $defaultLanguagePrefix = '/' . static::$defaultLanguage . '/';
+
+                        if (mb_substr($newRoute, 0, mb_strlen($defaultLanguagePrefix))) {
+                            $newRoute = mb_substr($newRoute, mb_strlen($defaultLanguagePrefix) - 1);
+                        }
+
+                        if ($newRoute !== \diRequest::requestPath()) {
+                            var_dump($this->routes);
+                            //static::redirect_301($newRoute, true, 'detectLanguage/default');
+                            die($newRoute);
+                        }
+                    }
+                    */
+
                     $this->removeRoute(0);
                 }
 
@@ -1672,6 +1674,10 @@ abstract class CMS
                         break;
                     }
                 }
+                break;
+
+            case Language::SUB_DOMAIN:
+                throw new \Exception('Not implemented yet');
                 break;
         }
 
@@ -1739,21 +1745,20 @@ abstract class CMS
 
 	protected function checkRouteStringForLanguageLinks($route, $language)
 	{
-		if ($route == $this->ct($this->defaultPageType))
-		{
+		if ($route == $this->ct($this->defaultPageType)) {
 			$route = '';
-		}
-		elseif ($route && substr($route, -1) != '/')
-		{
+		} elseif ($route && substr($route, -1) != '/') {
 			$route .= '/';
 		}
 
 		return $route;
 	}
 
-	protected function getRequestQueryStringForLanguageLinks($language)
+	protected function getRequestQueryStringForLanguageLinks($language = null)
 	{
-	    $qs = \diRequest::requestQueryString() ? '?' . \diRequest::requestQueryString() : '';
+	    $qs = \diRequest::requestQueryString()
+            ? '?' . \diRequest::requestQueryString()
+            : '';
 
 		return $qs;
 	}
@@ -1959,8 +1964,7 @@ abstract class CMS
 	 */
 	public function setMeta($text, $field = 'title')
 	{
-		if (is_array($text))
-		{
+		if (is_array($text)) {
 			$text = ArrayHelper::recursiveJoin($text, ' ');
 		}
 
@@ -1985,8 +1989,7 @@ abstract class CMS
 
 	public function setOpenGraph($text, $field = 'title')
 	{
-		if (is_array($text))
-		{
+		if (is_array($text)) {
 			$text = ArrayHelper::recursiveJoin($text, ' ');
 		}
 
@@ -2389,21 +2392,18 @@ abstract class CMS
 	{
 		header('Location: ' . $href);
 
-		if (is_string($die) && $headerDebugMessage === null && $headerDebugName === null)
-		{
+		if (is_string($die) && $headerDebugMessage === null && $headerDebugName === null) {
 			$headerDebugMessage = $die;
 			$die = true;
 		}
 
-		if ($headerDebugMessage)
-		{
+		if ($headerDebugMessage) {
 			$headerDebugName = $headerDebugName ?: 'Redirect-message';
 
 			header($headerDebugName . ': ' . $headerDebugMessage);
 		}
 
-		if ($die)
-		{
+		if ($die) {
 			die();
 		}
 	}
@@ -2461,25 +2461,21 @@ abstract class CMS
 
 	public function getChildren($parent)
 	{
-		if (!$parent instanceof Model)
-		{
+		if (!$parent instanceof Model) {
 			$parent = $this->getModelById($parent);
 		}
 
 		$ar = [];
 
-		if (!$parent->exists())
-		{
+		if (!$parent->exists()) {
 			return $ar;
 		}
 
 		/**
 		 * @var Model $m
 		 */
-		foreach ($this->getCachedContentCollection() as $m)
-		{
-			if ($m->getParent() == $parent->getId())
-			{
+		foreach ($this->getCachedContentCollection() as $m) {
+			if ($m->getParent() == $parent->getId()) {
 				$ar[] = $m;
 			}
 		}
@@ -2495,8 +2491,7 @@ abstract class CMS
 	{
 		$ar = $this->getChildren($parent);
 
-		if (!count($ar))
-		{
+		if (!count($ar)) {
 			return $this->getEmptyModel();
 		}
 
