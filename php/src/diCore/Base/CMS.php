@@ -1767,22 +1767,19 @@ abstract class CMS
 	{
 		$links = [];
 
-		if (count(static::$possibleLanguages) > 1)
-		{
+		if (count(static::$possibleLanguages) > 1) {
 			$currentModesStr = null;
 
 			$this->getTpl()
 				->clear('LANGUAGE_LINK_ROWS');
 
-			foreach (static::$possibleLanguages as $lng)
-			{
+			foreach (static::$possibleLanguages as $lng) {
 				$q = $this->getRequestQueryStringForLanguageLinks($lng);
 				$isCurrentLanguage = $this->language == $lng;
 
 				$modesStr = $this->getRoutesForLanguageLinks($lng);
 
-				if (is_array($modesStr))
-				{
+				if (is_array($modesStr)) {
 					$modesStr = join("/", $modesStr);
 				}
 
@@ -1790,7 +1787,8 @@ abstract class CMS
 
 				$lngUp = strtoupper($lng);
 
-				$lngLink = ($lng == static::$defaultLanguage ? "/" : "/$lng/") . $modesStr . $q;
+				$lngLink = //($lng == static::$defaultLanguage ? "/" : "/$lng/") .
+                    '/' . $modesStr . $q;
 				$lngActive = $isCurrentLanguage ? " active" : "";
 
 				$this->getTpl()->assign([
@@ -1803,14 +1801,12 @@ abstract class CMS
 
 				$links[$lng] = $lngLink;
 
-				if ($this->getTpl()->defined('language_link_row'))
-				{
+				if ($this->getTpl()->defined('language_link_row')) {
 					$this->getTpl()
 						->parse('LANGUAGE_LINK_ROWS', '.language_link_row');
 				}
 
-				if ($isCurrentLanguage)
-				{
+				if ($isCurrentLanguage) {
 					$currentModesStr = $modesStr;
 				}
 			}
