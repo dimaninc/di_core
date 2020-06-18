@@ -766,8 +766,7 @@ class Base
 	{
 		$script = '';
 
-		if ($alias = Form::getWysiwygAlias($this->getWysiwygVendor()))
-		{
+		if ($alias = Form::getWysiwygAlias($this->getWysiwygVendor())) {
 		    $this->getTwig()->render($this->getWysiwygTemplateName($alias), 'wysiwyg_head_script', [
 				'needed' => [
 					'rfm' => $this->responsiveFileManagerNeeded(),
@@ -798,8 +797,7 @@ class Base
 	{
         $head = $this->getPrintedHead();
 
-		if (!$head)
-		{
+		if (!$head) {
 			$this->printWysiwygHeadScript();
 
 			$head = $this->getTwig()->parse('admin/_index/head');
@@ -834,8 +832,7 @@ class Base
 		$ar = func_get_args();
 		$result = [];
 
-		foreach ($ar as $a)
-		{
+		foreach ($ar as $a) {
 			$result = array_merge_recursive($result, $a);
 		}
 

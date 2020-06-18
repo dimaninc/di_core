@@ -674,8 +674,7 @@ abstract class BasePage
 
 	protected function getFormWorkerUri()
 	{
-	    if (method_exists($this, 'submitForm'))
-	    {
+	    if (method_exists($this, 'submitForm')) {
 	    	return Base::getPageUri($this->getBasePath(), 'submit');
 	    }
 
@@ -1109,7 +1108,7 @@ abstract class BasePage
 				"AFTER_FORM" => "",
 			]);
 
-		$this->Form = new Form($this);
+		$this->Form = Form::basicCreate($this);
 		$this->getForm()
             ->afterInit([
                 'static_mode' => $this->getOption('staticMode'),
@@ -1125,8 +1124,7 @@ abstract class BasePage
 
 	protected function printEditLog()
 	{
-		if ($this->useEditLog() && $this->getId())
-		{
+		if ($this->useEditLog() && $this->getId()) {
 			/** @var TableEditLogs $records */
 			$records = \diCollection::create(\diTypes::admin_table_edit_log);
 			$records
@@ -1138,8 +1136,7 @@ abstract class BasePage
 			$admins = \diCollection::create(\diTypes::admin);
 
 			/** @var TableEditLog $rec */
-			foreach ($records as $rec)
-			{
+			foreach ($records as $rec) {
 				$rec->parseData();
 			}
 
@@ -1163,21 +1160,15 @@ abstract class BasePage
 			"SUBMIT_BLOCK" => $this->getFormSubmitButtonsBlock(),
 		]);
 
-		if ($this->getTwig()->assigned('before_form'))
-		{
+		if ($this->getTwig()->assigned('before_form')) {
 			$this->getTpl()->assign('before_form', $this->getTwig()->getAssigned('before_form'));
-		}
-		elseif ($this->getTpl()->defined('before_form'))
-		{
+		} elseif ($this->getTpl()->defined('before_form')) {
 			$this->getTpl()->parse('before_form');
 		}
 
-		if ($this->getTwig()->assigned('after_form'))
-		{
+		if ($this->getTwig()->assigned('after_form')) {
 			$this->getTpl()->assign('after_form', $this->getTwig()->getAssigned('after_form'));
-		}
-		elseif ($this->getTpl()->defined('after_form'))
-		{
+		} elseif ($this->getTpl()->defined('after_form')) {
 			$this->getTpl()->parse('after_form');
 		}
 	}

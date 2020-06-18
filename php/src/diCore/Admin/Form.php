@@ -15,9 +15,12 @@ use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 use diCore\Helper\FileSystemHelper;
 use diCore\Tool\Font\Helper;
+use diCore\Traits\BasicCreate;
 
 class Form
 {
+    use BasicCreate;
+
 	/** @var \diDB */
 	private $db;
 
@@ -190,7 +193,16 @@ class Form
 		'hide' => [],
 	];
 
-	protected static $defaultFieldTitles = [
+    public static $customDefaultFieldTitles = [
+        /*
+        'meta_title' => [
+            'ru' => 'Meta-заголовок',
+            'en' => 'Meta-title',
+        ],
+        */
+    ];
+
+    protected static $defaultFieldTitles = [
         'id' => 'ID',
         'slug' => [
             'ru' => 'Слаг',
@@ -281,6 +293,18 @@ class Form
             'en' => 'Meta-keywords',
         ],
         'meta_description' => [
+            'ru' => 'Meta-описание',
+            'en' => 'Meta-description',
+        ],
+        'html_title' => [
+            'ru' => 'Meta-заголовок',
+            'en' => 'Meta-title',
+        ],
+        'html_keywords' => [
+            'ru' => 'Meta-ключевые слова',
+            'en' => 'Meta-keywords',
+        ],
+        'html_description' => [
             'ru' => 'Meta-описание',
             'en' => 'Meta-description',
         ],
@@ -854,6 +878,11 @@ EOF;
             return $fieldProps['title'];
         }
 
+        if (isset(static::$customDefaultFieldTitles[$fieldName])) {
+            return is_array(static::$customDefaultFieldTitles[$fieldName])
+                ? static::$customDefaultFieldTitles[$fieldName][$language]
+                : static::$customDefaultFieldTitles[$fieldName];
+        }
 
         if (isset(self::$defaultFieldTitles[$fieldName])) {
             return is_array(self::$defaultFieldTitles[$fieldName])
@@ -866,17 +895,13 @@ EOF;
 
 	public function get_html()
 	{
-		if ($this->AdminPage)
-		{
+		if ($this->AdminPage) {
 			$formTabs = $this->AdminPage->getFormTabs();
 
-			if ($this->AdminPage->useEditLog() && $this->getId())
-			{
+			if ($this->AdminPage->useEditLog() && $this->getId()) {
 				$formTabs[TableEditLog::ADMIN_TAB_NAME] = TableEditLog::adminTabTitle($this->getX()->getLanguage());
 			}
-		}
-		else
-		{
+		} else {
 			$formTabs = isset($GLOBALS['tables_tabs_ar'][$this->table])
                 ? $GLOBALS['tables_tabs_ar'][$this->table]
                 : [];
@@ -884,10 +909,8 @@ EOF;
 
         $tabsExist = !!$formTabs;
 
-		if ($tabsExist)
-		{
-			if (!isset($formTabs['general']))
-			{
+		if ($tabsExist) {
+			if (!isset($formTabs['general'])) {
 				$formTabs = array_merge([
 					'general' => $this->L('tab_general'),
 				], $formTabs);
@@ -897,8 +920,7 @@ EOF;
 		$tabs = [];
 		$notesStarsCounter = '';
 
-		foreach ($this->getAllFields() as $field => $v)
-		{
+		foreach ($this->getAllFields() as $field => $v) {
 			$html = '';
 			unset($input);
 
@@ -919,7 +941,13 @@ EOF;
 
 			$fieldTitle = self::getFieldTitle($field, $v, $this->getX()->getLanguage());
 
-			if ($v['type'] == 'password' && ($this->static_mode || $this->isFlag($v, 'static'))) {
+			if (
+			    $v['type'] == 'password' &&
+                (
+                    $this->static_mode ||
+                    $this->isFlag($v, 'static')
+                )
+            ) {
 				$v['flags'][] = 'hidden';
 			}
 
@@ -928,34 +956,28 @@ EOF;
                 in_array($field, array_keys($this->force_inputs_fields))
                )
 			{
-				if (!$this->hasInputAttribute($field, 'size') && in_array($v['type'], self::$numericTypes))
-				{
+				if (
+				    !$this->hasInputAttribute($field, 'size') &&
+                    in_array($v['type'], self::$numericTypes)
+                ) {
 					$this->setInputAttribute($field, ['size' => 15]);
-				}
-				elseif (in_array($v['type'], self::$stringTypes))
-				{
-					if (!$this->hasInputAttribute($field, 'style'))
-					{
+				} elseif (in_array($v['type'], self::$stringTypes)) {
+					if (!$this->hasInputAttribute($field, 'style')) {
 						$this->setInputAttribute($field, ['style' => 'width: 100%;']);
 					}
 
-					if ($v['type'] == 'email')
-					{
+					if ($v['type'] == 'email') {
 						$this->setInputAttribute($field, ['type' => 'email']);
 					}
 
-					if ($v['type'] == 'tel')
-					{
+					if ($v['type'] == 'tel') {
 						$this->setInputAttribute($field, ['type' => 'tel']);
 					}
 
-					if ($v['type'] == 'url')
-					{
+					if ($v['type'] == 'url') {
 						$this->setInputAttribute($field, ['type' => 'url']);
 					}
-				}
-				elseif ($v['type'] == 'password')
-				{
+				} elseif ($v['type'] == 'password') {
 					$this->setInputAttribute($field, [
 						'value' => '',
 						'type' => 'password',
@@ -965,8 +987,7 @@ EOF;
 					]);
 				}
 
-				if ($this->isFlag($v, 'static') || $this->static_mode)
-				{
+				if ($this->isFlag($v, 'static') || $this->static_mode) {
 					if (isset($this->inputs[$field])) // already set, we'll leave it alone
 					{
 						$s = $this->inputs[$field];

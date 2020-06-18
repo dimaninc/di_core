@@ -241,30 +241,18 @@ class Content extends \diCore\Admin\BasePage
 
 			'html_title' => [
 				'type' => 'string',
-				'title' => $this->localized([
-					'ru' => 'Meta-заголовок',
-					'en' => 'Meta title',
-				]),
 				'default' => '',
 				'tab' => 'meta',
 			],
 
 			'html_keywords' => [
 				'type' => 'string',
-				'title' => $this->localized([
-					'ru' => 'Meta-ключевые слова',
-					'en' => 'Meta keywords',
-				]),
 				'default' => '',
 				'tab' => 'meta',
 			],
 
 			'html_description' => [
 				'type' => 'string',
-				'title' => $this->localized([
-					'ru' => 'Meta-описание',
-					'en' => 'Meta description',
-				]),
 				'default' => '',
 				'tab' => 'meta',
 			],
