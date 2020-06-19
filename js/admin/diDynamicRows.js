@@ -330,7 +330,11 @@ var diDynamicRows = function(opts) {
         return lastCreatedRowId;
     };
 
-	this.add = function(field) {
+	this.add = function(field, options) {
+		options = $.extend({
+			scrollToRow: true,
+		}, options || {});
+
 		if (!this.is_field_inited(field)) {
 			console.log('diDynamicRows: field {0} not initialized'.format(field));
 
@@ -393,9 +397,11 @@ var diDynamicRows = function(opts) {
 			});
 		}
 
-		$('html, body').animate({
-			scrollTop: $e.offset().top - 5
-		});
+		if (options.scrollToRow) {
+			$('html, body').animate({
+				scrollTop: $e.offset().top - 5
+			});
+		}
 
 		$lastCreatedRow = $e;
         lastCreatedRowId = id;
