@@ -56,6 +56,12 @@ class Model extends \diModel
 		//'table' => ['field1', 'field2'],
 	];
 
+    // if true, then skip
+    public static function isModelFieldSkipped(\diModel $model, $field)
+    {
+        return false;
+    }
+
 	public static function createForModel(\diModel $m, $adminId = 0, $useAllFields = true)
     {
         $log = static::create(static::type);
@@ -191,15 +197,17 @@ class Model extends \diModel
 			: (isset($a[$field]) ? $a[$field] : null);
 	}
 
-	protected function isFieldSkipped($field)
+	protected function isFieldSkipped(\diModel $model, $field)
 	{
-		$skipFields = isset(static::$skipFields[$this->getTargetTable()])
-			? static::$skipFields[$this->getTargetTable()]
-			: [];
+		$skipFields = static::$skipFields[$this->getTargetTable()] ?? [];
 
 		if (in_array($field, $skipFields) || in_array('*', $skipFields)) {
 			return true;
 		}
+
+		if (static::isModelFieldSkipped($model, $field)) {
+		    return true;
+        }
 
 		if ($this->useAllFields) {
 		    return false;
@@ -209,7 +217,10 @@ class Model extends \diModel
 
 		if (
 			isset($formFields[$field]) &&
-		    (!isset($formFields[$field]['flags']) || !in_array('virtual', $formFields[$field]['flags']))
+		    (
+		        !isset($formFields[$field]['flags']) ||
+                !in_array('virtual', $formFields[$field]['flags'])
+            )
         ) {
 			return false;
 		}
@@ -228,7 +239,7 @@ class Model extends \diModel
 		$old = $new = [];
 
         foreach ($fields as $field) {
-			if ($this->isFieldSkipped($field)) {
+			if ($this->isFieldSkipped($model, $field)) {
 				continue;
 			}
 
@@ -239,8 +250,7 @@ class Model extends \diModel
 		$old = $model->processFieldsOnSave($old);
         $new = $model->processFieldsOnSave($new);
 
-		if ($old && $new)
-		{
+		if ($old && $new) {
 			$this
 				->setOldData(serialize($old))
 				->setNewData(serialize($new));

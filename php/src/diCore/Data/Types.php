@@ -225,20 +225,17 @@ class Types
 
 	public static function getId($type)
 	{
-		if (isInteger($type))
-		{
+		if (isInteger($type)) {
 			$ar = static::tables();
 
-			if (isset($ar[$type]))
-			{
+			if (isset($ar[$type])) {
 				return $type;
 			}
 		}
 
 		$id = array_search($type, static::tables());
 
-		if ($id === false)
-		{
+		if ($id === false) {
 			$id = defined("static::$type") ? constant("static::$type") : null;
 		}
 
@@ -249,8 +246,7 @@ class Types
 	{
 		$ar = static::tables();
 
-		if (!isset($ar[$id]))
-		{
+		if (!isset($ar[$id])) {
 			throw new \Exception("No table for type#$id");
 		}
 
@@ -261,8 +257,7 @@ class Types
 	{
 		$ar = static::names();
 
-		if (!isset($ar[$id]))
-		{
+		if (!isset($ar[$id])) {
 			throw new \Exception("No name for type#$id");
 		}
 
@@ -273,8 +268,7 @@ class Types
 	{
 		$ar = static::titles();
 
-		if (!isset($ar[$id]))
-		{
+		if (!isset($ar[$id])) {
 			throw new \Exception("No title for type#$id");
 		}
 
@@ -297,12 +291,9 @@ class Types
 
 	public static function get($type)
 	{
-		if (isInteger($type))
-		{
+		if (isInteger($type)) {
 			return static::getTable($type);
-		}
-		else
-		{
+		} else {
 			return static::getId($type);
 		}
 	}

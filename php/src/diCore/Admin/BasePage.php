@@ -1214,12 +1214,8 @@ abstract class BasePage
 	{
 		if ($this->useEditLog()) {
 			try {
-				/** @var TableEditLog $log */
-				$log = \diModel::create(\diTypes::admin_table_edit_log);
-
-				$log->setRelated('formFields', $this->getFormFieldsFiltered());
-
-				$log
+				$log = TableEditLog::create()
+				    ->setRelated('formFields', $this->getFormFieldsFiltered())
 					->setTargetTable($this->getTable())
 					->setTargetId($this->getId())
 					->setAdminId($this->getAdmin()->getAdminModel()->getId())
