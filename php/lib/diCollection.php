@@ -506,15 +506,12 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		$ar = [];
 
 		/** @var \diModel $model */
-		foreach ($this as $model)
-		{
-			if ($length !== null && count($ar) >= $length)
-			{
+		foreach ($this as $model) {
+			if ($length !== null && count($ar) >= $length) {
 				break;
 			}
 
-			if ($i >= $start)
-			{
+			if ($i >= $start) {
 				$ar[] = $model;
 			}
 
@@ -574,17 +571,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function addAliasToField($field, $alias = null)
 	{
-		if ($alias === true)
-		{
+		if ($alias === true) {
 			$alias = static::MAIN_TABLE_ALIAS;
-		}
-		elseif ($alias === null)
-		{
+		} elseif ($alias === null) {
 			$alias = $this->alias;
 		}
 
-		if ($alias)
-		{
+		if ($alias) {
 			$alias = $alias . '.';
 		}
 
@@ -593,17 +586,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function addAliasToTable($table, $alias = null)
 	{
-		if ($alias === true)
-		{
+		if ($alias === true) {
 			$alias = static::MAIN_TABLE_ALIAS;
-		}
-		elseif ($alias === null)
-		{
+		} elseif ($alias === null) {
 			$alias = $this->alias;
 		}
 
-		if ($alias)
-		{
+		if ($alias) {
 			$alias = ' ' . $this->getDb()->escapeTable($alias);
 		}
 
@@ -622,10 +611,8 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 			'select',
 		];
 
-		foreach ($possibleMethods as $method)
-		{
-			if (substr($fullMethod, 0, strlen($method) + 1) == $method . '_')
-			{
+		foreach ($possibleMethods as $method) {
+			if (substr($fullMethod, 0, strlen($method) + 1) == $method . '_') {
 				return [$method, substr($fullMethod, strlen($method) + 1)];
 			}
 		}
@@ -641,8 +628,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 		list($method, $field) = $this->detectMethod($fullMethod);
 
-		switch ($method)
-		{
+		switch ($method) {
 			case 'filter_by':
 				return $operator !== null
 					? $this->filterBy($field, $operator, $value)
@@ -717,8 +703,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	public function getFirstItem()
 	{
-		if ($this->count())
-		{
+		if ($this->count()) {
 			$this
 				->setPageSize(1)
 				->setPageNumber(1)
@@ -733,24 +718,21 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function getRandomItemsArray($count)
 	{
-		if (!$this->isLoaded())
-		{
+		if (!$this->isLoaded()) {
 			$this
 				->setPageSize($this->count())
 				->setPageNumber(1)
 				->loadChunk();
 		}
 
-		if ($count >= $this->count())
-		{
+		if ($count >= $this->count()) {
 			return $this->items;
 		}
 
 		$ar = [];
 		$keys = array_keys($this->items);
 
-		while (count($ar) < $count)
-		{
+		while (count($ar) < $count) {
 			$index = mt_rand(0, count($keys) - 1);
 			$ar[] = $this->items[$keys[$index]];
 
@@ -827,8 +809,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	public function setPageSize($size = null)
 	{
-		if ($size === null)
-		{
+		if ($size === null) {
 			$size = $this->getStandardPageSize();
 		}
 
@@ -999,10 +980,8 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		$startFrom = $this->getStartFrom();
 		$requestPageSize = $this->pageSize;
 
-		if ($this->getRequestSize())
-		{
-			if ($this->requestNumber === null)
-			{
+		if ($this->getRequestSize()) {
+			if ($this->requestNumber === null) {
 				$this->requestNumber = 0;
 			}
 
@@ -1011,14 +990,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 			$startFrom += ($this->requestNumber - 1) * $this->getRequestSize();
 			$requestPageSize = $this->getRequestSize();
 
-			/*
+			/* * /
 			echo '$this->requestNumber: ' . $this->requestNumber . ', startFrom: ' . $startFrom .
 				', requestPageSize: ' . $requestPageSize . '<br>';
-			*/
+			/* */
 		}
 
-		if ($requestPageSize)
-		{
+		if ($requestPageSize) {
 			return sprintf(
 				'LIMIT %d,%d',
 				$startFrom,
@@ -1120,8 +1098,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function valid()
 	{
-		if (!$this->exists() && !$this->isLoaded())
-		{
+		if (!$this->exists() && !$this->isLoaded()) {
 			$this->loadChunk();
 		}
 
@@ -1130,8 +1107,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function load()
 	{
-		if ($this->isLoaded())
-		{
+		if ($this->isLoaded()) {
 			return $this;
 		}
 
@@ -1160,8 +1136,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		//echo 'isLoaded: '. ($this->loaded ? 'true' : 'false') . ', count($this->items): ' . count($this->items) . '<br>';
 
-		if ($this->getRequestSize())
-		{
+		if ($this->getRequestSize()) {
 			/*
 			echo count($this->items) > 0 ? 'true!<br>' : 'false!<br>';
 
@@ -1192,17 +1167,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	private function loadChunk()
 	{
-		if ($this->cachedRecords)
-		{
+		if ($this->cachedRecords) {
 			$rows = $this->cachedRecords;
-		}
-		else
-		{
+		} else {
 			$rows = $this->getDbRecords();
 		}
 
-		if ($this->getRequestSize())
-		{
+		if ($this->getRequestSize()) {
 			$this->removeItems();
 		}
 
@@ -1214,30 +1185,23 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 			$this->addItem($item);
 		};
 
-		if (ArrayHelper::is($rows) || $rows instanceof \Traversable)
-		{
-			foreach ($rows as $row)
-			{
+		if (ArrayHelper::is($rows) || $rows instanceof \Traversable) {
+			foreach ($rows as $row) {
 				$iterator($row);
 			}
-		}
-		else
-		{
-			while ($rows && $row = $this->getDb()->fetch_array($rows))
-			{
+		} else {
+			while ($rows && $row = $this->getDb()->fetch_array($rows)) {
 				$iterator($row);
 			}
 		}
 
-		if ($this->cachedRecords)
-		{
+		if ($this->cachedRecords) {
 			$this->count = count($this->items);
 
 			unset($this->cachedRecords);
 		}
 
-		if (count($this->items) == $this->count())
-		{
+		if (count($this->items) == $this->count()) {
 			$this->loaded = true;
 		}
 
@@ -1246,8 +1210,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function getRealCount()
 	{
-		if ($this->realCount === null)
-		{
+		if ($this->realCount === null) {
 			$this->count(true);
 		}
 
@@ -1256,10 +1219,8 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function count($force = false)
 	{
-		if ($this->count === null || $force)
-		{
-			if ($this->hasGroupBy())
-			{
+		if ($this->count === null || $force) {
+			if ($this->hasGroupBy()) {
 				$q = $this->getDb()->getQueryForRs(
 					$this->getQueryTable(),
 					$this->getQueryWhere() . ' ' . $this->getQueryGroupBy(),
@@ -1271,9 +1232,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 					'',
 					'COUNT(*) AS cc'
 				);
-			}
-			else
-			{
+			} else {
 				$r = $this->getDb()->r(
 					$this->getQueryTable(),
 					$this->getQueryWhere(),
@@ -1288,8 +1247,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
             }
 		}
 
-		if ($this->pageSize && $this->count > $this->pageSize)
-		{
+		if ($this->pageSize && $this->count > $this->pageSize) {
 			$this->count = $this->pageSize;
 		}
 
@@ -1298,8 +1256,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function offsetExists($offset)
 	{
-		while (!$this->exists($offset) && !$this->isLoaded())
-		{
+		while (!$this->exists($offset) && !$this->isLoaded()) {
 			$this->loadChunk();
 		}
 
@@ -1313,12 +1270,9 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function offsetSet($offset, $value)
 	{
-		if (is_null($offset))
-		{
+		if (is_null($offset)) {
 			$this->items[] = $value;
-		}
-		else
-		{
+		} else {
 			$this->items[$offset] = $value;
 		}
 
@@ -1345,14 +1299,10 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		$results = [];
 		$useItemCallback = is_string($callback) && strpos($callback, '::') === false;
 
-		foreach ($this as $id => $item)
-		{
-			if ($useItemCallback)
-			{
+		foreach ($this as $id => $item) {
+			if ($useItemCallback) {
 				$cb = [$item, $callback];
-			}
-			else
-			{
+			} else {
 				$cb = $callback;
 				array_unshift($arguments, $item);
 			}
@@ -1437,17 +1387,14 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function update($newData = [])
 	{
-		if ($newData)
-		{
+		if ($newData) {
 			$ids = $this->getIds();
 
-			if (count($ids))
-			{
+			if (count($ids)) {
 				$this->getDb()->update($this->getQueryTable(), $newData, $ids);
 
 				/** @var \diModel $m */
-				foreach ($this as $m)
-				{
+				foreach ($this as $m) {
 					$m->set($newData);
 				}
 			}
@@ -1470,8 +1417,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function find($o)
 	{
-		if (is_scalar($o))
-		{
+		if (is_scalar($o)) {
 			return $this->filterBy(static::getIdFieldName(), $o);
 		}
 
@@ -1499,8 +1445,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	public function getById($id)
 	{
-		if (!$this->isIdUnique)
-		{
+		if (!$this->isIdUnique) {
 			throw new \diRuntimeException(self::class . ' has no unique ID');
 		}
 
