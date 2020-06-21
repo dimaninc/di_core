@@ -6,7 +6,11 @@
  * Time: 14:58
  */
 
-class diSlugsPage extends \diCore\Admin\BasePage
+namespace diCore\Admin\Page;
+
+use diCore\Entity\Slug\Model;
+
+class Slugs extends \diCore\Admin\BasePage
 {
 	protected $options = [
 		"filters" => [
@@ -63,8 +67,8 @@ class diSlugsPage extends \diCore\Admin\BasePage
 				"headAttrs" => [
 					"width" => "20%",
 				],
-				"value" => function(diSlugModel $s) {
-					return diTypes::getTitle($s->getTargetType());
+				"value" => function(Model $s) {
+					return \diTypes::getTitle($s->getTargetType());
 				},
 				"noHref" => true,
 			],
@@ -72,12 +76,10 @@ class diSlugsPage extends \diCore\Admin\BasePage
 				"headAttrs" => [
 					"width" => "25%",
 				],
-				"value" => function(diSlugModel $s) {
-					$target = diModel::create(diTypes::getName($s->getTargetType()), $s->getTargetId(), "id");
-
-					return $target->exists()
-						? ($target->get("title") ?: '#' . $target->getId())
-						: 'Not exists: ' . diTypes::getName($s->getTargetType()) . '#' . $s->getTargetId();
+				"value" => function(Model $s) {
+					return $s->getTargetModel()->exists()
+						? ($s->getTargetModel()->get("title") ?: '#' . $s->getTargetModel()->getId())
+						: 'Not exists: ' . \diTypes::getName($s->getTargetType()) . '#' . $s->getTargetId();
 				},
 				"noHref" => true,
 			],
@@ -168,7 +170,7 @@ class diSlugsPage extends \diCore\Admin\BasePage
 
 	public function getModuleCaption()
 	{
-		return "Slug";
+		return "Slugs";
 	}
 
 	public function addButtonNeededInCaption()
