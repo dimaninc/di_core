@@ -7,7 +7,9 @@
  */
 
 use diCore\Base\CMS;
-use diCore\Data\Types;
+use diCore\Entity\Slug\Collection;
+use diCore\Entity\Slug\Model;
+use diCore\Tool\Logger;
 
 class diSlugsUnited
 {
@@ -15,7 +17,7 @@ class diSlugsUnited
 	private $targetId;
 	private $levelNum;
 
-	/** @var \diSlugModel */
+	/** @var Model */
 	private $model;
 
 	public function __construct($targetType, $targetId, $levelNum = 0)
@@ -24,15 +26,12 @@ class diSlugsUnited
 		$this->targetId = $targetId;
 		$this->levelNum = $levelNum;
 
-		/** @var \diSlugCollection $col */
-		$col = \diCollection::create(Types::slug);
-		$col
+		$col = Collection::create()
 			->filterByTargetType($this->targetType)
 			->filterByTargetId($this->targetId);
 		$this->model = $col->getFirstItem();
 
-		if (!$this->getModel()->exists())
-		{
+		if (!$this->getModel()->exists()) {
 			$this->getModel()
 				->setTargetType($this->targetType)
 				->setTargetId($this->targetId)
@@ -40,7 +39,7 @@ class diSlugsUnited
 		}
 	}
 
-	public static function emulateRealHref(\diSlugModel $s, CMS $Z)
+	public static function emulateRealHref(Model $s, CMS $Z)
 	{
 	}
 
@@ -101,8 +100,7 @@ class diSlugsUnited
             'lowerCase' => true,
 		], $options);
 
-		if ($options['prepare'])
-		{
+		if ($options['prepare']) {
 			$source = $this->prepare($source, $options['lowerCase']);
 		}
 
@@ -121,8 +119,7 @@ class diSlugsUnited
 
 	public function setFullSlug($parentSlugs = [])
 	{
-		if (is_scalar($parentSlugs))
-		{
+		if (is_scalar($parentSlugs)) {
 			$parentSlugs = $parentSlugs ? [$parentSlugs] : [];
 		}
 
@@ -142,11 +139,20 @@ class diSlugsUnited
 
 	public function save()
 	{
-		\diCore\Tool\Logger::getInstance()->log('Slug model: ' . print_r($this->getModel()->get(), true),
-            'diSlugsUnited');
-
-		$this->getModel()->save();
+		$this->getModel()
+            ->save();
 
 		return $this;
 	}
+
+	protected function log($message)
+    {
+        Logger::getInstance()->log(
+            $message,
+            'diSlugsUnited',
+            '-slug'
+        );
+
+        return $this;
+    }
 }
