@@ -13,48 +13,48 @@ use diCore\Entity\Slug\Model;
 class Slugs extends \diCore\Admin\BasePage
 {
 	protected $options = [
-		"filters" => [
-			"defaultSorter" => [
-				"sortBy" => "full_slug",
-				"dir" => "ASC",
+		'filters' => [
+			'defaultSorter' => [
+				'sortBy' => 'full_slug',
+				'dir' => 'ASC',
 			],
 		],
 	];
 
 	protected function initTable()
 	{
-		$this->setTable("slugs");
+		$this->setTable('slugs');
 	}
 
 	protected function setupFilters()
 	{
 		$this->getFilters()
 			->addFilter([
-				"field" => "id",
-				"type" => "int",
-				"title" => "ID",
+				'field' => 'id',
+				'type' => 'int',
+				'title' => 'ID',
 			])
 			->addFilter([
-				"field" => "target_type",
-				"type" => "int",
-				"title" => "Target type",
+				'field' => 'target_type',
+				'type' => 'int',
+				'title' => 'Target type',
 			])
 			->addFilter([
-				"field" => "target_id",
-				"type" => "int",
-				"title" => "Target ID",
+				'field' => 'target_id',
+				'type' => 'int',
+				'title' => 'Target ID',
 			])
 			->addFilter([
-				"field" => "slug",
-				"type" => "string",
-				"title" => "Слаг",
-				"where_tpl" => "diaf_substr",
+				'field' => 'slug',
+				'type' => 'string',
+				'title' => 'Слаг',
+				'where_tpl' => 'diaf_substr',
 			])
 			->addFilter([
-				"field" => "full_slug",
-				"type" => "string",
-				"title" => "Полный слаг",
-				"where_tpl" => "diaf_substr",
+				'field' => 'full_slug',
+				'type' => 'string',
+				'title' => 'Полный слаг',
+				'where_tpl' => 'diaf_substr',
 			])
 			->buildQuery();
 	}
@@ -62,56 +62,57 @@ class Slugs extends \diCore\Admin\BasePage
 	public function renderList()
 	{
 		$this->getList()->addColumns([
-			"id" => "ID",
-			"target_type" => [
-				"headAttrs" => [
-					"width" => "20%",
+			'id' => 'ID',
+            '#href' => [],
+			'target_type' => [
+				'headAttrs' => [
+					'width' => '20%',
 				],
-				"value" => function(Model $s) {
+				'value' => function(Model $s) {
 					return \diTypes::getTitle($s->getTargetType());
 				},
-				"noHref" => true,
+				'noHref' => true,
 			],
-			"target_id" => [
-				"headAttrs" => [
-					"width" => "25%",
+			'target_id' => [
+				'headAttrs' => [
+					'width' => '25%',
 				],
-				"value" => function(Model $s) {
+				'value' => function(Model $s) {
 					return $s->getTargetModel()->exists()
-						? ($s->getTargetModel()->get("title") ?: '#' . $s->getTargetModel()->getId())
+						? ($s->getTargetModel()->get('title') ?: '#' . $s->getTargetModel()->getId())
 						: 'Not exists: ' . \diTypes::getName($s->getTargetType()) . '#' . $s->getTargetId();
 				},
-				"noHref" => true,
+				'noHref' => true,
 			],
-			"level_num" => [
-				"headAttrs" => [
-					"width" => "5%",
+			'level_num' => [
+				'headAttrs' => [
+					'width' => '5%',
 				],
-				"bodyAttrs" => [
-					"class" => "dt",
+				'bodyAttrs' => [
+					'class' => 'dt',
 				],
-				"noHref" => true,
+				'noHref' => true,
 			],
-			"slug" => [
-				"headAttrs" => [
-					"width" => "20%",
+			'slug' => [
+				'headAttrs' => [
+					'width' => '20%',
 				],
-				"bodyAttrs" => [
-					"class" => "lite",
+				'bodyAttrs' => [
+					'class' => 'lite',
 				],
-				"noHref" => true,
+				'noHref' => true,
 			],
-			"full_slug" => [
-				"headAttrs" => [
-					"width" => "30%",
+			'full_slug' => [
+				'headAttrs' => [
+					'width' => '30%',
 				],
-				"bodyAttrs" => [
-					"class" => "lite",
+				'bodyAttrs' => [
+					'class' => 'lite',
 				],
-				"noHref" => true,
+				'noHref' => true,
 			],
-			//"#edit" => "",
-			//"#del" => "",
+			//'#edit' => '',
+			//'#del' => '',
 		]);
 	}
 
@@ -136,41 +137,41 @@ class Slugs extends \diCore\Admin\BasePage
 	public function getLocalFields()
 	{
 		return [
-			"target_type" => [
-				"type" => "string",
-				"title" => "Тип",
-				"default" => "",
+			'target_type' => [
+				'type' => 'string',
+				'title' => 'Тип',
+				'default' => '',
 			],
 
-			"target_id" => [
-				"type" => "string",
-				"title" => "Элемент",
-				"default" => "",
+			'target_id' => [
+				'type' => 'string',
+				'title' => 'Элемент',
+				'default' => '',
 			],
 
-			"level_num" => [
-				"type" => "int",
-				"title" => "Уровень вложенности",
-				"default" => 0,
+			'level_num' => [
+				'type' => 'int',
+				'title' => 'Уровень вложенности',
+				'default' => 0,
 			],
 
-			"slug" => [
-				"type" => "string",
-				"title" => "Slug",
-				"default" => "",
+			'slug' => [
+				'type' => 'string',
+				'title' => 'Slug',
+				'default' => '',
 			],
 
-			"full_slug" => [
-				"type" => "string",
-				"title" => "Полный Slug",
-				"default" => "",
+			'full_slug' => [
+				'type' => 'string',
+				'title' => 'Полный Slug',
+				'default' => '',
 			],
 		];
 	}
 
 	public function getModuleCaption()
 	{
-		return "Slugs";
+		return 'Slugs';
 	}
 
 	public function addButtonNeededInCaption()

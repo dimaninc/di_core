@@ -28,6 +28,11 @@ class Model extends \diModel
     const slug_field_name = self::SLUG_FIELD_NAME;
     protected $table = 'slugs';
 
+    public function getHref()
+    {
+        return '/' . $this->getFullSlug() . '/';
+    }
+
     public function validate()
     {
         if (!$this->getTargetType() || !$this->getTargetId()) {
