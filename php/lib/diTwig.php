@@ -2,6 +2,9 @@
 
 use diCore\Data\Config;
 use diCore\Helper\FileSystemHelper;
+use Twig\Environment;
+use Twig\Loader\FilesystemLoader;
+use Twig\TwigFunction;
 
 /**
  * Wrapper for Twig template engine
@@ -24,15 +27,15 @@ class diTwig
 	const customClassName = "diCustomTwig";
 
 	const NAMESPACE_CORE = 'core';
-	const NAMESPACE_MAIN = Twig_Loader_Filesystem::MAIN_NAMESPACE;
+	const NAMESPACE_MAIN = FilesystemLoader::MAIN_NAMESPACE;
 
 	/**
-	 * @var Twig_Loader_Filesystem
+	 * @var FilesystemLoader
 	 */
 	private $loader;
 
 	/**
-	 * @var Twig_Environment
+	 * @var Environment
 	 */
 	private $Twig;
 
@@ -53,14 +56,13 @@ class diTwig
 	 */
 	public function __construct($options = [])
 	{
-		$this->loader = new Twig_Loader_Filesystem();
+		$this->loader = new FilesystemLoader();
 
-		foreach ($this->getAllPaths() as $namespace => $paths)
-		{
+		foreach ($this->getAllPaths() as $namespace => $paths) {
 			$this->loader->setPaths(static::wrapPaths($paths), $namespace);
 		}
 
-		$this->Twig = new Twig_Environment($this->loader, extend([
+		$this->Twig = new Environment($this->loader, extend([
 			'cache' => Config::getCacheFolder() . static::CACHE_FOLDER,
 			'auto_reload' => diCurrentCMS::ignoreCaches(),
 		], $options));
@@ -112,13 +114,11 @@ class diTwig
 
 	protected static function wrapPaths($paths)
 	{
-		if (!is_array($paths))
-		{
+		if (!is_array($paths)) {
 			$paths = [$paths];
 		}
 
-		foreach ($paths as &$path)
-		{
+		foreach ($paths as &$path) {
 			$path = Config::getTemplateFolder() . static::TEMPLATES_FOLDER . ($path ? '/' . $path : '');
 		}
 
@@ -132,7 +132,7 @@ class diTwig
 
 	/**
 	 * @deprecated
-	 * @return Twig_Environment
+	 * @return Environment
 	 */
 	public function getTwig()
 	{
@@ -140,7 +140,7 @@ class diTwig
 	}
 
 	/**
-	 * @return Twig_Environment
+	 * @return Environment
 	 */
 	public function getEngine()
 	{
@@ -245,7 +245,7 @@ class diTwig
 
 	public function addFunction($name, callable $callable)
 	{
-		$function = new Twig_SimpleFunction($name, $callable);
+		$function = new TwigFunction($name, $callable);
 		$this->Twig->addFunction($function);
 
 		return $this;
@@ -340,10 +340,8 @@ class diTwig
 
 	public function importFromFastTemplate(FastTemplate $tpl, $tokens = [], $clear = true)
 	{
-		foreach ($tokens as $k => $v)
-		{
-			if (!is_string($k))
-			{
+		foreach ($tokens as $k => $v) {
+			if (!is_string($k)) {
 				$k = $v;
 			}
 
@@ -351,8 +349,7 @@ class diTwig
 				$k => $tpl->getAssigned($v),
 			]);
 
-			if ($clear)
-			{
+			if ($clear) {
 				$tpl->clear($v);
 			}
 		}

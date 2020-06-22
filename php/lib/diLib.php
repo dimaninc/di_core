@@ -14,6 +14,8 @@
 
 */
 
+use diCore\Data\Config;
+
 class diLib
 {
 	const AUTOLOAD = true;
@@ -155,31 +157,22 @@ class diLib
 
 	public static function registerNamespace($namespaces)
 	{
-		if (!is_array($namespaces))
-		{
+		if (!is_array($namespaces)) {
 			$namespaces = [$namespaces];
 		}
 
-		foreach ($namespaces as $namespace)
-		{
+		foreach ($namespaces as $namespace) {
 			self::$projectNamespaces[] = $namespace;
 		}
 
-		\diCore\Data\Config::resetClass();
+		Config::resetClass();
 
 		self::initiateTwig();
 	}
 
 	protected static function initiateTwig()
 	{
-		if (!self::$twigInitiated)
-		{
-			if (\diCore\Data\Config::getUseCoreTwig())
-			{
-				require_once dirname(dirname(__FILE__)) . '/vendor/Twig/Autoloader.php';
-				Twig_Autoloader::register();
-			}
-
+		if (!self::$twigInitiated) {
 			self::$twigInitiated = true;
 		}
 	}
@@ -198,9 +191,8 @@ class diLib
 
 	public static function checkCompatibility()
 	{
-		if (version_compare(PHP_VERSION, '5.6.0', '<'))
-		{
-			die('diCMS requires PHP 5.6 or higher. Current version is ' . PHP_VERSION);
+		if (version_compare(PHP_VERSION, '7.0', '<')) {
+			die('diCMS requires PHP 7.0 or higher. Current version is ' . PHP_VERSION);
 		}
 	}
 
@@ -211,25 +203,18 @@ class diLib
 		], $options);
 		$suffixAr = [];
 
-		if (!is_null($controller))
-		{
-			if (is_array($controller) && is_null($action) && is_null($paramsAr))
-			{
+		if (!is_null($controller)) {
+			if (is_array($controller) && is_null($action) && is_null($paramsAr)) {
 				$suffixAr = $controller;
-			}
-			else
-			{
+			} else {
 				$suffixAr[] = $controller;
 
-				if ($action)
-				{
+				if ($action) {
 					$suffixAr[] = $action;
 				}
 
-				if ($paramsAr)
-				{
-					if (!is_array($paramsAr))
-					{
+				if ($paramsAr) {
+					if (!is_array($paramsAr)) {
 						$paramsAr = [$paramsAr];
 					}
 
@@ -238,10 +223,8 @@ class diLib
 			}
 		}
 
-		if ($suffixAr)
-		{
-			if ($options['underscoreParams'])
-			{
+		if ($suffixAr) {
+			if ($options['underscoreParams']) {
 				$suffixAr = array_map('underscore', $suffixAr);
 			}
 
@@ -253,8 +236,7 @@ class diLib
 
 	public static function getClassNameInNamespace($basicName, $ns, $kind)
 	{
-		switch ($kind)
-		{
+		switch ($kind) {
 			case self::SIMPLE_CLASS:
 				return $ns . '\\' . $basicName;
 
@@ -284,18 +266,15 @@ class diLib
 
 		// old style: custom class
 		$class = camelize('di_' . $name . '_custom_' . self::$kindNames[$kind]);
-		if (self::exists($class))
-		{
+		if (self::exists($class)) {
 			return $class;
 		}
 
 		// namespaces class
-		foreach (self::getAllNamespaces() as $ns)
-		{
+		foreach (self::getAllNamespaces() as $ns) {
 			$class = self::getClassNameInNamespace($basicName, $ns, $kind);
 
-			if (self::exists($class))
-			{
+			if (self::exists($class)) {
 				return $class;
 			}
 		}
@@ -333,37 +312,31 @@ class diLib
 		$subNamespace = preg_replace('/^[^\\\\]+\\\\/', '\\', $subNamespace);
 
 		// костыли!
-		if (!$basicName && strpos($parentFullClassName, '\\') === false)
-		{
+		if (!$basicName && strpos($parentFullClassName, '\\') === false) {
 			$basicName = preg_replace("/^di/", '', $parentFullClassName);
 
-			if ($basicName == 'Auth' && $parentFullClassName == 'diAuth')
-			{
+			if ($basicName == 'Auth' && $parentFullClassName == 'diAuth') {
 				$subNamespace = '\\Tool';
 			}
 		}
 
-		foreach (self::getAllNamespaces() as $ns)
-		{
+		foreach (self::getAllNamespaces() as $ns) {
 			$class = self::getClassNameInNamespace($basicName, $ns . $subNamespace, self::SIMPLE_CLASS);
 
-			if (self::exists($class))
-			{
+			if (self::exists($class)) {
 				return $class;
 			}
 		}
 
 		$class = camelize('di_custom_' . $basicName);
 
-		if (self::exists($class))
-		{
+		if (self::exists($class)) {
 			return $class;
 		}
 
 		$class = camelize('di_' . $basicName);
 
-		if (self::exists($class))
-		{
+		if (self::exists($class)) {
 			return $class;
 		}
 
@@ -372,8 +345,7 @@ class diLib
 
 	static public function getWorkerPath($controller = null, $action = null, $paramsAr = null, $options = [])
 	{
-        if ($subFolder = \diLib::getSubFolder())
-        {
+        if ($subFolder = \diLib::getSubFolder()) {
             $subFolder = '/' . $subFolder;
         }
 
@@ -382,8 +354,7 @@ class diLib
 
 	static public function getAdminWorkerPath($controller = null, $action = null, $paramsAr = null, $options = [])
 	{
-        if ($subFolder = \diLib::getSubFolder())
-        {
+        if ($subFolder = \diLib::getSubFolder()) {
             $subFolder = '/' . $subFolder;
         }
 
@@ -411,8 +382,7 @@ class diLib
 
 	static public function getClassPathSubfolder($className)
 	{
-		if (isset(self::$classPropertiesAr[$className]['subfolder']))
-		{
+		if (isset(self::$classPropertiesAr[$className]['subfolder'])) {
 			return self::$classPropertiesAr[$className]['subfolder'];
 		}
 
@@ -497,8 +467,7 @@ class diLib
 
 	public static function getAssetLocations()
 	{
-		switch (self::getLocation())
-		{
+		switch (self::getLocation()) {
 			case self::LOCATION_VENDOR_BEYOND:
 				return [
 					'css' => '/assets/styles/_core/',
@@ -561,18 +530,15 @@ class diLib
 		}
 
 		// new format, listed
-		if (self::has($className))
-		{
+		if (self::has($className)) {
 			$className = self::normalizeClassName($className);
 			$path = self::getClassPath($className);
 			$subFolder = $subFolder ?: self::getClassPathSubfolder($className);
 		}
 
-		if (!$path)
-		{
+		if (!$path) {
 			// namespaces repository
-			if (strpos($className, '\\') !== false)
-			{
+			if (strpos($className, '\\') !== false) {
 				$rootNamespace = strtok($className, '\\');
 
 				$pathId = self::isNamespaceRoot($rootNamespace)
@@ -586,29 +552,23 @@ class diLib
 			}
 
 			// new format, not listed
-			foreach (self::$libPathsAr as $folderId => $folderPath)
-			{
+			foreach (self::$libPathsAr as $folderId => $folderPath) {
 				$libSubFolders = [$subFolder];
 
-				if (!empty(self::$libSubFolders[$folderId]))
-				{
+				if (!empty(self::$libSubFolders[$folderId])) {
 					$libSubFolders = array_merge($libSubFolders, self::$libSubFolders[$folderId]);
 				}
 
-				if ($libSubFolderProcessor)
-				{
+				if ($libSubFolderProcessor) {
 					$folderPath = $libSubFolderProcessor($folderPath);
 				}
 
-				foreach ($libSubFolders as $libSubFolder)
-				{
-					if ($libSubFolder)
-					{
+				foreach ($libSubFolders as $libSubFolder) {
+					if ($libSubFolder) {
 						$libSubFolder .= '/';
 					}
 
-					if (is_file($root . $folderPath . $libSubFolder . $className . '.php'))
-					{
+					if (is_file($root . $folderPath . $libSubFolder . $className . '.php')) {
 						$subFolder = $libSubFolder;
 						$path = $folderPath;
 
@@ -618,22 +578,19 @@ class diLib
 			}
 
 			// old format
-			if (!$path)
-			{
+			if (!$path) {
 				$className = '_class_' . strtolower($className);
 				$path = self::$libPathsAr[self::pathOldLib];
 			}
 		}
 
-		if ($subFolder)
-		{
+		if ($subFolder) {
 			$subFolder .= '/';
 		}
 
 		$fullFn = $root . $path . $subFolder . $className . '.php';
 
-		if (!is_file($fullFn))
-		{
+		if (!is_file($fullFn)) {
 			return null;
 		}
 
@@ -642,8 +599,7 @@ class diLib
 
 	static public function exists($className, $subFolder = '')
 	{
-		if (class_exists($className))
-		{
+		if (class_exists($className)) {
 			return true;
 		}
 
@@ -687,8 +643,7 @@ class diLib
 	 */
 	static public function inc($className, $subFolder = '')
 	{
-		if (diLib::AUTOLOAD && !$subFolder)
-		{
+		if (diLib::AUTOLOAD && !$subFolder) {
 			return true;
 		}
 
@@ -698,8 +653,7 @@ class diLib
 	/** @deprecated */
 	static public function incInterface($interfaceName, $subFolder = '')
 	{
-		if (interface_exists($interfaceName))
-		{
+		if (interface_exists($interfaceName)) {
 			return true;
 		}
 
@@ -707,10 +661,8 @@ class diLib
 
 		$ar = get_defined_vars();
 
-		foreach ($ar as $k => $v)
-		{
-			if (in_array($k, array('class_name', 'path_prefix')))
-			{
+		foreach ($ar as $k => $v) {
+			if (in_array($k, array('class_name', 'path_prefix'))) {
 				continue;
 			}
 
@@ -723,8 +675,7 @@ class diLib
 
 \diLib::checkCompatibility();
 
-if (\diLib::AUTOLOAD)
-{
+if (\diLib::AUTOLOAD) {
 	spl_autoload_register(function($class) {
 		\diLib::realInc($class);
 	});

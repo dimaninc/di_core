@@ -26,7 +26,6 @@ class Config
 	const mainDomain = null;
 	const mainPort = 80;
 	const mainLanguage = 'ru'; // used to determine localization field names
-	const useCoreTwig = true; // if false, twig should be installed via composer
 	const searchEngine = 'db';
     const adminSkin = Skin::classic;
 	const initiating = false; // if true, then DB is auto-created and admin works w/o password
@@ -150,14 +149,6 @@ class Config
 		$class = self::getClass();
 
 		return $class::mainLanguage;
-	}
-
-	final public static function getUseCoreTwig()
-	{
-		/** @var Config $class */
-		$class = self::getClass();
-
-		return $class::useCoreTwig;
 	}
 
 	final public static function useModuleCache()
