@@ -160,6 +160,13 @@ class diSelect
         return $this->addItem($value, $text, $attrsAr, $key !== false ? $key : null);
     }
 
+    public function setItemAttribute($value, $attrsAr = [])
+    {
+        $key = array_search($value, array_column($this->itemsAr, 'value'));
+
+        return $this->addItem($value, $this->getTextByValue($value), $attrsAr, $key !== false ? $key : null);
+    }
+
 	public function addItemsFromDB($db_rs, $prefix_ar = [], $suffix_ar = [], $template_text = "%title%", $template_value = "%id%")
 	{
 		global $db;
