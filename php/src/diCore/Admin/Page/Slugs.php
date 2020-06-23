@@ -79,7 +79,10 @@ class Slugs extends \diCore\Admin\BasePage
 				],
 				'value' => function(Model $s) {
 					return $s->getTargetModel()->exists()
-						? ($s->getTargetModel()->get('title') ?: '#' . $s->getTargetModel()->getId())
+						? join(', ', array_filter([
+						    $s->getTargetModel()->get('title'),
+                            '#' . $s->getTargetModel()->getId(),
+                        ]))
 						: 'Not exists: ' . \diTypes::getName($s->getTargetType()) . '#' . $s->getTargetId();
 				},
 				'noHref' => true,
