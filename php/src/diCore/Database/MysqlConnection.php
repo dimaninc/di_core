@@ -12,9 +12,14 @@ class MysqlConnection extends Connection
 {
 	const engine = Engine::MYSQL;
 
-	protected function connect()
+	protected function connect(ConnectionData $connData)
 	{
-		$this->db = new \diMYSQLi($this->getHost(), $this->getLogin(), $this->getPassword(), $this->getDatabase());
+		$this->db = new \diMYSQLi(
+		    $connData->getHost(),
+            $connData->getLogin(),
+            $connData->getPassword(),
+            $connData->getDatabase()
+        );
 
 		return $this;
 	}

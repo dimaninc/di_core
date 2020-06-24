@@ -14,9 +14,9 @@ class SqliteConnection extends Connection
 {
 	const engine = Engine::SQLITE;
 
-	protected function connect()
+	protected function connect(ConnectionData $connData)
 	{
-		$this->db = new Sqlite(null, null, null, $this->getDatabase());
+		$this->db = new Sqlite(null, null, null, $connData->getDatabase());
 
 		return $this;
 	}

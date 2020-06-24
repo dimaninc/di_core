@@ -12,9 +12,14 @@ class MysqlOldConnection extends Connection
 {
 	const engine = Engine::MYSQL_OLD;
 
-	protected function connect()
+	protected function connect(ConnectionData $connData)
 	{
-		$this->db = new \diMYSQL($this->getHost(), $this->getLogin(), $this->getPassword(), $this->getDatabase());
+		$this->db = new \diMYSQL(
+            $connData->getHost(),
+            $connData->getLogin(),
+            $connData->getPassword(),
+            $connData->getDatabase()
+        );
 
 		return $this;
 	}

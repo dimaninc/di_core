@@ -14,14 +14,14 @@ class MongoConnection extends Connection
 {
 	const engine = Engine::MONGO;
 
-	protected function connect()
+	protected function connect(ConnectionData $connData)
 	{
 		$this->db = new Mongo([
-			'host' => $this->getHost(),
-			'port' => $this->getPort(),
-			'username' => $this->getLogin(),
-			'password' => $this->getPassword(),
-			'dbname' => $this->getDatabase(),
+			'host' => $connData->getHost(),
+			'port' => $connData->getPort(),
+			'username' => $connData->getLogin(),
+			'password' => $connData->getPassword(),
+			'dbname' => $connData->getDatabase(),
 		]);
 
 		return $this;

@@ -105,8 +105,12 @@ abstract class diDB
 
 	public function __construct($settingsOrHost, $username = null, $password = null, $dbname = null)
 	{
-		if (is_array($settingsOrHost) && $username === null && $password === null && $dbname === null)
-		{
+		if (
+		    is_array($settingsOrHost) &&
+            $username === null &&
+            $password === null &&
+            $dbname === null
+        ) {
 			$settings = extend([
 				'host' => null,
 				'username' => null,
@@ -114,9 +118,7 @@ abstract class diDB
 				'dbname' => null,
 				'port' => null,
 			], $settingsOrHost);
-		}
-		else
-		{
+		} else {
 			$settings = [
 				'host' => $settingsOrHost,
 				'username' => $username,
@@ -134,18 +136,15 @@ abstract class diDB
 
 		$this->log = [];
 
-		if ($this->debug)
-		{
+		if ($this->debug) {
 			$this->enableDebug();
 		}
 
-		if (!empty($GLOBALS["engine"]["tables_ar"]))
-		{
+		if (!empty($GLOBALS["engine"]["tables_ar"])) {
 			$this->set_tables_ar($GLOBALS["engine"]["tables_ar"]);
 		}
 
-		if (!$this->connect())
-		{
+		if (!$this->connect()) {
 			$this->_fatal("unable to connect to database");
 		}
 
@@ -171,8 +170,7 @@ abstract class diDB
 
 	private function checkDebugFilename()
 	{
-		if (!$this->debugFileName)
-		{
+		if (!$this->debugFileName) {
 			do {
 				$this->debugFileName = \diDateTime::format("Y-m-d-H-i-s-") . get_unique_id() . ".csv";
 			} while (is_file($this->getDebugLogFileName()));
@@ -195,8 +193,7 @@ abstract class diDB
 
 	protected function debugMessage($message)
 	{
-		if (is_array($message))
-		{
+		if (is_array($message)) {
 			$message = join("", array_map(function($s) {
 				return '"' . str_replace('"', '\"', $s) . '";';
 			}, $message));
@@ -317,8 +314,7 @@ abstract class diDB
 	protected function _log($message, $add_native_error_message = true)
 	{
 		$this->log[] = $message;
-		if ($add_native_error_message)
-		{
+		if ($add_native_error_message) {
 			$this->log[] = $this->error();
 		}
 

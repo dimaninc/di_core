@@ -2,6 +2,8 @@
 
 namespace diCore\Database;
 
+use diCore\Helper\ArrayHelper;
+
 /**
  * Created by PhpStorm.
  * User: dimaninc
@@ -19,11 +21,14 @@ abstract class Connection
 
 	const engine = null;
 
-	protected $host;
-	protected $port;
-	protected $login;
-	protected $password;
-	protected $database;
+	/** @var ConnectionData */
+	protected $data;
+
+    /**
+     * Possible ConnectionData records (used for dev env, with different passwords)
+     * @var array
+     */
+	protected $allData = [];
 
 	/** @var \diDB */
 	protected $db;
@@ -32,7 +37,7 @@ abstract class Connection
 	{
 		$this
 			->parseConnData($connData)
-			->connect();
+			->connectAll();
 	}
 
 	public static function getEngine()
@@ -86,16 +91,7 @@ abstract class Connection
 
 	public static function localMysqlConnData($database)
     {
-        $password = gethostname() == 'Mac-mini.local'
-            ? ''
-            : '11111111';
-
-        return [
-            'host' => 'localhost',
-            'login' => 'root',
-            'password' => $password,
-            'database' => $database,
-        ];
+        return ConnectionData::localMysqlConnData($database);
     }
 
 	private static function add($name, Connection $conn)
@@ -133,124 +129,49 @@ abstract class Connection
 	/**
 	 * @return $this
 	 */
-	abstract protected function connect();
+	abstract protected function connect(ConnectionData $connData);
+
+	private function connectAll()
+    {
+        /** @var ConnectionData $connData */
+        foreach ($this->allData as $connData) {
+            try {
+                $this->connect($connData);
+
+                $this->data = $connData;
+
+                break;
+            } catch (\Exception $e) {
+                // do nothing, just go to the next connection data
+            }
+        }
+
+        if (!$this->data) {
+            throw new \diDatabaseException('No suitable database connection data');
+        }
+
+        return $this;
+    }
 
 	protected function parseConnData($connData)
 	{
-		$connData = extend([
-			'host' => null,
-			'port' => null,
-			'login' => null,
-			'username' => null,
-			'password' => null,
-			'database' => null,
-			'dbname' => null,
-		], $connData);
+	    $allData = ArrayHelper::isAssoc($connData)
+            ? [$connData]
+            : $connData;
 
-		$this
-			->setHost($connData['host'])
-			->setPort($connData['port'])
-			->setLogin($connData['login'] ?: $connData['username'])
-			->setPassword($connData['password'])
-			->setDatabase($connData['database'] ?: $connData['dbname']);
+	    foreach ($allData as $data) {
+	        $this->addConnData($data);
+        }
 
 		return $this;
 	}
 
-	/**
-	 * @return string
-	 */
-	public function getHost()
-	{
-		return $this->host;
-	}
+	protected function addConnData($connData)
+    {
+        $this->allData[] = new ConnectionData($connData);
 
-	/**
-	 * @param string $host
-	 * @return $this
-	 */
-	public function setHost($host)
-	{
-		$this->host = $host;
-
-		return $this;
-	}
-
-	/**
-	 * @return int
-	 */
-	public function getPort()
-	{
-		return $this->port;
-	}
-
-	/**
-	 * @param int $port
-	 * @return $this
-	 */
-	public function setPort($port)
-	{
-		$this->port = $port;
-
-		return $this;
-	}
-
-	/**
-	 * @return mixed
-	 */
-	public function getLogin()
-	{
-		return $this->login;
-	}
-
-	/**
-	 * @param mixed $login
-	 * @return $this
-	 */
-	public function setLogin($login)
-	{
-		$this->login = $login;
-
-		return $this;
-	}
-
-	/**
-	 * @return mixed
-	 */
-	public function getPassword()
-	{
-		return $this->password;
-	}
-
-	/**
-	 * @param mixed $password
-	 * @return $this
-	 */
-	public function setPassword($password)
-	{
-		$this->password = $password;
-
-		return $this;
-	}
-
-	/**
-	 * @return mixed
-	 */
-	public function getDatabase()
-	{
-		return $this->database;
-	}
-
-	/**
-	 * @param mixed $database
-	 * @return $this
-	 */
-	public function setDatabase($database)
-	{
-		$this->database = $database;
-
-		return $this;
-	}
+        return $this;
+    }
 
 	public function getTableNames()
     {

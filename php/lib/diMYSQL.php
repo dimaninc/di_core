@@ -1,5 +1,7 @@
 <?php
 
+use diCore\Data\Config;
+
 /**
  * Created by PhpStorm.
  * User: dimaninc
@@ -14,19 +16,24 @@ class diMYSQL extends diDB
 	{
 		$time1 = utime();
 
-		if (!$this->link = mysql_connect($this->host, $this->username, $this->password))
-		{
-			return $this->_log("unable to connect to host $this->host");
+		if (!$this->link = mysql_connect($this->host, $this->username, $this->password)) {
+            $message = "diMySQL: Unable to connect to host $this->host";
+
+            $this->_log($message);
+
+            throw new \diDatabaseException($message);
 		}
 
-		if (\diCore\Data\Config::isInitiating())
-		{
+		if (Config::isInitiating()) {
 			$this->__q($this->getCreateDatabaseQuery());
 		}
 
-		if (!mysql_select_db($this->dbname, $this->link))
-		{
-			return $this->_log("unable to select database $this->dbname");
+		if (!mysql_select_db($this->dbname, $this->link)) {
+            $message = "diMySQL: unable to select database $this->dbname";
+
+            $this->_log($message);
+
+            throw new \diDatabaseException($message);
 		}
 
 		$time2 = utime();
@@ -39,9 +46,12 @@ class diMYSQL extends diDB
 
 	protected function __close()
 	{
-		if (!mysql_close($this->link))
-		{
-			return $this->_log("unable to close connection");
+		if (!mysql_close($this->link)) {
+            $message = "unable to close connection";
+
+            $this->_log($message);
+
+            throw new \diDatabaseException($message);
 		}
 
 		return true;
@@ -77,8 +87,9 @@ class diMYSQL extends diDB
 
 	protected function __reset(&$rs)
 	{
-		if ($this->count($rs))
-			mysql_data_seek($rs, 0);
+		if ($this->count($rs)) {
+            mysql_data_seek($rs, 0);
+        }
 	}
 
 	protected function __fetch($rs)

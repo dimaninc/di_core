@@ -1,5 +1,7 @@
 <?php
 
+use diCore\Data\Config;
+
 /**
  * Created by PhpStorm.
  * User: dimaninc
@@ -15,19 +17,26 @@ class diMYSQLi extends diMYSQL
 	{
 		$time1 = utime();
 
-		if (!$this->link = new mysqli($this->host, $this->username, $this->password))
-		{
-			return $this->_log("unable to connect to host $this->host");
+        $this->link = @new \mysqli($this->host, $this->username, $this->password);
+
+        if (!$this->link || $this->link->connect_error) {
+		    $message = "diMySQLi: Unable to connect to host $this->host: " . $this->link->connect_error;
+
+			$this->_log($message);
+
+			throw new \diDatabaseException($message);
 		}
 
-		if (\diCore\Data\Config::isInitiating())
-		{
+		if (Config::isInitiating()) {
 			$this->__q($this->getCreateDatabaseQuery());
 		}
 
-		if (!$this->link->select_db($this->dbname))
-		{
-			return $this->_log("unable to select database $this->dbname");
+		if (!$this->link->select_db($this->dbname)) {
+		    $message = "unable to select database $this->dbname";
+
+			$this->_log($message);
+
+            throw new \diDatabaseException($message);
 		}
 
 		$time2 = utime();
@@ -40,9 +49,12 @@ class diMYSQLi extends diMYSQL
 
 	protected function __close()
 	{
-		if (!$this->link->close())
-		{
-			return $this->_log("unable to close connection");
+		if (!$this->link->close()) {
+		    $message = "unable to close connection";
+
+			$this->_log($message);
+
+            throw new \diDatabaseException($message);
 		}
 
 		return true;
@@ -50,7 +62,7 @@ class diMYSQLi extends diMYSQL
 
 	protected function __error()
 	{
-		return $this->link->error;
+		return $this->link->error ?? $this->link->connect_error;
 	}
 
 	protected function __q($q)
@@ -103,8 +115,7 @@ class diMYSQLi extends diMYSQL
 	 */
 	protected function __reset(&$rs)
 	{
-		if ($this->count($rs))
-		{
+		if ($this->count($rs)) {
 			$rs->data_seek(0);
 		}
 	}

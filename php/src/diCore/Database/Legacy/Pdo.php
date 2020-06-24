@@ -8,6 +8,8 @@
 
 namespace diCore\Database\Legacy;
 
+use diCore\Data\Config;
+
 abstract class Pdo extends \diDB
 {
 	protected $charset = 'utf8';
@@ -23,21 +25,25 @@ abstract class Pdo extends \diDB
 
 	protected function __connect()
 	{
-		$options = [
-			\PDO::ATTR_ERRMODE            => \PDO::ERRMODE_EXCEPTION,
-			\PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
-			\PDO::ATTR_EMULATE_PREPARES   => false,
-		];
+        $options = [
+            \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            \PDO::ATTR_DEFAULT_FETCH_MODE => \PDO::FETCH_ASSOC,
+            \PDO::ATTR_EMULATE_PREPARES => false,
+        ];
 
 		$time1 = utime();
 
 		try {
 			$this->link = new \PDO($this->getDSN(), $this->username, $this->password, $options);
 		} catch (\PDOException $e) {
-			return $this->_log("unable to connect to host $this->host: " . $e->getMessage());
-		}
+            $message = "Pdo: Unable to connect to host $this->host: " . $e->getMessage();
 
-		if (\diCore\Data\Config::isInitiating()) {
+            $this->_log($message);
+
+            throw new \diDatabaseException($message);
+        }
+
+		if (Config::isInitiating()) {
 			$this->__q($this->getCreateDatabaseQuery());
 		}
 
