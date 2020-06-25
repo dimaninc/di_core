@@ -147,6 +147,12 @@ class ConnectionData
             [
                 'host' => 'localhost',
                 'login' => 'root',
+                'password' => $password,
+                'database' => $database,
+            ],
+            [
+                'host' => 'localhost',
+                'login' => 'root',
                 'password' => '',
                 'database' => $database,
             ],
@@ -158,9 +164,17 @@ class ConnectionData
                 'database' => $database,
             ],
             [
-                'host' => 'localhost',
+                'host' => '127.0.0.1',
+                'port' => 3306,
                 'login' => 'root',
                 'password' => $password,
+                'database' => $database,
+            ],
+            [
+                'host' => '127.0.0.1',
+                'port' => 3306,
+                'login' => 'root',
+                'password' => '',
                 'database' => $database,
             ],
         ];
