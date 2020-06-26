@@ -455,7 +455,7 @@ class diDynamicRows
 
       if (!empty($v["virtual"]) && !empty($v["values_collector"]))
       {
-	      $value = $r ? $v["values_collector"]($r->id) : $default_value;
+	      $value = $r ? $v["values_collector"]($r->id, (array)$r) : $default_value;
       }
       else
       {
