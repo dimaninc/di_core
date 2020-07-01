@@ -1011,9 +1011,12 @@ EOF;
 				}
 
 				// value length counter
-                if ($this->useValueLengthCounterForField($field)) {
+                if (
+                    $this->useValueLengthCounterForField($field) &&
+                    ($maxLen = $this->getMaxValueLengthForField($field)) > 0
+                ) {
                     $this->setInputAttribute($field, [
-                        'data-max-length' => $this->getMaxValueLengthForField($field),
+                        'data-max-length' => $maxLen,
                     ]);
                 }
 
