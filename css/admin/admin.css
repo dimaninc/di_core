@@ -2192,6 +2192,16 @@ body[data-skin="entrine"] .diadminform-row[data-purpose="notes"] .title {
     font-weight: bolder;
   }
 }
+.diadminform-row .title .max-len-counter {
+  background: #7601ac;
+  color: #fff;
+  border-radius: 3px;
+  padding: 3px;
+  margin-left: 5px;
+}
+.diadminform-row .title .max-len-counter.over {
+  background: #f00;
+}
 .diadminform-row .value {
   -webkit-box-flex: 1;
   -moz-box-flex: 1;

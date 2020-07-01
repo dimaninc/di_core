@@ -473,6 +473,28 @@ class Form
 		return $this->rec;
 	}
 
+    protected function getMaxValueLengthForField($field)
+    {
+        if (
+            StringHelper::endsWith($field, 'meta_title') ||
+            StringHelper::endsWith($field, 'html_title')
+        ) {
+            return 70;
+        } elseif (
+            StringHelper::endsWith($field, 'meta_description') ||
+            StringHelper::endsWith($field, 'html_description')
+        ) {
+            return 150;
+        }
+
+        return 0;
+    }
+
+	protected function useValueLengthCounterForField($field)
+    {
+        return false;
+    }
+
 	/** @deprecated */
 	function is_flag($fieldOrFlagsAr, $flag)
 	{
@@ -481,15 +503,16 @@ class Form
 
 	public function isFlag($fieldOrFlagsAr, $flag)
 	{
-		if (is_string($fieldOrFlagsAr) && $flags = $this->getFieldProperty($fieldOrFlagsAr, "flags"))
-		{
-		}
-		elseif (is_array($fieldOrFlagsAr) && isset($fieldOrFlagsAr["flags"]))
-		{
-			$flags = $fieldOrFlagsAr["flags"];
-		}
-		else
-		{
+		if (
+		    is_string($fieldOrFlagsAr) &&
+            $flags = $this->getFieldProperty($fieldOrFlagsAr, 'flags')
+        ) {
+		} elseif (
+		    is_array($fieldOrFlagsAr) &&
+            isset($fieldOrFlagsAr['flags'])
+        ) {
+			$flags = $fieldOrFlagsAr['flags'];
+		} else {
 			$flags = [];
 		}
 
@@ -506,14 +529,14 @@ class Form
 		$this->wysiwygVendor = $vendor;
 	}
 
-	public function getWysiwygVendor($mode = "int")
+	public function getWysiwygVendor($mode = 'int')
 	{
 		if ($this->AdminPage)
 		{
 			$this->wysiwygVendor = $this->AdminPage->getAdmin()->getWysiwygVendor();
 		}
 
-		return $mode == "string" ? self::getWysiwygAlias($this->wysiwygVendor) : $this->wysiwygVendor;
+		return $mode == 'string' ? self::getWysiwygAlias($this->wysiwygVendor) : $this->wysiwygVendor;
 	}
 
 	public static function getWysiwygAlias($id)
@@ -529,7 +552,7 @@ class Form
 
 	public function isStatic($field)
 	{
-		return $this->static_mode || $this->isFlag($field, "static");
+		return $this->static_mode || $this->isFlag($field, 'static');
 	}
 
 	/** @deprecated */
@@ -618,20 +641,20 @@ class Form
 
 	private function processDefaultValue($field)
 	{
-		if (strtoupper($this->getData($field)) == "NOW()")
+		if (strtoupper($this->getData($field)) == 'NOW()')
 		{
-			switch ($this->getFieldProperty($field, "type"))
+			switch ($this->getFieldProperty($field, 'type'))
 			{
-				case "date_str":
-					$this->setData($field, \diDateTime::format("Y-m-d"));
+				case 'date_str':
+					$this->setData($field, \diDateTime::sqlDateFormat());
 					break;
 
-				case "time_str":
-					$this->setData($field, \diDateTime::format("H:i:s"));
+				case 'time_str':
+					$this->setData($field, \diDateTime::sqlTimeFormat());
 					break;
 
-				case "datetime_str":
-					$this->setData($field, \diDateTime::format("Y-m-d H:i:s"));
+				case 'datetime_str':
+					$this->setData($field, \diDateTime::sqlFormat());
 					break;
 			}
 		}
@@ -987,39 +1010,40 @@ EOF;
 					]);
 				}
 
+				// value length counter
+                if ($this->useValueLengthCounterForField($field)) {
+                    $this->setInputAttribute($field, [
+                        'data-max-length' => $this->getMaxValueLengthForField($field),
+                    ]);
+                }
+
 				if ($this->isFlag($v, 'static') || $this->static_mode) {
-					if (isset($this->inputs[$field])) // already set, we'll leave it alone
-					{
+					if (isset($this->inputs[$field])) {
+                        // already set, we'll leave it alone
 						$s = $this->inputs[$field];
-					}
-					else
-					{
+					} else {
 						$s = false;
 
-						switch ($v['type'])
-						{
-							case "date":
-								$s = $this->data[$field] ? date("d.m.Y", $this->data[$field]) : "---";
-								break;
-
-							case "time":
-								$s = $this->data[$field] ? date("H:i", $this->data[$field]) : "---";
-								break;
-
-							case "datetime":
-								$s = $this->data[$field] ? date("d.m.Y H:i", $this->data[$field]) : "---";
-								break;
-
+						switch ($v['type']) {
+                            case "date":
 							case "date_str":
-								$s = $this->data[$field] && $this->data[$field] != "0000-00-00 00:00:00" ? date("d.m.Y", strtotime($this->data[$field])) : "---";
+								$s = $this->data[$field] && $this->data[$field] != "0000-00-00 00:00:00"
+                                    ? \diDateTime::simpleDateFormat($this->data[$field])
+                                    : "---";
 								break;
 
+                            case "time":
 							case "time_str":
-								$s = $this->data[$field] && $this->data[$field] != "0000-00-00 00:00:00" ? date("H:i", strtotime($this->data[$field])) : "---";
+								$s = $this->data[$field] && $this->data[$field] != "0000-00-00 00:00:00"
+                                    ? \diDateTime::simpleTimeFormat($this->data[$field])
+                                    : "---";
 								break;
 
+                            case "datetime":
 							case "datetime_str":
-								$s = $this->data[$field] && $this->data[$field] != "0000-00-00 00:00:00" ? date("d.m.Y H:i", strtotime($this->data[$field])) : "---";
+								$s = $this->data[$field] && $this->data[$field] != "0000-00-00 00:00:00"
+                                    ? \diDateTime::simpleFormat($this->data[$field])
+                                    : "---";
 								break;
 
 							case "checkbox":
@@ -1093,7 +1117,9 @@ EOF;
 					}
 
 					if ($s === false) {
-						$s = isset($this->inputs[$field]) ? $this->inputs[$field] : $this->getData($field);
+						$s = isset($this->inputs[$field])
+                            ? $this->inputs[$field]
+                            : $this->getData($field);
 					}
 
 					$this->setInputAttribute($field, [
