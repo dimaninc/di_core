@@ -152,17 +152,24 @@ class diAdminFilters
 
 		$this->db = $db;
 
-		$this->applied_date = isset($_COOKIE["admin_filter_applied"][$this->table])
+		$this->gatherInitialData($sortby, $dir, $possible_sortby_ar);
+	}
+
+	protected function gatherInitialData($sortby = 'id', $dir = 'ASC', $possible_sortby_ar = [])
+    {
+        $this->applied_date = isset($_COOKIE["admin_filter_applied"][$this->table])
             ? (int)$_COOKIE["admin_filter_applied"][$this->table]
             : false;
 
-		$this->possible_sortby_ar = is_string($possible_sortby_ar)
+        $this->possible_sortby_ar = is_string($possible_sortby_ar)
             ? explode(",", $possible_sortby_ar)
             : $possible_sortby_ar;
-		$this->set_default_sorter($sortby, $dir);
+        $this->set_default_sorter($sortby, $dir);
 
         $this->reset = !!\diRequest::get("__diaf_reset");
-	}
+
+        return $this;
+    }
 
 	public function setSortableState($state)
 	{
@@ -198,7 +205,7 @@ class diAdminFilters
 
 	public function getData($field)
 	{
-		return isset($this->data[$field]) ? $this->data[$field] : null;
+		return $this->data[$field] ?? null;
 	}
 
 	public function setData($field, $value)
@@ -210,7 +217,7 @@ class diAdminFilters
 
 	public function getPredefinedData($field)
 	{
-		return isset($this->predefinedData[$field]) ? $this->predefinedData[$field] : null;
+		return $this->predefinedData[$field] ?? null;
 	}
 
 	public function setPredefinedData($field, $value)
@@ -656,6 +663,24 @@ EOF;
         return $this->ruleCallbacks;
     }
 
+    public function gatherData($field)
+    {
+        $value = !$this->reset && isset($_COOKIE["admin_filter"][$this->table][$field])
+            ? (
+                is_array($_COOKIE["admin_filter"][$this->table][$field])
+                    ? $_COOKIE["admin_filter"][$this->table][$field]
+                    : urldecode($_COOKIE["admin_filter"][$this->table][$field])
+            ) : $this->getPredefinedData($field);
+
+        $value = \diRequest::get($field, $value);
+
+        $value = isset($_GET["admin_filter"][$field])
+            ? $_GET["admin_filter"][$field]
+            : $value;
+
+        return $value;
+    }
+
 	public function buildQuery($table_prefix = "")
 	{
 		// sorter
@@ -692,15 +717,7 @@ EOF;
 		foreach ($this->ar as $idx => $a) {
 		    $where_tpl = $a["where_tpl"] ?: self::DEFAULT_WHERE_TPL;
 
-			$value = !$this->reset && isset($_COOKIE["admin_filter"][$this->table][$a["field"]])
-				? is_array($_COOKIE["admin_filter"][$this->table][$a["field"]]) ? $_COOKIE["admin_filter"][$this->table][$a["field"]] : urldecode($_COOKIE["admin_filter"][$this->table][$a["field"]])
-				: $this->getPredefinedData($a["field"]);
-
-			$value = \diRequest::get($a["field"], $value);
-
-			$value = isset($_GET["admin_filter"][$a["field"]])
-				? $_GET["admin_filter"][$a["field"]]
-				: $value;
+			$value = $this->gatherData($a['field']);
 
 			if (in_array($a["type"], ["date_range", "date_str_range"])) {
 				$value = [];
@@ -821,7 +838,9 @@ EOF;
 			$this->data[$a["field"]] = $value;
 		}
 
-		$this->where = $where_ar ? "WHERE " . join(" $this->andor ", $where_ar) : "";
+		$this->where = $where_ar
+            ? "WHERE " . join(" $this->andor ", $where_ar)
+            : "";
 
 		return $this;
 	}
