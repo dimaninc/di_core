@@ -566,8 +566,7 @@ class diModel implements \ArrayAccess
 
 	public function setTnFolder($folder, $index = '')
 	{
-		if ($index < 2)
-		{
+		if ($index < 2) {
 			$index = '';
 		}
 
@@ -578,8 +577,7 @@ class diModel implements \ArrayAccess
 
 	public function getTnFolder($index = '')
 	{
-		if ($index < 2)
-		{
+		if ($index < 2) {
 			$index = '';
 		}
 

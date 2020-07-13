@@ -244,6 +244,30 @@ class Form
             'ru' => 'Полный текст',
             'en' => 'Content',
         ],
+        'en_title' => [
+            'ru' => 'Название',
+            'en' => 'Title',
+        ],
+        'en_short_content' => [
+            'ru' => 'Краткий текст',
+            'en' => 'Short content',
+        ],
+        'en_content' => [
+            'ru' => 'Полный текст',
+            'en' => 'Content',
+        ],
+        'ru_title' => [
+            'ru' => 'Название',
+            'en' => 'Title',
+        ],
+        'ru_short_content' => [
+            'ru' => 'Краткий текст',
+            'en' => 'Short content',
+        ],
+        'ru_content' => [
+            'ru' => 'Полный текст',
+            'en' => 'Content',
+        ],
         'pic' => [
             'ru' => 'Изображение',
             'en' => 'Pic',
@@ -263,6 +287,10 @@ class Form
         'active' => [
             'ru' => 'Активно',
             'en' => 'Active',
+        ],
+        'top' => [
+            'ru' => 'В топе',
+            'en' => 'Promote',
         ],
         'like_count' => [
             'ru' => 'Количество лайков',
@@ -293,6 +321,30 @@ class Form
             'en' => 'Meta-keywords',
         ],
         'meta_description' => [
+            'ru' => 'Meta-описание',
+            'en' => 'Meta-description',
+        ],
+        'ru_meta_title' => [
+            'ru' => 'Meta-заголовок',
+            'en' => 'Meta-title',
+        ],
+        'ru_meta_keywords' => [
+            'ru' => 'Meta-ключевые слова',
+            'en' => 'Meta-keywords',
+        ],
+        'ru_meta_description' => [
+            'ru' => 'Meta-описание',
+            'en' => 'Meta-description',
+        ],
+        'en_meta_title' => [
+            'ru' => 'Meta-заголовок',
+            'en' => 'Meta-title',
+        ],
+        'en_meta_keywords' => [
+            'ru' => 'Meta-ключевые слова',
+            'en' => 'Meta-keywords',
+        ],
+        'en_meta_description' => [
             'ru' => 'Meta-описание',
             'en' => 'Meta-description',
         ],

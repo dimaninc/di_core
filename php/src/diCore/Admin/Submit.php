@@ -1610,8 +1610,7 @@ class Submit
 
 			// thumbnail photos
 
-			for ($i = 1; $i < 10; $i++)
-			{
+			for ($i = 1; $i < 10; $i++) {
 			    $fOpts = $getFileOptions($i);
 			    // this tn needed if it's in list or for dipics
 			    $needed = $fOpts || !$isCustom;
