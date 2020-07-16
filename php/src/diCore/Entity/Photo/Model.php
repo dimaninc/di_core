@@ -10,7 +10,7 @@ namespace diCore\Entity\Photo;
 
 use diCore\Admin\Submit;
 use diCore\Data\Types;
-use diCore\Helper\FileSystemHelper;
+use diCore\Tool\CollectionCache;
 
 /**
  * Class Model
@@ -77,6 +77,9 @@ class Model extends \diModel
 	const table = 'photos';
 	protected $table = 'photos';
 
+	/** @var \diCore\Entity\Album\Model */
+	protected $album;
+
 	public static $tokenAlignments = [
 		'left',
 		'right',
@@ -84,9 +87,8 @@ class Model extends \diModel
 		null,
 	];
 
-    public static function getPicOptions()
-    {
-        return [
+    protected static $picStoreSettings = [
+        'pic' => [
             [
                 'type' => Submit::IMAGE_TYPE_MAIN,
                 'resize' => \diImage::DI_THUMB_FIT,
@@ -95,7 +97,13 @@ class Model extends \diModel
                 'type' => Submit::IMAGE_TYPE_PREVIEW,
                 'resize' => \diImage::DI_THUMB_FIT,
             ],
-        ];
+        ],
+    ];
+
+    /** @deprecated  */
+    public static function getPicOptions()
+    {
+        return static::getPicStoreSettings('pic');
     }
 
 	public function getToken($alignment = null)
@@ -104,8 +112,7 @@ class Model extends \diModel
 			? '[PHOTO-' . str_pad($this->getId(), 6, '0', STR_PAD_LEFT) . ']'
 			: null;
 
-		if ($token && $alignment)
-		{
+		if ($token && $alignment) {
 			$token .= '[' . strtoupper($alignment) . ']';
 		}
 
@@ -116,8 +123,7 @@ class Model extends \diModel
 	{
 		$ar = [];
 
-		foreach (static::$tokenAlignments as $alignment)
-		{
+		foreach (static::$tokenAlignments as $alignment) {
 			$ar[$alignment] = $this->getToken($alignment);
 		}
 
@@ -158,5 +164,14 @@ class Model extends \diModel
     public function getPicsFolder()
     {
         return parent::getPicsFolder() . $this->getPicSubFolders();
+    }
+
+    public function getAlbum()
+    {
+        if (!$this->album) {
+            $this->album = CollectionCache::getModel(Types::album, $this->getAlbumId(), true);
+        }
+
+        return $this->album;
     }
 }

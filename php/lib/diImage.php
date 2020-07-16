@@ -132,7 +132,6 @@ class diImage
 
 		$this->jpeg_quality = 90;
 		$this->post_function = null;
-		$this->dst_type = false;
 
 		$this->info = false;
 
@@ -207,10 +206,9 @@ class diImage
 
 	function store($dst_fn = "", $image = false)
 	{
-		$dst_type = $this->dst_type ? $this->dst_type : $this->t;
+		$dst_type = $this->dst_type ?: $this->t;
 
-		if (!$image)
-		{
+		if (!$image) {
 			$image = $this->image;
 		}
 
@@ -283,38 +281,44 @@ class diImage
 		$this->post_function = $post_function;
 	}
 
+	public function getDstType()
+    {
+        return $this->dst_type;
+    }
+	     
 	function set_dst_type($type)
 	{
-		if (isset(self::$typeExtensions[$type]))
-		{
+		if (isset(self::$typeExtensions[$type])) {
 			$this->dst_type = $type;
+		} else {
+			$this->dst_type = self::getTypeByExt($type);
 		}
-		else
-		{
-			$type = strtolower($type);
 
-			if ($type == "jpg")
-			{
-				$type = "jpeg";
-			}
-
-			$this->dst_type = array_search($type, self::$typeExtensions);
-		}
+		return $this;
 	}
+
+	public static function getTypeByExt($ext)
+    {
+        $ext = strtolower($ext);
+
+        if ($ext == 'jpeg') {
+            $ext = 'jpg';
+        }
+
+        return array_search($ext, self::$typeExtensions);
+    }
 
 	function get_thumb($mode, $w, $h = 0)
 	{
 		if (!$this->image)
 			return false;
 
-		if (($mode & DI_THUMB_EXPAND_SIZE_MASK) == DI_THUMB_EXPAND_TO_SIZE)
-		{
+		if (($mode & DI_THUMB_EXPAND_SIZE_MASK) == DI_THUMB_EXPAND_TO_SIZE) {
 			if (
 				$w >= $this->w &&
 				$h >= $this->h &&
 				($mode & DI_THUMB_MODE_MASK) == DI_THUMB_CROP
-			   )
-			{
+            ) {
 				$mode &= DI_THUMB_X_POSITION_MASK | DI_THUMB_Y_POSITION_MASK | DI_THUMB_EXPAND_SIZE_MASK;
 				$mode |= DI_THUMB_FIT;
 			}
@@ -330,15 +334,13 @@ class diImage
 		if (
 			($mode & DI_THUMB_EXPAND_SIZE_MASK) == DI_THUMB_KEEP_SIZE ||
 			(($mode & DI_THUMB_EXPAND_SIZE_MASK) == DI_THUMB_EXPAND_TO_SIZE && ($mode & DI_THUMB_MODE_MASK) == DI_THUMB_FIT)
-		   )
-		{
+        ) {
 			$w = $dst_w;
 			$h = $dst_h;
 		}
 
 		// preparations
-		switch ($this->t)
-		{
+		switch ($this->t) {
 			case 1: //gif
 				$dst_img = imagecreate($w, $h); //($dst_w, $dst_h);
 				imagepalettecopy($dst_img, $this->image);
@@ -357,8 +359,7 @@ class diImage
 		}
 		//
 
-		if ($dst_w >= $src_w || $dst_h >= $src_h)
-		{
+		if ($dst_w >= $src_w || $dst_h >= $src_h) {
 			$bg = imagecolorallocate($dst_img, $this->bg_color[0], $this->bg_color[1], $this->bg_color[2]);
 			imagefilledrectangle($dst_img, 0, 0, $w, $h, $bg);
 		}
@@ -367,8 +368,7 @@ class diImage
 		imagecopyresampled($dst_img, $this->image, $dst_x, $dst_y, $src_x, $src_y, $dst_w, $dst_h, $src_w, $src_h);
 		//
 
-		switch ($mode & DI_THUMB_MODE_MASK)
-		{
+		switch ($mode & DI_THUMB_MODE_MASK) {
 			case DI_THUMB_CROP:
 				break;
 
@@ -379,8 +379,7 @@ class diImage
 		//
 
 		// post processes
-		switch ($this->t)
-		{
+		switch ($this->t) {
 			case 1: //gif
 				// for transparent gif
 				$pixel_over_black = imagecolorat($dst_img, 0, 0);

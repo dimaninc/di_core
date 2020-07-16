@@ -22,6 +22,9 @@ class PhotosOfAlbum
 	public static function getFormFieldArray($options = [])
 	{
         $options = extend($options, [
+            'naming' => Submit::FILE_NAMING_RANDOM,
+            'showImageType' => Submit::IMAGE_TYPE_PREVIEW,
+            'callback' => [\diDynamicRows::class, 'storePicSimple'],
             'extraFields' => [
                 /*
                 'top' => [
@@ -90,14 +93,14 @@ class PhotosOfAlbum
 				'pic' => [
 					'type' => 'pic',
 					'defaultMultiplePic' => true,
-					//'naming' => Submit::FILE_NAMING_ORIGINAL,
-					'showImageType' => Submit::IMAGE_TYPE_PREVIEW,
-					'callback' => [\diDynamicRows::class, 'storePicSimple'],
-					'fileOptions' => $model::getPicOptions(),
+					'naming' => $options['naming'],
+					'showImageType' => $options['showImageType'],
+					'callback' => $options['callback'],
+					'fileOptions' => $model::getPicStoreSettings('pic'),
 				],
 			], $options['extraFields']),
 			'template' => '<ul class="line">' .
-				'<li data-field="title">Подпись: {TITLE}</li>' .
+				'<li data-field="title" class="wider">Подпись: {TITLE}</li>' .
 				'<li data-field="visible">Отображать: {VISIBLE}</li>' .
                 '<li data-field="top">Выделить: {TOP}</li>' .
 				'<li data-field="order_num">Порядковый номер: {ORDER_NUM}</li>' .

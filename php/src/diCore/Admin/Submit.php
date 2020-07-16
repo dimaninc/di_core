@@ -833,19 +833,13 @@ class Submit
 
 	function make_datetime($field, $date = true, $time = false)
 	{
-		if ($this->isFlag($field, 'static') || $this->isFlag($field, 'hidden'))
-		{
-			if (substr($this->_all_fields[$field]['type'], -4) == '_str')
-			{
-				$this->setData($field, \diRequest::post($field, ''));
-			}
-			else
-			{
-				$this->setData($field, \diRequest::post($field, 0));
-			}
-		}
-		else
-		{
+		if ($this->isFlag($field, 'static') || $this->isFlag($field, 'hidden')) {
+			$default = substr($this->_all_fields[$field]['type'], -4) == '_str'
+                ? ''
+                : 0;
+
+			$this->setData($field, \diRequest::post($field, $default));
+		} else {
 			$this->setData($field, $this->get_datetime_from_ar(
 			    \diRequest::post($field, []),
 				$date,
@@ -861,8 +855,7 @@ class Submit
 	{
 		global $big_folder, $orig_folder, $tn_folder, $tn2_folder, $tn3_folder;
 
-		switch ($type)
-		{
+		switch ($type) {
 			case self::IMAGE_TYPE_MAIN:
 				return '';
 
@@ -982,8 +975,8 @@ class Submit
             $baseFolder = $fieldFileOptions[0]['folder'];
 
 			if (!empty($_FILES[$f]) && empty($_FILES[$f]['error'])) {
-				$oldExt = strtolower(StringHelper::fileExtension($this->getData($f)));
-				$newExt = strtolower(StringHelper::fileExtension($_FILES[$f]['name']));
+				$oldExt = mb_strtolower(StringHelper::fileExtension($this->getData($f)));
+				$newExt = mb_strtolower(StringHelper::fileExtension($_FILES[$f]['name']));
 
 				if (!$this->getData($f)) {
 					$this->generateFilename($f, $baseFolder, $_FILES[$f]['name']);
@@ -1013,7 +1006,8 @@ class Submit
 
     public static function getGeneratedFilename($folder, $origFilename, $naming)
 	{
-		$baseName = transliterate_rus_to_eng(StringHelper::fileBaseName($origFilename)) ?: get_unique_id(self::FILE_NAME_RANDOM_LENGTH);
+		$baseName = transliterate_rus_to_eng(StringHelper::fileBaseName($origFilename))
+            ?: get_unique_id(self::FILE_NAME_RANDOM_LENGTH);
 		$endingIdx = 0;
 		$extension = '.' . strtolower(StringHelper::fileExtension($origFilename));
 
@@ -1105,8 +1099,10 @@ class Submit
 
 	public static function checkBase64Files($field, $id)
     {
-        if (empty($_FILES[$field]['name'][$id]) && !empty($_POST['base64_' . $field][$id]))
-        {
+        if (
+            empty($_FILES[$field]['name'][$id]) &&
+            !empty($_POST['base64_' . $field][$id])
+        ) {
             $base64 = $_POST['base64_' . $field][$id];
             preg_match("#^data:(.+/[^;]+);base64,(.+)$#", $base64, $regs);
             $raw = $regs[2];
@@ -1116,8 +1112,7 @@ class Submit
             $_FILES[$field]['tmp_name'][$id] = tempnam(sys_get_temp_dir(), 'clipboard-image');
             $_FILES[$field]['error'][$id] = 0;
 
-            if (!$_FILES[$field]['tmp_name'][$id])
-            {
+            if (!$_FILES[$field]['tmp_name'][$id]) {
                 throw new \Exception('Unable to create temporary file for clipboard image');
             }
 
@@ -1131,8 +1126,7 @@ class Submit
 
 	private function store_dynamic_pics($field)
 	{
-		if (empty($_POST["{$field}_order_num"]))
-		{
+		if (empty($_POST["{$field}_order_num"])) {
 			return $this;
 		}
 
@@ -1151,14 +1145,14 @@ class Submit
 
 		$w = "_table='{$this->getTable()}' and _field='$field' and _id='{$this->getId()}'";
 
-		foreach ($ar as $id => $order_num)
-		{
-			if (!(int)$id)
-			{
+		foreach ($ar as $id => $order_num) {
+			if (!(int)$id) {
 				continue;
 			}
 
-			$test_r = $id > 0 ? $this->getDb()->r(self::dynamicPicsTable, "WHERE $w and id='$id'") : false;
+			$test_r = $id > 0
+                ? $this->getDb()->r(self::dynamicPicsTable, "WHERE $w and id='$id'")
+                : false;
 
 			$db_ar = [
                 'order_num' => (int)$order_num,
@@ -1427,31 +1421,59 @@ class Submit
 
 			$suffix = Submit::getPreviewSuffix($opts['type']);
 
-			$fn = \diPaths::fileSystem($obj->getModel(), true, $field) .
+            $fileExt = StringHelper::fileExtension($obj->getData($field));
+            $isSvg = in_array($fileExt, ['svg']);
+            $resizeAvailable = !$isSvg;
+            $forceReSave = false;
+
+		    if (!empty($opts['forceFormat']) && !$isSvg) {
+                $I->set_dst_type($opts['forceFormat']);
+
+                $oldType = \diImage::getTypeByExt($fileExt);
+                if ($oldType != $I->getDstType()) {
+                    $forceReSave = true;
+                }
+
+                $fileExt = \diImage::typeExt($I->getDstType());
+                $name = StringHelper::replaceFileExtension($obj->getData($field), $fileExt);
+
+                $obj->setData($field, $name);
+            }
+
+            $fn = \diPaths::fileSystem($obj->getModel(), true, $field) .
 				$opts['folder'] . $opts['subfolder'] . $obj->getData($field);
-			$fileExt = StringHelper::fileExtension($fn);
-			$isSvg = in_array($fileExt, ['svg']);
-			$resizeAvailable = !$isSvg;
 
             if (is_file($fn)) {
                 unlink($fn);
             }
 
-            if (!$opts['resize'] || !$resizeAvailable) {
+            if (
+                !$forceReSave &&
+                (!$opts['resize'] || !$resizeAvailable)
+            ) {
                 copy($F['tmp_name'], $fn);
             } else {
                 if (!empty($opts['quality'])) {
                     $I->set_jpeg_quality($opts['quality']);
                 }
 
-                $I->make_thumb_or_copy(
-                    $opts['resize'],
-                    $fn,
-                    $opts['width'],
-                    $opts['height'],
-                    false,
-                    $opts['watermark']['name'], $opts['watermark']['x'], $opts['watermark']['y']
-                );
+                $forceReSave
+                    ? $I->make_thumb(
+                        $opts['resize'],
+                        $fn,
+                        $opts['width'],
+                        $opts['height'],
+                        false,
+                        $opts['watermark']['name'], $opts['watermark']['x'], $opts['watermark']['y']
+                    )
+                    : $I->make_thumb_or_copy(
+                        $opts['resize'],
+                        $fn,
+                        $opts['width'],
+                        $opts['height'],
+                        false,
+                        $opts['watermark']['name'], $opts['watermark']['x'], $opts['watermark']['y']
+                    );
             }
 
 			chmod($fn, Submit::FILE_CHMOD);

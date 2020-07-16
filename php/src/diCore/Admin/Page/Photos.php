@@ -33,17 +33,6 @@ class Photos extends \diCore\Admin\BasePage
 		],
 	];
 
-	protected $picStoreOptions = [
-		[
-			'type' => Submit::IMAGE_TYPE_MAIN,
-			'resize' => \diImage::DI_THUMB_FIT,
-		],
-		[
-			'type' => Submit::IMAGE_TYPE_PREVIEW,
-			'resize' => \diImage::DI_THUMB_FIT,
-		],
-	];
-
 	protected $filters = [
 		'album_id' => [
 			'field' => 'album_id',
@@ -61,18 +50,12 @@ class Photos extends \diCore\Admin\BasePage
 
 	protected function getFilterSettings($field = null)
 	{
-		if ($field === null)
-		{
+		if ($field === null) {
 			return $this->filters;
-		}
-		else
-		{
-			if (isset($this->filters[$field]))
-			{
+		} else {
+			if (isset($this->filters[$field])) {
 				return $this->filters[$field];
-			}
-			else
-			{
+			} else {
 				throw new \Exception("No filter for '$field' specified");
 			}
 		}
@@ -80,9 +63,7 @@ class Photos extends \diCore\Admin\BasePage
 
 	protected function getAlbumsForFilter()
 	{
-		/** @var Albums $albums */
-		$albums = \diCollection::create(Types::album);
-		$albums
+		$albums = Albums::create()
 			->orderByOrderNum();
 
 		return $albums;
@@ -90,9 +71,7 @@ class Photos extends \diCore\Admin\BasePage
 
 	protected function getAlbumsForForm()
 	{
-		/** @var Albums $albums */
-		$albums = \diCollection::create(Types::album);
-		$albums
+		$albums = Albums::create()
 			->orderByTitle();
 
 		return $albums;
@@ -100,8 +79,7 @@ class Photos extends \diCore\Admin\BasePage
 
 	protected function setupFilters()
 	{
-		foreach ($this->getFilterSettings() as $field => $filter)
-		{
+		foreach ($this->getFilterSettings() as $field => $filter) {
 			$this->getFilters()
 				->addFilter($filter);
 		}
@@ -151,8 +129,7 @@ class Photos extends \diCore\Admin\BasePage
 		/** @var \diPhotoModel $photo */
 		$photo = $this->getForm()->getModel();
 
-		if (!$this->getId())
-		{
+		if (!$this->getId()) {
 			$this->getForm()
 				->setHiddenInput([
 					'token',
@@ -160,13 +137,10 @@ class Photos extends \diCore\Admin\BasePage
 					'comments_last_date',
 					'comments_count',
 				]);
-		}
-		else
-		{
+		} else {
 			$tokens = '';
 
-			switch ($this->tokenMode)
-			{
+			switch ($this->tokenMode) {
 				case self::TOKEN_MODE_SINGLE:
 					$tokens = $photo->getToken();
 					break;
@@ -184,16 +158,11 @@ class Photos extends \diCore\Admin\BasePage
 			->setSelectFromCollectionInput('album_id', $this->getAlbumsForForm());
 	}
 
-	protected function getPicStoreOptions()
-	{
-		return $this->picStoreOptions;
-	}
-
 	public function submitForm()
 	{
 		$this->getSubmit()
 			->makeSlug()
-			->storeImage('pic', $this->getPicStoreOptions());
+			->storeImage('pic');
 	}
 
 	public function getFormTabs()
