@@ -4,6 +4,31 @@
 
 */
 
+// type == false => all types
+// id_mask - string/regexp
+function _ge_inputs(/*type = false, parent = document, id_mask = false, checked_only = false*/) {
+	var type = typeof arguments[0] != 'undefined' && arguments[0] ? arguments[0] : false;
+	var parent = typeof arguments[1] != 'undefined' && arguments[1] ? arguments[1] : document;
+	var id_mask = typeof arguments[2] != 'undefined' && arguments[2] ? arguments[2] : false;
+	var checked_only = typeof arguments[3] != 'undefined' && arguments[3] ? arguments[3] : false;
+	var _input = parent.getElementsByTagName('input');
+	var ar = [];
+
+	for (var i = 0; i < _input.length; i++) {
+		if (id_mask) {
+			if (typeof id_mask == 'object' && !id_mask.test(_input[i].id))
+				continue;
+			else if (typeof id_mask == 'string' && _input[i].id.substr(0, id_mask.length) != id_mask)
+				continue;
+		}
+
+		if ((!type || (type && _input[i].type == type)) && (!checked_only || (checked_only && _input[i].checked)))
+			ar.push(_input[i]);
+	}
+
+	return ar;
+}
+
 function diForm(form_name, dont_attach_form_submit)
 {
 	var self = this;
