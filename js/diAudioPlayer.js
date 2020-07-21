@@ -6,13 +6,13 @@
 
 var diAudioPlayer = function (_opts) {
     var self = this,
-        audio = null,
         audioLoaded = false,
         opts = $.extend({
             audio: null,
             onEnd: null
         }, _opts || {});
 
+    this.audio = null;
     this.PAUSE = 1;
     this.PLAY = 2;
     this.END = 3;
@@ -23,13 +23,13 @@ var diAudioPlayer = function (_opts) {
             self.setElement(opts.audio);
 
             if (opts.onEnd) {
-                $(audio).on('ended', opts.onEnd);
+                $(self.audio).on('ended', opts.onEnd);
             }
         }
     }
 
     this.getElement = function () {
-        return audio;
+        return this.audio;
     };
 
     this.setElement = function (e) {
@@ -37,19 +37,21 @@ var diAudioPlayer = function (_opts) {
             e = e.length > 0 ? e.get(0) : null;
         }
 
-        audio = e;
-        audio.crossOrigin = 'anonymous';
+        if (e) {
+            this.audio = e;
+            this.audio.crossOrigin = 'anonymous';
+        }
 
         return this;
     };
 
     this.fixCORS = function (src) {
-        src = src || audio.src;
+        src = src || this.audio.src;
 
         if (src) {
             this.setSource(null);
 
-            audio.crossOrigin = 'anonymous';
+            this.audio.crossOrigin = 'anonymous';
             this.setSource(src);
 
             //console.log('diAudioPlayer: CORS fixed');
@@ -59,30 +61,30 @@ var diAudioPlayer = function (_opts) {
     };
 
     this.disableCORS = function () {
-        if (typeof audio.crossOrigin !== 'undefined') {
-            audio.crossOrigin = null;
+        if (typeof this.audio.crossOrigin !== 'undefined') {
+            this.audio.crossOrigin = null;
         }
 
         return this;
     };
 
     this.setSource = function (source) {
-        audio.src = source;
-        audio.load();
+        this.audio.src = source;
+        this.audio.load();
         audioLoaded = true;
 
         return this;
     };
 
     this.play = function () {
-        if (typeof audio.play !== 'undefined') {
+        if (typeof this.audio.play !== 'undefined') {
             if (!audioLoaded) {
-                audio.load();
+                this.audio.load();
 
                 audioLoaded = true;
             }
 
-            var promise = audio.play();
+            var promise = this.audio.play();
 
             if (promise !== undefined) {
                 promise
@@ -101,7 +103,7 @@ var diAudioPlayer = function (_opts) {
     };
 
     this.pause = function () {
-        audio.pause();
+        this.audio.pause();
 
         return this;
     };
@@ -118,18 +120,18 @@ var diAudioPlayer = function (_opts) {
     };
 
     this.getState = function () {
-        if (audio.paused) return this.PAUSE;
-        else if (audio.ended) return this.END;
-        else if (audio.played) return this.PLAY;
+        if (this.audio.paused) return this.PAUSE;
+        else if (this.audio.ended) return this.END;
+        else if (this.audio.played) return this.PLAY;
         else return this.UNKNOWN;
     };
 
     this.getCurrentTime = function () {
-        return audio.currentTime;
+        return this.audio.currentTime;
     };
 
     this.setCurrentTime = function (time) {
-        audio.currentTime = time;
+        this.audio.currentTime = time;
 
         return this;
     };
@@ -141,7 +143,7 @@ var diAudioPlayer = function (_opts) {
     };
 
     this.getDuration = function () {
-        return audio.duration;
+        return this.audio.duration;
     };
 
     this.isPlayed = function () {
@@ -158,18 +160,20 @@ var diAudioPlayer = function (_opts) {
 
     /* 0.0 ... 1.0 */
     this.setVolume = function (volume) {
-        volume *= 1;
+        volume = parseFloat(volume) || 0;
 
         if (volume < 0) volume = 0;
         else if (volume > 1) volume = 1;
 
-        audio.volume = volume;
+        if (this.audio) {
+            this.audio.volume = volume;
+        }
 
         return this;
     };
 
     this.getVolume = function () {
-        return audio.volume;
+        return this.audio.volume;
     };
 
     constructor();
