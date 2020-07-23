@@ -1045,24 +1045,13 @@ function escape_bad_html($s, $allowed = "p|br|b|i|u|a|img|object|embed|param|ifr
 /** @deprecated */
 function wysiwyg_empty($s)
 {
-	return diStringHelper::wysiwygEmpty($s);
+	return StringHelper::wysiwygEmpty($s);
 }
 
+/** @deprecated  */
 function print_json($ar, $printHeaders = true)
 {
-	//text/plain
-	if ($printHeaders)
-	{
-		$charset = \diCore\Data\Http\Charset::title(\diCore\Data\Http\Charset::id(DIENCODING));
-
-		header("Content-type: application/json; charset=" . $charset);
-		header("Expires: Mon, 11 Jul 1999 00:00:00 GMT");
-		header("Last-Modified: " . gmdate("D, d M Y H:i:s") . "GMT");
-		header("Cache-Control: no-cache, must-revalidate");
-		header("Pragma: no-cache");
-	}
-
-	echo json_encode($ar);
+	StringHelper::printJson($ar, $printHeaders);
 }
 
 function dierror2($text, $module = "")
