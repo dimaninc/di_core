@@ -12,6 +12,7 @@ use diCore\Data\Config;
 use diCore\Data\Configuration;
 use diCore\Data\Types;
 use diCore\Database\Connection;
+use diCore\Entity\DynamicPic\Collection as DynamicPics;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\FileSystemHelper;
 use diCore\Helper\Slug;
@@ -139,7 +140,10 @@ class Submit
                         $skip = true;
                     }
 
-                    if ($this->isFlag($field, 'virtual') || $this->isFlag($field, 'untouchable')) {
+                    if (
+                        $this->isFlag($field, 'virtual') ||
+                        $this->isFlag($field, 'untouchable')
+                    ) {
                         $skip = true;
                     }
 
@@ -1272,24 +1276,23 @@ class Submit
 
 			$db_ar = array_intersect_key($db_ar, array_flip(self::$allowedDynamicPicsFieldsAr));
 
-			if ($test_r)
-			{
-				$this->getDb()->update(self::dynamicPicsTable, $db_ar, $test_r->id) or $this->getDb()->dierror();;
+			if ($test_r) {
+				$this->getDb()->update(self::dynamicPicsTable, $db_ar, $test_r->id)
+                    or $this->getDb()->dierror();;
 
 				$ids_ar[] = $test_r->id;
-			}
-			else
-			{
+			} else {
 				$db_ar['_table'] = $this->getTable();
 				$db_ar['_field'] = $field;
 				$db_ar['_id'] = $this->getId();
 
-				$ids_ar[] = $this->getDb()->insert(self::dynamicPicsTable, $db_ar) or $this->getDb()->dierror();
+				$ids_ar[] = $this->getDb()->insert(self::dynamicPicsTable, $db_ar)
+                    or $this->getDb()->dierror();
 			}
 		}
 
 		// it's killing time!
-		$killCol = \diCore\Entity\DynamicPic\Collection::createByTarget($this->getTable(), $this->getId(), $field);
+		$killCol = DynamicPics::createByTarget($this->getTable(), $this->getId(), $field);
 		$killCol
 			->filterById($ids_ar, '!=')
 			->hardDestroy();
@@ -1297,14 +1300,13 @@ class Submit
 		// making order num to look ok
 		$order_num = 0;
 
-		$orderCol = \diCore\Entity\DynamicPic\Collection::createByTarget($this->getTable(), $this->getId(), $field);
+		$orderCol = DynamicPics::createByTarget($this->getTable(), $this->getId(), $field);
 		$orderCol
 			->orderByOrderNum()
 			->orderById();
 
 		/** @var \diCore\Entity\DynamicPic\Model $m */
-		foreach ($orderCol as $m)
-		{
+		foreach ($orderCol as $m) {
 			$m
 				->setOrderNum(++$order_num)
 				->save();
@@ -1333,24 +1335,21 @@ class Submit
 
 		$ar = [];
 
-		/** @var \diCore\Entity\DynamicPic\Collection $pics */
+		/** @var DynamicPics $pics */
 		$pics = \diCollection::create(Types::dynamic_pic);
 		$pics
 			->filterByTargetTable($Submit->getTable());
 
-		if ($field)
-		{
+		if ($field) {
 			$pics->filterByTargetField($field);
 		}
 
-		if ($id)
-		{
+		if ($id) {
 			$pics->filterByTargetId($id);
 		}
 
-			/** @var \diCore\Entity\DynamicPic\Model $pic */
-		foreach ($pics as $pic)
-		{
+        /** @var \diCore\Entity\DynamicPic\Model $pic */
+		foreach ($pics as $pic) {
 			$fn = \diPaths::fileSystem() . get_pics_folder($Page->getTable()) .
 				get_orig_folder() . $pic->getPic();
 
@@ -1368,8 +1367,7 @@ class Submit
 				'pic' => $pic->getPic(),
 			];
 
-			if (is_callable($callback))
-			{
+			if (is_callable($callback)) {
 				$callback($F, $Submit, [
 					'field' => $pic->getTargetField(),
 					'what' => 'pic',
@@ -1524,13 +1522,11 @@ class Submit
 		$fn = \diPaths::fileSystem($obj->getModel(), true, $field) .
 			$options['folder'] . $options['subfolder'] . ($options['filename'] ?: $obj->getData($field));
 
-		if (is_file($fn))
-		{
+		if (is_file($fn)) {
 			unlink($fn);
 		}
 
-		if (!(move_uploaded_file($F['tmp_name'], $fn) || rename($F['tmp_name'], $fn)))
-		{
+		if (!(move_uploaded_file($F['tmp_name'], $fn) || rename($F['tmp_name'], $fn))) {
 			dierror("Unable to copy file {$F['name']} to {$fn}");
 		}
 

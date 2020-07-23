@@ -35,6 +35,7 @@ var diDynamicRows = function(opts) {
 			fieldTitle: null,
 			direction: 1,
 			counter: 0,
+			focusFirstInputAfterAddRow: true,
 			sortable: false,
             language: 'ru',
 			afterInit: function(DynamicRows) {},
@@ -192,10 +193,12 @@ var diDynamicRows = function(opts) {
 
 	this.setupPasteImage = function() {
 		$(document).on('paste.didynamicrows', function(event) {
-            var items = (event.clipboardData  || event.originalEvent.clipboardData).items;
+            var items = (event.clipboardData || event.originalEvent.clipboardData).items;
 
             for (var i = 0; i < items.length; i++) {
-                if (items[i].type.indexOf('image') === -1) continue;
+                if (items[i].type.indexOf('image') === -1) {
+                	continue;
+				}
 
                 var format = items[i].type;
                 var blob = items[i].getAsFile();
@@ -401,6 +404,10 @@ var diDynamicRows = function(opts) {
 			$('html, body').animate({
 				scrollTop: $e.offset().top - 5
 			});
+		}
+
+		if (opts.focusFirstInputAfterAddRow) {
+			$e.find('input:not([type="hidden"]),textarea').first().focus();
 		}
 
 		$lastCreatedRow = $e;
