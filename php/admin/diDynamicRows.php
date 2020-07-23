@@ -92,8 +92,7 @@ class diDynamicRows
 
 		$this->storedModel = new diModel();
 
-		if (gettype($AdminPage) == "object")
-		{
+		if (gettype($AdminPage) == "object") {
 			$this->AdminPage = $AdminPage;
 			$this->table = $this->AdminPage->getTable();
 			$this->id = $this->AdminPage->getId();
@@ -101,9 +100,7 @@ class diDynamicRows
 			$this->language = $this->AdminPage->getLanguage();
 
 			$this->info_ar = $this->AdminPage->getAllFields();
-		}
-		else
-		{
+		} else {
 			$this->table = $AdminPage;
 			$this->id = $field;
 			$this->field = $oldField;
@@ -120,30 +117,25 @@ class diDynamicRows
 
 		$fields_to_check_ar = array("table", "template", "fields");
 
-		foreach ($fields_to_check_ar as $f)
-		{
-			if (empty($this->info_ar[$this->field]["$f"]))
-			{
+		foreach ($fields_to_check_ar as $f) {
+			if (empty($this->info_ar[$this->field]["$f"])) {
 				throw new Exception("You should define the '$f' attribute for '{$this->field}' field in '{$this->table}' Form Fields");
 			}
 		}
 
-		if (empty($this->info_ar[$this->field]["subquery"]))
-		{
+		if (empty($this->info_ar[$this->field]["subquery"])) {
 			$this->info_ar[$this->field]["subquery"] = function($table, $field, $id, \diDynamicRows $DR = null) {
 				return "_table = '$table' and _field = '$field' and _id = '$id'";
 			};
 		}
 
-		if (!empty($this->info_ar[$this->field]['options']))
-		{
+		if (!empty($this->info_ar[$this->field]['options'])) {
 			$this->setOption($this->info_ar[$this->field]['options']);
 		}
 
 		$this->subquery = $this->info_ar[$this->field]["subquery"]($this->table, $this->field, $this->id, $this);
 
-		if (!empty($this->info_ar[$this->field]["sortby"]))
-		{
+		if (!empty($this->info_ar[$this->field]["sortby"])) {
 			$this->sortby = $this->info_ar[$this->field]["sortby"];
 		}
 
@@ -208,12 +200,9 @@ class diDynamicRows
 
 	public function setOption($option, $value = null)
 	{
-		if ($value === null && is_array($option))
-		{
+		if ($value === null && is_array($option)) {
 			$this->options[$this->language] = extend($this->options[$this->language], $option);
-		}
-		else
-		{
+		} else {
 			$this->options[$this->language][$option] = $value;
 		}
 
@@ -254,11 +243,18 @@ class diDynamicRows
 
   function is_flag($field, $flag)
   {
-    return isset($this->info_ar["fields"][$field]["flags"]) &&
-           (
-            (is_array($this->info_ar["fields"][$field]["flags"]) && in_array($flag, $this->info_ar["fields"][$field]["flags"])) ||
-            (!is_array($this->info_ar["fields"][$field]["flags"]) && $flag == $this->info_ar["fields"][$field]["flags"])
-           ) ? true : false;
+      return
+          isset($this->info_ar["fields"][$field]["flags"]) &&
+          (
+              (
+                  is_array($this->info_ar["fields"][$field]["flags"]) &&
+                  in_array($flag, $this->info_ar["fields"][$field]["flags"])
+              ) ||
+              (
+                  !is_array($this->info_ar["fields"][$field]["flags"]) &&
+                  $flag == $this->info_ar["fields"][$field]["flags"]
+              )
+          ) ? true : false;
   }
 
 	public function getOrderBy()
@@ -1391,8 +1387,7 @@ EOF;
 	{
 		global $dynamic_pics_folder, $tn_folder, $tn2_folder, $tn3_folder;
 
-		if (empty($_POST["{$this->field}_ids_ar"]))
-		{
+		if (empty($_POST["{$this->field}_ids_ar"])) {
 			throw new \Exception("{$this->field}_ids_ar not defined. Please contact coders");
 		}
 
@@ -1401,57 +1396,52 @@ EOF;
 
 		$fileFields = [];
 		$fields = (array)$this->getProperty('fields');
-		$techFieldsCallback = $this->getProperty('techFieldsCallback') ?: $this->getProperty('tech_fields_ar');
+		$techFieldsCallback = $this->getProperty('techFieldsCallback')
+            ?: $this->getProperty('tech_fields_ar');
 		$techFieldsSet = false;
 		$beforeSaveCallback = $this->getProperty('beforeSave');
-		$afterSaveCallback = $this->getProperty('afterSave') ?: $this->getProperty('after_save');
+		$afterSaveCallback = $this->getProperty('afterSave')
+            ?: $this->getProperty('after_save');
 		$afterAllSavedCallback = $this->getProperty('afterAllSaved');
 
-		foreach ($fields as $k => $v)
-		{
-			if (!is_array($v))
-			{
+		foreach ($fields as $k => $v) {
+			if (!is_array($v)) {
 				$v = ["type" => $v];
 			}
 
-			if (in_array($v['type'], ['file', 'pic']))
-			{
+			if (in_array($v['type'], ['file', 'pic'])) {
 				$fileFields[] = $k;
 
-				if (!empty($v['defaultMultiplePic']))
-				{
+				if (!empty($v['defaultMultiplePic'])) {
 					$this->defaultMultiplePicField = $k;
 				}
 			}
 		}
 
-		if (!$this->defaultMultiplePicField && $fileFields)
-		{
+		if (!$this->defaultMultiplePicField && $fileFields) {
 			reset($fileFields);
 			$this->defaultMultiplePicField = current($fileFields);
 		}
 
-		foreach ($initial_ids_ar as $id)
-		{
-			if (!(int)$id)
-			{
+		foreach ($initial_ids_ar as $id) {
+			if (!(int)$id) {
 				continue;
 			}
 			$this->data_id = (int)$id;
 
-			$this->test_r = $id > 0 ? $this->getDb()->r($this->data_table, "WHERE $this->subquery and id='$id'") : false;
+			$this->test_r = $id > 0
+                ? $this->getDb()->r($this->data_table, "WHERE $this->subquery and id='$id'")
+                : false;
 			$this->storedModel->initFrom($this->test_r);
 
 			$this->data = [];
 			$data_for_db = [];
 
 			// tech fields
-			if (is_callable($techFieldsCallback))
-			{
+			if (is_callable($techFieldsCallback)) {
 				$_a = $techFieldsCallback($this->table, $this->field, $this->id, $this);
 
-				foreach ($_a as $_a_k => $_a_v)
-				{
+				foreach ($_a as $_a_k => $_a_v) {
 					$data_for_db[$_a_k] = $this->data[$_a_k] = $_a_v;
 				}
 
@@ -1459,65 +1449,53 @@ EOF;
 			}
 
 			// form fields
-			foreach ($fields as $k => $v)
-			{
-				if (!is_array($v))
-				{
+			foreach ($fields as $k => $v) {
+				if (!is_array($v)) {
 					$v = ["type" => $v];
 				}
 
-				if (!empty($v["virtual"]))
-				{
+				if (!empty($v["virtual"])) {
 					continue;
 				}
 
-				if (!isset($v["default"]))
-				{
+				if (!isset($v["default"])) {
 					$v["default"] = "";
 				}
 
 				$this->set_data($k, $v, $id);
 
-				if (in_array($v["type"], ["pic", "file"]) && !$this->data[$k])
-				{
-				}
-				else
-				{
-					if ($v['type'] == 'radio')
-					{
-						$data_for_db[$k] = isset($_POST[$this->field . '_' . $k]) && $_POST[$this->field . '_' . $k] == $id ? 1 : 0;
-					}
-					elseif (isset($this->data[$k]))
-					{
+				if (in_array($v["type"], ["pic", "file"]) && !$this->data[$k]) {
+				} else {
+					if ($v['type'] == 'radio') {
+					    $rf = $this->field . '_' . $k;
+						$data_for_db[$k] = isset($_POST[$rf]) && $_POST[$rf] == $id ? 1 : 0;
+					} elseif (isset($this->data[$k])) {
 						$data_for_db[$k] = $this->data[$k];
 					}
 				}
 			}
 
-			if (is_callable($beforeSaveCallback))
-			{
+			if (is_callable($beforeSaveCallback)) {
 				$_a = $beforeSaveCallback($this, $id);
 
 				$data_for_db = extend($data_for_db, $_a);
 				$this->data = extend($this->data, $_a);
 			}
 
-			if ($this->storedModel->exists() && $this->test_r)
-			{
-				$this->getDb()->update($this->data_table, $data_for_db, $this->test_r->id) or $this->getDb()->dierror();
+			if ($this->storedModel->exists() && $this->test_r) {
+                $this->getDb()->update($this->data_table, $data_for_db, $this->test_r->id)
+                    or $this->getDb()->dierror();
 				$ids_ar[] = $this->test_r->id;
-			}
-			else
-			{
-				if (!$techFieldsSet)
-				{
+			} else {
+				if (!$techFieldsSet) {
 					$data_for_db["_table"] = $this->data["_table"] = $this->table;
 					$data_for_db["_field"] = $this->data["_field"] = $this->field;
 					$data_for_db["_id"] = $this->data["_id"] = $this->id;
 					//this->data["date"] = time();
 				}
 
-				$ids_ar[] = $this->getDb()->insert($this->data_table, $data_for_db) or $this->getDb()->dierror();
+				$ids_ar[] = $this->getDb()->insert($this->data_table, $data_for_db)
+                    or $this->getDb()->dierror();
 			}
 		}
 
@@ -1530,18 +1508,21 @@ EOF;
 			? $m->getPicsFolder()
 			: $dynamic_pics_folder . "$this->table/";
 
-		$kill_rs = $this->getDb()->rs($this->data_table, "WHERE $this->subquery and id not in ('" . join("','", $ids_ar) . "')") or $this->getDb()->dierror();
-		while ($kill_r = $this->getDb()->fetch($kill_rs))
-		{
-			foreach ($fileFields as $field)
-			{
+		$kill_rs = $this->getDb()->rs(
+		    $this->data_table,
+            "WHERE $this->subquery and id not in ('" . join("','", $ids_ar) . "')"
+        ) or $this->getDb()->dierror();
+		while ($kill_r = $this->getDb()->fetch($kill_rs)) {
+			foreach ($fileFields as $field) {
 				$filesToKill[] = $kill_r->$field;
 			}
 		}
-		$this->getDb()->delete($this->data_table, "WHERE $this->subquery and id not in ('" . join("','", $ids_ar) . "')") or $this->getDb()->dierror();
+		$this->getDb()->delete(
+		    $this->data_table,
+            "WHERE $this->subquery and id not in ('" . join("','", $ids_ar) . "')"
+        ) or $this->getDb()->dierror();
 
-		foreach ($filesToKill as $fn)
-		{
+		foreach ($filesToKill as $fn) {
 			@unlink($this->abs_path . $pics_folder . $fn);
 			@unlink($this->abs_path . $pics_folder . $tn_folder . $fn);
 			@unlink($this->abs_path . $pics_folder . $tn2_folder . $fn);
@@ -1552,25 +1533,26 @@ EOF;
 		// making order num to look ok
 		$order_num = 0;
 
-		$rs = $this->getDb()->rs($this->data_table, "WHERE $this->subquery ORDER BY order_num ASC,id ASC");
-		while ($rs && $r = $this->getDb()->fetch($rs))
-		{
-			$this->getDb()->update($this->data_table, ["order_num" => ++$order_num], $r->id);
+		$rs = $this->getDb()->rs(
+		    $this->data_table,
+            "WHERE $this->subquery ORDER BY order_num ASC,id ASC"
+        );
+		while ($rs && $r = $this->getDb()->fetch($rs)) {
+			$this->getDb()->update($this->data_table, [
+			    "order_num" => ++$order_num,
+            ], $r->id);
 		}
 		//
 
-		if (is_callable($afterSaveCallback))
-		{
-			foreach ($ids_ar as $_idx => $_id)
-			{
+		if (is_callable($afterSaveCallback)) {
+			foreach ($ids_ar as $_idx => $_id) {
 				$initial_id = $initial_ids_ar[$_idx];
 
 				$afterSaveCallback($this, $_id, $initial_id);
 			}
 		}
 
-		if (is_callable($afterAllSavedCallback))
-		{
+		if (is_callable($afterAllSavedCallback)) {
 			$afterAllSavedCallback($this);
 		}
 

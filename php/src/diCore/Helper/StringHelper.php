@@ -8,6 +8,8 @@
 
 namespace diCore\Helper;
 
+use diCore\Data\Http\Charset;
+
 class StringHelper
 {
 	public static function random($length = 8)
@@ -548,5 +550,39 @@ class StringHelper
         }
 
         return $subject;
+    }
+
+    public static function printJson($data, $printHeaders = true)
+    {
+        //text/plain
+        if ($printHeaders) {
+            $charset = Charset::title(Charset::id(DIENCODING));
+
+            header('Content-type: application/json; charset=' . $charset);
+            header('Expires: Mon, 11 Jul 1999 00:00:00 GMT');
+            header('Last-Modified: ' . gmdate('D, d M Y H:i:s') . 'GMT');
+            header('Cache-Control: no-cache, must-revalidate');
+            header('Pragma: no-cache');
+        }
+
+        echo json_encode($data);
+    }
+
+    public static function transferCsv($csv, $filename)
+    {
+        if (is_array($csv)) {
+            $csv = join("\n", $csv);
+        }
+
+        $bom = chr(239) . chr(187) . chr(191);
+        $csv = $bom . $csv . "\n";
+
+        header("Content-type: application/csv");
+        header("Content-Disposition: attachment; filename=\"$filename\"");
+        header("Content-Length: " . strlen($csv) . "\n");
+        header("Pragma: no-cache");
+        header('Expires: 0');
+
+        echo $csv;
     }
 }
