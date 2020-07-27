@@ -67,12 +67,12 @@ class diAdminFilters
 	];
 
 	public static $dateRangeAr = [
-		'd1' => 'mday',
-		'm1' => 'mon',
-		'y1' => 'year',
-		'd2' => 'mday',
-		'm2' => 'mon',
-		'y2' => 'year',
+		'd1',
+		'm1',
+		'y1',
+		'd2',
+		'm2',
+		'y2',
 	];
 
 	public static $lngStrings = [
@@ -109,7 +109,8 @@ class diAdminFilters
 	protected $language = 'ru';
 
 	public $ar = [];
-	public $applied_date = false;
+	/** @var null|array */
+	protected $tableData = null;
 	private $predefinedData = [];
 	public $data = [];
 	public $sortby = '';
@@ -157,10 +158,6 @@ class diAdminFilters
 
 	protected function gatherInitialData($sortby = 'id', $dir = 'ASC', $possible_sortby_ar = [])
     {
-        $this->applied_date = isset($_COOKIE["admin_filter_applied"][$this->table])
-            ? (int)$_COOKIE["admin_filter_applied"][$this->table]
-            : false;
-
         $this->possible_sortby_ar = is_string($possible_sortby_ar)
             ? explode(",", $possible_sortby_ar)
             : $possible_sortby_ar;
@@ -540,8 +537,7 @@ EOF;
 
 	public function set_default_sorter($sortby, $dir = null)
 	{
-		if (is_array($sortby) && is_null($dir))
-		{
+		if (is_array($sortby) && is_null($dir)) {
 			$dir = $sortby["dir"];
 			$sortby = $sortby["sortBy"];
 		}
@@ -557,40 +553,31 @@ EOF;
 
 	public function get_js_data($print_script_tags = false)
 	{
-		$ar = array();
+		$ar = [];
 
-		foreach ($this->ar as $a)
-		{
-			if (in_array($a["type"], array("date_range", "date_str_range")))
-			{
-				foreach (self::$dateRangeAr as $_f => $_r)
-				{
-					$_ff = "d".$_f[0];
+		foreach ($this->ar as $a) {
+			if (in_array($a['type'], ['date_range', 'date_str_range'])) {
+				foreach (self::$dateRangeAr as $_f) {
+                    $_ff = 'd' . $_f[0];
 					$_idx = $_f[1];
 
-					$ar[] = "{$a["field"]}][{$_idx}][{$_ff}";
+					$ar[] = "{$a['field']}][{$_idx}][{$_ff}";
 				}
-			}
-			else
-			{
-				$ar[] = $a["field"];
+			} else {
+				$ar[] = $a['field'];
 			}
 		}
 
-		if ($this->getSortableState())
-		{
-			$ar[] = "sortby";
-			$ar[] = "dir";
+		if ($this->getSortableState()) {
+			$ar[] = 'sortby';
+			$ar[] = 'dir';
 		}
 
-		if ($print_script_tags)
-		{
+		if ($print_script_tags) {
 			$s = "<script type=\"text/javascript\">$(function() { ".
 				"window.diAF = new diAdminFilters({table: '".$this->getTable()."', fields: ['".join("','", $ar)."']});".
 				" });</script>\n";
-		}
-		else
-		{
+		} else {
 			$s = "<script type=\"text/javascript\" src=\"_js/filters.js\"></script>\n".
 				"filters_ar['{$this->table}'] = ['".join("','", $ar)."'];\n";
 		}
@@ -663,20 +650,37 @@ EOF;
         return $this->ruleCallbacks;
     }
 
+    public function getTableData($field = null)
+    {
+        if ($this->tableData === null) {
+            $this->tableData = (array)json_decode(\diRequest::cookie(
+                'admin_filter__' . $this->getTable()
+            ));
+        }
+
+        return $field === null
+            ? $this->tableData
+            : ($this->tableData[$field] ?? null);
+    }
+
     public function gatherData($field)
     {
-        $value = !$this->reset && isset($_COOKIE["admin_filter"][$this->table][$field])
-            ? (
-                is_array($_COOKIE["admin_filter"][$this->table][$field])
+        $value = $this->getPredefinedData($field);
+
+        if (!$this->reset) {
+            $value = $this->getTableData($field) ?: $value;
+
+            /*
+            if (isset($_COOKIE["admin_filter"][$this->table][$field])) {
+                $value = is_array($_COOKIE["admin_filter"][$this->table][$field])
                     ? $_COOKIE["admin_filter"][$this->table][$field]
-                    : urldecode($_COOKIE["admin_filter"][$this->table][$field])
-            ) : $this->getPredefinedData($field);
+                    : urldecode($_COOKIE["admin_filter"][$this->table][$field]);
+            }
+            */
 
-        $value = \diRequest::get($field, $value);
-
-        $value = isset($_GET["admin_filter"][$field])
-            ? $_GET["admin_filter"][$field]
-            : $value;
+            $value = \diRequest::get($field, $value);
+            $value = $_GET["admin_filter"][$field] ?? $value;
+        }
 
         return $value;
     }
@@ -684,135 +688,122 @@ EOF;
 	public function buildQuery($table_prefix = "")
 	{
 		// sorter
-		if (!$this->reset && isset($_COOKIE["admin_filter"][$this->table]["sortby"]))
-			$this->sortby = str_in(strtolower($_COOKIE["admin_filter"][$this->table]["sortby"]));
-
-		if (!$this->reset && isset($_COOKIE["admin_filter"][$this->table]["dir"]))
-			$this->dir = str_in(strtoupper($_COOKIE["admin_filter"][$this->table]["dir"]));
-
-		if (isset($_GET["sortby"]))
-			$this->sortby = str_in(strtolower($_GET["sortby"]));
-
-		if (isset($_GET["dir"]))
-			$this->dir = str_in(strtoupper($_GET["dir"]));
-
-		if (isset($_GET["admin_filter"]["sortby"]))
-			$this->sortby = str_in(strtolower($_GET["admin_filter"]["sortby"]));
-
-		if (isset($_GET["admin_filter"]["dir"]))
-			$this->dir = str_in(strtoupper($_GET["admin_filter"]["dir"]));
+		if (!$this->reset) {
+            $this->sortby = mb_strtolower($this->getTableData('sortby'));
+            $this->dir = mb_strtoupper($this->getTableData('dir'));
+        }
 
 		if ($this->possible_sortby_ar !== false) {
-			if (!in_array($this->sortby, $this->possible_sortby_ar))
-				$this->sortby = $this->default_sortby;
+			if (!in_array($this->sortby, $this->possible_sortby_ar)) {
+                $this->sortby = $this->default_sortby;
+            }
 		}
 
-		if (!in_array($this->dir, array("ASC","DESC")))
-			$this->dir = $this->default_dir;
-		//
+        if (!in_array($this->dir, ["ASC", "DESC"])) {
+            $this->dir = $this->default_dir;
+        }
 
 		$where_ar = $this->where_ar;
         $this->ruleCallbacks = [];
 
 		foreach ($this->ar as $idx => $a) {
-		    $where_tpl = $a["where_tpl"] ?: self::DEFAULT_WHERE_TPL;
+		    $where_tpl = $a['where_tpl'] ?: self::DEFAULT_WHERE_TPL;
 
 			$value = $this->gatherData($a['field']);
 
-			if (in_array($a["type"], ["date_range", "date_str_range"])) {
-				$value = [];
-			}
-
-			if ($value === null && $a["default_value"] !== null) {
-				$value = $a["default_value"];
+			if ($value === null && $a['default_value'] !== null) {
+				$value = $a['default_value'];
 			}
 
 			if ($value !== null) {
-				switch ($a["type"]) {
-					case "int":
-					case "float":
-					case "double":
-						if ($value && $value[0] == "!") {
-							$a["not"] = $this->ar[$idx]["not"] = true;
+				switch ($a['type']) {
+					case 'int':
+					case 'float':
+					case 'double':
+						if ($value && $value[0] == '!') {
+							$a['not'] = $this->ar[$idx]['not'] = true;
 							$value = substr($value, 1);
 
 							if (!is_callable($where_tpl)) {
-								$where_tpl = str_replace("=", "!=", $where_tpl);
+								$where_tpl = str_replace('=', '!=', $where_tpl);
 							}
 						}
 						break;
 				}
 
-				switch ($a["type"]) {
-					case "int":
+				switch ($a['type']) {
+					case 'int':
 						$value = intval($value);
 						break;
 
-					case "float":
-					case "double":
-						$value = str_replace(",", ".", $value);
+					case 'float':
+					case 'double':
+						$value = str_replace(',', '.', $value);
 						$value = doubleval($value);
 						break;
 
-					case "checkboxes":
+					case 'checkboxes':
 						if (empty($where_tpl)) {
 							$where_tpl = "[-field-] in ([-value-])";
 						}
 						break;
 
-					case "date_range":
-					case "date_str_range":
-						$r1 = $a["default_value"] === null
-                            ? $this->getDb()->r($this->getDb()->escapeTable($this->table), "", "MIN({$a["field"]}) as d1_min")
-                            : null; //,MAX($a["field"]) as d1_max
+					case 'date_range':
+					case 'date_str_range':
+						$r1 = $a['default_value'] === null
+                            ? $this->getDb()->r(
+                                $this->getDb()->escapeTable($this->table),
+                                '',
+                                "MIN({$a['field']}) as d1_min")
+                            : null; //,MAX($a['field']) as d1_max
 
-						if ($a["type"] == "date_str_range" && $r1) {
-							$r1->d1_min = strtotime($r1->d1_min);
+						if ($a['type'] == 'date_str_range' && $r1) {
+							$r1->d1_min = \diDateTime::timestamp($r1->d1_min);
 						}
 
-						$t1 = $a["default_value"] !== null ? $a["default_value"] : ($r1 && $r1->d1_min ? $r1->d1_min : time() - (date("d") - 1) * SECS_PER_DAY); // 1st day of current month
-						$t2 = $a["default_value2"] !== null ? $a["default_value2"] : strtotime("+1 day"); // tomorrow
+						$t1 = $a['default_value'] !== null
+                            ? $a['default_value']
+                            : ($r1 && $r1->d1_min
+                                ? $r1->d1_min
+                                : 'Y-m-01' // 1st day of current month
+                            );
+						$t2 = $a['default_value2'] !== null
+                            ? $a['default_value2']
+                            : '+1 day'; // tomorrow
 
-						$dt1 = getdate($t1);
-						$dt2 = getdate($t2);
+						$dt1 = \diDateTime::simpleDateFormat($t1);
+						$dt2 = \diDateTime::simpleDateFormat($t2);
 
-						foreach (self::$dateRangeAr as $_f => $_r) {
-							$_ff = "d".$_f[0];
-							$_idx = $_f[1];
-
-							$value[$_f] = !$this->reset && isset($_COOKIE["admin_filter"][$this->table]["{$a["field"]}"][$_idx][$_ff])
-								? (int)$_COOKIE["admin_filter"][$this->table]["{$a["field"]}"][$_idx][$_ff]
-								: ($_f[1] == "1" ? $dt1[$_r] : $dt2[$_r]);
-						}
-
-						$value["timestamp1"] = $value["d1"] && $value["m1"] && $value["y1"] ? mktime(0,0,0,$value["m1"],$value["d1"],$value["y1"]) : 0;
-						$value["timestamp2"] = $value["d2"] && $value["m2"] && $value["y2"] ? mktime(23,59,59,$value["m2"],$value["d2"],$value["y2"]) : 0;
+						$value['timestamp1'] = \diDateTime::timestamp(
+						    ArrayHelper::get($value, 0, $dt1) . ' 00:00:00');
+						$value['timestamp2'] = \diDateTime::timestamp(
+						    ArrayHelper::get($value, 1, $dt2) . ' 23:59:59');
 
 						break;
 
 					default:
-					case "str":
-					case "string":
+					case 'str':
+					case 'string':
 						$value = StringHelper::in($value);
 						break;
 				}
 
-				$this->ar[$idx]["value"] = $value;
+				$this->ar[$idx]['value'] = $value;
 
-				if ($value || ($value == "0" && substr($a["type"], 0, 3) == "str")) {
+				if ($value || ($value == '0' && substr($a['type'], 0, 3) == 'str')) {
 					$replace_ar = [
-						"[-field-]" => $table_prefix . $a["field"],
-						"[-value-]" => $value,
+						'[-field-]' => $table_prefix . $a['field'],
+						'[-value-]' => $value,
 					];
 
 					if (
-					    in_array($a["type"], ["date_range", "date_str_range"]) &&
+					    in_array($a['type'], ['date_range', 'date_str_range']) &&
                         $where_tpl == self::DEFAULT_WHERE_TPL
                     ) {
-						if ($a["type"] == "date_range") {
-							$where_tpl = "diaf_get_date_range_filter";
-						} elseif ($a["type"] == "date_str_range") {
-							$where_tpl = "diaf_get_date_str_range_filter";
+						if ($a['type'] == 'date_range') {
+							$where_tpl = 'diaf_get_date_range_filter';
+						} elseif ($a['type'] == 'date_str_range') {
+							$where_tpl = 'diaf_get_date_str_range_filter';
 						}
 					}
 
@@ -825,7 +816,7 @@ EOF;
 					    $w = null;
                     } else {
                         $w = is_callable($where_tpl)
-                            ? $where_tpl($a["field"], $value, $a["not"], $table_prefix, $a['queryPrefix'], $a['querySuffix'])
+                            ? $where_tpl($a['field'], $value, $a['not'], $table_prefix, $a['queryPrefix'], $a['querySuffix'])
                             : str_replace(array_keys($replace_ar), array_values($replace_ar), $where_tpl);
                     }
 
@@ -835,12 +826,12 @@ EOF;
 				}
 			}
 
-			$this->data[$a["field"]] = $value;
+			$this->data[$a['field']] = $value;
 		}
 
 		$this->where = $where_ar
             ? "WHERE " . join(" $this->andor ", $where_ar)
-            : "";
+            : '';
 
 		return $this;
 	}
@@ -866,26 +857,26 @@ EOF;
     }
 
     protected function getInputBody($field)
-	{
-		if (isset($this->inputs_ar[$field])) {
-			return $this->inputs_ar[$field];
-		}
+    {
+        if (isset($this->inputs_ar[$field])) {
+            return $this->inputs_ar[$field];
+        }
 
-		if ($ar = $this->getFilter($field)) {
-		    // todo: aliases for same field name
-		    //$name = $ar['alias'] ?: $field;
-		    $name = $field;
+        if ($ar = $this->getFilter($field)) {
+            // todo: aliases for same field name
+            //$name = $ar['alias'] ?: $field;
+            $name = $field;
 
-			$fieldName = 'admin_filter[' . $name . ']';
+            $fieldName = 'admin_filter[' . $name . ']';
 
-			switch ($ar["type"]) {
-				default:
-					if (!$ar["value"] && in_array($ar["type"], ['int', 'float', 'double'])) {
-						$ar["value"] = "";
-					}
+            switch ($ar['type']) {
+                default:
+                    if (!$ar['value'] && in_array($ar['type'], ['int', 'float', 'double'])) {
+                        $ar['value'] = '';
+                    }
 
-					if ($ar['input_size']) {
-					    $size = $ar['input_size'];
+                    if ($ar['input_size']) {
+                        $size = $ar['input_size'];
                     } else {
                         switch ($ar['type']) {
                             case 'int':
@@ -899,87 +890,107 @@ EOF;
                         }
                     }
 
-					if (isset($ar['feed'])) {
-						$input = \diSelect::fastCreate($fieldName, $ar['value'], $ar['feed']);
-					} else {
-						$input = sprintf('<input %s>', ArrayHelper::toAttributesString([
-							'id' => $fieldName,
-							'name' => $field,
-							'value' => $ar['value'],
-							'size' => $size,
+                    if (isset($ar['feed'])) {
+                        $input = \diSelect::fastCreate($fieldName, $ar['value'], $ar['feed']);
+                    } else {
+                        $input = sprintf('<input %s>', ArrayHelper::toAttributesString([
+                            'id' => $fieldName,
+                            'name' => $field,
+                            'value' => $ar['value'],
+                            'size' => $size,
                             'type' => 'text',
-						]));
-					}
+                        ]));
+                    }
 
-					$this->setInputResetButton($field);
+                    $this->setInputResetButton($field);
 
-					return $input;
+                    return $input;
 
-				case "date_range":
-				case "date_str_range":
-					$d1_sel = new diSelect("admin_filter[{$field}][1][dd]", $ar["value"]["d1"]);
-					$m1_sel = new diSelect("admin_filter[{$field}][1][dm]", $ar["value"]["m1"]);
-					$y1_sel = new diSelect("admin_filter[{$field}][1][dy]", $ar["value"]["y1"]);
-					$d2_sel = new diSelect("admin_filter[{$field}][2][dd]", $ar["value"]["d2"]);
-					$m2_sel = new diSelect("admin_filter[{$field}][2][dm]", $ar["value"]["m2"]);
-					$y2_sel = new diSelect("admin_filter[{$field}][2][dy]", $ar["value"]["y2"]);
+                case 'date_range':
+                case 'date_str_range':
+                    $sel = [];
 
-					for ($i = 1; $i <= 31; $i++) {
-						$d1_sel->addItem(lead0($i), lead0($i));
-						$d2_sel->addItem(lead0($i), lead0($i));
-					}
+                    $r1 = $this->getDb()->r(
+                        $this->getDb()->escapeTable($this->table),
+                        "",
+                        "MIN($field) as d1_min,MAX($field) as d1_max"
+                    );
 
-					for ($i = 1; $i <= 12; $i++) {
-						$m1_sel->addItem(lead0($i), lead0($i));
-						$m2_sel->addItem(lead0($i), lead0($i));
-					}
+                    foreach (self::$dateRangeAr as $_f) {
+                        $_ff = "d" . $_f[0];
+                        $tpl = $_f[0];
+                        if ($tpl === 'y') {
+                            $tpl = 'Y';
+                        }
+                        $_idx = $_f[1];
+                        $default = $_idx == 1
+                            ? $r1->d1_min
+                            : $r1->d1_max;
 
-					$r1 = $this->getDb()->r($this->getDb()->escapeTable($this->table), "", "MIN($field) as d1_min,MAX($field) as d1_max");
+                        $sel[$_f] = new \diSelect(
+                            "admin_filter[{$field}][{$_idx}][{$_ff}]",
+                            \diDateTime::format($tpl, ArrayHelper::get($ar, ['value', $_idx - 1], $default))
+                        );
+                    }
 
-					if ($ar["type"] == "date_str_range" && $r1) {
-						$r1->d1_min = strtotime($r1->d1_min);
-						$r1->d1_max = strtotime($r1->d1_max);
-					}
+                    for ($i = 1; $i <= 31; $i++) {
+                        $sel['d1']->addItem(lead0($i));
+                        $sel['d2']->addItem(lead0($i));
+                    }
 
-					$y1 = date("Y") - 1;
-					if ($ar["value"]["y1"] < $y1) $y1 = $ar["value"]["y1"];
-					if ($r1 && date("Y", $r1->d1_min) < $y1) $y1 = date("Y", $r1->d1_min);
+                    for ($i = 1; $i <= 12; $i++) {
+                        $sel['m1']->addItem(lead0($i));
+                        $sel['m2']->addItem(lead0($i));
+                    }
 
-					$y2 = date("Y") + 3;
-					if ($ar["value"]["y2"] > $y2) $y2 = $ar["value"]["y2"];
-					if ($r1 && date("Y", $r1->d1_max) > $y2) $y2 = date("Y", $r1->d1_max);
+                    if ($ar["type"] == "date_str_range" && $r1) {
+                        $r1->d1_min = strtotime($r1->d1_min);
+                        $r1->d1_max = strtotime($r1->d1_max);
+                    }
 
-					for ($i = $y1; $i <= $y2; $i++) {
-						$y1_sel->addItem($i, $i);
-						$y2_sel->addItem($i, $i);
-					}
+                    $y1 = min(
+                        \diDateTime::format("Y") - 1,
+                        $ar["value"] ? \diDateTime::format('Y', $ar["value"][0]) : 50000,
+                        $r1 ? \diDateTime::format("Y", $r1->d1_min) : 50000
+                    );
+                    $y2 = max(
+                        \diDateTime::format("Y") + 3,
+                        $ar["value"] ? \diDateTime::format('Y', $ar["value"][1]) : 0,
+                        $r1 ? \diDateTime::format("Y", $r1->d1_max) : 0
+                    );
 
-					$glue = '<span class="date-sep">.</span>';
+                    for ($i = $y1; $i <= $y2; $i++) {
+                        $sel['y1']->addItem($i);
+                        $sel['y2']->addItem($i);
+                    }
 
-					$s = join($glue, [$d1_sel, $m1_sel, $y1_sel]) .
+                    $glue = '<span class="date-sep">.</span>';
+
+                    $s = join($glue, [$sel['d1'], $sel['m1'], $sel['y1']]) .
                         '<span class="date-sep">...</span>' .
-                        join($glue, [$d2_sel, $m2_sel, $y2_sel]);
+                        join($glue, [$sel['d2'], $sel['m2'], $sel['y2']]);
 
-					// js
-					$uid = substr(get_unique_id(), 0, 8);
+                    // js
+                    $uid = substr(get_unique_id(), 0, 8);
 
-					$calendar_cfg_js = "months_to_show: 2, date1: 'admin_filter[{$field}][1]', date2: 'admin_filter[{$field}][2]', able_to_go_to_past: true, language: '{$this->language}'";
+                    $calendar_cfg_js = "months_to_show: 2, date1: 'admin_filter[{$field}][1]', date2: 'admin_filter[{$field}][2]', able_to_go_to_past: true, language: '{$this->language}'";
 
-					$s .= " <button type=button onclick=\"c_{$uid}.toggle();\" class=\"calendar-toggle\">{$this->L('calendar')}</button>" .
-						"<script type=\"text/javascript\">var c_{$uid} = new diCalendar({instance_name: 'c_{$uid}', $calendar_cfg_js});</script>";
-					//
+                    $s .= " <button type=button onclick=\"c_{$uid}.toggle();\" class=\"calendar-toggle\">{$this->L('calendar')}</button>" .
+                        "<script type=\"text/javascript\">var c_{$uid} = new diCalendar({instance_name: 'c_{$uid}', $calendar_cfg_js});</script>";
+                    //
 
-					return $s;
-			}
-		}
+                    return $s;
+            }
+        }
 
-		return null;
-	}
+        return null;
+    }
 
 	public function set_input_params($field, $params_ar = [])
 	{
-		if (!isset($this->input_params_ar[$field]))
-			$this->input_params_ar[$field] = [];
+		if (!isset($this->input_params_ar[$field])) {
+		    $this->input_params_ar[$field] = [];
+        }
 
 		$this->input_params_ar[$field] = array_merge($this->input_params_ar[$field], $params_ar);
 
@@ -988,8 +999,7 @@ EOF;
 
 	public function get_idx_by_field($field)
 	{
-		foreach ($this->ar as $idx => $ar)
-		{
+		foreach ($this->ar as $idx => $ar) {
 			if ($ar["field"] == $field)
 				return $idx;
 		}
@@ -1007,37 +1017,31 @@ EOF;
 	public function setSelectFromDbInput($field, $db_rs, $template_text = "%title%", $template_value = "%id%",
 	                                     $prefix_ar = [], $suffix_ar = [])
 	{
-		if (is_array($template_text))
-		{
+		if (is_array($template_text)) {
 			$prefix_ar = $template_text;
 			$template_text = "%title%";
 		}
 
-		if (is_array($template_value))
-		{
+		if (is_array($template_value)) {
 			$suffix_ar = $template_value;
 			$template_value = "%id%";
 		}
 
-		$sel = new diSelect("admin_filter[$field]", $this->data[$field]);
+		$sel = new \diSelect("admin_filter[$field]", $this->data[$field]);
 
-		if (isset($this->input_params_ar[$field]))
-		{
+		if (isset($this->input_params_ar[$field])) {
 			$sel->setAttr($this->input_params_ar[$field]);
 		}
 
-		if ($prefix_ar)
-		{
+		if ($prefix_ar) {
 			$sel->addItemArray($prefix_ar);
 		}
 
-		while ($db_rs && $db_r = $this->getDb()->fetch_array($db_rs))
-		{
+		while ($db_rs && $db_r = $this->getDb()->fetch_array($db_rs)) {
 			$ar1 = [];
 			$ar2 = [];
 
-			foreach ($db_r as $k => $v)
-			{
+			foreach ($db_r as $k => $v) {
 				$ar1[] = "%$k%";
 				$ar2[] = $v;
 			}
@@ -1048,8 +1052,7 @@ EOF;
 			$sel->addItem($value, $text);
 		}
 
-		if ($suffix_ar)
-		{
+		if ($suffix_ar) {
 			$sel->addItemArray($suffix_ar);
 		}
 
@@ -1106,8 +1109,7 @@ EOF;
 
 	protected function getValueForField($field)
 	{
-		switch ($field)
-		{
+		switch ($field) {
 			case "sortby":
 				return $this->sortby;
 
@@ -1115,7 +1117,7 @@ EOF;
 				return $this->dir;
 
 			default:
-				return isset($this->data[$field]) ? $this->data[$field] : null;
+				return $this->data[$field] ?? null;
 		}
 	}
 
@@ -1129,33 +1131,26 @@ EOF;
 	{
 		$sel = new \diSelect("admin_filter[$field]", $this->getValueForField($field));
 
-		if (isset($this->input_params_ar[$field]))
-		{
-			foreach ($this->input_params_ar[$field] as $_pn => $_pv)
-			{
+		if (isset($this->input_params_ar[$field])) {
+			foreach ($this->input_params_ar[$field] as $_pn => $_pv) {
 				$sel->setAttr($_pn, $_pv);
 			}
 		}
 
-		if ($prefix_ar)
-		{
+		if ($prefix_ar) {
 			$sel->addItemArray($prefix_ar);
 		}
 
 		$sel->addItemArray($ar);
 
-		if ($suffix_ar)
-		{
+		if ($suffix_ar) {
 			$sel->addItemArray($suffix_ar);
 		}
 
 		$x = $this->get_idx_by_field($field);
-		if ($x !== null && $this->ar[$x]["not"])
-		{
-			foreach ($sel->getItemsAr() as $_k => $_v)
-			{
-				if ($_v["value"] == $this->data[$field])
-				{
+		if ($x !== null && $this->ar[$x]["not"]) {
+			foreach ($sel->getItemsAr() as $_k => $_v) {
+				if ($_v["value"] == $this->data[$field]) {
 					$sel->addItem("!$_k", "НЕ {$_v["text"]}");
 					$sel->setCurrentValue("!$_k");
 
@@ -1185,23 +1180,19 @@ EOF;
 	{
 		$sel = new \diSelect("admin_filter[$field]", $this->data[$field]);
 
-		if (isset($this->input_params_ar[$field]))
-		{
-			foreach ($this->input_params_ar[$field] as $_pn => $_pv)
-			{
+		if (isset($this->input_params_ar[$field])) {
+			foreach ($this->input_params_ar[$field] as $_pn => $_pv) {
 				$sel->setAttr($_pn, $_pv);
 			}
 		}
 
-		if ($prefix_ar)
-		{
+		if ($prefix_ar) {
 			$sel->addItemArray($prefix_ar);
 		}
 
 		$sel->addItemArray2($ar);
 
-		if ($suffix_ar)
-		{
+		if ($suffix_ar) {
 			$sel->addItemArray($suffix_ar);
 		}
 
@@ -1224,35 +1215,28 @@ EOF;
 	{
 		$ar2 = [];
 
-		foreach ($ar as $k => $v)
-		{
-			$checked = strpos(",{$this->data[$field]},", ",$k,") !== false ? " checked=\"checked\"" : "";
+		foreach ($ar as $k => $v) {
+			$checked = strpos(",{$this->data[$field]},", ",$k,") !== false
+                ? " checked=\"checked\""
+                : "";
 
-			if (false && $this->static_mode)
-			{
-				if ($checked)
-				{
+			if (false && $this->static_mode) {
+				if ($checked) {
 					$ar2[] = $v;
 				}
-			}
-			else
-			{
+			} else {
 				$ar[$k] = "<input type='checkbox' id='diaf_{$field}[$k]' name='{$field}[]' value='$k'$checked onclick=\"diadminfilter_toggle_cb('$field',0);\" /> <label for='diaf_{$field}[$k]' id='diaf_label_{$field}[$k]'>$v</label>";
 			}
 		}
 
-		if (false && $this->static_mode)
-		{
+		if (false && $this->static_mode) {
 			$table = join(", ", $ar2);
-		}
-		else
-		{
+		} else {
 			$table = "<table><tr>";
 
 			$per_column = ceil(count($ar) / $columns);
 
-			for ($i = 0; $i < $columns; $i++)
-			{
+			for ($i = 0; $i < $columns; $i++) {
 				$table .= "<td style=\"padding-right: 20px; vertical-align: top;\">".join("<br />", array_slice($ar, $per_column * $i, $per_column))."</td>";
 			}
 
@@ -1272,11 +1256,10 @@ EOF;
 
 	public function setCheckboxFromDbInput($field, $db_rs, $template_text = "%title%", $template_value = "%id%", $cols_count = 1, $prefix_ar = array(), $suffix_ar = array(), $suffix_buttons_ar = array())
 	{
-		$ar = array();
-		$static_ar = array();
+		$ar = [];
+		$static_ar = [];
 
-		foreach ($prefix_ar as $value => $text)
-		{
+		foreach ($prefix_ar as $value => $text) {
 			$class = " cb_level0";
 			$checked = strpos(",{$this->data[$field]},", ",$value,") !== false ? " checked=\"checked\"" : "";
 
@@ -1287,13 +1270,11 @@ EOF;
 				$static_ar[] = $text;
 		}
 
-		while ($db_rs && $db_r = $this->getDb()->fetch_array($db_rs))
-		{
-			$ar1 = array();
-			$ar2 = array();
+		while ($db_rs && $db_r = $this->getDb()->fetch_array($db_rs)) {
+			$ar1 = [];
+			$ar2 = [];
 
-			foreach ($db_r as $k => $v)
-			{
+			foreach ($db_r as $k => $v) {
 				$ar1[] = "%$k%";
 				$ar2[] = $v;
 			}
@@ -1304,29 +1285,31 @@ EOF;
 			$class = isset($db_r["level_num"]) ? " cb_level{$db_r["level_num"]}" : "";
 			$checked = strpos(",{$this->data[$field]},", ",$value,") !== false ? " checked=\"checked\"" : "";
 
-			if ($checked)
-				$static_ar[] = $text;
+			if ($checked) {
+                $static_ar[] = $text;
+            }
 
-			$inp = !isset($db_r["level_num"]) || $db_r["level_num"] > 0 ? "<input type='checkbox' id='diaf_{$field}[$value]' name='{$field}[]' value='$value'$checked />" : "";
+			$inp = !isset($db_r["level_num"]) || $db_r["level_num"] > 0
+                ? "<input type='checkbox' id='diaf_{$field}[$value]' name='{$field}[]' value='$value'$checked />"
+                : "";
 			$ar[] = "<div class=\"cb_level_any{$class}\">$inp <label for='diaf_{$field}[$value]' id='diaf_label_{$field}[$value]'>$text</label></div>";
 		}
 
-		foreach ($suffix_ar as $value => $text)
-		{
-			$class = " cb_level0";
-			$checked = strpos(",{$this->data[$field]},", ",$value,") !== false ? " checked=\"checked\"" : "";
+		foreach ($suffix_ar as $value => $text) {
+            $class = " cb_level0";
+            $checked = strpos(",{$this->data[$field]},", ",$value,") !== false ? " checked=\"checked\"" : "";
 
-			$inp = "<input type='checkbox' id='diaf_{$field}[$value]' name='{$field}[]' value='$value'$checked />";
-			$ar[] = "<div class=\"cb_level_any{$class}\">$inp <label for='diaf_{$field}[$value]' id='diaf_label_{$field}[$value]'>$text</label></div>";
+            $inp = "<input type='checkbox' id='diaf_{$field}[$value]' name='{$field}[]' value='$value'$checked />";
+            $ar[] = "<div class=\"cb_level_any{$class}\">$inp <label for='diaf_{$field}[$value]' id='diaf_label_{$field}[$value]'>$text</label></div>";
 
-			if ($checked)
-				$static_ar[] = $text;
+            if ($checked) {
+                $static_ar[] = $text;
+            }
 		}
 
 		$tds_ar = array();
 		$per_col = ceil(count($ar) / $cols_count);
-		for ($i = 0; $i < $cols_count; $i++)
-		{
+		for ($i = 0; $i < $cols_count; $i++) {
 			$tds_ar[] = "<td valign=top>".join("\n", array_slice($ar, $i * $per_col, $per_col))."</td>";
 		}
 
@@ -1357,9 +1340,7 @@ EOF;
 	{
 		$language = $language ?: $this->language;
 
-		return isset(self::$lngStrings[$language][$token])
-			? self::$lngStrings[$language][$token]
-			: $token;
+		return self::$lngStrings[$language][$token] ?? $token;
 	}
 
   function convert_from_and_to_dates()
@@ -1657,18 +1638,20 @@ EOF;
 
 function diaf_get_date_range_filter($field, $value, $not = false, $table_prefix = "")
 {
-  $date1 = $value["d1"] && $value["m1"] && $value["y1"] ? mktime(0,0,0,$value["m1"],$value["d1"],$value["y1"]) : 0;
-  $date2 = $value["d2"] && $value["m2"] && $value["y2"] ? mktime(23,59,59,$value["m2"],$value["d2"],$value["y2"]) : 0;
+    $date1 = $value['timestamp1'];
+    $date2 = $value['timestamp2'];
 
-  return $date1 && $date2 ? "({$table_prefix}{$field} BETWEEN '$date1' AND '$date2')" : "";
+    return $date1 && $date2 ? "({$table_prefix}{$field} BETWEEN '$date1' AND '$date2')" : "";
 }
 
 function diaf_get_date_str_range_filter($field, $value, $not = false, $table_prefix = "", $queryPrefix = '', $querySuffix = '')
 {
-  $date1 = $value["d1"] && $value["m1"] && $value["y1"] ? "{$value["y1"]}-".lead0($value["m1"])."-".lead0($value["d1"])." 00:00:00" : 0;
-  $date2 = $value["d2"] && $value["m2"] && $value["y2"] ? "{$value["y2"]}-".lead0($value["m2"])."-".lead0($value["d2"])." 23:59:59" : 0;
+    $date1 = $value[0];
+    $date2 = $value[1];
 
-  return $date1 && $date2 ? $queryPrefix . "({$table_prefix}{$field} BETWEEN '$date1' AND '$date2')" . $querySuffix : "";
+    return $date1 && $date2
+        ? $queryPrefix . "({$table_prefix}{$field} BETWEEN '$date1' AND '$date2')" . $querySuffix
+        : "";
 }
 
 function diaf_minus_one($field, $value, $not = false, $table_prefix = "")

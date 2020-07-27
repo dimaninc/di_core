@@ -213,6 +213,23 @@ var di = {
         return ar.filter(callback);
 	},
 
+	objectFilter: function(obj, callback) {
+		var res = {};
+		var key;
+
+		callback = callback || function(e) {
+			return !!e;
+		};
+
+		for (key in obj) {
+			if (obj.hasOwnProperty(key) && callback(obj[key])) {
+				res[key] = obj[key];
+			}
+		}
+
+		return res;
+	},
+
 	keys: function(array) {
 		return $.map(array, function(val, key) { return key; });
 	},

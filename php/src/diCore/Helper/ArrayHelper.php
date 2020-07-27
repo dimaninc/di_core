@@ -208,8 +208,8 @@ class ArrayHelper
             return $defaultValue;
         }
 
-        $reduce = function (array $xs, $x) {
-            return array_key_exists($x, $xs) ? $xs[$x] : null;
+        $reduce = function ($xs, $x) {
+            return $xs && array_key_exists($x, $xs) ? $xs[$x] : null;
         };
 
         if (!is_array($path)) {

@@ -136,11 +136,11 @@ class diSelect
         return $this;
     }
 
-	public function addItem($value, $text, $attrsAr = [], $index = null)
+	public function addItem($value, $text = null, $attrsAr = [], $index = null)
 	{
 	    $ar = [
             "value" => trim($value),
-            "text" => trim($text),
+            "text" => trim($text !== null ? $text : $value),
             "attrs" => $attrsAr,
         ];
 
