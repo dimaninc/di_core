@@ -113,7 +113,7 @@ class diAdminFilters
 	protected $tableData = null;
 	private $predefinedData = [];
 	public $data = [];
-	public $sortby = '';
+	public $sortBy = '';
 	public $dir = '';
 	public $default_sortby = '';
 	public $default_dir = '';
@@ -129,7 +129,7 @@ class diAdminFilters
 	public $static_mode = false;
 	public $static_inputs_ar = [];
 	public $values_ar = [];
-	public $possible_sortby_ar = false;
+	public $possible_sortby_ar = [];
 	public $reset = false;
 
 	protected $sortable = true;
@@ -190,10 +190,28 @@ class diAdminFilters
 		return $this->db;
 	}
 
+	public function setSortBy($sortBy)
+    {
+        if ($sortBy) {
+            $this->sortBy = $sortBy;
+        }
+
+        return $this;
+    }
+
 	public function getSortBy()
 	{
-		return $this->sortby;
+		return $this->sortBy;
 	}
+
+    public function setDir($dir)
+    {
+        if ($dir) {
+            $this->dir = strtoupper($dir);
+        }
+
+        return $this;
+    }
 
 	public function getDir()
 	{
@@ -535,18 +553,19 @@ EOF;
 		return $this;
 	}
 
-	public function set_default_sorter($sortby, $dir = null)
+	public function set_default_sorter($sortBy, $dir = null)
 	{
-		if (is_array($sortby) && is_null($dir)) {
-			$dir = $sortby["dir"];
-			$sortby = $sortby["sortBy"];
+		if (is_array($sortBy) && is_null($dir)) {
+			$dir = $sortBy["dir"];
+			$sortBy = $sortBy["sortBy"];
 		}
 
-		$this->default_sortby = $sortby;
+		$this->default_sortby = $sortBy;
 		$this->default_dir = $dir;
 
-		$this->sortby = $sortby;
-		$this->dir = $dir;
+		$this
+            ->setSortBy($sortBy)
+		    ->setDir($dir);
 
 		return $this;
 	}
@@ -689,18 +708,18 @@ EOF;
 	{
 		// sorter
 		if (!$this->reset) {
-            $this->sortby = mb_strtolower($this->getTableData('sortby'));
-            $this->dir = mb_strtoupper($this->getTableData('dir'));
+            $this->setSortBy($this->getTableData('sortby'));
+            $this->setDir($this->getTableData('dir'));
         }
 
-		if ($this->possible_sortby_ar !== false) {
-			if (!in_array($this->sortby, $this->possible_sortby_ar)) {
-                $this->sortby = $this->default_sortby;
+		if ($this->possible_sortby_ar) {
+			if (!in_array($this->getSortBy(), $this->possible_sortby_ar)) {
+                $this->setSortBy($this->default_sortby);
             }
 		}
 
-        if (!in_array($this->dir, ["ASC", "DESC"])) {
-            $this->dir = $this->default_dir;
+        if (!in_array($this->getDir(), ["ASC", "DESC"])) {
+            $this->setDir($this->default_dir);
         }
 
 		$where_ar = $this->where_ar;
@@ -1111,10 +1130,10 @@ EOF;
 	{
 		switch ($field) {
 			case "sortby":
-				return $this->sortby;
+				return $this->getSortBy();
 
 			case "dir":
-				return $this->dir;
+				return $this->getDir();
 
 			default:
 				return $this->data[$field] ?? null;
@@ -1545,14 +1564,14 @@ EOF;
         //
 
         // sortby select
-        $sel = new diSelect("admin_filter[sortby]", $F->sortby);
+        $sel = new diSelect("admin_filter[sortby]", $F->getSortBy());
         $sel->AddItem("title", "По названию");
         $sel->AddItem("marking", "Артикулу");
         $sel->AddItem("price", "По цене");
         $sel->AddItem("id", "По дате добавления (по ID)");
         $sortby_sel = $sel->CreateHTML();
 
-        $dir_sel = new diSelect("admin_filter[dir]", $F->dir);
+        $dir_sel = new diSelect("admin_filter[dir]", $F->getDir());
         $dir_sel->AddItem("ASC", "По возрастанию");
         $dir_sel->AddItem("DESC", "По убыванию");
         $dir_sel = $dir_sel->CreateHTML();
