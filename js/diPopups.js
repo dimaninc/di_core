@@ -327,12 +327,16 @@ var diPopups = function() {
 		return this;
 	};
 
+	this.isMobile = function() {
+		return is_mobile; //$(window).width() < 450;
+	};
+
 	this.update_position = function(id) {
 		if (this.$e_ar[id]) {
 			var positioning = this.$e_ar[id].data('positioning');
 			var mobilePositioning = this.$e_ar[id].data('mobile-positioning');
 
-			if (is_mobile && mobilePositioning !== undefined) {
+			if (this.isMobile() && mobilePositioning !== undefined) {
 				positioning = mobilePositioning;
 			} else if (positioning === undefined) {
 				positioning = true;
