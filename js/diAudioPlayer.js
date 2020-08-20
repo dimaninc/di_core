@@ -166,7 +166,11 @@ var diAudioPlayer = function (_opts) {
         else if (volume > 1) volume = 1;
 
         if (this.audio) {
-            this.audio.volume = volume;
+            try {
+                this.audio.volume = volume;
+            } catch (e) {
+                console.log('Error while setting audio volume:', e);
+            }
         }
 
         return this;
