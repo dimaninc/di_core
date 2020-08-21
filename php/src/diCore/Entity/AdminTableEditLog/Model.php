@@ -35,7 +35,7 @@ use diCore\Helper\ArrayHelper;
  * @method $this setNewData($value)
  * @method $this setCreatedAt($value)
  */
-class Model extends \diCore\Database\Entity\Mongo\Model
+class Model extends \diModel
 {
 	const ADMIN_TAB_NAME = 'admin_edit_log';
 	protected static $lang = [
@@ -48,7 +48,6 @@ class Model extends \diCore\Database\Entity\Mongo\Model
     ];
 
 	const type = \diTypes::admin_table_edit_log;
-    const connection_name = 'mongo_main';
     const table = 'admin_table_edit_log';
 	protected $table = 'admin_table_edit_log';
 

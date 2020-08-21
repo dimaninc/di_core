@@ -177,4 +177,9 @@ abstract class Connection
     {
         return $this->getDb()->getTableNames();
     }
+
+    public static function isMongo()
+    {
+        return static::engine === Engine::MONGO;
+    }
 }

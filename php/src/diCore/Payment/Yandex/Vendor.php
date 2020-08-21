@@ -30,9 +30,9 @@ class Vendor extends VendorContainer
 
 	public static $titles = [
 		self::YANDEX_MONEY => 'Яндекс.Деньги',
-		self::WEBMONEY => 'Webmoney',
+		self::WEBMONEY => 'WebMoney',
 		self::CARD => 'Банковская карта',
-		self::MOBILE => 'С баланса мобильного телефона',
+		self::MOBILE => 'Баланс телефона',
 		self::QIWI_WALLET => 'Qiwi',
 		self::SBERBANK_ONLINE => 'Сбербанк-онлайн',
 		self::ALPHA_CLICK => 'Альфа-клик',

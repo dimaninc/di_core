@@ -14,22 +14,22 @@ use diCore\Traits\Collection\AutoTimestamps;
  * Class Collection
  * Methods list for IDE
  *
- * @method Collection filterById($value, $operator = null)
- * @method Collection filterByUri($value, $operator = null)
- * @method Collection filterByContent($value, $operator = null)
- * @method Collection filterByActive($value, $operator = null)
+ * @method $this filterById($value, $operator = null)
+ * @method $this filterByUri($value, $operator = null)
+ * @method $this filterByContent($value, $operator = null)
+ * @method $this filterByActive($value, $operator = null)
  *
- * @method Collection orderById($direction = null)
- * @method Collection orderByUri($direction = null)
- * @method Collection orderByContent($direction = null)
- * @method Collection orderByActive($direction = null)
+ * @method $this orderById($direction = null)
+ * @method $this orderByUri($direction = null)
+ * @method $this orderByContent($direction = null)
+ * @method $this orderByActive($direction = null)
  *
- * @method Collection selectId()
- * @method Collection selectUri()
- * @method Collection selectContent()
- * @method Collection selectActive()
+ * @method $this selectId()
+ * @method $this selectUri()
+ * @method $this selectContent()
+ * @method $this selectActive()
  */
-class Collection extends \diCore\Database\Entity\Mongo\Collection
+class Collection extends \diCollection
 {
     use AutoTimestamps;
 

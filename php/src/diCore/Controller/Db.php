@@ -3,6 +3,7 @@
 namespace diCore\Controller;
 
 use diCore\Data\Config;
+use diCore\Database\Engine;
 use diCore\Traits\Admin\DumpActions;
 
 class Db extends \diBaseAdminController
@@ -628,7 +629,7 @@ EOF;
             throw new \Exception('Model for table "' . $table . '" not found');
         }
 
-        if (!$model instanceof \diCore\Database\Entity\Mongo\Model) {
+        if ($model->getConnectionEngine() !== Engine::MONGO) {
             throw new \Exception('Model should be mongo instance');
         }
 

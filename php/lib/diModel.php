@@ -10,6 +10,7 @@ use diCore\Admin\Submit;
 use diCore\Base\CMS;
 use diCore\Data\Config;
 use diCore\Database\Connection;
+use diCore\Database\FieldType;
 use diCore\Helper\Slug;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
@@ -28,6 +29,7 @@ class diModel implements \ArrayAccess
 	const connection_name = null;
 	const table = null;
 	const id_field_name = 'id';
+    const mongo_id_field_name = '_id';
 	const slug_field_name = null; //self::SLUG_FIELD_NAME_LEGACY; get this back when all models are updated
     const slug_lower_case = true;
     const slug_regenerate_if_duplicate = false;
@@ -51,9 +53,9 @@ class diModel implements \ArrayAccess
 	/** @var array */
 	protected $relatedData = [];
 
-	/** @var int|null */
+	/** @var int|string|null */
 	protected $id;
-	/** @var int|null */
+	/** @var int|string|null */
 	protected $origId;
 	protected $idAutoIncremented = true;
 	/** @deprecated */
@@ -127,6 +129,15 @@ class diModel implements \ArrayAccess
 	/** @var callable */
 	private $fieldsOnSaveCallback;
 
+    /**
+     * @var \MongoDB\Collection
+     */
+    protected $collectionResource;
+
+    protected static $fieldTypes = [];
+
+    protected $upsertFields = [];
+
 	/**
 	 * @param null|array|object $ar
 	 * @param null|string $table
@@ -198,7 +209,7 @@ class diModel implements \ArrayAccess
 			'identityFieldName' => null,
 		], $options);
 
-		$className = self::existsFor($type);
+		$className = static::existsFor($type);
 
 		if (!$className) {
 			throw new \Exception("Model class doesn't exist: " . ($className ?: $type));
@@ -238,7 +249,7 @@ class diModel implements \ArrayAccess
 	public static function createForTableNoStrict($table, $ar = null, $options = [])
 	{
 		$type = \diTypes::getNameByTable($table);
-		$typeName = self::existsFor($type, 'type');
+		$typeName = static::existsFor($type, 'type');
 
 		return $typeName
 			? static::create($typeName, $ar, $options)
@@ -308,13 +319,21 @@ class diModel implements \ArrayAccess
 
 	public function initFrom($r)
 	{
-		if (is_object($r) && $r instanceof \diModel) {
-			$r = (array)$r->get();
-		} elseif (is_object($r) || is_array($r)) {
-			$r = (array)$r;
-		}
+        if ($r instanceof \diModel) {
+            $r = (array)$r->get();
+        } elseif ($r instanceof \MongoDB\Model\BSONDocument) {
+            $ar = [];
 
-		$this->ar = is_array($r)
+            foreach ($r->getIterator() as $field => $value) {
+                $ar[$field] = static::tuneFieldValueByTypeAfterDb($field, $value);
+            }
+
+            $r = $ar;
+        } elseif (is_object($r) || is_array($r)) {
+            $r = (array)$r;
+        }
+
+        $this->ar = is_array($r)
 			? $r
 			: ($r || $this->forceGetRecord ? $this->getRecord($r) : []);
 
@@ -503,7 +522,9 @@ class diModel implements \ArrayAccess
 
 	public static function getIdFieldName()
 	{
-		return static::id_field_name;
+		return static::getConnection()::isMongo()
+            ? static::mongo_id_field_name
+            : static::id_field_name;
 	}
 
 	public function getId()
@@ -847,7 +868,7 @@ class diModel implements \ArrayAccess
 
 	public static function getDateStrFormat()
 	{
-		switch (self::normalizeLang()) {
+		switch (static::normalizeLang()) {
 			default:
 			case 'ru':
 				return 'd %месяца% Y';
@@ -933,7 +954,9 @@ class diModel implements \ArrayAccess
 
 	protected function processIdBeforeGetRecord($id, $field)
 	{
-		return (int)$id;
+		return static::getConnection()::isMongo()
+            ? new \MongoDB\BSON\ObjectID($id)
+            : (int)$id;
 	}
 
 	protected function prepareIdAndFieldForGetRecord($id, $fieldAlias = null)
@@ -963,26 +986,53 @@ class diModel implements \ArrayAccess
 
 	protected static function isProperId($id)
 	{
-		return isInteger($id) && $id > 0;
+        return static::getConnection()::isMongo()
+            ? strlen($id) == 24
+            : isInteger($id) && $id > 0;
 	}
+
+    protected function getDatabaseRecord($field, $id)
+    {
+        return static::getConnection()::isMongo()
+            ? $this->getCollectionResource()
+                ->findOne([
+                    $field => $id,
+                ])
+            : $this->getDb()->ar(
+                $this->getDb()->escapeTable($this->getTable()),
+                "WHERE {$field} = '{$id}'"
+            );
+    }
 
 	protected function getRecord($id, $fieldAlias = null)
 	{
 		if (!$this->getTable()) {
-			throw new \Exception('Table not defined');
+			throw new \Exception('Table/collection not defined');
 		}
 
 		$a = $this->prepareIdAndFieldForGetRecord($id, $fieldAlias);
-		$ar = $this->getDb()->ar(
-		    $this->getDb()->escapeTable($this->getTable()),
-            "WHERE {$a['field']} = '{$a['id']}'"
-        );
+		
+		$ar = $this->getDatabaseRecord($a['field'], $a['id']);
 
 		return $this->tuneDataAfterFetch($ar);
 	}
 
 	protected function tuneDataAfterFetch($ar)
 	{
+	    if (static::getConnection()::isMongo()) {
+            if (!$ar) {
+                return $ar;
+            }
+
+            foreach ($ar as $field => &$value) {
+                if ($value instanceof \MongoDB\BSON\ObjectID) {
+                    $value = (string)$value;
+                } elseif ($value instanceof \MongoDB\BSON\UTCDatetime) {
+                    $value = $value->toDateTime()->format(\diDateTime::FORMAT_SQL_DATE_TIME);
+                }
+            }
+        }
+
 		return $ar;
 	}
 
@@ -1736,6 +1786,24 @@ class diModel implements \ArrayAccess
 
         $ar = $this->processFieldsOnSave($ar);
 
+        if (static::getConnection()::isMongo()) {
+            foreach ($this->getFieldTypes() as $field => $type) {
+                if ($type == FieldType::timestamp) {
+                    if (!isset($ar[$field])) {
+                        $ar[$field] = 'now';
+                    }
+                }
+            }
+
+            foreach ($ar as $field => &$value) {
+                if ($value === null) {
+                    continue;
+                }
+
+                $value = static::tuneFieldValueByTypeBeforeDb($field, $value);
+            }
+        }
+
 		return $ar;
 	}
 
@@ -1753,78 +1821,129 @@ class diModel implements \ArrayAccess
 		}
 
 		if ($this->isInsertOrUpdateAllowed()) {
-			$result = $this->getDb()->insert_or_update(
-                $this->getDb()->escapeTable($this->getTable()),
-                $ar
-            );
+		    if (static::getConnection()::isMongo()) {
+                $keys = array_combine($this->upsertFields, array_map(function ($field) {
+                    return $this->get($field);
+                }, $this->upsertFields));
 
-			$this->disallowInsertOrUpdate();
+                $replaceResult = $this->getCollectionResource()->replaceOne($keys, $ar, [
+                    'upsert' => true,
+                ]);
+                /** @var \MongoDB\BSON\ObjectId $id */
+                $id = $replaceResult->getUpsertedId();
 
-			if ($result) {
-				$this->setId((int)$result);
-			} else {
-				$e = new \diDatabaseException(
-				    'Unable to insert/update ' . get_class($this) . ' in DB: ' .
-					join("\n", $this->getDb()->getLog())
+                if ($id) {
+                    $this->setId((string)$id);
+                }
+            } else {
+                $result = $this->getDb()->insert_or_update(
+                    $this->getDb()->escapeTable($this->getTable()),
+                    $ar
                 );
-				$e->setErrors($this->getDb()->getLog());
 
-				throw $e;
-			}
+                $this->disallowInsertOrUpdate();
+
+                if ($result) {
+                    $this->setId((int)$result);
+                } else {
+                    $e = new \diDatabaseException(
+                        'Unable to insert/update ' . get_class($this) . ' in DB: ' .
+                        join("\n", $this->getDb()->getLog())
+                    );
+                    $e->setErrors($this->getDb()->getLog());
+
+                    throw $e;
+                }
+            }
 		} elseif (
 		    $this->getId() &&
-            ($this->isIdAutoIncremented() || (!$this->isIdAutoIncremented() && $this->getOrigId()))
+            (
+                $this->isIdAutoIncremented() ||
+                (
+                    !$this->isIdAutoIncremented() &&
+                    $this->getOrigId()
+                )
+            )
         ) {
-			$result = $this->getDb()->update(
-                $this->getDb()->escapeTable($this->getTable()),
-                $ar,
-                "WHERE `{$this->getIdFieldName()}` = '{$this->getId()}' LIMIT 1"
-            );
+            if (static::getConnection()::isMongo()) {
+                $a = $this->prepareIdAndFieldForGetRecord($this->getId(), 'id');
 
-			if (!$result) {
-				$e = new \diDatabaseException(
-				    'Unable to update ' . get_class($this) . ' in DB: ' .
-					join("\n", $this->getDb()->getLog())
+                $this->getCollectionResource()->updateOne([
+                    $a['field'] => $a['id'],
+                ], [
+                    '$set' => $ar,
+                ]);
+            } else {
+                $result = $this->getDb()->update(
+                    $this->getDb()->escapeTable($this->getTable()),
+                    $ar,
+                    "WHERE `{$this->getIdFieldName()}` = '{$this->getId()}' LIMIT 1"
                 );
-				$e->setErrors($this->getDb()->getLog());
 
-				throw $e;
-			}
+                if (!$result) {
+                    $e = new \diDatabaseException(
+                        'Unable to update ' . get_class($this) . ' in DB: ' .
+                        join("\n", $this->getDb()->getLog())
+                    );
+                    $e->setErrors($this->getDb()->getLog());
+
+                    throw $e;
+                }
+            }
 		} else {
-			$id = $this->getDb()->insert(
-                $this->getDb()->escapeTable($this->getTable()),
-                $ar
-            );
+            if (static::getConnection()::isMongo()) {
+                $insertResult = $this->getCollectionResource()->insertOne($ar); //['fsync' => true,]
+                /** @var \MongoDB\BSON\ObjectId $id */
+                $id = $insertResult->getInsertedId();
 
-			if ($id === false) {
-				$e = new \diDatabaseException(
-				    'Unable to insert ' . get_class($this) . ' into DB: ' .
-					join("\n", $this->getDb()->getLog())
+                if ($id) {
+                    $this->setId((string)$id);
+                }
+            } else {
+                $id = $this->getDb()->insert(
+                    $this->getDb()->escapeTable($this->getTable()),
+                    $ar
                 );
-				$e->setErrors($this->getDb()->getLog());
 
-				throw $e;
-			}
+                if ($id === false) {
+                    $e = new \diDatabaseException(
+                        'Unable to insert ' . get_class($this) . ' into DB: ' .
+                        join("\n", $this->getDb()->getLog())
+                    );
+                    $e->setErrors($this->getDb()->getLog());
 
-			if ($id) {
-				$this->setId($id);
-			}
+                    throw $e;
+                }
+
+                if ($id) {
+                    $this->setId($id);
+                }
+            }
 		}
 
 		return $this;
 	}
 
-	protected function killFromDb()
-	{
-		if ($this->hasId()) {
-			$this->getDb()->delete(
-			    $this->getDb()->escapeTable($this->getTable()),
-                $this->getId()
-            );
-		}
+    protected function killFromDb()
+    {
+        if ($this->hasId()) {
+            if (static::getConnection()::isMongo()) {
+                $a = $this->prepareIdAndFieldForGetRecord($this->getId(), 'id');
 
-		return $this;
-	}
+                $this->getCollectionResource()
+                    ->deleteOne([
+                        $a['field'] => $a['id'],
+                    ]);
+            } else {
+                $this->getDb()->delete(
+                    $this->getDb()->escapeTable($this->getTable()),
+                    $this->getId()
+                );
+            }
+        }
+
+        return $this;
+    }
 
 	public function killRelatedFilesAndData()
 	{
@@ -2285,6 +2404,99 @@ class diModel implements \ArrayAccess
         }
 
         return $ar;
+    }
+
+    public static function getFieldTypes()
+    {
+        return static::$fieldTypes;
+    }
+
+    public static function getFieldType($field)
+    {
+        $ar = static::getFieldTypes();
+
+        return isset($ar[$field]) ? $ar[$field] : null;
+    }
+
+    public function setUpsertFields(array $fields)
+    {
+        $this->upsertFields = $fields;
+
+        return $this;
+    }
+
+    /**
+     * @return \MongoDB\Collection
+     */
+    protected function getCollectionResource()
+    {
+        if (!$this->collectionResource) {
+            $this->collectionResource = $this->getDb()->getLink()->selectCollection($this->getTable());
+        }
+
+        return $this->collectionResource;
+    }
+
+    public static function tuneFieldValueByTypeAfterDb($field, $value)
+    {
+        if ($value instanceof \MongoDB\BSON\ObjectID) {
+            return (string)$value;
+        }
+        elseif ($value instanceof \MongoDB\BSON\UTCDatetime) {
+            return \diDateTime::sqlFormat(((string)$value) / 1000);
+        }
+
+        return $value;
+    }
+
+    public static function tuneFieldValueByTypeBeforeDb($field, $value)
+    {
+        $type = static::getFieldType($field);
+
+        if (is_array($value)) {
+            foreach ($value as $k => &$v) {
+                $v = static::tuneFieldValueByTypeBeforeDb($field, $v);
+            }
+
+            return $value;
+        }
+
+        if ($field == static::getIdFieldName()) {
+            if (!$value instanceof \MongoDB\BSON\ObjectID) {
+                return new \MongoDB\BSON\ObjectID($value);
+            }
+        }
+
+        switch ($type) {
+            case FieldType::mongo_id:
+                $value = new \MongoDB\BSON\ObjectID($value);
+                break;
+
+            case FieldType::int:
+                $value = (int)$value;
+                break;
+
+            case FieldType::float:
+                $value = (float)$value;
+                break;
+
+            case FieldType::double:
+                $value = (double)$value;
+                break;
+
+            case FieldType::bool:
+                $value = !!$value;
+                break;
+
+            case FieldType::timestamp:
+            case FieldType::datetime:
+                if (!$value instanceof \MongoDB\BSON\UTCDatetime) {
+                    $value = new \MongoDB\BSON\UTCDatetime((new \DateTime($value))->getTimestamp() * 1000);
+                }
+                break;
+        }
+
+        return $value;
     }
 
 	public function getAppearanceFeedForAdmin()

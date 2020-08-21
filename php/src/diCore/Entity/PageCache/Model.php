@@ -28,11 +28,11 @@ use Romantic\Data\Config;
  * @method bool hasContent
  * @method bool hasActive
  *
- * @method Model setUri($value)
- * @method Model setContent($value)
- * @method Model setActive($value)
+ * @method $this setUri($value)
+ * @method $this setContent($value)
+ * @method $this setActive($value)
  */
-class Model extends \diCore\Database\Entity\Mongo\Model
+class Model extends \diModel
 {
     use AutoTimestamps;
 

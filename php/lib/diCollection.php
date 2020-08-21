@@ -8,8 +8,10 @@
 
 use diCore\Database\Connection;
 use diCore\Database\Engine;
+use diCore\Database\Legacy\Mongo;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\FileSystemHelper;
+use MongoDB\Driver\Cursor;
 
 abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 {
@@ -170,7 +172,26 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	protected $possibleDirections = ['ASC', 'DESC'];
 
-	public function __construct($table = null)
+    /** @var  Cursor */
+    protected $cursor;
+
+    /**
+     * MongoDB operators
+     * @var array
+     */
+    protected static $operators = [
+        '=' => '$eq',
+        '!=' => '$ne',
+        'in' => '$in',
+        'not in' => '$nin',
+        '>' => '$gt',
+        '>=' => '$gte',
+        '<' => '$lt',
+        '<=' => '$lte',
+        'regexp' => '$regex',
+    ];
+
+    public function __construct($table = null)
 	{
 		if ($table !== null && empty($this->table)) {
 			$this->table = $table;
@@ -571,6 +592,16 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function addAliasToField($field, $alias = null)
 	{
+	    if (static::getConnection()::isMongo()) {
+            if ($field === 'id') {
+                $m = $this->getNewEmptyItem();
+
+                return $m->getIdFieldName();
+            }
+
+            return $field;
+        }
+
 		if ($alias === true) {
 			$alias = static::MAIN_TABLE_ALIAS;
 		} elseif ($alias === null) {
@@ -586,6 +617,10 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function addAliasToTable($table, $alias = null)
 	{
+	    if (static::getConnection()::isMongo()) {
+            return $table;
+        }
+
 		if ($alias === true) {
 			$alias = static::MAIN_TABLE_ALIAS;
 		} elseif ($alias === null) {
@@ -1024,18 +1059,79 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	}
 
 	/**
-	 * @return null|string
+	 * @return null|string|array
 	 */
 	protected function getQueryWhere()
 	{
+	    if (static::getConnection()::isMongo()) {
+            $filter = [];
+
+            /** @var \diModel $modelClass */
+            $modelClass = static::getModelClass();
+
+            if ($this->sqlParts['where']) {
+                foreach ($this->sqlParts['where'] as $val) {
+                    if ($val['value'] !== null) {
+                        $val['value'] = $modelClass::tuneFieldValueByTypeBeforeDb($val['field'], $val['value']);
+                    }
+
+                    $existingFilter = isset($filter[$val['field']])
+                        ? $filter[$val['field']]
+                        : [];
+
+                    $val['operator'] = mb_strtolower($val['operator']);
+
+                    if (isset(self::$operators[$val['operator']])) {
+                        $operator = self::$operators[$val['operator']];
+
+                        $newFilter = [
+                            $operator => $val['value'],
+                        ];
+                    } elseif ($val['operator'] == 'between') {
+                        if (is_array($val['value']) && count($val['value']) == 2) {
+                            $newFilter = [
+                                '$gte' => ArrayHelper::get($val['value'], 0),
+                                '$lte' => ArrayHelper::get($val['value'], 1),
+                            ];
+                        } else {
+                            throw new \Exception('Operator "' . $val['operator'] .
+                                '" supports only array with 2 values, but given: ' . print_r($val['value'], true));
+                        }
+                    } else {
+                        throw new \Exception('Operator "' . $val['operator'] . '" not supported yet');
+                    }
+
+                    $existingFilter = array_merge($existingFilter, $newFilter);
+
+                    if ($existingFilter) {
+                        $filter[$val['field']] = $existingFilter;
+                    }
+                }
+            }
+
+            return $filter;
+        }
+
 		return $this->query ?: $this->getBuiltQueryWhere();
 	}
 
 	/**
-	 * @return null|string
+	 * @return null|string|array
 	 */
 	protected function getQueryOrderBy()
 	{
+	    if (static::getConnection()::isMongo()) {
+            $sort = [];
+
+            if ($this->sqlParts['orderBy']) {
+                foreach ($this->sqlParts['orderBy'] as $val) {
+                    $sort[$val['field']] = Mongo::convertDirection($val['direction']);
+                }
+            }
+
+            return $sort;
+        }
+
 		return $this->getBuiltQueryOrderBy();
 	}
 
@@ -1044,6 +1140,10 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	protected function getQueryGroupBy()
 	{
+        if (static::getConnection()::isMongo()) {
+            throw new \Exception('Group by is not implemented for Mongo yet: ' . print_r($this->sqlParts['groupBy'], true));
+        }
+
 		return $this->getBuiltQueryGroupBy();
 	}
 
@@ -1058,10 +1158,22 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	}
 
 	/**
-	 * @return null|string
+	 * @return null|string|array
 	 */
 	public function getFullQuery()
 	{
+	    if (static::getConnection()::isMongo()) {
+            $ar = [
+                'filter' => $this->getQueryWhere(),
+                //todo: 'group' => $this->getQueryGroupBy(),
+                'sort' => $this->getQueryOrderBy(),
+                'skip' => $this->getStartFrom(),
+                'limit' => $this->getPageSize(),
+            ];
+
+            return $ar;
+        }
+
 		$ar = array_filter([
 			$this->getQueryWhere(),
 			$this->getQueryGroupBy(),
@@ -1155,11 +1267,17 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	protected function getDbRecords()
 	{
-		return $this->getDb()->rs(
-			$this->getQueryTable(),
-			$this->getFullQuery(),
-			$this->getQueryFields()
-		);
+	    $records = $this->getDb()->rs(
+            $this->getQueryTable(),
+            $this->getFullQuery(),
+            $this->getQueryFields()
+        );
+
+        if (static::getConnection()::isMongo()) {
+            $this->cursor = $records;
+        }
+
+		return $records;
 	}
 
 	/**
@@ -1220,27 +1338,34 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	public function count($force = false)
 	{
 		if ($this->count === null || $force) {
-			if ($this->hasGroupBy()) {
-				$q = $this->getDb()->getQueryForRs(
-					$this->getQueryTable(),
-					$this->getQueryWhere() . ' ' . $this->getQueryGroupBy(),
-					'COUNT(*)'
-				);
+		    if (static::getConnection()::isMongo()) {
+                $this->realCount = $this->getDb()->count([
+                    'collectionName' => $this->getQueryTable(),
+                    'filters' => $this->getFullQuery(),
+                ]);
+            } else {
+                if ($this->hasGroupBy()) {
+                    $q = $this->getDb()->getQueryForRs(
+                        $this->getQueryTable(),
+                        $this->getQueryWhere() . ' ' . $this->getQueryGroupBy(),
+                        'COUNT(*)'
+                    );
 
-				$r = $this->getDb()->r(
-					'(' . $q . ') counterfeit',
-					'',
-					'COUNT(*) AS cc'
-				);
-			} else {
-				$r = $this->getDb()->r(
-					$this->getQueryTable(),
-					$this->getQueryWhere(),
-					'COUNT(*) AS cc'
-				);
-			}
+                    $r = $this->getDb()->r(
+                        '(' . $q . ') counterfeit',
+                        '',
+                        'COUNT(*) AS cc'
+                    );
+                } else {
+                    $r = $this->getDb()->r(
+                        $this->getQueryTable(),
+                        $this->getQueryWhere(),
+                        'COUNT(*) AS cc'
+                    );
+                }
 
-			$this->realCount = $r ? (int)$r->cc : 0;
+                $this->realCount = $r ? (int)$r->cc : 0;
+            }
 
 			if ($this->count === null) {
                 $this->count = $this->realCount;
@@ -1531,6 +1656,10 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function startsWith($field, $value)
 	{
+	    if (static::getConnection()::isMongo()) {
+            return $this->extFilterBy($field, 'REGEXP', '^' . $value);
+        }
+
 	    $field = $this->getDb()->escapeField($field);
 	    $value = $this->getDb()->escapeValue($value);
 
@@ -1544,6 +1673,10 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
     public function endsWith($field, $value)
     {
+        if (static::getConnection()::isMongo()) {
+            return $this->extFilterBy($field, 'REGEXP', $value . '$');
+        }
+
         return $this->extFilterBy($field, 'REGEXP', $value . '$');
     }
 
@@ -1558,6 +1691,10 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function contains($field, $value)
 	{
+        if (static::getConnection()::isMongo()) {
+            return $this->extFilterBy($field, 'REGEXP', $value);
+        }
+
         if (static::supportedInstr()) {
             $field = $this->getDb()->escapeField($field);
             $value = $this->getDb()->escapeValue($value);

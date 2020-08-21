@@ -138,8 +138,7 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
 
 					$ar = [];
 
-					foreach ($model->getDataDiff() as $field => $diff)
-					{
+					foreach ($model->getDataDiff() as $field => $diff) {
 						$ar[] = '<b>' . $field . '</b>' . '<div class="lite">' . $diff . '</div>';
 					}
 
