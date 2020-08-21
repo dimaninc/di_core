@@ -7,6 +7,8 @@
 
 namespace diCore\Entity\AdminTableEditLog;
 
+use diCore\Database\FieldType;
+
 /**
  * Class Model
  * Methods list for IDE
@@ -48,6 +50,8 @@ class Model extends \diModel
     const table = 'admin_table_edit_log';
 	protected $table = 'admin_table_edit_log';
 
+	const MAX_UNCUT_LENGTH = 0;
+
 	private $dataParsed = false;
 
 	private $useAllFields = false;
@@ -55,6 +59,15 @@ class Model extends \diModel
 	protected static $skipFields = [
 		//'table' => ['field1', 'field2'],
 	];
+
+    protected static $fieldTypes = [
+        'target_table' => FieldType::string,
+        'target_id' => FieldType::string,
+        'admin_id' => FieldType::int,
+        'old_data' => FieldType::string,
+        'new_data' => FieldType::string,
+        'created_at' => FieldType::timestamp,
+    ];
 
     // if true, then skip
     public static function isModelFieldSkipped(\diModel $model, $field)
@@ -93,12 +106,15 @@ class Model extends \diModel
         return $this;
     }
 
-	public function parseData()
+	public function parseData($maxUncutLength = null)
 	{
-		if ($this->dataParsed)
-		{
+		if ($this->dataParsed) {
 			return $this;
 		}
+
+		if ($maxUncutLength === null) {
+            $maxUncutLength = static::MAX_UNCUT_LENGTH;
+        }
 
 		$this
 			->setOldValues(unserialize($this->getOldData()))
@@ -107,8 +123,7 @@ class Model extends \diModel
 		$newData = $this->getNewValues();
 		$diffs = [];
 
-		foreach ($this->getOldValues() as $field => $oldValue)
-		{
+		foreach ($this->getOldValues() as $field => $oldValue) {
 			$newValue = $newData[$field];
 
 			$origEnc = 'UTF-8';
@@ -118,6 +133,12 @@ class Model extends \diModel
 
 			$diff = new \FineDiff($oldValue, $newValue, \FineDiff::$wordGranularity);
 			$diffs[$field] = html_entity_decode(mb_convert_encoding($diff->renderDiffToHTML(), $origEnc, $enc));
+
+			if ($maxUncutLength && mb_strlen($diffs[$field]) > $maxUncutLength) {
+			    preg_match_all('#<\s*?(ins|del)\b[^>]*>(.*?)</(ins|del)\b[^>]*>#s', $diffs[$field], $matches);
+
+                $diffs[$field] = join("\n", $matches[0]);
+            }
 		}
 
 		$this->setDataDiff($diffs);
