@@ -610,4 +610,44 @@ EOF;
 
 		return $ar;
 	}
+
+    /**
+     * Migrate all mysql records to mongo
+     */
+	public function migrateToMongoAction()
+    {
+        if (!\diRequest::isCli()) {
+            throw new \Exception('Run the script from CLI please');
+        }
+
+        $table = $this->param(0);
+
+        $model = \diModel::createForTable($table);
+
+        if (!$model->modelType()) {
+            throw new \Exception('Model for table "' . $table . '" not found');
+        }
+
+        if (!$model instanceof \diCore\Database\Entity\Mongo\Model) {
+            throw new \Exception('Model should be mongo instance');
+        }
+
+        $counter = 0;
+        $log = [];
+
+        $rs = $this->getDb()->rs($table, 'ORDER BY id ASC');
+        while ($ar = $this->getDb()->ar($rs)) {
+            unset($ar['id']);
+            $model = \diModel::createForTable($table, $ar);
+            $model->save();
+            unset($model);
+
+            $counter++;
+        }
+
+        return [
+            'counter' => $counter,
+            'log' => $log,
+        ];
+    }
 }

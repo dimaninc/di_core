@@ -8,6 +8,7 @@
 namespace diCore\Entity\AdminTableEditLog;
 
 use diCore\Database\FieldType;
+use diCore\Helper\ArrayHelper;
 
 /**
  * Class Model
@@ -34,7 +35,7 @@ use diCore\Database\FieldType;
  * @method $this setNewData($value)
  * @method $this setCreatedAt($value)
  */
-class Model extends \diModel
+class Model extends \diCore\Database\Entity\Mongo\Model
 {
 	const ADMIN_TAB_NAME = 'admin_edit_log';
 	protected static $lang = [
@@ -47,6 +48,7 @@ class Model extends \diModel
     ];
 
 	const type = \diTypes::admin_table_edit_log;
+    const connection_name = 'mongo_main';
     const table = 'admin_table_edit_log';
 	protected $table = 'admin_table_edit_log';
 
@@ -156,13 +158,11 @@ class Model extends \diModel
 			? $globalSkipFields[$this->getTargetTable()]
 			: [];
 
-		if ($skipFields)
-		{
-			$ar = \diCore\Helper\ArrayHelper::filterByKey($ar, [], $skipFields);
+		if ($skipFields) {
+			$ar = ArrayHelper::filterByKey($ar, [], $skipFields);
 
 			// skipping all fields
-			if (in_array('*', $skipFields))
-			{
+			if (in_array('*', $skipFields)) {
 				$ar = [];
 			}
 		}
