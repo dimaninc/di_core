@@ -69,6 +69,9 @@ class Submit
 	const IMAGE_TYPE_ORIG = 10;
 	const IMAGE_TYPE_BIG = 11;
 
+	const IMAGE_RULE_DIVIDE_BY_2 = 2;
+    const IMAGE_RULE_DIVIDE_BY_3 = 3;
+
 	/** @var \diCore\Admin\BasePage */
 	private $AdminPage;
 
@@ -995,10 +998,25 @@ class Submit
                     $widthParam = Configuration::getDimensionParam('width', $this->getTable(), $f, $opts['type']);
                     $heightParam = Configuration::getDimensionParam('height', $this->getTable(), $f, $opts['type']);
 
-                    $opts = extend([
-                        'width' => Configuration::safeGet($widthParam),
-                        'height' => Configuration::safeGet($heightParam),
-                    ], $opts);
+                    $resultWidth = Configuration::safeGet($widthParam);
+                    $resultHeight = Configuration::safeGet($heightParam);
+
+                    if (!empty($opts['rule'])) {
+                        list($sourceWidth, $sourceHeight) = getimagesize($_FILES[$f]['tmp_name']);
+
+                        list($resultWidth, $resultHeight) = self::getResultDimensions([
+                            'widthParam' => $widthParam,
+                            'heightParam' => $heightParam,
+                            'rule' => $opts['rule'],
+                            'sourceWidth' => $sourceWidth,
+                            'sourceHeight' => $sourceHeight,
+                        ]);
+                    }
+
+                    $opts = extend($opts, [
+                        'width' => $resultWidth,
+                        'height' => $resultHeight,
+                    ]);
                 }
 
                 $callback($this, $f, $fieldFileOptions, $_FILES[$f]);
@@ -1541,6 +1559,36 @@ class Submit
         }
 	}
 
+    public static function getResultDimensions($opts)
+    {
+        $opts = extend([
+            'widthParam' => null,
+            'heightParam' => null,
+            'rule' => null,
+            'sourceWidth' => null,
+            'sourceHeight' => null,
+        ], $opts);
+
+        if ($opts['widthParam'] || $opts['heightParam']) {
+            $resultWidth = Configuration::safeGet($opts['widthParam']);
+            $resultHeight = Configuration::safeGet($opts['heightParam']);
+        } elseif ($opts['rule']) {
+            switch ($opts['rule']) {
+                case Submit::IMAGE_RULE_DIVIDE_BY_2:
+                    $resultWidth = round($opts['sourceWidth'] / 2);
+                    $resultHeight = round($opts['sourceHeight'] / 2);
+                    break;
+
+                case Submit::IMAGE_RULE_DIVIDE_BY_3:
+                    $resultWidth = round($opts['sourceWidth'] / 3);
+                    $resultHeight = round($opts['sourceHeight'] / 3);
+                    break;
+            }
+        }
+
+        return [$resultWidth ?? 0, $resultHeight ?? 0];
+    }
+
 	public static function storeDynamicPicCallback($F, $tableOrSubmit, $options, &$ar, $folder)
 	{
 		if (is_object($tableOrSubmit)) {
@@ -1605,11 +1653,6 @@ class Submit
 		$big_fn = $root . $folder . get_big_folder() . $fn;
 		$orig_fn = $root . $folder . get_orig_folder() . $fn;
 
-		FileSystemHelper::createTree($root, [
-			$folder . get_big_folder(),
-			$folder . get_orig_folder(),
-		], self::DIR_CHMOD);
-
 		$mode = $F['tmp_name'] == $orig_fn
             ? self::IMAGE_STORE_MODE_REBUILD
             : self::IMAGE_STORE_MODE_UPLOAD;
@@ -1620,7 +1663,7 @@ class Submit
 			if (is_file($orig_fn)) unlink($orig_fn);
 		}
 
-		list($tmp, $tmp, $imgType) = getimagesize($F['tmp_name']);
+		list($sourceWidth, $sourceHeight, $imgType) = getimagesize($F['tmp_name']);
 
 		if (\diImage::isImageType($imgType)) {
 			$I = new \diImage();
@@ -1652,7 +1695,7 @@ class Submit
 					$groupField . '_tn' . $suffix . '_height',
 				]);
 
-				if ($widthParam || $heightParam) {
+				if ($widthParam || $heightParam || !empty($fOpts['rule'])) {
 					$tn_fn = $root . $folder . get_tn_folder($i) . $fn;
 
 					if ($mode == self::IMAGE_STORE_MODE_UPLOAD) {
@@ -1663,6 +1706,7 @@ class Submit
 
 					$fileOptionsTn = extend([
 						'resize' => DI_THUMB_CROP, //| DI_THUMB_EXPAND_TO_SIZE
+                        'rule' => null,
 						'watermark' => [],
 					], $fOpts);
 					$tnWM = $Submit->getWatermarkOptionsFor($field, constant('self::IMAGE_TYPE_PREVIEW' . $suffix));
@@ -1671,9 +1715,21 @@ class Submit
 						$tnWM = extend($tnWM, $fileOptionsTn['watermark']);
 					}
 
+					list($resultWidth, $resultHeight) = self::getResultDimensions([
+					    'widthParam' => $widthParam,
+                        'heightParam' => $heightParam,
+					    'rule' => $fileOptionsTn['rule'],
+                        'sourceWidth' => $sourceWidth,
+                        'sourceHeight' => $sourceHeight,
+                    ]);
+
+                    FileSystemHelper::createTree($root, [
+                        $folder . get_tn_folder($i),
+                    ], self::DIR_CHMOD);
+
 					$I->make_thumb_or_copy($fileOptionsTn['resize'], $tn_fn,
-						Configuration::safeGet($widthParam),
-						Configuration::safeGet($heightParam),
+						$resultWidth,
+						$resultHeight,
 						false,
 						$tnWM['name'], $tnWM['x'], $tnWM['y']
 					);
@@ -1708,15 +1764,29 @@ class Submit
 
                 $fileOptionsMain = extend([
                     'resize' => DI_THUMB_FIT,
+                    'rule' => null,
                     'watermark' => [],
                 ], $fOpts);
                 $mainWM = $Submit->getWatermarkOptionsFor($field, self::IMAGE_TYPE_MAIN);
                 if (!$mainWM['name']) {
                     $mainWM = extend($mainWM, $fileOptionsMain['watermark']);
                 }
+
+                list($resultWidth, $resultHeight) = self::getResultDimensions([
+                    'widthParam' => $widthParam,
+                    'heightParam' => $heightParam,
+                    'rule' => $fileOptionsMain['rule'],
+                    'sourceWidth' => $sourceWidth,
+                    'sourceHeight' => $sourceHeight,
+                ]);
+
+                FileSystemHelper::createTree($root, [
+                    $folder,
+                ], self::DIR_CHMOD);
+
                 $I->make_thumb_or_copy($fileOptionsMain['resize'], $full_fn,
-                    Configuration::safeGet($widthParam),
-                    Configuration::safeGet($heightParam),
+                    $resultWidth,
+                    $resultHeight,
                     false,
                     $mainWM['name'], $mainWM['x'], $mainWM['y']
                 );
@@ -1744,15 +1814,29 @@ class Submit
 
                 $fileOptionsBig = extend([
                     'resize' => DI_THUMB_FIT,
+                    'rule' => null,
                     'watermark' => [],
                 ], $fOpts);
                 $bigWM = $Submit->getWatermarkOptionsFor($field, self::IMAGE_TYPE_BIG);
                 if (!$bigWM['name']) {
                     $bigWM = extend($bigWM, $fileOptionsBig['watermark']);
                 }
+
+                list($resultWidth, $resultHeight) = self::getResultDimensions([
+                    'widthParam' => $widthParam,
+                    'heightParam' => $heightParam,
+                    'rule' => $fileOptionsBig['rule'],
+                    'sourceWidth' => $sourceWidth,
+                    'sourceHeight' => $sourceHeight,
+                ]);
+
+                FileSystemHelper::createTree($root, [
+                    $folder . get_big_folder(),
+                ], self::DIR_CHMOD);
+
                 $I->make_thumb_or_copy($fileOptionsBig['resize'], $big_fn,
-                    Configuration::safeGet($widthParam, 10000),
-                    Configuration::safeGet($heightParam, 10000),
+                    $resultWidth ?: 10000,
+                    $resultHeight ?: 10000,
                     false,
                     $bigWM['name'], $bigWM['x'], $bigWM['y']
                 );
@@ -1768,6 +1852,10 @@ class Submit
 
             if ($needed) {
                 if ($mode == self::IMAGE_STORE_MODE_UPLOAD) {
+                    FileSystemHelper::createTree($root, [
+                        $folder . get_orig_folder(),
+                    ], self::DIR_CHMOD);
+
                     move_uploaded_file($F['tmp_name'], $orig_fn) || rename($F['tmp_name'], $orig_fn);
                     chmod($orig_fn, self::FILE_CHMOD);
                 }
