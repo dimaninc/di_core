@@ -70,7 +70,9 @@ var diAudioPlayer = function (_opts) {
 
     this.setSource = function (source) {
         this.audio.src = source;
-        this.audio.load();
+        if (typeof this.audio.load !== 'undefined') {
+            this.audio.load();
+        }
         audioLoaded = true;
 
         return this;
