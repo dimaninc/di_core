@@ -1840,6 +1840,14 @@ abstract class CMS
 	  return $this;
   }
 
+    public static function getAllSkipGetParams()
+    {
+	    return array_merge(
+            static::$skipGetParams,
+            static::$customSkipGetParams
+        );
+    }
+
 	private function check_redundant_get_params()
 	{
 		\diCore\Tool\Embed\App::getInstance()
@@ -1852,11 +1860,7 @@ abstract class CMS
 			return $this;
 		}
 
-		$params = array_merge(
-		    static::$skipGetParams,
-            static::$customSkipGetParams,
-            $ar
-        );
+		$params = array_merge(static::getAllSkipGetParams(), $ar);
 
 		foreach ($_GET as $k => $v) {
 			if (!in_array($k, $params)) {
