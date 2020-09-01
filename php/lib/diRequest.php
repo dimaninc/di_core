@@ -98,11 +98,14 @@ class diRequest
     {
         $headers = [];
 
-        foreach ($_SERVER as $name => $value)
-        {
-            if (substr($name, 0, 5) == 'HTTP_')
-            {
-                $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+        foreach ($_SERVER as $name => $value) {
+            if (substr($name, 0, 5) == 'HTTP_') {
+                $newName = str_replace(
+                    ' ',
+                    '-',
+                    ucwords(strtolower(str_replace('_', ' ', substr($name, 5))))
+                );
+                $headers[$newName] = $value;
             }
         }
 
@@ -147,20 +150,17 @@ class diRequest
 	{
 	    $mode = 'single';
 
-		if (substr(underscore($method), 0, 4) == 'all_')
-		{
+		if (substr(underscore($method), 0, 4) == 'all_') {
 			$mode = 'all';
 
 			$method = substr(underscore($method), 4);
 		}
 
-		if (!in_array($method, self::$possibleMethodsAr))
-	    {
+		if (!in_array($method, self::$possibleMethodsAr)) {
 	    	throw new Exception("Undefined method '$method' called");
 	    }
 
-		switch ($mode)
-		{
+		switch ($mode) {
 			case 'all':
 				return self::all($method);
 
@@ -175,13 +175,11 @@ class diRequest
 
 	private static function processRawPost()
     {
-        if (self::$postRawData === null)
-        {
+        if (self::$postRawData === null) {
             self::$postRawData = file_get_contents('php://input');
         }
 
-        if (self::$postRawParsed === null)
-        {
+        if (self::$postRawParsed === null) {
             self::$postRawParsed = self::$postRawData
                 ? (array)json_decode(self::$postRawData)
                 : null;

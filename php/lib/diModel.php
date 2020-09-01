@@ -358,6 +358,10 @@ class diModel implements \ArrayAccess
 	public function initFromRequest($method = 'post')
 	{
 		foreach (\diRequest::all($method) as $key => $value) {
+		    if ($method === 'post') {
+		        $value = $value ?: \diRequest::rawPost($key);
+            }
+
 			$this->set($key, $value);
 		}
 
