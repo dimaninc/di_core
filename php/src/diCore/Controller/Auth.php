@@ -140,20 +140,15 @@ class Auth extends \diBaseController
 	{
 		$a = $this->getOAuth();
 
-		if ($this->param(1) == \diOAuth2::callbackParam)
-		{
+		if ($this->param(1) == \diOAuth2::callbackParam) {
 			$a->processReturn();
 
 			$this->redirectTo(\diSession::getAndKill(self::BACK_KEY) ?: '/');
-		}
-		elseif ($this->param(1) == \diOAuth2::unlinkParam)
-		{
+		} elseif ($this->param(1) == \diOAuth2::unlinkParam) {
 			return [
 				'ok' => $a->unlink(),
 			];
-		}
-		else
-		{
+		} else {
 			\diSession::set(self::BACK_KEY, \diRequest::get('back') ?: \diRequest::referrer());
 
 			$a->redirectToLogin();
@@ -193,31 +188,26 @@ class Auth extends \diBaseController
 	public function activateAction()
 	{
 		try {
-			if (AuthTool::i()->authorized())
-			{
+			if (AuthTool::i()->authorized()) {
 				throw new \Exception('activate.sign_out_first');
 			}
 
 			/** @var Model $user */
 			$user = $this->getUserForActivate();
 
-			if (!$user->exists())
-			{
+			if (!$user->exists()) {
 				throw new \Exception('activate.account_not_found');
 			}
 
-			if ($user->active())
-			{
+			if ($user->active()) {
 				throw new \Exception('activate.account_already_activated');
 			}
 
-			if ($user->getActivationKey() != $this->getKeyForActivate())
-			{
+			if ($user->getActivationKey() != $this->getKeyForActivate()) {
 				throw new \Exception('activate.key_not_match');
 			}
 
-			if ($user->exists('activated'))
-			{
+			if ($user->exists('activated')) {
 				$user
 					->setActivated(1);
 			}
@@ -279,8 +269,7 @@ class Auth extends \diBaseController
 	{
 		$email = \diRequest::post('email');
 
-		if (!$email)
-		{
+		if (!$email) {
 			throw new \Exception($this->getEmptyUserUidErrorMessage());
 		}
 
@@ -296,8 +285,7 @@ class Auth extends \diBaseController
 	{
 		$email = $this->param(0);
 
-		if (!$email)
-		{
+		if (!$email) {
 			throw new \Exception('common.enter_email');
 		}
 
@@ -308,8 +296,7 @@ class Auth extends \diBaseController
 	{
 		$key = $this->param(1);
 
-		if (!$key)
-		{
+		if (!$key) {
 			throw new \Exception(self::L('activate.key_is_empty'));
 		}
 
@@ -343,7 +330,9 @@ class Auth extends \diBaseController
 				throw new \Exception('Аккаунт отключён, свяжитесь с администратором');
 			}
 
-			$user->notifyAboutResetPasswordByEmail($this->getTwig());
+			$user
+                ->setValidationNeeded(false)
+                ->notifyAboutResetPasswordByEmail($this->getTwig());
 
 			$ar['ok'] = true;
 		} catch (\Exception $e) {
@@ -385,8 +374,7 @@ class Auth extends \diBaseController
 				throw new \Exception(self::L('enter_new_password.passwords_not_match'));
 			}
 
-			/** @var \diCore\Entity\User\Model $user */
-			$user = \diModel::create(\diTypes::user, $email, 'slug');
+			$user = Model::createBySlug($email);
 
 			if (!$user->exists()) {
 				throw new \Exception(self::L('enter_new_password.user_not_exist'));
@@ -401,6 +389,7 @@ class Auth extends \diBaseController
 			}
 
 			$user
+                ->setValidationNeeded(false)
 				->setPasswordExt($password)
 				->setActivationKey(Model::generateActivationKey())
 				->save();
