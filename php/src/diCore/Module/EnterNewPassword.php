@@ -19,19 +19,19 @@ class EnterNewPassword extends \diModule
 		$email = $this->getRoute(1);
 		$key = $this->getRoute(2);
 
-		/** @var \diCore\Entity\User\Model $user */
+		/** @var Model $user */
 		$user = !Auth::i()->authorized() && \diEmail::isValid($email) && Model::isActivationKeyValid($key)
 			? \diModel::create(\diTypes::user, $email, 'slug')
 			: \diModel::create(\diTypes::user);
 
-		if ($user->exists() && $user->getActivationKey() == $key && $user->active())
-		{
-			if ($this->useTwig())
-			{
+		if (
+		    $user->exists() &&
+            $user->getActivationKey() == $key &&
+            $user->active()
+        ) {
+			if ($this->useTwig()) {
 				$this->getTwig()->renderPage('enter_new_password/form');
-			}
-			else
-			{
+			} else {
 				$this->getTpl()
 					->define('enter_new_password', [
 						'page',
@@ -41,9 +41,9 @@ class EnterNewPassword extends \diModule
 			$password = \diRequest::post('password', '');
 			$password2 = \diRequest::post('password2', '');
 
-			if ($password && $password2 && $password == $password2)
-			{
+			if ($password && $password2 && $password == $password2) {
 				$user
+                    ->setValidationNeeded(false)
 					->setPasswordExt($password)
 					->setActivationKey(Model::generateActivationKey())
 					->save();
@@ -52,29 +52,19 @@ class EnterNewPassword extends \diModule
 
 				$this->redirectToDone();
 			}
-		}
-		elseif ($this->getRoute(1) == 'done')
-		{
-			if ($this->useTwig())
-			{
+		} elseif ($this->getRoute(1) == 'done') {
+			if ($this->useTwig()) {
 				$this->getTwig()->renderPage('enter_new_password/done');
-			}
-			else
-			{
+			} else {
 				$this->getTpl()
 					->define('enter_new_password/done', [
 						'page',
 					]);
 			}
-		}
-		else
-		{
-			if ($this->useTwig())
-			{
+		} else {
+			if ($this->useTwig()) {
 				$this->getTwig()->renderPage('enter_new_password/error');
-			}
-			else
-			{
+			} else {
 				$this->getTpl()
 					->define('enter_new_password/error', [
 						'page',
