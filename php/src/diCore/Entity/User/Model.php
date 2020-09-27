@@ -183,8 +183,10 @@ class Model extends \diBaseUserModel
 		}
 
 		$this
+            ->setValidationNeeded(false)
 			->setPasswordExt($newPassword)
-			->save();
+			->save()
+            ->setValidationNeeded(true);
 
 		return $this;
 	}

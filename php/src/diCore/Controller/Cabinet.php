@@ -34,12 +34,9 @@ class Cabinet extends \diBaseController
 			'ok' => false,
 		];
 
-		if (!AuthTool::i()->authorized())
-		{
+		if (!AuthTool::i()->authorized()) {
 			$ar['message'] = self::L('set_password.sign_in_first');
-		}
-		else
-		{
+		} else {
 			try {
 				/** @var Model $user */
 				$user = AuthTool::i()->getUserModel();
