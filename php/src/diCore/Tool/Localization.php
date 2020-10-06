@@ -52,9 +52,14 @@ class Localization
 		return Config::__getPhpFolder() . static::CACHE_FOLDER . $language . '.php';
 	}
 
-	protected static function getAllStrings($language)
+	public static function getCollection()
     {
-        $locals = Collection::create()->orderByName();
+        return Collection::create()->orderByName();
+    }
+
+	public static function getAllStrings($language)
+    {
+        $locals = static::getCollection();
         $cache = [];
 
         /** @var Model $l */
