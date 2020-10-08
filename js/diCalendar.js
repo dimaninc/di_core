@@ -35,6 +35,28 @@
 
 */
 
+function _add_event(elem, evname, func)
+{
+  if (elem.attachEvent)
+  {
+    //elem.attachEvent("on" + evname, func);
+    //alert("elem.on"+evname+"=func;");
+    eval("elem.on"+evname+"=func;");
+  }
+  else
+    elem.addEventListener(evname, func, false); //true
+}
+
+function delEvent(elem, evname, func)
+{
+  if (elem.attachEvent)
+  {
+    eval("elem.on"+evname+"=null;");
+  }
+  else
+    elem.removeEventListener(evname, func, false); //true
+}
+
 function diCalendar(cfg)
 {
   var self = this;
