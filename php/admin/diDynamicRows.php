@@ -25,6 +25,7 @@ use diCore\Admin\Submit;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\FileSystemHelper;
 use diCore\Helper\StringHelper;
+use diCore\Tool\Logger;
 
 class diDynamicRows
 {
@@ -352,8 +353,7 @@ class diDynamicRows
 		$drag = $this->getAdminPage()->getForm()->getFieldProperty($this->getField(), 'drag_and_drop_uploading');
 		$multiple = $this->getAdminPage()->getForm()->getFieldProperty($this->getField(), 'multiple_uploading');
 
-		if (!$drag && !$multiple)
-		{
+		if (!$drag && !$multiple) {
 			return '';
 		}
 
@@ -366,8 +366,7 @@ class diDynamicRows
 			$this->getOption('multipleUpload'),
 		];
 
-		if ($drag)
-		{
+		if ($drag) {
 			$texts[] = $this->getOption('dragAndDropUpload');
 		}
 
@@ -1561,8 +1560,7 @@ EOF;
 
 	protected function submitMultipleFiles()
 	{
-		if (!$this->getProperty('multiple_uploading'))
-		{
+		if (!$this->getProperty('multiple_uploading')) {
 			return [];
 		}
 
@@ -1571,8 +1569,7 @@ EOF;
 		$atLeastOneUploaded = isset($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['size']) &&
             array_sum($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['size']) > 0;
 
-		if ($atLeastOneUploaded)
-		{
+		if ($atLeastOneUploaded) {
 			$id = self::MULTIPLE_UPLOAD_FIRST_ID;
 
 			$maxOrderNum = $this->getDb()->r($this->data_table, "WHERE $this->subquery", "MAX(order_num) AS o");
@@ -1584,21 +1581,18 @@ EOF;
 			$multiUploadCallback = $this->getProperty('multiUploadCallback');
 			$beforeSaveCallback = $this->getProperty('beforeSave');
 
-			foreach ($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['name'] as $idx => $name)
-			{
+			foreach ($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['name'] as $idx => $name) {
                 $id--;
 
-                if (!$name)
-                {
+                if (!$name) {
                     continue;
                 }
 
 				if (
 					!empty($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['error'][$idx]) &&
 					$_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['error'][$idx] != 4
-				   )
-				{
-					\diCore\Tool\Logger::getInstance()->log($idx . ' error: ' .
+                ) {
+					Logger::getInstance()->log($idx . ' error: ' .
 						$_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['error'][$idx], 'multiple');
 
 					continue;
@@ -1614,8 +1608,7 @@ EOF;
 				$data_for_db = [];
 
 				// tech fields
-				if (is_callable($techFieldsCallback))
-				{
+				if (is_callable($techFieldsCallback)) {
 					$_a = $techFieldsCallback($this->table, $this->field, $this->id, $this);
 
 					$data_for_db = extend($data_for_db, $_a);
@@ -1625,76 +1618,64 @@ EOF;
 				}
 
 				// form fields
-				foreach ($fields as $k => $v)
-				{
-					if (!is_array($v))
-					{
+				foreach ($fields as $k => $v) {
+					if (!is_array($v)) {
 						$v = ["type" => $v];
 					}
 
-					if (!empty($v["virtual"]))
-					{
+					if (!empty($v["virtual"])) {
 						continue;
 					}
 
-					if (!isset($v["default"]))
-					{
+					if (!isset($v["default"])) {
 						$v["default"] = "";
 					}
 
 					$this->set_data($k, $v, $id);
 
-					if (in_array($v["type"], ["pic", "file"]) && !$this->data[$k])
-					{
-					}
-					else
-					{
-						if ($v['type'] == 'radio')
-						{
-							$data_for_db[$k] = isset($_POST[$this->field . '_' . $k]) && $_POST[$this->field . '_' . $k] == $id ? 1 : 0;
-						}
-						elseif (isset($this->data[$k]))
-						{
+					if (in_array($v["type"], ["pic", "file"]) && !$this->data[$k]) {
+					} else {
+						if ($v['type'] == 'radio') {
+							$data_for_db[$k] =
+                                isset($_POST[$this->field . '_' . $k]) &&
+                                $_POST[$this->field . '_' . $k] == $id
+                                    ? 1
+                                    : 0;
+						} elseif (isset($this->data[$k])) {
 							$data_for_db[$k] = $this->data[$k];
 						}
 					}
 				}
 
-				if (is_callable($multiUploadCallback))
-				{
+				if (is_callable($multiUploadCallback)) {
 					$_a = $multiUploadCallback($this->table, $this->field, $this->id, $this);
 
 					$data_for_db = extend($data_for_db, $_a);
 					$this->data = extend($this->data, $_a);
 				}
 
-				if (is_callable($beforeSaveCallback))
-				{
+				if (is_callable($beforeSaveCallback)) {
 					$_a = $beforeSaveCallback($this);
 
 					$data_for_db = extend($data_for_db, $_a);
 					$this->data = extend($this->data, $_a);
 				}
 
-				if (!$techFieldsSet)
-				{
+				if (!$techFieldsSet) {
 					$data_for_db["_table"] = $this->data["_table"] = $this->table;
 					$data_for_db["_field"] = $this->data["_field"] = $this->field;
 					$data_for_db["_id"] = $this->data["_id"] = $this->id;
 				}
 
-				if (isset($fields['order_num']) && empty($data_for_db['order_num']))
-				{
+				if (isset($fields['order_num']) && empty($data_for_db['order_num'])) {
 					$data_for_db['order_num'] = $this->data['order_num'] = $orderNum;
 				}
 
-				if (isset($fields['default']) && $orderNum == 1)
-				{
+				if (isset($fields['default']) && $orderNum == 1) {
 					$data_for_db['default'] = $this->data['default'] = 1;
 				}
 
-				if (isset($fields['by_default']) && $orderNum == 1)
-				{
+				if (isset($fields['by_default']) && $orderNum == 1) {
 					$data_for_db['by_default'] = $this->data['by_default'] = 1;
 				}
 
@@ -1706,7 +1687,7 @@ EOF;
 					$insertedId = $model->getId();
 					$ids_ar[] = $insertedId;
 				} catch (\Exception $e) {
-					\diCore\Tool\Logger::getInstance()->variable('exception', $e->getMessage());
+					Logger::getInstance()->variable('exception', $e->getMessage());
 				}
 
 				//$id--;
@@ -1868,27 +1849,26 @@ EOF;
 		$pics_folder = '/' . $this->getPicsFolder();
 
 		//$pics_folder = $dynamic_pics_folder."$this->table/";
-		create_folders_chain($this->abs_path, $pics_folder . $tn_folder, 0775);
+        FileSystemHelper::createTree($this->abs_path, $pics_folder . $tn_folder, 0775);
 
 		$ff = $multiUploadMode
 			? self::MULTIPLE_UPLOAD_FIELD_NAME
 			: "{$this->field}_$field";
 
-		if ($multiUploadMode)
-		{
+		if ($multiUploadMode) {
 			$id = self::MULTIPLE_UPLOAD_FIRST_ID - $id - 1;
+
+			if ($this->defaultMultiplePicField && $this->defaultMultiplePicField != $field) {
+			    return $this;
+            }
 		}
 
-		if (isset($_FILES[$ff]["name"][$id]) && !$_FILES[$ff]["error"][$id])
-		{
-			$ext = "." . strtolower(get_file_ext($_FILES[$ff]["name"][$id]));
+		if (isset($_FILES[$ff]["name"][$id]) && !$_FILES[$ff]["error"][$id]) {
+			$ext = "." . strtolower(StringHelper::fileExtension($_FILES[$ff]["name"][$id]));
 
-			if ($this->test_r && $this->test_r->$field)
-			{
-				$this->data[$field] = replace_file_ext($this->test_r->$field, $ext);
-			}
-			else
-			{
+			if ($this->test_r && $this->test_r->$field) {
+				$this->data[$field] = StringHelper::replaceFileExtension($this->test_r->$field, $ext);
+			} else {
 				$this->data[$field] = Submit::getGeneratedFilename(
 					\diCore\Data\Config::getPublicFolder() . $pics_folder,
 					$_FILES[$ff]["name"][$id],
@@ -1909,8 +1889,7 @@ EOF;
 				"size" => $_FILES[$ff]["size"][$id],
 			];
 
-			if ($callback && is_callable($callback))
-			{
+			if ($callback && is_callable($callback)) {
 				$callback($F, $pics_folder, $field, $this->data, $this, [
 					'fileOptions' => $fileOptions,
 				]);
@@ -1938,8 +1917,7 @@ EOF;
 
 		$full_fn = diPaths::fileSystem() . $folder . $fn;
 
-		if (is_file($full_fn))
-		{
+		if (is_file($full_fn)) {
 			unlink($full_fn);
 		}
 
