@@ -424,6 +424,10 @@ class Base
 
 	public function getTable()
 	{
+	    if ($this->getPage() && !$this->table) {
+	        return $this->getPage()->getTable();
+        }
+
 		return $this->table;
 	}
 
