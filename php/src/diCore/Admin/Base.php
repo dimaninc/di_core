@@ -424,7 +424,7 @@ class Base
 
 	public function getTable()
 	{
-	    if ($this->getPage() && !$this->table) {
+	    if ($this->getPage() && !$this->table && $this->getPage()->hasTable()) {
 	        return $this->getPage()->getTable();
         }
 
