@@ -51,4 +51,17 @@ class FieldType extends SimpleContainer
 		self::timestamp => 'Timestamp',
 		self::mongo_id => 'Mongo id',
 	];
+
+	public static function type($id, Connection $connection)
+    {
+        switch ($id) {
+            case self::bool:
+                if ($connection::getEngine() === Engine::MYSQL) {
+                    return 'tinyint';
+                }
+                break;
+        }
+
+        return static::name($id);
+    }
 }

@@ -2031,6 +2031,32 @@ class diModel implements \ArrayAccess
 		return \diCollection::create($type);
 	}
 
+	public static function createTableInDatabase()
+    {
+        static::getConnection()->getDb()->q(static::getCreateTableQuery());
+    }
+
+    // todo
+    public static function getCreateTableQuery()
+    {
+        $db = static::getConnection()->getDb();
+
+        $tableName = $db->escapeTable(static::table);
+        $fields = [];
+
+        foreach (static::getFieldTypes() as $field => $type) {
+            $null = ' NULL';
+            $fields[] = $db->escapeField($field) . ' ' . FieldType::type($type, static::getConnection()) . $null;
+        }
+
+        $fieldQuery = join(',', $fields);
+
+        return "CREATE TABLE IF NOT EXISTS {$tableName} ({$fieldQuery})
+DEFAULT CHARSET = 'utf8'
+COLLATE = 'utf8_general_ci'
+ENGINE = InnoDB;";
+    }
+
 	/**
 	 * @param string|array|null $field If null, files for all fields returned
 	 * @return array
@@ -2516,7 +2542,7 @@ class diModel implements \ArrayAccess
 		return join(', ', array_filter($this->getAppearanceFeedForAdmin()));
 	}
 
-	public function appearanceForAdmin()
+	public function appearanceForAdmin($options = [])
 	{
 		$linkWord = \diCore\Admin\Form::L('link', $this->__getLanguage());
 

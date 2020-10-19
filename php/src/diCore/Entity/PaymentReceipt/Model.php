@@ -42,13 +42,11 @@ class Model extends \diCore\Entity\PaymentDraft\Model
 
 	public function validate()
 	{
-		if (!$this->hasOuterNumber())
-		{
+		if (!$this->hasOuterNumber()) {
 			$this->addValidationError('Outer number required');
 		}
 
-		if (!$this->hasDraftId())
-		{
+		if (!$this->hasDraftId()) {
 			$this->addValidationError('Draft ID required');
 		}
 
@@ -57,8 +55,7 @@ class Model extends \diCore\Entity\PaymentDraft\Model
 
 	public function getUser()
     {
-        if (!$this->user)
-        {
+        if (!$this->user) {
             $this->user = CollectionCache::getModel(Types::user, $this->getUserId(), true);
         }
 
@@ -93,5 +90,29 @@ class Model extends \diCore\Entity\PaymentDraft\Model
                 ],
             ],
         ];
+    }
+
+    public function getAppearanceFeedForAdmin()
+    {
+        return [
+            $this->exists()
+                ? 'Произведена ' . $this['date_payed_date'] . ' в ' . $this['date_payed_time']
+                : '&mdash;',
+        ];
+    }
+
+    public function appearanceForAdmin($options = [])
+    {
+        $options = extend([
+            'showLink' => false,
+        ], $options);
+
+        $str = $this->getStringAppearanceForAdmin();
+        
+        if ($options['showLink']) {
+            $str .= " <a href='{$this->getAdminHref()}'>#{$this->getId()}</a>";
+        }
+
+        return $str;
     }
 }
