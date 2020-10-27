@@ -374,6 +374,15 @@ class StringHelper
         return self::cutEnd($url, $options['cutLength']);
     }
 
+    public static function normalizeUrlProtocol($url, $protocol = 'http')
+    {
+        if (!preg_match('#^https?://#', $url)) {
+            $url = $protocol . '://' . $url;
+        }
+
+        return $url;
+    }
+
     public static function fileBaseName($filename)
 	{
 		$x = mb_strrpos($filename, '.');

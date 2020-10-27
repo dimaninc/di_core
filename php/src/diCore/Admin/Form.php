@@ -1525,8 +1525,7 @@ EOF;
 
 	public function setTwigInput($field, $templateName = null, $data = [])
 	{
-		if (is_array($templateName) && !$data)
-		{
+		if (is_array($templateName) && !$data) {
 			$data = $templateName;
 			$templateName = $field;
 		}
@@ -1535,8 +1534,7 @@ EOF;
             $templateName = $field;
         }
 
-		if (!StringHelper::contains($templateName, '/'))
-		{
+		if (!StringHelper::contains($templateName, '/')) {
 			$templateName = 'admin/' . $this->getTable() . '/' . $templateName;
 		}
 
@@ -1577,19 +1575,15 @@ EOF;
 		$h = new \diHierarchyTable($this->getTable());
 
 		$parentsAr = array();
-		foreach ($h->getParentsArByParentId($this->getData("parent")) as $parent_r)
-		{
+		foreach ($h->getParentsArByParentId($this->getData("parent")) as $parent_r) {
 			$parentsAr[] = strip_tags($parent_r->title);
 		}
 
-		if ($parentsAr)
-		{
+		if ($parentsAr) {
 			$this
 				->setStaticInput($field)
 				->setInput($field, join(" / ", $parentsAr));
-		}
-		else
-		{
+		} else {
 			$this->setHiddenInput($field);
 		}
 
@@ -1610,15 +1604,12 @@ EOF;
 
 	public function setInputAttribute($field, $params = [])
 	{
-		if (!is_array($field))
-		{
+		if (!is_array($field)) {
 			$field = [$field];
 		}
 
-		foreach ($field as $f)
-		{
-			if (!isset($this->inputAttributes[$f]))
-			{
+		foreach ($field as $f) {
+			if (!isset($this->inputAttributes[$f])) {
 				$this->inputAttributes[$f] = [];
 			}
 
@@ -1630,8 +1621,7 @@ EOF;
 
 	private function processAffix($field, $affix)
 	{
-		switch ($affix)
-		{
+		switch ($affix) {
 			case self::INPUT_SUFFIX_NEW_FIELD:
 				$affix = ' или введите: <input type="text" name="' . $field . self::NEW_FIELD_SUFFIX . '" value="" style="width: 300px;">';
 				break;
@@ -1674,13 +1664,10 @@ EOF;
 
 	public function setHrefInput($field)
 	{
-		if (!$this->getId())
-		{
+		if (!$this->getId()) {
 			$this
 				->setHiddenInput($field);
-		}
-		else
-		{
+		} else {
 			$this
                 ->setStaticInput($field)
 				->setInput($field, "<a href='{$this->getModel()->getHref()}' target='_blank'>{$this->getModel()->getFullHref()}</a>");
@@ -1691,12 +1678,9 @@ EOF;
 
 	function set_checkbox_input($field)
 	{
-		if ($this->static_mode || $this->isFlag($field, "static"))
-		{
+		if ($this->static_mode || $this->isFlag($field, "static")) {
 			$this->inputs[$field] = (int)$this->getData($field) ? $this->L("yes") : $this->L("no");
-		}
-		else
-		{
+		} else {
 			$checked = (int)$this->getData($field) ? " checked=\"checked\"" : "";
 			$this->inputs[$field] = "<input type='checkbox' name='$field'" . $checked . $this->getInputAttributesString($field) . ">";
 		}
@@ -1720,10 +1704,8 @@ EOF;
 			->addItemArray2($include);
 
 		$rs = $this->getDb()->rs($this->table, "ORDER BY $field ASC", "DISTINCT $field");
-		while ($r = $this->getDb()->fetch($rs))
-		{
-			if (!in_array($r->$field, $exclude))
-			{
+		while ($r = $this->getDb()->fetch($rs)) {
+			if (!in_array($r->$field, $exclude)) {
 				$sel->addItem($r->$field, $r->$field);
 			}
 		}

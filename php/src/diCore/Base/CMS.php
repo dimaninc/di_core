@@ -2036,8 +2036,7 @@ abstract class CMS
 			]);
 
 		$prefix = $imageHtmlBase ?: \diRequest::urlBase(true);
-		if (preg_match('#^https?://#', $imagePath))
-		{
+		if (preg_match('#^https?://#', $imagePath)) {
 			$prefix = '';
 		}
 
