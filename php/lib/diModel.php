@@ -567,6 +567,14 @@ class diModel implements \ArrayAccess
 		return $this;
 	}
 
+	public function killOrigId()
+    {
+        $this->origId = null;
+        $this->killOrig(static::getIdFieldName());
+
+        return $this;
+    }
+
 	protected function isPicField($field)
 	{
 		return in_array($field, $this->getPicFields());
