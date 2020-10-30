@@ -23,7 +23,7 @@ class Sqlite extends Pdo
 		$ar = [];
 
 		$tables = $this->q("SELECT * FROM sqlite_master WHERE type = 'table'");
-		while ($table = $this->fetch_array($tables)) {
+		while ($tables && $table = $this->fetch_array($tables)) {
 			$ar[] = $table['name'];
 		}
 
