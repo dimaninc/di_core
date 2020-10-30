@@ -573,17 +573,13 @@ abstract class diDB
 
 	public function getQueryForRs($table, $q_ending = "", $q_fields = "*")
 	{
-		if (is_numeric($q_ending))
-		{
+		if (is_numeric($q_ending)) {
 			$q_ending = "WHERE id='$q_ending' LIMIT 1";
-		}
-		elseif (is_array($q_ending))
-		{
+		} elseif (is_array($q_ending)) {
 			$q_ending = "WHERE id" . $this->in($q_ending);
 		}
 
-		if (is_array($q_fields))
-		{
+		if (is_array($q_fields)) {
 			$q_fields = join(",", $q_fields);
 		}
 
@@ -594,17 +590,13 @@ abstract class diDB
 
 	public function getQueryForR($table, $q_ending = "", $q_fields = "*")
 	{
-		if (is_numeric($q_ending))
-		{
+		if (is_numeric($q_ending)) {
 			$q_ending = "WHERE id = '$q_ending'";
-		}
-		elseif (is_array($q_ending))
-		{
+		} elseif (is_array($q_ending)) {
 			$q_ending = "WHERE id " . $this->in($q_ending);
 		}
 
-		if (is_array($q_fields))
-		{
+		if (is_array($q_fields)) {
 			$q_fields = join(",", $q_fields);
 		}
 
@@ -626,8 +618,9 @@ abstract class diDB
 
 		$this->time_log("rs", $time2 - $time1, $q);
 
-		if (!$rs)
-			return $this->_log("unable to exec query \"$q\"");
+		if (!$rs) {
+            return $this->_log("unable to exec query \"$q\"");
+        }
 
 		return $rs;
 	}
@@ -641,8 +634,7 @@ abstract class diDB
 	public function r($table, $q_ending = "", $q_fields = "*")
 	{
 		// alias to ::fetch()
-		if ((self::is_rs($table) || $table === false) && $q_ending === "")
-		{
+		if ((self::is_rs($table) || $table === false) && $q_ending === "") {
 			return $this->fetch($table);
 		}
 		//
@@ -659,12 +651,10 @@ abstract class diDB
 
 		$this->time_log("r", $time2 - $time1, $q);
 
-		if (!$r)
-		{
+		if (!$r) {
 			$err = $this->error();
 
-			if ($err)
-			{
+			if ($err) {
 				$this->_log("unable to exec query \"$q\"", false);
 				$this->_log($err, false);
 			}
@@ -694,8 +684,7 @@ abstract class diDB
 		$q = "SELECT $q_fields FROM $t $q_ending LIMIT $start,$limit";
 		*/
 
-		if (is_array($q_fields))
-		{
+		if (is_array($q_fields)) {
 			$q_fields = join(",", $q_fields);
 		}
 
@@ -843,6 +832,11 @@ abstract class diDB
         return $this->lastInsertId;
     }
 
+    public function getUpdateSingleLimit()
+    {
+        return ' LIMIT 1';
+    }
+
 	public function update($table, $fields_values = array(), $q_ending = "")
 	{
 		$time1 = utime();
@@ -850,23 +844,22 @@ abstract class diDB
 		$t = $this->get_table_name($table);
 
 		// fast construction to get record by id
-		if (is_numeric($q_ending))
-			$q_ending = "WHERE id='$q_ending' LIMIT 1";
-		elseif (is_array($q_ending))
-			$q_ending = "WHERE id".$this->in($q_ending);
-		elseif (!$q_ending && $q_ending !== "")
-		{
+		if (is_numeric($q_ending)) {
+            $q_ending = "WHERE id = '$q_ending'" . $this->getUpdateSingleLimit();
+        } elseif (is_array($q_ending)) {
+            $q_ending = "WHERE id" . $this->in($q_ending);
+        } elseif (!$q_ending && $q_ending !== "") {
 			$this->_log("Warning, empty Q_ENDING in update ($table)");
+
 			return false;
 			//$q_ending = "WHERE 1=0";
 		}
 		//
 
-		$q = "UPDATE $t SET ".self::fields_and_values_to_string_for_update($fields_values)." $q_ending";
+        $q = "UPDATE $t SET " . self::fields_and_values_to_string_for_update($fields_values) . " $q_ending";
 
 		$this->__q("LOCK TABLES $t WRITE");
-		if (!$this->__rq($q))
-		{
+		if (!$this->__rq($q)) {
 			$this->_log("unable to update");
 
 			$this->__q("UNLOCK TABLES");
@@ -1012,11 +1005,16 @@ abstract class diDB
 		return $this->__get_charset();
 	}
 
+	protected function getStartTransactionQuery()
+    {
+        return "START TRANSACTION";
+    }
+
 	public function startTransaction()
 	{
 		$this->transactionNestingLevel++;
 
-		$this->q("START TRANSACTION");
+		$this->q($this->getStartTransactionQuery());
 
 		return $this;
 	}

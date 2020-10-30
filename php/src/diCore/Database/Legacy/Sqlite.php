@@ -41,4 +41,14 @@ class Sqlite extends Pdo
 
         return $fields;
     }
+
+    protected function getStartTransactionQuery()
+    {
+        return 'BEGIN';
+    }
+
+    public function getUpdateSingleLimit()
+    {
+        return '';
+    }
 }

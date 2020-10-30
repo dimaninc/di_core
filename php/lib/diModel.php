@@ -1889,7 +1889,7 @@ class diModel implements \ArrayAccess
                 $result = $this->getDb()->update(
                     $this->getDb()->escapeTable($this->getTable()),
                     $ar,
-                    "WHERE `{$this->getIdFieldName()}` = '{$this->getId()}' LIMIT 1"
+                    "WHERE `{$this->getIdFieldName()}` = '{$this->getId()}'" . $this->getDb()->getUpdateSingleLimit()
                 );
 
                 if (!$result) {
