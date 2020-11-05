@@ -30,7 +30,7 @@ if (empty($_SERVER['DOCUMENT_ROOT'])) {
                 ? '/..'
                 : '';
 
-            require $_SERVER['DOCUMENT_ROOT'] . $beyond . '/vendor/autoload.php';;
+            require $_SERVER['DOCUMENT_ROOT'] . $up . '/vendor/autoload.php';;
         } else {
             throw new \Exception('Unknown location: ' . __FILE__);
         }
