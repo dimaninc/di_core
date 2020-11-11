@@ -57,18 +57,23 @@ trait CartOrder
         return $this;
     }
 
+    protected function fetchItems()
+    {
+        $items = \diCollection::create(static::item_type);
+        $items
+            ->filterBy(self::item_filter_field, $this->getId())
+            ->orderById();
+
+        return $items;
+    }
+
     public function getItems($forceRefresh = false)
     {
         if (($this->items === null && $this->exists()) || $forceRefresh) {
-            $items = \diCollection::create(static::item_type);
-            $items
-                ->filterBy(self::item_filter_field, $this->getId())
-                ->orderById();
-
             $this->items = [];
 
             /** @var \diModel $item */
-            foreach ($items as $item) {
+            foreach ($this->fetchItems() as $item) {
                 $this->items[] = $item;
                 $item
                     ->setRelated('user_id', $this->getUserId());

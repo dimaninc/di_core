@@ -519,6 +519,24 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
         return $col;
     }
 
+    /**
+     * @param callable $filterCallback ($model, $idx, $col)
+     * @return $this
+     */
+    public function filtered($filterCallback)
+    {
+        $col = static::createEmpty();
+
+        /** @var \diModel $model */
+        foreach ($this as $idx => $model) {
+            if ($filterCallback($model, $idx, $this)) {
+                $col->addItem($model);
+            }
+        }
+
+        return $col;
+    }
+
     public function slice($start = 0, $length = null)
 	{
 		$this->load();
