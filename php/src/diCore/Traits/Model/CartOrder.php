@@ -50,7 +50,11 @@ trait CartOrder
             }
 
             foreach ($byType as $type => $ids) {
-                CollectionCache::addManual($type, 'id', $ids);
+                $testModel = CollectionCache::getModel($type, $ids[0]);
+
+                if (!$testModel->exists()) {
+                    CollectionCache::addManual($type, 'id', $ids);
+                }
             }
         }
 

@@ -24,7 +24,7 @@ namespace diCore\Traits\Model;
 trait TargetInside
 {
 	/** @var \diModel */
-	private $target;
+	protected $target;
 
 	protected function getTunedTargetType()
     {
@@ -55,8 +55,7 @@ trait TargetInside
 
 	public function getTargetModel()
 	{
-		if (!$this->target)
-		{
+		if (!$this->target) {
 			$this->target = method_exists($this, 'getRelated') && $this->getRelated('target_model')
 				? $this->getRelated('target_model')
 				: ($this->getTargetType()

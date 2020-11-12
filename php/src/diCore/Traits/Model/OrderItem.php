@@ -82,7 +82,7 @@ trait OrderItem
 
         return $key === null
             ? $this->data
-            : ArrayHelper::getValue($this->data, $key);
+            : ArrayHelper::get($this->data, $key);
     }
 
     public function getCost()
