@@ -100,4 +100,11 @@ trait OrderItem
 
         return $price * $quantity;
     }
+
+    public function addQuantity($difference)
+    {
+        $this->setQuantity($this->getQuantity() + $difference);
+
+        return $this;
+    }
 }
