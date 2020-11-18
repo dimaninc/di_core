@@ -14,6 +14,8 @@ class diFTP
 	private $login;
 	private $password;
 	private $dir;
+	private $sourceEncoding = 'utf-8';
+	private $destEncoding = 'utf-8';
 
 	public function __construct($host, $login, $password, $port = 21)
 	{
@@ -85,9 +87,32 @@ class diFTP
 		return $this;
 	}
 
+    public function setSourceEncoding($enc)
+    {
+        $this->sourceEncoding = $enc;
+
+        return $this;
+    }
+
+	public function setDestEncoding($enc)
+    {
+        $this->destEncoding = $enc;
+
+        return $this;
+    }
+
+    public function fixEncoding($name)
+    {
+        if ($this->sourceEncoding !== $this->destEncoding) {
+            $name = mb_convert_encoding($name, $this->sourceEncoding, $this->destEncoding);
+        }
+
+        return $name;
+    }
+
 	public function change_dir($dir)
 	{
-		$this->dir = $dir;
+		$this->dir = $this->fixEncoding($dir);
 
 		if (!ftp_chdir($this->ftp, $this->dir)) {
 			$this->log("warning", "Unable to change dir to $this->dir");
@@ -137,7 +162,7 @@ class diFTP
 
 	public function make_dir($dir, $silent = false)
 	{
-		if (!@ftp_mkdir($this->ftp, add_ending_slash($this->dir) . $dir)) {
+		if (!@ftp_mkdir($this->ftp, add_ending_slash($this->dir) . $this->fixEncoding($dir))) {
 			if (!$silent) {
 				$this->log("warning", "Unable to create dir $this->dir/$dir");
 			}
@@ -148,7 +173,7 @@ class diFTP
 
 	public function make_dir_chain($path, $mode = 0775)
 	{
-		$folders_ar = explode("/", $path);
+		$folders_ar = explode("/", $this->fixEncoding($path));
 		$path = "";
 
 		foreach ($folders_ar as $f) {
@@ -178,6 +203,7 @@ class diFTP
 		}
 
 		foreach ($fn_ar as $fn) {
+		    $fn = $this->fixEncoding($fn);
 			if (!@ftp_chmod($this->ftp, $mode, $fn)) {
 				$this->log("warning", "Unable to chmod $this->dir/$fn");
 			}
@@ -193,6 +219,7 @@ class diFTP
 		}
 
 		foreach ($fn_ar as $fn) {
+            $fn = $this->fixEncoding($fn);
 			if (!ftp_delete($this->ftp, $fn)) {
 				$this->log("warning", "Unable to delete $this->dir/$fn");
 			}
@@ -210,6 +237,7 @@ class diFTP
 		$dir_to_store = add_ending_slash($dir_to_store);
 
 		foreach ($fn_ar as $fn) {
+            $fn = $this->fixEncoding($fn);
 			$local_fn = $dir_to_store.basename($fn);
 
 			@unlink($local_fn);
@@ -232,6 +260,8 @@ class diFTP
 
 		foreach ($fn_ar as $fn)
 		{
+            $fn = $this->fixEncoding($fn);
+
 			if ($keep_folders_tree) {
 				$remote_dir = dirname($fn);
 				$remote_fn = basename($fn);
@@ -269,6 +299,8 @@ class diFTP
 
 	public function simple_put($local_fn, $remote_fn)
 	{
+        $remote_fn = $this->fixEncoding($remote_fn);
+
 		if (!@ftp_put($this->ftp, $remote_fn, $local_fn, FTP_BINARY)) {
 			$this->log("warning", "Unable to put file $local_fn to $this->dir/$remote_fn");
 
