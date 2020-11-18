@@ -22,8 +22,7 @@ class diFTP
 
 	public function passiveMode()
 	{
-		if (!@ftp_pasv($this->ftp, true))
-		{
+		if (!@ftp_pasv($this->ftp, true)) {
 			$this->log('warning', 'Unable to switch into passive mode');
 		}
 
@@ -32,19 +31,15 @@ class diFTP
 
 	public function connect($host, $login, $password, $port = 21)
 	{
-		if (substr($host, 0, 6) == "ftp://")
-		{
+		if (substr($host, 0, 6) == "ftp://") {
 			$host = substr($host, 6);
 		}
 
 		$x = strpos($host, "/");
-		if ($x !== false)
-		{
+		if ($x !== false) {
 			$this->dir = substr($host, $x);
 			$host = substr($host, 0, $x);
-		}
-		else
-		{
+		} else {
 			$this->dir = "/";
 		}
 
@@ -55,13 +50,11 @@ class diFTP
 
 		$this->ftp = ftp_connect($this->host, $this->port);
 
-		if (!ftp_login($this->ftp, $this->login, $this->password))
-		{
+		if (!ftp_login($this->ftp, $this->login, $this->password)) {
 			$this->log("fatal", "Unable to login to host $this->host:$this->port as $this->login");
 		}
 
-		if (!$this->dir)
-		{
+		if (!$this->dir) {
 			$this->dir = ftp_pwd($this->ftp);
 		}
 
@@ -81,13 +74,11 @@ class diFTP
 		}
 		*/
 
-		if ($message)
-		{
+		if ($message) {
 			simple_debug($message, 'diFTP log');
 		}
 
-		if ($details)
-		{
+		if ($details) {
 			simple_debug($details, 'diFTP log');
 		}
 
@@ -98,8 +89,7 @@ class diFTP
 	{
 		$this->dir = $dir;
 
-		if (!ftp_chdir($this->ftp, $this->dir))
-		{
+		if (!ftp_chdir($this->ftp, $this->dir)) {
 			$this->log("warning", "Unable to change dir to $this->dir");
 		}
 
@@ -116,38 +106,26 @@ class diFTP
 			"other" => array(),
 		);
 
-		if ($contents = ftp_rawlist($this->ftp, ""))
-		{
-			foreach ($contents as $i => $rec)
-			{
+		if ($contents = ftp_rawlist($this->ftp, "")) {
+			foreach ($contents as $i => $rec) {
 				$item = preg_split("/\s+/", $rec, 9);
 				$item_type = substr($item[0], 0, 1);
 
-				if ($item_type == "d")
-				{
+				if ($item_type == "d") {
 					$ar["dirs"][] = $item[8];
-				}
-				elseif ($item_type == "l")
-				{
+				} elseif ($item_type == "l") {
 					$ar["links"][] = $item[8];
-				}
-				elseif ($item_type == "-")
-				{
+				} elseif ($item_type == "-") {
 					$ar["files"][] = $item[8];
 					$ar["filesizes"][] = $item[4];
-				}
-				elseif ($item_type == "+")
-				{
+				} elseif ($item_type == "+") {
 					/* it's something on an anonftp server */
 					$eplf = explode(",", join(" ", $item), 5);
 
-					if ($eplf[2] == "r")
-					{
+					if ($eplf[2] == "r") {
 						$ar["files"][] = trim($eplf[4]);
 						$ar["filesizes"][] = substr($eplf[3], 1);
-					}
-					elseif ($eplf[2] == "/")
-					{
+					} elseif ($eplf[2] == "/") {
 						$ar["dirs"][] = trim($eplf[3]);
 					}
 				}
@@ -159,10 +137,8 @@ class diFTP
 
 	public function make_dir($dir, $silent = false)
 	{
-		if (!@ftp_mkdir($this->ftp, add_ending_slash($this->dir) . $dir))
-		{
-			if (!$silent)
-			{
+		if (!@ftp_mkdir($this->ftp, add_ending_slash($this->dir) . $dir)) {
+			if (!$silent) {
 				$this->log("warning", "Unable to create dir $this->dir/$dir");
 			}
 		}
@@ -175,12 +151,9 @@ class diFTP
 		$folders_ar = explode("/", $path);
 		$path = "";
 
-		foreach ($folders_ar as $f)
-		{
-			if ($f)
-			{
-				if ($path)
-				{
+		foreach ($folders_ar as $f) {
+			if ($f) {
+				if ($path) {
 					$path = add_ending_slash($path);
 				}
 
@@ -188,8 +161,7 @@ class diFTP
 
 				$this->make_dir($path, true);
 
-				if ($mode)
-				{
+				if ($mode) {
 					$this->chmod($path, $mode);
 				}
 			}
@@ -201,15 +173,12 @@ class diFTP
 	// $fn_ar - string or array
 	public function chmod($fn_ar, $mode)
 	{
-		if (!is_array($fn_ar))
-		{
+		if (!is_array($fn_ar)) {
 			$fn_ar = array($fn_ar);
 		}
 
-		foreach ($fn_ar as $fn)
-		{
-			if (!@ftp_chmod($this->ftp, $mode, $fn))
-			{
+		foreach ($fn_ar as $fn) {
+			if (!@ftp_chmod($this->ftp, $mode, $fn)) {
 				$this->log("warning", "Unable to chmod $this->dir/$fn");
 			}
 		}
@@ -219,15 +188,12 @@ class diFTP
 
 	public function delete($fn_ar)
 	{
-		if (!is_array($fn_ar))
-		{
+		if (!is_array($fn_ar)) {
 			$fn_ar = array($fn_ar);
 		}
 
-		foreach ($fn_ar as $fn)
-		{
-			if (!ftp_delete($this->ftp, $fn))
-			{
+		foreach ($fn_ar as $fn) {
+			if (!ftp_delete($this->ftp, $fn)) {
 				$this->log("warning", "Unable to delete $this->dir/$fn");
 			}
 		}
@@ -237,21 +203,18 @@ class diFTP
 
 	public function get($fn_ar, $dir_to_store = "")
 	{
-		if (!is_array($fn_ar))
-		{
+		if (!is_array($fn_ar)) {
 			$fn_ar = array($fn_ar);
 		}
 
 		$dir_to_store = add_ending_slash($dir_to_store);
 
-		foreach ($fn_ar as $fn)
-		{
+		foreach ($fn_ar as $fn) {
 			$local_fn = $dir_to_store.basename($fn);
 
 			@unlink($local_fn);
 
-			if (!@ftp_get($this->ftp, $local_fn, $fn, FTP_BINARY))
-			{
+			if (!@ftp_get($this->ftp, $local_fn, $fn, FTP_BINARY)) {
 				$this->log("warning", "Unable to get $this->dir/$fn");
 			}
 		}
@@ -263,32 +226,26 @@ class diFTP
 	{
 		$result = true;
 
-		if (!is_array($fn_ar))
-		{
+		if (!is_array($fn_ar)) {
 			$fn_ar = array($fn_ar);
 		}
 
 		foreach ($fn_ar as $fn)
 		{
-			if ($keep_folders_tree)
-			{
+			if ($keep_folders_tree) {
 				$remote_dir = dirname($fn);
 				$remote_fn = basename($fn);
 
-				if ($remote_fn != $fn)
-				{
+				if ($remote_fn != $fn) {
 					$this->make_dir_chain($remote_dir);
 				}
 
 				$remote_fn = $fn;
-			}
-			else
-			{
+			} else {
 				$remote_fn = basename($fn);
 			}
 
-			if (!@ftp_put($this->ftp, $remote_fn, $fn, FTP_BINARY))
-			{
+			if (!@ftp_put($this->ftp, $remote_fn, $fn, FTP_BINARY)) {
 				$this->log("warning", "Unable to put file $fn to $this->dir/$remote_fn");
 
 				$result = false;
@@ -298,10 +255,21 @@ class diFTP
 		return $result;
 	}
 
+	public function raw($command)
+    {
+        @ftp_raw($this->ftp, $command);
+
+        return $this;
+    }
+
+    public function utfOn()
+    {
+        return $this->raw('OPTS UTF8 ON');
+    }
+
 	public function simple_put($local_fn, $remote_fn)
 	{
-		if (!@ftp_put($this->ftp, $remote_fn, $local_fn, FTP_BINARY))
-		{
+		if (!@ftp_put($this->ftp, $remote_fn, $local_fn, FTP_BINARY)) {
 			$this->log("warning", "Unable to put file $local_fn to $this->dir/$remote_fn");
 
 			return false;
