@@ -355,9 +355,13 @@ class diModel implements \ArrayAccess
 		return $this;
 	}
 
-	public function initFromRequest($method = 'post')
+	public function initFromRequest($method = 'post', $excludeKeys = [])
 	{
 		foreach (\diRequest::all($method) as $key => $value) {
+		    if (in_array($key, $excludeKeys)) {
+		        continue;
+            }
+
 		    if ($method === 'post') {
 		        $value = $value ?: \diRequest::rawPost($key);
             }
