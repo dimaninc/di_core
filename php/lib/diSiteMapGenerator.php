@@ -146,6 +146,39 @@ class diSiteMapGenerator
 		];
 	}
 
+	protected function arToXml($ar)
+    {
+        $a = [];
+
+        foreach ($ar as $opts) {
+            $attrs = '';
+            $k = $opts['key'];
+            $value = $opts['value'] ?? null;
+            $rawValue = false;
+
+            if (is_array($value)) {
+                $value = $this->arToXml($value) . "\n";
+                $rawValue = true;
+            }
+
+            if (!empty($opts['attrs'])) {
+                foreach ($opts['attrs'] as $attrKey => $attrValue) {
+                    $attrs .= " {$attrKey}=\"" . htmlspecialchars($attrValue, ENT_COMPAT, 'UTF-8') . "\"";
+                }
+            }
+
+            if ($value !== null) {
+                $value = $rawValue
+                    ? "\n" . $value
+                    : htmlspecialchars($value, ENT_COMPAT, 'UTF-8');
+            }
+
+            $a[] = "<{$k}{$attrs}" . ($value !== null ? ">" . $value . "</{$k}>" : " />");
+        }
+
+        return join("\n", $a);
+    }
+
 	protected function getItemsXml()
 	{
 		$out = [];
@@ -154,23 +187,7 @@ class diSiteMapGenerator
 			switch ($type) {
 				case 'url':
 					$out[$type] = join("\n", array_map(function($value) use($type) {
-						$a = [];
-
-						foreach ($value as $opts) {
-							$attrs = '';
-							$k = $opts['key'];
-							$value = isset($opts['value']) ? $opts['value'] : null;
-
-							if (!empty($opts['attrs'])) {
-								foreach ($opts['attrs'] as $attrKey => $attrValue) {
-									$attrs .= " {$attrKey}=\"" . htmlspecialchars($attrValue, ENT_COMPAT, 'UTF-8') . "\"";
-								}
-							}
-
-							$a[] = "<{$k}{$attrs}" . ($value !== null ? ">" . htmlspecialchars($value, ENT_COMPAT, 'UTF-8') . "</{$k}>" : " />");
-						}
-
-						return "<$type>" . join("\n", $a) . "</$type>";
+						return "<{$type}>{$this->arToXml($value)}</{$type}>";
 					}, $ar));
 
 					break;
