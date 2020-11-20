@@ -28,6 +28,8 @@ class diSiteMapGenerator
 	];
 	public static $customSkippedContentTypes = [];
 
+	protected $addedUrls = [];
+
 	protected $items = [
 		'url' => [],
 		'image' => [],
@@ -45,8 +47,7 @@ class diSiteMapGenerator
 	 */
 	public static function create()
 	{
-		if (!\diLib::exists(self::$className))
-		{
+		if (!\diLib::exists(self::$className)) {
 			self::$className = get_called_class();
 		}
 
@@ -74,38 +75,74 @@ class diSiteMapGenerator
 	public function generateForCollection(\diCollection $collection)
 	{
 		/** @var \diModel $model */
-		foreach ($collection as $model)
-		{
+		foreach ($collection as $model) {
 			$this->addUrlItem($model);
 		}
 
 		return $this;
 	}
 
+	protected function isUrlAdded($url)
+    {
+        return in_array($url, $this->addedUrls);
+    }
+
 	protected function addUrlItem(\diModel $model)
 	{
-		if ($this->isRowSkipped($model))
-		{
+	    $url = $this->getUrlOfModel($model);
+
+		if (
+		    $this->isRowSkipped($model) ||
+            $this->isUrlAdded($url)
+        ) {
 			return $this;
 		}
 
-		switch ($model->getTable())
-		{
-			default:
-				$this->items['url'][] = $this->getUrlItem($model);
-				break;
-		}
+        $this->items['url'][] = $this->getUrlItem($model);
+		$this->addedUrls[] = $url;
 
 		return $this;
 	}
+
+	protected function getUrlOfModel(\diModel $model)
+    {
+        return $this->protocol . $this->domain . $model->getHref();
+    }
+
+    protected function getChangeFreqOfModel(\diModel $model)
+    {
+        return 'daily';
+    }
+
+    protected function getPriorityOfModel(\diModel $model)
+    {
+        return 0.5;
+    }
+
+    protected function getLastModificationDate(\diModel $model)
+    {
+        return $model->get('updated_at'); // null or 0 for now
+    }
 
 	protected function getUrlItem(\diModel $model)
 	{
 		return [
 			[
 				'key' => 'loc',
-				'value' => $this->protocol . $this->domain . $model->getHref(),
-			]
+				'value' => $this->getUrlOfModel($model),
+			],
+            [
+                'key' => 'changefreq',
+                'value' => $this->getChangeFreqOfModel($model),
+            ],
+            [
+                'key' => 'priority',
+                'value' => $this->getPriorityOfModel($model),
+            ],
+            [
+                'key' => 'lastmod',
+                'value' => \diDateTime::isoFormat($this->getLastModificationDate($model)),
+            ],
 		];
 	}
 
@@ -113,24 +150,19 @@ class diSiteMapGenerator
 	{
 		$out = [];
 
-		foreach ($this->items as $type => $ar)
-		{
-			switch ($type)
-			{
+		foreach ($this->items as $type => $ar) {
+			switch ($type) {
 				case 'url':
 					$out[$type] = join("\n", array_map(function($value) use($type) {
-						$a = array();
+						$a = [];
 
-						foreach ($value as $opts)
-						{
+						foreach ($value as $opts) {
 							$attrs = '';
 							$k = $opts['key'];
 							$value = isset($opts['value']) ? $opts['value'] : null;
 
-							if (!empty($opts['attrs']))
-							{
-								foreach ($opts['attrs'] as $attrKey => $attrValue)
-								{
+							if (!empty($opts['attrs'])) {
+								foreach ($opts['attrs'] as $attrKey => $attrValue) {
 									$attrs .= " {$attrKey}=\"" . htmlspecialchars($attrValue, ENT_COMPAT, 'UTF-8') . "\"";
 								}
 							}
@@ -140,6 +172,7 @@ class diSiteMapGenerator
 
 						return "<$type>" . join("\n", $a) . "</$type>";
 					}, $ar));
+
 					break;
 			}
 		}
@@ -181,8 +214,7 @@ class diSiteMapGenerator
 
 	protected function isRowSkipped(\diModel $model)
 	{
-		switch ($model->getTable())
-		{
+		switch ($model->getTable()) {
 			case 'content':
 				return static::isContentRowSkipped($model);
 		}
