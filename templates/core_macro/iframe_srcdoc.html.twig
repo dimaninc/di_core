@@ -1,0 +1,27 @@
+{% macro youtube_src_doc(ctx, video, local = {'title': '', 'subtitle': ''}, auto_play = false) %}
+    {% if video['vendor'] == 1 %} {# youtube #}
+        {% set queryParams = '?rel=0&showinfo=0' %}
+        {% if auto_play %}
+            {% set queryParams = queryParams ~ '&autoplay=1&mute=1' %}
+        {% endif %}
+        <style>
+            *{padding:0;margin:0;overflow:hidden}html,body{height:100%}
+            img,span,div{position:absolute;width:100%;top:0;bottom:0;margin:auto}
+            span{height:5em;text-align:center;font:28px/5 sans-serif;color:white;z-index:2;padding-left:1px}
+            i {overflow: visible;position: absolute;text-align: center;background: #1a73e8;color: white;font-style: normal;-webkit-box-shadow: -2px 2px 2px 0 rgba(178,178,178,0.4);box-shadow: -2px 2px 2px 0 rgba(178,178,178,0.4);left: 5%;right: 5%;bottom: 65%;padding: 8px 16px 10px 16px;font-family: Verdana, Geneva, sans-serif;white-space: nowrap;border-radius: 4px;z-index: 1}
+            i b {display:block;position:relative;font-weight: normal;font-size: 23px;z-index: 2}
+            i u {display:block;position:relative;text-decoration: none;font-size: 16px;padding-top:5px;z-index: 2}
+            i:after {left: 50%;margin-left: -10px;bottom: -10px;-webkit-transform: rotate(-45deg);-moz-transform: rotate(-45deg);-o-transform: rotate(-45deg);-ms-transform: rotate(-45deg);transform: rotate(-45deg);content: '\00a0';display: block;position: absolute;background: #1a73e8;-webkit-box-shadow: -2px 2px 2px 0 rgba(178,178,178,0.4);box-shadow: -2px 2px 2px 0 rgba(178,178,178,0.4);width: 20px;height: 20px;}
+            div:before {content:'';position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background-color:red;z-index:1;width:70px;height:50px;border-radius:25%/35%;}
+            @media screen and (max-width: 450px) {i {padding: 5px 8px 5px 8px;bottom: 70%} i b {font-size:20px} i u {font-size: 14px}}
+            @media screen and (max-width: 350px) {i b {font-size:16px} i u {font-size: 13px}}
+        </style>
+        <a href={{ video['vendor_embed_link'] ~ queryParams }}><img src=https://img.youtube.com/vi/{{ video['vendor_video_uid'] }}/hqdefault.jpg alt='{{ video['title'] }}'><div>{% if local['title'] or local['subtitle'] %}<i>{% if local['title'] %}<b>{{ local['title'] }}</b>{% endif %}{% if local['subtitle'] %}<u>{{ local['subtitle'] }}</u>{% endif %}</i>{% endif %}<span>▶</span></div></a>
+        <script>
+            function initThis() { location.href = this.getAttribute('href'); }
+            var a = document.getElementsByTagName('a')[0];
+            a.addEventListener('mouseover',  initThis);
+            {#window.parent.addEventListener('scroll', initThis);#}
+        </script>
+    {% endif %}
+{% endmacro %}
