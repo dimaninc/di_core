@@ -1791,6 +1791,10 @@ class Submit
                     $mainWM['name'], $mainWM['x'], $mainWM['y']
                 );
                 chmod($full_fn, self::FILE_CHMOD);
+            } elseif (!$fOpts) {
+                if ($mode == self::IMAGE_STORE_MODE_UPLOAD) {
+                    move_uploaded_file($F['tmp_name'], $full_fn) || rename($F['tmp_name'], $orig_fn);
+                }
             }
 
 			// big photo
