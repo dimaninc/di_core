@@ -977,9 +977,7 @@ EOF;
 				$formTabs[TableEditLog::ADMIN_TAB_NAME] = TableEditLog::adminTabTitle($this->getX()->getLanguage());
 			}
 		} else {
-			$formTabs = isset($GLOBALS['tables_tabs_ar'][$this->table])
-                ? $GLOBALS['tables_tabs_ar'][$this->table]
-                : [];
+			$formTabs = $GLOBALS['tables_tabs_ar'][$this->table] ?? [];
         }
 
         $tabsExist = !!$formTabs;
@@ -1574,7 +1572,7 @@ EOF;
 	{
 		$h = new \diHierarchyTable($this->getTable());
 
-		$parentsAr = array();
+		$parentsAr = [];
 		foreach ($h->getParentsArByParentId($this->getData("parent")) as $parent_r) {
 			$parentsAr[] = strip_tags($parent_r->title);
 		}
@@ -1678,10 +1676,10 @@ EOF;
 
 	function set_checkbox_input($field)
 	{
-		if ($this->static_mode || $this->isFlag($field, "static")) {
-			$this->inputs[$field] = (int)$this->getData($field) ? $this->L("yes") : $this->L("no");
+		if ($this->static_mode || $this->isFlag($field, 'static')) {
+			$this->inputs[$field] = $this->L((int)$this->getData($field) ? 'yes' : 'no');
 		} else {
-			$checked = (int)$this->getData($field) ? " checked=\"checked\"" : "";
+			$checked = (int)$this->getData($field) ? ' checked="checked"' : '';
 			$this->inputs[$field] = "<input type='checkbox' name='$field'" . $checked . $this->getInputAttributesString($field) . ">";
 		}
 
@@ -1924,12 +1922,9 @@ EOF;
 
 	public function setWysiwygInput($field)
 	{
-		if ($this->static_mode || $this->isFlag($field, "static"))
-		{
+		if ($this->static_mode || $this->isFlag($field, "static")) {
 			$this->inputs[$field] = "<div class='static-text'>{$this->getData($field)}</div>";
-		}
-		else
-		{
+		} else {
 			$attrs = $this->getInputAttributesString($field, [
 				'name' => $field,
 				'cols' => 80,
@@ -1938,8 +1933,7 @@ EOF;
 
 			$this->inputs[$field] = "<div class='wysiwyg'><textarea {$attrs}>{$this->formatValue($field)}</textarea></div>";
 
-			if ($this->getWysiwygVendor() == self::wysiwygCK)
-			{
+			if ($this->getWysiwygVendor() == self::wysiwygCK) {
 				$this->inputs[$field] .= "<script type='text/javascript'>var editor_$field = CKEDITOR.replace('$field'); CKFinder.SetupCKEditor(editor_$field, {BasePath: '/_admin/ckfinder/', RememberLastFolder : false});</script>";
 			}
 		}

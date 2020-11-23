@@ -1125,11 +1125,9 @@ abstract class BasePage
 	protected function printEditLog()
 	{
 		if ($this->useEditLog() && $this->getId()) {
-			/** @var TableEditLogs $records */
-			$records = \diCollection::create(\diTypes::admin_table_edit_log);
-			$records
+			$records = TableEditLogs::create()
 				->filterByTargetTable($this->getTable())
-				->filterByTargetId($this->getId())
+				->filterByTargetId([$this->getId(), (int)$this->getId()])
 				->orderById('DESC');
 
 			/** @var \diCore\Entity\Admin\Collection $admins */
@@ -1140,11 +1138,16 @@ abstract class BasePage
 				$rec->parseData();
 			}
 
+			$options = extend([
+			    'show_only_diff' => false,
+            ], (array)$this->useEditLog());
+
 			$this->getForm()
 				->setInput(TableEditLog::ADMIN_TAB_NAME,
 					$this->getTwig()->parse('admin/admin_table_edit_log/form_field', [
 						'records' => $records,
 						'admins' => $admins,
+                        'options' => $options,
 					]));
 		}
 
@@ -1577,9 +1580,18 @@ abstract class BasePage
 		return true;
 	}
 
+    /**
+     * @return bool|array
+     */
 	public function useEditLog()
 	{
 		return false;
+
+		/*
+		 * [
+		 *     'show_only_diff' => false, // old and new values will be hidden
+		 * ]
+		 */
 	}
 
 	protected function reallySubmit()

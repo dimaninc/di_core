@@ -24,28 +24,20 @@ class diHierarchyTable
 	{
 		global $db;
 
-		if ($type)
-		{
-			if (isInteger($type))
-			{
+		if ($type) {
+			if (isInteger($type)) {
 				$this->type = $type;
 				$this->table = \diTypes::getTableByName($this->type);
-			}
-			else
-			{
+			} else {
 				$this->table = $type;
 				$this->type = \diTypes::getId($this->table);
 			}
-		}
-		else
-		{
-			if (!$this->type)
-			{
+		} else {
+			if (!$this->type) {
 				$this->type = \diTypes::getId($this->table);
 			}
 
-			if (!$this->table)
-			{
+			if (!$this->table) {
 				$this->table = \diTypes::getTableByName($this->type);
 			}
 		}
@@ -79,20 +71,17 @@ class diHierarchyTable
 	/** @deprecated  */
 	public function getParentsAr($id)
 	{
-		$ar = array();
+		$ar = [];
 		$id0 = $id;
 
-		while ($r = $this->getDb()->r($this->getTable(), (int)$id))
-		{
-			if ($id0 != $r->id)
-			{
+		while ($r = $this->getDb()->r($this->getTable(), (int)$id)) {
+			if ($id0 != $r->id) {
 				$ar[] = $r;
 			}
 
 			$id = $r->parent;
 
-			if (!$id)
-			{
+			if (!$id) {
 				break;
 			}
 		}
@@ -109,23 +98,19 @@ class diHierarchyTable
 		while (
 			($model = \diCollection::create($this->getType())->find((int)$id)->getFirstItem()) &&
 			$model->exists()
-		)
-		{
-			if ($id0 != $model->getId())
-			{
+		) {
+			if ($id0 != $model->getId()) {
 				$ar[] = $model;
 			}
 
 			$idsAr[] = $model->getId();
 			$id = $model->get('parent');
 
-			if ($id <= 0)
-			{
+			if ($id <= 0) {
 				break;
 			}
 
-			if (in_array($id, $idsAr))
-			{
+			if (in_array($id, $idsAr)) {
 				throw new \Exception('Parent/id infinite cycle for id=' . $id);
 			}
 		}
@@ -142,22 +127,17 @@ class diHierarchyTable
 		while (
 			($parentId = isset($r) ? $r->parent : $id) &&
 			$r = $this->getDb()->r($this->getTable(), $parentId)
-		)
-		{
+		) {
 			$ar[] = $r;
 			$idsAr[] = $r->id;
 
-			if ($r->parent > 0)
-			{
+			if ($r->parent > 0) {
 				$id = $r->parent;
-			}
-			else
-			{
+			} else {
 				break;
 			}
 
-			if (in_array($id, $idsAr))
-			{
+			if (in_array($id, $idsAr)) {
 				throw new \Exception('Parent/id infinite cycle for id=' . $id);
 			}
 		}
@@ -174,26 +154,20 @@ class diHierarchyTable
 		while (
 			($parentId = isset($model) ? $model->get('parent') : $id) &&
 			$model = \diCollection::create($this->getType())->find($parentId)->getFirstItem()
-		)
-		{
+		) {
 			$idsAr[] = $model->getId();
 
-			if ($model->exists())
-			{
+			if ($model->exists()) {
 				$ar[] = $model;
 			}
 
-			if ($model->get('parent') > 0)
-			{
+			if ($model->get('parent') > 0) {
 				$id = $model->get('parent');
-			}
-			else
-			{
+			} else {
 				break;
 			}
 
-			if (in_array($id, $idsAr))
-			{
+			if (in_array($id, $idsAr)) {
 				throw new \Exception('Parent/id infinite cycle for id=' . $id);
 			}
 		}
@@ -205,21 +179,16 @@ class diHierarchyTable
 	{
 		$idsAr = [];
 
-		while ($r = $this->getDb()->r($this->getTable(), isset($r) ? $r->parent : $id))
-		{
+		while ($r = $this->getDb()->r($this->getTable(), isset($r) ? $r->parent : $id)) {
 			$idsAr[] = $r->id;
 
-			if ($r->parent > 0)
-			{
+			if ($r->parent > 0) {
 				$id = $r->parent;
-			}
-			else
-			{
+			} else {
 				break;
 			}
 
-			if (in_array($id, $idsAr))
-			{
+			if (in_array($id, $idsAr)) {
 				throw new \Exception('Parent/id infinite cycle for id=' . $id);
 			}
 		}
@@ -234,14 +203,12 @@ class diHierarchyTable
 
 	public function getChildrenIdsAr($id, $ar = [], $order_by = 'order_num', $where_suffix = '')
 	{
-		if ($where_suffix && substr(trim($where_suffix), 0, 4) != "and ")
-		{
+		if ($where_suffix && substr(trim($where_suffix), 0, 4) != "and ") {
 			$where_suffix = " and $where_suffix";
 		}
 
 		$rs = $this->getDb()->rs($this->getTable(), "WHERE parent='$id'{$where_suffix} ORDER BY $order_by ASC", "id");
-		while ($r = $this->getDb()->fetch($rs))
-		{
+		while ($r = $this->getDb()->fetch($rs)) {
 			$ar[] = $r->id;
 
 			$ar = $this->getChildrenIdsAr($r->id, $ar);
@@ -252,14 +219,12 @@ class diHierarchyTable
 
 	public function getChildren($id, $orderBy = 'order_num', $whereSuffix = '', $ar = [])
 	{
-		if ($whereSuffix && substr(trim($whereSuffix), 0, 4) != "and ")
-		{
+		if ($whereSuffix && substr(trim($whereSuffix), 0, 4) != "and ") {
 			$whereSuffix = " and $whereSuffix";
 		}
 
 		$rs = $this->getDb()->rs($this->getTable(), "WHERE parent='$id'{$whereSuffix} ORDER BY $orderBy ASC", "id");
-		while ($a = $this->getDb()->fetch_array($rs))
-		{
+		while ($a = $this->getDb()->fetch_array($rs)) {
 			$m = $this->createModel($a);
 			$ar[] = $m;
 

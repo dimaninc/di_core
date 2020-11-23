@@ -1,5 +1,6 @@
 {% if records|length > 0 %}
 	<ul class="table-edit-log">
+	{% set colspan = options['show_only_diff'] ? 1 : 4 %}
 	{% for rec in records %}
 		<li>
 			<div class="author">
@@ -9,12 +10,14 @@
 			<table>
 				{% for field, value in rec.getOldValues() %}
 					<tr>
-						<th colspan="4">{{ field }}</th>
+						<th colspan="{{ colspan }}">{{ field }}</th>
 					</tr>
 					<tr>
+						{% if not options['show_only_diff'] %}
 						<td>{{ value }}</td>
 						<td>&raquo;</td>
 						<td>{{ rec.getNewValues(field) }}</td>
+						{% endif %}
 						<td>{{ rec.getDataDiff(field)|raw }}</td>
 					</tr>
 				{% endfor %}
