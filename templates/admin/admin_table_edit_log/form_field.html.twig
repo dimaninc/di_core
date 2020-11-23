@@ -14,11 +14,11 @@
 					</tr>
 					<tr>
 						{% if not options['show_only_diff'] %}
-						<td>{{ value }}</td>
+						<td>{{ options['strip_tags'] ? value|striptags('<ins><del>') : value }}</td>
 						<td>&raquo;</td>
-						<td>{{ rec.getNewValues(field) }}</td>
+						<td>{{ options['strip_tags'] ? rec.getNewValues(field)|striptags('<ins><del>') : rec.getNewValues(field) }}</td>
 						{% endif %}
-						<td>{{ rec.getDataDiff(field)|raw }}</td>
+						<td>{{ options['strip_tags'] ? rec.getDataDiff(field)|striptags('<ins><del>')|raw : rec.getDataDiff(field)|raw }}</td>
 					</tr>
 				{% endfor %}
 			</table>

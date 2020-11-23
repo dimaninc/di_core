@@ -1140,6 +1140,7 @@ abstract class BasePage
 
 			$options = extend([
 			    'show_only_diff' => false,
+                'strip_tags' => false,
             ], (array)$this->useEditLog());
 
 			$this->getForm()
