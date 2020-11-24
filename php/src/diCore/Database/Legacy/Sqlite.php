@@ -18,11 +18,31 @@ class Sqlite extends Pdo
 		return $dsn = "{$this->driver}:{$this->dbname}";
 	}
 
-	public function getTableNames()
+    public function getTablesInfo()
+    {
+        $ar = [];
+
+        foreach ($this->getTableNames() as $table) {
+            //$res = $this->fetch_ar($this->q("SELECT SUM(\"pgsize\") FROM \"dbstat\" WHERE name = '{$table}'"));
+
+            $ar[] = [
+                'name' => $table,
+                'is_view' => false, // does sqlite support views?
+                'rows' => 0,
+                'size' => 0,
+                'index_size' => 0,
+            ];
+        }
+
+        return $ar;
+    }
+
+
+    public function getTableNames()
 	{
 		$ar = [];
 
-		$tables = $this->q("SELECT * FROM sqlite_master WHERE type = 'table'");
+		$tables = $this->q("SELECT * FROM sqlite_master WHERE type = 'table' ORDER BY name ASC");
 		while ($tables && $table = $this->fetch_array($tables)) {
 			$ar[] = $table['name'];
 		}

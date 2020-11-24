@@ -147,7 +147,7 @@ abstract class Pdo extends \diDB
 	{
 		$s = $this->link->quote($s);
 
-		if (strlen($s) > 2) {
+		if (strlen($s) >= 2) {
 			$s = substr($s, 1, strlen($s) - 2);
 		}
 

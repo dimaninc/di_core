@@ -75,29 +75,30 @@ class Db extends \diBaseAdminController
 			"totalIndexSize" => 0,
 		];
 
-		$table_rs = $db->q("SHOW TABLE STATUS");
-		while ($table_r = $db->fetch($table_rs)) {
-			$size = size_in_bytes($table_r->Data_length);
-			$idx_size = size_in_bytes($table_r->Index_length);
+		$tables = $db->getTablesInfo();
+		foreach ($tables as $table) {
+			$size = size_in_bytes($table['size']);
+			$indexSize = size_in_bytes($table['index_size']);
 
-			$ar["totalSize"] += $table_r->Data_length;
-			$ar["totalIndexSize"] += $table_r->Index_length;
+			$ar["totalSize"] += $table['size'];
+			$ar["totalIndexSize"] += $table['index_size'];
 
 			$rows = "";
 
-			if ($table_r->Data_length === null) {
-				if ($table_r->Comment == "VIEW") {
-					$size_str = " [view]";
-				} else {
-					$size_str = " [DAMAGED!]";
-				}
+			if ($table['is_view']) {
+                $size_str = ' [view]';
+            } elseif ($table['size'] === null) {
+                $size_str = ' [DAMAGED!]';
 			} else {
-				$size_str = ", $size (+index: $idx_size)";
+				$size_str = ($table['size'] ? ", {$size}" : '') .
+                    ($table['index_size'] ? " (+index: {$indexSize})" : '');
 
-				$rows = ", $table_r->Rows rows";
+				$rows = $table['rows']
+                    ? ", {$table['rows']} rows"
+                    : '';
 			}
 
-			$ar["tablesForSelectAr"][$table_r->Name] = "{$table_r->Name}{$size_str}{$rows}";
+			$ar["tablesForSelectAr"][$table['name']] = "{$table['name']}{$size_str}{$rows}";
 		}
 
 		return $ar;

@@ -22,6 +22,8 @@ function diDbManager(_opts)
 
 	function bindEvents()
 	{
+	    var initialLoad = true;
+
 	    $('.db-list form.create').submit(function() {
 	    	self.createDump();
 
@@ -45,9 +47,13 @@ function diDbManager(_opts)
 		});
 
 		$('iframe[name="upload_container"]').load(function() {
-			self.status('Dump has been uploaded');
+		    if (!initialLoad) {
+                self.status('Dump has been uploaded');
 
-			addDumpRow($.parseJSON($(this).contents().text()));
+                addDumpRow($.parseJSON($(this).contents().text()));
+            }
+
+            initialLoad = false;
 		});
 
 		$(document.body)

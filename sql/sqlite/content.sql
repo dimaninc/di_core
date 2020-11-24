@@ -1,0 +1,51 @@
+CREATE TABLE IF NOT EXISTS content(
+	id integer not null primary key autoincrement,
+	parent integer default '-1',
+	clean_title varchar(255),
+	menu_title varchar(255) default '',
+	`type` varchar(32),
+	title varchar(255),
+	caption varchar(255) default '',
+	html_title text,
+	html_keywords text,
+	html_description text,
+	content mediumtext,
+	short_content text,
+	links_content text,
+	pic varchar(32) default '',
+	pic_w integer default '0',
+	pic_h integer default '0',
+	pic_t integer default '0',
+	pic2 varchar(32) default '',
+	pic2_w integer default '0',
+	pic2_h integer default '0',
+	pic2_t integer default '0',
+	ico varchar(50) default '',
+	ico_w integer default '0',
+	ico_h integer default '0',
+	ico_t integer default '0',
+	color varchar(32) default '',
+	background_color varchar(32) default '',
+	class varchar(32) default '',
+	menu_class varchar(20) default '',
+	level_num tinyint default '0',
+	visible tinyint default '0',
+	visible_top tinyint default '0',
+	visible_bottom tinyint default '0',
+	visible_left tinyint default '0',
+	visible_right tinyint default '0',
+	visible_logged_in tinyint default '0',
+	to_show_content tinyint default '1',
+	order_num integer,
+	top tinyint default '0',
+	comments_count integer default '0',
+	comments_last_date datetime default null,
+	comments_enabled tinyint default '1',
+	ad_block_id integer default '0'
+);
+
+CREATE UNIQUE INDEX idx_content_clean_title
+ON content (clean_title);
+
+CREATE INDEX idx_content
+ON content (visible,visible_top,visible_bottom,visible_left,visible_right,visible_logged_in,order_num,parent,level_num);

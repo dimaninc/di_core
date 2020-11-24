@@ -132,6 +132,24 @@ class diMYSQL extends diDB
 		return mysql_client_encoding($this->link);
 	}
 
+    public function getTablesInfo()
+    {
+        $ar = [];
+
+        $rs = $this->q("SHOW TABLE STATUS");
+        while ($r = $this->fetch($rs)) {
+            $ar[] = [
+                'name' => $r->Name,
+                'is_view' => $r->Data_length === null && $r->Comment == 'VIEW',
+                'rows' => $r->Rows,
+                'size' => $r->Data_length,
+                'index_size' => $r->Index_length,
+            ];
+        }
+
+        return $ar;
+    }
+
 	public function getTableNames()
 	{
 		$ar = [];

@@ -233,6 +233,23 @@ class Mongo extends \diDB
 		return 'utf8';
 	}
 
+    public function getTablesInfo()
+    {
+        $ar = [];
+
+        foreach ($this->getLink()->getCollectionInfo() as $info) {
+            $ar[] = [
+                'name' => $info['name'],
+                'is_view' => false,
+                'rows' => 0,
+                'size' => ArrayHelper::get($info, 'options.size', 0),
+                'index_size' => 0,
+            ];
+        }
+
+        return $ar;
+    }
+
 	public function getTableNames()
 	{
 		$ar = [];

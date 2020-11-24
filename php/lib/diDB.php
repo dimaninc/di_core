@@ -1021,8 +1021,7 @@ abstract class diDB
 
 	public function commitTransaction()
 	{
-		if ($this->transactionNestingLevel)
-		{
+		if ($this->transactionNestingLevel) {
 			$this->transactionNestingLevel--;
 
 			$this->q("COMMIT");
@@ -1033,8 +1032,7 @@ abstract class diDB
 
 	public function rollbackTransaction()
 	{
-		if ($this->transactionNestingLevel)
-		{
+		if ($this->transactionNestingLevel) {
 			$this->transactionNestingLevel--;
 
 			$this->q("ROLLBACK");
@@ -1066,13 +1064,10 @@ abstract class diDB
 	{
 		$x = strpos($string, '.');
 
-		if ($x !== false)
-		{
+		if ($x !== false) {
 			$alias = static::QUOTE_FIELD . substr($string, 0, $x) . static::QUOTE_FIELD . '.';
 			$field = substr($string, $x + 1);
-		}
-		else
-		{
+		} else {
 			$alias = '';
 			$field = $string;
 		}
@@ -1111,6 +1106,7 @@ abstract class diDB
 	abstract protected function __affected_rows();
 	abstract protected function __set_charset($name);
 	abstract protected function __get_charset();
+    abstract public function getTablesInfo();
 	abstract public function getTableNames();
     abstract public function getFields($table);
 }
