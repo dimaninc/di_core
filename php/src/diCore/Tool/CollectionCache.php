@@ -55,6 +55,22 @@ class CollectionCache
 		self::add($col);
 	}
 
+    public static function append(\diCollection $col)
+    {
+        $type = \diTypes::getId($col->getModelType());
+        $existingCol = static::get($type) ?: \diCollection::createEmpty($type);
+        $existingCol->addItems($col);
+        static::add($existingCol);
+    }
+
+	public static function appendModel(\diModel $model)
+    {
+        $type = \diTypes::getId($model->modelType());
+        $existingCol = static::get($type) ?: \diCollection::createEmpty($type);
+        $existingCol->addItem($model);
+        static::add($existingCol);
+    }
+
 	public static function remove($modelTypes = null)
 	{
 		if ($modelTypes === null) {

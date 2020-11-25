@@ -74,6 +74,13 @@ trait OrderItem
         return $this->initItem()->item;
     }
 
+    public function setItem(\diModel $item)
+    {
+        $this->item = $item;
+
+        return $this;
+    }
+
     public function getDataObject($key = null)
     {
         if (!$this->data && $this->hasData()) {
