@@ -250,29 +250,37 @@ class diFTP
 		return $this;
 	}
 
-	public function put($fn_ar, $keep_folders_tree = false)
+	public function put($fn_ar, $keep_folders_tree = false, $remoteFilenames = [])
 	{
 		$result = true;
 
 		if (!is_array($fn_ar)) {
-			$fn_ar = array($fn_ar);
+			$fn_ar = [$fn_ar];
 		}
 
-		foreach ($fn_ar as $fn)
-		{
+		if (!is_array($remoteFilenames)) {
+            $remoteFilenames = [$remoteFilenames];
+        }
+
+		if (
+            count($remoteFilenames) &&
+		    count($fn_ar) !== count($remoteFilenames)
+        ) {
+		    throw new \Exception('FTP: Local and remote filenames count should match');
+        }
+
+		foreach ($fn_ar as $idx => $fn) {
             $fn = $this->fixEncoding($fn);
+            $remote_fn = $remoteFilenames[$idx] ?? basename($fn);
 
 			if ($keep_folders_tree) {
-				$remote_dir = dirname($fn);
-				$remote_fn = basename($fn);
+				$remote_dir = dirname($remoteFilenames[$idx] ?? $fn);
 
-				if ($remote_fn != $fn) {
+				if (!$remoteFilenames && $remote_fn != $fn) {
 					$this->make_dir_chain($remote_dir);
 				}
 
 				$remote_fn = $fn;
-			} else {
-				$remote_fn = basename($fn);
 			}
 
 			if (!@ftp_put($this->ftp, $remote_fn, $fn, FTP_BINARY)) {
