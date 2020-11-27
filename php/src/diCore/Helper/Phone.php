@@ -10,8 +10,8 @@ namespace diCore\Helper;
 
 class Phone
 {
-	const INPUT_PATTERN = '(00|\+)?\d{1,3}[\s\t\x20()\-]*\d{2,3}[\s\t\x20()\-]*\d{3,3}[\s\t\x20\-]*\d{2,3}[\s\t\x20\-]*\d{2,3}';
-	const INPUT_PATTERN_INT_AND_LOCAL = '(00|\+)?\d{1,3}\s*(\d{2,3}\s*\d{3,3})?\s*\d{2,3}\s*\d{2,3}';
+	const INPUT_PATTERN = '(00|\+)?\d{1,3}[\s\t\x20()\-]*\d{2,4}[\s\t\x20()\-]*\d{3,3}[\s\t\x20\-]*\d{2,3}[\s\t\x20\-]*\d{2,3}';
+	const INPUT_PATTERN_INT_AND_LOCAL = '(00|\+)?\d{1,3}\s*(\d{2,4}\s*\d{3,3})?\s*\d{2,3}\s*\d{2,3}';
 	const INPUT_EXAMPLE = '+7 123 4567890';
 
 	public static function isValid($phone)
