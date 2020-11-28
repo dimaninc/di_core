@@ -20,7 +20,7 @@ class Kassa
 	const securityType = 'MD5'; //'PKCS7'
 	const testMode = false;
 
-	const productionUrl = 'https://money.yandex.ru/eshop.xml';
+	const productionUrl = 'https://yoomoney.ru/eshop.xml';
 	const testUrl = 'https://demomoney.yandex.ru/eshop.xml';
 
 	protected static $actions = [
@@ -39,8 +39,7 @@ class Kassa
 		$this->action = $action;
 		$this->options = extend($this->options, $options);
 
-		if ($this->action)
-		{
+		if ($this->action) {
 			$this->log('Yandex request: ' . $this->action);
 		}
 	}
@@ -104,8 +103,7 @@ class Kassa
 
 	public function process()
 	{
-		if (!$this->actionExists($this->getAction()))
-		{
+		if (!$this->actionExists($this->getAction())) {
 			$this->log('Unknown action: ' . $this->getAction());
 
 			return [
@@ -118,8 +116,7 @@ class Kassa
 
 		$this->log('Request processed, now trying to pass action: ' . $this->getAction());
 
-		switch ($this->getAction())
-		{
+		switch ($this->getAction()) {
 			case 'check':
 				$response = $this->checkResponse();
 				break;
@@ -146,8 +143,7 @@ class Kassa
 		$this->log('Start ' . $this->getAction());
 		$this->log('Security type ' . static::getSecurityType());
 
-		switch (static::getSecurityType())
-		{
+		switch (static::getSecurityType()) {
 			case 'MD5':
 				$this->log('Request: ' . print_r($_POST, true));
 
@@ -176,8 +172,7 @@ class Kassa
 				break;
 		}
 
-		if (is_callable($this->options['init']))
-		{
+		if (is_callable($this->options['init'])) {
 			$this->options['init']($this);
 		}
 
@@ -233,8 +228,7 @@ class Kassa
 		header('HTTP/1.0 200');
 		header('Content-Type: application/xml');
 
-		if ($forcePrintAndExit)
-		{
+		if ($forcePrintAndExit) {
 			die($responseBody);
 		}
 
@@ -263,8 +257,7 @@ class Kassa
 		$this->log('String to md5: ' . $str);
 		$md5 = strtoupper(md5($str));
 
-		if ($md5 != strtoupper(\diRequest::post('md5')))
-		{
+		if ($md5 != strtoupper(\diRequest::post('md5'))) {
 			$this->log('Waited for md5: ' . $md5 . ', received md5: ' . \diRequest::post('md5'));
 
 			return false;
@@ -286,8 +279,7 @@ class Kassa
 		$process = proc_open('openssl smime -verify -inform PEM -nointern -certfile ' . $certificate . ' -CAfile ' . $certificate,
 			$descriptorspec, $pipes);
 
-		if (is_resource($process))
-		{
+		if (is_resource($process)) {
 			// Getting data from request body.
 			$data = file_get_contents('php://input');
 			fwrite($pipes[0], $data);
@@ -296,12 +288,9 @@ class Kassa
 			fclose($pipes[1]);
 			$resCode = proc_close($process);
 
-			if ($resCode != 0)
-			{
+			if ($resCode != 0) {
 				return null;
-			}
-			else
-			{
+			} else {
 				$this->log('Raw xml: ' . $content);
 				$xml = simplexml_load_string($content);
 				$array = json_decode(json_encode($xml), TRUE);
@@ -322,8 +311,7 @@ class Kassa
 	 */
 	private function buildResponse($functionName, $invoiceId, $resultCode, $message = null)
 	{
-		switch ($functionName)
-		{
+		switch ($functionName) {
 			case 'check':
 				$methodName = 'checkOrder';
 				break;
