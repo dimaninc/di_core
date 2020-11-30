@@ -8,6 +8,8 @@
 
 namespace diCore\Traits\Model;
 
+use diCore\Tool\CollectionCache;
+
 /**
  * Trait TargetInside
  * @package diCore\Traits\Model
@@ -59,7 +61,7 @@ trait TargetInside
 			$this->target = method_exists($this, 'getRelated') && $this->getRelated('target_model')
 				? $this->getRelated('target_model')
 				: ($this->getTargetType()
-					? \diModel::create($this->getTunedTargetType(), $this->getTargetId(), 'id')
+					? CollectionCache::getModel($this->getTunedTargetType(), $this->getTargetId(), true)
 					: new \diModel()
 				);
 		}
