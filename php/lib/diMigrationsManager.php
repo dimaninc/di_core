@@ -1,6 +1,8 @@
 <?php
 
 use diCore\Data\Config;
+use diCore\Database\Connection;
+use diCore\Database\Engine;
 use diCore\Database\Tool\Migration;
 use diCore\Entity\DiMigrationsLog\Model;
 use diCore\Entity\DiMigrationsLog\Collection;
@@ -241,21 +243,46 @@ EOF;
 		return dirname(dirname(dirname(__FILE__))) . "/migrations/";
 	}
 
+	private function getCreateTableSql()
+    {
+        $charset = Config::getDbEncoding();
+        $collation = Config::getDbCollation();
+
+        switch (Connection::get()::getEngine()) {
+            case Engine::SQLITE:
+                return [
+                    "CREATE TABLE IF NOT EXISTS `" . static::logTable . "`(
+                        id integer not null primary key autoincrement,
+                        admin_id integer,
+                        idx varchar(100),
+                        name varchar(250),
+                        direction tinyint,
+                        date timestamp default CURRENT_TIMESTAMP
+                    );",
+                    "CREATE INDEX IF NOT EXISTS `" . static::logTable . "_idx` ON `" . static::logTable . "` (idx);",
+                ];
+
+            default:
+                return [
+                    "CREATE TABLE IF NOT EXISTS `" . static::logTable . "`(
+                        id bigint not null auto_increment,
+                        admin_id bigint,
+                        idx varchar(100),
+                        name varchar(250),
+                        direction tinyint,
+                        date timestamp not null default CURRENT_TIMESTAMP,
+                        index main_idx(idx),
+                        primary key(id)
+                    ) ENGINE=InnoDB DEFAULT CHARSET={$charset} COLLATE={$collation}",
+                ];
+        }
+    }
+
 	private function initTables()
 	{
-	    $charset = Config::getDbEncoding();
-	    $collation = Config::getDbCollation();
-
-        $res = $this->getDb()->q("CREATE TABLE IF NOT EXISTS `" . static::logTable . "`(
-			id bigint not null auto_increment,
-			admin_id bigint,
-			idx varchar(100),
-			name varchar(250),
-			direction tinyint,
-			date timestamp not null default CURRENT_TIMESTAMP,
-			index main_idx(idx),
-			primary key(id)
-		) ENGINE=InnoDB DEFAULT CHARSET={$charset} COLLATE={$collation}");
+	    foreach ($this->getCreateTableSql() as $sql) {
+            $res = $this->getDb()->q($sql);
+        }
 
 		if (!$res) {
 			throw new Exception("Unable to init Table: " . $this->getDb()->getLogStr());
