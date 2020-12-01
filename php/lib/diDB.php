@@ -526,8 +526,7 @@ abstract class diDB
 
 		$err = $this->error();
 
-		if (!$result && $err)
-		{
+		if (!$result && $err) {
 			$this->_log("unable to exec query \"$q\"", false);
 			$this->_log($err, false);
 		}
@@ -791,6 +790,20 @@ abstract class diDB
 		return join(",", $q_ar);
 	}
 
+	public function lockTable($table)
+    {
+        $this->__q("LOCK TABLES $table WRITE");
+
+        return $this;
+    }
+
+    public function unlockTable($table = null)
+    {
+        $this->__q("UNLOCK TABLES");
+
+        return $this;
+    }
+
 	public function insert($table, $fields_values = [])
     {
         $t = $this->get_table_name($table);
@@ -809,16 +822,16 @@ abstract class diDB
 
         $time1 = utime();
 
-        $this->__q("LOCK TABLES $t WRITE");
+        $this->lockTable($t);
         if (!$this->__rq("INSERT INTO {$t}{$q1} VALUES" . join(",", $q2_ar) . ";")) {
-            $this->_log("unable to insert into table $t");
+            $this->_log("unable to insert into table $t", false);
 
-            $this->__q("UNLOCK TABLES");
+            $this->unlockTable($t);
 
             return false;
         }
         $this->lastInsertId = $this->__insert_id();
-        $this->__q("UNLOCK TABLES");
+        $this->unlockTable($t);
 
         $time2 = utime();
         $this->execution_time += $time2 - $time1;
@@ -849,7 +862,7 @@ abstract class diDB
         } elseif (is_array($q_ending)) {
             $q_ending = "WHERE id" . $this->in($q_ending);
         } elseif (!$q_ending && $q_ending !== "") {
-			$this->_log("Warning, empty Q_ENDING in update ($table)");
+			$this->_log("Warning, empty Q_ENDING in update ($table)", false);
 
 			return false;
 			//$q_ending = "WHERE 1=0";
@@ -858,17 +871,17 @@ abstract class diDB
 
         $q = "UPDATE $t SET " . self::fields_and_values_to_string_for_update($fields_values) . " $q_ending";
 
-		$this->__q("LOCK TABLES $t WRITE");
+		$this->lockTable($t);
 		if (!$this->__rq($q)) {
-			$this->_log("unable to update");
+			$this->_log("unable to update: $q", false);
 
-			$this->__q("UNLOCK TABLES");
+            $this->unlockTable($t);
 
 			return false;
 		}
 
 		$this->affected_rows = $this->__affected_rows();
-		$this->__q("UNLOCK TABLES");
+        $this->unlockTable($t);
 
 		$time2 = utime();
 		$this->execution_time += $time2 - $time1;
@@ -877,6 +890,11 @@ abstract class diDB
 		return true;
 	}
 
+    public function getDeleteSingleLimit()
+    {
+        return ' LIMIT 1';
+    }
+
 	public function delete($table, $q_ending = "")
 	{
 		$time1 = utime();
@@ -884,31 +902,27 @@ abstract class diDB
 		$t = $this->get_table_name($table);
 
 		// fast construction to get record by id
-		if (is_numeric($q_ending))
-			$q_ending = "WHERE id='$q_ending' LIMIT 1";
-		elseif (is_array($q_ending))
-			$q_ending = "WHERE id".$this->in($q_ending);
-		elseif (!$q_ending && $q_ending !== "")
-		{
-			$this->_log("Warning, empty Q_ENDING in delete ($table)");
-			return false;
-			//$q_ending = "WHERE 1=0";
-		}
-		//
+        if (is_numeric($q_ending)) {
+            $q_ending = "WHERE id = '$q_ending'" . $this->getDeleteSingleLimit();
+        } elseif (is_array($q_ending)) {
+            $q_ending = "WHERE id" . $this->in($q_ending);
+        } elseif (!$q_ending && $q_ending !== "") {
+            $this->_log("Warning, empty Q_ENDING in delete ($table)", false);
+
+            return false;
+        }
 
 		$q = "DELETE FROM $t $q_ending";
 
-		$this->__q("LOCK TABLES $t WRITE");
-		if (!$this->__rq($q))
-		{
-			$this->_log("unable to delete");
-			$this->_log($q);
+        $this->lockTable($t);
+		if (!$this->__rq($q)) {
+			$this->_log("Unable to delete: $q", false);
 
-			$this->__q("UNLOCK TABLES");
+            $this->unlockTable($t);
 
 			return false;
 		}
-		$this->__q("UNLOCK TABLES");
+        $this->unlockTable($t);
 
 		$time2 = utime();
 		$this->execution_time += $time2 - $time1;
@@ -928,17 +942,16 @@ abstract class diDB
 
 		$time1 = utime();
 
-		$this->__q("LOCK TABLES $t WRITE");
-		if (!$this->__rq("INSERT INTO {$t}{$q1} VALUES{$q2} ON DUPLICATE KEY UPDATE {$q3};"))
-		{
-			$this->_log("unable to insert/update into table $t");
+        $this->lockTable($t);
+		if (!$this->__rq("INSERT INTO {$t}{$q1} VALUES{$q2} ON DUPLICATE KEY UPDATE {$q3};")) {
+			$this->_log("unable to insert/update into table $t", false);
 
-			$this->__q("UNLOCK TABLES");
+            $this->unlockTable($t);
 
 			return false;
 		}
 		$id = $this->__insert_id();
-		$this->__q("UNLOCK TABLES");
+        $this->unlockTable($t);
 
 		$time2 = utime();
 		$this->execution_time += $time2 - $time1;
@@ -951,8 +964,9 @@ abstract class diDB
 	{
 		$t = $this->get_table_name($table);
 
-		if (!$this->__rq("DROP TABLE $t"))
-			return $this->_log("unable to drop table $t");
+		if (!$this->__rq("DROP TABLE $t")) {
+            return $this->_log("unable to drop table $t", false);
+        }
 
 		return true;
 	}

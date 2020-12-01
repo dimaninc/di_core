@@ -1951,10 +1951,18 @@ class diModel implements \ArrayAccess
                         $a['field'] => $a['id'],
                     ]);
             } else {
-                $this->getDb()->delete(
+                if (!$this->getDb()->delete(
                     $this->getDb()->escapeTable($this->getTable()),
                     $this->getId()
-                );
+                )) {
+                    $e = new \diDatabaseException(
+                        'Unable to delete ' . get_class($this) . ' in DB: ' .
+                        join("\n", $this->getDb()->getLog())
+                    );
+                    $e->setErrors($this->getDb()->getLog());
+
+                    throw $e;
+                }
             }
         }
 

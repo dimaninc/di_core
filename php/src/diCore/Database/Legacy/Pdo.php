@@ -67,7 +67,9 @@ abstract class Pdo extends \diDB
 
 	protected function __error()
 	{
-		return null;
+		$info = json_encode($this->link->errorInfo());
+		
+		return $info;
 	}
 
 	protected function __q($q)
