@@ -44,6 +44,7 @@
 
 use diCore\Admin\BasePage;
 use diCore\Admin\FilterRule;
+use diCore\Admin\Form;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 
@@ -374,15 +375,21 @@ class diAdminFilters
 		$filterRowsAr = [];
 
 		foreach ($this->ar as $a) {
+		    $field = $a['field'];
+		    $title = $a['title']
+                ?: ArrayHelper::get($this->AdminPage->getFormFields(), $field . '.title')
+                ?: Form::getFieldTitle($field, $this->AdminPage->getFieldProperty($field))
+                ?: $field;
+
 			$filterRowsAr[] = $this->getRowHtml(
-			    $this->getFieldHtml($a["title"], $this->getInput($a["field"])),
-                $a['field']
+			    $this->getFieldHtml($title, $this->getInput($field)),
+                $field
             );
 
-			if ($this->getNote($a["field"])) {
+			if ($this->getNote($field)) {
 				$filterRowsAr[] = $this->getRowHtml(
-				    $this->getNote($a["field"]),
-                    $a['field']
+				    $this->getNote($field),
+                    $field
                 );
 			}
 		}

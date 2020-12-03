@@ -949,6 +949,12 @@ EOF;
 
 	public static function getFieldTitle($fieldName, $fieldProps, $language = 'ru')
     {
+        /*
+        if ($fieldProps === null) {
+            $fieldProps = $this->getX()->getFieldProperty($fieldName);
+        }
+        */
+
         if (!empty($fieldProps['title'])) {
             return $fieldProps['title'];
         }
