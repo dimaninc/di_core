@@ -342,4 +342,19 @@ class ArrayHelper
             return $obj;
         }
     }
+
+    public static function recursiveSum($array)
+    {
+        $sum = 0;
+
+        foreach ($array as $key => $a) {
+            if (is_array($a)) {
+                $sum += self::recursiveSum($a);
+            } else {
+                $sum += $a;
+            }
+        }
+
+        return $sum;
+    }
 }
