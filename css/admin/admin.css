@@ -1627,7 +1627,8 @@ body[data-skin="entrine"] .list-control-panel {
   visibility: hidden;
 }
 .expand-collapse-block {
-  float: right;
+  position: absolute;
+  right: 0;
   padding: 10px 25px 0 10px;
 }
 .expand-collapse-block u {
