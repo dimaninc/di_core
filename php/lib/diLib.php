@@ -400,13 +400,15 @@ class diLib
 
 	public static function getLocation()
 	{
-        $root = $_SERVER['DOCUMENT_ROOT'];
+        $sep = '/';
+	    $root = str_replace('\\', $sep, $_SERVER['DOCUMENT_ROOT']);
+        $__file__ = str_replace('\\', $sep, __FILE__);
 
 		if (self::$location === null) {
 			foreach (self::$locationMarkers as $locationId => $markerAr) {
-				$marker = DIRECTORY_SEPARATOR . join(DIRECTORY_SEPARATOR, $markerAr) . DIRECTORY_SEPARATOR;
+				$marker = $sep . join($sep, $markerAr) . $sep;
 
-				if (strpos(__FILE__, $marker) !== false) {
+				if (strpos($__file__, $marker) !== false) {
 					self::$location = $locationId;
 
 					break;
@@ -416,7 +418,7 @@ class diLib
 
 		if (
 		    self::$location === self::LOCATION_VENDOR_BEYOND &&
-            substr(__FILE__, 0, strlen($root)) === $root
+            substr($__file__, 0, strlen($root)) === $root
         ) {
 		    self::$location = self::LOCATION_VENDOR_HTDOCS;
         }
@@ -428,12 +430,11 @@ class diLib
             ]) &&
             isset($marker)
         ) {
-            $file = str_replace('\\', '/', __FILE__);
-            $marker = str_replace('\\', '/', $marker);
+            $marker = str_replace('\\', $sep, $marker);
 
-            if (substr($file, 0, strlen($root)) === $root) {
-                $file = substr($file, strlen($root));
-                self::$subFolder = trim(substr($file, 0, strpos($file, $marker)), '/');
+            if (substr($__file__, 0, strlen($root)) === $root) {
+                $__file__ = substr($__file__, strlen($root));
+                self::$subFolder = trim(substr($__file__, 0, strpos($__file__, $marker)), $sep);
             }
         }
 
