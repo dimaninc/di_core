@@ -28,6 +28,8 @@ namespace diCore\Data;
 
 use diCore\Admin\BasePage;
 use diCore\Admin\Submit;
+use diCore\Database\Connection;
+use diCore\Database\Engine;
 
 class Configuration
 {
@@ -94,8 +96,7 @@ class Configuration
 
 	public function checkOtherTabInList($force = false)
 	{
-		if ($force || !isset($this->tabsAr[$this->getOtherTabName()]))
-		{
+		if ($force || !isset($this->tabsAr[$this->getOtherTabName()])) {
 			$this->tabsAr[$this->getOtherTabName()] = $this->getOtherTabTitle();
 		}
 
@@ -138,8 +139,7 @@ class Configuration
 
 	protected function getLanguage()
 	{
-		if ($this->getAdminPage())
-		{
+		if ($this->getAdminPage()) {
 			return $this->getAdminPage()->getLanguage();
 		}
 
@@ -153,7 +153,7 @@ class Configuration
 
 	protected function getFullCacheFilename()
 	{
-		$folder = \diCore\Data\Config::getConfigurationFolder();
+		$folder = Config::getConfigurationFolder();
 
 		return $folder . $this->cacheFilename;
 	}
@@ -162,8 +162,7 @@ class Configuration
 	{
 		@include $this->getFullCacheFilename();
 
-		if (!self::$cacheLoaded)
-		{
+		if (!self::$cacheLoaded) {
 			$this
                 ->loadAllFromDB()
 			    ->updateCache();
@@ -182,12 +181,9 @@ class Configuration
 	 */
 	public static function get($name, $property = 'value')
 	{
-		if ($name2 = self::exists($name))
-		{
+		if ($name2 = self::exists($name)) {
 			return self::getPropertyOption($name2, $property);
-		}
-		else
-		{
+		} else {
 			self::throwException($name);
 
 			return null;
@@ -202,12 +198,9 @@ class Configuration
 	 */
 	public static function safeGet($name, $default = null, $property = 'value')
 	{
-		if ($name = self::exists($name))
-		{
+		if ($name = self::exists($name)) {
 			return self::getPropertyOption($name, $property);
-		}
-		else
-		{
+		} else {
 			return $default;
 		}
 	}
@@ -216,10 +209,8 @@ class Configuration
 	{
 		$ar = [];
 
-		foreach (self::$data as $key => $value)
-		{
-			if ($pattern !== null && !preg_match($pattern, $key))
-			{
+		foreach (self::$data as $key => $value) {
+			if ($pattern !== null && !preg_match($pattern, $key)) {
 				continue;
 			}
 
@@ -240,12 +231,9 @@ class Configuration
 	 */
 	public static function exists($name)
 	{
-		if (is_array($name))
-		{
-			foreach ($name as $n)
-			{
-				if (static::exists($n))
-				{
+		if (is_array($name)) {
+			foreach ($name as $n) {
+				if (static::exists($n)) {
 					return $n;
 				}
 			}
@@ -283,7 +271,7 @@ class Configuration
 
 	private function getDB()
 	{
-		return \diCore\Database\Connection::get()->getDb();
+		return Connection::get()->getDb();
 	}
 
 	public function setTableName($table)
@@ -317,10 +305,8 @@ class Configuration
 	public function loadAllFromDB()
 	{
 		$rs = $this->getDB()->rs($this->tableName);
-		while ($r = $this->getDB()->fetch_array($rs))
-		{
-			if (!self::exists($r[$this->nameField]))
-			{
+		while ($rs && $r = $this->getDB()->fetch_array($rs)) {
+			if (!self::exists($r[$this->nameField])) {
 				continue;
 			}
 
@@ -353,8 +339,7 @@ class Configuration
 
 	public function getFromDB($name)
 	{
-		if (!self::exists($name))
-		{
+		if (!self::exists($name)) {
 			self::throwException($name);
 
 			return null;
@@ -382,51 +367,39 @@ class Configuration
 	{
 		$checkboxesAr = [];
 
-		foreach ($_POST as $k => $v)
-		{
+		foreach ($_POST as $k => $v) {
 			$k = str_replace(
 				array_values(static::$inputNameReplaces),
 				array_keys(static::$inputNameReplaces),
 				$k
 			);
 
-			if (is_array($v))
-			{
-				foreach ($v as $_k => $_v)
-				{
+			if (is_array($v)) {
+				foreach ($v as $_k => $_v) {
 					$full_k = $k . '[' . $_k . ']';
 
-					if (self::exists($full_k))
-					{
+					if (self::exists($full_k)) {
 						$this->setToDB($full_k, $_v);
 					}
 
-					if (self::getPropertyType($full_k) == 'checkbox')
-					{
+					if (self::getPropertyType($full_k) == 'checkbox') {
 						$checkboxesAr[] = $full_k;
 					}
 				}
-			}
-			else
-			{
-				if (self::exists($k))
-				{
+			} else {
+				if (self::exists($k)) {
 					$this->setToDB($k, $v);
 
-					if (self::getPropertyType($k) == 'checkbox')
-					{
+					if (self::getPropertyType($k) == 'checkbox') {
 						$checkboxesAr[] = $k;
 					}
 				}
 			}
 		}
 
-		foreach ((array)$_FILES as $k => $v)
-		{
-			if (self::exists($k) && in_array(self::getPropertyType($k), ['pic', 'file']))
-			{
-				if (isset($_FILES[$k]) && $_FILES[$k]['error'] == 0)
-				{
+		foreach ((array)$_FILES as $k => $v) {
+			if (self::exists($k) && in_array(self::getPropertyType($k), ['pic', 'file'])) {
+				if (isset($_FILES[$k]) && $_FILES[$k]['error'] == 0) {
 					create_folders_chain(\diPaths::fileSystem(), self::getFolder(), $this->dirChmod);
 
 					$ext = strtolower('.' . get_file_ext($_FILES[$k]['name']));
@@ -435,13 +408,11 @@ class Configuration
 						$pic = substr(get_unique_id(), 0, 10) . $ext;
 					} while (is_file(\diPaths::fileSystem() . self::getFolder() . $pic));
 
-					if (!move_uploaded_file($_FILES[$k]['tmp_name'], \diPaths::fileSystem() . self::getFolder() . $pic))
-					{
+					if (!move_uploaded_file($_FILES[$k]['tmp_name'], \diPaths::fileSystem() . self::getFolder() . $pic)) {
 						throw new \Exception("Unable to copy file {$_FILES[$k]['name']} to " . \diPaths::fileSystem() . self::getFolder() . $pic);
 					}
 
-					if (self::get($k) && is_file(\diPaths::fileSystem() . self::getFolder() . self::get($k)))
-					{
+					if (self::get($k) && is_file(\diPaths::fileSystem() . self::getFolder() . self::get($k))) {
 						unlink(\diPaths::fileSystem() . self::getFolder() . self::get($k));
 					}
 
@@ -450,17 +421,13 @@ class Configuration
 			}
 		}
 
-		foreach (self::$data as $_k => $_v)
-		{
-		    if (!isset($_v['type']))
-		    {
+		foreach (self::$data as $_k => $_v) {
+		    if (!isset($_v['type'])) {
 		    	continue;
 			}
 
-			if ($_v['type'] == 'checkbox')
-			{
-				if (!in_array($_k, $checkboxesAr))
-				{
+			if ($_v['type'] == 'checkbox') {
+				if (!in_array($_k, $checkboxesAr)) {
 					self::$data[$_k]['value'] = 0;
 
 					$this->setToDB($_k, 0);
@@ -475,12 +442,10 @@ class Configuration
 
 	public static function hasFlag($name, $flag)
 	{
-		if (self::exists($name))
-		{
+		if (self::exists($name)) {
 			$flags = self::getPropertyOption($name, 'flags');
 
-			if (!is_array($flags))
-			{
+			if (!is_array($flags)) {
 				$flags = array($flags);
 			}
 
@@ -495,18 +460,46 @@ class Configuration
 		return self::$data;
 	}
 
+    private function getCreateTableSql()
+    {
+        $charset = Config::getDbEncoding();
+        $collation = Config::getDbCollation();
+
+        switch (Connection::get()::getEngine()) {
+            case Engine::SQLITE:
+                return [
+                    "CREATE TABLE IF NOT EXISTS `{$this->tableName}`(
+                        id integer not null primary key autoincrement,
+                        {$this->nameField} varchar(255),
+                        {$this->valueField} text
+                    );",
+                    "CREATE INDEX IF NOT EXISTS `{$this->tableName}_idx` ON `{$this->tableName}` ({$this->nameField});",
+                ];
+
+            default:
+                return [
+                    "CREATE TABLE IF NOT EXISTS `{$this->tableName}`(
+                        `id` int not null auto_increment,
+                        `{$this->nameField}` varchar(255),
+                        `{$this->valueField}` text,
+                        unique key `idx`(`{$this->nameField}`),
+                        primary key(`id`)
+		            ) ENGINE=InnoDB DEFAULT CHARSET={$charset} COLLATE={$collation};",
+                ];
+        }
+    }
+
 	private function createTable()
 	{
-		$charset = Config::getDbEncoding();
-		$collation = Config::getDbCollation();
+        foreach ($this->getCreateTableSql() as $sql) {
+            $res = $this->getDb()->q($sql);
+        }
 
-		$this->getDB()->q("CREATE TABLE IF NOT EXISTS `{$this->tableName}`(
-			`id` int not null auto_increment,
-			`{$this->nameField}` varchar(255),
-			`{$this->valueField}` text,
-			unique key `idx`(`{$this->nameField}`),
-			primary key(`id`)
-		) ENGINE=InnoDB DEFAULT CHARSET={$charset} COLLATE={$collation};");
+        if (!$res) {
+            throw new \Exception("Unable to init configuration table: " .
+                $this->getDb()->getLogStr()
+            );
+        }
 
 		return $this;
 	}
@@ -521,38 +514,32 @@ class Configuration
 		$cache_file = '';
 		$cache_file .= $this->phpHeader();
 
-		if ($options['prefixCode'])
-		{
+		if ($options['prefixCode']) {
 			$cache_file .= $options['prefixCode'];
 		}
 
 		$rs = $this->getDB()->rs($this->tableName);
-		while ($r = $this->getDB()->fetch($rs))
-		{
+		while ($rs && $r = $this->getDB()->fetch($rs)) {
 			$name = $r->{$this->nameField};
 
-			if (!self::exists($name))
-			{
+			if (!self::exists($name)) {
 				continue;
 			}
 
 			$type = self::getPropertyType($name);
 			$s = $this->adjustBeforeDB($r->{$this->valueField}, $type, true);
 
-			if (!in_array($type, ['int', 'integer', 'float', 'double', 'checkbox']))
-			{
+			if (!in_array($type, ['int', 'integer', 'float', 'double', 'checkbox'])) {
 				$s = "\"$s\"";
 			}
 
 			$cache_file .= "self::\$data[\"$name\"][\"value\"] = $s;\n";
 
-			if ($type == 'pic')
-			{
+			if ($type == 'pic') {
 				$ff = \diPaths::fileSystem() . self::getFolder() . $r->{$this->valueField};
 				list($w, $h, $t) = is_file($ff) ? getimagesize($ff) : [0, 0, 0];
 
-				if ($w && $h)
-				{
+				if ($w && $h) {
 					$cache_file .= "self::\$data[\"{$name}\"][\"img_width\"] = $w;\n";
 					$cache_file .= "self::\$data[\"{$name}\"][\"img_height\"] = $h;\n";
 					$cache_file .= "self::\$data[\"{$name}\"][\"img_type\"] = $t;\n";
@@ -560,8 +547,7 @@ class Configuration
 			}
 		}
 
-		if ($options['suffixCode'])
-		{
+		if ($options['suffixCode']) {
 			$cache_file .= $options['suffixCode'];
 		}
 
@@ -575,8 +561,7 @@ class Configuration
 
 	private function adjustBeforeDB($value, $type, $forCache = false)
 	{
-		switch ($type)
-		{
+		switch ($type) {
 			default:
 				return $forCache ? addcslashes($value, '"') : addslashes($value);
 
@@ -593,8 +578,7 @@ class Configuration
 
 	private function adjustAfterDB($value, $type)
 	{
-		switch ($type)
-		{
+		switch ($type) {
 			default:
 				return $value;
 
