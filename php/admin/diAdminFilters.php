@@ -750,7 +750,7 @@ EOF;
 							$a['not'] = $this->ar[$idx]['not'] = true;
 							$value = substr($value, 1);
 
-							if (!is_callable($where_tpl)) {
+							if ($where_tpl && !is_callable($where_tpl)) {
 								$where_tpl = str_replace('=', '!=', $where_tpl);
 							}
 						}
