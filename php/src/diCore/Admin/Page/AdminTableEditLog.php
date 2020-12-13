@@ -7,6 +7,7 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Admin\FilterRule;
 use diCore\Entity\AdminTableEditLog\Model;
 use diCore\Helper\ArrayHelper;
 use diCore\Tool\CollectionCache;
@@ -64,17 +65,19 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
 				'field' => 'admin_id',
 				'type' => 'int',
 				'title' => $this->getVocabularyTerm('admin_id.title'),
-				//'where_tpl' => 'diaf_minus_one',
+                'rule' => FilterRule::equals,
 			])
 			->addFilter([
 				'field' => 'target_table',
 				'type' => 'string',
 				'title' => $this->getVocabularyTerm('target_table.title'),
+                'rule' => FilterRule::equals,
 			])
             ->addFilter([
                 'field' => 'target_id',
                 'type' => 'string',
                 'title' => $this->getVocabularyTerm('target_id.title'),
+                'rule' => FilterRule::equals,
             ])
 			->buildQuery()
 			->setSelectFromCollectionInput('admin_id',

@@ -15,11 +15,13 @@ class FilterRule extends SimpleContainer
     const contains = 1;
     const startsWith = 2;
     const endsWith = 3;
+    const equals = 4;
 
     public static $names = [
         self::contains => 'contains',
         self::startsWith => 'startsWith',
         self::endsWith => 'endsWith',
+        self::equals => 'equals',
     ];
 
     public static function callback($id)
@@ -70,6 +72,15 @@ class FilterRule extends SimpleContainer
 
         return function (\diCollection $col) use ($props) {
             $col->endsWith($props['field'], $props['value']);
+        };
+    }
+
+    public static function equals($props = [])
+    {
+        $props = self::extProps($props);
+
+        return function (\diCollection $col) use ($props) {
+            $col->filterBy($props['field'], $props['value']);
         };
     }
 }
