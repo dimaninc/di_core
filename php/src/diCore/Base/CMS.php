@@ -131,6 +131,9 @@ abstract class CMS
         'test-tag',
         'banner-test-tags',
 
+        // google ad
+        'gclid',
+
         // facebook
         'fb_action_ids',
         'fb_action_types',
