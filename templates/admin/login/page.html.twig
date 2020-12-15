@@ -1,0 +1,20 @@
+<div class="login-form-wrapper">
+    {% block before_form_title %}
+    <div class="logo"><i>di</i><b>CMS</b> {{ _tech['xx_version'] }}</div>
+    <div class="site-title">{{ _tech['site_title'] }}</div>
+    <div class="description">{{ lang['logo_description'] }}</div>
+    {% endblock %}
+
+    {% include 'admin/login/form.html.twig' %}
+
+    {% block after_form_to_site %}
+    <div class="to-home"><a href="../" target="_blank">{{ lang['go_to_site'] }}</a></div>
+    {% endblock %}
+
+    {% block after_form_contacts %}
+    <div class="contacts">
+        {{ lang['support'] }}:
+        <a href="mailto:dicms.support@gmail.com">dicms.support@gmail.com</a>
+    </div>
+    {% endblock %}
+</div>

@@ -27,6 +27,11 @@ class Login extends \diCore\Admin\BasePage
         // this prevents errors due to fake table
     }
 
+    protected function getIndexTemplateName()
+    {
+        return 'admin/login/index';
+    }
+
     public function renderForm()
     {
         $errors = [];
@@ -45,7 +50,7 @@ class Login extends \diCore\Admin\BasePage
                     'login' => \diRequest::post(\diAdminUser::POST_LOGIN_FIELD),
                 ],
             ])
-            ->setTemplateForIndex('admin/login/index');
+            ->setTemplateForIndex($this->getIndexTemplateName());
     }
 
     public function getFormFields()

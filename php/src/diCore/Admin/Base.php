@@ -37,7 +37,7 @@ class Base
 	/** @var BasePage */
 	protected $adminPage;
 
-	private $version = '4.8';
+	private $version = '4.9';
 
 	protected $defaultSuperUsersAr = ['dimaninc'];
 	protected $superUsersAr = [];
@@ -181,8 +181,7 @@ class Base
     {
         $subFolder = static::SUBFOLDER;
 
-        if (\diLib::getSubFolder())
-        {
+        if (\diLib::getSubFolder()) {
             $subFolder = \diLib::getSubFolder() . '/' . $subFolder;
         }
 
@@ -243,14 +242,11 @@ class Base
 	{
 		$v = self::$vocabulary[self::currentLanguage()];
 
-		if ($term === null)
-		{
+		if ($term === null) {
 			return $v;
 		}
 
-		return isset($v[$term])
-			? $v[$term]
-			: null;
+		return $v[$term] ?? null;
 	}
 
 	public function work()
@@ -281,7 +277,8 @@ class Base
                 ->renderIndex()
                 ->getIndex();
         } catch (\Exception $e) {
-            echo 'fasttemplate';
+            echo 'fasttemplate fallback';
+            // var_dump($e);
             return $this->getTpl()
                 ->parse('index');
         }
@@ -289,7 +286,7 @@ class Base
 
 	protected function getStaticTimestampEnding()
 	{
-		return class_exists('diStaticBuild')
+		return class_exists('\diStaticBuild')
 			? '?v=' . \diStaticBuild::VERSION
 			: '';
 	}
@@ -349,8 +346,7 @@ class Base
 	 */
 	public function getTwig()
 	{
-		if ($this->Twig === null)
-		{
+		if ($this->Twig === null) {
 			$this->Twig = \diTwig::create($this->twigCreateOptions);
             $this->Twig
                 ->assign([
@@ -455,15 +451,13 @@ class Base
 
 	public function getRefinedMethod()
 	{
-		if ($this->getModule() == 'login')
-		{
+		if ($this->getModule() == 'login') {
 			return '';
 		}
 
 		$method = $this->getMethod();
 
-		if ($method == 'form')
-		{
+		if ($method == 'form') {
 			$method = $this->getId() ? 'edit' : 'add';
 		}
 
@@ -545,8 +539,7 @@ class Base
     /** @deprecated  */
 	protected function printExpandCollapseBlock()
 	{
-		if ($this->expandCollapseBlockNeeded())
-		{
+		if ($this->expandCollapseBlockNeeded()) {
 			$this->getTpl()->parse('EXPAND_COLLAPSE_BLOCK');
 		}
 
@@ -555,12 +548,9 @@ class Base
 
 	protected function printContentPage()
 	{
-		if ($this->currentMethodExists())
-		{
+		if ($this->currentMethodExists()) {
 			$this->load();
-		}
-		else
-		{
+		} else {
 			global $db, $tn_folder, $tn2_folder, $files_folder;
 
 			ob_start();
@@ -610,8 +600,7 @@ class Base
 
 	protected function getStartPath()
 	{
-		if (!$this->adminUser || !$this->adminUser->authorized())
-		{
+		if (!$this->adminUser || !$this->adminUser->authorized()) {
 			return null;
 		}
 
@@ -623,13 +612,12 @@ class Base
 	 */
 	public function getStartModule()
 	{
-		if ($this->adminUser->authorizedForSetup())
-		{
+		if ($this->adminUser->authorizedForSetup()) {
 			$level = 'root';
-		}
-		else
-		{
-			$level = $this->getAdminModel()->exists() ? $this->getAdminModel()->getLevel() : null;
+		} else {
+			$level = $this->getAdminModel()->exists()
+                ? $this->getAdminModel()->getLevel()
+                : null;
 		}
 
 		return $this->getStartModuleByAdminLevel($level);
@@ -637,8 +625,7 @@ class Base
 
 	protected function getStartModuleByAdminLevel($level)
 	{
-		switch ($level)
-		{
+		switch ($level) {
 			case 'root':
 				return 'content';
 
@@ -686,8 +673,7 @@ class Base
 			$this->path = \diRequest::get('path', '');
 			$this->filename = 'content.php';
 
-			if (substr($this->path, strlen($this->path) - 5) == '_form')
-			{
+			if (substr($this->path, strlen($this->path) - 5) == '_form') {
 				$this->path = substr($this->path, 0, strlen($this->path) - 5);
 				$this->filename = 'form.php';
 			}
@@ -707,44 +693,38 @@ class Base
 	// use snowsh system may be
 	private function checkRights()
 	{
-		if ($this->adminUser->reallyAuthorized())
-		{
+		if ($this->adminUser->reallyAuthorized()) {
 			$access_granted = false;
 
 			// old school style
 			$pathForCheck = $this->module;
 
-			if ($this->method != 'list')
-			{
+			if ($this->method != 'list') {
 				$m = in_array($this->method, ['form', 'submit']) ? 'form' : $this->method;
 
 				$pathForCheck .= '_' . $m;
 			}
 			//
 
-			foreach ($this->getAdminMenuFullTree() as $_title => $_ar)
-			{
+			foreach ($this->getAdminMenuFullTree() as $_title => $_ar) {
 				if (
 					in_array($pathForCheck, $_ar['paths']) &&
 					in_array($this->getAdminModel()->getLevel(), $_ar['permissions']) &&
 					(empty($_ar['super']) || $this->isAdminSuper())
-				)
-				{
+				) {
 					$access_granted = true;
 
 					break;
 				}
 			}
 
-			if (!$access_granted)
-			{
+			if (!$access_granted) {
 				$this->module = $this->path = $this->getStartPath();
 				$this->filename = 'content.php';
 			}
 		}
 
-		if (!$this->module || !$this->adminUser->authorized())
-		{
+		if (!$this->module || !$this->adminUser->authorized()) {
 			$this->module = $this->path = 'login';
 			$this->method = 'form';
 		}
@@ -975,8 +955,7 @@ class Base
 
 	public function printMainMenu()
 	{
-		if (!$this->adminUser->authorized())
-		{
+		if (!$this->adminUser->authorized()) {
 			return $this;
 		}
 
@@ -989,22 +968,18 @@ class Base
 		$visible_left_menu_ids_ar = explode(',', (string)@$_COOKIE['admin_visible_left_menu_ids']);
 		$i = 0;
 
-		foreach ($this->getAdminMenuFullTree() as $group_title => $group_ar)
-		{
-			if (
-				$this->adminUser->authorizedForSetup() ||
-				(
-					in_array($this->getAdminModel()->getLevel(), $group_ar['permissions']) &&
-					(empty($group_ar['super']) || $this->isAdminSuper())
-				)
-			   )
-			{
+		foreach ($this->getAdminMenuFullTree() as $group_title => $group_ar) {
+            if (
+                $this->adminUser->authorizedForSetup() ||
+                (
+                    in_array($this->getAdminModel()->getLevel(), $group_ar['permissions']) &&
+                    (empty($group_ar['super']) || $this->isAdminSuper())
+                )
+            ) {
 				$i++;
 
-				foreach ($group_ar['items'] as $itemTitle => $item)
-				{
-					if (is_scalar($item))
-					{
+				foreach ($group_ar['items'] as $itemTitle => $item) {
+					if (is_scalar($item)) {
 						$item = [
 							'module' => $item,
 						];
@@ -1016,10 +991,8 @@ class Base
 						'module' => null,
 					], $item);
 
-					if (empty($item['link']) && !empty($item['module']))
-					{
-						if (!$this->isModuleAccessible($item['module']))
-						{
+					if (empty($item['link']) && !empty($item['module'])) {
+						if (!$this->isModuleAccessible($item['module'])) {
 							continue;
 						}
 
@@ -1065,8 +1038,7 @@ class Base
 
 	public static function getClassMethodName($method, $prefix = '')
 	{
-		switch ($method)
-		{
+		switch ($method) {
 			case 'submit':
 				$m = $method . '_form';
 				break;
@@ -1076,8 +1048,7 @@ class Base
 				break;
 		}
 
-		if ($prefix)
-		{
+		if ($prefix) {
 			$prefix .= '_';
 		}
 
@@ -1099,8 +1070,7 @@ class Base
 		$class = self::getModuleClassName($module);
 		$m = self::getClassMethodName($method);
 
-		if ($this->moduleExists($module))
-		{
+		if ($this->moduleExists($module)) {
 			return method_exists($class, $m);
 		}
 
@@ -1146,8 +1116,7 @@ class Base
 
 	public function getPrintedHead()
     {
-        if ($this->hasHeadPrinter())
-        {
+        if ($this->hasHeadPrinter()) {
             $cb = $this->getHeadPrinter();
 
             return $cb($this);

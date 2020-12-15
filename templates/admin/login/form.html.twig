@@ -1,41 +1,35 @@
-<div class="login-form-wrapper">
+<form name="admin_login" method="post" action="{{ _tech['current_uri'] }}">
+	{% block back_url %}
+	<input type="hidden" name="back" value="{{ _tech['current_uri'] }}">
+	{% endblock %}
+	{% block before_form %}{% endblock %}
 
-	<div class="logo"><i>di</i><b>CMS</b> {{ _tech['xx_version'] }}</div>
-	<div class="site-title">{{ _tech['site_title'] }}</div>
-	<div class="description">{{ lang['logo_description'] }}</div>
-
-	<form name="admin_login" method="post" action="{{ _tech['current_uri'] }}">
-		<input type="hidden" name="back" value="{{ _tech['current_uri'] }}">
-
-		<div class="login-form">
-			{% if login_errors['password'] %}
-				<div class="error">{{ login_errors['password'][_tech['site_language']] }}</div>
-			{% endif %}
-			<div>
-				<input type="text" name="admin_login" placeholder="Login" value="{{ login_credentials['login'] }}">
-			</div>
-			<div>
-				<input type="password" name="admin_password" placeholder="Password">
-			</div>
-			<div>
-				<input type="checkbox" name="admin_remember" id="admin_remember" value="1" checked="checked">
-				<label for="admin_remember">{{ lang['remember_me'] }}</label>
-			</div>
-			<div>
-				<button type="submit">{{ lang['sign_in'] }}</button>
-			</div>
+	{% block form %}
+	<div class="login-form">
+		{% if login_errors['password'] %}
+			<div class="error">{{ login_errors['password'][_tech['site_language']] }}</div>
+		{% endif %}
+		<div>
+			<input type="text" name="admin_login" placeholder="Login" value="{{ login_credentials['login'] }}">
 		</div>
-	</form>
-
-	{#
-	<div class="forgotten"><a href="#">Забыли пароль?</a></div>
-	#}
-
-	<div class="to-home"><a href="../" target="_blank">{{ lang['go_to_site'] }}</a></div>
-
-	<div class="contacts">
-		{{ lang['support'] }}:
-		<a href="mailto:dicms.support@gmail.com">dicms.support@gmail.com</a>
+		<div>
+			<input type="password" name="admin_password" placeholder="Password">
+		</div>
+		<div>
+			<input type="checkbox" name="admin_remember" id="admin_remember" value="1" checked="checked">
+			<label for="admin_remember">{{ lang['remember_me'] }}</label>
+		</div>
+		<div>
+			<button type="submit">{{ lang['sign_in'] }}</button>
+		</div>
 	</div>
+	{% endblock %}
 
-</div>
+	{% block after_form %}{% endblock %}
+</form>
+
+{% block forgotten_password %}
+{#
+<div class="forgotten"><a href="#">Забыли пароль?</a></div>
+#}
+{% endblock %}

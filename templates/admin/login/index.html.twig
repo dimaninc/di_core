@@ -1,12 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="{{ _tech['site_language'] }}">
 
-{% include 'admin/_index/head_of_login.html.twig' %}
+{% block head %}{% include 'admin/_index/head_of_login.html.twig' %}{% endblock %}
 
 <body data-skin="{{ _tech['admin_skin'] }}">
 
-{% include 'admin/login/form.html.twig' %}
+{% block before_body %}{% endblock %}
+
+{% block body %}{% include 'admin/login/page.html.twig' %}{% endblock %}
+
+{% block after_body %}{% endblock %}
 
 </body>
-
 </html>
