@@ -301,6 +301,9 @@ class Base
 				'?back=' . urlencode(\diRequest::requestUri()),
 
             'admin_skin' => Skin::name(Config::getAdminSkin()),
+            'cms_name' => Config::getCmsName(),
+            'cms_support_email' => Config::getCmsSupportEmail(),
+
             'site_subfolder' => \diLib::getSubFolder(),
             'site_path' => (\diLib::getSubFolder() ? '/' . \diLib::getSubFolder() : '') . '/',
 			'site_language' => $this->getLanguage(),

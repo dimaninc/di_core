@@ -28,6 +28,8 @@ class Config
 	const mainLanguage = 'ru'; // used to determine localization field names
 	const searchEngine = 'db';
     const adminSkin = Skin::classic;
+    const cmsName = 'diCMS';
+    const cmsSupportEmail = 'dicms.support@gmail.com';
 	const initiating = false; // if true, then DB is auto-created and admin works w/o password
 
     const dbEncoding = 'utf8';
@@ -98,6 +100,22 @@ class Config
         $class = self::getClass();
 
         return $class::adminSkin;
+    }
+
+    final public static function getCmsName()
+    {
+        /** @var Config $class */
+        $class = self::getClass();
+
+        return $class::cmsName;
+    }
+
+    final public static function getCmsSupportEmail()
+    {
+        /** @var Config $class */
+        $class = self::getClass();
+
+        return $class::cmsSupportEmail;
     }
 
 	final public static function isInitiating()

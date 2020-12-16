@@ -12,7 +12,7 @@ data-floating-submit="{{ _settings['floating_submit'] }}">
 
 <div class="admin-layout">
 
-    <div class="logo"><b>diCMS {{ _tech['xx_version'] }}</b><div class="menu-toggle"></div></div>
+    <div class="logo"><b>{{ _tech['cms_name'] }} {{ _tech['xx_version'] }}</b><div class="menu-toggle"></div></div>
     <div class="head-auth-info"><span>{{ admin['login'] }}</span> <i>{{ admin['level_str'] }}</i></div>
     <a href="{{ _tech['site_path'] }}" class="head-href go-to-face" target="_blank"><span>{{ lang['go_to_site'] }}</span></a>
     <a href="{{ _tech['logout_href'] }}" class="head-href logout"><span>{{ lang['sign_out'] }}</span></a>
@@ -54,8 +54,10 @@ data-floating-submit="{{ _settings['floating_submit'] }}">
 
 <div class="footer">
     <div class="copyright">
-        <div>&copy; diCMS 2002-{{ _tech['current_year'] }}</div>
-        <div><a href="mailto:dicms.support@gmail.com">dicms.support@gmail.com</a></div>
+        <div>&copy; {{ _tech['cms_name'] }} 2002-{{ _tech['current_year'] }}</div>
+        {% if _tech['cms_support_email'] %}
+            <div><a href="mailto:{{ _tech['cms_support_email'] }}">{{ _tech['cms_support_email'] }}</a></div>
+        {% endif %}
     </div>
     <div class="console-container">
         <div class="up">&#x25B2;</div>
