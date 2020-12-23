@@ -110,7 +110,7 @@ function diDbManager(_opts)
 
 		var urlBase = workerScript + action + '/';
 
-	    if (action == 'download') {
+	    if (action === 'download') {
 	        options.headers = 1;
 
 	    	window.location.href = urlBase + '?' + $.param(options);
@@ -119,19 +119,15 @@ function diDbManager(_opts)
 	    }
 
 		$.get(urlBase, options, function(res) {
-
-			if (!res.ok)
-			{
+			if (!res.ok) {
 				self.status('Unable to complete action: `'+action+'` with file `'+options.file+'`');
 
 				//return false;
 			}
 
-			switch (action)
-			{
+			switch (action) {
 				case 'create':
-					if (res.ok)
-					{
+					if (res.ok) {
 						self.status('Dump has been created');
 
 						addDumpRow(res);
@@ -143,14 +139,11 @@ function diDbManager(_opts)
 					break;
 
 				case 'restore':
-					if (res.ok)
-					{
-						self.status('Dump `'+options.file+'` has been successfully restored into Database');
+					if (res.ok) {
+						self.status('Dump `' + options.file + '` has been successfully restored into Database');
 
 						self.loadTablesIntoList(res.tablesForSelectAr);
-					}
-					else
-					{
+					} else {
 						$e.console.html(res.errors.join('<br><br>').replace(/\n/g, '<br>\n')).slideDown();
 
 						/*
@@ -163,8 +156,7 @@ function diDbManager(_opts)
 					break;
 
 				case 'delete':
-					if (res.ok)
-					{
+					if (res.ok) {
 						self.status(res.file+' has been deleted');
 					}
 
@@ -217,8 +209,7 @@ function diDbManager(_opts)
 
 	this.executeQuery = function(query)
 	{
-		if (!confirm('Are you sure you want to execute query "'+query+'"?'))
-		{
+		if (!confirm('Are you sure you want to execute query "'+query+'"?')) {
 			return false;
 		}
 

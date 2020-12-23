@@ -173,4 +173,9 @@ class diMYSQL extends diDB
 
         return $fields;
     }
+
+    public static function insertUpdateQueryEnding()
+    {
+        return ',id = LAST_INSERT_ID(id)';
+    }
 }

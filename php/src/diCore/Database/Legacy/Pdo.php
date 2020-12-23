@@ -43,7 +43,10 @@ abstract class Pdo extends \diDB
             throw new \diDatabaseException($message);
         }
 
-		if (Config::isInitiating()) {
+		if (
+		    Config::isInitiating() &&
+            $this->databaseCreationAllowed()
+        ) {
 			$this->__q($this->getCreateDatabaseQuery());
 		}
 
@@ -54,6 +57,11 @@ abstract class Pdo extends \diDB
 
 		return true;
 	}
+
+	protected function databaseCreationAllowed()
+    {
+        return true;
+    }
 
 	protected function getDSN()
 	{
@@ -67,6 +75,10 @@ abstract class Pdo extends \diDB
 
 	protected function __error()
 	{
+	    if (!$this->link) {
+	        return null;
+        }
+
 		$info = json_encode($this->link->errorInfo());
 		
 		return $info;
@@ -76,7 +88,12 @@ abstract class Pdo extends \diDB
 	{
 		try {
 			$this->lastResult = $this->link->query($q);
-            $this->lastInsertId = $this->__insert_id() ?: $this->lastInsertId;
+
+			try {
+                $this->lastInsertId = $this->__insert_id() ?: $this->lastInsertId;
+            } catch (\PDOException $e) {
+                $this->lastInsertId = null;
+            }
 
             return $this->lastResult;
 		} catch (\PDOException $e) {

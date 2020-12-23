@@ -37,7 +37,6 @@ class Sqlite extends Pdo
         return $ar;
     }
 
-
     public function getTableNames()
 	{
 		$ar = [];

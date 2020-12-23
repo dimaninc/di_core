@@ -81,8 +81,11 @@ class diSlugsUnited
 			$this->getModel()->getTable(),
 			$this->getModel()->getId(),
 			extend([
+			    'db' => $this->getModel()::getConnection()->getDb(),
 				'queryConditions' => [
-					"`level_num` = '$this->levelNum'",
+					$this->getModel()::getConnection()->getDb()->escapeField('level_num') .
+                    ' = ' .
+                    $this->getModel()::getConnection()->getDb()->escapeValue($this->levelNum),
 				],
 			], $this->getUniqueOptions())
 		);

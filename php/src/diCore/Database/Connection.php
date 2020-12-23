@@ -94,6 +94,11 @@ abstract class Connection
         return ConnectionData::localMysqlConnData($database);
     }
 
+    public static function localPostgresConnData($database)
+    {
+        return ConnectionData::localPostgresConnData($database);
+    }
+
 	private static function add($name, Connection $conn)
 	{
 		if (is_array($name)) {

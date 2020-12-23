@@ -522,7 +522,9 @@ class diModel implements \ArrayAccess
 			$this->getIdFieldName(),
             $this->getSlugFieldName(),
             $extraOptions['delimiter'],
-            $extraOptions
+            extend($extraOptions, [
+                'db' => $this->getDb(),
+            ])
 		));
 
 		return $this;
@@ -951,7 +953,7 @@ class diModel implements \ArrayAccess
 		], $options);
 
 		$queryAr = array_merge($options['queryAr'], $options['additionalQueryAr']);
-		$limit = $options['onlyFirstRecord'] ? ' LIMIT 1' : '';
+		$limit = $options['onlyFirstRecord'] ? $this->getDb()->limitOffset(1) : '';
 
 		$ar = [];
 
@@ -1893,7 +1895,7 @@ class diModel implements \ArrayAccess
                 $result = $this->getDb()->update(
                     $this->getDb()->escapeTable($this->getTable()),
                     $ar,
-                    "WHERE `{$this->getIdFieldName()}` = '{$this->getId()}'" . $this->getDb()->getUpdateSingleLimit()
+                    "WHERE {$this->getDb()->escapeField($this->getIdFieldName())} = {$this->getDb()->escapeValue($this->getId())}" . $this->getDb()->getUpdateSingleLimit()
                 );
 
                 if (!$result) {

@@ -707,10 +707,12 @@ class Submit
 		    $origin,
             $this->getTable(),
             $this->getId(),
-			'id',
+			$this->getModel()::getIdFieldName(),
             $slugField,
             $this->getModel()::slug_delimiter,
-            $extraOptions
+            extend($extraOptions, [
+                'db' => $this->getModel()::getConnection()->getDb(),
+            ])
 		));
 
 		return $this;
@@ -749,8 +751,7 @@ class Submit
 
 	public function makeOrderAndLevelNum()
 	{
-		if (!$this->getId())
-		{
+		if (!$this->getId()) {
 			$h = new \diHierarchyTable($this->getTable());
 
 			$skipIdsAr = $this->getData('parent')
@@ -765,13 +766,10 @@ class Submit
 
 			$this->getDb()->update($this->getTable(), [
 				'*order_num' => 'order_num + 1',
-			], "WHERE order_num >= '{$this->getData('order_num')}'");
-		}
-		else
-		{
+			], "WHERE {$this->getDb()->escapeField('order_num')} >= {$this->getDb()->escapeValue($this->getData('order_num'))}");
+		} else {
 			$r = $this->getDb()->r($this->getTable(), $this->getId(), 'level_num,order_num');
-			if ($r)
-			{
+			if ($r) {
 				$this
 					->setData('level_num', $r->level_num)
 					->setData('order_num', $r->order_num);

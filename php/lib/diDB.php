@@ -208,7 +208,9 @@ abstract class diDB
 
 	protected function getCreateDatabaseQuery()
 	{
-		return "CREATE DATABASE IF NOT EXISTS `$this->dbname` /*!40100 COLLATE '" . Config::getDbCollation() . "' */";
+	    $quote = static::QUOTE_TABLE;
+
+		return "CREATE DATABASE IF NOT EXISTS {$quote}{$this->dbname}{$quote} /*!40100 COLLATE '" . Config::getDbCollation() . "' */";
 	}
 
 	protected function initCharset()
@@ -298,13 +300,11 @@ abstract class diDB
 
 	public function dierror($message = "")
 	{
-		if ($this->silent)
-		{
+		if ($this->silent) {
 			exit(0);
 		}
 
-		if (count($this->log))
-		{
+		if (count($this->log)) {
 			$this->_fatal($message);
 		}
 
@@ -331,8 +331,7 @@ abstract class diDB
 
 	protected function time_log($method, $duration, $query = "", $message = "")
 	{
-		if (!$this->debug)
-		{
+		if (!$this->debug) {
 			return $this;
 		}
 
@@ -456,28 +455,22 @@ abstract class diDB
 
 	public static function in($ar = [], $digits_only = false, $positive = true)
 	{
-		if (is_array($ar))
-		{
-			if (count($ar) == 1)
-			{
-				$c = $positive ? "" : "!";
+		if (is_array($ar)) {
+			if (count($ar) == 1) {
+				$c = $positive ? '=' : '!=';
 
-				return "$c='" . current($ar) . "'";
-			}
-			else
-			{
-				$c = $positive ? "" : " not";
+				return $c . ' ' . static::QUOTE_VALUE . current($ar) . static::QUOTE_VALUE;
+			} else {
+				$c = $positive ? ' in' : ' not in';
 
 				return $digits_only
-					? "$c in (".join(",", $ar).")"
-					: "$c in ('".join("','", $ar)."')";
+                    ? $c . ' (' . join(',', $ar) . ')'
+                    : $c . ' (' . static::QUOTE_VALUE . join(static::QUOTE_VALUE . ',' . static::QUOTE_VALUE, $ar) . static::QUOTE_VALUE . ')';
 			}
-		}
-		else
-		{
-			$c = $positive ? "" : "!";
+		} else {
+			$c = $positive ? '=' : '!=';
 
-			return "$c = '$ar'";
+			return $c . ' ' . static::QUOTE_VALUE . $ar . static::QUOTE_VALUE;
 		}
 	}
 
@@ -504,7 +497,7 @@ abstract class diDB
 	{
 		if ($this->debug)
 		{
-			$this->time_log("total", $this->execution_time);
+			$this->time_log('total', $this->execution_time);
 		}
 
 		return $this->__close();
@@ -573,7 +566,7 @@ abstract class diDB
 	public function getQueryForRs($table, $q_ending = "", $q_fields = "*")
 	{
 		if (is_numeric($q_ending)) {
-			$q_ending = "WHERE id='$q_ending' LIMIT 1";
+			$q_ending = "WHERE id='$q_ending'" . $this->limitOffset(1);
 		} elseif (is_array($q_ending)) {
 			$q_ending = "WHERE id" . $this->in($q_ending);
 		}
@@ -601,7 +594,7 @@ abstract class diDB
 
 		$t = $this->get_table_name($table);
 
-		return "SELECT $q_fields FROM $t $q_ending LIMIT 1";
+		return "SELECT $q_fields FROM $t $q_ending" . $this->limitOffset(1);
 	}
 
 	public function rs($table, $q_ending = "", $q_fields = "*")
@@ -680,14 +673,14 @@ abstract class diDB
 		srand((double)microtime() * 1000000);
 		$start = rand(0, $count - $limit);
 
-		$q = "SELECT $q_fields FROM $t $q_ending LIMIT $start,$limit";
+		$q = "SELECT $q_fields FROM $t $q_ending " . $this->limitOffset($limit, $start);
 		*/
 
 		if (is_array($q_fields)) {
 			$q_fields = join(",", $q_fields);
 		}
 
-		$q = "SELECT $q_fields FROM $t $q_ending ORDER BY RAND() LIMIT $limit";
+		$q = "SELECT $q_fields FROM $t $q_ending ORDER BY RAND()" . $this->limitOffset($limit);
 
 		$rs = $this->__q($q);
 
@@ -696,8 +689,9 @@ abstract class diDB
 
 		$this->time_log("random_rs", $time2 - $time1, $q);
 
-		if (!$rs)
-			return $this->_log("unable to exec query $q");
+		if (!$rs) {
+            return $this->_log("unable to exec query $q");
+        }
 
 		return $rs;
 	}
@@ -711,8 +705,7 @@ abstract class diDB
 	public function ar($table, $q_ending = "", $q_fields = "*")
 	{
 		// alias to ::fetch_array()
-		if ((self::is_rs($table) || $table === false) && $q_ending === "")
-		{
+		if ((self::is_rs($table) || $table === false) && $q_ending === "") {
 			return $this->fetch_array($table);
 		}
 		//
@@ -729,12 +722,10 @@ abstract class diDB
 
 		$this->time_log("ar", $time2 - $time1, $q);
 
-		if (!$r)
-		{
+		if (!$r) {
 			$err = $this->error();
 
-			if ($err)
-			{
+			if ($err) {
 				$this->_log("unable to exec query \"$q\"", false);
 				$this->_log($err, false);
 			}
@@ -747,8 +738,8 @@ abstract class diDB
 
 	public static function fields_to_string_for_insert($ar)
 	{
-		return join(",", array_map(function($k) {
-			return "`" . ($k && $k[0] == "*" ? substr($k, 1) : $k) . "`";
+		return join(',', array_map(function($k) {
+			return static::QUOTE_FIELD . ($k && $k[0] == '*' ? substr($k, 1) : $k) . static::QUOTE_FIELD;
 		}, array_keys($ar)));
 	}
 
@@ -757,38 +748,54 @@ abstract class diDB
         $outAr = [];
 
         foreach ($ar as $f => $v) {
-			if ($f[0] == "*") {
+			if ($f[0] == '*') {
 				$outAr[] = $v;
 			} elseif ($v === null) {
 			    $outAr[] = 'NULL';
             } else {
-				$outAr[] = "'$v'";
+				$outAr[] = static::QUOTE_VALUE . $v . static::QUOTE_VALUE;
 			}
 		}
 
-		return join(",", $outAr);
+		return join(',', $outAr);
 	}
 
 	public static function fields_and_values_to_string_for_update($ar)
 	{
         $q_ar = [];
 
-        foreach ($ar as $f => $v)
-		{
-			if ($v === null)
-			{
-				$q_ar[] = "`$f`=NULL";
+        foreach ($ar as $f => $v) {
+			if ($v === null) {
+				$q_ar[] = static::QUOTE_FIELD . $f . static::QUOTE_FIELD . ' = NULL';
 
 				continue;
 			}
 
-			$q_ar[] = $f[0] == "*"
-				? "`" . substr($f, 1) . "`=$v"
-				: "`$f`='$v'";
+			$q_ar[] = $f[0] === '*'
+				? static::QUOTE_FIELD . substr($f, 1) . static::QUOTE_FIELD . ' = ' . $v
+				: static::QUOTE_FIELD . $f . static::QUOTE_FIELD . ' = ' . static::QUOTE_VALUE . $v. static::QUOTE_VALUE;
 		}
 
-		return join(",", $q_ar);
+		return join(',', $q_ar);
 	}
+
+    protected static function insertUpdateQuery($fields_values)
+    {
+        $q1 = static::insertUpdateQueryBeginning();
+        $q3 = static::fields_and_values_to_string_for_update($fields_values) . static::insertUpdateQueryEnding();
+
+        return " {$q1} {$q3}";
+    }
+
+    public static function insertUpdateQueryBeginning()
+    {
+        return 'ON DUPLICATE KEY UPDATE';
+    }
+
+    public static function insertUpdateQueryEnding()
+    {
+        return '';
+    }
 
 	public function lockTable($table)
     {
@@ -808,8 +815,8 @@ abstract class diDB
     {
         $t = $this->get_table_name($table);
 
-        if (!is_array(current($fields_values))) // preparing for multi-insert
-        {
+        // preparing for multi-insert
+        if (!is_array(current($fields_values))) {
             $fields_values = [$fields_values];
         }
 
@@ -847,7 +854,7 @@ abstract class diDB
 
     public function getUpdateSingleLimit()
     {
-        return ' LIMIT 1';
+        return $this->limitOffset(1);
     }
 
 	public function update($table, $fields_values = array(), $q_ending = "")
@@ -858,9 +865,9 @@ abstract class diDB
 
 		// fast construction to get record by id
 		if (is_numeric($q_ending)) {
-            $q_ending = "WHERE id = '$q_ending'" . $this->getUpdateSingleLimit();
+            $q_ending = "WHERE {$this->escapeField('id')} = " . $this->escapeValue($q_ending) . $this->getUpdateSingleLimit();
         } elseif (is_array($q_ending)) {
-            $q_ending = "WHERE id" . $this->in($q_ending);
+            $q_ending = "WHERE " . $this->escapeField('id') . $this->in($q_ending);
         } elseif (!$q_ending && $q_ending !== "") {
 			$this->_log("Warning, empty Q_ENDING in update ($table)", false);
 
@@ -892,7 +899,7 @@ abstract class diDB
 
     public function getDeleteSingleLimit()
     {
-        return ' LIMIT 1';
+        return  $this->limitOffset(1);
     }
 
 	public function delete($table, $q_ending = "")
@@ -931,19 +938,19 @@ abstract class diDB
 		return true;
 	}
 
-	public function insert_or_update($table, $fields_values = array())
+	public function insert_or_update($table, $fields_values = [])
 	{
 		$t = $this->get_table_name($table);
 
-		$q1 = "(".self::fields_to_string_for_insert($fields_values).")";
-		$q2 = "(".self::values_to_string_for_insert($fields_values).")";
-		$q3 = self::fields_and_values_to_string_for_update($fields_values) .
-			",id = LAST_INSERT_ID(id)";
+        $q1 = "(" . static::fields_to_string_for_insert($fields_values) . ")";
+        $q2 = "(" . static::values_to_string_for_insert($fields_values) . ")";
+        $q3 = static::insertUpdateQuery($fields_values);
 
 		$time1 = utime();
 
         $this->lockTable($t);
-		if (!$this->__rq("INSERT INTO {$t}{$q1} VALUES{$q2} ON DUPLICATE KEY UPDATE {$q3};")) {
+        $query = "INSERT INTO {$t}{$q1} VALUES{$q2}{$q3};";
+		if (!$this->__rq($query)) {
 			$this->_log("unable to insert/update into table $t", false);
 
             $this->unlockTable($t);
@@ -1021,14 +1028,26 @@ abstract class diDB
 
 	protected function getStartTransactionQuery()
     {
-        return "START TRANSACTION";
+        return 'START TRANSACTION';
+    }
+
+    protected function getCommitTransactionQuery()
+    {
+        return 'COMMIT';
+    }
+
+    protected function getRollbackTransactionQuery()
+    {
+        return 'ROLLBACK';
     }
 
 	public function startTransaction()
 	{
 		$this->transactionNestingLevel++;
 
-		$this->q($this->getStartTransactionQuery());
+		if ($this->getStartTransactionQuery()) {
+            $this->q($this->getStartTransactionQuery());
+        }
 
 		return $this;
 	}
@@ -1038,7 +1057,9 @@ abstract class diDB
 		if ($this->transactionNestingLevel) {
 			$this->transactionNestingLevel--;
 
-			$this->q("COMMIT");
+			if ($this->getCommitTransactionQuery()) {
+                $this->q($this->getCommitTransactionQuery());
+            }
 		}
 
 		return $this;
@@ -1049,7 +1070,9 @@ abstract class diDB
 		if ($this->transactionNestingLevel) {
 			$this->transactionNestingLevel--;
 
-			$this->q("ROLLBACK");
+			if ($this->getRollbackTransactionQuery()) {
+                $this->q($this->getRollbackTransactionQuery());
+            }
 		}
 
 		return $this;
@@ -1086,7 +1109,7 @@ abstract class diDB
 			$field = $string;
 		}
 
-		return $field != '*'
+		return $field !== '*'
 			? $alias . static::QUOTE_FIELD . $this->escape_string($field) . static::QUOTE_FIELD
 			: $alias . $field;
 	}
@@ -1102,6 +1125,21 @@ abstract class diDB
 	{
 		return static::QUOTE_VALUE . $this->escape_string($string) . static::QUOTE_VALUE;
 	}
+
+	public function limitOffset($limit = null, $offset = null)
+    {
+        $ar = [];
+
+        if ($limit) {
+            $ar[] = "LIMIT $limit";
+        }
+
+        if ($offset) {
+            $ar[] = "OFFSET $offset";
+        }
+
+        return ' ' . join(' ', $ar);
+    }
 
 	/* these methods should be overwritten */
 

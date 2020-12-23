@@ -44,6 +44,17 @@ class ConnectionData
         return $this;
     }
 
+    public function get()
+    {
+        return array_filter([
+            'host' => $this->getHost(),
+            'username' => $this->getLogin(),
+            'password' => $this->getPassword(),
+            'dbname' => $this->getDatabase(),
+            'port' => $this->getPort(),
+        ]);
+    }
+
     /**
      * @return string
      */
@@ -175,6 +186,28 @@ class ConnectionData
                 'port' => 3306,
                 'login' => 'root',
                 'password' => '',
+                'database' => $database,
+            ],
+        ];
+    }
+
+    public static function localPostgresConnData($database)
+    {
+        $password = 'postgres';
+
+        return [
+            [
+                'host' => 'localhost',
+                'port' => 5432,
+                'login' => 'postgres',
+                'password' => $password,
+                'database' => $database,
+            ],
+            [
+                'host' => '127.0.0.1',
+                'port' => 5432,
+                'login' => 'postgres',
+                'password' => $password,
                 'database' => $database,
             ],
         ];

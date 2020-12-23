@@ -33,6 +33,7 @@ class Slug
 			'uniqueMaker' => function($origSlug, $delimiter, $index) {
 				return $origSlug . $delimiter . $index;
 			},
+            'db' => null,
 		], $options);
 
 		$i = 1;
@@ -44,7 +45,18 @@ class Slug
 			$slug = $origSlug . $options['delimiter'] . strval($i++);
 		}
 
-		$queryAr = array_merge(["`{$options['slugFieldName']}` = '{$slug}'"], $options['queryConditions']);
+		/** @var \diDB $db */
+		$db = $options['db'];
+		$slugField = $db
+            ? $db->escapeField($options['slugFieldName'])
+            : $options['slugFieldName'];
+        $slugValue = $db
+            ? $db->escapeValue($slug)
+            : "'$slug'";
+
+		$queryAr = array_merge([
+		    $slugField . ' = ' . $slugValue,
+        ], $options['queryConditions']);
 
 		while (true) {
 			$model = \diCollection::createForTable($table, 'WHERE ' . join(' AND ', $queryAr))->getFirstItem();
@@ -54,8 +66,13 @@ class Slug
 			}
 
 			$slug = $options['uniqueMaker']($origSlug, $options['delimiter'], $i++);
+            $slugValue = $db
+                ? $db->escapeValue($slug)
+                : "'$slug'";
 
-			$queryAr = array_merge(["`{$options['slugFieldName']}` = '{$slug}'"], $options['queryConditions']);
+			$queryAr = array_merge([
+                $slugField . ' = ' . $slugValue,
+            ], $options['queryConditions']);
 		}
 
 		return $slug;
@@ -79,6 +96,7 @@ class Slug
             'slugFieldName' => $slugFieldName,
             'delimiter' => $delimiter,
             'lowerCase' => true,
+            'db' => null,
         ], $extraOptions);
 
 		return self::unique(

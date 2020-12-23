@@ -476,6 +476,16 @@ class Configuration
                     "CREATE INDEX IF NOT EXISTS `{$this->tableName}_idx` ON `{$this->tableName}` ({$this->nameField});",
                 ];
 
+            case Engine::POSTGRESQL:
+                return [
+                    "CREATE TABLE IF NOT EXISTS \"{$this->tableName}\"(
+                        \"id\" SERIAL PRIMARY KEY,
+                        \"{$this->nameField}\" varchar(255),
+                        \"{$this->valueField}\" text,
+                        UNIQUE(\"{$this->nameField}\")
+		            );",
+                ];
+
             default:
                 return [
                     "CREATE TABLE IF NOT EXISTS `{$this->tableName}`(

@@ -54,7 +54,7 @@ class PhotosOfAlbum
 					'album_id' => $id,
 				];
 			},
-			'beforeSave' => function(\diDynamicRows $DR) {
+			'beforeSave' => function(\diDynamicRows $DR) use ($model) {
 				if ($DR->getData('slug')) {
 					return [];
 				}
@@ -62,7 +62,17 @@ class PhotosOfAlbum
 				//var_debug('slug', $DR->getTable(), $DR->getStoredId());
 
 				$slugSource = StringHelper::replaceFileExtension($DR->getData('pic'), '') ?: get_unique_id();
-				$slug = \diSlug::generate($slugSource, $DR->getTable(), $DR->getStoredId());
+				$slug = \diSlug::generate(
+				    $slugSource,
+                    $DR->getTable(),
+                    $DR->getStoredId(),
+                    $model::getIdFieldName(),
+                    $model->getSlugFieldName(),
+                    $model::slug_delimiter,
+                    [
+				        'db' => $model::getConnection()->getDb(),
+                    ]
+                );
 
 				return [
 					'slug' => $slug,

@@ -309,7 +309,7 @@ class diPagesNavy
 
 		if ($col->getQuery()) {
 			$col
-				->setQuery($col->getQuery() . " AND `$orderByField` $sign '$orderByValue'");
+				->setQuery($col->getQuery() . " AND {$this->getDb()->escapeField($orderByField)} $sign {$this->getDb()->escapeValue($orderByValue)}");
 		} else {
 			$col
 				->filterBy($orderByField, $sign, $orderByValue);

@@ -14,6 +14,8 @@ abstract class LocalizationMigration extends Migration
 
     public function down()
     {
-        $this->getDb()->q("DELETE FROM `localization` WHERE `name` IN ('" . join("','", $this->names) . "');");
+        $this->getDb()->delete(
+            'localization',
+            "WHERE {$this->getDb()->escapeField('name')}" . $this->getDb()::in($this->names));
     }
 }

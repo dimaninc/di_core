@@ -1050,11 +1050,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		}
 
 		if ($requestPageSize) {
-			return sprintf(
-				'LIMIT %d,%d',
-				$startFrom,
-				$requestPageSize
-			);
+		    return $this->getDb()->limitOffset($requestPageSize, $startFrom);
 		}
 
 		return null;

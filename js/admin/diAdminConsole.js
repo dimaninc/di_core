@@ -10,8 +10,7 @@ var diAdminConsole = function(_opts) {
 			$console: $('.console')
 		};
 
-	function constructor()
-	{
+	function constructor() {
 		e.$container.find('.up,.down').click(function() {
 			var sign = $(this).hasClass('up') ? -1 : 1;
 			var diff = sign * e.$container.height();
@@ -31,8 +30,7 @@ var diAdminConsole = function(_opts) {
 
 	function toggleNavy(state)
 	{
-		if (typeof state == 'undefined')
-		{
+		if (typeof state == 'undefined') {
 			state = lines > 2;
 		}
 
@@ -41,12 +39,11 @@ var diAdminConsole = function(_opts) {
 
 	this.add = function(line)
 	{
-		e.$console
-			.append(getLineHtml(line))
-			.stop(true, true)
-			.animate({
-				scrollTop: e.$console.get(0).scrollHeight
-			}, opts.scrollTimeout * 1000);
+		e.$console.append(getLineHtml(line));
+
+		e.$container.stop(true, true).animate({
+			scrollTop: e.$console.get(0).scrollHeight
+		}, opts.scrollTimeout * 1000);
 
 		lines++;
 		toggleNavy();
