@@ -1768,7 +1768,7 @@ abstract class CMS
 
 	protected function addLanguageToLink($lang, $path, $query)
     {
-        return ($lang === static::$defaultLanguage ? '/' : "/$lang/") . '/' . $path . $query;
+        return ($lang === static::$defaultLanguage ? '/' : "/$lang/") . $path . $query;
     }
 
 	protected function assign_top_language_links()
