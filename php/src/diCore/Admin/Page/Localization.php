@@ -90,7 +90,7 @@ class Localization extends \diCore\Admin\BasePage
 		$this->setAfterTableTemplate('admin/localization/after_list');
 
 		$valueOut = function(Model $m, $field) {
-			return self::valueOut($m, $field);
+			return static::valueOut($m, $field);
 		};
 
 		$this->getList()->addColumns([
