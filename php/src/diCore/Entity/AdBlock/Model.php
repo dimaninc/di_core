@@ -7,6 +7,8 @@
 
 namespace diCore\Entity\AdBlock;
 
+use diCore\Entity\Ad\Helper;
+
 /**
  * Class Model
  * Methods list for IDE
@@ -37,18 +39,18 @@ namespace diCore\Entity\AdBlock;
  * @method bool hasOrderNum
  * @method bool hasDate
  *
- * @method Model setTitle($value)
- * @method Model setDefaultSlideTitle($value)
- * @method Model setDefaultSlideContent($value)
- * @method Model setTransition($value)
- * @method Model setTransitionStyle($value)
- * @method Model setDurationOfShow($value)
- * @method Model setDurationOfChange($value)
- * @method Model setSlidesOrder($value)
- * @method Model setIgnoreHoverHold($value)
- * @method Model setVisible($value)
- * @method Model setOrderNum($value)
- * @method Model setDate($value)
+ * @method $this setTitle($value)
+ * @method $this setDefaultSlideTitle($value)
+ * @method $this setDefaultSlideContent($value)
+ * @method $this setTransition($value)
+ * @method $this setTransitionStyle($value)
+ * @method $this setDurationOfShow($value)
+ * @method $this setDurationOfChange($value)
+ * @method $this setSlidesOrder($value)
+ * @method $this setIgnoreHoverHold($value)
+ * @method $this setVisible($value)
+ * @method $this setOrderNum($value)
+ * @method $this setDate($value)
  */
 class Model extends \diModel
 {
@@ -69,4 +71,11 @@ class Model extends \diModel
 			'token' => $this->getToken(),
 		]);
 	}
+
+	public function getHtml()
+    {
+        return $this->exists()
+            ? Helper::printBlock($this->getId())
+            : null;
+    }
 }

@@ -9,6 +9,7 @@
 namespace diCore\Entity\Content;
 
 use diCore\Data\Types;
+use diCore\Entity\AdBlock\Model as AdBlock;
 
 /**
  * Class Model
@@ -104,60 +105,62 @@ use diCore\Data\Types;
  * @method bool hasShowLinks
  * @method bool hasAdBlockId
  *
- * @method Model setParent($value)
- * @method Model setMenuTitle($value)
- * @method Model setType($value)
- * @method Model setTitle($value)
- * @method Model setCaption($value)
- * @method Model setHtmlTitle($value)
- * @method Model setHtmlKeywords($value)
- * @method Model setHtmlDescription($value)
- * @method Model setContent($value)
- * @method Model setShortContent($value)
- * @method Model setLinksContent($value)
- * @method Model setPic($value)
- * @method Model setPicW($value)
- * @method Model setPicH($value)
- * @method Model setPicT($value)
- * @method Model setPic2($value)
- * @method Model setPic2W($value)
- * @method Model setPic2H($value)
- * @method Model setPic2T($value)
- * @method Model setIco($value)
- * @method Model setIcoW($value)
- * @method Model setIcoH($value)
- * @method Model setIcoT($value)
- * @method Model setColor($value)
- * @method Model setBackgroundColor($value)
- * @method Model setClass($value)
- * @method Model setMenuClass($value)
- * @method Model setLevelNum($value)
- * @method Model setVisible($value)
- * @method Model setVisibleTop($value)
- * @method Model setVisibleBottom($value)
- * @method Model setVisibleLeft($value)
- * @method Model setVisibleRight($value)
- * @method Model setVisibleLoggedIn($value)
- * @method Model setToShowContent($value)
- * @method Model setOrderNum($value)
- * @method Model setTop($value)
- * @method Model setCommentsCount($value)
- * @method Model setCommentsLastDate($value)
- * @method Model setCommentsEnabled($value)
- * @method Model setCreatedAt($value)
- * @method Model setUpdatedAt($value)
- * @method Model setShowLinks($value)
- * @method Model setAdBlockId($value)
+ * @method $this setParent($value)
+ * @method $this setMenuTitle($value)
+ * @method $this setType($value)
+ * @method $this setTitle($value)
+ * @method $this setCaption($value)
+ * @method $this setHtmlTitle($value)
+ * @method $this setHtmlKeywords($value)
+ * @method $this setHtmlDescription($value)
+ * @method $this setContent($value)
+ * @method $this setShortContent($value)
+ * @method $this setLinksContent($value)
+ * @method $this setPic($value)
+ * @method $this setPicW($value)
+ * @method $this setPicH($value)
+ * @method $this setPicT($value)
+ * @method $this setPic2($value)
+ * @method $this setPic2W($value)
+ * @method $this setPic2H($value)
+ * @method $this setPic2T($value)
+ * @method $this setIco($value)
+ * @method $this setIcoW($value)
+ * @method $this setIcoH($value)
+ * @method $this setIcoT($value)
+ * @method $this setColor($value)
+ * @method $this setBackgroundColor($value)
+ * @method $this setClass($value)
+ * @method $this setMenuClass($value)
+ * @method $this setLevelNum($value)
+ * @method $this setVisible($value)
+ * @method $this setVisibleTop($value)
+ * @method $this setVisibleBottom($value)
+ * @method $this setVisibleLeft($value)
+ * @method $this setVisibleRight($value)
+ * @method $this setVisibleLoggedIn($value)
+ * @method $this setToShowContent($value)
+ * @method $this setOrderNum($value)
+ * @method $this setTop($value)
+ * @method $this setCommentsCount($value)
+ * @method $this setCommentsLastDate($value)
+ * @method $this setCommentsEnabled($value)
+ * @method $this setCreatedAt($value)
+ * @method $this setUpdatedAt($value)
+ * @method $this setShowLinks($value)
+ * @method $this setAdBlockId($value)
  */
 class Model extends \diModel
 {
 	const type = Types::content;
 	protected $table = 'content';
 
+	/** @var AdBlock */
+	protected $adBlock;
+
 	public function getHref()
 	{
-		switch ($this->getType())
-		{
+		switch ($this->getType()) {
 			case 'home':
 				return $this->__getPrefixForHref() . '/';
 
@@ -181,4 +184,13 @@ class Model extends \diModel
 	{
 		return $this->getMenuTitle() ?: $this->getTitle();
 	}
+
+	public function getAdBlock()
+    {
+        if (!$this->adBlock) {
+            $this->adBlock = AdBlock::createById($this->getAdBlockId());
+        }
+
+        return $this->adBlock;
+    }
 }
