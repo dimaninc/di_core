@@ -1766,6 +1766,11 @@ abstract class CMS
 		return $qs;
 	}
 
+	protected function addLanguageToLink($lang, $path, $query)
+    {
+        return ($lang === static::$defaultLanguage ? '/' : "/$lang/") . '/' . $path . $query;
+    }
+
 	protected function assign_top_language_links()
 	{
 		$links = [];
@@ -1777,21 +1782,16 @@ abstract class CMS
 				->clear('LANGUAGE_LINK_ROWS');
 
 			foreach (static::$possibleLanguages as $lng) {
-				$q = $this->getRequestQueryStringForLanguageLinks($lng);
 				$isCurrentLanguage = $this->language == $lng;
-
 				$modesStr = $this->getRoutesForLanguageLinks($lng);
 
 				if (is_array($modesStr)) {
-					$modesStr = join("/", $modesStr);
+					$modesStr = join('/', $modesStr);
 				}
 
 				$modesStr = $this->checkRouteStringForLanguageLinks($modesStr, $lng);
-
 				$lngUp = strtoupper($lng);
-
-				$lngLink = //($lng == static::$defaultLanguage ? "/" : "/$lng/") .
-                    '/' . $modesStr . $q;
+				$lngLink = $this->addLanguageToLink($lng, $modesStr, $this->getRequestQueryStringForLanguageLinks($lng));
 				$lngActive = $isCurrentLanguage ? " active" : "";
 
 				$this->getTpl()->assign([
