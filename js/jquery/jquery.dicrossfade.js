@@ -160,8 +160,8 @@
 
 			var $this = $(this),
 				$helper = $this.clone().attr('id', ''),
-				w = $this.width(),
-				h = $this.height(),
+				w = '100%', //$this.width(),
+				h = '100%', //$this.height(),
 
 				css_ar = {
 					display: 'block',

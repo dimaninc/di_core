@@ -44,7 +44,7 @@
 			random_algorithm: $(this).data('random-algorithm') || random_algorithm.SHUFFLE_ON_START,
 			ignore_hover_hold: $(this).data('ignore-hover-hold') || 0,
 
-			auto_play: $(this).data('auto-play'),
+			auto_play: $(this).data('auto-play') || null,
 			duration_of_change: $(this).data('duration-of-change') || 1000,
 			duration_of_autochange: $(this).data('duration-of-autochange') || $(this).data('duration-of-change') || 1000,
 			duration_of_show: $(this).data('duration-of-show') || 0
@@ -112,8 +112,8 @@
 						$slide: $slide,
 
 						pic: $slide.data('pic'),
-						href: $slide.attr('href') || $slide.data('href'),
-						hrefTarget: $slide.data('href-target'),
+						href: $slide.attr('href') || $slide.data('href') || '',
+						hrefTarget: $slide.data('href-target') || '',
 
 						title: $slide.data('title') || '',
 						content: $slide.data('content') || '',
