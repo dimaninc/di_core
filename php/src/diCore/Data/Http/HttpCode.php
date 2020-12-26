@@ -16,6 +16,7 @@ class HttpCode extends SimpleContainer
 
 	const MOVED_PERMANENTLY = 301;
 
+	const BAD_REQUEST = 400;
 	const UNAUTHORIZED = 401;
 	const FORBIDDEN = 403;
 	const NOT_FOUND = 404;
@@ -27,6 +28,7 @@ class HttpCode extends SimpleContainer
 
 		self::MOVED_PERMANENTLY => 'Moved Permanently',
 
+        self::BAD_REQUEST => 'Bad request',
 		self::UNAUTHORIZED => 'Unauthorized',
 		self::FORBIDDEN => 'Forbidden',
 		self::NOT_FOUND => 'Not Found',
@@ -39,6 +41,7 @@ class HttpCode extends SimpleContainer
 
 		self::MOVED_PERMANENTLY => 'moved_permanently',
 
+        self::BAD_REQUEST => 'bad_request',
 		self::UNAUTHORIZED => 'unauthorized',
 		self::FORBIDDEN => 'forbidden',
 		self::NOT_FOUND => 'not_found',

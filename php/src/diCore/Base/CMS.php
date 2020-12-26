@@ -2318,8 +2318,6 @@ abstract class CMS
 
 	/**
 	 * Such page does not exist
-	 *
-	 * @return $this
 	 */
 	public function errorNotFound()
 	{
@@ -2333,6 +2331,16 @@ abstract class CMS
 
 		throw new HttpException($this->getResponseCode());
 	}
+
+    /**
+     * Bad request
+     */
+    public function errorBadRequest()
+    {
+        $this->setResponseCode(HttpCode::BAD_REQUEST);
+
+        throw new HttpException($this->getResponseCode());
+    }
 
 	protected function notFoundBackTraceNeeded()
 	{
