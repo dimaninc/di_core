@@ -1672,12 +1672,12 @@ function diaf_get_date_range_filter($field, $value, $not = false, $table_prefix 
 
 function diaf_get_date_str_range_filter($field, $value, $not = false, $table_prefix = "", $queryPrefix = '', $querySuffix = '')
 {
-    $date1 = $value[0];
-    $date2 = $value[1];
+    $date1 = $value[0] . ' 00:00:00';
+    $date2 = $value[1] . ' 23:59:59';
 
     return $date1 && $date2
         ? $queryPrefix . "({$table_prefix}{$field} BETWEEN '$date1' AND '$date2')" . $querySuffix
-        : "";
+        : '';
 }
 
 function diaf_minus_one($field, $value, $not = false, $table_prefix = "")
