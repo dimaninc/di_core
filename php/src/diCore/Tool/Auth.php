@@ -175,12 +175,9 @@ class Auth
 
 	private function storeSession()
 	{
-		if ($this->reallyAuthorized())
-		{
+		if ($this->reallyAuthorized()) {
 			$_SESSION[static::SESSION_USER_ID_FIELD] = $this->getUserId();
-		}
-		else
-		{
+		} else {
 			$this->clearSession();
 		}
 

@@ -1,5 +1,7 @@
 <?php
 
+use diCore\Entity\User\Model;
+use diCore\Tool\Auth;
 use diCore\Tool\Logger;
 
 abstract class diOAuth2
@@ -7,15 +9,15 @@ abstract class diOAuth2
 	const REQUEST_GET = 1;
 	const REQUEST_POST = 2;
 
-	const appId = "";
-	const secret = "";
-	const publicKey = "";
+	const appId = '';
+	const secret = '';
+	const publicKey = '';
 
-	const loginUrlBase = "";
-	const authUrlBase = "";
+	const loginUrlBase = '';
+	const authUrlBase = '';
 
-	const callbackParam = "callback";
-	const unlinkParam = "unlink";
+	const callbackParam = 'callback';
+	const unlinkParam = 'unlink';
 
 	protected $vendorId;
 
@@ -50,16 +52,14 @@ abstract class diOAuth2
 	{
 		$vendorName = diOAuth2Vendors::name(diOAuth2Vendors::id($vendor));
 
-		if (!$vendorName)
-		{
-			throw new Exception("No OAuth2 vendor#" . $vendor . " found");
+		if (!$vendorName) {
+			throw new Exception("No OAuth2 vendor#{$vendor} found");
 		}
 
 		$className = self::existsFor($vendorName);
 
-		if (!$className)
-		{
-			throw new Exception("OAuth2 class doesn't exist: " . $className);
+		if (!$className) {
+			throw new Exception("OAuth2 class doesn't exist: {$className}");
 		}
 
 		/** @var diOAuth2 $o */
@@ -74,19 +74,16 @@ abstract class diOAuth2
 	 */
 	public static function existsFor($vendorName)
 	{
-		if (isInteger($vendorName))
-		{
+		if (isInteger($vendorName)) {
 			$vendorName = diOAuth2Vendors::name($vendorName);
 		}
 
-		$className = camelize("di_o_auth2_" . $vendorName . "_custom");
+		$className = camelize('di_o_auth2_' . $vendorName . '_custom');
 
-		if (!diLib::exists($className))
-		{
+		if (!\diLib::exists($className)) {
 			$className = camelize("di_o_auth2_" . $vendorName);
 
-			if (!diLib::exists($className))
-			{
+			if (!\diLib::exists($className)) {
 				return false;
 			}
 		}
@@ -109,22 +106,20 @@ abstract class diOAuth2
 
 	public static function getWorkerPath($method, $params = [])
 	{
-		if (!is_array($params))
-		{
-			$params = array($params);
+		if (!is_array($params)) {
+			$params = [$params];
 		}
 
 		array_splice($params, 0, 0, [$method]);
 
-		return \diLib::getWorkerPath("auth", "oauth2", $params);
+		return \diLib::getWorkerPath('auth', 'oauth2', $params);
 	}
 
 	public static function makeHttpRequest($url, $params = [], $method = self::REQUEST_GET)
 	{
 		$ch = curl_init();
 
-		switch ($method)
-		{
+		switch ($method) {
 			case self::REQUEST_GET:
 				$url = static::makeUrl($url, $params);
 				break;
@@ -167,7 +162,7 @@ abstract class diOAuth2
 
 	public static function makeUrl($base, $params = [])
 	{
-		$glue = $params ? "?" : "";
+		$glue = $params ? '?' : '';
 
 		return $base . $glue . static::buildQuery($params);
 	}
@@ -175,9 +170,9 @@ abstract class diOAuth2
 	protected function getBackUrlParts()
 	{
 		return [
-			"scheme" => \diRequest::protocol(),
-			"host" => \diRequest::domain(),
-			"path" => static::getWorkerPath(\diOAuth2Vendors::name($this->vendorId), static::callbackParam),
+			'scheme' => \diRequest::protocol(),
+			'host' => \diRequest::domain(),
+			'path' => static::getWorkerPath(\diOAuth2Vendors::name($this->vendorId), static::callbackParam),
 		];
 	}
 
@@ -198,18 +193,17 @@ abstract class diOAuth2
 
 	public function redirectToLogin()
 	{
-		header("Location: " . $this->getLoginUrl());
+		header('Location: ' . $this->getLoginUrl());
 
 		return $this;
 	}
 
 	public function unlink()
 	{
-		if (diAuth::i()->authorized())
-		{
-			diAuth::i()->getUserModel()
-				->set(diOAuth2Vendors::name($this->vendorId) . "_id", 0)
-				->set(diOAuth2Vendors::name($this->vendorId) . "_login", "")
+		if (Auth::i()->authorized()) {
+			Auth::i()->getUserModel()
+				->set(diOAuth2Vendors::name($this->vendorId) . '_id', 0)
+				->set(diOAuth2Vendors::name($this->vendorId) . '_login', '')
 				->save();
 
 			return true;
@@ -250,14 +244,13 @@ abstract class diOAuth2
 
 	public function processReturn()
 	{
-		if ($this->isReturn())
-		{
+		if ($this->isReturn()) {
 			$user = $this
 				->retrieveProfile()
 				->syncWithUser();
 
-			if (!diAuth::i()->authorized()) {
-				diAuth::i()->forceAuthorize($user);
+			if (!Auth::i()->authorized()) {
+				Auth::i()->forceAuthorize($user, true);
 
 				Logger::getInstance()->log('force auth, ip=' . get_user_ip());
 			}
@@ -272,10 +265,10 @@ abstract class diOAuth2
 
 	protected function getUserModelByProfile()
 	{
-        Logger::getInstance()->log('authorized? ' . (\diAuth::i()->authorized() ? 1 : 0));
+        Logger::getInstance()->log('authorized? ' . (Auth::i()->authorized() ? 1 : 0));
 
-		if (\diAuth::i()->authorized()) {
-			$user = \diAuth::i()->getUserModel();
+		if (Auth::i()->authorized()) {
+			$user = Auth::i()->getUserModel();
 
             Logger::getInstance()->variable('authorized user', $user->get());
 		} else {
@@ -309,13 +302,13 @@ abstract class diOAuth2
 	}
 
 	/**
-	 * @return \diCore\Entity\User\Model
+	 * @return Model
 	 * @throws Exception
 	 */
 	protected function syncWithUser()
 	{
 		if (!$this->getProfile()->exists()) {
-			throw new \Exception("No profile retrieved");
+			throw new \Exception('No profile retrieved');
 		}
 
 		$user = $this->getUserModelByProfile();
@@ -326,30 +319,24 @@ abstract class diOAuth2
 	}
 
 	/**
-	 * @param \diCore\Entity\User\Model $user
+	 * @param Model $user
 	 * @return $this
 	 */
-	protected function storeProfileTo(\diCore\Entity\User\Model $user)
+	protected function storeProfileTo(Model $user)
 	{
 		$user->importDataFromOAuthProfile($this->getProfile());
 
 		$signUp = !$user->hasId();
 
-		if ($user->changed())
-		{
+		if ($user->changed()) {
 			$user->save();
 
-			if ($signUp)
-			{
-				if (is_callable($callback = $this->signUpCallback))
-				{
+			if ($signUp) {
+				if (is_callable($callback = $this->signUpCallback)) {
 					$callback($this, $user);
 				}
-			}
-			else
-			{
-				if (is_callable($callback = $this->signInCallback))
-				{
+			} else {
+				if (is_callable($callback = $this->signInCallback)) {
 					$callback($this, $user);
 				}
 			}
@@ -370,7 +357,7 @@ abstract class diOAuth2
 		$this->profileRawData = $data;
 
 		if ($data) {
-			Logger::getInstance()->variable("OAuth2 data " . diOAuth2Vendors::name($this->getVendorId()), $data);
+			Logger::getInstance()->variable('OAuth2 data ' . diOAuth2Vendors::name($this->getVendorId()), $data);
 		}
 
 		return $this;
@@ -391,13 +378,10 @@ abstract class diOAuth2
 
 		$this->downloadData();
 
-		if ($this->profileRawData)
-		{
-			$this->getProfile()->import(new diModel($this->profileRawData));
-		}
-		else
-		{
-			throw new \Exception($this->profileRetrieveErrorInfo . " " . self::$lastRequestError);
+		if ($this->profileRawData) {
+			$this->getProfile()->import(new \diModel($this->profileRawData));
+		} else {
+			throw new \Exception($this->profileRetrieveErrorInfo . ' ' . self::$lastRequestError);
 		}
 
 		return $this;
