@@ -820,17 +820,20 @@ body[data-skin="entrine"] .simple-button:hover {
 }
 .admin-layout > .nav {
   position: absolute;
-  border-right: #ccc solid 1px;
-  margin-bottom: 40px;
+  padding-bottom: 40px;
   width: 200px;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
 body[data-skin="entrine"] .admin-layout > .nav {
-  border-right: 0;
   width: 230px;
-  margin-bottom: 60px;
+  padding-bottom: 60px;
+}
+@media screen and (max-width: 767px) {
+  body[data-skin="entrine"] .admin-layout > .nav {
+    padding-bottom: 0;
+  }
 }
 @media screen and (max-width: 767px) {
   .admin-layout > .nav {
@@ -838,7 +841,7 @@ body[data-skin="entrine"] .admin-layout > .nav {
     z-index: 100;
     -webkit-box-shadow: 0 0 10px #000;
     box-shadow: 0 0 10px #000;
-    margin-bottom: 0;
+    padding-bottom: 0;
   }
 }
 @media screen and (max-width: 767px) {
@@ -1631,6 +1634,12 @@ body[data-skin="entrine"] .list-control-panel {
   right: 0;
   padding: 10px 25px 0 10px;
 }
+@media screen and (max-width: 768px) {
+  .expand-collapse-block {
+    padding-top: 7px;
+    padding-right: 10px;
+  }
+}
 .expand-collapse-block u {
   display: inline-block;
   width: 18px;
@@ -1908,6 +1917,7 @@ del {
   background: #fff;
   padding: 0 7px;
   border-bottom: 1px solid #ccc;
+  border-right: #ccc solid 1px;
   height: 39px;
 }
 .menu-panel > span {
@@ -1991,6 +2001,7 @@ ul.left-menu {
   list-style: none;
   margin: 0;
   padding: 0;
+  border-right: #ccc solid 1px;
 }
 ul.left-menu > li > b {
   display: block;

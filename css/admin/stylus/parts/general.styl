@@ -268,19 +268,21 @@ u
     padding-bottom 40px
     > .nav
         position absolute
-        border-right #ccc solid 1px
-        margin-bottom $classicFooterHeight
+        // border-right #ccc solid 1px
+        padding-bottom $classicFooterHeight
         width $classicMenuWidth
         box-sizing border-box
         body[data-skin="entrine"] &
-            border-right 0
+            // border-right 0
             width $entrineMenuWidth
-            margin-bottom $entrineFooterHeight
+            padding-bottom $entrineFooterHeight
+            @media screen and (max-width: 767px)
+                padding-bottom 0
         @media screen and (max-width: 767px)
             display none
             z-index 100
             box-shadow 0 0 10px black
-            margin-bottom 0
+            padding-bottom 0
     &.nav-shown
         > .nav
             @media screen and (max-width: 767px)
@@ -817,6 +819,9 @@ table.banners_stat td.sel, table.banners_stat th.sel
     position absolute
     right 0
     padding 10px 25px 0 10px
+    @media $mqTablet
+        padding-top 7px
+        padding-right 10px
     u
         display inline-block
         width 18px
