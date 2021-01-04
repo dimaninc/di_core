@@ -78,4 +78,15 @@ class Model extends \diModel
             ? Helper::printBlock($this->getId())
             : null;
     }
+
+    /**
+     * Called in Helper class when fetching ads for block
+     * Rewrite this if some emulation for non existing block needed or something
+     * @param callable $nativeCallback
+     * @return mixed
+     */
+    public function fetchAdsForHelper($nativeCallback)
+    {
+        return $nativeCallback();
+    }
 }

@@ -138,15 +138,13 @@ class Helper
 	{
 		$this->populateBlock($blockId);
 
-		if ($this->blockIsNeeded() && !$this->getBlock()->exists())
-		{
+		if ($this->blockIsNeeded() && !$this->getBlock()->exists()) {
 			return '';
 		}
 
 		$this->checkTitleAndContentOfSlides();
 
-		if ($this->getTpl() && $this->getTpl()->defined('ad_block'))
-		{
+		if ($this->getTpl() && $this->getTpl()->defined('ad_block')) {
 			return $this->oldRender($token);
 		}
 
@@ -197,9 +195,10 @@ class Helper
 	 */
 	protected function getAds()
 	{
-		if (!isset($this->ads[$this->getBlock()->getId()]))
-		{
-			$this->ads[$this->getBlock()->getId()] = $this->fetchAds();
+		if (!isset($this->ads[$this->getBlock()->getId()])) {
+			$this->ads[$this->getBlock()->getId()] = $this->getBlock()->fetchAdsForHelper(function() {
+			    return $this->fetchAds();
+            });
 		}
 
 		return $this->ads[$this->getBlock()->getId()];
@@ -216,33 +215,27 @@ class Helper
 				: ShowOnHolidays::except,
 		];
 
-		/** @var Collection $col */
-		$col = \diCollection::create(Types::ad);
-		$col
+		$col = Collection::create()
 			->filterByBlockId($this->getBlock()->getId());
 
-		if ($this->considerDates())
-		{
+		if ($this->considerDates()) {
 			$col
 				->filterManual('show_date1 IS NULL OR CURDATE() >= show_date1')
 				->filterManual('show_date2 IS NULL OR CURDATE() <= show_date2');
 		}
 
-		if ($this->considerTimes())
-		{
+		if ($this->considerTimes()) {
 			$col
 				->filterManual('show_time1 IS NULL OR CURTIME() >= show_time1')
 				->filterManual('show_time2 IS NULL OR CURTIME() <= show_time2');
 		}
 
-		if ($this->considerWeekdays())
-		{
+		if ($this->considerWeekdays()) {
 			$col
 				->filterManual("show_on_weekdays = '' OR INSTR(show_on_weekdays, ',$wd,') > 0");
 		}
 
-		if ($this->considerHolidays())
-		{
+		if ($this->considerHolidays()) {
 			$col
 				->filterByShowOnHolidays($holidayValues);
 		}
@@ -276,21 +269,20 @@ class Helper
 
 	protected function checkTitleAndContentOfSlides()
 	{
-		if (!$this->getBlock()->hasDefaultSlideTitle() && !$this->getBlock()->hasDefaultSlideContent())
-		{
+		if (
+		    !$this->getBlock()->hasDefaultSlideTitle() &&
+            !$this->getBlock()->hasDefaultSlideContent()
+        ) {
 			return $this;
 		}
 
 		/** @var Model $ad */
-		foreach ($this->getAds() as $ad)
-		{
-			if (!$ad->hasTitle())
-			{
+		foreach ($this->getAds() as $ad) {
+			if (!$ad->hasTitle()) {
 				$ad->setTitle($this->getBlock()->getDefaultSlideTitle());
 			}
 
-			if (!$ad->hasContent())
-			{
+			if (!$ad->hasContent()) {
 				$ad->setContent($this->getBlock()->getDefaultSlideContent());
 			}
 		}
@@ -304,8 +296,7 @@ class Helper
 			->clear('AD_ROWS');
 
 		/** @var Model $ad */
-		foreach ($this->getAds() as $ad)
-		{
+		foreach ($this->getAds() as $ad) {
 			$this->getTpl()
 				->assign($ad->getTemplateVarsExtended(), 'A_')
 				->process('AD_ROWS', '.ad_row');
