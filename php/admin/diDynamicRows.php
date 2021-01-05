@@ -22,6 +22,7 @@
 */
 
 use diCore\Admin\Submit;
+use diCore\Data\Config;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\FileSystemHelper;
 use diCore\Helper\StringHelper;
@@ -91,8 +92,6 @@ class diDynamicRows
 
 		$this->db = $db;
 
-		$this->storedModel = new diModel();
-
 		if (gettype($AdminPage) == "object") {
 			$this->AdminPage = $AdminPage;
 			$this->table = $this->AdminPage->getTable();
@@ -113,8 +112,11 @@ class diDynamicRows
 
 		$this->static_mode = false;
 
-		$this->abs_path = \diCore\Data\Config::getPublicFolder(); //diPaths::fileSystem();
+		$this->abs_path = Config::getPublicFolder(); //diPaths::fileSystem();
 		$this->data_table = $this->info_ar[$this->field]["table"];
+
+        $this->storedModel = \diModel::createForTableNoStrict($this->getDataTable()); // , $this->getParentId(), 'id'
+        //$this->storedModel = new \diModel();
 
 		$fields_to_check_ar = array("table", "template", "fields");
 
@@ -1192,7 +1194,7 @@ EOF;
 
 		$field2 = substr($matches[1], strlen($this->field) + 1);
 
-		$f = remove_ending_slash(\diCore\Data\Config::getPublicFolder()) . $fullName;
+		$f = remove_ending_slash(Config::getPublicFolder()) . $fullName;
 		$ext = strtoupper(get_file_ext($fullName));
 		$imgWrapperNeeded = false;
 
@@ -1870,13 +1872,19 @@ EOF;
 				$this->data[$field] = StringHelper::replaceFileExtension($this->test_r->$field, $ext);
 			} else {
 				$this->data[$field] = Submit::getGeneratedFilename(
-					\diCore\Data\Config::getPublicFolder() . $pics_folder,
+					Config::getPublicFolder() . $pics_folder,
 					$_FILES[$ff]["name"][$id],
 					$this->getFieldProperty($field, 'naming')
 				);
 			}
 
-			$fileOptions = $this->getFieldProperty($field, 'fileOptions');
+			//$fileOptions = $this->getFieldProperty($field, 'fileOptions');
+            $fileOptions = Submit::prepareFileOptions(
+                $field,
+                $this->getFieldProperty($field, 'fileOptions') ?: $this->getStoredModel()->getPicStoreSettings($field) ?: [],
+                $this->getStoredModel(),
+                $this->getTable()
+            );
 			$callback = isset($field_config["callback"])
 				? $field_config["callback"]
 				: [\diDynamicRows::class, 'storePicSimple'];
