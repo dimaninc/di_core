@@ -45,7 +45,7 @@ class diDynamicRows
 	 */
 	public $test_r;
 
-	const MULTIPLE_UPLOAD_FIELD_NAME = '__new_files';
+	const MULTIPLE_UPLOAD_FIELD_NAME = '__new_files__';
 	const MULTIPLE_UPLOAD_FIRST_ID = -10000;
 	private $defaultMultiplePicField = null;
 
@@ -1568,9 +1568,11 @@ EOF;
 
 		$ids_ar = [];
 
+		$multiField = self::getMultipleUploadFieldName($this->field);
+
 		$atLeastOneUploaded =
-            isset($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['size']) &&
-            array_sum($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['size']) > 0;
+            isset($_FILES[$multiField]['size']) &&
+            array_sum($_FILES[$multiField]['size']) > 0;
 
 		if ($atLeastOneUploaded) {
 			$id = self::MULTIPLE_UPLOAD_FIRST_ID;
@@ -1584,7 +1586,7 @@ EOF;
 			$multiUploadCallback = $this->getProperty('multiUploadCallback');
 			$beforeSaveCallback = $this->getProperty('beforeSave');
 
-			foreach ($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['name'] as $idx => $name) {
+			foreach ($_FILES[$multiField]['name'] as $idx => $name) {
                 $id--;
 
                 if (!$name) {
@@ -1592,11 +1594,11 @@ EOF;
                 }
 
 				if (
-					!empty($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['error'][$idx]) &&
-					$_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['error'][$idx] != 4
+					!empty($_FILES[$multiField]['error'][$idx]) &&
+					$_FILES[$multiField]['error'][$idx] != 4
                 ) {
 					Logger::getInstance()->log($idx . ' error: ' .
-						$_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['error'][$idx], 'multiple');
+						$_FILES[$multiField]['error'][$idx], 'multiple');
 
 					continue;
 				}
@@ -1842,6 +1844,11 @@ EOF;
 		return $id <= self::MULTIPLE_UPLOAD_FIRST_ID;
 	}
 
+	public static function getMultipleUploadFieldName($field)
+    {
+        return self::MULTIPLE_UPLOAD_FIELD_NAME . $field;
+    }
+
 	protected function store_pic($field, $id, $field_config)
 	{
 		global $tn_folder;
@@ -1853,7 +1860,7 @@ EOF;
         FileSystemHelper::createTree($this->abs_path, $pics_folder . $tn_folder, 0775);
 
 		$ff = $multiUploadMode
-			? self::MULTIPLE_UPLOAD_FIELD_NAME
+			? self::getMultipleUploadFieldName($this->field)
 			: "{$this->field}_$field";
 
 		if ($multiUploadMode) {

@@ -110,7 +110,7 @@ var diDynamicRows = function(opts) {
 			var $inp = $('<input/>').attr({
 				type: 'file',
 				multiple: 'multiple',
-				name: '__new_files[]'
+				name: '__new_files__' + opts.field + '[]'
 			});
 
 			$inp
@@ -121,7 +121,7 @@ var diDynamicRows = function(opts) {
 					if (this.files.length) {
 						for (var i in this.files) {
 							if (this.files.hasOwnProperty(i)) {
-								var $row = $('<li><img src=""></li>');
+								var $row = $('<li><img src="" alt=""></li>');
 
 								$previewArea
 									.append($row);
