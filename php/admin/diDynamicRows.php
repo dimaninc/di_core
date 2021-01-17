@@ -1568,7 +1568,8 @@ EOF;
 
 		$ids_ar = [];
 
-		$atLeastOneUploaded = isset($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['size']) &&
+		$atLeastOneUploaded =
+            isset($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['size']) &&
             array_sum($_FILES[self::MULTIPLE_UPLOAD_FIELD_NAME]['size']) > 0;
 
 		if ($atLeastOneUploaded) {
@@ -1637,13 +1638,11 @@ EOF;
 
 					if (in_array($v["type"], ["pic", "file"]) && !$this->data[$k]) {
 					} else {
-						if ($v['type'] == 'radio') {
-							$data_for_db[$k] =
-                                isset($_POST[$this->field . '_' . $k]) &&
-                                $_POST[$this->field . '_' . $k] == $id
-                                    ? 1
-                                    : 0;
-						} elseif (isset($this->data[$k])) {
+						if ($v['type'] === 'radio') {
+							$data_for_db[$k] =0;
+						} elseif ($v['type'] === 'checkbox') {
+                            $data_for_db[$k] = $v['default'];
+                        } elseif (isset($this->data[$k])) {
 							$data_for_db[$k] = $this->data[$k];
 						}
 					}
