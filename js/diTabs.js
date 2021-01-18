@@ -91,5 +91,13 @@ var diTabs = function(_opts)
 		return this.tabExists(name) ? e.$pages[name] : $();
 	};
 
+	this.getSelectedTab = function() {
+		return opts.selectedTab;
+	};
+
+	this.isTabSelected = function(tabName) {
+		return this.getSelectedTab() === tabName;
+	};
+
 	constructor();
 };

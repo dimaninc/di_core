@@ -28,6 +28,7 @@ var diDynamicRows = function(opts) {
 	this.counters = {};
 	this.directions = {};
 	this.field_titles = {};
+	this.formTab = null;
 
 	function constructor() {
 		opts = $.extend({
@@ -193,6 +194,10 @@ var diDynamicRows = function(opts) {
 
 	this.setupPasteImage = function() {
 		$(document).on('paste.didynamicrows', function(event) {
+			if (!self.isMyTabActive()) {
+				return;
+			}
+
             var items = (event.clipboardData || event.originalEvent.clipboardData).items;
 
             for (var i = 0; i < items.length; i++) {
@@ -246,6 +251,7 @@ var diDynamicRows = function(opts) {
 		$wrapper = $anc.parent();
 		$formRow = $wrapper.closest('.diadminform-row');
         $rowsWrapper = $wrapper.find('.dynamic-wrapper');
+        this.formTab = $formRow.closest('[data-tab]').data('tab');
 
 		setTimeout(function() {
 			$dropAreas = $formRow.find('.admin-form-uploading-area');
@@ -431,6 +437,18 @@ var diDynamicRows = function(opts) {
 		$('#' + field + '_div\\[' + id + '\\]').remove();
 
         opts.afterDelRow && opts.afterDelRow(this, id);
+	};
+
+	this.getFormTab = function() {
+		return this.formTab;
+	};
+
+	this.getAdminForm = function() {
+		return admin_form;
+	};
+
+	this.isMyTabActive = function () {
+		return this.getAdminForm() && this.getAdminForm().getTabs().isTabSelected(this.getFormTab());
 	};
 
 	constructor();

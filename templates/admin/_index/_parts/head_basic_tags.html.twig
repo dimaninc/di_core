@@ -9,10 +9,6 @@
 
 <link rel="icon" type="image/png" href="{{ asset_locations['images'] }}admin/icon.png">
 
-{% for name in jsFiles %}
-	{{ head.js(_context, name) }}
-{% endfor %}
+{% for name in jsFiles %}{{ head.js(_context, name) }}{% endfor %}
 
-{% for name in cssFiles %}
-	{{ head.style(_context, name) }}
-{% endfor %}
+{% for name in cssFiles %}{{ head.style(_context, name) }}{% endfor %}
