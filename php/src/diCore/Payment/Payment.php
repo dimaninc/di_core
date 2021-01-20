@@ -19,6 +19,7 @@ use diCore\Payment\Tinkoff\Helper as Tinkoff;
 use diCore\Payment\Yandex\Kassa;
 use diCore\Tool\Auth as AuthTool;
 use diCore\Tool\Logger;
+use diCore\Traits\BasicCreate;
 
 /**
  * Class Payment
@@ -27,7 +28,7 @@ use diCore\Tool\Logger;
  */
 class Payment
 {
-    use \diCore\Traits\BasicCreate;
+    use BasicCreate;
 
     const SELECT_FIRST_VENDOR_BY_DEFAULT = false;
     const ORDER_DESCRIPTION = 'Payment';
@@ -183,8 +184,7 @@ class Payment
             $paymentVendorId
         );
 
-        switch ($draft->getPaySystem())
-        {
+        switch ($draft->getPaySystem()) {
             case System::mixplat:
                 return $this->initMixplat($draft);
 
@@ -217,8 +217,7 @@ class Payment
             "user: {$this->getUserId()}, amount: $amount, system: $systemId, vendor: $vendorId]");
         static::log('Route: ' . \diRequest::requestUri());
 
-        /** @var \diCore\Entity\PaymentDraft\Model $draft */
-        $draft = \diModel::create(\diTypes::payment_draft);
+        $draft = Draft::create();
 
         $this->afterDraftCreate($draft);
 
@@ -241,12 +240,12 @@ class Payment
         return $draft;
     }
 
-    protected function afterDraftCreate(\diCore\Entity\PaymentDraft\Model $draft)
+    protected function afterDraftCreate(Draft $draft)
     {
         return $this;
     }
 
-    protected function beforeDraftSave(\diCore\Entity\PaymentDraft\Model $draft)
+    protected function beforeDraftSave(Draft $draft)
     {
         return $this;
     }
@@ -258,7 +257,7 @@ class Payment
      * @param float $amount
      * @param int $systemId
      * @param int $vendorId
-     * @return \diCore\Entity\PaymentDraft\Model
+     * @return Draft
      * @throws \Exception
      */
     public static function createDraft($targetType, $targetId, $userId, $amount, $systemId, $vendorId = 0, $currency = self::rub)
@@ -282,6 +281,21 @@ document.forms[0].submit();
 EOF;
     }
 
+    public static function wrapFormIntoHtml($form, $lang = 'ru')
+    {
+        return <<<EOF
+<!doctype html>
+<html lang="{$lang}">
+<head>
+<title>Payment system redirect</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="robots" content="noindex, nofollow">
+</head>
+<body>{$form}</body>
+</html>
+EOF;
+    }
+
     public static function log($message)
     {
         Logger::getInstance()->log($message, 'diPayment', '-payment');
@@ -298,15 +312,14 @@ EOF;
         ];
         $i = 0;
 
-        $processPaymentVariantRow = function ($systemId, $vendorId = 0) use ($hrefCallback, $selectedVendorId, &$ar, &$i)
-        {
+        $processPaymentVariantRow = function ($systemId, $vendorId = 0)
+        use ($hrefCallback, $selectedVendorId, &$ar, &$i) {
             $selected = $selectedVendorId && (
-                $selectedVendorId == $vendorId ||
-                (static::SELECT_FIRST_VENDOR_BY_DEFAULT && !$selectedVendorId && $i == 0)
-            );
+                    $selectedVendorId == $vendorId ||
+                    (static::SELECT_FIRST_VENDOR_BY_DEFAULT && !$selectedVendorId && $i == 0)
+                );
 
-            if (static::isPaymentMethodAvailable($systemId, $vendorId))
-            {
+            if (static::isPaymentMethodAvailable($systemId, $vendorId)) {
                 $ar['payment_vendor_rows'][] = [
                     'vendor' => [
                         'id' => $vendorId,
@@ -326,25 +339,19 @@ EOF;
             }
         };
 
-        foreach (static::$paymentVendorsUsed as $systemId)
-        {
-            if (is_array($systemId))
-            {
+        foreach (static::$paymentVendorsUsed as $systemId) {
+            if (is_array($systemId)) {
                 $vendors = $systemId['vendors'];
                 $systemId = $systemId['system'];
 
-                if (!is_array($vendors))
-                {
+                if (!is_array($vendors)) {
                     $vendors = [$vendors];
                 }
 
-                foreach ($vendors as $vendorId)
-                {
+                foreach ($vendors as $vendorId) {
                     $processPaymentVariantRow($systemId, $vendorId);
                 }
-            }
-            else
-            {
+            } else {
                 $processPaymentVariantRow($systemId);
             }
         }
@@ -372,7 +379,7 @@ EOF;
 
         $kassa = Kassa::create();
 
-        return $kassa::getForm($draft, [
+        return static::wrapFormIntoHtml($kassa::getForm($draft, [
             'autoSubmit' => true,
             'customerEmail' => $this->getCustomerEmail(),
             'customerPhone' => $this->getCustomerPhone(),
@@ -381,19 +388,19 @@ EOF;
                 'shopSuccessURL' => $successUrl,
                 'shopFailURL' => $failUrl,
             ],
-        ]);
+        ]));
     }
 
     public function initRobokassa(Draft $draft)
     {
         $rk = Robokassa::basicCreate();
 
-        return $rk::getForm($draft, [
+        return static::wrapFormIntoHtml($rk::getForm($draft, [
             'autoSubmit' => true,
             'customerEmail' => $this->getCustomerEmail(),
             'customerPhone' => $this->getCustomerPhone(),
             'description' => static::ORDER_DESCRIPTION,
-        ]);
+        ]));
     }
 
     public function initTinkoff(Draft $draft)
@@ -434,7 +441,7 @@ EOF;
 
         $pp = Paypal::create();
 
-        return $pp::getForm($draft, [
+        return static::wrapFormIntoHtml($pp::getForm($draft, [
             'autoSubmit' => true,
             'orderTitle' => static::ORDER_DESCRIPTION,
             'currency' => 'RUB',
@@ -442,7 +449,7 @@ EOF;
                 'return' => $successUrl,
                 'cancel_return' => $failUrl,
             ],
-        ]);
+        ]));
     }
 
     public function initMixplat(Draft $draft)
@@ -461,23 +468,19 @@ EOF;
         $ok = true;
         $message = '';
 
-        if ($result->isSuccess())
-        {
+        if ($result->isSuccess()) {
             $draft
                 ->setVendor(\diCore\Payment\Mixplat\MobileVendors::id($result->getData('operator')))
                 ->setStatus(\diCore\Payment\Mixplat\ResultStatus::PENDING)
                 ->save();
 
             $this->log('MixPlat initiated successfully: ' . print_r($result->getData(), true));
-        }
-        else
-        {
+        } else {
             $this->log('MixPlat not initiated: (' . $result->getErrorCode() . ') ' . $result->getError());
 
             $ok = false;
 
-            switch ($result->getErrorCode())
-            {
+            switch ($result->getErrorCode()) {
                 case 8: //Operator is not active
                     // todo: Localization here
                     $message = 'Технические проблемы на стороне оператора связи';
@@ -515,6 +518,6 @@ EOF;
     {
         throw new \Exception('Not implemented yet');
 
-        return [];
+        // return [];
     }
 }

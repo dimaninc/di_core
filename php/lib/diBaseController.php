@@ -1,5 +1,6 @@
 <?php
 
+use diCore\Database\Connection;
 use diCore\Helper\StringHelper;
 use diCore\Helper\ArrayHelper;
 use diCore\Base\CMS;
@@ -51,8 +52,7 @@ class diBaseController
 
 	protected function initAdmin()
 	{
-		if ($this->admin === null)
-		{
+		if ($this->admin === null) {
 			$this->admin = \diAdminUser::create();
 		}
 
@@ -66,8 +66,7 @@ class diBaseController
 
 	protected function adminRightsHardCheck()
 	{
-		if (!$this->isAdminAuthorized())
-		{
+		if (!$this->isAdminAuthorized()) {
 			throw new \Exception('You have no access to this controller/action');
 		}
 
@@ -76,7 +75,7 @@ class diBaseController
 
 	protected function getDb()
 	{
-		return \diCore\Database\Connection::get()->getDb();
+		return Connection::get()->getDb();
 	}
 
 	/**
@@ -86,8 +85,7 @@ class diBaseController
 	 */
 	protected function getTpl()
 	{
-		if ($this->tpl === null)
-		{
+		if ($this->tpl === null) {
 			throw new \Exception('Template not initialized');
 		}
 
@@ -99,8 +97,7 @@ class diBaseController
 	 */
 	protected function getTwig()
 	{
-		if ($this->Twig === null)
-		{
+		if ($this->Twig === null) {
 			$this->setupTwig();
 		}
 
@@ -138,8 +135,7 @@ class diBaseController
 
 		$result = $c->act();
 
-		if ($result)
-		{
+		if ($result) {
 			$c->defaultResponse($result);
 		}
 
@@ -151,8 +147,7 @@ class diBaseController
 		$pathBeginning = StringHelper::slash(StringHelper::slash($pathBeginning, true), false);
 		$route = static::getFullQueryRoute();
 
-		if (strpos($route, $pathBeginning) === 0)
-		{
+		if (strpos($route, $pathBeginning) === 0) {
 			try {
 				static::autoCreate([
 					'pathBeginning' => $pathBeginning,
@@ -161,8 +156,7 @@ class diBaseController
 				static::autoError($e);
 			}
 
-			if ($die)
-			{
+			if ($die) {
 				die();
 			}
 
@@ -191,12 +185,9 @@ class diBaseController
 	{
 		//$pathBeginning = $pathBeginning ?: Config::getApiQueryPrefix();
 
-		if ($pathBeginning)
-		{
+		if ($pathBeginning) {
 			$paramsStr = rtrim(static::getFullQueryRoute(), '/');
-		}
-		else
-		{
+		} else {
 			$path = static::getCurrentFolder();
 
 			$paramsStr = trim(substr(static::getFullQueryRoute(), strlen($path) + 1), '/');
@@ -204,8 +195,7 @@ class diBaseController
 
 		$paramsStr = preg_replace('/[?#].*$/', '', $paramsStr);
 
-		if ($pathBeginning && substr($paramsStr, 0, strlen($pathBeginning)) == $pathBeginning)
-		{
+		if ($pathBeginning && substr($paramsStr, 0, strlen($pathBeginning)) == $pathBeginning) {
 			$paramsStr = substr($paramsStr, strlen($pathBeginning));
 		}
 
@@ -228,8 +218,7 @@ class diBaseController
 	*/
 	public static function autoCreate($classBaseName = null, $action = null, $params = [])
 	{
-		if (is_array($classBaseName) && $classBaseName && $action === null && !$params)
-		{
+		if (is_array($classBaseName) && $classBaseName && $action === null && !$params) {
 			$options = extend([
 				'pathBeginning' => null,
 			], $classBaseName);
@@ -237,28 +226,23 @@ class diBaseController
 			$classBaseName = null;
 
 			$paramsAr = static::getQueryRouteAr($options['pathBeginning']);
-		}
-		else
-		{
+		} else {
 			$paramsAr = static::getQueryRouteAr();
 		}
 
-		if (!$classBaseName || !$action)
-		{
+		if (!$classBaseName || !$action) {
 			$classBaseName = isset($paramsAr[0]) ? $paramsAr[0] : '';
 			$action = isset($paramsAr[1]) ? $paramsAr[1] : '';
 			$params = array_slice($paramsAr, 2);
 
-			if (!$classBaseName)
-			{
+			if (!$classBaseName) {
 				throw new \Exception('Empty controller name passed');
 			}
 		}
 
 		$className = \diLib::getClassNameFor($classBaseName, \diLib::CONTROLLER);
 
-		if (!\diLib::exists($className))
-		{
+		if (!\diLib::exists($className)) {
 			throw new \Exception("Controller class '$className' doesn't exist");
 		}
 
@@ -267,8 +251,7 @@ class diBaseController
 
 		$result = $c->act($action, $params);
 
-		if ($result)
-		{
+		if ($result) {
 			$c->defaultResponse($result);
 		}
 
@@ -277,7 +260,7 @@ class diBaseController
 
 	public static function autoError(\Exception $e)
 	{
-		print_json([
+        StringHelper::printJson([
 			'ok' => false,
 			'message' => $e->getMessage(),
 		]);
@@ -285,29 +268,24 @@ class diBaseController
 
 	public function act($action = '', $paramsAr = [])
 	{
-		if (!$action)
-	    {
+		if (!$action) {
 	    	$action = $this->action;
 	    }
 
-		if (!$this->action)
-		{
+		if (!$this->action) {
 			$this->action = $action;
 		}
 
-		if ($action)
-		{
+		if ($action) {
 			$methodName = '_' . camelize(strtolower(\diRequest::getMethodStr()) . '_' . $action . '_action');
 
 			// first looking for REST API methods like _putSomeAction
-			if (!method_exists($this, $methodName))
-			{
+			if (!method_exists($this, $methodName)) {
 				$methodName = camelize($action . '_action');
 			}
 
 			// then for basic method like someAction
-			if (method_exists($this, $methodName))
-			{
+			if (method_exists($this, $methodName)) {
 			    $this->setParamsAr($paramsAr);
 
 				return $this->$methodName();
@@ -326,17 +304,13 @@ class diBaseController
 
 	public static function makeResponse($data, $die = false)
 	{
-		if (is_scalar($data))
-		{
+		if (is_scalar($data)) {
 			echo $data;
-		}
-		else
-		{
-			print_json($data, !static::isCli());
+		} else {
+            StringHelper::printJson($data, !static::isCli());
 		}
 
-		if ($die)
-		{
+		if ($die) {
 			die();
 		}
 	}
@@ -406,8 +380,6 @@ class diBaseController
 			$lang = Config::getMainLanguage();
 		}
 
-		return isset(static::$language[$lang][$key])
-			? static::$language[$lang][$key]
-			: $key;
+		return static::$language[$lang][$key] ?? $key;
 	}
 }

@@ -160,13 +160,11 @@ class Helper
 			'Encoding' => 'utf-8',
 		], $opts['additionalParams']);
 
-		if (self::isTestMode())
-		{
+		if (self::isTestMode()) {
 			$params['IsTest'] = 1;
 		}
 
-		if (static::isReceiptUsed())
-		{
+		if (static::isReceiptUsed()) {
 			$params['Receipt'] = static::getReceipt($draft);
 		}
 
