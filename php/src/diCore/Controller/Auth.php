@@ -116,7 +116,7 @@ class Auth extends \diBaseController
             }
 
             $A = new AuthTool();
-            $A->forceAuthorize($user);
+            $A->forceAuthorize($user, true);
 
             if ($back) {
                 header('Location: ' . $back);
