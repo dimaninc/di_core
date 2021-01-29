@@ -15,22 +15,16 @@ use diCore\Tool\CollectionCache;
  * Trait OrderItem
  * @package diCore\Traits\Model
  *
- * @method integer	getTargetType
- * @method integer	getTargetId
  * @method double	getPrice
  * @method integer	getQuantity
  * @method string	getCreatedAt
  * @method string	getData
  *
- * @method bool hasTargetType
- * @method bool hasTargetId
  * @method bool hasPrice
  * @method bool hasQuantity
  * @method bool hasCreatedAt
  * @method bool hasData
  *
- * @method $this setTargetType($value)
- * @method $this setTargetId($value)
  * @method $this setPrice($value)
  * @method $this setQuantity($value)
  * @method $this setCreatedAt($value)
@@ -42,21 +36,6 @@ trait OrderItem
     protected $item;
 
     protected $data;
-
-    public static function createByTarget($targetType, $targetId = null)
-    {
-        if ($targetType instanceof \diModel && $targetId === null) {
-            $targetId = $targetType->getId();
-            $targetType = $targetType->modelType();
-        }
-
-        $col = \diCollection::create(static::modelTypeName());
-        $col
-            ->filterBy('target_type', $targetType)
-            ->filterBy('target_id', $targetId);
-
-        return $col->getFirstItem();
-    }
 
     protected function initItem()
     {

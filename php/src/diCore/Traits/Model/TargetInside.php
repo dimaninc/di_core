@@ -77,4 +77,27 @@ trait TargetInside
 
 		return $this;
 	}
+
+    /**
+     * @param \diModel|int $targetType
+     * @param int|null $targetId
+     * @return $this
+     * @throws \Exception
+     */
+	public static function createByTarget($targetType, $targetId = null)
+    {
+        if ($targetType instanceof \diModel && $targetId === null) {
+            $targetId = $targetType->getId();
+            $targetType = \diTypes::getId($targetType->getTable());
+        }
+
+        /** @var \diCollection $colClass */
+        $colClass = static::getCollectionClass();
+
+        $col = $colClass::create()
+            ->filterByTargetType($targetType)
+            ->filterByTargetId($targetId);
+
+        return $col->getFirstItem();
+    }
 }

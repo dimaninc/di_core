@@ -7,6 +7,8 @@
 
 namespace diCore\Entity\Slug;
 
+use diCore\Traits\Model\TargetInside;
+
 /**
  * Class diSlugModel
  * Methods list for IDE
@@ -22,7 +24,7 @@ namespace diCore\Entity\Slug;
  */
 class Model extends \diModel
 {
-    use \diCore\Traits\Model\TargetInside;
+    use TargetInside;
 
     const type = \diTypes::slug;
     const slug_field_name = self::SLUG_FIELD_NAME;
@@ -48,24 +50,5 @@ class Model extends \diModel
         }
 
         return parent::validate();
-    }
-
-    /**
-     * @param \diModel|int $targetType
-     * @param int|null $targetId
-     * @return \diModel
-     * @throws \Exception
-     */
-    public static function createByTarget($targetType, $targetId = null)
-    {
-        if ($targetType instanceof \diModel && $targetId === null) {
-            $targetId = $targetType->getId();
-            $targetType = \diTypes::getId($targetType->getTable());
-        }
-
-        return Collection::create()
-            ->filterByTargetType($targetType)
-            ->filterByTargetId($targetId)
-            ->getFirstItem();
     }
 }
