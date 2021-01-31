@@ -72,13 +72,11 @@ class Content extends \diCore\Admin\BasePage
 
 	protected function hideFieldsForType($contentTypes, $fields, $allLanguages = true)
 	{
-		if ($allLanguages)
-		{
+		if ($allLanguages) {
 			$fields = \diCurrentCMS::extendFieldsWithAllLanguages($fields);
 		}
 
-		if (!is_array($contentTypes))
-		{
+		if (!is_array($contentTypes)) {
 			$contentTypes = [$contentTypes];
 		}
 
@@ -100,17 +98,13 @@ class Content extends \diCore\Admin\BasePage
 
 		$parentsAr = [];
 		/** @var Model $parent */
-		foreach ($parents as $parent)
-		{
+		foreach ($parents as $parent) {
 			$parentsAr[] = strip_tags($parent->getTitle());
 		}
 
-		if ($parentsAr)
-		{
+		if ($parentsAr) {
 			$this->getForm()->setInput('parent', join(' / ', $parentsAr));
-		}
-		else
-		{
+		} else {
 			$this->getForm()->setHiddenInput('parent');
 		}
 
