@@ -55,6 +55,8 @@ class diAdminFilters
 	const DEFAULT_INPUT_SIZE_STRING = 40;
 	const DEFAULT_INPUT_SIZE_NUMBER = 6;
 
+	const EMPTY_STRING = '$EMPTY$';
+
 	public static $dirAr = [
 	    'ru' => [
             'ASC' => 'По возрастанию',
@@ -139,7 +141,7 @@ class diAdminFilters
 	private $buttonsPrefix = null;
 	private $buttonsSuffix = null;
 
-	public function __construct($table, $sortby = 'id', $dir = 'ASC', $possible_sortby_ar = false)
+	public function __construct($table, $sortBy = 'id', $dir = 'ASC', $possibleSortByAr = [])
 	{
 		global $db;
 
@@ -154,15 +156,15 @@ class diAdminFilters
 
 		$this->db = $db;
 
-		$this->gatherInitialData($sortby, $dir, $possible_sortby_ar);
+		$this->gatherInitialData($sortBy, $dir, $possibleSortByAr);
 	}
 
-	protected function gatherInitialData($sortby = 'id', $dir = 'ASC', $possible_sortby_ar = [])
+	protected function gatherInitialData($sortBy = 'id', $dir = 'ASC', $possibleSortByAr = [])
     {
-        $this->possible_sortby_ar = is_string($possible_sortby_ar)
-            ? explode(",", $possible_sortby_ar)
-            : $possible_sortby_ar;
-        $this->set_default_sorter($sortby, $dir);
+        $this->possible_sortby_ar = is_string($possibleSortByAr)
+            ? explode(",", $possibleSortByAr)
+            : $possibleSortByAr;
+        $this->set_default_sorter($sortBy, $dir);
 
         $this->reset = !!\diRequest::get("__diaf_reset");
 
@@ -402,13 +404,9 @@ class diAdminFilters
 		return <<<EOF
 <form name="admin_filter_form[{$this->table}]" method="get" action="" {$style}>
 <div class="filter-block">
-
 	{$filterRows}
-
 	{$sorterBlock}
-
 	{$this->get_buttons_block()}
-
 </div>
 </form>
 EOF;
@@ -659,9 +657,9 @@ EOF;
 EOF;
 	}
 
-	public function get_where($table_prefix = "")
+	public function get_where($tablePrefix = '')
 	{
-		$this->buildQuery($table_prefix);
+		$this->buildQuery($tablePrefix);
 
 		return $this->where;
 	}
@@ -711,7 +709,7 @@ EOF;
         return $value;
     }
 
-	public function buildQuery($table_prefix = "")
+	public function buildQuery($tablePrefix = '')
 	{
 		// sorter
 		if (!$this->reset) {
@@ -818,7 +816,7 @@ EOF;
 
 				if ($value || ($value == '0' && substr($a['type'], 0, 3) == 'str')) {
 					$replace_ar = [
-						'[-field-]' => $table_prefix . $a['field'],
+						'[-field-]' => $tablePrefix . $a['field'],
 						'[-value-]' => $value,
 					];
 
@@ -833,6 +831,10 @@ EOF;
 						}
 					}
 
+					if ($value === self::EMPTY_STRING) {
+					    $value = '';
+                    }
+
 					if ($a['rule'] && $ruleCallback = FilterRule::callback($a['rule'])) {
 					    $this->ruleCallbacks[] = $ruleCallback([
                             'field' => $a['field'],
@@ -842,7 +844,7 @@ EOF;
 					    $w = null;
                     } else {
                         $w = is_callable($where_tpl)
-                            ? $where_tpl($a['field'], $value, $a['not'], $table_prefix, $a['queryPrefix'], $a['querySuffix'])
+                            ? $where_tpl($a['field'], $value, $a['not'], $tablePrefix, $a['queryPrefix'], $a['querySuffix'])
                             : str_replace(array_keys($replace_ar), array_values($replace_ar), $where_tpl);
                     }
 
@@ -1716,7 +1718,9 @@ function diaf_like($field, $value, $not = false, $table_prefix = "")
 
 function diaf_substr($field, $value, $not = false, $table_prefix = "")
 {
-  return "INSTR({$table_prefix}{$field},'$value')>'0'";
+    return $value
+        ? "INSTR({$table_prefix}{$field}, '$value') > '0'"
+        : "{$table_prefix}{$field} = '$value'";
 }
 
 function diaf_first_last_name($field, $value, $not = false, $table_prefix = "")

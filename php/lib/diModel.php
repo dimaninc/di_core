@@ -14,6 +14,8 @@ use diCore\Database\FieldType;
 use diCore\Helper\Slug;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
+use MongoDB\BSON\ObjectID;
+use MongoDB\BSON\UTCDatetime;
 
 class diModel implements \ArrayAccess
 {
@@ -973,7 +975,7 @@ class diModel implements \ArrayAccess
 	protected function processIdBeforeGetRecord($id, $field)
 	{
 		return static::getConnection()::isMongo()
-            ? new \MongoDB\BSON\ObjectID($id)
+            ? new ObjectID($id)
             : (int)$id;
 	}
 
@@ -1043,9 +1045,9 @@ class diModel implements \ArrayAccess
             }
 
             foreach ($ar as $field => &$value) {
-                if ($value instanceof \MongoDB\BSON\ObjectID) {
+                if ($value instanceof ObjectID) {
                     $value = (string)$value;
-                } elseif ($value instanceof \MongoDB\BSON\UTCDatetime) {
+                } elseif ($value instanceof UTCDatetime) {
                     $value = $value->toDateTime()->format(\diDateTime::FORMAT_SQL_DATE_TIME);
                 }
             }
@@ -1247,9 +1249,7 @@ class diModel implements \ArrayAccess
         }
 
         foreach ($keys as $key) {
-            $changed = $strict
-                ? $this->get($key) !== $this->getOrigData($key)
-                : $this->get($key) != $this->getOrigData($key);
+            $changed = $this->isValueOfFieldChanged($key, $strict);
 
             if ($changed) {
                 return true;
@@ -1258,6 +1258,16 @@ class diModel implements \ArrayAccess
 
 		return false;
 	}
+
+	protected function isValueOfFieldChanged($key, $strict = false)
+    {
+        $old = $this->getOrigData($key);
+        $new = $this->get($key);
+
+        return $strict
+            ? $new !== $old
+            : $new != $old;
+    }
 
 	public function changedFields($exclude = [], $strict = false)
 	{
@@ -1847,7 +1857,7 @@ class diModel implements \ArrayAccess
                 $replaceResult = $this->getCollectionResource()->replaceOne($keys, $ar, [
                     'upsert' => true,
                 ]);
-                /** @var \MongoDB\BSON\ObjectId $id */
+                /** @var ObjectId $id */
                 $id = $replaceResult->getUpsertedId();
 
                 if ($id) {
@@ -1911,7 +1921,7 @@ class diModel implements \ArrayAccess
 		} else {
             if (static::getConnection()::isMongo()) {
                 $insertResult = $this->getCollectionResource()->insertOne($ar); //['fsync' => true,]
-                /** @var \MongoDB\BSON\ObjectId $id */
+                /** @var ObjectId $id */
                 $id = $insertResult->getInsertedId();
 
                 if ($id) {
@@ -2491,10 +2501,10 @@ ENGINE = InnoDB;";
 
     public static function tuneFieldValueByTypeAfterDb($field, $value)
     {
-        if ($value instanceof \MongoDB\BSON\ObjectID) {
+        if ($value instanceof ObjectID) {
             return (string)$value;
         }
-        elseif ($value instanceof \MongoDB\BSON\UTCDatetime) {
+        elseif ($value instanceof UTCDatetime) {
             return \diDateTime::sqlFormat(((string)$value) / 1000);
         }
 
@@ -2514,14 +2524,14 @@ ENGINE = InnoDB;";
         }
 
         if ($field == static::getIdFieldName()) {
-            if (!$value instanceof \MongoDB\BSON\ObjectID) {
-                return new \MongoDB\BSON\ObjectID($value);
+            if (!$value instanceof ObjectID) {
+                return new ObjectID($value);
             }
         }
 
         switch ($type) {
             case FieldType::mongo_id:
-                $value = new \MongoDB\BSON\ObjectID($value);
+                $value = new ObjectID($value);
                 break;
 
             case FieldType::int:
@@ -2542,8 +2552,8 @@ ENGINE = InnoDB;";
 
             case FieldType::timestamp:
             case FieldType::datetime:
-                if (!$value instanceof \MongoDB\BSON\UTCDatetime) {
-                    $value = new \MongoDB\BSON\UTCDatetime((new \DateTime($value))->getTimestamp() * 1000);
+                if (!$value instanceof UTCDatetime) {
+                    $value = new UTCDatetime((new \DateTime($value))->getTimestamp() * 1000);
                 }
                 break;
         }
