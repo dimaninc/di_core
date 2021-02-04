@@ -18,9 +18,7 @@ class VendorContainer extends SimpleContainer
 
 	public static function code($id)
 	{
-		return isset(static::$codes[$id])
-			? static::$codes[$id]
-			: null;
+		return static::$codes[$id] ?? null;
 	}
 
 	public static function codeByName($name)
@@ -32,9 +30,7 @@ class VendorContainer extends SimpleContainer
 
 	public static function minLimit($id)
 	{
-		return isset(static::$minLimits[$id])
-			? static::$minLimits[$id]
-			: null;
+		return static::$minLimits[$id] ?? null;
 	}
 
 	public static function minLimitByName($name)
@@ -46,9 +42,7 @@ class VendorContainer extends SimpleContainer
 
 	public static function maxLimit($id)
 	{
-		return isset(static::$maxLimits[$id])
-			? static::$maxLimits[$id]
-			: null;
+		return static::$maxLimits[$id] ?? null;
 	}
 
 	public static function maxLimitByName($name)
@@ -62,8 +56,7 @@ class VendorContainer extends SimpleContainer
 	{
 		$id = parent::id($name);
 
-		if ($id === null)
-		{
+		if ($id === null) {
 			$id = array_search($name, static::$codes, true) ?: null;
 		}
 

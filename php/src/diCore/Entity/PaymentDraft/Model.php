@@ -33,14 +33,14 @@ use diCore\Traits\Model\TargetInside;
  * @method bool hasStatus
  * @method bool hasPaid
  *
- * @method Model setUserId($value)
- * @method Model setPaySystem($value)
- * @method Model setVendor($value)
- * @method Model setCurrency($value)
- * @method Model setAmount($value)
- * @method Model setDateReserved($value)
- * @method Model setStatus($value)
- * @method Model setPaid($value)
+ * @method $this setUserId($value)
+ * @method $this setPaySystem($value)
+ * @method $this setVendor($value)
+ * @method $this setCurrency($value)
+ * @method $this setAmount($value)
+ * @method $this setDateReserved($value)
+ * @method $this setStatus($value)
+ * @method $this setPaid($value)
  */
 class Model extends \diModel
 {
@@ -54,23 +54,19 @@ class Model extends \diModel
 
 	public function validate()
 	{
-		if (!$this->hasTargetType() && static::TARGET_IS_NECESSARY)
-		{
+		if (!$this->hasTargetType() && static::TARGET_IS_NECESSARY) {
 			$this->addValidationError('Target type required');
 		}
 
-		if (!$this->hasTargetId() && static::TARGET_IS_NECESSARY)
-		{
+		if (!$this->hasTargetId() && static::TARGET_IS_NECESSARY) {
 			$this->addValidationError('Target ID required');
 		}
 
-		if (!$this->hasUserId())
-		{
+		if (!$this->hasUserId()) {
 			$this->addValidationError('User ID required');
 		}
 
-		if (!$this->hasAmount())
-		{
+		if (!$this->hasAmount()) {
 			$this->addValidationError('Amount required');
 		}
 
@@ -89,8 +85,7 @@ class Model extends \diModel
 
 	public function getVendorStr()
 	{
-		switch ($this->getPaySystem())
-		{
+		switch ($this->getPaySystem()) {
 			case System::yandex_kassa:
 				return \diCore\Payment\Yandex\Vendor::title($this->getVendor());
 
@@ -117,11 +112,10 @@ class Model extends \diModel
 	public function getPaySystemWithVendorShortStr()
 	{
 		$ar = [
-			$this->getPaySystemStr()
+			$this->getPaySystemStr(),
 		];
 
-		if (!in_array($this->getPaySystem(), [System::paypal]))
-		{
+		if (!in_array($this->getPaySystem(), [System::paypal])) {
 			$ar[] = $this->getVendorStr() ?: 'Unknown?';
 		}
 
@@ -135,8 +129,7 @@ class Model extends \diModel
 
 	public function getStatusStr()
 	{
-		switch ($this->getPaySystem())
-		{
+		switch ($this->getPaySystem()) {
 			case System::mixplat:
 				return \diCore\Payment\Mixplat\ResultStatus::title($this->getStatus());
 

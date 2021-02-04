@@ -41,4 +41,19 @@ class MobileVendors extends VendorContainer
         self::TELE2 => 'mobile_ru_tele2',
         self::YOTA => 'mobile_ru_yota',
     ];
+
+    public static $codes2 = [
+        self::YOTA => 'ru_yota',
+    ];
+
+    public static function id($name)
+    {
+        $id = parent::id($name);
+
+        if ($id === null) {
+            $id = array_search($name, static::$codes2, true) ?: null;
+        }
+
+        return $id;
+    }
 }
