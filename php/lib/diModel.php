@@ -19,7 +19,7 @@ use MongoDB\BSON\UTCDatetime;
 
 class diModel implements \ArrayAccess
 {
-	const MAX_PREVIEWS_COUNT = 3;
+	const MAX_PREVIEWS_COUNT = 5;
 
 	const SLUG_FIELD_NAME_LEGACY = 'clean_title';
 	const SLUG_FIELD_NAME = 'slug';
@@ -758,87 +758,67 @@ class diModel implements \ArrayAccess
 	{
 		$ar = [];
 
-		if (!$this->exists())
-		{
+		if (!$this->exists()) {
 			return $ar;
 		}
 
-		foreach ($this->ar as $k => $v)
-		{
+		foreach ($this->ar as $k => $v) {
 			$isLocalized = $this->isFieldLocalized($k);
 
-			if ($this->isPicField($k))
-			{
-				for ($i = 1; $i <= static::MAX_PREVIEWS_COUNT; $i++)
-				{
+			if ($this->isPicField($k)) {
+				for ($i = 1; $i <= static::MAX_PREVIEWS_COUNT; $i++) {
 					$idx = $i > 1 ? $i : '';
 
-					if (!$this->exists($k . '_tn' . $idx))
-					{
+					if (!$this->exists($k . '_tn' . $idx)) {
 						$ar[$k . '_tn' . $idx] =
 						$ar[$k . '_tn' . $idx . '_with_path'] = $this->wrapFileWithPath($v, $i);
 
-						if ($isLocalized)
-						{
+						if ($isLocalized) {
 							$ar[static::LOCALIZED_PREFIX . $k . '_tn' . $idx] =
 							$ar[static::LOCALIZED_PREFIX . $k . '_tn' . $idx . '_with_path'] =
 								$this->wrapFileWithPath($this->localized($k), $i);
 						}
-					}
-					else
-					{
+					} else {
 						$ar[$k . '_tn' . $idx . '_with_path'] = $this->wrapFileWithPath($this->get($k . '_tn' . $idx), $i);
 
-						if ($isLocalized)
-						{
+						if ($isLocalized) {
 							$ar[static::LOCALIZED_PREFIX . $k . '_tn' . $idx . '_with_path'] =
 								$this->wrapFileWithPath($this->localized($k . '_tn' . $idx), $i);
 						}
 					}
 				}
 
-				if ($v)
-				{
+				if ($v) {
 					$v = $this->wrapFileWithPath($v);
 				}
 
 				$ar[$k . '_with_path'] = $v;
 
-				if ($isLocalized)
-				{
-					if ($v2 = $this->localized($k))
-					{
+				if ($isLocalized) {
+					if ($v2 = $this->localized($k)) {
 						$v2 = $this->wrapFileWithPath($v2);
 					}
 
 					$ar[static::LOCALIZED_PREFIX . $k . '_with_path'] = $v2;
 				}
-			}
-			elseif ($this->isFileField($k))
-			{
-				if ($v)
-				{
+			} elseif ($this->isFileField($k)) {
+				if ($v) {
 					$v = $this->wrapFileWithPath($v, null, true, $k);
 				}
 
 				$ar[$k . '_with_path'] = $v;
 
-				if ($isLocalized)
-				{
-					if ($v2 = $this->localized($k))
-					{
+				if ($isLocalized) {
+					if ($v2 = $this->localized($k)) {
 						$v2 = $this->wrapFileWithPath($v2);
 					}
 
 					$ar[static::LOCALIZED_PREFIX . $k . '_with_path'] = $v2;
 				}
-			}
-			elseif ($this->isDateField($k))
-			{
+			} elseif ($this->isDateField($k)) {
 				$v = isInteger($v) ? $v : strtotime($v);
 
-				if ($v)
-				{
+				if ($v) {
 				    $ar = extend($ar, ArrayHelper::mapAssoc(function($field, $value) use($k) {
                         return [
                             $k . '_' . $field,
@@ -848,9 +828,7 @@ class diModel implements \ArrayAccess
 
 					$v = $ar[$k . '_date'];
 				}
-			}
-			elseif ($this->isIpField($k))
-			{
+			} elseif ($this->isIpField($k)) {
 				$ar[$k . '_num'] = $v;
 
 				$v = isInteger($v) ? bin2ip($v) : $v;
@@ -1306,8 +1284,7 @@ class diModel implements \ArrayAccess
 	{
 		$lang = static::normalizeLang($lang, $field);
 
-		if ($lang != \diCore\Data\Config::getMainLanguage())
-		{
+		if ($lang != \diCore\Data\Config::getMainLanguage()) {
 			$field = $lang . '_' . $field;
 		}
 
