@@ -54,6 +54,8 @@ Helper =
             path = path.substr(1)
         neg + @getRootFolder() + path
 
+    replaceFolderInArray: (ar, from, to) -> ar.map (s) -> s.replace new RegExp('^' + from), to
+
     tryDone: (tasksDone, tasksTotal, done) ->
         done() if tasksDone is tasksTotal
         @
@@ -344,12 +346,13 @@ Helper =
         @
 
     assignJavascriptMinTaskToGulp: (gulp, opts = {}) ->
-        uglify = @req 'gulp-uglify' unless uglify
+        opts = @extend {input: null, outputFolder: null, taskName: 'js-min', es6: false}, opts
+        uglify = if opts.es6 then @req('gulp-terser') else @req('gulp-uglify') unless uglify
+        uglifyOpts = if opts.es6 then { ecma: 2015, keep_classnames: true, keep_fnames: true } else {}
         rename = @req 'gulp-rename' unless rename
-        opts = @extend {input: null, outputFolder: null, taskName: 'js-min'}, opts
         gulp.task opts.taskName, (done) =>
             gulp.src @fullPath opts.input
-            .pipe uglify()
+            .pipe uglify uglifyOpts
             .on 'error', console.log
             .pipe rename suffix: '.min'
             .pipe gulp.dest @fullPath opts.outputFolder

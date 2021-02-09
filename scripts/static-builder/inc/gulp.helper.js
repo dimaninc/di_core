@@ -95,6 +95,11 @@ Helper = {
     }
     return neg + this.getRootFolder() + path;
   },
+  replaceFolderInArray: function(ar, from, to) {
+    return ar.map(function(s) {
+      return s.replace(new RegExp('^' + from), to);
+    });
+  },
   tryDone: function(tasksDone, tasksTotal, done) {
     if (tasksDone === tasksTotal) {
       done();
@@ -528,24 +533,28 @@ Helper = {
     return this;
   },
   assignJavascriptMinTaskToGulp: function(gulp, opts) {
-    var rename, uglify;
+    var rename, uglify, uglifyOpts;
     if (opts == null) {
       opts = {};
-    }
-    if (!uglify) {
-      uglify = this.req('gulp-uglify');
-    }
-    if (!rename) {
-      rename = this.req('gulp-rename');
     }
     opts = this.extend({
       input: null,
       outputFolder: null,
-      taskName: 'js-min'
+      taskName: 'js-min',
+      es6: false
     }, opts);
+    uglify = opts.es6 ? this.req('gulp-terser') : !uglify ? this.req('gulp-uglify') : void 0;
+    uglifyOpts = opts.es6 ? {
+      ecma: 2015,
+      keep_classnames: true,
+      keep_fnames: true
+    } : {};
+    if (!rename) {
+      rename = this.req('gulp-rename');
+    }
     gulp.task(opts.taskName, (function(_this) {
       return function(done) {
-        return gulp.src(_this.fullPath(opts.input)).pipe(uglify()).on('error', console.log).pipe(rename({
+        return gulp.src(_this.fullPath(opts.input)).pipe(uglify(uglifyOpts)).on('error', console.log).pipe(rename({
           suffix: '.min'
         })).pipe(gulp.dest(_this.fullPath(opts.outputFolder))).on('end', function() {
           return done();
