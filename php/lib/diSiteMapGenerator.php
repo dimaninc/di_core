@@ -104,9 +104,14 @@ class diSiteMapGenerator
 		return $this;
 	}
 
+	protected function getRelativeUrlOfModel(\diModel $model)
+    {
+        return $model->getHref();
+    }
+
 	protected function getUrlOfModel(\diModel $model)
     {
-        return $this->protocol . $this->domain . $model->getHref();
+        return $this->protocol . $this->domain . $this->getRelativeUrlOfModel($model);
     }
 
     protected function getChangeFreqOfModel(\diModel $model)
