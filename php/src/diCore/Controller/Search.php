@@ -8,7 +8,6 @@
 
 namespace diCore\Controller;
 
-
 class Search extends \diBaseController
 {
     public function rebuildIndexForTableAction()

@@ -33,10 +33,8 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 
 	function init() {
 		$(self.e.form).find('button#btn-clone').click(function() {
-
 			$(self.e.form).find('input[name=id]').val(0);
 			$(self.e.form).submit();
-
 		});
 
 		if (self.auto_save_timeout && self.id) {

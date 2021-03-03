@@ -66,6 +66,8 @@ class Submit
 	const IMAGE_TYPE_PREVIEW = 1;
 	const IMAGE_TYPE_PREVIEW2 = 2;
 	const IMAGE_TYPE_PREVIEW3 = 3;
+    const IMAGE_TYPE_PREVIEW4 = 4;
+    const IMAGE_TYPE_PREVIEW5 = 5;
 	const IMAGE_TYPE_ORIG = 10;
 	const IMAGE_TYPE_BIG = 11;
 
@@ -236,6 +238,12 @@ class Submit
 
 			case self::IMAGE_TYPE_PREVIEW3:
 				return '_tn3';
+
+            case self::IMAGE_TYPE_PREVIEW4:
+                return '_tn4';
+
+            case self::IMAGE_TYPE_PREVIEW5:
+                return '_tn5';
 
 			case self::IMAGE_TYPE_ORIG:
 				return '_orig';
@@ -858,22 +866,25 @@ class Submit
 
 	public static function getFolderByImageType($type)
 	{
-		global $big_folder, $orig_folder, $tn_folder, $tn2_folder, $tn3_folder;
+		global $big_folder, $orig_folder;
 
 		switch ($type) {
 			case self::IMAGE_TYPE_MAIN:
 				return '';
 
 			case self::IMAGE_TYPE_BIG:
-				return $big_folder;
+				return $big_folder ?? 'big/';
 
 			case self::IMAGE_TYPE_PREVIEW:
 			case self::IMAGE_TYPE_PREVIEW2:
 			case self::IMAGE_TYPE_PREVIEW3:
-				return ${'tn' . ($type != self::IMAGE_TYPE_PREVIEW ? $type : '') . '_folder'};
+            case self::IMAGE_TYPE_PREVIEW4:
+            case self::IMAGE_TYPE_PREVIEW5:
+				return $GLOBALS['tn' . ($type != self::IMAGE_TYPE_PREVIEW ? $type : '') . '_folder']
+				    ?? 'preview' . ($type != self::IMAGE_TYPE_PREVIEW ? $type : '') . '/';
 
 			case self::IMAGE_TYPE_ORIG:
-				return $orig_folder;
+				return $orig_folder ?? 'orig/';
 		}
 
 		throw new \Exception("No folder for image type '$type' defined");

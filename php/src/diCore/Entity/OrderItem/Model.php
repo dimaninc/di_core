@@ -8,6 +8,7 @@
 namespace diCore\Entity\OrderItem;
 
 use diCore\Traits\Model\OrderItem;
+use diCore\Traits\Model\TargetInside;
 
 /**
  * Class Model
@@ -28,6 +29,7 @@ use diCore\Traits\Model\OrderItem;
 class Model extends \diModel
 {
     use OrderItem;
+    use TargetInside;
 
 	const type = \diTypes::order_item;
 	protected $table = 'order_item';

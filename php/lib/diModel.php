@@ -14,10 +14,12 @@ use diCore\Database\FieldType;
 use diCore\Helper\Slug;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
+use MongoDB\BSON\ObjectID;
+use MongoDB\BSON\UTCDatetime;
 
 class diModel implements \ArrayAccess
 {
-	const MAX_PREVIEWS_COUNT = 3;
+	const MAX_PREVIEWS_COUNT = 5;
 
 	const SLUG_FIELD_NAME_LEGACY = 'clean_title';
 	const SLUG_FIELD_NAME = 'slug';
@@ -756,87 +758,67 @@ class diModel implements \ArrayAccess
 	{
 		$ar = [];
 
-		if (!$this->exists())
-		{
+		if (!$this->exists()) {
 			return $ar;
 		}
 
-		foreach ($this->ar as $k => $v)
-		{
+		foreach ($this->ar as $k => $v) {
 			$isLocalized = $this->isFieldLocalized($k);
 
-			if ($this->isPicField($k))
-			{
-				for ($i = 1; $i <= static::MAX_PREVIEWS_COUNT; $i++)
-				{
+			if ($this->isPicField($k)) {
+				for ($i = 1; $i <= static::MAX_PREVIEWS_COUNT; $i++) {
 					$idx = $i > 1 ? $i : '';
 
-					if (!$this->exists($k . '_tn' . $idx))
-					{
+					if (!$this->exists($k . '_tn' . $idx)) {
 						$ar[$k . '_tn' . $idx] =
 						$ar[$k . '_tn' . $idx . '_with_path'] = $this->wrapFileWithPath($v, $i);
 
-						if ($isLocalized)
-						{
+						if ($isLocalized) {
 							$ar[static::LOCALIZED_PREFIX . $k . '_tn' . $idx] =
 							$ar[static::LOCALIZED_PREFIX . $k . '_tn' . $idx . '_with_path'] =
 								$this->wrapFileWithPath($this->localized($k), $i);
 						}
-					}
-					else
-					{
+					} else {
 						$ar[$k . '_tn' . $idx . '_with_path'] = $this->wrapFileWithPath($this->get($k . '_tn' . $idx), $i);
 
-						if ($isLocalized)
-						{
+						if ($isLocalized) {
 							$ar[static::LOCALIZED_PREFIX . $k . '_tn' . $idx . '_with_path'] =
 								$this->wrapFileWithPath($this->localized($k . '_tn' . $idx), $i);
 						}
 					}
 				}
 
-				if ($v)
-				{
+				if ($v) {
 					$v = $this->wrapFileWithPath($v);
 				}
 
 				$ar[$k . '_with_path'] = $v;
 
-				if ($isLocalized)
-				{
-					if ($v2 = $this->localized($k))
-					{
+				if ($isLocalized) {
+					if ($v2 = $this->localized($k)) {
 						$v2 = $this->wrapFileWithPath($v2);
 					}
 
 					$ar[static::LOCALIZED_PREFIX . $k . '_with_path'] = $v2;
 				}
-			}
-			elseif ($this->isFileField($k))
-			{
-				if ($v)
-				{
+			} elseif ($this->isFileField($k)) {
+				if ($v) {
 					$v = $this->wrapFileWithPath($v, null, true, $k);
 				}
 
 				$ar[$k . '_with_path'] = $v;
 
-				if ($isLocalized)
-				{
-					if ($v2 = $this->localized($k))
-					{
+				if ($isLocalized) {
+					if ($v2 = $this->localized($k)) {
 						$v2 = $this->wrapFileWithPath($v2);
 					}
 
 					$ar[static::LOCALIZED_PREFIX . $k . '_with_path'] = $v2;
 				}
-			}
-			elseif ($this->isDateField($k))
-			{
+			} elseif ($this->isDateField($k)) {
 				$v = isInteger($v) ? $v : strtotime($v);
 
-				if ($v)
-				{
+				if ($v) {
 				    $ar = extend($ar, ArrayHelper::mapAssoc(function($field, $value) use($k) {
                         return [
                             $k . '_' . $field,
@@ -846,9 +828,7 @@ class diModel implements \ArrayAccess
 
 					$v = $ar[$k . '_date'];
 				}
-			}
-			elseif ($this->isIpField($k))
-			{
+			} elseif ($this->isIpField($k)) {
 				$ar[$k . '_num'] = $v;
 
 				$v = isInteger($v) ? bin2ip($v) : $v;
@@ -973,7 +953,7 @@ class diModel implements \ArrayAccess
 	protected function processIdBeforeGetRecord($id, $field)
 	{
 		return static::getConnection()::isMongo()
-            ? new \MongoDB\BSON\ObjectID($id)
+            ? new ObjectID($id)
             : (int)$id;
 	}
 
@@ -1043,9 +1023,9 @@ class diModel implements \ArrayAccess
             }
 
             foreach ($ar as $field => &$value) {
-                if ($value instanceof \MongoDB\BSON\ObjectID) {
+                if ($value instanceof ObjectID) {
                     $value = (string)$value;
-                } elseif ($value instanceof \MongoDB\BSON\UTCDatetime) {
+                } elseif ($value instanceof UTCDatetime) {
                     $value = $value->toDateTime()->format(\diDateTime::FORMAT_SQL_DATE_TIME);
                 }
             }
@@ -1247,9 +1227,7 @@ class diModel implements \ArrayAccess
         }
 
         foreach ($keys as $key) {
-            $changed = $strict
-                ? $this->get($key) !== $this->getOrigData($key)
-                : $this->get($key) != $this->getOrigData($key);
+            $changed = $this->isValueOfFieldChanged($key, $strict);
 
             if ($changed) {
                 return true;
@@ -1258,6 +1236,16 @@ class diModel implements \ArrayAccess
 
 		return false;
 	}
+
+	protected function isValueOfFieldChanged($key, $strict = false)
+    {
+        $old = $this->getOrigData($key);
+        $new = $this->get($key);
+
+        return $strict
+            ? $new !== $old
+            : $new != $old;
+    }
 
 	public function changedFields($exclude = [], $strict = false)
 	{
@@ -1296,8 +1284,7 @@ class diModel implements \ArrayAccess
 	{
 		$lang = static::normalizeLang($lang, $field);
 
-		if ($lang != \diCore\Data\Config::getMainLanguage())
-		{
+		if ($lang != \diCore\Data\Config::getMainLanguage()) {
 			$field = $lang . '_' . $field;
 		}
 
@@ -1847,7 +1834,7 @@ class diModel implements \ArrayAccess
                 $replaceResult = $this->getCollectionResource()->replaceOne($keys, $ar, [
                     'upsert' => true,
                 ]);
-                /** @var \MongoDB\BSON\ObjectId $id */
+                /** @var ObjectId $id */
                 $id = $replaceResult->getUpsertedId();
 
                 if ($id) {
@@ -1911,7 +1898,7 @@ class diModel implements \ArrayAccess
 		} else {
             if (static::getConnection()::isMongo()) {
                 $insertResult = $this->getCollectionResource()->insertOne($ar); //['fsync' => true,]
-                /** @var \MongoDB\BSON\ObjectId $id */
+                /** @var ObjectId $id */
                 $id = $insertResult->getInsertedId();
 
                 if ($id) {
@@ -2491,10 +2478,10 @@ ENGINE = InnoDB;";
 
     public static function tuneFieldValueByTypeAfterDb($field, $value)
     {
-        if ($value instanceof \MongoDB\BSON\ObjectID) {
+        if ($value instanceof ObjectID) {
             return (string)$value;
         }
-        elseif ($value instanceof \MongoDB\BSON\UTCDatetime) {
+        elseif ($value instanceof UTCDatetime) {
             return \diDateTime::sqlFormat(((string)$value) / 1000);
         }
 
@@ -2514,14 +2501,14 @@ ENGINE = InnoDB;";
         }
 
         if ($field == static::getIdFieldName()) {
-            if (!$value instanceof \MongoDB\BSON\ObjectID) {
-                return new \MongoDB\BSON\ObjectID($value);
+            if (!$value instanceof ObjectID) {
+                return new ObjectID($value);
             }
         }
 
         switch ($type) {
             case FieldType::mongo_id:
-                $value = new \MongoDB\BSON\ObjectID($value);
+                $value = new ObjectID($value);
                 break;
 
             case FieldType::int:
@@ -2542,8 +2529,8 @@ ENGINE = InnoDB;";
 
             case FieldType::timestamp:
             case FieldType::datetime:
-                if (!$value instanceof \MongoDB\BSON\UTCDatetime) {
-                    $value = new \MongoDB\BSON\UTCDatetime((new \DateTime($value))->getTimestamp() * 1000);
+                if (!$value instanceof UTCDatetime) {
+                    $value = new UTCDatetime((new \DateTime($value))->getTimestamp() * 1000);
                 }
                 break;
         }
