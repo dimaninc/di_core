@@ -31,7 +31,11 @@ class Postgresql extends Pdo
     {
         $res = parent::__connect();
 
-        $this->link->setAttribute(\PDO::ATTR_AUTOCOMMIT,1);
+        try {
+            $this->link->setAttribute(\PDO::ATTR_AUTOCOMMIT, 1);
+        } catch (\Exception $e) {
+            $this->_log($e->getMessage(), false);
+        }
 
         return $res;
     }
@@ -76,9 +80,10 @@ ORDER BY relname ASC");
     {
         $fields = [];
 
-        $rs = $this->q("SELECT column_name, data_type, character_maximum_length
+        $rs = $this->q("SELECT column_name,data_type,character_maximum_length,ordinal_position
 FROM information_schema.columns
-WHERE table_name = '{$table}'");
+WHERE table_name = '{$table}'
+ORDER BY ordinal_position ASC");
         while ($r = $this->fetch_array($rs)) {
             $fields[$r['column_name']] = $r['data_type'];
         }
