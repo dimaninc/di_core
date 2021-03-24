@@ -985,17 +985,17 @@ abstract class diDB
 
 	public function fetch($rs)
 	{
-		return $this->__fetch($rs);
+		return $rs ? $this->__fetch($rs) : null;
 	}
 
 	public function fetch_array($rs)
 	{
-		return $this->__fetch_array($rs);
+		return $rs ? $this->__fetch_array($rs) : null;
 	}
 
 	public function fetch_ar($rs)
 	{
-		return $this->fetch_array($rs);
+		return $rs ? $this->fetch_array($rs) : null;
 	}
 
 	public function rs_go($func, $table, $q_ending = "", $q_fields = "*")
@@ -1003,8 +1003,7 @@ abstract class diDB
 		$i = 0;
 
 		$rs = $this->rs($table, $q_ending, $q_fields);
-		while ($r = $this->fetch($rs))
-		{
+		while ($r = $this->fetch($rs)) {
 			$func($r, $i++);
 		}
 
