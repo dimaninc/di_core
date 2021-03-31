@@ -37,8 +37,7 @@ abstract class SimpleContainer
 
 	public static function id($name)
 	{
-		if (isInteger($name))
-		{
+		if (isInteger($name)) {
 			return isset(static::$names[$name])
 				? (int)$name
 				: null;
@@ -46,8 +45,7 @@ abstract class SimpleContainer
 
 		$id = array_search($name, static::$names);
 
-		if ($id === false)
-		{
+		if ($id === false) {
 			$id = defined("static::$name")
 				? constant("static::$name")
 				: null;
@@ -67,8 +65,7 @@ abstract class SimpleContainer
 	{
 		$ar = [];
 
-		foreach (static::$names as $id => $name)
-		{
+		foreach (static::$names as $id => $name) {
 			$ar[] = [
 				'id' => $id,
 				'name' => static::name($id),
