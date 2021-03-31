@@ -240,4 +240,9 @@ class diRequest
 	{
 		return self::server('REQUEST_METHOD');
 	}
+
+	public static function enableCors()
+    {
+        header('Access-Control-Allow-Origin: *');
+    }
 }
