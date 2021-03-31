@@ -816,7 +816,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function getTable()
 	{
-		return $this->table;
+		return $this->table ?: static::getModelClass()::table;
 	}
 
 	public function getModelType()
