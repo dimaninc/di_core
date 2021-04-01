@@ -236,13 +236,37 @@ class diRequest
 		return self::getMethodStr() == 'DELETE';
 	}
 
+    public static function isOptions()
+    {
+        return self::getMethodStr() == 'OPTIONS';
+    }
+
 	public static function getMethodStr()
 	{
 		return self::server('REQUEST_METHOD');
 	}
 
-	public static function enableCors()
+	public static function enableCors($whitelistDomains = [])
     {
-        header('Access-Control-Allow-Origin: *');
+        $origin = self::server('HTTP_ORIGIN');
+
+        if ($whitelistDomains && in_array($origin, $whitelistDomains)) {
+            $domain = $origin;
+        } else {
+            $domain = $whitelistDomains
+                ? null
+                : '*';
+        }
+
+        if ($domain) {
+            header('Access-Control-Allow-Origin: ' . $domain);
+            header('Access-Control-Allow-Methods: POST, GET, OPTIONS, PUT, DELETE, HEAD');
+            header('Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization');
+            header('Access-Control-Expose-Headers: Content-Length, Date, X-Request-Id');
+        }
+
+        if (self::isOptions()) {
+            header('Allow: POST, GET, OPTIONS, PUT, DELETE, HEAD');
+        }
     }
 }
