@@ -79,11 +79,15 @@ trait CartOrder
             /** @var \diModel $item */
             foreach ($this->fetchItems() as $item) {
                 $this->items[] = $item;
-                $item
-                    ->setRelated('user_id', $this->getUserId());
             }
 
             $this->preCacheItems();
+        }
+
+        foreach ($this->items as $item) {
+            if (!$item->getRelated('user_id')) {
+                $item->setRelated('user_id', $this->getUserId());
+            }
         }
 
         return $this->items ?: [];
