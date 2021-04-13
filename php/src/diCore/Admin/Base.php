@@ -536,7 +536,12 @@ class Base
 
 	public function expandCollapseBlockNeeded()
     {
-        return in_array($this->getTable(), ['content', 'categories', 'orders']) || $this->forceShowExpandCollapse;
+        return
+            (
+                in_array($this->getTable(), ['content', 'categories', 'orders'])
+                && $this->getMethod() === 'list'
+            )
+            || $this->forceShowExpandCollapse;
     }
 
     /** @deprecated  */
