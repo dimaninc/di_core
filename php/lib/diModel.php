@@ -1098,6 +1098,12 @@ class diModel implements \ArrayAccess
 			->getDb();
 	}
 
+	protected static function db()
+    {
+        return Connection::get(static::connection_name ?: Connection::DEFAULT_NAME)
+            ->getDb();
+    }
+
 	/**
 	 * @param null|string $field
 	 * @return bool

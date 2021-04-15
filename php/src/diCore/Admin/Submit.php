@@ -735,14 +735,17 @@ class Submit
 	// dir == -1/+1, shows - to increase or decrease new value's order num
 	function make_order_num($dir, $q_ending = '', $force = false)
 	{
-		if (!$this->getId() || $force)
-		{
+		if (!$this->getId() || $force) {
+		    /*
 			$init_value = $dir > 0 ? 1 : 65000;
 			$sign = $dir > 0 ? 1 : -1;
 			$min_max = $dir > 0 ? 'MAX' : 'MIN';
 
 			$order_r = $this->getDb()->r($this->table, $q_ending, "$min_max(order_num) AS num,COUNT(id) AS cc");
 			$this->setData('order_num', $order_r && $order_r->cc ? intval($order_r->num) + $sign : $init_value);
+			*/
+
+			$this->getModel()->calculateAndSetOrderNum($dir);
 		}
 		/*
 		else
