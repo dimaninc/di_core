@@ -204,6 +204,18 @@ class Form
 
     protected static $defaultFieldTitles = [
         'id' => 'ID',
+        'href' => [
+            'ru' => 'Ссылка',
+            'en' => 'Link',
+        ],
+        'link' => [
+            'ru' => 'Ссылка',
+            'en' => 'Link',
+        ],
+        'category_id' => [
+            'ru' => 'Категория',
+            'en' => 'Category',
+        ],
         'slug' => [
             'ru' => 'Слаг',
             'en' => 'Slug',
@@ -272,6 +284,10 @@ class Form
             'ru' => 'Изображение',
             'en' => 'Pic',
         ],
+        'en_pic' => [
+            'ru' => 'Изображение',
+            'en' => 'Pic',
+        ],
         'logo' => [
             'ru' => 'Логотип',
             'en' => 'Logo',
@@ -284,11 +300,23 @@ class Form
             'ru' => 'Отображать на сайте',
             'en' => 'Visible',
         ],
+        'en_visible' => [
+            'ru' => 'Отображать на сайте',
+            'en' => 'Visible',
+        ],
         'active' => [
             'ru' => 'Активно',
             'en' => 'Active',
         ],
+        'en_active' => [
+            'ru' => 'Активно',
+            'en' => 'Active',
+        ],
         'top' => [
+            'ru' => 'В топе',
+            'en' => 'Promote',
+        ],
+        'en_top' => [
             'ru' => 'В топе',
             'en' => 'Promote',
         ],

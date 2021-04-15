@@ -337,31 +337,26 @@ EOF;
 
 			'pic_t' => [
 				'type' => 'int',
-				'title' => '',
 				'default' => '',
 			],
 
 			'pic_w' => [
 				'type' => 'int',
-				'title' => '',
 				'default' => '',
 			],
 
 			'pic_h' => [
 				'type' => 'int',
-				'title' => '',
 				'default' => '',
 			],
 
 			'pic_tn_w' => [
 				'type' => 'int',
-				'title' => '',
 				'default' => '',
 			],
 
 			'pic_tn_h' => [
 				'type' => 'int',
-				'title' => '',
 				'default' => '',
 			],
 		];
