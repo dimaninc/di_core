@@ -208,7 +208,15 @@ class Form
             'ru' => 'Ссылка',
             'en' => 'Link',
         ],
+        'en_href' => [
+            'ru' => 'Ссылка',
+            'en' => 'Link',
+        ],
         'link' => [
+            'ru' => 'Ссылка',
+            'en' => 'Link',
+        ],
+        'en_link' => [
             'ru' => 'Ссылка',
             'en' => 'Link',
         ],
