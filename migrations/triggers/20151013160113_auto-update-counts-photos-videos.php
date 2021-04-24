@@ -40,8 +40,7 @@ class diMigration_20151013160113 extends diMigration
 
 	protected function go()
 	{
-		foreach ($this->queries as $q)
-		{
+		foreach ($this->queries as $q) {
 			$this->getDb()->q($q);
 		}
 
@@ -54,8 +53,7 @@ class diMigration_20151013160113 extends diMigration
 
 		$q = "CREATE PROCEDURE `{$this->procedureName}`(IN media_table_name VARCHAR(100), alb_id INT, diff INT)\nBEGIN\n";
 
-		foreach ($this->triggerTables as $table)
-		{
+		foreach ($this->triggerTables as $table) {
 			$q .= "IF media_table_name = '{$table}' THEN
 					UPDATE albums SET
 						`{$table}_count` = diff + (SELECT COUNT(id) FROM {$table} WHERE album_id = alb_id and visible = '1')
@@ -79,12 +77,9 @@ class diMigration_20151013160113 extends diMigration
 
 	protected function triggersUp()
 	{
-		foreach ($this->triggerTables as $table)
-		{
-			foreach ($this->triggerActions as $when => $actions)
-			{
-				foreach ($actions as $action)
-				{
+		foreach ($this->triggerTables as $table) {
+			foreach ($this->triggerActions as $when => $actions) {
+				foreach ($actions as $action) {
 					$triggerName = "album_{$table}_{$when}_{$action}_trg";
 					$source = $when == "before" ? "OLD" : "NEW";
 					$diff = $when == "before" ? -1 : 0; // correction for BEFORE DELETE
@@ -111,12 +106,9 @@ class diMigration_20151013160113 extends diMigration
 
 	protected function triggersDown()
 	{
-		foreach ($this->triggerTables as $table)
-		{
-			foreach ($this->triggerActions as $when => $actions)
-			{
-				foreach ($actions as $action)
-				{
+		foreach ($this->triggerTables as $table) {
+			foreach ($this->triggerActions as $when => $actions) {
+				foreach ($actions as $action) {
 					$triggerName = "album_{$table}_{$when}_{$action}_trg";
 					$this->queries[] = "DROP TRIGGER IF EXISTS `{$triggerName}`";
 				}

@@ -2,7 +2,7 @@
 class diMigration_20180501000000 extends \diCore\Database\Tool\Migration
 {
 	public static $idx = "20180501000000";
-	public static $name = "Init";
+	public static $name = "Basic CMS init";
 
 	public function up()
 	{

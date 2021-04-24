@@ -293,7 +293,7 @@ abstract class diDB
 
 	public function resetLog()
 	{
-		$this->log = array();
+		$this->log = [];
 
 		return $this;
 	}
@@ -339,21 +339,19 @@ abstract class diDB
 
 		//$this->log[] = "$message: $duration sec";
 
-		$data = array(
-			$method,
-			$query,
-			$duration,
-			$message
-		);
+        $data = [
+            $method,
+            $query,
+            $duration,
+            $message,
+        ];
 
-		$explainData = $query
+        $explainData = $query
 			? $this->__fetch_array($this->__q("EXPLAIN $query"))
 			: null;
 
-		if ($explainData)
-		{
-			foreach ($explainData as $k => $v)
-			{
+		if ($explainData) {
+			foreach ($explainData as $k => $v) {
 				$data[] = "$k = $v";
 			}
 		}
@@ -374,34 +372,40 @@ abstract class diDB
 	{
 		$name = $this->tables_ar && isset($this->tables_ar[$table]) ? $this->tables_ar[$table] : $table;
 
-		if ($escape)
-		{
+		if ($escape) {
 			$name = $this->escape_string($name);
 		}
 
 		return $name;
 	}
 
+	public function doesColumnExist($table, $column)
+    {
+        $rs = $this->q("SELECT NULL 
+            FROM INFORMATION_SCHEMA.COLUMNS
+           WHERE table_name = '{$table}'
+             AND table_schema = '{$this->getDatabase()}'
+             AND column_name = '{$column}'");
+
+        return $this->count($rs) > 0;
+    }
+
+	/** @deprecated  */
 	public function precache_rs($table, $query_or_ids_ar = "", $fields = "*")
 	{
-		if (is_array($table))
-		{
+		if (is_array($table)) {
 			$realTable = $table["table"];
 			$table = $table["queryTable"];
-		}
-		else
-		{
+		} else {
 			$realTable = $table;
 		}
 
-		if (empty($this->cached_db_data[$realTable]))
-		{
+		if (empty($this->cached_db_data[$realTable])) {
 			$this->cached_db_data[$realTable] = array();
 		}
 
 		$rs = $this->rs($table, $query_or_ids_ar, $fields);
-		while ($r = $this->fetch($rs))
-		{
+		while ($r = $this->fetch($rs)) {
 			$this->cached_db_data[$realTable][$r->id] = $r;
 		}
 
@@ -410,18 +414,20 @@ abstract class diDB
 		return $rs;
 	}
 
+    /** @deprecated  */
 	public function precache_r($table, $id, $fields = "*", $force = true)
 	{
 		return $this->get_precached_r($table, $id, $fields, $force);
 	}
 
+    /** @deprecated  */
 	public function get_precached_r($table, $id, $fields = "*", $force = true)
 	{
-		if (empty($this->cached_db_data[$table]))
-			$this->cached_db_data[$table] = array();
+		if (empty($this->cached_db_data[$table])) {
+            $this->cached_db_data[$table] = [];
+        }
 
-		if (empty($this->cached_db_data[$table][$id]) && $id)
-		{
+		if (empty($this->cached_db_data[$table][$id]) && $id) {
 			$r = $force ? $this->r($table, $id) : null;
 
 			if ($r && !empty($r->id)) $id = $r->id;
@@ -431,6 +437,7 @@ abstract class diDB
 		return $id ? $this->cached_db_data[$table][$id] : null;
 	}
 
+    /** @deprecated  */
 	public function clear_precached($table = false)
 	{
 		$this->flush_precached($table);
@@ -438,6 +445,7 @@ abstract class diDB
 		return $this;
 	}
 
+    /** @deprecated  */
 	public function flush_precached($table = false)
 	{
 		if ($table)
@@ -495,8 +503,7 @@ abstract class diDB
 
 	public function close()
 	{
-		if ($this->debug)
-		{
+		if ($this->debug) {
 			$this->time_log('total', $this->execution_time);
 		}
 
