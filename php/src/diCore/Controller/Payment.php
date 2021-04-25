@@ -8,13 +8,18 @@
 
 namespace diCore\Controller;
 
-use diCore\Entity\PaymentDraft\Model as DraftModel;
-use diCore\Entity\PaymentReceipt\Model as ReceiptModel;
+use diCore\Entity\PaymentDraft\Model as Draft;
+use diCore\Entity\PaymentReceipt\Collection as Receipts;
+use diCore\Entity\PaymentReceipt\Model as Receipt;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
+use diCore\Payment\Mixplat\Helper as Mixplat;
+use diCore\Payment\Paypal\Helper as Paypal;
+use diCore\Payment\Robokassa\Helper as Robokassa;
 use diCore\Payment\Tinkoff\Helper as Tinkoff;
 use diCore\Payment\Yandex\Kassa;
 use diCore\Payment\System;
+use diCore\Payment\Yandex\Vendor as YandexVendor;
 use diCore\Tool\Auth as AuthTool;
 
 class Payment extends \diBaseController
@@ -31,10 +36,10 @@ class Payment extends \diBaseController
 	/** @var  string */
 	protected $subAction;
 
-	/** @var  DraftModel */
+	/** @var  Draft */
 	protected $draft;
 
-	/** @var  ReceiptModel */
+	/** @var  Receipt */
 	protected $receipt;
 
 	public function __construct($params = [])
@@ -42,8 +47,7 @@ class Payment extends \diBaseController
 		parent::__construct($params);
 
 		$class = \diCore\Payment\Payment::getClass();
-		if (!$class::enabled())
-		{
+		if (!$class::enabled()) {
 			$this->returnErrorResponse('E-pay disabled at the moment ' . get_user_ip());
 		}
 	}
@@ -57,20 +61,14 @@ class Payment extends \diBaseController
 			'message' => null,
 		];
 
-		if ($draftId)
-		{
+		if ($draftId) {
 			$this->initDraftOnly($draftId);
 
-			if (!$this->getDraft()->exists())
-			{
+			if (!$this->getDraft()->exists()) {
 				$res['message'] = 'Draft #' . $draftId . ' not found';
-			}
-			elseif ($this->getDraft()->hasPaid())
-			{
+			} elseif ($this->getDraft()->hasPaid()) {
 				$res['message'] = 'Draft #' . $draftId . ' already paid';
-			}
-			else
-			{
+			} else {
 				$this->createReceipt('manual-' . StringHelper::random(8));
 				$res['ok'] = true;
 			}
@@ -89,20 +87,16 @@ class Payment extends \diBaseController
 			'status_str' => '',
 		];
 
-		if ($draftId)
-		{
-			/** @var \diCore\Entity\PaymentReceipt\Collection $col */
+		if ($draftId) {
+			/** @var Receipts $col */
 			$col = \diCollection::create(\diTypes::payment_receipt);
 			$col
 				->filterByDraftId($draftId);
 
-			if ($col->count())
-			{
+			if ($col->count()) {
 				$res['ok'] = true;
-			}
-			else
-			{
-				/** @var DraftModel $draft */
+			} else {
+				/** @var Draft $draft */
 				$draft = \diModel::create(\diTypes::payment_draft, $draftId);
 
 				$res['status'] = $draft->getStatus();
@@ -171,10 +165,9 @@ class Payment extends \diBaseController
 		$this->log("POST:\n" . print_r($_POST, true));
 		$this->log("POST BODY:\n" . print_r(file_get_contents('php://input'), true));
 
-		$mixplat = \diCore\Payment\Mixplat\Helper::create();
+		$mixplat = Mixplat::create();
 
-		switch ($this->subAction)
-		{
+		switch ($this->subAction) {
 			case 'check':
 				$result = $mixplat->handleCheck();
 				break;
@@ -188,7 +181,7 @@ class Payment extends \diBaseController
 				{
 					$this->log('Creating receipt');
 
-					$this->createReceipt($result->getData('order_id'), function(ReceiptModel $r) use($result) {
+					$this->createReceipt($result->getData('order_id'), function(Receipt $r) use($result) {
 						$r->setRnd($result->getData('operator'));
 					});
 				}
@@ -196,8 +189,7 @@ class Payment extends \diBaseController
 				break;
 
 			case 'get':
-				if (!$draftId)
-				{
+				if (!$draftId) {
 					$this->returnErrorResponse('Draft ID should be specified for `get` action');
 				}
 
@@ -217,14 +209,11 @@ class Payment extends \diBaseController
 				exit;
 		}
 
-		if ($result->isSignCorrect())
-		{
+		if ($result->isSignCorrect()) {
 			$this->log("Mixplat data:\n" . print_r($result->getData(), true));
 
 			$mixplat->sendOk();
-		}
-		else
-		{
+		} else {
 			$this->returnErrorResponse('Error: incorrect sign');
 		}
 
@@ -238,8 +227,8 @@ class Payment extends \diBaseController
 
 		$this->log('Paypal request: ' . $this->subAction);
 
-		$pp = \diCore\Payment\Paypal\Helper::create([
-			'onSuccessPayment' => function(\diCore\Payment\Paypal\Helper $pp) {
+		$pp = Paypal::create([
+			'onSuccessPayment' => function(Paypal $pp) {
 				$this
 					->initDraft($pp->getItemNumber(), $pp->getTransactionAmount())
 					->updateDraftDetailsIfNeeded()
@@ -247,8 +236,7 @@ class Payment extends \diBaseController
 			},
 		]);
 
-		switch ($this->subAction)
-		{
+		switch ($this->subAction) {
 			case 'notification':
 				$pp->notification();
 				return null;
@@ -269,8 +257,8 @@ class Payment extends \diBaseController
 		$this->log('Robokassa request: ' . $this->subAction);
 		$this->log('POST: ' . print_r($_POST, true));
 
-		$rk = \diCore\Payment\Robokassa\Helper::basicCreate();
-		$rk->initDraft(function($draftId, $amount) {
+		$rk = Robokassa::basicCreate();
+		$rk->initDraft(function ($draftId, $amount) {
 			$this
 				->initDraft($draftId, $amount)
 				->updateDraftDetailsIfNeeded();
@@ -280,20 +268,19 @@ class Payment extends \diBaseController
 
 		$this->beforeRoboAction();
 
-		switch ($this->subAction)
-		{
+		switch ($this->subAction) {
 			case 'result':
-				return $rk->result(function(\diCore\Payment\Robokassa\Helper $rk) {
+				return $rk->result(function(Robokassa $rk) {
 					$this->createReceipt(1);
 				});
 
 			case 'success':
-				return $rk->success(function(\diCore\Payment\Robokassa\Helper $rk) {
+				return $rk->success(function(Robokassa $rk) {
 					$this->redirectTo($this->getTargetHref(self::STATUS_SUCCESS));
 				});
 
 			case 'fail':
-				return $rk->fail(function(\diCore\Payment\Robokassa\Helper $rk) {
+				return $rk->fail(function(Robokassa $rk) {
 					$this->redirectTo($this->getTargetHref(self::STATUS_FAIL));
 				});
 
@@ -312,11 +299,19 @@ class Payment extends \diBaseController
         $this->subAction = $this->param(0);
 
         $t = Tinkoff::create();
+        $t->initDraft(function ($draftId, $amount) {
+            $this
+                ->initDraft($draftId, $amount)
+                ->updateDraftDetailsIfNeeded();
+
+            return $this->getDraft();
+        });
 
         Tinkoff::log($this->subAction . "\n" . print_r(\diRequest::rawPost(), true));
 
-        switch ($this->subAction)
-        {
+        var_dump($this->getDraft()->get());
+
+        switch ($this->subAction) {
             case 'notification':
                 $params = \diRequest::rawPostParsed();
 
@@ -328,17 +323,17 @@ class Payment extends \diBaseController
                     return 'OK';
                 } else {
                     $t->log('Token not match');
+
+                    return 'ERROR';
                 }
 
-                return 'ERROR';
-
             case 'success':
-                return $t->success(function(\diCore\Payment\Tinkoff\Helper $rk) {
+                return $t->success(function(Tinkoff $rk) {
                     $this->redirectTo($this->getTargetHref(self::STATUS_SUCCESS));
                 });
 
             case 'fail':
-                return $t->fail(function(\diCore\Payment\Tinkoff\Helper $rk) {
+                return $t->fail(function(Tinkoff $rk) {
                     $this->redirectTo($this->getTargetHref(self::STATUS_FAIL));
                 });
 
@@ -364,7 +359,7 @@ class Payment extends \diBaseController
 	{
 		$this->log('createReceipt begins');
 
-		/** @var \diCore\Entity\PaymentReceipt\Collection $receipts */
+		/** @var Receipts $receipts */
 		$receipts = \diCollection::create(\diTypes::payment_receipt);
 		$receipts
 			->filterByDraftId($this->getDraft()->getId());
@@ -372,18 +367,16 @@ class Payment extends \diBaseController
 		$this->receipt = $receipts->getFirstItem();
 		$existingReceipt = true;
 
-		if (!$this->getReceipt()->exists())
-		{
+		if (!$this->getReceipt()->exists()) {
 			$this->receipt = \diModel::create(\diTypes::payment_receipt, $this->getDraft());
 			$existingReceipt = false;
 		}
 
 		if (!$this->getReceipt()->hasVendor())
 		{
-			switch ($this->getReceipt()->getPaySystem())
-			{
+			switch ($this->getReceipt()->getPaySystem()) {
 				case System::yandex_kassa:
-					$vendor = (int)\diCore\Payment\Yandex\Vendor::id(\diRequest::post('paymentType'));
+					$vendor = (int)YandexVendor::id(\diRequest::post('paymentType'));
 					break;
 
 				default:
@@ -391,15 +384,13 @@ class Payment extends \diBaseController
 					break;
 			}
 
-			if ($vendor)
-			{
+			if ($vendor) {
 				$this->getReceipt()
 					->setVendor($vendor);
 			}
 		}
 
-		if (!$existingReceipt)
-		{
+		if (!$existingReceipt) {
 			$this->getReceipt()
 				->killOrig()
 				->killId()
@@ -408,8 +399,7 @@ class Payment extends \diBaseController
 				->setOuterNumber($outerNumber);
 		}
 
-		if ($beforeSave)
-		{
+		if ($beforeSave) {
 			$beforeSave($this->getReceipt());
 		}
 
@@ -417,15 +407,12 @@ class Payment extends \diBaseController
 			$this->getReceipt()
 				->save();
 
-			if (!$existingReceipt)
-			{
+			if (!$existingReceipt) {
 				$this->log('Receipt created, ID = ' . $this->getReceipt()->getId());
 				$this->log('Receipt #' . $this->getReceipt()->getId() . ' created');
 
 				$this->log('Draft #' . $this->getDraft()->getId() . ' set as paid');
-			}
-			else
-			{
+			} else {
 				$this->log('Receipt updated, ID = ' . $this->getReceipt()->getId());
 				$this->log('Draft #' . $this->getDraft()->getId() . ' set as paid (not first time)');
 			}
@@ -437,8 +424,7 @@ class Payment extends \diBaseController
 				->save();
 				//->hardDestroy();
 
-			if (!$existingReceipt)
-			{
+			if (!$existingReceipt) {
 				$class = \diCore\Payment\Payment::getClass();
 				$class::postProcess($this->getReceipt());
 			}
@@ -462,7 +448,7 @@ class Payment extends \diBaseController
 	*/
 
 	/**
-	 * @return DraftModel
+	 * @return Draft
 	 */
 	protected function getDraft()
 	{
@@ -470,7 +456,7 @@ class Payment extends \diBaseController
 	}
 
 	/**
-	 * @return ReceiptModel
+	 * @return Receipt
 	 */
 	protected function getReceipt()
 	{
@@ -479,7 +465,7 @@ class Payment extends \diBaseController
 
 	protected function initDraftOnly($draftId)
 	{
-		$this->draft = \diModel::create(\diCore\Data\Types::payment_draft, $draftId);
+		$this->draft = Draft::createById($draftId);
 
 		return $this;
 	}
@@ -490,13 +476,11 @@ class Payment extends \diBaseController
 
 		$this->log('Draft used: ' . print_r($this->draft->get(), true));
 
-		if (!$this->getDraft()->exists())
-		{
+		if (!$this->getDraft()->exists()) {
 			$this->returnErrorResponse('No such payment draft');
 		}
 
-		if ($userId && $userId != $this->getDraft()->getUserId())
-		{
+		if ($userId && $userId != $this->getDraft()->getUserId()) {
 			$this->returnErrorResponse('Customer number ' . $userId . ' is wrong');
 		}
 
@@ -507,8 +491,7 @@ class Payment extends \diBaseController
 		}
 		*/
 
-		if ($amount < 1)
-		{
+		if ($amount < 1) {
 			$this->returnErrorResponse('Too small amount');
 		}
 
@@ -519,14 +502,12 @@ class Payment extends \diBaseController
 	{
 		$this->log('Updating draft details, id: ' . $this->getDraft()->getId() . ' data: ' . ($data ? print_r($data, true) : '-'));
 
-		switch ($this->getDraft()->getPaySystem())
-		{
+		switch ($this->getDraft()->getPaySystem()) {
 			case System::yandex_kassa:
 				if (
 					!$this->getDraft()->hasVendor() &&
-					$vendor = \diCore\Payment\Yandex\Vendor::id(\diRequest::post('paymentType'))
-				)
-				{
+					$vendor = YandexVendor::id(\diRequest::post('paymentType'))
+				) {
 					$this->getDraft()->setVendor($vendor);
 				}
 				break;
@@ -537,16 +518,14 @@ class Payment extends \diBaseController
 				if (
 					!$this->getDraft()->hasVendor() &&
 					$vendor = \diCore\Payment\Robokassa\Vendor::id(\diRequest::post('paymentType'))
-				)
-				{
+				) {
 					$this->getDraft()->setVendor($vendor);
 				}
 				*/
 				break;
 
 			case System::mixplat:
-				if (!empty($data['status']))
-				{
+				if (!empty($data['status'])) {
 					$this->getDraft()
 						->setStatus($data['status']);
 				}
@@ -554,8 +533,7 @@ class Payment extends \diBaseController
 
 			case System::sms_online:
 				/*
-				if (!empty($data['status']))
-				{
+				if (!empty($data['status'])) {
 					$this->getDraft()
 						->setStatus($data['status']);
 				}
@@ -563,11 +541,8 @@ class Payment extends \diBaseController
 				break;
 
             case System::tinkoff:
-                // todo
-                /*
                 $this->getDraft()
-                    ->setOuterNumber($data['OrderId']);
-                */
+                    ->setOuterNumber(\diRequest::request('PaymentId'));
                 break;
 		}
 
@@ -590,12 +565,9 @@ class Payment extends \diBaseController
 
 	private function returnErrorResponse($message)
 	{
-		if ($this->system == System::yandex_kassa && $this->kassa)
-		{
+		if ($this->system == System::yandex_kassa && $this->kassa) {
 			$this->kassa->sendErrorResponse($message, true);
-		}
-		else
-		{
+		} else {
 			$this->log('Sending error response: ' . $message);
 
 			die($message);

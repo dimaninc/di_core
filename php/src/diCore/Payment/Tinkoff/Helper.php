@@ -10,6 +10,7 @@
 
 namespace diCore\Payment\Tinkoff;
 
+use diCore\Entity\PaymentDraft\Model as Draft;
 use diCore\Helper\ArrayHelper;
 use diCore\Payment\BaseHelper;
 use diCore\Payment\System;
@@ -21,6 +22,16 @@ class Helper extends BaseHelper
     /** @var MerchantApi */
     protected $api;
 
+    public function initDraft(callable $getDraftCallback)
+    {
+        $draftId = \diRequest::request('OrderId', 0);
+        $amount = \diRequest::request('Amount', 0) / 100;
+
+        $this->draft = $getDraftCallback($draftId, $amount);
+
+        return $this;
+    }
+
 	protected function getApi()
     {
         if (!$this->api) {
@@ -31,11 +42,11 @@ class Helper extends BaseHelper
     }
 
 	/**
-	 * @param \diCore\Entity\PaymentDraft\Model $draft
+	 * @param Draft $draft
 	 * @param array $opts
 	 * @return string
 	 */
-	public function getFormUri(\diCore\Entity\PaymentDraft\Model $draft, $opts = [])
+	public function getFormUri(Draft $draft, $opts = [])
 	{
 		$opts = extend([
 			'amount' => $draft->getAmount(),
@@ -82,7 +93,7 @@ class Helper extends BaseHelper
 
     public function checkToken($params)
     {
-        $token = ArrayHelper::getValue($params, 'Token');
+        $token = ArrayHelper::get($params, 'Token');
 
         return $token && $this->generateToken($params) === $token;
     }
