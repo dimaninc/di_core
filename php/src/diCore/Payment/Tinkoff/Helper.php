@@ -81,6 +81,12 @@ class Helper extends BaseHelper
 
 	public function generateToken($params)
     {
+        foreach ($params as &$param) {
+            if (gettype($param) === 'boolean') {
+                $param = $param ? 'true' : 'false';
+            }
+        }
+
         unset($params['Token']);
         $params['Password'] = static::getPassword();
         ksort($params);
@@ -88,8 +94,8 @@ class Helper extends BaseHelper
         $line = join('', $params);
         $hash = hash('sha256', $line);
 
-        self::log('params: ' . print_r($params, true));
-        self::log('line: ' . $line);
+        // self::log('params: ' . print_r($params, true));
+        // self::log('line: ' . $line);
 
         return $hash;
     }
@@ -97,10 +103,9 @@ class Helper extends BaseHelper
     public function checkToken($params)
     {
         $token = ArrayHelper::get($params, 'Token');
-        $params['Success'] = \diRequest::rawPost('Success') ? 'true' : 'false';
         $generatedToken = $this->generateToken($params);
 
-        self::log('Generated token: ' . $generatedToken . ', received token: ' . $token);
+        // self::log('Generated token: ' . $generatedToken . ', received token: ' . $token);
 
         return $token && $generatedToken === $token;
     }
@@ -122,7 +127,7 @@ class Helper extends BaseHelper
             }
             */
 
-            if (\diRequest::get('Success') === 'true') {
+            if (\diRequest::request('Success') === 'true') {
                 self::log('Success method OK');
             } else {
                 throw new \Exception('Success method not OK: ' . print_r($_GET, true));
