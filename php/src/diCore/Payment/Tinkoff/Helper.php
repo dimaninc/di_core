@@ -88,6 +88,9 @@ class Helper extends BaseHelper
         $line = join('', $params);
         $hash = hash('sha256', $line);
 
+        self::log('params: ' . print_r($params));
+        self::log('line: ' . $line);
+
         return $hash;
     }
 
