@@ -94,8 +94,11 @@ class Helper extends BaseHelper
     public function checkToken($params)
     {
         $token = ArrayHelper::get($params, 'Token');
+        $generatedToken = $this->generateToken($params);
 
-        return $token && $this->generateToken($params) === $token;
+        self::log('Generated token: ' . $generatedToken . ', received token: ' . $token);
+
+        return $token && $generatedToken === $token;
     }
 
     public function success(callable $successCallback)
