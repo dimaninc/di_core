@@ -294,7 +294,6 @@ class Payment extends \diBaseController
 
     public function tinkoffAction()
     {
-        // todo
         $this->system = System::tinkoff;
         $this->subAction = $this->param(0);
 
@@ -309,15 +308,13 @@ class Payment extends \diBaseController
 
         Tinkoff::log($this->subAction . "\n" . print_r(\diRequest::rawPost(), true));
 
-        var_dump($this->getDraft()->get());
-
         switch ($this->subAction) {
             case 'notification':
                 $params = \diRequest::rawPostParsed();
 
                 if ($t->checkToken($params)) {
-                    if (ArrayHelper::getValue($params, 'Status') === 'CONFIRMED') {
-                        $this->createReceipt(\diRequest::rawPost('OrderId', 0));
+                    if (ArrayHelper::get($params, 'Status') === 'CONFIRMED') {
+                        $this->createReceipt(\diRequest::rawPost('PaymentId', 0));
                     }
 
                     return 'OK';
@@ -541,8 +538,8 @@ class Payment extends \diBaseController
 				break;
 
             case System::tinkoff:
-                $this->getDraft()
-                    ->setOuterNumber(\diRequest::request('PaymentId'));
+                //$this->getDraft()
+                //    ->setOuterNumber(\diRequest::request('PaymentId'));
                 break;
 		}
 
