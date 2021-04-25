@@ -97,6 +97,7 @@ class Helper extends BaseHelper
     public function checkToken($params)
     {
         $token = ArrayHelper::get($params, 'Token');
+        $params['Success'] = \diRequest::rawPost('Success') ? 'true' : 'false';
         $generatedToken = $this->generateToken($params);
 
         self::log('Generated token: ' . $generatedToken . ', received token: ' . $token);
