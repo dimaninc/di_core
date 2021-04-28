@@ -604,8 +604,7 @@ class Form
 			$flags = [];
 		}
 
-		if (!is_array($flags))
-		{
+		if (!is_array($flags)) {
 			$flags = [$flags];
 		}
 
@@ -668,18 +667,14 @@ class Form
 
 	public function setData($field, $value = null)
 	{
-		if (is_array($field))
-		{
+		if (is_array($field)) {
 			$this->data = extend($this->data, $field);
 
-			if ($value === true)
-			{
+			if ($value === true) {
 				$this->getModel()
 					->set($field);
 			}
-		}
-		else
-		{
+		} else {
 			$this->data[$field] = $value;
 		}
 
@@ -838,17 +833,13 @@ class Form
 			"hide" => [],
 		], $buttons);
 
-		foreach (["show", "show_additional", "hide"] as $purpose)
-		{
-			if (isset($buttons[$purpose]) && !is_array($buttons[$purpose]))
-			{
+		foreach (["show", "show_additional", "hide"] as $purpose) {
+			if (isset($buttons[$purpose]) && !is_array($buttons[$purpose])) {
 				$buttons[$purpose] = [$buttons[$purpose]];
 			}
 
-			if (isset($this->submitButtonsOptions[$purpose]))
-			{
-				if (!is_array($this->submitButtonsOptions[$purpose]))
-				{
+			if (isset($this->submitButtonsOptions[$purpose])) {
+				if (!is_array($this->submitButtonsOptions[$purpose])) {
 					$this->submitButtonsOptions[$purpose] = [$this->submitButtonsOptions[$purpose]];
 				}
 
@@ -856,8 +847,7 @@ class Form
 			}
 		}
 
-		if (empty($buttons["show"]))
-		{
+		if (empty($buttons["show"])) {
 			$buttons["show"] = ["save", "cancel"];
 
 			// showing Apply button only for existing records
@@ -1861,9 +1851,9 @@ EOF;
 	}
 
 	/** @deprecated */
-	public function set_select_from_db_input($field, $db_rs, $template_text = '%title%', $template_value = '%id%', $prefix_ar = array(), $suffix_ar = array())
-	{
-		return $this->setSelectFromDbInput($field, $db_rs, $template_text, $template_value, $prefix_ar, $suffix_ar);
+    public function set_select_from_db_input($field, $db_rs, $template_text = '%title%', $template_value = '%id%', $prefix_ar = [], $suffix_ar = [])
+    {
+        return $this->setSelectFromDbInput($field, $db_rs, $template_text, $template_value, $prefix_ar, $suffix_ar);
 	}
 
 	public function setSelectFromDbInput($field, $db_rs, $template_text = '%title%', $template_value = '%id%', $prefix_ar = [], $suffix_ar = [])
@@ -2387,8 +2377,8 @@ EOF;
 
 		$orig_r = false;
 
-		$ar = array();
-		while ($r = $db->fetch($rs)) {
+        $ar = [];
+        while ($r = $db->fetch($rs)) {
 			$class = $r->id == $this->getData($field) ? " class=\"cover_pic_selected\"" : "";
 
 			if ($class) {
@@ -2435,11 +2425,10 @@ EOF;
 
 		$orig_r = false;
 
-		$albums_ar = array();
-
-		$ar = array();
-		while ($r = $db->fetch($rs))
-		{
+        $albums_ar = [];
+        $ar = [];
+        
+        while ($r = $db->fetch($rs)) {
 			$class = $r->id == $this->getData($field) ? " cover_pic_selected" : "";
 
 			if ($class)
@@ -3048,13 +3037,11 @@ EOF;
 
 	private function setManualFieldFlag($field, $flag)
 	{
-		if (!isset($this->manualFieldFlags[$field]))
-		{
+		if (!isset($this->manualFieldFlags[$field])) {
 			$this->manualFieldFlags[$field] = [];
 		}
 
-		if (!in_array($flag, $this->manualFieldFlags[$field]))
-		{
+		if (!in_array($flag, $this->manualFieldFlags[$field])) {
 			$this->manualFieldFlags[$field][] = $flag;
 		}
 
@@ -3063,10 +3050,8 @@ EOF;
 
 	private function resetManualFieldFlag($field, $flag)
 	{
-		if (isset($this->manualFieldFlags[$field]))
-		{
-			if (($key = array_search($flag, $this->manualFieldFlags[$field])) !== false)
-			{
+		if (isset($this->manualFieldFlags[$field])) {
+			if (($key = array_search($flag, $this->manualFieldFlags[$field])) !== false) {
 				unset($this->manualFieldFlags[$field][$flag]);
 			}
 		}
@@ -3076,12 +3061,9 @@ EOF;
 
 	private function mergeManualFieldFlags($fields)
 	{
-		foreach ($this->manualFieldFlags as $field => $flags)
-		{
-			if (isset($fields[$field]))
-			{
-				if (!isset($fields[$field]["flags"]))
-				{
+		foreach ($this->manualFieldFlags as $field => $flags) {
+			if (isset($fields[$field])) {
+				if (!isset($fields[$field]["flags"])) {
 					$fields[$field]["flags"] = [];
 				}
 
@@ -3100,13 +3082,11 @@ EOF;
 
 	public function setHiddenInput($fields)
 	{
-		if (!is_array($fields))
-		{
+		if (!is_array($fields)) {
 			$fields = explode(",", $fields);
 		}
 
-		foreach ($fields as $field)
-		{
+		foreach ($fields as $field) {
 			$this->setManualFieldFlag($field, "hidden");
 
 			$this->force_inputs_fields[$field] = true;
@@ -3170,11 +3150,11 @@ EOF;
 
 	public function setFontInput($field)
 	{
-		$prefixAr = \diWebFonts::$titlesExtended;
-		$prefixAr = array_merge(array(0 => "Не выбран",), $prefixAr);
+        $prefixAr = \diWebFonts::$titlesExtended;
+        $prefixAr = array_merge([0 => "Не выбран",], $prefixAr);
 
-		$this->setSelectFromCollectionInput($field,
-			\diCore\Data\Font\Cache::getInstance()->getFonts(),
+        $this->setSelectFromCollectionInput($field,
+            \diCore\Data\Font\Cache::getInstance()->getFonts(),
 			function(\diFontModel $f) {
 				return [
 					'value' => $f->getToken(),
@@ -3203,9 +3183,9 @@ EOF;
 		return $this;
 	}
 
-	function set_select_file_input($field, $path, $ext_ar = array(), $kill_ext = true)
-	{
-		if (!is_array($ext_ar)) {
+    function set_select_file_input($field, $path, $ext_ar = [], $kill_ext = true)
+    {
+        if (!is_array($ext_ar)) {
 			$ext_ar = [$ext_ar];
 		}
 
@@ -3219,16 +3199,13 @@ EOF;
 		$sel->addItem("", "Не выбрано");
 
 		$ar = FileSystemHelper::folderContents("{$_SERVER["DOCUMENT_ROOT"]}/{$path}");
-		foreach ($ar["f"] as $fn)
-		{
+		foreach ($ar["f"] as $fn) {
 			$ext = StringHelper::fileExtension($fn);
-			if ($ext)
-			{
+			if ($ext) {
 				$ext = ".$ext";
 			}
 
-			if (in_array($ext, $ext_ar))
-			{
+			if (in_array($ext, $ext_ar)) {
 				$short_fn = $kill_ext ? pathinfo($fn, PATHINFO_FILENAME) : $fn;
 
 				$sel->addItem($short_fn, $short_fn);
@@ -3248,9 +3225,8 @@ EOF;
 
 		$orig_fn = false;
 
-		$ar = array();
-		for ($i = 1; $i <= $video_thumbs_count; $i++)
-		{
+        $ar = [];
+        for ($i = 1; $i <= $video_thumbs_count; $i++) {
 			$fn = $base_name."-$i.jpg";
 
 			if (!is_file($_SERVER["DOCUMENT_ROOT"].$fn))
@@ -3271,8 +3247,7 @@ EOF;
 		$html .= "<table class=\"cover_pic_select\" id=\"table_{$field}\">\n";
 
 		$rows_count = ceil(count($ar) / $cols);
-		for ($i = 0; $i < $rows_count; $i++)
-		{
+		for ($i = 0; $i < $rows_count; $i++) {
 			$html .= "<tr>".join("\n", array_slice($ar, $i * $cols, $cols))."</tr>\n";
 		}
 

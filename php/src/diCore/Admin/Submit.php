@@ -138,10 +138,11 @@ class Submit
                         $skip = true;
                     }
 
-                    if ($this->getId() && !$value && in_array($type, [
-                            'pic',
-                            'file',
-                        ])) {
+                    if (
+                        $this->getId() &&
+                        !$value &&
+                        in_array($type, ['pic', 'file'])
+                    ) {
                         $skip = true;
                     }
 
@@ -313,7 +314,7 @@ class Submit
 				!in_array($v['type'], ['checkbox', 'checkboxes', 'dynamic', 'dynamic_pics', 'dynamic_files', 'separator']) &&
 				!$this->isFlag($f, 'virtual')
 			) {
-				//echo $f;
+				// echo $f;
 
 				return false;
 			}
@@ -794,15 +795,13 @@ class Submit
 	{
 		$ar = getdate();
 
-		if ($date)
-		{
+		if ($date) {
 			if (isset($post['dd'])) $ar['mday'] = (int)$post['dd'];
 			if (isset($post['dm'])) $ar['mon'] = (int)$post['dm'];
 			if (isset($post['dy'])) $ar['year'] = (int)$post['dy'];
 		}
 
-		if ($time)
-		{
+		if ($time) {
 			if (isset($post['th'])) $ar['hours'] = (int)$post['th'];
 			if (isset($post['tm'])) $ar['minutes'] = (int)$post['tm'];
 			if (isset($post['ts'])) $ar['seconds'] = (int)$post['ts'];
@@ -811,13 +810,12 @@ class Submit
 		$ar['seconds'] = 0;
 		$value = null;
 
-		if (
-			($date && $ar['mday'] && $ar['mon'] && $ar['year']) ||
-			($time && $post['th'] !== '' && $post['tm'] !== '')
-		   )
-		{
-			$value = mktime($ar['hours'], $ar['minutes'], $ar['seconds'], $ar['mon'], $ar['mday'], $ar['year']);
-		}
+        if (
+            ($date && $ar['mday'] && $ar['mon'] && $ar['year']) ||
+            ($time && $post['th'] !== '' && $post['tm'] !== '')
+        ) {
+            $value = mktime($ar['hours'], $ar['minutes'], $ar['seconds'], $ar['mon'], $ar['mday'], $ar['year']);
+        }
 
 		/*
 		$value = !$date || ()
@@ -825,17 +823,14 @@ class Submit
 			: 0;
 		*/
 
-		if ($format == 'str')
-		{
+		if ($format == 'str') {
 			$tpl = [];
 
-			if ($date)
-			{
+			if ($date) {
 				$tpl[] = 'Y-m-d';
 			}
 
-			if ($time)
-			{
+			if ($time) {
 				$tpl[] = 'H:i:s';
 			}
 
