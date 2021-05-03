@@ -997,6 +997,21 @@ EOF;
                 : self::$defaultFieldTitles[$fieldName];
         }
 
+        // without language prefix
+        $commonFieldName = preg_replace('#^[a-z]{2}_#', '', $fieldName);
+
+        if (isset(static::$customDefaultFieldTitles[$commonFieldName])) {
+            return is_array(static::$customDefaultFieldTitles[$commonFieldName])
+                ? static::$customDefaultFieldTitles[$commonFieldName][$language]
+                : static::$customDefaultFieldTitles[$commonFieldName];
+        }
+
+        if (isset(self::$defaultFieldTitles[$commonFieldName])) {
+            return is_array(self::$defaultFieldTitles[$commonFieldName])
+                ? self::$defaultFieldTitles[$commonFieldName][$language]
+                : self::$defaultFieldTitles[$commonFieldName];
+        }
+
         return $fieldName;
     }
 
