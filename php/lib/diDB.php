@@ -838,7 +838,7 @@ abstract class diDB
 
         $this->lockTable($t);
         if (!$this->__rq("INSERT INTO {$t}{$q1} VALUES" . join(",", $q2_ar) . ";")) {
-            $this->_log("unable to insert into table $t", false);
+            $this->_log("Unable to insert into table $t", true);
 
             $this->unlockTable($t);
 
@@ -887,7 +887,7 @@ abstract class diDB
 
 		$this->lockTable($t);
 		if (!$this->__rq($q)) {
-			$this->_log("unable to update: $q", false);
+			$this->_log("Unable to update: $q", true);
 
             $this->unlockTable($t);
 
