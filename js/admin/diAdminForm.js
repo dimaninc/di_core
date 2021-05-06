@@ -48,6 +48,14 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 			}, self.auto_save_timeout * 1000);
 		}
 
+        if (!self.id) {
+            setTimeout(function() {
+                $(self.e.form).find('input')
+                    .filter('[type="text"],[type="email"],[type="tel"],[type="number"]')
+                    .add('textarea').first().focus();
+            }, 100);
+        }
+
 		self.clear_busy();
 
 		initTabs();
