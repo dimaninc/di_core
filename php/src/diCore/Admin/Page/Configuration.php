@@ -48,12 +48,9 @@ class Configuration extends \diCore\Admin\BasePage
 
 		$saved = \diRequest::get("saved", 0);
 
-		if ($saved)
-		{
+		if ($saved) {
 			$this->getTpl()->parse("saved_message");
-		}
-		else
-		{
+		} else {
 			$this->getTpl()->assign([
 				"SAVED_MESSAGE" => "",
 			]);
@@ -83,15 +80,14 @@ class Configuration extends \diCore\Admin\BasePage
 
 		$tabPagesAr = [];
 
-		foreach (Cfg::getData() as $k => $v)
-		{
-			if (!isset($v["title"]) || Cfg::hasFlag($k, "hidden"))
-			{
+		foreach (Cfg::getData() as $k => $v) {
+			if (!isset($v["title"]) || Cfg::hasFlag($k, "hidden")) {
 				continue;
 			}
 
 			$titleSuffix = "";
 			$valueSuffix = "";
+            $val = $v['value'] ?? '';
 
 			$this->getTpl()->clear("P_NOTE_ROWS");
 
@@ -101,10 +97,9 @@ class Configuration extends \diCore\Admin\BasePage
 				$k
 			);
 
-			switch ($v["type"])
-			{
+			switch ($v["type"]) {
 				case "checkbox":
-					$checked = $v["value"] ? " checked=\"checked\"" : "";
+					$checked = $val ? " checked=\"checked\"" : "";
 					$value = "<input type=\"checkbox\" id='$k' name=\"$htmlFieldName\" value=\"1\" {$checked}>";
 					break;
 
@@ -114,7 +109,7 @@ class Configuration extends \diCore\Admin\BasePage
 					$template_text = isset($v["select_template_text"]) ? $v["select_template_text"] : "%title%";
 					$template_value = isset($v["select_template_value"]) ? $v["select_template_value"] : "%id%";
 
-					$value = \diSelect::fastCreate($htmlFieldName, $v["value"], $v["select_values"], $prefix_ar, $suffix_ar, $template_text, $template_value);
+					$value = \diSelect::fastCreate($htmlFieldName, $val, $v["select_values"], $prefix_ar, $suffix_ar, $template_text, $template_value);
 					break;
 
 				case "text":
@@ -129,52 +124,44 @@ class Configuration extends \diCore\Admin\BasePage
 
 				    $attrs = ArrayHelper::toAttributesString($attrs);
 
-					$value = "<textarea {$attrs}>{$v["value"]}</textarea>";
+					$value = "<textarea {$attrs}>{$val}</textarea>";
 					break;
 
 				case "pic":
 				case "file":
-					$ff = \diPaths::fileSystem() . Cfg::getInstance()->getFolder() . $v["value"];
-					$ff_orig = "/" . Cfg::getInstance()->getFolder() . $v["value"];
+					$ff = \diPaths::fileSystem() . Cfg::getInstance()->getFolder() . $val;
+					$ff_orig = "/" . Cfg::getInstance()->getFolder() . $val;
 					$path = "/" . Cfg::getInstance()->getFolder();
 					$ext = strtoupper(get_file_ext($ff));
 
 					$info = "$ext";
 
-					if (is_file($ff))
-					{
+					if (is_file($ff)) {
 						list($ff_w, $ff_h, $ff_t) = getimagesize($ff);
 						$ff_s = str_filesize(filesize($ff));
 						$info .= $ff_w || $ff_h ? " {$ff_w}x{$ff_h}, $ff_s" : " $ff_s";
-					}
-					else
-					{
+					} else {
 						$ff_w = $ff_h = $ff_t = 0;
 					}
 
-					if ($v["type"] == "pic")
-					{
+					if ($v["type"] == "pic") {
 						$img_tag = $ff_t == 4 || $ff_t == 13
-							? "<script type=\"text/javascript\">run_movie(\"{$path}{$v["value"]}\", \"$ff_w\", \"$ff_h\", \"opaque\");</script>"
-							: "<img src='$path{$v["value"]}' border='0'>";
+							? "<script type=\"text/javascript\">run_movie(\"{$path}{$val}\", \"$ff_w\", \"$ff_h\", \"opaque\");</script>"
+							: "<img src='$path{$val}' border='0'>";
 
 						//$ff_w2 = $ff_w > 500 ? 500 : $ff_w;
 						$img_tag = "<div class='uploaded-pic'>$img_tag</div>";
 						// style='width: {$ff_w2}px; overflow-x: auto;'
-					}
-					// video
-					elseif (in_array($ext, ["MP4", "M4V", "OGV", "WEBM", "AVI"]))
-					{
+					} elseif (in_array($ext, ["MP4", "M4V", "OGV", "WEBM", "AVI"])) {
+                        // video
 						$mime_type = \diCore\Admin\Form::get_mime_type_by_ext($ext);
 																										// type=\"$mime_type\"
 						$img_tag = "<div><video preload=\"none\" controls width=400 height=225><source src=\"$ff_orig\"></video></div>";
-					}
-					else
-					{
+					} else {
 						$img_tag = "";
 					}
 
-					$valueSuffix = $v["value"]
+					$valueSuffix = $val
 						? sprintf(
 						    '<div>%s</div><div class="file-info">%s <a href="%s">%s</a></div>',
                             $img_tag,
@@ -189,28 +176,25 @@ class Configuration extends \diCore\Admin\BasePage
 
 				default:
 					$value = isset($v["flags"]) && in_array("static", $v["flags"])
-						? StringHelper::out($v["value"], true)
-						: "<input type=\"text\" name=\"$htmlFieldName\" id='$k' value=\"" . StringHelper::out($v["value"], true) . "\">";
+						? StringHelper::out($val, true)
+						: "<input type=\"text\" name=\"$htmlFieldName\" id='$k' value=\"" . StringHelper::out($val, true) . "\">";
 					break;
 			}
 
-			$tab = isset($v["tab"]) ? $v["tab"] : Cfg::getInstance()->getOtherTabName();
-			if (!isset($tabPagesAr[$tab]))
-			{
+			$tab = $v["tab"] ?? Cfg::getInstance()->getOtherTabName();
+
+			if (!isset($tabPagesAr[$tab])) {
 				$tabPagesAr[$tab] = "";
 			}
 
-			if (!empty($v["notes"]))
-			{
-				if (!is_array($v["notes"]))
-				{
+			if (!empty($v["notes"])) {
+				if (!is_array($v["notes"])) {
 					$v["notes"] = [$v["notes"]];
 				}
 
 				$this->getTpl()->clear_parse("NOTE_ROWS");
 
-				foreach ($v["notes"] as $_note)
-				{
+				foreach ($v["notes"] as $_note) {
 					$this->getTpl()->assign([
 						"NOTE" => $_note,
 					]);
@@ -219,9 +203,7 @@ class Configuration extends \diCore\Admin\BasePage
 				}
 
 				$this->getTpl()->parse("P_NOTES_BLOCK", "notes_block");
-			}
-			else
-			{
+			} else {
 				$this->getTpl()
 					->clear_parse("P_NOTES_BLOCK")
 					->assign([
@@ -244,10 +226,8 @@ class Configuration extends \diCore\Admin\BasePage
 			"WORKER_URI" => \diLib::getAdminWorkerPath("configuration", "store"),
 		]);
 
-		foreach (Cfg::getInstance()->getTabsAr() as $k => $v)
-		{
-			if (empty($tabPagesAr[$k]))
-			{
+		foreach (Cfg::getInstance()->getTabsAr() as $k => $v) {
+			if (empty($tabPagesAr[$k])) {
 				continue;
 			}
 

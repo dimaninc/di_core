@@ -128,6 +128,7 @@ abstract class CMS
 
 		// yandex.direct
 		'yclid',
+        'yandex_ad_client_id',
         'test-tag',
         'banner-test-tags',
 
@@ -406,16 +407,11 @@ abstract class CMS
 	{
 		global $Z, $z_ct_ar;
 
-		if (!empty($Z))
-		{
+		if (!empty($Z)) {
 			return $Z->ct_ar;
-		}
-		elseif (!empty($z_ct_ar))
-		{
+		} elseif (!empty($z_ct_ar)) {
 			return $z_ct_ar;
-		}
-		else
-		{
+		} else {
 			$z_ct_ar = [];
 			include Config::getConfigurationFolder() . '/' . static::TABLES_CONTENT_CLEAN_TITLES_PHP;
 
@@ -439,16 +435,11 @@ abstract class CMS
 		/** @var CMS $class */
 		$class = \diLib::getChildClass(static::class);
 
-		if (in_array($domain, $class::$devDomains))
-		{
+		if (in_array($domain, $class::$devDomains)) {
 			return self::ENV_DEV;
-		}
-		elseif (in_array($domain, $class::$stageDomains))
-		{
+		} elseif (in_array($domain, $class::$stageDomains)) {
 			return self::ENV_STAGE;
-		}
-        elseif (in_array($domain, $class::$stage2Domains))
-        {
+		} elseif (in_array($domain, $class::$stage2Domains)) {
             return self::ENV_STAGE2;
         }
 
@@ -477,19 +468,15 @@ abstract class CMS
 
 	public static function extendFieldsWithAllLanguages($fields)
 	{
-		if (!is_array($fields))
-		{
+		if (!is_array($fields)) {
 			$fields = [$fields];
 		}
 
 		$intFields = [];
 
-		foreach ($fields as $field)
-		{
-			foreach (static::$possibleLanguages as $language)
-			{
-				if ($language == static::$defaultLanguage)
-				{
+		foreach ($fields as $field) {
+			foreach (static::$possibleLanguages as $language) {
+				if ($language == static::$defaultLanguage) {
 					continue;
 				}
 
@@ -549,8 +536,7 @@ abstract class CMS
 		/**
 		 * @var Model $m
 		 */
-		foreach ($this->getCachedContentCollection() as $m)
-		{
+		foreach ($this->getCachedContentCollection() as $m) {
 			$contentByType[$m->getType()] = $m;
 		}
 
@@ -586,8 +572,7 @@ abstract class CMS
 	 */
 	public function getTwig()
 	{
-		if (!$this->Twig)
-		{
+		if (!$this->Twig) {
 			$this
 				->initTwig();
 		}
@@ -763,8 +748,7 @@ abstract class CMS
 
 	public function renderPage()
 	{
-		if (!$this->beforeRenderPage())
-		{
+		if (!$this->beforeRenderPage()) {
 			return $this;
 		}
 
@@ -772,17 +756,12 @@ abstract class CMS
 
 		$this->checkModuleAccessibility($moduleName);
 
-		if (static::moduleExists($moduleName))
-		{
+		if (static::moduleExists($moduleName)) {
 			$this->loadModule();
-		}
-		// back compatibility
-		elseif (!is_file("include/{$moduleName}.php"))
-		{
+		} elseif (!is_file("include/{$moduleName}.php")) {
+            // back compatibility
 			$this->loadModule("user");
-		}
-		else
-		{
+		} else {
 			$Z = $this;
 			$db = $this->getDb();
 			$tpl = $this->getTpl();
@@ -811,8 +790,7 @@ abstract class CMS
 
 	protected function checkTextMetaFields()
 	{
-		if (!$this->getMeta('title'))
-		{
+		if (!$this->getMeta('title')) {
 			$this->setMeta(
 				$this->getDefaultMetaTitlePrefix() .
 				$this->getContentModel()->localized('title') .
@@ -820,8 +798,7 @@ abstract class CMS
 			);
 		}
 
-		if (!$this->getMeta('description'))
-		{
+		if (!$this->getMeta('description')) {
 			$this->setMeta(
 				$this->getContentModel()->localized('description') ?: $this->getMeta('title'), 'description'
 			);
@@ -840,19 +817,18 @@ abstract class CMS
 		$this
 			->checkTextMetaFields();
 
-		if (!$this->getOpenGraph('image'))
-		{
-			if ($this->useContentPicAsOpenGraph() && $this->getContentModel()->localized('pic'))
-			{
+		if (!$this->getOpenGraph('image')) {
+			if (
+			    $this->useContentPicAsOpenGraph() &&
+                $this->getContentModel()->localized('pic')
+            ) {
 				$this
 					->setHeaderImage(
 						$this->getContentModel()->getPicsFolder() . $this->getContentModel()->localized('pic'), null,
 						$this->getContentModel()->localized('pic_w'),
 						$this->getContentModel()->localized('pic_h')
 					);
-			}
-			else
-			{
+			} else {
 				$this->setDefaultOpenGraphImage();
 			}
 		}
@@ -868,13 +844,10 @@ abstract class CMS
 	 */
 	public function printCommentsBlock($targetType, $targetId = null, $token = "COMMENTS_BLOCK")
 	{
-		if ($targetType instanceof \diModel)
-		{
+		if ($targetType instanceof \diModel) {
 			$token = $targetId ?: $token;
 			$Comments = \diComments::create($targetType);
-		}
-		else
-		{
+		} else {
 			$Comments = \diComments::create($targetType, $targetId);
 		}
 
@@ -933,8 +906,7 @@ abstract class CMS
 
 	protected function printCommentsForPage()
 	{
-		if ($this->isCommentsBlockPrintNeeded())
-		{
+		if ($this->isCommentsBlockPrintNeeded()) {
 			$this->printCommentsBlock($this->getMainTarget(), 'PAGE_COMMENTS_BLOCK');
 		}
 
@@ -1011,8 +983,8 @@ abstract class CMS
 
 	protected function printShareBlock()
 	{
-		if ($this->shareBlockNeeded()) // && static::templateEngineIsFastTemplate()
-		{
+        // && static::templateEngineIsFastTemplate()
+		if ($this->shareBlockNeeded()) {
 			$title0 = $this->getMeta("title");
 			$content0 = $this->getMeta("description");
 
@@ -1267,8 +1239,7 @@ abstract class CMS
         //die();
 
 		if ($idx === null) {
-			if (!is_array($route))
-			{
+			if (!is_array($route)) {
 				$route = [$route];
 			}
 
@@ -1305,8 +1276,7 @@ abstract class CMS
 	 */
 	public function getOrigRoute($idx = null)
 	{
-		if ($idx < 0)
-		{
+		if ($idx < 0) {
 			$idx += count($this->origRoutes);
 		}
 
