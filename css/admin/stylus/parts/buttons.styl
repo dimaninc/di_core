@@ -96,6 +96,7 @@ button
         margin-right 0
       > svg
         order 10
+        flex-shrink 0
         @media screen and (max-width: 767px)
           display none
       &:hover
@@ -133,6 +134,7 @@ button
         &:hover
           background-color $entrineColorCancel
       &[id="btn-quick-save"]
+      &[id="btn-create-and-add-another"]
         border-color $entrineColorQuickSave
         > svg
           path

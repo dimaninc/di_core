@@ -1273,15 +1273,17 @@ abstract class BasePage
 
 	protected function getRedirectAfterSubmitUrl()
 	{
-		$anchor = $this->useAnchorInRedirectAfterSubmitUrl()
+        $method = \diRequest::post('__redirect_to', 'list');
+        $anchorNeeded = $method === 'list';
+        $paramsNeeded = $method === 'list';
+		$anchor = $anchorNeeded && $this->useAnchorInRedirectAfterSubmitUrl()
 			? '#' . \diNiceTable::getRowAnchorName($this->getId())
 			: '';
+		$params = $paramsNeeded
+            ? $this->getQueryParamsForRedirectAfterSubmit()
+            : [];
 
-		return Base::getPageUri(
-			$this->getBasePath(),
-			'list',
-			$this->getQueryParamsForRedirectAfterSubmit()
-		) . $anchor;
+        return Base::getPageUri($this->getBasePath(), $method, $params) . $anchor;
 	}
 
 	protected function redirectAfterSubmit()

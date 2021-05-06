@@ -254,6 +254,8 @@ body[data-skin="entrine"] .submit-block button > svg {
   -ms-flex-order: 10;
   -webkit-order: 10;
   order: 10;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
 }
 @media screen and (max-width: 767px) {
   body[data-skin="entrine"] .filter-block button > svg,
@@ -340,17 +342,26 @@ body[data-skin="entrine"] .submit-block button[id="btn-cancel"]:hover {
 }
 body[data-skin="entrine"] .filter-block button[id="btn-quick-save"],
 body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button[id="btn-quick-save"],
-body[data-skin="entrine"] .submit-block button[id="btn-quick-save"] {
+body[data-skin="entrine"] .submit-block button[id="btn-quick-save"],
+body[data-skin="entrine"] .filter-block button[id="btn-create-and-add-another"],
+body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button[id="btn-create-and-add-another"],
+body[data-skin="entrine"] .submit-block button[id="btn-create-and-add-another"] {
   border-color: #62e0d6;
 }
 body[data-skin="entrine"] .filter-block button[id="btn-quick-save"] > svg path,
 body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button[id="btn-quick-save"] > svg path,
-body[data-skin="entrine"] .submit-block button[id="btn-quick-save"] > svg path {
+body[data-skin="entrine"] .submit-block button[id="btn-quick-save"] > svg path,
+body[data-skin="entrine"] .filter-block button[id="btn-create-and-add-another"] > svg path,
+body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button[id="btn-create-and-add-another"] > svg path,
+body[data-skin="entrine"] .submit-block button[id="btn-create-and-add-another"] > svg path {
   fill: #62e0d6;
 }
 body[data-skin="entrine"] .filter-block button[id="btn-quick-save"]:hover,
 body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button[id="btn-quick-save"]:hover,
-body[data-skin="entrine"] .submit-block button[id="btn-quick-save"]:hover {
+body[data-skin="entrine"] .submit-block button[id="btn-quick-save"]:hover,
+body[data-skin="entrine"] .filter-block button[id="btn-create-and-add-another"]:hover,
+body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button[id="btn-create-and-add-another"]:hover,
+body[data-skin="entrine"] .submit-block button[id="btn-create-and-add-another"]:hover {
   background-color: #62e0d6;
 }
 body[data-skin="entrine"] .filter-block button[data-purpose="apply"],

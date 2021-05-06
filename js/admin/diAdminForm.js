@@ -33,11 +33,16 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 
 	function init() {
 		$(self.e.form).find('button#btn-clone').click(function() {
-			$(self.e.form).find('input[name=id]').val(0);
+			$(self.e.form).find('input[name="id"]').val(0);
 			$(self.e.form).submit();
 		});
 
-		if (self.auto_save_timeout && self.id) {
+        $(self.e.form).find('button#btn-create-and-add-another').click(function() {
+            $(self.e.form).find('input[name="__redirect_to"]').val('form');
+            $(self.e.form).submit();
+        });
+
+        if (self.auto_save_timeout && self.id) {
 			self.timer_id = setInterval(function() {
 				self.auto_save();
 			}, self.auto_save_timeout * 1000);

@@ -10,6 +10,7 @@ namespace diCore\Admin;
 
 use diCore\Admin\Data\Skin;
 use diCore\Data\Config;
+use diCore\Data\Configuration;
 use diCore\Entity\AdminTableEditLog\Model as TableEditLog;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
@@ -51,6 +52,7 @@ class Form
 			'clone' => 'Save as a new record',
 			'cancel' => 'Cancel',
 			'quick_save' => 'Apply',
+            'create_and_add_another' => 'Create and add another',
 			'dispatch' => 'Save and dispatch',
 			'dispatch_test' => 'Save and test dispatch',
 			'edit' => 'Edit record',
@@ -105,6 +107,7 @@ class Form
 			'clone' => 'Сохранить как новую запись',
 			'cancel' => 'Отмена',
 			'quick_save' => 'Применить',
+            'create_and_add_another' => 'Сохранить и создать ещё',
 			'dispatch' => 'Сохранить и произвести рассылку',
 			'dispatch_test' => 'Сохранить и произвести тестовую рассылку',
 			'edit' => 'Редактировать',
@@ -433,15 +436,12 @@ class Form
 
 		$this->lite = !empty($lite) ? $lite : 0;
 
-		if (true || \diRequest::get('edit', 0) || !$id)
-		{
+		if (true || \diRequest::get('edit', 0) || !$id) {
 			$this->static_mode = false;
 		}
 
-		if (!$this->AdminPage)
-		{
-			if (!isset($GLOBALS[$this->table . "_all_fields"]))
-			{
+		if (!$this->AdminPage) {
+			if (!isset($GLOBALS[$this->table . "_all_fields"])) {
 				throw new \Exception("$" . $this->table . "_all_fields, etc. variables not defined");
 			}
 
@@ -618,8 +618,7 @@ class Form
 
 	public function getWysiwygVendor($mode = 'int')
 	{
-		if ($this->AdminPage)
-		{
+		if ($this->AdminPage) {
 			$this->wysiwygVendor = $this->AdminPage->getAdmin()->getWysiwygVendor();
 		}
 
@@ -819,21 +818,23 @@ class Form
                     'cancel' => '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><path d="M16 10.975v13.025l-6-5.269-6 5.269v-24h6.816c-.553.576-1.004 1.251-1.316 2h-3.5v17.582l4-3.512 4 3.512v-8.763c.805.19 1.379.203 2 .156zm4-6.475c0 2.485-2.017 4.5-4.5 4.5s-4.5-2.015-4.5-4.5 2.017-4.5 4.5-4.5 4.5 2.015 4.5 4.5zm-3.086-2.122l-1.414 1.414-1.414-1.414-.707.708 1.414 1.414-1.414 1.414.707.708 1.414-1.415 1.414 1.414.708-.708-1.414-1.413 1.414-1.414-.708-.708z"/></svg>',
                 ];
 
-                return isset($icons[$name]) ? $icons[$name] : '';
+                $icons['create_and_add_another'] = $icons['save'];
+
+                return $icons[$name] ?? '';
         }
 
         return '';
     }
 
-	public function getSubmitButtons($buttons = [], $prefix = "", $suffix = "")
+	public function getSubmitButtons($buttons = [], $prefix = '', $suffix = '')
 	{
 		$buttons = extend([
-			"show" => [],
-			"show_additional" => [],
-			"hide" => [],
+			'show' => [],
+			'show_additional' => [],
+			'hide' => [],
 		], $buttons);
 
-		foreach (["show", "show_additional", "hide"] as $purpose) {
+		foreach (['show', 'show_additional', 'hide'] as $purpose) {
 			if (isset($buttons[$purpose]) && !is_array($buttons[$purpose])) {
 				$buttons[$purpose] = [$buttons[$purpose]];
 			}
@@ -847,25 +848,28 @@ class Form
 			}
 		}
 
-		if (empty($buttons["show"])) {
-			$buttons["show"] = ["save", "cancel"];
+		if (empty($buttons['show'])) {
+			$buttons['show'] = ['save', 'cancel'];
 
-			// showing Apply button only for existing records
 			if ($this->getId()) {
-			    $buttons['show'][] = "quick_save";
+                // showing "Apply" button only for existing records
+			    $buttons['show'][] = 'quick_save';
+            } else {
+                // showing "Create and add another" button only for new records
+                $buttons['show'][] = 'create_and_add_another';
             }
 		}
 
-		$show_ar = isset($buttons["show_additional"])
-            ? array_merge($buttons["show"], $buttons["show_additional"])
-            : $buttons["show"];
-		$hide_ar = isset($buttons["hide"]) ? $buttons["hide"] : [];
+		$show_ar = isset($buttons['show_additional'])
+            ? array_merge($buttons['show'], $buttons['show_additional'])
+            : $buttons['show'];
+		$hide_ar = $buttons['hide'] ?? [];
 
 		$help_link = $this->show_help
 			? "<a href=\"help_files/toc.php?location=/" . self::$language . "/$this->table/\" rel=\"width:910,height:500,ajax:false,scrollbar:true,showControls:false\" id=\"adminHelp_toc\" class=\"mb\">{$this->L("view_help")}</a>"
 			: "";
 
-		$auto_save_timeout = \diConfiguration::safeGet("auto_save_timeout", 0);
+		$auto_save_timeout = Configuration::safeGet("auto_save_timeout", 0);
 		$js = <<<EOF
 <script type="text/javascript">
 var admin_form_{$this->table}_{$this->id}, admin_form;
@@ -880,8 +884,7 @@ $(function() {
 </script>
 EOF;
 
-		if ($this->static_mode)
-		{
+		if ($this->static_mode) {
 			$edit_btn = $this->isButtonShown("edit", $show_ar, $hide_ar) ? "<button type=\"button\" onclick=\"admin_form_{$this->table}_{$this->id}.switch_to_edit_mode();\">{$this->L("edit")}</button>" : "";
 			$cancel_btn = $this->isButtonShown("cancel", $show_ar, $hide_ar) ? "<button type=\"button\" id=\"btn-cancel\" onclick=\"admin_form_{$this->table}_{$this->id}.cancel_click();\">{$this->L("cancel")}</button>" : "";
 
@@ -898,9 +901,7 @@ EOF;
 
 $js
 EOF;
-		}
-		else
-		{
+		} else {
 			$save_btn = $this->isButtonShown("save", $show_ar, $hide_ar)
                 ? "<button type=\"submit\" id=\"btn-save\" onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->getButtonIcon('save')}{$this->L("save")}</button>"
                 : "";
@@ -909,6 +910,9 @@ EOF;
                 : "";
 			$quick_save_btn = $this->isButtonShown("quick_save", $show_ar, $hide_ar)
                 ? "<button type=\"button\" id=\"btn-quick-save\" onclick=\"admin_form_{$this->table}_{$this->id}.quick_save();\">{$this->getButtonIcon('quick_save')}{$this->L("quick_save")}</button>"
+                : "";
+            $create_and_add_another_btn = $this->isButtonShown("create_and_add_another", $show_ar, $hide_ar)
+                ? "<button type=\"button\" id=\"btn-create-and-add-another\">{$this->getButtonIcon('create_and_add_another')}{$this->L("create_and_add_another")}</button>"
                 : "";
 			$dispatch_btn = $this->isButtonShown("dispatch", $show_ar, $hide_ar)
                 ? "<button type=\"submit\" name=\"dispatch\" id=\"btn-dispatch\" value='1' onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true); return confirm('{$this->L("confirm_dispatch")}');\">{$this->L("dispatch")}</button>"
@@ -941,6 +945,8 @@ EOF;
 	$help_link
 
 	$save_btn
+	
+	$create_and_add_another_btn
 
 	$clone_btn
 
@@ -2105,7 +2111,7 @@ EOF;
 
 			if (\diSwiffy::is($f)) {
                 // swiffy
-				list($ff_w, $ff_h) = \diSwiffy::getDimensions($f);
+				[$ff_w, $ff_h] = \diSwiffy::getDimensions($f);
 
 				$imgTag = \diSwiffy::getHtml($httpName, $ff_w, $ff_h);
 			} elseif (in_array($ext, ['MP4', 'M4V', 'OGV', 'WEBM', 'AVI'])) {
@@ -2145,7 +2151,7 @@ EOF;
 				$previewWithText = true;
 			} else {
                 // picture
-				list($ff_w, $ff_h, $ff_t) = getimagesize($f);
+				[$ff_w, $ff_h, $ff_t] = getimagesize($f);
 
 				if (\diImage::isFlashType($ff_t)) {
 					$imgTag = "<script type=\"text/javascript\">run_movie(\"$httpName\", \"$ff_w\", \"$ff_h\", \"opaque\");</script>";
@@ -2155,7 +2161,7 @@ EOF;
 						$previewHttpName = StringHelper::slash(dirname($httpName)) . $subFolder . basename($httpName);
 						$previewFullName = StringHelper::slash(dirname($f)) . $subFolder . basename($f);
 
-						list($wTn, $hTn) = getimagesize($previewFullName);
+						[$wTn, $hTn] = getimagesize($previewFullName);
 						$sizeTn = filesize($previewFullName);
 
 						$previewInfoBlock = "<div class='info'>Preview: " . join(", ", array_filter([
@@ -2493,7 +2499,7 @@ EOF;
 
 		if (!empty($video_r->embed))
 		{
-			list($video_r->embed, $video_w, $video_h) = get_video_embed_and_dimensions($video_r, $w, $h);
+			[$video_r->embed, $video_w, $video_h] = get_video_embed_and_dimensions($video_r, $w, $h);
 
 			$this->last_video_w = $video_w;
 			$this->last_video_h = $video_h;
