@@ -774,7 +774,7 @@ function diCalendar(cfg)
     this.init();
     this.init_position();
 
-    this.e.style.display = 'block';
+    this.e.style.display = this.cfg.flex ? 'flex' : 'block';
     this.state = true;
 
     if (typeof dip != 'undefined' && !this.cfg.no_gray) dip.show_bg();
@@ -965,6 +965,7 @@ function diCalendar(cfg)
   this.set_config({
       instance_name: null,
       uid: null,
+      flex: false,
     add_events_to_date: {1: [], 2: []},
     able_to_go_to_past: true,
     show_weekday_titles: true,
@@ -987,6 +988,10 @@ function diCalendar(cfg)
     date1_select_str: dicalendar_lng_ar[this.cfg.language].date1_select_str, // only for range selection:
     date2_select_str: dicalendar_lng_ar[this.cfg.language].date2_select_str // these messages will pop up when user clicks on a date
   });
+
+  if (this.cfg.flex) {
+    $(this.e).addClass('with-flex');
+  }
 
   this.init_position();
 

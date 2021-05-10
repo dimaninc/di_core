@@ -1084,6 +1084,29 @@ abstract class diDB
 		return $this;
 	}
 
+	public function getBetweenOperator($val1 = null, $val2 = null)
+    {
+        if ($val1) {
+            $val1 = $this->escapeValue($val1);
+        }
+
+        if ($val2) {
+            $val2 = $this->escapeValue($val2);
+        }
+
+        if ($val1 && $val2) {
+            $op = "BETWEEN '$val1' AND '$val2'";
+        } elseif ($val1) {
+            $op = ">= '$val1'";
+        } elseif ($val2) {
+            $op = "<= '$val2'";
+        } else {
+            $op = null;
+        }
+
+        return $op;
+    }
+
 	/**
 	 * Prepares and quotes string for query as param
 	 *

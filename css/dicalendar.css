@@ -10,6 +10,15 @@ padding: 14px 14px 22px 46px;
 .dicalendar:hover {
 }
 
+.dicalendar.with-flex {
+    /*display: flex;*/
+    align-items: flex-start;
+}
+
+.dicalendar.with-flex > * {
+    float: none;
+}
+
 .dicalendar p {
 float: left;
 margin: 0;
