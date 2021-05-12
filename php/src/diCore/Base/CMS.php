@@ -33,6 +33,8 @@ abstract class CMS
 
 	const LANGUAGE_MODE = Language::URL;
 
+	const USE_TO_SHOW_CONTENT = false;
+
 	/**
 	 * @var \FastTemplate
 	 * @deprecated
@@ -1996,7 +1998,7 @@ abstract class CMS
 
             $imagePath = $pic;
             if ($fs && (!$width || !$height)) {
-                list($width, $height) = @getimagesize($fs);
+                [$width, $height] = @getimagesize($fs);
             }
         }
 
@@ -2641,22 +2643,25 @@ abstract class CMS
 	 * @param Model $model
 	 * @return Model
 	 */
-	protected function getRealContentModel(Model $model)
+	public function getRealContentModel(Model $model)
 	{
-		/*
-		if ($model->getLevelNum() == 0 && !$model->hasToShowContent())
-		{
-			$child = $this->getFirstVisibleChild($model);
-
-			if ($child->exists())
-			{
-				return $child;
-			}
-		}
-		*/
-
-		return $model;
+		return static::USE_TO_SHOW_CONTENT
+            ? $this->getFirstChildIfNotToShowContent($model)
+            : $model;
 	}
+
+	public function getFirstChildIfNotToShowContent(Model $model)
+    {
+        if ($model->getLevelNum() == 0 && !$model->hasToShowContent()) {
+            $child = $this->getFirstVisibleChild($model);
+
+            if ($child->exists()) {
+                return $child;
+            }
+        }
+
+        return $model;
+    }
 
 	/**
 	 * @deprecated
