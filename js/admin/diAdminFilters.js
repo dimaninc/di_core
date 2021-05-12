@@ -3,6 +3,7 @@ var diAdminFilters = function(_opts) {
 	this.MODE_GET = 2;
 
 	this.filters = {};
+	this.enteredDateFields = {};
 
     var self = this,
         opts = $.extend({
@@ -32,14 +33,67 @@ var diAdminFilters = function(_opts) {
             return false;
         });
 
-	    setupResetFilterButtons();
+	    this.setupResetFilterButtons().setupDateInputs();
 
 	    return this;
     };
 
-	function setupResetFilterButtons() {
-		$('[data-purpose="reset-filter"]').on('click', function() {
+    this.setDateEntered = function(field, idx, state) {
+    	var $f;
+
+    	if (field instanceof $ && !idx && !state) {
+    		$f = field.closest('.admin-filter-date-wrapper');
+    		field = $f.data('field');
+    		idx = $f.data('idx');
+    		state = !$f.hasClass('set');
+		} else {
+    		$f = $('.admin-filter-date-wrapper[data-field="{0}"][data-idx="{1}"]'.format(field, idx), e.$form);
+			state = !!state;
+		}
+
+    	this.setFilledDateField(field, idx, state);
+
+    	$f.toggleClass('set', state);
+
+		return this;
+	};
+
+    this.setFilledDateField = function(field, idx, state) {
+		if (typeof this.enteredDateFields[field] === 'undefined') {
+			this.enteredDateFields[field] = {};
+		}
+
+		this.enteredDateFields[field][idx] = state;
+
+    	return this;
+	};
+
+    this.setupDateInputs = function() {
+    	var $wrappers = $('.admin-filter-date-wrapper');
+
+		$wrappers.each(function () {
+			var $f = $(this);
+
+			field = $f.data('field');
+			idx = $f.data('idx');
+			state = $f.hasClass('set');
+
+			self.setFilledDateField(field, idx, state);
+		});
+
+    	$wrappers.find('.empty-dates, .reset-filter', e.$form).on('click', function() {
+    		self.setDateEntered($(this));
+
+    		return false;
+		});
+
+		return this;
+	};
+
+	this.setupResetFilterButtons = function() {
+		$('[data-purpose="reset-filter"]', e.$form).on('click', function() {
 			var $this = $(this),
+				$row = $this.closest('.row'),
 				field = $this.data('field'),
 				$input = e.$form.find('input,select,textarea')
 					.filter('[name="{0}"],[name="admin_filter\\[{0}\\]"]'.format(field));
@@ -48,11 +102,18 @@ var diAdminFilters = function(_opts) {
 				$input.val('');
 
 				self.apply();
+			} else if ($row.find('.admin-filter-date-wrapper').length) {
+				self.setDateEntered(field, 1, false);
+				self.setDateEntered(field, 2, false);
+
+				self.apply();
 			}
 
 			return false;
 		});
-	}
+
+		return this;
+	};
 
 	this.apply = function() {
 		switch (opts.mode) {
@@ -62,7 +123,7 @@ var diAdminFilters = function(_opts) {
 					expires: 365,
 					path: '/_admin/'
 				});
-				reloadPageInCookiesMode();
+				this.reloadPageInCookiesMode();
 				return false;
 
 			case this.MODE_GET:
@@ -96,21 +157,23 @@ var diAdminFilters = function(_opts) {
 		}
 
 		if (opts.mode === self.MODE_GET) {
-			window.location.href = baseUri;
+			location.href = baseUri;
 		} else {
-			reloadPageInCookiesMode();
+			this.reloadPageInCookiesMode();
 		}
 
 		return this;
 	};
 
-	function reloadPageInCookiesMode() {
-		if (baseUri !== window.location.href) {
-			window.location.href = baseUri;
+	this.reloadPageInCookiesMode = function() {
+		if (baseUri !== location.href) {
+			location.href = baseUri;
 		} else {
-			window.location.reload();
+			location.reload();
 		}
-	}
+
+		return this;
+	};
 
 	this.gatherFilterValues = function() {
 		var i, k, v, selector;
@@ -122,20 +185,20 @@ var diAdminFilters = function(_opts) {
 			k = opts.fields[i];
 			selector = ('#admin_filter[' + k + ']')
 				.replace(/\[/g, '\\[')
-				.replace(/\]/g, '\\]');
+				.replace(/]/g, '\\]');
 			$f = $(selector, e.$form);
 			v = $f.val();
 
-			regs = k.match(/^([^\[\]]+)\]\[(\d+)\]\[(.+)$/);
+			regs = k.match(/^([^\[\]]+)]\[(\d+)]\[(.+)$/);
 
-			if (regs && typeof regs[3] != 'undefined') {
+			if (regs && typeof regs[3] !== 'undefined') {
 				// regs[1]: field name: date, etc.
-				if (typeof dateRangeFields[regs[1]] == 'undefined') {
+				if (typeof dateRangeFields[regs[1]] === 'undefined') {
 					dateRangeFields[regs[1]] = {};
 				}
 
 				// regs[2]: index of range: 1 or 2
-				if (typeof dateRangeFields[regs[1]][regs[2]] == 'undefined') {
+				if (typeof dateRangeFields[regs[1]][regs[2]] === 'undefined') {
 					dateRangeFields[regs[1]][regs[2]] = {};
 				}
 
@@ -151,15 +214,24 @@ var diAdminFilters = function(_opts) {
 			if (dateRangeFields.hasOwnProperty(k)) {
 				for (i in dateRangeFields[k]) {
 					if (dateRangeFields[k].hasOwnProperty(i)) {
-						if (typeof this.filters[k] == 'undefined') {
+						if (typeof this.filters[k] === 'undefined') {
 							this.filters[k] = [];
 						}
 
-						this.filters[k].push([
+						v = [
 							dateRangeFields[k][i].dy,
 							dateRangeFields[k][i].dm,
 							dateRangeFields[k][i].dd
-						].join('-'));
+						].join('-');
+
+						// store null instead of selects value when unset
+						if (typeof this.enteredDateFields[k][i] !== 'undefined') {
+							if (!this.enteredDateFields[k][i]) {
+								v = null;
+							}
+						}
+
+						this.filters[k].push(v);
 					}
 				}
 			}

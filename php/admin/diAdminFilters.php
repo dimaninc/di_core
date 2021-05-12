@@ -866,7 +866,7 @@ EOF;
 
 	protected function getResetButton($field)
 	{
-		return "<span data-purpose='reset-filter' data-field='$field'></span>";
+		return "<span data-purpose=\"reset-filter\" data-field=\"$field\"></span>";
 	}
 
 	/** @deprecated */
@@ -896,6 +896,10 @@ EOF;
             $name = $field;
 
             $fieldName = 'admin_filter[' . $name . ']';
+
+            if (empty($ar['strict'])) {
+                $this->setInputResetButton($field);
+            }
 
             switch ($ar['type']) {
                 default:
@@ -929,8 +933,6 @@ EOF;
                             'type' => 'text',
                         ]));
                     }
-
-                    $this->setInputResetButton($field);
 
                     return $input;
 
@@ -971,20 +973,20 @@ EOF;
                         $sel['m2']->addItem(lead0($i));
                     }
 
-                    if ($ar["type"] == "date_str_range" && $r1) {
+                    if ($ar['type'] == 'date_str_range' && $r1) {
                         $r1->d1_min = strtotime($r1->d1_min);
                         $r1->d1_max = strtotime($r1->d1_max);
                     }
 
                     $y1 = min(
-                        \diDateTime::format("Y") - 1,
-                        $ar["value"] ? \diDateTime::format('Y', $ar["value"][0]) : 50000,
-                        $r1 ? \diDateTime::format("Y", $r1->d1_min) : 50000
+                        \diDateTime::format('Y') - 1,
+                        !empty($ar['value'][0]) ? \diDateTime::format('Y', $ar['value'][0]) : 50000,
+                        $r1 ? \diDateTime::format('Y', $r1->d1_min) : 50000
                     );
                     $y2 = max(
-                        \diDateTime::format("Y") + 3,
-                        $ar["value"] ? \diDateTime::format('Y', $ar["value"][1]) : 0,
-                        $r1 ? \diDateTime::format("Y", $r1->d1_max) : 0
+                        \diDateTime::format('Y') + 3,
+                        !empty($ar['value'][1]) ? \diDateTime::format('Y', $ar['value'][1]) : 0,
+                        $r1 ? \diDateTime::format('Y', $r1->d1_max) : 0
                     );
 
                     for ($i = $y1; $i <= $y2; $i++) {
@@ -992,20 +994,31 @@ EOF;
                         $sel['y2']->addItem($i);
                     }
 
-                    $glue = '<span class="date-sep">.</span>';
+                    $wrapSelects = function ($idx) use ($sel, $field, $ar) {
+                        $glue = '<span class="date-sep">.</span>';
+                        $dtSelects = join($glue, [$sel['d' . $idx], $sel['m' . $idx], $sel['y' . $idx]]);
+                        $set = !empty($ar['value'][$idx - 1]);
+                        $setClass = $set ? ' set' : '';
 
-                    $s = join($glue, [$sel['d1'], $sel['m1'], $sel['y1']]) .
-                        '<span class="date-sep">...</span>' .
-                        join($glue, [$sel['d2'], $sel['m2'], $sel['y2']]);
+                        return <<<EOF
+<span class="admin-filter-date-wrapper{$setClass}" data-field="$field" data-idx="$idx">
+    <span class="empty-dates">&mdash;&mdash;$glue&mdash;&mdash;$glue&mdash;&mdash;&mdash;&mdash;</span>
+    <span class="reset-filter"></span>
+    <span class="selects">$dtSelects</span>
+</span>
+EOF;
+                    };
+
+                    $s = $wrapSelects(1) . '<span class="sel-sep">...</span>' . $wrapSelects(2);
 
                     // js
-                    $uid = substr(get_unique_id(), 0, 8);
+                    $uid = get_unique_id(8);
 
-                    $calendar_cfg_js = "months_to_show: 2, date1: 'admin_filter[{$field}][1]', date2: 'admin_filter[{$field}][2]', able_to_go_to_past: true, language: '{$this->language}'";
+                    $calendar_cfg_js = "months_to_show: 2, date1: 'admin_filter[{$field}][1]', date2: 'admin_filter[{$field}][2]', able_to_go_to_past: true, language: '{$this->language}', position_base: 'parent', flex: true";
+                    $onClickPrefix = "diAF.setDateEntered('$field',1,true);diAF.setDateEntered('$field',2,true);";
 
-                    $s .= " <button type=button onclick=\"c_{$uid}.toggle();\" class=\"calendar-toggle\">{$this->L('calendar')}</button>" .
+                    $s .= " <button type=button onclick=\"{$onClickPrefix}c_{$uid}.toggle();\" class=\"calendar-toggle\">{$this->L('calendar')}</button>" .
                         "<script type=\"text/javascript\">var c_{$uid} = new diCalendar({instance_name: 'c_{$uid}', $calendar_cfg_js});</script>";
-                    //
 
                     return $s;
             }
@@ -1666,19 +1679,29 @@ EOF;
 
 function diaf_get_date_range_filter($field, $value, $not = false, $table_prefix = "")
 {
-    $date1 = $value['timestamp1'];
-    $date2 = $value['timestamp2'];
+    global $db;
 
-    return $date1 && $date2 ? "({$table_prefix}{$field} BETWEEN '$date1' AND '$date2')" : "";
+    $date1 = $value['timestamp1'] ?? null;
+    $date2 = $value['timestamp2'] ?? null;
+
+    $op = $db->getBetweenOperator($date1, $date2);
+
+    return $op
+        ? "({$table_prefix}{$field} {$op})"
+        : '';
 }
 
 function diaf_get_date_str_range_filter($field, $value, $not = false, $table_prefix = "", $queryPrefix = '', $querySuffix = '')
 {
-    $date1 = $value[0] . ' 00:00:00';
-    $date2 = $value[1] . ' 23:59:59';
+    global $db;
 
-    return $date1 && $date2
-        ? $queryPrefix . "({$table_prefix}{$field} BETWEEN '$date1' AND '$date2')" . $querySuffix
+    $date1 = isset($value[0]) ? $value[0] . ' 00:00:00' : null;
+    $date2 = isset($value[1]) ? $value[1] . ' 23:59:59' : null;
+
+    $op = $db->getBetweenOperator($date1, $date2);
+
+    return $op
+        ? $queryPrefix . "({$table_prefix}{$field} {$op})" . $querySuffix
         : '';
 }
 

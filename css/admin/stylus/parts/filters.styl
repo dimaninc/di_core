@@ -45,10 +45,44 @@
 			@media screen and (max-width: 767px)
 				flex 1
 				min-width 0
+		.admin-filter-date-wrapper
+			position relative
+			display flex
+			align-items center
+			.empty-dates
+				position absolute
+				display flex
+				justify-content center
+				align-items center
+				top 0
+				bottom 0
+				left 0
+				right 0
+				cursor pointer
+				border 1px solid $classicColorInputBorder
+				border-radius $classicBorderRadiusInput
+				.date-sep
+					margin 0 2px
+				{$entrineSkin} &
+					border-radius $entrineBorderRadiusInput
+			.reset-filter
+				margin-left 0
+				opacity .6
+			&.set
+				.empty-dates
+					display none
+			&:not(.set)
+				.reset-filter
+				.selects
+					visibility hidden
 		.date-sep
+		.sel-sep
 			align-self flex-end
 			{$entrineSkin} &
 				align-self center
+		.sel-sep
+			margin 0 5px
+	.reset-filter
 	[data-purpose="reset-filter"]
 		display inline-block
 		cursor pointer
