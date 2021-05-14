@@ -272,8 +272,7 @@ abstract class BasePage
 
 	protected function printList()
 	{
-		switch ($this->listMode)
-		{
+		switch ($this->listMode) {
 			case self::LIST_LIST:
 				$this->defaultPrintList();
 				break;
@@ -300,8 +299,7 @@ abstract class BasePage
 
 	public function tryToInitTable()
 	{
-		if (method_exists($this, 'initTable'))
-		{
+		if (method_exists($this, 'initTable')) {
 			$this->initTable();
 		}
 
@@ -320,16 +318,12 @@ abstract class BasePage
 	{
 		$x = $this->getOptions();
 
-		for ($i = 0; $i < func_num_args(); $i++)
-		{
+		for ($i = 0; $i < func_num_args(); $i++) {
 			$key = func_get_arg($i);
 
-			if (isset($x[$key]))
-			{
+			if (isset($x[$key])) {
 				$x = $x[$key];
-			}
-			else
-			{
+			} else {
 				return null;
 			}
 		}
@@ -341,8 +335,7 @@ abstract class BasePage
 	{
 		$opt = extend($this->options, $this->customOptions);
 
-		if (static::basePath)
-		{
+		if (static::basePath) {
 			$opt['formBasePath'] = static::basePath;
 		}
 
