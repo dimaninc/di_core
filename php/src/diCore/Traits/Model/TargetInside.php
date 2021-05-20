@@ -33,6 +33,16 @@ trait TargetInside
         return $this->getTargetType();
     }
 
+    public function getTargetTypeName()
+    {
+        return \diTypes::getName($this->getTargetType());
+    }
+
+    public function getTargetTypeTitle()
+    {
+        return \diTypes::getTitle($this->getTargetType());
+    }
+
 	/**
 	 * @param TargetInside $model
 	 * @return bool

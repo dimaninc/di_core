@@ -1009,7 +1009,7 @@ class diModel implements \ArrayAccess
 		}
 
 		$a = $this->prepareIdAndFieldForGetRecord($id, $fieldAlias);
-		
+
 		$ar = $this->getDatabaseRecord($a['field'], $a['id']);
 
 		return $this->tuneDataAfterFetch($ar);
@@ -2506,7 +2506,7 @@ ENGINE = InnoDB;";
             return $value;
         }
 
-        if ($field == static::getIdFieldName()) {
+        if (static::getConnection()::isMongo() && $field == static::getIdFieldName()) {
             if (!$value instanceof ObjectID) {
                 return new ObjectID($value);
             }
@@ -2535,7 +2535,10 @@ ENGINE = InnoDB;";
 
             case FieldType::timestamp:
             case FieldType::datetime:
-                if (!$value instanceof UTCDatetime) {
+                if (
+                    static::getConnection()::isMongo() &&
+                    !$value instanceof UTCDatetime
+                ) {
                     $value = new UTCDatetime((new \DateTime($value))->getTimestamp() * 1000);
                 }
                 break;

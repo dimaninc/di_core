@@ -52,7 +52,7 @@ class Config
 
     private static $class;
 
-	private static function getClass()
+	protected static function getClass()
 	{
 		if (!self::$class) {
 			self::$class = \diLib::getChildClass(self::class);

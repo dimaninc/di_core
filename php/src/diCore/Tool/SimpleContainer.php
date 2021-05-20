@@ -16,23 +16,17 @@ abstract class SimpleContainer
 
 	public static function name($id)
 	{
-		return isset(static::$names[$id])
-			? static::$names[$id]
-			: null;
+		return static::$names[$id] ?? null;
 	}
 
 	public static function title($id)
 	{
-		return isset(static::$titles[$id])
-			? static::$titles[$id]
-			: null;
+		return static::$titles[$id] ?? null;
 	}
 
 	public static function description($id)
 	{
-		return isset(static::$descriptions[$id])
-			? static::$descriptions[$id]
-			: null;
+		return static::$descriptions[$id] ?? null;
 	}
 
 	public static function id($name)
@@ -61,17 +55,22 @@ abstract class SimpleContainer
 		return $id;
 	}
 
+	protected static function getCollectionElement($id)
+    {
+	    return [
+            'id' => $id,
+            'name' => static::name($id),
+            'title' => static::title($id),
+            'description' => static::description($id),
+        ];
+    }
+
 	public static function getCollection()
 	{
 		$ar = [];
 
 		foreach (static::$names as $id => $name) {
-			$ar[] = [
-				'id' => $id,
-				'name' => static::name($id),
-				'title' => static::title($id),
-				'description' => static::description($id),
-			];
+			$ar[] = static::getCollectionElement($id);
 		}
 
 		return $ar;
