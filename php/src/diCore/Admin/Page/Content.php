@@ -17,7 +17,7 @@ class Content extends \diCore\Admin\BasePage
 	protected $options = [
 		'updateSearchIndexOnSubmit' => true,
 		'showControlPanel' => true,
-		'showHeader' => false,
+		'showHeader' => true,
 		'filters' => [
 			'defaultSorter' => [
 				'sortBy' => 'order_num',
