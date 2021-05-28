@@ -14,6 +14,7 @@ use diCore\Entity\Localization\Model;
 class Localization extends \diCore\Admin\BasePage
 {
     protected $options = [
+        'showControlPanel' => true,
         'filters' => [
             'defaultSorter' => [
                 'sortBy' => 'name',
