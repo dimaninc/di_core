@@ -25,10 +25,11 @@ LocalizationAdmin = (function() {
 
   LocalizationAdmin.prototype.setupExport = function() {
     $('.filter-block [name="export"]').on('click', function() {
-      var $cb, $out, $t, linesAr, names;
+      var $cb, $out, $t, lines, names, rawLines, text;
       $t = $('.dinicetable');
       $cb = $t.find('tr td.id .checked, tr td.id input:checkbox:checked');
-      linesAr = [];
+      lines = [];
+      rawLines = [];
       names = [];
       $out = $('.export-block');
       if ($out.length && $out.is(':visible')) {
@@ -40,35 +41,41 @@ LocalizationAdmin = (function() {
         return false;
       }
       $cb.each(function() {
-        var $td, s, val, valuesAr;
-        valuesAr = [];
+        var $td, field, fields, q, s, val, values;
+        fields = [];
+        values = [];
         $td = $(this).parent();
         while ($td = $td.next('td:eq(0)')) {
           if ($td.hasClass('btn')) {
             break;
           }
+          field = $td.data('field');
           val = $td.find('[data-purpose="orig"]').html();
           if (val === void 0 || val === null) {
             val = $td.html();
           }
           val = val.replace(/'/g, '\\\'').replace(/"/g, '\\\"');
-          if ($td.data('field') === 'name') {
+          if (field === 'name') {
             names.push(val);
           }
-          valuesAr.push(val);
+          fields.push(field);
+          values.push(val);
         }
-        s = '$this->getDb()->q("INSERT IGNORE INTO `' + $t.data('table') + '`(`name`,`value`,`en_value`,`de_value`,`it_value`,`es_value`,`fr_value`)\n' + '\u0009\u0009\u0009VALUES(\'' + valuesAr.join('\',\'') + '\');' + '");';
-        linesAr.push(s);
+        q = "INSERT IGNORE INTO `" + ($t.data('table')) + "`(`" + (fields.join('`,`')) + "`)\n\u0009\u0009\u0009VALUES('" + (values.join('\',\'')) + "');";
+        s = "$this->getDb()->q(\"" + q + "\");";
+        lines.push(s);
+        rawLines.push(q);
         return true;
       });
       if (!$out.length) {
         $out = $('<div class="export-block"><textarea></textarea></div>').insertAfter($(this).parent());
       }
-      $out.show().find('textarea').val(names.map((function(_this) {
+      text = names.map((function(_this) {
         return function(n) {
           return "'" + n + "',";
         };
-      })(this)).concat(linesAr).join('\n'));
+      })(this)).concat([''], lines, [''], rawLines).join('\n');
+      $out.show().find('textarea').val(text);
       return false;
     });
     return this;

@@ -53,7 +53,9 @@
         * fucking bullshit removed. now the table is becoming really nice
 */
 
+use diCore\Admin\Base;
 use diCore\Helper\ArrayHelper;
+use diCore\Helper\StringHelper;
 
 class diNiceTable
 {
@@ -214,15 +216,16 @@ class diNiceTable
 		return "<p class=\"navy\">" . $this->pn->print_pages("{$_SERVER["SCRIPT_NAME"]}?path={$this->table}") . "</p>";
 	}
 
-	public function addColumn($title = "&nbsp;", $more_params = [])
+	public function addColumn($title = '&nbsp;', $more_params = [], $field = null)
 	{
 		if (!is_array($more_params)) {
 			$more_params = [];
 		}
 
 		$this->cols[] = [
-			"title" => $title,
-			"more_params" => $more_params,
+			'title' => $title,
+			'more_params' => $more_params,
+            'field' => $field,
 		];
 
 		return $this;
@@ -231,7 +234,7 @@ class diNiceTable
 	public function textCell($text, $more_td_params = [])
 	{
 		$td_params = [
-			//"class" => $this->row_class_prefix
+			//'class' => $this->row_class_prefix
 		];
 
 		$td_params = array_merge($td_params, $more_td_params);
@@ -241,16 +244,16 @@ class diNiceTable
 
 	public function textLinkCell($text, $more_td_params = [])
 	{
-		$href = \diCore\Admin\Base::getPageUri($this->getFormPathBase(), "form", [
-			"id" => $this->getRowModel()->getId(),
-			"lite" => $this->lite,
-			"edit" => 1,
+		$href = Base::getPageUri($this->getFormPathBase(), 'form', [
+			'id' => $this->getRowModel()->getId(),
+			'lite' => $this->lite,
+			'edit' => 1,
 		]);
 
 		$td_params = [
-			//"class" => $this->row_class_prefix,
-			"onclick" => "window.location.href='{$href}';",
-			"style" => "cursor: pointer;",
+			//'class' => $this->row_class_prefix,
+			'onclick' => "window.location.href='{$href}';",
+			'style' => 'cursor: pointer;',
 		];
 
 		$td_params = array_merge($td_params, $more_td_params);
@@ -260,14 +263,14 @@ class diNiceTable
 
 	protected function btnCell($text)
 	{
-		return $this->fillCell($text, ["class" => "btn"]);
+		return $this->fillCell($text, ['class' => 'btn']);
 	}
 
 	protected function fillCell($text, $td_params = [])
 	{
-		$s = "<td";
+		$s = '<td';
 
-		$td_params = array_merge($this->cols[$this->col_idx]["more_params"], $td_params);
+		$td_params = array_merge($this->cols[$this->col_idx]['more_params'], $td_params);
 
 		foreach ($td_params as $p => $v) {
             $s .= $p
@@ -321,21 +324,23 @@ class diNiceTable
 		}
 
 		$this->row_idx = 0;
-		$s = "";
+		$s = '';
 
 		$s .= "<div class=\"dinicetable_div\">" .
 			"<table class=\"dinicetable\" data-table=\"{$this->table}\"><tbody>\n";
 
 		if ($print_headline == self::PRINT_HEADLINE) {
-            $head_ar = [];
+            $headCols = [];
 
-			$s .= $this->openRow(null, "", "headline");
+			$s .= $this->openRow(null, '', 'headline');
 
 			foreach ($this->cols as $col) {
-				$head_ar[] = $this->textCell($col["title"]);
+				$headCols[] = $this->textCell($col['title'], [
+				    'data-field' => $col['field'] ?? null,
+                ]);
 			}
 
-			$s .= join("", $head_ar).$this->closeRow();
+            $s .= join('', $headCols) . $this->closeRow();
 		}
 
 		return $s;
@@ -385,7 +390,7 @@ class diNiceTable
             $attributes = [];
         }
 
-		$id = \diCore\Helper\StringHelper::out($this->getRowModel()->getId());
+		$id = StringHelper::out($this->getRowModel()->getId());
 
 		$this->col_idx = 0;
 		$this->anchorPlaced = false;
@@ -442,13 +447,13 @@ class diNiceTable
 			$inner .= " <input type=\"checkbox\" data-purpose=\"toggle\" data-id=\"{$this->getRowId()}\">";
 		}
 
-		if ($this->getRowModel()->exists("level_num") && $show_expand_collapse) {
-			$expandClassName = in_array($this->getRowModel()->getId(), $this->collapsedIds) ? "expand" : "collapse";
+		if ($this->getRowModel()->exists('level_num') && $show_expand_collapse) {
+			$expandClassName = in_array($this->getRowModel()->getId(), $this->collapsedIds) ? 'expand' : 'collapse';
 
 			$inner .= "<u class=\"tree {$expandClassName}\"></u>";
 		}
 
-		return $this->textCell($inner, ["class" => "id"]);
+		return $this->textCell($inner, ['class' => 'id']);
 	}
 
 	public function setFormPathBase($formPathBase)
@@ -474,56 +479,56 @@ class diNiceTable
 			$queryParams['lite'] = $this->lite;
 		}
 
-		$href = \diCore\Admin\Base::getPageUri($this->getFormPathBase(), 'form', $queryParams);
+		$href = Base::getPageUri($this->getFormPathBase(), 'form', $queryParams);
 
 		return $this->btnCell($this->getButton('edit', $href));
 	}
 
 	public function delBtnCell()
 	{
-		return $this->btnCell($this->getButton("del"));
+		return $this->btnCell($this->getButton('del'));
 	}
 
 	public function toggleBtnCell($field, $active = true)
 	{
 		return $active
 			? $this->btnCell($this->getButton($field, [
-				"state" => $this->getRowModel()->get($field),
+				'state' => $this->getRowModel()->get($field),
             ]))
 			: $this->emptyBtnCell();
 	}
 
 	public function upBtnCell()
 	{
-		return $this->btnCell($this->getButton("up"));
+		return $this->btnCell($this->getButton('up'));
 	}
 
 	public function downBtnCell()
 	{
-		return $this->btnCell($this->getButton("down"));
+		return $this->btnCell($this->getButton('down'));
 	}
 
 	public function playBtnCell($opts = array())
 	{
-		return $this->btnCell($this->getButton("play", $opts));
+		return $this->btnCell($this->getButton('play', $opts));
 	}
 
 	public function rollbackBtnCell($opts = array())
 	{
-		return $this->btnCell($this->getButton("rollback", $opts));
+		return $this->btnCell($this->getButton('rollback', $opts));
 	}
 
 	public function commentsBtnCell()
 	{
 		$r = $this->getDb()->r(
-			"comments",
+			'comments',
 			"WHERE target_type='".diTypes::getId($this->getTable())."' and target_id='{$this->getRowModel()->getId()}'",
 			"COUNT(id) AS cc"
 		);
 
 		$s = $r->cc
-			? $this->getButton("comments", [
-				"text" => $r->cc,
+			? $this->getButton('comments', [
+				'text' => $r->cc,
             ])
 			: $this->getEmptyButton();
 
@@ -532,53 +537,52 @@ class diNiceTable
 
 	public function picBtnCell($opts = [])
 	{
-		switch ($this->getTable())
-		{
-			case "albums":
-				$path = "photos";
+		switch ($this->getTable()) {
+			case 'albums':
+				$path = 'photos';
 				$suffix = "?album_id={$this->getRowModel()->getId()}";
 				break;
 
 			default:
-				$path = "";
-				$suffix = "";
+				$path = '';
+				$suffix = '';
 				break;
 		}
 
-		if (!$opts["href"]) {
+		if (!$opts['href']) {
 			if (!$path) {
-				throw new Exception("picBtnCell path not defined");
+				throw new Exception('picBtnCell path not defined');
 			}
 
-			$opts["href"] = "/" . diAdmin::getSubFolder() . "/" . $path . "/" . $suffix;
+			$opts['href'] = '/' . diAdmin::getSubFolder() . '/' . $path . '/' . $suffix;
 		}
 
-		return $this->btnCell($this->getButton("pic", $opts["href"]));
+		return $this->btnCell($this->getButton('pic', $opts['href']));
 	}
 
 	public function videoBtnCell($opts = [])
 	{
 		switch ($this->getTable()) {
-			case "albums":
-				$path = "videos";
+			case 'albums':
+				$path = 'videos';
 				$suffix = "?album_id={$this->getRowModel()->getId()}";
 				break;
 
 			default:
-				$path = "";
-				$suffix = "";
+				$path = '';
+				$suffix = '';
 				break;
 		}
 
-		if (!$opts["href"]) {
+		if (!$opts['href']) {
 			if (!$path) {
-				throw new Exception("videoBtnCell path not defined");
+				throw new Exception('videoBtnCell path not defined');
 			}
 
-			$opts["href"] = "/" . diAdmin::getSubFolder() . "/" . $path . "/" . $suffix;
+			$opts['href'] = '/' . diAdmin::getSubFolder() . '/' . $path . '/' . $suffix;
 		}
 
-		return $this->btnCell($this->getButton("video", $opts["href"]));
+		return $this->btnCell($this->getButton('video', $opts['href']));
 	}
 
     public function manageBtnCell($href = null)
@@ -640,7 +644,7 @@ class diNiceTable
     public function createBtnCell($maxLevelNum, $queryParams = [])
     {
         if ($this->getRowModel()->get('level_num') < $maxLevelNum) {
-            $s = $this->getButton('create', \diCore\Admin\Base::getPageUri($this->getTable(), 'form', extend([
+            $s = $this->getButton('create', Base::getPageUri($this->getTable(), 'form', extend([
                 'parent' => $this->getRowModel()->getId(),
             ], $queryParams)));
         } else {
@@ -653,7 +657,7 @@ class diNiceTable
     public function printBtnCell($state = 1)
     {
         $s = $state
-            ? $this->getButton('print', \diCore\Admin\Base::getPageUri($this->getTable(), 'form', [
+            ? $this->getButton('print', Base::getPageUri($this->getTable(), 'form', [
                 'id' => $this->getRowModel()->getId(),
                 'print' => 1,
             ]))

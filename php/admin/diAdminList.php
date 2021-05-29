@@ -1,6 +1,7 @@
 <?php
 
 use diCore\Admin\BasePage;
+use diCore\Admin\Form;
 use diCore\Base\CMS;
 use diCore\Helper\ArrayHelper;
 
@@ -182,15 +183,12 @@ class diAdminList
 
 	public function removeColumn($names)
 	{
-		if (!is_array($names))
-		{
+		if (!is_array($names)) {
 			$names = [$names];
 		}
 
-		foreach ($names as $name)
-		{
-			if (isset($this->columnsAr[$name]))
-			{
+		foreach ($names as $name) {
+			if (isset($this->columnsAr[$name])) {
 				unset($this->columnsAr[$name]);
 			}
 		}
@@ -234,16 +232,14 @@ class diAdminList
 	{
 		return $this->getAdminPage()->doesFieldExist($name)
 			? $this->getAdminPage()->getFieldProperty($name, 'title')
-                ?: \diCore\Admin\Form::getFieldTitle($name, $this->getAdminPage()->getFieldProperty($name), $this->getAdminPage()->getLanguage())
+                ?: Form::getFieldTitle($name, $this->getAdminPage()->getFieldProperty($name), $this->getAdminPage()->getLanguage())
 			: null;
 	}
 
 	private function initColumns()
 	{
-		foreach ($this->columnsAr as $name => $properties)
-		{
-		    if (is_string($properties) && $properties)
-		    {
+		foreach ($this->columnsAr as $name => $properties) {
+		    if (is_string($properties) && $properties) {
 			    $properties = [
 				    'title' => $properties,
 			    ];
@@ -255,7 +251,7 @@ class diAdminList
 				'headAttrs' => [],
 			], $properties);
 
-			$this->T->addColumn($p['title'], array_merge($p['attrs'], $p['headAttrs']));
+			$this->T->addColumn($p['title'], extend($p['attrs'], $p['headAttrs']), $name);
 		}
 
 		$this->columnsInitiated = true;
