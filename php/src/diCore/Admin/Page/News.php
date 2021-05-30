@@ -8,7 +8,6 @@
 
 namespace diCore\Admin\Page;
 
-use diCore\Admin\Submit;
 use diCore\Data\Types;
 use diCore\Entity\MailIncut\Collection as IncutCollection;
 use diCore\Entity\MailIncut\Model as IncutModel;
@@ -33,17 +32,6 @@ class News extends \diCore\Admin\BasePage
 			'sortByAr' => [
 				'date' => 'По дате',
 			],
-		],
-	];
-
-	protected $picOptions = [
-		[
-			'type' => Submit::IMAGE_TYPE_MAIN,
-			'resize' => \diImage::DI_THUMB_FIT,
-		],
-		[
-			'type' => Submit::IMAGE_TYPE_PREVIEW,
-			'resize' => \diImage::DI_THUMB_CROP,
 		],
 	];
 
