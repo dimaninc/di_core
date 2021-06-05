@@ -166,9 +166,8 @@ class diTwig
 	 */
 	public function get($key = null)
 	{
-		if ($key !== null)
-		{
-			return isset($this->data[$key]) ? $this->data[$key] : null;
+		if ($key !== null) {
+			return $this->data[$key] ?? null;
 		}
 
 		return $this->data;
@@ -213,16 +212,10 @@ class diTwig
 	 */
 	public function assign($data, $recursive = false)
 	{
-		if ($data)
-		{
-			if ($recursive)
-			{
-				$this->data = array_replace_recursive($this->data, $data);
-			}
-			else
-			{
-				$this->data = extend($this->data, $data);
-			}
+		if ($data) {
+            $this->data = $recursive
+                ? array_replace_recursive($this->data, $data)
+                : extend($this->data, $data);
 		}
 
 		return $this;
@@ -230,12 +223,7 @@ class diTwig
 
 	public function getAssigned($token)
 	{
-		if (isset($this->data[$token]))
-		{
-			return $this->data[$token];
-		}
-
-		return null;
+		return $this->data[$token] ?? null;
 	}
 
 	public function assigned($token)
@@ -303,7 +291,7 @@ class diTwig
 
 		return $this
 			->render($template, self::TOKEN_FOR_PAGE, extend([
-				'Z' => isset($Z) ? $Z : null,
+				'Z' => $Z ?? null,
 			], $data));
 	}
 
@@ -324,7 +312,7 @@ class diTwig
 
         return $this
             ->render($template, self::TOKEN_FOR_INDEX, extend([
-                'Z' => isset($Z) ? $Z : null,
+                'Z' => $Z ?? null,
             ], $data));
     }
 
@@ -361,6 +349,9 @@ class diTwig
 	{
 		$dir = Config::getCacheFolder() . self::CACHE_FOLDER;
 
-		FileSystemHelper::delTree($dir, false);
+		try {
+            FileSystemHelper::delTree($dir, false);
+        } catch (\Exception $e) {
+        }
 	}
 }
