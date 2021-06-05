@@ -188,6 +188,14 @@ class ConnectionData
                 'password' => '',
                 'database' => $database,
             ],
+            // docker variant
+            [
+                'host' => 'db',
+                'port' => 3306,
+                'login' => 'root',
+                'password' => $password,
+                'database' => $database,
+            ],
         ];
     }
 

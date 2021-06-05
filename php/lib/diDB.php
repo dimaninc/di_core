@@ -381,7 +381,7 @@ abstract class diDB
 
 	public function doesColumnExist($table, $column)
     {
-        $rs = $this->q("SELECT NULL 
+        $rs = $this->q("SELECT NULL
             FROM INFORMATION_SCHEMA.COLUMNS
            WHERE table_name = '{$table}'
              AND table_schema = '{$this->getDatabase()}'
