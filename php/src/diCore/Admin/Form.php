@@ -259,6 +259,10 @@ class Form
             'ru' => 'Название',
             'en' => 'Title',
         ],
+        'caption' => [
+            'ru' => 'Заголовок',
+            'en' => 'Caption',
+        ],
         'short_content' => [
             'ru' => 'Краткий текст',
             'en' => 'Short content',
@@ -945,7 +949,7 @@ EOF;
 	$help_link
 
 	$save_btn
-	
+
 	$create_and_add_another_btn
 
 	$clone_btn
@@ -2448,7 +2452,7 @@ EOF;
 
         $albums_ar = [];
         $ar = [];
-        
+
         while ($r = $db->fetch($rs)) {
 			$class = $r->id == $this->getData($field) ? " cover_pic_selected" : "";
 

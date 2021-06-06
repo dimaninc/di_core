@@ -194,8 +194,8 @@ class Content extends \diCore\Admin\BasePage
 			'caption' => [
 				'type' => 'string',
 				'title' => $this->localized([
-					'ru' => 'Заголовок',
-					'en' => 'Caption',
+					'ru' => 'Заголовок для меню',
+					'en' => 'Menu caption',
 				]),
 				'default' => '',
 				'flags' => ['hidden'],
