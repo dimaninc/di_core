@@ -39,6 +39,7 @@ class diModel implements \ArrayAccess
 	const order_field_name = 'order_num';
 	const use_data_cache = false;
 	const open_graph_pic_field = 'pic';
+	const validation_error_prefix_needed = false;
 
 	// this should be redefined
 	protected $table;
@@ -1075,7 +1076,10 @@ class diModel implements \ArrayAccess
 	{
 		foreach ($this->fields as $field) {
 			if (!$this->exists($field)) {
-				$this->addValidationError("Field '{$field}' should be defined in " . get_class($this));
+				$this->addValidationError(
+				    "Field '{$field}' should be defined in " . get_class($this),
+                    $field
+                );
 			}
 		}
 
@@ -1512,6 +1516,16 @@ class diModel implements \ArrayAccess
 		return $this->validationErrors;
 	}
 
+	public static function validationErrorPrefixNeeded()
+    {
+        return static::validation_error_prefix_needed;
+    }
+
+    public function validationErrorPrefix()
+    {
+        return 'Unable to validate ' . get_class($this) . ': ';
+    }
+
 	protected function doValidate()
 	{
         if (!$this->isValidationNeeded()) {
@@ -1523,7 +1537,10 @@ class diModel implements \ArrayAccess
             ->validate();
 
         if ($this->validationErrors) {
-            $e = new \diValidationException('Unable to validate ' . get_class($this) . ': ' . join("\n", $this->preparedValidationErrors()));
+            $prefix = static::validationErrorPrefixNeeded()
+                ? $this->validationErrorPrefix()
+                : '';
+            $e = new \diValidationException($prefix . join("\n", $this->preparedValidationErrors()));
             $e->setErrors($this->validationErrors);
 
             throw $e;
@@ -1532,9 +1549,13 @@ class diModel implements \ArrayAccess
 		return $this;
 	}
 
-	protected function addValidationError($text)
+	protected function addValidationError($text, $field = null)
 	{
-		$this->validationErrors[] = $text;
+	    if ($field === null) {
+            $this->validationErrors[] = $text;
+        } else {
+            $this->validationErrors[$field] = $text;
+        }
 
 		return $this;
 	}

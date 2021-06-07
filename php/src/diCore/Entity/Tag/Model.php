@@ -62,11 +62,11 @@ class Model extends \diModel
 	public function validate()
 	{
 		if (!$this->getTitle()) {
-			$this->addValidationError('Title required');
+			$this->addValidationError('Title required', 'title');
 		}
 
 		if (!$this->getSlug()) {
-			$this->addValidationError('Slug required');
+			$this->addValidationError('Slug required', 'slug');
 		}
 
 		return parent::validate();

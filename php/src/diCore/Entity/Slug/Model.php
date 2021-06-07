@@ -38,15 +38,15 @@ class Model extends \diModel
     public function validate()
     {
         if (!$this->getTargetType() || !$this->getTargetId()) {
-            $this->addValidationError('Target required');
+            $this->addValidationError('Target required', 'target_id');
         }
 
         if (!$this->getSlug()) {
-            $this->addValidationError('Slug required');
+            $this->addValidationError('Slug required', 'slug');
         }
 
         if (!$this->exists('level_num')) {
-            $this->addValidationError('Level num required');
+            $this->addValidationError('Level num required', 'level_num');
         }
 
         return parent::validate();

@@ -55,19 +55,19 @@ class Model extends \diModel
 	public function validate()
 	{
 		if (!$this->hasTargetType() && static::TARGET_IS_NECESSARY) {
-			$this->addValidationError('Target type required');
+			$this->addValidationError('Target type required', 'target_type');
 		}
 
 		if (!$this->hasTargetId() && static::TARGET_IS_NECESSARY) {
-			$this->addValidationError('Target ID required');
+			$this->addValidationError('Target ID required', 'target_id');
 		}
 
 		if (!$this->hasUserId()) {
-			$this->addValidationError('User ID required');
+			$this->addValidationError('User ID required', 'user_id');
 		}
 
 		if (!$this->hasAmount()) {
-			$this->addValidationError('Amount required');
+			$this->addValidationError('Amount required', 'amount');
 		}
 
 		return parent::validate();

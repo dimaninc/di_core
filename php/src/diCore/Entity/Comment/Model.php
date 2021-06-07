@@ -9,6 +9,7 @@ namespace diCore\Entity\Comment;
 
 use diCore\Helper\StringHelper;
 use diCore\Tool\CollectionCache;
+use diCore\Traits\Model\TargetInside;
 
 /**
  * Class Model
@@ -18,8 +19,6 @@ use diCore\Tool\CollectionCache;
  * @method integer	getUserId
  * @method integer	getOwnerId
  * @method integer	getParent
- * @method integer	getTargetType
- * @method integer	getTargetId
  * @method string	getContent
  * @method string	getDate
  * @method integer	getIp
@@ -34,8 +33,6 @@ use diCore\Tool\CollectionCache;
  * @method bool hasUserId
  * @method bool hasOwnerId
  * @method bool hasParent
- * @method bool hasTargetType
- * @method bool hasTargetId
  * @method bool hasContent
  * @method bool hasDate
  * @method bool hasIp
@@ -46,24 +43,24 @@ use diCore\Tool\CollectionCache;
  * @method bool hasKarma
  * @method bool hasEvilScore
  *
- * @method Model setUserType($value)
- * @method Model setUserId($value)
- * @method Model setOwnerId($value)
- * @method Model setParent($value)
- * @method Model setTargetType($value)
- * @method Model setTargetId($value)
- * @method Model setContent($value)
- * @method Model setDate($value)
- * @method Model setIp($value)
- * @method Model setOrderNum($value)
- * @method Model setLevelNum($value)
- * @method Model setVisible($value)
- * @method Model setModerated($value)
- * @method Model setKarma($value)
- * @method Model setEvilScore($value)
+ * @method $this setUserType($value)
+ * @method $this setUserId($value)
+ * @method $this setOwnerId($value)
+ * @method $this setParent($value)
+ * @method $this setContent($value)
+ * @method $this setDate($value)
+ * @method $this setIp($value)
+ * @method $this setOrderNum($value)
+ * @method $this setLevelNum($value)
+ * @method $this setVisible($value)
+ * @method $this setModerated($value)
+ * @method $this setKarma($value)
+ * @method $this setEvilScore($value)
  */
 class Model extends \diModel
 {
+    use TargetInside;
+
 	const type = \diTypes::comment;
 	protected $table = 'comments';
 
@@ -91,14 +88,12 @@ class Model extends \diModel
 
 	public function validate()
 	{
-		if (!$this->getContent())
-		{
-			$this->addValidationError('Content required');
+		if (!$this->getContent()) {
+			$this->addValidationError('Content required', 'content');
 		}
 
-		if (!$this->getTargetType() || !$this->getTargetId())
-		{
-			$this->addValidationError('Target required');
+		if (!$this->getTargetType() || !$this->getTargetId()) {
+			$this->addValidationError('Target required', 'target_id');
 		}
 
 		return parent::validate();
@@ -128,8 +123,7 @@ class Model extends \diModel
 		parent::beforeSave();
 
 		// order_num, level_num
-		if (!$this->getId())
-		{
+		if (!$this->getId()) {
 			$h = new \diHierarchyCommentsTable();
 
 			$skipIdsAr = $h->getChildrenIdsAr($this->getParent(), array($this->getParent()));
@@ -143,14 +137,10 @@ class Model extends \diModel
 				'*order_num' => 'order_num+1',
 			], "WHERE order_num >= '{$this->getOrderNum()}'");
 		}
-		//
 
-		//ip
-		if (!$this->getIp())
-		{
+		if (!$this->getIp()) {
 			$this->setIp(ip2bin());
 		}
-		//
 
 		return $this;
 	}
@@ -159,8 +149,10 @@ class Model extends \diModel
 	{
 		parent::afterSave();
 
-		if ($this->updateCommentsCountForTargetNeeded() && $this->getTargetModel()->exists(static::COMMENTS_COUNT_FIELD))
-		{
+		if (
+		    $this->updateCommentsCountForTargetNeeded() &&
+            $this->getTargetModel()->exists(static::COMMENTS_COUNT_FIELD)
+        ) {
 			$this->getTargetModel()
 				->set(static::COMMENTS_COUNT_FIELD, $this->getTargetModel()->get(static::COMMENTS_COUNT_FIELD) + 1)
 				->set(static::COMMENTS_LAST_DATE_FIELD, \diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME))
@@ -174,15 +166,16 @@ class Model extends \diModel
 	{
 		parent::afterKill();
 
-		if ($this->updateCommentsCountForTargetNeeded() && $this->getTargetModel()->exists(static::COMMENTS_COUNT_FIELD))
-		{
+		if (
+		    $this->updateCommentsCountForTargetNeeded() &&
+            $this->getTargetModel()->exists(static::COMMENTS_COUNT_FIELD)
+        ) {
 			$this->getTargetModel()
 				->set(static::COMMENTS_COUNT_FIELD, $this->getTargetModel()->get(static::COMMENTS_COUNT_FIELD) - 1)
 				->save();
 		}
 
-		if ($this->hasVisible())
-		{
+		if ($this->hasVisible()) {
 			$this->afterToggleVisible();
 		}
 
@@ -191,8 +184,7 @@ class Model extends \diModel
 
 	public function afterToggleVisible()
 	{
-		if (static::UPDATE_COLLECTION_CACHE_ON_UPDATE)
-		{
+		if (static::UPDATE_COLLECTION_CACHE_ON_UPDATE) {
 			$Comments = \diComments::create($this->getTargetType(), $this->getTargetId());
 			$Comments
 				->updateCache(true);
@@ -205,12 +197,12 @@ class Model extends \diModel
 	 */
 	public function getUserModel()
 	{
-		if (!$this->user)
-		{
-			if (!($this->user = $this->getRelated('user')))
-			{
+		if (!$this->user) {
+			if (!($this->user = $this->getRelated('user'))) {
 				$this->user = CollectionCache::getModel(
-					$this->getUserType() == \diComments::utAdmin ? \diTypes::admin : \diTypes::user,
+					$this->getUserType() == \diComments::utAdmin
+                        ? \diTypes::admin
+                        : \diTypes::user,
 					$this->getUserId(),
 					true
 				);
@@ -226,8 +218,7 @@ class Model extends \diModel
 	 */
 	public function getTargetModel()
 	{
-		if (!$this->target || !$this->target->exists())
-		{
+		if (!$this->target || !$this->target->exists()) {
 			$this->target = \diModel::create($this->getTargetType(), $this->getTargetId(), 'id');
 		}
 
@@ -253,8 +244,7 @@ class Model extends \diModel
 		];
 
 		/** @var \diCore\Entity\User\Model $user */
-		if ($user = $this->getRelated('user'))
-		{
+		if ($user = $this->getRelated('user')) {
 			$related[] = "->setRelated('user', " . $user->asPhp(static::$userExcludeFields) . ")";
 		}
 
@@ -264,8 +254,7 @@ class Model extends \diModel
 	public function getHref()
 	{
 		// if href cached inside
-		if ($this->getRelated('href'))
-		{
+		if ($this->getRelated('href')) {
 			return $this->getRelated('href');
 		}
 

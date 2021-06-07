@@ -7,63 +7,61 @@
 
 namespace diCore\Entity\Comment;
 
+use diCore\Traits\Collection\TargetInside;
+
 /**
  * Class Collection
  * Methods list for IDE
  *
- * @method Collection filterById($value, $operator = null)
- * @method Collection filterByUserType($value, $operator = null)
- * @method Collection filterByUserId($value, $operator = null)
- * @method Collection filterByOwnerId($value, $operator = null)
- * @method Collection filterByParent($value, $operator = null)
- * @method Collection filterByTargetType($value, $operator = null)
- * @method Collection filterByTargetId($value, $operator = null)
- * @method Collection filterByContent($value, $operator = null)
- * @method Collection filterByDate($value, $operator = null)
- * @method Collection filterByIp($value, $operator = null)
- * @method Collection filterByOrderNum($value, $operator = null)
- * @method Collection filterByLevelNum($value, $operator = null)
- * @method Collection filterByVisible($value, $operator = null)
- * @method Collection filterByModerated($value, $operator = null)
- * @method Collection filterByKarma($value, $operator = null)
- * @method Collection filterByEvilScore($value, $operator = null)
+ * @method $this filterById($value, $operator = null)
+ * @method $this filterByUserType($value, $operator = null)
+ * @method $this filterByUserId($value, $operator = null)
+ * @method $this filterByOwnerId($value, $operator = null)
+ * @method $this filterByParent($value, $operator = null)
+ * @method $this filterByContent($value, $operator = null)
+ * @method $this filterByDate($value, $operator = null)
+ * @method $this filterByIp($value, $operator = null)
+ * @method $this filterByOrderNum($value, $operator = null)
+ * @method $this filterByLevelNum($value, $operator = null)
+ * @method $this filterByVisible($value, $operator = null)
+ * @method $this filterByModerated($value, $operator = null)
+ * @method $this filterByKarma($value, $operator = null)
+ * @method $this filterByEvilScore($value, $operator = null)
  *
- * @method Collection orderById($direction = null)
- * @method Collection orderByUserType($direction = null)
- * @method Collection orderByUserId($direction = null)
- * @method Collection orderByOwnerId($direction = null)
- * @method Collection orderByParent($direction = null)
- * @method Collection orderByTargetType($direction = null)
- * @method Collection orderByTargetId($direction = null)
- * @method Collection orderByContent($direction = null)
- * @method Collection orderByDate($direction = null)
- * @method Collection orderByIp($direction = null)
- * @method Collection orderByOrderNum($direction = null)
- * @method Collection orderByLevelNum($direction = null)
- * @method Collection orderByVisible($direction = null)
- * @method Collection orderByModerated($direction = null)
- * @method Collection orderByKarma($direction = null)
- * @method Collection orderByEvilScore($direction = null)
+ * @method $this orderById($direction = null)
+ * @method $this orderByUserType($direction = null)
+ * @method $this orderByUserId($direction = null)
+ * @method $this orderByOwnerId($direction = null)
+ * @method $this orderByParent($direction = null)
+ * @method $this orderByContent($direction = null)
+ * @method $this orderByDate($direction = null)
+ * @method $this orderByIp($direction = null)
+ * @method $this orderByOrderNum($direction = null)
+ * @method $this orderByLevelNum($direction = null)
+ * @method $this orderByVisible($direction = null)
+ * @method $this orderByModerated($direction = null)
+ * @method $this orderByKarma($direction = null)
+ * @method $this orderByEvilScore($direction = null)
  *
- * @method Collection selectId()
- * @method Collection selectUserType()
- * @method Collection selectUserId()
- * @method Collection selectOwnerId()
- * @method Collection selectParent()
- * @method Collection selectTargetType()
- * @method Collection selectTargetId()
- * @method Collection selectContent()
- * @method Collection selectDate()
- * @method Collection selectIp()
- * @method Collection selectOrderNum()
- * @method Collection selectLevelNum()
- * @method Collection selectVisible()
- * @method Collection selectModerated()
- * @method Collection selectKarma()
- * @method Collection selectEvilScore()
+ * @method $this selectId()
+ * @method $this selectUserType()
+ * @method $this selectUserId()
+ * @method $this selectOwnerId()
+ * @method $this selectParent()
+ * @method $this selectContent()
+ * @method $this selectDate()
+ * @method $this selectIp()
+ * @method $this selectOrderNum()
+ * @method $this selectLevelNum()
+ * @method $this selectVisible()
+ * @method $this selectModerated()
+ * @method $this selectKarma()
+ * @method $this selectEvilScore()
  */
 class Collection extends \diCollection
 {
+    use TargetInside;
+
 	const type = \diTypes::comment;
 	protected $table = 'comments';
 	protected $modelType = 'comment';
@@ -87,8 +85,7 @@ class Collection extends \diCollection
 	 */
 	public static function createForTarget($targetType, $targetId = null)
 	{
-		if ($targetType instanceof \diModel && $targetId === null)
-		{
+		if ($targetType instanceof \diModel && $targetId === null) {
 			$targetId = $targetType->getId();
 			$targetType = $targetType->modelType();
 		}
@@ -107,8 +104,7 @@ class Collection extends \diCollection
 
 	protected function getBaseCacheSubFolder($cacheKind = self::CACHE_ALL)
 	{
-		switch ($cacheKind)
-		{
+		switch ($cacheKind) {
 			case self::CACHE_BY_TARGET:
 				return parent::getBaseCacheSubFolder($cacheKind) . '/' . \diTypes::getName($this->getTargetType());
 
@@ -119,8 +115,7 @@ class Collection extends \diCollection
 
 	protected function getCacheFilename($cacheKind = self::CACHE_ALL)
 	{
-		switch ($cacheKind)
-		{
+		switch ($cacheKind) {
 			case self::CACHE_BY_TARGET:
 				return $this->getTargetId() . static::CACHE_FILE_EXTENSION;
 

@@ -26,11 +26,11 @@ use diCore\Tool\CollectionCache;
  * @method bool hasDateUploaded
  * @method bool hasDraftId
  *
- * @method Model setRnd($value)
- * @method Model setOuterNumber($value)
- * @method Model setDatePayed($value)
- * @method Model setDateUploaded($value)
- * @method Model setDraftId($value)
+ * @method $this setRnd($value)
+ * @method $this setOuterNumber($value)
+ * @method $this setDatePayed($value)
+ * @method $this setDateUploaded($value)
+ * @method $this setDraftId($value)
  */
 class Model extends \diCore\Entity\PaymentDraft\Model
 {
@@ -43,11 +43,11 @@ class Model extends \diCore\Entity\PaymentDraft\Model
 	public function validate()
 	{
 		if (!$this->hasOuterNumber()) {
-			$this->addValidationError('Outer number required');
+			$this->addValidationError('Outer number required', 'outer_number');
 		}
 
 		if (!$this->hasDraftId()) {
-			$this->addValidationError('Draft ID required');
+			$this->addValidationError('Draft ID required', 'draft_id');
 		}
 
 		return parent::validate();
@@ -108,7 +108,7 @@ class Model extends \diCore\Entity\PaymentDraft\Model
         ], $options);
 
         $str = $this->getStringAppearanceForAdmin();
-        
+
         if ($options['showLink']) {
             $str .= " <a href='{$this->getAdminHref()}'>#{$this->getId()}</a>";
         }

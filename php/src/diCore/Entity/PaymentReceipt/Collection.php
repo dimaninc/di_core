@@ -11,23 +11,23 @@ namespace diCore\Entity\PaymentReceipt;
  * Class Collection
  * Methods list for IDE
  *
- * @method Collection filterByRnd($value, $operator = null)
- * @method Collection filterByOuterNumber($value, $operator = null)
- * @method Collection filterByDatePayed($value, $operator = null)
- * @method Collection filterByDateUploaded($value, $operator = null)
- * @method Collection filterByDraftId($value, $operator = null)
+ * @method $this filterByRnd($value, $operator = null)
+ * @method $this filterByOuterNumber($value, $operator = null)
+ * @method $this filterByDatePayed($value, $operator = null)
+ * @method $this filterByDateUploaded($value, $operator = null)
+ * @method $this filterByDraftId($value, $operator = null)
  *
- * @method Collection orderByRnd($direction = null)
- * @method Collection orderByOuterNumber($direction = null)
- * @method Collection orderByDatePayed($direction = null)
- * @method Collection orderByDateUploaded($direction = null)
- * @method Collection orderByDraftId($direction = null)
+ * @method $this orderByRnd($direction = null)
+ * @method $this orderByOuterNumber($direction = null)
+ * @method $this orderByDatePayed($direction = null)
+ * @method $this orderByDateUploaded($direction = null)
+ * @method $this orderByDraftId($direction = null)
  *
- * @method Collection selectRnd()
- * @method Collection selectOuterNumber()
- * @method Collection selectDatePayed()
- * @method Collection selectDateUploaded()
- * @method Collection selectDraftId()
+ * @method $this selectRnd()
+ * @method $this selectOuterNumber()
+ * @method $this selectDatePayed()
+ * @method $this selectDateUploaded()
+ * @method $this selectDraftId()
  */
 class Collection extends \diCore\Entity\PaymentDraft\Collection
 {

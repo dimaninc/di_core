@@ -27,13 +27,13 @@ namespace diCore\Entity\Feedback;
  * @method bool hasIp
  * @method bool hasDate
  *
- * @method Model setUserId($value)
- * @method Model setName($value)
- * @method Model setEmail($value)
- * @method Model setPhone($value)
- * @method Model setContent($value)
- * @method Model setIp($value)
- * @method Model setDate($value)
+ * @method $this setUserId($value)
+ * @method $this setName($value)
+ * @method $this setEmail($value)
+ * @method $this setPhone($value)
+ * @method $this setContent($value)
+ * @method $this setIp($value)
+ * @method $this setDate($value)
  */
 class Model extends \diModel
 {
@@ -43,9 +43,8 @@ class Model extends \diModel
 
 	public function validate()
 	{
-		if (!$this->hasContent())
-		{
-			$this->addValidationError('Content required');
+		if (!$this->hasContent()) {
+			$this->addValidationError('Content required', 'content');
 		}
 
 		return parent::validate();

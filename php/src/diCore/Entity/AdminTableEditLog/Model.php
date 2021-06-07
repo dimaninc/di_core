@@ -282,23 +282,23 @@ class Model extends \diModel
 	public function validate()
 	{
 		if (!$this->hasTargetTable()) {
-			$this->addValidationError('Table required');
+			$this->addValidationError('Table required', 'target_table');
 		}
 
 		if (!$this->hasTargetId()) {
-			$this->addValidationError('Id required');
+			$this->addValidationError('Id required', 'target_id');
 		}
 
 		if (!$this->hasAdminId()) {
-			$this->addValidationError('Admin required');
+			$this->addValidationError('Admin required', 'admin_id');
 		}
 
 		if (!$this->hasOldData()) {
-			$this->addValidationError('Old data required');
+			$this->addValidationError('Old data required', 'old_data');
 		}
 
 		if (!$this->hasNewData()) {
-			$this->addValidationError('New data required');
+			$this->addValidationError('New data required', 'new_data');
 		}
 
 		return parent::validate();
