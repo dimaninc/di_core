@@ -3139,7 +3139,6 @@ body[data-skin="entrine"] table.dinicetable tr td:not([data-field="title"]) {
 }
 table.dinicetable tr td.id {
   position: relative;
-  font-size: 11px;
   background-color: #d4d0c8;
   font-weight: normal;
   text-align: center;
@@ -3149,8 +3148,13 @@ table.dinicetable tr td.id {
 body[data-skin="entrine"] table.dinicetable tr td.id {
   background-color: transparent;
   font-weight: 500;
-  font-size: 12px;
   padding: 7px;
+}
+table.dinicetable tr td.id-bg {
+  background-color: #d4d0c8;
+}
+body[data-skin="entrine"] table.dinicetable tr td.id-bg {
+  background-color: transparent;
 }
 table.dinicetable tr td.href {
   text-align: center;

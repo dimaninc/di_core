@@ -378,6 +378,8 @@ class diNiceTable
             $classes = explode(' ', $options['classes']);
         } elseif (is_callable($options['classes'])) {
             $classes = $options['classes']($this->getRowModel(), $this);
+        } elseif (is_array($options['classes'])) {
+            $classes = $options['classes'];
         } else {
             $classes = [];
         }
@@ -386,6 +388,8 @@ class diNiceTable
             $attributes = explode(' ', $options['attributes']);
         } elseif (is_callable($options['attributes'])) {
             $attributes = $options['attributes']($this->getRowModel(), $this);
+        } elseif (is_array($options['attributes'])) {
+            $attributes = $options['attributes'];
         } else {
             $attributes = [];
         }

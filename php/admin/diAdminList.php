@@ -1,5 +1,6 @@
 <?php
 
+use diCore\Admin\Base;
 use diCore\Admin\BasePage;
 use diCore\Admin\Form;
 use diCore\Base\CMS;
@@ -279,14 +280,12 @@ class diAdminList
 
 	private function buildHref($href)
 	{
-		if (is_array($href))
-		{
-		    if (!isset($href['method']))
-		    {
+		if (is_array($href)) {
+		    if (!isset($href['method'])) {
 		    	$href['method'] = 'list';
 		    }
 
-			$href = \diCore\Admin\Base::getPageUri($href['module'], $href['method'], $href['params']);
+			$href = Base::getPageUri($href['module'], $href['method'], $href['params']);
 		}
 
 		return $href;
@@ -313,8 +312,7 @@ class diAdminList
 
 	public function addRow($r, $options = [])
 	{
-		if (!$this->columnsInitiated)
-	    {
+		if (!$this->columnsInitiated) {
 	    	$this->initColumns();
 	    }
 
@@ -325,57 +323,44 @@ class diAdminList
 		$html = '';
 		$html .= $this->T->openRow($r, $options);
 
-		foreach ($this->columnsAr as $name => $properties)
-		{
+		foreach ($this->columnsAr as $name => $properties) {
 		    // converting callbacks to its resulting arrays
-		    if (isset($properties['headAttrs']) && is_callable($properties['headAttrs']))
-            {
+		    if (isset($properties['headAttrs']) && is_callable($properties['headAttrs'])) {
                 $properties['headAttrs'] = $properties['headAttrs']($r);
             }
 
-            if (isset($properties['bodyAttrs']) && is_callable($properties['bodyAttrs']))
-            {
+            if (isset($properties['bodyAttrs']) && is_callable($properties['bodyAttrs'])) {
                 $properties['bodyAttrs'] = $properties['bodyAttrs']($r);
             }
 
-            if ($name == 'id')
-			{
+            if ($name == 'id') {
 				$html .= $this->T->idCell(true, false, false);
-			}
-			elseif ($name == '_checkbox' || $name == '#checkbox')
-			{
+			} elseif ($name == '_checkbox' || $name == '#checkbox') {
 				$p = extend([
 					'active' => true,
 				], $properties);
 
-				if (is_callable($p['active']))
-				{
+				if (is_callable($p['active'])) {
 					$p['active'] = $p['active']($this->getCurModel(), $name);
 				}
 
 				$html .= $this->T->idCell(false, $p['active'], false);
-			}
-			elseif ($name == '_expand' || $name == '#expand')
-			{
+			} elseif ($name == '_expand' || $name == '#expand') {
 				$p = extend([
 					'active' => true,
 				], $properties);
 
-				if (is_callable($p['active']))
-				{
+				if (is_callable($p['active'])) {
 					$p['active'] = $p['active']($this->getCurModel(), $name);
 				}
 
 				$html .= $this->T->idCell(false, false, $p['active']);
-			}
-			elseif (substr($name, 0, 1) == '#')
-			{
+			} elseif (substr($name, 0, 1) == '#') {
 				$name = substr($name, 1);
 				$isToggle = CMS::isFieldToggle($name);
 				$method = camelize(($isToggle ? 'toggle' : $name) . '_btn_cell');
 
-				switch ($name)
-				{
+				switch ($name) {
 					case 'create':
 						$p = extend([
 							'maxLevelNum' => null,
@@ -390,14 +375,10 @@ class diAdminList
 							'href' => null,
 						], $properties);
 
-						if ($p['href'] === null)
-						{
+						if ($p['href'] === null) {
 							$p['href'] = $this->getCurModel()->getHref();
-						}
-						else
-						{
-							if (is_callable($p['href']))
-							{
+						} else {
+							if (is_callable($p['href'])) {
 								$p['href'] = $p['href']($this->getCurModel(), $name);
 							}
 
@@ -423,8 +404,7 @@ class diAdminList
 							'onclick' => '',
 						], $properties);
 
-						if (is_callable($p['active']))
-						{
+						if (is_callable($p['active'])) {
 							$p['active'] = $p['active']($this->getCurModel(), $name);
 						}
 
@@ -480,8 +460,7 @@ class diAdminList
 
 	public function setPrintParts($what = ['head', 'body'])
 	{
-		if (!is_array($what))
-		{
+		if (!is_array($what)) {
 			$what = explode(',', $what);
 		}
 
@@ -500,8 +479,7 @@ class diAdminList
 
 	protected function getControlPanelHtml()
 	{
-		if (!$this->getOption('showControlPanel'))
-		{
+		if (!$this->getOption('showControlPanel')) {
 			return '';
 		}
 
@@ -521,8 +499,7 @@ class diAdminList
 
 		$html = '';
 
-		foreach ($this->printParts as $what)
-		{
+		foreach ($this->printParts as $what) {
 			$html .= $this->htmlAr[$what];
 		}
 

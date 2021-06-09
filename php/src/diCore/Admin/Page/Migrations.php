@@ -1,4 +1,10 @@
 <?php
+/**
+ * Created by PhpStorm.
+ * User: dimaninc
+ * Date: 14.06.2015
+ * Time: 0:16
+ */
 
 namespace diCore\Admin\Page;
 
@@ -9,12 +15,6 @@ use diCore\Database\Tool\MigrationsManager;
 use diCore\Tool\CollectionCache;
 use diCore\Entity\DiMigrationsLog\Model;
 
-/**
- * Created by PhpStorm.
- * User: dimaninc
- * Date: 14.06.2015
- * Time: 0:16
- */
 class Migrations extends \diCore\Admin\BasePage
 {
 	protected $options = [
@@ -146,6 +146,13 @@ class Migrations extends \diCore\Admin\BasePage
 				'headAttrs' => [
 					'width' => '60%',
 				],
+                'bodyAttrs' => [
+                    'class' => function (\diModel $m) {
+                        return $m->has('folder')
+                            ? 'id-bg'
+                            : '';
+                    },
+                ],
 				'noHref' => true,
 			],
 			'subFolder' => [
@@ -153,9 +160,13 @@ class Migrations extends \diCore\Admin\BasePage
 				'headAttrs' => [
 					'width' => '10%',
 				],
-				'bodyAttrs' => [
-					'class' => 'lite',
-				],
+                'bodyAttrs' => [
+                    'class' => function (\diModel $m) {
+                        return $m->has('folder')
+                            ? 'id-bg'
+                            : 'lite';
+                    },
+                ],
 				'noHref' => true,
 			],
 			'date_created' => [
@@ -173,9 +184,13 @@ class Migrations extends \diCore\Admin\BasePage
 				'headAttrs' => [
 					'width' => '10%',
 				],
-				'bodyAttrs' => [
-					'class' => 'dt',
-				],
+                'bodyAttrs' => [
+                    'class' => function (\diModel $m) {
+                        return $m->has('folder')
+                            ? 'id-bg'
+                            : 'dt';
+                    },
+                ],
 				'noHref' => true,
 			],
 			'date_modified' => [
@@ -191,9 +206,13 @@ class Migrations extends \diCore\Admin\BasePage
 				'headAttrs' => [
 					'width' => '10%',
 				],
-				'bodyAttrs' => [
-					'class' => 'dt',
-				],
+                'bodyAttrs' => [
+                    'class' => function (\diModel $m) {
+                        return $m->has('folder')
+                            ? 'id-bg'
+                            : 'dt';
+                    },
+                ],
 				'noHref' => true,
 			],
 			'date_applied' => [
@@ -211,9 +230,13 @@ class Migrations extends \diCore\Admin\BasePage
 				'headAttrs' => [
 					'width' => '10%',
 				],
-				'bodyAttrs' => [
-					'class' => 'dt',
-				],
+                'bodyAttrs' => [
+                    'class' => function (\diModel $m) {
+                        return $m->has('folder')
+                            ? 'id-bg'
+                            : 'dt';
+                    },
+                ],
 				'noHref' => true,
 			],
 			'#play' => [
@@ -240,10 +263,7 @@ class Migrations extends \diCore\Admin\BasePage
 			],
 		]);
 
-		/** @var \diMigrationsManager $c */
-		$c = get_class($this->getManager());
-
-		foreach ($c::getFolderIds() as $folderId) {
+		foreach ($this->getManager()::getFolderIds() as $folderId) {
 			// printing folder
 			$folder = $this->getManager()->getFolderById($folderId);
 
