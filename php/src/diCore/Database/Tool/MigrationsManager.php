@@ -1,22 +1,25 @@
 <?php
 
+namespace diCore\Database\Tool;
+
 use diCore\Data\Config;
 use diCore\Database\Connection;
 use diCore\Database\Engine;
-use diCore\Database\Tool\Migration;
 use diCore\Entity\DiMigrationsLog\Model;
 use diCore\Entity\DiMigrationsLog\Collection;
 use diCore\Helper\FileSystemHelper;
 use diCore\Helper\StringHelper;
+use diCore\Traits\BasicCreate;
 
-class diMigrationsManager
+class MigrationsManager
 {
-	const logTable = "di_migrations_log";
-	const childClassName = "diCustomMigrationsManager";
+    use BasicCreate;
+
+	const logTable = 'di_migrations_log';
 	const dirChmod = 0775;
 	const fileChmod = 0664;
 
-	const defaultFolder = "_cfg/migrations";
+	const defaultFolder = '_cfg/migrations';
 	protected static $localFolder;
 
 	const FOLDER_LOCAL = 1;
@@ -26,8 +29,9 @@ class diMigrationsManager
 		self::FOLDER_LOCAL,
 		self::FOLDER_CORE_MIGRATIONS,
 	];
+    public static $customFoldersIdsAr = [];
 
-	/** @var diDB */
+	/** @var \diDB */
 	private $db;
 
 	public function __construct()
@@ -41,72 +45,62 @@ class diMigrationsManager
 			->initFolder();
 	}
 
-	public static function create()
-	{
-		$mmClassName = \diLib::exists(self::childClassName)
-			? self::childClassName
-			: "diMigrationsManager";
-
-		return new $mmClassName();
-	}
+    public static function getFolderIds()
+    {
+        return array_merge(static::$foldersIdsAr, static::$customFoldersIdsAr);
+    }
 
 	protected function initFolder()
 	{
-		self::$localFolder = Config::getSourcesFolder() . self::defaultFolder;
+		static::$localFolder = Config::getSourcesFolder() . static::defaultFolder;
 
 		return $this;
 	}
 
 	public static function getClassNameByIdx($idx)
 	{
-		return "diMigration_" . $idx;
+		return 'diMigration_' . $idx;
 	}
 
 	public static function getIdxByFileName($fn)
 	{
 		$name = substr(basename($fn), 0, -4);
-		$idx = substr($name, 0, strpos($name, "_"));
+		$idx = substr($name, 0, strpos($name, '_'));
 
 		return $idx;
 	}
 
 	public static function getMigrationsInFolder($folder, $idx = null)
 	{
-		if (is_numeric($folder))
-		{
-			$folder = self::getFolderById($folder);
+		if (is_numeric($folder)) {
+			$folder = static::getFolderById($folder);
 		}
 
-		return array_reverse(glob_recursive(StringHelper::slash($folder) . ($idx ?: "*") . "_*.php"));
+		return array_reverse(glob_recursive(StringHelper::slash($folder) . ($idx ?: '*') . '_*.php'));
 	}
 
 	public static function getSubFolders($folder)
 	{
-		if (is_numeric($folder))
-		{
-			$folder = self::getFolderById($folder);
+		if (is_numeric($folder)) {
+			$folder = static::getFolderById($folder);
 		}
 
 		$contents = FileSystemHelper::folderContents($folder, true, true);
 
-		return $contents["d"];
+		return $contents['d'];
 	}
 
 	public function getClassFileNameByIdx($idx)
 	{
-		$files = array();
+		$files = [];
 
-		foreach (static::$foldersIdsAr as $folderId)
-		{
-			$files = array_merge($files, self::getMigrationsInFolder($folderId, $idx));
+		foreach (static::getFolderIds() as $folderId) {
+			$files = array_merge($files, static::getMigrationsInFolder($folderId, $idx));
 		}
 
-		if (count($files) == 0)
-		{
+		if (count($files) == 0) {
 			throw new \Exception("No migrations with idx '$idx' found");
-		}
-		elseif (count($files) > 1)
-		{
+		} elseif (count($files) > 1) {
 			throw new \Exception("More that just 1 migration found with idx '$idx': " . join(", ", $files));
 		}
 
@@ -172,23 +166,21 @@ EOF;
 	{
 		$contents = $this->getTemplate($idx, $name, $folder);
 
-		$fullFolder = StringHelper::slash(self::$localFolder);
+		$fullFolder = StringHelper::slash(static::$localFolder);
 
-		if ($folder)
-		{
+		if ($folder) {
 			$fullFolder .= StringHelper::slash($folder);
 
-			if (!is_dir($fullFolder))
-			{
-				FileSystemHelper::createTree(self::$localFolder, $folder, self::dirChmod);
+			if (!is_dir($fullFolder)) {
+				FileSystemHelper::createTree(static::$localFolder, $folder, static::dirChmod);
 			}
 		}
 
-		$contents = sprintf($contents, self::getClassNameByIdx($idx), $idx, $name);
-		$fn = $fullFolder . self::getMigrationFileName($idx, $name);
+		$contents = sprintf($contents, static::getClassNameByIdx($idx), $idx, $name);
+		$fn = $fullFolder . static::getMigrationFileName($idx, $name);
 
 		file_put_contents($fn, $contents);
-		chmod($fn, self::fileChmod);
+		chmod($fn, static::fileChmod);
 	}
 
 	public static function getMigrationFileName($idx, $name)
@@ -206,7 +198,7 @@ EOF;
 	}
 
 	/**
-	 * @return diDB
+	 * @return \diDB
 	 */
 	protected function getDb()
 	{
@@ -216,12 +208,11 @@ EOF;
 	/**
 	 * @param $id integer
 	 * return string
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public static function getFolderById($id)
 	{
-		switch ($id)
-		{
+		switch ($id) {
 			case self::FOLDER_LOCAL:
 				return static::getLocalFolder();
 
@@ -229,7 +220,7 @@ EOF;
 				return static::getCoreMigrationsFolder();
 
 			default:
-				throw new Exception("Undefined folder id#$id");
+				throw new \Exception("Undefined folder id#$id");
 		}
 	}
 
@@ -240,7 +231,7 @@ EOF;
 
 	public static function getCoreMigrationsFolder()
 	{
-		return dirname(dirname(dirname(__FILE__))) . "/migrations/";
+		return dirname(__FILE__, 6) . '/migrations/';
 	}
 
 	private function getCreateTableSql()
@@ -285,7 +276,7 @@ EOF;
         }
 
 		if (!$res) {
-			throw new Exception("Unable to init Table: " . $this->getDb()->getLogStr());
+			throw new \Exception("Unable to init Table: " . $this->getDb()->getLogStr());
 		}
 
 		return $this;
@@ -296,7 +287,7 @@ EOF;
 	 */
 	private function getMigrationObject($idx)
 	{
-		$className = self::getClassNameByIdx($idx);
+		$className = static::getClassNameByIdx($idx);
 		$fn = $this->getClassFileNameByIdx($idx);
 
 		include($fn);
@@ -306,26 +297,21 @@ EOF;
 
 	public function run($idx, $state)
 	{
-		if (!$idx)
-		{
-			throw new Exception("Empty IDX of migration");
+		if (!$idx) {
+			throw new \Exception("Empty IDX of migration");
 		}
 
 		$executed = $this->wasExecuted($idx);
 
-		if ($state && $executed)
-		{
-			throw new Exception("Migration '$idx' has been already executed");
-		}
-		elseif (!$state && !$executed)
-		{
-			throw new Exception("Migration '$idx' has not been executed yet");
+		if ($state && $executed) {
+			throw new \Exception("Migration '$idx' has been already executed");
+		} elseif (!$state && !$executed) {
+			throw new \Exception("Migration '$idx' has not been executed yet");
 		}
 
 		$migration = $this->getMigrationObject($idx);
 
-		if ($migration->run($state))
-		{
+		if ($migration->run($state)) {
 			$this->logExecution($migration, $state);
 		}
 
@@ -355,19 +341,15 @@ EOF;
 	 */
 	protected function getLastLogByIdx($idx)
 	{
-		/** @var Collection $col */
-		$col = \diCollection::create(\diCore\Data\Types::di_migrations_log);
+		$col = Collection::create();
 
-		if ($idx)
-		{
+		if ($idx) {
 			$col
 				->filterByIdx($idx)
 				->orderById('desc');
 
 			return $col->getFirstItem();
-		}
-		else
-		{
+		} else {
 			return $col->getNewEmptyItem();
 		}
 	}

@@ -23,11 +23,11 @@ namespace diCore\Entity\DiMigrationsLog;
  * @method bool hasDirection
  * @method bool hasDate
  *
- * @method Model setAdminId($value)
- * @method Model setIdx($value)
- * @method Model setName($value)
- * @method Model setDirection($value)
- * @method Model setDate($value)
+ * @method $this setAdminId($value)
+ * @method $this setIdx($value)
+ * @method $this setName($value)
+ * @method $this setDirection($value)
+ * @method $this setDate($value)
  */
 class Model extends \diModel
 {

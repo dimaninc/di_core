@@ -168,7 +168,7 @@ class Dump extends \diCore\Admin\BasePage
 
 		$ar = [];
 
-		foreach ($controllerClass::$foldersIdsAr as $folderId) {
+		foreach ($controllerClass::getFolderIds() as $folderId) {
 			$folder = $controllerClass::getFolderById($folderId);
 			$filesAr = $this->getDumpFilesFromFolder($folder, $folderId);
 

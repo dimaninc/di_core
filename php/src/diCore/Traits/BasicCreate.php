@@ -24,8 +24,7 @@ trait BasicCreate
 
 	public static function getClass()
 	{
-		if (!self::$class)
-		{
+		if (!self::$class) {
 			self::$class = \diLib::getChildClass(static::class);
 		}
 

@@ -1,15 +1,19 @@
 <?php
 
-class diMigrationController extends diBaseAdminController
+namespace diCore\Controller;
+
+use diCore\Database\Tool\MigrationsManager;
+
+class Migration extends \diBaseAdminController
 {
-	/** @var diMigrationsManager */
+	/** @var MigrationsManager */
 	private $Manager;
 
 	public function __construct($params = [])
 	{
 		parent::__construct($params);
 
-		$this->Manager = diMigrationsManager::create();
+		$this->Manager = MigrationsManager::basicCreate();
 	}
 
 	public function upAction()

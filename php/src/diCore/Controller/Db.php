@@ -24,6 +24,7 @@ class Db extends \diBaseAdminController
 		self::FOLDER_LOCAL,
 		self::FOLDER_CORE_SQL,
 	];
+    public static $customFoldersIdsAr = [];
 
 	public function __construct($params = [])
 	{
@@ -33,6 +34,11 @@ class Db extends \diBaseAdminController
 		$this->folderId = \diRequest::get("folderId", 1);
 		$this->folder = $this->getFolderById($this->folderId);
 	}
+
+	public static function getFolderIds()
+    {
+        return array_merge(static::$foldersIdsAr, static::$customFoldersIdsAr);
+    }
 
 	/**
 	 * @param $id integer
@@ -60,7 +66,7 @@ class Db extends \diBaseAdminController
 
 	public static function getCoreSqlFolder()
 	{
-		return dirname(dirname(dirname(dirname(dirname(__FILE__))))) . '/sql/';
+		return dirname(__FILE__, 5) . '/sql/';
 	}
 
 	/**

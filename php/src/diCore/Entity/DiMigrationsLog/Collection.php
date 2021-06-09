@@ -11,26 +11,26 @@ namespace diCore\Entity\DiMigrationsLog;
  * Class Collection
  * Methods list for IDE
  *
- * @method Collection filterById($value, $operator = null)
- * @method Collection filterByAdminId($value, $operator = null)
- * @method Collection filterByIdx($value, $operator = null)
- * @method Collection filterByName($value, $operator = null)
- * @method Collection filterByDirection($value, $operator = null)
- * @method Collection filterByDate($value, $operator = null)
+ * @method $this filterById($value, $operator = null)
+ * @method $this filterByAdminId($value, $operator = null)
+ * @method $this filterByIdx($value, $operator = null)
+ * @method $this filterByName($value, $operator = null)
+ * @method $this filterByDirection($value, $operator = null)
+ * @method $this filterByDate($value, $operator = null)
  *
- * @method Collection orderById($direction = null)
- * @method Collection orderByAdminId($direction = null)
- * @method Collection orderByIdx($direction = null)
- * @method Collection orderByName($direction = null)
- * @method Collection orderByDirection($direction = null)
- * @method Collection orderByDate($direction = null)
+ * @method $this orderById($direction = null)
+ * @method $this orderByAdminId($direction = null)
+ * @method $this orderByIdx($direction = null)
+ * @method $this orderByName($direction = null)
+ * @method $this orderByDirection($direction = null)
+ * @method $this orderByDate($direction = null)
  *
- * @method Collection selectId()
- * @method Collection selectAdminId()
- * @method Collection selectIdx()
- * @method Collection selectName()
- * @method Collection selectDirection()
- * @method Collection selectDate()
+ * @method $this selectId()
+ * @method $this selectAdminId()
+ * @method $this selectIdx()
+ * @method $this selectName()
+ * @method $this selectDirection()
+ * @method $this selectDate()
  */
 class Collection extends \diCollection
 {

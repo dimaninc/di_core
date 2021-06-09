@@ -8,69 +8,63 @@ use diCore\Helper\StringHelper;
 
 abstract class Migration
 {
-	const UP = 1;
-	const DOWN = 0;
+    const UP = 1;
+    const DOWN = 0;
 
-	const DB_FOLDER = 'db/dump/';
+    const DB_FOLDER = 'db/dump/';
 
-	public static $idx;
-	public static $name;
+    public static $idx;
+    public static $name;
 
-	abstract public function up();
-	abstract public function down();
+    abstract public function up();
+    abstract public function down();
 
-	public function run($state)
-	{
-		$method = $state ? 'up' : 'down';
+    public function run($state)
+    {
+        $method = $state ? 'up' : 'down';
 
-		$this->getDb()
-			->resetLog()
-			->startTransaction();
+        $this->getDb()
+            ->resetLog()
+            ->startTransaction();
 
-		try {
-			$result = $this->$method();
+        try {
+            $result = $this->$method();
 
-			if ($this->getDb()->getLog() || $result === false)
-			{
-				$this->getDb()->rollbackTransaction();
+            if ($this->getDb()->getLog() || $result === false) {
+                $this->getDb()->rollbackTransaction();
 
-				throw new \Exception('Error(s) during migration: ' . $this->getDb()->getLogStr());
-			}
-			else
-			{
-				$this->getDb()->commitTransaction();
-			}
-		} catch (\Exception $e) {
-			$this->getDb()->rollbackTransaction();
+                throw new \Exception('Error(s) during migration: ' . $this->getDb()->getLogStr());
+            } else {
+                $this->getDb()->commitTransaction();
+            }
+        } catch (\Exception $e) {
+            $this->getDb()->rollbackTransaction();
 
-			throw $e;
-		}
+            throw $e;
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function executeSqlFile($files, $folder = null)
-	{
-		if (!is_array($files))
-		{
-			$files = [$files];
-		}
+    protected function executeSqlFile($files, $folder = null)
+    {
+        if (!is_array($files)) {
+            $files = [$files];
+        }
 
-		if ($folder === null)
-		{
-			$folder = Config::getDatabaseDumpFolder() . static::DB_FOLDER;
-		}
+        if ($folder === null) {
+            $folder = Config::getDatabaseDumpFolder() . static::DB_FOLDER;
+        }
 
-		foreach ($files as $file)
-		{
-			$this->getDb()->q(file_get_contents(StringHelper::slash($folder) . $file));
-		}
+        foreach ($files as $file) {
+            $this->getDb()->q(file_get_contents(StringHelper::slash($folder) . $file));
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function getDb()
-	{
-		return Connection::get()->getDb();
-	}
+    protected function getDb()
+    {
+        return Connection::get()->getDb();
+    }
 }

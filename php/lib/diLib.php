@@ -363,7 +363,7 @@ class diLib
 
 	static public function getRoot()
 	{
-		return str_replace("\\", "/", dirname(dirname(dirname(__FILE__))));
+		return str_replace("\\", "/", dirname(__FILE__, 3));
 	}
 
 	static public function has($className)
