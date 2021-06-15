@@ -27,7 +27,7 @@ a
     body[data-skin="entrine"] &
         box-sizing border-box
         margin 50px auto
-        padding 120px 20px
+        padding 80px 20px
         width 500px
         box-shadow 0 2px 39px 6px rgba(0, 0, 0, .09)
         @media screen and (max-width: 767px)
@@ -36,6 +36,7 @@ a
             padding 20px
             box-shadow none
 
+/*
 .logo
     font-size 50px
     line-height 100px
@@ -55,19 +56,34 @@ a
         font-weight 600
         body[data-skin="entrine"] &
             font-weight normal
+*/
+
+.site-logo
+    display flex
+    justify-content center
+    padding 36px 0
+    body[data-skin="entrine"] &
+        @media screen and (min-width: 768px)
+            padding-top 0
+    img
+        max-width 340px
+        max-height 200px
+        @media screen and (max-width: 340px)
+            max-width 90%
 
 .site-title
-    display none
     text-align center
-    font-size 20px
-    line-height 40px
+    font-size 24px
+    line-height 1.5
+    padding 36px 0
     body[data-skin="entrine"] &
-        display block
         line-height 30px
+        @media screen and (min-width: 768px)
+            padding-top 0
 
 .description
     text-align center
-    font-size 20px
+    font-size 16px
     body[data-skin="entrine"] &
         font-size 16px
         line-height 30px

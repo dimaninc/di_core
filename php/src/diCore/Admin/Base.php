@@ -37,7 +37,7 @@ class Base
 	/** @var BasePage */
 	protected $adminPage;
 
-	private $version = '4.9';
+	private $version = '5.0';
 
 	protected $defaultSuperUsersAr = ['dimaninc'];
 	protected $superUsersAr = [];
@@ -310,6 +310,7 @@ class Base
 			'current_year' => date('Y'),
 			'page_title' => $this->getPageTitle(),
 			'site_title' => $this->getSiteTitle(),
+            'site_logo' => $this->getSiteLogo(),
 
 			'xx_version' => $this->getVersion(),
 
@@ -499,6 +500,11 @@ class Base
 	{
 		return Config::getSiteTitle() ?: $this->siteTitle;
 	}
+
+    public function getSiteLogo()
+    {
+        return Config::getSiteLogo();
+    }
 
 	public static function getOldSchoolPath($module, $method = 'list')
 	{

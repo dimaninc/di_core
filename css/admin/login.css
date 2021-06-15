@@ -45,7 +45,7 @@ body[data-skin="entrine"] .login-form-wrapper {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   margin: 50px auto;
-  padding: 120px 20px;
+  padding: 80px 20px;
   width: 500px;
   -webkit-box-shadow: 0 2px 39px 6px rgba(0,0,0,0.09);
   box-shadow: 0 2px 39px 6px rgba(0,0,0,0.09);
@@ -59,47 +59,73 @@ body[data-skin="entrine"] .login-form-wrapper {
     box-shadow: none;
   }
 }
-.logo {
-  font-size: 50px;
-  line-height: 100px;
-  text-align: center;
+/*
+.logo
+    font-size 50px
+    line-height 100px
+    text-align center
+    body[data-skin="entrine"] &
+        display none
+        font-size 16px
+        line-height 60px
+    @media screen and (max-width: 767px)
+        line-height 70px
+    i
+        font-style normal
+        color #7601AC
+        body[data-skin="entrine"] &
+            color inherit
+    b
+        font-weight 600
+        body[data-skin="entrine"] &
+            font-weight normal
+*/
+.site-logo {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: box;
+  display: flex;
+  -webkit-box-pack: center;
+  -moz-box-pack: center;
+  -o-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  padding: 36px 0;
 }
-body[data-skin="entrine"] .logo {
-  display: none;
-  font-size: 16px;
-  line-height: 60px;
-}
-@media screen and (max-width: 767px) {
-  .logo {
-    line-height: 70px;
+@media screen and (min-width: 768px) {
+  body[data-skin="entrine"] .site-logo {
+    padding-top: 0;
   }
 }
-.logo i {
-  font-style: normal;
-  color: #7601ac;
+.site-logo img {
+  max-width: 340px;
+  max-height: 200px;
 }
-body[data-skin="entrine"] .logo i {
-  color: inherit;
-}
-.logo b {
-  font-weight: 600;
-}
-body[data-skin="entrine"] .logo b {
-  font-weight: normal;
+@media screen and (max-width: 340px) {
+  .site-logo img {
+    max-width: 90%;
+  }
 }
 .site-title {
-  display: none;
   text-align: center;
-  font-size: 20px;
-  line-height: 40px;
+  font-size: 24px;
+  line-height: 1.5;
+  padding: 36px 0;
 }
 body[data-skin="entrine"] .site-title {
-  display: block;
   line-height: 30px;
+}
+@media screen and (min-width: 768px) {
+  body[data-skin="entrine"] .site-title {
+    padding-top: 0;
+  }
 }
 .description {
   text-align: center;
-  font-size: 20px;
+  font-size: 16px;
 }
 body[data-skin="entrine"] .description {
   font-size: 16px;

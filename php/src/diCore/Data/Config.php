@@ -20,6 +20,7 @@ use diCore\Helper\StringHelper;
 class Config
 {
 	const siteTitle = null;
+    const siteLogo = null;
 	const apiQueryPrefix = '/api/';
 	const folderForAssets = '';
 	const folderForUserAssets = 'uploads/';
@@ -85,6 +86,14 @@ class Config
 
 		return $class::siteTitle;
 	}
+
+    final public static function getSiteLogo()
+    {
+        /** @var Config $class */
+        $class = self::getClass();
+
+        return $class::siteLogo;
+    }
 
 	final public static function getSearchEngine()
 	{
