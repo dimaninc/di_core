@@ -46,7 +46,7 @@ class Postgresql extends Pdo
 
         $tables = $this->q("SELECT schemaname,relname,n_live_tup 
 FROM pg_stat_user_tables 
-ORDER BY relname ASC");
+ORDER BY relname");
         while ($tables && $table = $this->fetch_array($tables)) {
             $tableName = $table['relname'];
             $size = $this->fetch_ar($this->q("select pg_relation_size('{$tableName}')"));
@@ -55,9 +55,9 @@ ORDER BY relname ASC");
             $ar[] = [
                 'name' => $tableName,
                 'is_view' => false,
-                'rows' => $table['n_live_tup'],
-                'size' => $size['pg_relation_size'],
-                'index_size' => $indexSize['pg_indexes_size'],
+                'rows' => $table['n_live_tup'] ?? 0,
+                'size' => $size['pg_relation_size'] ?? 0,
+                'index_size' => $indexSize['pg_indexes_size'] ?? 0,
             ];
         }
 
