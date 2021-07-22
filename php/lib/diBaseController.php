@@ -75,7 +75,7 @@ class diBaseController
 
 	protected function getDb()
 	{
-		return Connection::get()->getDb();
+		return Connection::get(Config::getMainDatabase())->getDb();
 	}
 
 	/**

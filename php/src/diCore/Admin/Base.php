@@ -376,7 +376,7 @@ class Base
 	 */
 	public function getDb()
 	{
-		return Connection::get()->getDb();
+		return Connection::get(Config::getMainDatabase())->getDb();
 	}
 
 	/**

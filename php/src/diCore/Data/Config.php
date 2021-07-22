@@ -27,6 +27,7 @@ class Config
 	const mainDomain = null;
 	const mainPort = 80;
 	const mainLanguage = 'ru'; // used to determine localization field names
+    const mainDatabase = null; // 'main' by default
 	const searchEngine = 'db';
     const adminSkin = Skin::classic;
     const cmsName = 'diCMS';
@@ -177,6 +178,14 @@ class Config
 
 		return $class::mainLanguage;
 	}
+
+    final public static function getMainDatabase()
+    {
+        /** @var Config $class */
+        $class = self::getClass();
+
+        return $class::mainDatabase;
+    }
 
 	final public static function useModuleCache()
 	{
