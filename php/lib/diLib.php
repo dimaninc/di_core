@@ -456,8 +456,7 @@ class diLib
      */
     public static function getSubFolder($openingSlash = false)
     {
-        if (self::$subFolder === null)
-        {
+        if (self::$subFolder === null) {
             self::getLocation();
         }
 

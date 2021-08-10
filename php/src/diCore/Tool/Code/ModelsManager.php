@@ -137,7 +137,7 @@ EOF;
                     "];" : '',
                 $slugFieldName,
                 $typeName,
-                $this->getNamespace() ? "\nnamespace " . self::extractNamespace($className) . ";\n" : '',
+                $this->getNamespace() ? "\nnamespace " . self::extractNamespace($className) . ";" : '',
                 $connectionNameStr,
                 $this->getFieldTypesArrayStr($fields)
             );
@@ -239,10 +239,10 @@ EOF;
     protected function getModelMethodsAnnotations($fields, $className)
     {
         $ar = [
-            "get" => [],
-            "has" => [],
-            "set" => [],
-            "localized" => [],
+            'get' => [],
+            'has' => [],
+            'set' => [],
+            'localized' => [],
         ];
         $localizedNeeded = [];
 
@@ -260,15 +260,18 @@ EOF;
                 continue;
             }
 
-            $ar["get"][] = " * @method " . self::tuneType($type) . "\t" .
-                camelize("get_" . $field);
-            $ar["has"][] = " * @method bool " .
-                camelize("has_" . $field);
-            $ar["set"][] = " * @method $className " .
-                camelize("set_" . $field) . "(\$value)";
+            $typeStr = self::tuneType($type);
+            $typeTab = "\t";
+            if (strlen($typeStr) <= 4) {
+                $typeTab .= "\t";
+            }
+
+            $ar['get'][] = " * @method " . $typeStr . $typeTab . camelize('get_' . $field);
+            $ar['has'][] = " * @method bool " . camelize('has_' . $field);
+            $ar['set'][] = " * @method $className " . camelize('set_' . $field) . "(\$value)";
 
             // localization tests
-            $fieldComponents = explode("_", $field);
+            $fieldComponents = explode('_', $field);
 
             if (
                 $fieldComponents &&
@@ -284,7 +287,14 @@ EOF;
         }
 
         foreach ($localizedNeeded as $field => $type) {
-            $ar["localized"][$field] = " * @method " . self::tuneType($type) . "\t" . camelize("localized_" . $field);
+            $typeStr = self::tuneType($type);
+            $typeTab = "\t";
+            if (strlen($typeStr) <= 4) {
+                $typeTab .= "\t";
+            }
+
+            $ar['localized'][$field] = " * @method " . $typeStr . $typeTab .
+                camelize('localized_' . $field);
         }
 
         return $ar;
@@ -293,12 +303,12 @@ EOF;
     protected function getCollectionMethodsAnnotations($fields, $className)
     {
         $ar = [
-            "filterBy" => [],
-            "filterByLocalized" => [],
-            "orderBy" => [],
-            "orderByLocalized" => [],
-            "select" => [],
-            "selectLocalized" => [],
+            'filterBy' => [],
+            'filterByLocalized' => [],
+            'orderBy' => [],
+            'orderByLocalized' => [],
+            'select' => [],
+            'selectLocalized' => [],
         ];
         $localizedNeeded = [];
 
@@ -324,7 +334,7 @@ EOF;
                 camelize("select_" . $field) . "()";
 
             // localization tests
-            $fieldComponents = explode("_", $field);
+            $fieldComponents = explode('_', $field);
 
             if ($fieldComponents && in_array($fieldComponents[0], \diCurrentCMS::$possibleLanguages)) {
                 $f = substr($field, strlen($fieldComponents[0]) + 1);
@@ -337,12 +347,12 @@ EOF;
         }
 
         foreach ($localizedNeeded as $field => $type) {
-            $ar["filterByLocalized"][] = " * @method $className " .
-                camelize("filter_by_localized_" . $field) . "(\$value, \$operator = null)";
-            $ar["orderByLocalized"][] = " * @method $className " .
-                camelize("order_by_localized_" . $field) . "(\$direction = null)";
-            $ar["selectLocalized"][] = " * @method $className " .
-                camelize("select_localized_" . $field) . "()";
+            $ar['filterByLocalized'][] = " * @method $className " .
+                camelize('filter_by_localized_' . $field) . "(\$value, \$operator = null)";
+            $ar['orderByLocalized'][] = " * @method $className " .
+                camelize('order_by_localized_' . $field) . "(\$direction = null)";
+            $ar['selectLocalized'][] = " * @method $className " .
+                camelize('select_localized_' . $field) . "()";
         }
 
         return $ar;
@@ -363,6 +373,10 @@ EOF;
             case 'float':
             case 'double':
                 return 'double';
+
+            case 'bool':
+            case 'boolean':
+                return 'bool';
 
             default:
                 return 'string';
