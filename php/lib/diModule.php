@@ -7,6 +7,7 @@
  */
 
 use diCore\Base\CMS;
+use diCore\Tool\Cache\Module;
 
 abstract class diModule
 {
@@ -33,41 +34,26 @@ abstract class diModule
 			'bootstrapSettings' => null,
 		], $options);
 
-		/** @var \diModule $o */
 		$o = new static($Z);
+		$o->setRenderOptions($options);
 
-		$m = "render";
-		$beforeM = "beforeRender";
-		$afterM = "afterRender";
-
-		if (!method_exists($o, $m))
-		{
-			throw new \Exception("Class " . get_class($o) . " doesn't have '$m' method");
+		if ($o->beforeRender()) {
+			$o->doRender();
 		}
 
-		if ($o->$beforeM())
-		{
-			$o->doRender($options);
-		}
+		$o->afterRender();
 
-		$o->$afterM();
-
-		if ($o->getTwig()->hasPage())
-		{
-			if ($Z::templateEngineIsFastTemplate())
-			{
+		if ($o->getTwig()->hasPage()) {
+			if ($Z::templateEngineIsFastTemplate()) {
 				$o->getTpl()
 					->assign([
-						"PAGE" => $o->getTwig()->getPage(),
+						'PAGE' => $o->getTwig()->getPage(),
 					]);
 			}
-		}
-		elseif ($o->getTpl()->defined("page"))
-		{
+		} elseif ($o->getTpl()->defined('page')) {
 			$o->getTpl()->process('page');
 
-			if ($Z::templateEngineIsTwig())
-			{
+			if ($Z::templateEngineIsTwig()) {
 				$o->getTwig()
 					->importFromFastTemplate($o->getTpl(), [
 						\diTwig::TOKEN_FOR_PAGE => 'page',
@@ -97,17 +83,13 @@ abstract class diModule
 		return $this;
 	}
 
-	protected function doRender($options = [])
+	protected function doRender()
 	{
-		$this->setRenderOptions($options);
-
-		if ($this->useModuleCache() && !$this->getRenderOption('noCache'))
-		{
+		if ($this->useModuleCache() && !$this->getRenderOption('noCache')) {
 			$bootstrapSettings = $this->getCurrentBootstrapSettings();
 
-			if (empty($bootstrapSettings[self::NO_CACHE_OPTION]))
-			{
-				$MC = \diCore\Tool\Cache\Module::basicCreate();
+			if (empty($bootstrapSettings[self::NO_CACHE_OPTION])) {
+				$MC = Module::basicCreate();
 				$contents = $MC->getCachedContents($this, [
 					'language' => $this->getZ()->getLanguage(),
 					'query_string' => \diRequest::requestQueryString(),
@@ -115,8 +97,7 @@ abstract class diModule
 				]);
 			}
 
-			if (!empty($contents))
-			{
+			if (!empty($contents)) {
 				$this
 					->setBootstrapSettings($bootstrapSettings)
 					->cachedBootstrap();
@@ -130,8 +111,7 @@ abstract class diModule
 		}
 
 		// todo: remove routes when module cache is being made from browser
-		if ($this->getRenderOption('noCache') && false)
-		{
+		if ($this->getRenderOption('noCache') && false) {
 			$this
 				->bootstrapRoutes();
 		}
@@ -186,17 +166,14 @@ abstract class diModule
 
 	protected function setBootstrapSettings($options)
 	{
-		if (!is_array($options))
-		{
-			$a = explode(\diCore\Tool\Cache\Module::BOOTSTRAP_SETTINGS_END, $options);
+		if (!is_array($options)) {
+			$a = explode(Module::BOOTSTRAP_SETTINGS_END, $options);
 			$options = [];
 
-			foreach ($a as $kv)
-			{
-				list($k, $v) = array_merge(explode(\diCore\Tool\Cache\Module::BOOTSTRAP_SETTINGS_EQ, $kv), [null, null]);
+			foreach ($a as $kv) {
+				list($k, $v) = array_merge(explode(Module::BOOTSTRAP_SETTINGS_EQ, $kv), [null, null]);
 
-				if ($k)
-				{
+				if ($k) {
 					$options[$k] = $v;
 				}
 			}
@@ -299,12 +276,9 @@ abstract class diModule
 	{
 		$name = get_class($this);
 
-		if ($id = \diLib::childNamespace($name))
-		{
+		if ($id = \diLib::childNamespace($name)) {
 			$id = underscore($id);
-		}
-		else
-		{
+		} else {
 			$id = underscore($name);
 			$id = preg_replace('/^di_|(_custom)?_module$/', '', $id);
 		}
