@@ -104,9 +104,9 @@ body[data-skin="entrine"] .login-form-wrapper {
   max-width: 340px;
   max-height: 200px;
 }
-@media screen and (max-width: 340px) {
+@media screen and (max-width: 450px) {
   .site-logo img {
-    max-width: 90%;
+    max-width: 75%;
   }
 }
 .site-title {
