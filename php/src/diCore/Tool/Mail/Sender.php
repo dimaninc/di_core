@@ -185,6 +185,7 @@ class Sender
 		$mail->CharSet = 'UTF-8';
 		$mail->Host = static::$localHost;
 		$mail->Port = static::$localPort;
+		$mail->XMailer = null;
 
 		if (static::debugSending)
 		{
