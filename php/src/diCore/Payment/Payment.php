@@ -165,7 +165,7 @@ class Payment
         return System::title($systemId) ?: 'Unknown payment system #' . $systemId;
     }
 
-    public static function getCurrentVendors()
+    public static function getCurrentVendors($onlyUsed = false)
     {
         $vendors = [];
 
@@ -174,7 +174,7 @@ class Payment
             $class = System::getSystemClass($systemId);
 
             foreach ($class::$titles as $vendorId => $vendorTitle) {
-                if (Payment::isVendorUsed($systemId, $vendorId)) {
+                if (!$onlyUsed || Payment::isVendorUsed($systemId, $vendorId)) {
                     $vendors[$vendorId] = $systemTitle . ': ' . $vendorTitle;
                 }
             }
