@@ -165,6 +165,24 @@ class Payment
         return System::title($systemId) ?: 'Unknown payment system #' . $systemId;
     }
 
+    public static function getCurrentVendors()
+    {
+        $vendors = [];
+
+        foreach (static::getCurrentSystems() as $systemId => $systemTitle) {
+            /** @var VendorContainer $class */
+            $class = System::getSystemClass($systemId);
+
+            foreach ($class::$titles as $vendorId => $vendorTitle) {
+                if (Payment::isVendorUsed($systemId, $vendorId)) {
+                    $vendors[$vendorId] = $systemTitle . ': ' . $vendorTitle;
+                }
+            }
+        }
+
+        return $vendors;
+    }
+
     public static function currencyTitle($currencyId)
     {
         return isset(static::$currencies[$currencyId])
@@ -357,6 +375,32 @@ EOF;
         }
 
         return $ar;
+    }
+
+    public static function isVendorUsed($systemId, $vendorId = null)
+    {
+        foreach (static::getPaymentVendorsUsed() as $sysId) {
+            if (is_array($sysId)) {
+                $vendors = $sysId['vendors'];
+                $sysId = $sysId['system'];
+
+                if (!is_array($vendors)) {
+                    $vendors = [$vendors];
+                }
+
+                foreach ($vendors as $venId) {
+                    if ($sysId == $systemId && $venId == $vendorId) {
+                        return true;
+                    }
+                }
+            } else {
+                if ($sysId == $systemId) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     protected function getCustomerEmail()

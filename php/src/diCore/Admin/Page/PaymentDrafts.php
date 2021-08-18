@@ -10,6 +10,7 @@ namespace diCore\Admin\Page;
 use diCore\Admin\BasePage;
 use diCore\Data\Types;
 use diCore\Entity\PaymentDraft\Model;
+use diCore\Entity\User\Model as User;
 use diCore\Payment\Payment;
 use diCore\Tool\CollectionCache;
 
@@ -40,7 +41,7 @@ class PaymentDrafts extends BasePage
 
 	protected function setupFilters()
 	{
-		$paymentClass = \diCore\Payment\Payment::getClass();
+		$paymentClass = Payment::getClass();
 
 		$this->getFilters()
 			->addFilter([
@@ -54,15 +55,19 @@ class PaymentDrafts extends BasePage
 			->addFilter([
 				'field' => 'pay_system',
 				'type' => 'int',
-				'title' => 'Провайдер',
 			])
+            ->addFilter([
+                'field' => 'vendor',
+                'type' => 'int',
+            ])
 			->addFilter([
 				'field' => 'date_reserved',
 				'type' => 'date_str_range',
 				'title' => 'За период',
 			])
 			->buildQuery()
-			->setSelectFromArrayInput('pay_system', $paymentClass::getCurrentSystems(), ['' => 'Все провайдеры']);
+			->setSelectFromArrayInput('pay_system', $paymentClass::getCurrentSystems(), ['' => 'Все провайдеры'])
+            ->setSelectFromArrayInput('vendor', $paymentClass::getCurrentVendors(), ['' => 'Все способы']);
 	}
 
 	public function renderList()
@@ -93,7 +98,7 @@ class PaymentDrafts extends BasePage
 					'width' => '20%',
 				],
 				'value' => function(Model $m) {
-					/** @var \diCore\Entity\User\Model $user */
+					/** @var User $user */
 					$user = CollectionCache::getModel(Types::user, $m->getUserId());
 
 					return $user;
@@ -170,7 +175,7 @@ class PaymentDrafts extends BasePage
 
 		/** @var Model $draft */
 		$draft = $this->getForm()->getModel();
-		/** @var \diCore\Entity\User\Model $user */
+		/** @var User $user */
 		$user = \diModel::create(Types::user, $draft->getUserId());
 
 		$target = $draft->hasTargetType() && $draft->hasTargetId()
@@ -222,7 +227,7 @@ class PaymentDrafts extends BasePage
 
 			'pay_system' => [
 				'type' => 'string',
-				'title' => 'Платежный шлюз',
+				'title' => 'Платёжный провайдер',
 				'default' => '',
 				'flags' => ['static'],
 			],
