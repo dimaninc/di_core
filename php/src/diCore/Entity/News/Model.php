@@ -102,7 +102,7 @@ class Model extends \diBasePrevNextModel
 
     public function getSourceForSlug()
     {
-        return mb_substr($this->getDate(), 0, 10) . ' ' . ($this->getMenuTitle() ?: $this->getTitle());
+        return mb_substr($this->getDate(), 0, 10) . ' ' . ($this->getSlugSource() ?: $this->getMenuTitle() ?: $this->getTitle());
     }
 
     public function getHref()
