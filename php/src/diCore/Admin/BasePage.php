@@ -140,6 +140,11 @@ abstract class BasePage
         'css' => [],
     ];
 
+    protected $staticCodeInjections = [
+        'js' => [],
+        'css' => [],
+    ];
+
 	public function __construct(Base $X)
 	{
 		$this->X = $X;
@@ -1038,11 +1043,28 @@ abstract class BasePage
         return $this;
     }
 
+    public function injectJsCode($code, $varName = null)
+    {
+        $this->staticCodeInjections['js'][] = is_string($code) && $varName === null
+            ? $code
+            : 'var ' . $varName . ' = ' . json_encode($code) . ';';
+
+        return $this;
+    }
+
+    public function injectCssCode($code)
+    {
+        $this->staticCodeInjections['css'][] = $code;
+
+        return $this;
+    }
+
     public function assignStaticInjections()
     {
         $this->getTwig()
             ->assign([
                 'static_injections' => $this->staticInjections,
+                'static_code_injections' => $this->staticCodeInjections,
             ]);
 
         return $this;

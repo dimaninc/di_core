@@ -1,3 +1,8 @@
+{% if static_code_injections['js']|length %}
+    <script type="text/javascript">
+        {{ static_code_injections['js']|join('\n')|raw }}
+    </script>
+{% endif %}
 {% for className in static_injections['js'] %}
     <script type="text/javascript" src="/_admin/_static/js/{{ className }}.js"></script>
     <script type="text/javascript">
@@ -6,6 +11,11 @@
         });
     </script>
 {% endfor %}
+{% if static_code_injections['css']|length %}
+    <style type="text/css">
+        {{ static_code_injections['css']|join('\n')|raw }}
+    </style>
+{% endif %}
 {% for cssName in static_injections['css'] %}
     <link rel="stylesheet" href="/_admin/_static/css/{{ cssName }}.css">
 {% endfor %}
