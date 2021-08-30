@@ -27,8 +27,7 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 
 	this.e = {
 	    $window: $(window),
-		status: _ge('submit_status_line_'+this.table+'_'+this.id),
-		form: document.forms[table+'_form']
+		form: document.forms[table + '_form']
 	};
 
 	function init() {
@@ -424,34 +423,22 @@ var diAdminForm = function(table, id, auto_save_timeout) {
     return this.able_to_leave_page;
   };
 
-  this.set_able_to_leave_page = function(state)
-  {
+  this.set_able_to_leave_page = function(state) {
     this.able_to_leave_page = state;
   };
 
-  this.set_status = function(message)
-  {
-    if (!message)
-      return false;
-
-    var d = new Date();
-
-    message = lead0(d.getHours()) + ':' + lead0(d.getMinutes()) + ':' + lead0(d.getSeconds()) + ': ' + message;
-
-    this.e.status.innerHTML = message;
+  this.set_status = function(message) {
+    window.A.console.add(message);
   };
 
-  this.cancel = function(href_ending)
-  {
-    if (confirm(this.get_cancel_message()))
-    {
+  this.cancel = function(href_ending) {
+    if (confirm(this.get_cancel_message())) {
       this.set_able_to_leave_page(true);
-      window.location.href = 'index.php?path='+this.table+(typeof href_ending !== 'undefined' ? href_ending : '');
+      location.href = 'index.php?path='+this.table+(typeof href_ending !== 'undefined' ? href_ending : '');
     }
   };
 
-  this.get_cancel_message = function()
-  {
+  this.get_cancel_message = function() {
     return 'All unsaved data will be lost. Are you sure?';
   };
 

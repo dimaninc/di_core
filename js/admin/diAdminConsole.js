@@ -37,8 +37,7 @@ var diAdminConsole = function(_opts) {
 		e.$container.toggleClass('navy-needed', !!state);
 	}
 
-	this.add = function(line)
-	{
+	this.add = function(line) {
 		e.$console.append(getLineHtml(line));
 
 		e.$container.stop(true, true).animate({
@@ -53,8 +52,7 @@ var diAdminConsole = function(_opts) {
 		return this;
 	};
 
-	this.clear = function()
-	{
+	this.clear = function() {
 		e.$console.html('');
 		lines = 0;
 		toggleNavy();
@@ -62,15 +60,13 @@ var diAdminConsole = function(_opts) {
 		return this;
 	};
 
-	this.set = function(line)
-	{
+	this.set = function(line) {
 		this.clear().add(line);
 
 		return this;
 	};
 
-	this.highlight = function()
-	{
+	this.highlight = function() {
 		e.$container.addClass('highlighted');
 
 		setTimeout(function() {
