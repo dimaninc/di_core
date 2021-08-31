@@ -68,14 +68,24 @@ var diAudioPlayer = function (_opts) {
         return this;
     };
 
-    this.setSource = function (source) {
-        this.audio.src = source;
-        if (typeof this.audio.load !== 'undefined') {
-            this.audio.load();
+    this.setSource = function (source, noReload) {
+        if (!this.isSource(source) || !noReload) {
+            this.audio.src = source;
+            if (typeof this.audio.load !== 'undefined') {
+                this.audio.load();
+            }
+            audioLoaded = true;
         }
-        audioLoaded = true;
 
         return this;
+    };
+
+    this.getSource = function () {
+        return this.audio.src;
+    };
+
+    this.isSource = function (source) {
+        return this.getSource() === source;
     };
 
     this.play = function () {
