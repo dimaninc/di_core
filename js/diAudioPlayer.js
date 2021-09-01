@@ -88,6 +88,10 @@ var diAudioPlayer = function (_opts) {
         return this.getSource() === source;
     };
 
+    this.isLoaded = function () {
+        return !!this.getSource() && audioLoaded;
+    };
+
     this.play = function () {
         if (typeof this.audio.play !== 'undefined') {
             if (!audioLoaded) {
