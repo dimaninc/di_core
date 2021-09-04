@@ -3604,8 +3604,8 @@ body[data-skin="entrine"] .dynamic-row + .dynamic-row {
   -webkit-align-items: flex-start;
   align-items: flex-start;
 }
-.dynamic-row ul.line > li input:not([type="checkbox"]):not([type="radio"]):not([type="file"])[size],
-.dynamic-row ul.line > li textarea[cols] {
+.dynamic-row ul.line > li:not(.full-width) input:not([type="checkbox"]):not([type="radio"]):not([type="file"])[size],
+.dynamic-row ul.line > li:not(.full-width) textarea[cols] {
   width: auto;
 }
 .dynamic-row ul.line > li .existing-pic-holder {

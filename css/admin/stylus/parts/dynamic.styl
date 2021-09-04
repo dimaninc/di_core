@@ -82,8 +82,9 @@
 					width 90%
 			&.pic-line
 				align-items flex-start
-			input:not([type="checkbox"]):not([type="radio"]):not([type="file"])[size],textarea[cols]
-				width auto
+			&:not(.full-width)
+				input:not([type="checkbox"]):not([type="radio"]):not([type="file"])[size],textarea[cols]
+					width auto
 			.existing-pic-holder
 				margin-bottom 0
 			.hidden
