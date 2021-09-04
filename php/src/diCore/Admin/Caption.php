@@ -31,8 +31,7 @@ class Caption
 		$caption = $this->getX()->getPage()->getModuleCaption();
 		$href = $this->getX()->getCurrentPageUri('list');
 
-		if (is_array($caption))
-		{
+		if (is_array($caption)) {
 			$caption = $caption[$this->getX()->getLanguage()];
 		}
 
@@ -43,8 +42,7 @@ class Caption
 
 	public function get()
 	{
-		if ($this->getX()->getPage())
-		{
+		if ($this->getX()->getPage()) {
 		    $methodCaption = $this->getX()->getPage()->getCurrentMethodCaption();
 
 			$ar = [];
@@ -55,9 +53,7 @@ class Caption
             }
 
 			return join($this->delimiter, array_filter($ar));
-		}
-		else
-		{
+		} else {
 			return $this->oldGet();
 		}
 	}
@@ -74,19 +70,16 @@ class Caption
 
 		$path = $this->getX()->getOldSchoolPath($this->getX()->getModule(), $this->getX()->getMethod());
 
-		if (isset($admin_captions_ar[$this->getX()->getLanguage()][$path]))
-		{
+		if (isset($admin_captions_ar[$this->getX()->getLanguage()][$path])) {
 			$s = $admin_captions_ar[$this->getX()->getLanguage()][$path];
 
-			if (is_array($s))
-			{
+			if (is_array($s)) {
 				$action = (int)$this->getX()->getId() ? 'edit' : 'add';
 
 				$s = $s[$action];
 				$x = strpos($s, ' / ');
 
-				if ($x !== false)
-				{
+				if ($x !== false) {
 					$href = $this->getX()->getCurrentPageUri('list');
 
 					$s = sprintf('<a href="%s">%s</a>%s', $href, substr($s, 0, $x), substr($s, $x));
@@ -101,8 +94,7 @@ class Caption
 
 	private function addButtonNeeded()
 	{
-		if (!$this->getX()->getPage())
-		{
+		if (!$this->getX()->getPage()) {
 			return false;
 		}
 
@@ -123,18 +115,16 @@ class Caption
 
 	public function getButtons()
 	{
-	    if ($this->hasButtons())
-		{
-		    $href = $this->getX()->getCurrentPageUri('form');
-            $bracketsNeeded = false; //Config::getAdminSkin() == Skin::classic;
-            $tag = "<a href=\"$href\" class=\"simple-button\">{$this->getX()->getVocabulary('add')}</a>";
+	    if (!$this->hasButtons()) {
+            return '';
+        }
 
-			return $bracketsNeeded ? "[ $tag ]" : $tag;
-		}
-		else
-		{
-			return '';
-		}
+        $params = $this->getX()->getPage()->getAddButtonUrlQueryParams();
+	    $href = $this->getX()->getCurrentPageUri('form', $params);
+	    $title = $this->getX()->getVocabulary('add');
+        $tag = "<a href=\"{$href}\" class=\"simple-button\">{$title}</a>";
+
+        return $tag;
 	}
 
 	public function __toString()

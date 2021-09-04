@@ -115,7 +115,7 @@ class diAdminFilters
 	/** @var null|array */
 	protected $tableData = null;
 	private $predefinedData = [];
-	public $data = [];
+	protected $data = [];
 	public $sortBy = '';
 	public $dir = '';
 	public $default_sortby = '';
@@ -221,9 +221,15 @@ class diAdminFilters
 		return $this->dir;
 	}
 
-	public function getData($field)
+	public function getData($field = null)
 	{
-		return $this->data[$field] ?? null;
+	    if ($field === null) {
+	        $this->buildQuery();
+        }
+
+		return $field
+            ? ($this->data[$field] ?? null)
+            : $this->data;
 	}
 
 	public function setData($field, $value)
@@ -854,7 +860,7 @@ EOF;
 				}
 			}
 
-			$this->data[$a['field']] = $value;
+			$this->setData($a['field'], $value);
 		}
 
 		$this->where = $where_ar
@@ -1068,7 +1074,7 @@ EOF;
 			$template_value = "%id%";
 		}
 
-		$sel = new \diSelect("admin_filter[$field]", $this->data[$field]);
+		$sel = new \diSelect("admin_filter[$field]", $this->getData($field));
 
 		if (isset($this->input_params_ar[$field])) {
 			$sel->setAttr($this->input_params_ar[$field]);
@@ -1158,7 +1164,7 @@ EOF;
 				return $this->getDir();
 
 			default:
-				return $this->data[$field] ?? null;
+				return $this->getData($field);
 		}
 	}
 
@@ -1191,7 +1197,7 @@ EOF;
 		$x = $this->get_idx_by_field($field);
 		if ($x !== null && $this->ar[$x]["not"]) {
 			foreach ($sel->getItemsAr() as $_k => $_v) {
-				if ($_v["value"] == $this->data[$field]) {
+				if ($_v["value"] == $this->getData($field)) {
 					$sel->addItem("!$_k", "НЕ {$_v["text"]}");
 					$sel->setCurrentValue("!$_k");
 
@@ -1219,7 +1225,7 @@ EOF;
 
 	public function setSelectFromArray2Input($field, $ar, $prefix_ar = [], $suffix_ar = [])
 	{
-		$sel = new \diSelect("admin_filter[$field]", $this->data[$field]);
+		$sel = new \diSelect("admin_filter[$field]", $this->getData($field));
 
 		if (isset($this->input_params_ar[$field])) {
 			foreach ($this->input_params_ar[$field] as $_pn => $_pv) {
@@ -1257,7 +1263,7 @@ EOF;
 		$ar2 = [];
 
 		foreach ($ar as $k => $v) {
-			$checked = strpos(",{$this->data[$field]},", ",$k,") !== false
+			$checked = strpos(",{$this->getData($field)},", ",$k,") !== false
                 ? " checked=\"checked\""
                 : "";
 
@@ -1285,7 +1291,7 @@ EOF;
 		}
 		//
 
-		$this->setInput($field, "<input type=hidden id='admin_filter[$field]' value='{$this->data[$field]}'>".$table);
+        $this->setInput($field, "<input type=hidden id='admin_filter[$field]' value='{$this->getData($field)}'>" . $table);
 
 		return $this;
 	}
@@ -1302,7 +1308,7 @@ EOF;
 
 		foreach ($prefix_ar as $value => $text) {
 			$class = " cb_level0";
-			$checked = strpos(",{$this->data[$field]},", ",$value,") !== false ? " checked=\"checked\"" : "";
+			$checked = strpos(",{$this->getData($field)},", ",$value,") !== false ? " checked=\"checked\"" : "";
 
 			$inp = "<input type='checkbox' id='diaf_{$field}[$value]' name='{$field}[]' value='$value'$checked />";
 			$ar[] = "<div class=\"cb_level_any{$class}\">$inp <label for='diaf_{$field}[$value]' id='diaf_label_{$field}[$value]'>$text</label></div>";
@@ -1324,7 +1330,7 @@ EOF;
 			$value = str_replace($ar1, $ar2, $template_value);
 
 			$class = isset($db_r["level_num"]) ? " cb_level{$db_r["level_num"]}" : "";
-			$checked = strpos(",{$this->data[$field]},", ",$value,") !== false ? " checked=\"checked\"" : "";
+			$checked = strpos(",{$this->getData($field)},", ",$value,") !== false ? " checked=\"checked\"" : "";
 
 			if ($checked) {
                 $static_ar[] = $text;
@@ -1338,7 +1344,7 @@ EOF;
 
 		foreach ($suffix_ar as $value => $text) {
             $class = " cb_level0";
-            $checked = strpos(",{$this->data[$field]},", ",$value,") !== false ? " checked=\"checked\"" : "";
+            $checked = strpos(",{$this->getData($field)},", ",$value,") !== false ? " checked=\"checked\"" : "";
 
             $inp = "<input type='checkbox' id='diaf_{$field}[$value]' name='{$field}[]' value='$value'$checked />";
             $ar[] = "<div class=\"cb_level_any{$class}\">$inp <label for='diaf_{$field}[$value]' id='diaf_label_{$field}[$value]'>$text</label></div>";
@@ -1362,7 +1368,7 @@ EOF;
 
 		$buttons_suffix = join("", $suffix_buttons_ar);
 
-		$this->setInput($field, "<input type=hidden id='admin_filter[$field]' value='{$this->data[$field]}'>".
+		$this->setInput($field, "<input type=hidden id='admin_filter[$field]' value='{$this->getData($field)}'>".
 			"<div onclick=\"diadminfilter_toggle_cb('$field',1);\" id=\"static_cb[$field]\" style=\"cursor:pointer;\">$static_inputs</div>".
 			"<div id=\"cb[$field]\" style=\"display: none; position: absolute; border: 1px solid #777; padding: 5px; background: #fff;\">".
 			"$inputs".
@@ -1515,8 +1521,7 @@ EOF;
       case "items":
         $q_category_id = "ORDER BY order_num ASC";
 
-        if ($o->items_category_strict && !$F->data["category_id"])
-        {
+        if ($o->items_category_strict && !$F->getData("category_id")) {
           $r = $F->getDb()->r("categories", $q_category_id);
 
           $_GET["category_id"] = $r ? $r->id : -1;

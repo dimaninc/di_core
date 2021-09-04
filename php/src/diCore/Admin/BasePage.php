@@ -1366,7 +1366,7 @@ abstract class BasePage
 	public static function getFieldProperties($fieldsAr, $field, $property = null)
 	{
 		return $property
-			? (isset($fieldsAr[$field][$property]) ? $fieldsAr[$field][$property] : null)
+			? ($fieldsAr[$field][$property] ?? null)
 			: $fieldsAr[$field];
 
 	}
@@ -1381,9 +1381,7 @@ abstract class BasePage
 	 */
 	public function getFormTabs()
 	{
-		return isset($GLOBALS['tables_tabs_ar'][$this->getTable()])
-			? $GLOBALS['tables_tabs_ar'][$this->getTable()]
-			: null;
+		return $GLOBALS['tables_tabs_ar'][$this->getTable()] ?? null;
 	}
 
 	public function getFormFields()
@@ -1400,8 +1398,7 @@ abstract class BasePage
 	{
 		$ar = $this->filterFields($this->getFormFields());
 
-		if ($this->useEditLog() && $this->getId())
-		{
+		if ($this->useEditLog() && $this->getId()) {
 			$ar[TableEditLog::ADMIN_TAB_NAME] = [
 				'type' => 'string',
 				'title' => $this->localized([
@@ -1461,34 +1458,24 @@ abstract class BasePage
 	 */
 	public static function setFieldFlag($fieldsAr, $field, $flag = null, $state = true)
 	{
-		if ($flag === null && is_array($field))
-		{
-			foreach ($field as $f => $fl)
-			{
+		if ($flag === null && is_array($field)) {
+			foreach ($field as $f => $fl) {
 				$fieldsAr = self::setFieldFlag($fieldsAr, $f, $fl, $state);
 			}
-		}
-		else
-		{
-			if (!is_array($flag))
-			{
+		} else {
+			if (!is_array($flag)) {
 				$flag = [$flag];
 			}
 
 			$fields = is_array($field) ? $field : [$field];
 
-			foreach ($fields as $field)
-			{
+			foreach ($fields as $field) {
 				$flags = self::getFieldFlags($fieldsAr, $field);
 
-				if ($state)
-				{
+				if ($state) {
 					$fieldsAr[$field]['flags'] = array_merge($flags, $flag);
-				}
-				else
-				{
-					foreach ($flag as $fl)
-					{
+				} else {
+					foreach ($flag as $fl) {
 						$fieldsAr[$field]['flags'] = ArrayHelper::removeByValue($flags, $fl);
 					}
 				}
@@ -1500,19 +1487,14 @@ abstract class BasePage
 
 	public static function setFieldOption($fieldsAr, $field, $option, $value = null)
 	{
-		if ($value === null && is_array($option))
-		{
-			foreach ($option as $k => $v)
-			{
+		if ($value === null && is_array($option)) {
+			foreach ($option as $k => $v) {
 				$fieldsAr = self::setFieldOption($fieldsAr, $field, $k, $v);
 			}
-		}
-		else
-		{
+		} else {
 			$fields = is_array($field) ? $field : [$field];
 
-			foreach ($fields as $field)
-			{
+			foreach ($fields as $field) {
 				$options = self::getFieldOptions($fieldsAr, $field);
 				$options[$option] = $value;
 
@@ -1525,19 +1507,14 @@ abstract class BasePage
 
 	public static function setFieldProperty($fieldsAr, $field, $property, $value = null)
 	{
-		if ($value === null && is_array($property))
-		{
-			foreach ($property as $k => $v)
-			{
+		if ($value === null && is_array($property)) {
+			foreach ($property as $k => $v) {
 				$fieldsAr = self::setFieldProperty($fieldsAr, $field, $k, $v);
 			}
-		}
-		else
-		{
+		} else {
 			$fields = is_array($field) ? $field : [$field];
 
-			foreach ($fields as $field)
-			{
+			foreach ($fields as $field) {
 				$fieldsAr[$field][$property] = $value;
 			}
 		}
@@ -1586,11 +1563,9 @@ abstract class BasePage
 	{
 		global $admin_captions_ar;
 
-		if (isset($admin_captions_ar[$this->getLanguage()][$this->getTable()]))
-		{
+		if (isset($admin_captions_ar[$this->getLanguage()][$this->getTable()])) {
 			$s = $admin_captions_ar[$this->getLanguage()][$this->getTable()];
-			if (($x = strpos($s, ' / ')) !== false)
-			{
+			if (($x = strpos($s, ' / ')) !== false) {
 				$s = substr($s, 0, $x);
 			}
 
@@ -1602,9 +1577,7 @@ abstract class BasePage
 
 	public function getMethodCaption($action)
 	{
-		return isset($this->methodCaptionsAr[$this->getLanguage()][$action])
-			? $this->methodCaptionsAr[$this->getLanguage()][$action]
-			: null;
+		return $this->methodCaptionsAr[$this->getLanguage()][$action] ?? null;
 	}
 
 	public function getCurrentMethodCaption()
@@ -1622,6 +1595,11 @@ abstract class BasePage
 		return true;
 	}
 
+	public function getAddButtonUrlQueryParams()
+    {
+        return [];
+    }
+
     /**
      * @return bool|array
      */
@@ -1630,8 +1608,9 @@ abstract class BasePage
 		return false;
 
 		/*
-		 * [
-		 *     'show_only_diff' => false, // old and new values will be hidden
+		 * return [
+		 *   'show_only_diff' => true, // old and new values will be hidden
+         *   'strip_tags' => true, // html tags from content will be stripped
 		 * ]
 		 */
 	}
