@@ -147,7 +147,7 @@ var diAudioPlayer = function (_opts) {
     };
 
     this.setCurrentTime = function (time) {
-        this.audio.currentTime = time;
+        this.audio.currentTime = Number(time);
 
         return this;
     };
