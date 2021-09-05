@@ -31,7 +31,7 @@ class Vendor extends VendorContainer
     const MOBILE_TELE2 = 34;
 
 	public static $titles = [
-		self::YANDEX_MONEY => 'Яндекс.Деньги',
+		self::YANDEX_MONEY => 'ЮMoney',
 		self::WEBMONEY => 'Webmoney',
 		self::QIWI => 'Qiwi',
 		self::ELECSNET => 'Кошелек Элекснет',

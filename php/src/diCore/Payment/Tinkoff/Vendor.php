@@ -19,6 +19,10 @@ class Vendor extends VendorContainer
 
 	const CARD = 10;
 	const WEBMONEY = 11;
+    const BANKING = 12;
+
+    const GOOGLE_PAY = 21;
+    const APPLE_PAY = 22;
 
 	public static $titles = [
 		self::BEELINE => 'Билайн',
@@ -28,16 +32,24 @@ class Vendor extends VendorContainer
 
 		self::CARD => 'Банковская карта',
 		self::WEBMONEY => 'Webmoney',
+        self::BANKING => 'Tinkoff',
+
+        self::GOOGLE_PAY => 'Google Pay',
+        self::APPLE_PAY => 'Apple Pay',
 	];
 
 	public static $names = [
 		self::BEELINE => 'beeline',
-		self::MEGAFON => 'mf',
+		self::MEGAFON => 'megafon',
 		self::MTS => 'mts',
 		self::TELE2 => 'tele2',
 
 		self::CARD => 'card',
 		self::WEBMONEY => 'webmoney',
+        self::BANKING => 'banking',
+
+        self::GOOGLE_PAY => 'google-pay',
+        self::APPLE_PAY => 'apple-pay',
 	];
 
 	public static $codes = [

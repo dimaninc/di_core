@@ -29,7 +29,7 @@ class Vendor extends VendorContainer
     const APPLE_PAY = 15;
 
 	public static $titles = [
-		self::YANDEX_MONEY => 'Яндекс.Деньги',
+		self::YANDEX_MONEY => 'ЮMoney', // Яндекс.Деньги
 		self::WEBMONEY => 'WebMoney',
 		self::CARD => 'Банковская карта',
 		self::MOBILE => 'Баланс телефона',
