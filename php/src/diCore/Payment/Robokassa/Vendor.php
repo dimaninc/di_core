@@ -71,32 +71,20 @@ class Vendor extends VendorContainer
 	];
 
 	public static $codes = [
-		/*
-		<Currency Label="Qiwi50RIBRM" Alias="QiwiWallet" Name="QIWI Кошелек" MinValue="1" MaxValue="14999"/>
-		<Currency Label="YandexMerchantRIBR" Alias="YandexMoney" Name="Яндекс.Деньги" MinValue="1" MaxValue="14999"/>
-		<Currency Label="WMR30RM" Alias="WMR" Name="WMR"/>
-		<Currency Label="ElecsnetWalletRIBR" Alias="ElecsnetWallet" Name="Кошелек Элекснет" MaxValue="14999"/>
-		<Currency Label="W1RIBR" Alias="W1" Name="RUR " MaxValue="14999"/>
-		*/
-		self::YANDEX_MONEY => 'YandexMerchantRIBR',
-		self::WEBMONEY => 'WMR20RM',
-		self::QIWI => 'Qiwi50RIBRM',
+		self::YANDEX_MONEY => 'YandexMerchantPS5R',
+		self::WEBMONEY => 'WMR20PM',
+		self::QIWI => 'Qiwi40PS',
 		self::ELECSNET => 'ElecsnetWallet',
 		self::W1 => 'W1RIBR',
 
-		/*
-		<Currency Label="BANKOCEAN3R" Alias="BankCard" Name="Банковская карта"/>
-		<Currency Label="ApplePayRIBR" Alias="ApplePay" Name="Apple Pay"/>
-		<Currency Label="SamsungPayRIBR" Alias="SamsungPay" Name="Samsung Pay"/>
-		 */
-		self::CARD => 'BankCard',
-		self::APPLE_PAY => 'ApplePay',
-		self::SAMSUNG_PAY => 'SamsungPay',
+		self::CARD => 'BankCardPSR',
+		self::APPLE_PAY => 'ApplePayPSR',
+		self::SAMSUNG_PAY => 'SamsungPayPSR',
 
 		//self::SBERBANK_ONLINE => 'BankSberBank',
 		self::ALPHA_CLICK => 'AlfaBank',
 
-        self::MOBILE_BEELINE => 'MixplatBeelineRIBR',
+        self::MOBILE_BEELINE => 'RuRuBeelinePSR',
         self::MOBILE_MEGAFON => 'MixplatMegafonRIBR',
         self::MOBILE_MTS => 'MixplatMTSRIBR',
         self::MOBILE_TELE2 => 'MixplatTele2RIBR',
@@ -105,52 +93,43 @@ class Vendor extends VendorContainer
 	public static $minLimits = [];
 
 }
+
 /**
-<Group Code="Bank" Description="Через интернет-банк">
+ * https://auth.robokassa.ru/Merchant/WebService/Service.asmx/GetCurrencies?MerchantLogin=romantic2
+<CurrenciesList xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://merchant.roboxchange.com/WebService/">
+<Result>
+<Code>0</Code>
+</Result>
+<Groups>
+<Group Code="EMoney" Description="Электронным кошельком">
 <Items>
-<Currency Label="BankSberBankRIB" Alias="BankSberBank" Name="Банковская карта"/>
-<Currency Label="AlfaBankRIBR" Alias="AlfaBank" Name="Альфа-Клик"/>
-<Currency Label="RussianStandardBankRIBR" Alias="BankRSB" Name="Банк Русский Стандарт"/>
-<Currency Label="VTB24RIBR" Alias="VTB24" Name="ВТБ24" MinValue="1000"/>
-<Currency Label="W1RIBPSBR" Alias="W1" Name="RUR Единый кошелек" MaxValue="14999"/>
-<Currency Label="MINBankRIBR" Alias="BankMIN" Name="Московский Индустриальный Банк"/>
-<Currency Label="BSSIntezaRIBR" Alias="BankInteza" Name="Банк Интеза" MaxValue="15000"/>
-<Currency Label="BSSAvtovazbankR" Alias="BankAVB" Name="Банк АВБ"/>
-<Currency Label="FacturaBinBank" Alias="BankBin" Name="БИНБАНК"/>
-<Currency Label="BSSFederalBankForInnovationAndDevelopmentR" Alias="BankFBID" Name="ФБ Инноваций и Развития"/>
-<Currency Label="BSSMezhtopenergobankR" Alias="BankMTEB" Name="Межтопэнергобанк"/>
-<Currency Label="FacturaSovCom" Alias="BankSovCom" Name="Совкомбанк"/>
-<Currency Label="BSSNationalBankTRUSTR" Alias="BankTrust" Name="Национальный банк ТРАСТ"/>
-<Currency Label="HandyBankRIBR" Alias="HandyBank" Name="HandyBank"/>
-<Currency Label="HandyBankBO" Alias="HandyBankBO" Name="Банк Образование"/>
-<Currency Label="HandyBankFB" Alias="HandyBankFB" Name="ФлексБанк"/>
-<Currency Label="HandyBankFU" Alias="HandyBankFU" Name="ФьючерБанк"/>
-<Currency Label="HandyBankKB" Alias="HandyBankKB" Name="КранБанк"/>
-<Currency Label="HandyBankKSB" Alias="HandyBankKSB" Name="Костромаселькомбанк"/>
-<Currency Label="HandyBankNSB" Alias="HandyBankNSB" Name="Независимый строительный банк"/>
-<Currency Label="HandyBankVIB" Alias="HandyBankVIB" Name="ВестИнтерБанк"/>
-<Currency Label="KUBankR" Alias="KUBank" Name="Кредит Урал Банк"/>
+<Currency Label="Qiwi40PS" Alias="QiwiWallet" Name="QIWI Кошелек"/>
+<Currency Label="YandexMerchantPS5R" Alias="YandexMoney" Name="Яндекс.Деньги"/>
+<Currency Label="WMR20PM" Alias="WMR" Name="WMR"/>
+</Items>
+</Group>
+<Group Code="BankCard" Description="Банковской картой">
+<Items>
+<Currency Label="BankCardPSR" Alias="BankCard" Name="Банковская карта"/>
+<Currency Label="YandexPayPSR" Alias="YandexPay" Name="Яндекс Pay" MaxValue="40000"/>
+<Currency Label="GooglePayPSR" Alias="GooglePay" Name="Google Pay" MaxValue="40000"/>
+<Currency Label="CardHalvaPSR" Alias="BankCardHalva" Name="Карта Халва"/>
+<Currency Label="CardHomeCreditPSR" Alias="BankCardHomeCredit" Name="Карта Свобода"/>
+<Currency Label="CardSovestPSR" Alias="BankCardSovest" Name="Карта Совесть"/>
+<Currency Label="ApplePayPSR" Alias="ApplePay" Name="Apple Pay" MaxValue="40000"/>
+<Currency Label="SamsungPayPSR" Alias="SamsungPay" Name="Samsung Pay" MaxValue="40000"/>
 </Items>
 </Group>
 <Group Code="Terminals" Description="В терминале">
 <Items>
-<Currency Label="Qiwi50RIBRM" Alias="QiwiWallet" Name="QIWI Кошелек" MinValue="1" MaxValue="14999"/>
-<Currency Label="TerminalsElecsnetRIBR" Alias="TerminalsElecsnet" Name="Терминал Элекснет" MaxValue="15000"/>
+<Currency Label="Qiwi40PS" Alias="QiwiWallet" Name="QIWI Кошелек"/>
 </Items>
 </Group>
 <Group Code="Mobile" Description="Сотовые операторы">
 <Items>
-<Currency Label="MixplatMTSRIBR" Alias="PhoneMTS" Name="МТС" MinValue="10" MaxValue="15000"/>
-<Currency Label="MixplatTele2RIBR" Alias="PhoneTele2" Name="Tele2" MinValue="10" MaxValue="15000"/>
-<Currency Label="MixplatBeelineRIBR" Alias="PhoneBeeline" Name="Билайн" MinValue="10" MaxValue="15000"/>
-<Currency Label="MixplatMegafonRIBR" Alias="PhoneMegafon" Name="Мегафон" MinValue="10" MaxValue="15000"/>
-<Currency Label="CypixTatTelecomRIB" Alias="PhoneTatTelecom" Name="Таттелеком" MinValue="10" MaxValue="15000"/>
+<Currency Label="RuRuBeelinePSR" Alias="PhoneBeeline" Name="Билайн" MaxValue="14354"/>
 </Items>
 </Group>
-<Group Code="Other" Description="Другие способы">
-<Items>
-<Currency Label="RapidaRIBEurosetR" Alias="StoreEuroset" Name="Евросеть" MaxValue="15000"/>
-<Currency Label="RapidaRIBSvyaznoyR" Alias="StoreSvyaznoy" Name="Связной" MaxValue="15000"/>
-</Items>
-</Group>
+</Groups>
+</CurrenciesList>
 */
