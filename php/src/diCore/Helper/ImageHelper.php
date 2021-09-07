@@ -76,6 +76,40 @@ class ImageHelper
 		$im->clear();
 	}
 
+    public static function autoRotate(\Imagick $image, $background = '#000000')
+    {
+        switch ($image->getImageOrientation()) {
+            case \Imagick::ORIENTATION_TOPRIGHT:
+                $image->flopImage();
+                break;
+            case \Imagick::ORIENTATION_BOTTOMRIGHT:
+                $image->rotateImage($background, 180);
+                break;
+            case \Imagick::ORIENTATION_BOTTOMLEFT:
+                $image->flopImage();
+                $image->rotateImage($background, 180);
+                break;
+            case \Imagick::ORIENTATION_LEFTTOP:
+                $image->flopImage();
+                $image->rotateImage($background, -90);
+                break;
+            case \Imagick::ORIENTATION_RIGHTTOP:
+                $image->rotateImage($background, 90);
+                break;
+            case \Imagick::ORIENTATION_RIGHTBOTTOM:
+                $image->flopImage();
+                $image->rotateImage($background, 90);
+                break;
+            case \Imagick::ORIENTATION_LEFTBOTTOM:
+                $image->rotateImage($background, -90);
+                break;
+            default: // Invalid orientation
+            case \Imagick::ORIENTATION_TOPLEFT:
+                break;
+        }
+        $image->setImageOrientation(\Imagick::ORIENTATION_TOPLEFT);
+    }
+
 	public static function rotateGd($angle, $inFilename, $outFilename = null, $backgroundColor = self::DEFAULT_BACKGROUND_COLOR)
 	{
 		if ($outFilename === null) {
