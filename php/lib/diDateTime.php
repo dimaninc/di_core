@@ -140,6 +140,20 @@ class diDateTime
         return $datetime->format(\DateTime::ATOM);
     }
 
+    public static function durationInIso8601($seconds)
+    {
+        $days = floor($seconds / 86400);
+        $seconds = $seconds % 86400;
+
+        $hours = floor($seconds / 3600);
+        $seconds = $seconds % 3600;
+
+        $minutes = floor($seconds / 60);
+        $seconds = $seconds % 60;
+
+        return sprintf('P%dDT%dH%dM%dS', $days, $hours, $minutes, $seconds);
+    }
+
 	public static function simpleFormat($dt = null)
 	{
 		return self::format(self::FORMAT_SIMPLE_DATE_TIME, $dt);
