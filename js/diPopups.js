@@ -134,6 +134,7 @@ var diPopups = function() {
 	};
 
 	this.hide_bg = function() {
+		$('html').removeClass('dipopup-shown');
 		this.e.$bg.fadeOut();
 	};
 
@@ -216,6 +217,8 @@ var diPopups = function() {
 		$e.children('input[type="text"]:visible,textarea:visible').eq(0).focus();
 
 		this.fireEvent(name, 'show');
+
+		$('html').addClass('dipopup-shown');
 
 		return false;
 	};
