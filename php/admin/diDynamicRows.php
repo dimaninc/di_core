@@ -1321,12 +1321,11 @@ EOF;
 
 	function set_file_input($field, $path = false, $hide_if_no_file = false)
 	{
-		if ($path === false)
-		{
+		if ($path === false) {
 			$path = '/' . $this->getPicsFolder();
 		}
 
-		$v = isset($this->data[$field]) ? $this->data[$field] : "";
+		$v = $this->data[$field] ?? '';
 
 		$file_info = $this->get_pic_html_for_input($field, $path . $v, $hide_if_no_file);
 
@@ -1337,7 +1336,8 @@ EOF;
 
 		$this->inputs[$field] = $this->is_flag($field, "static") || $this->static_mode
 			? "$file_info<input type=\"hidden\" name=\"$field\" value=\"$v\">"
-			: "$file_info<div class=\"file-input-wrapper\" data-caption=\"{$this->L('choose_file')}\"><input type=\"file\" name=\"$field\" value=\"\" size=\"40\" " . $this->getInputAttributesString($field2) . "></div>";
+			: "$file_info<div class=\"file-input-wrapper\" data-caption=\"{$this->L('choose_file')}\">" .
+                "<input type=\"file\" name=\"$field\" value=\"\" size=\"40\" " . $this->getInputAttributesString($field2) . "></div>";
 	}
 
 	private function getInputAttributesString($field, $forceAttributes = [])
