@@ -305,10 +305,18 @@ var diAdminForm = function(table, id, auto_save_timeout) {
 			if (confirm($this.data('confirm'))) {
 				$.get($this.attr('href'), {redirect: 0}, function(res) {
 					if (res.ok) {
-						var $e = res.field && res.subId
-                            // dynamic rows
-							? $('.diadminform-row[data-field="{0}"] .dynamic-row[data-id="{1}"] .existing-pic-holder[data-field="{2}"]'.format(mainField, res.subId, res.field))
-							: $('.diadminform-row[data-field="{0}"] .existing-pic-holder'.format($this.data('field')));
+						var $e;
+
+						if (res.field && res.type === 'dynamic') {
+						    // dynamic rows
+                            $e = $('.diadminform-row[data-field="{0}"] .dynamic-row[data-id="{1}"] .existing-pic-holder[data-field="{2}"]'.format(mainField, res.subId, res.field));
+                        } else if (res.subId) {
+						    // pic with sub-id
+                            $e = $('.diadminform-row[data-field="{0}"] .existing-pic-holder[data-sub-id="{1}"]'.format($this.data('field'), res.subId));
+                        } else {
+                            $e = $('.diadminform-row[data-field="{0}"] .existing-pic-holder'.format($this.data('field')));
+                        }
+
 						$e.remove();
 					} else {
 						alert(res.message || 'Error: no such record');

@@ -9,22 +9,19 @@ use diCore\Admin\Submit;
 
 class Files extends \diBaseAdminController
 {
+    protected $ret = [];
+
 	public function rebuildDynamicPicsAction()
 	{
 		$module = $this->param(0);
 		$field = $this->param(1);
 		$id = $this->param(2);
-
 		$redirect = \diRequest::get('redirect', 0);
-
 		$ar = Submit::rebuildDynamicPics($module, $field, $id);
 
-		if ($redirect)
-		{
+		if ($redirect) {
 			$this->redirect();
-		}
-		else
-		{
+		} else {
 			/*
 			$this->defaultResponse(array(
 				'ok' => 1,
@@ -40,23 +37,19 @@ class Files extends \diBaseAdminController
 		$table = StringHelper::in($this->param(0));
 		$id  = (int)$this->param(1);
 		$field = StringHelper::in($this->param(2));
-
 		$redirect = \diRequest::get('redirect', 1);
-
 		$model = \diModel::createForTableNoStrict($table, $id, 'id');
-
 		$ok = $this->delRelatedFiles($model, $field);
 
-		if ($redirect)
-		{
+		if ($redirect) {
 			$this->redirect();
 
 			return null;
 		}
 
-		return [
+		return extend([
 			'ok' => $ok,
-		];
+		], $this->ret);
 	}
 
 	private function getDefaultSubTableForDelDynamic()
@@ -76,15 +69,11 @@ class Files extends \diBaseAdminController
 		$subTable = $this->getSubTableForDelDynamic($table, $id);
 		$field = StringHelper::in($this->param(3));
 		$subId  = (int)$this->param(4);
-
 		$redirect = \diRequest::get('redirect', 1);
-
 		$model = \diModel::createForTableNoStrict($subTable, $subId, 'id');
-
 		$ok = $this->delRelatedFiles($model, $field);
 
-		if ($redirect)
-		{
+		if ($redirect) {
 			$this->redirect();
 
 			return null;
@@ -92,6 +81,7 @@ class Files extends \diBaseAdminController
 
 		return [
 			'ok' => $ok,
+            'type' => 'dynamic',
 			'table' => $table,
 			'id' => $id,
 			'subTable' => $this->getDefaultSubTableForDelDynamic(),
@@ -103,8 +93,7 @@ class Files extends \diBaseAdminController
 
 	protected function delRelatedFiles(\diModel $model, $field = null)
 	{
-		if ($model->exists() && $model->has($field))
-		{
+		if ($model->exists() && $model->has($field)) {
 			$model
 				->killRelatedFiles($field)
 				->resetFieldsOfRelatedFiles($field)
@@ -185,8 +174,7 @@ class Files extends \diBaseAdminController
 
 	protected static function getWatermarkFilename($table, $field, $type)
 	{
-		switch ($type)
-		{
+		switch ($type) {
 			case 'main':
 				$wm = \diPaths::fileSystem() . \diConfiguration::getFilename('watermark');
 				break;

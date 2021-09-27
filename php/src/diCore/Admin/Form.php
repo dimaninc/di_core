@@ -2043,16 +2043,26 @@ EOF;
 		return !!$this->getInputAttribute($field, $attribute);
 	}
 
-	private function getDelLinkCode($field)
+	private function getDelLinkCode($field, $opts = [])
 	{
+        $opts = extend([
+            'suffix' => [],
+            'subId' => null,
+        ], $opts);
+
 	    $confirmMessage = $this->L(
-	        $this->getFieldProperty($field, 'type') == 'pic'
+	        $this->getFieldProperty($field, 'type') === 'pic'
                 ? 'delete_pic_confirmation'
                 : 'delete_file_confirmation'
         );
 
-		return ", <a href=\"" . \diLib::getAdminWorkerPath("files", "del", [$this->table, $this->id, $field]) . "\" " .
-		    "data-field=\"$field\" data-confirm=\"{$confirmMessage}\" " .
+	    $url = \diLib::getAdminWorkerPath('files', 'del', array_merge(
+	        [$this->table, $this->id, $field],
+            $opts['subId'] ? [$opts['subId']] : [],
+            $opts['suffix'] ?: []
+        ));
+
+		return ", <a href=\"$url\" data-field=\"$field\" data-confirm=\"{$confirmMessage}\" " .
 		    "class=\"del-file\">{$this->L("delete")}</a>";
 	}
 
@@ -2085,6 +2095,8 @@ EOF;
             'infoSuffix' => '',
 			'hideIfNoFile' => false,
 			'showDelLink' => true,
+			'subId' => null,
+			'delLinkSuffix' => [],
 			'showRotateBlock' => false,
 			'showWatermarkBlock' => false,
 			'showPreviewWithLink' => false,
@@ -2199,7 +2211,10 @@ EOF;
 		}
 
 		$delLink = $options['showDelLink']
-			? $this->getDelLinkCode($field)
+			? $this->getDelLinkCode($field, [
+			    'suffix' => $options['delLinkSuffix'],
+                'subId' => $options['subId'],
+            ])
 			: '';
 
 		$rotateBlock = $options['showRotateBlock'] && isset($ff_t) && \diImage::isImageType($ff_t)
@@ -2213,7 +2228,7 @@ EOF;
 		$this->uploaded_images_w[$field] = isset($ff_w) ? $ff_w : 0;
 
 		return $fullName && (is_file(\diPaths::fileSystem() . $fullName) || !$options['hideIfNoFile'])
-			? '<div class="existing-pic-holder">' . $imgTag .
+			? '<div class="existing-pic-holder" data-sub-id="' . $options['subId'] . '">' . $imgTag .
 				'<a href="' . $httpName . '" class="link">' . basename($fullName) . '</a>' .
 				$previewInfoBlock .
 				'<div class="info">' . $options['infoPrefix'] . $info . $options['infoSuffix'] .
