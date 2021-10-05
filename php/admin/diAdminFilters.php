@@ -141,11 +141,13 @@ class diAdminFilters
 	private $buttonsPrefix = null;
 	private $buttonsSuffix = null;
 
+	private $useCookie = true;
+
 	public function __construct($table, $sortBy = 'id', $dir = 'ASC', $possibleSortByAr = [])
 	{
 		global $db;
 
-		if (gettype($table) == 'object') {
+		if (gettype($table) === 'object') {
 			$this->AdminPage = $table;
 
 			$this->table = $this->AdminPage->getTable();
@@ -254,6 +256,18 @@ class diAdminFilters
 	public function hideBlock()
     {
         $this->hidden = true;
+
+        return $this;
+    }
+
+    public function isUseCookie()
+    {
+        return $this->useCookie;
+    }
+
+    public function setUseCookie($useCookie)
+    {
+        $this->useCookie = $useCookie;
 
         return $this;
     }
@@ -665,7 +679,9 @@ EOF;
 
 	public function get_where($tablePrefix = '')
 	{
-		$this->buildQuery($tablePrefix);
+		$this->buildQuery([
+		    'tablePrefix' => $tablePrefix,
+        ]);
 
 		return $this->where;
 	}
@@ -682,7 +698,7 @@ EOF;
 
     public function getTableData($field = null)
     {
-        if ($this->tableData === null) {
+        if ($this->tableData === null && $this->isUseCookie()) {
             $this->tableData = (array)json_decode(\diRequest::cookie(
                 'admin_filter__' . $this->getTable()
             ));
@@ -715,8 +731,18 @@ EOF;
         return $value;
     }
 
-	public function buildQuery($tablePrefix = '')
+	public function buildQuery($options = [])
 	{
+	    if (!is_array($options)) {
+	        $options = [
+	            'tablePrefix' => $options ?: '',
+            ];
+        }
+
+	    $options = extend([
+	        'tablePrefix' => '',
+        ], $options);
+
 		// sorter
 		if (!$this->reset) {
             $this->setSortBy($this->getTableData('sortby'));
@@ -729,7 +755,7 @@ EOF;
             }
 		}
 
-        if (!in_array($this->getDir(), ["ASC", "DESC"])) {
+        if (!in_array($this->getDir(), ['ASC', 'DESC'])) {
             $this->setDir($this->default_dir);
         }
 
@@ -822,7 +848,7 @@ EOF;
 
 				if ($value || ($value == '0' && substr($a['type'], 0, 3) == 'str')) {
 					$replace_ar = [
-						'[-field-]' => $tablePrefix . $a['field'],
+						'[-field-]' => $options['tablePrefix'] . $a['field'],
 						'[-value-]' => $value,
 					];
 
@@ -850,7 +876,7 @@ EOF;
 					    $w = null;
                     } else {
                         $w = is_callable($where_tpl)
-                            ? $where_tpl($a['field'], $value, $a['not'], $tablePrefix, $a['queryPrefix'], $a['querySuffix'])
+                            ? $where_tpl($a['field'], $value, $a['not'], $options['tablePrefix'], $a['queryPrefix'], $a['querySuffix'])
                             : str_replace(array_keys($replace_ar), array_values($replace_ar), $where_tpl);
                     }
 

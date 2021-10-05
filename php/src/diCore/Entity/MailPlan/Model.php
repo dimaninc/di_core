@@ -7,36 +7,34 @@
 
 namespace diCore\Entity\MailPlan;
 
+use diCore\Traits\Model\TargetInside;
+
 /**
  * Class Model
  * Methods list for IDE
  *
- * @method integer	getTargetType
- * @method integer	getTargetId
  * @method integer	getMode
  * @method string	getConditions
  * @method string	getCreatedAt
  * @method string	getStartedAt
  * @method string	getProcessedAt
  *
- * @method bool hasTargetType
- * @method bool hasTargetId
  * @method bool hasMode
  * @method bool hasConditions
  * @method bool hasCreatedAt
  * @method bool hasStartedAt
  * @method bool hasProcessedAt
  *
- * @method Model setTargetType($value)
- * @method Model setTargetId($value)
- * @method Model setMode($value)
- * @method Model setConditions($value)
- * @method Model setCreatedAt($value)
- * @method Model setStartedAt($value)
- * @method Model setProcessedAt($value)
+ * @method $this setMode($value)
+ * @method $this setConditions($value)
+ * @method $this setCreatedAt($value)
+ * @method $this setStartedAt($value)
+ * @method $this setProcessedAt($value)
  */
 abstract class Model extends \diModel
 {
+    use TargetInside;
+
 	const type = \diTypes::mail_plan;
 	protected $table = 'mail_plans';
 	protected $sentMailsCount = 0;
@@ -67,7 +65,7 @@ abstract class Model extends \diModel
 	protected function beforeProcess()
 	{
 		$this
-			->setStartedAt(\diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME))
+			->setStartedAt(\diDateTime::sqlFormat())
 			->save();
 
 		return $this;
@@ -76,7 +74,7 @@ abstract class Model extends \diModel
 	protected function afterProcess()
 	{
 		$this
-			->setProcessedAt(\diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME))
+			->setProcessedAt(\diDateTime::sqlFormat())
 			->save();
 
 		return $this;

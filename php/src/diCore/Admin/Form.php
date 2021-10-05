@@ -8,6 +8,7 @@
 
 namespace diCore\Admin;
 
+use diCore\Admin\Data\FormFlag;
 use diCore\Admin\Data\Skin;
 use diCore\Data\Config;
 use diCore\Data\Configuration;
@@ -548,9 +549,7 @@ class Form
 	{
 		$language = $language ?: self::$language;
 
-		return isset(self::$lngStrings[$language][$token])
-			? self::$lngStrings[$language][$token]
-			: $token;
+		return self::$lngStrings[$language][$token] ?? $token;
 	}
 
 	public function setStaticMode($state)
@@ -642,7 +641,7 @@ class Form
 
 	public function isStatic($field)
 	{
-		return $this->static_mode || $this->isFlag($field, 'static');
+		return $this->static_mode || $this->isFlag($field, FormFlag::static);
 	}
 
 	/** @deprecated */
@@ -688,7 +687,7 @@ class Form
 	{
 		return $field === null
 			? $this->data
-			: (isset($this->data[$field]) ? $this->data[$field] : null);
+			: ($this->data[$field] ?? null);
 	}
 
 	public function getDb()
@@ -766,7 +765,7 @@ class Form
 				foreach ($this->getAllFields() as $k => $v) {
 					if (isset($this->rec->$k)) {
 						$this->data[$k] = $this->rec->$k;
-					} elseif ($this->isFlag($v, 'virtual')) {
+					} elseif ($this->isFlag($v, FormFlag::virtual)) {
 						$this->data[$k] = $this->getFieldDefaultValue($k);
 
 						$this->processDefaultValue($k);
@@ -1069,10 +1068,10 @@ EOF;
 			    $v['type'] == 'password' &&
                 (
                     $this->static_mode ||
-                    $this->isFlag($v, 'static')
+                    $this->isFlag($v, FormFlag::static)
                 )
             ) {
-				$v['flags'][] = 'hidden';
+				$v['flags'][] = FormFlag::hidden;
 			}
 
 			if (
@@ -1121,7 +1120,7 @@ EOF;
                     ]);
                 }
 
-				if ($this->isFlag($v, 'static') || $this->static_mode) {
+				if ($this->isFlag($v, FormFlag::static) || $this->static_mode) {
 					if (isset($this->inputs[$field])) {
                         // already set, we'll leave it alone
 						$s = $this->inputs[$field];
@@ -1221,9 +1220,7 @@ EOF;
 					}
 
 					if ($s === false) {
-						$s = isset($this->inputs[$field])
-                            ? $this->inputs[$field]
-                            : $this->getData($field);
+						$s = $this->inputs[$field] ?? $this->getData($field);
 					}
 
 					$this->setInputAttribute($field, [
@@ -1239,32 +1236,32 @@ EOF;
 				if (isset($this->inputs[$field])) {
 					$input = $this->inputs[$field];
 				} else {
-					switch ($v["type"]) {
-						case "date":
-						case "date_str":
+					switch ($v['type']) {
+						case 'date':
+						case 'date_str':
 							$this->set_datetime_input($field, true, false);
 							break;
 
-						case "time":
-						case "time_str":
+						case 'time':
+						case 'time_str':
 							$this->set_datetime_input($field, false, true);
 							break;
 
-						case "datetime":
-						case "datetime_str":
+						case 'datetime':
+						case 'datetime_str':
 							$this->set_datetime_input($field, true, true);
 							break;
 
-						case "text":
-						case "blob":
+						case 'text':
+						case 'blob':
 							$this->setTextareaInput($field);
 							break;
 
-						case "wysiwyg":
+						case 'wysiwyg':
 							$this->setWysiwygInput($field);
 							break;
 
-						case "checkbox":
+						case 'checkbox':
 							$this->set_checkbox_input($field);
 							break;
 
@@ -1272,43 +1269,43 @@ EOF;
 							$this->setCheckboxesListInput($field);
 							break;
 
-						case "color":
+						case 'color':
 							$this->setColorInput($field);
 							break;
 
-						case "font":
+						case 'font':
 							$this->setFontInput($field);
 							break;
 
-						case "href":
+						case 'href':
 							$this->setHrefInput($field);
 							break;
 
-						case "pic":
+						case 'pic':
 							$this->setPicInput($field);
 							break;
 
-						case "file":
+						case 'file':
 							$this->setFileInput($field);
 							break;
 
-						case "dynamic_pics":
+						case 'dynamic_pics':
 							$this->set_dynamic_pics_input($field);
 							break;
 
-						case "dynamic_files":
+						case 'dynamic_files':
 							$this->set_dynamic_files_input($field);
 							break;
 
-						case "dynamic":
+						case 'dynamic':
 							$this->set_dynamic_input($field);
 							break;
 
-						case "tags":
+						case 'tags':
 							$this->setTagsInput($field);
 							break;
 
-						case "ip":
+						case 'ip':
 							$this->setIpInput($field);
 							break;
 
@@ -1323,24 +1320,24 @@ EOF;
 				}
 
 				$hidden =
-					$this->isFlag($field, 'hidden') ||
-					($this->isFlag($field, 'initially_hidden') && !$this->getId());
+					$this->isFlag($field, FormFlag::hidden) ||
+					($this->isFlag($field, FormFlag::initially_hidden) && !$this->getId());
 
 				if ($hidden) {
 					$html .= "\n<input type=\"hidden\" id=\"$field\" name=\"$field\" value=\"" .
 						$this->formatValue($field) . "\">\n";
 				} else {
-					if (!empty($v["notes"])) {
-						$notesStarsCounter .= "*";
+					if (!empty($v['notes'])) {
+						$notesStarsCounter .= '*';
 						$notesStar = $notesStarsCounter;
 					} else {
-						$notesStar = "";
+						$notesStar = '';
 					}
 
-					switch ($v["type"]) {
-						case "password":
-							$input1 = $this->getSimpleInput("password");
-							$input2 = $this->getSimpleInput("password", ["name" => "password2"]);
+					switch ($v['type']) {
+						case 'password':
+							$input1 = $this->getSimpleInput('password');
+							$input2 = $this->getSimpleInput('password', ['name' => 'password2']);
 
 							$t2 = $fieldTitle;
 							if ($t2) {
@@ -1348,23 +1345,23 @@ EOF;
 							}
 
 							$html .= $this->getRow($field, "{$fieldTitle}{$notesStar}:", "$input1 &nbsp;<span id=\"{$field}_console\" class=\"error\"></span>");
-							$html .= $this->getRow($field . "2", "{$this->L("confirm")} {$t2}{$notesStar}:", $input2);
+							$html .= $this->getRow($field . '2', "{$this->L('confirm')} {$t2}{$notesStar}:", $input2);
 
 							break;
 
-						case "dynamic_pics":
-						case "dynamic_files":
-						case "pic":
-						case "file":
+						case 'dynamic_pics':
+						case 'dynamic_files':
+						case 'pic':
+						case 'file':
 							if (!empty($this->uploaded_images[$field]))
 								$tag =	$this->uploaded_images[$field];
 							elseif (!empty($this->uploaded_files[$field]))
 								$tag =	$this->uploaded_files[$field];
 							else
-								$tag = "";
+								$tag = '';
 
 							if ($this->static_mode)
-								$input = "";
+								$input = '';
 
 							$input = $this->wrapInput($field, $input);
 
@@ -1381,32 +1378,32 @@ EOF;
 							break;
 					}
 
-					if (!empty($v["notes"])) {
-						if (!is_array($v["notes"])) {
-							$v["notes"] = array($v["notes"]);
+					if (!empty($v['notes'])) {
+						if (!is_array($v['notes'])) {
+							$v['notes'] = [$v['notes']];
 						}
 
-						$_notes = "";
+						$_notes = '';
 
-						foreach ($v["notes"] as $_note) {
+						foreach ($v['notes'] as $_note) {
 							$_notes .= "<div><i>{$notesStar} {$_note}</i></div>";
 						}
 
-						$caption = $this->L("notes_caption");
-						$caption = $caption[(count($v["notes"]) > 1)];
+						$caption = $this->L('notes_caption');
+						$caption = $caption[(count($v['notes']) > 1)];
 
 						$html .= $this->getRow($field, "{$caption}:", $_notes, 'data-purpose="notes"');
 					}
 				}
 			}
 
-			$tabs[$v["tab"]] .= $html;
+			$tabs[$v['tab']] .= $html;
 		}
 
 		// tabs
 		if ($tabsExist) {
 			$tab_head_ar = [];
-			$tab_head_separator = "";
+			$tab_head_separator = '';
 
 			foreach ($formTabs as $field => $v) {
 				if (!empty($tabs[$field])) {
@@ -1425,13 +1422,13 @@ EOF;
 
 			foreach ($formTabs as $field => $v) {
 				$result .= "<div data-tab=\"{$field}\">" .
-					(isset($tabs[$field]) ? $tabs[$field] : "") .
+					($tabs[$field] ?? '') .
 					"</div>\n\n";
 			}
 
 			$result .= "</div>\n";
 		} else {
-			$result = isset($tabs["general"]) ? $tabs["general"] : "";
+			$result = $tabs['general'] ?? '';
 		}
 		//
 
@@ -1440,7 +1437,7 @@ EOF;
 
 	public function getInput($field)
 	{
-		return isset($this->inputs[$field]) ? $this->inputs[$field] : null;
+		return $this->inputs[$field] ?? null;
 	}
 
 	public function getSimpleInput($field, $attributes = [])
@@ -1528,13 +1525,11 @@ EOF;
 
 	public function getFieldOption($field, $option = null)
 	{
-		$o = (array)$this->getFieldProperty($field, "options");
+		$o = (array)$this->getFieldProperty($field, 'options');
 
-		if (is_null($option)) {
-			return $o;
-		} else {
-			return isset($o[$option]) ? $o[$option] : null;
-		}
+        return $option === null
+            ? $o
+            : ($o[$option] ?? null);
 	}
 
 	function create()
@@ -1545,12 +1540,12 @@ EOF;
 	}
 
 	/** @deprecated */
-	public function set_input($field, $input, $static_input = "")
+	public function set_input($field, $input, $static_input = '')
 	{
 		return $this->setInput($field, $input, $static_input);
 	}
 
-	public function setInput($field, $input, $static_input = "")
+	public function setInput($field, $input, $static_input = '')
 	{
 		if ($input instanceof \diModel) {
 			$input = $input->appearanceForAdmin();
@@ -1604,7 +1599,7 @@ EOF;
 	{
 		$this->getTpl()
 			->define($templatePath, [
-				"_input_block" => $templateName,
+				'_input_block' => $templateName,
 			])
 			->assign([
 				'id' => $this->getId(),
@@ -1612,26 +1607,26 @@ EOF;
 				'type' => \diTypes::getId($this->getTable()),
 				'field' => $field,
 				'value' => $this->getData($field),
-			], "I_");
+			], 'I_');
 
-		$this->setInput($field, $this->getTpl()->parse("_input_block"));
+		$this->setInput($field, $this->getTpl()->parse('_input_block'));
 
 		return $this;
 	}
 
-	public function setParentInput($field = "parent")
+	public function setParentInput($field = 'parent')
 	{
 		$h = new \diHierarchyTable($this->getTable());
 
 		$parentsAr = [];
-		foreach ($h->getParentsArByParentId($this->getData("parent")) as $parent_r) {
+		foreach ($h->getParentsArByParentId($this->getData('parent')) as $parent_r) {
 			$parentsAr[] = strip_tags($parent_r->title);
 		}
 
 		if ($parentsAr) {
 			$this
 				->setStaticInput($field)
-				->setInput($field, join(" / ", $parentsAr));
+				->setInput($field, join(' / ', $parentsAr));
 		} else {
 			$this->setHiddenInput($field);
 		}
@@ -1696,7 +1691,7 @@ EOF;
 
 	public function getInputPrefix($field)
 	{
-		return isset($this->inputPrefixes[$field]) ? $this->inputPrefixes[$field] : null;
+		return $this->inputPrefixes[$field] ?? null;
 	}
 
 	public function setInputSuffix($field, $suffix)
@@ -1708,7 +1703,7 @@ EOF;
 
 	public function getInputSuffix($field)
 	{
-		return isset($this->inputSuffixes[$field]) ? $this->inputSuffixes[$field] : null;
+		return $this->inputSuffixes[$field] ?? null;
 	}
 
 	public function setHrefInput($field)
@@ -1727,7 +1722,7 @@ EOF;
 
 	function set_checkbox_input($field)
 	{
-		if ($this->static_mode || $this->isFlag($field, 'static')) {
+		if ($this->static_mode || $this->isFlag($field, FormFlag::static)) {
 			$this->inputs[$field] = $this->L((int)$this->getData($field) ? 'yes' : 'no');
 		} else {
 			$checked = (int)$this->getData($field) ? ' checked="checked"' : '';
@@ -1853,13 +1848,15 @@ EOF;
 
 	public function setSelectFromArray2Input($field, $ar, $prefix_ar = [], $suffix_ar = [])
 	{
-		if ($this->static_mode || $this->isFlag($field, 'static')) {
+		if ($this->static_mode || $this->isFlag($field, FormFlag::static)) {
 			$this->inputs[$field] = StringHelper::out($this->getData($field));
 		} else {
-            $sel = \diSelect::fastCreate($field, $this->getData($field), [], $prefix_ar, $suffix_ar);
+            $sel = new \diSelect($field, $this->getData($field));
 			$sel
 				->setAttr($this->getInputAttributes($field))
-				->addItemArray2($ar);
+                ->addItemArray($prefix_ar)
+				->addItemArray2($ar)
+                ->addItemArray($suffix_ar);
 
 			$this->inputs[$field] = $sel;
 		}
@@ -2025,8 +2022,8 @@ EOF;
 	private function getInputAttributes($field, $forceAttributes = [])
 	{
 		return extend(
-			$this->getFieldProperty($field, "attrs") ?: [],
-			isset($this->inputAttributes[$field]) ? $this->inputAttributes[$field] : [],
+			$this->getFieldProperty($field, 'attrs') ?: [],
+			$this->inputAttributes[$field] ?? [],
 			$forceAttributes
 		);
 	}
@@ -2035,7 +2032,7 @@ EOF;
 	{
 		$ar = $this->getInputAttributes($field);
 
-		return isset($ar[$attribute]) ? $ar[$attribute] : null;
+		return $ar[$attribute] ?? null;
 	}
 
 	private function hasInputAttribute($field, $attribute)
@@ -2225,7 +2222,7 @@ EOF;
 			? $this->getWatermarkBlockCode($field)
 			: '';
 
-		$this->uploaded_images_w[$field] = isset($ff_w) ? $ff_w : 0;
+		$this->uploaded_images_w[$field] = $ff_w ?? 0;
 
 		return $fullName && (is_file(\diPaths::fileSystem() . $fullName) || !$options['hideIfNoFile'])
 			? '<div class="existing-pic-holder" data-sub-id="' . $options['subId'] . '">' . $imgTag .
@@ -2266,7 +2263,7 @@ EOF;
 			$this->uploaded_images[$field] = $v
 				? $this->getPreviewHtmlForFile($field, $path . $v, [
 					'hideIfNoFile' => $hideIfNoFile,
-					'showDelLink' => !$this->isFlag($field, 'static') || $this->getFieldProperty($field, 'showDelLink'),
+					'showDelLink' => !$this->isFlag($field, FormFlag::static) || $this->getFieldProperty($field, 'showDelLink'),
 					'showRotateBlock' => $this->getFieldProperty($field, 'showRotateBlock'),
 					'showWatermarkBlock' => $this->getFieldProperty($field, 'showWatermarkBlock'),
 					'showPreviewWithLink' => $this->getFieldProperty($field, 'showPreview'),
@@ -2283,7 +2280,7 @@ EOF;
 				'accept' => '.jpg,.jpeg,.gif,.png,.svg',
 			]);
 
-			$this->inputs[$field] = $this->isFlag($field, 'static')
+			$this->inputs[$field] = $this->isFlag($field, FormFlag::static)
 				? "<input type=\"hidden\" name=\"$field\" value=\"$v\">"
 				: "<div class=\"file-input-wrapper\" data-caption=\"{$this->L('choose_file')}\"><input type=\"file\" name=\"$name\" value=\"\" size=\"70\" {$attributes}></div>";
 
@@ -2392,7 +2389,7 @@ EOF;
 			        '<input type="hidden" name="__uploaded__' . $field . '" value="">';
             }
 
-			$this->inputs[$field] = $this->isFlag($field, 'static')
+			$this->inputs[$field] = $this->isFlag($field, FormFlag::static)
 				? '<input type="hidden" name="' . $field . '" value="' . $v . '">'
 				: '<div class="file-input-wrapper" data-caption="' . $this->L('choose_file') .
                 '"><input ' . ArrayHelper::toAttributesString($attrs, true, ArrayHelper::ESCAPE_HTML) . '>' .
@@ -2812,7 +2809,7 @@ EOF;
 			$ar = [];
 
 			foreach ($values as $k) {
-				$ar[] = isset($feed[$k]) ? $feed[$k] : "[tag#{$k}]";
+				$ar[] = $feed[$k] ?? "[tag#{$k}]";
 			}
 
 			$table = $ar ? join(', ', $ar) : '&mdash;';
@@ -3142,7 +3139,7 @@ EOF;
 		}
 
 		foreach ($fields as $field) {
-			$this->setManualFieldFlag($field, 'static');
+			$this->setManualFieldFlag($field, FormFlag::static);
 
 			$this->force_inputs_fields[$field] = true;
 		}
@@ -3153,7 +3150,7 @@ EOF;
 	function set_dynamic_input($field)
 	{
 		$dr = new \diDynamicRows($this->AdminPage, $field);
-		$dr->static_mode = $this->static_mode || $this->isFlag($field, 'static');
+		$dr->static_mode = $this->static_mode || $this->isFlag($field, FormFlag::static);
 
 		$this->inputs[$field] = $dr->get_html();
 		$this->force_inputs_fields[$field] = true;

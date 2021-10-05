@@ -7,6 +7,7 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Admin\Data\FormFlag;
 use diCore\Entity\MailPlan\Mode;
 use diCore\Entity\MailPlan\Model;
 
@@ -55,7 +56,7 @@ class MailPlans extends \diCore\Admin\BasePage
 			],
 			'created_at' => [
 				'value' => function(Model $m) {
-					return \diDateTime::format('d.m.Y H:i', $m->getCreatedAt());
+					return \diDateTime::simpleFormat($m->getCreatedAt());
 				},
 				'headAttrs' => [
 					'width' => '10%',
@@ -66,7 +67,9 @@ class MailPlans extends \diCore\Admin\BasePage
 			],
 			'started_at' => [
 				'value' => function(Model $m) {
-					return $m->hasStartedAt() ? \diDateTime::format('d.m.Y H:i', $m->getStartedAt()) : '&mdash;';
+					return $m->hasStartedAt()
+                        ? \diDateTime::simpleFormat($m->getStartedAt())
+                        : '&mdash;';
 				},
 				'headAttrs' => [
 					'width' => '10%',
@@ -77,7 +80,9 @@ class MailPlans extends \diCore\Admin\BasePage
 			],
 			'processed_at' => [
 				'value' => function(Model $m) {
-					return $m->hasProcessedAt() ? \diDateTime::format('d.m.Y H:i', $m->getProcessedAt()) : '&mdash;';
+					return $m->hasProcessedAt()
+                        ? \diDateTime::simpleFormat($m->getProcessedAt())
+                        : '&mdash;';
 				},
 				'headAttrs' => [
 					'width' => '10%',
@@ -137,21 +142,21 @@ class MailPlans extends \diCore\Admin\BasePage
 				'type'		=> 'datetime_str',
 				'title'		=> 'Created at',
 				'default'	=> '',
-				'flags'		=> ['static', 'untouchable', 'initially_hidden'],
+				'flags'		=> [FormFlag::static, FormFlag::untouchable, FormFlag::initially_hidden],
 			],
 
 			'started_at' => [
 				'type'		=> 'datetime_str',
 				'title'		=> 'Started at',
 				'default'	=> '',
-				'flags'		=> ['static', 'untouchable', 'initially_hidden'],
+				'flags'		=> [FormFlag::static, FormFlag::untouchable, FormFlag::initially_hidden],
 			],
 
 			'processed_at' => [
 				'type'		=> 'datetime_str',
 				'title'		=> 'Processed at',
 				'default'	=> '',
-				'flags'		=> ['static', 'untouchable', 'initially_hidden'],
+				'flags'		=> [FormFlag::static, FormFlag::untouchable, FormFlag::initially_hidden],
 			],
 		];
 	}
