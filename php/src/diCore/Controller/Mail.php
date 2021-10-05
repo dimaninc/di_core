@@ -8,9 +8,9 @@
 
 namespace diCore\Controller;
 
-use diCore\Data\Types;
 use diCore\Entity\MailPlan\Collection;
 use diCore\Entity\MailPlan\Model;
+use diCore\Tool\Logger;
 use diCore\Tool\Mail\Queue;
 
 class Mail extends \diBaseAdminController
@@ -46,19 +46,20 @@ class Mail extends \diBaseAdminController
 
 	public function processPlanAction()
 	{
-		/** @var Collection $plans */
-		$plans = \diCollection::create(Types::mail_plan);
-		$plans
+		$plans = Collection::create()
 			->filterByStartedAt(null, '=');
 
 		$sent = 0;
 
 		/** @var Model $plan */
-		foreach ($plans as $plan)
-		{
+		foreach ($plans as $plan) {
 			$plan->process();
-
 			$sent += $plan->getSentMailsCount();
+
+			Logger::getInstance()->log(
+			    $plan->getSentMailsCount() . ' emails sent for plan#' . $plan->getId(),
+                'mail::processPlanAction'
+            );
 		}
 
 		return [
