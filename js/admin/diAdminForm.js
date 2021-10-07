@@ -65,7 +65,8 @@ var diAdminForm = function(table, id, auto_save_timeout) {
         .initRotateAndWaterMarkLinks()
         .initFileInputs()
         .initCheckboxesToggles()
-        .initFieldMaxLength();
+        .initFieldMaxLength()
+        .initOwnValueForSelect();
 
         initiating = false;
 	}
@@ -132,6 +133,34 @@ var diAdminForm = function(table, id, auto_save_timeout) {
             if (self.isMobile() || !$(this).hasClass('no-zoom-feature')) {
                 $(this).toggleClass('img-full-size');
             }
+        });
+
+        return this;
+    };
+
+    this.initOwnValueForSelect = function () {
+        var $selects = $(this.e.form).find('select[data-own-value]');
+        var oldValues = {};
+
+        $selects.each(function () {
+            var $s = $(this);
+            var $label = $s.parent().find('label');
+            var $inp = $label.find('input');
+            var field = $s.attr('name');
+            var ownVal = $s.data('own-value');
+
+            $s.on('change click keyup', function() {
+                var state = $s.val() === ownVal;
+
+                if (state) {
+                    oldValues[field] && !$inp.val() && $inp.val(oldValues[field]);
+                } else {
+                    oldValues[field] = $inp.val();
+                    $inp.val('');
+                }
+
+                $label.toggle(state);
+            }).trigger('change');
         });
 
         return this;

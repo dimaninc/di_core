@@ -84,6 +84,7 @@ class Form
 			'confirm_send' => 'Send the reply to email? Are you sure?',
 
 			'or_enter' => 'or enter',
+            'your_variant' => 'Your own variant',
 			'add_item' => 'Add',
 			'link' => 'Link',
             'not_selected' => 'Not selected',
@@ -139,6 +140,7 @@ class Form
 			'confirm_send' => 'Отправить ответ на почту? Вы уверены?',
 
 			'or_enter' => 'или введите',
+            'your_variant' => 'Свой вариант',
 			'add_item' => 'Добавить',
 			'link' => 'Ссылка',
             'not_selected' => 'Не выбрано',
@@ -152,6 +154,7 @@ class Form
             'tag.toggle_off' => 'Снять все',
 		],
 	];
+    private $vocabularyAssigned = false;
 
 	protected static $numericTypes = ['int', 'integer', 'float', 'double'];
 	protected static $stringTypes = ['str', 'string', 'email', 'tel', 'url', 'varchar'];
@@ -471,6 +474,19 @@ class Form
         }
 
         return $this;
+    }
+
+    public function getTwig()
+    {
+        if (!$this->vocabularyAssigned) {
+            $this->getX()->getTwig()->assign([
+                'form_lang' => self::$lngStrings[self::$language],
+            ]);
+
+            $this->vocabularyAssigned = true;
+        }
+
+        return $this->getX()->getTwig();
     }
 
 	private function setAutoInputAttributes()
@@ -1749,7 +1765,7 @@ EOF;
 
 		$rs = $this->getDb()->rs($this->table, "ORDER BY $field ASC", "DISTINCT $field");
 		while ($r = $this->getDb()->fetch($rs)) {
-			if (!in_array($r->$field, $exclude)) {
+			if (!in_array($r->$field, $exclude) && !in_array($r->$field, $include)) {
 				$sel->addItem($r->$field, $r->$field);
 			}
 		}
@@ -1814,22 +1830,22 @@ EOF;
 		return $this->setSelectFromArrayInput($field, $ar, $prefix_ar, $suffix_ar);
 	}
 
-	public function setSelectFromArrayInput($field, $ar, $prefix_ar = [], $suffix_ar = [])
+	public function setSelectFromArrayInput($field, $ar, $prefixAr = [], $suffixAr = [])
 	{
-		if ($this->static_mode || $this->isFlag($field, "static")) {
+		if ($this->static_mode || $this->isFlag($field, FormFlag::static)) {
 			if (isset($ar[$this->getData($field)])) {
 				$this->inputs[$field] = $ar[$this->getData($field)];
-			} elseif (isset($prefix_ar[$this->getData($field)])) {
-				$this->inputs[$field] = $prefix_ar[$this->getData($field)];
-			} elseif (isset($suffix_ar[$this->getData($field)])) {
-				$this->inputs[$field] = $suffix_ar[$this->getData($field)];
+			} elseif (isset($prefixAr[$this->getData($field)])) {
+				$this->inputs[$field] = $prefixAr[$this->getData($field)];
+			} elseif (isset($suffixAr[$this->getData($field)])) {
+				$this->inputs[$field] = $suffixAr[$this->getData($field)];
 			}
 
 			if (!empty($this->inputs[$field])) {
 				$this->inputs[$field] = StringHelper::out($this->inputs[$field]);
 			}
 		} else {
-			$sel = \diSelect::fastCreate($field, $this->getData($field), $ar, $prefix_ar, $suffix_ar);
+			$sel = \diSelect::fastCreate($field, $this->getData($field), $ar, $prefixAr, $suffixAr);
 			$sel->setAttr($this->getInputAttributes($field));
 
 			$this->inputs[$field] = $sel;
@@ -1846,7 +1862,7 @@ EOF;
 		return $this->setSelectFromArray2Input($field, $ar);
 	}
 
-	public function setSelectFromArray2Input($field, $ar, $prefix_ar = [], $suffix_ar = [])
+	public function setSelectFromArray2Input($field, $ar, $prefixAr = [], $suffixAr = [], $ownAllowed = false)
 	{
 		if ($this->static_mode || $this->isFlag($field, FormFlag::static)) {
 			$this->inputs[$field] = StringHelper::out($this->getData($field));
@@ -1854,11 +1870,21 @@ EOF;
             $sel = new \diSelect($field, $this->getData($field));
 			$sel
 				->setAttr($this->getInputAttributes($field))
-                ->addItemArray($prefix_ar)
+                ->setAttr('data-own-value', $ownAllowed ?: '[empty]')
+                ->addItemArray($prefixAr)
 				->addItemArray2($ar)
-                ->addItemArray($suffix_ar);
+                ->addItemArray($suffixAr);
 
 			$this->inputs[$field] = $sel;
+
+            if ($ownAllowed) {
+                $value = $this->getData($field);
+
+                $this->inputs[$field] .= $this->getTwig()->parse('admin/_form/or-enter', [
+                    'field' => $field . self::NEW_FIELD_SUFFIX,
+                    'value' => in_array($value, $sel->getSimpleItemsAr()) ? '' : $value,
+                ]);
+            }
 		}
 
 		$this->force_inputs_fields[$field] = true;

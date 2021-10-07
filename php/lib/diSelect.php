@@ -118,9 +118,7 @@ class diSelect
 
 	public function getAttr($name)
 	{
-		return isset($this->attrsAr[$name])
-            ? $this->attrsAr[$name]
-            : null;
+		return $this->attrsAr[$name] ?? null;
 	}
 
 	public function removeAttr($name)
