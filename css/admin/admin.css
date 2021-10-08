@@ -4429,6 +4429,9 @@ ul.disk-stat {
   margin: 0;
   padding: 0;
 }
+ul.disk-stat + ul.disk-stat {
+  margin-top: 5px;
+}
 ul.disk-stat > li {
   position: relative;
   text-align: center;
