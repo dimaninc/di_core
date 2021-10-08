@@ -274,8 +274,7 @@ abstract class CMS
 
 	public function __construct($tpl_dir = false, $tpl_cache_php = false, $tables_cache_fn_ar = false, $ct_cache_fn_ar = false)
 	{
-		if ($this->authUsed)
-		{
+		if ($this->authUsed) {
 			$this->initAuth();
 		}
 
@@ -635,23 +634,17 @@ abstract class CMS
 		/** @var CMS $Z */
 		global $Z;
 
-		if (static::$forceLanguage)
-		{
+		if (static::$forceLanguage) {
 			return static::$forceLanguage;
-		}
-		elseif (
+		} elseif (
 			!empty($GLOBALS["CURRENT_LANGUAGE"]) &&
 			in_array($GLOBALS["CURRENT_LANGUAGE"], \diCurrentCMS::$possibleLanguages) &&
 			$GLOBALS["CURRENT_LANGUAGE"] != static::$defaultLanguage
 		) {
 			$language = $GLOBALS["CURRENT_LANGUAGE"];
-		}
-		elseif (!empty($Z))
-		{
+		} elseif (!empty($Z)) {
 			$language = $Z->getLanguage();
-		}
-		else
-		{
+		} else {
 			$language = static::$defaultLanguage;
 		}
 
@@ -693,8 +686,7 @@ abstract class CMS
 	{
 		$n = !\diContentTypes::exists($module) || \diContentTypes::getParam($module, "logged_in");
 
-		if ($n && !$this->getAuth()->authorized())
-		{
+		if ($n && !$this->getAuth()->authorized()) {
 			$this->errorNotAuthorized();
 
 			return false;
@@ -1608,13 +1600,33 @@ abstract class CMS
 		}
 	}
 
+	public static function getLanguageByDomain()
+    {
+        $language = null;
+
+        foreach (static::$languageDomains as $lang => $domains) {
+            if (!is_array($domains)) {
+                $domains = [$domains];
+            }
+
+            if (in_array(\diRequest::domain(), $domains)) {
+                $language = $lang;
+                break;
+            }
+        }
+
+        return $language;
+    }
+
 	public function detectLanguage()
     {
+        $language = static::getLanguageByDomain();
+
         switch (static::LANGUAGE_MODE) {
             case Language::URL:
-                $language = $this->getRoute(0);
-
                 if ($this->routes && in_array($this->routes[0], static::$possibleLanguages)) {
+                    $language = $this->getRoute(0);
+
                     // check if this is safe first
                     /*
                     if ($language === static::$defaultLanguage) {
@@ -1639,16 +1651,6 @@ abstract class CMS
                 break;
 
             case Language::DOMAIN:
-                foreach (static::$languageDomains as $lang => $domains) {
-                    if (!is_array($domains)) {
-                        $domains = [$domains];
-                    }
-
-                    if (in_array(\diRequest::domain(), $domains)) {
-                        $language = $lang;
-                        break;
-                    }
-                }
                 break;
 
             case Language::SUB_DOMAIN:
@@ -1656,7 +1658,7 @@ abstract class CMS
                 break;
         }
 
-        if (!isset($language)) {
+        if (empty($language)) {
             $language = static::$defaultLanguage;
         }
 
@@ -1699,19 +1701,21 @@ abstract class CMS
 			($queryParams ? '?' . http_build_query($queryParams) : '');
 	}
 
-  function define_language_vars()
-  {
-    $prefix = $this->language != 'rus' && $this->language != 'ru' ? $this->language . '_' : '';
-
-    foreach (static::$field_names_ar as $field)
+	/** @deprecated */
+    public function define_language_vars()
     {
-      $variable = $field . '_var';
-      $GLOBALS[$variable] = $prefix.$field;
-      $this->$variable = $prefix.$field;
-    }
+        $prefix = $this->language !== static::$defaultLanguage
+            ? $this->language . '_'
+            : '';
 
-	  return $this;
-  }
+        foreach (static::$field_names_ar as $field) {
+            $variable = $field . '_var';
+            $GLOBALS[$variable] = $prefix . $field;
+            $this->$variable = $prefix . $field;
+        }
+
+        return $this;
+    }
 
 	protected function getRoutesForLanguageLinks($language)
 	{
@@ -1740,7 +1744,10 @@ abstract class CMS
 
 	protected function addLanguageToLink($lang, $path, $query)
     {
-        return ($lang === static::$defaultLanguage ? '/' : "/$lang/") . $path . $query;
+        $prefix = \diModel::__getPrefixForHref($lang);
+
+        // ($lang === static::$defaultLanguage ? '/' : "/$lang/")
+        return $prefix . '/' . $path . $query;
     }
 
 	protected function assign_top_language_links()

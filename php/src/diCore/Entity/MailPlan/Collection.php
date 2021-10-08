@@ -7,39 +7,37 @@
 
 namespace diCore\Entity\MailPlan;
 
+use diCore\Traits\Collection\TargetInside;
+
 /**
  * Class Collection
  * Methods list for IDE
  *
- * @method Collection filterById($value, $operator = null)
- * @method Collection filterByTargetType($value, $operator = null)
- * @method Collection filterByTargetId($value, $operator = null)
- * @method Collection filterByMode($value, $operator = null)
- * @method Collection filterByConditions($value, $operator = null)
- * @method Collection filterByCreatedAt($value, $operator = null)
- * @method Collection filterByStartedAt($value, $operator = null)
- * @method Collection filterByProcessedAt($value, $operator = null)
+ * @method $this filterById($value, $operator = null)
+ * @method $this filterByMode($value, $operator = null)
+ * @method $this filterByConditions($value, $operator = null)
+ * @method $this filterByCreatedAt($value, $operator = null)
+ * @method $this filterByStartedAt($value, $operator = null)
+ * @method $this filterByProcessedAt($value, $operator = null)
  *
- * @method Collection orderById($direction = null)
- * @method Collection orderByTargetType($direction = null)
- * @method Collection orderByTargetId($direction = null)
- * @method Collection orderByMode($direction = null)
- * @method Collection orderByConditions($direction = null)
- * @method Collection orderByCreatedAt($direction = null)
- * @method Collection orderByStartedAt($direction = null)
- * @method Collection orderByProcessedAt($direction = null)
+ * @method $this orderById($direction = null)
+ * @method $this orderByMode($direction = null)
+ * @method $this orderByConditions($direction = null)
+ * @method $this orderByCreatedAt($direction = null)
+ * @method $this orderByStartedAt($direction = null)
+ * @method $this orderByProcessedAt($direction = null)
  *
- * @method Collection selectId()
- * @method Collection selectTargetType()
- * @method Collection selectTargetId()
- * @method Collection selectMode()
- * @method Collection selectConditions()
- * @method Collection selectCreatedAt()
- * @method Collection selectStartedAt()
- * @method Collection selectProcessedAt()
+ * @method $this selectId()
+ * @method $this selectMode()
+ * @method $this selectConditions()
+ * @method $this selectCreatedAt()
+ * @method $this selectStartedAt()
+ * @method $this selectProcessedAt()
  */
 class Collection extends \diCollection
 {
+    use TargetInside;
+
 	const type = \diTypes::mail_plan;
 	protected $table = 'mail_plans';
 	protected $modelType = 'mail_plan';

@@ -188,7 +188,6 @@ var diAdminFilters = function(_opts) {
 				.replace(/]/g, '\\]');
 			$f = $(selector, e.$form);
 			v = $f.val();
-
 			regs = k.match(/^([^\[\]]+)]\[(\d+)]\[(.+)$/);
 
 			if (regs && typeof regs[3] !== 'undefined') {
@@ -231,7 +230,9 @@ var diAdminFilters = function(_opts) {
 							}
 						}
 
-						this.filters[k].push(v);
+						if (v !== null) {
+							this.filters[k].push(v);
+						}
 					}
 				}
 			}

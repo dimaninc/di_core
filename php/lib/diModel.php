@@ -8,6 +8,7 @@
 
 use diCore\Admin\Submit;
 use diCore\Base\CMS;
+use diCore\Base\Language;
 use diCore\Data\Config;
 use diCore\Database\Connection;
 use diCore\Database\FieldType;
@@ -432,8 +433,20 @@ class diModel implements \ArrayAccess
             $language = static::__getLanguage();
         }
 
+		if (
+		    \diCurrentCMS::LANGUAGE_MODE == Language::DOMAIN &&
+            $language &&
+            $language !== static::__getLanguage()
+        ) {
+            return \diRequest::protocol() . '://' .
+                ArrayHelper::get(\diCurrentCMS::$languageDomains, [$language, 0]) .
+                \diLib::getSubFolder(true);
+        }
+
 		if ($language && $language != \diCurrentCMS::$defaultLanguage) {
-			$prefix = '/' . $language;
+            $prefix = \diCurrentCMS::LANGUAGE_MODE == Language::URL
+                ? '/' . $language
+                : '';
 		} elseif (!empty($Z)) {
 			$prefix = $Z->getLanguageHrefPrefix();
 		} else {
