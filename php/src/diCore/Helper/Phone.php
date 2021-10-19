@@ -53,7 +53,7 @@ class Phone
 			$phone = substr($phone, 2);
 		}
 
-		if (strlen($phone) == 10 && static::isValid($phone)) {
+		if (strlen($phone) == 10 && static::isValid($phone) && substr($phone, 0, 1) == '9') {
 			$phone = '7' . $phone; // default Russian code
 		}
 
