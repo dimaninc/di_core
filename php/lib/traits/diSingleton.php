@@ -1,11 +1,11 @@
 <?php
-
 /**
  * Created by PhpStorm.
  * User: dimaninc
  * Date: 10.05.2016
  * Time: 11:29
  */
+
 trait diSingleton
 {
 	protected static $instance;
@@ -17,7 +17,7 @@ trait diSingleton
 			: static::$instance = new static;
 	}
 
-	final private function __construct()
+	private function __construct()
 	{
 		$this->init();
 	}
@@ -26,11 +26,11 @@ trait diSingleton
 	{
 	}
 
-	final private function __wakeup()
+	public function __wakeup()
 	{
 	}
 
-	final private function __clone()
+	private function __clone()
 	{
 	}
 }
