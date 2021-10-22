@@ -287,7 +287,7 @@ class Migrations extends \diCore\Admin\BasePage
 
 				/** @var Migration $className */
 				$className = $this->getManager()::getClassNameByIdx($idx);
-				include($fn);
+				require_once $fn;
 
 				$subFolder = basename(dirname($fn));
 				if ($subFolder == 'migrations') {
