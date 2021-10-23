@@ -122,8 +122,7 @@ class Kassa
 				break;
 
 			case 'aviso':
-				if (is_callable($this->options['onAviso']))
-				{
+				if (is_callable($this->options['onAviso'])) {
 					$this->options['onAviso']($this);
 				}
 
@@ -148,8 +147,7 @@ class Kassa
 				$this->log('Request: ' . print_r($_POST, true));
 
 				// If the MD5 checking fails, respond with '1' error code
-				if (!$this->checkMD5())
-				{
+				if (!$this->checkMD5()) {
 					$this->log('MD5 not passed');
 
 					$response = $this->buildResponse($this->getAction(), \diRequest::post('invoiceId'), 1);
@@ -161,8 +159,7 @@ class Kassa
 
 			case 'PKCS7':
 				// Checking for a certificate sign. If the checking fails, respond with '200' error code.
-				if (($request = $this->verifySign()) == null)
-				{
+				if (($request = $this->verifySign()) == null) {
 					$response = $this->buildResponse($this->getAction(), null, 200);
 					return $this->sendResponse($response, true);
 				}
@@ -179,18 +176,18 @@ class Kassa
 		return $this;
 	}
 
-	public static function checkResponse()
+	public function checkResponse()
 	{
 		static::log('Check action!');
 
-		return static::buildResponse('check', \diRequest::post('invoiceId'), 0);
+		return $this->buildResponse('check', \diRequest::post('invoiceId'), 0);
 	}
 
-	public static function avisoResponse()
+	public function avisoResponse()
 	{
 		static::log('Aviso action!');
 
-		return static::buildResponse('aviso', \diRequest::post('invoiceId'), 0);
+		return $this->buildResponse('aviso', \diRequest::post('invoiceId'), 0);
 	}
 
 	public static function formatDate(\DateTime $date)
