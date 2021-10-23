@@ -29,6 +29,7 @@ class FastTemplate
 	public $ERROR      = "";            // Holds the last error message
 	public $LAST       = "";            // Holds the HANDLE to the last template parsed by parse()
 	private $STRICT    = false;         // Strict template checking. Unresolved vars in templates will generate a warning when found.
+    private $showUnknowns = false;
 
 	private $default_folder = "pages";
 
@@ -419,6 +420,10 @@ class FastTemplate
 
 	public function show_unknowns($line)
 	{
+	    if (!$this->showUnknowns) {
+	        return $this;
+        }
+
 		$unknown = array();
 		if (preg_match("/({[A-Z0-9_]+})/", $line, $unknown))
 		{
