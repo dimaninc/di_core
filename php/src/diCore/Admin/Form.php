@@ -2144,7 +2144,7 @@ EOF;
 
 			if (\diSwiffy::is($f)) {
                 // swiffy
-				[$ff_w, $ff_h] = \diSwiffy::getDimensions($f);
+				list($ff_w, $ff_h) = \diSwiffy::getDimensions($f);
 
 				$imgTag = \diSwiffy::getHtml($httpName, $ff_w, $ff_h);
 			} elseif (in_array($ext, ['MP4', 'M4V', 'OGV', 'WEBM', 'AVI'])) {
@@ -2184,7 +2184,7 @@ EOF;
 				$previewWithText = true;
 			} else {
                 // picture
-				[$ff_w, $ff_h, $ff_t] = getimagesize($f);
+                list($ff_w, $ff_h, $ff_t) = getimagesize($f);
 
 				if (\diImage::isFlashType($ff_t)) {
 					$imgTag = "<script type=\"text/javascript\">run_movie(\"$httpName\", \"$ff_w\", \"$ff_h\", \"opaque\");</script>";
@@ -2194,7 +2194,7 @@ EOF;
 						$previewHttpName = StringHelper::slash(dirname($httpName)) . $subFolder . basename($httpName);
 						$previewFullName = StringHelper::slash(dirname($f)) . $subFolder . basename($f);
 
-						[$wTn, $hTn] = getimagesize($previewFullName);
+						list($wTn, $hTn) = getimagesize($previewFullName);
 						$sizeTn = filesize($previewFullName);
 
 						$previewInfoBlock = "<div class='info'>Preview: " . join(", ", array_filter([
@@ -2535,7 +2535,7 @@ EOF;
 
 		if (!empty($video_r->embed))
 		{
-			[$video_r->embed, $video_w, $video_h] = get_video_embed_and_dimensions($video_r, $w, $h);
+            list($video_r->embed, $video_w, $video_h) = get_video_embed_and_dimensions($video_r, $w, $h);
 
 			$this->last_video_w = $video_w;
 			$this->last_video_h = $video_h;

@@ -2005,7 +2005,7 @@ abstract class CMS
 
             $imagePath = $pic;
             if ($fs && (!$width || !$height)) {
-                [$width, $height] = @getimagesize($fs);
+                list($width, $height) = @getimagesize($fs);
             }
         }
 
