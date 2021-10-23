@@ -687,7 +687,9 @@ class diDynamicRows
   function set_select_from_array_input($name, $ar, $prefix_ar = array(), $suffix_ar = array())
   {
       if (is_array($name)) {
-          list('field' => $field, 'name' => $name) = $name;
+          // list('field' => $field, 'name' => $name) = $name;
+          $field = $name['field'];
+          $name = $name['name'];
       } else {
           $field = '';
       }
@@ -717,7 +719,9 @@ class diDynamicRows
   function set_select_from_db_input($name, $db_rs, $template_text = "%title%", $template_value = "%id%", $prefix_ar = array(), $suffix_ar = array())
   {
       if (is_array($name)) {
-          list('field' => $field, 'name' => $name) = $name;
+          // list('field' => $field, 'name' => $name) = $name;
+          $field = $name['field'];
+          $name = $name['name'];
       } else {
           $field = '';
       }
@@ -796,7 +800,9 @@ class diDynamicRows
 	public function setSelectFromCollectionInput($name, diCollection $col, $format = null, $prefixAr = [], $suffixAr = [])
 	{
         if (is_array($name)) {
-            list('field' => $field, 'name' => $name) = $name;
+            // list('field' => $field, 'name' => $name) = $name;
+            $field = $name['field'];
+            $name = $name['name'];
         } else {
             $field = '';
         }
