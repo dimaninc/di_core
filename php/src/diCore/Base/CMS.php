@@ -565,12 +565,6 @@ abstract class CMS
 	 */
 	public function getTpl()
 	{
-	    if (!$this->tpl) {
-            $this
-                ->init_tpl()
-                ->initTplDefines();
-        }
-
 		return $this->tpl;
 	}
 
