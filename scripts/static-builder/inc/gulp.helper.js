@@ -272,8 +272,7 @@ Helper = {
       opts = {};
     }
     if (!sass) {
-      sass = this.req('gulp-sass');
-      sass.compiler = this.req('node-sass');
+      sass = this.req('gulp-sass')(this.req('node-sass'));
     }
     opts = this.extend({
       fn: null,
