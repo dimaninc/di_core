@@ -12,6 +12,8 @@ class SiteMap extends \diBaseController
 {
     public function generateAction()
     {
+        $this->adminRightsHardCheck();
+
         \diSiteMapGenerator::createAndGenerate();
     }
 }
