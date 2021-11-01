@@ -190,12 +190,17 @@ EOF;
 		return $s . ".php";
 	}
 
+	protected function getConn()
+    {
+        return Connection::get();
+    }
+
 	/**
 	 * @return \diDB
 	 */
 	protected function getDb()
 	{
-		return Connection::get()->getDb();
+		return $this->getConn()->getDb();
 	}
 
 	/**
@@ -232,7 +237,7 @@ EOF;
         $charset = Config::getDbEncoding();
         $collation = Config::getDbCollation();
 
-        switch (Connection::get()::getEngine()) {
+        switch ($this->getConn()::getEngine()) {
             case Engine::SQLITE:
                 return [
                     "CREATE TABLE IF NOT EXISTS `" . static::logTable . "`(
