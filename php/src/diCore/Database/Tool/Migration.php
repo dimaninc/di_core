@@ -12,6 +12,7 @@ abstract class Migration
     const DOWN = 0;
 
     const DB_FOLDER = 'db/dump/';
+    const CONNECTION_NAME = null;
 
     public static $idx;
     public static $name;
@@ -65,6 +66,6 @@ abstract class Migration
 
     protected function getDb()
     {
-        return Connection::get()->getDb();
+        return Connection::get(static::CONNECTION_NAME)->getDb();
     }
 }

@@ -24,6 +24,9 @@ abstract class Connection
 	/** @var ConnectionData */
 	protected $data;
 
+	/** @var string */
+	private $name;
+
     /**
      * Possible ConnectionData records (used for dev env, with different passwords)
      * @var array
@@ -33,8 +36,10 @@ abstract class Connection
 	/** @var \diDB */
 	protected $db;
 
-	public function __construct($connData)
+	public function __construct($connData, $name = null)
 	{
+	    $this->name = $name;
+
 		$this
 			->parseConnData($connData)
 			->connectAll();
@@ -55,7 +60,7 @@ abstract class Connection
 	{
 		$className = self::getChildClassName($engine);
 		/** @var Connection $conn */
-		$conn = new $className($connData);
+		$conn = new $className($connData, $name);
 
 		self::add($name, $conn);
 
@@ -152,7 +157,7 @@ abstract class Connection
         }
 
         if (!$this->data) {
-            throw new \diDatabaseException('No suitable database connection data');
+            throw new \diDatabaseException("No suitable database connection data for '$this->name'");
         }
 
         return $this;

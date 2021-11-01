@@ -31,15 +31,8 @@ class MigrationsManager
 	];
     public static $customFoldersIdsAr = [];
 
-	/** @var \diDB */
-	private $db;
-
 	public function __construct()
 	{
-		global $db;
-
-		$this->db = $db;
-
 		$this
 			->initTables()
 			->initFolder();
@@ -202,7 +195,7 @@ EOF;
 	 */
 	protected function getDb()
 	{
-		return $this->db;
+		return Connection::get()->getDb();
 	}
 
 	/**
@@ -251,6 +244,19 @@ EOF;
                         date timestamp default CURRENT_TIMESTAMP
                     );",
                     "CREATE INDEX IF NOT EXISTS `" . static::logTable . "_idx` ON `" . static::logTable . "` (idx);",
+                ];
+
+            case Engine::POSTGRESQL:
+                return [
+                    "CREATE TABLE IF NOT EXISTS \"" . static::logTable . "\"(
+                        id SERIAL primary key,
+                        admin_id bigint,
+                        idx varchar(100),
+                        name varchar(250),
+                        direction smallint,
+                        date timestamp default CURRENT_TIMESTAMP
+                    );",
+                    "CREATE INDEX IF NOT EXISTS idx_" . static::logTable . " ON " . static::logTable . " (idx);",
                 ];
 
             default:
