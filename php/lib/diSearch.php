@@ -100,7 +100,7 @@ abstract class diSearch
 	 */
 	public static function create($table, $method = null)
 	{
-		$method = $method ?: \diCore\Data\Config::getSearchEngine();
+		$method = $method ?: Config::getSearchEngine();
 
 		$className = camelize("di_" . $method . "_search");
 
@@ -111,10 +111,9 @@ abstract class diSearch
 	{
 		$a = self::getSettings($table);
 
-		if ($a)
-		{
+		if ($a) {
 			$search = self::create($table);
-			$search->index_record($id, "", $a["fields"], $a["where"], $a["callback"], $a['post_callback']);
+			$search->index_record($id, $a['primaryFields'], $a['fields'], $a['where'], $a['callback'], $a['post_callback']);
 
             return true;
 		}
@@ -126,10 +125,9 @@ abstract class diSearch
     {
         $a = self::getSettings($table);
 
-        if ($a)
-        {
+        if ($a) {
             $search = self::create($table);
-            $search->index_full_table('', $a["fields"], $a["where"], $a["callback"]);
+            $search->index_full_table($a['primaryFields'], $a['fields'], $a['where'], $a['callback']);
 
             return true;
         }
@@ -141,16 +139,22 @@ abstract class diSearch
 	{
 		global $search_q_ar;
 
-		if (!isset($search_q_ar[$table]))
-		{
+		if (!isset($search_q_ar[$table])) {
 			return false;
 		}
 
         return [
-            "fields" => $search_q_ar[$table]["fields"],
-            "where" => !empty($search_q_ar[$table]["where"]) ? "WHERE " . str_replace("t.", "", $search_q_ar[$table]["where"]) : "",
-            "callback" => !empty($search_q_ar[$table]["callback"]) ? $search_q_ar[$table]["callback"] : "",
-	        'post_callback' => !empty($search_q_ar[$table]["post_callback"]) ? $search_q_ar[$table]["post_callback"] : null,
+            'primaryFields' => $search_q_ar[$table]['primaryFields'] ?? [],
+            'fields' => $search_q_ar[$table]['fields'],
+            'where' => !empty($search_q_ar[$table]['where'])
+                ? 'WHERE ' . str_replace('t.', '', $search_q_ar[$table]['where'])
+                : '',
+            'callback' => !empty($search_q_ar[$table]['callback'])
+                ? $search_q_ar[$table]['callback']
+                : '',
+	        'post_callback' => !empty($search_q_ar[$table]['post_callback'])
+                ? $search_q_ar[$table]['post_callback']
+                : null,
         ];
 	}
 
@@ -164,21 +168,22 @@ abstract class diSearch
 	//              $data - the current record index line
 	function index_full_table($primary_fields_ar, $fields_ar, $q_ending = "", $callback = "")
 	{
-		if (!is_array($primary_fields_ar))
-		{
-			$primary_fields_ar = $primary_fields_ar ? explode(",", $primary_fields_ar) : array();
+		if (!is_array($primary_fields_ar)) {
+			$primary_fields_ar = $primary_fields_ar
+                ? explode(",", $primary_fields_ar)
+                : [];
 		}
 
-		if (!is_array($fields_ar))
-		{
-			$fields_ar = $fields_ar ? explode(",", $fields_ar) : array();
+		if (!is_array($fields_ar)) {
+			$fields_ar = $fields_ar
+                ? explode(",", $fields_ar)
+                : [];
 		}
 
 		$rs = $this->getDb()->rs($this->table, "$q_ending ORDER BY id ASC");
-		while ($rs && $r = $this->getDb()->fetch($rs))
-		{
+		while ($rs && $r = $this->getDb()->fetch($rs)) {
 			$this->index_record($r, $primary_fields_ar, $fields_ar, $q_ending, $callback);
-}
+        }
 
 		return $this;
 	}
@@ -187,49 +192,45 @@ abstract class diSearch
 	{
 		$r = is_object($r_or_id) ? $r_or_id : $this->getDb()->r($this->table, $q_ending ? "$q_ending and id='$r_or_id'" : $r_or_id);
 
-		if (!$r)
-		{
-			if ((int)$r_or_id)
-			{
+		if (!$r) {
+			if ((int)$r_or_id) {
 				$this->kill_index_record((int)$r_or_id);
 			}
 
 			return $this;
 		}
 
-		if (!is_array($primary_fields_ar)) $primary_fields_ar = explode(",", $primary_fields_ar);
-		if (!is_array($fields_ar)) $fields_ar = explode(",", $fields_ar);
+		if (!is_array($primary_fields_ar)) {
+		    $primary_fields_ar = explode(",", $primary_fields_ar);
+        }
+		if (!is_array($fields_ar)) {
+		    $fields_ar = explode(",", $fields_ar);
+        }
 
         $primary_data_ar = [];
         $data_ar = [];
 
-		foreach ($primary_fields_ar as $f)
-		{
-			if ($f)
-			{
+		foreach ($primary_fields_ar as $f) {
+			if ($f) {
 				$primary_data_ar[] = $this->prepare_string($r->$f);
 			}
 		}
 
-		foreach ($fields_ar as $f)
-		{
-			if ($f)
-			{
+		foreach ($fields_ar as $f) {
+			if ($f) {
 				$data_ar[] = "{$r->$f}";
 			}
 		}
 
 		$origData = $data = join(" ", $data_ar);
 
-		if ($callback)
-		{
+		if ($callback) {
 			$data = $callback($this->table, $r, $data);
 		}
 
 		$data = $this->prepare_string($data);
 
-		if ($post_callback)
-		{
+		if ($post_callback) {
 			$data = $post_callback($this->table, $r, $data, $origData);
 		}
 
@@ -241,19 +242,13 @@ abstract class diSearch
 	public static function prepare_string($s, $removeCharacters = true)
 	{
 		$s = mb_strtolower($s);
-
 		$s = strip_tags($s);
 		$s = preg_replace("/&#?[a-z0-9\s]+;/", " ", $s);
 		$s = str_replace('-', '', $s);
-
-		if ($removeCharacters)
-		{
-			$s = str_replace(self::$prepare_replace_ar, " ", $s);
-		}
-		else
-		{
-			$s = str_replace(self::$prepare_replace_lite_ar, " ", $s);
-		}
+        $s = str_replace($removeCharacters
+            ? self::$prepare_replace_ar
+            : self::$prepare_replace_lite_ar,
+            " ", $s);
 
 		$s_ar = explode(" ", $s);
 		array_walk($s_ar, "kill_lil_word");
@@ -268,14 +263,12 @@ abstract class diSearch
   {
     $sr_r = $this->getDb()->r("search_replaces", "WHERE query='".str_in($query)."'");
 
-    if ($sr_r)
-      return $this->lo($sr_r->replacement);
-    else
-    {
+    if ($sr_r) {
+        return $this->lo($sr_r->replacement);
+    } else {
       $sr_r = $this->getDb()->r("search_replaces", "WHERE '".str_in($query)."' LIKE query");
 
-      if ($sr_r)
-      {
+      if ($sr_r) {
         $l1 = strlen($query);
         $l2 = strlen($sr_r->query);
 
@@ -692,9 +685,9 @@ function kill_ending2(&$item, $key)
        )
     {
       if ($x <= $disearch_min_word_length)
-        $item = $item." ".mb_substr($item, 0, $x).(\diCore\Data\Config::getSearchEngine() == "db" ? "*" : "");
+        $item = $item." ".mb_substr($item, 0, $x).(Config::getSearchEngine() == "db" ? "*" : "");
       else
-        $item = mb_substr($item, 0, $x).(\diCore\Data\Config::getSearchEngine() == "db" ? "*" : "");
+        $item = mb_substr($item, 0, $x).(Config::getSearchEngine() == "db" ? "*" : "");
 
       break;
     }
