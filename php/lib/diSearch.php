@@ -1,26 +1,4 @@
 <?php
-/*
-    // dimaninc
-
-    // 2014/12/04
-        * diSearcher added
-
-    // 2011/06/08
-        * total reorganizing
-        * diTextfileSearch
-        * diDBSearch
-
-    // 2006/07/19
-        * index_table() improved
-
-    // 2005/12/24
-        * all da shit reorganized into a class
-
-    // 2005/07/05
-        * index_table() improved
-        * prepare_string_for_index() improved
-        * $_di_min_word_length variable added
-*/
 
 use diCore\Data\Config;
 
@@ -551,6 +529,7 @@ class diDBSearch extends diSearch
                id bigint not null,
                primary_content text character set $charset collate {$collation},
                content text character set $charset collate {$collation},
+               fulltext(primary_content),
                fulltext(content),
                primary key(id)
               ) ENGINE=MyISAM CHARSET={$charset} COLLATE={$collation};");
@@ -589,53 +568,50 @@ class diDBSearch extends diSearch
     }
   }
 
-  function search($query)
-  {
-    if ($this->use_query_replaces)
-      $query = $this->get_replaced_query($query);
-
-    $query = $this->lo($query);
-    $query = chop($query);
-
-	  $query = str_replace('-', '', $query);
-
-	  if ($this->hardReplaceSymbolsOfQuery)
-	  {
-		  $query = str_replace(self::$prepare_replace_ar, " ", $query);
-	  }
-	  else
-	  {
-		  $query = str_replace(self::$prepare_replace_lite_ar, " ", $query);
-	  }
-
-    $query_ar = explode(" ", $query);
-    array_walk($query_ar, "kill_ending2");
-    $query = trim(join(" ", $query_ar));
-
-    $ar = array();
-
-    $this->search_id = $this->getDb()->insert("searches", array(
-      "t" => $this->table,
-      "date" => time(),
-    ));
-
-    $match = "MATCH (content) AGAINST ('".addslashes($query)."' IN BOOLEAN MODE)";
-    //echo "select *,$match as rel from $this->index_table WHERE $match ORDER BY rel DESC<br>";
-
-    $rs = $this->getDb()->rs($this->index_table, "WHERE $match ORDER BY rel DESC", "*,$match as rel");
-    while ($r = $this->getDb()->fetch($rs))
+    function search($query)
     {
-	    $this->getDb()->insert("search_results", array(
-        "search_id" => $this->search_id,
-        "id" => $r->id,
-        "rel" => $r->rel,
-      ));
+        if ($this->use_query_replaces) {
+            $query = $this->get_replaced_query($query);
+        }
 
-      $ar[] = $r->id;
+        $query = $this->lo($query);
+        $query = chop($query);
+        $query = str_replace('-', '', $query);
+        $query = str_replace($this->hardReplaceSymbolsOfQuery
+            ? self::$prepare_replace_ar
+            : self::$prepare_replace_lite_ar,
+            " ", $query);
+        $query_ar = explode(" ", $query);
+        array_walk($query_ar, "kill_ending2");
+        $query = trim(join(" ", $query_ar));
+
+        $this->search_id = $this->getDb()->insert("searches", [
+            "t" => $this->table,
+            "date" => time(),
+        ]);
+
+        $match = "MATCH (content) AGAINST ('" . addslashes($query) . "' IN BOOLEAN MODE)";
+        $primaryMatch = "MATCH (primary_content) AGAINST ('" . addslashes($query) . "' IN BOOLEAN MODE)";
+
+        $ar = [];
+        $rs = $this->getDb()->rs(
+            $this->index_table,
+            "WHERE $match ORDER BY rel0 DESC, rel DESC",
+            "*,$match as rel,$primaryMatch as rel0"
+        );
+        $this->getDb()->dierror();
+        while ($r = $this->getDb()->fetch($rs)) {
+            $this->getDb()->insert("search_results", [
+                "search_id" => $this->search_id,
+                "id" => $r->id,
+                "rel" => $r->rel0 * 10 + $r->rel,
+            ]);
+
+            $ar[] = $r->id;
+        }
+
+        return $ar;
     }
-
-    return $ar;
-  }
 }
 
 /****************************************************************************************
