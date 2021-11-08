@@ -35,8 +35,7 @@ class Transport
 
 		$fp = fsockopen($url['host'], 443, $errNum, $errStr, 30);
 
-		if (!$fp)
-		{
+		if (!$fp) {
 			static::log('Sockets: error (' . $errNum . ') ' . $errStr);
 
 			return null;
@@ -51,8 +50,7 @@ class Transport
 
 		$response = '';
 
-		while (!feof($fp))
-		{
+		while (!feof($fp)) {
 			$response .= fgets($fp, 1024);
 		}
 
@@ -67,9 +65,11 @@ class Transport
 	{
 		$queryStr = http_build_query($query);
 
-		if (static::debug)
-		{
-			static::log('OPENSSL_VERSION_NUMBER: ' . OPENSSL_VERSION_NUMBER . ', ' . (OPENSSL_VERSION_NUMBER < 0x009080bf ? "OpenSSL Version Out-of-Date" : "OpenSSL Version OK"));
+		if (static::debug) {
+		    $sslInfo = OPENSSL_VERSION_NUMBER < 0x009080bf
+                ? 'OpenSSL Version Out-of-Date'
+                : 'OpenSSL Version OK';
+			static::log('OPENSSL_VERSION_NUMBER: ' . OPENSSL_VERSION_NUMBER . ', ' . $sslInfo);
 		}
 
 		static::log('CURL query: ' . $queryStr);
@@ -87,13 +87,11 @@ class Transport
 		curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 30);
 		curl_setopt($curl, CURLOPT_FORBID_REUSE, 1);
 
-		if (static::certFilename)
-		{
+		if (static::certFilename) {
 			curl_setopt($curl, CURLOPT_CAINFO, \diPaths::fileSystem() . static::certFilename);
 		}
 
-		if (static::debug)
-		{
+		if (static::debug) {
 			curl_setopt($curl, CURLOPT_VERBOSE, 1);
 			$verbose = fopen('php://temp', 'w+');
 			curl_setopt($curl, CURLOPT_STDERR, $verbose);
@@ -105,8 +103,7 @@ class Transport
 		]);
 		$response = curl_exec($curl);
 
-		if (static::debug)
-		{
+		if (static::debug) {
 			static::log('CURL error: ' . curl_error($curl) . ', ' . curl_errno($curl));
 
 			rewind($verbose);
@@ -138,22 +135,15 @@ class Transport
 	 */
 	public static function requestRequests($url, $query)
 	{
-		if (static::debug)
-		{
+		if (static::debug) {
 			static::log('Requests: ' . $url . ' ? ' . print_r($query, true));
 		}
 
-		$request = \Requests::post(
-			$url,
-			[],
-			$query,
-			[
-				'transport' => 'Requests_Transport_fsockopen',
-			]
-		);
+		$request = \Requests::post($url, [], $query, [
+            'transport' => 'Requests_Transport_fsockopen',
+		]);
 
-		if (static::debug)
-		{
+		if (static::debug) {
 			static::log('Requests response: ' . print_r($request, true));
 		}
 
@@ -162,6 +152,6 @@ class Transport
 
 	public static function log($message)
 	{
-        Logger::getInstance()->log($message, "PayPal Transport", "-payment");
+        Logger::getInstance()->log($message, 'PayPal Transport', '-payment');
 	}
 }

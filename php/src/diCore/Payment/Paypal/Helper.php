@@ -126,8 +126,7 @@ EOF;
 		$this->log('Notification, POST DATA: ' . print_r($this->data, true));
 		$this->log('Notification, transaction type: ' . $transactionType);
 
-		switch ($transactionType)
-		{
+		switch ($transactionType) {
 			case Helper::TRANSACTION_TYPE_SINGLE_PAY:
 				break;
 
@@ -140,6 +139,8 @@ EOF;
 		//$customData = json_decode($$this->data['custom'], true);
 		//$userId = $customData['user_id'];
 
+        $this->log('Sending request _notify-validate');
+
 		$response = $this->sendRequest([
 			'cmd' => '_notify-validate',
 		], true);
@@ -149,31 +150,29 @@ EOF;
 		$tokens = explode("\r\n\r\n", trim($response));
 		$response = trim(end($tokens));
 
-		if (strcmp($response, "VERIFIED") == 0)
-		{
-			if (is_callable($this->options['onSuccessPayment']))
-			{
+		if (strcmp($response, "VERIFIED") == 0) {
+            static::log('Invalid IPN response: ' . $response);
+
+			if (is_callable($this->options['onSuccessPayment'])) {
 				$this->options['onSuccessPayment']($this);
 			}
-		}
-		elseif (strcmp($response, "INVALID") == 0)
-		{
-			static::log("Invalid IPN response: " . $response);
+		} elseif (strcmp($response, "INVALID") == 0) {
+			static::log('Invalid IPN response: ' . $response);
 		}
 	}
 
 	protected function sendRequest($query = [], $extendIncoming = false)
 	{
-		if ($extendIncoming)
-		{
+		if ($extendIncoming) {
 			$query = extend($_POST, $query);
 		}
 
 		/** @var Transport $transport */
 		$transport = Transport::create();
 
-		switch (static::transport)
-		{
+        $this->log('sendRequest: transport=' . static::transport);
+
+		switch (static::transport) {
 			case self::TRANSPORT_CURL:
 				return $transport::requestCUrl(static::getUrl(), $query);
 
@@ -195,12 +194,9 @@ EOF;
 	{
 		$post = $this->getPostFromRawData($rawPostData);
 
-		if (isset($post['subscr_id']))
-		{
+		if (isset($post['subscr_id'])) {
 			return Helper::TRANSACTION_TYPE_SUBSCRIPTION;
-		}
-		else
-		{
+		} else {
 			return Helper::TRANSACTION_TYPE_SINGLE_PAY;
 		}
 	}
@@ -214,12 +210,10 @@ EOF;
 		$raw_post_array = explode('&', $rawPostData ?: file_get_contents('php://input'));
 		$myPost = [];
 
-		foreach ($raw_post_array as $keyVal)
-		{
+		foreach ($raw_post_array as $keyVal) {
 			$keyVal = explode('=', $keyVal);
 
-			if (count($keyVal) == 2)
-			{
+			if (count($keyVal) == 2) {
 				$myPost[$keyVal[0]] = urldecode($keyVal[1]);
 			}
 		}
@@ -231,7 +225,7 @@ EOF;
 	{
 		return $key === null
 			? $this->data
-			: (isset($this->data[$key]) ? $this->data[$key] : null);
+			: ($this->data[$key] ?? null);
 	}
 
 	public function getItemNumber()
