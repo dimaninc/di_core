@@ -11,6 +11,7 @@ namespace diCore\Payment;
 use diCore\Base\CMS;
 use diCore\Data\Configuration;
 use diCore\Entity\PaymentDraft\Model as Draft;
+use diCore\Entity\PaymentReceipt\Model as Receipt;
 use diCore\Payment\Mixplat\Helper as Mixplat;
 use diCore\Payment\Paypal\Helper as Paypal;
 use diCore\Payment\Robokassa\Helper as Robokassa;
@@ -73,6 +74,8 @@ class Payment
     protected $targetId;
     /** @var  int */
     protected $userId;
+
+    private static $counter;
 
     public function __construct($targetType, $targetId, $userId)
     {
@@ -319,8 +322,40 @@ EOF;
         Logger::getInstance()->log($message, 'diPayment', '-payment');
     }
 
-    public static function postProcess(\diCore\Entity\PaymentReceipt\Model $receipt)
+    public static function postProcess(Receipt $receipt)
     {
+    }
+
+    protected static function getPaymentVendorRow(
+        $systemId,
+        $vendorId = null,
+        callable $hrefCallback = null,
+        $selectedVendorId = null
+    )
+    {
+        $selected = $selectedVendorId && (
+                $selectedVendorId == $vendorId ||
+                (static::SELECT_FIRST_VENDOR_BY_DEFAULT && !$selectedVendorId && static::$counter == 0)
+            );
+
+        if (static::isPaymentMethodAvailable($systemId, $vendorId)) {
+            return [
+                'vendor' => [
+                    'id' => $vendorId,
+                    'name' => System::vendorName($systemId, $vendorId),
+                    'title' => System::vendorTitle($systemId, $vendorId),
+                    'href' => $hrefCallback ? $hrefCallback($systemId, $vendorId) : null,
+                    'selected_class' => $selected ? 'selected' : '',
+                ],
+                'system' => [
+                    'id' => $systemId,
+                    'name' => System::name($systemId),
+                    'title' => System::title($systemId),
+                ],
+            ];
+        }
+
+        return null;
     }
 
     public static function getTemplateData(callable $hrefCallback = null, $selectedVendorId = null)
@@ -328,34 +363,7 @@ EOF;
         $ar = [
             'payment_vendor_rows' => [],
         ];
-        $i = 0;
-
-        $processPaymentVariantRow = function ($systemId, $vendorId = 0)
-        use ($hrefCallback, $selectedVendorId, &$ar, &$i) {
-            $selected = $selectedVendorId && (
-                    $selectedVendorId == $vendorId ||
-                    (static::SELECT_FIRST_VENDOR_BY_DEFAULT && !$selectedVendorId && $i == 0)
-                );
-
-            if (static::isPaymentMethodAvailable($systemId, $vendorId)) {
-                $ar['payment_vendor_rows'][] = [
-                    'vendor' => [
-                        'id' => $vendorId,
-                        'name' => System::vendorName($systemId, $vendorId),
-                        'title' => System::vendorTitle($systemId, $vendorId),
-                        'href' => $hrefCallback ? $hrefCallback($systemId, $vendorId) : null,
-                        'selected_class' => $selected ? 'selected' : '',
-                    ],
-                    'system' => [
-                        'id' => $systemId,
-                        'name' => System::name($systemId),
-                        'title' => System::title($systemId),
-                    ],
-                ];
-
-                $i++;
-            }
-        };
+        static::$counter = 0;
 
         foreach (static::$paymentVendorsUsed as $systemId) {
             if (is_array($systemId)) {
@@ -367,12 +375,20 @@ EOF;
                 }
 
                 foreach ($vendors as $vendorId) {
-                    $processPaymentVariantRow($systemId, $vendorId);
+                    $ar['payment_vendor_rows'][] = static::getPaymentVendorRow(
+                        $systemId, $vendorId, $hrefCallback, $selectedVendorId
+                    );
+                    static::$counter++;
                 }
             } else {
-                $processPaymentVariantRow($systemId);
+                $ar['payment_vendor_rows'][] = static::getPaymentVendorRow(
+                    $systemId, null, $hrefCallback, $selectedVendorId
+                );
+                static::$counter++;
             }
         }
+
+        $ar['payment_vendor_rows'] = array_filter($ar['payment_vendor_rows']);
 
         return $ar;
     }
