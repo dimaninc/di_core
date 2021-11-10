@@ -137,17 +137,20 @@ class Transport
 	{
 		if (static::debug) {
 			static::log('Requests: ' . $url . ' ? ' . print_r($query, true));
+			static::log('Using class: ' . \Requests::class);
+            static::log('App name: ' . static::applicationName);
 		}
 
-		$request = \Requests::post($url, [], $query, [
+		$res = \Requests::post($url, [], $query, [
             'transport' => 'Requests_Transport_fsockopen',
 		]);
 
 		if (static::debug) {
-			static::log('Requests response: ' . print_r($request, true));
+            static::log('Requests response:');
+			static::log(print_r($res, true));
 		}
 
-		return $request->body;
+		return $res->body;
 	}
 
 	public static function log($message)
