@@ -4,6 +4,7 @@ use diCore\Data\Config;
 use diCore\Helper\FileSystemHelper;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
+use Twig\TwigFilter;
 use Twig\TwigFunction;
 
 /**
@@ -66,6 +67,11 @@ class diTwig
 			'cache' => Config::getCacheFolder() . static::CACHE_FOLDER,
 			'auto_reload' => diCurrentCMS::ignoreCaches(),
 		], $options));
+
+		$this
+            ->addFilters()
+            ->addExtensions()
+            ->assignInitialData();
 	}
 
 	/**
@@ -82,6 +88,48 @@ class diTwig
 
 		return $t;
 	}
+
+	protected function assignInitialData()
+    {
+        return $this;
+    }
+
+    protected function addExtensions()
+    {
+        /*
+        $this->getEngine()->addExtension(new Jasny\Twig\DateExtension());
+        $this->getEngine()->addExtension(new Jasny\Twig\PcreExtension());
+        $this->getEngine()->addExtension(new Jasny\Twig\TextExtension());
+        $this->getEngine()->addExtension(new Jasny\Twig\ArrayExtension());
+        */
+
+        return $this;
+    }
+
+	protected function addFilters()
+    {
+        return $this;
+    }
+
+    protected function addStrFilesizeFilter()
+    {
+        $this->getEngine()
+            ->addFilter(new TwigFilter('str_filesize', function($size) {
+                return str_filesize($size);
+            }));
+
+        return $this;
+    }
+
+    protected function addPregReplaceFilter()
+    {
+        $this->getEngine()
+            ->addFilter(new TwigFilter('preg_replace', function ($subject, $pattern, $replacement) {
+                return preg_replace($pattern, $replacement, $subject);
+            }));
+
+        return $this;
+    }
 
 	protected function getAllPaths()
 	{
