@@ -18,8 +18,7 @@ class StringHelper
 		$charactersLength = mb_strlen($characters);
 		$randomString = '';
 
-		for ($i = 0; $i < $length; $i++)
-		{
+		for ($i = 0; $i < $length; $i++) {
 			$randomString .= $characters[rand(0, $charactersLength - 1)];
 		}
 
@@ -45,8 +44,7 @@ class StringHelper
 
 	public static function out($str, $replaceAmp = false)
 	{
-		if ($replaceAmp)
-		{
+		if ($replaceAmp) {
 			$str = str_replace('&', '&amp;', $str);
 		}
 
@@ -131,12 +129,10 @@ class StringHelper
 
 		$result = $path . $query;
 
-		if (isset($parsedUrl['host']))
-		{
+		if (isset($parsedUrl['host'])) {
 			$result = $parsedUrl['host'] . $result;
 
-			if (isset($parsedUrl['scheme']))
-			{
+			if (isset($parsedUrl['scheme'])) {
 				$result = $parsedUrl['scheme'] . '://' . $result;
 			}
 		}
@@ -361,6 +357,24 @@ class StringHelper
         }
 
         $text = join("\n", $lines);
+
+        return $text;
+    }
+
+    public static function stripTagsWithContent($text, $tags = '', $invert = false)
+    {
+        preg_match_all('/<(.+?)[\s]*\/?[\s]*>/si', trim($tags), $tags);
+        $tags = array_unique($tags[1]);
+
+        if (is_array($tags) && count($tags) > 0) {
+            if ($invert == false) {
+                return preg_replace('@<(?!(?:' . implode('|', $tags) . ')\b)(\w+)\b.*?>.*?</\1>@si', '', $text);
+            } else {
+                return preg_replace('@<(' . implode('|', $tags) . ')\b.*?>.*?</\1>@si', '', $text);
+            }
+        } elseif ($invert == false) {
+            return preg_replace('@<(\w+)\b.*?>.*?</\1>@si', '', $text);
+        }
 
         return $text;
     }
