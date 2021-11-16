@@ -176,6 +176,7 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
 		$model->parseData();
 
 		$this->getForm()
+            ->setInput('target_id', $model->getTarget()->appearanceForAdmin())
 			->setSelectFromCollectionInput('admin_id',
 				$admins = \diCollection::create(\diTypes::admin)->filterBy('active', 1)->orderBy('login'),
 				function(\diCore\Entity\Admin\Model $admin) {

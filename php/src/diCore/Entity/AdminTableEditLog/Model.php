@@ -51,6 +51,9 @@ class Model extends \diModel
     const table = 'admin_table_edit_log';
 	protected $table = 'admin_table_edit_log';
 
+	/** @var \diModel */
+	protected $target;
+
 	const MAX_UNCUT_LENGTH = 0;
 
 	private $dataParsed = false;
@@ -153,9 +156,7 @@ class Model extends \diModel
 	{
 		$globalSkipFields = $globalSkipFields ?: static::$skipFields;
 
-		$skipFields = isset($globalSkipFields[$this->getTargetTable()])
-			? $globalSkipFields[$this->getTargetTable()]
-			: [];
+		$skipFields = $globalSkipFields[$this->getTargetTable()] ?? [];
 
 		if ($skipFields) {
 			$ar = ArrayHelper::filterByKey($ar, [], $skipFields);
@@ -303,4 +304,21 @@ class Model extends \diModel
 
 		return parent::validate();
 	}
+
+    public function getAppearanceFeedForAdmin()
+    {
+        return [
+            $this->getTargetTable(),
+            $this->getTargetId(),
+        ];
+    }
+
+	public function getTarget()
+    {
+        if (!$this->target) {
+            $this->target = \diModel::createForTable($this->getTargetTable(), $this->getTargetId(), 'id');
+        }
+
+        return $this->target;
+    }
 }
