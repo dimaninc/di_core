@@ -308,6 +308,10 @@ class diBaseController
 			echo $data;
 		} else {
             StringHelper::printJson($data, !static::isCli());
+
+            if (static::isCli()) {
+                echo "\n";
+            }
 		}
 
 		if ($die) {
