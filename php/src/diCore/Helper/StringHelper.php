@@ -368,15 +368,15 @@ class StringHelper
 
         if (is_array($tags) && count($tags) > 0) {
             if ($invert == false) {
-                return preg_replace('@<(?!(?:' . implode('|', $tags) . ')\b)(\w+)\b.*?>.*?</\1>@si', '', $text);
+                $text = preg_replace('@<(?!(?:' . implode('|', $tags) . ')\b)(\w+)\b.*?>.*?</\1>@si', '', $text);
             } else {
-                return preg_replace('@<(' . implode('|', $tags) . ')\b.*?>.*?</\1>@si', '', $text);
+                $text = preg_replace('@<(' . implode('|', $tags) . ')\b.*?>.*?</\1>@si', '', $text);
             }
         } elseif ($invert == false) {
-            return preg_replace('@<(\w+)\b.*?>.*?</\1>@si', '', $text);
+            $text = preg_replace('@<(\w+)\b.*?>.*?</\1>@si', '', $text);
         }
 
-        return $text;
+        return strip_tags($text);
     }
 
     public static function cutUrl($url, $options = [])
