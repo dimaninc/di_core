@@ -283,7 +283,7 @@ class diModel implements \ArrayAccess
 	public function __call($method, $arguments)
 	{
 		$fullMethod = underscore($method);
-		$value = isset($arguments[0]) ? $arguments[0] : null;
+		$value = $arguments[0] ?? null;
 
 		$x = strpos($fullMethod, '_');
 		$method = substr($fullMethod, 0, $x);
@@ -653,7 +653,7 @@ class diModel implements \ArrayAccess
 			$index = '';
 		}
 
-		return isset($this->picsTnFolders[$index]) ? $this->picsTnFolders[$index] : get_tn_folder($index);
+		return $this->picsTnFolders[$index] ?? get_tn_folder($index);
 	}
 
     public function getFolderForField($field)
@@ -730,9 +730,7 @@ class diModel implements \ArrayAccess
 
 	public static function getPicStoreSettings($field)
     {
-        return isset(static::$picStoreSettings[$field])
-            ? static::$picStoreSettings[$field]
-            : null;
+        return static::$picStoreSettings[$field] ?? null;
     }
 
     public function rebuildPics($field)
@@ -1216,6 +1214,17 @@ class diModel implements \ArrayAccess
 			? $this->origData[$field]
 			: null;
 	}
+
+	public function getTunedData($field = null)
+    {
+        if (is_null($field)) {
+            return ArrayHelper::mapAssoc(function ($key, $value) {
+                return [$key, static::tuneFieldValueByTypeBeforeDb($key, $value)];
+            }, $this->get());
+        }
+
+        return static::tuneFieldValueByTypeBeforeDb($field, $this->get($field));
+    }
 
 	public function localized($field, $lang = null)
 	{
@@ -2494,7 +2503,7 @@ ENGINE = InnoDB;";
     {
         $ar = static::getFieldTypes();
 
-        return isset($ar[$field]) ? $ar[$field] : null;
+        return $ar[$field] ?? null;
     }
 
     public function setUpsertFields(array $fields)
