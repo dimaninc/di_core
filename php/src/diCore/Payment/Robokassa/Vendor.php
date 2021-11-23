@@ -21,6 +21,7 @@ class Vendor extends VendorContainer
 	const CARD = 10;
 	const APPLE_PAY = 11;
 	const SAMSUNG_PAY = 12;
+    const YANDEX_PAY = 13;
 
 	//const SBERBANK_ONLINE = 20;
 	const ALPHA_CLICK = 21;
@@ -40,6 +41,7 @@ class Vendor extends VendorContainer
 		self::CARD => 'Банковская карта',
 		self::APPLE_PAY => 'Apple Pay',
 		self::SAMSUNG_PAY => 'Samsung Pay',
+        self::YANDEX_PAY => 'Яндекс Pay',
 
 		//self::SBERBANK_ONLINE => 'Сбербанк-онлайн',
 		self::ALPHA_CLICK => 'Альфа-клик',
@@ -60,6 +62,7 @@ class Vendor extends VendorContainer
 		self::CARD => 'card',
 		self::APPLE_PAY => 'apple-pay',
 		self::SAMSUNG_PAY => 'samsung-pay',
+        self::YANDEX_PAY => 'yandex-pay',
 
 		//self::SBERBANK_ONLINE => 'sberbank-online',
 		self::ALPHA_CLICK => 'alpha-click',
@@ -80,6 +83,7 @@ class Vendor extends VendorContainer
 		self::CARD => 'BankCardPSR',
 		self::APPLE_PAY => 'ApplePayPSR',
 		self::SAMSUNG_PAY => 'SamsungPayPSR',
+        self::YANDEX_PAY => 'YandexPayPSR',
 
 		//self::SBERBANK_ONLINE => 'BankSberBank',
 		self::ALPHA_CLICK => 'AlfaBank',
