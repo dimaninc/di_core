@@ -2043,23 +2043,26 @@ abstract class CMS
 	/** @deprecated  */
 	protected function checkOpenGraphVariables()
 	{
-		if (!static::templateEngineIsFastTemplate())
-		{
+		if (!static::templateEngineIsFastTemplate()) {
 			return $this;
 		}
 
-		if (!$this->getOpenGraph('title'))
-		{
+		if (!$this->getOpenGraph('title')) {
 			$this->setOpenGraph($this->getMeta('title'));
 		}
 
-		if (!$this->getOpenGraph('description'))
-		{
+		if (!$this->getOpenGraph('description')) {
 			$this->setOpenGraph($this->getMeta('description'), 'description');
 		}
 
 		return $this;
 	}
+
+	public function getPageNumberOfPaginator()
+    {
+        //\diRequest::get(\diPagesNavy::PAGE_PARAM, \diRequest::get(\diComments::PAGE_PARAM, 0));
+        return \diRequest::get(\diPagesNavy::PAGE_PARAM, 0);
+    }
 
 	/**
 	 * Could be overridden if different languages used
@@ -2078,6 +2081,56 @@ abstract class CMS
 	{
 		return true;
 	}
+
+    /**
+     * Could be overridden if different languages used
+     * @return string
+     */
+    public function getPaginationDescriptionSuffixTemplate()
+    {
+        return $this->getPaginationTitleSuffixTemplate();
+    }
+
+    /**
+     * Should we add "Page N" to the page description
+     * @return bool
+     */
+    protected function isPageDescriptionSuffixNeeded()
+    {
+        return true;
+    }
+
+    protected function addPageSuffixToMetaTitle()
+    {
+        $page = $this->getPageNumberOfPaginator();
+
+        if ($page > 1) {
+            if ($this->isPageTitleSuffixNeeded()) {
+                $this->appendMeta(
+                    sprintf($this->getPaginationTitleSuffixTemplate(), $page),
+                    'title'
+                );
+            }
+        }
+
+        return $this;
+    }
+
+    protected function addPageSuffixToMetaDescription()
+    {
+        $page = $this->getPageNumberOfPaginator();
+
+        if ($page > 1) {
+            if ($this->isPageDescriptionSuffixNeeded()) {
+                $this->appendMeta(
+                    sprintf($this->getPaginationDescriptionSuffixTemplate(), $page),
+                    'description'
+                );
+            }
+        }
+
+        return $this;
+    }
 
 	/**
 	 * Automatically sets meta tags based on $model
@@ -2102,8 +2155,7 @@ abstract class CMS
             $models = [$models];
         }
 
-        foreach ($defaults as $field => $defaultValue)
-		{
+        foreach ($defaults as $field => $defaultValue) {
 		    $value = null;
 
 		    /** @var \diModel $model */
@@ -2134,14 +2186,9 @@ abstract class CMS
 			}
 		}
 
-		// adding page to the end
-		//$page = \diRequest::get(\diPagesNavy::PAGE_PARAM, \diRequest::get(\diComments::PAGE_PARAM, 0));
-		$page = \diRequest::get(\diPagesNavy::PAGE_PARAM, 0);
-
-		if ($page > 1 && $this->isPageTitleSuffixNeeded())
-		{
-			$this->appendMeta(sprintf($this->getPaginationTitleSuffixTemplate(), $page), 'title');
-		}
+        $this
+            ->addPageSuffixToMetaTitle()
+            ->addPageSuffixToMetaDescription();
 
 		return $this;
 	}
