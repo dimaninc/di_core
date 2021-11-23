@@ -121,8 +121,8 @@ class Model extends \diModel
         }
 
 		$this
-			->setOldValues(unserialize($this->getOldData()))
-			->setNewValues(unserialize($this->getNewData()));
+			->setOldValues(unserialize($this->getOldData()) ?: [])
+			->setNewValues(unserialize($this->getNewData()) ?: []);
 
 		$newData = $this->getNewValues();
 		$diffs = [];
