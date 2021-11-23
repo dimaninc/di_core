@@ -159,7 +159,7 @@ class Model extends \diModel
 		$skipFields = $globalSkipFields[$this->getTargetTable()] ?? [];
 
 		if ($skipFields) {
-			$ar = ArrayHelper::filterByKey($ar, [], $skipFields);
+			$ar = ArrayHelper::filterByKey($ar ?: [], [], $skipFields);
 
 			// skipping all fields
 			if (in_array('*', $skipFields)) {
