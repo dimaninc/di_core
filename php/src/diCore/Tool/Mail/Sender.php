@@ -49,6 +49,21 @@ class Sender
 		return static::transport;
 	}
 
+    public static function getHost()
+    {
+        return static::$localHost;
+    }
+
+    public static function getPort()
+    {
+        return static::$localPort;
+    }
+
+    public static function getDebugSending()
+    {
+        return static::debugSending;
+    }
+
 	/*
 	 * each $attachments element should look like this:
 	 * [0] => [
@@ -61,8 +76,7 @@ class Sender
 	 */
 	public static function send($from, $to, $subject, $bodyPlain, $bodyHtml, $attachments = [], $options = [])
 	{
-		switch (static::getTransport())
-		{
+		switch (static::getTransport()) {
 			case Transport::SENDMAIL:
 				return static::viaSendmail($from, $to, $subject, $bodyPlain, $bodyHtml, $attachments, $options);
 				break;
@@ -83,8 +97,7 @@ class Sender
 
 	public static function viaSmtp($from, $to, $subject, $bodyPlain, $bodyHtml, $attachments = [], $options = [])
 	{
-		if (!is_array($to))
-		{
+		if (!is_array($to)) {
 			$to = [$to];
 		}
 
@@ -98,34 +111,29 @@ class Sender
 		$mail->Subject = $subject;
 		$mail->Body = $bodyPlain ?: $bodyHtml;
 
-		if (!empty($options['replyTo']))
-		{
+		if (!empty($options['replyTo'])) {
 			$options['replyTo'] = \diEmail::parseNameAndEmail($options['replyTo']);
 
 			$mail->addReplyTo($options['replyTo']['email'], $options['replyTo']['name']);
 		}
 
-		foreach ($to as $recipient)
-		{
+		foreach ($to as $recipient) {
 			$recipient = \diEmail::parseNameAndEmail($recipient);
 
 			$mail->addAddress($recipient['email'], $recipient['name']);
 		}
 
-		if ($attachments)
-		{
+		if ($attachments) {
 		    $attachmentIds = [];
 
 		    while (empty($attachment['content_id']) || in_array($attachment['content_id'], $attachmentIds)) {
                 $attachment['content_id'] = static::generateAttachmentId();
             }
 
-			foreach ($attachments as $attachment)
-			{
+			foreach ($attachments as $attachment) {
 				$attachment = static::prepareAttachment($attachment);
 
-				if (!empty($attachment['data']))
-				{
+				if (!empty($attachment['data'])) {
 					$mail->addStringEmbeddedImage(
 						$attachment['data'],
 						$attachment['content_id'],
@@ -133,17 +141,13 @@ class Sender
 						'base64',
 						$attachment['content_type']
 					);
-				}
-				elseif (!empty($attachment['path']))
-				{
+				} elseif (!empty($attachment['path'])) {
 					$mail->addEmbeddedImage(
 						$attachment['path'],
 						$attachment['content_id'],
 						$attachment['filename']
 					);
-				}
-				else
-				{
+				} else {
 					Logger::getInstance()
 						->log('attachment error: no file contents')
 						->variable($attachment);
@@ -155,8 +159,7 @@ class Sender
 
 		$res = $mail->send();
 
-		if (!$res)
-		{
+		if (!$res) {
 			Logger::getInstance()->log('mail error: ' . $mail->ErrorInfo);
 		}
 
@@ -183,12 +186,11 @@ class Sender
 	{
 		$mail = new PHPMailer();
 		$mail->CharSet = 'UTF-8';
-		$mail->Host = static::$localHost;
-		$mail->Port = static::$localPort;
+		$mail->Host = static::getHost();
+		$mail->Port = static::getPort();
 		$mail->XMailer = null;
 
-		if (static::debugSending)
-		{
+		if (static::debugSending) {
 			$mail->SMTPDebug = 3;
 		}
 
@@ -196,39 +198,33 @@ class Sender
 			Logger::getInstance()->log($str, 'Mailer/' . $level);
 		};
 
-		if ($fromEmail)
-		{
+		if ($fromEmail) {
 			$vendor = static::getAccountVendor($fromEmail);
 
-			if ($vendor != Vendor::own)
-			{
+			if ($vendor != Vendor::own) {
 				$mail->Host = Vendor::smtpHost($vendor) ?: $mail->Host;
 			}
+
 			$mail->Password = static::getAccountPassword($fromEmail) ?: '';
 
-			if (!$mail->Host)
-			{
+			if (!$mail->Host) {
 				throw new \Exception('SMTP host not defined for ' . $fromEmail);
 			}
 
 			/*
-			if (!$mail->Password)
-			{
+			if (!$mail->Password) {
 				throw new \Exception('SMTP password not defined for ' . $fromEmail);
 			}
 			*/
 
 			$mail->isSMTP();
 
-			if ($mail->Mailer == 'smtp')
-			{
-				if ($vendor != Vendor::own)
-				{
+			if ($mail->Mailer == 'smtp') {
+				if ($vendor != Vendor::own) {
 					$mail->Port = Vendor::smtpPort($vendor, static::secureSending);
 				}
 
-				if (static::getAccountUseSSL($fromEmail))
-				{
+				if (static::getAccountUseSSL($fromEmail)) {
 					$mail->SMTPAuth = true;
 					$mail->SMTPAutoTLS = true;
 					$mail->SMTPSecure = 'tls';
@@ -239,14 +235,11 @@ class Sender
 							'allow_self_signed' => true,
 						],
 					];
-				}
-				else
-				{
+				} else {
 					$mail->SMTPAutoTLS = false;
 				}
 
-				if ($mail->Password)
-				{
+				if ($mail->Password) {
 					$mail->Username = $fromEmail;
 				}
 			}
@@ -257,34 +250,22 @@ class Sender
 
 	protected static function getAccountUseSSL($email)
 	{
-		$a = isset(static::$accounts[$email])
-			? static::$accounts[$email]
-			: null;
+		$a = static::$accounts[$email] ?? null;
 
-		return isset($a['useSSL'])
-			? $a['useSSL']
-			: static::defaultUseSSL;
+		return $a['useSSL'] ?? static::defaultUseSSL;
 	}
 
 	protected static function getAccountVendor($email)
 	{
-		$a = isset(static::$accounts[$email])
-			? static::$accounts[$email]
-			: null;
+		$a = static::$accounts[$email] ?? null;
 
-		return isset($a['vendor'])
-			? $a['vendor']
-			: static::defaultVendor;
+		return $a['vendor'] ?? static::defaultVendor;
 	}
 
 	protected static function getAccountPassword($email)
 	{
-		$a = isset(static::$accounts[$email])
-			? static::$accounts[$email]
-			: null;
+		$a = static::$accounts[$email] ?? null;
 
-		return isset($a['password'])
-			? $a['password']
-			: $a;
+		return $a['password'] ?? $a;
 	}
 }
