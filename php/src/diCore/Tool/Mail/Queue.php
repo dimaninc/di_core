@@ -365,13 +365,21 @@ class Queue
 
 	public function setVisible()
 	{
-		/** @var Collection $col */
-		$col = \diCollection::create(Types::mail_queue);
-		$col
-			->filterByVisible(0)
-			->update([
-				'visible' => 1,
-			]);
+	    $conn = Collection::getConnection();
+	    $db = $conn->getDb();
+
+	    if ($conn::isRelational()) {
+            $db->update(Types::getTable(Collection::type), [
+                'visible' => 1,
+            ], "WHERE {$db->escapeField('visible')} = {$db->escapeValue(0)}");
+        } else {
+            Collection::create()
+                ->selectId()
+                ->filterByVisible(0)
+                ->update([
+                    'visible' => 1,
+                ]);
+        }
 
 		return $this;
 	}

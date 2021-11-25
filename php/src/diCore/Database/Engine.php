@@ -15,7 +15,7 @@ class Engine extends SimpleContainer
 	const MYSQL = 1;
 	const MYSQL_OLD = 4;
 	const SQLITE = 2;
-	const POSTGRESQL = 3; // not implemented yet
+	const POSTGRESQL = 3;
 	const MONGO = 5;
 
 	public static $names = [
@@ -33,4 +33,16 @@ class Engine extends SimpleContainer
 		self::POSTGRESQL => 'PostgreSQL',
 		self::MONGO => 'MongoDB',
 	];
+
+	public static function isNoSql($engine)
+    {
+        return in_array($engine, [
+            self::MONGO,
+        ]);
+    }
+
+	public static function isRelational($engine)
+    {
+        return !static::isNoSql($engine);
+    }
 }

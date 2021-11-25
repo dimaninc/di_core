@@ -47,6 +47,7 @@ class Model extends \diModel
 	use TargetInside;
 
 	const type = \diTypes::payment_draft;
+    const table = 'payment_drafts';
 	protected $table = 'payment_drafts';
 
 	const TARGET_IS_NECESSARY = true;

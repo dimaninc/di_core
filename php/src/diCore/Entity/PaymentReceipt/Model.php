@@ -35,6 +35,7 @@ use diCore\Tool\CollectionCache;
 class Model extends \diCore\Entity\PaymentDraft\Model
 {
 	const type = \diTypes::payment_receipt;
+    const table = 'payment_receipts';
 	protected $table = 'payment_receipts';
 
 	/** @var \diCore\Entity\User\Model */

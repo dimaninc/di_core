@@ -6,6 +6,7 @@
  */
 
 namespace diCore\Entity\MailQueue;
+
 use diCore\Data\Types;
 
 /**
@@ -42,21 +43,22 @@ use diCore\Data\Types;
  * @method bool hasDate
  * @method bool hasSettings
  *
- * @method Model setRecipientId($value)
- * @method Model setSubject($value)
- * @method Model setBody($value)
- * @method Model setPlainBody($value)
- * @method Model setAttachment($value)
- * @method Model setIncutIds($value)
- * @method Model setVisible($value)
- * @method Model setSent($value)
- * @method Model setNewsId($value)
- * @method Model setDate($value)
- * @method Model setSettings($value)
+ * @method $this setRecipientId($value)
+ * @method $this setSubject($value)
+ * @method $this setBody($value)
+ * @method $this setPlainBody($value)
+ * @method $this setAttachment($value)
+ * @method $this setIncutIds($value)
+ * @method $this setVisible($value)
+ * @method $this setSent($value)
+ * @method $this setNewsId($value)
+ * @method $this setDate($value)
+ * @method $this setSettings($value)
  */
 class Model extends \diModel
 {
 	const type = Types::mail_queue;
+    const table = 'mail_queue';
 	protected $table = 'mail_queue';
 
 	const BODY_TYPE_HTML = 0;

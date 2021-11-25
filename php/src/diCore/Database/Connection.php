@@ -50,7 +50,17 @@ abstract class Connection
         return static::engine;
     }
 
-	/**
+    public static function isNoSql()
+    {
+        return Engine::isNoSql(static::getEngine());
+    }
+
+    public static function isRelational()
+    {
+        return Engine::isRelational(static::getEngine());
+    }
+
+    /**
 	 * @param string|array $connData
 	 * @param int $engine
 	 * @param string $name

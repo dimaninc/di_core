@@ -32,5 +32,6 @@ class Model extends \diModel
     use TargetInside;
 
 	const type = \diTypes::order_item;
+    const table = 'order_item';
 	protected $table = 'order_item';
 }
