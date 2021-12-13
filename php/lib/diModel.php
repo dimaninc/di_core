@@ -66,8 +66,10 @@ class diModel implements \ArrayAccess
 	protected $slugFieldName = self::SLUG_FIELD_NAME_LEGACY;
 	/** @deprecated */
 	protected $orderFieldName = 'order_num';
-	/** @var string - 'id' or 'slug', auto-detect by default */
+	/** @var string 'id' or 'slug', auto-detect by default */
 	protected $identityFieldName;
+	/** @var bool if true: no origData stored, save/kill not allowed */
+	protected $readOnly = false;
 
 	protected $picsFolder = null;
 	protected $picsTnFolders = [];
@@ -211,6 +213,7 @@ class diModel implements \ArrayAccess
 
 		$options = extend([
 			'identityFieldName' => null,
+            'readOnly' => false,
 		], $options);
 
 		$className = static::existsFor($type);
@@ -226,7 +229,9 @@ class diModel implements \ArrayAccess
 			$o->setIdentityFieldName($options['identityFieldName']);
 		}
 
-		$o->initFrom($ar);
+		$o
+            ->_setReadOnly($options['readOnly'])
+            ->initFrom($ar);
 
 		return $o;
 	}
@@ -382,6 +387,13 @@ class diModel implements \ArrayAccess
 
 		return $this;
 	}
+
+    public function _setReadOnly($state)
+    {
+        $this->readOnly = !!$state;
+
+        return $this;
+    }
 
 	public function getTable()
 	{
@@ -1373,6 +1385,10 @@ class diModel implements \ArrayAccess
 	 */
 	public function setOrigData($field = null, $value = null)
 	{
+	    if (!$this->readOnly) {
+	        return $this;
+        }
+
 		if (is_null($field)) {
 			$this->origData = $this->ar;
 			$this->origId = $this->id;
@@ -1666,6 +1682,10 @@ class diModel implements \ArrayAccess
 	 */
 	public function save()
 	{
+	    if ($this->readOnly) {
+	        throw new \diDatabaseException('Unable to save read-only model');
+        }
+
 		try {
 			$this
 				->prepareForSave()
@@ -1731,6 +1751,10 @@ class diModel implements \ArrayAccess
 	 */
 	public function hardDestroy()
 	{
+        if ($this->readOnly) {
+            throw new \diDatabaseException('Unable to kill read-only model');
+        }
+
 		try {
 			$this
 				->prepareForKill()

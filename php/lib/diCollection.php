@@ -6,6 +6,7 @@
  * Time: 14:25
  */
 
+use diCore\Data\Config;
 use diCore\Database\Connection;
 use diCore\Database\Engine;
 use diCore\Database\Legacy\Mongo;
@@ -22,6 +23,8 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	/** @var @deprecated */
 	protected $modelType;
 	protected $isIdUnique = true;
+    /** @var bool */
+    protected $readOnly = false;
 
 	const MAIN_TABLE_ALIAS = 'main_table';
 	protected $alias = self::MAIN_TABLE_ALIAS;
@@ -969,12 +972,12 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	public function getNewEmptyItem()
 	{
-		return \diModel::create($this->getModelType());
+		return \diModel::create($this->getModelType())->_setReadOnly($this->readOnly);
 	}
 
 	public function getNewItem($data)
 	{
-		return \diModel::create($this->getModelType(), $data);
+		return \diModel::create($this->getModelType(), $data)->_setReadOnly($this->readOnly);
 	}
 
 	/**
@@ -1526,6 +1529,10 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	public function update($newData = [])
 	{
+        if ($this->readOnly) {
+            throw new \diDatabaseException('Unable to update read-only collection');
+        }
+
 		if ($newData) {
 			$ids = $this->getIds();
 
@@ -1998,6 +2005,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return null;
 	}
 
+    public function _setReadOnly($state)
+    {
+        $this->readOnly = !!$state;
+
+        return $this;
+    }
+
 	/**
 	 * Cache methods
 	 */
@@ -2036,7 +2050,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	protected function getCachePath($cacheKind = self::CACHE_ALL)
 	{
-		return \diCore\Data\Config::__getPhpFolder() . static::CACHE_FOLDER;
+		return Config::__getPhpFolder() . static::CACHE_FOLDER;
 	}
 
 	protected function getCacheFilename($cacheKind = self::CACHE_ALL)
