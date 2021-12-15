@@ -452,9 +452,24 @@ abstract class CMS
 		return static::$envNames[static::getEnvironment()];
 	}
 
+	public static function isDev()
+    {
+        return static::getEnvironment() == self::ENV_DEV;
+    }
+
+    public static function isProd()
+    {
+        return static::getEnvironment() == self::ENV_PROD;
+    }
+
+    public static function isStage()
+    {
+        return static::getEnvironment() == self::ENV_STAGE;
+    }
+
 	public static function debugMode()
 	{
-		return static::getEnvironment() == self::ENV_DEV;
+		return static::isDev();
 	}
 
 	public static function ignoreCaches()
@@ -919,7 +934,7 @@ abstract class CMS
 
 	protected function countersNeeded()
 	{
-		return static::getEnvironment() == self::ENV_PROD;
+		return static::isProd();
 	}
 
     public function setShareBlockNeeded($state)

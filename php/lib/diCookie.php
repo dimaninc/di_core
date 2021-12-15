@@ -7,6 +7,7 @@
  */
 
 use diCore\Base\CMS;
+use diCore\Tool\Logger;
 
 class diCookie
 {
@@ -23,12 +24,9 @@ class diCookie
 	 */
 	public static function set($name, $value = null, $optionsOrDate = null, $path = null, $domain = null)
 	{
-		if (is_array($optionsOrDate))
-		{
+		if (is_array($optionsOrDate)) {
 			$options = $optionsOrDate;
-		}
-		else
-		{
+		} else {
 			$options = [
 				'expire' => $optionsOrDate,
 				'path' => $path,
@@ -44,22 +42,18 @@ class diCookie
 			'httpOnly' => null,
 		], $options);
 
-		if ($options['expire'] !== null)
-		{
+		if ($options['expire'] !== null) {
 			$options['expire'] = \diDateTime::timestamp($options['expire']);
 		}
 
-		if ($options['domain'] === true)
-		{
+		if ($options['domain'] === true) {
 			$options['domain'] = static::getDomainForAll();
 		}
 
 		setcookie($name, $value, $options['expire'], $options['path'], $options['domain'], $options['secure'], $options['httpOnly']);
 
-		if (static::DEBUG)
-		{
-			if ($options['expire'])
-			{
+		if (static::DEBUG) {
+			if ($options['expire']) {
 				$options['expire'] = \diDateTime::format('d.m.Y H:i:s', $options['expire']);
 			}
 
@@ -75,8 +69,7 @@ class diCookie
 	 */
 	public static function get($name)
 	{
-		if (static::DEBUG)
-		{
+		if (static::DEBUG) {
 			static::log("Cookie get: '$name'");
 		}
 
@@ -93,8 +86,7 @@ class diCookie
 	 */
 	public static function remove($name, $path = null, $domain = null, $options = [])
 	{
-		if (static::DEBUG)
-		{
+		if (static::DEBUG) {
 			static::log("Cookie remove: '$name'");
 		}
 
@@ -108,8 +100,7 @@ class diCookie
 	{
 		$host = \diRequest::domain();
 
-		if (CMS::getEnvironment() == CMS::ENV_DEV)
-		{
+		if (CMS::isDev()) {
 			return $host;
 		}
 
@@ -120,6 +111,6 @@ class diCookie
 
 	protected static function log($message)
 	{
-		\diCore\Tool\Logger::getInstance()->log($message, '', '-cookie');
+		Logger::getInstance()->log($message, '', '-cookie');
 	}
 }

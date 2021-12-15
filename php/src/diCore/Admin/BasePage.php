@@ -195,7 +195,7 @@ abstract class BasePage
 
 			$o->$afterM();
 		} catch (\Exception $e) {
-			if (CMS::getEnvironment() == CMS::ENV_DEV) {
+			if (CMS::isDev()) {
                 throw $e;
             } else {
                 die($e->getMessage());
