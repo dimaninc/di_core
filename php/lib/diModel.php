@@ -1385,7 +1385,7 @@ class diModel implements \ArrayAccess
 	 */
 	public function setOrigData($field = null, $value = null)
 	{
-	    if (!$this->readOnly) {
+	    if ($this->readOnly) {
 	        return $this;
         }
 
