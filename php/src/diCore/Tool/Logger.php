@@ -8,6 +8,8 @@
 
 namespace diCore\Tool;
 
+use diCore\Data\Config;
+use diCore\Helper\StringHelper;
 
 class Logger
 {
@@ -21,13 +23,16 @@ class Logger
 	const PURPOSE_SIMPLE = 1;
 	const PURPOSE_VARIABLE = 2;
 
+	protected $uid;
+
 	protected function init()
 	{
+	    $this->uid = StringHelper::random(10);
 	}
 
 	public function getFolder()
 	{
-		return \diCore\Data\Config::getLogFolder();
+		return Config::getLogFolder();
 	}
 
 	protected function getFilename($purpose, $fnSuffix = '')
@@ -50,7 +55,7 @@ class Logger
 		$fn = $this->getFullFilename($purpose, $fnSuffix);
 
 		$f = fopen($fn, 'a');
-		fputs($f, $this->getDateTime($purpose) . ' ' . $line . "\n");
+		fputs($f, $this->uid . '> ' . $this->getDateTime($purpose) . ' ' . $line . "\n");
 		fclose($f);
 
 		@chmod($fn, static::CHMOD);
@@ -60,12 +65,11 @@ class Logger
 
 	public function log($message, $module = '', $fnSuffix = '')
 	{
-		if ($module)
-		{
-			$module = "[$module]";
+		if ($module) {
+			$module = "[$module] ";
 		}
 
-		$this->saveLine($module . ' ' . $message, self::PURPOSE_SIMPLE, $fnSuffix);
+		$this->saveLine($module . $message, self::PURPOSE_SIMPLE, $fnSuffix);
 
 		return $this;
 	}
@@ -74,8 +78,7 @@ class Logger
 	{
 		$arguments = func_get_args();
 
-		foreach ($arguments as $arg)
-		{
+		foreach ($arguments as $arg) {
 			$this->saveLine(print_r($arg, true) ?: var_export($arg, true), self::PURPOSE_VARIABLE);
 		}
 
