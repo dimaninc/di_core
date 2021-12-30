@@ -141,9 +141,13 @@ class Transport
             static::log('App name: ' . static::applicationName);
 		}
 
-		$res = \Requests::post($url, [], $query, [
-            'transport' => 'Requests_Transport_fsockopen',
-		]);
+		try {
+            $res = \Requests::post($url, [], $query, [
+                'transport' => 'Requests_Transport_fsockopen',
+            ]);
+        } catch (\Exception $e) {
+            static::log('Exception: ' . $e->getMessage());
+        }
 
 		if (static::debug) {
             static::log('Requests response:');
