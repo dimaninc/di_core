@@ -1683,8 +1683,11 @@ EOF;
 	{
 		switch ($affix) {
 			case self::INPUT_SUFFIX_NEW_FIELD:
-				$affix = ' или введите: <input type="text" name="' . $field . self::NEW_FIELD_SUFFIX . '" value="" style="width: 300px;">';
-				break;
+				return sprintf(
+				    ' <span class="ml-5 mr-5">%s:</span> <input type="text" name="%s" value="" style="width: 300px;">',
+                    $this->L('or_enter'),
+                    $field . self::NEW_FIELD_SUFFIX
+                );
 		}
 
 		return $affix;
@@ -1760,6 +1763,7 @@ EOF;
 	{
 		$sel = new \diSelect($field, $this->getData($field));
 		$sel
+            ->setAttr('data-edit-own-value', 'true')
 			->setAttr($this->getInputAttributes($field))
 			->addItemArray2($include);
 
@@ -1771,7 +1775,7 @@ EOF;
 		}
 
 		$this->inputs[$field] = count($sel->getItemsAr())
-			? $sel . ' ' . $this->L('or_enter') . ': '
+			? $sel . ' <span class="ml-5 mr-5">' . $this->L('or_enter') . ':</span> '
 			: '';
 
 		$width = $this->inputs[$field]
@@ -1815,7 +1819,7 @@ EOF;
 			$sel->setAttr($this->getInputAttributes($field));
 
 			$this->inputs[$field] = $sel->getHTML();
-			$this->inputs[$field] .= ' ' . $this->L('or_enter') . ': <input type="text" name="' .
+			$this->inputs[$field] .= ' <span class="ml-5 mr-5">' . $this->L('or_enter') . ':</span> <input type="text" name="' .
 				$field . self::NEW_FIELD_SUFFIX . '" value="" style="width: 300px;">';
 
 			$this->force_inputs_fields[$field] = true;

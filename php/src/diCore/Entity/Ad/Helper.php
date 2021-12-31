@@ -9,8 +9,9 @@
 namespace diCore\Entity\Ad;
 
 use diCore\Base\CMS;
-use diCore\Data\Types;
-use diCore\Entity\AdBlock\Model as AdBlock;
+use diCore\Data\Configuration;
+use diCore\Entity\AdBlock\Collection as Blocks;
+use diCore\Entity\AdBlock\Model as Block;
 
 class Helper
 {
@@ -61,7 +62,7 @@ class Helper
 	 */
 	private $ads = [];
 	/**
-	 * @var AdBlock
+	 * @var Block
 	 */
 	private $block;
 
@@ -72,9 +73,7 @@ class Helper
 		$a = new static($CMS ?: $Z);
 
 		if (!$blockId) {
-		    /** @var Collection $blocks */
-		    $blocks = \diCollection::create(Types::ad_block);
-		    $blocks
+		    $blocks = Blocks::create()
                 ->filterByVisible(1)
                 ->orderByOrderNum();
 
@@ -88,10 +87,10 @@ class Helper
 	{
 		$ar1 = $ar2 = [];
 
-		$blocks = \diCollection::create(Types::ad_block);
-		foreach ($blocks as $block)
-		{
-			$ar1[] = sprintf(AdBlock::INCUT_TEMPLATE, $block->getId());
+		$blocks = Blocks::create();
+		/** @var Block $block */
+        foreach ($blocks as $block) {
+			$ar1[] = sprintf(Block::INCUT_TEMPLATE, $block->getId());
 			$ar2[] = self::printBlock($block, '_AD_BLOCK', $Z);
 		}
 
@@ -124,7 +123,7 @@ class Helper
 	{
 		$this->block = is_object($blockId) && $blockId instanceof \diModel
 			? $blockId
-			: \diModel::create(Types::ad_block, $blockId);
+			: Block::createById($blockId);
 
 		return $this;
 	}
@@ -166,17 +165,17 @@ class Helper
 	}
 
 	/**
-	 * @return AdBlock
+	 * @return Block
 	 * @throws \Exception
 	 */
 	protected function getBlock()
 	{
-		return $this->block ?: \diModel::create(Types::ad_block);
+		return $this->block ?: Block::create();
 	}
 
 	protected function getHolidayDates()
 	{
-		$ar = preg_split('#[;,\s]+#', \diConfiguration::safeGet('holidays'));
+		$ar = preg_split('#[;,\s]+#', Configuration::safeGet('holidays'));
 
 		return $ar;
 	}

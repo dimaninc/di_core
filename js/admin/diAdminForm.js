@@ -66,7 +66,8 @@ var diAdminForm = function(table, id, auto_save_timeout) {
         .initFileInputs()
         .initCheckboxesToggles()
         .initFieldMaxLength()
-        .initOwnValueForSelect();
+        .initOwnValueForSelect()
+        .editOwnValue();
 
         initiating = false;
 	}
@@ -160,6 +161,22 @@ var diAdminForm = function(table, id, auto_save_timeout) {
                 }
 
                 $label.toggle(state);
+            }).trigger('change');
+        });
+
+        return this;
+    };
+
+    this.editOwnValue = function () {
+        var $selects = $(this.e.form).find('select[data-edit-own-value]');
+
+        $selects.each(function () {
+            var $s = $(this);
+            var field = $s.attr('name');
+            var $inp = $s.closest('.value').find('input[name="{0}"]'.format(field + '__new__'));
+
+            $s.on('change click keyup', function() {
+                $inp.val($s.find('option:selected').text());
             }).trigger('change');
         });
 

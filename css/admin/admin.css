@@ -750,6 +750,12 @@ u:hover {
 .no-padding {
   padding: 0 !important;
 }
+.ml-5 {
+  margin-left: 5px;
+}
+.mr-5 {
+  margin-right: 5px;
+}
 .close {
   display: block;
   float: right;
@@ -2245,6 +2251,12 @@ body[data-skin="entrine"] .diadminform-row[data-purpose="notes"] .title {
   -webkit-flex-wrap: wrap;
   -ms-flex-wrap: wrap;
   flex-wrap: wrap;
+  -webkit-box-align: center;
+  -moz-box-align: center;
+  -o-box-align: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
+  align-items: center;
 }
 .diadminform-row[data-type="pic"] .value,
 .diadminform-row[data-type="file"] .value {
