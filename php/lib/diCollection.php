@@ -1201,6 +1201,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return join(' ', $ar);
 	}
 
+    #[\ReturnTypeWillChange]
 	public function rewind()
 	{
 		reset($this->items);
@@ -1208,16 +1209,19 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this;
 	}
 
+    #[\ReturnTypeWillChange]
 	public function current()
 	{
 		return current($this->items) ?: $this->getNewEmptyItem();
 	}
 
+    #[\ReturnTypeWillChange]
 	public function key()
 	{
 		return key($this->items);
 	}
 
+    #[\ReturnTypeWillChange]
 	public function next()
 	{
 		next($this->items);
@@ -1225,6 +1229,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this;
 	}
 
+    #[\ReturnTypeWillChange]
 	public function valid()
 	{
 		if (!$this->exists() && !$this->isLoaded()) {
@@ -1352,6 +1357,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this->realCount;
 	}
 
+    #[\ReturnTypeWillChange]
 	public function count($force = false)
 	{
 		if ($this->count === null || $force) {
@@ -1396,6 +1402,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this->count;
 	}
 
+    #[\ReturnTypeWillChange]
 	public function offsetExists($offset)
 	{
 		while (!$this->exists($offset) && !$this->isLoaded()) {
@@ -1405,11 +1412,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this->exists($offset);
 	}
 
+    #[\ReturnTypeWillChange]
 	public function offsetGet($offset)
 	{
 		return $this->offsetExists($offset) ? $this->items[$offset] : null;
 	}
 
+    #[\ReturnTypeWillChange]
 	public function offsetSet($offset, $value)
 	{
 		if (is_null($offset)) {
@@ -1421,6 +1430,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this;
 	}
 
+    #[\ReturnTypeWillChange]
 	public function offsetUnset($offset)
 	{
 		unset($this->items[$offset]);

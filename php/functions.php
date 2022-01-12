@@ -257,7 +257,13 @@ function str_out($str, $replaceAmp = false)
 
 function isInteger($value)
 {
-	return !is_int($value) ? ctype_digit($value) : true;
+    if (is_null($value)) {
+        return false;
+    }
+
+	return !is_int($value)
+        ? ctype_digit($value)
+        : true;
 }
 
 function lead0($num)

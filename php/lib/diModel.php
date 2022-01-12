@@ -2356,6 +2356,7 @@ ENGINE = InnoDB;";
 	 * @param string $offset
 	 * @param mixed $value
 	 */
+    #[\ReturnTypeWillChange]
 	public function offsetSet($offset, $value)
 	{
 		if ($offset == $this->getIdFieldName()) {
@@ -2372,6 +2373,7 @@ ENGINE = InnoDB;";
 	 * @param string $offset
 	 * @return boolean
 	 */
+    #[\ReturnTypeWillChange]
 	public function offsetExists($offset)
 	{
 		if ($offset == $this->getIdFieldName()) {
@@ -2387,6 +2389,7 @@ ENGINE = InnoDB;";
 	 * @link http://www.php.net/manual/en/arrayaccess.offsetunset.php
 	 * @param string $offset
 	 */
+    #[\ReturnTypeWillChange]
 	public function offsetUnset($offset){
 		return $this->kill($offset);
 	}
@@ -2398,6 +2401,7 @@ ENGINE = InnoDB;";
 	 * @param string $offset
 	 * @return mixed
 	 */
+    #[\ReturnTypeWillChange]
 	public function offsetGet($offset)
 	{
         if ($this->has($offset)) {
