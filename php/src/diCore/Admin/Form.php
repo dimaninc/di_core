@@ -1725,15 +1725,23 @@ EOF;
 		return $this->inputSuffixes[$field] ?? null;
 	}
 
-	public function setHrefInput($field)
+	public function setHrefInput($field, $href = null, $text = null)
 	{
 		if (!$this->getId()) {
 			$this
 				->setHiddenInput($field);
 		} else {
+		    if (!$href) {
+		        $href = $this->getModel()->getHref();
+            }
+
+		    if (!$text) {
+		        $text = $this->getModel()->getFullHref();
+            }
+
 			$this
                 ->setStaticInput($field)
-				->setInput($field, "<a href='{$this->getModel()->getHref()}' target='_blank'>{$this->getModel()->getFullHref()}</a>");
+				->setInput($field, "<a href='{$href}' target=_blank>{$text}</a>");
 		}
 
 		return $this;
