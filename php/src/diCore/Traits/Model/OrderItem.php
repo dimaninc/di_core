@@ -60,15 +60,32 @@ trait OrderItem
         return $this;
     }
 
-    public function getDataObject($key = null)
+    public function parseDataObject($force = false)
     {
-        if (!$this->data && $this->hasData()) {
+        if (
+            (!$this->data && $this->hasData()) ||
+            $force
+        ) {
             $this->data = json_decode($this->getData());
         }
+
+        return $this;
+    }
+
+    public function getDataObject($key = null)
+    {
+        $this->parseDataObject();
 
         return $key === null
             ? $this->data
             : ArrayHelper::get($this->data, $key);
+    }
+
+    public function updateData($newData)
+    {
+        $this->data = extend($this->getDataObject(), $newData);
+
+        return $this->setData(json_encode($this->data));
     }
 
     public function getCost()
