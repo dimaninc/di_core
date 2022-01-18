@@ -2559,7 +2559,7 @@ ENGINE = InnoDB;";
             return (string)$value;
         }
         elseif ($value instanceof UTCDatetime) {
-            return \diDateTime::sqlFormat(((string)$value) / 1000);
+            return \diDateTime::sqlFormat($value->toDateTime()->getTimestamp());
         }
 
         return $value;
