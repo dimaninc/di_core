@@ -31,15 +31,15 @@ namespace diCore\Entity\Geo;
  * @method bool 	hasLongitude
  * @method bool 	hasMetroCode
  *
- * @method GeoIpLocation setCountryCode($value)
- * @method GeoIpLocation setCountryName($value)
- * @method GeoIpLocation setRegionCode($value)
- * @method GeoIpLocation setRegionName($value)
- * @method GeoIpLocation setCity($value)
- * @method GeoIpLocation setZipCode($value)
- * @method GeoIpLocation setLatitude($value)
- * @method GeoIpLocation setLongitude($value)
- * @method GeoIpLocation setMetroCode($value)
+ * @method $this setCountryCode($value)
+ * @method $this setCountryName($value)
+ * @method $this setRegionCode($value)
+ * @method $this setRegionName($value)
+ * @method $this setCity($value)
+ * @method $this setZipCode($value)
+ * @method $this setLatitude($value)
+ * @method $this setLongitude($value)
+ * @method $this setMetroCode($value)
  */
 class GeoIpLocation
 {
@@ -53,12 +53,21 @@ class GeoIpLocation
 		GeoLiteLocation::class,
 	];
 
+    public static $crimeaRegions = [
+        'Crimea',
+        'Republic of Crimea',
+        'Autonomous Republic of Crimea',
+        'Krym',
+        'Gorod Sevastopol',
+        'Sevastopol',
+        "Sevastopol'",
+    ];
+
 	public function __construct($ip = null)
 	{
 		$this->ip = $ip;
 
-		if (isInteger($this->ip))
-		{
+		if (isInteger($this->ip)) {
 			$this->ip = bin2ip($this->ip);
 		}
 
@@ -72,10 +81,8 @@ class GeoIpLocation
 	 */
 	public static function create($ip = null)
 	{
-		foreach (self::$providers as $provider)
-		{
-			if (class_exists($provider))
-			{
+		foreach (self::$providers as $provider) {
+			if (class_exists($provider)) {
 				return new $provider($ip);
 			}
 		}
@@ -90,10 +97,10 @@ class GeoIpLocation
 
 	protected function readData()
 	{
-		if (!$this->exists() && $this->getBinIp())
-		{
+		if (!$this->exists() && $this->getBinIp()) {
 			$this
-				->fetchData();
+				->fetchData()
+                ->fixData();
 		}
 
 		return $this;
@@ -109,6 +116,22 @@ class GeoIpLocation
 		return $this;
 	}
 
+    protected function fixData()
+    {
+        if ($this->isCrimea()) {
+            $this
+                ->setCountryCode('RU')
+                ->setCountryName('Russia');
+        }
+
+        return $this;
+    }
+
+    public function isCrimea()
+    {
+        return in_array($this->getRegionName(), GeoIpLocation::$crimeaRegions);
+    }
+
 	public function __call($method, $arguments)
 	{
 		$fullMethod = underscore($method);
@@ -118,8 +141,7 @@ class GeoIpLocation
 		$method = substr($fullMethod, 0, $x);
 		$field = substr($fullMethod, $x + 1);
 
-		switch ($method)
-		{
+		switch ($method) {
 			case "get":
 				return $this->get($field);
 
@@ -140,17 +162,15 @@ class GeoIpLocation
 
 	/**
 	 * @param string|null $field
-	 * @return string|int|null|object
+	 * @return string|int|null|array
 	 */
 	public function get($field = null)
 	{
-		if (is_null($field))
-		{
+		if (is_null($field)) {
 			return $this->data;
 		}
 
-		if (!$this->exists($field))
-		{
+		if (!$this->exists($field)) {
 			return null;
 		}
 
@@ -175,12 +195,9 @@ class GeoIpLocation
 
 	public function set($field, $value = null)
 	{
-		if (is_null($value))
-		{
+		if (is_null($value)) {
 			$this->data = extend($this->data, $field);
-		}
-		else
-		{
+		} else {
 			$this->data[$field] = $value;
 		}
 

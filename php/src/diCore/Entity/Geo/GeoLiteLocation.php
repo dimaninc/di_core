@@ -8,6 +8,7 @@
 
 namespace diCore\Entity\Geo;
 
+use diCore\Helper\StringHelper;
 use diCore\Tool\Logger;
 use MaxMind\Db\Reader;
 
@@ -23,9 +24,8 @@ class GeoLiteLocation extends GeoIpLocation
      */
     protected function getReader()
     {
-        if (!$this->Reader)
-        {
-            $this->Reader = new Reader(\diCore\Helper\StringHelper::slash(dirname(\diPaths::fileSystem())) .
+        if (!$this->Reader) {
+            $this->Reader = new Reader(StringHelper::slash(dirname(\diPaths::fileSystem())) .
                 'data/geo/GeoLite2-City.mmdb');
         }
 
@@ -34,8 +34,7 @@ class GeoLiteLocation extends GeoIpLocation
 
     protected function closeReader()
     {
-        if ($this->Reader)
-        {
+        if ($this->Reader) {
             $this->Reader->close();
             $this->Reader = null;
         }
@@ -47,8 +46,7 @@ class GeoLiteLocation extends GeoIpLocation
     {
         $d = $this->getReader()->get($this->getIp());
 
-        if ($d)
-        {
+        if ($d) {
             $this->data = [
                 'city' => isset($d['city']['names'][$this->language]) ? $d['city']['names'][$this->language] : null,
                 'country_code' => isset($d['country']['iso_code']) ? $d['country']['iso_code'] : null,
@@ -60,9 +58,7 @@ class GeoLiteLocation extends GeoIpLocation
                 'longitude' => isset($d['location']['longitude']) ? $d['location']['longitude'] : null,
                 'metro_code' => null,
             ];
-        }
-        else
-        {
+        } else {
             Logger::getInstance()->log('Geo data for IP not found: ' . $this->getIp());
 
             $this->data = [];
