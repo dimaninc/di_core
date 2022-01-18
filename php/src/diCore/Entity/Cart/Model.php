@@ -43,6 +43,13 @@ class Model extends \diModel implements \diCore\Interfaces\CartOrder
     const item_type = Types::cart_item;
 	const pre_cache_needed = false;
 
+    /**
+     * @param null $id
+     * @param null $sessionId
+     * @param null $userId
+     * @return $this
+     * @throws \Exception
+     */
 	public static function autoCreate($id = null, $sessionId = null, $userId = null)
 	{
 	    if (static::only_one_instance && static::$instance) {
