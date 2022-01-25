@@ -61,6 +61,7 @@ class GeoIpLocation
         'Gorod Sevastopol',
         'Sevastopol',
         "Sevastopol'",
+        'Sebastopol City',
     ];
 
 	public function __construct($ip = null)
