@@ -683,6 +683,9 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		$operator = isset($arguments[1]) ? $arguments[1] : null;
 
 		list($method, $field) = $this->detectMethod($fullMethod);
+        /** @var \diModel $modelClass */
+        $modelClass = static::getModelClass();
+		$field = $modelClass::normalizeFieldName($field);
 
 		switch ($method) {
 			case 'filter_by':
