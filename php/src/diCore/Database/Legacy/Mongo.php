@@ -9,6 +9,8 @@
 namespace diCore\Database\Legacy;
 
 use diCore\Helper\ArrayHelper;
+use MongoDB\Client;
+use MongoDB\Database;
 use MongoDB\Driver\Cursor;
 use MongoDB\Model\CollectionInfo;
 
@@ -16,7 +18,7 @@ use MongoDB\Model\CollectionInfo;
  * Class Mongo
  * @package diCore\Database\Legacy
  *
- * @method \MongoDB\Database getLink
+ * @method Database getLink
  */
 class Mongo extends \diDB
 {
@@ -24,7 +26,7 @@ class Mongo extends \diDB
 	const DEFAULT_PORT = 27017;
 
 	/**
-	 * @var \MongoDB\Client
+	 * @var Client
 	 */
 	protected $mongo;
 	/** @var string|null */
@@ -34,7 +36,7 @@ class Mongo extends \diDB
 	{
 		$time1 = utime();
 
-		$this->mongo = new \MongoDB\Client($this->getServerConnectionString());
+		$this->mongo = new Client($this->getServerConnectionString());
 		$this->link = $this->mongo->selectDatabase($this->getDatabase());
 
 		$time2 = utime();
@@ -270,9 +272,26 @@ class Mongo extends \diDB
             'limit' => 1,
         ])->toArray(), 0, []);
         foreach ($ar as $name => $value) {
-            $fields[$name] = gettype($value);
+            $type = gettype($value);
+
+            if (is_array($value)) {
+                if (!empty($value['milliseconds'])) {
+                    $type = 'timestamp';
+                }
+            }
+
+            $fields[$name] = $type;
         }
 
         return $fields;
+    }
+
+    public function getFieldMethodForModel($field, $method)
+    {
+        if ($field === '_id') {
+            $field = 'id';
+        }
+
+        return $method . ucfirst($field);
     }
 }

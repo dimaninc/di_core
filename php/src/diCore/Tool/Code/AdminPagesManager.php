@@ -8,6 +8,7 @@
 
 namespace diCore\Tool\Code;
 
+use diCore\Admin\Data\FormFlag;
 use diCore\Database\Connection;
 use diCore\Helper\StringHelper;
 use diCore\Helper\FileSystemHelper;
@@ -25,6 +26,8 @@ class AdminPagesManager
 
     protected $skipInColumnsFields = [
         'id',
+        '_id',
+        '__v',
         'visible',
         'order_num',
         'to_show_content',
@@ -117,6 +120,7 @@ class AdminPagesManager
  * Time: %2$s
  */
 %11$s
+use diCore\Admin\Data\FormFlag;
 %12$s
 class %3$s extends \diCore\Admin\BasePage
 {
@@ -241,11 +245,13 @@ EOF;
         ];
 
         foreach ($fields as $field => $type) {
-            if (in_array($field, ['id'])) {
+            if (in_array($field, ['id', '_id', '__v'])) {
                 continue;
             }
 
-            $sort = in_array($field, $this->localFieldNames) ? 'local' : 'form';
+            $sort = in_array($field, $this->localFieldNames)
+                ? 'local'
+                : 'form';
 
             $ar[$sort][] = $this->getFieldInfo($field, $type);
         }
@@ -283,23 +289,35 @@ EOF;
 
     protected function getFlagsStr($field)
     {
+        $fieldAlt = underscore($field);
         $flags = [];
 
-        if (in_array($field, $this->staticFieldNames)) {
-            $flags[] = 'static';
+        if (
+            in_array($field, $this->staticFieldNames) ||
+            in_array($fieldAlt, $this->staticFieldNames)
+        ) {
+            $flags[] = FormFlag::static;
         }
 
-        if (in_array($field, $this->untouchableFieldNames)) {
-            $flags[] = 'untouchable';
+        if (
+            in_array($field, $this->untouchableFieldNames) ||
+            in_array($fieldAlt, $this->untouchableFieldNames)
+        ) {
+            $flags[] = FormFlag::untouchable;
         }
 
-        if (in_array($field, $this->initiallyHiddenFieldNames)) {
-            $flags[] = 'initially_hidden';
+        if (
+            in_array($field, $this->initiallyHiddenFieldNames) ||
+            in_array($fieldAlt, $this->initiallyHiddenFieldNames)
+        ) {
+            $flags[] = FormFlag::initially_hidden;
         }
 
         return $flags
-            ? "\n                'flags' => [" . join(', ', array_map(function($f) { return "'" . $f . "'"; }, $flags)) . "],"
-            : "";
+            ? "\n                'flags' => [" . join(', ', array_map(function($f) {
+                    return 'FormFlag::' . $f;
+                }, $flags)) . '],'
+            : '';
     }
 
     protected function tuneType($field, $type)
@@ -364,12 +382,20 @@ EOF;
         $ar = [];
 
         foreach ($this->getFieldsOfTable($connName, $table) as $field => $type) {
-            if (in_array($field, $this->skipInColumnsFields)) {
+            $fieldAlt = underscore($field);
+
+            if (
+                in_array($field, $this->skipInColumnsFields) ||
+                in_array($fieldAlt, $this->skipInColumnsFields)
+            ) {
                 continue;
             }
 
-            if (in_array($field, $this->dateTimeFieldNames)) {
-                $methodName = camelize('get_' . $field);
+            if (
+                in_array($field, $this->dateTimeFieldNames) ||
+                in_array($fieldAlt, $this->dateTimeFieldNames)
+            ) {
+                $methodName = $this->getDb($connName)->getFieldMethodForModel($field, 'get');
 
                 $ar[] = <<<EOF
             '$field' => [

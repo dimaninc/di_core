@@ -565,6 +565,11 @@ class diModel implements \ArrayAccess
             : static::id_field_name;
 	}
 
+	public static function areFieldsInCamelCase()
+    {
+        return static::getConnection()::isMongo();
+    }
+
 	public function getId()
 	{
 		return $this->id;

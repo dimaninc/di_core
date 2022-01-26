@@ -26,11 +26,15 @@ class ModelsManager
 
     public static $skippedInAnnotationFields = [
         'id',
+        '_id', // mongo id
         'clean_title',
         'slug',
+        '__v', // mongo tech field
     ];
 
-    public static $skippedInCollectionAnnotationFields = [];
+    public static $skippedInCollectionAnnotationFields = [
+        '__v', // mongo tech field
+    ];
 
     protected function getModelTemplate()
     {
@@ -114,6 +118,7 @@ EOF;
             $className = $className ?: self::getModelClassNameByTable($table, $this->getNamespace());
             $annotations = $this->getModelMethodsAnnotations(
                 $fields,
+                $connName,
                 $className
             );
 
@@ -159,6 +164,7 @@ EOF;
             $collectionClassName = $collectionClassName ?: self::getCollectionClassNameByTable($table, $this->getNamespace());
             $collectionAnnotations = $this->getCollectionMethodsAnnotations(
                 $fields,
+                $connName,
                 $collectionClassName
             );
 
@@ -168,15 +174,15 @@ EOF;
                 self::extractClass($collectionClassName),
                 $table,
                 $typeName,
-                join("\n", $collectionAnnotations["filterBy"]),
-                join("\n", $collectionAnnotations["orderBy"]),
-                join("\n", $collectionAnnotations["select"]),
+                join("\n", $collectionAnnotations['filterBy']),
+                join("\n", $collectionAnnotations['orderBy']),
+                join("\n", $collectionAnnotations['select']),
                 $this->getNamespace() ? "\nnamespace " . self::extractNamespace($collectionClassName) . ";\n" : '',
-                $collectionAnnotations["filterByLocalized"]
-                    ? "\n *\n" . join("\n", $collectionAnnotations["filterByLocalized"]) .
-                      "\n *\n" . join("\n", $collectionAnnotations["orderByLocalized"]) .
-                      "\n *\n" . join("\n", $collectionAnnotations["selectLocalized"])
-                    : "",
+                $collectionAnnotations['filterByLocalized']
+                    ? "\n *\n" . join("\n", $collectionAnnotations['filterByLocalized']) .
+                      "\n *\n" . join("\n", $collectionAnnotations['orderByLocalized']) .
+                      "\n *\n" . join("\n", $collectionAnnotations['selectLocalized'])
+                    : '',
                 $connectionNameStr
             );
 
@@ -236,7 +242,7 @@ EOF;
         return $s;
     }
 
-    protected function getModelMethodsAnnotations($fields, $className)
+    protected function getModelMethodsAnnotations($fields, $connName, $className)
     {
         $ar = [
             'get' => [],
@@ -247,8 +253,7 @@ EOF;
         $localizedNeeded = [];
 
         /*
-        if ($this->getNamespace())
-        {
+        if ($this->getNamespace()) {
             $className = self::extractClass($className);
         }
         */
@@ -266,9 +271,13 @@ EOF;
                 $typeTab .= "\t";
             }
 
-            $ar['get'][] = " * @method " . $typeStr . $typeTab . camelize('get_' . $field);
-            $ar['has'][] = " * @method bool " . camelize('has_' . $field);
-            $ar['set'][] = " * @method $className " . camelize('set_' . $field) . "(\$value)";
+            $ar['get'][] = " * @method " . $typeStr . $typeTab .
+                $this->getDb($connName)->getFieldMethodForModel($field, 'get');
+            $ar['has'][] = " * @method bool " .
+                $this->getDb($connName)->getFieldMethodForModel($field, 'has');
+            $ar['set'][] = " * @method $className " .
+                $this->getDb($connName)->getFieldMethodForModel($field, 'set') .
+                "(\$value)";
 
             // localization tests
             $fieldComponents = explode('_', $field);
@@ -294,13 +303,13 @@ EOF;
             }
 
             $ar['localized'][$field] = " * @method " . $typeStr . $typeTab .
-                camelize('localized_' . $field);
+                $this->getDb($connName)->getFieldMethodForModel($field, 'localized');
         }
 
         return $ar;
     }
 
-    protected function getCollectionMethodsAnnotations($fields, $className)
+    protected function getCollectionMethodsAnnotations($fields, $connName, $className)
     {
         $ar = [
             'filterBy' => [],
@@ -313,8 +322,7 @@ EOF;
         $localizedNeeded = [];
 
         /*
-        if ($this->getNamespace())
-        {
+        if ($this->getNamespace()) {
             $className = self::extractClass($className);
         }
         */
@@ -327,11 +335,13 @@ EOF;
             }
 
             $ar["filterBy"][] = " * @method $className " .
-                camelize("filter_by_" . $field) . "(\$value, \$operator = null)";
+                $this->getDb($connName)->getFieldMethodForModel($field, 'filterBy') .
+                "(\$value, \$operator = null)";
             $ar["orderBy"][] = " * @method $className " .
-                camelize("order_by_" . $field) . "(\$direction = null)";
+                $this->getDb($connName)->getFieldMethodForModel($field, 'orderBy') .
+                "(\$direction = null)";
             $ar["select"][] = " * @method $className " .
-                camelize("select_" . $field) . "()";
+                $this->getDb($connName)->getFieldMethodForModel($field, 'select');
 
             // localization tests
             $fieldComponents = explode('_', $field);
@@ -348,11 +358,13 @@ EOF;
 
         foreach ($localizedNeeded as $field => $type) {
             $ar['filterByLocalized'][] = " * @method $className " .
-                camelize('filter_by_localized_' . $field) . "(\$value, \$operator = null)";
+                $this->getDb($connName)->getFieldMethodForModel($field, 'filterByLocalized') .
+                "(\$value, \$operator = null)";
             $ar['orderByLocalized'][] = " * @method $className " .
-                camelize('order_by_localized_' . $field) . "(\$direction = null)";
+                $this->getDb($connName)->getFieldMethodForModel($field, 'orderByLocalized') .
+                "(\$direction = null)";
             $ar['selectLocalized'][] = " * @method $className " .
-                camelize('select_localized_' . $field) . "()";
+                $this->getDb($connName)->getFieldMethodForModel($field, 'selectLocalized');
         }
 
         return $ar;

@@ -1170,6 +1170,15 @@ abstract class diDB
         return ' ' . join(' ', $ar);
     }
 
+    /**
+     * @param string $field
+     * @param string $method get/set/has
+     */
+    public function getFieldMethodForModel($field, $method)
+    {
+        return camelize($method . '_' . $field);
+    }
+
 	/* these methods should be overwritten */
 
 	abstract protected function __connect();

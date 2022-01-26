@@ -1031,7 +1031,9 @@ EOF;
                 : self::$defaultFieldTitles[$commonFieldName];
         }
 
-        return $fieldName;
+        return underscore($fieldName) === $fieldName
+            ? $fieldName
+            : static::getFieldTitle(underscore($fieldName), $fieldProps, $language);
     }
 
 	public function get_html()
