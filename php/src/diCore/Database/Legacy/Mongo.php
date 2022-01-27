@@ -9,6 +9,7 @@
 namespace diCore\Database\Legacy;
 
 use diCore\Helper\ArrayHelper;
+use MongoDB\BSON\ObjectId;
 use MongoDB\Client;
 use MongoDB\Database;
 use MongoDB\Driver\Cursor;
@@ -84,7 +85,7 @@ class Mongo extends \diDB
 
 		$insertResult = $this->getCollectionResource($table)
 			->insertOne($fields_values);
-		/** @var \MongoDB\BSON\ObjectId $id */
+		/** @var ObjectId $id */
 		$id = $insertResult->getInsertedId();
 
 		$time2 = utime();
@@ -134,6 +135,43 @@ class Mongo extends \diDB
 			throw new \Exception('Mongo can not execute queries, array filter needed');
 		}
 	}
+
+    public function delete($table, $id = '')
+    {
+        $deleted = 0;
+
+        $time1 = utime();
+
+        if (is_scalar($id)) {
+            $r = $this->getCollectionResource($table)
+                ->deleteOne([
+                    '_id' => new ObjectId($id),
+                ]);
+            $deleted = $r->getDeletedCount();
+        } elseif (is_array($id)) {
+            $r = $this->getCollectionResource($table)
+                ->deleteMany([
+                    '_id' => [
+                        '$in' => array_map(function ($id) {
+                            return new ObjectId($id);
+                        }, $id),
+                    ],
+                ]);
+            $deleted = $r->getDeletedCount();
+        } elseif (!$id && $id !== "") {
+            $this->getCollectionResource($table)
+                ->drop();
+            $deleted = true;
+
+            $this->_log("Warning, empty Q_ENDING in delete, collection '$table' dropped", false);
+        }
+
+        $time2 = utime();
+        $this->execution_time += $time2 - $time1;
+        $this->time_log('delete', $time2 - $time1);
+
+        return $deleted;
+    }
 
 	protected function __close()
 	{

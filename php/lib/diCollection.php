@@ -1487,9 +1487,9 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	public function getIds()
 	{
-		return array_filter($this->walk(function(\diModel $m) {
+		return array_filter(array_values($this->walk(function(\diModel $m) {
 			return $this->getId($m);
-		}));
+		})));
 	}
 
 	/**

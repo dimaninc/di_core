@@ -12,6 +12,7 @@ use diCore\Base\Language;
 use diCore\Data\Config;
 use diCore\Database\Connection;
 use diCore\Database\FieldType;
+use diCore\Entity\DynamicPic\Collection as DynamicPics;
 use diCore\Helper\Slug;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
@@ -2198,8 +2199,7 @@ ENGINE = InnoDB;";
 
 	public function killRelatedFiles($field = null)
 	{
-		if (!$this->exists())
-		{
+		if (!$this->exists()) {
 			return $this;
 		}
 
@@ -2207,18 +2207,18 @@ ENGINE = InnoDB;";
 		$basePath = $this->getFileSystemBasePath(true, $field);
 
 		// killing time
-		foreach ($killFiles as $fn)
-		{
-			if ($fn && is_file($basePath . $fn))
-			{
+		foreach ($killFiles as $fn) {
+			if ($fn && is_file($basePath . $fn)) {
 				unlink($basePath . $fn);
 			}
 		}
 
-		if ($field === null && $this->getTable() != 'dipics')
-		{
-			\diCore\Entity\DynamicPic\Collection::createByTarget($this->getTable(), $this->getId())
-				->hardDestroy();
+		if ($field === null && $this->getTable() !== 'dipics') {
+			$pics = DynamicPics::createByTarget($this->getTable(), $this->getId());
+
+			if ($pics->count()) {
+                $pics->hardDestroy();
+            }
 		}
 
 		return $this;
