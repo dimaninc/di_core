@@ -9,6 +9,8 @@
 namespace diCore\Payment\Paypal;
 
 use diCore\Tool\Logger;
+use WpOrg\Requests\Requests;
+use WpOrg\Requests\Transport\Fsockopen;
 
 class Transport
 {
@@ -137,17 +139,27 @@ class Transport
 	{
 		if (static::debug) {
 			static::log('Requests: ' . $url . ' ? ' . print_r($query, true));
-			static::log('Using class: ' . \Requests::class);
+			static::log('Using class: ' . Requests::class);
             static::log('App name: ' . static::applicationName);
 		}
 
-		try {
-            $res = \Requests::post($url, [], $query, [
-                'transport' => 'Requests_Transport_fsockopen',
-            ]);
-        } catch (\Exception $e) {
-            static::log('Exception: ' . $e->getMessage());
-            $res = json_decode('{"Exception":"[Caught]"}');
+		for ($try = 1; $try <= 2; $try++) {
+            if (static::debug) {
+                static::log('Try #' . $try);
+            }
+
+            try {
+                $res = Requests::post($url, [], $query, [
+                    'transport' => Fsockopen::class,
+                    'timeout' => 14,
+                    'connect_timeout' => 14,
+                ]);
+
+                break;
+            } catch (\Exception $e) {
+                static::log('Exception during request to paypal: ' . $e->getMessage());
+                $res = json_decode('{"Exception":"Caught above"}');
+            }
         }
 
 		if (static::debug) {
