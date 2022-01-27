@@ -147,6 +147,7 @@ class Transport
             ]);
         } catch (\Exception $e) {
             static::log('Exception: ' . $e->getMessage());
+            $res = json_decode('{"Exception":"[Caught]"}');
         }
 
 		if (static::debug) {
