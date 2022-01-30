@@ -130,6 +130,7 @@ abstract class CMS
 
 		// yandex.direct
 		'yclid',
+        'ysclid',
         'yandex_ad_client_id',
         'test-tag',
         'banner-test-tags',
