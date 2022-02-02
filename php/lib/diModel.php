@@ -146,6 +146,8 @@ class diModel implements \ArrayAccess
 
     protected $upsertFields = [];
 
+    protected static $publicFields = [];
+
 	/**
 	 * @param null|array|object $ar
 	 * @param null|string $table
@@ -2551,6 +2553,16 @@ ENGINE = InnoDB;";
         $this->upsertFields = $fields;
 
         return $this;
+    }
+
+    public static function getPublicFields()
+    {
+        return static::$publicFields;
+    }
+
+    public function getPublicData()
+    {
+        return ArrayHelper::filterByKey($this->get(), static::getPublicFields());
     }
 
     /**

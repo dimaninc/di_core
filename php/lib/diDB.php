@@ -1176,7 +1176,7 @@ abstract class diDB
      */
     public function getFieldMethodForModel($field, $method)
     {
-        return camelize($method . '_' . $field);
+        return camelize(underscore($method) . '_' . $field);
     }
 
 	/* these methods should be overwritten */

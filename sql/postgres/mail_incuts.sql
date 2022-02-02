@@ -7,6 +7,6 @@ CREATE TABLE IF NOT EXISTS mail_incuts
     content     BYTEA
 );
 
-CREATE INDEX idx_mail_incuts
+CREATE INDEX idx__mail_incuts
     ON mail_incuts (target_type, target_id, type);
 

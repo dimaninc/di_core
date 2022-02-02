@@ -588,6 +588,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this->slice();
 	}
 
+	public function asPublicDataArray()
+    {
+        return $this->map(function (\diModel $m) {
+            return $m->getPublicData();
+        });
+    }
+
 	/**
 	 * Setting current alias for next query settings
 	 * @param $alias
