@@ -441,9 +441,11 @@ class diModel implements \ArrayAccess
 	{
 		global $Z;
 
+		/*
 		if (!$language) {
             $language = static::__getLanguage();
         }
+		*/
 
 		if (
 		    \diCurrentCMS::LANGUAGE_MODE == Language::DOMAIN &&
@@ -459,7 +461,7 @@ class diModel implements \ArrayAccess
             $prefix = \diCurrentCMS::LANGUAGE_MODE == Language::URL
                 ? '/' . $language
                 : '';
-		} elseif (!empty($Z)) {
+		} elseif (!empty($Z) && !$language) {
 			$prefix = $Z->getLanguageHrefPrefix();
 		} else {
 			$prefix = '';
