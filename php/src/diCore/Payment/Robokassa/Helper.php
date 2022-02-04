@@ -12,6 +12,8 @@ use diCore\Data\Types;
 use diCore\Entity\PaymentDraft\Model as Draft;
 use diCore\Tool\Logger;
 use diCore\Traits\BasicCreate;
+use WpOrg\Requests\Requests;
+use WpOrg\Requests\Transport\Fsockopen;
 
 class Helper
 {
@@ -88,10 +90,10 @@ class Helper
 
 	public static function getRequest($url)
 	{
-		$request = \Requests::get(
+		$request = Requests::get(
 			$url,
 			[], [
-				'transport' => 'Requests_Transport_fsockopen',
+				'transport' => Fsockopen::class,
 			]
 		);
 

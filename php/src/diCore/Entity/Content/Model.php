@@ -155,6 +155,17 @@ class Model extends \diModel
 	const type = Types::content;
 	protected $table = 'content';
 
+	protected static $publicFields = [
+	    'clean_title',
+        'title',
+        'caption',
+        'content',
+        'visible',
+        'html_title',
+        'html_description',
+        'html_keywords',
+    ];
+
 	/** @var AdBlock */
 	protected $adBlock;
 

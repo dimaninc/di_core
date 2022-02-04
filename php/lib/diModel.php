@@ -12,6 +12,7 @@ use diCore\Base\Language;
 use diCore\Data\Config;
 use diCore\Database\Connection;
 use diCore\Database\FieldType;
+use diCore\Entity\DynamicPic\Collection as DynamicPics;
 use diCore\Helper\Slug;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
@@ -31,6 +32,7 @@ class diModel implements \ArrayAccess
 	const type = null;
 	const connection_name = null;
 	const table = null;
+	const camel_case_field_names = false;
 	const id_field_name = 'id';
     const mongo_id_field_name = '_id';
 	const slug_field_name = null; //self::SLUG_FIELD_NAME_LEGACY; get this back when all models are updated
@@ -143,6 +145,8 @@ class diModel implements \ArrayAccess
     protected static $fieldTypes = [];
 
     protected $upsertFields = [];
+
+    protected static $publicFields = [];
 
 	/**
 	 * @param null|array|object $ar
@@ -285,6 +289,15 @@ class diModel implements \ArrayAccess
         return self::create(static::type, $id, 'id');
     }
 
+    public static function normalizeFieldName($field)
+    {
+        if (static::camel_case_field_names) {
+            $field = camelize($field);
+        }
+
+        return $field;
+    }
+
 	public function __call($method, $arguments)
 	{
 		$fullMethod = underscore($method);
@@ -293,6 +306,7 @@ class diModel implements \ArrayAccess
 		$x = strpos($fullMethod, '_');
 		$method = substr($fullMethod, 0, $x);
 		$field = substr($fullMethod, $x + 1);
+        $field = static::normalizeFieldName($field);
 
 		switch ($method) {
 			case 'get':
@@ -566,6 +580,11 @@ class diModel implements \ArrayAccess
             ? static::mongo_id_field_name
             : static::id_field_name;
 	}
+
+	public static function areFieldsInCamelCase()
+    {
+        return static::getConnection()::isMongo();
+    }
 
 	public function getId()
 	{
@@ -1048,12 +1067,8 @@ class diModel implements \ArrayAccess
                 return $ar;
             }
 
-            foreach ($ar as $field => &$value) {
-                if ($value instanceof ObjectID) {
-                    $value = (string)$value;
-                } elseif ($value instanceof UTCDatetime) {
-                    $value = $value->toDateTime()->format(\diDateTime::FORMAT_SQL_DATE_TIME);
-                }
+            foreach ($ar as $field => $value) {
+                $ar[$field] = static::tuneFieldValueByTypeAfterDb($field, $value);
             }
         }
 
@@ -2188,8 +2203,7 @@ ENGINE = InnoDB;";
 
 	public function killRelatedFiles($field = null)
 	{
-		if (!$this->exists())
-		{
+		if (!$this->exists()) {
 			return $this;
 		}
 
@@ -2197,18 +2211,18 @@ ENGINE = InnoDB;";
 		$basePath = $this->getFileSystemBasePath(true, $field);
 
 		// killing time
-		foreach ($killFiles as $fn)
-		{
-			if ($fn && is_file($basePath . $fn))
-			{
+		foreach ($killFiles as $fn) {
+			if ($fn && is_file($basePath . $fn)) {
 				unlink($basePath . $fn);
 			}
 		}
 
-		if ($field === null && $this->getTable() != 'dipics')
-		{
-			\diCore\Entity\DynamicPic\Collection::createByTarget($this->getTable(), $this->getId())
-				->hardDestroy();
+		if ($field === null && $this->getTable() !== 'dipics') {
+			$pics = DynamicPics::createByTarget($this->getTable(), $this->getId());
+
+			if ($pics->count()) {
+                $pics->hardDestroy();
+            }
 		}
 
 		return $this;
@@ -2339,7 +2353,7 @@ ENGINE = InnoDB;";
 
 		$qAr = $this->getQueryArForMove();
 		$query = $qAr ? 'WHERE ' . join(' AND ', $qAr) : '';
-		$field = static::order_field_name ?: $this->orderFieldName;
+		$field = static::normalizeFieldName(static::order_field_name ?: $this->orderFieldName);
 
 		$order_r = $this->getDb()->r(
             $this->getDb()->escapeTable($this->getTable()),
@@ -2543,6 +2557,16 @@ ENGINE = InnoDB;";
         return $this;
     }
 
+    public static function getPublicFields()
+    {
+        return static::$publicFields;
+    }
+
+    public function getPublicData()
+    {
+        return ArrayHelper::filterByKey($this->get(), static::getPublicFields());
+    }
+
     /**
      * @return \MongoDB\Collection
      */
@@ -2559,9 +2583,8 @@ ENGINE = InnoDB;";
     {
         if ($value instanceof ObjectID) {
             return (string)$value;
-        }
-        elseif ($value instanceof UTCDatetime) {
-            return \diDateTime::sqlFormat(((string)$value) / 1000);
+        } elseif ($value instanceof UTCDatetime) {
+            return \diDateTime::sqlFormat($value->toDateTime()->getTimestamp());
         }
 
         return $value;

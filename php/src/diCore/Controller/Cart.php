@@ -20,18 +20,24 @@ class Cart extends \diBaseController
 	{
 		parent::__construct($params);
 
-		$this->cart = Model::autoCreate()
-			->save();
+		$this->setupCart();
 
 		$this->targetType = \diRequest::request('target_type', 0);
 		$this->targetId = \diRequest::request('target_id', 0);
 		$this->quantity = \diRequest::request('quantity', 0);
 	}
 
+	protected function setupCart()
+    {
+        $this->cart = Model::autoCreate()
+            ->save();
+
+        return $this;
+    }
+
 	protected function setupCartItem()
 	{
-		if (!$this->cartItem)
-		{
+		if (!$this->cartItem) {
 			$this->cartItem = $this->getCart()
 				->getItem($this->targetType, $this->targetId);
 		}

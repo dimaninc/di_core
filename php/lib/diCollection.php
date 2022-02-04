@@ -588,6 +588,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this->slice();
 	}
 
+	public function asPublicDataArray()
+    {
+        return $this->map(function (\diModel $m) {
+            return $m->getPublicData();
+        });
+    }
+
 	/**
 	 * Setting current alias for next query settings
 	 * @param $alias
@@ -683,6 +690,9 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		$operator = isset($arguments[1]) ? $arguments[1] : null;
 
 		list($method, $field) = $this->detectMethod($fullMethod);
+        /** @var \diModel $modelClass */
+        $modelClass = static::getModelClass();
+		$field = $modelClass::normalizeFieldName($field);
 
 		switch ($method) {
 			case 'filter_by':
@@ -1484,9 +1494,9 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	public function getIds()
 	{
-		return array_filter($this->walk(function(\diModel $m) {
+		return array_filter(array_values($this->walk(function(\diModel $m) {
 			return $this->getId($m);
-		}));
+		})));
 	}
 
 	/**

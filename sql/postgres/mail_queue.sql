@@ -17,5 +17,5 @@ CREATE TABLE IF NOT EXISTS mail_queue
     settings     TEXT
 );
 
-CREATE INDEX idx_mail_queue
+CREATE INDEX idx__mail_queue
     ON mail_queue (visible, sent);

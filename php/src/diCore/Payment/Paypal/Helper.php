@@ -151,7 +151,7 @@ EOF;
 		$response = trim(end($tokens));
 
 		if (strcmp($response, "VERIFIED") == 0) {
-            static::log('Invalid IPN response: ' . $response);
+            static::log('Verified IPN response: ' . $response);
 
 			if (is_callable($this->options['onSuccessPayment'])) {
 				$this->options['onSuccessPayment']($this);

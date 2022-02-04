@@ -44,8 +44,8 @@ CREATE TABLE IF NOT EXISTS content(
 	ad_block_id integer default '0'
 );
 
-CREATE UNIQUE INDEX idx_content_clean_title
+CREATE UNIQUE INDEX idx__content__clean_title
 ON content (clean_title);
 
-CREATE INDEX idx_content
+CREATE INDEX idx__content
 ON content (visible,visible_top,visible_bottom,visible_left,visible_right,visible_logged_in,order_num,parent,level_num);
