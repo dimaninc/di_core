@@ -12,7 +12,7 @@ class SiteMap extends \diBaseController
 {
     public function generateAction()
     {
-        $this->adminRightsHardCheck();
+        //$this->adminRightsHardCheck();
 
         \diSiteMapGenerator::createAndGenerate();
     }
