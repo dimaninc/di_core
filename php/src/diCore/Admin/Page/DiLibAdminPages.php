@@ -8,6 +8,7 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Admin\Base;
 use diCore\Database\Connection;
 use diCore\Tool\Code\AdminPagesManager;
 
@@ -51,7 +52,7 @@ class DiLibAdminPages extends \diCore\Admin\BasePage
         }
 		$this->getTpl()
 			->assign([
-				'ACTION' => \diCore\Admin\Base::getPageUri($this->pseudoTable, 'submit'),
+				'ACTION' => Base::getPageUri($this->pseudoTable, 'submit'),
 			], 'ADMIN_FORM_');
 
 		$this->getForm()
@@ -72,7 +73,7 @@ class DiLibAdminPages extends \diCore\Admin\BasePage
 
 	protected function afterSubmitForm()
 	{
-		$this->redirectTo(\diCore\Admin\Base::getPageUri($this->pseudoTable, 'form'));
+		$this->redirectTo(Base::getPageUri($this->pseudoTable, 'form'));
 	}
 
 	public function getFormFields()

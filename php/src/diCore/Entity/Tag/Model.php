@@ -47,6 +47,7 @@ namespace diCore\Entity\Tag;
 class Model extends \diModel
 {
 	const type = \diTypes::tag;
+    const table = 'tags';
 	const slug_field_name = self::SLUG_FIELD_NAME;
 	protected $table = 'tags';
 

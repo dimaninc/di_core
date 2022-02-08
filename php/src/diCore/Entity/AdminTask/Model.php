@@ -31,19 +31,20 @@ use diCore\Helper\StringHelper;
  * @method bool hasDate
  * @method bool hasAdminId
  *
- * @method Model setTitle($value)
- * @method Model setContent($value)
- * @method Model setVisible($value)
- * @method Model setStatus($value)
- * @method Model setPriority($value)
- * @method Model setDueDate($value)
- * @method Model setDate($value)
- * @method Model setAdminId($value)
+ * @method $this setTitle($value)
+ * @method $this setContent($value)
+ * @method $this setVisible($value)
+ * @method $this setStatus($value)
+ * @method $this setPriority($value)
+ * @method $this setDueDate($value)
+ * @method $this setDate($value)
+ * @method $this setAdminId($value)
  */
 class Model extends \diModel
 {
 	const type = \diTypes::admin_task;
-	protected $table = "admin_tasks";
+    const table = 'admin_tasks';
+	protected $table = 'admin_tasks';
 
 	// statuses
 	const STATUS_PENDING = 10;
@@ -68,16 +69,16 @@ class Model extends \diModel
 	];
 
 	public static $statuses = [
-		self::STATUS_PENDING => "Не начата",
-		self::STATUS_IN_PROGRESS => "Выполняется",
-		self::STATUS_RESOLVED => "Ожидает тестирования",
-		self::STATUS_TESTED => "Протестирована",
-		self::STATUS_CLOSED => "Закрыта",
+		self::STATUS_PENDING => 'Не начата',
+		self::STATUS_IN_PROGRESS => 'Выполняется',
+		self::STATUS_RESOLVED => 'Ожидает тестирования',
+		self::STATUS_TESTED => 'Протестирована',
+		self::STATUS_CLOSED => 'Закрыта',
 
-		self::STATUS_REFINE_NEEDED => "Требуется уточнение",
+		self::STATUS_REFINE_NEEDED => 'Требуется уточнение',
 		self::STATUS_PAUSED => 'На паузе',
-		self::STATUS_DELAYED => "Отложена",
-		self::STATUS_CANCELLED => "Отменена",
+		self::STATUS_DELAYED => 'Отложена',
+		self::STATUS_CANCELLED => 'Отменена',
 	];
 	//
 
@@ -88,10 +89,10 @@ class Model extends \diModel
 	const PRIORITY_BLOCKER = 30;
 
 	public static $priorities = [
-		self::PRIORITY_MINOR => "Минимальный",
-		self::PRIORITY_MAJOR => "Средний",
-		self::PRIORITY_CRITICAL => "Высокий",
-		self::PRIORITY_BLOCKER => "Молния",
+		self::PRIORITY_MINOR => 'Минимальный',
+		self::PRIORITY_MAJOR => 'Средний',
+		self::PRIORITY_CRITICAL => 'Высокий',
+		self::PRIORITY_BLOCKER => 'Молния',
 	];
 	//
 
@@ -131,8 +132,7 @@ class Model extends \diModel
 
 	public static function statusStr($status = null)
 	{
-		if ($status === null)
-		{
+		if ($status === null) {
 			return static::$statuses;
 		}
 
@@ -143,8 +143,7 @@ class Model extends \diModel
 
 	public static function priorityStr($priority = null)
 	{
-		if ($priority === null)
-		{
+		if ($priority === null) {
 			return static::$priorities;
 		}
 

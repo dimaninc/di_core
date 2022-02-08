@@ -153,6 +153,7 @@ use diCore\Entity\AdBlock\Model as AdBlock;
 class Model extends \diModel
 {
 	const type = Types::content;
+    const table = 'content';
 	protected $table = 'content';
 
 	protected static $publicFields = [

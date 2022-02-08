@@ -55,6 +55,7 @@ use diCore\Entity\Ad\Helper;
 class Model extends \diModel
 {
 	const type = \diTypes::ad_block;
+    const table = 'ad_blocks';
 	protected $table = 'ad_blocks';
 
 	const INCUT_TEMPLATE = '[AD-BLOCK-%d]';

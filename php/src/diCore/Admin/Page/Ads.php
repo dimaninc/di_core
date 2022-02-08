@@ -83,11 +83,11 @@ class Ads extends \diCore\Admin\BasePage
 					'width' => '30%',
 				],
 			],
-			'#edit' => '',
-			'#del' => '',
-			'#visible' => '',
-			'#up' => '',
-			'#down' => '',
+			'#edit' => [],
+			'#del' => [],
+			'#visible' => [],
+			'#up' => [],
+			'#down' => [],
 		]);
 	}
 
@@ -111,7 +111,7 @@ class Ads extends \diCore\Admin\BasePage
 	public function submitForm()
 	{
 		$this->getSubmit()
-			->store_pics('pic');
+			->storeImage('pic');
 	}
 
 	protected function getQueryParamsForRedirectAfterSubmit()
@@ -283,20 +283,17 @@ class Ads extends \diCore\Admin\BasePage
 		return [
 			'order_num' => [
 				'type' => 'order_num',
-				'title' => 'Order num',
 				'default' => 0,
 				'direction' => 1,
 			],
 
 			'pic_w' => [
 				'type' => 'int',
-				'title' => 'Pic w',
 				'default' => 0,
 			],
 
 			'pic_h' => [
 				'type' => 'int',
-				'title' => 'Pic h',
 				'default' => 0,
 			],
 		];

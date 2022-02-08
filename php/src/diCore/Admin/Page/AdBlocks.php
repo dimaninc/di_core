@@ -2,11 +2,22 @@
 namespace diCore\Admin\Page;
 
 use diCore\Admin\BasePage;
+use diCore\Admin\Data\FormFlag;
+use diCore\Data\Types;
 use diCore\Entity\Ad\Helper;
 use diCore\Entity\AdBlock\Model;
+use diCore\Traits\Admin\TargetInside;
 
 class AdBlocks extends BasePage
 {
+    use TargetInside;
+
+    const TARGET_USED = false;
+
+    protected static $targetTypes = [
+        Types::content,
+    ];
+
 	protected $options = [
 		'filters' => [
 			'defaultSorter' => [
@@ -49,11 +60,11 @@ class AdBlocks extends BasePage
 				],
 				'icon' => 'img',
 			],
-			'#edit' => '',
-			'#del' => '',
-			'#visible' => '',
-			'#up' => '',
-			'#down' => '',
+			'#edit' => [],
+			'#del' => [],
+			'#visible' => [],
+			'#up' => [],
+			'#down' => [],
 		]);
 	}
 
@@ -70,14 +81,15 @@ class AdBlocks extends BasePage
 			->setSelectFromArrayInput('transition_style', Helper::$adTransitionStylesAr)
 			->setSelectFromArrayInput('slides_order', Helper::$adSlidesOrdersAr);
 
-		if ($this->getId())
-		{
+		if ($this->getId()) {
 			$this->getForm()->setInput('token', $this->getForm()->getModel()->getToken());
-		}
-		else
-		{
+		} else {
 			$this->getForm()->setHiddenInput('token');
 		}
+
+		if (static::TARGET_USED) {
+            $this->tiAddToForm($this, static::$targetTypes);
+        }
 	}
 
 	public function submitForm()
@@ -89,11 +101,31 @@ class AdBlocks extends BasePage
 		return [
 			'title' => [
 				'type' => 'string',
-				'title' => 'Название блока',
 				'default' => '',
 			],
 
-			'default_slide_title' => [
+            'purpose' => [
+                'type' => 'int',
+                'title' => 'Назначение',
+                'default' => '',
+                'flags' => [FormFlag::hidden],
+            ],
+
+            'target_type' => [
+                'type' => 'int',
+                'title' => 'Привязка к объекту (тип)',
+                'default' => 0,
+                'flags' => static::TARGET_USED ? [] : [FormFlag::hidden],
+            ],
+
+            'target_id' => [
+                'type' => 'int',
+                'title' => 'Привязка к объекту (объект)',
+                'default' => 0,
+                'flags' => static::TARGET_USED ? [] : [FormFlag::hidden],
+            ],
+
+            'default_slide_title' => [
 				'type' => 'string',
 				'title' => 'Заголовок слайдов по умолчанию',
 				'default' => '',
@@ -162,7 +194,6 @@ class AdBlocks extends BasePage
 		return [
 			'order_num' => [
 				'type' => 'order_num',
-				'title' => 'Order num',
 				'default' => 0,
 				'direction' => 1,
 			],

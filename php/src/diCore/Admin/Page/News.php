@@ -75,9 +75,9 @@ class News extends \diCore\Admin\BasePage
 					'width' => '90%',
 				],
 			],
-			'#edit' => '',
-			'#del' => '',
-			'#visible' => '',
+			'#edit' => [],
+			'#del' => [],
+			'#visible' => [],
 		]);
 	}
 
@@ -89,7 +89,7 @@ class News extends \diCore\Admin\BasePage
 	{
 		$this->getSubmit()
 			->makeSlug()
-			->storeImage('pic', $this->picOptions);
+			->storeImage('pic');
 	}
 
 	protected function afterSubmitForm()
@@ -105,13 +105,14 @@ class News extends \diCore\Admin\BasePage
 		/** @var Model $m */
 		$m = \diModel::create(Types::news, $this->getSubmit()->getModel()->getId());
 
-		if (!\diRequest::post('dispatch', 0) && !\diRequest::post('dispatch_test', 0))
-		{
+		if (
+		    !\diRequest::post('dispatch', 0)
+            && !\diRequest::post('dispatch_test', 0)
+        ) {
 			return $this;
 		}
 
 		$mode = \diRequest::post('dispatch_test', 0) ? self::DISPATCH_MODE_TEST : self::DISPATCH_MODE_STANDARD;
-
 		$sender = \diConfiguration::get('newsletter_email');
 		$subject = $m->getTitle();
 		$content = $m->getContent();
@@ -125,8 +126,7 @@ class News extends \diCore\Admin\BasePage
 		$fn = \diPaths::fileSystem() . $m->getPicsFolder() . $m->getPic();
 		$fileReplaces['{PIC}'] = '';
 
-		if ($m->hasPic() && is_file($fn))
-		{
+		if ($m->hasPic() && is_file($fn)) {
 			$imgContent = file_get_contents($fn);
 
 			$ext = strtolower(\diCore\Helper\StringHelper::fileExtension($m->getPic()));
@@ -174,8 +174,7 @@ EOF;
 			: "WHERE email!='' and notify_news='1' and newsletter_flag='0' and active='1' ORDER BY id ASC"
 		);
 		/** @var \diCore\Entity\User\Model $user */
-		foreach ($users as $user)
-		{
+		foreach ($users as $user) {
 			$recipient = $user->getEmail();
 
 			$bodySuffix = <<<EOF
@@ -195,16 +194,14 @@ EOF;
 
 			$mq->add($sender, $recipient, $subject, $body_prefix . $bodySuffix, false, $m->getId());
 
-			if ($newsLetterFlag)
-			{
+			if ($newsLetterFlag) {
 				$user
 					->setNewsletterFlag(1)
 					->save();
 			}
 		}
 
-		if ($newsLetterFlag)
-		{
+		if ($newsLetterFlag) {
 			$this->getDb()->update('users', ['newsletter_flag' => 0]);
 		}
 

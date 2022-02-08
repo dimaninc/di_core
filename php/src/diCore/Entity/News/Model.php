@@ -80,6 +80,7 @@ use diCore\Admin\Submit;
 class Model extends \diBasePrevNextModel
 {
     const type = \diTypes::news;
+    const table = 'news';
     protected $table = 'news';
 
     protected static $picStoreSettings = [

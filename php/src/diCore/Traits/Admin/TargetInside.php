@@ -10,6 +10,7 @@ namespace diCore\Traits\Admin;
 
 use diCore\Data\Types;
 use diCore\Admin\BasePage;
+use diCore\Entity\Content\Model;
 
 trait TargetInside
 {
@@ -26,7 +27,7 @@ trait TargetInside
 		};
 
 		$defaultMapCollectionCallback = function (\diModel $m, $id) {
-			if ($m instanceof \diCore\Entity\Content\Model) {
+			if ($m instanceof Model) {
 				return [
 					'id' => $m->getId(),
 					'title' => sprintf('%s (%s)', $m->getTitle(), $m->getType()),

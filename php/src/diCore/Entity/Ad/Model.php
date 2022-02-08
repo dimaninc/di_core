@@ -91,6 +91,7 @@ use diCore\Helper\StringHelper;
 class Model extends \diModel
 {
 	const type = \diTypes::ad;
+    const table = 'ads';
 	protected $table = 'ads';
 
 	/**

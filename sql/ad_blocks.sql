@@ -1,5 +1,8 @@
 CREATE TABLE IF NOT EXISTS ad_blocks(
   id bigint auto_increment,
+  purpose int,
+  target_type int,
+  target_id int,
   title varchar(255),
   default_slide_title varchar(255) default '',
   default_slide_content text,
@@ -12,6 +15,6 @@ CREATE TABLE IF NOT EXISTS ad_blocks(
   visible tinyint default '1',
   order_num bigint,
   date timestamp default CURRENT_TIMESTAMP,
-  key idx(visible,order_num),
+  key idx(purpose, target_type, target_id, visible, order_num),
   primary key(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;

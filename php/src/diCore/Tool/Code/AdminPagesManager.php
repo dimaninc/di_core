@@ -144,11 +144,11 @@ class %3$s extends \diCore\Admin\BasePage
             'id' => 'ID',
             '#href' => [],
 %8$s
-            '#edit' => '',
-            '#del' => '',
-            '#visible' => '',
-            '#up' => '',
-            '#down' => '',
+            '#edit' => [],
+            '#del' => [],
+            '#visible' => [],
+            '#up' => [],
+            '#down' => [],
         ]);
     }
 
