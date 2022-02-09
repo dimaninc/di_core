@@ -10,6 +10,12 @@ namespace diCore\Database;
 
 use diCore\Database\Legacy\Mongo;
 
+/**
+ * Class MongoConnection
+ * @package diCore\Database
+ *
+ * @method Mongo getDb
+ */
 class MongoConnection extends Connection
 {
 	const engine = Engine::MONGO;
