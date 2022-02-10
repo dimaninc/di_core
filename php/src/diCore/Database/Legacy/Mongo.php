@@ -79,12 +79,12 @@ class Mongo extends \diDB
 		return $this->getLink()->selectCollection($collectionName);
 	}
 
-	public function insert($table, $fields_values = [])
+	public function insert($table, $fieldValues = [])
 	{
 		$time1 = utime();
 
 		$insertResult = $this->getCollectionResource($table)
-			->insertOne($fields_values);
+			->insertOne($fieldValues);
 		/** @var ObjectId $id */
 		$id = $insertResult->getInsertedId();
 
@@ -94,6 +94,47 @@ class Mongo extends \diDB
 
 		return $this->lastInsertId = (string)$id;
 	}
+
+	public function update($table, $fieldValues = [], $filterOrId = '')
+    {
+        $updated = 0;
+
+        $time1 = utime();
+
+        if (is_scalar($filterOrId)) {
+            $r = $this->getCollectionResource($table)
+                ->updateOne([
+                    '_id' => new ObjectId($filterOrId),
+                ], [
+                    '$set' => $fieldValues,
+                ]);
+            $updated = $r->getModifiedCount();
+        } elseif (is_array($filterOrId)) {
+            if (ArrayHelper::hasStringKey($filterOrId)) {
+                $filter = $filterOrId;
+            } else {
+                $filter = [
+                    '_id' => [
+                        '$in' => array_map(function ($id) {
+                            return new ObjectId($id);
+                        }, $filterOrId),
+                    ],
+                ];
+            }
+
+            $r = $this->getCollectionResource($table)
+                ->updateMany($filter, [
+                    '$set' => $fieldValues,
+                ]);
+            $updated = $r->getModifiedCount();
+        }
+
+        $time2 = utime();
+        $this->execution_time += $time2 - $time1;
+        $this->time_log('update', $time2 - $time1);
+
+        return $updated;
+    }
 
 	public static function convertDirection($direction)
 	{
@@ -136,29 +177,35 @@ class Mongo extends \diDB
 		}
 	}
 
-    public function delete($table, $id = '')
+    public function delete($table, $filterOrId = '')
     {
         $deleted = 0;
 
         $time1 = utime();
 
-        if (is_scalar($id)) {
+        if (is_scalar($filterOrId)) {
             $r = $this->getCollectionResource($table)
                 ->deleteOne([
-                    '_id' => new ObjectId($id),
+                    '_id' => new ObjectId($filterOrId),
                 ]);
             $deleted = $r->getDeletedCount();
-        } elseif (is_array($id)) {
-            $r = $this->getCollectionResource($table)
-                ->deleteMany([
+        } elseif (is_array($filterOrId)) {
+            if (ArrayHelper::hasStringKey($filterOrId)) {
+                $filter = $filterOrId;
+            } else {
+                $filter = [
                     '_id' => [
                         '$in' => array_map(function ($id) {
                             return new ObjectId($id);
-                        }, $id),
+                        }, $filterOrId),
                     ],
-                ]);
+                ];
+            }
+
+            $r = $this->getCollectionResource($table)
+                ->deleteMany($filter);
             $deleted = $r->getDeletedCount();
-        } elseif (!$id && $id !== "") {
+        } elseif (!$filterOrId && $filterOrId !== '') {
             $this->getCollectionResource($table)
                 ->drop();
             $deleted = true;

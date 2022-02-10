@@ -8,6 +8,7 @@
 
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
+use MongoDB\BSON\UTCDatetime;
 
 class diDateTime
 {
@@ -140,6 +141,12 @@ class diDateTime
         return $datetime->format(\DateTime::ATOM);
     }
 
+    public static function mongoFormat($dt = null)
+    {
+        $dt = self::sqlFormat($dt);
+        return new UTCDatetime((new \DateTime($dt))->getTimestamp() * 1000);
+    }
+
     public static function durationInIso8601($seconds)
     {
         $days = floor($seconds / 86400);
@@ -193,9 +200,13 @@ class diDateTime
 	{
 		if ($dt === null) {
 			return time();
-		}
+		} elseif (isInteger($dt)) {
+		    return $dt;
+        } elseif ($dt instanceof UTCDatetime) {
+		    return $dt->toDateTime()->getTimestamp();
+        }
 
-		return isInteger($dt) ? $dt : strtotime($dt);
+		return strtotime($dt);
 	}
 
 	/**

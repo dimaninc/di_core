@@ -24,6 +24,27 @@ class ArrayHelper
 		);
 	}
 
+	// simple, non associative, with sequential indexes
+	public static function isSequential($ar)
+    {
+        if ($ar === []) {
+            return true;
+        }
+
+        return array_keys($ar) === range(0, count($ar) - 1);
+    }
+
+    public static function hasStringKey($ar)
+    {
+        foreach ($ar as $key => $value) {
+            if (is_string($key)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
 	/**
 	 * @param array $ar1
 	 * @param array|null $ar2

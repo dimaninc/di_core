@@ -818,19 +818,19 @@ abstract class diDB
         return $this;
     }
 
-	public function insert($table, $fields_values = [])
+	public function insert($table, $fieldValues = [])
     {
         $t = $this->get_table_name($table);
 
         // preparing for multi-insert
-        if (!is_array(current($fields_values))) {
-            $fields_values = [$fields_values];
+        if (!is_array(current($fieldValues))) {
+            $fieldValues = [$fieldValues];
         }
 
-        $q1 = "(" . self::fields_to_string_for_insert(current($fields_values)) . ")";
+        $q1 = "(" . self::fields_to_string_for_insert(current($fieldValues)) . ")";
         $q2_ar = [];
 
-        foreach ($fields_values as $ar) {
+        foreach ($fieldValues as $ar) {
             $q2_ar[] = "(" . self::values_to_string_for_insert($ar) . ")";
         }
 
@@ -864,7 +864,7 @@ abstract class diDB
         return $this->limitOffset(1);
     }
 
-	public function update($table, $fields_values = array(), $q_ending = "")
+	public function update($table, $fieldValues = array(), $q_ending = "")
 	{
 		$time1 = utime();
 
@@ -883,7 +883,7 @@ abstract class diDB
 		}
 		//
 
-        $q = "UPDATE $t SET " . self::fields_and_values_to_string_for_update($fields_values) . " $q_ending";
+        $q = "UPDATE $t SET " . self::fields_and_values_to_string_for_update($fieldValues) . " $q_ending";
 
 		$this->lockTable($t);
 		if (!$this->__rq($q)) {
