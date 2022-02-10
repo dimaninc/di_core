@@ -87,22 +87,20 @@ class diModel implements \ArrayAccess
      * @var array Settings for Submit, for each pic field, what previews to generate
      */
 	protected static $picStoreSettings = [
-	    /*
         'pic' => [
             [
                 'type' => Submit::IMAGE_TYPE_MAIN,
                 'resize' => \diImage::DI_THUMB_FIT,
-                'forceFormat' => 'jpeg',
-                'quality' => 84,
+                // 'forceFormat' => 'jpeg',
+                // 'quality' => 84,
             ],
             [
                 'type' => Submit::IMAGE_TYPE_PREVIEW,
                 'resize' => \diImage::DI_THUMB_FIT,
-                'forceFormat' => 'jpeg',
-                'quality' => 75,
+                // 'forceFormat' => 'jpeg',
+                // 'quality' => 75,
             ],
         ],
-	    */
     ];
 
 	protected $fileFields = ['pic', 'pic2', 'pic3', 'pic_main', 'ico', 'flv', 'mp3', 'swf', 'final_pic'];

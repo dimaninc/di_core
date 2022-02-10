@@ -29,10 +29,27 @@ class AdminPagesManager
         '_id',
         '__v',
         'visible',
+        'en_visible',
+        'top',
+        'en_top',
         'order_num',
         'to_show_content',
         'level_num',
         'parent',
+        'content',
+        'en_content',
+        'meta_title',
+        'meta_description',
+        'meta_keywords',
+        'html_title',
+        'html_description',
+        'html_keywords',
+        'en_meta_title',
+        'en_meta_description',
+        'en_meta_keywords',
+        'en_html_title',
+        'en_html_description',
+        'en_html_keywords',
     ];
 
     protected $localFieldNames = [
@@ -48,6 +65,9 @@ class AdminPagesManager
         'pic3_w',
         'pic3_h',
         'pic3_t',
+        'ico_w',
+        'ico_h',
+        'ico_t',
     ];
 
     protected $picFieldNames = [
@@ -56,6 +76,7 @@ class AdminPagesManager
         'pic3',
         'logo',
         'img',
+        'ico',
     ];
 
     protected $checkboxFieldNames = [
@@ -63,6 +84,8 @@ class AdminPagesManager
         'activated',
         'visible',
         'top',
+        'en_visible',
+        'en_top',
     ];
 
     protected $dateTimeFieldNames = [
@@ -158,6 +181,9 @@ class %3$s extends \diCore\Admin\BasePage
 
     public function submitForm()
     {
+        $this->getSubmit()
+            ->makeSlug()
+            ->storeImage(['pic']);
     }
 
     public function getFormTabs()
@@ -253,20 +279,24 @@ EOF;
                 ? 'local'
                 : 'form';
 
-            $ar[$sort][] = $this->getFieldInfo($field, $type);
+            $ar[$sort][] = $this->getFieldInfo($field, $type, $sort);
         }
 
         return $ar;
     }
 
-    protected function getFieldInfo($field, $type)
+    protected function getFieldInfo($field, $type, $sort)
     {
         $typeTuned = $this->tuneType($field, $type);
+        $getTitle = function () use ($sort) {
+            return $sort === 'form'
+                ? "\n                'title' => '',"
+                : '';
+        };
 
         return <<<EOF
             '{$field}' => [
-                'type' => '{$typeTuned}',
-                'title' => '',
+                'type' => '{$typeTuned}',{$getTitle()}
                 'default' => '',{$this->getFlagsStr($field)}{$this->getExtraPropertiesStr($field)}
             ],
 EOF;
@@ -410,9 +440,25 @@ EOF;
                 ],
             ],
 EOF;
-            }
-            else
-            {
+            } elseif (
+                in_array($field, $this->picFieldNames) ||
+                in_array($fieldAlt, $this->picFieldNames)
+            ) {
+                $ar[] = <<<EOF
+            '$field' => [
+                'bodyAttrs' => [
+                    'class' => 'no-padding',
+                ],
+                'value' => function (Model \$m) {
+                    \$pic = '/' . \$m['pic_tn_with_path'];
+
+                    return \$m->hasPic()
+                        ? "<img src=\"{\$pic}\" alt='' style='max-width: 200px; max-height: 200px;'>"
+                        : '&mdash;';
+                },
+            ],
+EOF;
+            } else {
                 $ar[] = <<<EOF
             '$field' => [
                 'headAttrs' => [
