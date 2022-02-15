@@ -37,7 +37,7 @@ class Base
 	/** @var BasePage */
 	protected $adminPage;
 
-	private $version = '5.0';
+	private $version = '5.1';
 
 	protected $defaultSuperUsersAr = ['dimaninc'];
 	protected $superUsersAr = [];
@@ -398,7 +398,6 @@ class Base
 			->load_cache()
 			->define('`_index', [
 				'index',
-
 				'expand_collapse_block',
 				'footer',
 				'head_includes',
@@ -708,7 +707,7 @@ class Base
 	private function checkRights()
 	{
 		if ($this->adminUser->reallyAuthorized()) {
-			$access_granted = false;
+			$accessGranted = false;
 
 			// old school style
 			$pathForCheck = $this->module;
@@ -718,21 +717,19 @@ class Base
 
 				$pathForCheck .= '_' . $m;
 			}
-			//
 
-			foreach ($this->getAdminMenuFullTree() as $_title => $_ar) {
+			foreach ($this->getAdminMenuFullTree() as $groupTitle => $groupOpts) {
 				if (
-					in_array($pathForCheck, $_ar['paths']) &&
-					in_array($this->getAdminModel()->getLevel(), $_ar['permissions']) &&
-					(empty($_ar['super']) || $this->isAdminSuper())
+					in_array($pathForCheck, $groupOpts['paths']) &&
+                    $this->hasAccess($groupOpts)
 				) {
-					$access_granted = true;
+					$accessGranted = true;
 
 					break;
 				}
 			}
 
-			if (!$access_granted) {
+			if (!$accessGranted) {
 				$this->module = $this->path = $this->getStartPath();
 				$this->filename = 'content.php';
 			}
@@ -863,12 +860,15 @@ class Base
         $ar = [
             'items' => [],
             'permissions' => [],
+            'isVisible' => true,
             'paths' => [],
         ];
 
         foreach ($names as $moduleName => $opts) {
             $options = extend([
                 'permissions' => ['root'],
+                'isVisible' => true, // boolean or callback
+                'super' => false,
                 'showList' => true,
                 'showForm' => true,
                 'listTitle' => static::getVocabulary('menu.list'),
@@ -881,6 +881,8 @@ class Base
             ], $moduleOptions, $opts);
 
             $ar['permissions'] = $options['permissions'];
+            $ar['isVisible'] = $options['isVisible'];
+            $ar['super'] = $options['super'];
             $ar['paths'] = array_merge(
                 $ar['paths'],
                 [$moduleName, $moduleName . '_form'],
@@ -967,6 +969,23 @@ class Base
 		];
 	}
 
+	protected function hasAccess($groupOpts)
+    {
+        if ($this->adminUser->authorizedForSetup()) {
+            return true;
+        }
+
+        $hasPermissions = in_array($this->getAdminModel()->getLevel(), $groupOpts['permissions']);
+        $super = empty($groupOpts['super']) || $this->isAdminSuper();
+        $visible = isset($groupOpts['isVisible'])
+            ? (is_callable($groupOpts['isVisible'])
+                ? $groupOpts['isVisible']()
+                : $groupOpts['isVisible'])
+            : true;
+
+        return $hasPermissions && $super && $visible;
+    }
+
 	public function printMainMenu()
 	{
 		if (!$this->adminUser->authorized()) {
@@ -979,64 +998,60 @@ class Base
 			'left_menu_row1',
 		]);
 
-		$visible_left_menu_ids_ar = explode(',', (string)@$_COOKIE['admin_visible_left_menu_ids']);
+		$visibleIds = explode(',', \diRequest::cookie('admin_visible_left_menu_ids', ''));
 		$i = 0;
 
-		foreach ($this->getAdminMenuFullTree() as $group_title => $group_ar) {
-            if (
-                $this->adminUser->authorizedForSetup() ||
-                (
-                    in_array($this->getAdminModel()->getLevel(), $group_ar['permissions']) &&
-                    (empty($group_ar['super']) || $this->isAdminSuper())
-                )
-            ) {
-				$i++;
+		foreach ($this->getAdminMenuFullTree() as $groupTitle => $groupOpts) {
+            if (!$this->hasAccess($groupOpts)) {
+                continue;
+            }
 
-				foreach ($group_ar['items'] as $itemTitle => $item) {
-					if (is_scalar($item)) {
-						$item = [
-							'module' => $item,
-						];
-					}
+            $i++;
 
-					$item = extend([
-						'link' => null,
-						'link_suffix' => null,
-						'module' => null,
-					], $item);
+            foreach ($groupOpts['items'] as $itemTitle => $item) {
+                if (is_scalar($item)) {
+                    $item = [
+                        'module' => $item,
+                    ];
+                }
 
-					if (empty($item['link']) && !empty($item['module'])) {
-						if (!$this->isModuleAccessible($item['module'])) {
-							continue;
-						}
+                $item = extend([
+                    'link' => null,
+                    'link_suffix' => null,
+                    'module' => null,
+                ], $item);
 
-						$item['link'] = self::getPageUri($item['module']);
-					}
+                if (empty($item['link']) && !empty($item['module'])) {
+                    if (!$this->isModuleAccessible($item['module'])) {
+                        continue;
+                    }
 
-					$href = $item['link'] . $item['link_suffix'];
-					$state = in_array($i, $visible_left_menu_ids_ar);
+                    $item['link'] = self::getPageUri($item['module']);
+                }
 
-					$this->getTpl()
-						->assign([
-							//'ID' => $r->id,
-							'TITLE' => $itemTitle,
-							'HREF' => $href,
-							'TARGET' => !empty($item['target']) ? " target=\"{$item["target"]}\"" : '',
-							'STYLE_DISPLAY' => $state ? 'display: block;' : 'display: none;',
-							'STATE' => $state ? 1 : 0,
-						], 'M_')
-						->process('LEFT_MENU_ROWS1', '.left_menu_row1');
-				}
+                $href = $item['link'] . $item['link_suffix'];
+                $state = in_array($i, $visibleIds);
 
-				$this->getTpl()
-					->assign([
-						'ID' => $i,
-						'TITLE' => $group_title,
-					], 'M_')
-					->process('LEFT_MENU_ROWS0', '.left_menu_row0')
-					->clear('LEFT_MENU_ROWS1')
-					->assign('LEFT_MENU_ROWS1', '');
-			}
+                $this->getTpl()
+                    ->assign([
+                        //'ID' => $r->id,
+                        'TITLE' => $itemTitle,
+                        'HREF' => $href,
+                        'TARGET' => !empty($item['target']) ? " target=\"{$item["target"]}\"" : '',
+                        'STYLE_DISPLAY' => $state ? 'display: block;' : 'display: none;',
+                        'STATE' => $state ? 1 : 0,
+                    ], 'M_')
+                    ->process('LEFT_MENU_ROWS1', '.left_menu_row1');
+            }
+
+            $this->getTpl()
+                ->assign([
+                    'ID' => $i,
+                    'TITLE' => $groupTitle,
+                ], 'M_')
+                ->process('LEFT_MENU_ROWS0', '.left_menu_row0')
+                ->clear('LEFT_MENU_ROWS1')
+                ->assign('LEFT_MENU_ROWS1', '');
 		}
 
 		$this->getTpl()
