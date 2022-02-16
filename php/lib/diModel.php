@@ -888,13 +888,21 @@ class diModel implements \ArrayAccess
 
 		$ar[$this->getIdFieldName()] = $this->getId();
 		$ar['slug'] = $this->getSlug(); // back compatibility for clean_title
-		$ar['href'] = $this->getHref();
-		$ar['full_href'] = $this->getFullHref();
-		$ar['admin_href'] = $this->getAdminHref();
-		$ar['full_admin_href'] = $this->getFullAdminHref();
 
-		return $ar;
+		return extend($ar, $this->getBasicTemplateVars());
 	}
+
+	public function getBasicTemplateVars()
+    {
+        $ar = [
+            'href' => $this->getHref(),
+            'full_href' => $this->getFullHref(),
+            'admin_href' => $this->getAdminHref(),
+            'full_admin_href' => $this->getFullAdminHref(),
+        ];
+
+        return $ar;
+    }
 
 	public static function getTemplateDateVars($v)
     {
@@ -2562,7 +2570,10 @@ ENGINE = InnoDB;";
 
     public function getPublicData()
     {
-        return ArrayHelper::filterByKey($this->get(), static::getPublicFields());
+        return ArrayHelper::filterByKey(
+            extend($this->get(), $this->getBasicTemplateVars()),
+            static::getPublicFields()
+        );
     }
 
     /**

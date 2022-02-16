@@ -71,33 +71,33 @@ use diCore\Data\Types;
  * @method bool hasCommentsLastDate
  * @method bool hasCommentsCount
  *
- * @method Model setAlbumId($value)
- * @method Model setVendor($value)
- * @method Model setVendorVideoUid($value)
- * @method Model setSlugSource($value)
- * @method Model setTitle($value)
- * @method Model setContent($value)
- * @method Model setEmbed($value)
- * @method Model setVideoMp4($value)
- * @method Model setVideoM4v($value)
- * @method Model setVideoOgv($value)
- * @method Model setVideoWebm($value)
- * @method Model setVideoW($value)
- * @method Model setVideoH($value)
- * @method Model setPic($value)
- * @method Model setPicW($value)
- * @method Model setPicH($value)
- * @method Model setPicT($value)
- * @method Model setPicTnW($value)
- * @method Model setPicTnH($value)
- * @method Model setViewsCount($value)
- * @method Model setDate($value)
- * @method Model setOrderNum($value)
- * @method Model setVisible($value)
- * @method Model setTop($value)
- * @method Model setCommentsEnabled($value)
- * @method Model setCommentsLastDate($value)
- * @method Model setCommentsCount($value)
+ * @method $this setAlbumId($value)
+ * @method $this setVendor($value)
+ * @method $this setVendorVideoUid($value)
+ * @method $this setSlugSource($value)
+ * @method $this setTitle($value)
+ * @method $this setContent($value)
+ * @method $this setEmbed($value)
+ * @method $this setVideoMp4($value)
+ * @method $this setVideoM4v($value)
+ * @method $this setVideoOgv($value)
+ * @method $this setVideoWebm($value)
+ * @method $this setVideoW($value)
+ * @method $this setVideoH($value)
+ * @method $this setPic($value)
+ * @method $this setPicW($value)
+ * @method $this setPicH($value)
+ * @method $this setPicT($value)
+ * @method $this setPicTnW($value)
+ * @method $this setPicTnH($value)
+ * @method $this setViewsCount($value)
+ * @method $this setDate($value)
+ * @method $this setOrderNum($value)
+ * @method $this setVisible($value)
+ * @method $this setTop($value)
+ * @method $this setCommentsEnabled($value)
+ * @method $this setCommentsLastDate($value)
+ * @method $this setCommentsCount($value)
  */
 class Model extends \diModel
 {
@@ -142,10 +142,8 @@ class Model extends \diModel
 	{
 		$ar = parent::getTemplateVars();
 
-		foreach (\diWebVideoFormats::$extensions as $formatId => $formatExt)
-		{
-			if ($this->has('video_' . $formatExt))
-			{
+		foreach (\diWebVideoFormats::$extensions as $formatId => $formatExt) {
+			if ($this->has('video_' . $formatExt)) {
 				$ar['video_' . $formatExt] = $this->getVideoFileByFormat($formatExt);
 			}
 		}
@@ -160,8 +158,7 @@ class Model extends \diModel
 
 	public function getVideoVendorPreview()
 	{
-		if ($this->getVendor() == Vendor::OWN)
-		{
+		if ($this->getVendor() == Vendor::OWN) {
 			return null;
 		}
 
