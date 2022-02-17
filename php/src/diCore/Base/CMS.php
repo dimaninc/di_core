@@ -14,9 +14,12 @@ use diCore\Helper\StringHelper;
 use diCore\Tool\Auth;
 use diCore\Tool\Cache\Page;
 use diCore\Tool\Logger;
+use diCore\Traits\BasicCreate;
 
 abstract class CMS
 {
+    use BasicCreate;
+
 	const TPL_DIR = 'tpl';
 	const TPL_CACHE_PHP = '_cfg/cache/tpl_cache.php';
 	const TABLES_CONTENT_CACHE_PHP = '_cfg/cache/table_content.php';

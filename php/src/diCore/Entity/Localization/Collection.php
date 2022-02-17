@@ -7,34 +7,56 @@
 
 namespace diCore\Entity\Localization;
 
+use diCore\Base\CMS;
+
 /**
  * Class Collection
  * Methods list for IDE
  *
- * @method Collection filterById($value, $operator = null)
- * @method Collection filterByName($value, $operator = null)
- * @method Collection filterByValue($value, $operator = null)
- * @method Collection filterByEnValue($value, $operator = null)
+ * @method $this filterById($value, $operator = null)
+ * @method $this filterByName($value, $operator = null)
+ * @method $this filterByValue($value, $operator = null)
+ * @method $this filterByEnValue($value, $operator = null)
  *
- * @method Collection orderById($direction = null)
- * @method Collection orderByName($direction = null)
- * @method Collection orderByValue($direction = null)
- * @method Collection orderByEnValue($direction = null)
+ * @method $this orderById($direction = null)
+ * @method $this orderByName($direction = null)
+ * @method $this orderByValue($direction = null)
+ * @method $this orderByEnValue($direction = null)
  *
- * @method Collection selectId()
- * @method Collection selectName()
- * @method Collection selectValue()
- * @method Collection selectEnValue()
+ * @method $this selectId()
+ * @method $this selectName()
+ * @method $this selectValue()
+ * @method $this selectEnValue()
  *
- * @method Collection filterByLocalizedValue($value, $operator = null)
+ * @method $this filterByLocalizedValue($value, $operator = null)
  *
- * @method Collection orderByLocalizedValue($direction = null)
+ * @method $this orderByLocalizedValue($direction = null)
  *
- * @method Collection selectLocalizedValue()
+ * @method $this selectLocalizedValue()
  */
 class Collection extends \diCollection
 {
 	const type = \diTypes::localization;
 	protected $table = 'localization';
 	protected $modelType = 'localization';
+
+	public static function getPossibleLanguages()
+    {
+        /** @var CMS $cmsClass */
+        $cmsClass = CMS::getClass();
+
+        return $cmsClass::$possibleLanguages;
+    }
+
+    public function asArrayByLanguage()
+    {
+        $ar = array_fill_keys(static::getPossibleLanguages(), []);
+
+        $this->map(function (Model $m) use (&$ar) {
+            $ar['ru'][$m->getName()] = $m->getValue();
+            $ar['en'][$m->getName()] = $m->getEnValue();
+        });
+
+        return $ar;
+    }
 }

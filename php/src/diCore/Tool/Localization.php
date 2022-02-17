@@ -57,6 +57,11 @@ class Localization
         return Collection::create()->orderByName();
     }
 
+    public static function getI18nArray()
+    {
+        return static::getCollection()->asArrayByLanguage();
+    }
+
 	public static function getAllStrings($language)
     {
         $locals = static::getCollection();
@@ -118,7 +123,7 @@ class Localization
 
 	/**
 	 * @param $token
-	 * @return Model
+	 * @return Model|\diModel
 	 * @throws \Exception
 	 */
 	protected static function getModel($token)

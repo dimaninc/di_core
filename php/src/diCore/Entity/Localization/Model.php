@@ -7,6 +7,8 @@
 
 namespace diCore\Entity\Localization;
 
+use diCore\Database\FieldType;
+
 /**
  * Class Model
  * Methods list for IDE
@@ -19,9 +21,9 @@ namespace diCore\Entity\Localization;
  * @method bool hasValue
  * @method bool hasEnValue
  *
- * @method Model setName($value)
- * @method Model setValue($value)
- * @method Model setEnValue($value)
+ * @method $this setName($value)
+ * @method $this setValue($value)
+ * @method $this setEnValue($value)
  *
  * @method string	localizedValue
  */
@@ -30,6 +32,19 @@ class Model extends \diModel
 	const type = \diTypes::localization;
 	protected $table = 'localization';
 	protected $localizedFields = ['value'];
+
+    protected static $fieldTypes = [
+        'id' => FieldType::int,
+        'name' => FieldType::string,
+        'value' => FieldType::string,
+        'en_value' => FieldType::string,
+    ];
+
+    protected static $publicFields = [
+        'name',
+        'value',
+        'en_value',
+    ];
 
 	public function getValueForLanguage($language)
 	{
