@@ -8,12 +8,14 @@
 
 namespace diCore\Entity\Content;
 
+use diCore\Traits\Collection\AutoTimestamps;
+use diCore\Traits\Collection\Hierarchy;
+
 /**
  * Class Collection
  * Methods list for IDE
  *
  * @method $this filterById($value, $operator = null)
- * @method $this filterByParent($value, $operator = null)
  * @method $this filterByCleanTitle($value, $operator = null)
  * @method $this filterByMenuTitle($value, $operator = null)
  * @method $this filterByType($value, $operator = null)
@@ -41,7 +43,6 @@ namespace diCore\Entity\Content;
  * @method $this filterByBackgroundColor($value, $operator = null)
  * @method $this filterByClass($value, $operator = null)
  * @method $this filterByMenuClass($value, $operator = null)
- * @method $this filterByLevelNum($value, $operator = null)
  * @method $this filterByVisible($value, $operator = null)
  * @method $this filterByVisibleTop($value, $operator = null)
  * @method $this filterByVisibleBottom($value, $operator = null)
@@ -49,17 +50,13 @@ namespace diCore\Entity\Content;
  * @method $this filterByVisibleRight($value, $operator = null)
  * @method $this filterByVisibleLoggedIn($value, $operator = null)
  * @method $this filterByToShowContent($value, $operator = null)
- * @method $this filterByOrderNum($value, $operator = null)
  * @method $this filterByTop($value, $operator = null)
- * @method $this filterByCreatedAt($value, $operator = null)
- * @method $this filterByUpdatedAt($value, $operator = null)
  * @method $this filterByCommentsCount($value, $operator = null)
  * @method $this filterByCommentsLastDate($value, $operator = null)
  * @method $this filterByCommentsEnabled($value, $operator = null)
  * @method $this filterByAdBlockId($value, $operator = null)
  *
  * @method $this orderById($direction = null)
- * @method $this orderByParent($direction = null)
  * @method $this orderByCleanTitle($direction = null)
  * @method $this orderByMenuTitle($direction = null)
  * @method $this orderByType($direction = null)
@@ -87,7 +84,6 @@ namespace diCore\Entity\Content;
  * @method $this orderByBackgroundColor($direction = null)
  * @method $this orderByClass($direction = null)
  * @method $this orderByMenuClass($direction = null)
- * @method $this orderByLevelNum($direction = null)
  * @method $this orderByVisible($direction = null)
  * @method $this orderByVisibleTop($direction = null)
  * @method $this orderByVisibleBottom($direction = null)
@@ -95,17 +91,13 @@ namespace diCore\Entity\Content;
  * @method $this orderByVisibleRight($direction = null)
  * @method $this orderByVisibleLoggedIn($direction = null)
  * @method $this orderByToShowContent($direction = null)
- * @method $this orderByOrderNum($direction = null)
  * @method $this orderByTop($direction = null)
- * @method $this orderByCreatedAt($direction = null)
- * @method $this orderByUpdatedAt($direction = null)
  * @method $this orderByCommentsCount($direction = null)
  * @method $this orderByCommentsLastDate($direction = null)
  * @method $this orderByCommentsEnabled($direction = null)
  * @method $this orderByAdBlockId($direction = null)
  *
  * @method $this selectId()
- * @method $this selectParent()
  * @method $this selectCleanTitle()
  * @method $this selectMenuTitle()
  * @method $this selectType()
@@ -133,7 +125,6 @@ namespace diCore\Entity\Content;
  * @method $this selectBackgroundColor()
  * @method $this selectClass()
  * @method $this selectMenuClass()
- * @method $this selectLevelNum()
  * @method $this selectVisible()
  * @method $this selectVisibleTop()
  * @method $this selectVisibleBottom()
@@ -141,10 +132,7 @@ namespace diCore\Entity\Content;
  * @method $this selectVisibleRight()
  * @method $this selectVisibleLoggedIn()
  * @method $this selectToShowContent()
- * @method $this selectOrderNum()
  * @method $this selectTop()
- * @method $this selectCreatedAt()
- * @method $this selectUpdatedAt()
  * @method $this selectCommentsCount()
  * @method $this selectCommentsLastDate()
  * @method $this selectCommentsEnabled()
@@ -152,6 +140,9 @@ namespace diCore\Entity\Content;
  */
 class Collection extends \diCollection
 {
+    use AutoTimestamps;
+    use Hierarchy;
+
 	const type = \diTypes::content;
 	protected $table = 'content';
 	protected $modelType = 'content';

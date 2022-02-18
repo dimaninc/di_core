@@ -10,12 +10,13 @@ namespace diCore\Entity\Content;
 
 use diCore\Data\Types;
 use diCore\Entity\AdBlock\Model as AdBlock;
+use diCore\Traits\Model\AutoTimestamps;
+use diCore\Traits\Model\Hierarchy;
 
 /**
  * Class Model
  * Methods list for IDE
  *
- * @method integer	getParent
  * @method string	getMenuTitle
  * @method string	getType
  * @method string	getTitle
@@ -42,7 +43,6 @@ use diCore\Entity\AdBlock\Model as AdBlock;
  * @method string	getBackgroundColor
  * @method string	getClass
  * @method string	getMenuClass
- * @method integer	getLevelNum
  * @method integer	getVisible
  * @method integer	getVisibleTop
  * @method integer	getVisibleBottom
@@ -50,17 +50,13 @@ use diCore\Entity\AdBlock\Model as AdBlock;
  * @method integer	getVisibleRight
  * @method integer	getVisibleLoggedIn
  * @method integer	getToShowContent
- * @method integer	getOrderNum
  * @method integer	getTop
- * @method string	getCreatedAt
- * @method string	getUpdatedAt
  * @method integer	getCommentsCount
  * @method string	getCommentsLastDate
  * @method integer	getCommentsEnabled
  * @method string	getShowLinks
  * @method integer	getAdBlockId
  *
- * @method bool hasParent
  * @method bool hasMenuTitle
  * @method bool hasType
  * @method bool hasTitle
@@ -87,7 +83,6 @@ use diCore\Entity\AdBlock\Model as AdBlock;
  * @method bool hasBackgroundColor
  * @method bool hasClass
  * @method bool hasMenuClass
- * @method bool hasLevelNum
  * @method bool hasVisible
  * @method bool hasVisibleTop
  * @method bool hasVisibleBottom
@@ -95,17 +90,13 @@ use diCore\Entity\AdBlock\Model as AdBlock;
  * @method bool hasVisibleRight
  * @method bool hasVisibleLoggedIn
  * @method bool hasToShowContent
- * @method bool hasOrderNum
  * @method bool hasTop
- * @method bool hasCreatedAt
- * @method bool hasUpdatedAt
  * @method bool hasCommentsCount
  * @method bool hasCommentsLastDate
  * @method bool hasCommentsEnabled
  * @method bool hasShowLinks
  * @method bool hasAdBlockId
  *
- * @method $this setParent($value)
  * @method $this setMenuTitle($value)
  * @method $this setType($value)
  * @method $this setTitle($value)
@@ -132,7 +123,6 @@ use diCore\Entity\AdBlock\Model as AdBlock;
  * @method $this setBackgroundColor($value)
  * @method $this setClass($value)
  * @method $this setMenuClass($value)
- * @method $this setLevelNum($value)
  * @method $this setVisible($value)
  * @method $this setVisibleTop($value)
  * @method $this setVisibleBottom($value)
@@ -140,18 +130,18 @@ use diCore\Entity\AdBlock\Model as AdBlock;
  * @method $this setVisibleRight($value)
  * @method $this setVisibleLoggedIn($value)
  * @method $this setToShowContent($value)
- * @method $this setOrderNum($value)
  * @method $this setTop($value)
  * @method $this setCommentsCount($value)
  * @method $this setCommentsLastDate($value)
  * @method $this setCommentsEnabled($value)
- * @method $this setCreatedAt($value)
- * @method $this setUpdatedAt($value)
  * @method $this setShowLinks($value)
  * @method $this setAdBlockId($value)
  */
 class Model extends \diModel
 {
+    use AutoTimestamps;
+    use Hierarchy;
+
 	const type = Types::content;
     const table = 'content';
 	protected $table = 'content';
@@ -204,5 +194,12 @@ class Model extends \diModel
         }
 
         return $this->adBlock;
+    }
+
+    public function prepareForSave()
+    {
+        $this->generateTimestamps();
+
+        return parent::prepareForSave();
     }
 }
