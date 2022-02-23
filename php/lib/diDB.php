@@ -83,7 +83,6 @@ abstract class diDB
 	protected $dbname;
 	protected $username;
 	protected $password;
-	//
 
 	protected $link;
 	protected $logFolder = "log/db/";
@@ -116,7 +115,7 @@ abstract class diDB
 				'username' => null,
 				'password' => null,
 				'dbname' => null,
-				'port' => null,
+				'port' => static::DEFAULT_PORT,
 			], $settingsOrHost);
 		} else {
 			$settings = [
@@ -124,15 +123,11 @@ abstract class diDB
 				'username' => $username,
 				'password' => $password,
 				'dbname' => $dbname,
-				'port' => null,
+				'port' => static::DEFAULT_PORT,
 			];
 		}
 
-		$this->host = $settings['host'];
-		$this->dbname = $settings['dbname'];
-		$this->username = $settings['username'];
-		$this->password = $settings['password'];
-		$this->port = $settings['port'];
+		$this->populateBasicSettings($settings);
 
 		$this->log = [];
 
@@ -150,6 +145,17 @@ abstract class diDB
 
 		$this->initCharset();
 	}
+
+	protected function populateBasicSettings($settings)
+    {
+        $this->host = $settings['host'];
+        $this->dbname = $settings['dbname'];
+        $this->username = $settings['username'];
+        $this->password = $settings['password'];
+        $this->port = $settings['port'];
+
+        return $this;
+    }
 
 	public function getLink()
 	{

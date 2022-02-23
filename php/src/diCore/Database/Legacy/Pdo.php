@@ -9,6 +9,7 @@
 namespace diCore\Database\Legacy;
 
 use diCore\Data\Config;
+use diCore\Helper\ArrayHelper;
 
 abstract class Pdo extends \diDB
 {
@@ -23,7 +24,23 @@ abstract class Pdo extends \diDB
 	/** @var  \PDOStatement */
 	protected $lastResult;
 
-	protected function __connect()
+	/** @var bool  */
+	protected $ssl = false;
+	/** @var string  */
+    protected $sslCert = '';
+    /** @var string  */
+    protected $sslKey = '';
+
+    protected function populateBasicSettings($settings)
+    {
+        $this->ssl = ArrayHelper::get($settings, 'ssl', false);
+        $this->sslCert = ArrayHelper::get($settings, 'cert', '');
+        $this->sslKey = ArrayHelper::get($settings, 'key', '');
+
+        return parent::populateBasicSettings($settings);
+    }
+
+    protected function __connect()
 	{
         $options = [
             \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,

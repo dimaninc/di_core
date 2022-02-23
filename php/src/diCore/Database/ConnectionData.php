@@ -8,6 +8,8 @@
 
 namespace diCore\Database;
 
+use diCore\Helper\ArrayHelper;
+
 class ConnectionData
 {
     protected $host;
@@ -15,6 +17,9 @@ class ConnectionData
     protected $login;
     protected $password;
     protected $database;
+    protected $ssl;
+    protected $sslCert;
+    protected $sslKey;
 
     public function __construct($connData)
     {
@@ -24,22 +29,15 @@ class ConnectionData
 
     protected function parseConnData($connData)
     {
-        $connData = extend([
-            'host' => null,
-            'port' => null,
-            'login' => null,
-            'username' => null,
-            'password' => null,
-            'database' => null,
-            'dbname' => null,
-        ], $connData);
-
         $this
-            ->setHost($connData['host'])
-            ->setPort($connData['port'])
-            ->setLogin($connData['login'] ?: $connData['username'])
-            ->setPassword($connData['password'])
-            ->setDatabase($connData['database'] ?: $connData['dbname']);
+            ->setHost(ArrayHelper::get($connData, 'host'))
+            ->setPort(ArrayHelper::get($connData, 'port'))
+            ->setLogin(ArrayHelper::get($connData, 'login') ?: ArrayHelper::get($connData, 'username'))
+            ->setPassword(ArrayHelper::get($connData, 'password'))
+            ->setDatabase(ArrayHelper::get($connData, 'database') ?: ArrayHelper::get($connData, 'dbname'))
+            ->setSsl(ArrayHelper::get($connData, 'ssl'))
+            ->setSslCert(ArrayHelper::get($connData, 'cert'))
+            ->setSslKey(ArrayHelper::get($connData, 'key'));
 
         return $this;
     }
@@ -52,6 +50,9 @@ class ConnectionData
             'password' => $this->getPassword(),
             'dbname' => $this->getDatabase(),
             'port' => $this->getPort(),
+            'ssl' => $this->getSsl(),
+            'cert' => $this->getSslCert(),
+            'key' => $this->getSslKey(),
         ]);
     }
 
@@ -94,7 +95,7 @@ class ConnectionData
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getLogin()
     {
@@ -102,7 +103,7 @@ class ConnectionData
     }
 
     /**
-     * @param mixed $login
+     * @param string $login
      * @return $this
      */
     public function setLogin($login)
@@ -113,7 +114,7 @@ class ConnectionData
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getPassword()
     {
@@ -121,7 +122,7 @@ class ConnectionData
     }
 
     /**
-     * @param mixed $password
+     * @param string $password
      * @return $this
      */
     public function setPassword($password)
@@ -132,7 +133,7 @@ class ConnectionData
     }
 
     /**
-     * @return mixed
+     * @return string
      */
     public function getDatabase()
     {
@@ -140,12 +141,69 @@ class ConnectionData
     }
 
     /**
-     * @param mixed $database
+     * @param string $database
      * @return $this
      */
     public function setDatabase($database)
     {
         $this->database = $database;
+
+        return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getSsl()
+    {
+        return $this->ssl;
+    }
+
+    /**
+     * @param bool $ssl
+     * @return $this
+     */
+    public function setSsl($ssl)
+    {
+        $this->ssl = $ssl;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSslCert()
+    {
+        return $this->sslCert;
+    }
+
+    /**
+     * @param string $sslCert
+     * @return $this
+     */
+    public function setSslCert($sslCert)
+    {
+        $this->sslCert = $sslCert;
+
+        return $this;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSslKey()
+    {
+        return $this->sslKey;
+    }
+
+    /**
+     * @param string $sslKey
+     * @return $this
+     */
+    public function setSslKey($sslKey)
+    {
+        $this->sslKey = $sslKey;
 
         return $this;
     }

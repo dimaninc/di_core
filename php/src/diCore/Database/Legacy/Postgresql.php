@@ -12,6 +12,7 @@ class Postgresql extends Pdo
 {
     protected $driver = 'pgsql';
     const CHARSET_INIT_NEEDED = false;
+    const DEFAULT_PORT = 5432;
 
     const QUOTE_TABLE = '"';
     const QUOTE_FIELD = '"';
@@ -19,7 +20,21 @@ class Postgresql extends Pdo
 
     protected function getDSN()
     {
-        return $dsn = "{$this->driver}:host={$this->host};port={$this->port};dbname={$this->dbname};user={$this->username};password={$this->password}";
+        $dsn = "{$this->driver}:host={$this->host};port={$this->port};dbname={$this->dbname};user={$this->username};password={$this->password}";
+
+        if ($this->ssl) {
+            $dsn .= ';sslmode=require';
+
+            if ($this->sslCert) {
+                $dsn .= ';sslcert=' . $this->sslCert;
+            }
+
+            if ($this->sslKey) {
+                $dsn .= ';sslkey=' . $this->sslKey;
+            }
+        }
+
+        return $dsn;
     }
 
     protected function databaseCreationAllowed()
