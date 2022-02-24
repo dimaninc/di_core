@@ -4,6 +4,7 @@ namespace diCore\Controller;
 
 use diCore\Data\Config;
 use diCore\Database\Engine;
+use diCore\Helper\StringHelper;
 use diCore\Traits\Admin\DumpActions;
 
 class Db extends \diBaseAdminController
@@ -451,24 +452,21 @@ EOF;
 		$start_from = \diRequest::get("start_from", 0);
 		$system = \diRequest::get("system", 0);
 
-		if (!$fn)
-		{
+		if (!$fn) {
 			throw new \Exception("No file defined");
 		}
 
-		$ffn = $this->folder.$fn;
+		$ffn = $this->folder . $fn;
 
-		$is_gz = get_file_ext($fn) == "gz";
+		$is_gz = StringHelper::fileExtension($fn) == "gz";
 		$fopen_func = $is_gz ? "gzopen" : "fopen";
 		$fgets_func = $is_gz ? "gzgets" : "fgets";
 		$fclose_func = $is_gz ? "gzclose" : "fclose";
 		$ftell_func = $is_gz ? "gztell" : "ftell";
 		$fseek_func = $is_gz ? "gzseek" : "fseek";
 
-		if ($system)
-		{
-			if ($is_gz)
-			{
+		if ($system) {
+			if ($is_gz) {
 				throw new \Exception('System method can execute non-archived SQL only');
 			}
 
@@ -477,16 +475,15 @@ EOF;
 				'--password=' . $this->getDb()->getPassword(),
 			];
 
-			if (static::MYSQL_SYSTEM_HOST)
-			{
+			if (static::MYSQL_SYSTEM_HOST) {
 				$params[] = '--host=' . static::MYSQL_SYSTEM_HOST;
 			}
 
+			// todo: add other engines support
 			$command = 'mysql ' . join(' ', $params) . ' ' . $this->getDb()->getDatabase() . ' < ' . $ffn;
 			system($command, $a);
 
-			if (!$a)
-			{
+			if (!$a) {
 				return [
 					"ok" => true,
 					"system" => true,
@@ -496,12 +493,10 @@ EOF;
 
 		$errorsAr = [];
 
-		if (is_file($ffn) && $file = $fopen_func($ffn, "r"))
-		{
+		if (is_file($ffn) && $file = $fopen_func($ffn, "r")) {
 			simple_debug("starting $fn from $start_from", "db-restore");
 
-			if ($start_from)
-			{
+			if ($start_from) {
 				$fseek_func($file, $start_from);
 			}
 
@@ -510,29 +505,24 @@ EOF;
 			$in_quotes = false;
 			$query = "";
 
-			while ($line = $fgets_func($file, $max_line_length))
-			{
+			while ($line = $fgets_func($file, $max_line_length)) {
 				$line = str_replace("\r\n", "\n", $line);
 				$line = str_replace("\r", "\n", $line);
 				$line = trim($line);
 
-				if (!$in_quotes)
-				{
+				if (!$in_quotes) {
 					$to_skip_line = false;
 
 					reset($sql_comments);
 
-					foreach($sql_comments as $sql_c)
-					{
-						if (!$line || substr($line, 0, strlen($sql_c)) == $sql_c)
-						{
+					foreach($sql_comments as $sql_c) {
+						if (!$line || substr($line, 0, strlen($sql_c)) == $sql_c) {
 							$to_skip_line = true;
 							break;
 						}
 					}
 
-					if ($to_skip_line)
-					{
+					if ($to_skip_line) {
 						$line_counter++;
 
 						continue;
@@ -542,13 +532,11 @@ EOF;
 				$line_deslashed = str_replace("\\\\", "", $line);
 
 				$quotes_cc = substr_count($line_deslashed, "'") - substr_count($line_deslashed, "\\'");
-				if ($quotes_cc % 2 != 0)
-				{
+				if ($quotes_cc % 2 != 0) {
 					$in_quotes = !$in_quotes;
 				}
 
-				if ($query)
-				{
+				if ($query) {
 					$query .= "\n";
 				}
 				$query .= $line;
@@ -562,22 +550,17 @@ EOF;
 
 				$lineTerminated = substr($line, -1) == ';' && $ending == ';';
 
-				if ($lineTerminated && !$in_quotes)
-				{
-					if (substr($query, 0, 12) == "/*!40101 SET")
-					{
+				if ($lineTerminated && !$in_quotes) {
+					if (substr($query, 0, 12) == "/*!40101 SET") {
 						// skipping this trash
 						$query = "";
-					}
-					elseif (substr($query, -23) == "DEFAULT CHARSET=latin1;")
-					{
+					} elseif (substr($query, -23) == "DEFAULT CHARSET=latin1;") {
 						$query = substr($query, 0, -7) . Config::getDbEncoding() . ";";
 					}
 
 					$this->getDb()->resetLog();
 
-					if ($query && !$this->getDb()->q($query))
-					{
+					if ($query && !$this->getDb()->q($query)) {
 						$errorsAr[] =
 							"Line: " . $line_counter . "\n" .
 							"Unable to execute query \"$query\"\n" .
@@ -591,8 +574,7 @@ EOF;
 
 				$line_counter++;
 
-				if ($this->checkTimeout($startTime, static::MAX_TIMEOUT))
-				{
+				if ($this->checkTimeout($startTime, static::MAX_TIMEOUT)) {
 					$startFrom = $ftell_func($file);
 
 					break;
@@ -600,9 +582,7 @@ EOF;
 			}
 
 			$fclose_func($file);
-		}
-		else
-		{
+		} else {
 			$errorsAr[] = "Unable to open file ".$this->folder.$fn;
 		}
 

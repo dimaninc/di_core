@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS tags
     date             timestamp    default CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx__tags
+CREATE INDEX IF NOT EXISTS idx__tags
     ON tags (weight, visible, title, date);
 
-CREATE UNIQUE INDEX idx__tags_slug
+CREATE UNIQUE INDEX IF NOT EXISTS idx__tags_slug
     ON tags (slug);

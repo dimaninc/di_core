@@ -5,5 +5,5 @@ CREATE TABLE IF NOT EXISTS tag_links
     tag_id      bigint
 );
 
-CREATE INDEX idx__tag_links
+CREATE INDEX IF NOT EXISTS idx__tag_links
     ON tag_links (target_type, target_id, tag_id);

@@ -216,7 +216,7 @@ class diBaseController
 	/*
 		creates an instance of class from request
 	*/
-	public static function autoCreate($classBaseName = null, $action = null, $params = [])
+	public static function autoCreate($classBaseName = null, $action = null, $params = [], $silent = false)
 	{
 		if (is_array($classBaseName) && $classBaseName && $action === null && !$params) {
 			$options = extend([
@@ -251,7 +251,7 @@ class diBaseController
 
 		$result = $c->act($action, $params);
 
-		if ($result) {
+		if ($result && !$silent) {
 			$c->defaultResponse($result);
 		}
 

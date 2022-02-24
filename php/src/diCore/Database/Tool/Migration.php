@@ -2,6 +2,7 @@
 
 namespace diCore\Database\Tool;
 
+use diCore\Controller\Db;
 use diCore\Data\Config;
 use diCore\Database\Connection;
 use diCore\Helper\StringHelper;
@@ -57,8 +58,25 @@ abstract class Migration
             $folder = Config::getDatabaseDumpFolder() . static::DB_FOLDER;
         }
 
+        $folderId = null;
+
+        foreach (Db::$foldersIdsAr as $id) {
+            if (StringHelper::startsWith($folder, Db::getFolderById($id))) {
+                $folderId = $id;
+                $folder = mb_substr($folder, mb_strlen(Db::getFolderById($id)));
+
+                break;
+            }
+        }
+
         foreach ($files as $file) {
-            $this->getDb()->q(file_get_contents(StringHelper::slash($folder) . $file));
+            if ($folderId !== null) {
+                $_GET['file'] = $folder . $file;
+                $_GET['folderId'] = $folderId;
+                \diBaseController::autoCreate('db', 'restore', [], true);
+            } else {
+                $this->getDb()->q(file_get_contents(StringHelper::slash($folder) . $file));
+            }
         }
 
         return $this;

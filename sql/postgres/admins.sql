@@ -14,5 +14,5 @@ CREATE TABLE IF NOT EXISTS admins(
   active smallint default '1'
 );
 
-CREATE INDEX idx__admins
+CREATE INDEX IF NOT EXISTS idx__admins
 ON admins (login,email,active);

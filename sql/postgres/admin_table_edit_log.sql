@@ -8,5 +8,5 @@ CREATE TABLE IF NOT EXISTS admin_table_edit_log(
     created_at   timestamp default CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx__admin_table_edit_log
+CREATE INDEX IF NOT EXISTS idx__admin_table_edit_log
     ON admin_table_edit_log (target_table, target_id, admin_id, created_at);

@@ -18,5 +18,5 @@ CREATE TABLE IF NOT EXISTS ad_blocks
     date                  timestamp    default CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx__ad_blocks
+CREATE INDEX IF NOT EXISTS idx__ad_blocks
     ON ad_blocks (purpose, target_type, target_id, visible, order_num);

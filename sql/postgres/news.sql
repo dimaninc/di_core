@@ -24,8 +24,8 @@ CREATE TABLE IF NOT EXISTS news
     comments_enabled   smallint     default '1'
 );
 
-CREATE INDEX idx__news
+CREATE INDEX IF NOT EXISTS idx__news
     ON news (visible, order_num, date);
 
-CREATE UNIQUE INDEX idx__news__clean_title
+CREATE UNIQUE INDEX IF NOT EXISTS idx__news__clean_title
     ON news (clean_title);

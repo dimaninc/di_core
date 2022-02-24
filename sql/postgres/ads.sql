@@ -27,6 +27,6 @@ CREATE TABLE IF NOT EXISTS ads
     show_on_holidays   smallint     DEFAULT 0
 );
 
-CREATE INDEX idx__ads
+CREATE INDEX IF NOT EXISTS idx__ads
     ON ads (block_id, category_id, show_date1, show_date2, show_time1, show_time2, show_on_weekdays, show_on_holidays,
             visible, order_num);
