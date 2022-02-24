@@ -8,6 +8,8 @@
 
 namespace diCore\Database\Legacy;
 
+use diCore\Helper\ArrayHelper;
+
 class Postgresql extends Pdo
 {
     protected $driver = 'pgsql';
@@ -18,21 +20,35 @@ class Postgresql extends Pdo
     const QUOTE_FIELD = '"';
     const QUOTE_VALUE = "'";
 
+    const DSN_DELIMITER = ';';
+
     protected function getDSN()
     {
-        $dsn = "{$this->driver}:host={$this->host};port={$this->port};dbname={$this->dbname};user={$this->username};password={$this->password}";
+        $ar = [
+            'host' => $this->host,
+            'port' => $this->port,
+            'dbname' => $this->dbname,
+            'user' => $this->username,
+            'password' => $this->password,
+        ];
 
         if ($this->ssl) {
-            $dsn .= ';sslmode=require';
+            $ar['sslmode'] = 'require';
 
             if ($this->sslCert) {
-                $dsn .= ';sslcert=' . $this->sslCert;
+                $ar['sslcert'] = $this->sslCert;
             }
 
             if ($this->sslKey) {
-                $dsn .= ';sslkey=' . $this->sslKey;
+                $ar['sslkey'] = $this->sslKey;
             }
         }
+
+        $ar = ArrayHelper::mapAssoc(function ($key, $value) {
+            return [$key, urlencode($value)];
+        }, $ar);
+
+        $dsn = $this->driver . ':' . ArrayHelper::toString($ar, '=', ';');
 
         return $dsn;
     }

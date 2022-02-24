@@ -2,6 +2,7 @@
 
 namespace diCore\Database;
 
+use diCore\Data\Environment;
 use diCore\Helper\ArrayHelper;
 
 /**
@@ -153,6 +154,8 @@ abstract class Connection
 
 	private function connectAll()
     {
+        $errors = [];
+
         /** @var ConnectionData $connData */
         foreach ($this->allData as $connData) {
             try {
@@ -162,12 +165,19 @@ abstract class Connection
 
                 break;
             } catch (\Exception $e) {
+                $errors[] = $e->getMessage();
                 // do nothing, just go to the next connection data
             }
         }
 
         if (!$this->data) {
-            throw new \diDatabaseException("No suitable database connection data for '$this->name'");
+            $message = "No suitable database connection data for '$this->name'";
+
+            if (Environment::getInitiating()) {
+                $message .= ', errors: ' . join('; ', $errors);
+            }
+
+            throw new \diDatabaseException($message);
         }
 
         return $this;
