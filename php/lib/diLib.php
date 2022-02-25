@@ -603,7 +603,9 @@ class diLib
 			return true;
 		}
 
-		return is_file(self::getClassFilename($className, $subFolder));
+		$fn = self::getClassFilename($className, $subFolder);
+
+		return $fn ? is_file($fn) : false;
 	}
 
 	public static function realInc($className, $subFolder = '')
