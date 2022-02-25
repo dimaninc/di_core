@@ -2302,7 +2302,10 @@ abstract class CMS
 
 	public function load_content_table_cache($forceRebuild = false)
 	{
-		if ($forceRebuild) {
+		if (
+		    $forceRebuild ||
+            !is_file($this->tables_cache_fn_ar[$this->content_table])
+        ) {
 			$this->build_content_table_cache();
 		}
 
