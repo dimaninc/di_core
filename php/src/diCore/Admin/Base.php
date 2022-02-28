@@ -294,7 +294,7 @@ class Base
 	private function getTemplateVariables()
 	{
 		return [
-			'html_base' => \diRequest::protocol() . '://' . \diRequest::domain() . '/' . self::getSubFolder() . '/',
+			'html_base' => '//' . \diRequest::domain() . '/' . self::getSubFolder() . '/',
 			'current_uri' => \diRequest::requestUri(),
 
 			'logout_href' => \diLib::getAdminWorkerPath('admin_auth', 'logout') .
