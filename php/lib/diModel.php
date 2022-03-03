@@ -2571,7 +2571,7 @@ ENGINE = InnoDB;";
     public function getPublicData()
     {
         return ArrayHelper::filterByKey(
-            extend($this->get(), $this->getBasicTemplateVars()),
+            extend($this->getTemplateVarsExtended(), $this->getBasicTemplateVars()),
             static::getPublicFields()
         );
     }
