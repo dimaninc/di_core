@@ -8,6 +8,7 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Admin\FilterRule;
 use diCore\Admin\Form;
 use diCore\Entity\Localization\Model;
 
@@ -52,7 +53,7 @@ class Localization extends \diCore\Admin\BasePage
 				    'ru' => 'Токен',
                     'en' => 'Token',
 				],
-				'where_tpl' => 'diaf_substr',
+                'rule' => FilterRule::contains,
 			])
 			->addFilter([
 				'field' => 'value',
@@ -61,7 +62,7 @@ class Localization extends \diCore\Admin\BasePage
 				    'ru' => 'Рус.значение',
                     'en' => 'Value',
 				],
-				'where_tpl' => 'diaf_substr',
+                'rule' => FilterRule::contains,
 			])
 			->addFilter([
 				'field' => 'en_value',
@@ -70,7 +71,7 @@ class Localization extends \diCore\Admin\BasePage
 				    'ru' => 'Eng.значение',
                     'en' => 'Eng.value',
 				],
-				'where_tpl' => 'diaf_substr',
+                'rule' => FilterRule::contains,
 			])
 			->buildQuery();
 	}
@@ -122,7 +123,7 @@ class Localization extends \diCore\Admin\BasePage
 			],
 			'#edit' => '',
 			'#del' => [
-				'active' => function(Model $m, $field) {
+				'active' => function (Model $m, $field) {
 					return $this->getAdmin()->isAdminSuper();
 				},
 			],

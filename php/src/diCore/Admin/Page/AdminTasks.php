@@ -2,6 +2,7 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Admin\FilterRule;
 use diCore\Data\Types;
 use diCore\Entity\DynamicPic\Collection as dpCol;
 use diCore\Entity\AdminTask\Model;
@@ -55,7 +56,7 @@ class AdminTasks extends \diCore\Admin\BasePage
 				'field' => 'title',
 				'type' => 'string',
 				'title' => 'Название',
-				'where_tpl' => 'diaf_substr',
+                'rule' => FilterRule::contains,
 			])
 			->addFilter([
 				'field' => 'admin_id',

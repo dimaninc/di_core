@@ -8,6 +8,8 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Admin\FilterRule;
+
 class Fonts extends \diCore\Admin\BasePage
 {
 	protected $options = [
@@ -35,7 +37,7 @@ class Fonts extends \diCore\Admin\BasePage
 				'field' => 'token',
 				'type' => 'str',
 				'title' => 'Токен',
-				'where_tpl' => 'diaf_substr',
+                'rule' => FilterRule::contains,
 			])
 			->buildQuery();
 	}

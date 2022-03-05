@@ -8,6 +8,7 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Admin\FilterRule;
 use diCore\Entity\Slug\Model;
 
 class Slugs extends \diCore\Admin\BasePage
@@ -48,13 +49,13 @@ class Slugs extends \diCore\Admin\BasePage
 				'field' => 'slug',
 				'type' => 'string',
 				'title' => 'Слаг',
-				'where_tpl' => 'diaf_substr',
+                'rule' => FilterRule::contains,
 			])
 			->addFilter([
 				'field' => 'full_slug',
 				'type' => 'string',
 				'title' => 'Полный слаг',
-				'where_tpl' => 'diaf_substr',
+                'rule' => FilterRule::contains,
 			])
 			->buildQuery();
 	}

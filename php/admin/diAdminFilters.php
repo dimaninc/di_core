@@ -1553,11 +1553,13 @@ function diaf_from_to($field, $value, $not = false, $table_prefix = "")
   return "(INSTR(sender,'$value')>'0' OR INSTR(recipient,'$value')>'0')";
 }
 
+/** @deprecated  */
 function diaf_like($field, $value, $not = false, $table_prefix = "")
 {
   return diaf_substr($field, $value, $not, $table_prefix);
 }
 
+/** @deprecated  */
 function diaf_substr($field, $value, $not = false, $table_prefix = "")
 {
     return $value
@@ -1565,6 +1567,7 @@ function diaf_substr($field, $value, $not = false, $table_prefix = "")
         : "{$table_prefix}{$field} = '$value'";
 }
 
+/** @deprecated  */
 function diaf_first_last_name($field, $value, $not = false, $table_prefix = "")
 {
   return "(INSTR(first_name,'$value')>'0' OR INSTR(last_name,'$value')>'0')";
@@ -1598,11 +1601,13 @@ function diaf_bin_ip($field, $value, $not = false, $table_prefix = "")
   return "{$table_prefix}{$field}='".ip2bin($value)."'";
 }
 
+/** @deprecated  */
 function diaf_host($field, $value, $not = false, $table_prefix = "")
 {
   return "(INSTR({$table_prefix}{$field},'$value')>'0' or INSTR({$table_prefix}{$field},'www.$value')>'0')";
 }
 
+/** @deprecated  */
 function diaf_checkboxes($field, $value, $not = false, $table_prefix = "")
 {
   $ar = explode(",", $value);
@@ -1616,6 +1621,7 @@ function diaf_checkboxes($field, $value, $not = false, $table_prefix = "")
   return "(".join(" or ", $ar2).")";
 }
 
+/** @deprecated  */
 function diaf_checkboxes2($field, $value, $not = false, $table_prefix = "")
 {
   $ar = explode(",", $value);
