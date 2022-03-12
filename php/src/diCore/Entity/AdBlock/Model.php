@@ -8,6 +8,7 @@
 namespace diCore\Entity\AdBlock;
 
 use diCore\Entity\Ad\Helper;
+use diCore\Traits\Model\TargetInside;
 
 /**
  * Class Model
@@ -54,7 +55,9 @@ use diCore\Entity\Ad\Helper;
  */
 class Model extends \diModel
 {
-	const type = \diTypes::ad_block;
+    use TargetInside;
+
+    const type = \diTypes::ad_block;
     const table = 'ad_blocks';
 	protected $table = 'ad_blocks';
 

@@ -7,6 +7,8 @@
 
 namespace diCore\Entity\AdBlock;
 
+use diCore\Traits\Collection\TargetInside;
+
 /**
  * Class Collection
  * Methods list for IDE
@@ -55,6 +57,8 @@ namespace diCore\Entity\AdBlock;
  */
 class Collection extends \diCollection
 {
+    use TargetInside;
+
 	const type = \diTypes::ad_block;
 	protected $table = 'ad_blocks';
 	protected $modelType = 'ad_block';
