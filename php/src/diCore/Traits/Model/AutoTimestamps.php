@@ -26,6 +26,10 @@ trait AutoTimestamps
 {
     protected function generateTimestamps()
     {
+        if (defined('static::SKIP_TIMESTAMP_FIELDS') && static::SKIP_TIMESTAMP_FIELDS) {
+            return $this;
+        }
+
         $dt = \diDateTime::sqlFormat();
 
         if (!$this->hasCreatedAt()) {

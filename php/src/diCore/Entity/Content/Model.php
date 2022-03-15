@@ -144,6 +144,7 @@ class Model extends \diModel
 
 	const type = Types::content;
     const table = 'content';
+    const SKIP_TIMESTAMP_FIELDS = false;
 	protected $table = 'content';
 
 	protected static $publicFields = [
@@ -194,12 +195,5 @@ class Model extends \diModel
         }
 
         return $this->adBlock;
-    }
-
-    public function prepareForSave()
-    {
-        $this->generateTimestamps();
-
-        return parent::prepareForSave();
     }
 }

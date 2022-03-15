@@ -22,18 +22,14 @@ class diListController extends \diBaseAdminController
 		/** @var diModel $m */
 		foreach ($c as $m)
 		{
-			if ($m->exists("parent") && $m->exists("level_num"))
-			{
+			if ($m->exists("parent") && $m->exists("level_num")) {
 				$collection = $this->getFamilyCollection($m, [$m]);
-			}
-			else
-			{
+			} else {
 				$collection = [$m];
 			}
 
 			/** @var diModel $model */
-			foreach ($collection as $model)
-			{
+			foreach ($collection as $model) {
 				$ar["id"][] = $model->getId();
 
 				$this->deleteRecord($model);
@@ -227,18 +223,12 @@ class diListController extends \diBaseAdminController
 			"id" => $m->getId(),
 		];
 
-		if (!$field)
-		{
+		if (!$field) {
 			$ar["message"] = 'No field specified';
-		}
-		elseif (!$m->exists($field))
-		{
+		} elseif (!$m->exists($field)) {
 			$ar["message"] = "Record #{$m->getId()} doesn't have field '$field'";
-		}
-		else
-		{
-			try
-			{
+		} else {
+			try {
 				$m
 					->set($field, $m->get($field) ? 0 : 1)
 					->save();
@@ -249,9 +239,7 @@ class diListController extends \diBaseAdminController
 
 				$ar["ok"] = true;
 				$ar["state"] = $m->get($field);
-			}
-			catch (\Exception $e)
-			{
+			} catch (\Exception $e) {
 				$ar["message"] = $e->getMessage();
 				$ar["state"] = $m->getOrigData($field);
 			}
