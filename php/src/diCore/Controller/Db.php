@@ -333,7 +333,9 @@ EOF;
 					$indexAr[$key_name][] = $r_key->Column_name;
 				}
 
-				$engine = substr($table, 0, 13) == "search_index_" ? "MyISAM" : "InnoDB";
+				$engine = substr($table, 0, 13) == "search_index_"
+                    ? "MyISAM"
+                    : "InnoDB";
 
 				// get each key info
 				foreach ($indexAr as $key_name => $columns) {
@@ -369,37 +371,36 @@ EOF;
 			}
 
 			if ($data) {
-				$rs = $this->getDb()->rs($this->getDb()->escapeTable($table));
-				$rc = $this->getDb()->count($rs);
+			    $col = \diCollection::createForTable($table);
 
 				if ($fields && empty($fieldsAr)) {
-					$r = $this->getDb()->fetch($rs);
+					$r = $col->getModelByIdx()->get();
 
 					foreach ($r as $Field => $Value) {
 						$fieldsAr[$Field] = 1;
 					}
-
-					$this->getDb()->reset($rs);
 				}
 
-				$fieldsListString = $fields && $fieldsAr ? '(' . join(',', array_map(function($field) {
-						return '`' . $field . '`';
-					}, array_keys($fieldsAr))) . ')' : '';
+                $fieldsListString = $fields && $fieldsAr
+                    ? '(' . join(',', array_map(function ($field) {
+                        return '`' . $field . '`';
+                    }, array_keys($fieldsAr))) . ')'
+                    : '';
 
-				if ($multiple && $rc) {
+				if ($multiple && $col->count()) {
 					$sql .= "INSERT INTO `{$table}`{$fieldsListString} VALUES";
 				}
 
 				$end_symbol = $multiple ? ',' : ';';
 
-                for ($j = 0; $j < $rc; $j++) {
-                    $r = $this->getDb()->fetch_array($rs);
+                for ($j = 0; $j < $col->count(); $j++) {
+                    $r = $col->getModelByIdx($j)->get();
 
                     if (!$multiple) {
                         $sql .= "INSERT INTO `{$table}`{$fieldsListString} VALUES";
                     }
 
-                    if ($j == $rc - 1) {
+                    if ($j == $col->count() - 1) {
                         $end_symbol = ';';
                     }
 
