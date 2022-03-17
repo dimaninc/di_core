@@ -14,10 +14,10 @@ class Slug
 	{
         $source = trim($source, ' \"\'');
         $source = str_replace([' ', '/', '\\', '_', '-'], $delimiter, $source);
-        $source = preg_replace("/{$delimiter}{2,}/", $delimiter, $source);
         $source = preg_replace("/\&\#?[a-z0-9]+\;/", '', $source);
         $source = transliterate_rus_to_eng($source, $lowerCase);
         $source = preg_replace("/[^a-zA-Z0-9{$delimiter}]/", '', $source);
+        $source = preg_replace("/{$delimiter}{2,}/", $delimiter, $source);
 
         return $source;
 	}
