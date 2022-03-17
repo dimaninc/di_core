@@ -20,7 +20,6 @@ use diCore\Data\Types;
  * @method string	getSubject
  * @method string	getBody
  * @method integer	getPlainBody
- * @method string	getAttachment
  * @method string	getIncutIds
  * @method integer	getVisible
  * @method integer	getSent
@@ -125,4 +124,13 @@ class Model extends \diModel
 	{
 		return $this->setEmailNameField('reply_to', $email, $name);
 	}
+
+	public function getAttachment()
+    {
+        $a = $this->get('attachment');
+
+        return is_resource($a)
+            ? stream_get_contents($a)
+            : $a;
+    }
 }

@@ -192,7 +192,7 @@ class diRequest
 
 		return $name === null
 			? self::$postRawData
-			: ArrayHelper::getValue(self::$postRawParsed, $name, $defaultValue, $type);
+			: ArrayHelper::get(self::$postRawParsed, $name, $defaultValue, $type);
 	}
 
 	public static function rawPostParsed()
