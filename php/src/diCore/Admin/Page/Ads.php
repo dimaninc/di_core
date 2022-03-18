@@ -69,13 +69,13 @@ class Ads extends \diCore\Admin\BasePage
 						? '<img src="/' . $ad->getPicsFolder() . $ad->getPic() . '" height="100">'
 						: '&mdash;';
 				},
-				'headAttrs' => [
-					'width' => '30%',
-				],
+                'bodyAttrs' => [
+                    'class' => 'no-padding',
+                ],
 			],
 			'title' => [
 				'headAttrs' => [
-					'width' => '40%',
+					'width' => '70%',
 				],
 			],
 			'href' => [
