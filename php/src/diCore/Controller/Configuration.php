@@ -11,8 +11,7 @@ class Configuration extends \diBaseAdminController
 	{
 		Cfg::getInstance()->store();
 
-		// $this->redirectBack();
-        return 'oh yeah?';
+		 $this->redirectBack();
 	}
 
 	public function delPicAction(){
