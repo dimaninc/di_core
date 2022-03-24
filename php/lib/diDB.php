@@ -792,15 +792,18 @@ abstract class diDB
 		return join(',', $q_ar);
 	}
 
-    protected static function insertUpdateQuery($fields_values)
+    /*
+     * enter $keyField if it differs from 'id'
+     */
+    protected static function insertUpdateQuery($fields_values, $keyField = null)
     {
-        $q1 = static::insertUpdateQueryBeginning();
+        $q1 = static::insertUpdateQueryBeginning($keyField);
         $q3 = static::fields_and_values_to_string_for_update($fields_values) . static::insertUpdateQueryEnding();
 
         return " {$q1} {$q3}";
     }
 
-    public static function insertUpdateQueryBeginning()
+    public static function insertUpdateQueryBeginning($keyField = null)
     {
         return 'ON DUPLICATE KEY UPDATE';
     }
@@ -951,13 +954,16 @@ abstract class diDB
 		return true;
 	}
 
-	public function insert_or_update($table, $fields_values = [])
+	/*
+	 * enter $keyField if it differs from 'id'
+	 */
+	public function insert_or_update($table, $fields_values = [], $keyField = null)
 	{
 		$t = $this->get_table_name($table);
 
         $q1 = "(" . static::fields_to_string_for_insert($fields_values) . ")";
         $q2 = "(" . static::values_to_string_for_insert($fields_values) . ")";
-        $q3 = static::insertUpdateQuery($fields_values);
+        $q3 = static::insertUpdateQuery($fields_values, $keyField);
 
 		$time1 = utime();
 

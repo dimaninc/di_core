@@ -122,9 +122,11 @@ ORDER BY ordinal_position ASC");
         return $fields;
     }
 
-    public static function insertUpdateQueryBeginning()
+    public static function insertUpdateQueryBeginning($keyField = null)
     {
-        return 'ON CONFLICT (id) DO UPDATE SET';
+        $keyField = $keyField ?: 'id';
+
+        return "ON CONFLICT ($keyField) DO UPDATE SET";
     }
 
     public function getUpdateSingleLimit()

@@ -358,7 +358,9 @@ class Configuration
 		$this->getDB()->insert_or_update($this->tableName, [
 			$this->nameField => $this->getDB()->escape_string($name),
 			$this->valueField => $this->adjustBeforeDB($value, self::getPropertyType($name)),
-		]);
+		], 'name');
+
+		$this->getDB()->dierror();
 
 		return $this;
 	}
