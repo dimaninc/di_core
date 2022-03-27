@@ -117,7 +117,7 @@ class diMYSQL extends diDB
 		return mysql_affected_rows();
 	}
 
-	public function escape_string($s)
+	public function escape_string($s, $binary = false)
 	{
 		return mysql_real_escape_string($s, $this->link);
 	}

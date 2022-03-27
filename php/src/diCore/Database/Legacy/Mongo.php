@@ -305,7 +305,7 @@ class Mongo extends \diDB
 		return null;
 	}
 
-	public function escape_string($s)
+	public function escape_string($s, $binary = false)
 	{
 		return $s;
 	}

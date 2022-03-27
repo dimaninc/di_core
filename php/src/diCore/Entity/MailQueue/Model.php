@@ -60,6 +60,8 @@ class Model extends \diModel
     const table = 'mail_queue';
 	protected $table = 'mail_queue';
 
+	protected static $binaryFields = ['attachment'];
+
 	const BODY_TYPE_HTML = 0;
 	const BODY_TYPE_PLAIN_TEXT = 1;
 
@@ -84,26 +86,17 @@ class Model extends \diModel
 	 */
 	protected function setEmailNameField($field, $email, $name = null)
 	{
-		if ($name === null)
-		{
-			if (is_array($email))
-			{
-				if (!empty($email['name']))
-				{
+		if ($name === null) {
+			if (is_array($email)) {
+				if (!empty($email['name'])) {
 					$sender = sprintf('%s <%s>', $email['name'], $email['email']);
-				}
-				else
-				{
+				} else {
 					$sender = $email['email'];
 				}
-			}
-			else
-			{
+			} else {
 				$sender = $email;
 			}
-		}
-		else
-		{
+		} else {
 			$sender = sprintf('%s <%s>', $name, $email);
 		}
 

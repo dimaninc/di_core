@@ -154,7 +154,7 @@ class diMYSQLi extends diMYSQL
 		return $this->link->affected_rows;
 	}
 
-	public function escape_string($s)
+	public function escape_string($s, $binary = false)
 	{
 		return $this->link->escape_string($s);
 	}

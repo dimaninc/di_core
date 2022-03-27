@@ -115,6 +115,9 @@ class diModel implements \ArrayAccess
 	/* redefine this in child class */
 	protected $customDateFields = [];
 
+    protected static $binaryFields = [];
+    protected static $customBinaryFields = [];
+
     /**
      * @var array Fields which should be compared strict in saveToDb() method
      */
@@ -1878,6 +1881,13 @@ class diModel implements \ArrayAccess
         return $ar;
     }
 
+    protected function escapeValue($value, $field)
+    {
+        $binary = in_array($field, $this->getBinaryFields());
+
+        return $this->getDb()->escape_string($value, $binary);
+    }
+
 	/**
 	 * @return array
 	 */
@@ -1887,7 +1897,7 @@ class diModel implements \ArrayAccess
 
         foreach ($ar as $k => &$v) {
             if (is_scalar($v)) {
-                $v = $this->getDb()->escape_string($v);
+                $v = $this->escapeValue($v, $k);
             }
         }
 
@@ -2117,6 +2127,16 @@ class diModel implements \ArrayAccess
 		return array_merge($this->ipFields, $this->customIpFields);
 	}
 
+    /**
+     * Returns array of binary fields of the model
+     *
+     * @return array
+     */
+    public static function getBinaryFields()
+    {
+        return array_merge(static::$binaryFields, static::$customBinaryFields);
+    }
+
 	/**
 	 * Returns array of model fields and table prefix
 	 *
@@ -2126,7 +2146,7 @@ class diModel implements \ArrayAccess
 	{
 		$m = new static();
 
-		return array_map(function($field) use($prefix, $fieldPrefix) {
+		return array_map(function ($field) use ($prefix, $fieldPrefix) {
 			return ($prefix ? $prefix . '.' : '') . $fieldPrefix . $field;
 		}, $m->fields, static::createCollection()->hasUniqueId() ? ['id'] : []);
 	}

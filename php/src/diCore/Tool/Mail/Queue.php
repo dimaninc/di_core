@@ -11,10 +11,8 @@ namespace diCore\Tool\Mail;
 use diCore\Data\Types;
 use diCore\Entity\MailIncut\Model as IncutModel;
 use diCore\Entity\MailIncut\Collection as IncutCollection;
-use diCore\Entity\MailIncut\Type;
 use diCore\Entity\MailQueue\Collection;
 use diCore\Entity\MailQueue\Model;
-use diCore\Helper\ArrayHelper;
 use diCore\Tool\Logger;
 use diCore\Traits\BasicCreate;
 
@@ -38,13 +36,11 @@ class Queue
 
 	public function add($from, $to, $subject, $body, $settings = [], $attachments = [], $incutIds = [])
 	{
-		if (static::isRecipient($to))
-		{
+		if (static::isRecipient($to)) {
 			$to = [$to];
 		}
 
-		if (!is_array($settings))
-		{
+		if (!is_array($settings)) {
 			$settings = [
 				'plainBody' => $settings,
 			];
@@ -59,18 +55,14 @@ class Queue
 		unset($otherSettings['plainBody']);
 		unset($otherSettings['replyTo']);
 
-		if (!is_array($incutIds))
-		{
+		if (!is_array($incutIds)) {
 			$incutIds = explode(',', $incutIds);
 		}
 
 		$ids = [];
 
-		foreach ($to as $singleTo)
-		{
-			/** @var Model $model */
-			$model = \diModel::create(Types::mail_queue);
-			$model
+		foreach ($to as $singleTo) {
+			$model = Model::create()
 				->setSender($from)
 				->setRecipient($singleTo)
 				->setReplyTo($settings['replyTo'])
@@ -81,14 +73,11 @@ class Queue
 				->setSettings($otherSettings ? serialize($otherSettings) : '')
 				->setSent(0);
 
-			if (!is_array($attachments) && $attachments)
-			{
+			if (!is_array($attachments) && $attachments) {
 				$model
 					->setAttachment('')
 					->setNewsId((int)$attachments);
-			}
-			else
-			{
+			} else {
 				$model
 					->setAttachment(serialize($attachments));
 			}
@@ -105,8 +94,7 @@ class Queue
 	{
 		$ids = $this->add($from, $to, $subject, $body, $settings, $attachments, $incutIds);
 
-		foreach ($ids as $id)
-		{
+		foreach ($ids as $id) {
 			$this->send($id);
 		}
 
@@ -117,10 +105,8 @@ class Queue
 	{
 		$ids = $this->add($from, $to, $subject, $body, $settings, $attachments, $incutIds);
 
-		if (static::INSTANT_SEND)
-		{
-			foreach ($ids as $id)
-			{
+		if (static::INSTANT_SEND) {
+			foreach ($ids as $id) {
 				$this->send($id);
 			}
 		}
@@ -132,20 +118,16 @@ class Queue
 	{
 		$incutIds = $model->hasIncutIds() ? explode(',', $model->getIncutIds()) : [];
 
-		if ($incutIds)
-		{
-			foreach ($incutIds as $incutId)
-			{
+		if ($incutIds) {
+			foreach ($incutIds as $incutId) {
 				$incutId = (int)$incutId;
 				$token = static::incutToken($incutId);
 
-				if ($incutId && !isset($this->incuts[$token]))
-				{
+				if ($incutId && !isset($this->incuts[$token])) {
 					/** @var IncutModel $incut */
 					$incut = \diModel::create(Types::mail_incut, $incutId);
 
-					if ($incut->exists())
-					{
+					if ($incut->exists()) {
 						$this->incuts[$token] = $incut->getContent();
 					}
 				}
@@ -159,11 +141,8 @@ class Queue
 
 	public function getAttachments(Model $model)
 	{
-		if ($model->hasNewsId())
-		{
-			/** @var IncutCollection $col */
-			$col = \diCollection::create(Types::mail_incut);
-			$col
+		if ($model->hasNewsId()) {
+			$col = IncutCollection::create()
 				//->filterByType(Type::binary_attachment)
 				->filterByTargetType(self::STORED_NEWS_ID_TARGET_TYPE)
 				->filterByTargetId($model->getNewsId());
@@ -174,9 +153,7 @@ class Queue
 			return $incut->exists() && $incut->hasContent()
 				? unserialize($incut->getContent())
 				: [];
-		}
-		else
-		{
+		} else {
 			return unserialize($model->getAttachment());
 		}
 	}
@@ -187,17 +164,14 @@ class Queue
 		/** @var Collection $messages */
 		$messages = Collection::createActual();
 
-		if ($id)
-		{
-			$messages
-				->filterById($id);
+		if ($id) {
+			$messages->filterById($id);
 		}
 
 		/** @var Model $message */
 		$message = $messages->getFirstItem();
 
-		if ($message->exists())
-		{
+		if ($message->exists()) {
 			return $this->sendMessage($message);
 		}
 
@@ -206,8 +180,7 @@ class Queue
 
 	public function sendWorker($from, $to, $subject, $bodyPlain, $bodyHtml, $attachments = [], $options = [])
 	{
-		if (!is_array($to))
-		{
+		if (!is_array($to)) {
 			$to = [$to];
 		}
 
@@ -215,11 +188,11 @@ class Queue
 
 		$res = true;
 
-		foreach ($to as $singleTo)
-		{
+		foreach ($to as $singleTo) {
 			try {
-				if (!$sender->send($from, $singleTo, $subject, $bodyPlain, $bodyHtml, $attachments, $options))
-				{
+				if (!$sender->send(
+				    $from, $singleTo, $subject, $bodyPlain, $bodyHtml, $attachments, $options
+                )) {
 					$res = false;
 
 					$this->setLastError(Error::UNKNOWN_FATAL);
@@ -241,15 +214,12 @@ class Queue
 		$counter = 0;
 
 		/** @var Model $message */
-		foreach ($messages as $message)
-		{
-			if ($this->sendMessage($message))
-			{
+		foreach ($messages as $message) {
+			if ($this->sendMessage($message)) {
 				$counter++;
 			}
 
-			if ($limit && $counter > $limit)
-			{
+			if ($limit && $counter > $limit) {
 				break;
 			}
 		}
@@ -263,8 +233,7 @@ class Queue
 		//$errorsAllowed = static::SAFE_SEND_ERRORS_ALLOWED;
 
 		do {
-			if ($limit && $i >= $limit)
-			{
+			if ($limit && $i >= $limit) {
 				break;
 			}
 
@@ -273,14 +242,10 @@ class Queue
 
 			$sent = $this->send();
 
-			if ($sent)
-			{
+			if ($sent) {
 				$i++;
-			}
-			else
-			{
-				if ($this->isLastErrorFatal())
-				{
+			} else {
+				if ($this->isLastErrorFatal()) {
 					break;
 					//$errorsAllowed--;
 				}
@@ -309,8 +274,7 @@ class Queue
 		$result = $this->sendWorker($message->getSender(), $message->getRecipient(), $message->getSubject(),
 			$bodyPlain, $bodyHtml, $attachments, $options);
 
-		if ($result)
-		{
+		if ($result) {
 			$this->setMessageSent($message);
 		}
 

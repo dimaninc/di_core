@@ -179,9 +179,9 @@ abstract class Pdo extends \diDB
 			: 0;
 	}
 
-	public function escape_string($s)
+	public function escape_string($s, $binary = false)
 	{
-		$s = $this->link->quote($s);
+		$s = $this->link->quote($s, $binary ? \PDO::PARAM_LOB : \PDO::PARAM_STR);
 
 		if (strlen($s) >= 2) {
 			$s = substr($s, 1, strlen($s) - 2);
