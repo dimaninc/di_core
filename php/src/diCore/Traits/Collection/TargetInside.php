@@ -23,4 +23,10 @@ namespace diCore\Traits\Collection;
  */
 trait TargetInside
 {
+    public function filterByTarget(\diModel $target)
+    {
+        return $this
+            ->filterByTargetType($target->modelType())
+            ->filterByTargetId($target->getId());
+    }
 }
