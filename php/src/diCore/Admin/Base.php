@@ -831,6 +831,14 @@ class Base
 			$result = array_merge_recursive($result, $a);
 		}
 
+		if (is_array($result['isVisible'])) {
+            $result['isVisible'] = current($result['isVisible']);
+        }
+
+        if (is_array($result['super'])) {
+            $result['super'] = current($result['super']);
+        }
+
 		return $result;
 	}
 
