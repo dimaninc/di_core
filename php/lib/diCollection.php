@@ -237,6 +237,28 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
         return static::getConnection()::getEngine();
     }
 
+    public static function getInnerCol()
+    {
+        if (!static::getConnection()::isMongo()) {
+            throw new \Exception('getInnerCol implemented for mongo only');
+        }
+
+        /** @var Mongo $mongo */
+        $mongo = static::getConnection()->getDb();
+
+        return $mongo->getCollectionResource(static::getModelClass()::table);
+    }
+
+    public static function postCreateIndexes()
+    {
+        // implement mongo indexes creation here
+    }
+
+    public static function postDropIndexes()
+    {
+        // implement mongo indexes dropping here
+    }
+
 	/**
 	 * @param integer|string $type
 	 * @param array $options
