@@ -130,6 +130,10 @@ class Model extends \diModel
 		foreach ($this->getOldValues() as $field => $oldValue) {
 			$newValue = $newData[$field];
 
+			if (!is_scalar($newValue) || !is_scalar($oldValue)) {
+			    continue;
+            }
+
 			$origEnc = 'UTF-8';
 			$enc = 'HTML-ENTITIES';
 			$oldValue = mb_convert_encoding($oldValue, $enc, $origEnc);
