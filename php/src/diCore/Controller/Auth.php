@@ -180,9 +180,21 @@ class Auth extends \diBaseController
 		return $ar;
 	}
 
-	protected function getActivateRedirectUrl($token)
+	protected function getActivateRedirectUrl($success, $token = null)
 	{
-		return '/' . CMS::ct('registration') . '/?activate_message=' . $token;
+	    $params = [];
+
+	    if ($success) {
+	        $params['success'] = 1;
+            $params['activate_message'] = 'activate.success';
+        }
+
+        if ($token) {
+            $params['activate_message'] = $token;
+        }
+
+		return '/' . CMS::ct('registration') . '/' .
+            ($params ? '?' . http_build_query($params) : '');
 	}
 
 	public function activateAction()
@@ -217,9 +229,9 @@ class Auth extends \diBaseController
 				->setActivationKey(Model::generateActivationKey())
 				->save();
 
-			$href = '/';
+            $href = $this->getActivateRedirectUrl(true);
 		} catch (\Exception $e) {
-			$href = $this->getActivateRedirectUrl($e->getMessage());
+			$href = $this->getActivateRedirectUrl(false, $e->getMessage());
 		}
 
 		$this->redirectTo($href);
