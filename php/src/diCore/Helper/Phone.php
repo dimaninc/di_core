@@ -21,7 +21,11 @@ class Phone
 
 	public static function isRussian($phone)
     {
-        return self::isRussianAndMore($phone) && !self::isKazakh($phone) && !self::isAbkhaz($phone);
+        return self::isRussianAndMore($phone)
+            && !self::isKazakh($phone)
+            && !self::isAbkhaz($phone)
+            && !self::isDNR($phone)
+            && !self::isLNR($phone);
     }
 
     public static function isRussianAndMore($phone)
@@ -43,6 +47,20 @@ class Phone
         $cleanPhone = Phone::clean($phone);
 
         return self::isRussianAndMore($phone) && in_array(substr($cleanPhone, 1, 3), [940]);
+    }
+
+    public static function isDNR($phone)
+    {
+        $cleanPhone = Phone::clean($phone);
+
+        return self::isRussianAndMore($phone) && in_array(substr($cleanPhone, 1, 3), [949]);
+    }
+
+    public static function isLNR($phone)
+    {
+        $cleanPhone = Phone::clean($phone);
+
+        return self::isRussianAndMore($phone) && in_array(substr($cleanPhone, 1, 3), [959]);
     }
 
 	public static function clean($phone, $prefix = '')

@@ -76,6 +76,11 @@ class Captcha
         return rand(1000, 9999);
     }
 
+    public function getImageTag()
+    {
+        return "<img src=\"/api/captcha/png/{$this->getUid()}/image.png\" alt=\"\">";
+    }
+
     public function printPng()
     {
         header('Content-Type: image/png');
