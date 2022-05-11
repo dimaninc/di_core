@@ -1,36 +1,37 @@
 <?php
 
+use diCore\Helper\StringHelper;
+
 class diListController extends \diBaseAdminController
 {
 	const BATCH_COPY_ACTION = 1;
 	const BATCH_MOVE_ACTION = 2;
 
-	private $possibleDirections = ["up", "down"];
-	private $signs = ["up" => "<", "down" => ">"];
-	private $orderDirections = ["up" => "desc", "down" => "asc"];
-	private $orderNumField = "order_num";
+	private $possibleDirections = ['up', 'down'];
+	private $signs = ['up' => '<', 'down' => '>'];
+	private $orderDirections = ['up' => 'desc', 'down' => 'asc'];
+	private $orderNumField = 'order_num';
 
 	public function batchDeleteAction()
 	{
 		$c = $this->getTargetCollection();
 
 		$ar = [
-			"ok" => !!count($c),
-			"id" => [],
+			'ok' => !!count($c),
+			'id' => [],
 		];
 
-		/** @var diModel $m */
-		foreach ($c as $m)
-		{
-			if ($m->exists("parent") && $m->exists("level_num")) {
+		/** @var \diModel $m */
+		foreach ($c as $m) {
+			if ($m->exists('parent') && $m->exists('level_num')) {
 				$collection = $this->getFamilyCollection($m, [$m]);
 			} else {
 				$collection = [$m];
 			}
 
-			/** @var diModel $model */
+			/** @var \diModel $model */
 			foreach ($collection as $model) {
-				$ar["id"][] = $model->getId();
+				$ar['id'][] = $model->getId();
 
 				$this->deleteRecord($model);
 			}
@@ -54,27 +55,23 @@ class diListController extends \diBaseAdminController
 		$all = $this->getAllModels($this->getTargetCollection());
 
 		$ar = [
-			"ok" => !!count($all),
-			"id" => array_keys($all),
+			'ok' => !!count($all),
+			'id' => array_keys($all),
 		];
 
-		if ($ar["ok"])
-		{
+		if ($ar['ok']) {
 			$table = $this->param(0);
 			$delta = count($all);
 			$map = [];
 
-			$parentModel = $this->getParentModel($table, \diRequest::post("parent", 0));
-			$order = $parentModel->getRelated("order");
+			$parentModel = $this->getParentModel($table, \diRequest::post('parent', 0));
+			$order = $parentModel->getRelated('order');
 
 			// checking if there is a loop, we can't move model inside itself or inside children
-			if ($action == self::BATCH_MOVE_ACTION)
-			{
+			if ($action == self::BATCH_MOVE_ACTION) {
 				/** @var \diModel $m */
-				foreach ($all as $m)
-				{
-					if ($parentModel->getId() == $m->getId())
-					{
+				foreach ($all as $m) {
+					if ($parentModel->getId() == $m->getId()) {
 						return [
 							'ok' => false,
 							'message' => 'Parent cycling detected',
@@ -86,23 +83,19 @@ class diListController extends \diBaseAdminController
 			$this->moveRecordsDown($table, $order, $delta);
 
 			/** @var diModel $m */
-			foreach ($all as $m)
-			{
+			foreach ($all as $m) {
 				/** @var diModel $p */
-				$p = isset($map[$m->get("parent")])
-					? $map[$m->get("parent")]
-					: $parentModel;
+				$p = $map[$m->get('parent')] ?? $parentModel;
 
-				if ($action == self::BATCH_COPY_ACTION)
-				{
+				if ($action == self::BATCH_COPY_ACTION) {
 					$m
 						->killId()
 						->generateSlug();
 				}
 
 				$m
-					->set("parent", $p->getId())
-					->set("level_num", $p->get("level_num") + 1)
+					->set('parent', $p->getId())
+					->set('level_num', $p->get('level_num') + 1)
 					->set($this->orderNumField, $order++)
 					->save();
 
@@ -119,33 +112,30 @@ class diListController extends \diBaseAdminController
 	private function moveRecordsDown($table, $orderNum, $delta)
 	{
 		$this->getDb()->update($table, [
-			"*" . $this->orderNumField => $this->orderNumField . "+" . $delta,
-		], "WHERE $this->orderNumField>='$orderNum'");
+			'*' . $this->orderNumField => $this->orderNumField . '+' . $delta,
+		], "WHERE $this->orderNumField >= '$orderNum'");
 
 		return $this;
 	}
 
 	private function getParentModel($table, $parentId)
 	{
-		if ($parentId > 0)
-		{
-			$parentModel = \diModel::createForTableNoStrict($table, $parentId, "id");
+		if ($parentId > 0) {
+			$parentModel = \diModel::createForTableNoStrict($table, $parentId, 'id');
 			$order = $parentModel->get($this->orderNumField) + 1;
-		}
-		else
-		{
-			$minRec = $this->getDb()->r($table, "", "MIN($this->orderNumField) as min_order_num");
+		} else {
+			$minRec = $this->getDb()->r($table, '', "MIN($this->orderNumField) as min_order_num");
 			$order = $minRec ? $minRec->min_order_num - 1 : 0;
 
 			$parentModel = \diModel::createForTableNoStrict($table);
 			$parentModel
 				->setId(-1)
-				->set("parent", -1)
-				->set("level_num", -1)
+				->set('parent', -1)
+				->set('level_num', -1)
 				->set($this->orderNumField, $order - 1);
 		}
 
-		$parentModel->setRelated("order", $order);
+		$parentModel->setRelated('order', $order);
 
 		return $parentModel;
 	}
@@ -154,32 +144,26 @@ class diListController extends \diBaseAdminController
 	{
 		$all = [];
 
-		/** @var diModel $m */
-		foreach ($c as $m)
-		{
-			if ($m->exists("parent") && $m->exists("level_num"))
-			{
+		/** @var \diModel $m */
+		foreach ($c as $m) {
+			if ($m->exists('parent') && $m->exists('level_num')) {
 				$collection = $this->getFamilyCollection($m, [$m]);
-			}
-			else
-			{
+			} else {
 				$collection = [$m];
 			}
 
-			/** @var diModel $model */
-			foreach ($collection as $model)
-			{
+			/** @var \diModel $model */
+			foreach ($collection as $model) {
 				$all[$model->getId()] = $model;
 			}
 		}
 
 		uasort($all, function(\diModel $a, \diModel $b) {
-			if ($a->get("order_num") == $b->get("order_num"))
-			{
+			if ($a->get('order_num') == $b->get('order_num')) {
 				return 0;
 			}
 
-			return $a->get("order_num") < $b->get("order_num") ? -1 : 1;
+			return $a->get('order_num') < $b->get('order_num') ? -1 : 1;
 		});
 
 		return $all;
@@ -189,24 +173,20 @@ class diListController extends \diBaseAdminController
 	{
 		$m = $this->getTargetModel();
 
-		if ($m->exists("parent") && $m->exists("level_num"))
-		{
+		if ($m->exists('parent') && $m->exists('level_num')) {
 			$collection = $this->getFamilyCollection($m, [$m]);
-		}
-		else
-		{
+		} else {
 			$collection = [$m];
 		}
 
 		$ar = [
-			"ok" => $m->exists(),
-			"id" => array_map(function(\diModel $m) {
+			'ok' => $m->exists(),
+			'id' => array_map(function(\diModel $m) {
 				return $m->getId();
 			}, $collection),
 		];
 
-		foreach ($collection as $model)
-		{
+		foreach ($collection as $model) {
 			$this->deleteRecord($model);
 		}
 
@@ -215,18 +195,18 @@ class diListController extends \diBaseAdminController
 
 	public function toggleAction()
 	{
-		$field = \diRequest::post("field");
+		$field = \diRequest::post('field');
 		$m = $this->getTargetModel();
 
 		$ar = [
-			"ok" => false,
-			"id" => $m->getId(),
+			'ok' => false,
+			'id' => $m->getId(),
 		];
 
 		if (!$field) {
-			$ar["message"] = 'No field specified';
+			$ar['message'] = 'No field specified';
 		} elseif (!$m->exists($field)) {
-			$ar["message"] = "Record #{$m->getId()} doesn't have field '$field'";
+			$ar['message'] = "Record #{$m->getId()} doesn't have field '$field'";
 		} else {
 			try {
 				$m
@@ -237,11 +217,11 @@ class diListController extends \diBaseAdminController
 					->afterToggle($m, $field)
 					->postProcess($m);
 
-				$ar["ok"] = true;
-				$ar["state"] = $m->get($field);
+				$ar['ok'] = true;
+				$ar['state'] = $m->get($field);
 			} catch (\Exception $e) {
-				$ar["message"] = $e->getMessage();
-				$ar["state"] = $m->getOrigData($field);
+				$ar['message'] = $e->getMessage();
+				$ar['state'] = $m->getOrigData($field);
 			}
 		}
 
@@ -250,10 +230,9 @@ class diListController extends \diBaseAdminController
 
 	protected function afterToggle(diModel $m, $field)
 	{
-		$methodName = camelize("after_toggle_" . $field);
+		$methodName = camelize('after_toggle_' . $field);
 
-		if (method_exists($m, $methodName))
-		{
+		if (method_exists($m, $methodName)) {
 			$m->$methodName();
 		}
 
@@ -262,18 +241,17 @@ class diListController extends \diBaseAdminController
 
 	public function moveAction()
 	{
-		$direction = \diRequest::post("direction");
+		$direction = \diRequest::post('direction');
 		$m = $this->getTargetModel();
 
 		$ar = [
-			"ok" => false,
-			"up" => [],
-			"down" => [],
-			"downFirst" => null,
+			'ok' => false,
+			'up' => [],
+			'down' => [],
+			'downFirst' => null,
 		];
 
-		if (in_array($direction, $this->possibleDirections) && $m->exists($this->orderNumField))
-		{
+		if (in_array($direction, $this->possibleDirections) && $m->exists($this->orderNumField)) {
 			$queryAr = $this->getQueryArForMove($m, [
 				"{$this->orderNumField}{$this->signs[$direction]}'{$m->get($this->orderNumField)}'",
 			]);
@@ -282,15 +260,11 @@ class diListController extends \diBaseAdminController
 				"WHERE " . join(" AND ", $queryAr) . " ORDER BY {$this->orderNumField} {$this->orderDirections[$direction]}"
 			), $m->getTable());
 
-			if ($neighbor->exists())
-			{
-				if ($neighbor->get($this->orderNumField) < $m->get($this->orderNumField))
-				{
+			if ($neighbor->exists()) {
+				if ($neighbor->get($this->orderNumField) < $m->get($this->orderNumField)) {
 					$m1 = $neighbor;
 					$m2 = $m;
-				}
-				else
-				{
+				} else {
 					$m1 = $m;
 					$m2 = $neighbor;
 				}
@@ -302,7 +276,7 @@ class diListController extends \diBaseAdminController
 				$counter = 0;
 				$limit = count($col2);
 				$field = $this->orderNumField;
-				$dir = "up";
+				$dir = 'up';
 
 				try {
 					array_map(function (\diModel $model) use ($num, $field, &$ar, $dir, &$counter, $limit) {
@@ -310,9 +284,8 @@ class diListController extends \diBaseAdminController
 							->set($field, $num + $counter++)
 							->save();
 
-						if ($dir == "up" && $counter > $limit)
-						{
-							$dir = "down";
+						if ($dir == 'up' && $counter > $limit) {
+							$dir = 'down';
 						}
 
 						$ar[$dir][] = $model->getId();
@@ -320,10 +293,10 @@ class diListController extends \diBaseAdminController
 
 					$this->postProcess($m);
 
-					$ar["downFirst"] = $m1->getId();
-					$ar["ok"] = true;
+					$ar['downFirst'] = $m1->getId();
+					$ar['ok'] = true;
 				} catch (\Exception $e) {
-					$ar["message"] = $e->getMessage();
+					$ar['message'] = $e->getMessage();
 				}
 			}
 		}
@@ -348,18 +321,19 @@ class diListController extends \diBaseAdminController
 	}
 
 	/**
-	 * @return diCollection
+	 * @return \diCollection
 	 */
 	protected function getTargetCollection()
 	{
 		$table = $this->param(0);
-		$ids = array_filter(array_map('intval', explode(',', \diRequest::post('ids', ''))));
+		$ids = explode(',', \diRequest::post('ids', ''));
+		$ids = array_filter(array_map([StringHelper::class, 'in'], $ids));
 
 		return \diCollection::createForTableNoStrict($table)->filterBy('id', $ids);
 	}
 
 	/**
-	 * @param diModel $m
+	 * @param \diModel $m
 	 * @return $this
 	 */
 	protected function deleteRecord(\diModel $m)
@@ -379,16 +353,15 @@ class diListController extends \diBaseAdminController
 	 */
 	protected function postProcess(\diModel $m)
 	{
-		switch ($m->getTable())
-		{
+		switch ($m->getTable()) {
 			case 'content':
 				$Z = new \diCurrentCMS();
 				$Z->build_content_table_cache();
 				break;
 
 			case 'orders':
-				$this->getDb()->delete("order_items", "WHERE order_id='{$m->getId()}'");
-				$this->getDb()->delete("actions_log", "WHERE type='{$m->getTable()}' and target_id='{$m->getId()}'");
+				$this->getDb()->delete('order_items', "WHERE order_id='{$m->getId()}'");
+				$this->getDb()->delete('actions_log', "WHERE type='{$m->getTable()}' and target_id='{$m->getId()}'");
 				break;
 		}
 
@@ -402,18 +375,14 @@ class diListController extends \diBaseAdminController
 	 */
 	private function getFamilyCollection(\diModel $m, $collection = [])
 	{
-		if ($m->has("parent"))
-		{
+		if ($m->has('parent')) {
 			$col = \diCollection::createForTable($m->getTable())->filterBy('parent', $m->getId());
 
 			/** @var \diModel $model */
-			foreach ($col as $model)
-			{
+			foreach ($col as $model) {
 				/** @var \diModel $_m */
-				foreach ($collection as $_m)
-				{
-					if ($model->getId() == $_m->getId())
-					{
+				foreach ($collection as $_m) {
+					if ($model->getId() == $_m->getId()) {
 						//\diCore\Tool\Logger::getInstance()->log('Parent cycling detected');
 						throw new \Exception('Parent cycling detected');
 					}
