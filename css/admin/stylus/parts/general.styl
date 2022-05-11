@@ -769,60 +769,6 @@ table.banners_stat td.sel, table.banners_stat th.sel
 .bg_eee
     background #eee
 
-.list-control-panel
-    display flex
-    padding 8px
-    border-radius 8px
-    background-color #D4D0C8
-    margin 0 $classicStandardPadding 10px $classicStandardPadding
-    min-height 22px
-    body[data-skin="entrine"] &
-        background-color $entrineColorBgLightGray
-        border-radius 0
-        margin-bottom 20px
-    @media screen and (max-width: 767px)
-        margin-left 0
-        margin-right 0
-        border-radius 0
-    > ul
-        position fixed
-        top 0
-        left 50%
-        list-style none
-        margin 0 0 0 -300px
-        padding 10px
-        border-radius 0 0 10px 10px
-        background #D4D0C8
-        z-index 500
-        display none
-        box-shadow 0 0 5px black
-        li
-            display inline-block
-            vertical-align top
-            font-size 14px
-            font-weight bold
-    .toggle-all
-        padding-right 40px
-        line-height 22px
-        display flex
-        input[type="checkbox"]
-            position relative
-            top 2px
-            margin-right 8px
-        label
-            cursor pointer
-    .notes
-        font-size 11px
-        line-height 22px
-
-.list-control-panel[data-table="feedback"] ul li[data-purpose="move"],
-.list-control-panel[data-table="feedback"] ul li[data-purpose="copy"]
-    display none
-
-.list-control-panel[data-table="feedback"]
-    .notes
-        visibility hidden
-
 .expand-collapse-block
     position absolute
     right 0

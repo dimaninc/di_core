@@ -13,6 +13,7 @@ use diCore\Entity\PageCache\Model;
 class PageCache extends \diCore\Admin\BasePage
 {
 	protected $options = [
+        'showControlPanel' => true,
 		'filters' => [
 			'defaultSorter' => [
 				'sortBy' => 'id',
@@ -42,6 +43,7 @@ class PageCache extends \diCore\Admin\BasePage
 	{
 		$this->getList()->addColumns([
 			'id' => 'ID',
+            '#checkbox' => [],
 			'#href' => [],
 			'uri' => [
 				'headAttrs' => [
