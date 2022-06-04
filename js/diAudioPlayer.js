@@ -7,10 +7,13 @@
 var diAudioPlayer = function (_opts) {
     var self = this,
         audioLoaded = false,
-        opts = $.extend({
-            audio: null,
-            onEnd: null
-        }, _opts || {});
+        opts = $.extend(
+            {
+                audio: null,
+                onEnd: null,
+            },
+            _opts || {}
+        );
 
     this.audio = null;
     this.PAUSE = 1;
@@ -108,7 +111,10 @@ var diAudioPlayer = function (_opts) {
                         //console.log('diAudioPlayer: audio track started');
                     })
                     .catch(function (error) {
-                        console.log('diAudioPlayer: error playing audio track', error);
+                        console.log(
+                            'diAudioPlayer: error playing audio track',
+                            error
+                        );
                     });
             }
         } else {
@@ -127,8 +133,7 @@ var diAudioPlayer = function (_opts) {
     this.toggleState = function () {
         if (this.getState() != this.PAUSE) {
             this.pause();
-        }
-        else {
+        } else {
             this.play();
         }
 
@@ -137,9 +142,9 @@ var diAudioPlayer = function (_opts) {
 
     this.getState = function () {
         if (this.audio.paused) return this.PAUSE;
-        else if (this.audio.ended) return this.END;
-        else if (this.audio.played) return this.PLAY;
-        else return this.UNKNOWN;
+        if (this.audio.ended) return this.END;
+        if (this.audio.played) return this.PLAY;
+        return this.UNKNOWN;
     };
 
     this.getCurrentTime = function () {
@@ -153,7 +158,7 @@ var diAudioPlayer = function (_opts) {
     };
 
     this.setPosition = function (percent) {
-        this.setCurrentTime(this.getDuration() * percent / 100);
+        this.setCurrentTime((this.getDuration() * percent) / 100);
 
         return this;
     };
