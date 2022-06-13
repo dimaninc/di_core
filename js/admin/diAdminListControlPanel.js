@@ -8,7 +8,7 @@ var diAdminListControlPanel = function (_opts) {
             $btnMove: null,
             $btnDelete: null,
             $rows: $('.dinicetable > tbody > tr'),
-            $rowToggles: null,
+            $rowToggles: null
         },
         externalActions = {},
         selectedIds = [],
@@ -16,7 +16,7 @@ var diAdminListControlPanel = function (_opts) {
         anchorHtml = '<div class="parent-anchor">&#x21B3;</div>',
         opts = $.extend(
             {
-                NiceTable: null,
+                NiceTable: null
             },
             _opts || {}
         );
@@ -37,7 +37,7 @@ var diAdminListControlPanel = function (_opts) {
         } else {
             a = {};
             a[name] = {
-                callback: callback,
+                callback: callback
             };
         }
 
@@ -73,7 +73,7 @@ var diAdminListControlPanel = function (_opts) {
     function getExternalAction(name) {
         if (!isExternalAction(name)) {
             return {
-                _exists: false,
+                _exists: false
             };
         }
 
@@ -84,7 +84,7 @@ var diAdminListControlPanel = function (_opts) {
                     return true;
                 },
                 callback: function () {},
-                deselectOnFinish: false,
+                deselectOnFinish: false
             },
             externalActions[name]
         );
@@ -93,7 +93,7 @@ var diAdminListControlPanel = function (_opts) {
     function executeExternalAction(name, options) {
         options = $.extend(
             {
-                ids: [],
+                ids: []
             },
             options || {}
         );
@@ -117,7 +117,7 @@ var diAdminListControlPanel = function (_opts) {
         function doButtonAction() {
             if (isExternalAction($btn.data('action'))) {
                 executeExternalAction($btn.data('action'), {
-                    ids: ids,
+                    ids: ids
                 });
 
                 return;
@@ -130,7 +130,7 @@ var diAdminListControlPanel = function (_opts) {
                 action,
                 {
                     ids: ids.join(','),
-                    parent: parent,
+                    parent: parent
                 },
                 function (res) {
                     switch (action) {
@@ -268,7 +268,7 @@ var diAdminListControlPanel = function (_opts) {
     function setExpandStatus(id, state) {
         var c = {
             true: 'expand',
-            false: 'collapse',
+            false: 'collapse'
         };
 
         getExpandButton(id).addClass(c[state]).removeClass(c[!state]);
@@ -286,7 +286,7 @@ var diAdminListControlPanel = function (_opts) {
             rowsInfo.push({
                 id: $row.data('id'),
                 level: $row.data('level'),
-                collapsed: $row.hasClass('collapsed'),
+                collapsed: $row.hasClass('collapsed')
             });
         });
 
@@ -359,7 +359,7 @@ var diAdminListControlPanel = function (_opts) {
 
         $.cookie('list_collapsed[' + table + ']', hiddenAr.join(','), {
             expires: 365,
-            path: '/_admin/',
+            path: '/_admin/'
         });
     }
 

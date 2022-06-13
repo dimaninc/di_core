@@ -949,7 +949,7 @@ EOF;
                 ? "<button type=\"submit\" name=\"submit_and_send\" id=\"btn-submit_and_send\" value=1 onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true); return confirm('{$this->L("confirm_send")}');\">{$this->L("submit_and_send")}</button>"
                 : "";
 			$cancel_btn = $this->isButtonShown("cancel", $show_ar, $hide_ar)
-                ? "<button type=\"button\" id=\"btn-cancel\" onclick=\"admin_form_{$this->table}_{$this->id}.cancel(".($this->lite ? "'&lite={$this->lite}'" : "").");\">{$this->getButtonIcon('cancel')}{$this->L("cancel")}</button>"
+                ? "<button type=\"button\" id=\"btn-cancel\" onclick=\"admin_form_{$this->table}_{$this->id}.cancel();\">{$this->getButtonIcon('cancel')}{$this->L("cancel")}</button>"
                 : "";
 
 			return <<<EOF

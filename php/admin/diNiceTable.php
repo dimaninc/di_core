@@ -246,13 +246,13 @@ class diNiceTable
 	{
 		$href = Base::getPageUri($this->getFormPathBase(), 'form', [
 			'id' => $this->getRowModel()->getId(),
-			'lite' => $this->lite,
-			'edit' => 1,
+			// 'lite' => $this->lite,
+			// 'edit' => 1,
 		]);
 
 		$td_params = [
 			//'class' => $this->row_class_prefix,
-			'onclick' => "window.location.href='{$href}';",
+			'onclick' => "location.href='{$href}';",
 			'style' => 'cursor: pointer;',
 		];
 
