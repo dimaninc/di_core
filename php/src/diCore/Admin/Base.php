@@ -255,10 +255,8 @@ class Base
             ->assignTplBase()
 			->printContentPage()
 			->printMainMenu()
-			->printExpandCollapseBlock()
 			->printCaption()
-			->printHead()
-			->printFooter();
+			->printHead();
 
 		echo $this->getFinalHtml();
 	}
@@ -319,8 +317,6 @@ class Base
 			'xx_table' => $this->getTable(),
 			'xx_id' => $this->getId(),
 
-			'expand_collapse_block' => '',
-
 			'static_timestamp' => $this->getStaticTimestampEnding(),
 		];
 	}
@@ -380,7 +376,7 @@ class Base
 	}
 
 	/**
-	 * @return \FastTemplate
+	 * @return \FastTemplate|null
 	 * @throws \Exception
 	 */
 	public static function getAdminTpl()
@@ -548,16 +544,6 @@ class Base
             )
             || $this->forceShowExpandCollapse;
     }
-
-    /** @deprecated  */
-	protected function printExpandCollapseBlock()
-	{
-		if ($this->expandCollapseBlockNeeded()) {
-			$this->getTpl()->parse('EXPAND_COLLAPSE_BLOCK');
-		}
-
-		return $this;
-	}
 
 	protected function printContentPage()
 	{
@@ -802,14 +788,6 @@ class Base
 			->assign([
 				'head' => $head,
 			]);
-
-		return $this;
-	}
-
-	/** @deprecated */
-	public function printFooter()
-	{
-		$this->getTpl()->process('footer');
 
 		return $this;
 	}

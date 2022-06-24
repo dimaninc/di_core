@@ -18,6 +18,7 @@ class FastTemplate
 
 	public $data = array();             // holds parsed and assigned data
 	public $cache_filename = "";
+	public $cacheUsed = false;
 	public $TEMPLATES  = array();       // holds unparsed templates (cache)
 	public $FILELIST   = array();       // Holds the array of filehandles FILELIST[HANDLE] == "fileName"
 	public $PARSEVARS  = array();       // Holds the array of Variable handles. PARSEVARS[HANDLE] == "value"
@@ -131,20 +132,17 @@ class FastTemplate
 
 	public function rebuild_cache()
 	{
-		if (empty($this->ROOT))
-		{
+		if (empty($this->ROOT) || !is_dir($this->ROOT)) {
 			//$this->error("Cannot rebuild cache. Root not valid.", 1);
 			return $this;
 		}
 
-		if (empty($this->cache_filename))
-		{
+		if (empty($this->cache_filename)) {
 			$this->error("Cannot rebuild cache. Cache filename not valid.", 1);
 			return $this;
 		}
 
-		switch ($this->place)
-		{
+		switch ($this->place) {
 			case self::PLACE_WEB:
 				$core_basedir = diLib::getRoot() . "/tpl/web/";
 				break;
@@ -162,13 +160,11 @@ class FastTemplate
 
 		$cache_file = "<?php\n";
 
-		foreach ($files_ar["f"] as $f)
-		{
+		foreach ($files_ar["f"] as $f) {
 			$cache_file .= $this->get_cache_template_line($f, $this->ROOT);
 		}
 
-		foreach ($core_files_ar["f"] as $f)
-		{
+		foreach ($core_files_ar["f"] as $f) {
 			$cache_file .= $this->get_cache_template_line($f, $core_basedir, "`");
 		}
 
@@ -242,15 +238,16 @@ class FastTemplate
 
 	public function load_cache()
 	{
-		if (empty($this->cache_filename))
-		{
+		if (empty($this->cache_filename)) {
 			$this->error("Cannot load cache. Cache filename not valid.", 1);
 			return false;
 		}
 
-		if ($this->ROOT)
-		{
-			include $this->cache_filename;
+		if ($this->ROOT) {
+		    if (is_file($this->cache_filename)) {
+                include $this->cache_filename;
+                $this->cacheUsed = true;
+            }
 		}
 
 		return $this;
@@ -272,15 +269,7 @@ class FastTemplate
 				$root = "$root".chr(47);
 			}
 
-			if (is_dir($root))
-			{
-				$this->ROOT = $root;
-			}
-			else
-			{
-				$this->ROOT = "";
-				//$this->error("Specified ROOT dir [$root] is not a directory");
-			}
+            $this->ROOT = $root;
 		}
 		else
 		{

@@ -1445,13 +1445,6 @@ abstract class CMS
 				"prev_active",
 				"prev_inactive",
 			])
-			->define("~pic", [
-				"pic_img",
-				"pic_swf",
-				"pic_swf_safe",
-				"pic_a_img",
-				"pic_a_swf",
-			])
 			->define("~title", [
 				"top_title_divider",
 				"top_title_href",
@@ -2223,18 +2216,14 @@ abstract class CMS
 		    $folder = $content_pics_folder;
 	    }
 
-		$pic_tag_tpl = strtolower(get_file_ext($r->$field)) == "swf" ? "pic_swf_safe" : "pic_img";
-
-		$this->tpl->assign([
-			"PIC_IDX" => ++$this->safe_swf_idx,
-			"PIC_PIC" => $folder . $r->$field,
-			//"PIC_PIC_SAFE" => "/pic/default/default_pic145.png",
-			"PIC_PIC_W" => $r->{$field . "_w"},
-			"PIC_PIC_H" => $r->{$field . "_h"},
-			"PIC_MODE" => "transparent",
-		]);
-
-		return $this->tpl->parse("_", $pic_tag_tpl);
+		return $this->getTwig()->parse('snippets/img', [
+		    'img' => [
+                'idx' => ++$this->safe_swf_idx,
+                'src' => $folder . $r->$field,
+                'width' => $r->{$field . '_w'},
+                'height' => $r->{$field . '_h'},
+            ],
+        ]);
 	}
 
 	/**

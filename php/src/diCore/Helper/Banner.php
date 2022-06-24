@@ -64,6 +64,13 @@ class Banner
 		return $Z->getTpl();
 	}
 
+    public static function getTwig()
+    {
+        global $Z;
+
+        return $Z->getTwig();
+    }
+
 	/** @deprecated  */
 	public static function getDb()
 	{
@@ -86,25 +93,20 @@ class Banner
 	}
 
 	/** @deprecated  */
-	public static function getHtml($r, $banner_token = '__BANNER_PIC')
+	public static function getHtml($r)
 	{
 		self::storeStat($r->id, self::STAT_VIEW);
 
-		$tpl_name = $r->pic
-			? ($r->pic_t == 4 || $r->pic_t == 13 ? 'pic_a_swf' : 'pic_a_img')
-			: 'text_banner';
-
-		return self::getTpl()
-			->assign([
-				'TITLE'         => str_out($r->title),
-				'HREF'          => "/redir.php?bid={$r->id}&uri=".urlencode(\diRequest::requestUri()),
-				'HREF_TARGET'   => $r->href_target == 'blank' ? ' target=_blank' : '',
-				'PIC'           => get_pics_folder(self::table).$r->pic,
-				'PIC_W'         => $r->pic_w,
-				'PIC_H'         => $r->pic_h,
-				'BG'            => isset($r->background) ? str_out($r->background) : '#FFFFFF',
-			], 'PIC_')
-			->parse($banner_token, $tpl_name);
+        return self::getTwig()->parse('snippets/img', [
+            'img' => [
+                'src' => get_pics_folder(self::table) . $r->pic,
+                'width' => $r->pic_w,
+                'height' => $r->pic_h,
+                'href' => "/redir/{$r->id}/?uri=" . urlencode(\diRequest::requestUri()),
+                'target' => $r->href_target == 'blank' ? ' target=_blank' : '',
+                'title' => $r->title,
+            ],
+        ]);
 	}
 
 	/** @deprecated  */
