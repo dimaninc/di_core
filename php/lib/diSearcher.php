@@ -1,4 +1,7 @@
 <?php
+
+use diCore\Data\Configuration;
+
 class diSearcher
 {
 	public $tables_ar = array();
@@ -42,12 +45,12 @@ class diSearcher
 
 	public function get_table_caption($table)
 	{
-		return isset($this->tables_ar[$table]) ? $this->tables_ar[$table] : "[$table]";
+		return $this->tables_ar[$table] ?? "[$table]";
 	}
 
 	public function get_rc($table)
 	{
-		return isset($this->rc_ar[$table]) ? $this->rc_ar[$table] : 0;
+		return $this->rc_ar[$table] ?? 0;
 	}
 
 	public function get_search_ids_ar()
@@ -65,13 +68,10 @@ class diSearcher
 		global $db;
 
 		$this->search_results_exist = false;
-
 		$this->rc_ar = $this->search_ids_ar = array();
 
-		foreach ($this->tables_ar as $table => $caption)
-		{
-			if (!$table)
-			{
+		foreach ($this->tables_ar as $table => $caption) {
+			if (!$table) {
 				continue;
 			}
 
@@ -79,22 +79,18 @@ class diSearcher
 
 			$search = $this->search_mode == "db" ? new diDBSearch($table) : new diTextfileSearch($table);
 
-			if ($search_r)
-			{
+			if ($search_r) {
 				$search->search_id = $search_r->id;
 
 				$search_result_r = $db->r("search_results", "WHERE search_id='$search_r->id'", "COUNT(*) AS cc");
 				$rc = $search_result_r->cc;
-			}
-			else
-			{
+			} else {
 				$search->hardReplaceSymbolsOfQuery = $this->hardReplaceSymbols;
 				$ar = $search->search($this->q);
 				$rc = count($ar);
 			}
 
-			if ($rc)
-			{
+			if ($rc) {
 				$this->search_results_exist = true;
 			}
 
@@ -116,12 +112,15 @@ class diSearcher
 
 		unset($_GET["page"]);
 
-		if ($table == $this->current_area && $this->orig_page != 1)
-		{
+		if ($table == $this->current_area && $this->orig_page != 1) {
 			$_GET["page"] = $this->orig_page;
 		}
 
-		$per_page = diConfiguration::safeGet(diConfiguration::exists("per_page[$table]") ? "per_page[$table]" : "per_page[search]", 100000);
+        $per_page = Configuration::safeGet(
+            Configuration::exists("per_page[$table]")
+                ? "per_page[$table]"
+                : "per_page[search]",
+            100000);
 
 		$pn = new diPagesNavy($table, $per_page, $this->rc_ar[$table]);
 
@@ -129,8 +128,7 @@ class diSearcher
 			"i.search_id='{$this->search_ids_ar[$table]}'",
 		);
 
-		if ($props["where"])
-		{
+		if ($props["where"]) {
 			$whereAr[] = $props["where"];
 		}
 
@@ -143,12 +141,10 @@ class diSearcher
 
 	protected function process_all_results($func)
 	{
-		$ar = array();
+		$ar = [];
 
-		foreach ($this->tables_ar as $table => $caption)
-		{
-			if (!$table)
-			{
+		foreach ($this->tables_ar as $table => $caption) {
+			if (!$table) {
 				continue;
 			}
 
