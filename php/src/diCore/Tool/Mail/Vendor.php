@@ -38,7 +38,7 @@ class Vendor extends SimpleContainer
 		self::google => 'smtp.gmail.com',
 		self::yandex => 'smtp.yandex.ru',
 		self::microsoft => 'smtp.office365.com',
-        self::mailru => 'smtp.mail.ru',
+        self::mailru => 'ssl://smtp.mail.ru',
 	];
 
 	protected static $smtpPorts = [
