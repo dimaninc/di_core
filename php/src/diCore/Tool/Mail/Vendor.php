@@ -15,12 +15,14 @@ class Vendor extends SimpleContainer
 	const google = 1;
 	const yandex = 2;
 	const microsoft = 3;
+    const mailru = 4;
 	const own = 50;
 
 	public static $titles = [
 		self::google => 'Google',
 		self::yandex => 'Yandex',
 		self::microsoft => 'Microsoft',
+        self::mailru => 'Mail.ru',
 		self::own => 'Own SMTP',
 	];
 
@@ -28,6 +30,7 @@ class Vendor extends SimpleContainer
 		self::google => 'google',
 		self::yandex => 'yandex',
 		self::microsoft => 'microsoft',
+        self::mailru => 'mailru',
 		self::own => 'own',
 	];
 
@@ -35,6 +38,7 @@ class Vendor extends SimpleContainer
 		self::google => 'smtp.gmail.com',
 		self::yandex => 'smtp.yandex.ru',
 		self::microsoft => 'smtp.office365.com',
+        self::mailru => 'smtp.mail.ru',
 	];
 
 	protected static $smtpPorts = [
@@ -50,19 +54,19 @@ class Vendor extends SimpleContainer
 			true => 587,
 			false => 25,
 		],
+        self::mailru => [
+            true => 465,
+            false => 25,
+        ],
 	];
 
 	public static function smtpHost($id)
 	{
-		return isset(static::$smtpHosts[$id])
-			? static::$smtpHosts[$id]
-			: null;
+		return static::$smtpHosts[$id] ?? null;
 	}
 
 	public static function smtpPort($id, $secure)
 	{
-		return isset(static::$smtpPorts[$id][$secure])
-			? static::$smtpPorts[$id][$secure]
-			: null;
+		return static::$smtpPorts[$id][$secure] ?? null;
 	}
 }
