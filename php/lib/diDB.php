@@ -1107,11 +1107,11 @@ abstract class diDB
         }
 
         if ($val1 && $val2) {
-            $op = "BETWEEN '$val1' AND '$val2'";
+            $op = "BETWEEN $val1 AND $val2";
         } elseif ($val1) {
-            $op = ">= '$val1'";
+            $op = ">= $val1";
         } elseif ($val2) {
-            $op = "<= '$val2'";
+            $op = "<= $val2";
         } else {
             $op = null;
         }
