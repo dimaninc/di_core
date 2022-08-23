@@ -3547,6 +3547,12 @@ body[data-skin="entrine"] .dynamic-row + .dynamic-row {
 .dynamic-row ul.line > li textarea {
   width: 300px;
 }
+@media screen and (max-width: 450px) {
+  .dynamic-row ul.line > li input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
+  .dynamic-row ul.line > li textarea {
+    width: calc(80vw - 50px);
+  }
+}
 .dynamic-row ul.line > li code {
   display: block;
   white-space: pre;
@@ -3568,13 +3574,37 @@ body[data-skin="entrine"] .dynamic-row + .dynamic-row {
   -webkit-align-items: flex-start;
   align-items: flex-start;
 }
-.dynamic-row ul.line > li.wider input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
+input.dynamic-row ul.line > li.wider:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
 .dynamic-row ul.line > li.wider textarea {
   width: 500px;
+}
+@media screen and (max-width: 1150px) {
+  input.dynamic-row ul.line > li.wider:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
+  .dynamic-row ul.line > li.wider textarea {
+    width: calc(80vw - 230px);
+  }
+}
+@media screen and (max-width: 767px) {
+  input.dynamic-row ul.line > li.wider:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
+  .dynamic-row ul.line > li.wider textarea {
+    width: calc(80vw - 50px);
+  }
 }
 .dynamic-row ul.line > li.wide input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
 .dynamic-row ul.line > li.wide textarea {
   width: 750px;
+}
+@media screen and (max-width: 1150px) {
+  .dynamic-row ul.line > li.wide input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
+  .dynamic-row ul.line > li.wide textarea {
+    width: calc(80vw - 230px);
+  }
+}
+@media screen and (max-width: 767px) {
+  .dynamic-row ul.line > li.wide input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
+  .dynamic-row ul.line > li.wide textarea {
+    width: calc(80vw - 50px);
+  }
 }
 .dynamic-row ul.line > li.full-width {
   display: block;
