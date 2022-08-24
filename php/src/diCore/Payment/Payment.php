@@ -12,6 +12,7 @@ use diCore\Base\CMS;
 use diCore\Data\Configuration;
 use diCore\Entity\PaymentDraft\Model as Draft;
 use diCore\Entity\PaymentReceipt\Model as Receipt;
+use diCore\Payment\CryptoCloud\Helper as CryptoCloud;
 use diCore\Payment\Mixplat\Helper as Mixplat;
 use diCore\Payment\Paypal\Helper as Paypal;
 use diCore\Payment\Robokassa\Helper as Robokassa;
@@ -215,6 +216,9 @@ class Payment
             case System::paypal:
                 return $this->initPaypal($draft);
 
+            case System::crypto_cloud:
+                return $this->initCryptoCloud($draft);
+
             case System::yandex_kassa:
                 return $this->initYandex($draft);
 
@@ -313,6 +317,22 @@ EOF;
 <meta name="robots" content="noindex, nofollow">
 </head>
 <body>{$form}</body>
+</html>
+EOF;
+    }
+
+    public static function htmlRedirect($url, $body, $lang = 'ru')
+    {
+        return <<<EOF
+<!doctype html>
+<html lang="{$lang}">
+<head>
+<title>Payment system redirect</title>
+<meta http-equiv="refresh" content="0; url={$url}" />
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="robots" content="noindex, nofollow">
+</head>
+<body>{$body}</body>
 </html>
 EOF;
     }
@@ -572,6 +592,18 @@ EOF;
             'message' => $message,
             'draft_id' => $draft->getId(),
         ];
+    }
+
+    public function initCryptoCloud(Draft $draft)
+    {
+        $cc = CryptoCloud::basicCreate();
+
+        $payUrl = $cc->initPayment($draft, [
+            'customerEmail' => $this->getCustomerEmail(),
+            'customerPhone' => $this->getCustomerPhone(),
+        ]);
+
+        return static::htmlRedirect($payUrl, $cc::getRedirectHtmlBody($draft));
     }
 
     public function initSmsOnline(Draft $draft)

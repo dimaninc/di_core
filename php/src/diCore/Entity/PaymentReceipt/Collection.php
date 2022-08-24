@@ -12,19 +12,16 @@ namespace diCore\Entity\PaymentReceipt;
  * Methods list for IDE
  *
  * @method $this filterByRnd($value, $operator = null)
- * @method $this filterByOuterNumber($value, $operator = null)
  * @method $this filterByDatePayed($value, $operator = null)
  * @method $this filterByDateUploaded($value, $operator = null)
  * @method $this filterByDraftId($value, $operator = null)
  *
  * @method $this orderByRnd($direction = null)
- * @method $this orderByOuterNumber($direction = null)
  * @method $this orderByDatePayed($direction = null)
  * @method $this orderByDateUploaded($direction = null)
  * @method $this orderByDraftId($direction = null)
  *
  * @method $this selectRnd()
- * @method $this selectOuterNumber()
  * @method $this selectDatePayed()
  * @method $this selectDateUploaded()
  * @method $this selectDraftId()

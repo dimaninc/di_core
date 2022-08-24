@@ -15,19 +15,16 @@ use diCore\Tool\CollectionCache;
  * Methods list for IDE
  *
  * @method string	getRnd
- * @method string	getOuterNumber
  * @method string	getDatePayed
  * @method string	getDateUploaded
  * @method integer	getDraftId
  *
  * @method bool hasRnd
- * @method bool hasOuterNumber
  * @method bool hasDatePayed
  * @method bool hasDateUploaded
  * @method bool hasDraftId
  *
  * @method $this setRnd($value)
- * @method $this setOuterNumber($value)
  * @method $this setDatePayed($value)
  * @method $this setDateUploaded($value)
  * @method $this setDraftId($value)

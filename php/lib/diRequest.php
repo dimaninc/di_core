@@ -121,7 +121,7 @@ class diRequest
     {
 		$scope = self::all($method);
 
-	    return ArrayHelper::getValue($scope, $name, $defaultValue, $type);
+	    return ArrayHelper::get($scope, $name, $defaultValue, $type);
     }
 
 	public static function all($method)

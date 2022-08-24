@@ -26,6 +26,7 @@ class System extends SimpleContainer
 	const tinkoff = 7;
 	const sberbank = 8;
 	const paymaster = 9;
+	const crypto_cloud = 10;
 
 	public static $titles = [
 		self::webmoney => 'Webmoney',
@@ -37,6 +38,7 @@ class System extends SimpleContainer
 		self::tinkoff => 'Тинькофф',
         self::sberbank => 'Сбербанк',
         self::paymaster => 'Paymaster',
+        self::crypto_cloud => 'CryptoCloud',
 	];
 
 	public static $names = [
@@ -49,6 +51,7 @@ class System extends SimpleContainer
 		self::tinkoff => 'tinkoff',
         self::sberbank => 'sberbank',
         self::paymaster => 'paymaster',
+        self::crypto_cloud => 'crypto_cloud',
 	];
 
 	public static function getSystemClass($systemId, $vendorId = null)
@@ -68,6 +71,7 @@ class System extends SimpleContainer
 
 			case self::webmoney:
 			case self::paypal:
+            case self::crypto_cloud:
 				return self::class;
 
             case self::paymaster:

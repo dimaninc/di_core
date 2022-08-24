@@ -281,20 +281,17 @@ EOF;
 			$signature = strtolower(\diRequest::post('SignatureValue'));
 			$cost = \diRequest::post('OutSum', 0.0);
 
-			if (!$this->getDraft()->exists())
-			{
+			if (!$this->getDraft()->exists()) {
 				throw new \Exception('No draft found');
 			}
 
-			if ($this->getDraft()->getAmount() != $cost)
-			{
+			if ($this->getDraft()->getAmount() != $cost) {
 				throw new \Exception('Cost not match: (their) ' . $cost . ', (our) ' . $this->getDraft()->getAmount());
 			}
 
 			$ourSignature = static::getSignatureResult($this->getDraft());
 
-			if ($signature != $ourSignature)
-			{
+			if ($signature != $ourSignature) {
 				throw new \Exception('Signature not matched (' . $signature . ' != ' . $ourSignature . ')');
 			}
 
@@ -318,13 +315,11 @@ EOF;
 		try {
 			$signature = strtolower(\diRequest::post('SignatureValue'));
 
-			if (!$this->getDraft()->exists())
-			{
+			if (!$this->getDraft()->exists()) {
 				throw new \Exception('No draft found');
 			}
 
-			if ($signature != static::getSignatureSuccess($this->getDraft()))
-			{
+			if ($signature != static::getSignatureSuccess($this->getDraft())) {
 				throw new \Exception('Signature not matched');
 			}
 

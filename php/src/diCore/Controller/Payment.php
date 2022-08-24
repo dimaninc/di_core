@@ -13,6 +13,7 @@ use diCore\Entity\PaymentReceipt\Collection as Receipts;
 use diCore\Entity\PaymentReceipt\Model as Receipt;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
+use diCore\Payment\CryptoCloud\Helper as CryptoCloud;
 use diCore\Payment\Mixplat\Helper as Mixplat;
 use diCore\Payment\Paypal\Helper as Paypal;
 use diCore\Payment\Robokassa\Helper as Robokassa;
@@ -248,6 +249,46 @@ class Payment extends \diBaseController
 				];
 		}
 	}
+
+    public function cryptoCloudAction()
+    {
+        $this->system = System::crypto_cloud;
+        $this->subAction = $this->param(0);
+
+        $this->log('CryptoCloud request: ' . $this->subAction);
+
+        $cc = CryptoCloud::basicCreate();
+        $cc->initDraft(function ($draftId, $amount, $currency) {
+            $this
+                ->initDraft($draftId, $amount)
+                ->updateDraftDetailsIfNeeded();
+
+            return $this->getDraft();
+        });
+
+        switch ($this->subAction) {
+            case 'result':
+                return $cc->result(function() {
+                    $this->createReceipt();
+                });
+
+            case 'success':
+                return $cc->success(function() {
+                    $this->redirectTo($this->getTargetHref(self::STATUS_SUCCESS));
+                });
+
+            case 'fail':
+                return $cc->fail(function() {
+                    $this->redirectTo($this->getTargetHref(self::STATUS_FAIL));
+                });
+
+            default:
+                return [
+                    'ok' => false,
+                    'message' => 'Unknown action: ' . $this->subAction,
+                ];
+        }
+    }
 
 	public function roboAction()
 	{

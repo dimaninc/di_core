@@ -150,6 +150,11 @@ class PaymentDrafts extends BasePage
 					'class' => 'dt',
 				],
 			],
+            'outer_number' => [
+                'bodyAttrs' => [
+                    'class' => 'lite',
+                ],
+            ],
 			'paid' => [
 				'value' => function(Model $m) {
 					return $m->hasPaid() ? '+' : '';
@@ -252,6 +257,13 @@ class PaymentDrafts extends BasePage
 				'default' => '',
 				'flags' => ['static'],
 			],
+
+            'outer_number' => [
+                'type' => 'string',
+                'title' => 'Внешний номер платежа',
+                'default' => '',
+                'flags' => ['static'],
+            ],
 
 			'date_reserved' => [
 				'type' => 'datetime_str',

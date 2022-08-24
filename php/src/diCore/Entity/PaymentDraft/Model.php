@@ -16,6 +16,7 @@ use diCore\Traits\Model\TargetInside;
  * Methods list for IDE
  *
  * @method integer	getUserId
+ * @method string	getOuterNumber
  * @method string	getPaySystem
  * @method string	getVendor
  * @method string	getCurrency
@@ -25,6 +26,7 @@ use diCore\Traits\Model\TargetInside;
  * @method integer	getPaid
  *
  * @method bool hasUserId
+ * @method bool hasOuterNumber
  * @method bool hasPaySystem
  * @method bool hasVendor
  * @method bool hasCurrency
@@ -34,6 +36,7 @@ use diCore\Traits\Model\TargetInside;
  * @method bool hasPaid
  *
  * @method $this setUserId($value)
+ * @method $this setOuterNumber($value)
  * @method $this setPaySystem($value)
  * @method $this setVendor($value)
  * @method $this setCurrency($value)
@@ -105,6 +108,9 @@ class Model extends \diModel
 			case System::paypal:
 				return 'Paypal';
 
+            case System::crypto_cloud:
+                return 'CryptoCloud';
+
 			default:
 				return $this->hasVendor() ? 'Vendor #' . $this->getVendor() : '';
 		}
@@ -116,7 +122,7 @@ class Model extends \diModel
 			$this->getPaySystemStr(),
 		];
 
-		if (!in_array($this->getPaySystem(), [System::paypal])) {
+		if (!in_array($this->getPaySystem(), [System::paypal, System::crypto_cloud])) {
 			$ar[] = $this->getVendorStr() ?: 'Unknown?';
 		}
 

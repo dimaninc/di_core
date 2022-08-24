@@ -43,11 +43,6 @@ class PaymentReceipts extends PaymentDrafts
                         : '');
 			})
 			->insertColumnsAfter('date_reserved', [
-				'outer_number' => [
-					'bodyAttrs' => [
-						'class' => 'lite',
-					],
-				],
 				'draft_id' => [
                     'bodyAttrs' => [
                         'class' => 'lite',
@@ -71,13 +66,6 @@ class PaymentReceipts extends PaymentDrafts
 				'title' => 'Случайный код',
 				'default' => '',
 				'flags' => 'hidden',
-			],
-
-			'outer_number' => [
-				'type' => 'string',
-				'title' => 'Внешний номер платежа',
-				'default' => '',
-				'flags' => 'static',
 			],
 
 			'date_payed' => [
