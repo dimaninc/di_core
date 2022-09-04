@@ -2046,7 +2046,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return null;
 	}
 
-    public function _setReadOnly($state)
+    public function _setReadOnly($state = true)
     {
         $this->readOnly = !!$state;
 
