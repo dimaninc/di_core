@@ -360,8 +360,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	{
 		$className = self::existsFor($type);
 
-		if (!$className)
-		{
+		if (!$className) {
 			throw new \Exception("Collection class doesn't exist: " . ($className ?: $type));
 		}
 

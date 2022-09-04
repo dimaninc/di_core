@@ -59,14 +59,6 @@ use diCore\Data\Config;
 use diCore\Helper\FileSystemHelper;
 use diCore\Helper\StringHelper;
 
-/**
- * @deprecated
- */
-function is_rs($rs)
-{
-    return diDB::is_rs($rs);
-}
-
 abstract class diDB
 {
 	const QUOTE_TABLE = '`';
@@ -85,13 +77,14 @@ abstract class diDB
 	protected $password;
 
 	protected $link;
-	protected $logFolder = "log/db/";
+	protected $logFolder = 'log/db/';
 	protected $log;
 	protected $execution_time = 0;
 	protected $execution_time_log = [];
 
 	protected $tables_ar;
 	protected $debug = false;
+	protected $logStackTrace = false;
 	private $debugFileName;
 	protected $silent = false;
 
@@ -135,12 +128,12 @@ abstract class diDB
 			$this->enableDebug();
 		}
 
-		if (!empty($GLOBALS["engine"]["tables_ar"])) {
-			$this->set_tables_ar($GLOBALS["engine"]["tables_ar"]);
+		if (!empty($GLOBALS['engine']['tables_ar'])) {
+			$this->set_tables_ar($GLOBALS['engine']['tables_ar']);
 		}
 
 		if (!$this->connect()) {
-			$this->_fatal("unable to connect to database");
+			$this->_fatal('unable to connect to database');
 		}
 
 		$this->initCharset();
@@ -167,18 +160,25 @@ abstract class diDB
 		$this->debug = true;
 
 		$this->debugMessage([
-			"URL",
+			'URL',
 			\diRequest::requestUri(),
 		]);
 
 		return $this;
 	}
 
+	public function withStackTrace()
+    {
+        $this->logStackTrace = true;
+
+        return $this;
+    }
+
 	private function checkDebugFilename()
 	{
 		if (!$this->debugFileName) {
 			do {
-				$this->debugFileName = \diDateTime::format("Y-m-d-H-i-s-") . get_unique_id() . ".csv";
+				$this->debugFileName = \diDateTime::format('Y-m-d-H-i-s-') . get_unique_id() . '.csv';
 			} while (is_file($this->getDebugLogFileName()));
 		}
 
@@ -197,17 +197,21 @@ abstract class diDB
 		return StringHelper::slash($this->getFullDebugLogFolder()) . $this->debugFileName;
 	}
 
-	protected function debugMessage($message)
+	public function debugMessage($message)
 	{
 		if (is_array($message)) {
-			$message = join("", array_map(function($s) {
-				return '"' . str_replace('"', '\"', $s) . '";';
-			}, $message));
-		}
+            $message = join("", array_map(function ($s) {
+                return '"' . str_replace('"', '\"', $s) . '";';
+            }, $message));
+        }
 
 		FileSystemHelper::createTree(Config::getLogFolder(), $this->logFolder, 0777);
 
 		file_put_contents($this->getDebugLogFileName(), $message . "\n", FILE_APPEND | LOCK_EX);
+
+		if ($this->logStackTrace) {
+		    file_put_contents($this->getDebugLogFileName(), var_export((new \Exception)->getTraceAsString(), true) . "\n", FILE_APPEND | LOCK_EX);
+        }
 
 		return $this;
 	}
@@ -249,7 +253,7 @@ abstract class diDB
 
 	public static function is_rs($rs)
 	{
-		return is_resource($rs) || (is_object($rs) && method_exists($rs, "fetch_object"));
+		return is_resource($rs) || (is_object($rs) && method_exists($rs, 'fetch_object'));
 	}
 
 	public function getHost()
@@ -304,7 +308,7 @@ abstract class diDB
 		return $this;
 	}
 
-	public function dierror($message = "")
+	public function dierror($message = '')
 	{
 		if ($this->silent) {
 			exit(0);
@@ -335,13 +339,13 @@ abstract class diDB
 		return false;
 	}
 
-	protected function time_log($method, $duration, $query = "", $message = "")
+	protected function time_log($method, $duration, $query = '', $message = '')
 	{
 		if (!$this->debug) {
 			return $this;
 		}
 
-		$duration = sprintf("%.10f", $duration);
+		$duration = sprintf('%.10f', $duration);
 
 		//$this->log[] = "$message: $duration sec";
 
@@ -397,11 +401,11 @@ abstract class diDB
     }
 
 	/** @deprecated  */
-	public function precache_rs($table, $query_or_ids_ar = "", $fields = "*")
+	public function precache_rs($table, $query_or_ids_ar = '', $fields = '*')
 	{
 		if (is_array($table)) {
-			$realTable = $table["table"];
-			$table = $table["queryTable"];
+			$realTable = $table['table'];
+			$table = $table['queryTable'];
 		} else {
 			$realTable = $table;
 		}
@@ -421,13 +425,13 @@ abstract class diDB
 	}
 
     /** @deprecated  */
-	public function precache_r($table, $id, $fields = "*", $force = true)
+	public function precache_r($table, $id, $fields = '*', $force = true)
 	{
 		return $this->get_precached_r($table, $id, $fields, $force);
 	}
 
     /** @deprecated  */
-	public function get_precached_r($table, $id, $fields = "*", $force = true)
+	public function get_precached_r($table, $id, $fields = '*', $force = true)
 	{
 		if (empty($this->cached_db_data[$table])) {
             $this->cached_db_data[$table] = [];
@@ -537,7 +541,7 @@ abstract class diDB
 			$this->_log($err, false);
 		}
 
-		$this->time_log("q", $time2 - $time1, $q);
+		$this->time_log('q', $time2 - $time1, $q);
 
 		return $result;
 	}
@@ -554,7 +558,7 @@ abstract class diDB
 		if (!$result)
 			$this->_log("unable to exec query \"$q\"");
 
-		$this->time_log("rq", $time2 - $time1, $q);
+		$this->time_log('rq', $time2 - $time1, $q);
 
 		return $result;
 	}
@@ -571,7 +575,7 @@ abstract class diDB
 		if ($result === false)
 			$this->_log("unable to exec query \"$q\"");
 
-		$this->time_log("mq", $time2 - $time1, $q);
+		$this->time_log('mq', $time2 - $time1, $q);
 
 		return $result;
 	}
