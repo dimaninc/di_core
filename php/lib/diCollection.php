@@ -377,6 +377,18 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $o;
 	}
 
+    /**
+     * @param integer|string $type
+     * @param array $options
+     * @param string|null $queryFields
+     * @return $this
+     * @throws \Exception
+     */
+    public static function createReadOnly($type = null, $options = [], $queryFields = null)
+    {
+        return static::create($type, $options, $queryFields)->_setReadOnly();
+    }
+
 	public static function createEmpty($type = null)
     {
         $o = static::create($type);
