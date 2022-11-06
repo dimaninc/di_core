@@ -976,7 +976,8 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 		if (
 		    $this->options['modelAfterCreate'] &&
-            is_callable($this->options['modelAfterCreate'])) {
+            is_callable($this->options['modelAfterCreate'])
+        ) {
 			$this->options['modelAfterCreate']($item);
 		}
 
