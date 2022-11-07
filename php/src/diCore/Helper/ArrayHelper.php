@@ -139,6 +139,17 @@ class ArrayHelper
 		return $ar;
 	}
 
+	public static function filterRecursive($ar, $callback = null)
+    {
+        foreach ($ar as &$value) {
+            if (is_array($value)) {
+                $value = self::filterRecursive($value, $callback);
+            }
+        }
+
+        return array_filter($ar, $callback);
+    }
+
 	/**
 	 * Flattens assoc array into an attributes string
 	 *

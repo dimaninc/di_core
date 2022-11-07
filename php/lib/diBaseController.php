@@ -123,7 +123,7 @@ class diBaseController
 
 	public function param($idx, $defaultValue = null, $type = null)
 	{
-		return ArrayHelper::getValue($this->paramsAr, $idx, $defaultValue, $type);
+		return ArrayHelper::get($this->paramsAr, $idx, $defaultValue, $type);
 	}
 
 	/**
