@@ -248,7 +248,7 @@ class ArrayHelper
             $path = explode('.', $path);
         }
 
-        $value = array_reduce($path, $reduce, self::fromObject($deepArray)) ?: $defaultValue;
+        $value = array_reduce($path, $reduce, self::fromObject($deepArray)) ?? $defaultValue;
         $type = $type ?: gettype($defaultValue);
 
         if ($type != 'NULL' && is_scalar($value)) {
