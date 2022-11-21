@@ -27,6 +27,7 @@ class Vendor extends VendorContainer
 	const QPPI = 13;
 	const GOOGLE_PAY = 14;
     const APPLE_PAY = 15;
+    const SBP = 16;
 
 	public static $titles = [
 		self::YANDEX_MONEY => 'ЮMoney', // Яндекс.Деньги
@@ -44,6 +45,7 @@ class Vendor extends VendorContainer
 		self::QPPI => 'Куппи.ру',
         self::GOOGLE_PAY => 'Google Pay',
         self::APPLE_PAY => 'Apple Pay',
+        self::SBP => 'Система быстрых платежей',
 	];
 
 	public static $names = [
@@ -62,6 +64,7 @@ class Vendor extends VendorContainer
 		self::QPPI => 'qppi',
         self::GOOGLE_PAY => 'google-pay',
         self::APPLE_PAY => 'apple-pay',
+        self::SBP => 'sbp',
 	];
 
 	public static $codes = [
@@ -80,6 +83,7 @@ class Vendor extends VendorContainer
 		self::QPPI => 'QP',
         self::GOOGLE_PAY => 'AC',
         self::APPLE_PAY => 'AC',
+        self::SBP => 'CP',
 	];
 
 	public static $minLimits = [
@@ -98,5 +102,6 @@ class Vendor extends VendorContainer
 		self::QPPI => 100,
         self::GOOGLE_PAY => null,
         self::APPLE_PAY => null,
+        self::SBP => null,
 	];
 }

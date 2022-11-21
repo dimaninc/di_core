@@ -64,6 +64,13 @@ class GeoIpLocation
         'Sebastopol City',
     ];
 
+    public static $novorossiaRegions = [
+        'Donetsk Oblast',
+        'Kherson Oblast',
+        'Luhansk',
+        'Zaporizhzhya Oblast',
+    ];
+
 	public function __construct($ip = null)
 	{
 		$this->ip = $ip;
@@ -119,7 +126,7 @@ class GeoIpLocation
 
     protected function fixData()
     {
-        if ($this->isCrimea()) {
+        if ($this->isCrimea() || $this->isNovorossia()) {
             $this
                 ->setCountryCode('RU')
                 ->setCountryName('Russia');
@@ -133,31 +140,36 @@ class GeoIpLocation
         return in_array($this->getRegionName(), GeoIpLocation::$crimeaRegions);
     }
 
+    public function isNovorossia()
+    {
+        return in_array($this->getRegionName(), GeoIpLocation::$novorossiaRegions);
+    }
+
 	public function __call($method, $arguments)
 	{
 		$fullMethod = underscore($method);
 		$value = isset($arguments[0]) ? $arguments[0] : null;
 
-		$x = strpos($fullMethod, "_");
+		$x = strpos($fullMethod, '_');
 		$method = substr($fullMethod, 0, $x);
 		$field = substr($fullMethod, $x + 1);
 
 		switch ($method) {
-			case "get":
+			case 'get':
 				return $this->get($field);
 
-			case "has":
+			case 'has':
 				return $this->has($field);
 
-			case "exists":
+			case 'exists':
 				return $this->exists($field);
 
-			case "set":
+			case 'set':
 				return $this->set($field, $value);
 		}
 
 		throw new \Exception(
-			sprintf("Invalid method %s::%s(%s)", get_class($this), $method, print_r($arguments, 1))
+			sprintf('Invalid method %s::%s(%s)', get_class($this), $method, print_r($arguments, 1))
 		);
 	}
 
