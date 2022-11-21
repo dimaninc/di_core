@@ -58,6 +58,7 @@ class Form
 			'dispatch_test' => 'Save and test dispatch',
 			'edit' => 'Edit record',
 			'calendar' => 'Calendar',
+            'clear' => 'Clear',
 			'submit_and_add' => 'Save and add new item',
 			'submit_and_next' => 'Save and go to next item',
 			'submit_and_send' => 'Save and send via email',
@@ -114,6 +115,7 @@ class Form
 			'dispatch_test' => 'Сохранить и произвести тестовую рассылку',
 			'edit' => 'Редактировать',
 			'calendar' => 'Календарь',
+            'clear' => 'Очистить',
 			'submit_and_add' => 'Сохранить и добавить новый товар',
 			'submit_and_next' => 'Сохранить и перейти к следующей записи',
 			'submit_and_send' => 'Сохранить и отправить письмо',
@@ -2991,12 +2993,10 @@ EOF;
 
 	public function get_datetime_input($table, $field, $value, $date = true, $time = false, $calendar_cfg = true)
 	{
-		if ($value && $value != "0000-00-00 00:00:00")
-		{
+		if ($value && $value != "0000-00-00 00:00:00") {
 			$str_field_type = substr($this->getFieldProperty($field, "type"), -4) == "_str" ?: -1;
 
-			if ($str_field_type == -1)
-			{
+			if ($str_field_type == -1) {
 				$str_field_type = !is_numeric($value);
 			}
 
@@ -3007,9 +3007,7 @@ EOF;
 			$dd = lead0($v["mday"]);
 			$th = lead0($v["hours"]);
 			$tm = lead0($v["minutes"]);
-		}
-		else
-		{
+		} else {
 			$dy = "";
 			$dm = "";
 			$dd = "";
@@ -3040,22 +3038,21 @@ EOF;
 		if ($input) $input .= "&nbsp;";
 		if ($time) $input .= $t;
 
-		if ($date && $calendar_cfg)
-		{
+		if ($date && $calendar_cfg) {
 			//$uid = substr(get_unique_id(), 0, 8);
 			$uid = "{$table}_{$field}";
 
-			if ($calendar_cfg === true)
-			{
+			if ($calendar_cfg === true) {
 				$calendar_cfg_js = "months_to_show: 1, date1: '$field', able_to_go_to_past: true";
-			}
-			else
-			{
+			} else {
 				$calendar_cfg_js = $calendar_cfg;
 			}
 
 			$input .= <<<EOF
- <button type="button" onclick="c_{$uid}.toggle();" class="calendar-toggle w_hover">{$this->L("calendar")}</button>
+<span class="calendar-controls">
+<button type="button" onclick="c_{$uid}.toggle();" class="calendar-toggle w_hover">{$this->L("calendar")}</button>
+<button type="button" onclick="c_{$uid}.clear();" class="calendar-clear w_hover" data-purpose="reset">{$this->L("clear")}</button>
+</span>
 
 <script type="text/javascript">
 var c_{$uid} = new diCalendar({

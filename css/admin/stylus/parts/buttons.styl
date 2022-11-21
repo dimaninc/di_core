@@ -56,15 +56,9 @@ button
     > svg
       path
         transition .3s
-    &.calendar-toggle
-      margin-left 5px
-      padding-top 2px
-      padding-bottom 2px
-      {$entrineSkin} &
-        margin-left 15px
     &[id="btn-save"]
       font-weight bold
-      body[data-skin="entrine"] &
+      {$entrineSkin} &
         font-weight normal
     {$entrineSkin} &
       display inline-flex
@@ -82,9 +76,9 @@ button
       background none
       + button
         margin-left 20px
-        //@media screen and (max-width: 767px)
-        //  margin-right 12px
-      @media screen and (max-width: 767px)
+        @media $mqTablet
+          margin-left 5px
+      @media $mqTablet
         //margin 0 12px 12px 0
         padding 6px
         border-width 2px
@@ -97,7 +91,7 @@ button
       > svg
         order 10
         flex-shrink 0
-        @media screen and (max-width: 767px)
+        @media $mqTablet
           display none
       &:hover
         background-color alpha($entrineColorTextMenuSelected, .2)
@@ -162,12 +156,12 @@ button
           height 24px
           background-image embedurl('../../../i/admin/skin/entrine/filter/reset.svg', 'utf8')
           background-repeat no-repeat
+          @media $mqTablet
+            display none
       &[name="export"]
         margin-left 30px
       &.calendar-toggle
         border-color #df5a5a
-        @media screen and (max-width: 767px)
-          margin-left 5px
         &:hover
           background-color alpha(#df5a5a, .2)
         &:after
@@ -176,3 +170,5 @@ button
           height 24px
           background-image embedurl('../../../i/admin/skin/entrine/calendar.svg', 'utf8')
           background-repeat no-repeat
+          @media $mqTablet
+            display none

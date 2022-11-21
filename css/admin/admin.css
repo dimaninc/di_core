@@ -171,18 +171,6 @@ button.red:hover {
   -ms-transition: 0.3s;
   transition: 0.3s;
 }
-.filter-block button.calendar-toggle,
-.diadminform-row:not([data-type="wysiwyg"]) button.calendar-toggle,
-.submit-block button.calendar-toggle {
-  margin-left: 5px;
-  padding-top: 2px;
-  padding-bottom: 2px;
-}
-body[data-skin="entrine"] .filter-block button.calendar-toggle,
-body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button.calendar-toggle,
-body[data-skin="entrine"] .submit-block button.calendar-toggle {
-  margin-left: 15px;
-}
 .filter-block button[id="btn-save"],
 .diadminform-row:not([data-type="wysiwyg"]) button[id="btn-save"],
 .submit-block button[id="btn-save"] {
@@ -229,7 +217,14 @@ body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button + b
 body[data-skin="entrine"] .submit-block button + button {
   margin-left: 20px;
 }
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 768px) {
+  body[data-skin="entrine"] .filter-block button + button,
+  body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button + button,
+  body[data-skin="entrine"] .submit-block button + button {
+    margin-left: 5px;
+  }
+}
+@media screen and (max-width: 768px) {
   body[data-skin="entrine"] .filter-block button,
   body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button,
   body[data-skin="entrine"] .submit-block button {
@@ -257,7 +252,7 @@ body[data-skin="entrine"] .submit-block button > svg {
   -webkit-flex-shrink: 0;
   flex-shrink: 0;
 }
-@media screen and (max-width: 767px) {
+@media screen and (max-width: 768px) {
   body[data-skin="entrine"] .filter-block button > svg,
   body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button > svg,
   body[data-skin="entrine"] .submit-block button > svg {
@@ -402,6 +397,13 @@ body[data-skin="entrine"] .submit-block button[data-purpose="reset"]:after {
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg height=%2221%22 viewBox=%220 0 24 21%22 width=%2224%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cpath d=%22m13.5 0c-5.629 0-10.212 4.436-10.475 10h-3.025l4.537 5.917 4.463-5.917h-2.975c.26-3.902 3.508-7 7.475-7 4.136 0 7.5 3.364 7.5 7.5s-3.364 7.5-7.5 7.5c-2.381 0-4.502-1.119-5.876-2.854l-1.847 2.449c1.919 2.088 4.664 3.405 7.723 3.405 5.798 0 10.5-4.702 10.5-10.5s-4.702-10.5-10.5-10.5z%22 fill=%22%236ea3bf%22/%3E%3C/svg%3E");
   background-repeat: no-repeat;
 }
+@media screen and (max-width: 768px) {
+  body[data-skin="entrine"] .filter-block button[data-purpose="reset"]:after,
+  body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button[data-purpose="reset"]:after,
+  body[data-skin="entrine"] .submit-block button[data-purpose="reset"]:after {
+    display: none;
+  }
+}
 body[data-skin="entrine"] .filter-block button[name="export"],
 body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button[name="export"],
 body[data-skin="entrine"] .submit-block button[name="export"] {
@@ -411,13 +413,6 @@ body[data-skin="entrine"] .filter-block button.calendar-toggle,
 body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button.calendar-toggle,
 body[data-skin="entrine"] .submit-block button.calendar-toggle {
   border-color: #df5a5a;
-}
-@media screen and (max-width: 767px) {
-  body[data-skin="entrine"] .filter-block button.calendar-toggle,
-  body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button.calendar-toggle,
-  body[data-skin="entrine"] .submit-block button.calendar-toggle {
-    margin-left: 5px;
-  }
 }
 body[data-skin="entrine"] .filter-block button.calendar-toggle:hover,
 body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button.calendar-toggle:hover,
@@ -432,6 +427,13 @@ body[data-skin="entrine"] .submit-block button.calendar-toggle:after {
   height: 24px;
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg enable-background=%22new 0 0 160 160%22 viewBox=%220 0 160 160%22 xmlns=%22http://www.w3.org/2000/svg%22 fill=%22%23df5a5a%22%3E%3Cpath d=%22m139.594 22.593h-13.653v-6.078c0-5.938-4.83-10.768-10.768-10.768s-10.768 4.831-10.768 10.768v19.156c0 5.938 4.831 10.768 10.768 10.768s10.768-4.83 10.768-10.768v-6.078h13.653c4.427 0 8.028 3.602 8.028 8.029v17.811h-135.244v-17.811c0-4.427 3.602-8.029 8.028-8.029h13.653v6.078c0 5.938 4.831 10.768 10.768 10.768s10.768-4.83 10.768-10.768v-19.156c0-5.938-4.831-10.768-10.768-10.768s-10.768 4.831-10.768 10.768v6.078h-13.653c-8.287 0-15.028 6.742-15.028 15.029v101.603c0 8.287 6.742 15.028 15.028 15.028h119.188c8.287 0 15.028-6.741 15.028-15.028v-101.603c0-8.287-6.741-15.029-15.028-15.029zm-20.653 13.078c0 2.078-1.69 3.768-3.768 3.768s-3.768-1.69-3.768-3.768v-19.156c0-2.078 1.69-3.768 3.768-3.768s3.768 1.69 3.768 3.768zm-77.882-19.156c0-2.078 1.69-3.768 3.768-3.768s3.768 1.69 3.768 3.768v19.156c0 2.078-1.69 3.768-3.768 3.768s-3.768-1.69-3.768-3.768zm106.563 122.709c0 4.427-3.602 8.028-8.028 8.028h-119.188c-4.427 0-8.028-3.602-8.028-8.028v-76.792h135.245v76.792z%22/%3E%3Cpath d=%22m27.965 98.355h22c1.381 0 2.5-1.119 2.5-2.5v-22c0-1.381-1.119-2.5-2.5-2.5h-22c-1.381 0-2.5 1.119-2.5 2.5v22c0 1.381 1.119 2.5 2.5 2.5zm2.5-22h17v17h-17z%22/%3E%3Cpath d=%22m69 98.355h22c1.381 0 2.5-1.119 2.5-2.5v-22c0-1.381-1.119-2.5-2.5-2.5h-22c-1.381 0-2.5 1.119-2.5 2.5v22c0 1.381 1.119 2.5 2.5 2.5zm2.5-22h17v17h-17z%22/%3E%3Cpath d=%22m110.036 98.355h22c1.381 0 2.5-1.119 2.5-2.5v-22c0-1.381-1.119-2.5-2.5-2.5h-22c-1.381 0-2.5 1.119-2.5 2.5v22c0 1.381 1.119 2.5 2.5 2.5zm2.5-22h17v17h-17z%22/%3E%3Cpath d=%22m27.965 137.902h22c1.381 0 2.5-1.119 2.5-2.5v-22c0-1.381-1.119-2.5-2.5-2.5h-22c-1.381 0-2.5 1.119-2.5 2.5v22c0 1.381 1.119 2.5 2.5 2.5zm2.5-22h17v17h-17z%22/%3E%3Cpath d=%22m69 137.902h22c1.381 0 2.5-1.119 2.5-2.5v-22c0-1.381-1.119-2.5-2.5-2.5h-22c-1.381 0-2.5 1.119-2.5 2.5v22c0 1.381 1.119 2.5 2.5 2.5zm2.5-22h17v17h-17z%22/%3E%3Cpath d=%22m58.095 22.593h43.81v7h-43.81z%22/%3E%3C/svg%3E");
   background-repeat: no-repeat;
+}
+@media screen and (max-width: 768px) {
+  body[data-skin="entrine"] .filter-block button.calendar-toggle:after,
+  body[data-skin="entrine"] .diadminform-row:not([data-type="wysiwyg"]) button.calendar-toggle:after,
+  body[data-skin="entrine"] .submit-block button.calendar-toggle:after {
+    display: none;
+  }
 }
 input[type="text"],
 input[type="email"],
@@ -2424,9 +2426,21 @@ body[data-skin="entrine"] .diadminform-row .value input:not([type="checkbox"]):n
 body[data-skin="entrine"] .diadminform-row .value textarea {
   padding: 15px;
 }
+@media screen and (max-width: 768px) {
+  body[data-skin="entrine"] .diadminform-row .value input:not([type="checkbox"]):not([type="radio"]),
+  body[data-skin="entrine"] .diadminform-row .value textarea {
+    padding: 5px;
+  }
+}
 body[data-skin="entrine"] .diadminform-row .value > input[type="checkbox"],
 body[data-skin="entrine"] .diadminform-row .value > input[type="radio"] {
   margin-top: 20px;
+}
+@media screen and (max-width: 768px) {
+  body[data-skin="entrine"] .diadminform-row .value > input[type="checkbox"],
+  body[data-skin="entrine"] .diadminform-row .value > input[type="radio"] {
+    margin-top: 10px;
+  }
 }
 .diadminform-row .value select {
   max-width: 100%;
@@ -2436,6 +2450,38 @@ body[data-skin="entrine"] .diadminform-row .value > input[type="radio"] {
                     //margin-top 15px
                     height 48px
             */
+}
+.diadminform-row .value .calendar-controls {
+  display: -webkit-inline-box;
+  display: -moz-inline-box;
+  display: -webkit-inline-flex;
+  display: -ms-inline-flexbox;
+  display: inline-box;
+  display: inline-flex;
+  margin-left: 5px;
+}
+@media screen and (min-width: 769px) {
+  body[data-skin="entrine"] .diadminform-row .value .calendar-controls {
+    margin-left: 15px;
+  }
+}
+@media (min-width: 768px) and (max-width: 1024px) {
+  body[data-skin="entrine"] .diadminform-row .value .calendar-controls {
+    margin-left: 0;
+    margin-top: 10px;
+  }
+}
+.diadminform-row .value .calendar-controls button {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+.diadminform-row .value .calendar-controls button + button {
+  margin-left: 5px;
+}
+@media screen and (min-width: 769px) {
+  body[data-skin="entrine"] .diadminform-row .value .calendar-controls button + button {
+    margin-left: 15px;
+  }
 }
 .diadminform-row .value.ui-sortable .ui-state-highlight {
   min-height: 50px;

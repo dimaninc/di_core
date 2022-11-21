@@ -190,12 +190,16 @@
             box-sizing border-box
         input:not([type="checkbox"]):not([type="radio"])
         textarea
-            body[data-skin="entrine"] &
+            {$entrineSkin} &
                 padding 15px
+                @media $mqTablet
+                    padding 5px
         > input[type="checkbox"]
         > input[type="radio"]
-            body[data-skin="entrine"] &
+            {$entrineSkin} &
                 margin-top 20px
+                @media $mqTablet
+                    margin-top 10px
         select
             max-width 100%
             /*
@@ -204,6 +208,23 @@
                     //margin-top 15px
                     height 48px
             */
+        .calendar-controls
+            display inline-flex
+            margin-left 5px
+            {$entrineSkin} &
+                @media $mqNoTablet
+                    margin-left 15px
+                @media (min-width: $widthTablet) and (max-width: $widthTabletLandscape)
+                    margin-left 0
+                    margin-top 10px
+            button
+                padding-top 2px
+                padding-bottom 2px
+                + button
+                    margin-left 5px
+                    {$entrineSkin} &
+                        @media $mqNoTablet
+                            margin-left 15px
         &.ui-sortable
             .ui-state-highlight
                 min-height 50px
@@ -218,14 +239,14 @@
             flex 1
             max-width 100%
             //overflow-x auto
-            body[data-skin="entrine"] &
+            {$entrineSkin} &
                 padding-top 18px
                 //min-height 40px
         .static-text
             padding 8px
             border-radius 8px
             background #ddd
-            body[data-skin="entrine"] &
+            {$entrineSkin} &
                 margin -18px 0 0 0
                 padding 10px
                 border-radius 0
@@ -254,7 +275,7 @@
         .title
             flex-basis 100%
             padding-bottom 10px
-            body[data-skin="entrine"] &
+            {$entrineSkin} &
                 text-align left
                 font-weight bold
         .value
