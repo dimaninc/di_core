@@ -2046,8 +2046,8 @@ EOF;
 	public function setTextareaInput($field)
 	{
         $this->inputs[$field] = $this->isStatic($field)
-            ? "<div class=\"static-text\">" . nl2br($this->getData($field)) . "</div>"
-			: "<div class='textarea'>" . $this->getTextareaInput($field) . "</div>";
+            ? "<div class=\"static-text\">" . nl2br($this->formatValue($field)) . "</div>"
+			: "<div class=\"textarea\">" . $this->getTextareaInput($field) . "</div>";
 
 		$this->force_inputs_fields[$field] = true;
 
