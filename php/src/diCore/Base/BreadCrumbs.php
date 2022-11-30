@@ -102,16 +102,13 @@ class BreadCrumbs
 	{
 		$this->reset();
 
-		if ($this->useTpl)
-		{
+		if ($this->useTpl) {
 			$this->setDivider($this->getTpl()->parse('top_title_divider'));
 		}
 
 		/** @var Model $m */
-		foreach ($this->getZ()->getContentFamily()->get() as $m)
-		{
-			if (in_array($m->getType(), $this->skippedContentTypes))
-			{
+		foreach ($this->getZ()->getContentFamily()->get() as $m) {
+			if (in_array($m->getType(), $this->skippedContentTypes)) {
 				continue;
 			}
 
@@ -134,13 +131,11 @@ class BreadCrumbs
 
 	public function addHref($index = -1, $href = null)
 	{
-		if (!count($this->elements))
-		{
+		if (!count($this->elements)) {
 			return $this;
 		}
 
-		if ($href === null)
-		{
+		if ($href === null) {
 			$href = $this->getZ()->getContentFamily()->getMemberByLevel($index)->getHref();
 		}
 
@@ -153,8 +148,7 @@ class BreadCrumbs
 
 	public function remove($index = -1)
 	{
-		if ($index < 0)
-		{
+		if ($index < 0) {
 			$index += count($this->elements);
 		}
 
@@ -168,26 +162,21 @@ class BreadCrumbs
         /** @var \diModel $m */
         $m = $element['model'];
 
-        if ($m->exists())
-        {
-            if (!$element['title'])
-            {
+        if ($m->exists()) {
+            if (!$element['title']) {
                 $element['title'] = $m->localized('title');
             }
 
-            if (!$element['href'] && $this->hrefNeeded($m))
-            {
+            if (!$element['href'] && $this->hrefNeeded($m)) {
                 $element['href'] = $m->getHref();
             }
         }
 
-        if ($element['position'] < 0)
-        {
+        if ($element['position'] < 0) {
             $element['position'] += count($this->elements) + 1;
         }
 
-        if ($element['wordWrap'])
-        {
+        if ($element['wordWrap']) {
             $element['title'] = trim(word_wrap($element['title'], \diConfiguration::get('page_title_word_max_len'), ' '));
         }
 
@@ -223,13 +212,11 @@ class BreadCrumbs
 
 	public function update($index, $options = [])
 	{
-		if ($index < 0)
-		{
+		if ($index < 0) {
 			$index += count($this->elements);
 		}
 
-		if (isset($this->elements[$index]))
-		{
+		if (isset($this->elements[$index])) {
 			$this->elements[$index] = $this->prepareElement(extend($this->elements[$index], $options));
 		}
 
@@ -238,8 +225,7 @@ class BreadCrumbs
 
 	public function getTitleOfElement($element)
 	{
-		if ($cb = $this->titleGetter)
-		{
+		if ($cb = $this->titleGetter) {
 			return $cb($element);
 		}
 
@@ -250,8 +236,7 @@ class BreadCrumbs
     {
         $ar = [];
 
-        foreach ($this->elements as $element)
-        {
+        foreach ($this->elements as $element) {
             $hrefPrefix = $element['href'] && $element['hrefPrefixNeeded']
                 ? $this->getZ()->getLanguageHrefPrefix()
                 : '';
@@ -270,8 +255,7 @@ class BreadCrumbs
 	{
 		$ar = [];
 
-		foreach ($this->getProcessedElements() as $e)
-		{
+		foreach ($this->getProcessedElements() as $e) {
 			$ar[] = $this->getTpl()
 				->assign($e, 'TT_')
 				->parse('TOP_TITLE_ELEMENT', $e['href'] ? 'top_title_href' : 'top_title_nohref');
@@ -282,16 +266,14 @@ class BreadCrumbs
 
 	public function finish()
 	{
-        if ($this->useTpl)
-        {
+        if ($this->useTpl) {
             $ar = $this->getHtmlElements();
 
             $this->getTpl()->assign([
                 'TOP_TITLE' => join($this->divider, $ar),
             ]);
 
-            if ($this->getZ()->needToPrintBreadCrumbs())
-            {
+            if ($this->getZ()->needToPrintBreadCrumbs()) {
                 $this->getTpl()->parse('top_title_div');
             }
 
@@ -300,9 +282,7 @@ class BreadCrumbs
                     'top_title' => join($this->divider, $ar),
                     'top_title_div' => $this->getTpl()->getAssigned('TOP_TITLE_DIV'),
                 ]);
-        }
-        else
-        {
+        } else {
             $this->getTwig()
                 ->assign([
                     'bread_crumbs' => $this->getProcessedElements(),

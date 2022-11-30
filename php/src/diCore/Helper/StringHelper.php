@@ -300,6 +300,61 @@ class StringHelper
 		return $res;
 	}
 
+    public static function divideLongWords($s, $len, $divider = ' ')
+    {
+        $ar0 = preg_split("/[ \r\n]/", $s);
+        $ar1 = $ar2 = $ar3 = [];
+        $lines = $lines2 = [''];
+        $rChar = '>';
+
+        for ($i = 0; $i < count($ar0); $i++) {
+            if (!$ar0[$i]) {
+                continue;
+            }
+
+            $ar1[] = $ar0[$i];
+            $ar2[] = preg_replace("/\&(\#[0-9]{2,5}|[a-zA-Z]{2,8})\;/", $rChar, $ar0[$i]);
+
+            preg_match_all("/\&(\#[0-9]{2,5}|[a-zA-Z]{2,8})\;/", $ar0[$i], $r);
+            $ar3[] = $r[0];
+        }
+
+        for ($i = 0; $i < count($ar1); $i++) {
+            if (mb_strlen($lines2[count($lines2) - 1]) + 1 + mb_strlen($ar2[$i]) <= $len) {
+                $lines[count($lines) - 1] .= ' ' . $ar1[$i];
+                $lines2[count($lines2) - 1] .= ' ' . $ar2[$i];
+            } else {
+                if (mb_strlen($ar2[$i]) <= $len) {
+                    $lines[count($lines)] = $ar1[$i];
+                    $lines2[count($lines2)] = $ar2[$i];
+                } else {
+                    $cc = 0;
+
+                    while (mb_strlen($ar2[$i]) > 0) {
+                        $tmp1 = substr($ar2[$i], 0, $len);
+                        $tmp2 = $tmp1;
+
+                        for ($j = 0; $j < mb_strlen($tmp1); $j++) {
+                            if (mb_substr($tmp1, $j, 1) == $rChar) {
+                                $tmp1 = mb_substr($tmp1, 0, $j) . $ar3[$i][$cc] . mb_substr($tmp1, $j + 1);
+                                $j += mb_strlen($ar3[$i][$cc]) - 1;
+                                $cc++;
+                            }
+                        }
+
+                        $ar1[$i] = mb_substr($ar1[$i], mb_strlen($tmp1));
+                        $ar2[$i] = mb_substr($ar2[$i], mb_strlen($tmp2));
+
+                        $lines[count($lines)] = $tmp1;
+                        $lines2[count($lines2)] = $tmp2;
+                    }
+                }
+            }
+        }
+
+        return join($divider, $lines);
+    }
+
     public static function wrapUrlWithTag($text, $options = [])
     {
         $options = extend([
@@ -548,7 +603,7 @@ class StringHelper
         if (is_array($subject)) {
             // call mb_replace for each single string in $subject
             foreach ($subject as &$string) {
-                $string = &self::replace($search, $replace, $string, $c);
+                $string = self::replace($search, $replace, $string, $c);
                 $count += $c;
             }
         } elseif (is_array($search)) {
@@ -568,7 +623,7 @@ class StringHelper
             }
         } else {
             $parts = mb_split(preg_quote($search), $subject);
-            $count = count($parts)-1;
+            $count = count($parts) - 1;
             $subject = implode($replace, $parts);
         }
 

@@ -827,73 +827,10 @@ function get_1000_path($id)
   return $path;
 }
 
+/** @deprecated */
 function word_wrap($s, $len, $divider = " ")
 {
-  $r_char = ">";
-
-  $lines = array("");
-  $lines2 = array("");
-
-  $ar0 = preg_split("/[ \r\n]/", $s);
-  $ar1 = array();
-  $ar2 = array();
-  $ar3 = array();
-
-  for ($i = 0; $i < count($ar0); $i++)
-  {
-    if ($ar0[$i] == "") continue;
-
-    $ar1[] = $ar0[$i];
-    $ar2[] = preg_replace("/\&(\#[0-9]{2,5}|[a-zA-Z]{2,8})\;/", $r_char, $ar0[$i]);
-
-    preg_match_all("/\&(\#[0-9]{2,5}|[a-zA-Z]{2,8})\;/", $ar0[$i], $r);
-    $ar3[] = $r[0];
-  }
-
-  for ($i = 0; $i < count($ar1); $i++)
-  {
-    if (mb_strlen($lines2[count($lines2) - 1]) + 1 + mb_strlen($ar2[$i]) <= $len)
-    {
-      $lines[count($lines) - 1] .= " ".$ar1[$i];
-      $lines2[count($lines2) - 1] .= " ".$ar2[$i];
-    }
-    else
-    {
-      if (mb_strlen($ar2[$i]) <= $len)
-      {
-        $lines[count($lines)] = $ar1[$i];
-        $lines2[count($lines2)] = $ar2[$i];
-      }
-      else
-      {
-        $cc = 0;
-
-        while (mb_strlen($ar2[$i]) > 0)
-        {
-          $tmp1 = substr($ar2[$i], 0, $len);
-          $tmp2 = $tmp1;
-
-          for ($j = 0; $j < mb_strlen($tmp1); $j++)
-          {
-            if (mb_substr($tmp1, $j, 1) == $r_char)
-            {
-              $tmp1 = mb_substr($tmp1, 0, $j).$ar3[$i][$cc].mb_substr($tmp1, $j + 1);
-              $j += mb_strlen($ar3[$i][$cc]) - 1;
-              $cc++;
-            }
-          }
-
-          $ar1[$i] = mb_substr($ar1[$i], mb_strlen($tmp1));
-          $ar2[$i] = mb_substr($ar2[$i], mb_strlen($tmp2));
-
-          $lines[count($lines)] = $tmp1;
-          $lines2[count($lines2)] = $tmp2;
-        }
-      }
-    }
-  }
-
-  return join($divider, $lines);
+    return StringHelper::divideLongWords($s, $len, $divider);
 }
 
 function utime()
@@ -912,8 +849,7 @@ function replace_file_ext($fn, $new_ext = "")
 
 function ip2bin($ip = null)
 {
-	if ($ip === null)
-	{
+	if ($ip === null) {
 		$ip = get_user_ip();
 	}
 
