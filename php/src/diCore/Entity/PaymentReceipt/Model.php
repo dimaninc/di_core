@@ -6,6 +6,7 @@
  */
 
 namespace diCore\Entity\PaymentReceipt;
+
 use diCore\Data\Types;
 use diCore\Helper\ArrayHelper;
 use diCore\Tool\CollectionCache;

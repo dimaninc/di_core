@@ -56,6 +56,11 @@ class Model extends \diModel
 	const TARGET_IS_NECESSARY = true;
 	protected $customDateFields = ['date_reserved', 'date_payed', 'date_uploaded'];
 
+	public static function isUserIdNeeded()
+    {
+        return true;
+    }
+
 	public function validate()
 	{
 		if (!$this->hasTargetType() && static::TARGET_IS_NECESSARY) {
@@ -66,7 +71,7 @@ class Model extends \diModel
 			$this->addValidationError('Target ID required', 'target_id');
 		}
 
-		if (!$this->hasUserId()) {
+		if (!$this->hasUserId() && static::isUserIdNeeded()) {
 			$this->addValidationError('User ID required', 'user_id');
 		}
 
