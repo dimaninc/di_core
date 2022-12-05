@@ -1082,8 +1082,7 @@ class diDynamicRows
 
   function set_datetime_input($field, $date = true, $time = false, $calendar_cfg = true)
   {
-    if ($this->data[$field])
-    {
+    if ($this->data[$field]) {
       $str_field_type = substr($this->get_row_type($this->current_field), -4) == "_str";
       //if (!$str_field_type)
       //  $str_field_type = !is_numeric($value);
@@ -1094,9 +1093,7 @@ class diDynamicRows
       $dd = lead0($v["mday"]);
       $th = lead0($v["hours"]);
       $tm = lead0($v["minutes"]);
-    }
-    else
-    {
+    } else {
       $dy = "";
       $dm = "";
       $dd = "";
@@ -1120,18 +1117,14 @@ class diDynamicRows
     if ($this->inputs[$field]) $this->inputs[$field] .= " ";
     if ($time) $this->inputs[$field] .= $t;
 
-    if ($date && $calendar_cfg)
-    {
+    if ($date && $calendar_cfg) {
       $uid = "{$this->table}_{$this->field}_{$field}";
       //$uid = get_unique_id(8);
         $uid2 = preg_replace('#\[.+$#', '', $uid);
 
-      if ($calendar_cfg === true)
-      {
+      if ($calendar_cfg === true) {
         $calendar_cfg_js = "months_to_show: 1, date1: '$field', able_to_go_to_past: true";
-      }
-      else
-      {
+      } else {
         $calendar_cfg_js = $calendar_cfg;
       }
 
@@ -1199,17 +1192,14 @@ EOF;
 		preg_match('/^([^[]+)\[([^]]+)\]$/', $field, $matches);
 
 		$field2 = substr($matches[1], strlen($this->field) + 1);
-
 		$f = remove_ending_slash(Config::getPublicFolder()) . $fullName;
 		$ext = strtoupper(get_file_ext($fullName));
 		$imgWrapperNeeded = false;
 
-		if (is_file($f))
-		{
+		if (is_file($f)) {
 			$httpName = \diPaths::http($this->storedModel, false, $field) . '/' . StringHelper::unslash($fullName, false);
 
-            if (!StringHelper::contains($httpName, '://') && \diLib::getSubFolder())
-            {
+            if (!StringHelper::contains($httpName, '://') && \diLib::getSubFolder()) {
                 $httpName = '/' . $httpName;
             }
 
@@ -1218,37 +1208,23 @@ EOF;
 			$ff_s = filesize($f);
 			$previewWithText = false;
 
-			if (diSwiffy::is($f))
-			{
+			if (diSwiffy::is($f)) {
 				list($ff_w, $ff_h) = diSwiffy::getDimensions($f);
-
 				$imgTag = diSwiffy::getHtml($fullName, $ff_w, $ff_h);
-
                 $imgWrapperNeeded = true;
-			}
-			elseif (in_array($ext, ["MP4", "M4V", "OGV", "WEBM", "AVI"]))
-			{
+			} elseif (in_array($ext, ["MP4", "M4V", "OGV", "WEBM", "AVI"])) {
 				//$mime_type = self::get_mime_type_by_ext($ext);
 				// type=\"$mime_type\"
 				$imgTag = "<div><video preload=\"none\" controls width=400 height=225><source src=\"$httpName\"></video></div>";
-			}
-			// audio
-			elseif (in_array($ext, ["MP3", "OGG"]))
-			{
+			} elseif (in_array($ext, ["MP3", "OGG"])) {
 				$imgTag = "<div><audio preload=\"none\" controls=\"controls\"><source src=\"$httpName\"></audio></div>";
-			}
-			else
-			{
+			} else {
 				list($ff_w, $ff_h, $ff_t) = getimagesize($f);
 
-				if ($ff_t == 4 || $ff_t == 13)
-				{
+				if ($ff_t == 4 || $ff_t == 13) {
 					$imgTag = "<script type=\"text/javascript\">run_movie(\"$fullName\", \"$ff_w\", \"$ff_h\", \"opaque\");</script>";
-				}
-				elseif ($ff_t)
-				{
+				} elseif ($ff_t) {
 					$imgTag = "<img src=\"$httpName\" width=\"$ff_w\" height=\"$ff_h\" alt=\"$field\" />";
-
                     $imgWrapperNeeded = true;
 				}
 			}
@@ -1260,17 +1236,13 @@ EOF;
 				\diDateTime::simpleFormat(filemtime($f)),
 			]));
 
-			if ($imgTag && $imgWrapperNeeded)
-			{
+			if ($imgTag && $imgWrapperNeeded) {
 				$additionalClassName = $previewWithText ? "text" : "embed";
 
 				$imgTag = "<div class='container {$additionalClassName}'>$imgTag</div>";
 			}
-		}
-		else
-		{
+		} else {
 			$info = "No file ($fullName)";
-
 			$imgTag = "";
 			$httpName = "#no-file";
 		}
@@ -1307,8 +1279,7 @@ EOF;
 
 	function set_pic_input($field, $path = false, $hide_if_no_file = false)
 	{
-		if ($path === false)
-		{
+		if ($path === false) {
 			$path = '/' . $this->getPicsFolder();
 		}
 
@@ -1446,11 +1417,14 @@ EOF;
 
 			// tech fields
 			if (is_callable($techFieldsCallback)) {
-				$_a = $techFieldsCallback($this->table, $this->field, $this->id, $this);
+				$techData = $techFieldsCallback($this->table, $this->field, $this->id, $this);
 
-				foreach ($_a as $_a_k => $_a_v) {
-					$data_for_db[$_a_k] = $this->data[$_a_k] = $_a_v;
-				}
+				foreach ($techData as $k => $v) {
+					$data_for_db[$k] = $this->data[$k] = $v;
+
+                    $this->getStoredModel()
+                        ->set($k, $v);
+                }
 
 				$techFieldsSet = true;
 			}
@@ -1483,10 +1457,10 @@ EOF;
 			}
 
 			if (is_callable($beforeSaveCallback)) {
-				$_a = $beforeSaveCallback($this, $id);
+				$techData = $beforeSaveCallback($this, $id);
 
-				$data_for_db = extend($data_for_db, $_a);
-				$this->data = extend($this->data, $_a);
+				$data_for_db = extend($data_for_db, $techData);
+				$this->data = extend($this->data, $techData);
 			}
 
 			if ($this->storedModel->exists() && $this->test_r) {
