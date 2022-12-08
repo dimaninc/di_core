@@ -14,7 +14,7 @@ textarea
   padding 2px 5px
   border-radius $classicBorderRadiusInput
   align-self center
-  body[data-skin="entrine"] &
+  {$entrineSkin} &
     font-family $entrineFont
     border-radius $entrineBorderRadiusInput
     padding 5px
@@ -27,13 +27,13 @@ select
   font-size 14px
   align-self center
   border-color $classicColorInputBorder
-  body[data-skin="entrine"] &
+  {$entrineSkin} &
     //padding 15px
     border-color $entrineColorInputBorder
   //@media screen and (max-width: 767px)
   //    padding 5px
   &[size="1"]
-    body[data-skin="entrine"] &
+    {$entrineSkin} &
       height 48px
       @media screen and (max-width: 767px)
         height 42px
@@ -42,7 +42,7 @@ textarea
   padding-top 5px
   padding-bottom 5px
   align-self stretch
-  body[data-skin="entrine"] &
+  {$entrineSkin} &
     padding 15px
     @media screen and (max-width: 767px)
       padding 5px

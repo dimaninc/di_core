@@ -21,7 +21,7 @@ ul.admin-grid
 			width 49%
 		@media screen and (max-width: 550px)
 			width 100%
-		body[data-skin="entrine"] &
+		{$entrineSkin} &
 			border-radius 0
 			background-color $entrineColorBgLightGray
 		.nicetable-button
@@ -30,7 +30,7 @@ ul.admin-grid
 				&[data-action="down"]
 					transform rotate(-90deg)
 				&[data-action="down"]
-					body[data-skin="entrine"] &
+					{$entrineSkin} &
 						transform rotate(90deg)
 		&.highlight
 			background-color #ffd

@@ -59,7 +59,6 @@ class Payment extends \diBaseController
 
 		$res = [
 			'ok' => false,
-			'message' => null,
 		];
 
 		if ($draftId) {
@@ -70,8 +69,7 @@ class Payment extends \diBaseController
 			} elseif ($this->getDraft()->hasPaid()) {
 				$res['message'] = 'Draft #' . $draftId . ' already paid';
 			} else {
-				$this->createReceipt('manual-' . StringHelper::random(8));
-				$res['ok'] = true;
+                $res = $this->createReceipt('manual-' . StringHelper::random(8));
 			}
 		}
 
@@ -178,11 +176,10 @@ class Payment extends \diBaseController
 
 				$this->processMixplatRequest($result->getData());
 
-				if ($result->isSignCorrect() && $result->isStatusSuccess())
-				{
+				if ($result->isSignCorrect() && $result->isStatusSuccess()) {
 					$this->log('Creating receipt');
 
-					$this->createReceipt($result->getData('order_id'), function(Receipt $r) use($result) {
+					$this->createReceipt($result->getData('order_id'), function (Receipt $r) use ($result) {
 						$r->setRnd($result->getData('operator'));
 					});
 				}
@@ -410,8 +407,7 @@ class Payment extends \diBaseController
 			$existingReceipt = false;
 		}
 
-		if (!$this->getReceipt()->hasVendor())
-		{
+		if (!$this->getReceipt()->hasVendor()) {
 			switch ($this->getReceipt()->getPaySystem()) {
 				case System::yandex_kassa:
 					$vendor = (int)YandexVendor::id(\diRequest::post('paymentType'));
@@ -468,9 +464,16 @@ class Payment extends \diBaseController
 			}
 		} catch (\Exception $e) {
 			$this->log('Error while creating receipt: ' . $e->getMessage());
+
+			return [
+			    'ok' => false,
+                'message' => $e->getMessage(),
+            ];
 		}
 
-		return $this;
+		return [
+		    'ok' => true,
+        ];
 	}
 
 	/*

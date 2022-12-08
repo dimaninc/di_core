@@ -180,8 +180,7 @@ class PaymentDrafts extends BasePage
 
 		/** @var Model $draft */
 		$draft = $this->getForm()->getModel();
-		/** @var User $user */
-		$user = \diModel::create(Types::user, $draft->getUserId());
+		$user = User::createById($draft->getUserId());
 
 		$target = $draft->hasTargetType() && $draft->hasTargetId()
 			? \diModel::create($draft->getTargetType(), $draft->getTargetId())
@@ -193,7 +192,9 @@ class PaymentDrafts extends BasePage
 			->setInput('status', $draft->getStatusStr())
 			->setInput('currency', Payment::currencyTitle($draft->getCurrency()))
 			->setInput('pay_system', Payment::systemTitle($draft->getPaySystem()))
-			->setInput('user_id', sprintf('%s [<a href="%s">ссылка</a>]', $user, $user->getAdminHref()))
+			->setInput('user_id', $user->exists()
+                ? sprintf('%s [<a href="%s">ссылка</a>]', $user, $user->getAdminHref())
+                : '&mdash;')
 			->setInput('target_id', sprintf('%s [<a href="%s">ссылка</a>]', $this->getTargetTitle($target), $target->getAdminHref()));
 	}
 

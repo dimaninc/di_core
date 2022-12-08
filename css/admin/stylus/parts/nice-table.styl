@@ -12,20 +12,20 @@ table.dinicetable
         &.level1
             td
                 font-weight bold
-                body[data-skin="entrine"] &
+                {$entrineSkin} &
                     font-weight 500
         &.level2
             td
                 background #dfe0e5
                 padding-left 20px
-                body[data-skin="entrine"] &
+                {$entrineSkin} &
                     padding-left 20px
         &.level3
             td
                 color #333
                 background #dddde7
                 padding-left 35px
-                body[data-skin="entrine"] &
+                {$entrineSkin} &
                     padding-left 35px
         &.level4
             td
@@ -33,7 +33,7 @@ table.dinicetable
                 font-size 11px
                 background #dfdfda
                 padding-left 50px
-                body[data-skin="entrine"] &
+                {$entrineSkin} &
                     padding-left 50px
         &.level5
             td
@@ -41,7 +41,7 @@ table.dinicetable
                 font-size 11px
                 background #dfdfda
                 padding-left 65px
-                body[data-skin="entrine"] &
+                {$entrineSkin} &
                     padding-left 65px
         &.level6
             td
@@ -49,7 +49,7 @@ table.dinicetable
                 font-size 10px
                 background #eee
                 padding-left 80px
-                body[data-skin="entrine"] &
+                {$entrineSkin} &
                     padding-left 80px
         td
             border 1px white solid
@@ -63,7 +63,7 @@ table.dinicetable
             padding 0 5px
             vertical-align middle
             height 28px
-            body[data-skin="entrine"] &
+            {$entrineSkin} &
                 font-family $entrineFont
                 background none
                 height auto
@@ -72,7 +72,7 @@ table.dinicetable
                 border 1px $entrineColorTableBorder solid
             &:not([data-field="title"])
                 padding-left 5px
-                body[data-skin="entrine"] &
+                {$entrineSkin} &
                     padding-left 5px
             &.id
                 position relative
@@ -82,14 +82,14 @@ table.dinicetable
                 text-align center
                 white-space nowrap
                 padding 0 5px
-                body[data-skin="entrine"] &
+                {$entrineSkin} &
                     background-color transparent
                     font-weight 500
                     //font-size 12px //!important
                     padding 7px
             &.id-bg
                 background-color #d4d0c8
-                body[data-skin="entrine"] &
+                {$entrineSkin} &
                     background-color transparent
             &.href
                 text-align center
@@ -100,12 +100,12 @@ table.dinicetable
                     height 18px
                     background-image embedurl('../../../i/admin/skin/classic/list/share.svg')
                     background-size cover
-                    body[data-skin="entrine"] &
+                    {$entrineSkin} &
                         background-image embedurl('../../../i/admin/skin/entrine/list/share.svg')
             &.btn
                 border-right 0
                 padding 0
-                body[data-skin="entrine"] &
+                {$entrineSkin} &
                     border-left 0
                     background $entrineColorBgLightGray
                     &:not(:last-child)
@@ -153,7 +153,7 @@ table.dinicetable
         &.delete
             > td
                 background-color #fbb
-                body[data-skin="entrine"] &
+                {$entrineSkin} &
                     background-color alpha(red, .1)
         &.highlight
             > td
@@ -169,17 +169,17 @@ table.dinicetable
                 font-weight bold
                 padding 0 5px 5px 5px
                 text-align center
-                body[data-skin="entrine"] &
+                {$entrineSkin} &
                     font-weight 500
                     text-align left
                     text-transform uppercase
-                    padding 18px 0
+                    padding 10px 0 10px 5px
                     border-color transparent
                     border-bottom-color $entrineColorTableBorder
             &:hover
                 > td
                     background-color white
-                    body[data-skin="entrine"] &
+                    {$entrineSkin} &
                         background-color none
 
 .nicetable-button
@@ -190,7 +190,7 @@ table.dinicetable
     &:not([data-action])
     [data-action="empty"]
         cursor default
-    body[data-skin="entrine"] &
+    {$entrineSkin} &
         width 48px
         height 48px
         background none

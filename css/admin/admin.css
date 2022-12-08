@@ -2446,7 +2446,7 @@ body[data-skin="entrine"] .diadminform-row .value > input[type="radio"] {
   max-width: 100%;
 /*
             &[size="1"]
-                body[data-skin="entrine"] &
+                {$entrineSkin} &
                     //margin-top 15px
                     height 48px
             */
@@ -3300,7 +3300,7 @@ body[data-skin="entrine"] table.dinicetable tr.headline td {
   font-weight: 500;
   text-align: left;
   text-transform: uppercase;
-  padding: 18px 0;
+  padding: 10px 0 10px 5px;
   border-color: transparent;
   border-bottom-color: #dbdbdb;
 }
@@ -3963,6 +3963,9 @@ body[data-skin="entrine"] .filter-block .row .admin-filter-date-wrapper .empty-d
 .filter-block .row .admin-filter-date-wrapper:not(.set) .reset-filter,
 .filter-block .row .admin-filter-date-wrapper:not(.set) .selects {
   visibility: hidden;
+}
+.filter-block .row .admin-filter-date-wrapper + button {
+  margin-left: 5px;
 }
 .filter-block .row .date-sep,
 .filter-block .row .sel-sep {

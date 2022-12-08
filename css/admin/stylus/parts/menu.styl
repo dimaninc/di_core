@@ -26,7 +26,7 @@ $gapSize = (($menuPanelHeight - $buttonSize) / 2)
         box-sizing border-box
         text-align center
         margin-left $gapSize
-        body[data-skin="entrine"] &
+        {$entrineSkin} &
             border-radius 0
     .search
         flex 1
@@ -44,7 +44,7 @@ $gapSize = (($menuPanelHeight - $buttonSize) / 2)
             padding 4px
             outline none
             box-sizing border-box
-            body[data-skin="entrine"] &
+            {$entrineSkin} &
                 border-radius 0
                 border 0
                 font-family $entrineFont
@@ -56,7 +56,7 @@ $gapSize = (($menuPanelHeight - $buttonSize) / 2)
         > span
             position absolute
             opacity 0
-    body[data-skin="entrine"] &
+    {$entrineSkin} &
         font-family $entrineFont
         background $entrineColorBgDarker
         color white
@@ -81,7 +81,7 @@ ul.left-menu
             box-sizing border-box
             //width $classicMenuWidth
             transition .3s
-            body[data-skin="entrine"] &
+            {$entrineSkin} &
                 font-family $entrineFont
                 font-weight 600
                 border-bottom 0
@@ -100,7 +100,7 @@ ul.left-menu
                     transition .5s
             &:hover
                 background-color #dde5e5
-                body[data-skin="entrine"] &
+                {$entrineSkin} &
                     //background-color $entrineColorBgDarker
                     color $entrineColorTextMenuSelected
         > ul
@@ -108,14 +108,14 @@ ul.left-menu
             display none
             border-bottom 1px solid #cfcfcf
             width 199px
-            body[data-skin="entrine"] &
+            {$entrineSkin} &
                 border-bottom 0
                 width auto
             > li
                 border-bottom 0 solid #edf0f4
                 font normal 11px / 11px Verdana, sans-serif
                 color #0059B2
-                body[data-skin="entrine"] &
+                {$entrineSkin} &
                     font normal 12px / 16px Montserrat, sans-serif
                     color $entrineColorTextMenu
                 a
@@ -124,7 +124,7 @@ ul.left-menu
                     display block
                     background #ffffff
                     padding 7px 7px 7px 28px
-                    body[data-skin="entrine"] &
+                    {$entrineSkin} &
                         color $entrineColorTextMenu
                         background $entrineColorBgDarker
                         text-transform uppercase
@@ -132,12 +132,12 @@ ul.left-menu
                     &:hover
                         color #FF0000
                         background #f7f7f7
-                        body[data-skin="entrine"] &
+                        {$entrineSkin} &
                             color $entrineColorTextMenuSelected
                             background $entrineColorBgDarker
         &[data-state="1"]
             > b
-                body[data-skin="entrine"] &
+                {$entrineSkin} &
                     //background-color $entrineColorBgDarker
                     //color $entrineColorTextMenuSelected
                     &:after

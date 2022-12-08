@@ -63,7 +63,7 @@ class Model extends \diCore\Entity\PaymentDraft\Model
 
     public function getUserData()
     {
-        $userData = ArrayHelper::filterByKey($this->getUser()->get(), [
+        $userData = ArrayHelper::filterByKey($this->getUser()->get() ?? [], [
             'name',
             'email',
             'phone',

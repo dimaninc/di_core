@@ -31,8 +31,7 @@ class Cash extends \diBaseController
 
     protected function checkSecret()
     {
-        if (static::secret() !== static::getSecret())
-        {
+        if (static::secret() !== static::getSecret()) {
             throw new \Exception('Credentials not match');
         }
 
@@ -68,7 +67,7 @@ class Cash extends \diBaseController
     {
         CollectionCache::addManual(Types::user, 'id', $receipts->map('user_id'));
 
-        $ar = $receipts->map(function(Model $r) {
+        $ar = $receipts->map(function (Model $r) {
             return $r->asArrayForCashDesk();
         });
 
@@ -81,14 +80,11 @@ class Cash extends \diBaseController
      */
     protected function getReceipts()
     {
-        /** @var Collection $receipts */
-        $receipts = \diCollection::create(Types::payment_receipt);
-        $receipts
+        $receipts = Collection::create()
             ->filterByDatePayed(\diDateTime::sqlFormat(static::dates), '>=')
             ->filterByDateUploaded(null);
 
-        if ($this->getMaxReceiptsCount())
-        {
+        if ($this->getMaxReceiptsCount()) {
             $receipts
                 ->setPageSize($this->getMaxReceiptsCount());
         }
@@ -98,11 +94,9 @@ class Cash extends \diBaseController
 
     protected function setReceiptUploaded($receiptId)
     {
-        /** @var Model $receipt */
-        $receipt = \diModel::create(Types::payment_receipt, $receiptId);
+        $receipt = Model::createById($receiptId);
 
-        if (!$receipt->exists())
-        {
+        if (!$receipt->exists()) {
             throw new \Exception('Receipt ID=' . $receipt . ' not found');
         }
 
