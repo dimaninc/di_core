@@ -28,6 +28,7 @@ class diDateTime
 	const FORMAT_SIMPLE_DATE_TIME = 'd.m.Y H:i';
 	const FORMAT_SIMPLE_DATE = 'd.m.Y';
 	const FORMAT_SIMPLE_TIME = 'H:i';
+	const FORMAT_ATOM = 'Y-m-d\TH:i:sP';
 
 	public static $daysInMonth = [
 		false => [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
@@ -138,7 +139,7 @@ class diDateTime
     {
         $datetime = new \DateTime(static::sqlFormat($dt));
 
-        return $datetime->format(\DateTime::ATOM);
+        return $datetime->format(self::FORMAT_ATOM);
     }
 
     public static function mongoFormat($dt = null)

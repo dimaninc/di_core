@@ -52,10 +52,11 @@ class Cash extends \diBaseController
     public function _postSetReceiptUploadedAction()
     {
         $receiptId = \diRequest::rawPost('id', 0);
+        $fiscal = \diRequest::rawPost('lastReceipt', []);
 
         return $this
             ->checkSecret()
-            ->setReceiptUploaded($receiptId);
+            ->setReceiptUploaded($receiptId, $fiscal);
     }
 
     protected function getMaxReceiptsCount()
@@ -92,12 +93,20 @@ class Cash extends \diBaseController
         return $receipts;
     }
 
-    protected function setReceiptUploaded($receiptId)
+    protected function setReceiptUploaded($receiptId, $fiscal = [])
     {
         $receipt = Model::createById($receiptId);
 
         if (!$receipt->exists()) {
             throw new \Exception('Receipt ID=' . $receipt . ' not found');
+        }
+
+        if (!empty($fiscal['docId'])) {
+            $receipt->setFiscalDocId($fiscal['docId']);
+        }
+
+        if (!empty($fiscal['mark'])) {
+            $receipt->setFiscalMark($fiscal['mark']);
         }
 
         $receipt

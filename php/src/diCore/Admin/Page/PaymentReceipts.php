@@ -88,6 +88,20 @@ class PaymentReceipts extends PaymentDrafts
 				'default' => '',
 				'flags' => 'static',
 			],
+
+            'fiscal_mark' => [
+                'type' => 'string',
+                'title' => 'Фискальный признак',
+                'default' => '',
+                'flags' => 'static',
+            ],
+
+            'fiscal_doc_id' => [
+                'type' => 'string',
+                'title' => 'Фискальный номер',
+                'default' => '',
+                'flags' => 'static',
+            ],
 		]);
 	}
 

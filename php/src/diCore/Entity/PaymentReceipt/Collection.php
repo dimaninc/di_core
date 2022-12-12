@@ -15,16 +15,22 @@ namespace diCore\Entity\PaymentReceipt;
  * @method $this filterByDatePayed($value, $operator = null)
  * @method $this filterByDateUploaded($value, $operator = null)
  * @method $this filterByDraftId($value, $operator = null)
+ * @method $this filterByFiscalMark($value, $operator = null)
+ * @method $this filterByFiscalDocId($value, $operator = null)
  *
  * @method $this orderByRnd($direction = null)
  * @method $this orderByDatePayed($direction = null)
  * @method $this orderByDateUploaded($direction = null)
  * @method $this orderByDraftId($direction = null)
+ * @method $this orderByFiscalMark($direction = null)
+ * @method $this orderByFiscalDocId($direction = null)
  *
  * @method $this selectRnd()
  * @method $this selectDatePayed()
  * @method $this selectDateUploaded()
  * @method $this selectDraftId()
+ * @method $this selectFiscalMark()
+ * @method $this selectFiscalDocId()
  */
 class Collection extends \diCore\Entity\PaymentDraft\Collection
 {
