@@ -113,6 +113,14 @@ class Cash extends \diBaseController
             $receipt->setFiscalDate(\diDateTime::sqlFormat($fiscal['date']));
         }
 
+        if (!empty($fiscal['session'])) {
+            $receipt->setFiscalSession($fiscal['session']);
+        }
+
+        if (!empty($fiscal['number'])) {
+            $receipt->setFiscalNumber($fiscal['number']);
+        }
+
         $receipt
             ->setDateUploaded(\diDateTime::sqlFormat())
             ->save();

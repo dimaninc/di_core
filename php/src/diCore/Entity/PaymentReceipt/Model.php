@@ -24,6 +24,8 @@ use diCore\Tool\CollectionCache;
  * @method string	getFiscalMark
  * @method string	getFiscalDocId
  * @method string	getFiscalDate
+ * @method integer	getFiscalSession
+ * @method integer	getFiscalNumber
  *
  * @method bool hasRnd
  * @method bool hasDatePayed
@@ -32,6 +34,8 @@ use diCore\Tool\CollectionCache;
  * @method bool hasFiscalMark
  * @method bool hasFiscalDocId
  * @method bool hasFiscalDate
+ * @method bool hasFiscalSession
+ * @method bool hasFiscalNumber
  *
  * @method $this setRnd($value)
  * @method $this setDatePayed($value)
@@ -40,6 +44,8 @@ use diCore\Tool\CollectionCache;
  * @method $this setFiscalMark($value)
  * @method $this setFiscalDocId($value)
  * @method $this setFiscalDate($value)
+ * @method $this setFiscalSession($value)
+ * @method $this setFiscalNumber($value)
  */
 class Model extends \diCore\Entity\PaymentDraft\Model
 {
@@ -49,6 +55,8 @@ class Model extends \diCore\Entity\PaymentDraft\Model
 
     const TIMESTAMP_FORMAT = 'Ymd\THi';
     const FISCAL_STORAGE_NUMBER = null;
+
+    protected $customDateFields = ['date_reserved', 'date_payed', 'date_uploaded', 'fiscal_date'];
 
     /** @var \diCore\Entity\User\Model */
 	protected $user;
@@ -86,18 +94,20 @@ class Model extends \diCore\Entity\PaymentDraft\Model
         return $userData;
     }
 
+    public function getMainPositionTitle()
+    {
+        return \diTypes::getTitle($this->getTargetModel()->modelType());
+    }
+
 	public function asArrayForCashDesk()
     {
-        $userData = $this->getUserData();
-        $target = $this->getTargetModel();
-
         return [
             'id' => $this->getId(),
             'user_id' => $this->getUserId(),
-            'user' => $userData,
+            'user' => $this->getUserData(),
             'positions' => [
                 [
-                    'name' => \diTypes::getTitle($target->modelType()),
+                    'name' => $this->getMainPositionTitle(),
                     'amount' => 1,
                     'price' => $this->getAmount(),
                 ],
@@ -108,6 +118,11 @@ class Model extends \diCore\Entity\PaymentDraft\Model
     public static function getFiscalStorageNumber()
     {
         return static::FISCAL_STORAGE_NUMBER;
+    }
+
+    public function isQrAvailable()
+    {
+        return $this->hasFiscalDate() && $this->hasFiscalDocId() && $this->hasFiscalMark();
     }
 
     /*
@@ -123,7 +138,7 @@ class Model extends \diCore\Entity\PaymentDraft\Model
     public function getCashDeskQrCodeData()
     {
         return [
-            't' => \diDateTime::format(static::TIMESTAMP_FORMAT, $this->getDateUploaded()),
+            't' => \diDateTime::format(static::TIMESTAMP_FORMAT, $this->getFiscalDate()),
             's' => sprintf('%.2f', $this->getAmount()),
             'fn' => static::getFiscalStorageNumber(),
             'i' => $this->getFiscalDocId(),
@@ -137,13 +152,13 @@ class Model extends \diCore\Entity\PaymentDraft\Model
         return ArrayHelper::toString($this->getCashDeskQrCodeData(), '=', '&');
     }
 
-    public function getCashDeskQrCodeContents($type = QRCode::OUTPUT_MARKUP_SVG)
+    public function getCashDeskQrCodeContents($type = QRCode::OUTPUT_MARKUP_SVG, $extraOptions = [])
     {
-        $options = new QROptions([
+        $options = new QROptions(extend([
             'version' => 5,
             'outputType' => $type,
             'eccLevel' => QRCode::ECC_L,
-        ]);
+        ], $extraOptions));
         $qrCode = new QRCode($options);
 
         return $qrCode->render($this->getCashDeskQrCodeStr());
@@ -157,6 +172,13 @@ class Model extends \diCore\Entity\PaymentDraft\Model
     public function getCashDeskQrCodeAsInlinePng()
     {
         return $this->getCashDeskQrCodeContents(QRCode::OUTPUT_IMAGE_PNG);
+    }
+
+    public function getCashDeskQrCodeAsPng()
+    {
+        return $this->getCashDeskQrCodeContents(QRCode::OUTPUT_IMAGE_PNG, [
+            'imageBase64' => false,
+        ]);
     }
 
     public function getAppearanceFeedForAdmin()

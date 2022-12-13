@@ -18,6 +18,8 @@ namespace diCore\Entity\PaymentReceipt;
  * @method $this filterByFiscalMark($value, $operator = null)
  * @method $this filterByFiscalDocId($value, $operator = null)
  * @method $this filterByFiscalDate($value, $operator = null)
+ * @method $this filterByFiscalSession($value, $operator = null)
+ * @method $this filterByFiscalNumber($value, $operator = null)
  *
  * @method $this orderByRnd($direction = null)
  * @method $this orderByDatePayed($direction = null)
@@ -26,6 +28,8 @@ namespace diCore\Entity\PaymentReceipt;
  * @method $this orderByFiscalMark($direction = null)
  * @method $this orderByFiscalDocId($direction = null)
  * @method $this orderByFiscalDate($direction = null)
+ * @method $this orderByFiscalSession($direction = null)
+ * @method $this orderByFiscalNumber($direction = null)
  *
  * @method $this selectRnd()
  * @method $this selectDatePayed()
@@ -34,6 +38,8 @@ namespace diCore\Entity\PaymentReceipt;
  * @method $this selectFiscalMark()
  * @method $this selectFiscalDocId()
  * @method $this selectFiscalDate()
+ * @method $this selectFiscalSession()
+ * @method $this selectFiscalNumber()
  */
 class Collection extends \diCore\Entity\PaymentDraft\Collection
 {

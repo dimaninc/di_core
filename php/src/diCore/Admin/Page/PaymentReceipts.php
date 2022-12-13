@@ -109,6 +109,20 @@ class PaymentReceipts extends PaymentDrafts
                 'default' => '',
                 'flags' => 'static',
             ],
+
+            'fiscal_session' => [
+                'type' => 'int',
+                'title' => 'Смена',
+                'default' => '',
+                'flags' => 'static',
+            ],
+
+            'fiscal_number' => [
+                'type' => 'int',
+                'title' => 'Номер чека',
+                'default' => '',
+                'flags' => 'static',
+            ],
 		]);
 	}
 
