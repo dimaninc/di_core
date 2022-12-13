@@ -109,6 +109,10 @@ class Cash extends \diBaseController
             $receipt->setFiscalMark($fiscal['mark']);
         }
 
+        if (!empty($fiscal['date'])) {
+            $receipt->setFiscalDate(\diDateTime::sqlFormat($fiscal['date']));
+        }
+
         $receipt
             ->setDateUploaded(\diDateTime::sqlFormat())
             ->save();

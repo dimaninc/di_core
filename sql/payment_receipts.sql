@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS payment_receipts(
 	date_uploaded timestamp DEFAULT NULL,
     fiscal_mark varchar(16) default '',
     fiscal_doc_id varchar(16) default '',
+    fiscal_date datetime default null,
 	draft_id bigint,
 	index idx(target_type,target_id,user_id,date_reserved,date_payed,date_uploaded),
 	unique draft_idx(draft_id),

@@ -7,6 +7,8 @@
 
 namespace diCore\Entity\PaymentReceipt;
 
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
 use diCore\Data\Types;
 use diCore\Helper\ArrayHelper;
 use diCore\Tool\CollectionCache;
@@ -18,9 +20,10 @@ use diCore\Tool\CollectionCache;
  * @method string	getRnd
  * @method string	getDatePayed
  * @method string	getDateUploaded
+ * @method integer	getDraftId
  * @method string	getFiscalMark
  * @method string	getFiscalDocId
- * @method integer	getDraftId
+ * @method string	getFiscalDate
  *
  * @method bool hasRnd
  * @method bool hasDatePayed
@@ -28,6 +31,7 @@ use diCore\Tool\CollectionCache;
  * @method bool hasDraftId
  * @method bool hasFiscalMark
  * @method bool hasFiscalDocId
+ * @method bool hasFiscalDate
  *
  * @method $this setRnd($value)
  * @method $this setDatePayed($value)
@@ -35,6 +39,7 @@ use diCore\Tool\CollectionCache;
  * @method $this setDraftId($value)
  * @method $this setFiscalMark($value)
  * @method $this setFiscalDocId($value)
+ * @method $this setFiscalDate($value)
  */
 class Model extends \diCore\Entity\PaymentDraft\Model
 {
@@ -113,18 +118,45 @@ class Model extends \diCore\Entity\PaymentDraft\Model
      * fn=16цифр ФН (номер фискального накопителя),
      * i=ФД (номер фискального документа)
      * fp=ФПД (фискальный признак документа)
-     * n= тип системы налогообложения (0-ОСН,1-УСН Доход,2-УСН Доход-Расход, 3-ЕНВД, 4-ЕСН, 5-Патент)
+     * n=тип системы налогообложения (0-ОСН,1-УСН Доход,2-УСН Доход-Расход, 3-ЕНВД, 4-ЕСН, 5-Патент)
      */
-    public function getQrCodeData()
+    public function getCashDeskQrCodeData()
     {
         return [
             't' => \diDateTime::format(static::TIMESTAMP_FORMAT, $this->getDateUploaded()),
-            's' => sprintf('.%2f', $this->getAmount()),
+            's' => sprintf('%.2f', $this->getAmount()),
             'fn' => static::getFiscalStorageNumber(),
             'i' => $this->getFiscalDocId(),
             'fp' => $this->getFiscalMark(),
             'n' => 1, // УСН Доход
         ];
+    }
+
+    public function getCashDeskQrCodeStr()
+    {
+        return ArrayHelper::toString($this->getCashDeskQrCodeData(), '=', '&');
+    }
+
+    public function getCashDeskQrCodeContents($type = QRCode::OUTPUT_MARKUP_SVG)
+    {
+        $options = new QROptions([
+            'version' => 5,
+            'outputType' => $type,
+            'eccLevel' => QRCode::ECC_L,
+        ]);
+        $qrCode = new QRCode($options);
+
+        return $qrCode->render($this->getCashDeskQrCodeStr());
+    }
+
+    public function getCashDeskQrCodeAsInlineSvg()
+    {
+        return $this->getCashDeskQrCodeContents();
+    }
+
+    public function getCashDeskQrCodeAsInlinePng()
+    {
+        return $this->getCashDeskQrCodeContents(QRCode::OUTPUT_IMAGE_PNG);
     }
 
     public function getAppearanceFeedForAdmin()
