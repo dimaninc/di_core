@@ -17,7 +17,6 @@ class diMigration_20221212193712 extends \diCore\Database\Tool\Migration
 
 	public function down()
 	{
-	    return;
         $this->getDb()->q("ALTER TABLE payment_receipts
             DROP COLUMN fiscal_mark,
             DROP COLUMN fiscal_doc_id,
