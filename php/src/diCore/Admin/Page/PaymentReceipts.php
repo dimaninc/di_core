@@ -102,6 +102,13 @@ class PaymentReceipts extends PaymentDrafts
                 'default' => '',
                 'flags' => 'static',
             ],
+
+            'fiscal_date' => [
+                'type' => 'datetime_str',
+                'title' => 'Дата чека',
+                'default' => '',
+                'flags' => 'static',
+            ],
 		]);
 	}
 
