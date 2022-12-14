@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS payment_receipts(
     fiscal_number int default 0,
 	draft_id bigint,
 	index idx(target_type,target_id,user_id,date_reserved,date_payed,date_uploaded),
+    index idx_fiscal(fiscal_doc_id, fiscal_mark, fiscal_date, fiscal_session, fiscal_number),
 	unique draft_idx(draft_id),
 	PRIMARY KEY(id)
 )

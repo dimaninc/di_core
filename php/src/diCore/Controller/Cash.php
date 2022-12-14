@@ -93,6 +93,11 @@ class Cash extends \diBaseController
         return $receipts;
     }
 
+    protected static function useFiscalMarkFromCashDesk()
+    {
+        return true;
+    }
+
     protected function setReceiptUploaded($receiptId, $fiscal = [])
     {
         $receipt = Model::createById($receiptId);
@@ -105,7 +110,7 @@ class Cash extends \diBaseController
             $receipt->setFiscalDocId($fiscal['docId']);
         }
 
-        if (!empty($fiscal['mark'])) {
+        if (!empty($fiscal['mark']) && static::useFiscalMarkFromCashDesk()) {
             $receipt->setFiscalMark($fiscal['mark']);
         }
 
