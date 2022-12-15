@@ -24,6 +24,7 @@ use diCore\Traits\Model\TargetInside;
  * @method string	getDateReserved
  * @method integer	getStatus
  * @method integer	getPaid
+ * @method integer	getIp
  *
  * @method bool hasUserId
  * @method bool hasOuterNumber
@@ -34,6 +35,7 @@ use diCore\Traits\Model\TargetInside;
  * @method bool hasDateReserved
  * @method bool hasStatus
  * @method bool hasPaid
+ * @method bool hasIp
  *
  * @method $this setUserId($value)
  * @method $this setOuterNumber($value)
@@ -44,6 +46,7 @@ use diCore\Traits\Model\TargetInside;
  * @method $this setDateReserved($value)
  * @method $this setStatus($value)
  * @method $this setPaid($value)
+ * @method $this setIp($value)
  */
 class Model extends \diModel
 {
@@ -164,4 +167,11 @@ class Model extends \diModel
 			'pay_system_with_vendor_short_str' => $this->getPaySystemWithVendorShortStr(),
 		]);
 	}
+
+    public function getLocationStr()
+    {
+        $location = \diGeo::location(bin2ip($this->getIp()));
+
+        return join(', ', array_filter([$location->getCity(), $location->getRegionName(), $location->getCountryName()]));
+    }
 }

@@ -150,11 +150,6 @@ class PaymentDrafts extends BasePage
 					'class' => 'dt',
 				],
 			],
-            'outer_number' => [
-                'bodyAttrs' => [
-                    'class' => 'lite',
-                ],
-            ],
 			'paid' => [
 				'value' => function(Model $m) {
 					return $m->hasPaid() ? '+' : '';
@@ -190,6 +185,7 @@ class PaymentDrafts extends BasePage
 			->setInput('pay_manual', '<button type="button" data-purpose="pay-manual">Провести</button>')
 			->setInput('vendor', $draft->getVendorStr())
 			->setInput('status', $draft->getStatusStr())
+            ->setInput('geo', $draft->getLocationStr())
 			->setInput('currency', Payment::currencyTitle($draft->getCurrency()))
 			->setInput('pay_system', Payment::systemTitle($draft->getPaySystem()))
 			->setInput('user_id', $user->exists()
@@ -286,6 +282,20 @@ class PaymentDrafts extends BasePage
 				'default' => '',
 				'flags' => ['static'],
 			],
+
+            'ip' => [
+                'type' => 'ip',
+                'title' => 'IP-адрес',
+                'default' => '',
+                'flags' => ['static'],
+            ],
+
+            'geo' => [
+                'type' => 'string',
+                'title' => 'Регион',
+                'default' => '',
+                'flags' => ['static', 'virtual'],
+            ],
 
 			'pay_manual' => [
 				'type' => 'string',

@@ -253,7 +253,8 @@ class Payment
             ->setPaySystem((int)$systemId)
             ->setVendor((int)$vendorId)
             ->setCurrency($currency)
-            ->setAmount($amount);
+            ->setAmount($amount)
+            ->setIp(ip2bin());
 
         $this->beforeDraftSave($draft);
 

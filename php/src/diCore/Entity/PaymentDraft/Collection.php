@@ -23,6 +23,7 @@ namespace diCore\Entity\PaymentDraft;
  * @method $this filterByDateReserved($value, $operator = null)
  * @method $this filterByStatus($value, $operator = null)
  * @method $this filterByPaid($value, $operator = null)
+ * @method $this filterByIp($value, $operator = null)
  *
  * @method $this orderById($direction = null)
  * @method $this orderByTargetType($direction = null)
@@ -36,6 +37,7 @@ namespace diCore\Entity\PaymentDraft;
  * @method $this orderByDateReserved($direction = null)
  * @method $this orderByStatus($direction = null)
  * @method $this orderByPaid($direction = null)
+ * @method $this orderByIp($direction = null)
  *
  * @method $this selectId()
  * @method $this selectTargetType()
@@ -49,6 +51,7 @@ namespace diCore\Entity\PaymentDraft;
  * @method $this selectDateReserved()
  * @method $this selectStatus()
  * @method $this selectPaid()
+ * @method $this selectIp()
  */
 class Collection extends \diCollection
 {
