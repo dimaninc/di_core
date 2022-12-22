@@ -186,6 +186,7 @@ class PaymentDrafts extends BasePage
 			->setInput('vendor', $draft->getVendorStr())
 			->setInput('status', $draft->getStatusStr())
             ->setInput('geo', $draft->getLocationStr())
+            ->setInput('partner_code_id', \diPartnerCodeModel::getInfoForAdminById($draft->getPartnerCodeId()))
 			->setInput('currency', Payment::currencyTitle($draft->getCurrency()))
 			->setInput('pay_system', Payment::systemTitle($draft->getPaySystem()))
 			->setInput('user_id', $user->exists()
@@ -286,6 +287,13 @@ class PaymentDrafts extends BasePage
             'ip' => [
                 'type' => 'ip',
                 'title' => 'IP-адрес',
+                'default' => '',
+                'flags' => ['static'],
+            ],
+
+            'partner_code_id' => [
+                'type' => 'int',
+                'title' => 'Приглашён(а) партнером',
                 'default' => '',
                 'flags' => ['static'],
             ],

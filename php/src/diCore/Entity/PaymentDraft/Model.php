@@ -17,14 +17,15 @@ use diCore\Traits\Model\TargetInside;
  *
  * @method integer	getUserId
  * @method string	getOuterNumber
- * @method string	getPaySystem
+ * @method integer	getPaySystem
  * @method string	getVendor
- * @method string	getCurrency
+ * @method integer	getCurrency
  * @method double	getAmount
  * @method string	getDateReserved
  * @method integer	getStatus
  * @method integer	getPaid
  * @method integer	getIp
+ * @method integer	getPartnerCodeId
  *
  * @method bool hasUserId
  * @method bool hasOuterNumber
@@ -36,6 +37,7 @@ use diCore\Traits\Model\TargetInside;
  * @method bool hasStatus
  * @method bool hasPaid
  * @method bool hasIp
+ * @method bool hasPartnerCodeId
  *
  * @method $this setUserId($value)
  * @method $this setOuterNumber($value)
@@ -47,6 +49,7 @@ use diCore\Traits\Model\TargetInside;
  * @method $this setStatus($value)
  * @method $this setPaid($value)
  * @method $this setIp($value)
+ * @method $this setPartnerCodeId($value)
  */
 class Model extends \diModel
 {

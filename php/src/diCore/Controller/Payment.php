@@ -139,13 +139,13 @@ class Payment extends \diBaseController
 		$this->subAction = $this->param(0);
 
 		$this->kassa = Kassa::create($this->subAction, [
-			'init' => function(Kassa $k) {
+			'init' => function (Kassa $k) {
 				$this
 					->initDraft(\diRequest::post('orderNumber', 0), \diRequest::post('orderSumAmount'),
 						\diRequest::post('customerNumber', 0))
 					->updateDraftDetailsIfNeeded();
 			},
-			'onAviso' => function(Kassa $k) {
+			'onAviso' => function (Kassa $k) {
 				$this->createReceipt(\diRequest::post('invoiceId', 0));
 			},
 		]);
