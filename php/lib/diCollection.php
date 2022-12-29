@@ -1402,7 +1402,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this->realCount;
 	}
 
-	public function sum($field)
+	public function aggregateSum($field)
     {
         $ar = $this->getDb()->ar(
             $this->getQueryTable(),
@@ -1411,6 +1411,17 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
         );
 
         return $ar['s'];
+    }
+
+    public function aggregateCount($field = '*')
+    {
+        $ar = $this->getDb()->ar(
+            $this->getQueryTable(),
+            $this->getQueryWhere(),
+            "COUNT($field) AS cc"
+        );
+
+        return $ar['cc'];
     }
 
     #[\ReturnTypeWillChange]
