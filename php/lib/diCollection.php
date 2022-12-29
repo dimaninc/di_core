@@ -7,6 +7,7 @@
  */
 
 use diCore\Data\Config;
+use diCore\Data\Configuration;
 use diCore\Database\Connection;
 use diCore\Database\Engine;
 use diCore\Database\Legacy\Mongo;
@@ -897,9 +898,9 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 		return $this;
 	}
 
-	public function populatePageNumber($param = \diPagesNavy::PAGE_PARAM)
+	public function populatePageNumber($param = null)
 	{
-		return $this->setPageNumber(\diRequest::get($param, 1));
+		return $this->setPageNumber(\diRequest::get($param ?: \diPagesNavy::PAGE_PARAM, 1));
 	}
 
 	/**
@@ -919,16 +920,16 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 	protected function getStandardPageSize()
 	{
-		return \diConfiguration::get('per_page[' . $this->getTable() . ']');
+		return Configuration::get('per_page[' . $this->getTable() . ']');
 	}
 
-	public function initPagesNavy()
+	public function initPagesNavy($pageSize = null, $pageParam = null)
 	{
 		$this
-			->setPageSize()
-			->populatePageNumber();
+			->setPageSize($pageSize)
+			->populatePageNumber($pageParam);
 
-		$this->PN = new \diPagesNavy($this);
+		$this->PN = new \diPagesNavy($this, $pageParam);
 
 		return $this;
 	}
@@ -1400,6 +1401,17 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
 		return $this->realCount;
 	}
+
+	public function sum($field)
+    {
+        $ar = $this->getDb()->ar(
+            $this->getQueryTable(),
+            $this->getQueryWhere(),
+            "SUM($field) AS s"
+        );
+
+        return $ar['s'];
+    }
 
     #[\ReturnTypeWillChange]
 	public function count($force = false)

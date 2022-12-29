@@ -93,6 +93,11 @@ class diPagesNavy
 		return $this->page;
 	}
 
+    public function getPageParam()
+    {
+        return $this->page_param;
+    }
+
 	public function getPrevPage()
 	{
 		return $this->checkPrevNext($this->getPage() - $this->getSign());
@@ -163,15 +168,13 @@ class diPagesNavy
 		return $this->where;
 	}
 
-	public function init($table, $per_page = 1, $where = '', $reverse = false, $page_param = self::PAGE_PARAM)
+	public function init($table, $per_page = 1, $where = '', $reverse = false, $page_param = null)
 	{
 		global $pagesnavy_sortby_ar, $pagesnavy_sortby_defaults_ar;
 
-		if ($table instanceof \diCollection)
-		{
+		if ($table instanceof \diCollection) {
 			$this->col = $table;
-			if ($per_page && is_string($per_page) && !isInteger($per_page))
-			{
+			if ($per_page && is_string($per_page) && !isInteger($per_page)) {
 				$page_param = $per_page;
 			}
 			$per_page = $this->col->getPageSize();
@@ -179,45 +182,34 @@ class diPagesNavy
 			$table = $table->getTable();
 		}
 
-		if (is_array($reverse))
-		{
+		if (is_array($reverse)) {
 			$this->init_on_last_page = isset($reverse["init_on_last_page"]) ? $reverse["init_on_last_page"] : false;
 			$this->reverse = isset($reverse["reverse"]) ? $reverse["reverse"] : false;
-		}
-		else
-		{
+		} else {
 			$this->reverse = $reverse;
 		}
 
 		$this->table = $table;
-		$this->page_param = $page_param;
+		$this->page_param = $page_param ?: self::PAGE_PARAM;
 
-		if (is_array($per_page))
-		{
+		if (is_array($per_page)) {
 			$this->per_page = $per_page['initial'];
 			$this->per_load = $per_page['load'];
-		}
-		else
-		{
+		} else {
 			$this->per_page = $this->per_load = $per_page;
 		}
 
-		if (isInteger($where))
-		{
+		if (isInteger($where)) {
 			$this->total_records = (int)$where;
 			$this->where = "";
-		}
-		else
-		{
-			if ($where && strtoupper(substr($where, 0, 5)) != "WHERE")
-			{
+		} else {
+			if ($where && strtoupper(substr($where, 0, 5)) != "WHERE") {
 				$where = "WHERE $where";
 			}
 
 			$this->where = $where;
 
-			if (!$this->col)
-			{
+			if (!$this->col) {
 				$this->col = $this->getInitialCollection();
 			}
 

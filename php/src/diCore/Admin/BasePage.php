@@ -1147,6 +1147,15 @@ abstract class BasePage
 				"AFTER_FORM" => "",
 			]);
 
+		$this->getTwig()
+            ->assign([
+                '_form' => [
+                    'table' => $this->getTable(),
+                    'id' => $this->getId(),
+                    'model' => $this->getCurrentModel(false),
+                ],
+            ]);
+
 		$this->Form = Form::basicCreate($this);
 		$this->getForm()
             ->afterInit([

@@ -2,7 +2,9 @@
     {% set pn = col.getPN() %}
 {% endif %}
 {% if pn.getTotalPages() > 1 %}
+    {% set href_suffix = href_suffix ?: '' %}
     {% set href_base = href_base ?: Z.getMainTarget().getHref() %}
+    {% set page_param = pn.getPageParam() ?: 'page' %}
     {% set print_prev_next = print_prev_next ?: false %}
     {% set prev_word = prev_word ?: 'Предыдущая' %}
     {% set next_word = next_word ?: 'Следующая' %}
@@ -32,17 +34,18 @@
     {% elseif pageFinish < pn.getTotalPages() - 1 %}
         {% set pagesList = pagesList|merge(['...', pn.getTotalPages()]) %}
     {% endif %}
-    {% set prevHref = href_base ~ (pn.getPrevPage() > 1 ? 'page=' ~ pn.getPrevPage() : '') %}
-    {% set nextHref = href_base ~ 'page=' ~ pn.getNextPage() %}
+    {% set prevHref = href_base ~ (pn.getPrevPage() > 1 ? page_param ~ '=' ~ pn.getPrevPage() : '') ~ href_suffix %}
+    {% set nextHref = href_base ~ page_param ~ '=' ~ pn.getNextPage() ~ href_suffix %}
 
     <div class="navy">
         {% if print_prev_next %}{% if pn.getPrevPage() %}<a class="prev" href="{{ prevHref }}">{{ prev_word|raw }}</a>{%
         else %}<span class="prev">{{ prev_word|raw }}</span>{% endif %}{% endif %}{%
         for page in pagesList
-        %}{% if page == '...' %}{{ page }}{% else %}{%
+        %}{% if page == '...' %}{{ page }}{% else %}{% if pn.getPage() == page and not selected_as_link
+        %}<b>{{ page }}</b>{% else %}{%
         set selected = pn.getPage() == page ? ' selected' : '' %}{%
-        set href = href_base ~ (page > 1 ? 'page=' ~ page : '')
-        %}<a class="page {{ selected }}" href="{{ href }}">{{ page }}</a>{% endif %}{%
+        set href = href_base ~ (page > 1 ? page_param ~ '=' ~ page : '') ~ href_suffix
+        %}<a class="page {{ selected }}" href="{{ href }}">{{ page }}</a>{% endif %}{% endif %}{%
         endfor %}{% if print_prev_next %}{%
         if pn.getNextPage() %}<a class="next" href="{{ nextHref }}">{{ next_word|raw }}</a>{%
         else %}<span class="next">{{ next_word|raw }}</span>{% endif %}{% endif %}
