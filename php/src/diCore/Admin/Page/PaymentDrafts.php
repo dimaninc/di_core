@@ -76,7 +76,7 @@ class PaymentDrafts extends BasePage
 			'id' => 'ID',
 			'target_type' => [
 				'headAttrs' => [
-					'width' => '20%',
+					'width' => '15%',
 				],
                 'bodyAttrs' => [
                     'class' => 'lite',
@@ -95,9 +95,9 @@ class PaymentDrafts extends BasePage
 			],
 			'user_id' => [
 				'headAttrs' => [
-					'width' => '20%',
+					'width' => '25%',
 				],
-				'value' => function(Model $m) {
+				'value' => function (Model $m) {
 					/** @var User $user */
 					$user = CollectionCache::getModel(Types::user, $m->getUserId());
 
@@ -113,34 +113,26 @@ class PaymentDrafts extends BasePage
 			*/
 			'vendor' => [
 				'headAttrs' => [
-					'width' => '20%',
+					'width' => '30%',
 				],
                 'bodyAttrs' => [
                     'class' => 'lite',
                 ],
-				'value' => function(Model $m) {
+				'value' => function (Model $m) {
 					return join(' / ', array_filter([$m->getPaySystemStr(), $m->getVendorStr()]));
-				},
-			],
-			'currency' => [
-				'headAttrs' => [
-					'width' => '10%',
-				],
-                'bodyAttrs' => [
-                    'class' => 'lite',
-                ],
-				'value' => function(Model $m) {
-					return $m->getCurrencyStr();
 				},
 			],
 			'amount' => [
 				'headAttrs' => [
 					'width' => '10%',
 				],
+                'value' => function (Model $m) {
+                    return $m->getAmount() . ' ' . $m->getCurrencyStr();
+                },
 			],
 			'date_reserved' => [
 				'title' => 'Дата',
-				'value' => function(Model $m) {
+				'value' => function (Model $m) {
 					return \diDateTime::simpleFormat($m->getDateReserved());
 				},
 				'headAttrs' => [
@@ -151,13 +143,13 @@ class PaymentDrafts extends BasePage
 				],
 			],
 			'paid' => [
-				'value' => function(Model $m) {
+				'value' => function (Model $m) {
 					return $m->hasPaid() ? '+' : '';
 				},
 			],
 			'#edit' => '',
 			'#del' => [
-				'active' => function(Model $m) {
+				'active' => function (Model $m) {
 					return $this->getAdmin()->isAdminSuper();
 				},
 			],
