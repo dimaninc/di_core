@@ -266,6 +266,11 @@ function isInteger($value)
         : true;
 }
 
+function is_not_null($value)
+{
+    return !is_null($value);
+}
+
 function lead0($num)
 {
 	if (mb_strlen($num) == 1)

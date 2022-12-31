@@ -1974,19 +1974,19 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 					return $val['expression'];
 				} elseif (!empty($val['options']['rawValue'])) {
 					if (is_array($value)) {
-						$value = '(' . join(',', $value) . ')';
+						$value = '(' . join(',', array_filter($value, 'is_not_null')) . ')';
 					}
 				} else {
 					if (is_array($value)) {
 						if (strtolower($val['operator']) == 'between') {
-							$value = join(' AND ', array_map(function($v) {
+							$value = join(' AND ', array_map(function ($v) {
 								return $this->getDb()->escapeValue($v);
 							}, $value));
 						} else {
 							$value = count($value)
-								? '(' . join(',', array_map(function($v) {
+								? '(' . join(',', array_map(function ($v) {
 							            return $this->getDb()->escapeValue($v);
-						            }, $value)) . ')'
+						            }, array_filter($value, 'is_not_null'))) . ')'
 								: null;
 						}
 					} else {
@@ -1998,21 +1998,21 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 					if (count($val['value'])) {
 						switch ($val['operator']) {
 							case '=':
-								$val['operator'] = 'in';
+								$val['operator'] = 'IN';
 								break;
 
 							case '!=':
-								$val['operator'] = 'not in';
+								$val['operator'] = 'NOT IN';
 								break;
 						}
 					} else {
-						switch (trim(strtolower($val['operator']))) {
+						switch (trim(strtoupper($val['operator']))) {
 							case '=':
-							case 'in':
+							case 'IN':
 								return '1 = 0';
 
 							case '!=':
-							case 'not in':
+							case 'NOT IN':
 								return null;
 						}
 					}
@@ -2030,10 +2030,25 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 					}
 				}
 
-				return
-					$this->getDb()->escapeField($val['field']) .
-					' ' . $val['operator'] . ' ' .
-					$value;
+				$condition = $this->getDb()->escapeField($val['field']) .
+                    ' ' . $val['operator'] . ' ' .
+                    $value;
+
+				if (is_array($val['value']) && in_array(null, $val['value'])) {
+                    switch (strtoupper($val['operator'])) {
+                        case 'IN':
+                            $nullCondition = $this->getDb()->escapeField($val['field']) . ' IS NULL';
+                            $condition = "($condition OR $nullCondition)";
+                        break;
+
+                        case 'NOT IN':
+                            $nullCondition = $this->getDb()->escapeField($val['field']) . ' IS NOT NULL';
+                            $condition = "($condition AND $nullCondition)";
+                            break;
+                    }
+                }
+
+				return $condition;
 			}, $this->sqlParts['where'])));
 		}
 
