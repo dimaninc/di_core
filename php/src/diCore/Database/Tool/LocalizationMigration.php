@@ -8,9 +8,37 @@
 
 namespace diCore\Database\Tool;
 
+use diCore\Tool\Localization;
+
 abstract class LocalizationMigration extends Migration
 {
     protected $names = [];
+
+    protected function updateCache()
+    {
+        $L = Localization::basicCreate();
+        $L->createCache();
+
+        return $this;
+    }
+
+    protected function upWrapper()
+    {
+        parent::upWrapper();
+
+        $this->updateCache();
+
+        return $this;
+    }
+
+    protected function downWrapper()
+    {
+        parent::downWrapper();
+
+        $this->updateCache();
+
+        return $this;
+    }
 
     public function down()
     {

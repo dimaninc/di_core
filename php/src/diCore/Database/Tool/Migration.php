@@ -21,16 +21,30 @@ abstract class Migration
     abstract public function up();
     abstract public function down();
 
+    protected function upWrapper()
+    {
+        $this->up();
+
+        return $this;
+    }
+
+    protected function downWrapper()
+    {
+        $this->down();
+
+        return $this;
+    }
+
     public function run($state)
     {
-        $method = $state ? 'up' : 'down';
-
         $this->getDb()
             ->resetLog()
             ->startTransaction();
 
         try {
-            $result = $this->$method();
+            $result = $state
+                ? $this->upWrapper()
+                : $this->downWrapper();
 
             if ($this->getDb()->getLog() || $result === false) {
                 $this->getDb()->rollbackTransaction();
