@@ -8,7 +8,10 @@
 
 namespace diCore\Payment\Yandex;
 
+use diCore\Base\CMS;
+use diCore\Entity\PaymentDraft\Model as PaymentDraft;
 use diCore\Helper\ArrayHelper;
+use diCore\Payment\Payment;
 use diCore\Tool\Logger;
 
 class Kassa
@@ -349,7 +352,7 @@ class Kassa
 		return sprintf('%.2f', $price);
 	}
 
-	public static function getForm(\diCore\Entity\PaymentDraft\Model $draft, $opts = [])
+	public static function getForm(PaymentDraft $draft, $opts = [])
 	{
 		$action = static::getUrl();
 		$shopId = static::getShopId();
@@ -371,8 +374,12 @@ class Kassa
 			$item = \diDB::_out($item);
 		});
 
-		$button = !$opts['autoSubmit'] ? "<button type=\"submit\">{$opts['buttonCaption']}</button>" : '';
-		$redirectScript = $opts['autoSubmit'] ? \diCore\Payment\Payment::getAutoSubmitScript() : '';
+		$button = !$opts['autoSubmit']
+            ? "<button type=\"submit\">{$opts['buttonCaption']}</button>"
+            : '';
+		$redirectScript = $opts['autoSubmit']
+            ? Payment::getAutoSubmitScript()
+            : '';
 
 		$params = extend([
 			'shopId' => $shopId,
@@ -386,7 +393,7 @@ class Kassa
 		], $opts['additionalParams']);
 
 		$paramsStr = join("\n\t", array_filter(array_map(function($name, $value) {
-			return $value !== null ? \diCore\Payment\Payment::getHiddenInput($name, $value) : '';
+			return $value !== null ? Payment::getHiddenInput($name, $value) : '';
 		}, array_keys($params), $params)));
 
 		$form = <<<EOF
@@ -401,4 +408,16 @@ EOF;
 
 		return $form;
 	}
+
+    public function getSuccessUrl(PaymentDraft $draft)
+    {
+        return \diPaths::defaultHttp() . CMS::makeUrl([CMS::ct('payment_callback'), 'thanks']);
+    }
+
+    public function getFailUrl(PaymentDraft $draft)
+    {
+        return \diPaths::defaultHttp() . CMS::makeUrl([CMS::ct("payment_callback"), 'failed'], [
+                'draftNumber' => $draft->getId(),
+            ]);
+    }
 }

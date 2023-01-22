@@ -453,11 +453,6 @@ EOF;
     public function initYandex(Draft $draft)
     {
         $paymentVendor = \diCore\Payment\Yandex\Vendor::code($draft->getVendor());
-
-        $successUrl = \diPaths::defaultHttp() . CMS::makeUrl([CMS::ct('payment_callback'), 'thanks']);
-        $failUrl = \diPaths::defaultHttp() . CMS::makeUrl([CMS::ct("payment_callback"), 'failed']);
-        //$failUrl = $successUrl;
-
         $kassa = Kassa::create();
 
         return static::wrapFormIntoHtml($kassa::getForm($draft, [
@@ -466,8 +461,8 @@ EOF;
             'customerPhone' => $this->getCustomerPhone(),
             'paymentSystem' => $paymentVendor,
             'additionalParams' => [
-                'shopSuccessURL' => $successUrl,
-                'shopFailURL' => $failUrl,
+                'shopSuccessURL' => $kassa->getSuccessUrl($draft),
+                'shopFailURL' => $kassa->getFailUrl($draft),
             ],
         ]));
     }
