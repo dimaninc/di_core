@@ -114,7 +114,7 @@ abstract class Pdo extends \diDB
 
             return $this->lastResult;
 		} catch (\PDOException $e) {
-			return $this->_log("Unable to execute query `{$q}`");
+			return $this->_log("Unable to execute query `{$q}`: {$e->getMessage()}");
 		}
 	}
 
