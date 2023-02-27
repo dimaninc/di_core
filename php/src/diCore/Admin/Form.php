@@ -744,10 +744,8 @@ class Form
 
 	private function processDefaultValue($field)
 	{
-		if (strtoupper($this->getData($field)) == 'NOW()')
-		{
-			switch ($this->getFieldProperty($field, 'type'))
-			{
+		if (strtoupper($this->getData($field)) == 'NOW()') {
+			switch ($this->getFieldProperty($field, 'type')) {
 				case 'date_str':
 					$this->setData($field, \diDateTime::sqlDateFormat());
 					break;
@@ -1148,88 +1146,92 @@ EOF;
 						$s = false;
 
 						switch ($v['type']) {
-                            case "date":
-							case "date_str":
-								$s = $this->data[$field] && $this->data[$field] != "0000-00-00 00:00:00"
+                            case 'date':
+							case 'date_str':
+								$s = $this->data[$field] && $this->data[$field] != '0000-00-00 00:00:00'
                                     ? \diDateTime::simpleDateFormat($this->data[$field])
-                                    : "---";
+                                    : '---';
 								break;
 
-                            case "time":
-							case "time_str":
-								$s = $this->data[$field] && $this->data[$field] != "0000-00-00 00:00:00"
+                            case 'time':
+							case 'time_str':
+								$s = $this->data[$field] && $this->data[$field] != '0000-00-00 00:00:00'
                                     ? \diDateTime::simpleTimeFormat($this->data[$field])
-                                    : "---";
+                                    : '---';
 								break;
 
-                            case "datetime":
-							case "datetime_str":
-								$s = $this->data[$field] && $this->data[$field] != "0000-00-00 00:00:00"
+                            case 'datetime':
+							case 'datetime_str':
+								$s = $this->data[$field] && $this->data[$field] != '0000-00-00 00:00:00'
                                     ? \diDateTime::simpleFormat($this->data[$field])
-                                    : "---";
+                                    : '---';
 								break;
 
-							case "checkbox":
-								$s = $this->L($this->data[$field] ? "yes" : "no");
+							case 'checkbox':
+								$s = $this->L($this->data[$field] ? 'yes' : 'no');
 								break;
 
 							case 'checkboxes':
 								$this->setCheckboxesListInput($field);
 								break;
 
-							case "color":
+							case 'color':
 								$this->setColorInput($field);
 								break;
 
-							case "font":
+							case 'font':
 								$this->setFontInput($field);
 								break;
 
-							case "href":
+							case 'href':
 								$this->setHrefInput($field);
 								break;
 
-							case "ip":
+							case 'ip':
 								$this->setIpInput($field);
 								break;
 
-							case "pic":
+							case 'pic':
 								$this->setPicInput($field);
 								break;
 
-							case "file":
+							case 'file':
 								$this->setFileInput($field);
 								break;
 
-							case "dynamic_pics":
+							case 'dynamic_pics':
 								$this->set_dynamic_pics_input($field);
 								break;
 
-							case "dynamic_files":
+							case 'dynamic_files':
 								$this->set_dynamic_files_input($field);
 								break;
 
-							case "dynamic":
+							case 'dynamic':
 								$this->set_dynamic_input($field);
 								break;
 
-							case "text":
-							case "blob":
+							case 'text':
+							case 'blob':
 								$this->setTextareaInput($field);
 								break;
 
-							case "wysiwyg":
+                            case 'json':
+                                $this->setJsonInput($field);
+                                break;
+
+							case 'wysiwyg':
 								$this->setWysiwygInput($field);
 								break;
 
-							case "int":
-							case "integer":
-							case "float":
-							case "double":
+							case 'int':
+							case 'integer':
+							case 'float':
+							case 'double':
 								$s = $this->getData($field);
 								break;
 
-							case "tags":
+							case 'tags':
 								$this->setTagsInput($field);
 								break;
 
@@ -1277,7 +1279,11 @@ EOF;
 							$this->setTextareaInput($field);
 							break;
 
-						case 'wysiwyg':
+                        case 'json':
+                            $this->setJsonInput($field);
+                            break;
+
+                        case 'wysiwyg':
 							$this->setWysiwygInput($field);
 							break;
 
@@ -1500,6 +1506,11 @@ EOF;
         return StringHelper::out($value, true);
     }
 
+    public static function valueFormatterJson($value, $field)
+    {
+        return json_encode(json_decode($value), JSON_PRETTY_PRINT);
+    }
+
 	protected function getRow($field, $title, $value, $rowAttrs = '')
 	{
 		if (is_array($rowAttrs)) {
@@ -1551,6 +1562,18 @@ EOF;
             ? $o
             : ($o[$option] ?? null);
 	}
+
+    public function setFieldOption($field, $option, $value)
+    {
+        $newOptions = $this->getFieldOption($field);
+        $newOptions[$option] = $value;
+
+        $this->setFieldProperty($field, [
+            'options' => $newOptions,
+        ]);
+
+        return $this;
+    }
 
 	function create()
 	{
@@ -2054,11 +2077,26 @@ EOF;
 		return $this;
 	}
 
+    public function setJsonInput($field)
+    {
+        if (!$this->isStatic($field)) {
+            return $this->setTextareaInput($field);
+        }
+
+        $this->setFieldOption($field, 'valueFormatter', [self::class, 'valueFormatterJson']);
+
+        $this->inputs[$field] = '<pre class="code">' . $this->formatValue($field) . '</pre>';
+
+        $this->force_inputs_fields[$field] = true;
+
+        return $this;
+    }
+
 	private function getInputAttributesString($field, $forceAttributes = [])
 	{
 		$ar = $this->getInputAttributes($field, $forceAttributes);
 
-		return $ar ? ArrayHelper::toAttributesString($ar, true, ArrayHelper::ESCAPE_HTML) : "";
+		return $ar ? ArrayHelper::toAttributesString($ar, true, ArrayHelper::ESCAPE_HTML) : '';
 	}
 
 	private function getInputAttributes($field, $forceAttributes = [])
