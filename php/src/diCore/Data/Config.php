@@ -133,7 +133,7 @@ class Config
 		/** @var Config $class */
 		$class = self::getClass();
 
-		return Environment::getInitiating() ?: $class::initiating;
+		return Environment::getInitiating() ?? $class::initiating;
 	}
 
 	final public static function getApiQueryPrefix()
@@ -149,7 +149,7 @@ class Config
 		/** @var Config $class */
 		$class = self::getClass();
 
-		return Environment::getMainDomain() ?: $class::mainDomain;
+		return Environment::getMainDomain() ?? $class::mainDomain;
 	}
 
 	final public static function getMainPort()
@@ -157,7 +157,7 @@ class Config
 		/** @var Config $class */
 		$class = self::getClass();
 
-		return Environment::getMainPort() ?: $class::mainPort;
+		return Environment::getMainPort() ?? $class::mainPort;
 	}
 
 	final public static function getMainProtocol()
@@ -205,7 +205,7 @@ class Config
         /** @var Config $class */
         $class = self::getClass();
 
-        return Environment::getDbEncoding() ?: $class::dbEncoding;
+        return Environment::getDbEncoding() ?? $class::dbEncoding;
     }
 
     final public static function getDbCollation()
@@ -213,7 +213,7 @@ class Config
         /** @var Config $class */
         $class = self::getClass();
 
-        return Environment::getDbCollation() ?: $class::dbCollation;
+        return Environment::getDbCollation() ?? $class::dbCollation;
     }
 
     final public static function getSourcesFolder()
