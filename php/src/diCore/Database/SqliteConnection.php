@@ -16,7 +16,7 @@ class SqliteConnection extends Connection
 
 	protected function connect(ConnectionData $connData)
 	{
-		$this->db = new Sqlite(null, null, null, $connData->getDatabase());
+		$this->db = new Sqlite(null, null, null, $connData->getDatabase(), $this);
 
 		return $this;
 	}

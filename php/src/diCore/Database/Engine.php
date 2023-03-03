@@ -41,6 +41,14 @@ class Engine extends SimpleContainer
         ]);
     }
 
+    public static function isMySql($engine)
+    {
+        return in_array($engine, [
+            self::MYSQL,
+            self::MYSQL_OLD,
+        ]);
+    }
+
 	public static function isRelational($engine)
     {
         return !static::isNoSql($engine);

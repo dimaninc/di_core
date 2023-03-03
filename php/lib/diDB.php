@@ -77,6 +77,8 @@ abstract class diDB
 	protected $password;
 
 	protected $link;
+	/** @var \diCore\Database\Connection | null */
+	protected $connection;
 	protected $logFolder = 'log/db/';
 	protected $log;
 	protected $execution_time = 0;
@@ -95,7 +97,7 @@ abstract class diDB
 
 	protected $lastInsertId;
 
-	public function __construct($settingsOrHost, $username = null, $password = null, $dbname = null)
+	public function __construct($settingsOrHost, $username = null, $password = null, $dbname = null, $connection = null)
 	{
 		if (
 		    is_array($settingsOrHost) &&
@@ -109,6 +111,7 @@ abstract class diDB
 				'password' => null,
 				'dbname' => null,
 				'port' => static::DEFAULT_PORT,
+                'connection' => null,
 			], $settingsOrHost);
 		} else {
 			$settings = [
@@ -117,6 +120,7 @@ abstract class diDB
 				'password' => $password,
 				'dbname' => $dbname,
 				'port' => static::DEFAULT_PORT,
+                'connection' => $connection,
 			];
 		}
 
@@ -146,6 +150,7 @@ abstract class diDB
         $this->username = $settings['username'];
         $this->password = $settings['password'];
         $this->port = $settings['port'];
+        $this->connection = $settings['connection'] ?? null;
 
         return $this;
     }
@@ -154,6 +159,11 @@ abstract class diDB
 	{
 		return $this->link;
 	}
+	
+	public function getConnection()
+    {
+        return $this->connection;
+    }
 
 	public function enableDebug()
 	{

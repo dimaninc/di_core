@@ -45,6 +45,7 @@
 use diCore\Admin\BasePage;
 use diCore\Admin\FilterRule;
 use diCore\Admin\Form;
+use diCore\Database\Engine;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 
@@ -97,7 +98,7 @@ class diAdminFilters
 	public $table;
 
 	/** @var \diDB */
-	private $db;
+	private static $db;
 
 	/** @var BasePage */
 	private $AdminPage;
@@ -156,7 +157,7 @@ class diAdminFilters
 			$this->table = $table;
 		}
 
-		$this->db = $db;
+		self::$db = $db;
 
 		$this->gatherInitialData($sortBy, $dir, $possibleSortByAr);
 	}
@@ -190,9 +191,9 @@ class diAdminFilters
 		return $this->table;
 	}
 
-	public function getDb()
+	public static function getDb()
 	{
-		return $this->db;
+		return self::$db;
 	}
 
 	public function setSortBy($sortBy)
@@ -432,14 +433,44 @@ class diAdminFilters
 EOF;
 	}
 
-	public static function get_user_id_where($userFields = ["name", "login", "email"])
+	public static function get_user_id_where($userFields = ["name", "login", "email"], $userTable = 'users')
 	{
-		$condition = join(" or ", array_map(function($field) {
-			return "INSTR($field,'[-value-]')>'0'";
+		$condition = join(" or ", array_map(function ($field) {
+		    $conn = self::getDb()->getConnection();
+		    $op = $conn && Engine::isMySql($conn::getEngine()) ? 'INSTR' : 'STRPOS';
+
+            // $field = self::getDb()->escapeField($field);
+            $value = self::getDb()->escapeValue('[-value-]');
+			return "$op($field, $value) > 0";
 		}, $userFields));
 
-		return "([-field-]>'0' and ([-field-]='[-value-]' or [-field-] in (SELECT id FROM users WHERE $condition)))";
+        $field = self::getDb()->escapeField('[-field-]');
+        $idField = self::getDb()->escapeField('id');
+        $value = self::getDb()->escapeValue('[-value-]');
+        $userTable = self::getDb()->escapeTable($userTable);
+
+		return "($field > 0 AND ($field = $value or $field in (SELECT $idField FROM $userTable WHERE $condition)))";
 	}
+
+    public static function getUserWhere($userFields = ['name', 'login', 'email'], $userTable = 'users')
+    {
+        return function ($field, $value, $not = false, $tablePrefix = '') use ($userFields, $userTable) {
+            $field = self::getDb()->escapeField($field);
+            $value = self::getDb()->escapeValue($value);
+            $intValue = self::getDb()->escapeValue((int)$value);
+            $condition = join(' or ', array_map(function ($field) use ($value) {
+                $conn = self::getDb()->getConnection();
+                $op = $conn && Engine::isMySql($conn::getEngine()) ? 'INSTR' : 'STRPOS';
+
+                return "$op($field, $value) > 0";
+            }, $userFields));
+
+            $idField = self::getDb()->escapeField('id');
+            $userTable = self::getDb()->escapeTable($userTable);
+
+            return "($field > 0 AND ($field = $intValue or $field in (SELECT $idField FROM $userTable WHERE $condition)))";
+        };
+    }
 
 	public function getFilter($field)
 	{
@@ -807,8 +838,8 @@ EOF;
 					case 'date_range':
 					case 'date_str_range':
 						$r1 = $a['default_value'] === null
-                            ? $this->getDb()->r(
-                                $this->getDb()->escapeTable($this->table),
+                            ? self::getDb()->r(
+                                self::getDb()->escapeTable($this->table),
                                 '',
                                 "MIN({$a['field']}) as d1_min")
                             : null; //,MAX($a['field']) as d1_max
@@ -972,8 +1003,8 @@ EOF;
                 case 'date_str_range':
                     $sel = [];
 
-                    $r1 = $this->getDb()->r(
-                        $this->getDb()->escapeTable($this->table),
+                    $r1 = self::getDb()->r(
+                        self::getDb()->escapeTable($this->table),
                         "",
                         "MIN($field) as d1_min,MAX($field) as d1_max"
                     );
@@ -1110,7 +1141,7 @@ EOF;
 			$sel->addItemArray($prefix_ar);
 		}
 
-		while ($db_rs && $db_r = $this->getDb()->fetch_array($db_rs)) {
+		while ($db_rs && $db_r = self::getDb()->fetch_array($db_rs)) {
 			$ar1 = [];
 			$ar2 = [];
 
@@ -1343,7 +1374,7 @@ EOF;
 				$static_ar[] = $text;
 		}
 
-		while ($db_rs && $db_r = $this->getDb()->fetch_array($db_rs)) {
+		while ($db_rs && $db_r = self::getDb()->fetch_array($db_rs)) {
 			$ar1 = [];
 			$ar2 = [];
 

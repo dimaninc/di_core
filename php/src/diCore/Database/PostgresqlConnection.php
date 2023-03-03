@@ -16,7 +16,9 @@ class PostgresqlConnection extends Connection
 
 	protected function connect(ConnectionData $connData)
 	{
-		$this->db = new Postgresql($connData->get());
+		$this->db = new Postgresql(extend([
+		    'connection' => $this,
+        ], $connData->get()));
 
 		return $this;
 	}

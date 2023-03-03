@@ -18,7 +18,8 @@ class MysqlOldConnection extends Connection
             $connData->getHost(),
             $connData->getLogin(),
             $connData->getPassword(),
-            $connData->getDatabase()
+            $connData->getDatabase(),
+            $this
         );
 
 		return $this;

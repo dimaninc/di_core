@@ -28,6 +28,7 @@ class MongoConnection extends Connection
 			'username' => $connData->getLogin(),
 			'password' => $connData->getPassword(),
 			'dbname' => $connData->getDatabase(),
+            'connection' => $this,
 		]);
 
 		return $this;
