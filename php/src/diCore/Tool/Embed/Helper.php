@@ -20,10 +20,8 @@ class Helper
 
 	public static function is()
 	{
-		foreach (static::$identifyParams as $name => $value)
-		{
-			if (\diRequest::get($name) == $value)
-			{
+		foreach (static::$identifyParams as $name => $value) {
+			if (\diRequest::get($name) == $value) {
 				return true;
 			}
 		}

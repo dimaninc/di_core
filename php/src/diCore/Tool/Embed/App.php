@@ -42,10 +42,8 @@ class App
 		 * @var int $mode
 		 * @var Helper $class
 		 */
-		foreach (self::$classes as $mode => $class)
-		{
-			if ($class::is())
-			{
+		foreach (self::$classes as $mode => $class) {
+			if ($class::is()) {
 				$this->setMode($mode);
 			}
 		}
@@ -55,8 +53,7 @@ class App
 
 	public function killGetParams()
 	{
-		if (!$this->isEmbedApp())
-		{
+		if (!$this->isEmbedApp()) {
 			return $this;
 		}
 
@@ -156,8 +153,7 @@ class App
 		 * @var int $mode
 		 * @var Helper $class
 		 */
-		foreach (self::$classes as $mode => $class)
-		{
+		foreach (self::$classes as $mode => $class) {
 			$ar = array_merge($ar, $class::getQueryParamsToRemove());
 		}
 

@@ -27,11 +27,21 @@ class vkHelper extends Helper
 		'parent_language',
 		'ad_info',
 		'is_secure',
+        'is_favorite',
+        'stats_hash',
 		'ads_app_id',
 		'referrer',
 		'lc_name',
-		'hash',
+        'platform',
+        'is_widescreen',
+        'whitelist_scopes',
+        'group_whitelist_scopes',
+        'timestamp',
+        'sign',
+        'sign_keys',
+        'hash',
 		'api_script',
+        'access_token_settings',
 	];
 
 	public static $identifyParams = [];
