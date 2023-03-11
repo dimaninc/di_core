@@ -1033,9 +1033,14 @@ class Submit
 		return $this;
 	}
 
+	public static function cleanFilename($filename)
+    {
+        return preg_replace("/[^a-zA-Z0-9.()_!-]/", '', $filename);
+    }
+
     public static function getGeneratedFilename($folder, $origFilename, $naming)
 	{
-		$baseName = transliterate_rus_to_eng(StringHelper::fileBaseName($origFilename))
+		$baseName = self::cleanFilename(transliterate_rus_to_eng(StringHelper::fileBaseName($origFilename)))
             ?: get_unique_id(self::FILE_NAME_RANDOM_LENGTH);
 		$endingIdx = 0;
 		$extension = '.' . strtolower(StringHelper::fileExtension($origFilename));
