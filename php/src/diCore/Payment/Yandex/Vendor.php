@@ -28,6 +28,7 @@ class Vendor extends VendorContainer
 	const GOOGLE_PAY = 14;
     const APPLE_PAY = 15;
     const SBP = 16;
+    const MIR_PAY = 17;
 
 	public static $titles = [
 		self::YANDEX_MONEY => 'ЮMoney', // Яндекс.Деньги
@@ -46,6 +47,7 @@ class Vendor extends VendorContainer
         self::GOOGLE_PAY => 'Google Pay',
         self::APPLE_PAY => 'Apple Pay',
         self::SBP => 'Система быстрых платежей',
+        self::MIR_PAY => 'МИР Pay',
 	];
 
 	public static $names = [
@@ -65,6 +67,7 @@ class Vendor extends VendorContainer
         self::GOOGLE_PAY => 'google-pay',
         self::APPLE_PAY => 'apple-pay',
         self::SBP => 'sbp',
+        self::MIR_PAY => 'mir-pay',
 	];
 
 	public static $codes = [
@@ -84,6 +87,7 @@ class Vendor extends VendorContainer
         self::GOOGLE_PAY => 'AC',
         self::APPLE_PAY => 'AC',
         self::SBP => 'CP',
+        self::MIR_PAY => 'AC',
 	];
 
 	public static $minLimits = [
@@ -103,5 +107,6 @@ class Vendor extends VendorContainer
         self::GOOGLE_PAY => null,
         self::APPLE_PAY => null,
         self::SBP => null,
+        self::MIR_PAY => null,
 	];
 }
