@@ -1,5 +1,7 @@
 <?php
 
+use diCore\Traits\BasicCreate;
+
 /**
  * Created by PhpStorm.
  * User: dimaninc
@@ -9,30 +11,46 @@
 
 class diSession
 {
+    use BasicCreate;
+
 	const SHORT_ID_LENGTH = 12;
-	const VALUES_SESSION_KEY = "diSession";
+	const VALUES_SESSION_KEY = 'diSession';
+	const COOKIE_LIFE_TIME = SECS_PER_DAY * 30;
+
+	protected static function beforeCreate()
+    {
+        session_set_cookie_params(static::COOKIE_LIFE_TIME);
+    }
+
+    protected static function afterCreate()
+    {
+    }
 
 	public static function start()
 	{
-		if (!self::exists())
-		{
-			session_set_cookie_params(SECS_PER_DAY * 30);
+	    $class = static::getClass();
+
+		if (!$class::exists()) {
+            $class::beforeCreate();
 
 			session_start();
+
+            $class::afterCreate();
 		}
 	}
 
 	public static function finish()
 	{
-		if (self::exists())
-		{
+        $class = static::getClass();
+
+		if ($class::exists()) {
 			session_write_close();
 		}
 	}
 
 	public static function exists()
 	{
-		return !!self::id();
+		return !!static::id();
 	}
 
 	public static function id()
@@ -42,12 +60,12 @@ class diSession
 
 	public static function shortId()
 	{
-		return substr(self::id(), 0, self::SHORT_ID_LENGTH);
+		return substr(static::id(), 0, static::SHORT_ID_LENGTH);
 	}
 
 	public static function shortIntId()
 	{
-	    $stringId = substr(self::id(), 0, 8);
+	    $stringId = substr(static::id(), 0, 8);
 
         $arr = str_split($stringId, 2);
         $dec = [];
@@ -61,50 +79,48 @@ class diSession
 
 	public static function set($name, $value)
 	{
-		self::start();
+		static::start();
+        $class = static::getClass();
 
-		if (!isset($_SESSION[self::VALUES_SESSION_KEY]))
-		{
-			$_SESSION[self::VALUES_SESSION_KEY] = array();
+		if (!isset($_SESSION[$class::VALUES_SESSION_KEY])) {
+			$_SESSION[$class::VALUES_SESSION_KEY] = [];
 		}
 
-		$_SESSION[self::VALUES_SESSION_KEY][$name] = $value;
+		$_SESSION[$class::VALUES_SESSION_KEY][$name] = $value;
 	}
 
 	public static function get($name)
 	{
-		self::start();
+		static::start();
+        $class = static::getClass();
 
-		return isset($_SESSION[self::VALUES_SESSION_KEY][$name])
-			? $_SESSION[self::VALUES_SESSION_KEY][$name]
-			: null;
+		return $_SESSION[$class::VALUES_SESSION_KEY][$name] ?? null;
 	}
 
 	public static function getAll()
 	{
-		self::start();
+		static::start();
+        $class = static::getClass();
 
-		return isset($_SESSION[self::VALUES_SESSION_KEY])
-			? $_SESSION[self::VALUES_SESSION_KEY]
-			: [];
+		return $_SESSION[$class::VALUES_SESSION_KEY] ?? [];
 	}
 
 	public static function getAndKill($name)
 	{
-		$value = self::get($name);
+		$value = static::get($name);
 
-		self::kill($name);
+		static::kill($name);
 
 		return $value;
 	}
 
 	public static function kill($name)
 	{
-		self::start();
+		static::start();
+        $class = static::getClass();
 
-		if (isset($_SESSION[self::VALUES_SESSION_KEY]))
-		{
-			unset($_SESSION[self::VALUES_SESSION_KEY][$name]);
+		if (isset($_SESSION[$class::VALUES_SESSION_KEY])) {
+			unset($_SESSION[$class::VALUES_SESSION_KEY][$name]);
 		}
 	}
 }
