@@ -196,4 +196,11 @@ class Model extends \diModel
 
         return $this->adBlock;
     }
+
+    public function prepareForSave()
+    {
+        $this->generateTimestamps();
+
+        return parent::prepareForSave();
+    }
 }

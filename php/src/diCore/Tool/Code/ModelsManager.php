@@ -36,6 +36,7 @@ class ModelsManager
         '__v', // mongo tech field
     ];
 
+    // todo: use AutoTimeStamps+prepareForSave if created_at and updated_at fields exist
     protected function getModelTemplate()
     {
         return <<<'EOF'
