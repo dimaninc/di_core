@@ -211,7 +211,7 @@ class Form
         */
     ];
 
-    protected static $defaultFieldTitles = [
+    public static $defaultFieldTitles = [
         'id' => 'ID',
         'href' => [
             'ru' => 'Ссылка',
@@ -228,6 +228,10 @@ class Form
         'en_link' => [
             'ru' => 'Ссылка',
             'en' => 'Link',
+        ],
+        'website' => [
+            'ru' => 'Вебсайт',
+            'en' => 'Website',
         ],
         'category_id' => [
             'ru' => 'Категория',
@@ -420,6 +424,10 @@ class Form
         'applied_at' => [
             'ru' => 'Дата/время применения',
             'en' => 'Date/time of use',
+        ],
+        'done_at' => [
+            'ru' => 'Дата/время выполнения',
+            'en' => 'Date/time of completion',
         ],
         'deleted_at' => [
             'ru' => 'Дата/время удаления',

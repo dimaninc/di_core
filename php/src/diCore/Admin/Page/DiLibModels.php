@@ -9,10 +9,11 @@
 namespace diCore\Admin\Page;
 
 use diCore\Admin\Base;
+use diCore\Admin\BasePage;
 use diCore\Database\Connection;
 use diCore\Tool\Code\ModelsManager;
 
-class DiLibModels extends \diCore\Admin\BasePage
+class DiLibModels extends BasePage
 {
 	/** @var ModelsManager */
 	private $Manager;
@@ -82,7 +83,7 @@ class DiLibModels extends \diCore\Admin\BasePage
 
 	public function submitForm()
 	{
-		$this->getManager()->createModel(
+		$this->getManager()->createEntity(
 			explode('::', $this->getSubmit()->getData('table')),
 			$this->getSubmit()->getData('needed'),
 			$this->getSubmit()->getData('classname'),

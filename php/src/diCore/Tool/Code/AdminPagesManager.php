@@ -9,6 +9,7 @@
 namespace diCore\Tool\Code;
 
 use diCore\Admin\Data\FormFlag;
+use diCore\Admin\Form;
 use diCore\Database\Connection;
 use diCore\Helper\StringHelper;
 use diCore\Helper\FileSystemHelper;
@@ -17,7 +18,6 @@ use diCore\Data\Config;
 class AdminPagesManager
 {
     const fileChmod = 0664;
-
     const defaultFolder = '_admin/_inc/lib/pages';
 
     protected $fieldsByTable = [];
@@ -114,7 +114,7 @@ class AdminPagesManager
         'date',
         'created_at',
         'edited_at',
-        'updated_at',
+        // 'updated_at',
     ];
 
     protected $initiallyHiddenFieldNames = [
@@ -135,30 +135,30 @@ class AdminPagesManager
 
         $this->setNamespace($namespace);
 
-        $contents = <<<'EOF'
-<?php
+        $contents = '<?php' . <<<'EOF'
+
 /**
- * Created by \diAdminPagesManager
- * Date: %1$s
- * Time: %2$s
+ * Created by AdminPagesManager
+ * Date: {{ date }}
+ * Time: {{ time }}
  */
-%11$s
+{{ namespace }}
 use diCore\Admin\Data\FormFlag;
-%12$s
-class %3$s extends \diCore\Admin\BasePage
+{{ usedNamespaces }}
+class {{ className }} extends \diCore\Admin\BasePage
 {
     protected $options = [
         'filters' => [
             'defaultSorter' => [
-                'sortBy' => '%9$s',
-                'dir' => '%10$s',
+                'sortBy' => '{{ sortBy }}',
+                'dir' => '{{ sortDir }}',
             ],
         ],
     ];
 
     protected function initTable()
     {
-        $this->setTable('%4$s');
+        $this->setTable('{{ table }}');
     }
 
     public function renderList()
@@ -166,7 +166,7 @@ class %3$s extends \diCore\Admin\BasePage
         $this->getList()->addColumns([
             'id' => 'ID',
             '#href' => [],
-%8$s
+{{ listColumns }}
             '#edit' => [],
             '#del' => [],
             '#visible' => [],
@@ -194,20 +194,20 @@ class %3$s extends \diCore\Admin\BasePage
     public function getFormFields()
     {
         return [
-%6$s
+{{ formFields }}
         ];
     }
 
     public function getLocalFields()
     {
         return [
-%7$s
+{{ localFields }}
         ];
     }
 
     public function getModuleCaption()
     {
-        return '%5$s';
+        return '{{ caption }}';
     }
 }
 EOF;
@@ -220,20 +220,22 @@ EOF;
         $sortBy = isset($fields['order_num']) ? 'order_num' : 'id';
         $dir = isset($fields['order_num']) ? 'ASC' : 'DESC';
 
-        $contents = sprintf($contents,
-            date('d.m.Y'),
-            date('H:i'),
-            ModelsManager::extractClass($className),
-            $table,
-            $caption,
-            join("\n\n", $fieldsInfo['form']),
-            join("\n\n", $fieldsInfo['local']),
-            join("\n", $columns),
-            $sortBy,
-            $dir,
-            $this->getNamespace() ? "\nnamespace " . ModelsManager::extractNamespace($className) . ";\n" : '',
-            $this->getNamespace() ? "use " . ModelsManager::getModelClassNameByTable($table, $this->getNamespace()) . ";\n" : ''
-        );
+        $replaces = [
+            '{{ date }}' => date('d.m.Y'),
+            '{{ time }}' => date('H:i'),
+            '{{ className }}' => ModelsManager::extractClass($className),
+            '{{ table }}' => $table,
+            '{{ caption }}' => $caption,
+            '{{ formFields }}' => join("\n\n", $fieldsInfo['form']),
+            '{{ localFields }}' => join("\n\n", $fieldsInfo['local']),
+            '{{ listColumns }}' => join("\n", $columns),
+            '{{ sortBy }}' => $sortBy,
+            '{{ sortDir }}' => $dir,
+            '{{ namespace }}' => $this->getNamespace() ? "\nnamespace " . ModelsManager::extractNamespace($className) . ";\n" : '',
+            '{{ usedNamespaces }}' => $this->getNamespace() ? "use " . ModelsManager::getModelClassNameByTable($table, $this->getNamespace()) . ";\n" : '',
+        ];
+
+        $contents = str_replace(array_keys($replaces), array_values($replaces), $contents);
 
         $fn = $this->getPageFilename($className);
 
@@ -288,10 +290,19 @@ EOF;
     protected function getFieldInfo($field, $type, $sort)
     {
         $typeTuned = $this->tuneType($field, $type);
-        $getTitle = function () use ($sort) {
-            return $sort === 'form'
-                ? "\n                'title' => '',"
-                : '';
+        $getTitle = function () use ($field, $sort) {
+            if ($sort !== 'form') {
+                return '';
+            }
+
+            if (
+                !isset(Form::$defaultFieldTitles[$field])
+                && !isset(Form::$customDefaultFieldTitles[$field])
+            ) {
+                return '';
+            }
+
+            return "\n                'title' => '',";
         };
 
         return <<<EOF
@@ -344,7 +355,7 @@ EOF;
         }
 
         return $flags
-            ? "\n                'flags' => [" . join(', ', array_map(function($f) {
+            ? "\n                'flags' => [" . join(', ', array_map(function ($f) {
                     return 'FormFlag::' . $f;
                 }, $flags)) . '],'
             : '';
@@ -429,7 +440,7 @@ EOF;
 
                 $ar[] = <<<EOF
             '$field' => [
-                'value' => function($modelName \$m) {
+                'value' => function ($modelName \$m) {
                     return \diDateTime::simpleFormat(\$m->{$methodName}());
                 },
                 'headAttrs' => [

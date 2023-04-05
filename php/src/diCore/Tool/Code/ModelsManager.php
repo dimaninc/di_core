@@ -22,9 +22,17 @@ class ModelsManager
 
     protected $fieldsByTable = [];
 
+    protected $usedModelTraits = [];
+    protected $usedModelNamespaces = [];
+    protected $implementedModelMethods = [];
+
+    protected $usedCollectionTraits = [];
+    protected $usedCollectionNamespaces = [];
+    protected $implementedCollectionMethods = [];
+
     private $namespace;
 
-    public static $skippedInAnnotationFields = [
+    public static $skippedInModelAnnotationFields = [
         'id',
         '_id', // mongo id
         'clean_title',
@@ -39,68 +47,70 @@ class ModelsManager
     // todo: use AutoTimeStamps+prepareForSave if created_at and updated_at fields exist
     protected function getModelTemplate()
     {
-        return <<<'EOF'
-<?php
+        return '<?php' . <<<'EOF'
+
 /**
- * Created by \diModelsManager
- * Date: %1$s
- * Time: %2$s
+ * Created by ModelsManager
+ * Date: {{ date }}
+ * Time: {{ time }}
  */
-%12$s
+{{ namespace }}
 
-use diCore\Database\FieldType;
+use diCore\Database\FieldType;{{ usedNamespaces }}
 
 /**
- * Class %3$s
+ * Class {{ className }}
  * Methods list for IDE
  *
-%5$s
+{{ getMethods }}
  *
-%6$s
+{{ hasMethods }}
  *
-%7$s%8$s
+{{ setMethods }}{{ localizedMethods }}
  */
-class %3$s extends \diModel
+class {{ className }} extends \diModel
 {
-    const type = \diTypes::%11$s;%13$s
-    const table = '%4$s';
-    protected $table = '%4$s';%10$s%9$s%14$s
+    {{ usedTraits }}const type = \diTypes::{{ modelType }};{{ connectionLine }}
+    const table = '{{ table }}';
+    protected $table = '{{ table }}';{{ slugFieldName }}{{ localizedFields }}{{ fieldTypes }}{{ implementedMethods }}
 }
+
 EOF;
     }
 
     protected function getCollectionTemplate()
     {
-        return <<<'EOF'
-<?php
+        return '<?php' . <<<'EOF'
+
 /**
- * Created by \diModelsManager
- * Date: %1$s
- * Time: %2$s
+ * Created by ModelsManager
+ * Date: {{ date }}
+ * Time: {{ time }}
  */
-%9$s
+{{ namespace }}{{ usedNamespaces }}
 /**
- * Class %3$s
+ * Class {{ className }}
  * Methods list for IDE
  *
-%6$s
+{{ filterMethods }}
  *
-%7$s
+{{ orderMethods }}
  *
-%8$s%10$s
+{{ selectMethods }}{{ localizedMethods }}
  */
-class %3$s extends \diCollection
+class {{ className }} extends \diCollection
 {
-    const type = \diTypes::%5$s;%11$s
-    protected $table = '%4$s';
-    protected $modelType = '%5$s';
+    {{ usedTraits }}const type = \diTypes::{{ modelType }};{{ connectionLine }}
+    protected $table = '{{ table }}';
+    protected $modelType = '{{ modelType }}';{{ implementedMethods }}
 }
+
 EOF;
     }
 
-    public function createModel($table, $needed, $className,
-                                $collectionNeeded = false, $collectionClassName = '',
-                                $namespace = '')
+    public function createEntity($table, $modelNeeded, $modelClassName,
+                                 $collectionNeeded = false, $collectionClassName = '',
+                                 $namespace = '')
     {
         // connection::table
         if (is_array($table)) {
@@ -113,42 +123,48 @@ EOF;
 
         $connectionNameStr = $connName ? "\n\tconst connection_name = '{$connName}';" : '';
         $fields = $this->getFieldsOfTable($connName, $table);
+        $this->populateTraits($fields);
 
-        if ($needed) {
+        if ($modelNeeded) {
             $typeName = self::getModelNameByTable($table);
-            $className = $className ?: self::getModelClassNameByTable($table, $this->getNamespace());
+            $modelClassName = $modelClassName ?: self::getModelClassNameByTable($table, $this->getNamespace());
             $annotations = $this->getModelMethodsAnnotations(
                 $fields,
                 $connName,
-                $className
+                $modelClassName
             );
 
             $slugFieldName = $this->doesTableHaveField($connName, $table, 'slug')
                 ? "\n\tconst slug_field_name = self::SLUG_FIELD_NAME;"
                 : '';
 
-            $contents = sprintf($this->getModelTemplate(),
-                date('d.m.Y'),
-                date('H:i'),
-                self::extractClass($className),
-                $table,
-                join("\n", $annotations["get"]),
-                join("\n", $annotations["has"]),
-                join("\n", $annotations["set"]),
-                $annotations["localized"] ? "\n *\n" . join("\n", $annotations["localized"]) : "",
-                $annotations["localized"] ? "\n\tprotected \$localizedFields = [" .
+            $replaces = [
+                '{{ date }}' => date('d.m.Y'),
+                '{{ time }}' => date('H:i'),
+                '{{ className }}' => self::extractClass($modelClassName),
+                '{{ table }}' => $table,
+                '{{ getMethods }}' => join("\n", $annotations["get"]),
+                '{{ hasMethods }}' => join("\n", $annotations["has"]),
+                '{{ setMethods }}' => join("\n", $annotations["set"]),
+                '{{ localizedMethods }}' => $annotations["localized"] ? "\n *\n" . join("\n", $annotations["localized"]) : "",
+                '{{ localizedFields }}' => $annotations["localized"] ? "\n\tprotected \$localizedFields = [" .
                     join(", ", array_map(function ($val) {
                         return "'" . $val . "'";
                     }, array_keys($annotations["localized"]))) .
                     "];" : '',
-                $slugFieldName,
-                $typeName,
-                $this->getNamespace() ? "\nnamespace " . self::extractNamespace($className) . ";" : '',
-                $connectionNameStr,
-                $this->getFieldTypesArrayStr($fields)
-            );
+                '{{ slugFieldName }}' => $slugFieldName,
+                '{{ modelType }}' => $typeName,
+                '{{ namespace }}' => $this->getNamespace() ? "\nnamespace " . self::extractNamespace($modelClassName) . ";" : '',
+                '{{ connectionLine }}' => $connectionNameStr,
+                '{{ fieldTypes }}' => $this->getFieldTypesArrayStr($fields),
+                '{{ usedNamespaces }}' => $this->getUsedModelNamespaces(),
+                '{{ usedTraits }}' => $this->getUsedModelTraits(),
+                '{{ implementedMethods }}' => $this->getImplementedModelMethods(),
+            ];
 
-            $fn = $this->getModelFilename($className);
+            $contents = str_replace(array_keys($replaces), array_values($replaces), $this->getModelTemplate());
+
+            $fn = $this->getModelFilename($modelClassName);
 
             if (is_file(Config::getSourcesFolder() . $fn)) {
                 throw new \Exception("Model $fn already exists");
@@ -169,23 +185,28 @@ EOF;
                 $collectionClassName
             );
 
-            $contents = sprintf($this->getCollectionTemplate(),
-                date('d.m.Y'),
-                date('H:i'),
-                self::extractClass($collectionClassName),
-                $table,
-                $typeName,
-                join("\n", $collectionAnnotations['filterBy']),
-                join("\n", $collectionAnnotations['orderBy']),
-                join("\n", $collectionAnnotations['select']),
-                $this->getNamespace() ? "\nnamespace " . self::extractNamespace($collectionClassName) . ";\n" : '',
-                $collectionAnnotations['filterByLocalized']
+            $replaces = [
+                '{{ date }}' => date('d.m.Y'),
+                '{{ time }}' => date('H:i'),
+                '{{ className }}' => self::extractClass($collectionClassName),
+                '{{ table }}' => $table,
+                '{{ modelType }}' => $typeName,
+                '{{ filterMethods }}' => join("\n", $collectionAnnotations['filterBy']),
+                '{{ orderMethods }}' => join("\n", $collectionAnnotations['orderBy']),
+                '{{ selectMethods }}' => join("\n", $collectionAnnotations['select']),
+                '{{ localizedMethods }}' => $collectionAnnotations['filterByLocalized']
                     ? "\n *\n" . join("\n", $collectionAnnotations['filterByLocalized']) .
                       "\n *\n" . join("\n", $collectionAnnotations['orderByLocalized']) .
                       "\n *\n" . join("\n", $collectionAnnotations['selectLocalized'])
                     : '',
-                $connectionNameStr
-            );
+                '{{ namespace }}' => $this->getNamespace() ? "\nnamespace " . self::extractNamespace($collectionClassName) . ";\n" : '',
+                '{{ connectionLine }}' => $connectionNameStr,
+                '{{ usedNamespaces }}' => $this->getUsedCollectionNamespaces(),
+                '{{ usedTraits }}' => $this->getUsedCollectionTraits(),
+                '{{ implementedMethods }}' => $this->getImplementedCollectionMethods(),
+            ];
+
+            $contents = str_replace(array_keys($replaces), array_values($replaces), $this->getCollectionTemplate());
 
             $fn = $this->getCollectionFilename($collectionClassName);
 
@@ -243,6 +264,30 @@ EOF;
         return $s;
     }
 
+    protected function isFieldSkippedInModelAnnotation($field)
+    {
+        if (
+            in_array($field, ['created_at', 'updated_at'])
+            && in_array('AutoTimestamps', $this->usedModelTraits)
+        ) {
+            return true;
+        }
+
+        return in_array($field, static::$skippedInModelAnnotationFields);
+    }
+
+    protected function isFieldSkippedInCollectionAnnotation($field)
+    {
+        if (
+            in_array($field, ['created_at', 'updated_at'])
+            && in_array('AutoTimestamps', $this->usedCollectionTraits)
+        ) {
+            return true;
+        }
+
+        return in_array($field, static::$skippedInCollectionAnnotationFields);
+    }
+
     protected function getModelMethodsAnnotations($fields, $connName, $className)
     {
         $ar = [
@@ -262,7 +307,7 @@ EOF;
         $className = '$this';
 
         foreach ($fields as $field => $type) {
-            if (in_array($field, static::$skippedInAnnotationFields)) {
+            if ($this->isFieldSkippedInModelAnnotation($field)) {
                 continue;
             }
 
@@ -331,7 +376,7 @@ EOF;
         $className = '$this';
 
         foreach ($fields as $field => $type) {
-            if (in_array($field, static::$skippedInCollectionAnnotationFields)) {
+            if ($this->isFieldSkippedInCollectionAnnotation($field)) {
                 continue;
             }
 
@@ -521,5 +566,74 @@ EOF;
         $this->namespace = $namespace;
 
         return $this;
+    }
+
+    protected function populateTraits($fields)
+    {
+        if (isset($fields['created_at']) && isset($fields['updated_at'])) {
+            $this->usedModelTraits[] = 'AutoTimestamps';
+            $this->usedModelNamespaces[] = 'diCore\Traits\Model\AutoTimestamps';
+            $this->implementedModelMethods[] = <<<'EOF'
+    public function prepareForSave()
+    {
+        $this->generateTimestamps();
+
+        return parent::prepareForSave();
+    }
+EOF;
+
+
+            $this->usedCollectionTraits[] = 'AutoTimestamps';
+            $this->usedCollectionNamespaces[] = 'diCore\Traits\Collection\AutoTimestamps';
+        }
+
+        return $this;
+    }
+
+    protected function getUsedModelTraits()
+    {
+        return $this->usedModelTraits
+            ? join("\n", array_map([self::class, 'mapUsed'], $this->usedModelTraits)) . "\n\n    "
+            : '';
+    }
+
+    protected function getUsedCollectionTraits()
+    {
+        return $this->usedCollectionTraits
+            ? join("\n", array_map([self::class, 'mapUsed'], $this->usedCollectionTraits)) . "\n\n    "
+            : '';
+    }
+
+    protected function getUsedModelNamespaces()
+    {
+        return $this->usedModelNamespaces
+            ? "\n" . join("\n", array_map([self::class, 'mapUsed'], $this->usedModelNamespaces))
+            : '';
+    }
+
+    protected function getUsedCollectionNamespaces()
+    {
+        return $this->usedCollectionNamespaces
+            ? "\n" . join("\n", array_map([self::class, 'mapUsed'], $this->usedCollectionNamespaces)) . "\n"
+            : '';
+    }
+
+    public static function mapUsed($name)
+    {
+        return "use $name;";
+    }
+
+    protected function getImplementedModelMethods()
+    {
+        return $this->implementedModelMethods
+            ? "\n\n" . join("\n", $this->implementedModelMethods)
+            : '';
+    }
+
+    protected function getImplementedCollectionMethods()
+    {
+        return $this->implementedCollectionMethods
+            ? "\n\n" . join("\n", $this->implementedCollectionMethods)
+            : '';
     }
 }
