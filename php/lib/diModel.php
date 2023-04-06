@@ -2365,8 +2365,7 @@ ENGINE = InnoDB;";
 	{
 		$ar = [];
 
-		if ($this->exists('parent'))
-		{
+		if ($this->exists('parent')) {
 			$ar[] = "parent = '{$this->get('parent')}'";
 		}
 

@@ -380,10 +380,10 @@ class Submit
             $type = in_array($v['type'], ['float', 'double', 'int'])
                 ? $v['type']
                 : null;
-            $value = \diRequest::post($f, $v['default'], $type);
+            $value = \diRequest::post($f, $v['default'] ?? null, $type);
 
 			if (!empty($v['preprocessor'])) {
-                $value = \diRequest::post($f) ?: $v['default'];
+                $value = \diRequest::post($f) ?: ($v['default'] ?? null);
 			    $value = $v['preprocessor']($value, $f, $this);
             }
 
@@ -391,7 +391,7 @@ class Submit
 				case 'password':
 					$this
 						->setData($f, $value ?: '')
-						->setData($f . '2', \diRequest::post($f . '2', $v['default'], 'string'));
+						->setData($f . '2', \diRequest::post($f . '2', $v['default'] ?? '', 'string'));
 					break;
 
 				case 'date':
@@ -440,7 +440,7 @@ class Submit
         // local fields
 		foreach ($this->_local_fields as $f => $v) {
 			if (!$this->getData($f)) {
-				$this->setData($f, $v['default']);
+				$this->setData($f, $v['default'] ?? null);
 			}
 		}
 
@@ -534,7 +534,7 @@ class Submit
 
 				case 'enum':
 					if (!in_array($this->getData($f), $v['values'])) {
-						$this->setData($f, $v['default']);
+						$this->setData($f, $v['default'] ?? null);
 					}
 					break;
 			}

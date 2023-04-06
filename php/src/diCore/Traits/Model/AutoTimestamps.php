@@ -40,4 +40,10 @@ trait AutoTimestamps
 
         return $this;
     }
+
+    public function getPairString($glue = '<br>')
+    {
+        return \diDateTime::simpleFormat($this->getCreatedAt()) . $glue
+            . \diDateTime::simpleFormat($this->getUpdatedAt());
+    }
 }
