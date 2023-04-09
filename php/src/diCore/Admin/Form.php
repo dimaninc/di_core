@@ -3194,13 +3194,17 @@ EOF;
 		return $this->setHiddenInput($field);
 	}
 
-	public function setHiddenInput($fields)
+	public function setHiddenInput($fields, $onlyIfEmpty = false)
 	{
 		if (!is_array($fields)) {
 			$fields = explode(",", $fields);
 		}
 
 		foreach ($fields as $field) {
+		    if ($onlyIfEmpty && $this->getData($field)) {
+		        continue;
+            }
+
 			$this->setManualFieldFlag($field, "hidden");
 
 			$this->force_inputs_fields[$field] = true;
