@@ -731,7 +731,7 @@ EOF;
     {
         if ($this->tableData === null && $this->isUseCookie()) {
             $this->tableData = (array)json_decode(\diRequest::cookie(
-                'admin_filter__' . $this->getTable()
+                'admin_filter__' . $this->getTable(), ''
             ));
         }
 
