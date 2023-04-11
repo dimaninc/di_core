@@ -868,7 +868,7 @@ class diModel implements \ArrayAccess
 					$ar[static::LOCALIZED_PREFIX . $k . '_with_path'] = $v2;
 				}
 			} elseif ($this->isDateField($k)) {
-				$v = isInteger($v) ? $v : strtotime($v);
+				$v = isInteger($v) ? $v : strtotime($v ?: '');
 
 				if ($v) {
 				    $ar = extend($ar, ArrayHelper::mapAssoc(function($field, $value) use($k) {

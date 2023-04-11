@@ -716,6 +716,15 @@ class Form
 			: ($this->data[$field] ?? null);
 	}
 
+    public function populateFiltersDataIfNew()
+    {
+        if ($this->getX()->isNew()) {
+            $this->setData($this->getX()->getFilters()->getData());
+        }
+
+        return $this;
+    }
+
 	public function getDb()
 	{
 		return $this->db;
@@ -752,7 +761,7 @@ class Form
 
 	private function processDefaultValue($field)
 	{
-		if (strtoupper($this->getData($field)) == 'NOW()') {
+		if (strtoupper($this->getData($field) ?: '') == 'NOW()') {
 			switch ($this->getFieldProperty($field, 'type')) {
 				case 'date_str':
 					$this->setData($field, \diDateTime::sqlDateFormat());

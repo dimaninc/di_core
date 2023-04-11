@@ -622,7 +622,7 @@ function imageflipvertical($image)
 
 function get_unique_id($length = 32)
 {
-	srand((double)microtime() * 1000000);
+	srand(intval((double)microtime() * 1000000));
 	$hash = md5(rand(0, 9999999));
 
 	return $length > 0 && $length < 32

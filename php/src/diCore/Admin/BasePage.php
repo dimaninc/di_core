@@ -1271,8 +1271,11 @@ abstract class BasePage
 					->setTargetTable($this->getTable())
 					->setTargetId($this->getId())
 					->setAdminId($this->getAdmin()->getAdminModel()->getId())
-					->setBothData($this->getSubmit()->getModel())
-					->save();
+					->setBothData($this->getSubmit()->getModel());
+
+				if ($log->hasOldData() && $log->hasNewData()) {
+                    $log->save();
+                }
 			} catch (\Exception $e) {
 				// validation failed -> no changes
 				//throw $e;

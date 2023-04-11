@@ -394,11 +394,10 @@ class diNiceTable
             $attributes = [];
         }
 
-		$id = StringHelper::out($this->getRowModel()->getId());
+		$id = StringHelper::out($this->getRowModel()->getId() ?: '');
 
 		$this->col_idx = 0;
 		$this->anchorPlaced = false;
-
 		$this->row_class_prefix = $row_class_prefix ?: 'level' . ((int)$this->getRowModel()->get('level_num') + 1);
 		$this->row_id_prefix = $row_id_prefix;
 
