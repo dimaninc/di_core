@@ -275,7 +275,7 @@ class diAdminList
 
 	private function replaceValues($s)
 	{
-		return str_replace(array_keys($this->replaceAr), array_values($this->replaceAr), $s);
+		return $s ? str_replace(array_keys($this->replaceAr), array_values($this->replaceAr), $s) : '';
 	}
 
 	private function buildHref($href)

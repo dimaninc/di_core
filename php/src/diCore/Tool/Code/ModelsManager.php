@@ -20,6 +20,8 @@ class ModelsManager
     const defaultModelFolder = '_cfg/models';
     const defaultCollectionFolder = '_cfg/collections';
 
+    const typeTuneRegex = "/(\(\d+\))?(\s+unsigned)?$/";
+
     protected $fieldsByTable = [];
 
     protected $usedModelTraits = [];
@@ -44,7 +46,6 @@ class ModelsManager
         '__v', // mongo tech field
     ];
 
-    // todo: use AutoTimeStamps+prepareForSave if created_at and updated_at fields exist
     protected function getModelTemplate()
     {
         return '<?php' . <<<'EOF'
@@ -418,7 +419,7 @@ EOF;
 
     public static function tuneType($type)
     {
-        $type = preg_replace("/\(\d+\)(\sunsigned)?$/", '', strtolower($type));
+        $type = preg_replace(static::typeTuneRegex, '', strtolower($type));
 
         switch ($type) {
             case 'integer':
@@ -443,7 +444,7 @@ EOF;
 
     public static function tuneTypeForModel($type)
     {
-        $type = preg_replace("/\(\d+\)(\sunsigned)?$/", '', strtolower($type));
+        $type = preg_replace(static::typeTuneRegex, '', strtolower($type));
 
         switch ($type) {
             case 'integer':

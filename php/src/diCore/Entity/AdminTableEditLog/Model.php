@@ -60,6 +60,12 @@ class Model extends \diModel
 
 	private $useAllFields = false;
 
+	// skip these fields in every table
+    protected static $globalSkipFields = [
+        'created_at',
+        'updated_at',
+    ];
+
 	protected static $skipFields = [
 		//'table' => ['field1', 'field2'],
 	];
@@ -77,6 +83,12 @@ class Model extends \diModel
     public static function isModelFieldSkipped(\diModel $model, $field)
     {
         return false;
+    }
+
+    // if true, then skip
+    public static function isGlobalFieldSkipped(\diModel $model, $field)
+    {
+        return in_array($field, static::$globalSkipFields);
     }
 
 	public static function createForModel(\diModel $m, $adminId = 0, $useAllFields = true)
@@ -234,7 +246,11 @@ class Model extends \diModel
 		    return true;
         }
 
-		if ($this->useAllFields) {
+        if (static::isGlobalFieldSkipped($model, $field)) {
+            return true;
+        }
+
+        if ($this->useAllFields) {
 		    return false;
         }
 

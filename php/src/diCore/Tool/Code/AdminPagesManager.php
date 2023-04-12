@@ -373,7 +373,8 @@ EOF;
             return 'order_num';
         }
 
-        $type = preg_replace('/\(.+$/', '', mb_strtolower($type));
+        // '/\(.+$/'
+        $type = preg_replace(ModelsManager::typeTuneRegex, '', mb_strtolower($type));
 
         switch ($type) {
             case 'timestamp':
