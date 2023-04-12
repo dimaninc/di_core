@@ -1053,12 +1053,9 @@ function extend()
 	$args = func_get_args();
 	$extended = array();
 
-	if (is_array($args) && count($args))
-	{
-		foreach ($args as $array)
-		{
-			if (is_array($array) || is_object($array))
-			{
+	if (is_array($args) && count($args)) {
+		foreach ($args as $array) {
+			if (is_array($array) || is_object($array)) {
 				$extended = array_replace($extended, (array)$array);
 			}
 		}
@@ -1098,8 +1095,7 @@ function lc_all_but_first_letters($s, $only_sentence_uc = false)
     	if (!$only_sentence_uc)
     		return in_array($prev_ar[count($prev_ar) - 1], $word_end_ar, true);
 
-		for ($i = count($prev_ar) - 1; $i >= 0; $i--)
-		{
+		for ($i = count($prev_ar) - 1; $i >= 0; $i--) {
 			if (in_array($prev_ar[$i], $space_ar, true))
 				continue;
 
@@ -1112,8 +1108,7 @@ function lc_all_but_first_letters($s, $only_sentence_uc = false)
 	    return false;
     };
 
-	for ($i = 0; $i < mb_strlen($s); $i++)
-	{
+	for ($i = 0; $i < mb_strlen($s); $i++) {
 	    $c = mb_substr($s, $i, 1);
 
 		$s2 .= $uc_allowed($prev_ar) ? $c : mb_strtolower($c);
@@ -1126,18 +1121,25 @@ function lc_all_but_first_letters($s, $only_sentence_uc = false)
 
 function camelize($scored, $lcFirst = true)
 {
+    if (!$scored) {
+        return '';
+    }
+
 	$s = implode("", array_map("ucfirst", array_map("strtolower", explode("_", $scored))));
 
 	return $lcFirst ? lcfirst($s) : $s;
 }
 
-function underscore($cameled)
+function underscore($camelized)
 {
-	return implode("_", array_map("strtolower", preg_split('/([A-Z]{1}[^A-Z]*)/', $cameled, -1, PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_NO_EMPTY)));
+    if (!$camelized) {
+        return '';
+    }
+
+	return implode("_", array_map("strtolower", preg_split('/([A-Z]{1}[^A-Z]*)/', $camelized, -1, PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_NO_EMPTY)));
 }
 
-if (!function_exists('http_build_url'))
-{
+if (!function_exists('http_build_url')) {
 	define('HTTP_URL_REPLACE', 1);              // Replace every part of the first URL when there's one of the second URL
 	define('HTTP_URL_JOIN_PATH', 2);            // Join relative paths
 	define('HTTP_URL_JOIN_QUERY', 4);           // Join query strings
@@ -1176,59 +1178,43 @@ if (!function_exists('http_build_url'))
 		$keys = array('user', 'pass', 'port', 'path', 'query', 'fragment');
 
 		// HTTP_URL_STRIP_ALL and HTTP_URL_STRIP_AUTH cover several other flags.
-		if ($flags & HTTP_URL_STRIP_ALL)
-		{
+		if ($flags & HTTP_URL_STRIP_ALL) {
 			$flags |= HTTP_URL_STRIP_USER | HTTP_URL_STRIP_PASS
 				| HTTP_URL_STRIP_PORT | HTTP_URL_STRIP_PATH
 				| HTTP_URL_STRIP_QUERY | HTTP_URL_STRIP_FRAGMENT;
-		}
-		elseif ($flags & HTTP_URL_STRIP_AUTH)
-		{
+		} elseif ($flags & HTTP_URL_STRIP_AUTH) {
 			$flags |= HTTP_URL_STRIP_USER | HTTP_URL_STRIP_PASS;
 		}
 
 		// Schema and host are alwasy replaced
-		foreach (array('scheme', 'host') as $part)
-		{
-			if (isset($parts[$part]))
-			{
+		foreach (array('scheme', 'host') as $part) {
+			if (isset($parts[$part])) {
 				$url[$part] = $parts[$part];
 			}
 		}
 
-		if ($flags & HTTP_URL_REPLACE)
-		{
-			foreach ($keys as $key)
-			{
-				if (isset($parts[$key]))
-				{
+		if ($flags & HTTP_URL_REPLACE) {
+			foreach ($keys as $key) {
+				if (isset($parts[$key])) {
 					$url[$key] = $parts[$key];
 				}
 			}
-		}
-		else
-		{
-			if (isset($parts['path']) && ($flags & HTTP_URL_JOIN_PATH))
-			{
-				if (isset($url['path']) && substr($parts['path'], 0, 1) !== '/')
-				{
+		} else {
+			if (isset($parts['path']) && ($flags & HTTP_URL_JOIN_PATH)) {
+				if (isset($url['path']) && substr($parts['path'], 0, 1) !== '/') {
 					// Workaround for trailing slashes
 					$url['path'] .= 'a';
 					$url['path'] = rtrim(
 							str_replace(basename($url['path']), '', $url['path']),
 							'/'
 						) . '/' . ltrim($parts['path'], '/');
-				}
-				else
-				{
+				} else {
 					$url['path'] = $parts['path'];
 				}
 			}
 
-			if (isset($parts['query']) && ($flags & HTTP_URL_JOIN_QUERY))
-			{
-				if (isset($url['query']))
-				{
+			if (isset($parts['query']) && ($flags & HTTP_URL_JOIN_QUERY)) {
+				if (isset($url['query'])) {
 					parse_str($url['query'], $url_query);
 					parse_str($parts['query'], $parts_query);
 
@@ -1238,69 +1224,56 @@ if (!function_exists('http_build_url'))
 							$parts_query
 						)
 					);
-				}
-				else
-				{
+				} else {
 					$url['query'] = $parts['query'];
 				}
 			}
 		}
 
-		if (isset($url['path']) && $url['path'] !== '' && substr($url['path'], 0, 1) !== '/')
-		{
+		if (isset($url['path']) && $url['path'] !== '' && substr($url['path'], 0, 1) !== '/') {
 			$url['path'] = '/' . $url['path'];
 		}
 
-		foreach ($keys as $key)
-		{
+		foreach ($keys as $key) {
 			$strip = 'HTTP_URL_STRIP_' . strtoupper($key);
-			if ($flags & constant($strip))
-			{
+			if ($flags & constant($strip)) {
 				unset($url[$key]);
 			}
 		}
 
 		$parsed_string = '';
 
-		if (!empty($url['scheme']))
-		{
+		if (!empty($url['scheme'])) {
 			$parsed_string .= $url['scheme'] . '://';
 		}
 
-		if (!empty($url['user']))
-		{
+		if (!empty($url['user'])) {
 			$parsed_string .= $url['user'];
 
-			if (isset($url['pass']))
-			{
+			if (isset($url['pass'])) {
 				$parsed_string .= ':' . $url['pass'];
 			}
 
 			$parsed_string .= '@';
 		}
 
-		if (!empty($url['host']))
-		{
+		if (!empty($url['host'])) {
 			$parsed_string .= $url['host'];
 		}
 
-		if (!empty($url['port']))
-		{
+		if (!empty($url['port'])) {
 			$parsed_string .= ':' . $url['port'];
 		}
 
-		if (!empty($url['path']))
-		{
+		if (!empty($url['path'])) {
 			$parsed_string .= $url['path'];
 		}
 
-		if (!empty($url['query']))
-		{
+		if (!empty($url['query'])) {
 			$parsed_string .= '?' . $url['query'];
 		}
 
-		if (!empty($url['fragment']))
-		{
+		if (!empty($url['fragment'])) {
 			$parsed_string .= '#' . $url['fragment'];
 		}
 
@@ -1312,15 +1285,12 @@ if (!function_exists('http_build_url'))
 
 function utf8_wordwrap($string, $width = 75, $break = "\n", $cut = false)
 {
-	if ($cut)
-	{
+	if ($cut) {
 		// Match anything 1 to $width chars long followed by whitespace or EOS,
 		// otherwise match anything $width chars long
 		$search = '/(.{1,'.$width.'})(?:\s|$)|(.{'.$width.'})/uS';
 		$replace = '$1$2'.$break;
-	}
-	else
-	{
+	} else {
 		// Anchor the beginning of the pattern with a look ahead
 		// to avoid crazy backtracking when words are longer than $width
 		$search = '/(?=\s)(.{1,'.$width.'})(?:\s|$)/uS';
