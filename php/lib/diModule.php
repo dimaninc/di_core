@@ -167,7 +167,7 @@ abstract class diModule
 	protected function setBootstrapSettings($options)
 	{
 		if (!is_array($options)) {
-			$a = explode(Module::BOOTSTRAP_SETTINGS_END, $options);
+			$a = $options ? explode(Module::BOOTSTRAP_SETTINGS_END, $options) : [];
 			$options = [];
 
 			foreach ($a as $kv) {
