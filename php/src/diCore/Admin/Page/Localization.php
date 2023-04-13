@@ -11,9 +11,12 @@ namespace diCore\Admin\Page;
 use diCore\Admin\FilterRule;
 use diCore\Admin\Form;
 use diCore\Entity\Localization\Model;
+use diCore\Traits\Admin\MultiColumn;
 
 class Localization extends \diCore\Admin\BasePage
 {
+    use MultiColumn;
+
     protected $options = [
         'showControlPanel' => true,
         'filters' => [
@@ -54,25 +57,18 @@ class Localization extends \diCore\Admin\BasePage
                     'en' => 'Token',
 				],
                 'rule' => FilterRule::contains,
-			])
-			->addFilter([
-				'field' => 'value',
-				'type' => 'string',
-				'title' => [
-				    'ru' => 'Рус.значение',
-                    'en' => 'Value',
-				],
-                'rule' => FilterRule::contains,
-			])
-			->addFilter([
-				'field' => 'en_value',
-				'type' => 'string',
-				'title' => [
-				    'ru' => 'Eng.значение',
-                    'en' => 'Eng.value',
-				],
-                'rule' => FilterRule::contains,
-			])
+			]);
+
+		$this->addMultiColumnFilters('value', [
+            'type' => 'string',
+            'title' => $this->localized([
+                'ru' => 'Значение',
+                'en' => 'Value',
+            ]),
+            'rule' => FilterRule::contains,
+        ]);
+
+        $this->getFilters()
 			->buildQuery();
 	}
 
@@ -91,9 +87,13 @@ class Localization extends \diCore\Admin\BasePage
 	{
 		$this->setAfterTableTemplate('admin/localization/after_list');
 
-		$valueOut = function(Model $m, $field) {
+		$valueOut = function (Model $m, $field) {
 			return static::valueOut($m, $field);
 		};
+
+		$valuesAr = $this->getListMultiColumn('value', 80, [
+            'value' => $valueOut,
+        ]);
 
 		$this->getList()->addColumns([
 			'id' => 'ID',
@@ -107,20 +107,6 @@ class Localization extends \diCore\Admin\BasePage
 				],
 				'noHref' => true,
 			],
-			'value' => [
-				'title' => 'Rus',
-				'headAttrs' => [
-					'width' => '40%',
-				],
-				'value' => $valueOut,
-			],
-			'en_value' => [
-				'title' => 'Eng',
-				'headAttrs' => [
-					'width' => '40%',
-				],
-				'value' => $valueOut,
-			],
 			'#edit' => '',
 			'#del' => [
 				'active' => function (Model $m, $field) {
@@ -128,6 +114,9 @@ class Localization extends \diCore\Admin\BasePage
 				},
 			],
 		]);
+
+		$this->getList()
+            ->insertColumnsAfter('name', $valuesAr);
 	}
 
 	public function renderForm()
@@ -166,7 +155,20 @@ class Localization extends \diCore\Admin\BasePage
 	{
 	    $formatter = [Form::class, 'valueFormatterEscapeAmp'];
 
-		return [
+	    $valuesAr = $this->getMultiColumn('value', [
+            'type' => 'text',
+            'title' => $this->localized([
+                'ru' => 'Значение',
+                'en' => 'Value',
+            ]),
+            'default' => '',
+            'options' => [
+                'rows' => 3,
+                'valueFormatter' => $formatter,
+            ],
+        ]);
+
+		return extend([
 			'name' => [
 				'type' => 'string',
 				'title' => $this->localized([
@@ -175,33 +177,7 @@ class Localization extends \diCore\Admin\BasePage
                 ]),
 				'default' => '',
 			],
-
-			'value' => [
-				'type' => 'text',
-				'title' => $this->localized([
-                    'ru' => 'Значение (RUS)',
-                    'en' => 'Value (Rus)',
-                ]),
-				'default' => '',
-				'options' => [
-					'rows' => 3,
-                    'valueFormatter' => $formatter,
-				],
-			],
-
-			'en_value' => [
-				'type' => 'text',
-				'title' => $this->localized([
-                    'ru' => 'Значение (ENG)',
-                    'en' => 'Value (Eng)',
-                ]),
-				'default' => '',
-				'options' => [
-					'rows' => 3,
-                    'valueFormatter' => $formatter,
-				],
-			],
-		];
+		], $valuesAr);
 	}
 
 	public function getLocalFields()

@@ -44,6 +44,10 @@ class StringHelper
 
 	public static function out($str, $replaceAmp = false)
 	{
+	    if (!$str) {
+	        return '';
+        }
+
 		if ($replaceAmp) {
 			$str = str_replace('&', '&amp;', $str);
 		}

@@ -12,6 +12,10 @@ class Slug
 {
 	public static function prepare($source, $delimiter = '-', $lowerCase = true)
 	{
+	    if (!$source) {
+	        return '';
+        }
+
         $source = trim($source, ' \"\'');
         $source = str_replace([' ', '/', '\\', '_', '-'], $delimiter, $source);
         $source = preg_replace("/\&\#?[a-z0-9]+\;/", '', $source);

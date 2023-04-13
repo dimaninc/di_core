@@ -48,13 +48,22 @@ class Collection extends \diCollection
         return $cmsClass::$possibleLanguages;
     }
 
+    public static function getDefaultLanguage()
+    {
+        /** @var CMS $cmsClass */
+        $cmsClass = CMS::getClass();
+
+        return $cmsClass::$defaultLanguage;
+    }
+
     public function asArrayByLanguage()
     {
         $ar = array_fill_keys(static::getPossibleLanguages(), []);
 
         $this->map(function (Model $m) use (&$ar) {
-            $ar['ru'][$m->getName()] = $m->getValue();
-            $ar['en'][$m->getName()] = $m->getEnValue();
+            foreach (static::getPossibleLanguages() as $lang) {
+                $ar[$lang][$m->getName()] = $m->get(\diModel::getLocalizedFieldName('value', $lang));
+            }
         });
 
         return $ar;

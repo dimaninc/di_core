@@ -145,8 +145,7 @@ class diPagesNavy
 
 	protected function checkPrevNext($page)
 	{
-		if ($page < 1 || $page > $this->getTotalPages())
-		{
+		if ($page < 1 || $page > $this->getTotalPages()) {
 			return null;
 		}
 
@@ -229,8 +228,8 @@ class diPagesNavy
             : $pagesnavy_sortby_defaults_ar["*default"];
 		*/
 
-		$this->sortby = \diRequest::get($this->sortby_param); //, $sortby_defaults_ar["sortby"]
-		$this->dir = strtolower(\diRequest::get($this->dir_param)); //, $sortby_defaults_ar["dir"]
+		$this->sortby = \diRequest::get($this->sortby_param, ''); //, $sortby_defaults_ar["sortby"]
+		$this->dir = strtolower(\diRequest::get($this->dir_param, '')); //, $sortby_defaults_ar["dir"]
 
         /*
 		if (!in_array($this->dir, ["asc", "desc"])) {
@@ -330,8 +329,7 @@ class diPagesNavy
 
 		$cc = 0;
 		$rs2 = $this->getDb()->rs($this->table, "$where ORDER BY $orderby $dir,date $dir", "id");
-		while ($r2 = $this->getDb()->fetch($rs2))
-		{
+		while ($r2 = $this->getDb()->fetch($rs2)) {
 			$cc++;
 
 			if ($r2->id == $id)
@@ -371,8 +369,7 @@ class diPagesNavy
 
 		$r2 = $this->getDb()->r($this->table, ($this->where ? $this->where." and " : "WHERE ").$where2.$where_orderby);
 
-		if (!$r2)
-		{
+		if (!$r2) {
 			$r2 = $this->getDb()->r($this->table, $this->where.$where_orderby);
 			//echo "$position $this->where$where_orderby<br>";
 		}
@@ -382,12 +379,9 @@ class diPagesNavy
 
 	public function set_tpl($name, $value = "")
 	{
-		if (is_array($name))
-		{
+		if (is_array($name)) {
 			$this->tpl_ar = array_merge($this->tpl_ar, $name);
-		}
-		else
-		{
+		} else {
 			$this->tpl_ar[$name] = $value;
 		}
 
@@ -396,12 +390,9 @@ class diPagesNavy
 
 	public function set_str($name, $value = "")
 	{
-		if (is_array($name))
-		{
+		if (is_array($name)) {
 			$this->str_ar = array_merge($this->str_ar, $name);
-		}
-		else
-		{
+		} else {
 			$this->str_ar[$name] = $value;
 		}
 
@@ -424,8 +415,7 @@ class diPagesNavy
 
 	public function add_replaces_ar($ar)
 	{
-		foreach ($ar as $k => $v)
-		{
+		foreach ($ar as $k => $v) {
 			$this->add_replace($k, $v);
 		}
 
@@ -438,13 +428,11 @@ class diPagesNavy
 			? $base_uri
 			: "{$base_uri}{$this->glue}{$this->page_param}={$p}";
 
-		foreach ($this->replaces_ar as $k => $v)
-		{
+		foreach ($this->replaces_ar as $k => $v) {
 			if ($href == $k) $href = $v;
 		}
 
-		if ($this->pageHrefProcessor && is_callable($this->pageHrefProcessor))
-		{
+		if ($this->pageHrefProcessor && is_callable($this->pageHrefProcessor)) {
 			$href = call_user_func($this->pageHrefProcessor, $href);
 		}
 
@@ -457,26 +445,22 @@ class diPagesNavy
 		$sign = $this->reverse ? -1 : 1;
 		$this->glue = strpos($base_uri, "?") !== false ? "&" : "?";
 
-		if ($this->total_pages > 1)
-		{
+		if ($this->total_pages > 1) {
 			$_pages = [];
 			$_pages["start"] = $this->page - $pages_max_shown; // * $sign;
 			$_pages["finish"] = $this->page + $pages_max_shown; // * $sign;
 
-			if ($_pages["start"] < 1)
-			{
+			if ($_pages["start"] < 1) {
 				$_pages["start"] = 1;
 			}
 
-			if ($_pages["finish"] > $this->total_pages)
-			{
+			if ($_pages["finish"] > $this->total_pages) {
 				$_pages["finish"] = $this->total_pages;
 			}
 
 			$_pages["ar"] = [];
 
-			switch ($_pages["start"])
-			{
+			switch ($_pages["start"]) {
 				case 1:
 					break;
 
@@ -490,13 +474,11 @@ class diPagesNavy
 					break;
 			}
 
-			for ($i = $_pages["start"]; $i <= $_pages["finish"]; $i++)
-			{
+			for ($i = $_pages["start"]; $i <= $_pages["finish"]; $i++) {
 				$_pages["ar"][] = $i;
 			}
 
-			switch ($_pages["finish"])
-			{
+			switch ($_pages["finish"]) {
 				case $this->total_pages:
 					break;
 
@@ -512,16 +494,12 @@ class diPagesNavy
 
 			if ($this->reverse) $_pages["ar"] = array_reverse($_pages["ar"]);
 
-			for ($i = 0; $i < count($_pages["ar"]); $i++)
-			{
+			for ($i = 0; $i < count($_pages["ar"]); $i++) {
 				$p = $_pages["ar"][$i];
 
-				if ($p == $dots)
-				{
+				if ($p == $dots) {
 					$tmp_s = str_replace("{DOTS}", $dots, $this->tpl_ar["dots"]);
-				}
-				else
-				{
+				} else {
 					$tpl = $p == $this->page ? "selected" : "link";
 
 					$tmp_s = str_replace([
@@ -537,17 +515,14 @@ class diPagesNavy
 
 				$s .= $tmp_s;
 			}
-		}
-		else
-		{
+		} else {
 			$s = str_replace("{PAGE}", 1, $this->tpl_ar["selected"]);
 		}
 
 		$prev_page = $this->page - $sign;
 		$next_page = $this->page + $sign;
 
-		if ($this->reverse)
-		{
+		if ($this->reverse) {
 			$prev_tpl = $prev_page <= $this->total_pages ? "border-link" : "inactive";
 			$next_tpl = $next_page >= 1 ? "border-link" : "inactive";
 
@@ -565,9 +540,7 @@ class diPagesNavy
 				"{$this->str_ar["prev_page"]} {$this->str_ar["next_symb"]}",
 				$this->get_page_href($next_page, $base_uri),
 			], $this->tpl_ar[$next_tpl]) : "";
-		}
-		else
-		{
+		} else {
 			$prev_tpl = $prev_page >= 1 ? "border-link" : "inactive";
 			$next_tpl = $next_page <= $this->total_pages ? "border-link" : "inactive";
 
@@ -601,8 +574,7 @@ function diPagesNavy_wrong_page_error()
 {
 	global $Z;
 
-	if (isset($Z))
-	{
+	if (isset($Z)) {
 		$Z->errorNotFound();
 	}
 }
