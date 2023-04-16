@@ -50,7 +50,8 @@ class diCookie
 			$options['domain'] = static::getDomainForAll();
 		}
 
-		setcookie($name, $value, $options['expire'], $options['path'], $options['domain'], $options['secure'], $options['httpOnly']);
+		setcookie($name, $value, $options['expire'], $options['path'], $options['domain'],
+            (boolean)$options['secure'], (boolean)$options['httpOnly']);
 
 		if (static::DEBUG) {
 			if ($options['expire']) {
