@@ -99,7 +99,8 @@ class Fonts extends \diCore\Admin\BasePage
 				'default' => '',
 				'notes' => [
 					'используется в CSS. Только латиница, цифры, дефисы и подчёркивания',
-					'<a href="https://www.web-font-generator.com">Хороший конвертер шрифтов</a>'
+					'<a href="https://www.web-font-generator.com">Хороший конвертер шрифтов</a>',
+                    '<a href="https://transfonter.org/">Ещё один</a>'
 				],
 			],
 
