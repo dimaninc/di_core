@@ -965,13 +965,15 @@ class Submit
 	    $hasFilesOptions = $filesOptions || $this->getModel()->getPicStoreSettings(current($field));
 
 		// back compatibility
-		if (is_callable($filesOptions) || !$hasFilesOptions || (is_string($filesOptions) && $filesOptions))
-		{
+		if (
+		    is_callable($filesOptions)
+            || !$hasFilesOptions
+            || (is_string($filesOptions) && $filesOptions)
+        ) {
 			return $filesOptions
 				? $this->store_pics($field, $filesOptions)
 				: $this->store_pics($field);
 		}
-		//
 
 		$callback = [static::class, 'storeImageCallback'];
 
@@ -1020,10 +1022,20 @@ class Submit
                         ]);
                     }
 
+                    if (empty($opts['width'])) {
+                        $opts['width'] = $resultWidth;
+                    }
+
+                    if (empty($opts['height'])) {
+                        $opts['height'] = $resultHeight;
+                    }
+                    
+                    /*
                     $opts = extend($opts, [
                         'width' => $resultWidth,
                         'height' => $resultHeight,
                     ]);
+                    */
                 }
 
                 $callback($this, $f, $fieldFileOptions, $_FILES[$f]);
@@ -1448,7 +1460,6 @@ class Submit
             }
 
 			$suffix = Submit::getPreviewSuffix($opts['type']);
-
             $fileExt = StringHelper::fileExtension($obj->getData($field));
             $isSvg = in_array($fileExt, ['svg']);
             $resizeAvailable = !$isSvg;

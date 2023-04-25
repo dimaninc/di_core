@@ -310,8 +310,9 @@ class diImage
 
 	function get_thumb($mode, $w, $h = 0)
 	{
-		if (!$this->image)
-			return false;
+		if (!$this->image) {
+            return false;
+        }
 
 		if (($mode & DI_THUMB_EXPAND_SIZE_MASK) == DI_THUMB_EXPAND_TO_SIZE) {
 			if (
@@ -357,7 +358,6 @@ class diImage
 				$dst_img = imagecreatetruecolor($w, $h); //($dst_w, $dst_h);
 				break;
 		}
-		//
 
 		if ($dst_w >= $src_w || $dst_h >= $src_h) {
 			$bg = imagecolorallocate($dst_img, $this->bg_color[0], $this->bg_color[1], $this->bg_color[2]);
@@ -366,7 +366,6 @@ class diImage
 
 		// doing it
 		imagecopyresampled($dst_img, $this->image, $dst_x, $dst_y, $src_x, $src_y, $dst_w, $dst_h, $src_w, $src_h);
-		//
 
 		switch ($mode & DI_THUMB_MODE_MASK) {
 			case DI_THUMB_CROP:
@@ -390,8 +389,7 @@ class diImage
 
 				$pixel_over_white = imagecolorat($dst_img, 0, 0);
 
-				if ($pixel_over_black != $pixel_over_white)
-				{
+				if ($pixel_over_black != $pixel_over_white) {
 					imagefilledrectangle($dst_img, 0, 0, $w, $h, $this->transparent);
 					imagecopyresized($dst_img, $this->image, $dst_x, $dst_y, $src_x, $src_y, $dst_w, $dst_h, $src_w, $src_h);
 					imagecolortransparent($dst_img, $this->transparent);
@@ -409,20 +407,20 @@ class diImage
 
 	function make_thumb($mode, $dst_fn, $w, $h = 0, $sharpen = false, $wm = false, $wm_x_pos = "left", $wm_y_pos = "top")
 	{
-		if (!$this->image)
-		{
+		if (!$this->image) {
 			return false;
 		}
 
 		$dst_img = $this->get_thumb($mode, $w, $h);
 
-		if ($sharpen)
-		{
+		if ($sharpen) {
 			self::sharpMask($dst_img, 80, 0.5, 0);
 		}
 
-		if ($wm && is_file(get_absolute_path().diConfiguration::getFolder().diConfiguration::get($wm)))
-		{
+		if (
+		    $wm
+            && is_file(get_absolute_path().diConfiguration::getFolder().diConfiguration::get($wm))
+        ) {
 			$this->merge_wm_to($dst_img, get_absolute_path().diConfiguration::getFolder().diConfiguration::get($wm), $wm_x_pos, $wm_y_pos);
 		}
 
@@ -434,21 +432,19 @@ class diImage
 
 	function make_thumb_or_copy($mode, $dst_fn, $w, $h = 0, $sharpen = false, $wm = false, $wm_x_pos = "left", $wm_y_pos = "top")
 	{
-		if (!$this->image)
-		{
+		if (!$this->image) {
 			return false;
 		}
 
-		if (($this->w <= $w && $this->h <= $h) || (!$w && !$h))
-		{
-			if ($this->changed)
-			{
+		if (
+		    ($this->w <= $w && $this->h <= $h)
+            || (!$w && !$h)
+        ) {
+			if ($this->changed) {
 				$this->store($dst_fn);
 
 				return true;
-			}
-			elseif (!$sharpen && !$wm)
-			{
+			} elseif (!$sharpen && !$wm) {
 				copy($this->orig_fn, $dst_fn);
 
 				return true;
@@ -457,13 +453,15 @@ class diImage
 
 		$dst_img = $this->get_thumb($mode, $w, $h);
 
-		if ($sharpen)
-		{
+		if ($sharpen) {
 			self::sharpMask($dst_img, 80, 0.5, 0);
 		}
 
-		if ($wm && diConfiguration::exists($wm) && is_file(get_absolute_path().diConfiguration::getFolder().diConfiguration::get($wm)))
-		{
+		if (
+		    $wm
+            && diConfiguration::exists($wm)
+            && is_file(get_absolute_path().diConfiguration::getFolder().diConfiguration::get($wm))
+        ) {
 			$this->merge_wm_to($dst_img, get_absolute_path().diConfiguration::getFolder().diConfiguration::get($wm), $wm_x_pos, $wm_y_pos);
 		}
 
@@ -481,8 +479,7 @@ class diImage
 		$dst_img = imagecreate($this->w, $this->h);
 		$palette = array();
 
-		for ($c = 0; $c < 256; $c++)
-		{
+		for ($c = 0; $c < 256; $c++) {
 			$palette[$c] = imagecolorallocate($dst_img, $c, $c, $c);
 		}
 
@@ -663,24 +660,19 @@ class diImage
 		$dst_x = 0;
 		$dst_y = 0;
 
-		switch ($mode & DI_THUMB_MODE_MASK)
-		{
+		switch ($mode & DI_THUMB_MODE_MASK) {
 			case DI_THUMB_CROP:
 				$dst_w = $w;
 				$dst_h = $h;
 
-				if ($src_w / $src_h > $w / $h)
-				{
+				if ($src_w / $src_h > $w / $h) {
 					$src_w = round($w * ($src_h / $h));
-				}
-				else
-				{
+				} else {
 					$src_h = round($h * ($src_w / $w));
 				}
 
 				// x
-				switch ($mode & DI_THUMB_X_POSITION_MASK)
-				{
+				switch ($mode & DI_THUMB_X_POSITION_MASK) {
 					case DI_THUMB_LEFT:
 						$src_x = 0;
 						break;
@@ -694,11 +686,9 @@ class diImage
 						$src_x = round(($this->w - $src_w) / 2);
 						break;
 				}
-				//
 
 				// y
-				switch ($mode & DI_THUMB_Y_POSITION_MASK)
-				{
+				switch ($mode & DI_THUMB_Y_POSITION_MASK) {
 					case DI_THUMB_TOP:
 						$src_y = 0;
 						break;
@@ -712,7 +702,6 @@ class diImage
 						$src_y = round(($this->h - $src_h) / 2);
 						break;
 				}
-				//
 
 				break;
 
