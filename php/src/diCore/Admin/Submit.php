@@ -1441,14 +1441,10 @@ class Submit
 	 */
 	public static function storeImageCallback(&$obj, $field, $options, $F)
 	{
-	    $origType = isset($F['diOrigType'])
-            ? $F['diOrigType']
-            : null;
-
+	    $origType = $F['diOrigType'] ?? null;
 	    $mode = $origType !== null
             ? self::IMAGE_STORE_MODE_REBUILD
             : self::IMAGE_STORE_MODE_UPLOAD;
-
 		$needToUnlink = $mode == self::IMAGE_STORE_MODE_UPLOAD;
 
 		$I = new \diImage();
@@ -1484,6 +1480,10 @@ class Submit
 
             if (is_file($fn)) {
                 unlink($fn);
+
+                if (is_file($fn . '.webp')) {
+                    unlink($fn . '.webp');
+                }
             }
 
             if (

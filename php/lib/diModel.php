@@ -2214,12 +2214,9 @@ ENGINE = InnoDB;";
 		// own pics
 		$picsFolder = $this->getPicsFolder();
 
-		foreach ($fileFields as $field)
-		{
-			if ($this->has($field))
-			{
-				foreach ($subFolders as $subFolder)
-				{
+		foreach ($fileFields as $field) {
+			if ($this->has($field)) {
+				foreach ($subFolders as $subFolder) {
 					$killFiles[] = $picsFolder . $subFolder . $this->get($field);
 				}
 			}
@@ -2239,13 +2236,17 @@ ENGINE = InnoDB;";
 			return $this;
 		}
 
-		$killFiles = $this->getRelatedFilesList($field);
+		$filesToKill = $this->getRelatedFilesList($field);
 		$basePath = $this->getFileSystemBasePath(true, $field);
 
 		// killing time
-		foreach ($killFiles as $fn) {
+		foreach ($filesToKill as $fn) {
 			if ($fn && is_file($basePath . $fn)) {
 				unlink($basePath . $fn);
+
+				if (is_file($basePath . $fn . '.webp')) {
+                    unlink($basePath . $fn . '.webp');
+                }
 			}
 		}
 

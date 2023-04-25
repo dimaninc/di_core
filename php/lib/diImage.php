@@ -665,6 +665,10 @@ class diImage
 				$dst_w = $w;
 				$dst_h = $h;
 
+				if (!$w || !$h) {
+				    throw new \Exception('Both dimensions for cropping needed');
+                }
+
 				if ($src_w / $src_h > $w / $h) {
 					$src_w = round($w * ($src_h / $h));
 				} else {
@@ -707,14 +711,12 @@ class diImage
 
 			case DI_THUMB_FIT:
 			default:
-				if ($w && $dst_w > $w)
-				{
+				if ($w && $dst_w > $w) {
 					$dst_h = round($dst_h / ($dst_w / $w));
 					$dst_w = $w;
 				}
 
-				if ($h && $dst_h > $h)
-				{
+				if ($h && $dst_h > $h) {
 					$dst_w = round($dst_w / ($dst_h / $h));
 					$dst_h = $h;
 				}
@@ -722,17 +724,12 @@ class diImage
 				break;
 		}
 
-		if (($mode & DI_THUMB_EXPAND_SIZE_MASK) == DI_THUMB_EXPAND_TO_SIZE)
-		{
-			if ($dst_w < $w || $dst_h < $h)
-			{
-				if ($w / $h > $dst_w / $dst_w)
-				{
+		if (($mode & DI_THUMB_EXPAND_SIZE_MASK) == DI_THUMB_EXPAND_TO_SIZE) {
+			if ($dst_w < $w || $dst_h < $h) {
+				if ($w / $h > $dst_w / $dst_w) {
 					$dst_h = round($dst_h / ($dst_w / $w));
 					$dst_w = $w;
-				}
-				else
-				{
+				} else {
 					$dst_w = round($dst_w / ($dst_h / $h));
 					$dst_h = $h;
 				}
