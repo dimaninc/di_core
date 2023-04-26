@@ -745,6 +745,10 @@ class Form
 		return $this->AdminPage;
 	}
 
+    /**
+     * @deprecated
+     * @return \FastTemplate
+     */
 	public function getTpl()
 	{
 		return $this->getX()->getTpl();
