@@ -1,14 +1,25 @@
 <?php
 
+use diCore\Data\Http\HttpCode;
+use diCore\Base\Exception\HttpException;
 use diCore\Database\Connection;
 use diCore\Helper\StringHelper;
 use diCore\Helper\ArrayHelper;
 use diCore\Base\CMS;
 use diCore\Data\Config;
+use diCore\Data\Http\Response;
 
 class diBaseController
 {
-	/** @var \FastTemplate */
+    /**
+     * @var Response
+     */
+    protected $response;
+
+	/**
+     * @var \FastTemplate
+     * @deprecated
+     */
 	private $tpl;
 
 	/** @var \diTwig */
@@ -132,12 +143,11 @@ class diBaseController
 	public static function create($params = [])
 	{
 		$c = new static($params);
+		$c->act();
 
-		$result = $c->act();
-
-		if ($result) {
-			$c->defaultResponse($result);
-		}
+		//if ($c->getResponse()->hasReturnData()) {
+        $c->defaultResponse();
+		//}
 
 		return $c;
 	}
@@ -248,11 +258,10 @@ class diBaseController
 
 		/** @var diBaseController $c */
 		$c = new $className($params);
+		$c->act($action, $params);
 
-		$result = $c->act($action, $params);
-
-		if ($result && !$silent) {
-			$c->defaultResponse($result);
+		if (!$silent) {
+			$c->defaultResponse();
 		}
 
 		return $c;
@@ -260,6 +269,14 @@ class diBaseController
 
 	public static function autoError(\Exception $e)
 	{
+	    if ($e instanceof HttpException) {
+            static::makeResponse($e, true);
+        }
+
+	    if (Config::isRestApiSupported()) {
+            HttpCode::header(HttpCode::INTERNAL_SERVER_ERROR);
+        }
+
         StringHelper::printJson([
 			'ok' => false,
 			'message' => $e->getMessage(),
@@ -288,23 +305,39 @@ class diBaseController
 			if (method_exists($this, $methodName)) {
 			    $this->setParamsAr($paramsAr);
 
-				return $this->$methodName();
+                $this->getResponse()->setReturnData($this->$methodName());
+
+                return;
 			}
 		}
 
 		throw new \Exception("There is not action method for '$action' in " . get_class($this));
 	}
 
-	protected function defaultResponse($data, $die = false)
+	protected function defaultResponse($data = null, $die = false)
 	{
-		static::makeResponse($data, $die);
+		static::makeResponse($data ?? $this->getResponse(), $die);
 
 		return $this;
 	}
 
 	public static function makeResponse($data, $die = false)
 	{
-		if (is_scalar($data)) {
+	    if ($data instanceof Response) {
+            if (Config::isRestApiSupported()) {
+                HttpCode::header($data->getResponseCode());
+            }
+	        $data = $data->getReturnData();
+        }
+
+        if ($data instanceof HttpException) {
+            if (Config::isRestApiSupported()) {
+                HttpCode::header($data->getCode());
+            }
+            $data = $data->getBody();
+        }
+
+        if (is_scalar($data)) {
 			echo $data;
 		} else {
             StringHelper::printJson($data, !static::isCli());
@@ -377,6 +410,60 @@ class diBaseController
 
 		return $this;
 	}
+
+    public function getResponse()
+    {
+        if (!$this->response) {
+            $this->response = new Response();
+        }
+
+        return $this->response;
+    }
+
+    protected function standardResponse($statusCode, $returnData = [])
+    {
+        if (Config::isRestApiSupported()) {
+            $this->getResponse()
+                ->setResponseCode($statusCode);
+        }
+
+        return $returnData;
+    }
+
+	protected function okay($returnData = [])
+    {
+        return $this->standardResponse(HttpCode::OK, extend([
+            'ok' => true,
+        ], $returnData));
+    }
+
+    protected function notFound($returnData = [])
+    {
+        return $this->standardResponse(HttpCode::NOT_FOUND, extend([
+            'ok' => false,
+        ], $returnData));
+    }
+
+    protected function forbidden($returnData = [])
+    {
+        return $this->standardResponse(HttpCode::FORBIDDEN, extend([
+            'ok' => false,
+        ], $returnData));
+    }
+
+    protected function badRequest($returnData = [])
+    {
+        return $this->standardResponse(HttpCode::BAD_REQUEST, extend([
+            'ok' => false,
+        ], $returnData));
+    }
+
+    protected function internalServerError($returnData = [])
+    {
+        return $this->standardResponse(HttpCode::INTERNAL_SERVER_ERROR, extend([
+            'ok' => false,
+        ], $returnData));
+    }
 
 	public static function L($key, $lang = null)
 	{

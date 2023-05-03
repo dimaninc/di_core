@@ -22,6 +22,7 @@ class Config
 	const siteTitle = null;
     const siteLogo = null;
 	const apiQueryPrefix = '/api/';
+	const restApiSupported = false;
 	const folderForAssets = '';
 	const folderForUserAssets = 'uploads/';
 	const mainDomain = null;
@@ -143,6 +144,14 @@ class Config
 
 		return $class::apiQueryPrefix;
 	}
+
+    final public static function isRestApiSupported()
+    {
+        /** @var Config $class */
+        $class = self::getClass();
+
+        return $class::restApiSupported;
+    }
 
 	final public static function getMainDomain()
 	{

@@ -8,6 +8,8 @@
 
 namespace diCore\Base\Exception;
 
+use diCore\Data\Http\HttpCode;
+
 class HttpException extends \Exception
 {
 	/**
@@ -20,9 +22,9 @@ class HttpException extends \Exception
 	/**
 	 * Body message
 	 *
-	 * @var string
+	 * @var mixed
 	 */
-	private $body = '';
+	private $body;
 
 	/**
 	 * List of HTTP status codes
@@ -93,8 +95,7 @@ class HttpException extends \Exception
 	 */
 	public function __construct($statusCode = 500, $statusPhrase = null, array $headers = [])
 	{
-		if ($statusPhrase === null && isset($this->status[$statusCode]))
-		{
+		if ($statusPhrase === null && isset($this->status[$statusCode])) {
 			$statusPhrase = $this->status[$statusCode];
 		}
 
@@ -106,6 +107,42 @@ class HttpException extends \Exception
 			->addHeader($header)
 			->addHeaders($headers);
 	}
+
+    public static function fastCreate($code, $data = null)
+    {
+        $e = new static($code);
+
+        if ($data !== null) {
+            $e->setBody($data);
+        }
+
+        return $e;
+    }
+
+	public static function notFound($data = null)
+    {
+        return static::fastCreate(HttpCode::NOT_FOUND, $data);
+    }
+
+    public static function badRequest($data = null)
+    {
+        return static::fastCreate(HttpCode::BAD_REQUEST, $data);
+    }
+
+    public static function internalServerError($data = null)
+    {
+        return static::fastCreate(HttpCode::INTERNAL_SERVER_ERROR, $data);
+    }
+
+    public static function forbidden($data = null)
+    {
+        return static::fastCreate(HttpCode::FORBIDDEN, $data);
+    }
+
+    public static function unauthorized($data = null)
+    {
+        return static::fastCreate(HttpCode::UNAUTHORIZED, $data);
+    }
 
 	/**
 	 * Returns the list of additional headers
@@ -136,10 +173,8 @@ class HttpException extends \Exception
 	 */
 	public function addHeaders(array $headers)
 	{
-		foreach ($headers as $key => $header)
-		{
-			if (!is_int($key))
-			{
+		foreach ($headers as $key => $header) {
+			if (!is_int($key)) {
 				$header = $key . ': ' . $header;
 			}
 
@@ -152,7 +187,7 @@ class HttpException extends \Exception
 	/**
 	 * Return the body message.
 	 *
-	 * @return string
+	 * @return mixed
 	 */
 	public function getBody()
 	{
@@ -162,13 +197,13 @@ class HttpException extends \Exception
 	/**
 	 * Define a body message.
 	 *
-	 * @param string $body
+	 * @param mixed $body
 	 *
 	 * @return self
 	 */
 	public function setBody($body)
 	{
-		$this->body = (string)$body;
+		$this->body = $body;
 
 		return $this;
 	}

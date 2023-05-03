@@ -5,6 +5,7 @@ namespace diCore\Base;
 use diCore\Base\Exception\HttpException;
 use diCore\Data\Config;
 use diCore\Data\Http\HttpCode;
+use diCore\Data\Http\Response;
 use diCore\Data\Types;
 use diCore\Database\Connection;
 use diCore\Entity\Ad\Helper;
@@ -162,11 +163,10 @@ abstract class CMS
 	];
 	protected static $customSkipGetParams = [];
 
-	/**
-	 * @var int
-	 * Todo: make response object
-	 */
-	protected $responseCode = HttpCode::OK;
+    /**
+     * @var Response
+     */
+	protected $response;
 
 	private $routes = [];
 	private $origRoutes = [];
@@ -2791,12 +2791,21 @@ abstract class CMS
 		return $this->mainTarget ?: $this->getContentModel();
 	}
 
+	public function getResponse()
+    {
+        if (!$this->response) {
+            $this->response = new Response();
+        }
+
+        return $this->response;
+    }
+
 	/**
 	 * @return int
 	 */
 	public function getResponseCode()
 	{
-		return $this->responseCode;
+		return $this->getResponse()->getResponseCode();
 	}
 
 	/**
@@ -2804,7 +2813,7 @@ abstract class CMS
 	 */
 	public function isResponseCode($code)
 	{
-		return $this->getResponseCode() == $code;
+		return $this->getResponse()->isResponseCode($code);
 	}
 
 	/**
@@ -2813,7 +2822,7 @@ abstract class CMS
 	 */
 	public function setResponseCode($responseCode)
 	{
-		$this->responseCode = $responseCode;
+		$this->getResponse()->setResponseCode($responseCode);
 
 		return $this;
 	}
