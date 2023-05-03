@@ -23,6 +23,7 @@ class Config
     const siteLogo = null;
 	const apiQueryPrefix = '/api/';
 	const restApiSupported = false;
+    const restApiInAdminSupported = false;
 	const folderForAssets = '';
 	const folderForUserAssets = 'uploads/';
 	const mainDomain = null;
@@ -151,6 +152,14 @@ class Config
         $class = self::getClass();
 
         return $class::restApiSupported;
+    }
+
+    final public static function isRestApiInAdminSupported()
+    {
+        /** @var Config $class */
+        $class = self::getClass();
+
+        return $class::restApiInAdminSupported;
     }
 
 	final public static function getMainDomain()

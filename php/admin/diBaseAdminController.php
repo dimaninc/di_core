@@ -1,5 +1,7 @@
 <?php
 
+use diCore\Data\Config;
+
 class diBaseAdminController extends diBaseController
 {
 	public function __construct($params = [])
@@ -15,6 +17,11 @@ class diBaseAdminController extends diBaseController
             die();
         }
 	}
+
+	protected static function isRestApiSupported()
+    {
+        return Config::isRestApiInAdminSupported();
+    }
 
 	protected function redirect()
 	{

@@ -48,6 +48,11 @@ class diBaseController
 		$this->paramsAr = $params;
 	}
 
+    protected static function isRestApiSupported()
+    {
+        return Config::isRestApiSupported();
+    }
+
 	/**
 	 * @return \diAdminUser
 	 */
@@ -273,7 +278,7 @@ class diBaseController
             static::makeResponse($e, true);
         }
 
-	    if (Config::isRestApiSupported()) {
+	    if (static::isRestApiSupported()) {
             HttpCode::header(HttpCode::INTERNAL_SERVER_ERROR);
         }
 
@@ -324,14 +329,14 @@ class diBaseController
 	public static function makeResponse($data, $die = false)
 	{
 	    if ($data instanceof Response) {
-            if (Config::isRestApiSupported()) {
+            if (static::isRestApiSupported()) {
                 HttpCode::header($data->getResponseCode());
             }
 	        $data = $data->getReturnData();
         }
 
         if ($data instanceof HttpException) {
-            if (Config::isRestApiSupported()) {
+            if (static::isRestApiSupported()) {
                 HttpCode::header($data->getCode());
             }
             $data = $data->getBody();
@@ -422,7 +427,7 @@ class diBaseController
 
     protected function standardResponse($statusCode, $returnData = [])
     {
-        if (Config::isRestApiSupported()) {
+        if (static::isRestApiSupported()) {
             $this->getResponse()
                 ->setResponseCode($statusCode);
         }
