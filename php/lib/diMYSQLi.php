@@ -156,7 +156,7 @@ class diMYSQLi extends diMYSQL
 
 	public function escape_string($s, $binary = false)
 	{
-		return $this->link->escape_string($s);
+		return $s ? $this->link->escape_string($s) : $s;
 	}
 
 	protected function __set_charset($name)
