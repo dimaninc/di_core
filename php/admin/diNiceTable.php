@@ -88,7 +88,6 @@ class diNiceTable
 	public $lng;
 	public $table;				// mysql table
 	public $page;				// current page
-	public $lite;
 	private $collapsedIds;
 
 	private $anchorPlaced; // this gets reset on every ->openRow()
@@ -108,8 +107,6 @@ class diNiceTable
 	 */
 	public function __construct($table = "", $pn = false, $lng = "ru")
 	{
-		global $lite, $db;
-
 		if ($table instanceof \diAdminList) {
 		    $this->List = $table;
             $this->table = $this->List->getTable();
@@ -117,7 +114,7 @@ class diNiceTable
             $this->table = $table;
         }
 
-		$this->db = $db;
+        $this->db = \diModel::createForTable($this->table)::getConnection()->getDb();
 
 		if (is_object($pn)) {
 			$this->pn = $pn;
@@ -134,7 +131,6 @@ class diNiceTable
 
 		$this->lng = $lng;
 
-		$this->lite = !empty($lite) ? $lite : 0;
 		$this->collapsedIds = isset($_COOKIE["list_collapsed"][$this->table])
             ? explode(",", $_COOKIE["list_collapsed"][$this->table])
             : [];
@@ -246,7 +242,6 @@ class diNiceTable
 	{
 		$href = Base::getPageUri($this->getFormPathBase(), 'form', [
 			'id' => $this->getRowModel()->getId(),
-			// 'lite' => $this->lite,
 			// 'edit' => 1,
 		]);
 
@@ -477,10 +472,6 @@ class diNiceTable
 			'id' => $this->getRowModel()->getId(),
 			//'edit' => 1,
 		];
-
-		if ($this->lite) {
-			$queryParams['lite'] = $this->lite;
-		}
 
 		$href = Base::getPageUri($this->getFormPathBase(), 'form', $queryParams);
 

@@ -437,10 +437,6 @@ class Form
 
 	public function __construct($table, $id = 0, $module_id = 0)
 	{
-		global $lite, $db;
-
-		$this->db = $db;
-
 		if (gettype($table) == 'object') {
 			$this->AdminPage = $table;
 			$this->table = $this->AdminPage->getTable();
@@ -452,7 +448,7 @@ class Form
 			$this->module_id = $module_id;
 		}
 
-		$this->lite = !empty($lite) ? $lite : 0;
+		$this->db = \diModel::createForTable($this->table)::getConnection()->getDb();
 
 		if (true || \diRequest::get('edit', 0) || !$id) {
 			$this->static_mode = false;

@@ -61,15 +61,11 @@ class diPagesNavy
 
 	public $wrong_page_error_handler = "diPagesNavy_wrong_page_error";
 	public $glue = "&";
-	public $replaces_ar = array();
+	public $replaces_ar = [];
 
 	public function __construct($tableOrCollection, $perPageOrPageParam = 1, $whereOrTotalRecords = "",
 	                            $reverse = false, $page_param = self::PAGE_PARAM)
 	{
-	    global $db;
-
-	    $this->db = $db;
-
 		$this->init($tableOrCollection, $perPageOrPageParam, $whereOrTotalRecords, $reverse, $page_param);
 	}
 
@@ -169,7 +165,7 @@ class diPagesNavy
 
 	public function init($table, $per_page = 1, $where = '', $reverse = false, $page_param = null)
 	{
-		global $pagesnavy_sortby_ar, $pagesnavy_sortby_defaults_ar;
+		global $pagesnavy_sortby_ar;
 
 		if ($table instanceof \diCollection) {
 			$this->col = $table;
@@ -179,7 +175,10 @@ class diPagesNavy
 			$per_page = $this->col->getPageSize();
 			$where = $this->col->getRealCount();
 			$table = $table->getTable();
-		}
+			$this->db = $this->col::db();
+		} else {
+		    $this->db = \diModel::createForTable($table)::getConnection()->getDb();
+        }
 
 		if (is_array($reverse)) {
 			$this->init_on_last_page = isset($reverse["init_on_last_page"]) ? $reverse["init_on_last_page"] : false;
@@ -268,7 +267,6 @@ class diPagesNavy
         }
 
 		$this->start = ($this->reverse ? $this->total_pages - $this->page : $this->page - 1) * $this->per_page;
-		//
 
 		return $this;
 	}

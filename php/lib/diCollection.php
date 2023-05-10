@@ -847,18 +847,16 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 	 */
 	protected function getDb()
 	{
-		return Connection::get(static::connection_name ?: Connection::DEFAULT_NAME)
-			->getDb();
+		return static::db();
 	}
 
 	/**
 	 * @return diDB
 	 */
-	protected static function db()
+	public static function db()
 	{
-		global $db;
-
-		return $db;
+        return Connection::get(static::connection_name ?: Connection::DEFAULT_NAME)
+            ->getDb();
 	}
 
 	public function getTable()

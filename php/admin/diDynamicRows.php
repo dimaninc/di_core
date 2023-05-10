@@ -88,10 +88,6 @@ class diDynamicRows
 
     public function __construct($AdminPage, $field, $oldField = null)
     {
-        global $db;
-
-        $this->db = $db;
-
         if (gettype($AdminPage) == 'object') {
             $this->AdminPage = $AdminPage;
             $this->table = $this->AdminPage->getTable();
@@ -110,6 +106,7 @@ class diDynamicRows
             $this->info_ar = $$_all_fields;
         }
 
+        $this->db = \diModel::createForTable($this->table)::getConnection()->getDb();
         $this->static_mode = false;
 
         $this->abs_path = Config::getPublicFolder(); //diPaths::fileSystem();

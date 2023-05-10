@@ -146,8 +146,6 @@ class diAdminFilters
 
 	public function __construct($table, $sortBy = 'id', $dir = 'ASC', $possibleSortByAr = [])
 	{
-		global $db;
-
 		if (gettype($table) === 'object') {
 			$this->AdminPage = $table;
 
@@ -157,7 +155,7 @@ class diAdminFilters
 			$this->table = $table;
 		}
 
-		self::$db = $db;
+		self::$db = \diModel::createForTable($this->table)::getConnection()->getDb();
 
 		$this->gatherInitialData($sortBy, $dir, $possibleSortByAr);
 	}
@@ -401,7 +399,7 @@ class diAdminFilters
 		    $field = $a['field'];
 		    $title = $a['title']
                 ?: ArrayHelper::get($this->AdminPage->getFormFields(), $field . '.title')
-                ?: Form::getFieldTitle($field, $this->AdminPage->getFieldProperty($field))
+                ?: Form::getFieldTitle($field, $this->AdminPage->getFieldProperty($field), $this->language)
                 ?: $field;
 
 			$filterRowsAr[] = $this->getRowHtml(
