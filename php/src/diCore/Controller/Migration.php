@@ -6,27 +6,43 @@ use diCore\Database\Tool\MigrationsManager;
 
 class Migration extends \diBaseAdminController
 {
-	/** @var MigrationsManager */
-	private $Manager;
+    /** @var MigrationsManager */
+    private $Manager;
 
-	public function __construct($params = [])
-	{
-		parent::__construct($params);
+    public function __construct($params = [])
+    {
+        parent::__construct($params);
 
-		$this->Manager = MigrationsManager::basicCreate();
-	}
+        $this->Manager = MigrationsManager::basicCreate();
+    }
 
-	public function upAction()
-	{
-		$this->Manager->run($this->param(0), true);
+    public function upAction()
+    {
+        $this->Manager->run($this->param(0), true);
 
-		$this->redirect();
-	}
+        $this->redirect();
+    }
 
-	public function downAction()
-	{
-		$this->Manager->run($this->param(0), false);
+    public function downAction()
+    {
+        $this->Manager->run($this->param(0), false);
 
-		$this->redirect();
-	}
+        $this->redirect();
+    }
+
+    /**
+     * Runs all new local project migrations
+     */
+    public function upNewAction()
+    {
+        // todo
+    }
+
+    /**
+     * Rollbacks last migration
+     */
+    public function downLastAction()
+    {
+        // todo
+    }
 }
