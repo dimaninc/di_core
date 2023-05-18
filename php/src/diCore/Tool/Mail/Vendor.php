@@ -16,6 +16,7 @@ class Vendor extends SimpleContainer
 	const yandex = 2;
 	const microsoft = 3;
     const mailru = 4;
+    const masterhost = 5;
 	const own = 50;
 
 	public static $titles = [
@@ -23,6 +24,7 @@ class Vendor extends SimpleContainer
 		self::yandex => 'Yandex',
 		self::microsoft => 'Microsoft',
         self::mailru => 'Mail.ru',
+        self::masterhost => 'Masterhost',
 		self::own => 'Own SMTP',
 	];
 
@@ -31,6 +33,7 @@ class Vendor extends SimpleContainer
 		self::yandex => 'yandex',
 		self::microsoft => 'microsoft',
         self::mailru => 'mailru',
+        self::masterhost => 'masterhost',
 		self::own => 'own',
 	];
 
@@ -39,6 +42,7 @@ class Vendor extends SimpleContainer
 		self::yandex => 'smtp.yandex.ru',
 		self::microsoft => 'smtp.office365.com',
         self::mailru => 'ssl://smtp.mail.ru',
+        self::masterhost => 'smtp.masterhost.ru',
 	];
 
 	protected static $smtpPorts = [
@@ -55,6 +59,10 @@ class Vendor extends SimpleContainer
 			false => 25,
 		],
         self::mailru => [
+            true => 465,
+            false => 25,
+        ],
+        self::masterhost => [
             true => 465,
             false => 25,
         ],
