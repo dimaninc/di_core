@@ -35,7 +35,19 @@ class Migration extends \diBaseAdminController
      */
     public function upNewAction()
     {
-        // todo
+        try {
+            $migrationsExecuted = $this->Manager->upNew();
+        } catch (\Exception $e) {
+            return $this->internalServerError([
+                'message' => $e->getMessage(),
+            ]);
+        }
+
+        $this->redirect();
+
+        return [
+            'migrationsExecuted' => $migrationsExecuted,
+        ];
     }
 
     /**
@@ -43,6 +55,18 @@ class Migration extends \diBaseAdminController
      */
     public function downLastAction()
     {
-        // todo
+        try {
+            $migrationRolledBack = $this->Manager->downLast();
+        } catch (\Exception $e) {
+            return $this->internalServerError([
+                'message' => $e->getMessage(),
+            ]);
+        }
+
+        $this->redirect();
+
+        return [
+            'migrationRolledBack' => $migrationRolledBack,
+        ];
     }
 }

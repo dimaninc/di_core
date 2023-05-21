@@ -17,391 +17,395 @@ use diCore\Entity\DiMigrationsLog\Model;
 
 class Migrations extends \diCore\Admin\BasePage
 {
-	protected $options = [
-		'filters' => [
-			'defaultSorter' => [
-				'sortBy' => 'date',
-				'dir' => 'DESC',
-			],
-		],
-	];
+    protected $options = [
+        'filters' => [
+            'defaultSorter' => [
+                'sortBy' => 'date',
+                'dir' => 'DESC',
+            ],
+        ],
+    ];
 
-	/** @var MigrationsManager */
-	private $Manager;
+    /** @var MigrationsManager */
+    private $Manager;
 
-	private $pseudoTable = 'migrations';
+    const basePath = 'migrations';
 
-	protected function initTable()
-	{
-		$this->setTable($this->pseudoTable);
+    private $pseudoTable = self::basePath;
 
-		switch ($this->getMethod()) {
-			case 'log':
-				$this->setTable($this->getManager()::logTable);
-				break;
-		}
-	}
+    protected function initTable()
+    {
+        $this->setTable($this->pseudoTable);
 
-	public function getManager()
-	{
-	    if (!$this->Manager) {
+        switch ($this->getMethod()) {
+            case 'log':
+                $this->setTable($this->getManager()::logTable);
+                break;
+        }
+    }
+
+    public function getManager()
+    {
+        if (!$this->Manager) {
             $this->Manager = MigrationsManager::basicCreate();
         }
 
-		return $this->Manager;
-	}
+        return $this->Manager;
+    }
 
-	protected function beforeRenderLog()
-	{
-		parent::beforeRenderList();
+    protected function beforeRenderLog()
+    {
+        parent::beforeRenderList();
 
-		return true;
-	}
+        return true;
+    }
 
-	protected function afterRenderLog()
-	{
-		parent::afterRenderList();
-	}
+    protected function afterRenderLog()
+    {
+        parent::afterRenderList();
+    }
 
-	public function getMethodCaption($action)
-	{
-		if ($action == 'log') {
-			return 'Журнал';
-		}
+    public function getMethodCaption($action)
+    {
+        if ($action == 'log') {
+            return 'Журнал';
+        }
 
-		return parent::getMethodCaption($action);
-	}
+        return parent::getMethodCaption($action);
+    }
 
-	public function renderLog()
-	{
-		$this->getList()->addColumns([
-			'id' => 'ID',
-			'idx' => [
-				'headAttrs' => [
-					'width' => '10%',
-				],
-				'noHref' => true,
-			],
-			'name' => [
-				'headAttrs' => [
-					'width' => '50%',
-				],
-				'noHref' => true,
-			],
-			'admin_id' => [
-				'title' => 'Применил админ',
-				'value' => function(Model $l) {
-					/** @var \diCore\Entity\Admin\Model $admin */
-					$admin = CollectionCache::getModel(\diTypes::admin, $l->getAdminId());
+    public function renderLog()
+    {
+        $this->getList()->addColumns([
+            'id' => 'ID',
+            'idx' => [
+                'headAttrs' => [
+                    'width' => '10%',
+                ],
+                'noHref' => true,
+            ],
+            'name' => [
+                'headAttrs' => [
+                    'width' => '50%',
+                ],
+                'noHref' => true,
+            ],
+            'admin_id' => [
+                'title' => 'Применил админ',
+                'value' => function (Model $l) {
+                    /** @var \diCore\Entity\Admin\Model $admin */
+                    $admin = CollectionCache::getModel(
+                        \diTypes::admin,
+                        $l->getAdminId()
+                    );
 
-					return $admin->exists() ? $admin->getLogin() : '&ndash;';
-				},
-				'headAttrs' => [
-					'width' => '30%',
-				],
-				'noHref' => true,
-			],
-			'direction' => [
-				'title' => '',
-				'value' => function (Model $l) {
-					return $l->getDirection() == Migration::UP ? '+' : '-';
-				},
-				'noHref' => true,
-			],
-			'date' => [
-				'title' => 'Когда',
-				'value' => function (Model $l) {
-					return \diDateTime::simpleFormat($l->getDate());
-				},
-				'attrs' => [],
-				'headAttrs' => [
-					'width' => '10%',
-				],
-				'bodyAttrs' => [
-					'class' => 'dt',
-				],
-				'noHref' => true,
-			],
-			//'#del' => '',
-		]);
-	}
+                    return $admin->exists() ? $admin->getLogin() : '&ndash;';
+                },
+                'headAttrs' => [
+                    'width' => '30%',
+                ],
+                'noHref' => true,
+            ],
+            'direction' => [
+                'title' => '',
+                'value' => function (Model $l) {
+                    return $l->getDirection() == Migration::UP ? '+' : '-';
+                },
+                'noHref' => true,
+            ],
+            'date' => [
+                'title' => 'Когда',
+                'value' => function (Model $l) {
+                    return \diDateTime::simpleFormat($l->getDate());
+                },
+                'attrs' => [],
+                'headAttrs' => [
+                    'width' => '10%',
+                ],
+                'bodyAttrs' => [
+                    'class' => 'dt',
+                ],
+                'noHref' => true,
+            ],
+            //'#del' => '',
+        ]);
+    }
 
-	protected function cacheDataForList()
-	{
-		parent::cacheDataForList();
+    protected function cacheDataForList()
+    {
+        parent::cacheDataForList();
 
-		CollectionCache::addManual(\diTypes::admin, 'id', $this->getListCollection()->map('admin_id'));
+        CollectionCache::addManual(
+            \diTypes::admin,
+            'id',
+            $this->getListCollection()->map('admin_id')
+        );
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function renderList()
-	{
-		$that = $this;
+    public function renderList()
+    {
+        $that = $this;
 
-		$this->getList()->addColumns([
-			'id' => 'ID',
-			'description' => [
-				'title' => 'Описание',
-				'headAttrs' => [
-					'width' => '60%',
-				],
+        $this->getList()->addColumns([
+            'id' => 'ID',
+            'description' => [
+                'title' => 'Описание',
+                'headAttrs' => [
+                    'width' => '60%',
+                ],
                 'bodyAttrs' => [
                     'class' => function (\diModel $m) {
-                        return $m->has('folder')
-                            ? 'id-bg'
-                            : '';
+                        return $m->has('folder') ? 'id-bg' : '';
                     },
                 ],
-				'noHref' => true,
-			],
-			'subFolder' => [
-				'title' => 'Папка',
-				'headAttrs' => [
-					'width' => '10%',
-				],
+                'noHref' => true,
+            ],
+            'subFolder' => [
+                'title' => 'Папка',
+                'headAttrs' => [
+                    'width' => '10%',
+                ],
                 'bodyAttrs' => [
                     'class' => function (\diModel $m) {
-                        return $m->has('folder')
-                            ? 'id-bg'
-                            : 'lite';
+                        return $m->has('folder') ? 'id-bg' : 'lite';
                     },
                 ],
-				'noHref' => true,
-			],
-			'date_created' => [
-				'title' => 'Дата создания',
-				'value' => function(\diModel $m) {
-					if ($m->has('folder')) {
-						return '';
-					}
+                'noHref' => true,
+            ],
+            'date_created' => [
+                'title' => 'Дата создания',
+                'value' => function (\diModel $m) {
+                    if ($m->has('folder')) {
+                        return '';
+                    }
 
-					$ar = str_split($m->getId(), 2);
+                    $ar = str_split($m->getId(), 2);
 
-					return "{$ar[3]}.{$ar[2]}.{$ar[0]}{$ar[1]} {$ar[4]}:{$ar[5]}";
-				},
-				'attrs' => [],
-				'headAttrs' => [
-					'width' => '10%',
-				],
+                    return "{$ar[3]}.{$ar[2]}.{$ar[0]}{$ar[1]} {$ar[4]}:{$ar[5]}";
+                },
+                'attrs' => [],
+                'headAttrs' => [
+                    'width' => '10%',
+                ],
                 'bodyAttrs' => [
                     'class' => function (\diModel $m) {
-                        return $m->has('folder')
-                            ? 'id-bg'
-                            : 'dt';
+                        return $m->has('folder') ? 'id-bg' : 'dt';
                     },
                 ],
-				'noHref' => true,
-			],
-			'date_modified' => [
-				'title' => 'Дата модификации',
-				'value' => function(\diModel $m) {
-					if ($m->has('folder')) {
-						return '';
-					}
+                'noHref' => true,
+            ],
+            'date_modified' => [
+                'title' => 'Дата модификации',
+                'value' => function (\diModel $m) {
+                    if ($m->has('folder')) {
+                        return '';
+                    }
 
-					return \diDateTime::simpleFormat($m->get('date'));
-				},
-				'attrs' => [],
-				'headAttrs' => [
-					'width' => '10%',
-				],
+                    return \diDateTime::simpleFormat($m->get('date'));
+                },
+                'attrs' => [],
+                'headAttrs' => [
+                    'width' => '10%',
+                ],
                 'bodyAttrs' => [
                     'class' => function (\diModel $m) {
-                        return $m->has('folder')
-                            ? 'id-bg'
-                            : 'dt';
+                        return $m->has('folder') ? 'id-bg' : 'dt';
                     },
                 ],
-				'noHref' => true,
-			],
-			'date_applied' => [
-				'title' => 'Дата наката',
-				'value' => function(\diModel $m) {
-					if ($m->has('folder')) {
-						return '';
-					}
+                'noHref' => true,
+            ],
+            'date_applied' => [
+                'title' => 'Дата наката',
+                'value' => function (\diModel $m) {
+                    if ($m->has('folder')) {
+                        return '';
+                    }
 
-					$date = $this->getManager()->whenExecuted($m->getId());
+                    $date = $this->getManager()->whenExecuted($m->getId());
 
-					return $date ? \diDateTime::simpleFormat($date) : '&ndash;';
-				},
-				'attrs' => [],
-				'headAttrs' => [
-					'width' => '10%',
-				],
+                    return $date ? \diDateTime::simpleFormat($date) : '&ndash;';
+                },
+                'attrs' => [],
+                'headAttrs' => [
+                    'width' => '10%',
+                ],
                 'bodyAttrs' => [
                     'class' => function (\diModel $m) {
-                        return $m->has('folder')
-                            ? 'id-bg'
-                            : 'dt';
+                        return $m->has('folder') ? 'id-bg' : 'dt';
                     },
                 ],
-				'noHref' => true,
-			],
-			'#play' => [
-				'active' => function(\diModel $m) {
-					if ($m->has('folder')) {
-						return false;
-					}
+                'noHref' => true,
+            ],
+            '#play' => [
+                'active' => function (\diModel $m) {
+                    if ($m->has('folder')) {
+                        return false;
+                    }
 
-					return !$this->getManager()->wasExecuted($m->getId());
-				},
-				'href' => \diLib::getAdminWorkerPath('migration', 'up', '%id%') . '?back=' . urlencode($_SERVER['REQUEST_URI']),
-				'onclick' => "return confirm('Накатить миграцию?');",
-			],
-			"#rollback" => [
-				"active" => function(\diModel $m) {
-					if ($m->has("folder")) {
-						return false;
-					}
+                    return !$this->getManager()->wasExecuted($m->getId());
+                },
+                'href' =>
+                    \diLib::getAdminWorkerPath('migration', 'up', '%id%') .
+                    '?back=' .
+                    urlencode($_SERVER['REQUEST_URI']),
+                'onclick' => "return confirm('Накатить миграцию?');",
+            ],
+            '#rollback' => [
+                'active' => function (\diModel $m) {
+                    if ($m->has('folder')) {
+                        return false;
+                    }
 
-					return $this->getManager()->wasExecuted($m->getId());
-				},
-				"href" => \diLib::getAdminWorkerPath("migration", "down", "%id%") . "?back=" . urlencode($_SERVER["REQUEST_URI"]),
-				"onclick" => "return confirm('Откатить миграцию?');",
-			],
-		]);
+                    return $this->getManager()->wasExecuted($m->getId());
+                },
+                'href' =>
+                    \diLib::getAdminWorkerPath('migration', 'down', '%id%') .
+                    '?back=' .
+                    urlencode($_SERVER['REQUEST_URI']),
+                'onclick' => "return confirm('Откатить миграцию?');",
+            ],
+        ]);
 
-		foreach ($this->getManager()::getFolderIds() as $folderId) {
-			// printing folder
-			$folder = $this->getManager()->getFolderById($folderId);
+        foreach ($this->getManager()::getFolderIds() as $folderId) {
+            // printing folder
+            $folder = $this->getManager()->getFolderById($folderId);
+            $this->getList()->addRow([
+                'id' => '-',
+                'description' => $folder,
+                'folder' => true,
+                'subFolder' => '',
+            ]);
 
-			$r = (object)[
-				'id' => '-',
-				'description' => $folder,
-				'folder' => true,
-				'subFolder' => '',
-			];
+            $migrations = $this->getManager()->getMigrationsInFolder($folder, [
+                'sort' => 'desc',
+            ]);
 
-			$this->getList()->addRow($r);
-			//
+            foreach ($migrations as $i => $fn) {
+                $idx = $this->getManager()::getIdxByFileName($fn);
 
-			$migrations = $this->getManager()::getMigrationsInFolder($folder);
-			usort($migrations, function($a, $b) use ($that) {
-				return $this->getManager()::getIdxByFileName($a) < $this->getManager()::getIdxByFileName($b) ? 1 : -1;
-			});
+                /** @var Migration $className */
+                $className = $this->getManager()::getClassNameByIdx($idx);
+                require_once $fn;
 
-			foreach ($migrations as $i => $fn) {
-				$idx = $this->getManager()::getIdxByFileName($fn);
+                $subFolder = basename(dirname($fn));
+                if ($subFolder == 'migrations') {
+                    $subFolder = '';
+                }
 
-				/** @var Migration $className */
-				$className = $this->getManager()::getClassNameByIdx($idx);
-				require_once $fn;
+                $this->getList()->addRow([
+                    'id' => $idx,
+                    'description' => \diDB::_out($className::$name),
+                    'date' => filemtime($fn),
+                    'subFolder' => $subFolder,
+                ]);
+            }
+        }
+    }
 
-				$subFolder = basename(dirname($fn));
-				if ($subFolder == 'migrations') {
-					$subFolder = '';
-				}
+    public function printList()
+    {
+        if ($this->getMethod() != 'list') {
+            parent::printList();
+        }
+    }
 
-				$r = [
-					'id' => $idx,
-					'description' => \diDB::_out($className::$name),
-					'date' => filemtime($fn),
-					'subFolder' => $subFolder,
-				];
+    public function renderForm()
+    {
+        $this->getTpl()
+            ->define('`migrations/form', ['after_form'])
+            ->assign(
+                [
+                    'ACTION' => Base::getPageUri($this->pseudoTable, 'submit'),
+                ],
+                'ADMIN_FORM_'
+            );
 
-				$this->getList()->addRow($r);
-			}
-		}
-	}
+        $rawFolders = $this->getManager()::getSubFolders(
+            $this->getManager()::FOLDER_LOCAL
+        );
+        $folders = [
+            '' => '/',
+        ];
 
-	public function printList()
-	{
-		if ($this->getMethod() != 'list') {
-			parent::printList();
-		}
-	}
+        $start = $this->getManager()->getLocalFolder() . '/';
 
-	public function renderForm()
-	{
-		$this->getTpl()
-			->define('`migrations/form', [
-				'after_form',
-			])
-			->assign([
-				'ACTION' => Base::getPageUri($this->pseudoTable, 'submit'),
-			], 'ADMIN_FORM_');
+        foreach ($rawFolders as $f) {
+            $f = mb_substr($f, mb_strlen($start));
 
-		$rawFolders = $this->getManager()::getSubFolders($this->getManager()::FOLDER_LOCAL);
-		$folders = [
-			'' => '/',
-		];
+            $folders[$f] = $f;
+        }
 
-		$start = $this->getManager()->getLocalFolder() . '/';
+        $folders['*'] = 'Создать папку';
 
-		foreach ($rawFolders as $f) {
-			$f = mb_substr($f, mb_strlen($start));
+        $this->getForm()
+            ->setInputSuffix('folder', Form::INPUT_SUFFIX_NEW_FIELD)
+            ->setSelectFromArrayInput('folder', $folders);
+    }
 
-			$folders[$f] = $f;
-		}
+    public function submitForm()
+    {
+        $this->getSubmit()
+            ->processData('idx', function ($idx) {
+                return preg_replace('/[^a-z0-9_]/i', '', $idx);
+            })
+            ->processData('folder', function ($folder) {
+                if ($folder == '*') {
+                    $folder = \diRequest::post(
+                        'folder' . Form::NEW_FIELD_SUFFIX,
+                        ''
+                    );
+                }
 
-		$folders['*'] = 'Создать папку';
+                return preg_replace('/[^a-z0-9_]/i', '', $folder);
+            });
 
-		$this->getForm()
-			->setInputSuffix('folder', Form::INPUT_SUFFIX_NEW_FIELD)
-			->setSelectFromArrayInput('folder', $folders);
-	}
+        $this->getManager()->createMigration(
+            $this->getSubmit()->getData('idx'),
+            $this->getSubmit()->getData('name'),
+            $this->getSubmit()->getData('folder')
+        );
+    }
 
-	public function submitForm()
-	{
-		$this->getSubmit()
-			->processData('idx', function ($idx) {
-				return preg_replace('/[^a-z0-9_]/i', '', $idx);
-			})
-			->processData('folder', function ($folder) {
-				if ($folder == '*') {
-					$folder = \diRequest::post('folder' . Form::NEW_FIELD_SUFFIX, '');
-				}
+    protected function afterSubmitForm()
+    {
+        $this->redirectAfterSubmit();
+    }
 
-				return preg_replace('/[^a-z0-9_]/i', '', $folder);
-			});
+    public function getFormFields()
+    {
+        return [
+            'idx' => [
+                'type' => 'string',
+                'title' => 'Идентификатор',
+                'default' => date('YmdHis'),
+            ],
 
-		$this->getManager()->createMigration(
-			$this->getSubmit()->getData('idx'),
-			$this->getSubmit()->getData('name'),
-			$this->getSubmit()->getData('folder')
-		);
-	}
+            'name' => [
+                'type' => 'string',
+                'title' => 'Название',
+                'default' => '',
+            ],
 
-	protected function afterSubmitForm()
-	{
-		$this->redirectTo(Base::getPageUri($this->pseudoTable, 'list'));
-	}
+            'folder' => [
+                'type' => 'string',
+                'title' => 'Папка',
+                'default' => '',
+            ],
+        ];
+    }
 
-	public function getFormFields()
-	{
-		return [
-			'idx' => [
-				'type' => 'string',
-				'title' => 'Идентификатор',
-				'default' => date('YmdHis'),
-			],
+    public function getLocalFields()
+    {
+        return [];
+    }
 
-			'name' => [
-				'type' => 'string',
-				'title' => 'Название',
-				'default' => '',
-			],
-
-			'folder' => [
-				'type' => 'string',
-				'title' => 'Папка',
-				'default' => '',
-			],
-		];
-	}
-
-	public function getLocalFields()
-	{
-		return [];
-	}
-
-	public function getModuleCaption()
-	{
-		return [
-			'ru' => 'Миграции',
-			'en' => 'Migrations',
-		];
-	}
+    public function getModuleCaption()
+    {
+        return [
+            'ru' => 'Миграции',
+            'en' => 'Migrations',
+        ];
+    }
 }

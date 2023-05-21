@@ -15,94 +15,132 @@ class MigrationsManager
 {
     use BasicCreate;
 
-	const logTable = 'di_migrations_log';
-	const dirChmod = 0775;
-	const fileChmod = 0664;
+    const logTable = 'di_migrations_log';
+    const dirChmod = 0775;
+    const fileChmod = 0664;
 
-	const defaultFolder = '_cfg/migrations';
-	protected static $localFolder;
+    const defaultFolder = '_cfg/migrations';
+    protected static $localFolder;
 
-	const FOLDER_LOCAL = 1;
-	const FOLDER_CORE_MIGRATIONS = 2;
+    const FOLDER_LOCAL = 1;
+    const FOLDER_CORE_MIGRATIONS = 2;
 
-	public static $foldersIdsAr = [
-		self::FOLDER_LOCAL,
-		self::FOLDER_CORE_MIGRATIONS,
-	];
+    public static $foldersIdsAr = [self::FOLDER_LOCAL, self::FOLDER_CORE_MIGRATIONS];
     public static $customFoldersIdsAr = [];
 
-	public function __construct()
-	{
-		$this
-			->initTables()
-			->initFolder();
-	}
+    public function __construct()
+    {
+        $this->initTables()->initFolder();
+    }
 
     public static function getFolderIds()
     {
         return array_merge(static::$foldersIdsAr, static::$customFoldersIdsAr);
     }
 
-	protected function initFolder()
-	{
-		static::$localFolder = Config::getSourcesFolder() . static::defaultFolder;
+    protected function initFolder()
+    {
+        static::$localFolder = Config::getSourcesFolder() . static::defaultFolder;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public static function getClassNameByIdx($idx)
-	{
-		return 'diMigration_' . $idx;
-	}
+    public static function getClassNameByIdx($idx)
+    {
+        return 'diMigration_' . $idx;
+    }
 
-	public static function getIdxByFileName($fn)
-	{
-		$name = substr(basename($fn), 0, -4);
-		$idx = substr($name, 0, strpos($name, '_'));
+    public static function getIdxByFileName($fn)
+    {
+        $name = substr(basename($fn), 0, -4);
+        $idx = substr($name, 0, strpos($name, '_'));
 
-		return $idx;
-	}
+        return $idx;
+    }
 
-	public static function getMigrationsInFolder($folder, $idx = null)
-	{
-		if (is_numeric($folder)) {
-			$folder = static::getFolderById($folder);
-		}
+    public function getMigrationsInFolder($folder, $options = [])
+    {
+        $options = extend(
+            [
+                'idxOrWildcard' => null,
+                'sort' => false, // false | 'asc' | 'desc'
+                'filterNotExecuted' => false,
+                'filterExecuted' => false,
+            ],
+            $options
+        );
 
-		return array_reverse(glob_recursive(StringHelper::slash($folder) . ($idx ?: '*') . '_*.php'));
-	}
+        if (is_numeric($folder)) {
+            $folder = static::getFolderById($folder);
+        }
 
-	public static function getSubFolders($folder)
-	{
-		if (is_numeric($folder)) {
-			$folder = static::getFolderById($folder);
-		}
+        $wildcard = $options['idxOrWildcard'] ?: '*';
+        $ar = glob_recursive(StringHelper::slash($folder) . $wildcard . '_*.php');
 
-		$contents = FileSystemHelper::folderContents($folder, true, true);
+        if ($options['filterNotExecuted']) {
+            $ar = array_filter($ar, function ($name) {
+                return !$this->wasExecuted(static::getIdxByFileName($name));
+            });
+        }
 
-		return $contents['d'];
-	}
+        if ($options['filterExecuted']) {
+            $ar = array_filter($ar, function ($name) {
+                return $this->wasExecuted(static::getIdxByFileName($name));
+            });
+        }
 
-	public function getClassFileNameByIdx($idx)
-	{
-		$files = [];
+        if ($options['sort']) {
+            usort($ar, function ($a, $b) {
+                return static::getIdxByFileName($a) < static::getIdxByFileName($b)
+                    ? -1
+                    : 1;
+            });
 
-		foreach (static::getFolderIds() as $folderId) {
-			$files = array_merge($files, static::getMigrationsInFolder($folderId, $idx));
-		}
+            if (strtolower($options['sort']) === 'desc') {
+                $ar = array_reverse($ar);
+            }
+        }
 
-		if (count($files) == 0) {
-			throw new \Exception("No migrations with idx '$idx' found");
-		} elseif (count($files) > 1) {
-			throw new \Exception("More that just 1 migration found with idx '$idx': " . join(", ", $files));
-		}
+        return $ar;
+    }
 
-		return $files[0];
-	}
+    public static function getSubFolders($folder)
+    {
+        if (is_numeric($folder)) {
+            $folder = static::getFolderById($folder);
+        }
 
-	protected function getSimpleTemplate()
-	{
-		return <<<EOF
+        $contents = FileSystemHelper::folderContents($folder, true, true);
+
+        return $contents['d'];
+    }
+
+    public function getClassFileNameByIdx($idx)
+    {
+        $files = [];
+
+        foreach (static::getFolderIds() as $folderId) {
+            $files = array_merge(
+                $files,
+                $this->getMigrationsInFolder($folderId, ['idxOrWildcard' => $idx])
+            );
+        }
+
+        if (count($files) == 0) {
+            throw new \Exception("No migrations with idx '$idx' found");
+        } elseif (count($files) > 1) {
+            throw new \Exception(
+                "More that just 1 migration found with idx '$idx': " .
+                    join(', ', $files)
+            );
+        }
+
+        return $files[0];
+    }
+
+    protected function getSimpleTemplate()
+    {
+        return <<<EOF
 <?php
 class %s extends \diCore\Database\Tool\Migration
 {
@@ -120,7 +158,7 @@ class %s extends \diCore\Database\Tool\Migration
 	}
 }
 EOF;
-	}
+    }
 
     protected function getLocalizationTemplate()
     {
@@ -144,8 +182,8 @@ class %s extends \diCore\Database\Tool\LocalizationMigration
 EOF;
     }
 
-	protected function getTemplate($idx, $name, $folder)
-	{
+    protected function getTemplate($idx, $name, $folder)
+    {
         switch ($folder) {
             case 'localization':
                 return $this->getLocalizationTemplate();
@@ -153,86 +191,90 @@ EOF;
             default:
                 return $this->getSimpleTemplate();
         }
-	}
+    }
 
-	public function createMigration($idx, $name, $folder = '')
-	{
-		$contents = $this->getTemplate($idx, $name, $folder);
+    public function createMigration($idx, $name, $folder = '')
+    {
+        $contents = $this->getTemplate($idx, $name, $folder);
 
-		$fullFolder = StringHelper::slash(static::$localFolder);
+        $fullFolder = StringHelper::slash(static::$localFolder);
 
-		if ($folder) {
-			$fullFolder .= StringHelper::slash($folder);
+        if ($folder) {
+            $fullFolder .= StringHelper::slash($folder);
 
-			if (!is_dir($fullFolder)) {
-				FileSystemHelper::createTree(static::$localFolder, $folder, static::dirChmod);
-			}
-		}
+            if (!is_dir($fullFolder)) {
+                FileSystemHelper::createTree(
+                    static::$localFolder,
+                    $folder,
+                    static::dirChmod
+                );
+            }
+        }
 
-		$contents = sprintf($contents, static::getClassNameByIdx($idx), $idx, $name);
-		$fn = $fullFolder . static::getMigrationFileName($idx, $name);
+        $contents = sprintf($contents, static::getClassNameByIdx($idx), $idx, $name);
+        $fn = $fullFolder . static::getMigrationFileName($idx, $name);
 
-		file_put_contents($fn, $contents);
-		chmod($fn, static::fileChmod);
-	}
+        file_put_contents($fn, $contents);
+        chmod($fn, static::fileChmod);
+    }
 
-	public static function getMigrationFileName($idx, $name)
-	{
-		$s = $idx . '_' . $name;
+    public static function getMigrationFileName($idx, $name)
+    {
+        $s = $idx . '_' . $name;
 
-        $s = str_replace([" ", "/", "\\"], "-", $s);
-        $s = preg_replace("/\&\#?[a-z0-9]+\;/", "", $s);
-		$s = transliterate_rus_to_eng($s);
-		$s = preg_replace('/[^a-z0-9_-]/i', '', $s);
-		$s = preg_replace('/-{2,}/', "-", $s);
-		$s = preg_replace('/_{2,}/', "_", $s);
+        $s = str_replace([' ', '/', '\\'], '-', $s);
+        $s = preg_replace('/\&\#?[a-z0-9]+\;/', '', $s);
+        $s = transliterate_rus_to_eng($s);
+        $s = preg_replace('/[^a-z0-9_-]/i', '', $s);
+        $s = preg_replace('/-{2,}/', '-', $s);
+        $s = preg_replace('/_{2,}/', '_', $s);
 
-		return $s . ".php";
-	}
+        return $s . '.php';
+    }
 
-	protected function getConn()
+    protected function getConn()
     {
         return Connection::get();
     }
 
-	/**
-	 * @return \diDB
-	 */
-	protected function getDb()
-	{
-		return $this->getConn()->getDb();
-	}
+    /**
+     * @return \diDB
+     */
+    protected function getDb()
+    {
+        return $this->getConn()->getDb();
+    }
 
-	/**
-	 * @param $id integer
-	 * return string
-	 * @throws \Exception
-	 */
-	public static function getFolderById($id)
-	{
-		switch ($id) {
-			case self::FOLDER_LOCAL:
-				return static::getLocalFolder();
+    /**
+     * @param $id integer
+     * return string
+     * @throws \Exception
+     */
+    public static function getFolderById($id)
+    {
+        switch ($id) {
+            case self::FOLDER_LOCAL:
+                return static::getLocalFolder();
 
-			case self::FOLDER_CORE_MIGRATIONS:
-				return static::getCoreMigrationsFolder();
+            case self::FOLDER_CORE_MIGRATIONS:
+                return static::getCoreMigrationsFolder();
 
-			default:
-				throw new \Exception("Undefined folder id#$id");
-		}
-	}
+            default:
+                throw new \Exception("Undefined folder id#$id");
+        }
+    }
 
-	public static function getLocalFolder()
-	{
-		return static::$localFolder;
-	}
+    public static function getLocalFolder()
+    {
+        return static::$localFolder;
+    }
 
-	public static function getCoreMigrationsFolder()
-	{
-		return dirname(__FILE__, 6) . '/migrations/';
-	}
+    public static function getCoreMigrationsFolder()
+    {
+        return dirname(__FILE__, 6) . '/migrations/';
+    }
 
-	private function getCreateTableSql()
+    private function getCreateTableSql()
     {
         $charset = Config::getDbEncoding();
         $collation = Config::getDbCollation();
@@ -240,7 +282,9 @@ EOF;
         switch ($this->getConn()::getEngine()) {
             case Engine::SQLITE:
                 return [
-                    "CREATE TABLE IF NOT EXISTS `" . static::logTable . "`(
+                    'CREATE TABLE IF NOT EXISTS `' .
+                    static::logTable .
+                    "`(
                         id integer not null primary key autoincrement,
                         admin_id integer,
                         idx varchar(100),
@@ -248,12 +292,18 @@ EOF;
                         direction tinyint,
                         date timestamp default CURRENT_TIMESTAMP
                     );",
-                    "CREATE INDEX IF NOT EXISTS `" . static::logTable . "_idx` ON `" . static::logTable . "` (idx);",
+                    'CREATE INDEX IF NOT EXISTS `' .
+                    static::logTable .
+                    '_idx` ON `' .
+                    static::logTable .
+                    '` (idx);',
                 ];
 
             case Engine::POSTGRESQL:
                 return [
-                    "CREATE TABLE IF NOT EXISTS \"" . static::logTable . "\"(
+                    "CREATE TABLE IF NOT EXISTS \"" .
+                    static::logTable .
+                    "\"(
                         id SERIAL primary key,
                         admin_id bigint,
                         idx varchar(100),
@@ -261,12 +311,18 @@ EOF;
                         direction smallint,
                         date timestamp default CURRENT_TIMESTAMP
                     );",
-                    "CREATE INDEX IF NOT EXISTS idx_" . static::logTable . " ON " . static::logTable . " (idx);",
+                    'CREATE INDEX IF NOT EXISTS idx_' .
+                    static::logTable .
+                    ' ON ' .
+                    static::logTable .
+                    ' (idx);',
                 ];
 
             default:
                 return [
-                    "CREATE TABLE IF NOT EXISTS `" . static::logTable . "`(
+                    'CREATE TABLE IF NOT EXISTS `' .
+                    static::logTable .
+                    "`(
                         id bigint not null auto_increment,
                         admin_id bigint,
                         idx varchar(100),
@@ -280,104 +336,133 @@ EOF;
         }
     }
 
-	private function initTables()
-	{
-	    foreach ($this->getCreateTableSql() as $sql) {
+    private function initTables()
+    {
+        foreach ($this->getCreateTableSql() as $sql) {
             $res = $this->getDb()->q($sql);
         }
 
-		if (!$res) {
-			throw new \Exception("Unable to init Table: " . $this->getDb()->getLogStr());
-		}
+        if (!$res) {
+            throw new \Exception(
+                'Unable to init Table: ' . $this->getDb()->getLogStr()
+            );
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @return Migration
-	 */
-	private function getMigrationObject($idx)
-	{
-		$className = static::getClassNameByIdx($idx);
-		$fn = $this->getClassFileNameByIdx($idx);
+    /**
+     * @return Migration
+     */
+    private function getMigrationObject($idx)
+    {
+        $className = static::getClassNameByIdx($idx);
+        $fn = $this->getClassFileNameByIdx($idx);
 
-		include($fn);
+        include $fn;
 
-		return new $className();
-	}
+        return new $className();
+    }
 
-	public function run($idx, $state)
-	{
-		if (!$idx) {
-			throw new \Exception("Empty IDX of migration");
-		}
+    public function run($idx, $state)
+    {
+        if (!$idx) {
+            throw new \Exception('Empty IDX of migration');
+        }
 
-		$executed = $this->wasExecuted($idx);
+        $executed = $this->wasExecuted($idx);
 
-		if ($state && $executed) {
-			throw new \Exception("Migration '$idx' has been already executed");
-		} elseif (!$state && !$executed) {
-			throw new \Exception("Migration '$idx' has not been executed yet");
-		}
+        if ($state && $executed) {
+            throw new \Exception("Migration '$idx' has been already executed");
+        } elseif (!$state && !$executed) {
+            throw new \Exception("Migration '$idx' has not been executed yet");
+        }
 
-		$migration = $this->getMigrationObject($idx);
+        $migration = $this->getMigrationObject($idx);
 
-		if ($migration->run($state)) {
-			$this->logExecution($migration, $state);
-		}
+        if ($migration->run($state)) {
+            $this->logExecution($migration, $state);
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	private function logExecution(Migration $migration, $state)
-	{
-		$adminUser = \diAdminUser::create();
+    public function upNew()
+    {
+        $ar = $this->getMigrationsInFolder(static::FOLDER_LOCAL, [
+            'sort' => 'asc',
+            'filterNotExecuted' => true,
+        ]);
 
-		/** @var Model $log */
-		$log = \diModel::create(\diTypes::di_migrations_log);
-		$log
-			->setAdminId($adminUser->getModel()->getId())
-			->setIdx($migration::$idx)
-			->setName($migration::$name)
-			->setDirection($state ? Migration::UP : Migration::DOWN)
-			->save();
+        foreach ($ar as $name) {
+            $this->run(static::getIdxByFileName($name), true);
+        }
 
-		return $this;
-	}
+        return $ar;
+    }
 
-	/**
-	 * @param $idx
-	 * @return Model
-	 * @throws \Exception
-	 */
-	protected function getLastLogByIdx($idx)
-	{
-		$col = Collection::create();
+    public function downLast()
+    {
+        $ar = $this->getMigrationsInFolder(static::FOLDER_LOCAL, [
+            'sort' => 'desc',
+            'filterExecuted' => true,
+        ]);
 
-		if ($idx) {
-			$col
-				->filterByIdx($idx)
-				->orderById('desc');
+        $name = $ar[0] ?? null;
 
-			return $col->getFirstItem();
-		} else {
-			return $col->getNewEmptyItem();
-		}
-	}
+        if ($name) {
+            $this->run(static::getIdxByFileName($name), false);
+        }
 
-	public function wasExecuted($idx)
-	{
-		$log = $this->getLastLogByIdx($idx);
+        return $name;
+    }
 
-		return $log->exists() && $log->getDirection() == Migration::UP;
-	}
+    private function logExecution(Migration $migration, $state)
+    {
+        $adminUser = \diAdminUser::create();
 
-	public function whenExecuted($idx)
-	{
-		$log = $this->getLastLogByIdx($idx);
+        /** @var Model $log */
+        $log = \diModel::create(\diTypes::di_migrations_log);
+        $log->setAdminId($adminUser->getModel()->getId())
+            ->setIdx($migration::$idx)
+            ->setName($migration::$name)
+            ->setDirection($state ? Migration::UP : Migration::DOWN)
+            ->save();
 
-		return $log->exists() && $log->getDirection() == Migration::UP
-			? $log->getDate()
-			: null;
-	}
+        return $this;
+    }
+
+    /**
+     * @param $idx
+     * @return Model
+     * @throws \Exception
+     */
+    protected function getLastLogByIdx($idx)
+    {
+        $col = Collection::create();
+
+        if ($idx) {
+            $col->filterByIdx($idx)->orderById('desc');
+
+            return $col->getFirstItem();
+        } else {
+            return $col->getNewEmptyItem();
+        }
+    }
+
+    public function wasExecuted($idx)
+    {
+        $log = $this->getLastLogByIdx($idx);
+
+        return $log->exists() && $log->getDirection() == Migration::UP;
+    }
+
+    public function whenExecuted($idx)
+    {
+        $log = $this->getLastLogByIdx($idx);
+
+        return $log->exists() && $log->getDirection() == Migration::UP
+            ? $log->getDate()
+            : null;
+    }
 }
