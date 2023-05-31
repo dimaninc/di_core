@@ -129,11 +129,21 @@ var diNiceTable = function (opts) {
 
         setTimeout(function () {
             if (confirm(self.L('delete')) && confirm(self.L('are_you_sure'))) {
-                call('delete', id, function (res, $row) {
-                    $row.remove();
+                call(
+                    'delete',
+                    id,
+                    function (res, $row) {
+                        $row.remove();
 
-                    log(self.L('deleted'));
-                });
+                        log(self.L('deleted'));
+                    },
+                    function ($row) {
+                        $row.find('.nicetable-button[data-action="del"]').attr(
+                            'data-loading',
+                            1
+                        );
+                    }
+                );
             } else {
                 $rows.removeClass('delete');
             }
@@ -148,8 +158,8 @@ var diNiceTable = function (opts) {
                 direction: direction
             },
             function (res) {
-                var $upRows = getRow(res.up),
-                    $downRows = getRow(res.down);
+                var $upRows = getRow(res.up);
+                var $downRows = getRow(res.down);
 
                 $upRows.insertBefore(getRow(res.downFirst));
 
@@ -172,10 +182,17 @@ var diNiceTable = function (opts) {
             },
             function (res, $row) {
                 $row.find('.nicetable-button[data-action="' + field + '"]')
+                    .attr('data-loading', 0)
                     .attr('data-state', res.state)
                     .data('state', res.state);
 
                 log('Switched "' + field + '" to ' + boolToOnOff(res.state));
+            },
+            function ($row) {
+                $row.find('.nicetable-button[data-action="' + field + '"]').attr(
+                    'data-loading',
+                    1
+                );
             }
         );
     }
@@ -195,10 +212,10 @@ var diNiceTable = function (opts) {
 
         return selectorAr.length
             ? settings.$table.find('[data-role="row"]').filter(selectorAr.join(','))
-            : null;
+            : $();
     }
 
-    function call(action, id, callback) {
+    function call(action, id, callback, precall) {
         var params = {};
 
         if (typeof id === 'object') {
@@ -206,18 +223,16 @@ var diNiceTable = function (opts) {
             id = params.id || '';
         }
 
+        id && precall && precall(getRow(id));
+
         $.post(
             workerBase + action + '/' + settings.table + '/' + id,
             params,
             function (res) {
                 if (!res.ok) {
                     log('Error while requesting action "' + action + '" for #' + id);
-
-                    if (typeof res.message !== 'undefined') {
-                        log(res.message);
-                    }
-
-                    return false;
+                    typeof res.message !== 'undefined' && log(res.message);
+                    return;
                 }
 
                 callback(res, getRow(res.id));

@@ -148,9 +148,9 @@ class diBaseController
         $c = new static($params);
         $c->act();
 
-        //if ($c->getResponse()->hasReturnData()) {
-        $c->defaultResponse();
-        //}
+        if ($c->getResponse()->hasReturnData()) {
+            $c->defaultResponse();
+        }
 
         return $c;
     }
@@ -295,7 +295,7 @@ class diBaseController
         $c = new $className($params);
         $c->act($action, $params);
 
-        if (!$silent) {
+        if (!$silent && $c->getResponse()->hasReturnData()) {
             $c->defaultResponse();
         }
 

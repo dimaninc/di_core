@@ -83,6 +83,74 @@
     transform: rotate(360deg);
   }
 }
+@-moz-keyframes opacityPulse {
+  0% {
+    opacity: 1;
+    -ms-filter: none;
+    filter: none;
+  }
+  50% {
+    opacity: 0.5;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+    filter: alpha(opacity=50);
+  }
+  100% {
+    opacity: 1;
+    -ms-filter: none;
+    filter: none;
+  }
+}
+@-webkit-keyframes opacityPulse {
+  0% {
+    opacity: 1;
+    -ms-filter: none;
+    filter: none;
+  }
+  50% {
+    opacity: 0.5;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+    filter: alpha(opacity=50);
+  }
+  100% {
+    opacity: 1;
+    -ms-filter: none;
+    filter: none;
+  }
+}
+@-o-keyframes opacityPulse {
+  0% {
+    opacity: 1;
+    -ms-filter: none;
+    filter: none;
+  }
+  50% {
+    opacity: 0.5;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+    filter: alpha(opacity=50);
+  }
+  100% {
+    opacity: 1;
+    -ms-filter: none;
+    filter: none;
+  }
+}
+@keyframes opacityPulse {
+  0% {
+    opacity: 1;
+    -ms-filter: none;
+    filter: none;
+  }
+  50% {
+    opacity: 0.5;
+    -ms-filter: "progid:DXImageTransform.Microsoft.Alpha(Opacity=50)";
+    filter: alpha(opacity=50);
+  }
+  100% {
+    opacity: 1;
+    -ms-filter: none;
+    filter: none;
+  }
+}
 button {
   font-family: Verdana, sans-serif;
   font-size: 14px;
@@ -757,6 +825,14 @@ u:hover {
 }
 .mr-5 {
   margin-right: 5px;
+}
+[data-loading="1"],
+[data-loading="true"] {
+  -webkit-animation: 1s ease opacityPulse infinite;
+  -moz-animation: 1s ease opacityPulse infinite;
+  -o-animation: 1s ease opacityPulse infinite;
+  -ms-animation: 1s ease opacityPulse infinite;
+  animation: 1s ease opacityPulse infinite;
 }
 .close {
   display: block;

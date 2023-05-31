@@ -27,7 +27,7 @@ class Response
 
     public function hasReturnData()
     {
-        return !!$this->returnData;
+        return $this->returnData !== null;
     }
 
     /**
