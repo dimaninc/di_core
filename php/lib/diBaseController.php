@@ -471,6 +471,11 @@ class diBaseController
         return $returnData;
     }
 
+    protected function ok($returnData = '')
+    {
+        return $this->standardResponse(HttpCode::OK, $returnData);
+    }
+
     protected function okay($returnData = [])
     {
         return $this->standardResponse(
