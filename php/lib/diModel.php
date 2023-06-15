@@ -2608,7 +2608,13 @@ ENGINE = InnoDB;";
 
     public static function escapeValueForFile($value)
     {
-        $value = $value ?: '';
+        if ($value === null) {
+            return 'null';
+        } elseif (is_numeric($value)) {
+            return $value;
+        }
+
+        $value = "$value"; //$value ?: '';
 
         if (strpos($value, "\n") !== false) {
             $value = "<<<'EOF'\n" . $value . "\nEOF\n";
