@@ -2260,7 +2260,9 @@ abstract class CMS
             if ($field == 'title' && !$value) {
                 foreach ($models as $model) {
                     $value =
-                        $value ?: $model->localized('title', $this->getLanguage());
+                        $value ?:
+                        $model->localized('title', $this->getLanguage()) ?:
+                        $model->get('title');
                 }
             }
 
@@ -2269,7 +2271,9 @@ abstract class CMS
                     $value =
                         $value ?:
                         $model->localized('short_content', $this->getLanguage()) ?:
-                        $model->localized('content', $this->getLanguage());
+                        $model->localized('content', $this->getLanguage()) ?:
+                        $model->get('short_content') ?:
+                        $model->get('content');
                 }
             }
 
