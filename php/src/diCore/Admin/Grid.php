@@ -31,8 +31,7 @@ class Grid
     {
         $this->AdminPage = $AdminPage;
 
-        $this->options = extend([
-        ], $options);
+        $this->options = extend([], $options);
     }
 
     protected function getAdminPage()
@@ -42,7 +41,9 @@ class Grid
 
     protected function getLanguage()
     {
-        return $this->getAdminPage()->getAdmin()->getLanguage();
+        return $this->getAdminPage()
+            ->getAdmin()
+            ->getLanguage();
     }
 
     public function addButtons($ar)
@@ -65,27 +66,22 @@ class Grid
      */
     public function setButtonAttr($names, $attr, $value = null)
     {
-        if (!is_array($names))
-        {
+        if (!is_array($names)) {
             $names = [$names];
         }
 
-        foreach ($names as $name)
-        {
-            if (!$this->buttonExists($name))
-            {
+        foreach ($names as $name) {
+            if (!$this->buttonExists($name)) {
                 $this->buttonsAr[$name] = [];
             }
 
-            if (!is_array($this->buttonsAr[$name]))
-            {
+            if (!is_array($this->buttonsAr[$name])) {
                 $this->buttonsAr[$name] = [
                     'title' => $this->buttonsAr[$name],
                 ];
             }
 
-            if (!is_array($attr))
-            {
+            if (!is_array($attr)) {
                 $attr = [
                     $attr => $value,
                 ];
@@ -99,15 +95,12 @@ class Grid
 
     public function removeButton($names)
     {
-        if (!is_array($names))
-        {
+        if (!is_array($names)) {
             $names = [$names];
         }
 
-        foreach ($names as $name)
-        {
-            if (isset($this->buttonsAr[$name]))
-            {
+        foreach ($names as $name) {
+            if (isset($this->buttonsAr[$name])) {
                 unset($this->buttonsAr[$name]);
             }
         }
@@ -117,23 +110,29 @@ class Grid
 
     public function replaceButton($name, array $newButtons)
     {
-        $this
-            ->insertButtonsBefore($name, $newButtons)
-            ->removeButton($name);
+        $this->insertButtonsBefore($name, $newButtons)->removeButton($name);
 
         return $this;
     }
 
     public function insertButtonsBefore($name, array $newButtons)
     {
-        $this->buttonsAr = ArrayHelper::addItemsToAssocArrayBeforeKey($this->buttonsAr, $name, $newButtons);
+        $this->buttonsAr = ArrayHelper::addItemsToAssocArrayBeforeKey(
+            $this->buttonsAr,
+            $name,
+            $newButtons
+        );
 
         return $this;
     }
 
     public function insertButtonsAfter($name, array $newButtons)
     {
-        $this->buttonsAr = ArrayHelper::addItemsToAssocArrayAfterKey($this->buttonsAr, $name, $newButtons);
+        $this->buttonsAr = ArrayHelper::addItemsToAssocArrayAfterKey(
+            $this->buttonsAr,
+            $name,
+            $newButtons
+        );
 
         return $this;
     }
@@ -180,29 +179,32 @@ class Grid
     public function printElements(\diCollection $collection)
     {
         /** @var \diModel $model */
-        foreach ($collection as $model)
-        {
+        foreach ($collection as $model) {
             $this->setCurModel($model);
 
             $editHref = Base::getPageUri($this->getTable(), 'form', [
                 'id' => $model->getId(),
             ]);
 
-            $buttons = array_intersect_key($this->buttonsAr, \diNiceTableButtons::$titles[$this->getLanguage()]);
+            $buttons = array_intersect_key(
+                $this->buttonsAr,
+                \diNiceTableButtons::$titles[$this->getLanguage()]
+            );
             $htmlButtons = [];
 
-            foreach ($buttons as $action => $settings)
-            {
-                $settings = extend([
-                    'allowed' => null,
-                ], $settings);
+            foreach ($buttons as $action => $settings) {
+                $settings = extend(
+                    [
+                        'allowed' => null,
+                    ],
+                    $settings
+                );
 
                 $options = [
                     'language' => $this->getLanguage(),
                 ];
 
-                switch ($action)
-                {
+                switch ($action) {
                     case 'edit':
                         $options['href'] = $editHref;
                         break;
@@ -212,38 +214,37 @@ class Grid
                         break;
                 }
 
-                $html = !is_callable($settings['allowed']) || $settings['allowed']($model, $action)
-                    ? \diNiceTableButtons::getButton($action, $options)
-                    : null;
+                $html =
+                    !is_callable($settings['allowed']) ||
+                    $settings['allowed']($model, $action)
+                        ? \diNiceTableButtons::getButton($action, $options)
+                        : null;
 
-                if ($html)
-                {
+                if ($html) {
                     $htmlButtons[$action] = $html;
                 }
             }
 
-            $model
-                ->setRelated([
-                    'edit_href' => $editHref,
-                    'img_url_prefix' => $this->getAdminPage()->getImgUrlPrefix($model),
-                    'buttons' => $htmlButtons,
-                ]);
+            $model->setRelated([
+                'edit_href' => $editHref,
+                'img_url_prefix' => $this->getAdminPage()->getImgUrlPrefix($model),
+                'buttons' => $htmlButtons,
+            ]);
         }
 
-        $this->getAdminPage()
-            ->setRenderCallback(function() use($collection) {
-                return $this->getTwig()
-                    ->importFromFastTemplate($this->getTpl(), [
-                        'filters',
-                        'before_table',
-                        'after_table',
-                        'navy',
-                    ])
-                    ->parse($this->getTemplateName(), [
-                        'table' => $this->getTable(),
-                        'rows' => $collection,
-                    ]);
-            });
+        $this->getAdminPage()->setRenderCallback(function () use ($collection) {
+            return $this->getTwig()
+                ->importFromFastTemplate($this->getTpl(), [
+                    'filters',
+                    'before_table',
+                    'after_table',
+                    'navy',
+                ])
+                ->parse($this->getTemplateName(), [
+                    'table' => $this->getTable(),
+                    'rows' => $collection,
+                ]);
+        });
 
         return $this;
     }

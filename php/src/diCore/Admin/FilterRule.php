@@ -41,11 +41,14 @@ class FilterRule extends SimpleContainer
 
     public static function extProps($props = [])
     {
-        return extend([
-            'field' => null,
-            'value' => null,
-            'negative' => null,
-        ], $props);
+        return extend(
+            [
+                'field' => null,
+                'value' => null,
+                'negative' => null,
+            ],
+            $props
+        );
     }
 
     public static function contains($props = [])
