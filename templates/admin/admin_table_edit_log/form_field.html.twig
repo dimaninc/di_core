@@ -18,7 +18,7 @@
 						<td>&raquo;</td>
 						<td>{{ options['strip_tags'] ? rec.getNewValues(field)|striptags('<ins><del>') : rec.getNewValues(field) }}</td>
 						{% endif %}
-						<td>{{ options['strip_tags'] ? rec.getDataDiff(field)|striptags('<ins><del>') : rec.getDataDiff(field) }}</td>
+						<td>{{ options['strip_tags'] ? rec.getDataDiff(field)|striptags('<ins><del>')|escape('insdel')|raw : rec.getDataDiff(field)|escape('insdel')|raw }}</td>
 					</tr>
 				{% endfor %}
 			</table>

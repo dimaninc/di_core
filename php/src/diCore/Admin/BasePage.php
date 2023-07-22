@@ -9,9 +9,12 @@
 namespace diCore\Admin;
 
 use diCore\Base\CMS;
+use diCore\Entity\Admin\Collection as Admins;
 use diCore\Entity\AdminTableEditLog\Collection as TableEditLogs;
 use diCore\Entity\AdminTableEditLog\Model as TableEditLog;
 use diCore\Helper\ArrayHelper;
+use diCore\Helper\StringHelper;
+use Twig\Extension\EscaperExtension;
 
 abstract class BasePage
 {
@@ -1190,8 +1193,7 @@ abstract class BasePage
                 ->filterByTargetId([$this->getId(), (int) $this->getId()])
                 ->orderById('DESC');
 
-            /** @var \diCore\Entity\Admin\Collection $admins */
-            $admins = \diCollection::create(\diTypes::admin);
+            $admins = Admins::create();
 
             /** @var TableEditLog $rec */
             foreach ($records as $rec) {
@@ -1205,6 +1207,25 @@ abstract class BasePage
                 ],
                 (array) $this->useEditLog()
             );
+
+            $this->getTwig()
+                ->getEngine()
+                ->getExtension(EscaperExtension::class)
+                ->setEscaper('insdel', function ($twig, $string, $charset) {
+                    $escaped = StringHelper::out($string);
+                    $semiEscaped = str_replace(
+                        [
+                            '&lt;ins&gt;',
+                            '&lt;/ins&gt;',
+                            '&lt;del&gt;',
+                            '&lt;/del&gt;',
+                        ],
+                        ['<ins>', '</ins>', '<del>', '</del>'],
+                        $escaped
+                    );
+
+                    return '(' . $semiEscaped . ')';
+                });
 
             $this->getForm()->setInput(
                 TableEditLog::ADMIN_TAB_NAME,

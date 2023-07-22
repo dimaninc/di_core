@@ -43,8 +43,9 @@ class LocalizationAdmin
                 while $td = $td.next 'td:eq(0)'
                     break if $td.hasClass 'btn'
                     field = $td.data('field')
-                    val = $td.find('[data-purpose="orig"]').html()
-                    val = $td.html() if val is undefined or val is null
+                    $e = $td.find('[data-purpose="orig"]')
+                    val = $e.data('orig-value') or $e.html()
+                    val = $td.data('orig-value') or $td.html() if val is undefined or val is null
                     val = val.replace(/'/g, '\\\'').replace(/"/g, '\\\"')
                     names.push val if field is 'name'
                     fields.push field
