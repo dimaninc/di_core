@@ -8,24 +8,22 @@
 
 namespace diCore\Helper;
 
-
 class ArrayHelper
 {
-	const ESCAPE_NONE = 0;
-	const ESCAPE_HTML = 1;
+    const ESCAPE_NONE = 0;
+    const ESCAPE_HTML = 1;
 
-	public static function is($var)
-	{
-		return is_array($var) || (
-			$var instanceof \ArrayAccess  &&
-			$var instanceof \Traversable  &&
-			//$var instanceof Serializable && todo: add this to diCollection!
-			$var instanceof \Countable
-		);
-	}
+    public static function is($var)
+    {
+        return is_array($var) ||
+            ($var instanceof \ArrayAccess &&
+                $var instanceof \Traversable &&
+                //$var instanceof Serializable && todo: add this to diCollection!
+                $var instanceof \Countable);
+    }
 
-	// simple, non associative, with sequential indexes
-	public static function isSequential($ar)
+    // simple, non associative, with sequential indexes
+    public static function isSequential($ar)
     {
         if ($ar === []) {
             return true;
@@ -45,101 +43,99 @@ class ArrayHelper
         return false;
     }
 
-	/**
-	 * @param array $ar1
-	 * @param array|null $ar2
-	 * @return array
-	 */
-	public static function combine($ar1, $ar2 = null)
-	{
-		return $ar2 === null
-			? array_combine($ar1, $ar1)
-			: array_combine($ar1, $ar2);
-	}
+    /**
+     * @param array $ar1
+     * @param array|null $ar2
+     * @return array
+     */
+    public static function combine($ar1, $ar2 = null)
+    {
+        return $ar2 === null ? array_combine($ar1, $ar1) : array_combine($ar1, $ar2);
+    }
 
-	/**
-	 * @param $ar array
-	 * @param $position integer
-	 * @param $newItems array
-	 *
-	 * @return array
-	 */
-	public static function addItemsToAssocArray($ar, $position, $newItems)
-	{
-		return array_merge(
-			array_slice($ar, 0, $position, true),
-			$newItems,
-			array_slice($ar, $position, count($ar) - $position, true)
-		);
-	}
+    /**
+     * @param $ar array
+     * @param $position integer
+     * @param $newItems array
+     *
+     * @return array
+     */
+    public static function addItemsToAssocArray($ar, $position, $newItems)
+    {
+        return array_merge(
+            array_slice($ar, 0, $position, true),
+            $newItems,
+            array_slice($ar, $position, count($ar) - $position, true)
+        );
+    }
 
-	/**
-	 * @param $ar
-	 * @param $key
-	 * @param $newItems
-	 *
-	 * @return array
-	 * @throws \Exception
-	 */
-	public static function addItemsToAssocArrayAfterKey($ar, $key, $newItems)
-	{
-		$i = 0;
+    /**
+     * @param $ar
+     * @param $key
+     * @param $newItems
+     *
+     * @return array
+     * @throws \Exception
+     */
+    public static function addItemsToAssocArrayAfterKey($ar, $key, $newItems)
+    {
+        $i = 0;
 
-		foreach ($ar as $k => $v) {
-			if ($k === $key) {
-				return self::addItemsToAssocArray($ar, $i + 1, $newItems);
-			}
+        foreach ($ar as $k => $v) {
+            if ($k === $key) {
+                return self::addItemsToAssocArray($ar, $i + 1, $newItems);
+            }
 
-			$i++;
-		}
+            $i++;
+        }
 
-		throw new \Exception("No key '$key' found");
-	}
+        throw new \Exception("No key '$key' found");
+    }
 
-	/**
-	 * @param $ar
-	 * @param $key
-	 * @param $newItems
-	 *
-	 * @return array
-	 * @throws \Exception
-	 */
-	public static function addItemsToAssocArrayBeforeKey($ar, $key, $newItems)
-	{
-		$i = 0;
+    /**
+     * @param $ar
+     * @param $key
+     * @param $newItems
+     *
+     * @return array
+     * @throws \Exception
+     */
+    public static function addItemsToAssocArrayBeforeKey($ar, $key, $newItems)
+    {
+        $i = 0;
 
-		foreach ($ar as $k => $v) {
-			if ($k === $key) {
-				return self::addItemsToAssocArray($ar, $i, $newItems);
-			}
+        foreach ($ar as $k => $v) {
+            if ($k === $key) {
+                return self::addItemsToAssocArray($ar, $i, $newItems);
+            }
 
-			$i++;
-		}
+            $i++;
+        }
 
-		throw new \Exception("No key '$key' found");
-	}
+        throw new \Exception("No key '$key' found");
+    }
 
-	/**
-	 * @param       $ar
-	 * @param array $allowedKeys
-	 * @param array $disallowedKeys
-	 *
-	 * @return array
-	 */
-	public static function filterByKey($ar, $allowedKeys = [], $disallowedKeys = [])
-	{
-		if ($allowedKeys) {
-			$ar = array_intersect_key($ar, array_flip($allowedKeys));
-		}
+    /**
+     * @param       $ar
+     * @param array $allowedKeys
+     * @param array $disallowedKeys
+     *
+     * @return array
+     */
+    public static function filterByKey($ar, $allowedKeys = [], $disallowedKeys = [])
+    {
+        if ($allowedKeys) {
+            $ar = array_intersect_key($ar, array_flip($allowedKeys));
+        }
 
-		if ($disallowedKeys) {
-			$ar = array_diff_key($ar, array_flip($disallowedKeys));
-		}
+        if ($disallowedKeys) {
+            $ar = array_diff_key($ar, array_flip($disallowedKeys));
+        }
 
-		return $ar;
-	}
+        return $ar;
+    }
 
-	public static function filterRecursive($ar, $callback = null)
+    public static function filterRecursive($ar, $callback = null)
     {
         foreach ($ar as &$value) {
             if (is_array($value)) {
@@ -150,47 +146,48 @@ class ArrayHelper
         return array_filter($ar, $callback);
     }
 
-	/**
-	 * Flattens assoc array into an attributes string
-	 *
-	 * @param array $ar
-	 * @return string
-	 */
-	public static function toAttributesString($ar, $skipNull = true, $escapeMethod = self::ESCAPE_NONE)
-	{
-		if ($skipNull) {
-			$ar = array_filter($ar, function($v) {
-				return $v !== null;
-			});
-		}
+    /**
+     * Flattens assoc array into an attributes string
+     *
+     * @param array $ar
+     * @return string
+     */
+    public static function toAttributesString(
+        $ar,
+        $skipNull = true,
+        $escapeMethod = self::ESCAPE_NONE
+    ) {
+        if ($skipNull) {
+            $ar = array_filter($ar, function ($v) {
+                return $v !== null;
+            });
+        }
 
-		array_walk($ar, function(&$value, $key) use($escapeMethod) {
-			$raw = is_scalar($value) && !is_bool($value);
+        array_walk($ar, function (&$value, $key) use ($escapeMethod) {
+            $raw = is_scalar($value) && !is_bool($value);
 
-			$quote = $raw || $escapeMethod != self::ESCAPE_NONE ? '"' : "'";
+            $quote = $raw || $escapeMethod != self::ESCAPE_NONE ? '"' : "'";
 
-			$value = $raw
-				? $value
-				: json_encode($value);
+            $value = $raw ? $value : json_encode($value);
 
-			switch ($escapeMethod) {
-				default:
-				case self::ESCAPE_NONE:
-					$value = str_replace($quote, "\\" . $quote, $value);
-					break;
+            switch ($escapeMethod) {
+                default:
+                case self::ESCAPE_NONE:
+                    $value = str_replace($quote, '\\' . $quote, $value);
+                    break;
 
-				case self::ESCAPE_HTML:
-					$value = StringHelper::out($value);
-					break;
-			}
+                case self::ESCAPE_HTML:
+                    $value = StringHelper::out($value);
+                    break;
+            }
 
-			$value = $key . '=' . $quote . $value . $quote;
-		});
+            $value = $key . '=' . $quote . $value . $quote;
+        });
 
-		return join(' ', $ar);
-	}
+        return join(' ', $ar);
+    }
 
-	public static function toString($ar, $pairSymbol = '=', $spaceSymbol = ' ')
+    public static function toString($ar, $pairSymbol = '=', $spaceSymbol = ' ')
     {
         $ar2 = [];
 
@@ -201,38 +198,38 @@ class ArrayHelper
         return join($spaceSymbol, $ar2);
     }
 
-	/**
-	 * Returns element of array by idx, setting proper type, if it exists, else returns default value
-	 *
+    /**
+     * Returns element of array by idx, setting proper type, if it exists, else returns default value
+     *
      * @deprecated use get() instead
-	 * @param mixed $ar
-	 * @param int|string|bool $idx
-	 * @param mixed $defaultValue
-	 * @param string $type
-	 * @return mixed
-	 */
-	public static function getValue($ar, $idx, $defaultValue = null, $type = null)
-	{
-	    $ar = (array)$ar;
+     * @param mixed $ar
+     * @param int|string|bool $idx
+     * @param mixed $defaultValue
+     * @param string $type
+     * @return mixed
+     */
+    public static function getValue($ar, $idx, $defaultValue = null, $type = null)
+    {
+        $ar = (array) $ar;
 
-		$type = $type ?: gettype($defaultValue);
+        $type = $type ?: gettype($defaultValue);
 
-		if (isset($ar[$idx])) {
-			$value = $ar[$idx];
+        if (isset($ar[$idx])) {
+            $value = $ar[$idx];
 
-			if ($type != 'NULL' && is_scalar($value)) {
-			    if (in_array(strtolower($type), ['float', 'double'])) {
-			        $value = StringHelper::fixFloatDot($value);
+            if ($type != 'NULL' && is_scalar($value)) {
+                if (in_array(strtolower($type), ['float', 'double'])) {
+                    $value = StringHelper::fixFloatDot($value);
                 }
 
-				settype($value, $type);
-			}
+                settype($value, $type);
+            }
 
-			return $value;
-		} else {
-			return $defaultValue;
-		}
-	}
+            return $value;
+        } else {
+            return $defaultValue;
+        }
+    }
 
     public static function get($deepArray, $path, $defaultValue = null, $type = null)
     {
@@ -248,7 +245,9 @@ class ArrayHelper
             $path = explode('.', $path);
         }
 
-        $value = array_reduce($path, $reduce, self::fromObject($deepArray)) ?? $defaultValue;
+        $value =
+            array_reduce($path, $reduce, self::fromObject($deepArray)) ??
+            $defaultValue;
         $type = $type ?: gettype($defaultValue);
 
         if ($type != 'NULL' && is_scalar($value)) {
@@ -263,83 +262,83 @@ class ArrayHelper
     }
 
     /**
-	 * @param array $array
-	 * @return array
-	 */
-	public static function shuffleAssoc($array)
-	{
-		$new = array();
-		$keys = array_keys($array);
-		shuffle($keys);
+     * @param array $array
+     * @return array
+     */
+    public static function shuffleAssoc($array)
+    {
+        $new = [];
+        $keys = array_keys($array);
+        shuffle($keys);
 
-		foreach($keys as $key) {
-			$new[$key] = $array[$key];
-		}
+        foreach ($keys as $key) {
+            $new[$key] = $array[$key];
+        }
 
-		return $new;
-	}
+        return $new;
+    }
 
-	/**
-	 * @param array $array
-	 * @param mixed $value
-	 * @return array
-	 */
-	public static function removeByValue($array, $value)
-	{
-		if (($key = array_search($value, $array)) !== false) {
-			unset($array[$key]);
-		}
+    /**
+     * @param array $array
+     * @param mixed $value
+     * @return array
+     */
+    public static function removeByValue($array, $value)
+    {
+        if (($key = array_search($value, $array)) !== false) {
+            unset($array[$key]);
+        }
 
-		return $array;
-	}
+        return $array;
+    }
 
-	/**
-	 * @param array $ar
-	 * @param string $defaultGlue
-	 *
-	 * @return string
-	 */
-	public static function recursiveJoin(array $ar, $defaultGlue = ' ')
-	{
-		$ar = array_filter($ar);
+    /**
+     * @param array $ar
+     * @param string $defaultGlue
+     *
+     * @return string
+     */
+    public static function recursiveJoin(array $ar, $defaultGlue = ' ')
+    {
+        $ar = array_filter($ar);
 
-		foreach ($ar as $glue => &$value) {
-		    // assoc array has `glue => array` structure, using default glue for simple arrays
-		    if (!self::isAssoc($ar)) {
-		        $glue = $defaultGlue;
+        foreach ($ar as $glue => &$value) {
+            // assoc array has `glue => array` structure, using default glue for simple arrays
+            if (!self::isAssoc($ar)) {
+                $glue = $defaultGlue;
             }
 
-			if (is_array($value)) {
-				$value = self::recursiveJoin($value, $glue);
-			}
-		}
+            if (is_array($value)) {
+                $value = self::recursiveJoin($value, $glue);
+            }
+        }
 
-		return join($defaultGlue, array_filter($ar));
-	}
+        return join($defaultGlue, array_filter($ar));
+    }
 
-	/**
-	 * Returns random $count elements from array
-	 *
-	 * @param array $ar
-	 * @param int $count
-	 *
-	 * @return array
-	 */
-	public static function random(array $ar, $count = 1)
-	{
-		if ($count >= count($ar)) {
-			return $ar;
-		}
+    /**
+     * Returns random $count elements from array
+     *
+     * @param array $ar
+     * @param int $count
+     *
+     * @return array
+     */
+    public static function random(array $ar, $count = 1)
+    {
+        if ($count >= count($ar)) {
+            return $ar;
+        }
 
-		$keys = array_rand($ar, $count);
-		$out = [];
+        $keys = array_rand($ar, $count);
+        $out = [];
 
-		foreach ($keys as $key) {
-			$out[] = $ar[$key];
-		}
+        foreach ($keys as $key) {
+            $out[] = $ar[$key];
+        }
 
-		return $out;
-	}
+        return $out;
+    }
 
     public static function isAssoc(array $ar)
     {
@@ -363,7 +362,7 @@ class ArrayHelper
     public static function fromObject($obj)
     {
         if (is_object($obj) || is_array($obj)) {
-            $ret = (array)$obj;
+            $ret = (array) $obj;
 
             foreach ($ret as &$item) {
                 $item = self::fromObject($item);
@@ -388,5 +387,29 @@ class ArrayHelper
         }
 
         return $sum;
+    }
+
+    public static function some($array, $cb)
+    {
+        foreach ($array as $value) {
+            if ($cb($value)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static function someValue($array, $cb, $returnCallbackValue = false)
+    {
+        foreach ($array as $value) {
+            $res = $cb($value);
+
+            if ($res) {
+                return $returnCallbackValue ? $res : $value;
+            }
+        }
+
+        return null;
     }
 }
