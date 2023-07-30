@@ -106,7 +106,9 @@ class diDynamicRows
             $this->info_ar = $$_all_fields;
         }
 
-        $this->db = \diModel::createForTable($this->table)::getConnection()->getDb();
+        $this->db = \diModel::createForTable($this->table)
+            ::getConnection()
+            ->getDb();
         $this->static_mode = false;
 
         $this->abs_path = Config::getPublicFolder(); //diPaths::fileSystem();
@@ -2084,7 +2086,8 @@ EOF;
                 $this->data[$field] = Submit::getGeneratedFilename(
                     Config::getPublicFolder() . $pics_folder,
                     $_FILES[$ff]['name'][$id],
-                    $this->getFieldProperty($field, 'naming')
+                    $this->getFieldProperty($field, 'naming'),
+                    $this->getFieldProperty($field, 'maxNameLength')
                 );
             }
 

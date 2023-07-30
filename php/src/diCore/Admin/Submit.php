@@ -1194,8 +1194,12 @@ class Submit
         return preg_replace('/[^a-zA-Z0-9.()_!-]/', '', $filename);
     }
 
-    public static function getGeneratedFilename($folder, $origFilename, $naming)
-    {
+    public static function getGeneratedFilename(
+        $folder,
+        $origFilename,
+        $naming,
+        $maxLen = 0
+    ) {
         $baseName =
             self::cleanFilename(
                 transliterate_rus_to_eng(StringHelper::fileBaseName($origFilename))
@@ -1203,6 +1207,9 @@ class Submit
             get_unique_id(self::FILE_NAME_RANDOM_LENGTH);
         $endingIdx = 0;
         $extension = '.' . strtolower(StringHelper::fileExtension($origFilename));
+
+        $extLen = mb_strlen($extension);
+        $maxBaseLen = $maxLen ? min(mb_strlen($baseName), $maxLen - $extLen) : 0;
 
         do {
             switch ($naming) {
@@ -1213,6 +1220,13 @@ class Submit
 
                 case self::FILE_NAMING_ORIGINAL:
                     $filename = $baseName;
+                    $suffix = $endingIdx ? self::FILE_NAME_GLUE . $endingIdx : '';
+                    $suffixLen = mb_strlen($suffix);
+                    $maxFnLen = $maxBaseLen - $suffixLen;
+
+                    if ($maxBaseLen && mb_strlen($filename) > $maxFnLen) {
+                        $filename = mb_substr($filename, 0, $maxFnLen);
+                    }
 
                     if ($endingIdx) {
                         $filename .= self::FILE_NAME_GLUE . $endingIdx;
@@ -1233,7 +1247,8 @@ class Submit
             self::getGeneratedFilename(
                 \diPaths::fileSystem($this->getModel(), true, $field) . $folder,
                 $origFilename,
-                $this->getFieldProperty($field, 'naming')
+                $this->getFieldProperty($field, 'naming'),
+                $this->getFieldOption($field, 'maxNameLength')
             )
         );
 
@@ -1436,7 +1451,8 @@ class Submit
                     $db_ar[$f] = self::getGeneratedFilename(
                         \diPaths::fileSystem($this->getModel()) . $pics_folder,
                         $_FILES[$varName]['name'][$id],
-                        $this->getFieldProperty($field, 'naming')
+                        $this->getFieldProperty($field, 'naming'),
+                        $this->getFieldOption($field, 'maxNameLength')
                     );
                 }
 
@@ -1486,7 +1502,8 @@ class Submit
                     $db_ar[$f] = self::getGeneratedFilename(
                         \diPaths::fileSystem($this->getModel()) . $pics_folder,
                         $_FILES[$varName]['name'][$id],
-                        $this->getFieldProperty($field, 'naming')
+                        $this->getFieldProperty($field, 'naming'),
+                        $this->getFieldOption($field, 'maxNameLength')
                     );
                 }
 
