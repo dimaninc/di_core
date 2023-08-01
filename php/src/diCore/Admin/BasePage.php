@@ -235,6 +235,20 @@ abstract class BasePage
         return $o;
     }
 
+    public static function liteCreate($module)
+    {
+        $className = Base::getModuleClassName($module);
+        $adminBaseClassName = \diLib::getChildClass(Base::class);
+
+        /** @var Base $X */
+        $X = new $adminBaseClassName(Base::INIT_MODE_LITE);
+        /** @var self $Page */
+        $Page = new $className($X);
+        $Page->tryToInitTable();
+
+        return $Page;
+    }
+
     public function setRenderCallback(callable $callback)
     {
         $this->renderCallback = $callback;
