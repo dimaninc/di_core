@@ -2993,6 +2993,9 @@ body[data-skin="entrine"] .existing-pic-holder .info:last-child {
 .existing-pic-holder .info .watermark-block > a:not(:last-child) {
   margin-right: 15px;
 }
+.rename-to-wrapper {
+  margin-top: 10px;
+}
 ul.table-edit-log {
   list-style: none;
   margin: 0;

@@ -40,19 +40,25 @@ class Helper extends BaseHelper
      */
     public function getFormUri(\diCore\Entity\PaymentDraft\Model $draft, $opts = [])
     {
-        $opts = extend([
-            'amount' => $draft->getAmount(),
-            'userId' => $draft->getUserId(),
-            'draftId' => $draft->getId(),
-            'description' => '',
-            'customerEmail' => '',
-            'customerPhone' => '',
-            'paymentVendor' => '',
-            'additionalParams' => [],
-        ], $opts);
+        $opts = extend(
+            [
+                'amount' => $draft->getAmount(),
+                'userId' => $draft->getUserId(),
+                'draftId' => $draft->getId(),
+                'description' => '',
+                'customerEmail' => '',
+                'customerPhone' => '',
+                'paymentVendor' => '',
+                'additionalParams' => [],
+            ],
+            $opts
+        );
 
-        $response = $this->getClient()
-            ->registerOrder($opts['draftId'], $opts['amount'], $draft->getTargetModel()->getHref());
+        $response = $this->getClient()->registerOrder(
+            $opts['draftId'],
+            $opts['amount'],
+            $draft->getTargetModel()->getHref()
+        );
 
         static::log("registerOrder:\n" . print_r($opts, true));
         static::log("Response:\n" . print_r($response, true));
@@ -63,6 +69,6 @@ class Helper extends BaseHelper
         }
         */
 
-        return ArrayHelper::getValue($response, 'formUrl');
+        return ArrayHelper::get($response, 'formUrl');
     }
 }

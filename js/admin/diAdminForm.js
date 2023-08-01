@@ -12,16 +12,21 @@ var diAdminForm = function (table, id, auto_save_timeout) {
     this.timer_id = false;
     this.able_to_leave_page = true; // false
     this.language = $('body').data('language');
+    this.fileApiBase = '/api/files/';
 
     var local = {
         ru: {
             field_href: 'Ссылка',
-            field_slug_source: 'Название для URL'
+            field_slug_source: 'Название для URL',
+            renamedTo:
+                'Файл &laquo;{{ oldFn }}&raquo; переименован в &laquo;{{ newFn }}&raquo;'
         },
 
         en: {
             field_href: 'Href',
-            field_slug_source: 'Slug source'
+            field_slug_source: 'Slug source',
+            renamedTo:
+                'File &laquo;{{ oldFn }}&raquo; renamed to &laquo;{{ newFn }}&raquo;'
         }
     };
 
@@ -76,15 +81,27 @@ var diAdminForm = function (table, id, auto_save_timeout) {
             .initCheckboxesToggles()
             .initFieldMaxLength()
             .initOwnValueForSelect()
+            .initRenameTo()
             .editOwnValue();
 
         initiating = false;
     }
 
-    this.L = function (name) {
-        return typeof local[this.getLanguage()][name] !== 'undefined'
-            ? local[this.getLanguage()][name]
-            : name;
+    this.L = function (name, vars) {
+        var v =
+            typeof local[this.getLanguage()][name] !== 'undefined'
+                ? local[this.getLanguage()][name]
+                : name;
+
+        if (vars) {
+            v = di.strReplace(
+                di.keys(vars).map(s => '{{ ' + s + ' }}'),
+                di.values(vars),
+                v
+            );
+        }
+
+        return v;
     };
 
     this.getLanguage = function () {
@@ -390,6 +407,57 @@ var diAdminForm = function (table, id, auto_save_timeout) {
         return this;
     };
 
+    this.initRenameTo = function () {
+        const $btn = $('button[data-purpose="rename-file"]');
+        const field = $btn.closest('[data-field]').data('field');
+
+        $btn.on('click', function (event) {
+            event.preventDefault();
+
+            const $this = $(this);
+
+            if (!confirm($this.data('confirm'))) {
+                return;
+            }
+
+            $.post(
+                self.fileApiBase + 'rename',
+                {
+                    table: self.table,
+                    id: self.id,
+                    field: field
+                },
+                res => {
+                    if (!res.ok) {
+                        return ajaxErrorHandler(res);
+                    }
+
+                    A.console.add(
+                        res.message ||
+                            self.L('renamedTo', {
+                                oldFn: res.oldFn,
+                                newFn: res.newFn
+                            })
+                    );
+
+                    const $picWrapper = $this
+                        .closest('.value')
+                        .find('.existing-pic-holder');
+                    const $link = $picWrapper.find('.link');
+                    const href = $link.attr('href');
+                    const newHref = dirname(href) + '/' + res.newFn;
+                    $link.html(res.newFn);
+                    $link.attr('href', newHref);
+
+                    const $wrapper = $this.closest('.rename-to-wrapper');
+                    $wrapper.remove();
+                }
+            ).error(ajaxErrorHandler);
+        });
+
+        return this;
+    };
+
     function initTabs() {
         Tabs = new diTabs({
             $tabsContainer: $('.diadminform_tabs ul'),
@@ -437,7 +505,10 @@ var diAdminForm = function (table, id, auto_save_timeout) {
                             );
                         }
 
+                        const $renameTo = $e.parent().find('.rename-to-wrapper');
+
                         $e.remove();
+                        $renameTo.remove();
                     } else {
                         alert(res.message || 'Error: no such record');
                     }

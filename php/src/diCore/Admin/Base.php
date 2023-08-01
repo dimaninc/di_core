@@ -653,7 +653,7 @@ class Base
 
     public function getUriParam($idx, $defaultValue = null, $type = null)
     {
-        return ArrayHelper::getValue($this->uriParams, $idx, $defaultValue, $type);
+        return ArrayHelper::get($this->uriParams, $idx, $defaultValue, $type);
     }
 
     private function readUri()

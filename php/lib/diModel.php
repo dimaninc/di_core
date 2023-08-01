@@ -850,6 +850,53 @@ class diModel implements \ArrayAccess
         return $this;
     }
 
+    public function renameFiles($field, $newFnSource)
+    {
+        $fileVariants = static::getPicStoreSettings($field);
+        $oldFn = $this->get($field);
+        $newFn = null;
+
+        if (!$oldFn) {
+            throw new \Exception('No file value set to be renamed');
+        }
+
+        if (!$fileVariants) {
+            throw new \Exception('No pic settings set');
+        }
+
+        foreach ($fileVariants as $variant) {
+            $pathPrefix = \diPaths::fileSystem($this, true, $field);
+            $subFolder = Submit::getFolderByImageType($variant['type']);
+            $path = $pathPrefix . $this->getFolderForField($field) . $subFolder;
+
+            if (!$newFn) {
+                $newFn = Submit::getGeneratedFilename(
+                    $path,
+                    $newFnSource,
+                    Submit::FILE_NAMING_ORIGINAL
+                );
+            }
+
+            $oldFullFn = $path . $oldFn;
+            $newFullFn = $path . $newFn;
+
+            if (is_file($oldFullFn)) {
+                rename($oldFullFn, $newFullFn);
+            }
+
+            if (is_file($oldFullFn . \diImage::EXT_WEBP)) {
+                rename(
+                    $oldFullFn . \diImage::EXT_WEBP,
+                    $newFullFn . \diImage::EXT_WEBP
+                );
+            }
+        }
+
+        $this->set($field, basename($newFn));
+
+        return $this;
+    }
+
     public function getFileContents($field, $previewIdx = null)
     {
         if (!$this->has($field)) {
@@ -2350,8 +2397,8 @@ ENGINE = InnoDB;";
             if ($fn && is_file($basePath . $fn)) {
                 unlink($basePath . $fn);
 
-                if (is_file($basePath . $fn . '.webp')) {
-                    unlink($basePath . $fn . '.webp');
+                if (is_file($basePath . $fn . \diImage::EXT_WEBP)) {
+                    unlink($basePath . $fn . \diImage::EXT_WEBP);
                 }
             }
         }

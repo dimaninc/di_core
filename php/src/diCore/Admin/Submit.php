@@ -10,7 +10,6 @@ namespace diCore\Admin;
 
 use diCore\Data\Config;
 use diCore\Data\Configuration;
-use diCore\Data\Types;
 use diCore\Database\Connection;
 use diCore\Entity\DynamicPic\Collection as DynamicPics;
 use diCore\Helper\ArrayHelper;
@@ -1194,10 +1193,27 @@ class Submit
         return preg_replace('/[^a-zA-Z0-9.()_!-]/', '', $filename);
     }
 
+    public static function getFilenameFromTitle(\diModel $m, $fields)
+    {
+        if (!is_array($fields)) {
+            $fields = [$fields];
+        }
+
+        $source = ArrayHelper::someValue(
+            $fields,
+            function ($field) use ($m) {
+                return $m->get($field);
+            },
+            true
+        );
+
+        return self::cleanFilename(transliterate_rus_to_eng($source));
+    }
+
     public static function getGeneratedFilename(
         $folder,
         $origFilename,
-        $naming,
+        $naming = self::FILE_NAMING_ORIGINAL,
         $maxLen = 0
     ) {
         $baseName =
@@ -1238,6 +1254,15 @@ class Submit
         } while (is_file($folder . $filename . $extension));
 
         return $filename . $extension;
+    }
+
+    public static function cleanGeneratedFilename($fn)
+    {
+        $ext = StringHelper::fileExtension($fn);
+        $fn = StringHelper::fileBaseName($fn);
+        $fn = preg_replace('#' . self::FILE_NAME_GLUE . '\d+#', '', $fn);
+
+        return $fn . $ext;
     }
 
     protected function generateFilename($field, $folder, $origFilename)
@@ -1595,27 +1620,14 @@ class Submit
 
     public static function rebuildDynamicPics($module, $field = null, $id = null)
     {
-        $className = \diCore\Admin\Base::getModuleClassName($module);
-        $adminBaseClassName = \diLib::getChildClass(Base::class);
-
-        /** @var Base $X */
-        $X = new $adminBaseClassName(\diCore\Admin\Base::INIT_MODE_LITE);
-        /** @var \diCore\Admin\BasePage $Page */
-        $Page = new $className($X);
-        $Page->tryToInitTable();
-        $Submit = new self($Page);
-
-        $callback = isset($Submit->_all_fields[$field]['callback'])
-            ? $Submit->_all_fields[$field]['callback']
-            : self::$defaultDynamicPicCallback;
-
+        $Submit = new self(BasePage::liteCreate($module));
+        $callback =
+            $Submit->_all_fields[$field]['callback'] ??
+            self::$defaultDynamicPicCallback;
         $id = (int) $id;
-
         $ar = [];
 
-        /** @var DynamicPics $pics */
-        $pics = \diCollection::create(Types::dynamic_pic);
-        $pics->filterByTargetTable($Submit->getTable());
+        $pics = DynamicPics::create()->filterByTargetTable($Submit->getTable());
 
         if ($field) {
             $pics->filterByTargetField($field);
@@ -1629,7 +1641,7 @@ class Submit
         foreach ($pics as $pic) {
             $fn =
                 \diPaths::fileSystem() .
-                get_pics_folder($Page->getTable()) .
+                get_pics_folder($Submit->getTable()) .
                 get_orig_folder() .
                 $pic->getPic();
 
@@ -1643,7 +1655,7 @@ class Submit
                 'size' => filesize($fn),
             ];
 
-            $db_ar = [
+            $update = [
                 'pic' => $pic->getPic(),
             ];
 
@@ -1655,12 +1667,12 @@ class Submit
                         'field' => $pic->getTargetField(),
                         'what' => 'pic',
                     ],
-                    $db_ar,
-                    get_pics_folder($Page->getTable())
+                    $update,
+                    get_pics_folder($Submit->getTable())
                 );
             }
 
-            $pic->set($db_ar)->save();
+            $pic->set($update)->save();
         }
 
         return $ar;
@@ -1733,8 +1745,8 @@ class Submit
             if (is_file($fn)) {
                 unlink($fn);
 
-                if (is_file($fn . '.webp')) {
-                    unlink($fn . '.webp');
+                if (is_file($fn . \diImage::EXT_WEBP)) {
+                    unlink($fn . \diImage::EXT_WEBP);
                 }
             }
 

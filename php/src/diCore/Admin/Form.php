@@ -94,6 +94,8 @@ class Form
             'tab_general' => 'General',
 
             'choose_file' => 'Choose file...',
+            'rename_to' => 'Rename to &laquo;{{ fn }}&raquo;',
+            'rename_to.confirm' => 'Rename to &laquo;{{ fn }}&raquo;?',
 
             'tag.enter_new' => 'Add new items, comma separated',
             'tag.toggle_on' => 'All on',
@@ -152,6 +154,8 @@ class Form
             'tab_general' => 'Основное',
 
             'choose_file' => 'Выбрать файл...',
+            'rename_to' => 'Переименовать в &laquo;{{ fn }}&raquo;',
+            'rename_to.confirm' => 'Переименовать в &laquo;{{ fn }}&raquo;?',
 
             'tag.enter_new' => 'Добавить новые, через запятую',
             'tag.toggle_on' => 'Выделить все',
@@ -577,11 +581,28 @@ class Form
         return null;
     }
 
-    public static function L($token, $language = null)
+    public static function L($token, $vars = [], $language = null)
     {
+        if ($language && is_string($vars)) {
+            $language = $vars;
+            $vars = [];
+        }
+
         $language = $language ?: self::$language;
 
-        return self::$lngStrings[$language][$token] ?? $token;
+        $s = self::$lngStrings[$language][$token] ?? $token;
+
+        if ($vars) {
+            $s = str_replace(
+                array_map(function ($v) {
+                    return "{{ $v }}";
+                }, array_keys($vars)),
+                array_values($vars),
+                $s
+            );
+        }
+
+        return $s;
     }
 
     public function setStaticMode($state)
@@ -2739,11 +2760,35 @@ EOF;
                     ]
             );
 
+            $renameFields = $this->getFieldOption($field, 'showRenameButton');
+            $renameButton = '';
+
+            if ($renameFields && $v) {
+                $ext = '.' . strtolower(StringHelper::fileExtension($v));
+                $newFn =
+                    Submit::getFilenameFromTitle($this->getModel(), $renameFields) .
+                    $ext;
+                $oldFnClean = Submit::cleanGeneratedFilename($v);
+                $newFnClean = Submit::cleanGeneratedFilename($newFn);
+
+                if ($oldFnClean !== $newFnClean) {
+                    $caption = $this->L('rename_to', [
+                        'fn' => $newFn,
+                    ]);
+                    $confirmMessage = $this->L('rename_to.confirm', [
+                        'fn' => $newFn,
+                    ]);
+
+                    $renameButton = "<div class='rename-to-wrapper'><button type='button' data-purpose='rename-file' data-new-fn='$newFn' data-confirm=\"{$confirmMessage}\">{$caption}</button></div>";
+                }
+            }
+
             $this->inputs[$field] = $this->isFlag($field, FormFlag::static)
                 ? "<input type=\"hidden\" name=\"$field\" value=\"$v\">"
                 : "<div class=\"file-input-wrapper\" data-caption=\"{$this->L(
-                    'choose_file'
-                )}\"><input type=\"file\" name=\"$name\" value=\"\" size=\"70\" {$attributes}></div>";
+                        'choose_file'
+                    )}\"><input type=\"file\" name=\"$name\" value=\"\" size=\"70\" {$attributes}></div>" .
+                    $renameButton;
 
             $this->force_inputs_fields[$field] = true;
         }
