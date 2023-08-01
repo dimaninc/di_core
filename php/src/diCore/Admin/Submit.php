@@ -1190,7 +1190,8 @@ class Submit
 
     public static function cleanFilename($filename)
     {
-        return preg_replace('/[^a-zA-Z0-9.()_!-]/', '', $filename);
+        // do we need "!" in filenames?
+        return preg_replace('/[^a-zA-Z0-9.()_-]/', '', $filename);
     }
 
     public static function getFilenameFromTitle(\diModel $m, $fields)
