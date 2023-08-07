@@ -1604,6 +1604,9 @@ body[data-skin="entrine"] .footer .console-container .console > div {
 .footer .console-container:not(.navy-needed) .down {
   display: none;
 }
+.error-wrapper {
+  padding: 0 20px;
+}
 .mce-tinymce button {
   border-radius: 0;
 }

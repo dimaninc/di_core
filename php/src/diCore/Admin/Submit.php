@@ -997,43 +997,46 @@ class Submit
         \diModel $model,
         $table = null
     ) {
-        foreach ($filesOptions as &$opts) {
-            $widthParam = Configuration::getDimensionParam(
-                'width',
-                $table ?: $model->getTable(),
-                $field,
-                $opts['type'] ?? self::IMAGE_TYPE_MAIN
-            );
-            $heightParam = Configuration::getDimensionParam(
-                'height',
-                $table ?: $model->getTable(),
-                $field,
-                $opts['type'] ?? self::IMAGE_TYPE_MAIN
-            );
+        $widthParam = Configuration::getDimensionParam(
+            'width',
+            $table ?: $model->getTable(),
+            $field,
+            $opts['type'] ?? self::IMAGE_TYPE_MAIN
+        );
+        $heightParam = Configuration::getDimensionParam(
+            'height',
+            $table ?: $model->getTable(),
+            $field,
+            $opts['type'] ?? self::IMAGE_TYPE_MAIN
+        );
 
-            $opts = extend(
-                [
-                    'type' => self::IMAGE_TYPE_MAIN,
-                    'folder' =>
-                        $model->getPicsFolder() ?:
-                        get_pics_folder(
-                            $table ?: $model->getTable(),
-                            Config::getUserAssetsFolder()
-                        ),
-                    'subfolder' => null,
-                    'resize' => null,
-                    'quality' => null,
-                    'afterSave' => null,
-                    'watermark' => [
-                        'name' => null,
-                        'x' => null,
-                        'y' => null,
-                    ],
-                    'width' => Configuration::safeGet($widthParam),
-                    'height' => Configuration::safeGet($heightParam),
-                ],
-                $opts
-            );
+        $defaultOpt = [
+            'type' => self::IMAGE_TYPE_MAIN,
+            'folder' =>
+                $model->getPicsFolder() ?:
+                get_pics_folder(
+                    $table ?: $model->getTable(),
+                    Config::getUserAssetsFolder()
+                ),
+            'subfolder' => null,
+            'resize' => null,
+            'quality' => null,
+            'afterSave' => null,
+            'watermark' => [
+                'name' => null,
+                'x' => null,
+                'y' => null,
+            ],
+            'width' => Configuration::safeGet($widthParam),
+            'height' => Configuration::safeGet($heightParam),
+        ];
+
+        if (!$filesOptions) {
+            $filesOptions = [[]];
+        }
+
+        foreach ($filesOptions as &$opts) {
+            $opts = extend($defaultOpt, $opts);
 
             if (
                 $opts['type'] != self::IMAGE_TYPE_MAIN &&

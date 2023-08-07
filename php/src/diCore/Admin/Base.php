@@ -253,9 +253,19 @@ class Base
 
     public function work()
     {
-        $this->assignTplBase()
-            ->printContentPage()
-            ->printMainMenu()
+        try {
+            $this->assignTplBase()->printContentPage();
+        } catch (\Exception $e) {
+            $this->getTwig()->render(
+                'admin/_error/simple',
+                \diTwig::TOKEN_FOR_PAGE,
+                [
+                    'e' => $e,
+                ]
+            );
+        }
+
+        $this->printMainMenu()
             ->printCaption()
             ->printHead();
 

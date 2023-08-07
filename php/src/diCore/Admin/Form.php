@@ -843,7 +843,7 @@ class Form
                 }
             } else {
                 throw new \Exception(
-                    "There's no such record ($this->table#'$this->id')"
+                    "There's no such record ('$this->table'#'$this->id')"
                 );
             }
         } else {
