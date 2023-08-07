@@ -592,7 +592,7 @@ class Form
 
         $s = self::$lngStrings[$language][$token] ?? $token;
 
-        if ($vars) {
+        if ($vars && is_array($vars)) {
             $s = str_replace(
                 array_map(function ($v) {
                     return "{{ $v }}";
