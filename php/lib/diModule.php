@@ -7,282 +7,314 @@
  */
 
 use diCore\Base\CMS;
+use diCore\Data\Config;
 use diCore\Tool\Cache\Module;
 
 abstract class diModule
 {
-	/** @var CMS */
-	private $Z;
+    /** @var CMS */
+    private $Z;
 
-	protected $useModuleCache = false;
+    protected $useModuleCache = false;
 
-	protected $renderOptions = [];
-	protected $bootstrapSettings = [];
+    protected $renderOptions = [];
+    protected $bootstrapSettings = [];
 
-	const NO_CACHE_OPTION = 'noCache';
+    const NO_CACHE_OPTION = 'noCache';
 
-	public function __construct(CMS $Z)
-	{
-		$this->Z = $Z;
-	}
+    public function __construct(CMS $Z)
+    {
+        $this->Z = $Z;
+    }
 
-	public static function create(CMS $Z, $options = [])
-	{
-		$options = extend([
-			'noCache' => false,
-			'ignoreRealRoutes' => false,
-			'bootstrapSettings' => null,
-		], $options);
+    public static function create(CMS $Z, $options = [])
+    {
+        $options = extend(
+            [
+                'noCache' => false,
+                'ignoreRealRoutes' => false,
+                'bootstrapSettings' => null,
+            ],
+            $options
+        );
 
-		$o = new static($Z);
-		$o->setRenderOptions($options);
+        $o = new static($Z);
+        $o->setRenderOptions($options);
 
-		if ($o->beforeRender()) {
-			$o->doRender();
-		}
+        if ($o->beforeRender()) {
+            $o->doRender();
+        }
 
-		$o->afterRender();
+        $o->afterRender();
 
-		if ($o->getTwig()->hasPage()) {
-			if ($Z::templateEngineIsFastTemplate()) {
-				$o->getTpl()
-					->assign([
-						'PAGE' => $o->getTwig()->getPage(),
-					]);
-			}
-		} elseif ($o->getTpl()->defined('page')) {
-			$o->getTpl()->process('page');
+        if ($o->getTwig()->hasPage()) {
+            if ($Z::templateEngineIsFastTemplate()) {
+                $o->getTpl()->assign([
+                    'PAGE' => $o->getTwig()->getPage(),
+                ]);
+            }
+        } elseif ($o->getTpl()->defined('page')) {
+            $o->getTpl()->process('page');
 
-			if ($Z::templateEngineIsTwig()) {
-				$o->getTwig()
-					->importFromFastTemplate($o->getTpl(), [
-						\diTwig::TOKEN_FOR_PAGE => 'page',
-					], false);
-			}
-		}
+            if ($Z::templateEngineIsTwig()) {
+                $o->getTwig()->importFromFastTemplate(
+                    $o->getTpl(),
+                    [
+                        \diTwig::TOKEN_FOR_PAGE => 'page',
+                    ],
+                    false
+                );
+            }
+        }
 
-		return $o;
-	}
+        return $o;
+    }
 
-	public function getResultPage()
-	{
-		return $this->getTwig()->getPage() ?: $this->getTpl()->getAssigned('PAGE');
-	}
+    public function getResultPage()
+    {
+        return $this->getTwig()->getPage() ?:
+            $this->getTpl()->getAssigned('PAGE');
+    }
 
-	abstract public function render();
+    abstract public function render();
 
-	public function beforeRender()
-	{
-		return true;
-	}
+    public function beforeRender()
+    {
+        return true;
+    }
 
-	public function afterRender()
-	{
-		$this->getZ()->beforeParsePage();
+    public function afterRender()
+    {
+        $this->getZ()->beforeParsePage();
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function doRender()
-	{
-		if ($this->useModuleCache() && !$this->getRenderOption('noCache')) {
-			$bootstrapSettings = $this->getCurrentBootstrapSettings();
+    protected function doRender()
+    {
+        if ($this->useModuleCache() && !$this->getRenderOption('noCache')) {
+            $bootstrapSettings = $this->getCurrentBootstrapSettings();
 
-			if (empty($bootstrapSettings[self::NO_CACHE_OPTION])) {
-				$MC = Module::basicCreate();
-				$contents = $MC->getCachedContents($this, [
-					'language' => $this->getZ()->getLanguage(),
-					'query_string' => \diRequest::requestQueryString(),
-					'bootstrap_settings' => $bootstrapSettings,
-				]);
-			}
+            if (empty($bootstrapSettings[self::NO_CACHE_OPTION])) {
+                $MC = Module::basicCreate();
+                $contents = $MC->getCachedContents($this, [
+                    'language' => $this->getZ()->getLanguage(),
+                    'query_string' => \diRequest::requestQueryString(),
+                    'bootstrap_settings' => $bootstrapSettings,
+                ]);
+            }
 
-			if (!empty($contents)) {
-				$this
-					->setBootstrapSettings($bootstrapSettings)
-					->cachedBootstrap();
+            if (!empty($contents)) {
+                $this->setBootstrapSettings(
+                    $bootstrapSettings
+                )->cachedBootstrap();
 
-				$this->getTwig()->assign([
-					\diTwig::TOKEN_FOR_PAGE => $contents,
-				]);
+                $this->getTwig()->assign([
+                    \diTwig::TOKEN_FOR_PAGE => $contents,
+                ]);
 
-				return $this;
-			}
-		}
+                return $this;
+            }
+        }
 
-		// todo: remove routes when module cache is being made from browser
-		if ($this->getRenderOption('noCache') && false) {
-			$this
-				->bootstrapRoutes();
-		}
+        // todo: remove routes when module cache is being made from browser
+        if ($this->getRenderOption('noCache') && false) {
+            $this->bootstrapRoutes();
+        }
 
-		$this
-			->bootstrap()
-			->render();
+        $this->bootstrap()->render();
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @return array
-	 */
-	protected function getCurrentBootstrapSettings()
-	{
-		return [];
-	}
+    /**
+     * @return array
+     */
+    protected function getCurrentBootstrapSettings()
+    {
+        return [];
+    }
 
-	protected function cachedBootstrap()
-	{
-		return $this;
-	}
+    protected function cachedBootstrap()
+    {
+        return $this;
+    }
 
-	protected function bootstrapRoutes()
-	{
-		$this->getZ()
-			->setRoute([]);
+    protected function bootstrapRoutes()
+    {
+        $this->getZ()->setRoute([]);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function bootstrap()
-	{
-		return $this;
-	}
+    protected function bootstrap()
+    {
+        return $this;
+    }
 
-	protected function setRenderOptions($options)
-	{
-		$this->renderOptions = $options;
-		$this->setBootstrapSettings($this->getRenderOption('bootstrapSettings'));
+    protected function setRenderOptions($options)
+    {
+        $this->renderOptions = $options;
+        $this->setBootstrapSettings(
+            $this->getRenderOption('bootstrapSettings')
+        );
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function getRenderOption($name = null)
-	{
-		return $name === null
-			? $this->renderOptions
-			: (isset($this->renderOptions[$name]) ? $this->renderOptions[$name] : null);
-	}
+    protected function getRenderOption($name = null)
+    {
+        return $name === null
+            ? $this->renderOptions
+            : (isset($this->renderOptions[$name])
+                ? $this->renderOptions[$name]
+                : null);
+    }
 
-	protected function setBootstrapSettings($options)
-	{
-		if (!is_array($options)) {
-			$a = $options ? explode(Module::BOOTSTRAP_SETTINGS_END, $options) : [];
-			$options = [];
+    protected function setBootstrapSettings($options)
+    {
+        if (!is_array($options)) {
+            $a = $options
+                ? explode(Module::BOOTSTRAP_SETTINGS_END, $options)
+                : [];
+            $options = [];
 
-			foreach ($a as $kv) {
-				list($k, $v) = array_merge(explode(Module::BOOTSTRAP_SETTINGS_EQ, $kv), [null, null]);
+            foreach ($a as $kv) {
+                list($k, $v) = array_merge(
+                    explode(Module::BOOTSTRAP_SETTINGS_EQ, $kv),
+                    [null, null]
+                );
 
-				if ($k) {
-					$options[$k] = $v;
-				}
-			}
-		}
+                if ($k) {
+                    $options[$k] = $v;
+                }
+            }
+        }
 
-		$this->bootstrapSettings = $options;
+        $this->bootstrapSettings = $options;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function getBootstrapSettings($name = null)
-	{
-		return $name === null
-			? $this->bootstrapSettings
-			: (isset($this->bootstrapSettings[$name]) ? $this->bootstrapSettings[$name] : null);
-	}
+    protected function getBootstrapSettings($name = null)
+    {
+        return $name === null
+            ? $this->bootstrapSettings
+            : (isset($this->bootstrapSettings[$name])
+                ? $this->bootstrapSettings[$name]
+                : null);
+    }
 
-	protected function useModuleCache()
-	{
-		return \diCore\Data\Config::useModuleCache() && $this->useModuleCache;
-	}
+    protected function useModuleCache()
+    {
+        return Config::useModuleCache() && $this->useModuleCache;
+    }
 
-	/**
-	 * @return \diCurrentCMS
-	 */
-	public function getZ()
-	{
-		return $this->Z;
-	}
+    /**
+     * @return \diCurrentCMS
+     */
+    public function getZ()
+    {
+        return $this->Z;
+    }
 
-	/**
-	 * @return FastTemplate
-	 * @deprecated
-	 */
-	public function getTpl()
-	{
-		return $this->getZ()->getTpl();
-	}
+    /**
+     * @return FastTemplate
+     * @deprecated
+     */
+    public function getTpl()
+    {
+        return $this->getZ()->getTpl();
+    }
 
-	/**
-	 * @return \diTwig
-	 */
-	public function getTwig()
-	{
-		return $this->getZ()->getTwig();
-	}
+    /**
+     * @return \diTwig
+     */
+    public function getTwig()
+    {
+        return $this->getZ()->getTwig();
+    }
 
-	/**
-	 * @return \diDB
-	 */
-	public function getDb()
-	{
-		return $this->getZ()->getDb();
-	}
+    /**
+     * @return \diDB
+     */
+    public function getDb()
+    {
+        return $this->getZ()->getDb();
+    }
 
-	/**
-	 * @param int|null $idx
-	 * @return array|string|null
-	 */
-	public function getRoute($idx = null)
-	{
-		return $this->getRenderOption('ignoreRealRoutes')
+    /**
+     * @param int|null $idx
+     * @return array|string|null
+     */
+    public function getRoute($idx = null)
+    {
+        return $this->getRenderOption('ignoreRealRoutes')
             ? null
             : $this->getZ()->getRoute($idx);
-	}
+    }
 
-	/**
-	 * @return \diCore\Base\BreadCrumbs
-	 */
-	public function getBreadCrumbs()
-	{
-		return $this->getZ()->getBreadCrumbs();
-	}
+    /**
+     * @return \diCore\Base\BreadCrumbs
+     */
+    public function getBreadCrumbs()
+    {
+        return $this->getZ()->getBreadCrumbs();
+    }
 
-	/**
-	 * @param $href
-	 * @param bool|true $die
-	 * @return $this
-	 */
-	public function redirect($href, $die = true, $headerDebugMessage = null, $headerDebugName = null)
-	{
-		$this->getZ()->redirect($href, $die, $headerDebugMessage, $headerDebugName);
+    /**
+     * @param $href
+     * @param bool|true $die
+     * @return $this
+     */
+    public function redirect(
+        $href,
+        $die = true,
+        $headerDebugMessage = null,
+        $headerDebugName = null
+    ) {
+        $this->getZ()->redirect(
+            $href,
+            $die,
+            $headerDebugMessage,
+            $headerDebugName
+        );
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @param $href
-	 * @param bool|string $die  Redirect debug message can be instead of $die (this means also that $die = true)
-	 * @return $this
-	 */
-	public function redirect_301($href, $die = true, $headerDebugMessage = null, $headerDebugName = null)
-	{
-		$this->getZ()->redirect_301($href, $die, $headerDebugMessage, $headerDebugName);
+    /**
+     * @param $href
+     * @param bool|string $die  Redirect debug message can be instead of $die (this means also that $die = true)
+     * @return $this
+     */
+    public function redirect_301(
+        $href,
+        $die = true,
+        $headerDebugMessage = null,
+        $headerDebugName = null
+    ) {
+        $this->getZ()->redirect_301(
+            $href,
+            $die,
+            $headerDebugMessage,
+            $headerDebugName
+        );
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function getName()
-	{
-		$name = get_class($this);
+    public function getName()
+    {
+        $name = get_class($this);
 
-		if ($id = \diLib::childNamespace($name)) {
-			$id = underscore($id);
-		} else {
-			$id = underscore($name);
-			$id = preg_replace('/^di_|(_custom)?_module$/', '', $id);
-		}
+        if ($id = \diLib::childNamespace($name)) {
+            $id = underscore($id);
+        } else {
+            $id = underscore($name);
+            $id = preg_replace('/^di_|(_custom)?_module$/', '', $id);
+        }
 
-		return $id;
-	}
+        return $id;
+    }
 }

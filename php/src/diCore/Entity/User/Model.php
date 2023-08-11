@@ -24,8 +24,8 @@ use diCore\Tool\Mail\Queue;
  * @method bool hasPassword
  * @method bool hasActivationKey
  *
- * @method Model setPassword($value)
- * @method Model setActivationKey($value)
+ * @method $this setPassword($value)
+ * @method $this setActivationKey($value)
  */
 class Model extends \diBaseUserModel
 {
@@ -175,10 +175,7 @@ class Model extends \diBaseUserModel
         $newPassword = \diRequest::post('new_password', '');
         $newPassword2 = \diRequest::post('new_password2', '');
 
-        if (
-            !$oldPassword ||
-            static::hash($oldPassword, 'db') != $this->getPassword()
-        ) {
+        if (!$oldPassword || !static::isPasswordOk($oldPassword)) {
             throw new \Exception(Cabinet::L('set_password.wrong_old_password'));
         }
 
@@ -187,7 +184,9 @@ class Model extends \diBaseUserModel
         }
 
         if ($newPassword != $newPassword2) {
-            throw new \Exception(Cabinet::L('set_password.passwords_not_match'));
+            throw new \Exception(
+                Cabinet::L('set_password.passwords_not_match')
+            );
         }
 
         $this->setValidationNeeded(false)

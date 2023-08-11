@@ -55,7 +55,7 @@ namespace diCore\Entity\Admin;
  */
 class Collection extends \diCollection
 {
-	const type = \diTypes::admin;
-	protected $table = 'admins';
-	protected $modelType = 'admin';
+    const type = \diTypes::admin;
+    protected $table = 'admins';
+    protected $modelType = 'admin';
 }

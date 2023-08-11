@@ -37,8 +37,7 @@ trait Tagged
         $a = $this->prepareIdAndFieldForGetRecord($id, $field);
 
         $col = \diCollection::create(static::type);
-        $col
-            ->filterBy($a['field'], $a['id']);
+        $col->filterBy($a['field'], $a['id']);
 
         return $col->getFirstItem();
     }
@@ -55,8 +54,7 @@ trait Tagged
      */
     protected function afterTaggedInit()
     {
-        if ($this->exists())
-        {
+        if ($this->exists()) {
             $this->parseTags();
         }
 
@@ -67,13 +65,14 @@ trait Tagged
     {
         $tags = $this->get($this->tagsField);
 
-        if ($tags && is_string($tags))
-        {
-            $tags = trim($tags, Collection::$TAG_INFO_SEPARATOR . Collection::$TAG_SEPARATOR);
+        if ($tags && is_string($tags)) {
+            $tags = trim(
+                $tags,
+                Collection::$TAG_INFO_SEPARATOR . Collection::$TAG_SEPARATOR
+            );
             $tags = array_filter(explode(Collection::$TAG_SEPARATOR, $tags));
 
-            foreach ($tags as &$tag)
-            {
+            foreach ($tags as &$tag) {
                 $info = explode(Collection::$TAG_INFO_SEPARATOR, $tag);
 
                 $tag = \diModel::create(Types::tag, [
@@ -83,9 +82,10 @@ trait Tagged
                 ]);
             }
 
-            $this
-                ->set($this->tagsField, '')
-                ->setRelated($this->tagsField, $tags);
+            $this->set($this->tagsField, '')->setRelated(
+                $this->tagsField,
+                $tags
+            );
         }
 
         return $this;

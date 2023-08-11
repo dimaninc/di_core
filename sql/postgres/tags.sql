@@ -17,5 +17,5 @@ CREATE TABLE IF NOT EXISTS tags
 CREATE INDEX IF NOT EXISTS idx__tags
     ON tags (weight, visible, title, date);
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx__tags_slug
+CREATE UNIQUE INDEX IF NOT EXISTS idx__tags__slug
     ON tags (slug);

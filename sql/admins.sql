@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS admins(
   id bigint not null auto_increment,
   login varchar(50),
-  password varchar(32),
+  password varchar(100),
   first_name varchar(50),
   last_name varchar(50),
   email varchar(60),

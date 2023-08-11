@@ -114,7 +114,9 @@ class diDynamicRows
         $this->abs_path = Config::getPublicFolder(); //diPaths::fileSystem();
         $this->data_table = $this->info_ar[$this->field]['table'];
 
-        $this->storedModel = \diModel::createForTableNoStrict($this->getDataTable()); // , $this->getParentId(), 'id'
+        $this->storedModel = \diModel::createForTableNoStrict(
+            $this->getDataTable()
+        ); // , $this->getParentId(), 'id'
         //$this->storedModel = new \diModel();
 
         $fields_to_check_ar = ['table', 'template', 'fields'];
@@ -429,11 +431,18 @@ class diDynamicRows
     {
         if (
             is_string($fieldOrFlagsAr) &&
-            isset($this->info_ar[$this->field]['fields'][$fieldOrFlagsAr]['flags'])
+            isset(
+                $this->info_ar[$this->field]['fields'][$fieldOrFlagsAr]['flags']
+            )
         ) {
             $flags_ar =
-                $this->info_ar[$this->field]['fields'][$fieldOrFlagsAr]['flags'];
-        } elseif (is_array($fieldOrFlagsAr) && isset($fieldOrFlagsAr['flags'])) {
+                $this->info_ar[$this->field]['fields'][$fieldOrFlagsAr][
+                    'flags'
+                ];
+        } elseif (
+            is_array($fieldOrFlagsAr) &&
+            isset($fieldOrFlagsAr['flags'])
+        ) {
             $flags_ar = $fieldOrFlagsAr['flags'];
         } else {
             $flags_ar = [];
@@ -472,7 +481,10 @@ class diDynamicRows
             if (in_array($v['type'], explode(',', 'date,time,datetime'))) {
                 $default_value = time();
             } elseif (
-                in_array($v['type'], explode(',', 'date_str,time_str,datetime_str'))
+                in_array(
+                    $v['type'],
+                    explode(',', 'date_str,time_str,datetime_str')
+                )
             ) {
                 $default_value = date('Y-m-d H:i:s');
             } else {
@@ -601,7 +613,9 @@ class diDynamicRows
                     break;
 
                 default:
-                    if (in_array($ar['type'], explode(',', 'int,float,double'))) {
+                    if (
+                        in_array($ar['type'], explode(',', 'int,float,double'))
+                    ) {
                         $input_params .= ' size=6';
                     } elseif (!empty($ar['input_size'])) {
                         $input_params .= " size=\"{$ar['input_size']}\"";
@@ -623,7 +637,8 @@ class diDynamicRows
 
                     $input_params .= " data-field-name='{$field}'";
 
-                    $static = $this->static_mode || $this->isFlag($ar, 'static');
+                    $static =
+                        $this->static_mode || $this->isFlag($ar, 'static');
 
                     $this->inputs[$name] = $static
                         ? str_out($value)
@@ -1096,7 +1111,8 @@ class diDynamicRows
         } elseif ($feed instanceof \diCollection) {
             /** @var \diModel $m */
             foreach ($feed as $m) {
-                $checked = strpos($this->data[$field], ",{$m->getId()},") !== false;
+                $checked =
+                    strpos($this->data[$field], ",{$m->getId()},") !== false;
 
                 $data = [
                     'value' => $m->getId(),
@@ -1464,7 +1480,11 @@ EOF;
         $ar = $this->getInputAttributes($field, $forceAttributes);
 
         return $ar
-            ? ArrayHelper::toAttributesString($ar, true, ArrayHelper::ESCAPE_HTML)
+            ? ArrayHelper::toAttributesString(
+                $ar,
+                true,
+                ArrayHelper::ESCAPE_HTML
+            )
             : '';
     }
 
@@ -1472,7 +1492,9 @@ EOF;
     {
         return extend(
             $this->getFieldProperty($field, 'attrs') ?: [],
-            isset($this->inputs_params[$field]) ? $this->inputs_params[$field] : [],
+            isset($this->inputs_params[$field])
+                ? $this->inputs_params[$field]
+                : [],
             $forceAttributes
         );
     }
@@ -1481,7 +1503,11 @@ EOF;
     {
         $a = $this->info_ar[$this->field]['fields'];
 
-        if ($field !== null && $property !== null && isset($a[$field][$property])) {
+        if (
+            $field !== null &&
+            $property !== null &&
+            isset($a[$field][$property])
+        ) {
             return $a[$field][$property];
         } elseif ($field && $property === null && isset($a[$field])) {
             return $a[$field];
@@ -1624,8 +1650,10 @@ EOF;
                 $ids_ar[] = $this->test_r->id;
             } else {
                 if (!$techFieldsSet) {
-                    $data_for_db['_table'] = $this->data['_table'] = $this->table;
-                    $data_for_db['_field'] = $this->data['_field'] = $this->field;
+                    $data_for_db['_table'] = $this->data['_table'] =
+                        $this->table;
+                    $data_for_db['_field'] = $this->data['_field'] =
+                        $this->field;
                     $data_for_db['_id'] = $this->data['_id'] = $this->id;
                     //this->data["date"] = time();
                 }
@@ -1648,7 +1676,9 @@ EOF;
 
         ($kill_rs = $this->getDb()->rs(
             $this->data_table,
-            "WHERE $this->subquery and id not in ('" . join("','", $ids_ar) . "')"
+            "WHERE $this->subquery and id not in ('" .
+                join("','", $ids_ar) .
+                "')"
         )) or $this->getDb()->dierror();
         while ($kill_r = $this->getDb()->fetch($kill_rs)) {
             foreach ($fileFields as $field) {
@@ -1657,7 +1687,9 @@ EOF;
         }
         $this->getDb()->delete(
             $this->data_table,
-            "WHERE $this->subquery and id not in ('" . join("','", $ids_ar) . "')"
+            "WHERE $this->subquery and id not in ('" .
+                join("','", $ids_ar) .
+                "')"
         ) or $this->getDb()->dierror();
 
         foreach ($filesToKill as $fn) {
@@ -1792,7 +1824,10 @@ EOF;
 
                     $this->set_data($k, $v, $id);
 
-                    if (in_array($v['type'], ['pic', 'file']) && !$this->data[$k]) {
+                    if (
+                        in_array($v['type'], ['pic', 'file']) &&
+                        !$this->data[$k]
+                    ) {
                     } else {
                         if ($v['type'] === 'radio') {
                             $data_for_db[$k] = 0;
@@ -1824,8 +1859,10 @@ EOF;
                 }
 
                 if (!$techFieldsSet) {
-                    $data_for_db['_table'] = $this->data['_table'] = $this->table;
-                    $data_for_db['_field'] = $this->data['_field'] = $this->field;
+                    $data_for_db['_table'] = $this->data['_table'] =
+                        $this->table;
+                    $data_for_db['_field'] = $this->data['_field'] =
+                        $this->field;
                     $data_for_db['_id'] = $this->data['_id'] = $this->id;
                 }
 
@@ -1833,7 +1870,9 @@ EOF;
                     isset($fields['order_num']) &&
                     empty($data_for_db['order_num'])
                 ) {
-                    $data_for_db['order_num'] = $this->data['order_num'] = $orderNum;
+                    $data_for_db['order_num'] = $this->data[
+                        'order_num'
+                    ] = $orderNum;
                 }
 
                 if (isset($fields['default']) && $orderNum == 1) {
@@ -1853,7 +1892,10 @@ EOF;
                     $insertedId = $model->getId();
                     $ids_ar[] = $insertedId;
                 } catch (\Exception $e) {
-                    Logger::getInstance()->variable('exception', $e->getMessage());
+                    Logger::getInstance()->variable(
+                        'exception',
+                        $e->getMessage()
+                    );
                 }
 
                 //$id--;
@@ -1965,7 +2007,8 @@ EOF;
                         $this->data[
                             $f
                         ] = $this->getCurrentModel()::hashPasswordFromRawToDb(
-                            $this->data[$f]
+                            $this->data[$f],
+                            $f
                         );
                     } else {
                         $r = $this->getDb()->r($this->data_table, $id, $f);
@@ -2075,7 +2118,9 @@ EOF;
         if (isset($_FILES[$ff]['name'][$id]) && !$_FILES[$ff]['error'][$id]) {
             $ext =
                 '.' .
-                strtolower(StringHelper::fileExtension($_FILES[$ff]['name'][$id]));
+                strtolower(
+                    StringHelper::fileExtension($_FILES[$ff]['name'][$id])
+                );
 
             if ($this->test_r && $this->test_r->$field) {
                 $this->data[$field] = StringHelper::replaceFileExtension(
@@ -2168,9 +2213,11 @@ EOF;
         move_uploaded_file($F['tmp_name'], $full_fn);
         @chmod($full_fn, 0775);
 
-        list($ar["{$field}_w"], $ar["{$field}_h"], $ar["{$field}_t"]) = getimagesize(
-            $full_fn
-        );
+        list(
+            $ar["{$field}_w"],
+            $ar["{$field}_h"],
+            $ar["{$field}_t"],
+        ) = getimagesize($full_fn);
     }
 }
 

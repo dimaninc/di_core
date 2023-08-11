@@ -9,6 +9,7 @@ namespace diCore\Entity\Admin;
 
 use diCore\Admin\Page\Admins as Guide;
 use diCore\Data\Config;
+use diCore\Database\FieldType;
 
 /**
  * Class Model
@@ -55,86 +56,105 @@ use diCore\Data\Config;
  */
 class Model extends \diBaseUserModel
 {
-	const type = \diTypes::admin;
-	const table = 'admins';
-	const slug_field_name = 'login';
-	protected $table = 'admins';
+    const type = \diTypes::admin;
+    const table = 'admins';
+    const slug_field_name = 'login';
+    protected $table = 'admins';
 
-	const COMPLEX_QUERY_PREFIX = 'admin_';
+    const COMPLEX_QUERY_PREFIX = 'admin_';
 
-	protected $levels;
+    protected $levels;
 
-	protected $fields = [
-		'login',
-		'password',
-		'first_name',
-		'last_name',
-		'email',
-		'phone',
-		'host',
-		'level',
-		'active',
-		'date',
-		'ip',
-	];
+    protected $fields = [
+        'login',
+        'password',
+        'first_name',
+        'last_name',
+        'email',
+        'phone',
+        'host',
+        'level',
+        'active',
+        'date',
+        'ip',
+    ];
 
-	public function getTemplateVars()
-	{
-		$ar = extend(parent::getTemplateVars(), [
-			'level_str' => $this->getLevelStr(),
-			'name' => $this->getName(),
-		]);
+    protected static $fieldTypes = [
+        'id' => FieldType::int,
+        'login' => FieldType::string,
+        'password' => FieldType::string,
+        'first_name' => FieldType::string,
+        'last_name' => FieldType::string,
+        'email' => FieldType::string,
+        'phone' => FieldType::string,
+        'address' => FieldType::string,
+        'date' => FieldType::string,
+        'ip' => FieldType::int,
+        'host' => FieldType::string,
+        'level' => FieldType::string,
+        'active' => FieldType::string,
+    ];
 
-		return $ar;
-	}
+    public function getTemplateVars()
+    {
+        $ar = extend(parent::getTemplateVars(), [
+            'level_str' => $this->getLevelStr(),
+            'name' => $this->getName(),
+        ]);
+
+        return $ar;
+    }
 
     public function isRoot()
     {
         return $this->getLevel() === 'root' || Config::isInitiating();
     }
 
-	public function getName()
-	{
-		return join(' ', array_filter($this->getNameElements()));
-	}
-
-	public function getNameElements()
+    public function getName()
     {
-        return [
-            $this->getFirstName(),
-            $this->getLastName(),
-        ];
+        return join(' ', array_filter($this->getNameElements()));
     }
 
-	public function getLevelStr()
-	{
-		if (!$this->exists()) {
-			return null;
-		}
+    public function getNameElements()
+    {
+        return [$this->getFirstName(), $this->getLastName()];
+    }
 
-		$this->cacheLevels();
+    public function getLevelStr()
+    {
+        if (!$this->exists()) {
+            return null;
+        }
 
-		return isset($this->levels[$this->getLevel()])
-			? $this->levels[$this->getLevel()]
-			: '---';
-	}
+        $this->cacheLevels();
 
-	protected function cacheLevels()
-	{
-		if ($this->levels === null) {
-			/** @var Guide $adminPageClassName */
-			$adminPageClassName = \diLib::getClassNameFor('admins', \diLib::ADMIN_PAGE);
+        return isset($this->levels[$this->getLevel()])
+            ? $this->levels[$this->getLevel()]
+            : '---';
+    }
 
-			if (class_exists($adminPageClassName)) {
-				$this->levels = $adminPageClassName::$levelsAr;
-			} else {
-				$this->levels = Guide::$levelsAr;
-			}
+    protected function cacheLevels()
+    {
+        if ($this->levels === null) {
+            /** @var Guide $adminPageClassName */
+            $adminPageClassName = \diLib::getClassNameFor(
+                'admins',
+                \diLib::ADMIN_PAGE
+            );
 
-			$this->levels = extend(Guide::$baseLevelsAr, $this->levels);
-			$this->levels = Guide::translateLevels($this->levels, $this->__getLanguage());
-		}
+            if (class_exists($adminPageClassName)) {
+                $this->levels = $adminPageClassName::$levelsAr;
+            } else {
+                $this->levels = Guide::$levelsAr;
+            }
 
-		return $this;
-	}
+            $this->levels = extend(Guide::$baseLevelsAr, $this->levels);
+            $this->levels = Guide::translateLevels(
+                $this->levels,
+                $this->__getLanguage()
+            );
+        }
+
+        return $this;
+    }
 }

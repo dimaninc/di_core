@@ -6,6 +6,6 @@ CREATE TABLE IF NOT EXISTS feedback
     email   varchar(60)  default '',
     phone   varchar(20)  default '',
     content text,
-    ip      bigint,
+    ip      cidr,
     date    timestamp    default CURRENT_TIMESTAMP
 );
