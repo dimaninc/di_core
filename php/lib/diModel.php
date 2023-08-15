@@ -2595,7 +2595,7 @@ ENGINE = InnoDB;";
      * @param integer $direction    Should be 1 or -1
      * @return $this
      */
-    public function calculateAndSetOrderNum($direction)
+    public function calculateAndSetOrderNum($direction = 1)
     {
         $init_value = $direction > 0 ? 1 : 65000;
         $sign = $direction > 0 ? 1 : -1;
@@ -2618,6 +2618,38 @@ ENGINE = InnoDB;";
                 ? intval($order_r->num) + $sign
                 : $init_value
         );
+
+        return $this;
+    }
+
+    public function calculateAndSetOrderAndLevelNum($updateNeighbors = true)
+    {
+        $h = new \diHierarchyTable($this->getTable());
+        $parent = $this->get('parent');
+        $skipIdsAr = $parent ? $h->getChildrenIdsAr($parent, [$parent]) : [];
+
+        $r = $this->getDb()->r(
+            $this->getTable(),
+            $skipIdsAr ?: '',
+            'MAX(order_num) AS num'
+        );
+
+        $this->set('level_num', $h->getChildLevelNum($parent))->set(
+            'order_num',
+            (int) $r->num + 1
+        );
+
+        if ($updateNeighbors) {
+            $this->getDb()->update(
+                $this->getTable(),
+                [
+                    '*order_num' => 'order_num + 1',
+                ],
+                "WHERE {$this->getDb()->escapeField(
+                    'order_num'
+                )} >= {$this->getDb()->escapeValue($this->get('order_num'))}"
+            );
+        }
 
         return $this;
     }

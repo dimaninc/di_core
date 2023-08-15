@@ -12,6 +12,13 @@ use diCore\Data\Http\Response;
 class diBaseController
 {
     /**
+     * Turn this to true for tiny rest controller without action name
+     * methods should be named like _postAction, _putAction, etc.
+     * e.g. /api/name/[params]
+     */
+    const TINY_ACTIONS = false;
+
+    /**
      * @var Response
      */
     protected $response;
@@ -81,7 +88,9 @@ class diBaseController
     protected function adminRightsHardCheck()
     {
         if (!$this->isAdminAuthorized()) {
-            throw new \Exception('You have no access to this controller/action');
+            throw new \Exception(
+                'You have no access to this controller/action'
+            );
         }
 
         return $this;
@@ -276,16 +285,19 @@ class diBaseController
         }
 
         if (!$classBaseName || !$action) {
-            $classBaseName = isset($paramsAr[0]) ? $paramsAr[0] : '';
-            $action = isset($paramsAr[1]) ? $paramsAr[1] : '';
-            $params = array_slice($paramsAr, 2);
+            $classBaseName = $paramsAr[0] ?? '';
+            $action = $paramsAr[1] ?? '';
+            $params = array_slice($paramsAr, static::TINY_ACTIONS ? 1 : 2);
 
             if (!$classBaseName) {
                 throw new \Exception('Empty controller name passed');
             }
         }
 
-        $className = \diLib::getClassNameFor($classBaseName, \diLib::CONTROLLER);
+        $className = \diLib::getClassNameFor(
+            $classBaseName,
+            \diLib::CONTROLLER
+        );
 
         if (!\diLib::exists($className)) {
             throw new \Exception("Controller class '$className' doesn't exist");
@@ -320,23 +332,23 @@ class diBaseController
 
     public function act($action = '', $paramsAr = [])
     {
-        if (!$action) {
-            $action = $this->action;
+        if (!static::TINY_ACTIONS) {
+            if (!$action) {
+                $action = $this->action;
+            }
+
+            if (!$this->action) {
+                $this->action = $action;
+            }
         }
 
-        if (!$this->action) {
-            $this->action = $action;
-        }
-
-        if ($action) {
-            $methodName =
-                '_' .
-                camelize(
-                    strtolower(\diRequest::getMethodStr()) .
-                        '_' .
-                        $action .
-                        '_action'
-                );
+        if ($action || static::TINY_ACTIONS) {
+            $actionPart = static::TINY_ACTIONS ? '' : '_' . $action;
+            $source =
+                strtolower(\diRequest::getMethodStr()) .
+                $actionPart .
+                '_action';
+            $methodName = '_' . camelize($source);
 
             // first looking for REST API methods like _putSomeAction
             if (!method_exists($this, $methodName)) {
