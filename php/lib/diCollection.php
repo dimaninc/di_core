@@ -15,166 +15,166 @@ use diCore\Helper\ArrayHelper;
 use diCore\Helper\FileSystemHelper;
 use MongoDB\Driver\Cursor;
 
-abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
+abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
 {
-	// this should be redefined
-	const type = null;
-	const connection_name = null;
-	protected $table;
-	/** @var @deprecated */
-	protected $modelType;
-	protected $isIdUnique = true;
+    // this should be redefined
+    const type = null;
+    const connection_name = null;
+    protected $table;
+    /** @var @deprecated */
+    protected $modelType;
+    protected $isIdUnique = true;
     /** @var bool */
     protected $readOnly = false;
 
-	const MAIN_TABLE_ALIAS = 'main_table';
-	protected $alias = self::MAIN_TABLE_ALIAS;
+    const MAIN_TABLE_ALIAS = 'main_table';
+    protected $alias = self::MAIN_TABLE_ALIAS;
 
-	// cache
-	const CACHE_FOLDER = '_cfg/cache/';
-	const CACHE_FILE_EXTENSION = '.php';
-	const cacheDirChmod = 0777;
-	const cacheFileChmod = 0777;
+    // cache
+    const CACHE_FOLDER = '_cfg/cache/';
+    const CACHE_FILE_EXTENSION = '.php';
+    const cacheDirChmod = 0777;
+    const cacheFileChmod = 0777;
 
-	const CACHE_ALL = 0;
+    const CACHE_ALL = 0;
 
-	protected static $commonCacheFileNames = [
-		self::CACHE_ALL => null, // null for auto-generation
-	];
-	protected static $cacheFileNames = []; // overridden in child classes
+    protected static $commonCacheFileNames = [
+        self::CACHE_ALL => null, // null for auto-generation
+    ];
+    protected static $cacheFileNames = []; // overridden in child classes
 
-	protected static $commonCacheNames = [
-		self::CACHE_ALL => 'all',
-	];
-	protected static $cacheNames = []; // overridden in child classes
+    protected static $commonCacheNames = [
+        self::CACHE_ALL => 'all',
+    ];
+    protected static $cacheNames = []; // overridden in child classes
 
-	/**
-	 * Current iterator position
-	 *
-	 * @var int
-	 */
-	protected $position = 0;
+    /**
+     * Current iterator position
+     *
+     * @var int
+     */
+    protected $position = 0;
 
-	/**
-	 * Models of the collection
-	 *
-	 * @var array
-	 */
-	protected $items = [];
+    /**
+     * Models of the collection
+     *
+     * @var array
+     */
+    protected $items = [];
 
-	/**
-	 * Total count of records in current collection
-	 *
-	 * @var int
-	 */
-	protected $count = null;
+    /**
+     * Total count of records in current collection
+     *
+     * @var int
+     */
+    protected $count = null;
 
-	/**
-	 * Total count of records in database
-	 *
-	 * @var int
-	 */
-	protected $realCount = null;
+    /**
+     * Total count of records in database
+     *
+     * @var int
+     */
+    protected $realCount = null;
 
-	/**
-	 * Indicates if all files were loaded from server
-	 *
-	 * @var bool
-	 */
-	protected $loaded = false;
+    /**
+     * Indicates if all files were loaded from server
+     *
+     * @var bool
+     */
+    protected $loaded = false;
 
-	/**
-	 * Query for database. This is temporary until query builder is installed
-	 *
-	 * @var string|null
-	 */
-	protected $query = null;
+    /**
+     * Query for database. This is temporary until query builder is installed
+     *
+     * @var string|null
+     */
+    protected $query = null;
 
-	/**
-	 * Fields of table to be fetched. This is temporary until query builder is installed
-	 *
-	 * @var string|null
-	 */
-	protected $queryFields = null;
+    /**
+     * Fields of table to be fetched. This is temporary until query builder is installed
+     *
+     * @var string|null
+     */
+    protected $queryFields = null;
 
-	/**
-	 * Cached records rows, which were assigned to collection on creation
-	 * This is temporary until query builder is installed
-	 *
-	 * @var resource|null
-	 */
-	protected $cachedRecords = null;
+    /**
+     * Cached records rows, which were assigned to collection on creation
+     * This is temporary until query builder is installed
+     *
+     * @var resource|null
+     */
+    protected $cachedRecords = null;
 
-	/**
-	 * Size of records on page
-	 *
-	 * @var int|null
-	 */
-	protected $pageSize = null;
+    /**
+     * Size of records on page
+     *
+     * @var int|null
+     */
+    protected $pageSize = null;
 
-	/**
-	 * Number of current page
-	 *
-	 * @var int
-	 */
-	protected $pageNumber = 1;
+    /**
+     * Number of current page
+     *
+     * @var int
+     */
+    protected $pageNumber = 1;
 
-	/**
-	 * \diPagesNavy object, if initialized
-	 *
-	 * @var null|\diPagesNavy
-	 */
-	protected $PN = null;
+    /**
+     * \diPagesNavy object, if initialized
+     *
+     * @var null|\diPagesNavy
+     */
+    protected $PN = null;
 
-	/**
-	 * How many records to skip. If set, the $pageNumber is not used
-	 *
-	 * @var int
-	 */
-	protected $skip = null;
+    /**
+     * How many records to skip. If set, the $pageNumber is not used
+     *
+     * @var int
+     */
+    protected $skip = null;
 
-	/**
-	 * Size of records per request. If null, $pageSize used (There could be several requests per page)
-	 *
-	 * @var int|null
-	 */
-	protected $requestSize = null;
+    /**
+     * Size of records per request. If null, $pageSize used (There could be several requests per page)
+     *
+     * @var int|null
+     */
+    protected $requestSize = null;
 
-	/**
-	 * Number of request
-	 *
-	 * @var int|null
-	 */
-	protected $requestNumber = null;
+    /**
+     * Number of request
+     *
+     * @var int|null
+     */
+    protected $requestNumber = null;
 
-	/**
-	 * Collection options, set on creation
-	 *
-	 * @var array
-	 */
-	protected $options = [
-		'modelAfterCreate' => null, // called after collection loaded from database, callback for each model
-									// function(\diModel $m) {}
-	];
+    /**
+     * Collection options, set on creation
+     *
+     * @var array
+     */
+    protected $options = [
+        'modelAfterCreate' => null, // called after collection loaded from database, callback for each model
+        // function(\diModel $m) {}
+    ];
 
-	/**
-	 * Parts of SQL query
-	 *
-	 * @var array
-	 */
-	protected $sqlParts = [
-		'select' => [],
-		'from' => [],
-		'join' => [],
-		'set' => [],
-		'where' => [],
-		'groupBy' => [],
-		'having' => [],
-		'orderBy' => [],
-		'values' => [],
-	];
+    /**
+     * Parts of SQL query
+     *
+     * @var array
+     */
+    protected $sqlParts = [
+        'select' => [],
+        'from' => [],
+        'join' => [],
+        'set' => [],
+        'where' => [],
+        'groupBy' => [],
+        'having' => [],
+        'orderBy' => [],
+        'values' => [],
+    ];
 
-	protected $possibleDirections = ['ASC', 'DESC'];
+    protected $possibleDirections = ['ASC', 'DESC'];
 
     /** @var  Cursor */
     protected $cursor;
@@ -196,37 +196,37 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
     ];
 
     public function __construct($table = null)
-	{
-		if ($table !== null && empty($this->table)) {
-			$this->table = $table;
-		}
-	}
+    {
+        if ($table !== null && empty($this->table)) {
+            $this->table = $table;
+        }
+    }
 
-	/**
-	 * @param $type
-	 * @param string $return
-	 * @return bool|string
-	 * @throws Exception
-	 */
-	public static function existsFor($type, $return = 'class')
-	{
-		if (isInteger($type)) {
-			$type = \diTypes::getName($type);
-		}
+    /**
+     * @param $type
+     * @param string $return
+     * @return bool|string
+     * @throws Exception
+     */
+    public static function existsFor($type, $return = 'class')
+    {
+        if (isInteger($type)) {
+            $type = \diTypes::getName($type);
+        }
 
-		$className = \diLib::getClassNameFor($type, \diLib::COLLECTION);
+        $className = \diLib::getClassNameFor($type, \diLib::COLLECTION);
 
-		if (!\diLib::exists($className)) {
-			return false;
-		}
+        if (!\diLib::exists($className)) {
+            return false;
+        }
 
-		return $return == 'class' ? $className : $type;
-	}
+        return $return == 'class' ? $className : $type;
+    }
 
-	public static function getModelClass()
-	{
-		return \diLib::getChildClass(static::class, 'Model');
-	}
+    public static function getModelClass()
+    {
+        return \diLib::getChildClass(static::class, 'Model');
+    }
 
     public static function getConnection()
     {
@@ -260,123 +260,134 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
         // implement mongo indexes dropping here
     }
 
-	/**
-	 * @param integer|string $type
-	 * @param array $options
-	 * @param string|null $queryFields
-	 * @return $this
-	 * @throws \Exception
-	 */
-	public static function create($type = null, $options = [], $queryFields = null)
-	{
-	    $type = $type ?: static::type;
+    /**
+     * @param integer|string $type
+     * @param array $options
+     * @param string|null $queryFields
+     * @return $this
+     * @throws \Exception
+     */
+    public static function create(
+        $type = null,
+        $options = [],
+        $queryFields = null
+    ) {
+        $type = $type ?: static::type;
 
         if (!$type) {
-            throw new \Exception("Type of collection not defined: " . $type);
+            throw new \Exception('Type of collection not defined: ' . $type);
         }
 
-		if (\diDB::is_rs($options)) {
-			$options = [
-				'cachedRecords' => $options,
-			];
-		} elseif (is_scalar($options)) {
-			$options = [
-				'query' => $options,
-			];
-		}
+        if (\diDB::is_rs($options)) {
+            $options = [
+                'cachedRecords' => $options,
+            ];
+        } elseif (is_scalar($options)) {
+            $options = [
+                'query' => $options,
+            ];
+        }
 
-		$options = extend([
-			'query' => null,
-			'queryFields' => $queryFields,
-			'cachedRecords' => null,
-		], $options);
+        $options = extend(
+            [
+                'query' => null,
+                'queryFields' => $queryFields,
+                'cachedRecords' => null,
+            ],
+            $options
+        );
 
-		$className = self::existsFor($type);
+        $className = self::existsFor($type);
 
-		if (!$className) {
-			throw new \Exception("Collection class doesn't exist: " . ($className ?: $type));
-		}
+        if (!$className) {
+            throw new \Exception(
+                "Collection class doesn't exist: " . ($className ?: $type)
+            );
+        }
 
-		/** @var diCollection $o */
-		$o = new $className();
+        /** @var diCollection $o */
+        $o = new $className();
 
-		if ($options['query']) {
-			$o->setQuery($options['query']);
-			unset($options['query']);
-		}
+        if ($options['query']) {
+            $o->setQuery($options['query']);
+            unset($options['query']);
+        }
 
-		if ($options['queryFields']) {
-			$o->setQueryFields($options['queryFields']);
-			unset($options['queryFields']);
-		}
+        if ($options['queryFields']) {
+            $o->setQueryFields($options['queryFields']);
+            unset($options['queryFields']);
+        }
 
-		if ($options['cachedRecords']) {
-			$o->setCachedRecords($options['cachedRecords']);
-			unset($options['cachedRecords']);
-		}
+        if ($options['cachedRecords']) {
+            $o->setCachedRecords($options['cachedRecords']);
+            unset($options['cachedRecords']);
+        }
 
-		$o->setOptions($options);
+        $o->setOptions($options);
 
-		return $o;
-	}
+        return $o;
+    }
 
-	public static function createForTable($table, $options = [])
-	{
-		return static::create(\diTypes::getNameByTable($table), $options);
-	}
+    public static function createForTable($table, $options = [])
+    {
+        return static::create(\diTypes::getNameByTable($table), $options);
+    }
 
-	/**
-	 * @param $table
-	 * @param array $options
-	 * @return $this
-	 * @throws Exception
-	 */
-	public static function createForTableNoStrict($table, $options = [])
-	{
-		$type = \diTypes::getNameByTable($table);
-		$typeName = self::existsFor($type, 'type');
+    /**
+     * @param $table
+     * @param array $options
+     * @return $this
+     * @throws Exception
+     */
+    public static function createForTableNoStrict($table, $options = [])
+    {
+        $type = \diTypes::getNameByTable($table);
+        $typeName = self::existsFor($type, 'type');
 
-		if ($typeName) {
-			return static::create($typeName, $options);
-		}
+        if ($typeName) {
+            return static::create($typeName, $options);
+        }
 
-		$c = new static($table);
+        $c = new static($table);
 
-		if (isset($options['query'])) {
-			$c->setQuery($options['query']);
-			unset($options['query']);
-		}
+        if (isset($options['query'])) {
+            $c->setQuery($options['query']);
+            unset($options['query']);
+        }
 
-		$c->setOptions($options);
+        $c->setOptions($options);
 
-		return $c;
-	}
+        return $c;
+    }
 
-	/**
-	 * @param integer|string $type
-	 * @return $this
-	 * @throws \Exception
-	 */
-	public static function createFromCache($type, $options = [], $cacheKind = self::CACHE_ALL)
-	{
-		$className = self::existsFor($type);
+    /**
+     * @param integer|string $type
+     * @return $this
+     * @throws \Exception
+     */
+    public static function createFromCache(
+        $type,
+        $options = [],
+        $cacheKind = self::CACHE_ALL
+    ) {
+        $className = self::existsFor($type);
 
-		if (!$className) {
-			throw new \Exception("Collection class doesn't exist: " . ($className ?: $type));
-		}
+        if (!$className) {
+            throw new \Exception(
+                "Collection class doesn't exist: " . ($className ?: $type)
+            );
+        }
 
-		$forceRebuild = !empty($options['forceRebuild']);
-		unset($options['forceRebuild']);
+        $forceRebuild = !empty($options['forceRebuild']);
+        unset($options['forceRebuild']);
 
-		/** @var diCollection $o */
-		$o = new $className();
+        /** @var diCollection $o */
+        $o = new $className();
 
-		$o
-			->setOptions($options)
-			->loadCache($cacheKind, $forceRebuild);
+        $o->setOptions($options)->loadCache($cacheKind, $forceRebuild);
 
-		return $o;
-	}
+        return $o;
+    }
 
     /**
      * @param integer|string $type
@@ -385,12 +396,15 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
      * @return $this
      * @throws \Exception
      */
-    public static function createReadOnly($type = null, $options = [], $queryFields = null)
-    {
+    public static function createReadOnly(
+        $type = null,
+        $options = [],
+        $queryFields = null
+    ) {
         return static::create($type, $options, $queryFields)->_setReadOnly();
     }
 
-	public static function createEmpty($type = null)
+    public static function createEmpty($type = null)
     {
         $o = static::create($type);
         $o->makeEmpty();
@@ -425,33 +439,36 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
         return $this;
     }
 
-	/**
-	 * @param $type
-	 * @param $id
-	 * @param int $cacheKind
-	 * @return \diModel
-	 * @throws \Exception
-	 */
-	public static function createModelFromCache($type, $id, $cacheKind = self::CACHE_ALL)
-	{
-		$col = static::createFromCache($type, [], $cacheKind);
+    /**
+     * @param $type
+     * @param $id
+     * @param int $cacheKind
+     * @return \diModel
+     * @throws \Exception
+     */
+    public static function createModelFromCache(
+        $type,
+        $id,
+        $cacheKind = self::CACHE_ALL
+    ) {
+        $col = static::createFromCache($type, [], $cacheKind);
 
-		return $col[$id] ?: \diModel::create($type);
-	}
+        return $col[$id] ?: \diModel::create($type);
+    }
 
-	/**
-	 * @return bool
-	 */
-	public function hasUniqueId()
-	{
-		return $this->isIdUnique;
-	}
+    /**
+     * @return bool
+     */
+    public function hasUniqueId()
+    {
+        return $this->isIdUnique;
+    }
 
-	/**
+    /**
      * Maps collection
-	 * @param string|callable $callback Callback or field name of model
-	 * @return array
-	 */
+     * @param string|callable $callback Callback or field name of model
+     * @return array
+     */
     public function map($callback)
     {
         $this->load();
@@ -521,9 +538,7 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
     {
         $this->load();
 
-        $col = $asArray
-            ? []
-            : static::createEmpty();
+        $col = $asArray ? [] : static::createEmpty();
 
         $obj = new ArrayObject($this->items);
         $it = $obj->getIterator();
@@ -575,36 +590,36 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
     }
 
     public function slice($start = 0, $length = null)
-	{
-		$this->load();
+    {
+        $this->load();
 
-		$i = 0;
-		$ar = [];
+        $i = 0;
+        $ar = [];
 
-		/** @var \diModel $model */
-		foreach ($this as $model) {
-			if ($length !== null && count($ar) >= $length) {
-				break;
-			}
+        /** @var \diModel $model */
+        foreach ($this as $model) {
+            if ($length !== null && count($ar) >= $length) {
+                break;
+            }
 
-			if ($i >= $start) {
-				$ar[] = $model;
-			}
+            if ($i >= $start) {
+                $ar[] = $model;
+            }
 
-			$i++;
-		}
+            $i++;
+        }
 
-		return $ar;
-	}
+        return $ar;
+    }
 
-	public function sort($callback)
+    public function sort($callback)
     {
         uasort($this->items, $callback);
 
         return $this;
     }
 
-	public function getModelByIdx($idx = 0)
+    public function getModelByIdx($idx = 0)
     {
         if ($idx < 0) {
             $idx += $this->count();
@@ -612,49 +627,47 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
 
         $ar = $this->slice($idx, 1);
 
-        return count($ar)
-            ? $ar[0]
-            : $this->getNewEmptyItem();
+        return count($ar) ? $ar[0] : $this->getNewEmptyItem();
     }
 
-	public function asArray()
-	{
-		return $this->slice();
-	}
+    public function asArray()
+    {
+        return $this->slice();
+    }
 
-	public function asPublicDataArray()
+    public function asPublicDataArray()
     {
         return $this->map(function (\diModel $m) {
             return $m->getPublicData();
         });
     }
 
-	/**
-	 * Setting current alias for next query settings
-	 * @param $alias
-	 * @return $this
-	 */
-	public function setAlias($alias)
-	{
-		$this->alias = $alias;
+    /**
+     * Setting current alias for next query settings
+     * @param $alias
+     * @return $this
+     */
+    public function setAlias($alias)
+    {
+        $this->alias = $alias;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * Resetting current alias for next query settings
-	 * @return $this
-	 */
-	public function resetAlias()
-	{
-		$this->alias = static::MAIN_TABLE_ALIAS;
+    /**
+     * Resetting current alias for next query settings
+     * @return $this
+     */
+    public function resetAlias()
+    {
+        $this->alias = static::MAIN_TABLE_ALIAS;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function addAliasToField($field, $alias = null)
-	{
-	    if (static::getConnection()::isMongo()) {
+    public function addAliasToField($field, $alias = null)
+    {
+        if (static::getConnection()::isMongo()) {
             if ($field === 'id') {
                 $m = $this->getNewEmptyItem();
 
@@ -664,330 +677,332 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
             return $field;
         }
 
-		if ($alias === true) {
-			$alias = static::MAIN_TABLE_ALIAS;
-		} elseif ($alias === null) {
-			$alias = $this->alias;
-		}
+        if ($alias === true) {
+            $alias = static::MAIN_TABLE_ALIAS;
+        } elseif ($alias === null) {
+            $alias = $this->alias;
+        }
 
-		if ($alias) {
-			$alias = $alias . '.';
-		}
+        if ($alias) {
+            $alias = $alias . '.';
+        }
 
-		return $alias . $field;
-	}
+        return $alias . $field;
+    }
 
-	public function addAliasToTable($table, $alias = null)
-	{
-	    if (static::getConnection()::isMongo()) {
+    public function addAliasToTable($table, $alias = null)
+    {
+        if (static::getConnection()::isMongo()) {
             return $table;
         }
 
-		if ($alias === true) {
-			$alias = static::MAIN_TABLE_ALIAS;
-		} elseif ($alias === null) {
-			$alias = $this->alias;
-		}
+        if ($alias === true) {
+            $alias = static::MAIN_TABLE_ALIAS;
+        } elseif ($alias === null) {
+            $alias = $this->alias;
+        }
 
-		if ($alias) {
-			$alias = ' ' . $this->getDb()->escapeTable($alias);
-		}
+        if ($alias) {
+            $alias = ' ' . $this->getDb()->escapeTable($alias);
+        }
 
-		return $this->getDb()->escapeTable($table) . $alias;
-	}
+        return $this->getDb()->escapeTable($table) . $alias;
+    }
 
-	protected function detectMethod($fullMethod)
-	{
-		$possibleMethods = [
-			'filter_by_localized',
-			'filter_by_expression',
-			'filter_by',
-			'order_by_localized',
-			'order_by',
-			'select_localized',
-			'select',
-		];
+    protected function detectMethod($fullMethod)
+    {
+        $possibleMethods = [
+            'filter_by_localized',
+            'filter_by_expression',
+            'filter_by',
+            'order_by_localized',
+            'order_by',
+            'select_localized',
+            'select',
+        ];
 
-		foreach ($possibleMethods as $method) {
-			if (substr($fullMethod, 0, strlen($method) + 1) == $method . '_') {
-				return [$method, substr($fullMethod, strlen($method) + 1)];
-			}
-		}
+        foreach ($possibleMethods as $method) {
+            if (substr($fullMethod, 0, strlen($method) + 1) == $method . '_') {
+                return [$method, substr($fullMethod, strlen($method) + 1)];
+            }
+        }
 
-		return [$fullMethod, null];
-	}
+        return [$fullMethod, null];
+    }
 
-	public function __call($method, $arguments)
-	{
-		$fullMethod = underscore($method);
-		$value = isset($arguments[0]) ? $arguments[0] : null;
-		$operator = isset($arguments[1]) ? $arguments[1] : null;
+    public function __call($method, $arguments)
+    {
+        $fullMethod = underscore($method);
+        $value = isset($arguments[0]) ? $arguments[0] : null;
+        $operator = isset($arguments[1]) ? $arguments[1] : null;
 
-		list($method, $field) = $this->detectMethod($fullMethod);
+        list($method, $field) = $this->detectMethod($fullMethod);
         /** @var \diModel $modelClass */
         $modelClass = static::getModelClass();
-		$field = $modelClass::normalizeFieldName($field);
+        $field = $modelClass::normalizeFieldName($field);
 
-		switch ($method) {
-			case 'filter_by':
-				return $operator !== null
-					? $this->filterBy($field, $operator, $value)
-					: $this->filterBy($field, $value);
+        switch ($method) {
+            case 'filter_by':
+                return $operator !== null
+                    ? $this->filterBy($field, $operator, $value)
+                    : $this->filterBy($field, $value);
 
-			case 'filter_by_localized':
-				return $operator !== null
-					? $this->filterByLocalized($field, $operator, $value)
-					: $this->filterByLocalized($field, $value);
+            case 'filter_by_localized':
+                return $operator !== null
+                    ? $this->filterByLocalized($field, $operator, $value)
+                    : $this->filterByLocalized($field, $value);
 
-			case 'filter_by_expression':
-				return $operator !== null
-					? $this->filterByExpression($field, $operator, $value)
-					: $this->filterByExpression($field, $value);
+            case 'filter_by_expression':
+                return $operator !== null
+                    ? $this->filterByExpression($field, $operator, $value)
+                    : $this->filterByExpression($field, $value);
 
-			case 'order_by':
-				return $this->orderBy($field, $value);
+            case 'order_by':
+                return $this->orderBy($field, $value);
 
-			case 'order_by_localized':
-				return $this->orderByLocalized($field, $value);
+            case 'order_by_localized':
+                return $this->orderByLocalized($field, $value);
 
-			case 'select':
-				return $this->select($field, true);
+            case 'select':
+                return $this->select($field, true);
 
-			case 'select_localized':
-				return $this->selectLocalized($field, true);
-		}
+            case 'select_localized':
+                return $this->selectLocalized($field, true);
+        }
 
-		throw new \Exception(
-			sprintf('Invalid method %s::%s(%s)', get_class($this), $method, print_r($arguments, 1))
-		);
-	}
+        throw new \Exception(
+            sprintf(
+                'Invalid method %s::%s(%s)',
+                get_class($this),
+                $method,
+                print_r($arguments, 1)
+            )
+        );
+    }
 
-	/**
-	 * Set options for collection
-	 *
-	 * @param array $options
-	 * @return $this
-	 */
-	public function setOptions($options = [])
-	{
-		$this->options = extend($this->options, $options);
+    /**
+     * Set options for collection
+     *
+     * @param array $options
+     * @return $this
+     */
+    public function setOptions($options = [])
+    {
+        $this->options = extend($this->options, $options);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @return array
-	 */
-	public function getOptions()
-	{
-		return $this->options;
-	}
+    /**
+     * @return array
+     */
+    public function getOptions()
+    {
+        return $this->options;
+    }
 
-	/**
-	 * Returns option by name
-	 *
-	 * @param string $name
-	 * @return mixed|null
-	 */
-	public function getOption($name)
-	{
-		return isset($this->options[$name])
-			? $this->options[$name]
-			: null;
-	}
+    /**
+     * Returns option by name
+     *
+     * @param string $name
+     * @return mixed|null
+     */
+    public function getOption($name)
+    {
+        return isset($this->options[$name]) ? $this->options[$name] : null;
+    }
 
-	/**
-	 * Get the first result of the query or empty model
-	 *
-	 * @return \diModel
-	 */
-	public function getFirstItem()
-	{
-		if ($this->count()) {
-			$this
-				->setPageSize(1)
-				->setPageNumber(1)
-				->rewind()
-				->valid();
+    /**
+     * Get the first result of the query or empty model
+     *
+     * @return \diModel
+     */
+    public function getFirstItem()
+    {
+        if ($this->count()) {
+            $this->setPageSize(1)
+                ->setPageNumber(1)
+                ->rewind()
+                ->valid();
 
-			return $this->current();
-		}
+            return $this->current();
+        }
 
-		return $this->getNewEmptyItem();
-	}
+        return $this->getNewEmptyItem();
+    }
 
-	public function getRandomItemsArray($count)
-	{
-		if (!$this->isLoaded()) {
-			$this
-				->setPageSize($this->count())
-				->setPageNumber(1)
-				->loadChunk();
-		}
+    public function getRandomItemsArray($count)
+    {
+        if (!$this->isLoaded()) {
+            $this->setPageSize($this->count())
+                ->setPageNumber(1)
+                ->loadChunk();
+        }
 
-		if ($count >= $this->count()) {
-			return $this->items;
-		}
+        if ($count >= $this->count()) {
+            return $this->items;
+        }
 
-		$ar = [];
-		$keys = array_keys($this->items);
+        $ar = [];
+        $keys = array_keys($this->items);
 
-		while (count($ar) < $count) {
-			$index = mt_rand(0, count($keys) - 1);
-			$ar[] = $this->items[$keys[$index]];
+        while (count($ar) < $count) {
+            $index = mt_rand(0, count($keys) - 1);
+            $ar[] = $this->items[$keys[$index]];
 
-			array_splice($keys, $index, 1);
-		}
+            array_splice($keys, $index, 1);
+        }
 
-		return $ar;
-	}
+        return $ar;
+    }
 
-	/**
-	 * @return \diDB
-	 */
-	protected function getDb()
-	{
-		return static::db();
-	}
+    /**
+     * @return \diDB
+     */
+    protected function getDb()
+    {
+        return static::db();
+    }
 
-	/**
-	 * @return diDB
-	 */
-	public static function db()
-	{
-        return Connection::get(static::connection_name ?: Connection::DEFAULT_NAME)
-            ->getDb();
-	}
+    /**
+     * @return diDB
+     */
+    public static function db()
+    {
+        return Connection::get(
+            static::connection_name ?: Connection::DEFAULT_NAME
+        )->getDb();
+    }
 
-	public function getTable()
-	{
-		return $this->table ?: static::getModelClass()::table;
-	}
+    public function getTable()
+    {
+        return $this->table ?: static::getModelClass()::table;
+    }
 
-	public function getModelType()
-	{
-		return static::type ?: $this->modelType;
-	}
+    public function getModelType()
+    {
+        return static::type ?: $this->modelType;
+    }
 
-	/**
-	 * @return int
-	 */
-	public function getPageSize()
-	{
-		return $this->pageSize;
-	}
+    /**
+     * @return int
+     */
+    public function getPageSize()
+    {
+        return $this->pageSize;
+    }
 
-	/**
-	 * @return int
-	 */
-	public function getPageNumber()
-	{
-		return $this->pageNumber;
-	}
+    /**
+     * @return int
+     */
+    public function getPageNumber()
+    {
+        return $this->pageNumber;
+    }
 
-	/**
-	 * @param integer $number   First page number is 1
-	 * @return $this
-	 */
-	public function setPageNumber($number)
-	{
-		$this->pageNumber = $number;
+    /**
+     * @param integer $number   First page number is 1
+     * @return $this
+     */
+    public function setPageNumber($number)
+    {
+        $this->pageNumber = $number;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function populatePageNumber($param = null)
-	{
-		return $this->setPageNumber(\diRequest::get($param ?: \diPagesNavy::PAGE_PARAM, 1));
-	}
+    public function populatePageNumber($param = null)
+    {
+        return $this->setPageNumber(
+            \diRequest::get($param ?: \diPagesNavy::PAGE_PARAM, 1)
+        );
+    }
 
-	/**
-	 * @param integer|null $size     Records per page, if null automatically gets read from configuration
-	 * @return $this
-	 */
-	public function setPageSize($size = null)
-	{
-		if ($size === null) {
-			$size = $this->getStandardPageSize();
-		}
+    /**
+     * @param integer|null $size     Records per page, if null automatically gets read from configuration
+     * @return $this
+     */
+    public function setPageSize($size = null)
+    {
+        if ($size === null) {
+            $size = $this->getStandardPageSize();
+        }
 
-		$this->pageSize = $size;
+        $this->pageSize = $size;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function getStandardPageSize()
-	{
-		return Configuration::get('per_page[' . $this->getTable() . ']');
-	}
+    protected function getStandardPageSize()
+    {
+        return Configuration::get('per_page[' . $this->getTable() . ']');
+    }
 
-	public function initPagesNavy($pageSize = null, $pageParam = null)
-	{
-		$this
-			->setPageSize($pageSize)
-			->populatePageNumber($pageParam);
+    public function initPagesNavy($pageSize = null, $pageParam = null)
+    {
+        $this->setPageSize($pageSize)->populatePageNumber($pageParam);
 
-		$this->PN = new \diPagesNavy($this, $pageParam);
+        $this->PN = new \diPagesNavy($this, $pageParam);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function getPN()
-	{
-		return $this->PN;
-	}
+    public function getPN()
+    {
+        return $this->PN;
+    }
 
-	/**
-	 * @param integer $number   How many records to skip
-	 * @return $this
-	 */
-	public function setSkip($number)
-	{
-		$this->skip = $number;
+    /**
+     * @param integer $number   How many records to skip
+     * @return $this
+     */
+    public function setSkip($number)
+    {
+        $this->skip = $number;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @param integer $requestSize Records per request
-	 * @return $this
-	 */
-	public function setRequestSize($requestSize)
-	{
-		$this->requestSize = $requestSize;
+    /**
+     * @param integer $requestSize Records per request
+     * @return $this
+     */
+    public function setRequestSize($requestSize)
+    {
+        $this->requestSize = $requestSize;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @return int|null
-	 */
-	public function getRequestSize()
-	{
-		return $this->requestSize;
-	}
+    /**
+     * @return int|null
+     */
+    public function getRequestSize()
+    {
+        return $this->requestSize;
+    }
 
-	public function addItem($item)
-	{
-		if (!$item instanceof \diModel) {
-			$item = $this->getNewItem($item);
-		}
+    public function addItem($item)
+    {
+        if (!$item instanceof \diModel) {
+            $item = $this->getNewItem($item);
+        }
 
-		if (
-		    $this->options['modelAfterCreate'] &&
+        if (
+            $this->options['modelAfterCreate'] &&
             is_callable($this->options['modelAfterCreate'])
         ) {
-			$this->options['modelAfterCreate']($item);
-		}
+            $this->options['modelAfterCreate']($item);
+        }
 
-		$this->offsetSet($this->isIdUnique ? $this->getId($item) : null, $item);
+        $this->offsetSet($this->isIdUnique ? $this->getId($item) : null, $item);
 
-		$this->count = count($this->items);
+        $this->count = count($this->items);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function addItems($items)
+    public function addItems($items)
     {
         foreach ($items as $item) {
             $this->addItem($item);
@@ -996,134 +1011,145 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
         return $this;
     }
 
-	private function removeItems()
-	{
-		$this->items = [];
+    private function removeItems()
+    {
+        $this->items = [];
         $this->count = 0;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function merge(\diCollection $col)
+    public function merge(\diCollection $col)
     {
         return $this->addItems($col);
     }
 
-	/**
-	 * @return \diModel
-	 * @throws \Exception
-	 */
-	public function getNewEmptyItem()
-	{
-		return \diModel::create($this->getModelType())->_setReadOnly($this->readOnly);
-	}
+    /**
+     * @return \diModel
+     * @throws \Exception
+     */
+    public function getNewEmptyItem()
+    {
+        return \diModel::create($this->getModelType())->_setReadOnly(
+            $this->readOnly
+        );
+    }
 
-	public function getNewItem($data)
-	{
-		return \diModel::create($this->getModelType(), $data)->_setReadOnly($this->readOnly);
-	}
+    public function getNewItem($data)
+    {
+        return \diModel::create($this->getModelType(), $data)->_setReadOnly(
+            $this->readOnly
+        );
+    }
 
-	/**
-	 * @param string|int $query
-	 * @return $this
-	 */
-	public function setQuery($query)
-	{
-		$this->query = $query;
+    /**
+     * @param string|int $query
+     * @return $this
+     */
+    public function setQuery($query)
+    {
+        $this->query = $query;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @return null|string
-	 */
-	public function getQuery()
-	{
-		return $this->query;
-	}
+    /**
+     * @return null|string
+     */
+    public function getQuery()
+    {
+        return $this->query;
+    }
 
-	/**
-	 * @param string $queryFields
-	 * @deprecated Use ->select() instead
-	 * @return $this
-	 */
-	public function setQueryFields($queryFields)
-	{
-		$this->queryFields = is_array($queryFields) ? join(',', $queryFields) : $queryFields;
+    /**
+     * @param string $queryFields
+     * @deprecated Use ->select() instead
+     * @return $this
+     */
+    public function setQueryFields($queryFields)
+    {
+        $this->queryFields = is_array($queryFields)
+            ? join(',', $queryFields)
+            : $queryFields;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @param $records
-	 * @return $this
-	 */
-	public function setCachedRecords($records)
-	{
-		$this->cachedRecords = $records;
+    /**
+     * @param $records
+     * @return $this
+     */
+    public function setCachedRecords($records)
+    {
+        $this->cachedRecords = $records;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function getStartFrom()
-	{
-		$startFrom = $this->skip !== null
-			? $this->skip
-			: ($this->pageSize ? ($this->pageNumber - 1) * $this->pageSize : 0);
+    protected function getStartFrom()
+    {
+        $startFrom =
+            $this->skip !== null
+                ? $this->skip
+                : ($this->pageSize
+                    ? ($this->pageNumber - 1) * $this->pageSize
+                    : 0);
 
-		return $startFrom;
-	}
+        return $startFrom;
+    }
 
-	protected function getLimitQueryEnding()
-	{
-		$startFrom = $this->getStartFrom();
-		$requestPageSize = $this->pageSize;
+    protected function getLimitQueryEnding()
+    {
+        $startFrom = $this->getStartFrom();
+        $requestPageSize = $this->pageSize;
 
-		if ($this->getRequestSize()) {
-			if ($this->requestNumber === null) {
-				$this->requestNumber = 0;
-			}
+        if ($this->getRequestSize()) {
+            if ($this->requestNumber === null) {
+                $this->requestNumber = 0;
+            }
 
-			$this->requestNumber++;
+            $this->requestNumber++;
 
-			$startFrom += ($this->requestNumber - 1) * $this->getRequestSize();
-			$requestPageSize = $this->getRequestSize();
+            $startFrom += ($this->requestNumber - 1) * $this->getRequestSize();
+            $requestPageSize = $this->getRequestSize();
 
-			/* * /
+            /* * /
 			echo '$this->requestNumber: ' . $this->requestNumber . ', startFrom: ' . $startFrom .
 				', requestPageSize: ' . $requestPageSize . '<br>';
 			/* */
-		}
+        }
 
-		if ($requestPageSize) {
-		    return $this->getDb()->limitOffset($requestPageSize, $startFrom);
-		}
+        if ($requestPageSize) {
+            return $this->getDb()->limitOffset($requestPageSize, $startFrom);
+        }
 
-		return null;
-	}
+        return null;
+    }
 
-	/**
-	 * @return string
-	 */
-	protected function getQueryTable()
-	{
-		return $this->addAliasToTable($this->getTable());
-	}
+    /**
+     * @return string
+     */
+    protected function getQueryTable()
+    {
+        return $this->addAliasToTable($this->getTable());
+    }
 
-	/**
-	 * @return string
-	 */
-	protected function getQueryFields()
-	{
-		return $this->queryFields ?: $this->getBuiltQueryFields() ?: $this->addAliasToField('*');
-	}
+    /**
+     * @return string
+     */
+    protected function getQueryFields()
+    {
+        return $this->queryFields ?:
+            $this->getBuiltQueryFields() ?:
+            $this->addAliasToField('*');
+    }
 
-	/**
-	 * @return null|string|array
-	 */
-	protected function getQueryWhere()
-	{
-	    if (static::getConnection()::isMongo()) {
+    /**
+     * @return null|string|array
+     */
+    protected function getQueryWhere()
+    {
+        if (static::getConnection()::isMongo()) {
             $filter = [];
 
             /** @var \diModel $modelClass */
@@ -1132,7 +1158,12 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
             if ($this->sqlParts['where']) {
                 foreach ($this->sqlParts['where'] as $val) {
                     if ($val['value'] !== null) {
-                        $val['value'] = $modelClass::tuneFieldValueByTypeBeforeDb($val['field'], $val['value']);
+                        $val[
+                            'value'
+                        ] = $modelClass::tuneFieldValueByTypeBeforeDb(
+                            $val['field'],
+                            $val['value']
+                        );
                     }
 
                     $existingFilter = isset($filter[$val['field']])
@@ -1148,17 +1179,28 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
                             $operator => $val['value'],
                         ];
                     } elseif ($val['operator'] == 'between') {
-                        if (is_array($val['value']) && count($val['value']) == 2) {
+                        if (
+                            is_array($val['value']) &&
+                            count($val['value']) == 2
+                        ) {
                             $newFilter = [
                                 '$gte' => ArrayHelper::get($val['value'], 0),
                                 '$lte' => ArrayHelper::get($val['value'], 1),
                             ];
                         } else {
-                            throw new \Exception('Operator "' . $val['operator'] .
-                                '" supports only array with 2 values, but given: ' . print_r($val['value'], true));
+                            throw new \Exception(
+                                'Operator "' .
+                                    $val['operator'] .
+                                    '" supports only array with 2 values, but given: ' .
+                                    print_r($val['value'], true)
+                            );
                         }
                     } else {
-                        throw new \Exception('Operator "' . $val['operator'] . '" not supported yet');
+                        throw new \Exception(
+                            'Operator "' .
+                                $val['operator'] .
+                                '" not supported yet'
+                        );
                     }
 
                     $existingFilter = array_merge($existingFilter, $newFilter);
@@ -1172,57 +1214,62 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
             return $filter;
         }
 
-		return $this->query ?: $this->getBuiltQueryWhere();
-	}
+        return $this->query ?: $this->getBuiltQueryWhere();
+    }
 
-	/**
-	 * @return null|string|array
-	 */
-	protected function getQueryOrderBy()
-	{
-	    if (static::getConnection()::isMongo()) {
+    /**
+     * @return null|string|array
+     */
+    protected function getQueryOrderBy()
+    {
+        if (static::getConnection()::isMongo()) {
             $sort = [];
 
             if ($this->sqlParts['orderBy']) {
                 foreach ($this->sqlParts['orderBy'] as $val) {
-                    $sort[$val['field']] = Mongo::convertDirection($val['direction']);
+                    $sort[$val['field']] = Mongo::convertDirection(
+                        $val['direction']
+                    );
                 }
             }
 
             return $sort;
         }
 
-		return $this->getBuiltQueryOrderBy();
-	}
+        return $this->getBuiltQueryOrderBy();
+    }
 
-	/**
-	 * @return null|string
-	 */
-	protected function getQueryGroupBy()
-	{
+    /**
+     * @return null|string
+     */
+    protected function getQueryGroupBy()
+    {
         if (static::getConnection()::isMongo()) {
-            throw new \Exception('Group by is not implemented for Mongo yet: ' . print_r($this->sqlParts['groupBy'], true));
+            throw new \Exception(
+                'Group by is not implemented for Mongo yet: ' .
+                    print_r($this->sqlParts['groupBy'], true)
+            );
         }
 
-		return $this->getBuiltQueryGroupBy();
-	}
+        return $this->getBuiltQueryGroupBy();
+    }
 
-	/**
-	 * Collection has any 'group by' conditions
-	 *
-	 * @return bool
-	 */
-	public function hasGroupBy()
-	{
-		return !!count($this->sqlParts['groupBy']);
-	}
+    /**
+     * Collection has any 'group by' conditions
+     *
+     * @return bool
+     */
+    public function hasGroupBy()
+    {
+        return !!count($this->sqlParts['groupBy']);
+    }
 
-	/**
-	 * @return null|string|array
-	 */
-	public function getFullQuery()
-	{
-	    if (static::getConnection()::isMongo()) {
+    /**
+     * @return null|string|array
+     */
+    public function getFullQuery()
+    {
+        if (static::getConnection()::isMongo()) {
             $ar = [
                 'filter' => $this->getQueryWhere(),
                 //todo: 'group' => $this->getQueryGroupBy(),
@@ -1234,105 +1281,108 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
             return $ar;
         }
 
-		$ar = array_filter([
-			$this->getQueryWhere(),
-			$this->getQueryGroupBy(),
-			$this->getQueryOrderBy(),
-			$this->getLimitQueryEnding(),
-		]);
+        $ar = array_filter([
+            $this->getQueryWhere(),
+            $this->getQueryGroupBy(),
+            $this->getQueryOrderBy(),
+            $this->getLimitQueryEnding(),
+        ]);
 
-		return join(' ', $ar);
-	}
-
-    #[\ReturnTypeWillChange]
-	public function rewind()
-	{
-		reset($this->items);
-
-		return $this;
-	}
+        return join(' ', $ar);
+    }
 
     #[\ReturnTypeWillChange]
-	public function current()
-	{
-		return current($this->items) ?: $this->getNewEmptyItem();
-	}
+    public function rewind()
+    {
+        reset($this->items);
+
+        return $this;
+    }
 
     #[\ReturnTypeWillChange]
-	public function key()
-	{
-		return key($this->items);
-	}
+    public function current()
+    {
+        return current($this->items) ?: $this->getNewEmptyItem();
+    }
 
     #[\ReturnTypeWillChange]
-	public function next()
-	{
-		next($this->items);
-
-		return $this;
-	}
+    public function key()
+    {
+        return key($this->items);
+    }
 
     #[\ReturnTypeWillChange]
-	public function valid()
-	{
-		if (!$this->exists() && !$this->isLoaded()) {
-			$this->loadChunk();
-		}
+    public function next()
+    {
+        next($this->items);
 
-		return key($this->items) !== null;
-	}
+        return $this;
+    }
 
-	public function load()
-	{
-		if ($this->isLoaded()) {
-			return $this;
-		}
+    #[\ReturnTypeWillChange]
+    public function valid()
+    {
+        if (!$this->exists() && !$this->isLoaded()) {
+            $this->loadChunk();
+        }
 
-		$this->loadChunk();
+        return key($this->items) !== null;
+    }
 
-		return $this;
-	}
+    public function load()
+    {
+        if ($this->isLoaded()) {
+            return $this;
+        }
 
-	/**
-	 * Checks if element exists. Uses current position if no offset provided
-	 *
-	 * @param int $offset
-	 * @return bool
-	 */
-	private function exists($offset = null)
-	{
-		return isset($this->items[$offset !== null ? $offset : $this->position]);
-	}
+        $this->loadChunk();
 
-	/**
-	 * Checks if all elements are loaded into iterator
-	 *
-	 * @return bool
-	 */
-	private function isLoaded()
-	{
-		//echo 'isLoaded: '. ($this->loaded ? 'true' : 'false') . ', count($this->items): ' . count($this->items) . '<br>';
+        return $this;
+    }
 
-		if ($this->getRequestSize()) {
-			/*
+    /**
+     * Checks if element exists. Uses current position if no offset provided
+     *
+     * @param int $offset
+     * @return bool
+     */
+    private function exists($offset = null)
+    {
+        return isset(
+            $this->items[$offset !== null ? $offset : $this->position]
+        );
+    }
+
+    /**
+     * Checks if all elements are loaded into iterator
+     *
+     * @return bool
+     */
+    private function isLoaded()
+    {
+        //echo 'isLoaded: '. ($this->loaded ? 'true' : 'false') . ', count($this->items): ' . count($this->items) . '<br>';
+
+        if ($this->getRequestSize()) {
+            /*
 			echo count($this->items) > 0 ? 'true!<br>' : 'false!<br>';
 
 			var_dump($this->key());
 			*/
 
-			return count($this->items) > 0 && $this->key();
-		}
+            return count($this->items) > 0 && $this->key();
+        }
 
-		return $this->loaded || ($this->pageSize && count($this->items) >= $this->pageSize);
-	}
+        return $this->loaded ||
+            ($this->pageSize && count($this->items) >= $this->pageSize);
+    }
 
-	/**
-	 * Override this if joins or something like that needed
-	 * todo: make common mechanism for both model and collection of one type
-	 */
-	protected function getDbRecords()
-	{
-	    $records = $this->getDb()->rs(
+    /**
+     * Override this if joins or something like that needed
+     * todo: make common mechanism for both model and collection of one type
+     */
+    protected function getDbRecords()
+    {
+        $records = $this->getDb()->rs(
             $this->getQueryTable(),
             $this->getFullQuery(),
             $this->getQueryFields()
@@ -1342,65 +1392,65 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
             $this->cursor = $records;
         }
 
-		return $records;
-	}
+        return $records;
+    }
 
-	/**
-	 * Loads rows chunk from database
-	 */
-	private function loadChunk()
-	{
-		if ($this->cachedRecords) {
-			$rows = $this->cachedRecords;
-		} else {
-			$rows = $this->getDbRecords();
-		}
+    /**
+     * Loads rows chunk from database
+     */
+    private function loadChunk()
+    {
+        if ($this->cachedRecords) {
+            $rows = $this->cachedRecords;
+        } else {
+            $rows = $this->getDbRecords();
+        }
 
-		if ($this->getRequestSize()) {
-			$this->removeItems();
-		}
+        if ($this->getRequestSize()) {
+            $this->removeItems();
+        }
 
-		$iterator = function($row) {
-			/** @var \diModel $item */
-			$item = $this->getNewEmptyItem();
-			$item->initFrom($row);
+        $iterator = function ($row) {
+            /** @var \diModel $item */
+            $item = $this->getNewEmptyItem();
+            $item->initFrom($row);
 
-			$this->addItem($item);
-		};
+            $this->addItem($item);
+        };
 
-		if (ArrayHelper::is($rows) || $rows instanceof \Traversable) {
-			foreach ($rows as $row) {
-				$iterator($row);
-			}
-		} else {
-			while ($rows && $row = $this->getDb()->fetch_array($rows)) {
-				$iterator($row);
-			}
-		}
+        if (ArrayHelper::is($rows) || $rows instanceof \Traversable) {
+            foreach ($rows as $row) {
+                $iterator($row);
+            }
+        } else {
+            while ($rows && ($row = $this->getDb()->fetch_array($rows))) {
+                $iterator($row);
+            }
+        }
 
-		if ($this->cachedRecords) {
-			$this->count = count($this->items);
+        if ($this->cachedRecords) {
+            $this->count = count($this->items);
 
-			unset($this->cachedRecords);
-		}
+            unset($this->cachedRecords);
+        }
 
-		if (count($this->items) == $this->count()) {
-			$this->loaded = true;
-		}
+        if (count($this->items) == $this->count()) {
+            $this->loaded = true;
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function getRealCount()
-	{
-		if ($this->realCount === null) {
-			$this->count(true);
-		}
+    public function getRealCount()
+    {
+        if ($this->realCount === null) {
+            $this->count(true);
+        }
 
-		return $this->realCount;
-	}
+        return $this->realCount;
+    }
 
-	public function aggregateSum($field)
+    public function aggregateSum($field)
     {
         $ar = $this->getDb()->ar(
             $this->getQueryTable(),
@@ -1423,10 +1473,10 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
     }
 
     #[\ReturnTypeWillChange]
-	public function count($force = false)
-	{
-		if ($this->count === null || $force) {
-		    if (static::getConnection()::isMongo()) {
+    public function count($force = false)
+    {
+        if ($this->count === null || $force) {
+            if (static::getConnection()::isMongo()) {
                 $this->realCount = $this->getDb()->count([
                     'collectionName' => $this->getQueryTable(),
                     'filters' => $this->getFullQuery(),
@@ -1452,144 +1502,149 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
                     );
                 }
 
-                $this->realCount = $r ? (int)$r->cc : 0;
+                $this->realCount = $r ? (int) $r->cc : 0;
             }
 
-			if ($this->count === null) {
+            if ($this->count === null) {
                 $this->count = $this->realCount;
             }
-		}
+        }
 
-		if ($this->pageSize && $this->count > $this->pageSize) {
-			$this->count = $this->pageSize;
-		}
+        if ($this->pageSize && $this->count > $this->pageSize) {
+            $this->count = $this->pageSize;
+        }
 
-		return $this->count;
-	}
-
-    #[\ReturnTypeWillChange]
-	public function offsetExists($offset)
-	{
-		while (!$this->exists($offset) && !$this->isLoaded()) {
-			$this->loadChunk();
-		}
-
-		return $this->exists($offset);
-	}
+        return $this->count;
+    }
 
     #[\ReturnTypeWillChange]
-	public function offsetGet($offset)
-	{
-		return $this->offsetExists($offset) ? $this->items[$offset] : null;
-	}
+    public function offsetExists($offset)
+    {
+        while (!$this->exists($offset) && !$this->isLoaded()) {
+            $this->loadChunk();
+        }
+
+        return $this->exists($offset);
+    }
 
     #[\ReturnTypeWillChange]
-	public function offsetSet($offset, $value)
-	{
-		if (is_null($offset)) {
-			$this->items[] = $value;
-		} else {
-			$this->items[$offset] = $value;
-		}
-
-		return $this;
-	}
+    public function offsetGet($offset)
+    {
+        return $this->offsetExists($offset) ? $this->items[$offset] : null;
+    }
 
     #[\ReturnTypeWillChange]
-	public function offsetUnset($offset)
-	{
-		unset($this->items[$offset]);
+    public function offsetSet($offset, $value)
+    {
+        if (is_null($offset)) {
+            $this->items[] = $value;
+        } else {
+            $this->items[$offset] = $value;
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * Walk through the collection and run model method or external callback
-	 * with optional arguments
-	 *
-	 * @param $callback
-	 * @param array $arguments
-	 * @return array
-	 */
-	public function walk($callback, array $arguments = [])
-	{
-		$results = [];
-		$useItemCallback = is_string($callback) && strpos($callback, '::') === false;
+    #[\ReturnTypeWillChange]
+    public function offsetUnset($offset)
+    {
+        unset($this->items[$offset]);
 
-		foreach ($this as $id => $item) {
-			if ($useItemCallback) {
-				$cb = [$item, $callback];
-			} else {
-				$cb = $callback;
-				array_unshift($arguments, $item);
-			}
+        return $this;
+    }
 
-			$results[$id] = call_user_func_array($cb, $arguments);
-		}
+    /**
+     * Walk through the collection and run model method or external callback
+     * with optional arguments
+     *
+     * @param $callback
+     * @param array $arguments
+     * @return array
+     */
+    public function walk($callback, array $arguments = [])
+    {
+        $results = [];
+        $useItemCallback =
+            is_string($callback) && strpos($callback, '::') === false;
 
-		return $results;
-	}
+        foreach ($this as $id => $item) {
+            if ($useItemCallback) {
+                $cb = [$item, $callback];
+            } else {
+                $cb = $callback;
+                array_unshift($arguments, $item);
+            }
 
-	/**
-	 * Returns ID of model
-	 *
-	 * @param \diModel $model
-	 *
-	 * @return int|null
-	 */
-	protected function getId(\diModel $model)
-	{
-		return $model->getId();
-	}
+            $results[$id] = call_user_func_array($cb, $arguments);
+        }
 
-	/**
-	 * Returns ids of all non-empty records in collection
-	 *
-	 * @return array
-	 */
-	public function getIds()
-	{
-		return array_filter(array_values($this->walk(function(\diModel $m) {
-			return $this->getId($m);
-		})));
-	}
+        return $results;
+    }
 
-	/**
-	 * Removes collection data from memory
-	 *
-	 * @return $this
-	 */
-	public function destroy()
-	{
-		$this->items = [];
-		$this->count = null;
+    /**
+     * Returns ID of model
+     *
+     * @param \diModel $model
+     *
+     * @return int|null
+     */
+    protected function getId(\diModel $model)
+    {
+        return $model->getId();
+    }
 
-		return $this;
-	}
+    /**
+     * Returns ids of all non-empty records in collection
+     *
+     * @return array
+     */
+    public function getIds()
+    {
+        return array_filter(
+            array_values(
+                $this->walk(function (\diModel $m) {
+                    return $this->getId($m);
+                })
+            )
+        );
+    }
 
-	/**
-	 * Removes collection data, database records and all related files and data
-	 *
-	 * @return $this
-	 */
-	public function hardDestroy()
-	{
-		/** @var \diModel $model */
-		foreach ($this as $model) {
-			$model->killRelatedFilesAndData();
-		}
+    /**
+     * Removes collection data from memory
+     *
+     * @return $this
+     */
+    public function destroy()
+    {
+        $this->items = [];
+        $this->count = null;
 
-		$this->softDestroy();
+        return $this;
+    }
 
-		return $this;
-	}
+    /**
+     * Removes collection data, database records and all related files and data
+     *
+     * @return $this
+     */
+    public function hardDestroy()
+    {
+        /** @var \diModel $model */
+        foreach ($this as $model) {
+            $model->killRelatedFilesAndData();
+        }
+
+        $this->softDestroy();
+
+        return $this;
+    }
 
     /**
      * Removes collection data and database records
      *
      * @return $this
      */
-	public function softDestroy()
+    public function softDestroy()
     {
         $ids = $this->getIds();
 
@@ -1602,175 +1657,200 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
         return $this;
     }
 
-	public function update($newData = [])
-	{
+    public function update($newData = [])
+    {
         if ($this->readOnly) {
-            throw new \diDatabaseException('Unable to update read-only collection');
+            throw new \diDatabaseException(
+                'Unable to update read-only collection'
+            );
         }
 
-		if ($newData) {
-			$ids = $this->getIds();
+        if ($newData) {
+            $ids = $this->getIds();
 
-			if (count($ids)) {
-				$this->getDb()->update($this->getQueryTable(), $newData, $ids);
+            if (count($ids)) {
+                $this->getDb()->update($this->getQueryTable(), $newData, $ids);
 
-				/** @var \diModel $m */
-				foreach ($this as $m) {
-					$m->set($newData);
-				}
-			}
-		}
+                /** @var \diModel $m */
+                foreach ($this as $m) {
+                    $m->set($newData);
+                }
+            }
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public static function getIdFieldName()
-	{
-		/** @var \diModel $modelClass */
-		$modelClass = static::getModelClass();
+    public static function getIdFieldName()
+    {
+        /** @var \diModel $modelClass */
+        $modelClass = static::getModelClass();
 
-		return $modelClass::getIdFieldName();
-	}
+        return $modelClass::getIdFieldName();
+    }
 
-	/**
-	 * Simple query builder functions
-	 */
+    /**
+     * Simple query builder functions
+     */
 
-	public function find($o)
-	{
-		if (is_scalar($o)) {
-			return $this->filterBy(static::getIdFieldName(), $o);
-		}
+    public function find($o)
+    {
+        if (is_scalar($o)) {
+            return $this->filterBy(static::getIdFieldName(), $o);
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * Returns first found model
-	 *
-	 * @param $o
-	 *
-	 * @return \diModel
-	 */
-	public function findOne($o)
-	{
-		return $this->find($o)->getFirstItem();
-	}
+    /**
+     * Returns first found model
+     *
+     * @param $o
+     *
+     * @return \diModel
+     */
+    public function findOne($o)
+    {
+        return $this->find($o)->getFirstItem();
+    }
 
-	/**
-	 * Returns model by id
-	 *
-	 * @param integer $id
-	 *
-	 * @return \diModel
-	 */
-	public function getById($id)
-	{
-		if (!$this->isIdUnique) {
-			throw new \diRuntimeException(self::class . ' has no unique ID');
-		}
+    /**
+     * Returns model by id
+     *
+     * @param integer $id
+     *
+     * @return \diModel
+     */
+    public function getById($id)
+    {
+        if (!$this->isIdUnique) {
+            throw new \diRuntimeException(self::class . ' has no unique ID');
+        }
 
-		return $this->offsetGet($id) ?: $this->getNewEmptyItem();
-	}
+        return $this->offsetGet($id) ?: $this->getNewEmptyItem();
+    }
 
-	/**
-	 * @param $field
-	 * @param $operator
-	 * @param $value
-	 * @param array $options
-	 * @return $this
-	 */
-	protected function extFilterBy($field, $operator, $value, $options = [])
-	{
-		$field = $this->addAliasToField($field);
+    /**
+     * @param $field
+     * @param $operator
+     * @param $value
+     * @param array $options
+     * @return $this
+     */
+    protected function extFilterBy($field, $operator, $value, $options = [])
+    {
+        $field = $this->addAliasToField($field);
 
-		$this->sqlParts['where'][] = compact('field', 'operator', 'value', 'options');
+        $this->sqlParts['where'][] = compact(
+            'field',
+            'operator',
+            'value',
+            'options'
+        );
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @param $field
-	 * @param bool $append
-	 * @param array $options
-	 * @return $this
-	 */
-	protected function extSelect($field, $append = false, $options = [])
-	{
-		$options = extend([
-			'addAlias' => true,
-			'raw' => false,
-		], $options);
+    /**
+     * @param $field
+     * @param bool $append
+     * @param array $options
+     * @return $this
+     */
+    protected function extSelect($field, $append = false, $options = [])
+    {
+        $options = extend(
+            [
+                'addAlias' => true,
+                'raw' => false,
+            ],
+            $options
+        );
 
-		if ($options['addAlias']) {
-			$field = $this->addAliasToField($field);
-		}
+        if ($options['addAlias']) {
+            $field = $this->addAliasToField($field);
+        }
 
-		if (!$append) {
-			$this->resetSelect();
-		}
+        if (!$append) {
+            $this->resetSelect();
+        }
 
-		$this->sqlParts['select'][] = compact('field', 'options');
+        $this->sqlParts['select'][] = compact('field', 'options');
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function filterBy($field, $operator, $value = null)
-	{
-		if (func_num_args() == 2) {
-			$value = $operator;
-			$operator = is_array($value) ? 'in' : '=';
-		}
+    public function filterBy($field, $operator, $value = null)
+    {
+        if (func_num_args() == 2) {
+            $value = $operator;
+            $operator = is_array($value) ? 'in' : '=';
+        }
 
-		return $this->extFilterBy($field, $operator, $value, [
-			'rawValue' => false,
-		]);
-	}
+        return $this->extFilterBy($field, $operator, $value, [
+            'rawValue' => false,
+        ]);
+    }
 
-	public function filterByLocalized($field, $operator, $value = null)
-	{
-		$field = \diModel::getLocalizedFieldName($field);
+    public function filterByLocalized($field, $operator, $value = null)
+    {
+        $field = \diModel::getLocalizedFieldName($field);
 
-		if (func_num_args() == 2) {
-			return $this->filterBy($field, $operator);
-		} else {
-			return $this->filterBy($field, $operator, $value);
-		}
-	}
+        if (func_num_args() == 2) {
+            return $this->filterBy($field, $operator);
+        } else {
+            return $this->filterBy($field, $operator, $value);
+        }
+    }
 
-	public function filterByExpression($field, $operator, $value = null)
-	{
-		if (func_num_args() == 2) {
-			$value = $operator;
-			$operator = is_array($value) ? 'in' : '=';
-		}
+    public function filterByExpression($field, $operator, $value = null)
+    {
+        if (func_num_args() == 2) {
+            $value = $operator;
+            $operator = is_array($value) ? 'in' : '=';
+        }
 
-		return $this->extFilterBy($field, $operator, $value, [
-			'rawValue' => true,
-		]);
-	}
+        return $this->extFilterBy($field, $operator, $value, [
+            'rawValue' => true,
+        ]);
+    }
 
-	public function startsWith($field, $value)
-	{
-	    if (static::getConnection()::isMongo()) {
+    public function startsWith($field, $value)
+    {
+        if (static::getConnection()::isMongo()) {
             return $this->extFilterBy($field, 'REGEXP', '^' . $value);
         }
 
-	    $field = $this->getDb()->escapeField($field);
-	    $value = $this->getDb()->escapeValue($value);
+        if (static::supportedInstr()) {
+            $field = $this->getDb()->escapeField($field);
+            $value = $this->getDb()->escapeValue($value);
 
-		return $this->filterManual("INSTR(" . $field . ", " . $value . ") = 1");
-		/* for non-MySql
-		return $this->extFilterBy($field, 'LIKE', $value . '%', [
-			'rawValue' => true,
-		]);
-		*/
-	}
+            return $this->filterManual(
+                'INSTR(' . $field . ', ' . $value . ') = 1'
+            );
+        }
+
+        if (static::supportedIlike()) {
+            return $this->extFilterBy($field, 'ILIKE', "'{$value}%'", [
+                'rawValue' => true,
+            ]);
+        }
+
+        return $this->extFilterBy($field, 'LIKE', $value . '%', [
+            'rawValue' => true,
+        ]);
+    }
 
     public function endsWith($field, $value)
     {
         if (static::getConnection()::isMongo()) {
             return $this->extFilterBy($field, 'REGEXP', $value . '$');
+        }
+
+        if (static::supportedIlike()) {
+            return $this->extFilterBy($field, 'ILIKE', "'%{$value}'", [
+                'rawValue' => true,
+            ]);
         }
 
         return $this->extFilterBy($field, 'REGEXP', $value . '$');
@@ -1785,8 +1865,13 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
         ]);
     }
 
-	public function contains($field, $value)
-	{
+    protected static function supportedIlike()
+    {
+        return in_array(static::getConnectionEngine(), [Engine::POSTGRESQL]);
+    }
+
+    public function contains($field, $value)
+    {
         if (static::getConnection()::isMongo()) {
             return $this->extFilterBy($field, 'REGEXP', $value);
         }
@@ -1794,322 +1879,381 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
         if (static::supportedInstr()) {
             $field = $this->getDb()->escapeField($field);
             $value = $this->getDb()->escapeValue($value);
-            return $this->filterManual("INSTR(" . $field . ", " . $value . ") > 0");
+            return $this->filterManual(
+                'INSTR(' . $field . ', ' . $value . ') > 0'
+            );
+        }
+
+        if (static::supportedIlike()) {
+            return $this->extFilterBy($field, 'ILIKE', "'%{$value}%'", [
+                'rawValue' => true,
+            ]);
         }
 
         return $this->extFilterBy($field, 'LIKE', "'%{$value}%'", [
-			'rawValue' => true,
-		]);
-	}
+            'rawValue' => true,
+        ]);
+    }
 
-	/**
-	 * Adding manual expression to query
-	 * @param $expression
-	 * @return $this
-	 */
-	public function filterManual($expression)
-	{
-		$this->sqlParts['where'][] = [
-			'field' => null,
-			'value' => null,
-			'expression' => '(' . $expression . ')',
-			'options' => [
-				'manual' => true,
-			],
-		];
+    /**
+     * Adding manual expression to query
+     * @param $expression
+     * @return $this
+     */
+    public function filterManual($expression)
+    {
+        $this->sqlParts['where'][] = [
+            'field' => null,
+            'value' => null,
+            'expression' => '(' . $expression . ')',
+            'options' => [
+                'manual' => true,
+            ],
+        ];
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function filterOr($expressionsAr)
+    public function filterOr($expressionsAr)
     {
         $ar = [];
 
         foreach ($expressionsAr as $k => $v) {
-            $ar[] = $this->getDb()->escapeField($k) . '=' .
+            $ar[] =
+                $this->getDb()->escapeField($k) .
+                '=' .
                 $this->getDb()->escapeValue($v);
         }
 
         return $this->filterManual(join(' OR ', $ar));
     }
 
-	public function orderBy($field, $direction = null)
-	{
-		$direction = strtoupper($direction ?: 'ASC');
+    public function orderBy($field, $direction = null)
+    {
+        $direction = strtoupper($direction ?: 'ASC');
 
-		if (!in_array($direction, $this->possibleDirections)) {
-			throw new Exception("Unknown direction '{$direction}'");
-		}
+        if (!in_array($direction, $this->possibleDirections)) {
+            throw new Exception("Unknown direction '{$direction}'");
+        }
 
-		$field = $this->addAliasToField($field);
+        $field = $this->addAliasToField($field);
 
-		$options = [
-			'rawValue' => false,
-		];
+        $options = [
+            'rawValue' => false,
+        ];
 
-		$this->sqlParts['orderBy'][] = compact('field', 'direction', 'options');
+        $this->sqlParts['orderBy'][] = compact('field', 'direction', 'options');
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function orderByLocalized($field, $direction = null)
-	{
-		return $this->orderBy(\diModel::getLocalizedFieldName($field), $direction);
-	}
+    public function orderByLocalized($field, $direction = null)
+    {
+        return $this->orderBy(
+            \diModel::getLocalizedFieldName($field),
+            $direction
+        );
+    }
 
-	public function orderByExpression($field, $direction = null)
-	{
-		$direction = strtoupper($direction ?: 'ASC');
+    public function orderByExpression($field, $direction = null)
+    {
+        $direction = strtoupper($direction ?: 'ASC');
 
-		if (!in_array($direction, $this->possibleDirections)) {
-			throw new Exception("Unknown direction '{$direction}'");
-		}
+        if (!in_array($direction, $this->possibleDirections)) {
+            throw new Exception("Unknown direction '{$direction}'");
+        }
 
-		$options = [
-			'rawValue' => true,
-		];
+        $options = [
+            'rawValue' => true,
+        ];
 
-		$this->sqlParts['orderBy'][] = compact('field', 'direction', 'options');
+        $this->sqlParts['orderBy'][] = compact('field', 'direction', 'options');
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function randomOrder()
-	{
-		$this
-			->orderByExpression('RAND()');
+    public function randomOrder()
+    {
+        $this->orderByExpression('RAND()');
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @param array|string $fields
-	 * @return $this
-	 */
-	public function groupBy($fields)
-	{
-		if (!is_array($fields)) {
-			$fields = [$fields];
-		}
+    /**
+     * @param array|string $fields
+     * @return $this
+     */
+    public function groupBy($fields)
+    {
+        if (!is_array($fields)) {
+            $fields = [$fields];
+        }
 
-		foreach ($fields as $field) {
-			$field = $this->addAliasToField($field);
+        foreach ($fields as $field) {
+            $field = $this->addAliasToField($field);
 
-			$this->sqlParts['groupBy'][] = compact('field');
-		}
+            $this->sqlParts['groupBy'][] = compact('field');
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @param array|string $fields
-	 * @param bool $append
-	 * @param bool $raw
-	 *
-	 * @return $this
-	 */
-	public function select($fields, $append = false)
-	{
-		if (!is_array($fields)) {
-			$fields = [$fields];
-		}
+    /**
+     * @param array|string $fields
+     * @param bool $append
+     * @param bool $raw
+     *
+     * @return $this
+     */
+    public function select($fields, $append = false)
+    {
+        if (!is_array($fields)) {
+            $fields = [$fields];
+        }
 
-		if (!$append) {
-			$this->resetSelect();
-		}
+        if (!$append) {
+            $this->resetSelect();
+        }
 
-		foreach ($fields as $field) {
-			$this->extSelect($field, true);
-		}
+        foreach ($fields as $field) {
+            $this->extSelect($field, true);
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @param array|string $fields
-	 * @param bool $append
-	 * @param bool $raw
-	 *
-	 * @return $this
-	 */
-	public function selectLocalized($fields, $append = false)
-	{
-		if (!is_array($fields)) {
-			$fields = [$fields];
-		}
+    /**
+     * @param array|string $fields
+     * @param bool $append
+     * @param bool $raw
+     *
+     * @return $this
+     */
+    public function selectLocalized($fields, $append = false)
+    {
+        if (!is_array($fields)) {
+            $fields = [$fields];
+        }
 
-		foreach ($fields as &$field) {
-			$field = \diModel::getLocalizedFieldName($field);
-		}
+        foreach ($fields as &$field) {
+            $field = \diModel::getLocalizedFieldName($field);
+        }
 
-		return $this->select($fields, $append);
-	}
+        return $this->select($fields, $append);
+    }
 
-	public function selectExpression($field, $append = false)
-	{
-		$this->extSelect($field, $append, [
-			'addAlias' => false,
-			'raw' => true,
-		]);
+    public function selectExpression($field, $append = false)
+    {
+        $this->extSelect($field, $append, [
+            'addAlias' => false,
+            'raw' => true,
+        ]);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function resetSelect()
-	{
-		$this->sqlParts['select'] = [];
+    public function resetSelect()
+    {
+        $this->sqlParts['select'] = [];
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function getBuiltQueryWhere()
-	{
-		if ($this->sqlParts['where']) {
-			return 'WHERE ' . join(' AND ', array_filter(array_map(function ($val) {
-				$value = is_array($val['value'])
-                    ? array_filter($val['value'], 'is_not_null')
-                    : $val['value'];
-				$valuesCount = is_array($val['value'])
-                    ? count($val['value'])
-                    : null;
-				$nullInValue = is_array($val['value']) && in_array(null, $val['value'], true);
+    protected function getBuiltQueryWhere()
+    {
+        if ($this->sqlParts['where']) {
+            return 'WHERE ' .
+                join(
+                    ' AND ',
+                    array_filter(
+                        array_map(function ($val) {
+                            $value = is_array($val['value'])
+                                ? array_filter($val['value'], 'is_not_null')
+                                : $val['value'];
+                            $valuesCount = is_array($val['value'])
+                                ? count($val['value'])
+                                : null;
+                            $nullInValue =
+                                is_array($val['value']) &&
+                                in_array(null, $val['value'], true);
 
-				if (!empty($val['options']['manual'])) {
-					return $val['expression'];
-				} elseif (!empty($val['options']['rawValue'])) {
-					if (is_array($value)) {
-						$value = '(' . join(',', $value) . ')';
-					}
-				} else {
-					if (is_array($value)) {
-						if (strtolower($val['operator']) == 'between') {
-							$value = join(' AND ', array_map(function ($v) {
-								return $this->getDb()->escapeValue($v);
-							}, $value));
-						} else {
-							$value = count($value)
-								? '(' . join(',', array_map(function ($v) {
-							            return $this->getDb()->escapeValue($v);
-						            }, $value)) . ')'
-								: null;
-						}
-					} else {
-						$value = $this->getDb()->escapeValue($val['value']);
-					}
-				}
+                            if (!empty($val['options']['manual'])) {
+                                return $val['expression'];
+                            } elseif (!empty($val['options']['rawValue'])) {
+                                if (is_array($value)) {
+                                    $value = '(' . join(',', $value) . ')';
+                                }
+                            } else {
+                                if (is_array($value)) {
+                                    if (
+                                        strtolower($val['operator']) ==
+                                        'between'
+                                    ) {
+                                        $value = join(
+                                            ' AND ',
+                                            array_map(function ($v) {
+                                                return $this->getDb()->escapeValue(
+                                                    $v
+                                                );
+                                            }, $value)
+                                        );
+                                    } else {
+                                        $value = count($value)
+                                            ? '(' .
+                                                join(
+                                                    ',',
+                                                    array_map(function ($v) {
+                                                        return $this->getDb()->escapeValue(
+                                                            $v
+                                                        );
+                                                    }, $value)
+                                                ) .
+                                                ')'
+                                            : null;
+                                    }
+                                } else {
+                                    $value = $this->getDb()->escapeValue(
+                                        $val['value']
+                                    );
+                                }
+                            }
 
-				if (is_array($val['value'])) {
-					if ($valuesCount) {
-						switch ($val['operator']) {
-							case '=':
-								$val['operator'] = 'IN';
-								break;
+                            if (is_array($val['value'])) {
+                                if ($valuesCount) {
+                                    switch ($val['operator']) {
+                                        case '=':
+                                            $val['operator'] = 'IN';
+                                            break;
 
-							case '!=':
-								$val['operator'] = 'NOT IN';
-								break;
-						}
-					} else {
-						switch (trim(strtoupper($val['operator']))) {
-							case '=':
-							case 'IN':
-								return '1 = 0';
+                                        case '!=':
+                                            $val['operator'] = 'NOT IN';
+                                            break;
+                                    }
+                                } else {
+                                    switch (
+                                        trim(strtoupper($val['operator']))
+                                    ) {
+                                        case '=':
+                                        case 'IN':
+                                            return '1 = 0';
 
-							case '!=':
-							case 'NOT IN':
-								return null;
-						}
-					}
-				} elseif (is_null($val['value'])) {
-					switch ($val['operator']) {
-						case '=':
-							$val['operator'] = 'IS';
-							$value = 'NULL';
-							break;
+                                        case '!=':
+                                        case 'NOT IN':
+                                            return null;
+                                    }
+                                }
+                            } elseif (is_null($val['value'])) {
+                                switch ($val['operator']) {
+                                    case '=':
+                                        $val['operator'] = 'IS';
+                                        $value = 'NULL';
+                                        break;
 
-						case '!=':
-							$val['operator'] = 'IS NOT';
-							$value = 'NULL';
-							break;
-					}
-				}
+                                    case '!=':
+                                        $val['operator'] = 'IS NOT';
+                                        $value = 'NULL';
+                                        break;
+                                }
+                            }
 
-				$condition = $this->getDb()->escapeField($val['field']) .
-                    ' ' . $val['operator'] . ' ' .
-                    $value;
+                            $condition =
+                                $this->getDb()->escapeField($val['field']) .
+                                ' ' .
+                                $val['operator'] .
+                                ' ' .
+                                $value;
 
-				if ($nullInValue) {
-				    if (!$value) {
-				        $condition = '';
+                            if ($nullInValue) {
+                                if (!$value) {
+                                    $condition = '';
+                                }
+
+                                switch (strtoupper($val['operator'])) {
+                                    case 'IN':
+                                    case '=':
+                                        $nullCondition =
+                                            $this->getDb()->escapeField(
+                                                $val['field']
+                                            ) . ' IS NULL';
+                                        $condition = $condition
+                                            ? "($condition OR $nullCondition)"
+                                            : $nullCondition;
+                                        break;
+
+                                    case 'NOT IN':
+                                    case '!=':
+                                        $nullCondition =
+                                            $this->getDb()->escapeField(
+                                                $val['field']
+                                            ) . ' IS NOT NULL';
+                                        $condition = $condition
+                                            ? "($condition AND $nullCondition)"
+                                            : $nullCondition;
+                                        break;
+                                }
+                            }
+
+                            return $condition;
+                        }, $this->sqlParts['where'])
+                    )
+                );
+        }
+
+        return null;
+    }
+
+    protected function getBuiltQueryOrderBy()
+    {
+        if ($this->sqlParts['orderBy']) {
+            return 'ORDER BY ' .
+                join(
+                    ',',
+                    array_map(function ($val) {
+                        $field = empty($val['options']['rawValue'])
+                            ? $this->getDb()->escapeField($val['field'])
+                            : $val['field'];
+                        return $field . ' ' . $val['direction'];
+                    }, $this->sqlParts['orderBy'])
+                );
+        }
+
+        return null;
+    }
+
+    protected function getBuiltQueryGroupBy()
+    {
+        if ($this->sqlParts['groupBy']) {
+            return 'GROUP BY ' .
+                join(
+                    ',',
+                    array_map(function ($val) {
+                        return $this->getDb()->escapeField($val['field']);
+                    }, $this->sqlParts['groupBy'])
+                );
+        }
+
+        return null;
+    }
+
+    protected function getBuiltQueryFields()
+    {
+        if ($this->sqlParts['select']) {
+            return join(
+                ',',
+                array_map(function ($opt) {
+                    if (is_scalar($opt['field'])) {
+                        return !empty($opt['options']['raw'])
+                            ? $opt['field']
+                            : $this->getDb()->escapeField($opt['field']);
                     }
 
-                    switch (strtoupper($val['operator'])) {
-                        case 'IN':
-                        case '=':
-                            $nullCondition = $this->getDb()->escapeField($val['field']) . ' IS NULL';
-                            $condition = $condition
-                                ? "($condition OR $nullCondition)"
-                                : $nullCondition;
-                            break;
+                    throw new \Exception('Not implemented yet');
+                }, $this->sqlParts['select'])
+            );
+        }
 
-                        case 'NOT IN':
-                        case '!=':
-                            $nullCondition = $this->getDb()->escapeField($val['field']) . ' IS NOT NULL';
-                            $condition = $condition
-                                ? "($condition AND $nullCondition)"
-                                : $nullCondition;
-                            break;
-                    }
-                }
-
-				return $condition;
-			}, $this->sqlParts['where'])));
-		}
-
-		return null;
-	}
-
-	protected function getBuiltQueryOrderBy()
-	{
-		if ($this->sqlParts['orderBy']) {
-			return 'ORDER BY ' . join(',', array_map(function($val) {
-				$field = empty($val['options']['rawValue'])
-					? $this->getDb()->escapeField($val['field'])
-					: $val['field'];
-				return $field . ' ' . $val['direction'];
-			}, $this->sqlParts['orderBy']));
-		}
-
-		return null;
-	}
-
-	protected function getBuiltQueryGroupBy()
-	{
-		if ($this->sqlParts['groupBy']) {
-			return 'GROUP BY ' . join(',', array_map(function($val) {
-				return $this->getDb()->escapeField($val['field']);
-			}, $this->sqlParts['groupBy']));
-		}
-
-		return null;
-	}
-
-	protected function getBuiltQueryFields()
-	{
-		if ($this->sqlParts['select']) {
-			return join(',', array_map(function($opt) {
-				if (is_scalar($opt['field'])) {
-					return !empty($opt['options']['raw'])
-						? $opt['field']
-						: $this->getDb()->escapeField($opt['field']);
-				}
-
-				throw new \Exception('Not implemented yet');
-			}, $this->sqlParts['select']));
-		}
-
-		return null;
-	}
+        return null;
+    }
 
     public function _setReadOnly($state = true)
     {
@@ -2118,98 +2262,109 @@ abstract class diCollection implements \Iterator,\Countable,\ArrayAccess
         return $this;
     }
 
-	/**
-	 * Cache methods
-	 */
+    /**
+     * Cache methods
+     */
 
-	protected function getCacheContents($cacheKind = self::CACHE_ALL)
-	{
-		$s = "<?php\n";
+    protected function getCacheContents($cacheKind = self::CACHE_ALL)
+    {
+        $s = "<?php\n";
 
-		/** @var \diModel $model */
-		foreach ($this as $model) {
-			$s .= "\$this->addItem(" . $model->asPhp() . ");\n";
-		}
+        /** @var \diModel $model */
+        foreach ($this as $model) {
+            $s .= "\$this->addItem(" . $model->asPhp() . ");\n";
+        }
 
-		return $s;
-	}
+        return $s;
+    }
 
-	protected function getBaseCacheSubFolder($cacheKind = self::CACHE_ALL)
-	{
-		return \diTypes::getName(\diTypes::getId($this->getModelType()));
-	}
+    protected function getBaseCacheSubFolder($cacheKind = self::CACHE_ALL)
+    {
+        return \diTypes::getName(\diTypes::getId($this->getModelType()));
+    }
 
-	protected function getCacheSubFolder($cacheKind = self::CACHE_ALL)
-	{
-		$subFolder = '';
+    protected function getCacheSubFolder($cacheKind = self::CACHE_ALL)
+    {
+        $subFolder = '';
 
-		if (
-			empty(static::$cacheFileNames[$cacheKind]) &&
-			empty(static::$commonCacheFileNames[$cacheKind]) &&
-			!empty(static::$cacheNames[$cacheKind])
+        if (
+            empty(static::$cacheFileNames[$cacheKind]) &&
+            empty(static::$commonCacheFileNames[$cacheKind]) &&
+            !empty(static::$cacheNames[$cacheKind])
         ) {
-			$subFolder = $this->getBaseCacheSubFolder($cacheKind) . '/';
-		}
+            $subFolder = $this->getBaseCacheSubFolder($cacheKind) . '/';
+        }
 
-		return $subFolder;
-	}
+        return $subFolder;
+    }
 
-	protected function getCachePath($cacheKind = self::CACHE_ALL)
-	{
-		return Config::__getPhpFolder() . static::CACHE_FOLDER;
-	}
+    protected function getCachePath($cacheKind = self::CACHE_ALL)
+    {
+        return Config::__getPhpFolder() . static::CACHE_FOLDER;
+    }
 
-	protected function getCacheFilename($cacheKind = self::CACHE_ALL)
-	{
-		if ($cacheKind == self::CACHE_ALL) {
-			$fn = $this->getTable();
-		} elseif (!empty(static::$cacheFileNames[$cacheKind])) {
-			$fn = static::$cacheFileNames[$cacheKind];
-		} elseif (!empty(static::$commonCacheFileNames[$cacheKind])) {
-			$fn = static::$commonCacheFileNames[$cacheKind];
-		} elseif (!empty(static::$cacheNames[$cacheKind])) {
-			$fn = static::$cacheNames[$cacheKind];
-		} else {
-			throw new \Exception('Undefined cache kind: ' . $cacheKind);
-		}
+    protected function getCacheFilename($cacheKind = self::CACHE_ALL)
+    {
+        if ($cacheKind == self::CACHE_ALL) {
+            $fn = $this->getTable();
+        } elseif (!empty(static::$cacheFileNames[$cacheKind])) {
+            $fn = static::$cacheFileNames[$cacheKind];
+        } elseif (!empty(static::$commonCacheFileNames[$cacheKind])) {
+            $fn = static::$commonCacheFileNames[$cacheKind];
+        } elseif (!empty(static::$cacheNames[$cacheKind])) {
+            $fn = static::$cacheNames[$cacheKind];
+        } else {
+            throw new \Exception('Undefined cache kind: ' . $cacheKind);
+        }
 
-		return $fn . static::CACHE_FILE_EXTENSION;
-	}
+        return $fn . static::CACHE_FILE_EXTENSION;
+    }
 
-	protected function getCachePathAndFilename($cacheKind = self::CACHE_ALL)
-	{
-		return $this->getCachePath($cacheKind) .
-			$this->getCacheSubFolder($cacheKind) .
-			$this->getCacheFilename($cacheKind);
-	}
+    protected function getCachePathAndFilename($cacheKind = self::CACHE_ALL)
+    {
+        return $this->getCachePath($cacheKind) .
+            $this->getCacheSubFolder($cacheKind) .
+            $this->getCacheFilename($cacheKind);
+    }
 
-	public function buildCache($cacheKind = self::CACHE_ALL)
-	{
-		FileSystemHelper::createTree($this->getCachePath($cacheKind), $this->getCacheSubFolder($cacheKind),
-			static::cacheDirChmod);
+    public function buildCache($cacheKind = self::CACHE_ALL)
+    {
+        FileSystemHelper::createTree(
+            $this->getCachePath($cacheKind),
+            $this->getCacheSubFolder($cacheKind),
+            static::cacheDirChmod
+        );
 
-		file_put_contents($this->getCachePathAndFilename($cacheKind), $this->getCacheContents($cacheKind));
-		chmod($this->getCachePathAndFilename($cacheKind), static::cacheFileChmod);
+        file_put_contents(
+            $this->getCachePathAndFilename($cacheKind),
+            $this->getCacheContents($cacheKind)
+        );
+        chmod(
+            $this->getCachePathAndFilename($cacheKind),
+            static::cacheFileChmod
+        );
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function cacheExists($cacheKind = self::CACHE_ALL)
-	{
-		return is_file($this->getCachePathAndFilename($cacheKind));
-	}
+    public function cacheExists($cacheKind = self::CACHE_ALL)
+    {
+        return is_file($this->getCachePathAndFilename($cacheKind));
+    }
 
-	public function loadCache($cacheKind = self::CACHE_ALL, $forceRebuild = false)
-	{
-		if ($forceRebuild) {
-			$this->buildCache($cacheKind);
-		}
+    public function loadCache(
+        $cacheKind = self::CACHE_ALL,
+        $forceRebuild = false
+    ) {
+        if ($forceRebuild) {
+            $this->buildCache($cacheKind);
+        }
 
-		include $this->getCachePathAndFilename($cacheKind);
+        include $this->getCachePathAndFilename($cacheKind);
 
-		$this->loaded = true;
-		$this->count = count($this->items);
+        $this->loaded = true;
+        $this->count = count($this->items);
 
-		return $this;
-	}
+        return $this;
+    }
 }
