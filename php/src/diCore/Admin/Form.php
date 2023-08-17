@@ -270,6 +270,30 @@ class Form
             'ru' => 'E-mail',
             'en' => 'E-mail',
         ],
+        'login' => [
+            'ru' => 'Логин',
+            'en' => 'Login',
+        ],
+        'password' => [
+            'ru' => 'Пароль',
+            'en' => 'Password',
+        ],
+        'name' => [
+            'ru' => 'ФИО',
+            'en' => 'Name',
+        ],
+        'first_name' => [
+            'ru' => 'Имя',
+            'en' => 'First name',
+        ],
+        'middle_name' => [
+            'ru' => 'Отчество',
+            'en' => 'Middle name',
+        ],
+        'last_name' => [
+            'ru' => 'Фамилия',
+            'en' => 'Last name',
+        ],
         'phone' => [
             'ru' => 'Телефон',
             'en' => 'Phone',
@@ -294,6 +318,10 @@ class Form
             'ru' => 'Полный текст',
             'en' => 'Content',
         ],
+        'description' => [
+            'ru' => 'Описание',
+            'en' => 'Description',
+        ],
         'en_title' => [
             'ru' => 'Название',
             'en' => 'Title',
@@ -306,6 +334,10 @@ class Form
             'ru' => 'Полный текст',
             'en' => 'Content',
         ],
+        'en_description' => [
+            'ru' => 'Описание',
+            'en' => 'Description',
+        ],
         'ru_title' => [
             'ru' => 'Название',
             'en' => 'Title',
@@ -317,6 +349,10 @@ class Form
         'ru_content' => [
             'ru' => 'Полный текст',
             'en' => 'Content',
+        ],
+        'ru_description' => [
+            'ru' => 'Описание',
+            'en' => 'Description',
         ],
         'pic' => [
             'ru' => 'Изображение',
@@ -446,6 +482,10 @@ class Form
             'ru' => 'Дата/время удаления',
             'en' => 'Date/time of deletion',
         ],
+        'ip' => [
+            'ru' => 'IP-адрес',
+            'en' => 'IP address',
+        ],
     ];
 
     public function __construct($table, $id = 0, $module_id = 0)
@@ -472,7 +512,9 @@ class Form
         if (!$this->AdminPage) {
             if (!isset($GLOBALS[$this->table . '_all_fields'])) {
                 throw new \Exception(
-                    "$" . $this->table . '_all_fields, etc. variables not defined'
+                    "$" .
+                        $this->table .
+                        '_all_fields, etc. variables not defined'
                 );
             }
 
@@ -528,7 +570,9 @@ class Form
 
     private function getAllFields()
     {
-        $ar = $this->AdminPage ? $this->AdminPage->getAllFields() : $this->allFields;
+        $ar = $this->AdminPage
+            ? $this->AdminPage->getAllFields()
+            : $this->allFields;
 
         $ar = $this->mergeManualFieldFlags($ar);
 
@@ -651,7 +695,10 @@ class Form
             is_string($fieldOrFlagsAr) &&
             ($flags = $this->getFieldProperty($fieldOrFlagsAr, 'flags'))
         ) {
-        } elseif (is_array($fieldOrFlagsAr) && isset($fieldOrFlagsAr['flags'])) {
+        } elseif (
+            is_array($fieldOrFlagsAr) &&
+            isset($fieldOrFlagsAr['flags'])
+        ) {
             $flags = $fieldOrFlagsAr['flags'];
         } else {
             $flags = [];
@@ -672,7 +719,9 @@ class Form
     public function getWysiwygVendor($mode = 'int')
     {
         if ($this->AdminPage) {
-            $this->wysiwygVendor = $this->AdminPage->getAdmin()->getWysiwygVendor();
+            $this->wysiwygVendor = $this->AdminPage
+                ->getAdmin()
+                ->getWysiwygVendor();
         }
 
         return $mode == 'string'
@@ -704,7 +753,8 @@ class Form
 
     public static function isButtonShown($id, $show_ar = [], $hide_ar = [])
     {
-        return (!$show_ar || in_array($id, $show_ar)) && !in_array($id, $hide_ar);
+        return (!$show_ar || in_array($id, $show_ar)) &&
+            !in_array($id, $hide_ar);
     }
 
     public function processData($field, $callback)
@@ -826,7 +876,10 @@ class Form
             if ($this->getModel()->exists()) {
                 $this->rec = (object) $this->getModel()->get();
             } else {
-                $this->rec = $this->getDb()->r($this->getTable(), $this->getId());
+                $this->rec = $this->getDb()->r(
+                    $this->getTable(),
+                    $this->getId()
+                );
             }
 
             if ($this->rec) {
@@ -1012,7 +1065,11 @@ EOF;
                     'clone'
                 )}</button>"
                 : '';
-            $quick_save_btn = $this->isButtonShown('quick_save', $show_ar, $hide_ar)
+            $quick_save_btn = $this->isButtonShown(
+                'quick_save',
+                $show_ar,
+                $hide_ar
+            )
                 ? "<button type=\"button\" id=\"btn-quick-save\" onclick=\"admin_form_{$this->table}_{$this->id}.quick_save();\">{$this->getButtonIcon(
                     'quick_save'
                 )}{$this->L('quick_save')}</button>"
@@ -1031,7 +1088,11 @@ EOF;
                     'confirm_dispatch'
                 )}');\">{$this->L('dispatch')}</button>"
                 : '';
-            $dispatch_test_btn = $this->isButtonShown('dispatch', $show_ar, $hide_ar)
+            $dispatch_test_btn = $this->isButtonShown(
+                'dispatch',
+                $show_ar,
+                $hide_ar
+            )
                 ? "<button type=\"submit\" name=\"dispatch_test\" value='1' id=\"btn-dispatch-test\" onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->L(
                     'dispatch_test'
                 )}</button>"
@@ -1109,8 +1170,11 @@ EOF;
         }
     }
 
-    public static function getFieldTitle($fieldName, $fieldProps, $language = 'ru')
-    {
+    public static function getFieldTitle(
+        $fieldName,
+        $fieldProps,
+        $language = 'ru'
+    ) {
         /*
         if ($fieldProps === null) {
             $fieldProps = $this->getX()->getFieldProperty($fieldName);
@@ -1150,7 +1214,11 @@ EOF;
 
         return underscore($fieldName) === $fieldName
             ? $fieldName
-            : static::getFieldTitle(underscore($fieldName), $fieldProps, $language);
+            : static::getFieldTitle(
+                underscore($fieldName),
+                $fieldProps,
+                $language
+            );
     }
 
     public function get_html()
@@ -1304,7 +1372,9 @@ EOF;
                                 break;
 
                             case 'checkbox':
-                                $s = $this->L($this->data[$field] ? 'yes' : 'no');
+                                $s = $this->L(
+                                    $this->data[$field] ? 'yes' : 'no'
+                                );
                                 break;
 
                             case 'checkboxes':
@@ -1551,7 +1621,8 @@ EOF;
                             $html .= $this->getRow(
                                 $field,
                                 "{$fieldTitle}{$notesStar}:",
-                                $tag && ($this->static_mode || $this->data[$field])
+                                $tag &&
+                                ($this->static_mode || $this->data[$field])
                                     ? "$tag<div>$input</div>"
                                     : $input
                             );
@@ -1864,12 +1935,18 @@ EOF;
         $h = new \diHierarchyTable($this->getTable());
 
         $parentsAr = [];
-        foreach ($h->getParentsArByParentId($this->getData('parent')) as $parent_r) {
+        foreach (
+            $h->getParentsArByParentId($this->getData('parent'))
+            as $parent_r
+        ) {
             $parentsAr[] = strip_tags($parent_r->title);
         }
 
         if ($parentsAr) {
-            $this->setStaticInput($field)->setInput($field, join(' / ', $parentsAr));
+            $this->setStaticInput($field)->setInput(
+                $field,
+                join(' / ', $parentsAr)
+            );
         } else {
             $this->setHiddenInput($field);
         }
@@ -1900,7 +1977,10 @@ EOF;
                 $this->inputAttributes[$f] = [];
             }
 
-            $this->inputAttributes[$f] = extend($this->inputAttributes[$f], $params);
+            $this->inputAttributes[$f] = extend(
+                $this->inputAttributes[$f],
+                $params
+            );
         }
 
         return $this;
@@ -2015,13 +2095,19 @@ EOF;
             "DISTINCT $field"
         );
         while ($r = $this->getDb()->fetch($rs)) {
-            if (!in_array($r->$field, $exclude) && !in_array($r->$field, $include)) {
+            if (
+                !in_array($r->$field, $exclude) &&
+                !in_array($r->$field, $include)
+            ) {
                 $sel->addItem($r->$field, $r->$field);
             }
         }
 
         $this->inputs[$field] = count($sel->getItemsAr())
-            ? $sel . ' <span class="ml-5 mr-5">' . $this->L('or_enter') . ':</span> '
+            ? $sel .
+                ' <span class="ml-5 mr-5">' .
+                $this->L('or_enter') .
+                ':</span> '
             : '';
 
         $width = $this->inputs[$field] ? '50%' : '100%';
@@ -2044,7 +2130,11 @@ EOF;
         $values = [];
 
         foreach ($field_ar as $field) {
-            $rs = $db->rs($this->table, "ORDER BY $field ASC", "DISTINCT $field");
+            $rs = $db->rs(
+                $this->table,
+                "ORDER BY $field ASC",
+                "DISTINCT $field"
+            );
             while ($r = $db->fetch($rs)) {
                 $values[] = $r->$field;
             }
@@ -2054,7 +2144,10 @@ EOF;
         sort($values, SORT_STRING);
 
         foreach ($field_ar as $field) {
-            $sel = new \diSelect($field, StringHelper::out($this->getData($field)));
+            $sel = new \diSelect(
+                $field,
+                StringHelper::out($this->getData($field))
+            );
 
             foreach ($values as $v) {
                 $sel->addItem(StringHelper::out($v), StringHelper::out($v));
@@ -2084,7 +2177,12 @@ EOF;
         $prefix_ar = [],
         $suffix_ar = []
     ) {
-        return $this->setSelectFromArrayInput($field, $ar, $prefix_ar, $suffix_ar);
+        return $this->setSelectFromArrayInput(
+            $field,
+            $ar,
+            $prefix_ar,
+            $suffix_ar
+        );
     }
 
     public function setSelectFromArrayInput(
@@ -2103,7 +2201,9 @@ EOF;
             }
 
             if (!empty($this->inputs[$field])) {
-                $this->inputs[$field] = StringHelper::out($this->inputs[$field]);
+                $this->inputs[$field] = StringHelper::out(
+                    $this->inputs[$field]
+                );
             }
         } else {
             $sel = \diSelect::fastCreate(
@@ -2374,7 +2474,11 @@ EOF;
         $ar = $this->getInputAttributes($field, $forceAttributes);
 
         return $ar
-            ? ArrayHelper::toAttributesString($ar, true, ArrayHelper::ESCAPE_HTML)
+            ? ArrayHelper::toAttributesString(
+                $ar,
+                true,
+                ArrayHelper::ESCAPE_HTML
+            )
             : '';
     }
 
@@ -2712,7 +2816,8 @@ EOF;
     {
         if ($path === false) {
             $path = StringHelper::slash(
-                $this->getModel()->getPicsFolder() ?: get_pics_folder($this->table),
+                $this->getModel()->getPicsFolder() ?:
+                get_pics_folder($this->table),
                 false
             );
         }
@@ -2766,8 +2871,10 @@ EOF;
             if ($renameFields && $v) {
                 $ext = '.' . strtolower(StringHelper::fileExtension($v));
                 $newFn =
-                    Submit::getFilenameFromTitle($this->getModel(), $renameFields) .
-                    $ext;
+                    Submit::getFilenameFromTitle(
+                        $this->getModel(),
+                        $renameFields
+                    ) . $ext;
                 $oldFnClean = Submit::cleanGeneratedFilename($v);
                 $newFnClean = Submit::cleanGeneratedFilename($newFn);
 
@@ -2840,7 +2947,12 @@ EOF;
         $hide_if_no_file = false,
         $show_del_link = true
     ) {
-        return $this->setFileInput($field, $path, $hide_if_no_file, $show_del_link);
+        return $this->setFileInput(
+            $field,
+            $path,
+            $hide_if_no_file,
+            $show_del_link
+        );
     }
 
     /**
@@ -2859,7 +2971,8 @@ EOF;
     ) {
         if ($path === false) {
             $path = StringHelper::slash(
-                $this->getModel()->getPicsFolder() ?: get_pics_folder($this->table),
+                $this->getModel()->getPicsFolder() ?:
+                get_pics_folder($this->table),
                 false
             );
         }
@@ -2915,7 +3028,11 @@ EOF;
             }
 
             $this->inputs[$field] = $this->isFlag($field, FormFlag::static)
-                ? '<input type="hidden" name="' . $field . '" value="' . $v . '">'
+                ? '<input type="hidden" name="' .
+                    $field .
+                    '" value="' .
+                    $v .
+                    '">'
                 : '<div class="file-input-wrapper" data-caption="' .
                     $this->L('choose_file') .
                     '"><input ' .
@@ -2964,7 +3081,9 @@ EOF;
         }
 
         if (isset($this->rec->pic) && !empty($path2)) {
-            $class = !$this->getData($field) ? " class=\"cover_pic_selected\"" : '';
+            $class = !$this->getData($field)
+                ? " class=\"cover_pic_selected\""
+                : '';
             $img0 = $this->rec->pic
                 ? $this->get_pic_html_tag(
                     3,
@@ -3011,7 +3130,9 @@ EOF;
         $rows_count = ceil(count($ar) / $cols);
         for ($i = 0; $i < $rows_count; $i++) {
             $html .=
-                '<tr>' . join("\n", array_slice($ar, $i * $cols, $cols)) . "</tr>\n";
+                '<tr>' .
+                join("\n", array_slice($ar, $i * $cols, $cols)) .
+                "</tr>\n";
         }
 
         $html .= "</table>\n";
@@ -3034,7 +3155,8 @@ EOF;
         $ar = [];
 
         while ($r = $db->fetch($rs)) {
-            $class = $r->id == $this->getData($field) ? ' cover_pic_selected' : '';
+            $class =
+                $r->id == $this->getData($field) ? ' cover_pic_selected' : '';
 
             if ($class) {
                 $orig_r = $r;
@@ -3075,7 +3197,9 @@ EOF;
         $rows_count = ceil(count($ar) / $cols);
         for ($i = 0; $i < $rows_count; $i++) {
             $html .=
-                '<tr>' . join("\n", array_slice($ar, $i * $cols, $cols)) . "</tr>\n";
+                '<tr>' .
+                join("\n", array_slice($ar, $i * $cols, $cols)) .
+                "</tr>\n";
         }
 
         $html .= "</table>\n";
@@ -3192,7 +3316,9 @@ EOF;
         $by_default_text = $by_default_checked ? ' Заглавная' : '';
 
         $visible_checked =
-            ($pic_r && $pic_r->visible) || !$pic_r ? " checked=\"checked\"" : '';
+            ($pic_r && $pic_r->visible) || !$pic_r
+                ? " checked=\"checked\""
+                : '';
         $visible_text = $visible_checked ? ' Отображается' : ' Не отображается';
 
         $title = $pic_r ? StringHelper::out($pic_r->title) : '';
@@ -3292,7 +3418,9 @@ EOF;
         $by_default_text = $by_default_checked ? ', Заглавная' : '';
 
         $visible_checked =
-            ($pic_r && $pic_r->visible) || !$pic_r ? " checked=\"checked\"" : '';
+            ($pic_r && $pic_r->visible) || !$pic_r
+                ? " checked=\"checked\""
+                : '';
         $visible_text = $visible_checked ? ', Отображается' : '';
 
         $title = $pic_r ? StringHelper::out($pic_r->title) : '';
@@ -3371,9 +3499,18 @@ EOF;
     }
 
     /** @deprecated */
-    function set_cb_list_input($field, $feed, $columns = null, $ableToAddNew = null)
-    {
-        return $this->setCheckboxesListInput($field, $feed, $columns, $ableToAddNew);
+    function set_cb_list_input(
+        $field,
+        $feed,
+        $columns = null,
+        $ableToAddNew = null
+    ) {
+        return $this->setCheckboxesListInput(
+            $field,
+            $feed,
+            $columns,
+            $ableToAddNew
+        );
     }
 
     public function setCheckboxesListInput(
@@ -3398,7 +3535,8 @@ EOF;
         }
 
         if (is_null($ableToAddNew)) {
-            $ableToAddNew = $this->getFieldOption($field, 'ableToAddNew') ?: false;
+            $ableToAddNew =
+                $this->getFieldOption($field, 'ableToAddNew') ?: false;
         }
 
         $multiple =
@@ -3496,14 +3634,23 @@ EOF;
                 }
 
                 $title = is_callable($titleGetter)
-                    ? $titleGetter($v, $this->getTable(), $field, $this->getId())
+                    ? $titleGetter(
+                        $v,
+                        $this->getTable(),
+                        $field,
+                        $this->getId()
+                    )
                     : $v[$titleGetter];
 
                 // string or function($feedModel, $callbackParams)
-                $outerPrefix = $this->getFieldOption($field, 'outerPrefix') ?: '';
-                $outerSuffix = $this->getFieldOption($field, 'outerSuffix') ?: '';
-                $innerPrefix = $this->getFieldOption($field, 'innerPrefix') ?: '';
-                $innerSuffix = $this->getFieldOption($field, 'innerSuffix') ?: '';
+                $outerPrefix =
+                    $this->getFieldOption($field, 'outerPrefix') ?: '';
+                $outerSuffix =
+                    $this->getFieldOption($field, 'outerSuffix') ?: '';
+                $innerPrefix =
+                    $this->getFieldOption($field, 'innerPrefix') ?: '';
+                $innerSuffix =
+                    $this->getFieldOption($field, 'innerSuffix') ?: '';
 
                 if (is_callable($outerPrefix)) {
                     $outerPrefix = $outerPrefix($v, $this, $field);
@@ -3616,7 +3763,8 @@ EOF;
     ) {
         if ($value && $value != '0000-00-00 00:00:00') {
             $str_field_type =
-                substr($this->getFieldProperty($field, 'type'), -4) == '_str' ?: -1;
+                substr($this->getFieldProperty($field, 'type'), -4) == '_str' ?:
+                -1;
 
             if ($str_field_type == -1) {
                 $str_field_type = !is_numeric($value);
@@ -3783,8 +3931,10 @@ EOF;
     {
         if (isset($this->manualFieldFlags[$field])) {
             if (
-                ($key = array_search($flag, $this->manualFieldFlags[$field])) !==
-                false
+                ($key = array_search(
+                    $flag,
+                    $this->manualFieldFlags[$field]
+                )) !== false
             ) {
                 unset($this->manualFieldFlags[$field][$flag]);
             }
@@ -3906,7 +4056,8 @@ EOF;
             function (\diFontModel $f) {
                 return [
                     'value' => $f->getToken(),
-                    'text' => $f->getToken() . ' &ndash; ' . $f->getTitle() . '',
+                    'text' =>
+                        $f->getToken() . ' &ndash; ' . $f->getTitle() . '',
                 ];
             },
             $prefixAr
@@ -3931,8 +4082,12 @@ EOF;
         return $this;
     }
 
-    function set_select_file_input($field, $path, $ext_ar = [], $kill_ext = true)
-    {
+    function set_select_file_input(
+        $field,
+        $path,
+        $ext_ar = [],
+        $kill_ext = true
+    ) {
         if (!is_array($ext_ar)) {
             $ext_ar = [$ext_ar];
         }
@@ -3984,7 +4139,9 @@ EOF;
             }
 
             $class =
-                $i == $this->getData($field) ? " class=\"cover_pic_selected\"" : '';
+                $i == $this->getData($field)
+                    ? " class=\"cover_pic_selected\""
+                    : '';
 
             if ($class) {
                 $orig_fn = $fn;
@@ -4014,7 +4171,9 @@ EOF;
         $rows_count = ceil(count($ar) / $cols);
         for ($i = 0; $i < $rows_count; $i++) {
             $html .=
-                '<tr>' . join("\n", array_slice($ar, $i * $cols, $cols)) . "</tr>\n";
+                '<tr>' .
+                join("\n", array_slice($ar, $i * $cols, $cols)) .
+                "</tr>\n";
         }
 
         $html .= "</table>\n";

@@ -145,7 +145,11 @@ EOF;
                 $modelClassName
             );
 
-            $slugFieldName = $this->doesTableHaveField($connName, $table, 'slug')
+            $slugFieldName = $this->doesTableHaveField(
+                $connName,
+                $table,
+                'slug'
+            )
                 ? "\n    const slug_field_name = self::SLUG_FIELD_NAME;"
                 : '';
 
@@ -173,7 +177,9 @@ EOF;
                 '{{ slugFieldName }}' => $slugFieldName,
                 '{{ modelType }}' => $typeName,
                 '{{ namespace }}' => $this->getNamespace()
-                    ? "\nnamespace " . self::extractNamespace($modelClassName) . ';'
+                    ? "\nnamespace " .
+                        self::extractNamespace($modelClassName) .
+                        ';'
                     : '',
                 '{{ connectionLine }}' => $connectionNameStr,
                 '{{ fieldTypes }}' => $this->getFieldTypesArrayStr($fields),
@@ -194,7 +200,10 @@ EOF;
                 throw new \Exception("Model $fn already exists");
             }
 
-            FileSystemHelper::createTree(Config::getSourcesFolder(), dirname($fn));
+            FileSystemHelper::createTree(
+                Config::getSourcesFolder(),
+                dirname($fn)
+            );
 
             file_put_contents(Config::getSourcesFolder() . $fn, $contents);
             chmod(Config::getSourcesFolder() . $fn, self::fileChmod);
@@ -204,7 +213,10 @@ EOF;
             $typeName = self::getModelNameByTable($table);
             $collectionClassName =
                 $collectionClassName ?:
-                self::getCollectionClassNameByTable($table, $this->getNamespace());
+                self::getCollectionClassNameByTable(
+                    $table,
+                    $this->getNamespace()
+                );
             $collectionAnnotations = $this->getCollectionMethodsAnnotations(
                 $fields,
                 $connName,
@@ -233,7 +245,10 @@ EOF;
                     'filterByLocalized'
                 ]
                     ? "\n *\n" .
-                        join("\n", $collectionAnnotations['filterByLocalized']) .
+                        join(
+                            "\n",
+                            $collectionAnnotations['filterByLocalized']
+                        ) .
                         "\n *\n" .
                         join("\n", $collectionAnnotations['orderByLocalized']) .
                         "\n *\n" .
@@ -262,7 +277,10 @@ EOF;
                 throw new \Exception("Collection $fn already exists");
             }
 
-            FileSystemHelper::createTree(Config::getSourcesFolder(), dirname($fn));
+            FileSystemHelper::createTree(
+                Config::getSourcesFolder(),
+                dirname($fn)
+            );
 
             file_put_contents(Config::getSourcesFolder() . $fn, $contents);
             chmod(Config::getSourcesFolder() . $fn, self::fileChmod);
@@ -297,14 +315,18 @@ EOF;
             : camelize('di_' . self::getModelNameByTable($table) . '_model');
     }
 
-    public static function getCollectionClassNameByTable($table, $namespace = '')
-    {
+    public static function getCollectionClassNameByTable(
+        $table,
+        $namespace = ''
+    ) {
         return $namespace
             ? $namespace .
                     '\\Entity\\' .
                     camelize(self::getModelNameByTable($table), false) .
                     '\\Collection'
-            : camelize('di_' . self::getModelNameByTable($table) . '_collection');
+            : camelize(
+                'di_' . self::getModelNameByTable($table) . '_collection'
+            );
     }
 
     protected function getFieldTypesArrayStr($fields)
@@ -345,8 +367,11 @@ EOF;
         return in_array($field, static::$skippedInCollectionAnnotationFields);
     }
 
-    protected function getModelMethodsAnnotations($fields, $connName, $className)
-    {
+    protected function getModelMethodsAnnotations(
+        $fields,
+        $connName,
+        $className
+    ) {
         $ar = [
             'get' => [],
             'has' => [],
@@ -414,7 +439,10 @@ EOF;
                 ' * @method ' .
                 $typeStr .
                 $typeTab .
-                $this->getDb($connName)->getFieldMethodForModel($field, 'localized');
+                $this->getDb($connName)->getFieldMethodForModel(
+                    $field,
+                    'localized'
+                );
         }
 
         return $ar;
@@ -450,15 +478,24 @@ EOF;
 
             $ar['filterBy'][] =
                 " * @method $className " .
-                $this->getDb($connName)->getFieldMethodForModel($field, 'filterBy') .
+                $this->getDb($connName)->getFieldMethodForModel(
+                    $field,
+                    'filterBy'
+                ) .
                 "(\$value, \$operator = null)";
             $ar['orderBy'][] =
                 " * @method $className " .
-                $this->getDb($connName)->getFieldMethodForModel($field, 'orderBy') .
+                $this->getDb($connName)->getFieldMethodForModel(
+                    $field,
+                    'orderBy'
+                ) .
                 "(\$direction = null)";
             $ar['select'][] =
                 " * @method $className " .
-                $this->getDb($connName)->getFieldMethodForModel($field, 'select');
+                $this->getDb($connName)->getFieldMethodForModel(
+                    $field,
+                    'select'
+                );
 
             // localization tests
             $fieldComponents = explode('_', $field);
@@ -473,7 +510,6 @@ EOF;
                     $localizedNeeded[$f] = $type;
                 }
             }
-            //
         }
 
         foreach ($localizedNeeded as $field => $type) {
@@ -509,6 +545,7 @@ EOF;
         switch ($type) {
             case 'integer':
             case 'tinyint':
+            case 'smallint':
             case 'mediumint':
             case 'int':
             case 'bigint':
@@ -516,6 +553,7 @@ EOF;
 
             case 'float':
             case 'double':
+            case 'double precision':
                 return 'double';
 
             case 'bool':
@@ -534,6 +572,7 @@ EOF;
         switch ($type) {
             case 'integer':
             case 'tinyint':
+            case 'smallint':
             case 'mediumint':
             case 'int':
             case 'bigint':
@@ -544,8 +583,14 @@ EOF;
             case 'datetime':
             case 'timestamp':
             case 'float':
-            case 'double':
                 return $type;
+
+            case 'timestamp without time zone':
+                return 'timestamp';
+
+            case 'double':
+            case 'double precision':
+                return 'double';
 
             case 'bool':
             case 'boolean':
@@ -697,7 +742,10 @@ EOF;
         return $this->usedCollectionTraits
             ? join(
                     "\n",
-                    array_map([self::class, 'mapUsed'], $this->usedCollectionTraits)
+                    array_map(
+                        [self::class, 'mapUsed'],
+                        $this->usedCollectionTraits
+                    )
                 ) . "\n\n    "
             : '';
     }

@@ -70,14 +70,7 @@ class AdminPagesManager
         'ico_t',
     ];
 
-    protected $picFieldNames = [
-        'pic',
-        'pic2',
-        'pic3',
-        'logo',
-        'img',
-        'ico',
-    ];
+    protected $picFieldNames = ['pic', 'pic2', 'pic3', 'logo', 'img', 'ico'];
 
     protected $checkboxFieldNames = [
         'active',
@@ -97,11 +90,15 @@ class AdminPagesManager
         'edited_at',
         'updated_at',
         'done_at',
+        'seen_at',
+        'paid_at',
     ];
 
-    protected $orderNumFieldNames = [
-        'order_num',
-    ];
+    protected $orderNumFieldNames = ['order_num'];
+
+    protected $passwordFieldNames = ['password'];
+
+    protected $ipFieldNames = ['ip'];
 
     protected $staticFieldNames = [
         'date',
@@ -135,7 +132,9 @@ class AdminPagesManager
 
         $this->setNamespace($namespace);
 
-        $contents = '<?php' . <<<'EOF'
+        $contents =
+            '<?php' .
+            <<<'EOF'
 
 /**
  * Created by AdminPagesManager
@@ -213,7 +212,9 @@ class {{ className }} extends \diCore\Admin\BasePage
 EOF;
 
         $fields = $this->getFieldsOfTable($connName, $table);
-        $className = $className ?: self::getClassNameByTable($table, $this->getNamespace());
+        $className =
+            $className ?:
+            self::getClassNameByTable($table, $this->getNamespace());
         $caption = $caption ?: \diTypes::getTitle(\diTypes::getId($table));
         $fieldsInfo = $this->getFieldsInfo($fields);
         $columns = $this->getColumns($connName, $table);
@@ -221,8 +222,8 @@ EOF;
         $dir = isset($fields['order_num']) ? 'ASC' : 'DESC';
 
         $replaces = [
-            '{{ date }}' => date('d.m.Y'),
-            '{{ time }}' => date('H:i'),
+            '{{ date }}' => \diDateTime::simpleDateFormat(),
+            '{{ time }}' => \diDateTime::simpleTimeFormat(),
             '{{ className }}' => ModelsManager::extractClass($className),
             '{{ table }}' => $table,
             '{{ caption }}' => $caption,
@@ -231,11 +232,26 @@ EOF;
             '{{ listColumns }}' => join("\n", $columns),
             '{{ sortBy }}' => $sortBy,
             '{{ sortDir }}' => $dir,
-            '{{ namespace }}' => $this->getNamespace() ? "\nnamespace " . ModelsManager::extractNamespace($className) . ";\n" : '',
-            '{{ usedNamespaces }}' => $this->getNamespace() ? "use " . ModelsManager::getModelClassNameByTable($table, $this->getNamespace()) . ";\n" : '',
+            '{{ namespace }}' => $this->getNamespace()
+                ? "\nnamespace " .
+                    ModelsManager::extractNamespace($className) .
+                    ";\n"
+                : '',
+            '{{ usedNamespaces }}' => $this->getNamespace()
+                ? 'use ' .
+                    ModelsManager::getModelClassNameByTable(
+                        $table,
+                        $this->getNamespace()
+                    ) .
+                    ";\n"
+                : '',
         ];
 
-        $contents = str_replace(array_keys($replaces), array_values($replaces), $contents);
+        $contents = str_replace(
+            array_keys($replaces),
+            array_values($replaces),
+            $contents
+        );
 
         $fn = $this->getPageFilename($className);
 
@@ -277,9 +293,7 @@ EOF;
                 continue;
             }
 
-            $sort = in_array($field, $this->localFieldNames)
-                ? 'local'
-                : 'form';
+            $sort = in_array($field, $this->localFieldNames) ? 'local' : 'form';
 
             $ar[$sort][] = $this->getFieldInfo($field, $type, $sort);
         }
@@ -296,8 +310,8 @@ EOF;
             }
 
             if (
-                !isset(Form::$defaultFieldTitles[$field])
-                && !isset(Form::$customDefaultFieldTitles[$field])
+                isset(Form::$defaultFieldTitles[$field]) ||
+                isset(Form::$customDefaultFieldTitles[$field])
             ) {
                 return '';
             }
@@ -305,10 +319,13 @@ EOF;
             return "\n                'title' => '',";
         };
 
+        $suffix =
+            $this->getFlagsStr($field) . $this->getExtraPropertiesStr($field);
+
         return <<<EOF
             '{$field}' => [
                 'type' => '{$typeTuned}',{$getTitle()}
-                'default' => '',{$this->getFlagsStr($field)}{$this->getExtraPropertiesStr($field)}
+                'default' => '',{$suffix}
             ],
 EOF;
     }
@@ -354,11 +371,14 @@ EOF;
             $flags[] = FormFlag::initially_hidden;
         }
 
-        return $flags
-            ? "\n                'flags' => [" . join(', ', array_map(function ($f) {
-                    return 'FormFlag::' . $f;
-                }, $flags)) . '],'
-            : '';
+        $flagsStr = join(
+            ', ',
+            array_map(function ($f) {
+                return 'FormFlag::' . $f;
+            }, $flags)
+        );
+
+        return $flags ? "\n                'flags' => [{$flagsStr}]," : '';
     }
 
     protected function tuneType($field, $type)
@@ -371,10 +391,18 @@ EOF;
             return 'pic';
         } elseif (in_array($field, $this->orderNumFieldNames)) {
             return 'order_num';
+        } elseif (in_array($field, $this->passwordFieldNames)) {
+            return 'password';
+        } elseif (in_array($field, $this->ipFieldNames)) {
+            return 'ip';
         }
 
         // '/\(.+$/'
-        $type = preg_replace(ModelsManager::typeTuneRegex, '', mb_strtolower($type));
+        $type = preg_replace(
+            ModelsManager::typeTuneRegex,
+            '',
+            mb_strtolower($type)
+        );
 
         switch ($type) {
             case 'timestamp':
@@ -388,11 +416,15 @@ EOF;
                 return 'time_str';
 
             case 'double':
+            case 'double precision':
+                return 'double';
+
             case 'float':
-                return $type;
+                return 'float';
 
             case 'integer':
             case 'tinyint':
+            case 'smallint':
             case 'mediumint':
             case 'int':
             case 'bigint':
@@ -406,7 +438,9 @@ EOF;
     protected function getFieldsOfTable($connName, $table)
     {
         if (!isset($this->fieldsByTable[$table])) {
-            $this->fieldsByTable[$table] = $this->getDb($connName)->getFields($table);
+            $this->fieldsByTable[$table] = $this->getDb($connName)->getFields(
+                $table
+            );
         }
 
         return $this->fieldsByTable[$table];
@@ -423,7 +457,10 @@ EOF;
 
         $ar = [];
 
-        foreach ($this->getFieldsOfTable($connName, $table) as $field => $type) {
+        foreach (
+            $this->getFieldsOfTable($connName, $table)
+            as $field => $type
+        ) {
             $fieldAlt = underscore($field);
 
             if (
@@ -437,7 +474,10 @@ EOF;
                 in_array($field, $this->dateTimeFieldNames) ||
                 in_array($fieldAlt, $this->dateTimeFieldNames)
             ) {
-                $methodName = $this->getDb($connName)->getFieldMethodForModel($field, 'get');
+                $methodName = $this->getDb($connName)->getFieldMethodForModel(
+                    $field,
+                    'get'
+                );
 
                 $ar[] = <<<EOF
             '$field' => [
@@ -496,9 +536,11 @@ EOF;
 
     public function getFolder()
     {
-        return StringHelper::slash($this->getNamespace()
-            ? $this->getFolderForNamespace()
-            : static::defaultFolder);
+        return StringHelper::slash(
+            $this->getNamespace()
+                ? $this->getFolderForNamespace()
+                : static::defaultFolder
+        );
     }
 
     public function getNamespace()
