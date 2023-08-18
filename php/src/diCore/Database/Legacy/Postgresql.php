@@ -78,10 +78,14 @@ class Postgresql extends Pdo
         $tables = $this->q("SELECT schemaname,relname,n_live_tup 
 FROM pg_stat_user_tables 
 ORDER BY relname");
-        while ($tables && $table = $this->fetch_array($tables)) {
+        while ($tables && ($table = $this->fetch_array($tables))) {
             $tableName = $table['relname'];
-            $size = $this->fetch_ar($this->q("select pg_relation_size('{$tableName}')"));
-            $indexSize = $this->fetch_ar($this->q("select pg_indexes_size('{$tableName}')"));
+            $size = $this->fetch_ar(
+                $this->q("select pg_relation_size('{$tableName}')")
+            );
+            $indexSize = $this->fetch_ar(
+                $this->q("select pg_indexes_size('{$tableName}')")
+            );
 
             $ar[] = [
                 'name' => $tableName,
@@ -99,8 +103,10 @@ ORDER BY relname");
     {
         $ar = [];
 
-        $tables = $this->q("select relname from pg_stat_user_tables order by relname");
-        while ($tables && $table = $this->fetch_array($tables)) {
+        $tables = $this->q(
+            'select relname from pg_stat_user_tables order by relname'
+        );
+        while ($tables && ($table = $this->fetch_array($tables))) {
             $ar[] = $table['relname'];
         }
 

@@ -32,6 +32,6 @@
  */
 class diRedirectModel extends diModel
 {
-	const type = diTypes::redirect;
-	protected $table = "redirects";
+    const type = diTypes::redirect;
+    protected $table = 'redirects';
 }

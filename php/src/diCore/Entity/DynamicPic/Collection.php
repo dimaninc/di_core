@@ -73,32 +73,29 @@ namespace diCore\Entity\DynamicPic;
  */
 class Collection extends \diCollection
 {
-	const type = \diTypes::dynamic_pic;
-	protected $table = 'dipics';
-	protected $modelType = 'dynamic_pic';
+    const type = \diTypes::dynamic_pic;
+    protected $table = 'dipics';
+    protected $modelType = 'dynamic_pic';
 
-	/**
-	 * @param $table
-	 * @param $id
-	 * @param $field
-	 * @return Collection
-	 * @throws \Exception
-	 */
-	public static function createByTarget($table, $id, $field = null)
-	{
-		/** @var Collection $col */
-		$col = static::create(static::type);
-		$col
-			->filterByTargetTable($table)
-			->filterByTargetId((int)$id);
+    /**
+     * @param $table
+     * @param $id
+     * @param $field
+     * @return Collection
+     * @throws \Exception
+     */
+    public static function createByTarget($table, $id, $field = null)
+    {
+        /** @var Collection $col */
+        $col = static::create(static::type);
+        $col->filterByTargetTable($table)->filterByTargetId((int) $id);
 
-		if ($field !== null) {
-			$col
-				->filterByTargetField($field);
-		}
+        if ($field !== null) {
+            $col->filterByTargetField($field);
+        }
 
-		return $col;
-	}
+        return $col;
+    }
 
     /**
      * @param $table
@@ -111,104 +108,102 @@ class Collection extends \diCollection
     {
         /** @var Collection $col */
         $col = static::create(static::type);
-        $col
-            ->filterByTargetTable($table);
+        $col->filterByTargetTable($table);
 
         if ($field !== null) {
-            $col
-                ->filterByTargetField($field);
+            $col->filterByTargetField($field);
         }
 
         return $col;
     }
 
-	/**
-	 * @param $value
-	 * @param null $operator
-	 * @return Collection
-	 */
-	public function filterByTargetTable($value, $operator = null)
-	{
-		return $operator !== null
-			? $this->filterBy('_table', $operator, $value)
-			: $this->filterBy('_table', $value);
-	}
+    /**
+     * @param $value
+     * @param null $operator
+     * @return Collection
+     */
+    public function filterByTargetTable($value, $operator = null)
+    {
+        return $operator !== null
+            ? $this->filterBy('_table', $operator, $value)
+            : $this->filterBy('_table', $value);
+    }
 
-	/**
-	 * @param $value
-	 * @param null $operator
-	 * @return Collection
-	 */
-	public function filterByTargetField($value, $operator = null)
-	{
-		return $operator !== null
-			? $this->filterBy('_field', $operator, $value)
-			: $this->filterBy('_field', $value);
-	}
+    /**
+     * @param $value
+     * @param null $operator
+     * @return Collection
+     */
+    public function filterByTargetField($value, $operator = null)
+    {
+        return $operator !== null
+            ? $this->filterBy('_field', $operator, $value)
+            : $this->filterBy('_field', $value);
+    }
 
-	/**
-	 * @param $value
-	 * @param null $operator
-	 * @return Collection
-	 */
-	public function filterByTargetId($value, $operator = null)
-	{
-		return $operator !== null
-			? $this->filterBy('_id', $operator, $value)
-			: $this->filterBy('_id', $value);
-	}
+    /**
+     * @param $value
+     * @param null $operator
+     * @return Collection
+     */
+    public function filterByTargetId($value, $operator = null)
+    {
+        return $operator !== null
+            ? $this->filterBy('_id', $operator, $value)
+            : $this->filterBy('_id', $value);
+    }
 
-	/**
-	 * @param null $direction
-	 * @return $this
-	 * @throws \Exception
-	 */
-	public function orderByTargetTable($direction = null)
-	{
-		return $this->orderBy('_table', $direction);
-	}
+    /**
+     * @param null $direction
+     * @return $this
+     * @throws \Exception
+     */
+    public function orderByTargetTable($direction = null)
+    {
+        return $this->orderBy('_table', $direction);
+    }
 
-	/**
-	 * @param null $direction
-	 * @return $this
-	 * @throws \Exception
-	 */
-	public function orderByTargetField($direction = null)
-	{
-		return $this->orderBy('_field', $direction);
-	}
+    /**
+     * @param null $direction
+     * @return $this
+     * @throws \Exception
+     */
+    public function orderByTargetField($direction = null)
+    {
+        return $this->orderBy('_field', $direction);
+    }
 
-	/**
-	 * @param null $direction
-	 * @return $this
-	 * @throws \Exception
-	 */
-	public function orderByTargetId($direction = null)
-	{
-		return $this->orderBy('_id', $direction);
-	}
+    /**
+     * @param null $direction
+     * @return $this
+     * @throws \Exception
+     */
+    public function orderByTargetId($direction = null)
+    {
+        return $this->orderBy('_id', $direction);
+    }
 
-	/**
-	 * @return $this
-	 */
-	public function selectTargetTable()
-	{
-		return $this->select('_table', true);
-	}
+    /**
+     * @return $this
+     */
+    public function selectTargetTable()
+    {
+        return $this->select('_table', true);
+    }
 
-	/**
-	 * @return $this
-	 */
-	public function selectTargetField()
-	{
-		return $this->select('_field', true);
-	}
+    /**
+     * @return $this
+     */
+    public function selectTargetField()
+    {
+        return $this->select('_field', true);
+    }
 
-	/**
-	 * @return $this
-	 */
-	public function selectTargetId()
-	{
-		return $this->select('_id', true);
-	}
+    /**
+     * @return $this
+     */
+    public function selectTargetId()
+    {
+        return $this->select('_id', true);
+    }
 }

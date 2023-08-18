@@ -90,11 +90,21 @@ class Captcha
         header('Pragma: no-cache');
 
         $img = imagecreate(static::width, static::height);
-        $fontFile = \diPaths::fileSystem() . \diWebFonts::getFileForFont(static::fontFamily);
+        $fontFile =
+            \diPaths::fileSystem() .
+            \diWebFonts::getFileForFont(static::fontFamily);
 
         imagefill($img, 0, 0, rgb_allocate($img, static::bgColor));
-        imagettftext($img, static::fontSize, static::fontAngle, static::fontX, static::fontY,
-            rgb_allocate($img, static::fontColor), $fontFile, $this->getCode());
+        imagettftext(
+            $img,
+            static::fontSize,
+            static::fontAngle,
+            static::fontX,
+            static::fontY,
+            rgb_allocate($img, static::fontColor),
+            $fontFile,
+            $this->getCode()
+        );
 
         imagepng($img);
     }

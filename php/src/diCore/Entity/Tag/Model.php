@@ -46,30 +46,30 @@ namespace diCore\Entity\Tag;
  */
 class Model extends \diModel
 {
-	const type = \diTypes::tag;
+    const type = \diTypes::tag;
     const table = 'tags';
-	const slug_field_name = self::SLUG_FIELD_NAME;
-	protected $table = 'tags';
+    const slug_field_name = self::SLUG_FIELD_NAME;
+    protected $table = 'tags';
 
-	public function prepareForSave()
-	{
-		if (!$this->hasSlug()) {
-			$this->generateSlug();
-		}
+    public function prepareForSave()
+    {
+        if (!$this->hasSlug()) {
+            $this->generateSlug();
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function validate()
-	{
-		if (!$this->getTitle()) {
-			$this->addValidationError('Title required', 'title');
-		}
+    public function validate()
+    {
+        if (!$this->getTitle()) {
+            $this->addValidationError('Title required', 'title');
+        }
 
-		if (!$this->getSlug()) {
-			$this->addValidationError('Slug required', 'slug');
-		}
+        if (!$this->getSlug()) {
+            $this->addValidationError('Slug required', 'slug');
+        }
 
-		return parent::validate();
-	}
+        return parent::validate();
+    }
 }

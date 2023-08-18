@@ -34,13 +34,13 @@
  */
 class diDiActionsLogModel extends diModel
 {
-	protected $table = "di_actions_log";
+    protected $table = 'di_actions_log';
 
-	public function getCustomTemplateVars()
-	{
-		return extend(parent::getCustomTemplateVars(), [
-			"info_str" => diActionsLog::getActionInfoStr((object)$this->get()),
-			"action_str" => diActionsLog::getActionStr($this->getAction()),
-		]);
-	}
+    public function getCustomTemplateVars()
+    {
+        return extend(parent::getCustomTemplateVars(), [
+            'info_str' => diActionsLog::getActionInfoStr((object) $this->get()),
+            'action_str' => diActionsLog::getActionStr($this->getAction()),
+        ]);
+    }
 }

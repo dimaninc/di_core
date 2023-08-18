@@ -52,7 +52,7 @@ namespace diCore\Entity\Tag;
  */
 class Collection extends \diCollection
 {
-	const type = \diTypes::tag;
-	protected $table = 'tags';
-	protected $modelType = 'tag';
+    const type = \diTypes::tag;
+    protected $table = 'tags';
+    protected $modelType = 'tag';
 }

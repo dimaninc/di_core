@@ -40,6 +40,6 @@ namespace diCore\Entity\CommentCache;
  */
 class Model extends \diModel
 {
-	const type = \diTypes::comment_cache;
-	protected $table = 'comment_cache';
+    const type = \diTypes::comment_cache;
+    protected $table = 'comment_cache';
 }

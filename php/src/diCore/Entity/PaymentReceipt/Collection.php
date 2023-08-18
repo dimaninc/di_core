@@ -43,7 +43,7 @@ namespace diCore\Entity\PaymentReceipt;
  */
 class Collection extends \diCore\Entity\PaymentDraft\Collection
 {
-	const type = \diTypes::payment_receipt;
-	protected $table = 'payment_receipts';
-	protected $modelType = 'payment_receipt';
+    const type = \diTypes::payment_receipt;
+    protected $table = 'payment_receipts';
+    protected $modelType = 'payment_receipt';
 }

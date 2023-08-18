@@ -10,34 +10,33 @@ namespace diCore\Data\Font;
 
 class Cache
 {
-	use \diSingleton;
+    use \diSingleton;
 
-	/** @var \diFontCollection */
-	private $fonts;
+    /** @var \diFontCollection */
+    private $fonts;
 
-	protected function init()
-	{
-		$this->fonts = \diCollection::create(\diTypes::font);
+    protected function init()
+    {
+        $this->fonts = \diCollection::create(\diTypes::font);
 
-		$this->getFonts()
-			->orderByToken();
-	}
+        $this->getFonts()->orderByToken();
+    }
 
-	/**
-	 * @return \diFontCollection
-	 */
-	public function getFonts()
-	{
-		return $this->fonts;
-	}
+    /**
+     * @return \diFontCollection
+     */
+    public function getFonts()
+    {
+        return $this->fonts;
+    }
 
-	public function defaultCallback()
-	{
-		return function(\diFontModel $f) {
-			return [
-				'value' => $f->getToken(),
-				'text' => $f->getToken() . ' &ndash; ' . $f->getTitle() . '',
-			];
-		};
-	}
+    public function defaultCallback()
+    {
+        return function (\diFontModel $f) {
+            return [
+                'value' => $f->getToken(),
+                'text' => $f->getToken() . ' &ndash; ' . $f->getTitle() . '',
+            ];
+        };
+    }
 }

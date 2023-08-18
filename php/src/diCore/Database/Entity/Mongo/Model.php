@@ -9,4 +9,6 @@
 namespace diCore\Database\Entity\Mongo;
 
 /** @deprecated  */
-class Model extends \diModel {}
+class Model extends \diModel
+{
+}

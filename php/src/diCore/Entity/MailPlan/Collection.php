@@ -38,7 +38,7 @@ class Collection extends \diCollection
 {
     use TargetInside;
 
-	const type = \diTypes::mail_plan;
-	protected $table = 'mail_plans';
-	protected $modelType = 'mail_plan';
+    const type = \diTypes::mail_plan;
+    protected $table = 'mail_plans';
+    protected $modelType = 'mail_plan';
 }

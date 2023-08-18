@@ -8,82 +8,84 @@ namespace diCore\Payment\Mixplat;
 
 class QueryResult
 {
-	/**
-	 * @var bool
-	 */
+    /**
+     * @var bool
+     */
 
-	private $isSuccess;
+    private $isSuccess;
 
-	/**
-	 * @var array
-	 */
+    /**
+     * @var array
+     */
 
-	private $data;
+    private $data;
 
-	/**
-	 * @var string
-	 */
+    /**
+     * @var string
+     */
 
-	private $error;
+    private $error;
 
-	/**
-	 * @var int
-	 */
+    /**
+     * @var int
+     */
 
-	private $errorCode;
+    private $errorCode;
 
-	/**
-	 * @param bool $isSuccess
-	 * @param array $data
-	 * @param string $error
-	 * @param int $errorCode
-	 */
+    /**
+     * @param bool $isSuccess
+     * @param array $data
+     * @param string $error
+     * @param int $errorCode
+     */
 
-	public function __construct( $isSuccess, $data, $error, $errorCode )
-	{
-		$this->isSuccess	= $isSuccess;
-		$this->data			= $data;
-		$this->error		= $error;
-		$this->errorCode	= $errorCode;
-	}
+    public function __construct($isSuccess, $data, $error, $errorCode)
+    {
+        $this->isSuccess = $isSuccess;
+        $this->data = $data;
+        $this->error = $error;
+        $this->errorCode = $errorCode;
+    }
 
-	/**
-	 * Флаг успешности запроса
-	 * @return bool
-	 */
+    /**
+     * Флаг успешности запроса
+     * @return bool
+     */
 
-	public function isSuccess()
-	{
-		return $this->isSuccess;
-	}
+    public function isSuccess()
+    {
+        return $this->isSuccess;
+    }
 
-	/**
-	 * Данные
-	 * @return array
-	 */
+    /**
+     * Данные
+     * @return array
+     */
 
-	public function getData($key = null)
-	{
-		return $key !== null && isset($this->data[$key]) ? $this->data[$key] : $this->data;
-	}
+    public function getData($key = null)
+    {
+        return $key !== null && isset($this->data[$key])
+            ? $this->data[$key]
+            : $this->data;
+    }
 
-	/**
-	 * Ошибка
-	 * @return string
-	 */
+    /**
+     * Ошибка
+     * @return string
+     */
 
-	public function getError()
-	{
-		return $this->error;
-	}
+    public function getError()
+    {
+        return $this->error;
+    }
 
-	/**
-	 * Код ошибки
-	 * @return int
-	 */
+    /**
+     * Код ошибки
+     * @return int
+     */
 
-	public function getErrorCode()
-	{
-		return $this->errorCode;
-	}
+    public function getErrorCode()
+    {
+        return $this->errorCode;
+    }
 }

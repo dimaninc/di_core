@@ -59,315 +59,343 @@ use diCore\Helper\StringHelper;
 
 class diNiceTable
 {
-	const NO_HEADLINE = 0;
-	const PRINT_HEADLINE = 1;
+    const NO_HEADLINE = 0;
+    const PRINT_HEADLINE = 1;
 
-	const ROW_ANCHOR_PREFIX = 'row';
+    const ROW_ANCHOR_PREFIX = 'row';
 
-	/**
-	 * @var diPagesNavy
-	 */
-	private $pn;
+    /**
+     * @var diPagesNavy
+     */
+    private $pn;
 
-	/**
-	 * @var diDB
-	 */
-	private $db;
+    /**
+     * @var diDB
+     */
+    private $db;
 
-	/**
-	 * @var diModel
-	 */
-	private $rowModel;
+    /**
+     * @var diModel
+     */
+    private $rowModel;
 
-	public $properties;		// nice table properties (color, alignment, ...)
-	public $cols;			// columns info (title, width, color, alignment, ...)
-	public $col_idx;		// index of current column
-	public $row_idx;		// index of current row
-	public $row_class_prefix;	// 'level1','level2',... - to form classes like 'level1' or 'level1_num'
-	private $row_id_prefix;
-	public $lng;
-	public $table;				// mysql table
-	public $page;				// current page
-	private $collapsedIds;
+    public $properties; // nice table properties (color, alignment, ...)
+    public $cols; // columns info (title, width, color, alignment, ...)
+    public $col_idx; // index of current column
+    public $row_idx; // index of current row
+    public $row_class_prefix; // 'level1','level2',... - to form classes like 'level1' or 'level1_num'
+    private $row_id_prefix;
+    public $lng;
+    public $table; // mysql table
+    public $page; // current page
+    private $collapsedIds;
 
-	private $anchorPlaced; // this gets reset on every ->openRow()
+    private $anchorPlaced; // this gets reset on every ->openRow()
 
-	private $treeView = false;
+    private $treeView = false;
 
-	/** @var string|null Used for editBtn href, if differs with table */
-	private $formPathBase;
+    /** @var string|null Used for editBtn href, if differs with table */
+    private $formPathBase;
 
-	/** @var \diAdminList */
-	protected $List;
+    /** @var \diAdminList */
+    protected $List;
 
-	/**
-	 * @param string $table
-	 * @param diPagesNavy $pn
-	 * @param string $lng
-	 */
-	public function __construct($table = "", $pn = false, $lng = "ru")
-	{
-		if ($table instanceof \diAdminList) {
-		    $this->List = $table;
+    /**
+     * @param string $table
+     * @param diPagesNavy $pn
+     * @param string $lng
+     */
+    public function __construct($table = '', $pn = false, $lng = 'ru')
+    {
+        if ($table instanceof \diAdminList) {
+            $this->List = $table;
             $this->table = $this->List->getTable();
         } else {
             $this->table = $table;
         }
 
-        $this->db = \diModel::createForTable($this->table)::getConnection()->getDb();
+        $this->db = \diModel::createForTable($this->table)
+            ::getConnection()
+            ->getDb();
 
-		if (is_object($pn)) {
-			$this->pn = $pn;
-			$this->page = $pn->page;
-		} else {
-			$this->pn = null;
-			$this->page = $pn ?: 1;
-		}
+        if (is_object($pn)) {
+            $this->pn = $pn;
+            $this->page = $pn->page;
+        } else {
+            $this->pn = null;
+            $this->page = $pn ?: 1;
+        }
 
-		$this->properties = [];
+        $this->properties = [];
 
-		$this->cols = [];
-		$this->col_idx = 0;
+        $this->cols = [];
+        $this->col_idx = 0;
 
-		$this->lng = $lng;
+        $this->lng = $lng;
 
-		$this->collapsedIds = isset($_COOKIE["list_collapsed"][$this->table])
-            ? explode(",", $_COOKIE["list_collapsed"][$this->table])
+        $this->collapsedIds = isset($_COOKIE['list_collapsed'][$this->table])
+            ? explode(',', $_COOKIE['list_collapsed'][$this->table])
             : [];
-	}
+    }
 
-	public function getList()
+    public function getList()
     {
         return $this->List;
     }
 
     public function L($token)
     {
-        return $this->getList()
-            ? $this->getList()->L($token)
-            : $token;
+        return $this->getList() ? $this->getList()->L($token) : $token;
     }
 
-	protected function getDb()
-	{
-		return $this->db;
-	}
+    protected function getDb()
+    {
+        return $this->db;
+    }
 
-	public function getTable()
-	{
-		return $this->table;
-	}
+    public function getTable()
+    {
+        return $this->table;
+    }
 
-	public function getRowModel()
-	{
-		return $this->rowModel;
-	}
+    public function getRowModel()
+    {
+        return $this->rowModel;
+    }
 
-	public function getRowId()
-	{
-		return $this->getRowModel()->getId();
-	}
+    public function getRowId()
+    {
+        return $this->getRowModel()->getId();
+    }
 
-	public function getLanguage()
-	{
-		return $this->lng;
-	}
+    public function getLanguage()
+    {
+        return $this->lng;
+    }
 
-	public static function getRowAnchorName($id)
-	{
-		return self::ROW_ANCHOR_PREFIX . $id;
-	}
+    public static function getRowAnchorName($id)
+    {
+        return self::ROW_ANCHOR_PREFIX . $id;
+    }
 
-	protected function setRowRec($r)
-	{
-		if ($r instanceof diModel) {
-			$this->rowModel = $r;
-		} else {
-			$type = \diTypes::getNameByTable($this->getTable());
-			$this->rowModel = $type && diModel::existsFor($type)
-				? \diModel::create($type, $r)
-				: new diModel($r, $this->getTable());
-		}
+    protected function setRowRec($r)
+    {
+        if ($r instanceof diModel) {
+            $this->rowModel = $r;
+        } else {
+            $type = \diTypes::getNameByTable($this->getTable());
+            $this->rowModel =
+                $type && diModel::existsFor($type)
+                    ? \diModel::create($type, $r)
+                    : new diModel($r, $this->getTable());
+        }
 
-		if ($this->getRowModel()->exists()) {
-			$this->treeView = $this->getRowModel()->exists("level_num");
-		}
+        if ($this->getRowModel()->exists()) {
+            $this->treeView = $this->getRowModel()->exists('level_num');
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/** @deprecated */
-	public function get_pn()
-	{
-		return $this->getPn();
-	}
+    /** @deprecated */
+    public function get_pn()
+    {
+        return $this->getPn();
+    }
 
-	public function getPn()
-	{
-		return $this->pn;
-	}
+    public function getPn()
+    {
+        return $this->pn;
+    }
 
-	public function getNavyBlock()
-	{
-		return "<p class=\"navy\">" . $this->pn->print_pages("{$_SERVER["SCRIPT_NAME"]}?path={$this->table}") . "</p>";
-	}
+    public function getNavyBlock()
+    {
+        return "<p class=\"navy\">" .
+            $this->pn->print_pages(
+                "{$_SERVER['SCRIPT_NAME']}?path={$this->table}"
+            ) .
+            '</p>';
+    }
 
-	public function addColumn($title = '&nbsp;', $more_params = [], $field = null)
-	{
-		if (!is_array($more_params)) {
-			$more_params = [];
-		}
+    public function addColumn(
+        $title = '&nbsp;',
+        $more_params = [],
+        $field = null
+    ) {
+        if (!is_array($more_params)) {
+            $more_params = [];
+        }
 
-		$this->cols[] = [
-			'title' => $title,
-			'more_params' => $more_params,
+        $this->cols[] = [
+            'title' => $title,
+            'more_params' => $more_params,
             'field' => $field,
-		];
+        ];
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function textCell($text, $more_td_params = [])
-	{
-		$td_params = [
-			//'class' => $this->row_class_prefix
-		];
+    public function textCell($text, $more_td_params = [])
+    {
+        $td_params = [
+            //'class' => $this->row_class_prefix
+        ];
 
-		$td_params = array_merge($td_params, $more_td_params);
+        $td_params = array_merge($td_params, $more_td_params);
 
-		return $this->fillCell($text, $td_params);
-	}
+        return $this->fillCell($text, $td_params);
+    }
 
-	public function textLinkCell($text, $more_td_params = [])
-	{
-		$href = Base::getPageUri($this->getFormPathBase(), 'form', [
-			'id' => $this->getRowModel()->getId(),
-			// 'edit' => 1,
-		]);
+    public function textLinkCell($text, $more_td_params = [])
+    {
+        $href = Base::getPageUri($this->getFormPathBase(), 'form', [
+            'id' => $this->getRowModel()->getId(),
+            // 'edit' => 1,
+        ]);
 
-		$td_params = [
-			//'class' => $this->row_class_prefix,
-			'onclick' => "location.href='{$href}';",
-			'style' => 'cursor: pointer;',
-		];
+        $td_params = [
+            //'class' => $this->row_class_prefix,
+            'onclick' => "location.href='{$href}';",
+            'style' => 'cursor: pointer;',
+        ];
 
-		$td_params = array_merge($td_params, $more_td_params);
+        $td_params = array_merge($td_params, $more_td_params);
 
-		return $this->fillCell($text, $td_params);
-	}
+        return $this->fillCell($text, $td_params);
+    }
 
-	protected function btnCell($text)
-	{
-		return $this->fillCell($text, ['class' => 'btn']);
-	}
+    protected function btnCell($text)
+    {
+        return $this->fillCell($text, ['class' => 'btn']);
+    }
 
-	protected function fillCell($text, $td_params = [])
-	{
-		$s = '<td';
+    protected function fillCell($text, $td_params = [])
+    {
+        $s = '<td';
 
-		$td_params = array_merge($this->cols[$this->col_idx]['more_params'], $td_params);
+        $td_params = array_merge(
+            $this->cols[$this->col_idx]['more_params'],
+            $td_params
+        );
 
-		foreach ($td_params as $p => $v) {
-            $s .= $p
-                ? " $p=\"$v\""
-                : " $v";
-		}
+        foreach ($td_params as $p => $v) {
+            $s .= $p ? " $p=\"$v\"" : " $v";
+        }
 
-		if (!$this->anchorPlaced) {
-			$anchorName = self::getRowAnchorName($this->getRowModel()->getId());
-			$anchor = "<a name='{$anchorName}' class='anchor'></a>";
+        if (!$this->anchorPlaced) {
+            $anchorName = self::getRowAnchorName($this->getRowModel()->getId());
+            $anchor = "<a name='{$anchorName}' class='anchor'></a>";
 
-			$text = $anchor . $text;
+            $text = $anchor . $text;
 
-			$this->anchorPlaced = true;
-		}
+            $this->anchorPlaced = true;
+        }
 
-		$s .= ">$text</td>\n";
+        $s .= ">$text</td>\n";
 
-		$this->col_idx++;
+        $this->col_idx++;
 
-		return $s;
-	}
+        return $s;
+    }
 
-	/**
-	 * @param string $action
-	 * @param array|string $options
-	 */
-	public function getButton($action, $options = [])
-	{
-		if (gettype($options) == 'string') {
-			$options = [
-				'href' => $options,
-			];
-		}
+    /**
+     * @param string $action
+     * @param array|string $options
+     */
+    public function getButton($action, $options = [])
+    {
+        if (gettype($options) == 'string') {
+            $options = [
+                'href' => $options,
+            ];
+        }
 
-		return diNiceTableButtons::getButton($action, extend([
-			'language' => $this->getLanguage(),
-            'customTitles' => $this->getList()->getAdminPage()->getCustomListButtonTitles(),
-		], $options));
-	}
+        return diNiceTableButtons::getButton(
+            $action,
+            extend(
+                [
+                    'language' => $this->getLanguage(),
+                    'customTitles' => $this->getList()
+                        ->getAdminPage()
+                        ->getCustomListButtonTitles(),
+                ],
+                $options
+            )
+        );
+    }
 
-	public function getEmptyButton()
-	{
-		return diNiceTableButtons::getButtonHtml();
-	}
+    public function getEmptyButton()
+    {
+        return diNiceTableButtons::getButtonHtml();
+    }
 
-	public function openTable($print_headline = null)
-	{
-		if ($print_headline === null) {
-			$print_headline = self::PRINT_HEADLINE;
-		}
+    public function openTable($print_headline = null)
+    {
+        if ($print_headline === null) {
+            $print_headline = self::PRINT_HEADLINE;
+        }
 
-		$this->row_idx = 0;
-		$s = '';
+        $this->row_idx = 0;
+        $s = '';
 
-		$s .= "<div class=\"dinicetable_div\">" .
-			"<table class=\"dinicetable\" data-table=\"{$this->table}\"><tbody>\n";
+        $s .=
+            "<div class=\"dinicetable_div\">" .
+            "<table class=\"dinicetable\" data-table=\"{$this->table}\"><tbody>\n";
 
-		if ($print_headline == self::PRINT_HEADLINE) {
+        if ($print_headline == self::PRINT_HEADLINE) {
             $headCols = [];
 
-			$s .= $this->openRow(null, '', 'headline');
+            $s .= $this->openRow(null, '', 'headline');
 
-			foreach ($this->cols as $col) {
-				$headCols[] = $this->textCell($col['title'], [
-				    'data-field' => $col['field'] ?? null,
+            foreach ($this->cols as $col) {
+                $headCols[] = $this->textCell($col['title'], [
+                    'data-field' => $col['field'] ?? null,
                 ]);
-			}
+            }
 
             $s .= join('', $headCols) . $this->closeRow();
-		}
+        }
 
-		return $s;
-	}
+        return $s;
+    }
 
-	public function closeTable()
-	{
-		$s = "</tbody></table></div>\n";
+    public function closeTable()
+    {
+        $s = "</tbody></table></div>\n";
 
-		return $s;
-	}
+        return $s;
+    }
 
-	public function openRow($r = null, $row_id_prefix = 'section', $row_class_prefix = '', $options = [])
-	{
+    public function openRow(
+        $r = null,
+        $row_id_prefix = 'section',
+        $row_class_prefix = '',
+        $options = []
+    ) {
         $this->setRowRec($r);
 
-	    if (is_array($row_id_prefix) && !$row_class_prefix && !$options) {
-	        $options = $row_id_prefix;
+        if (is_array($row_id_prefix) && !$row_class_prefix && !$options) {
+            $options = $row_id_prefix;
 
-            $options = extend([
-                'idPrefix' => 'section',
-                'classPrefix' => '',
-            ], $options);
+            $options = extend(
+                [
+                    'idPrefix' => 'section',
+                    'classPrefix' => '',
+                ],
+                $options
+            );
 
             $row_id_prefix = $options['idPrefix'];
             $row_class_prefix = $options['classPrefix'];
         }
 
-        $options = extend([
-            'classes' => null,
-            'attributes' => [],
-        ], $options);
+        $options = extend(
+            [
+                'classes' => null,
+                'attributes' => [],
+            ],
+            $options
+        );
 
         if (is_string($options['classes'])) {
             $classes = explode(' ', $options['classes']);
@@ -389,195 +417,222 @@ class diNiceTable
             $attributes = [];
         }
 
-		$id = StringHelper::out($this->getRowModel()->getId() ?: '');
+        $id = StringHelper::out($this->getRowModel()->getId() ?: '');
 
-		$this->col_idx = 0;
-		$this->anchorPlaced = false;
-		$this->row_class_prefix = $row_class_prefix ?: 'level' . ((int)$this->getRowModel()->get('level_num') + 1);
-		$this->row_id_prefix = $row_id_prefix;
+        $this->col_idx = 0;
+        $this->anchorPlaced = false;
+        $this->row_class_prefix =
+            $row_class_prefix ?:
+            'level' . ((int) $this->getRowModel()->get('level_num') + 1);
+        $this->row_id_prefix = $row_id_prefix;
 
-		$classes[] = $this->row_class_prefix;
+        $classes[] = $this->row_class_prefix;
 
-		if (
-		    $this->getRowModel()->has('parent') &&
+        if (
+            $this->getRowModel()->has('parent') &&
             in_array($this->getRowModel()->get('parent'), $this->collapsedIds)
         ) {
-			$classes[] = 'collapsed';
-		}
+            $classes[] = 'collapsed';
+        }
 
-		if ($this->row_id_prefix) {
-			$attributes['id'] = $this->row_class_prefix . ($id ?: '');
-		}
+        if ($this->row_id_prefix) {
+            $attributes['id'] = $this->row_class_prefix . ($id ?: '');
+        }
 
         $attributes['class'] = join(' ', $classes);
 
-		return sprintf(
-			"<tr %s data-role=\"row\" data-id=\"%s\" data-level=\"%d\">\n",
-			ArrayHelper::toAttributesString($attributes, true, ArrayHelper::ESCAPE_HTML),
-			$id,
-			(int)$this->getRowModel()->get("level_num")
-		);
-	}
+        return sprintf(
+            "<tr %s data-role=\"row\" data-id=\"%s\" data-level=\"%d\">\n",
+            ArrayHelper::toAttributesString(
+                $attributes,
+                true,
+                ArrayHelper::ESCAPE_HTML
+            ),
+            $id,
+            (int) $this->getRowModel()->get('level_num')
+        );
+    }
 
-	public function closeRow()
-	{
-		$this->row_idx++;
+    public function closeRow()
+    {
+        $this->row_idx++;
 
-		return "</tr>\n\n";
-	}
+        return "</tr>\n\n";
+    }
 
-	/* methods of printing each type of table cells: all possible buttons, etc. */
-	/* basic methods implemented, all of them may be overridden */
+    /* methods of printing each type of table cells: all possible buttons, etc. */
+    /* basic methods implemented, all of them may be overridden */
 
-	public function idCell($show_id = true, $show_checkbox = false, $show_expand_collapse = true)
-	{
-		if (!$this->getRowModel()->exists()) {
-			throw new Exception("diNiceTable::idCell(): no current rec");
-		}
+    public function idCell(
+        $show_id = true,
+        $show_checkbox = false,
+        $show_expand_collapse = true
+    ) {
+        if (!$this->getRowModel()->exists()) {
+            throw new Exception('diNiceTable::idCell(): no current rec');
+        }
 
-		$inner = "";
+        $inner = '';
 
-		if ($show_id) {
-			$inner .= $this->getRowId();
-		}
+        if ($show_id) {
+            $inner .= $this->getRowId();
+        }
 
-		if ($show_checkbox) {
-			$inner .= " <input type=\"checkbox\" data-purpose=\"toggle\" data-id=\"{$this->getRowId()}\">";
-		}
+        if ($show_checkbox) {
+            $inner .= " <input type=\"checkbox\" data-purpose=\"toggle\" data-id=\"{$this->getRowId()}\">";
+        }
 
-		if ($this->getRowModel()->exists('level_num') && $show_expand_collapse) {
-			$expandClassName = in_array($this->getRowModel()->getId(), $this->collapsedIds) ? 'expand' : 'collapse';
+        if (
+            $this->getRowModel()->exists('level_num') &&
+            $show_expand_collapse
+        ) {
+            $expandClassName = in_array(
+                $this->getRowModel()->getId(),
+                $this->collapsedIds
+            )
+                ? 'expand'
+                : 'collapse';
 
-			$inner .= "<u class=\"tree {$expandClassName}\"></u>";
-		}
+            $inner .= "<u class=\"tree {$expandClassName}\"></u>";
+        }
 
-		return $this->textCell($inner, ['class' => 'id']);
-	}
+        return $this->textCell($inner, ['class' => 'id']);
+    }
 
-	public function setFormPathBase($formPathBase)
-	{
-		$this->formPathBase = $formPathBase;
+    public function setFormPathBase($formPathBase)
+    {
+        $this->formPathBase = $formPathBase;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function getFormPathBase()
-	{
-		return $this->formPathBase ?: $this->getTable();
-	}
+    public function getFormPathBase()
+    {
+        return $this->formPathBase ?: $this->getTable();
+    }
 
-	public function editBtnCell()
-	{
-		$queryParams = [
-			'id' => $this->getRowModel()->getId(),
-			//'edit' => 1,
-		];
+    public function editBtnCell()
+    {
+        $queryParams = [
+            'id' => $this->getRowModel()->getId(),
+            //'edit' => 1,
+        ];
 
-		$href = Base::getPageUri($this->getFormPathBase(), 'form', $queryParams);
+        $href = Base::getPageUri(
+            $this->getFormPathBase(),
+            'form',
+            $queryParams
+        );
 
-		return $this->btnCell($this->getButton('edit', $href));
-	}
+        return $this->btnCell($this->getButton('edit', $href));
+    }
 
-	public function delBtnCell()
-	{
-		return $this->btnCell($this->getButton('del'));
-	}
+    public function delBtnCell()
+    {
+        return $this->btnCell($this->getButton('del'));
+    }
 
-	public function toggleBtnCell($field, $active = true)
-	{
-		return $active
-			? $this->btnCell($this->getButton($field, [
-				'state' => $this->getRowModel()->get($field),
-            ]))
-			: $this->emptyBtnCell();
-	}
+    public function toggleBtnCell($field, $active = true)
+    {
+        return $active
+            ? $this->btnCell(
+                $this->getButton($field, [
+                    'state' => $this->getRowModel()->get($field),
+                ])
+            )
+            : $this->emptyBtnCell();
+    }
 
-	public function upBtnCell()
-	{
-		return $this->btnCell($this->getButton('up'));
-	}
+    public function upBtnCell()
+    {
+        return $this->btnCell($this->getButton('up'));
+    }
 
-	public function downBtnCell()
-	{
-		return $this->btnCell($this->getButton('down'));
-	}
+    public function downBtnCell()
+    {
+        return $this->btnCell($this->getButton('down'));
+    }
 
-	public function playBtnCell($opts = array())
-	{
-		return $this->btnCell($this->getButton('play', $opts));
-	}
+    public function playBtnCell($opts = [])
+    {
+        return $this->btnCell($this->getButton('play', $opts));
+    }
 
-	public function rollbackBtnCell($opts = array())
-	{
-		return $this->btnCell($this->getButton('rollback', $opts));
-	}
+    public function rollbackBtnCell($opts = [])
+    {
+        return $this->btnCell($this->getButton('rollback', $opts));
+    }
 
-	public function commentsBtnCell()
-	{
-		$r = $this->getDb()->r(
-			'comments',
-			"WHERE target_type='".diTypes::getId($this->getTable())."' and target_id='{$this->getRowModel()->getId()}'",
-			"COUNT(id) AS cc"
-		);
+    public function commentsBtnCell()
+    {
+        $r = $this->getDb()->r(
+            'comments',
+            "WHERE target_type='" .
+                diTypes::getId($this->getTable()) .
+                "' and target_id='{$this->getRowModel()->getId()}'",
+            'COUNT(id) AS cc'
+        );
 
-		$s = $r->cc
-			? $this->getButton('comments', [
-				'text' => $r->cc,
+        $s = $r->cc
+            ? $this->getButton('comments', [
+                'text' => $r->cc,
             ])
-			: $this->getEmptyButton();
+            : $this->getEmptyButton();
 
-		return $this->btnCell($s);
-	}
+        return $this->btnCell($s);
+    }
 
-	public function picBtnCell($opts = [])
-	{
-		switch ($this->getTable()) {
-			case 'albums':
-				$path = 'photos';
-				$suffix = "?album_id={$this->getRowModel()->getId()}";
-				break;
+    public function picBtnCell($opts = [])
+    {
+        switch ($this->getTable()) {
+            case 'albums':
+                $path = 'photos';
+                $suffix = "?album_id={$this->getRowModel()->getId()}";
+                break;
 
-			default:
-				$path = '';
-				$suffix = '';
-				break;
-		}
+            default:
+                $path = '';
+                $suffix = '';
+                break;
+        }
 
-		if (!$opts['href']) {
-			if (!$path) {
-				throw new Exception('picBtnCell path not defined');
-			}
+        if (!$opts['href']) {
+            if (!$path) {
+                throw new Exception('picBtnCell path not defined');
+            }
 
-			$opts['href'] = '/' . diAdmin::getSubFolder() . '/' . $path . '/' . $suffix;
-		}
+            $opts['href'] =
+                '/' . diAdmin::getSubFolder() . '/' . $path . '/' . $suffix;
+        }
 
-		return $this->btnCell($this->getButton('pic', $opts['href']));
-	}
+        return $this->btnCell($this->getButton('pic', $opts['href']));
+    }
 
-	public function videoBtnCell($opts = [])
-	{
-		switch ($this->getTable()) {
-			case 'albums':
-				$path = 'videos';
-				$suffix = "?album_id={$this->getRowModel()->getId()}";
-				break;
+    public function videoBtnCell($opts = [])
+    {
+        switch ($this->getTable()) {
+            case 'albums':
+                $path = 'videos';
+                $suffix = "?album_id={$this->getRowModel()->getId()}";
+                break;
 
-			default:
-				$path = '';
-				$suffix = '';
-				break;
-		}
+            default:
+                $path = '';
+                $suffix = '';
+                break;
+        }
 
-		if (!$opts['href']) {
-			if (!$path) {
-				throw new Exception('videoBtnCell path not defined');
-			}
+        if (!$opts['href']) {
+            if (!$path) {
+                throw new Exception('videoBtnCell path not defined');
+            }
 
-			$opts['href'] = '/' . diAdmin::getSubFolder() . '/' . $path . '/' . $suffix;
-		}
+            $opts['href'] =
+                '/' . diAdmin::getSubFolder() . '/' . $path . '/' . $suffix;
+        }
 
-		return $this->btnCell($this->getButton('video', $opts['href']));
-	}
+        return $this->btnCell($this->getButton('video', $opts['href']));
+    }
 
     public function manageBtnCell($href = null)
     {
@@ -598,7 +653,8 @@ class diNiceTable
                 throw new Exception('manageBtnCell path not defined');
             }
 
-            $opts['href'] = '/' . \diAdmin::getSubFolder() . '/' . $path . '/' . $suffix;
+            $opts['href'] =
+                '/' . \diAdmin::getSubFolder() . '/' . $path . '/' . $suffix;
         }
 
         return $this->btnCell($this->getButton('manage', $href));
@@ -638,9 +694,19 @@ class diNiceTable
     public function createBtnCell($maxLevelNum, $queryParams = [])
     {
         if ($this->getRowModel()->get('level_num') < $maxLevelNum) {
-            $s = $this->getButton('create', Base::getPageUri($this->getTable(), 'form', extend([
-                'parent' => $this->getRowModel()->getId(),
-            ], $queryParams)));
+            $s = $this->getButton(
+                'create',
+                Base::getPageUri(
+                    $this->getTable(),
+                    'form',
+                    extend(
+                        [
+                            'parent' => $this->getRowModel()->getId(),
+                        ],
+                        $queryParams
+                    )
+                )
+            );
         } else {
             $s = $this->getEmptyButton();
         }
@@ -651,10 +717,13 @@ class diNiceTable
     public function printBtnCell($state = 1)
     {
         $s = $state
-            ? $this->getButton('print', Base::getPageUri($this->getTable(), 'form', [
-                'id' => $this->getRowModel()->getId(),
-                'print' => 1,
-            ]))
+            ? $this->getButton(
+                'print',
+                Base::getPageUri($this->getTable(), 'form', [
+                    'id' => $this->getRowModel()->getId(),
+                    'print' => 1,
+                ])
+            )
             : $this->getEmptyButton();
 
         return $this->btnCell($s);
@@ -666,13 +735,16 @@ class diNiceTable
             $levelNumsToShow = [$levelNumsToShow];
         }
 
-        return in_array($this->getRowModel()->get('level_num'), $levelNumsToShow)
+        return in_array(
+            $this->getRowModel()->get('level_num'),
+            $levelNumsToShow
+        )
             ? $this->toggleBtnCell('to_show_content')
             : $this->emptyBtnCell();
     }
 
     public function emptyBtnCell()
-	{
-		return $this->btnCell($this->getEmptyButton());
-	}
+    {
+        return $this->btnCell($this->getEmptyButton());
+    }
 }

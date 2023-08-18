@@ -38,8 +38,10 @@ class Helper extends BaseHelper
      * @param array $opts
      * @return string
      */
-    public function getFormUri(\diCore\Entity\PaymentDraft\Model $draft, $opts = [])
-    {
+    public function getFormUri(
+        \diCore\Entity\PaymentDraft\Model $draft,
+        $opts = []
+    ) {
         $opts = extend(
             [
                 'amount' => $draft->getAmount(),

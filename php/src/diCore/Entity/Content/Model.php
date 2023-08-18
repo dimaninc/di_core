@@ -142,13 +142,13 @@ class Model extends \diModel
     use AutoTimestamps;
     use Hierarchy;
 
-	const type = Types::content;
+    const type = Types::content;
     const table = 'content';
     const SKIP_TIMESTAMP_FIELDS = false;
-	protected $table = 'content';
+    protected $table = 'content';
 
-	protected static $publicFields = [
-	    'clean_title',
+    protected static $publicFields = [
+        'clean_title',
         'title',
         'caption',
         'content',
@@ -158,37 +158,39 @@ class Model extends \diModel
         'html_keywords',
     ];
 
-	/** @var AdBlock */
-	protected $adBlock;
+    /** @var AdBlock */
+    protected $adBlock;
 
-	public function getHref()
-	{
-		switch ($this->getType()) {
-			case 'home':
-				return $this->__getPrefixForHref() . '/';
+    public function getHref()
+    {
+        switch ($this->getType()) {
+            case 'home':
+                return $this->__getPrefixForHref() . '/';
 
-			case 'href':
-				return $this->getMenuTitle();
+            case 'href':
+                return $this->getMenuTitle();
 
-			case 'logout':
-				return \diLib::getWorkerPath('auth', 'logout') . '?back=' . urlencode(\diRequest::requestUri());
+            case 'logout':
+                return \diLib::getWorkerPath('auth', 'logout') .
+                    '?back=' .
+                    urlencode(\diRequest::requestUri());
 
-			default:
-				return $this->getDefaultHref();
-		}
-	}
+            default:
+                return $this->getDefaultHref();
+        }
+    }
 
-	protected function getDefaultHref()
-	{
-		return $this->__getPrefixForHref() . '/' . $this->getSlug() . '/';
-	}
+    protected function getDefaultHref()
+    {
+        return $this->__getPrefixForHref() . '/' . $this->getSlug() . '/';
+    }
 
-	public function getSourceForSlug()
-	{
-		return $this->getMenuTitle() ?: $this->getTitle();
-	}
+    public function getSourceForSlug()
+    {
+        return $this->getMenuTitle() ?: $this->getTitle();
+    }
 
-	public function getAdBlock()
+    public function getAdBlock()
     {
         if (!$this->adBlock) {
             $this->adBlock = AdBlock::createById($this->getAdBlockId());

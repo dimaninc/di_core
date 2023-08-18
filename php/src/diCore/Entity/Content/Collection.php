@@ -143,7 +143,7 @@ class Collection extends \diCollection
     use AutoTimestamps;
     use Hierarchy;
 
-	const type = \diTypes::content;
-	protected $table = 'content';
-	protected $modelType = 'content';
+    const type = \diTypes::content;
+    protected $table = 'content';
+    protected $modelType = 'content';
 }

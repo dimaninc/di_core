@@ -10,10 +10,9 @@ namespace diCore\Tool\Embed;
 
 class siteHelper extends Helper
 {
-	protected static $queryParamsToRemove = [
-	];
+    protected static $queryParamsToRemove = [];
 
-	protected static $identifyParams = [
-		App::QUERY_PARAM => 'site-embed',
-	];
+    protected static $identifyParams = [
+        App::QUERY_PARAM => 'site-embed',
+    ];
 }

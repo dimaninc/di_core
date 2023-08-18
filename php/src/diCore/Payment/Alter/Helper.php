@@ -10,5 +10,4 @@ namespace diCore\Payment\Alter;
 
 class Helper
 {
-
 }

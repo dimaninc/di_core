@@ -8,29 +8,29 @@
 
 trait diSingleton
 {
-	protected static $instance;
+    protected static $instance;
 
-	final public static function getInstance()
-	{
-		return isset(static::$instance)
-			? static::$instance
-			: static::$instance = new static;
-	}
+    final public static function getInstance()
+    {
+        return isset(static::$instance)
+            ? static::$instance
+            : (static::$instance = new static());
+    }
 
-	private function __construct()
-	{
-		$this->init();
-	}
+    private function __construct()
+    {
+        $this->init();
+    }
 
-	protected function init()
-	{
-	}
+    protected function init()
+    {
+    }
 
-	public function __wakeup()
-	{
-	}
+    public function __wakeup()
+    {
+    }
 
-	private function __clone()
-	{
-	}
+    private function __clone()
+    {
+    }
 }

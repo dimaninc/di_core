@@ -36,11 +36,11 @@ use diCore\Base\CMS;
  */
 class Collection extends \diCollection
 {
-	const type = \diTypes::localization;
-	protected $table = 'localization';
-	protected $modelType = 'localization';
+    const type = \diTypes::localization;
+    protected $table = 'localization';
+    protected $modelType = 'localization';
 
-	public static function getPossibleLanguages()
+    public static function getPossibleLanguages()
     {
         /** @var CMS $cmsClass */
         $cmsClass = CMS::getClass();
@@ -62,7 +62,9 @@ class Collection extends \diCollection
 
         $this->map(function (Model $m) use (&$ar) {
             foreach (static::getPossibleLanguages() as $lang) {
-                $ar[$lang][$m->getName()] = $m->get(\diModel::getLocalizedFieldName('value', $lang));
+                $ar[$lang][$m->getName()] = $m->get(
+                    \diModel::getLocalizedFieldName('value', $lang)
+                );
             }
         });
 

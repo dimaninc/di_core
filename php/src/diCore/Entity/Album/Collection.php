@@ -76,7 +76,7 @@ use diCore\Data\Types;
  */
 class Collection extends \diCollection
 {
-	const type = Types::album;
-	protected $table = 'albums';
-	protected $modelType = 'album';
+    const type = Types::album;
+    protected $table = 'albums';
+    protected $modelType = 'album';
 }

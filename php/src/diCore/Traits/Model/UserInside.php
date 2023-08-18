@@ -29,7 +29,11 @@ trait UserInside
     public function getUser()
     {
         if (!$this->user) {
-            $this->user = CollectionCache::getModel(Types::user, $this->getUserId(), true);
+            $this->user = CollectionCache::getModel(
+                Types::user,
+                $this->getUserId(),
+                true
+            );
         }
 
         return $this->user;

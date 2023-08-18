@@ -10,13 +10,13 @@ namespace diCore\Database\Legacy;
 
 class Sqlite extends Pdo
 {
-	protected $driver = 'sqlite';
-	const CHARSET_INIT_NEEDED = false;
+    protected $driver = 'sqlite';
+    const CHARSET_INIT_NEEDED = false;
 
-	protected function getDSN()
-	{
-		return $dsn = "{$this->driver}:{$this->dbname}";
-	}
+    protected function getDSN()
+    {
+        return $dsn = "{$this->driver}:{$this->dbname}";
+    }
 
     public function getTablesInfo()
     {
@@ -38,22 +38,24 @@ class Sqlite extends Pdo
     }
 
     public function getTableNames()
-	{
-		$ar = [];
+    {
+        $ar = [];
 
-		$tables = $this->q("SELECT * FROM sqlite_master WHERE type = 'table' ORDER BY name ASC");
-		while ($tables && $table = $this->fetch_array($tables)) {
-			$ar[] = $table['name'];
-		}
+        $tables = $this->q(
+            "SELECT * FROM sqlite_master WHERE type = 'table' ORDER BY name ASC"
+        );
+        while ($tables && ($table = $this->fetch_array($tables))) {
+            $ar[] = $table['name'];
+        }
 
-		return $ar;
-	}
+        return $ar;
+    }
 
     public function getFields($table)
     {
         $fields = [];
 
-        $rs = $this->q("PRAGMA table_info(" . $this->escapeTable($table) . ")");
+        $rs = $this->q('PRAGMA table_info(' . $this->escapeTable($table) . ')');
         while ($r = $this->fetch_array($rs)) {
             $fields[$r['name']] = $r['type'];
         }

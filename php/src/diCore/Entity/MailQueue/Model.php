@@ -56,74 +56,76 @@ use diCore\Data\Types;
  */
 class Model extends \diModel
 {
-	const type = Types::mail_queue;
+    const type = Types::mail_queue;
     const table = 'mail_queue';
-	protected $table = 'mail_queue';
+    protected $table = 'mail_queue';
 
-	protected static $binaryFields = ['attachment'];
+    protected static $binaryFields = ['attachment'];
 
-	const BODY_TYPE_HTML = 0;
-	const BODY_TYPE_PLAIN_TEXT = 1;
+    const BODY_TYPE_HTML = 0;
+    const BODY_TYPE_PLAIN_TEXT = 1;
 
-	public static $bodyTypes = [
-		self::BODY_TYPE_HTML => 'HTML',
-		self::BODY_TYPE_PLAIN_TEXT => 'Просто текст',
-	];
+    public static $bodyTypes = [
+        self::BODY_TYPE_HTML => 'HTML',
+        self::BODY_TYPE_PLAIN_TEXT => 'Просто текст',
+    ];
 
-	const DIRECTION_INCOMING = 0;
-	const DIRECTION_OUTGOING = 1;
+    const DIRECTION_INCOMING = 0;
+    const DIRECTION_OUTGOING = 1;
 
-	public static $email_incoming_ar = [
-		self::DIRECTION_INCOMING => 'Исходящее',
-		self::DIRECTION_OUTGOING => 'Входящее',
-	];
+    public static $email_incoming_ar = [
+        self::DIRECTION_INCOMING => 'Исходящее',
+        self::DIRECTION_OUTGOING => 'Входящее',
+    ];
 
-	/**
-	 * @param string $field
-	 * @param string|array $email
-	 * @param string|null $name
-	 * @return Model
-	 */
-	protected function setEmailNameField($field, $email, $name = null)
-	{
-		if ($name === null) {
-			if (is_array($email)) {
-				if (!empty($email['name'])) {
-					$sender = sprintf('%s <%s>', $email['name'], $email['email']);
-				} else {
-					$sender = $email['email'];
-				}
-			} else {
-				$sender = $email;
-			}
-		} else {
-			$sender = sprintf('%s <%s>', $name, $email);
-		}
+    /**
+     * @param string $field
+     * @param string|array $email
+     * @param string|null $name
+     * @return Model
+     */
+    protected function setEmailNameField($field, $email, $name = null)
+    {
+        if ($name === null) {
+            if (is_array($email)) {
+                if (!empty($email['name'])) {
+                    $sender = sprintf(
+                        '%s <%s>',
+                        $email['name'],
+                        $email['email']
+                    );
+                } else {
+                    $sender = $email['email'];
+                }
+            } else {
+                $sender = $email;
+            }
+        } else {
+            $sender = sprintf('%s <%s>', $name, $email);
+        }
 
-		return $this->set($field, $sender);
-	}
+        return $this->set($field, $sender);
+    }
 
-	public function setSender($email, $name = null)
-	{
-		return $this->setEmailNameField('sender', $email, $name);
-	}
+    public function setSender($email, $name = null)
+    {
+        return $this->setEmailNameField('sender', $email, $name);
+    }
 
-	public function setRecipient($email, $name = null)
-	{
-		return $this->setEmailNameField('recipient', $email, $name);
-	}
+    public function setRecipient($email, $name = null)
+    {
+        return $this->setEmailNameField('recipient', $email, $name);
+    }
 
-	public function setReplyTo($email, $name = null)
-	{
-		return $this->setEmailNameField('reply_to', $email, $name);
-	}
+    public function setReplyTo($email, $name = null)
+    {
+        return $this->setEmailNameField('reply_to', $email, $name);
+    }
 
-	public function getAttachment()
+    public function getAttachment()
     {
         $a = $this->get('attachment');
 
-        return is_resource($a)
-            ? stream_get_contents($a)
-            : $a;
+        return is_resource($a) ? stream_get_contents($a) : $a;
     }
 }

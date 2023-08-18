@@ -37,7 +37,7 @@ namespace diCore\Entity\OrderStatus;
  */
 class Collection extends \diCollection
 {
-	const type = \diTypes::order_status;
-	protected $table = 'order_status';
-	protected $modelType = 'order_status';
+    const type = \diTypes::order_status;
+    protected $table = 'order_status';
+    protected $modelType = 'order_status';
 }

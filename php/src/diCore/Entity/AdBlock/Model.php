@@ -59,28 +59,26 @@ class Model extends \diModel
 
     const type = \diTypes::ad_block;
     const table = 'ad_blocks';
-	protected $table = 'ad_blocks';
+    protected $table = 'ad_blocks';
 
-	const INCUT_TEMPLATE = '[AD-BLOCK-%d]';
-	const INCUT_TEMPLATE_FOR_ADMIN = '[AD-BLOCK-%id%]';
-	
-	public function getToken()
-	{
-		return sprintf(static::INCUT_TEMPLATE, $this->getId());
-	}
-	
-	public function getCustomTemplateVars()
-	{
-		return extend(parent::getCustomTemplateVars(), [
-			'token' => $this->getToken(),
-		]);
-	}
+    const INCUT_TEMPLATE = '[AD-BLOCK-%d]';
+    const INCUT_TEMPLATE_FOR_ADMIN = '[AD-BLOCK-%id%]';
 
-	public function getHtml()
+    public function getToken()
     {
-        return $this->exists()
-            ? Helper::printBlock($this->getId())
-            : null;
+        return sprintf(static::INCUT_TEMPLATE, $this->getId());
+    }
+
+    public function getCustomTemplateVars()
+    {
+        return extend(parent::getCustomTemplateVars(), [
+            'token' => $this->getToken(),
+        ]);
+    }
+
+    public function getHtml()
+    {
+        return $this->exists() ? Helper::printBlock($this->getId()) : null;
     }
 
     /**

@@ -227,7 +227,9 @@ class Grid
 
             $model->setRelated([
                 'edit_href' => $editHref,
-                'img_url_prefix' => $this->getAdminPage()->getImgUrlPrefix($model),
+                'img_url_prefix' => $this->getAdminPage()->getImgUrlPrefix(
+                    $model
+                ),
                 'buttons' => $htmlButtons,
             ]);
         }

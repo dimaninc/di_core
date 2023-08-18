@@ -24,8 +24,7 @@ class Helper
      */
     private static function getClass()
     {
-        if (!self::$class)
-        {
+        if (!self::$class) {
             self::$class = \diLib::getChildClass(self::class, 'Settings');
         }
 
@@ -49,6 +48,11 @@ class Helper
     {
         $class = self::getClass();
 
-        return new Mixplat($class::serviceId, $class::secretKey, $class::testMode, $class::logFolder());
+        return new Mixplat(
+            $class::serviceId,
+            $class::secretKey,
+            $class::testMode,
+            $class::logFolder()
+        );
     }
 }

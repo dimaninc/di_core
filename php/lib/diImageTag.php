@@ -20,8 +20,11 @@ class diImageTag
         }
     }
 
-    public static function getForModel(\diModel $model, $field = 'pic', $options = [])
-    {
+    public static function getForModel(
+        \diModel $model,
+        $field = 'pic',
+        $options = []
+    ) {
         return static::get(
             $model->getTable(),
             $model->get($field),

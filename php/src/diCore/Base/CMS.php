@@ -293,7 +293,8 @@ abstract class CMS
             $this->content_table => [],
         ];
 
-        $this->tpl_dir = $tpl_dir ?: Config::getOldTplFolder() . static::TPL_DIR;
+        $this->tpl_dir =
+            $tpl_dir ?: Config::getOldTplFolder() . static::TPL_DIR;
         $this->tpl_cache_php =
             $tpl_cache_php ?: Config::getOldTplFolder() . static::TPL_CACHE_PHP;
 
@@ -935,7 +936,10 @@ abstract class CMS
     protected function printCommentsForPage()
     {
         if ($this->isCommentsBlockPrintNeeded()) {
-            $this->printCommentsBlock($this->getMainTarget(), 'PAGE_COMMENTS_BLOCK');
+            $this->printCommentsBlock(
+                $this->getMainTarget(),
+                'PAGE_COMMENTS_BLOCK'
+            );
         }
 
         return $this;
@@ -1007,7 +1011,8 @@ abstract class CMS
 
     public static function templateEngineIsFastTemplate()
     {
-        return static::MAIN_TEMPLATE_ENGINE === self::TEMPLATE_ENGINE_FASTTEMPLATE;
+        return static::MAIN_TEMPLATE_ENGINE ===
+            self::TEMPLATE_ENGINE_FASTTEMPLATE;
     }
 
     protected function printShareBlock()
@@ -1136,7 +1141,10 @@ abstract class CMS
             ? 'open_graph_default_pic'
             : 'smm_logo';
 
-        if (\diConfiguration::exists($key) && \diConfiguration::getFilename($key)) {
+        if (
+            \diConfiguration::exists($key) &&
+            \diConfiguration::getFilename($key)
+        ) {
             $this->setHeaderImage(
                 \diConfiguration::getFilename($key),
                 null,
@@ -1331,7 +1339,8 @@ abstract class CMS
 
         $this->Twig = \diTwig::create()->assign([
             'content_slugs' => $this->getCleanTitlesAr(),
-            'logged_in' => $this->authUsed && Auth::i()->authorized() ? true : false,
+            'logged_in' =>
+                $this->authUsed && Auth::i()->authorized() ? true : false,
             'files_timestamp' => $this->timestampSuffixNeeded
                 ? \diStaticBuild::VERSION
                 : '',
@@ -1803,7 +1812,10 @@ abstract class CMS
                 $modesStr = join('/', $modesStr);
             }
 
-            $modesStr = $this->checkRouteStringForLanguageLinks($modesStr, $lng);
+            $modesStr = $this->checkRouteStringForLanguageLinks(
+                $modesStr,
+                $lng
+            );
             $lngLink = $this->addLanguageToLink(
                 $lng,
                 $modesStr,
@@ -1833,7 +1845,10 @@ abstract class CMS
                     $modesStr = join('/', $modesStr);
                 }
 
-                $modesStr = $this->checkRouteStringForLanguageLinks($modesStr, $lng);
+                $modesStr = $this->checkRouteStringForLanguageLinks(
+                    $modesStr,
+                    $lng
+                );
                 $lngUp = strtoupper($lng);
                 $lngActive = $isCurrentLanguage ? ' active' : '';
 
@@ -1887,7 +1902,10 @@ abstract class CMS
 
     public static function getAllSkipGetParams()
     {
-        return array_merge(static::$skipGetParams, static::$customSkipGetParams);
+        return array_merge(
+            static::$skipGetParams,
+            static::$customSkipGetParams
+        );
     }
 
     private function checkRedundantGetParams()
@@ -1933,7 +1951,12 @@ abstract class CMS
     /** @deprecated */
     function get_content_of($id)
     {
-        return $this->get_field_by_field('content', $this->content_var, 'id', $id);
+        return $this->get_field_by_field(
+            'content',
+            $this->content_var,
+            'id',
+            $id
+        );
     }
 
     /**
@@ -1944,7 +1967,9 @@ abstract class CMS
         $pageData = [
             'title' => $this->getContentModel()->localized('title'),
             'caption' => $this->getContentModel()->localized('caption'),
-            'short_content' => $this->getContentModel()->localized('short_content'),
+            'short_content' => $this->getContentModel()->localized(
+                'short_content'
+            ),
             'content' => $this->getContentModel()->localized('content'),
             'output_mode' => \diCore\Tool\Embed\App::getInstance()->getModeName(),
         ];
@@ -2008,7 +2033,9 @@ abstract class CMS
 
     public function getMeta($field)
     {
-        return isset($this->metaFields[$field]) ? $this->metaFields[$field] : null;
+        return isset($this->metaFields[$field])
+            ? $this->metaFields[$field]
+            : null;
     }
 
     protected function processTextForMeta($text)
@@ -2203,7 +2230,10 @@ abstract class CMS
         if ($page > 1) {
             if ($this->isPageDescriptionSuffixNeeded()) {
                 $this->appendMeta(
-                    sprintf($this->getPaginationDescriptionSuffixTemplate(), $page),
+                    sprintf(
+                        $this->getPaginationDescriptionSuffixTemplate(),
+                        $page
+                    ),
                     'description'
                 );
             }
@@ -2270,7 +2300,10 @@ abstract class CMS
                 foreach ($models as $model) {
                     $value =
                         $value ?:
-                        $model->localized('short_content', $this->getLanguage()) ?:
+                        $model->localized(
+                            'short_content',
+                            $this->getLanguage()
+                        ) ?:
                         $model->localized('content', $this->getLanguage()) ?:
                         $model->get('short_content') ?:
                         $model->get('content');
@@ -2315,7 +2348,11 @@ abstract class CMS
         $s2 = str_cut_end($s, $max_len, $trailer);
 
         if ($s != $s2) {
-            return "<span title=\"" . str_out($s) . "\">" . str_out($s2) . '</span>';
+            return "<span title=\"" .
+                str_out($s) .
+                "\">" .
+                str_out($s2) .
+                '</span>';
         } else {
             return str_out($s);
         }
@@ -2419,13 +2456,19 @@ abstract class CMS
             $this->tables_cache_fn_ar[$this->content_table],
             $cache_file
         );
-        chmod($this->tables_cache_fn_ar[$this->content_table], $this->fileChmod);
+        chmod(
+            $this->tables_cache_fn_ar[$this->content_table],
+            $this->fileChmod
+        );
         //
 
         $ct_rows = "<?php\n" . str_replace('$this->', '$z_', $ct_rows);
 
         // clean titles cache file
-        file_put_contents($this->ct_cache_fn_ar[$this->content_table], $ct_rows);
+        file_put_contents(
+            $this->ct_cache_fn_ar[$this->content_table],
+            $ct_rows
+        );
         chmod($this->ct_cache_fn_ar[$this->content_table], $this->fileChmod);
         //
 
@@ -2696,12 +2739,19 @@ abstract class CMS
         return false;
     }
 
-    function get_children_ids_ar($table = 'content', $parent_id = -1, $ids_ar = [])
-    {
+    function get_children_ids_ar(
+        $table = 'content',
+        $parent_id = -1,
+        $ids_ar = []
+    ) {
         foreach ($this->tables[$table] as $id => $ar) {
             if ($ar['parent'] == $parent_id) {
                 $ids_ar[] = $ar['id'];
-                $ids_ar = $this->get_children_ids_ar($table, $ar['id'], $ids_ar);
+                $ids_ar = $this->get_children_ids_ar(
+                    $table,
+                    $ar['id'],
+                    $ids_ar
+                );
             }
         }
 
@@ -2748,7 +2798,12 @@ abstract class CMS
 
     function get_title_by_type($table, $type)
     {
-        return $this->get_field_by_field($table, $this->title_var, 'type', $type);
+        return $this->get_field_by_field(
+            $table,
+            $this->title_var,
+            'type',
+            $type
+        );
     }
 
     function get_r_by_type($table, $type)

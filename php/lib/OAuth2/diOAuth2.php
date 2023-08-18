@@ -6,282 +6,297 @@ use diCore\Tool\Logger;
 
 abstract class diOAuth2
 {
-	const REQUEST_GET = 1;
-	const REQUEST_POST = 2;
+    const REQUEST_GET = 1;
+    const REQUEST_POST = 2;
 
-	const appId = '';
-	const secret = '';
-	const publicKey = '';
+    const appId = '';
+    const secret = '';
+    const publicKey = '';
 
-	const loginUrlBase = '';
-	const authUrlBase = '';
+    const loginUrlBase = '';
+    const authUrlBase = '';
 
-	const callbackParam = 'callback';
-	const unlinkParam = 'unlink';
+    const callbackParam = 'callback';
+    const unlinkParam = 'unlink';
 
-	protected $vendorId;
+    protected $vendorId;
 
-	/** @var diOAuth2ProfileModel */
-	protected $profile;
+    /** @var diOAuth2ProfileModel */
+    protected $profile;
 
-	/** @var array */
-	protected $profileRawData = [];
-	/** @var string */
-	protected $profileRetrieveErrorInfo;
-	public static $lastRequestError;
+    /** @var array */
+    protected $profileRawData = [];
+    /** @var string */
+    protected $profileRetrieveErrorInfo;
+    public static $lastRequestError;
 
-	/** @var  callable|null */
-	protected $signUpCallback;
-	/** @var  callable|null */
-	protected $signInCallback;
-	/** @var  callable|null */
-	protected $postCallback;
+    /** @var  callable|null */
+    protected $signUpCallback;
+    /** @var  callable|null */
+    protected $signInCallback;
+    /** @var  callable|null */
+    protected $postCallback;
 
-	public function __construct()
-	{
-		$this->profile = diModel::create(diTypes::o_auth2_profile);
-	}
+    public function __construct()
+    {
+        $this->profile = diModel::create(diTypes::o_auth2_profile);
+    }
 
-	/**
-	 * @param integer|string $vendor
-	 * @param array $options
-	 * @return diOAuth2
-	 * @throws Exception
-	 */
-	public static function create($vendor, $options = [])
-	{
-		$vendorName = diOAuth2Vendors::name(diOAuth2Vendors::id($vendor));
+    /**
+     * @param integer|string $vendor
+     * @param array $options
+     * @return diOAuth2
+     * @throws Exception
+     */
+    public static function create($vendor, $options = [])
+    {
+        $vendorName = diOAuth2Vendors::name(diOAuth2Vendors::id($vendor));
 
-		if (!$vendorName) {
-			throw new Exception("No OAuth2 vendor#{$vendor} found");
-		}
+        if (!$vendorName) {
+            throw new Exception("No OAuth2 vendor#{$vendor} found");
+        }
 
-		$className = self::existsFor($vendorName);
+        $className = self::existsFor($vendorName);
 
-		if (!$className) {
-			throw new Exception("OAuth2 class doesn't exist: {$className}");
-		}
+        if (!$className) {
+            throw new Exception("OAuth2 class doesn't exist: {$className}");
+        }
 
-		/** @var diOAuth2 $o */
-		$o = new $className($options);
+        /** @var diOAuth2 $o */
+        $o = new $className($options);
 
-		return $o;
-	}
+        return $o;
+    }
 
-	/**
-	 * @param string $vendorName
-	 * @return bool|string
-	 */
-	public static function existsFor($vendorName)
-	{
-		if (isInteger($vendorName)) {
-			$vendorName = diOAuth2Vendors::name($vendorName);
-		}
+    /**
+     * @param string $vendorName
+     * @return bool|string
+     */
+    public static function existsFor($vendorName)
+    {
+        if (isInteger($vendorName)) {
+            $vendorName = diOAuth2Vendors::name($vendorName);
+        }
 
-		$className = camelize('di_o_auth2_' . $vendorName . '_custom');
+        $className = camelize('di_o_auth2_' . $vendorName . '_custom');
 
-		if (!\diLib::exists($className)) {
-			$className = camelize("di_o_auth2_" . $vendorName);
+        if (!\diLib::exists($className)) {
+            $className = camelize('di_o_auth2_' . $vendorName);
 
-			if (!\diLib::exists($className)) {
-				return false;
-			}
-		}
+            if (!\diLib::exists($className)) {
+                return false;
+            }
+        }
 
-		return $className;
-	}
+        return $className;
+    }
 
-	/**
-	 * @return diOAuth2ProfileModel
-	 */
-	public function getProfile()
-	{
-		return $this->profile;
-	}
+    /**
+     * @return diOAuth2ProfileModel
+     */
+    public function getProfile()
+    {
+        return $this->profile;
+    }
 
-	public function getVendorId()
-	{
-		return $this->vendorId;
-	}
+    public function getVendorId()
+    {
+        return $this->vendorId;
+    }
 
-	public static function getWorkerPath($method, $params = [])
-	{
-		if (!is_array($params)) {
-			$params = [$params];
-		}
+    public static function getWorkerPath($method, $params = [])
+    {
+        if (!is_array($params)) {
+            $params = [$params];
+        }
 
-		array_splice($params, 0, 0, [$method]);
+        array_splice($params, 0, 0, [$method]);
 
-		return \diLib::getWorkerPath('auth', 'oauth2', $params);
-	}
+        return \diLib::getWorkerPath('auth', 'oauth2', $params);
+    }
 
-	public static function makeHttpRequest($url, $params = [], $method = self::REQUEST_GET)
-	{
-		$ch = curl_init();
+    public static function makeHttpRequest(
+        $url,
+        $params = [],
+        $method = self::REQUEST_GET
+    ) {
+        $ch = curl_init();
 
-		switch ($method) {
-			case self::REQUEST_GET:
-				$url = static::makeUrl($url, $params);
-				break;
+        switch ($method) {
+            case self::REQUEST_GET:
+                $url = static::makeUrl($url, $params);
+                break;
 
-			case self::REQUEST_POST:
-				curl_setopt($ch, CURLOPT_POST, 1);
-			    curl_setopt($ch, CURLOPT_POSTFIELDS, static::buildQuery($params));
-				break;
+            case self::REQUEST_POST:
+                curl_setopt($ch, CURLOPT_POST, 1);
+                curl_setopt(
+                    $ch,
+                    CURLOPT_POSTFIELDS,
+                    static::buildQuery($params)
+                );
+                break;
 
-			default:
-				throw new \Exception("Unknown method '$method'");
-				break;
-		}
+            default:
+                throw new \Exception("Unknown method '$method'");
+                break;
+        }
 
-		curl_setopt($ch, CURLOPT_URL, $url);
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
-		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
-		//curl_setopt($ch, CURLOPT_PORT, $_SERVER['SERVER_PORT']);
-		//curl_setopt($ch, CURLOPT_SSLVERSION, 2);
-		//curl_setopt($ch, CURLOPT_DNS_USE_GLOBAL_CACHE, false);
-		//curl_setopt($ch, CURLOPT_DNS_CACHE_TIMEOUT, 2);
-		//curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
-		curl_setopt($ch, CURLOPT_USERAGENT, 'diOAuth2');
-		$query = curl_exec($ch);
-		self::$lastRequestError = curl_error($ch);
-		curl_close($ch);
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        //curl_setopt($ch, CURLOPT_PORT, $_SERVER['SERVER_PORT']);
+        //curl_setopt($ch, CURLOPT_SSLVERSION, 2);
+        //curl_setopt($ch, CURLOPT_DNS_USE_GLOBAL_CACHE, false);
+        //curl_setopt($ch, CURLOPT_DNS_CACHE_TIMEOUT, 2);
+        //curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'diOAuth2');
+        $query = curl_exec($ch);
+        self::$lastRequestError = curl_error($ch);
+        curl_close($ch);
 
-		return $query;
+        return $query;
 
-		//return join('', file($url));
-		//return file_get_contents($url);
-	}
+        //return join('', file($url));
+        //return file_get_contents($url);
+    }
 
-	public static function buildQuery($params)
-	{
-		return http_build_query($params); //urldecode(
-	}
+    public static function buildQuery($params)
+    {
+        return http_build_query($params); //urldecode(
+    }
 
-	public static function makeUrl($base, $params = [])
-	{
-		$glue = $params ? '?' : '';
+    public static function makeUrl($base, $params = [])
+    {
+        $glue = $params ? '?' : '';
 
-		return $base . $glue . static::buildQuery($params);
-	}
+        return $base . $glue . static::buildQuery($params);
+    }
 
-	protected function getBackUrlParts()
-	{
-		return [
-			'scheme' => \diRequest::protocol(),
-			'host' => \diRequest::domain(),
-			'path' => static::getWorkerPath(\diOAuth2Vendors::name($this->vendorId), static::callbackParam),
-		];
-	}
+    protected function getBackUrlParts()
+    {
+        return [
+            'scheme' => \diRequest::protocol(),
+            'host' => \diRequest::domain(),
+            'path' => static::getWorkerPath(
+                \diOAuth2Vendors::name($this->vendorId),
+                static::callbackParam
+            ),
+        ];
+    }
 
-	public function getBackUrl()
-	{
-		return http_build_url($this->getBackUrlParts());
-	}
+    public function getBackUrl()
+    {
+        return http_build_url($this->getBackUrlParts());
+    }
 
-	public function getLoginUrl()
-	{
-		return static::makeUrl(static::loginUrlBase, $this->getLoginUrlParams());
-	}
+    public function getLoginUrl()
+    {
+        return static::makeUrl(
+            static::loginUrlBase,
+            $this->getLoginUrlParams()
+        );
+    }
 
-	public function getAuthUrl()
-	{
-		return static::makeUrl(static::authUrlBase, $this->getAuthUrlParams());
-	}
+    public function getAuthUrl()
+    {
+        return static::makeUrl(static::authUrlBase, $this->getAuthUrlParams());
+    }
 
-	public function redirectToLogin()
-	{
-		header('Location: ' . $this->getLoginUrl());
+    public function redirectToLogin()
+    {
+        header('Location: ' . $this->getLoginUrl());
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function unlink()
-	{
-		if (Auth::i()->authorized()) {
-			Auth::i()->getUserModel()
-				->set(diOAuth2Vendors::name($this->vendorId) . '_id', 0)
-				->set(diOAuth2Vendors::name($this->vendorId) . '_login', '')
-				->save();
+    public function unlink()
+    {
+        if (Auth::i()->authorized()) {
+            Auth::i()
+                ->getUserModel()
+                ->set(diOAuth2Vendors::name($this->vendorId) . '_id', 0)
+                ->set(diOAuth2Vendors::name($this->vendorId) . '_login', '')
+                ->save();
 
-			return true;
-		}
+            return true;
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	/**
-	 * @param callable $signUpCallback
-	 * @return $this
-	 */
-	public function setSignUpCallback($signUpCallback)
-	{
-		$this->signUpCallback = $signUpCallback;
-		return $this;
-	}
+    /**
+     * @param callable $signUpCallback
+     * @return $this
+     */
+    public function setSignUpCallback($signUpCallback)
+    {
+        $this->signUpCallback = $signUpCallback;
+        return $this;
+    }
 
-	/**
-	 * @param callable $signInCallback
-	 * @return $this
-	 */
-	public function setSignInCallback($signInCallback)
-	{
-		$this->signInCallback = $signInCallback;
-		return $this;
-	}
+    /**
+     * @param callable $signInCallback
+     * @return $this
+     */
+    public function setSignInCallback($signInCallback)
+    {
+        $this->signInCallback = $signInCallback;
+        return $this;
+    }
 
-	/**
-	 * @param callable $postCallback
-	 * @return $this
-	 */
-	public function setPostCallback($postCallback)
-	{
-		$this->postCallback = $postCallback;
-		return $this;
-	}
+    /**
+     * @param callable $postCallback
+     * @return $this
+     */
+    public function setPostCallback($postCallback)
+    {
+        $this->postCallback = $postCallback;
+        return $this;
+    }
 
-	public function processReturn()
-	{
-		if ($this->isReturn()) {
-			$user = $this
-				->retrieveProfile()
-				->syncWithUser();
+    public function processReturn()
+    {
+        if ($this->isReturn()) {
+            $user = $this->retrieveProfile()->syncWithUser();
 
-			if (!Auth::i()->authorized()) {
-				Auth::i()->forceAuthorize($user, true);
+            if (!Auth::i()->authorized()) {
+                Auth::i()->forceAuthorize($user, true);
 
-				Logger::getInstance()->log('force auth, ip=' . get_user_ip());
-			}
+                Logger::getInstance()->log('force auth, ip=' . get_user_ip());
+            }
 
-			if (is_callable($callback = $this->postCallback)) {
-				$callback($this, $user);
-			}
-		}
+            if (is_callable($callback = $this->postCallback)) {
+                $callback($this, $user);
+            }
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function getUserModelByProfile()
-	{
-        Logger::getInstance()->log('authorized? ' . (Auth::i()->authorized() ? 1 : 0));
+    protected function getUserModelByProfile()
+    {
+        Logger::getInstance()->log(
+            'authorized? ' . (Auth::i()->authorized() ? 1 : 0)
+        );
 
-		if (Auth::i()->authorized()) {
-			$user = Auth::i()->getUserModel();
+        if (Auth::i()->authorized()) {
+            $user = Auth::i()->getUserModel();
 
             Logger::getInstance()->variable('authorized user', $user->get());
-		} else {
-			$q = [];
+        } else {
+            $q = [];
 
-			if ($this->getProfile()->getUid()) {
-				$q[diOAuth2Vendors::name($this->vendorId) . '_id'] =
-                    $this->getProfile()->getUid();
-			}
+            if ($this->getProfile()->getUid()) {
+                $q[
+                    diOAuth2Vendors::name($this->vendorId) . '_id'
+                ] = $this->getProfile()->getUid();
+            }
 
-			if ($this->getProfile()->hasEmail()) {
-				$q['email'] = $this->getProfile()->getEmail();
-			}
+            if ($this->getProfile()->hasEmail()) {
+                $q['email'] = $this->getProfile()->getEmail();
+            }
 
             Logger::getInstance()->variable('user query', $q);
 
@@ -290,124 +305,127 @@ abstract class diOAuth2
             if ($q) {
                 $col->filterOr($q);
             } else {
-			    $col->makeEmpty();
+                $col->makeEmpty();
             }
 
-			$user = $col->getFirstItem();
+            $user = $col->getFirstItem();
 
             Logger::getInstance()->variable('user found', $user->get());
-		}
+        }
 
-		return $user;
-	}
+        return $user;
+    }
 
-	/**
-	 * @return Model
-	 * @throws Exception
-	 */
-	protected function syncWithUser()
-	{
-		if (!$this->getProfile()->exists()) {
-			throw new \Exception('No profile retrieved');
-		}
+    /**
+     * @return Model
+     * @throws Exception
+     */
+    protected function syncWithUser()
+    {
+        if (!$this->getProfile()->exists()) {
+            throw new \Exception('No profile retrieved');
+        }
 
-		$user = $this->getUserModelByProfile();
+        $user = $this->getUserModelByProfile();
 
-		$this->storeProfileTo($user);
+        $this->storeProfileTo($user);
 
-		return $user;
-	}
+        return $user;
+    }
 
-	/**
-	 * @param Model $user
-	 * @return $this
-	 */
-	protected function storeProfileTo(Model $user)
-	{
-		$user->importDataFromOAuthProfile($this->getProfile());
+    /**
+     * @param Model $user
+     * @return $this
+     */
+    protected function storeProfileTo(Model $user)
+    {
+        $user->importDataFromOAuthProfile($this->getProfile());
 
-		$signUp = !$user->hasId();
+        $signUp = !$user->hasId();
 
-		if ($user->changed()) {
-			$user->save();
+        if ($user->changed()) {
+            $user->save();
 
-			if ($signUp) {
-				if (is_callable($callback = $this->signUpCallback)) {
-					$callback($this, $user);
-				}
-			} else {
-				if (is_callable($callback = $this->signInCallback)) {
-					$callback($this, $user);
-				}
-			}
-		}
+            if ($signUp) {
+                if (is_callable($callback = $this->signUpCallback)) {
+                    $callback($this, $user);
+                }
+            } else {
+                if (is_callable($callback = $this->signInCallback)) {
+                    $callback($this, $user);
+                }
+            }
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function setProfileError($m = null)
-	{
-		$this->profileRetrieveErrorInfo = $m;
+    protected function setProfileError($m = null)
+    {
+        $this->profileRetrieveErrorInfo = $m;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function setProfileRawData($data = [])
-	{
-		$this->profileRawData = $data;
+    protected function setProfileRawData($data = [])
+    {
+        $this->profileRawData = $data;
 
-		if ($data) {
-			Logger::getInstance()->variable('OAuth2 data ' . diOAuth2Vendors::name($this->getVendorId()), $data);
-		}
+        if ($data) {
+            Logger::getInstance()->variable(
+                'OAuth2 data ' . diOAuth2Vendors::name($this->getVendorId()),
+                $data
+            );
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function downloadData()
-	{
-		$this
-			->setProfileRawData()
-			->setProfileError();
+    protected function downloadData()
+    {
+        $this->setProfileRawData()->setProfileError();
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function retrieveProfile()
-	{
-		$this->getProfile()->setVendorId($this->getVendorId());
+    protected function retrieveProfile()
+    {
+        $this->getProfile()->setVendorId($this->getVendorId());
 
-		$this->downloadData();
+        $this->downloadData();
 
-		if ($this->profileRawData) {
-			$this->getProfile()->import(new \diModel($this->profileRawData));
-		} else {
-			throw new \Exception($this->profileRetrieveErrorInfo . ' ' . self::$lastRequestError);
-		}
+        if ($this->profileRawData) {
+            $this->getProfile()->import(new \diModel($this->profileRawData));
+        } else {
+            throw new \Exception(
+                $this->profileRetrieveErrorInfo . ' ' . self::$lastRequestError
+            );
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function isReturn()
-	{
-		return !!\diRequest::get('code');
-	}
+    protected function isReturn()
+    {
+        return !!\diRequest::get('code');
+    }
 
-	protected function getLoginUrlParams()
-	{
-		return [
-			'client_id' => static::appId,
-			'response_type' => 'code',
-			'redirect_uri' => $this->getBackUrl(),
-		];
-	}
+    protected function getLoginUrlParams()
+    {
+        return [
+            'client_id' => static::appId,
+            'response_type' => 'code',
+            'redirect_uri' => $this->getBackUrl(),
+        ];
+    }
 
-	protected function getAuthUrlParams()
-	{
-		return [
-			'client_id' => static::appId,
-			'client_secret' => static::secret,
-			'code' => \diRequest::get('code'),
-			'redirect_uri' => $this->getBackUrl(),
-		];
-	}
+    protected function getAuthUrlParams()
+    {
+        return [
+            'client_id' => static::appId,
+            'client_secret' => static::secret,
+            'code' => \diRequest::get('code'),
+            'redirect_uri' => $this->getBackUrl(),
+        ];
+    }
 }

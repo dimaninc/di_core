@@ -64,9 +64,7 @@ trait CartOrder
     protected function fetchItems()
     {
         $items = \diCollection::create(static::item_type);
-        $items
-            ->filterBy(self::item_filter_field, $this->getId())
-            ->orderById();
+        $items->filterBy(self::item_filter_field, $this->getId())->orderById();
 
         return $items;
     }
@@ -97,7 +95,10 @@ trait CartOrder
     {
         /** @var TargetInside $i */
         foreach ($this->getItems() as $i) {
-            if ($i->getTargetType() == $targetType && $i->getTargetId() == $targetId) {
+            if (
+                $i->getTargetType() == $targetType &&
+                $i->getTargetId() == $targetId
+            ) {
                 $ok = true;
 
                 foreach ($additionalFields as $k => $v) {

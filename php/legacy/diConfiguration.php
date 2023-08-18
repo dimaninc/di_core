@@ -1,3 +1,5 @@
 <?php
 /** @deprecated  */
-class diConfiguration extends \diCore\Data\Configuration {}
+class diConfiguration extends \diCore\Data\Configuration
+{
+}

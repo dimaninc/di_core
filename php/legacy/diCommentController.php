@@ -8,5 +8,4 @@
  */
 class diCommentController extends \diCore\Controller\Comment
 {
-
 }

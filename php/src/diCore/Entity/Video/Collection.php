@@ -109,7 +109,7 @@ use diCore\Data\Types;
  */
 class Collection extends \diCollection
 {
-	const type = Types::video;
-	protected $table = 'videos';
-	protected $modelType = 'video';
+    const type = Types::video;
+    protected $table = 'videos';
+    protected $modelType = 'video';
 }

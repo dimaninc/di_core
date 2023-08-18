@@ -25,7 +25,7 @@ class Collection extends \diCollection
     use OrderItem;
     use TargetInside;
 
-	const type = \diTypes::cart_item;
-	protected $table = 'cart_item';
-	protected $modelType = 'cart_item';
+    const type = \diTypes::cart_item;
+    protected $table = 'cart_item';
+    protected $modelType = 'cart_item';
 }

@@ -35,7 +35,7 @@
  */
 class diRedirectCollection extends diCollection
 {
-	const type = diTypes::redirect;
-	protected $table = "redirects";
-	protected $modelType = "redirect";
+    const type = diTypes::redirect;
+    protected $table = 'redirects';
+    protected $modelType = 'redirect';
 }

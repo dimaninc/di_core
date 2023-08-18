@@ -20,6 +20,6 @@
  */
 class diAdminTaskParticipantCollection extends diCollection
 {
-	protected $table = "admin_task_participants";
-	protected $modelType = "admin_task_participant";
+    protected $table = 'admin_task_participants';
+    protected $modelType = 'admin_task_participant';
 }

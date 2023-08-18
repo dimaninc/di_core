@@ -7,6 +7,6 @@
  */
 class diCartCollection extends diCollection
 {
-	protected $table = "carts";
-	protected $modelType = "cart";
+    protected $table = 'carts';
+    protected $modelType = 'cart';
 }

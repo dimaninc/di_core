@@ -10,28 +10,29 @@ namespace diCore\Controller;
 
 class Banner extends \diBaseController
 {
-	public function redirectAction()
-	{
-		$bannerId = $this->param(0, 0);
-		$uri = \diRequest::get('uri', '');
+    public function redirectAction()
+    {
+        $bannerId = $this->param(0, 0);
+        $uri = \diRequest::get('uri', '');
 
-		/** @var \diBannerModel $banner */
-		$banner = \diModel::create(\diTypes::banner, $bannerId);
+        /** @var \diBannerModel $banner */
+        $banner = \diModel::create(\diTypes::banner, $bannerId);
 
-		if ($banner->exists())
-		{
-			\diBannerDailyStatModel::add($banner->getId(), \diCore\Helper\Banner::STAT_CLICK, $uri);
+        if ($banner->exists()) {
+            \diBannerDailyStatModel::add(
+                $banner->getId(),
+                \diCore\Helper\Banner::STAT_CLICK,
+                $uri
+            );
 
-			$this->redirectTo($banner->get('href'));
+            $this->redirectTo($banner->get('href'));
 
-			return null;
-		}
-		else
-		{
-			return [
-				'ok' => false,
-				'message' => 'Banner #' . $bannerId . ' not found',
-			];
-		}
-	}
+            return null;
+        } else {
+            return [
+                'ok' => false,
+                'message' => 'Banner #' . $bannerId . ' not found',
+            ];
+        }
+    }
 }

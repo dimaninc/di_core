@@ -49,35 +49,44 @@ use diCore\Tool\CollectionCache;
  */
 class Model extends \diCore\Entity\PaymentDraft\Model
 {
-	const type = \diTypes::payment_receipt;
+    const type = \diTypes::payment_receipt;
     const table = 'payment_receipts';
-	protected $table = 'payment_receipts';
+    protected $table = 'payment_receipts';
 
     const TIMESTAMP_FORMAT = 'Ymd\THi';
     const FISCAL_STORAGE_NUMBER = null;
 
-    protected $customDateFields = ['date_reserved', 'date_payed', 'date_uploaded', 'fiscal_date'];
+    protected $customDateFields = [
+        'date_reserved',
+        'date_payed',
+        'date_uploaded',
+        'fiscal_date',
+    ];
 
     /** @var \diCore\Entity\User\Model */
-	protected $user;
+    protected $user;
 
-	public function validate()
-	{
-		if (!$this->hasOuterNumber()) {
-			$this->addValidationError('Outer number required', 'outer_number');
-		}
+    public function validate()
+    {
+        if (!$this->hasOuterNumber()) {
+            $this->addValidationError('Outer number required', 'outer_number');
+        }
 
-		if (!$this->hasDraftId()) {
-			$this->addValidationError('Draft ID required', 'draft_id');
-		}
+        if (!$this->hasDraftId()) {
+            $this->addValidationError('Draft ID required', 'draft_id');
+        }
 
-		return parent::validate();
-	}
+        return parent::validate();
+    }
 
-	public function getUser()
+    public function getUser()
     {
         if (!$this->user) {
-            $this->user = CollectionCache::getModel(Types::user, $this->getUserId(), true);
+            $this->user = CollectionCache::getModel(
+                Types::user,
+                $this->getUserId(),
+                true
+            );
         }
 
         return $this->user;
@@ -99,7 +108,7 @@ class Model extends \diCore\Entity\PaymentDraft\Model
         return \diTypes::getTitle($this->getTargetModel()->modelType());
     }
 
-	public function asArrayForCashDesk()
+    public function asArrayForCashDesk()
     {
         return [
             'id' => $this->getId(),
@@ -122,7 +131,9 @@ class Model extends \diCore\Entity\PaymentDraft\Model
 
     public function isQrAvailable()
     {
-        return $this->hasFiscalDate() && $this->hasFiscalDocId() && $this->hasFiscalMark();
+        return $this->hasFiscalDate() &&
+            $this->hasFiscalDocId() &&
+            $this->hasFiscalMark();
     }
 
     /*
@@ -138,7 +149,10 @@ class Model extends \diCore\Entity\PaymentDraft\Model
     public function getCashDeskQrCodeData()
     {
         return [
-            't' => \diDateTime::format(static::TIMESTAMP_FORMAT, $this->getFiscalDate()),
+            't' => \diDateTime::format(
+                static::TIMESTAMP_FORMAT,
+                $this->getFiscalDate()
+            ),
             's' => sprintf('%.2f', $this->getAmount()),
             'fn' => static::getFiscalStorageNumber(),
             'i' => $this->getFiscalDocId(),
@@ -152,13 +166,20 @@ class Model extends \diCore\Entity\PaymentDraft\Model
         return ArrayHelper::toString($this->getCashDeskQrCodeData(), '=', '&');
     }
 
-    public function getCashDeskQrCodeContents($type = QRCode::OUTPUT_MARKUP_SVG, $extraOptions = [])
-    {
-        $options = new QROptions(extend([
-            'version' => 5,
-            'outputType' => $type,
-            'eccLevel' => QRCode::ECC_L,
-        ], $extraOptions));
+    public function getCashDeskQrCodeContents(
+        $type = QRCode::OUTPUT_MARKUP_SVG,
+        $extraOptions = []
+    ) {
+        $options = new QROptions(
+            extend(
+                [
+                    'version' => 5,
+                    'outputType' => $type,
+                    'eccLevel' => QRCode::ECC_L,
+                ],
+                $extraOptions
+            )
+        );
         $qrCode = new QRCode($options);
 
         return $qrCode->render($this->getCashDeskQrCodeStr());
@@ -185,16 +206,22 @@ class Model extends \diCore\Entity\PaymentDraft\Model
     {
         return [
             $this->exists()
-                ? 'Произведена ' . $this['date_payed_date'] . ' в ' . $this['date_payed_time']
+                ? 'Произведена ' .
+                    $this['date_payed_date'] .
+                    ' в ' .
+                    $this['date_payed_time']
                 : '&mdash;',
         ];
     }
 
     public function appearanceForAdmin($options = [])
     {
-        $options = extend([
-            'showLink' => false,
-        ], $options);
+        $options = extend(
+            [
+                'showLink' => false,
+            ],
+            $options
+        );
 
         $str = $this->getStringAppearanceForAdmin();
 

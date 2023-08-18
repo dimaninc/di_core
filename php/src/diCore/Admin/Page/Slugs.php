@@ -13,173 +13,179 @@ use diCore\Entity\Slug\Model;
 
 class Slugs extends \diCore\Admin\BasePage
 {
-	protected $options = [
-		'filters' => [
-			'defaultSorter' => [
-				'sortBy' => 'full_slug',
-				'dir' => 'ASC',
-			],
-		],
-	];
+    protected $options = [
+        'filters' => [
+            'defaultSorter' => [
+                'sortBy' => 'full_slug',
+                'dir' => 'ASC',
+            ],
+        ],
+    ];
 
-	protected function initTable()
-	{
-		$this->setTable('slugs');
-	}
+    protected function initTable()
+    {
+        $this->setTable('slugs');
+    }
 
-	protected function setupFilters()
-	{
-		$this->getFilters()
-			->addFilter([
-				'field' => 'id',
-				'type' => 'int',
-				'title' => 'ID',
-			])
-			->addFilter([
-				'field' => 'target_type',
-				'type' => 'int',
-				'title' => 'Target type',
-			])
-			->addFilter([
-				'field' => 'target_id',
-				'type' => 'int',
-				'title' => 'Target ID',
-			])
-			->addFilter([
-				'field' => 'slug',
-				'type' => 'string',
-				'title' => 'Слаг',
+    protected function setupFilters()
+    {
+        $this->getFilters()
+            ->addFilter([
+                'field' => 'id',
+                'type' => 'int',
+                'title' => 'ID',
+            ])
+            ->addFilter([
+                'field' => 'target_type',
+                'type' => 'int',
+                'title' => 'Target type',
+            ])
+            ->addFilter([
+                'field' => 'target_id',
+                'type' => 'int',
+                'title' => 'Target ID',
+            ])
+            ->addFilter([
+                'field' => 'slug',
+                'type' => 'string',
+                'title' => 'Слаг',
                 'rule' => FilterRule::contains,
-			])
-			->addFilter([
-				'field' => 'full_slug',
-				'type' => 'string',
-				'title' => 'Полный слаг',
+            ])
+            ->addFilter([
+                'field' => 'full_slug',
+                'type' => 'string',
+                'title' => 'Полный слаг',
                 'rule' => FilterRule::contains,
-			])
-			->buildQuery();
-	}
+            ])
+            ->buildQuery();
+    }
 
-	public function renderList()
-	{
-		$this->getList()->addColumns([
-			'id' => 'ID',
+    public function renderList()
+    {
+        $this->getList()->addColumns([
+            'id' => 'ID',
             '#href' => [],
-			'target_type' => [
-				'headAttrs' => [
-					'width' => '20%',
-				],
-				'value' => function(Model $s) {
-					return \diTypes::getTitle($s->getTargetType());
-				},
-				'noHref' => true,
-			],
-			'target_id' => [
-				'headAttrs' => [
-					'width' => '25%',
-				],
-				'value' => function(Model $s) {
-					return $s->getTargetModel()->exists()
-						? join(', ', array_filter([
-						    $s->getTargetModel()->get('title'),
-                            '#' . $s->getTargetModel()->getId(),
-                        ]))
-						: 'Not exists: ' . \diTypes::getName($s->getTargetType()) . '#' . $s->getTargetId();
-				},
-				'noHref' => true,
-			],
-			'level_num' => [
-				'headAttrs' => [
-					'width' => '5%',
-				],
-				'bodyAttrs' => [
-					'class' => 'dt',
-				],
-				'noHref' => true,
-			],
-			'slug' => [
-				'headAttrs' => [
-					'width' => '20%',
-				],
-				'bodyAttrs' => [
-					'class' => 'lite',
-				],
-				'noHref' => true,
-			],
-			'full_slug' => [
-				'headAttrs' => [
-					'width' => '30%',
-				],
-				'bodyAttrs' => [
-					'class' => 'lite',
-				],
-				'noHref' => true,
-			],
-			//'#edit' => '',
-			//'#del' => '',
-		]);
-	}
+            'target_type' => [
+                'headAttrs' => [
+                    'width' => '20%',
+                ],
+                'value' => function (Model $s) {
+                    return \diTypes::getTitle($s->getTargetType());
+                },
+                'noHref' => true,
+            ],
+            'target_id' => [
+                'headAttrs' => [
+                    'width' => '25%',
+                ],
+                'value' => function (Model $s) {
+                    return $s->getTargetModel()->exists()
+                        ? join(
+                            ', ',
+                            array_filter([
+                                $s->getTargetModel()->get('title'),
+                                '#' . $s->getTargetModel()->getId(),
+                            ])
+                        )
+                        : 'Not exists: ' .
+                                \diTypes::getName($s->getTargetType()) .
+                                '#' .
+                                $s->getTargetId();
+                },
+                'noHref' => true,
+            ],
+            'level_num' => [
+                'headAttrs' => [
+                    'width' => '5%',
+                ],
+                'bodyAttrs' => [
+                    'class' => 'dt',
+                ],
+                'noHref' => true,
+            ],
+            'slug' => [
+                'headAttrs' => [
+                    'width' => '20%',
+                ],
+                'bodyAttrs' => [
+                    'class' => 'lite',
+                ],
+                'noHref' => true,
+            ],
+            'full_slug' => [
+                'headAttrs' => [
+                    'width' => '30%',
+                ],
+                'bodyAttrs' => [
+                    'class' => 'lite',
+                ],
+                'noHref' => true,
+            ],
+            //'#edit' => '',
+            //'#del' => '',
+        ]);
+    }
 
-	public function renderForm()
-	{
-	}
+    public function renderForm()
+    {
+    }
 
-	public function submitForm()
-	{
-	}
+    public function submitForm()
+    {
+    }
 
-	public function getFormTabs()
-	{
-		return [];
-	}
+    public function getFormTabs()
+    {
+        return [];
+    }
 
-	public function getFormFields()
-	{
-		return [];
-	}
+    public function getFormFields()
+    {
+        return [];
+    }
 
-	public function getLocalFields()
-	{
-		return [
-			'target_type' => [
-				'type' => 'string',
-				'title' => 'Тип',
-				'default' => '',
-			],
+    public function getLocalFields()
+    {
+        return [
+            'target_type' => [
+                'type' => 'string',
+                'title' => 'Тип',
+                'default' => '',
+            ],
 
-			'target_id' => [
-				'type' => 'string',
-				'title' => 'Элемент',
-				'default' => '',
-			],
+            'target_id' => [
+                'type' => 'string',
+                'title' => 'Элемент',
+                'default' => '',
+            ],
 
-			'level_num' => [
-				'type' => 'int',
-				'title' => 'Уровень вложенности',
-				'default' => 0,
-			],
+            'level_num' => [
+                'type' => 'int',
+                'title' => 'Уровень вложенности',
+                'default' => 0,
+            ],
 
-			'slug' => [
-				'type' => 'string',
-				'title' => 'Slug',
-				'default' => '',
-			],
+            'slug' => [
+                'type' => 'string',
+                'title' => 'Slug',
+                'default' => '',
+            ],
 
-			'full_slug' => [
-				'type' => 'string',
-				'title' => 'Полный Slug',
-				'default' => '',
-			],
-		];
-	}
+            'full_slug' => [
+                'type' => 'string',
+                'title' => 'Полный Slug',
+                'default' => '',
+            ],
+        ];
+    }
 
-	public function getModuleCaption()
-	{
-		return 'Slugs';
-	}
+    public function getModuleCaption()
+    {
+        return 'Slugs';
+    }
 
-	public function addButtonNeededInCaption()
-	{
-		return false;
-	}
+    public function addButtonNeededInCaption()
+    {
+        return false;
+    }
 }

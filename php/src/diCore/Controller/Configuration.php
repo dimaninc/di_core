@@ -7,34 +7,37 @@ use diCore\Data\Configuration as Cfg;
 
 class Configuration extends \diBaseAdminController
 {
-	public function storeAction()
-	{
-		Cfg::getInstance()->store();
+    public function storeAction()
+    {
+        Cfg::getInstance()->store();
 
-		 $this->redirectBack();
-	}
+        $this->redirectBack();
+    }
 
-	public function delPicAction(){
-		$k = $this->param(0);
+    public function delPicAction()
+    {
+        $k = $this->param(0);
 
-		if ($k && Cfg::exists($k) && Cfg::get($k)) {
-			$fn = Cfg::getFolder() . Cfg::get($k);
-			$full_fn = \diPaths::fileSystem() . $fn;
+        if ($k && Cfg::exists($k) && Cfg::get($k)) {
+            $fn = Cfg::getFolder() . Cfg::get($k);
+            $full_fn = \diPaths::fileSystem() . $fn;
 
-			if (is_file($full_fn)) {
-				unlink($full_fn);
-			}
+            if (is_file($full_fn)) {
+                unlink($full_fn);
+            }
 
             Cfg::getInstance()
                 ->setToDB($k, '')
-			    ->updateCache();
-		}
+                ->updateCache();
+        }
 
-		$this->redirectBack();
-	}
+        $this->redirectBack();
+    }
 
-	protected function redirectBack()
-	{
-		return $this->redirectTo(Base::getPageUri("configuration", "", ["saved" => 1]));
-	}
+    protected function redirectBack()
+    {
+        return $this->redirectTo(
+            Base::getPageUri('configuration', '', ['saved' => 1])
+        );
+    }
 }

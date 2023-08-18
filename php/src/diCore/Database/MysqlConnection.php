@@ -10,18 +10,18 @@ namespace diCore\Database;
  */
 class MysqlConnection extends Connection
 {
-	const engine = Engine::MYSQL;
+    const engine = Engine::MYSQL;
 
-	protected function connect(ConnectionData $connData)
-	{
-		$this->db = new \diMYSQLi(
-		    $connData->getHost(),
+    protected function connect(ConnectionData $connData)
+    {
+        $this->db = new \diMYSQLi(
+            $connData->getHost(),
             $connData->getLogin(),
             $connData->getPassword(),
             $connData->getDatabase(),
             $this
         );
 
-		return $this;
-	}
+        return $this;
+    }
 }

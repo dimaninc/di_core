@@ -40,9 +40,7 @@ class Cash extends \diBaseController
 
     public function _postGetNewReceiptsAction()
     {
-        $receiptsCol = $this
-            ->checkSecret()
-            ->getReceipts();
+        $receiptsCol = $this->checkSecret()->getReceipts();
 
         return [
             'receipts' => $this->processReceipts($receiptsCol),
@@ -54,9 +52,7 @@ class Cash extends \diBaseController
         $receiptId = \diRequest::rawPost('id', 0);
         $fiscal = \diRequest::rawPost('lastReceipt', []);
 
-        return $this
-            ->checkSecret()
-            ->setReceiptUploaded($receiptId, $fiscal);
+        return $this->checkSecret()->setReceiptUploaded($receiptId, $fiscal);
     }
 
     protected function getMaxReceiptsCount()
@@ -66,7 +62,11 @@ class Cash extends \diBaseController
 
     protected function processReceipts(Collection $receipts)
     {
-        CollectionCache::addManual(Types::user, 'id', $receipts->map('user_id'));
+        CollectionCache::addManual(
+            Types::user,
+            'id',
+            $receipts->map('user_id')
+        );
 
         $ar = $receipts->map(function (Model $r) {
             return $r->asArrayForCashDesk();
@@ -86,8 +86,7 @@ class Cash extends \diBaseController
             ->filterByDateUploaded(null);
 
         if ($this->getMaxReceiptsCount()) {
-            $receipts
-                ->setPageSize($this->getMaxReceiptsCount());
+            $receipts->setPageSize($this->getMaxReceiptsCount());
         }
 
         return $receipts;
@@ -126,9 +125,7 @@ class Cash extends \diBaseController
             $receipt->setFiscalNumber($fiscal['number']);
         }
 
-        $receipt
-            ->setDateUploaded(\diDateTime::sqlFormat())
-            ->save();
+        $receipt->setDateUploaded(\diDateTime::sqlFormat())->save();
 
         return [
             'ok' => true,

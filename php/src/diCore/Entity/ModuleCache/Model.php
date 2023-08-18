@@ -43,6 +43,6 @@ namespace diCore\Entity\ModuleCache;
  */
 class Model extends \diModel
 {
-	const type = \diTypes::module_cache;
-	protected $table = 'module_cache';
+    const type = \diTypes::module_cache;
+    protected $table = 'module_cache';
 }

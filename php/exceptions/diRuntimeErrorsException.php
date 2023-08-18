@@ -8,25 +8,25 @@
 
 class diRuntimeErrorsException extends diRuntimeException
 {
-	protected $errors = array();
+    protected $errors = [];
 
-	/**
-	 * Set database error messages
-	 *
-	 * @param array $errors
-	 */
-	public function setErrors(array $errors)
-	{
-		$this->errors = $errors;
-	}
+    /**
+     * Set database error messages
+     *
+     * @param array $errors
+     */
+    public function setErrors(array $errors)
+    {
+        $this->errors = $errors;
+    }
 
-	/**
-	 * Get database errors
-	 *
-	 * @return array
-	 */
-	public function getErrors()
-	{
-		return $this->errors;
-	}
+    /**
+     * Get database errors
+     *
+     * @return array
+     */
+    public function getErrors()
+    {
+        return $this->errors;
+    }
 }

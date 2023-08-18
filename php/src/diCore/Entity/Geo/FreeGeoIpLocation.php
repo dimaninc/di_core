@@ -10,10 +10,10 @@ namespace diCore\Entity\Geo;
 
 class FreeGeoIpLocation extends GeoIpLocation
 {
-	protected function fetchData()
-	{
-		//$this->data = (array)json_decode(file_get_contents('http://freegeoip.net/json/' . $this->getIp()));
+    protected function fetchData()
+    {
+        //$this->data = (array)json_decode(file_get_contents('http://freegeoip.net/json/' . $this->getIp()));
 
-		return $this;
-	}
+        return $this;
+    }
 }

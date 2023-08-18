@@ -1,3 +1,5 @@
 <?php
 /** @deprecated  */
-class diSlugCollection extends \diCore\Entity\Slug\Collection {}
+class diSlugCollection extends \diCore\Entity\Slug\Collection
+{
+}

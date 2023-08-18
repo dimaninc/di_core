@@ -40,9 +40,12 @@ trait OrderItem
     protected function initItem()
     {
         if (!$this->item) {
-            $this->item = CollectionCache::getModel($this->getTargetType(), $this->getTargetId(), true);
-            $this->item
-                ->setRelated('user_id', $this->getRelated('user_id'));
+            $this->item = CollectionCache::getModel(
+                $this->getTargetType(),
+                $this->getTargetId(),
+                true
+            );
+            $this->item->setRelated('user_id', $this->getRelated('user_id'));
         }
 
         return $this;
@@ -62,10 +65,7 @@ trait OrderItem
 
     public function parseDataObject($force = false)
     {
-        if (
-            (!$this->data && $this->hasData()) ||
-            $force
-        ) {
+        if ((!$this->data && $this->hasData()) || $force) {
             $this->data = json_decode($this->getData());
         }
 

@@ -62,103 +62,104 @@ class Collection extends \diCollection
 {
     use TargetInside;
 
-	const type = \diTypes::comment;
-	protected $table = 'comments';
-	protected $modelType = 'comment';
+    const type = \diTypes::comment;
+    protected $table = 'comments';
+    protected $modelType = 'comment';
 
-	protected $targetType;
-	protected $targetId;
+    protected $targetType;
+    protected $targetId;
 
-	const CACHE_RECENT = 1;
-	const CACHE_BY_TARGET = 2;
+    const CACHE_RECENT = 1;
+    const CACHE_BY_TARGET = 2;
 
-	protected static $cacheNames = [
-		self::CACHE_RECENT => 'recent',
-		self::CACHE_BY_TARGET => 'by_target',
-	];
+    protected static $cacheNames = [
+        self::CACHE_RECENT => 'recent',
+        self::CACHE_BY_TARGET => 'by_target',
+    ];
 
-	/**
-	 * @param int|\diModel $targetType
-	 * @param int|null $targetId
-	 * @return Collection
-	 * @throws \Exception
-	 */
-	public static function createForTarget($targetType, $targetId = null)
-	{
-		if ($targetType instanceof \diModel && $targetId === null) {
-			$targetId = $targetType->getId();
-			$targetType = $targetType->modelType();
-		}
+    /**
+     * @param int|\diModel $targetType
+     * @param int|null $targetId
+     * @return Collection
+     * @throws \Exception
+     */
+    public static function createForTarget($targetType, $targetId = null)
+    {
+        if ($targetType instanceof \diModel && $targetId === null) {
+            $targetId = $targetType->getId();
+            $targetType = $targetType->modelType();
+        }
 
-		/** @var Collection $col */
-		$col = static::create(static::type);
-		$col
-			->setTargetType($targetType)
-			->setTargetId($targetId)
-			->filterByTargetType($targetType)
-			->filterByTargetId($targetId)
-			->orderByOrderNum();
+        /** @var Collection $col */
+        $col = static::create(static::type);
+        $col->setTargetType($targetType)
+            ->setTargetId($targetId)
+            ->filterByTargetType($targetType)
+            ->filterByTargetId($targetId)
+            ->orderByOrderNum();
 
-		return $col;
-	}
+        return $col;
+    }
 
-	protected function getBaseCacheSubFolder($cacheKind = self::CACHE_ALL)
-	{
-		switch ($cacheKind) {
-			case self::CACHE_BY_TARGET:
-				return parent::getBaseCacheSubFolder($cacheKind) . '/' . \diTypes::getName($this->getTargetType());
+    protected function getBaseCacheSubFolder($cacheKind = self::CACHE_ALL)
+    {
+        switch ($cacheKind) {
+            case self::CACHE_BY_TARGET:
+                return parent::getBaseCacheSubFolder($cacheKind) .
+                    '/' .
+                    \diTypes::getName($this->getTargetType());
 
-			default:
-				return parent::getBaseCacheSubFolder($cacheKind);
-		}
-	}
+            default:
+                return parent::getBaseCacheSubFolder($cacheKind);
+        }
+    }
 
-	protected function getCacheFilename($cacheKind = self::CACHE_ALL)
-	{
-		switch ($cacheKind) {
-			case self::CACHE_BY_TARGET:
-				return $this->getTargetId() . static::CACHE_FILE_EXTENSION;
+    protected function getCacheFilename($cacheKind = self::CACHE_ALL)
+    {
+        switch ($cacheKind) {
+            case self::CACHE_BY_TARGET:
+                return $this->getTargetId() . static::CACHE_FILE_EXTENSION;
 
-			default:
-				return parent::getCacheFilename($cacheKind);
-		}
-	}
+            default:
+                return parent::getCacheFilename($cacheKind);
+        }
+    }
 
-	/**
-	 * @return int
-	 */
-	public function getTargetType()
-	{
-		return $this->targetType;
-	}
+    /**
+     * @return int
+     */
+    public function getTargetType()
+    {
+        return $this->targetType;
+    }
 
-	/**
-	 * @param int $targetType
-	 * @return $this
-	 */
-	public function setTargetType($targetType)
-	{
-		$this->targetType = $targetType;
+    /**
+     * @param int $targetType
+     * @return $this
+     */
+    public function setTargetType($targetType)
+    {
+        $this->targetType = $targetType;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @return int
-	 */
-	public function getTargetId()
-	{
-		return $this->targetId;
-	}
+    /**
+     * @return int
+     */
+    public function getTargetId()
+    {
+        return $this->targetId;
+    }
 
-	/**
-	 * @param int $targetId
-	 * @return $this
-	 */
-	public function setTargetId($targetId)
-	{
-		$this->targetId = $targetId;
+    /**
+     * @param int $targetId
+     * @return $this
+     */
+    public function setTargetId($targetId)
+    {
+        $this->targetId = $targetId;
 
-		return $this;
-	}
+        return $this;
+    }
 }

@@ -72,196 +72,244 @@ use diCore\Helper\FileSystemHelper;
  */
 class Model extends \diModel
 {
-	const type = Types::album;
-	const slug_field_name = self::SLUG_FIELD_NAME;
-	const table = 'albums';
-	protected $table = 'albums';
+    const type = Types::album;
+    const slug_field_name = self::SLUG_FIELD_NAME;
+    const table = 'albums';
+    protected $table = 'albums';
 
-	const TOKEN_TEMPLATE = '[ALBUM-%s]';
-	const TOKEN_DIGITS = 5;
+    const TOKEN_TEMPLATE = '[ALBUM-%s]';
+    const TOKEN_DIGITS = 5;
 
-	public function getToken()
-	{
-		return sprintf(static::TOKEN_TEMPLATE, str_pad($this->getId(), static::TOKEN_DIGITS, '0', STR_PAD_LEFT));
-	}
+    public function getToken()
+    {
+        return sprintf(
+            static::TOKEN_TEMPLATE,
+            str_pad($this->getId(), static::TOKEN_DIGITS, '0', STR_PAD_LEFT)
+        );
+    }
 
-	protected function getDefaultThumbnailOptions()
-	{
-		return [
-			'childTable' => null, // 'photos'
-			'childModelType' => Types::photo,
-			'fieldForSubFolders' => null, // e.g. user_id
-			'borderWidth' => 1,
-			'borderHeight' => null,
-			'borderColor' => '#FFFFFF',
-		];
-	}
+    protected function getDefaultThumbnailOptions()
+    {
+        return [
+            'childTable' => null, // 'photos'
+            'childModelType' => Types::photo,
+            'fieldForSubFolders' => null, // e.g. user_id
+            'borderWidth' => 1,
+            'borderHeight' => null,
+            'borderColor' => '#FFFFFF',
+        ];
+    }
 
-	/**
-	 * @param PhotosCol $collection
-	 * @return $this
-	 */
-	protected function tuneThumbnailCollection(\diCollection $collection)
-	{
-		$collection
-			->filterByAlbumId($this->getId())
-			->filterByVisible(1)
-			->orderById('desc');
+    /**
+     * @param PhotosCol $collection
+     * @return $this
+     */
+    protected function tuneThumbnailCollection(\diCollection $collection)
+    {
+        $collection
+            ->filterByAlbumId($this->getId())
+            ->filterByVisible(1)
+            ->orderById('desc');
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function minPhotosCountForThumbnail()
-	{
-		return 1;
-	}
+    protected function minPhotosCountForThumbnail()
+    {
+        return 1;
+    }
 
-	protected function maxPhotosCountForThumbnail()
-	{
-		return $this->maxHorPhotosCountOnThumbnail() * $this->maxVerPhotosCountOnThumbnail();
-	}
+    protected function maxPhotosCountForThumbnail()
+    {
+        return $this->maxHorPhotosCountOnThumbnail() *
+            $this->maxVerPhotosCountOnThumbnail();
+    }
 
-	protected function maxHorPhotosCountOnThumbnail()
-	{
-		return 2;
-	}
+    protected function maxHorPhotosCountOnThumbnail()
+    {
+        return 2;
+    }
 
-	protected function maxVerPhotosCountOnThumbnail()
-	{
-		return 2;
-	}
+    protected function maxVerPhotosCountOnThumbnail()
+    {
+        return 2;
+    }
 
-	/**
-	 * @param PhotosCol $collection
-	 * @return $this
-	 */
-	protected function getFinalThumbnails(\diCollection $collection)
-	{
-		return $collection->getRandomItemsArray($this->maxPhotosCountForThumbnail());
-	}
+    /**
+     * @param PhotosCol $collection
+     * @return $this
+     */
+    protected function getFinalThumbnails(\diCollection $collection)
+    {
+        return $collection->getRandomItemsArray(
+            $this->maxPhotosCountForThumbnail()
+        );
+    }
 
-	public function generateThumbnail($options = [])
-	{
-		if (
-			!\diConfiguration::exists('albums_tn_width') ||
-			!\diConfiguration::exists('albums_tn_height') ||
-			!$this->hasPhotosCount()
-		   )
-		{
-			return $this;
-		}
+    public function generateThumbnail($options = [])
+    {
+        if (
+            !\diConfiguration::exists('albums_tn_width') ||
+            !\diConfiguration::exists('albums_tn_height') ||
+            !$this->hasPhotosCount()
+        ) {
+            return $this;
+        }
 
-		$options = extend($this->getDefaultThumbnailOptions(), $options);
+        $options = extend($this->getDefaultThumbnailOptions(), $options);
 
-		$width = \diConfiguration::get('albums_tn_width');
-		$height = \diConfiguration::get('albums_tn_height');
+        $width = \diConfiguration::get('albums_tn_width');
+        $height = \diConfiguration::get('albums_tn_height');
 
-		$borderWidth = $options['borderWidth'];
-		$borderHeight = $options['borderHeight'] ?: $options['borderWidth'];
+        $borderWidth = $options['borderWidth'];
+        $borderHeight = $options['borderHeight'] ?: $options['borderWidth'];
 
-		$childWidth = floor(($width - $borderWidth * ($this->maxHorPhotosCountOnThumbnail() - 1))
-			/ $this->maxHorPhotosCountOnThumbnail());
-		$childHeight = floor(($height - $borderHeight * ($this->maxVerPhotosCountOnThumbnail() - 1))
-			/ $this->maxVerPhotosCountOnThumbnail());
+        $childWidth = floor(
+            ($width -
+                $borderWidth * ($this->maxHorPhotosCountOnThumbnail() - 1)) /
+                $this->maxHorPhotosCountOnThumbnail()
+        );
+        $childHeight = floor(
+            ($height -
+                $borderHeight * ($this->maxVerPhotosCountOnThumbnail() - 1)) /
+                $this->maxVerPhotosCountOnThumbnail()
+        );
 
-		$albumsFolder = get_pics_folder($this->getTable());
-		$photosFolder = get_pics_folder($options['childTable'] ?: Types::getTable($options['childModelType']));
+        $albumsFolder = get_pics_folder($this->getTable());
+        $photosFolder = get_pics_folder(
+            $options['childTable'] ?:
+            Types::getTable($options['childModelType'])
+        );
 
-		if ($options['fieldForSubFolders'] && $this->has($options['fieldForSubFolders']))
-		{
-			$userFolder = get_1000_path($this->get($options['fieldForSubFolders']));
+        if (
+            $options['fieldForSubFolders'] &&
+            $this->has($options['fieldForSubFolders'])
+        ) {
+            $userFolder = get_1000_path(
+                $this->get($options['fieldForSubFolders'])
+            );
 
-			$albumsFolder .= $userFolder;
-			$photosFolder .= $userFolder;
-		}
+            $albumsFolder .= $userFolder;
+            $photosFolder .= $userFolder;
+        }
 
-		FileSystemHelper::createTree(\diPaths::fileSystem(), $albumsFolder, 0775);
-		$fn = $this->getPic();
+        FileSystemHelper::createTree(
+            \diPaths::fileSystem(),
+            $albumsFolder,
+            0775
+        );
+        $fn = $this->getPic();
 
-		if (!$fn)
-		{
-			do {
-				$fn = substr(get_unique_id(), 0, 10) . '.jpg';
-			} while (is_file(\diPaths::fileSystem() . $albumsFolder . $fn));
+        if (!$fn) {
+            do {
+                $fn = substr(get_unique_id(), 0, 10) . '.jpg';
+            } while (is_file(\diPaths::fileSystem() . $albumsFolder . $fn));
 
-			$this->setPic($fn);
-		}
+            $this->setPic($fn);
+        }
 
-		$fullFn = \diPaths::fileSystem() . $albumsFolder . $fn;
+        $fullFn = \diPaths::fileSystem() . $albumsFolder . $fn;
 
-		$collection = $options['childTable']
-			? \diCollection::createForTable($options['childTable'])
-			: \diCollection::create($options['childModelType']);
+        $collection = $options['childTable']
+            ? \diCollection::createForTable($options['childTable'])
+            : \diCollection::create($options['childModelType']);
 
-		$this->tuneThumbnailCollection($collection);
+        $this->tuneThumbnailCollection($collection);
 
-		if ($this->getPhotosCount() < $this->minPhotosCountForThumbnail())
-		{
-			/** @var \diCore\Entity\Photo\Model $photo */
-			$photo = $collection->getFirstItem();
+        if ($this->getPhotosCount() < $this->minPhotosCountForThumbnail()) {
+            /** @var \diCore\Entity\Photo\Model $photo */
+            $photo = $collection->getFirstItem();
 
-			if ($photo->exists())
-			{
-				$folder = ($photo->getPicsFolder() ?: $photosFolder) . $photo->getTnFolder();
+            if ($photo->exists()) {
+                $folder =
+                    ($photo->getPicsFolder() ?: $photosFolder) .
+                    $photo->getTnFolder();
 
-				$I = new \diImage(\diPaths::fileSystem() . $folder . $photo->getPic());
-				$I->make_thumb(DI_THUMB_CROP, $fullFn, $width, $height);
-				$I->close();
-			}
-		}
-		else
-		{
-			$I = new \diImage();
-			$I->w = $width;
-			$I->h = $height;
-			$I->t = \diImage::TYPE_JPEG;
-			$I->image = imagecreatetruecolor($I->w, $I->h);
-			imagefilledrectangle($I->image, 0, 0, $I->w, $I->h, rgb_allocate($I->image, $options['borderColor']));
+                $I = new \diImage(
+                    \diPaths::fileSystem() . $folder . $photo->getPic()
+                );
+                $I->make_thumb(DI_THUMB_CROP, $fullFn, $width, $height);
+                $I->close();
+            }
+        } else {
+            $I = new \diImage();
+            $I->w = $width;
+            $I->h = $height;
+            $I->t = \diImage::TYPE_JPEG;
+            $I->image = imagecreatetruecolor($I->w, $I->h);
+            imagefilledrectangle(
+                $I->image,
+                0,
+                0,
+                $I->w,
+                $I->h,
+                rgb_allocate($I->image, $options['borderColor'])
+            );
 
-			$x = $y = 0;
+            $x = $y = 0;
 
-			$randomPhotos = $this->getFinalThumbnails($collection);
+            $randomPhotos = $this->getFinalThumbnails($collection);
 
-			/** @var \diCore\Entity\Photo\Model $photo */
-			foreach ($randomPhotos as $photo)
-			{
-				$folder = ($photo->getPicsFolder() ?: $photosFolder) . $photo->getTnFolder();
+            /** @var \diCore\Entity\Photo\Model $photo */
+            foreach ($randomPhotos as $photo) {
+                $folder =
+                    ($photo->getPicsFolder() ?: $photosFolder) .
+                    $photo->getTnFolder();
 
-				$picFn = \diPaths::fileSystem() . $folder . $photo->getPic();
+                $picFn = \diPaths::fileSystem() . $folder . $photo->getPic();
 
-				if (!is_file($picFn))
-				{
-					continue;
-				}
+                if (!is_file($picFn)) {
+                    continue;
+                }
 
-				$I2 = new \diImage($picFn);
-				list($src_w, $src_h, $src_x, $src_y) = $I2->calculate_dst_dimentsions(DI_THUMB_CROP,
-					$childWidth, $childHeight);
-				imagecopyresampled($I->image, $I2->image, $x, $y, $src_x, $src_y,
-					$childWidth, $childHeight, $src_w, $src_h);
-				$I2->close();
+                $I2 = new \diImage($picFn);
+                list(
+                    $src_w,
+                    $src_h,
+                    $src_x,
+                    $src_y,
+                ) = $I2->calculate_dst_dimentsions(
+                    DI_THUMB_CROP,
+                    $childWidth,
+                    $childHeight
+                );
+                imagecopyresampled(
+                    $I->image,
+                    $I2->image,
+                    $x,
+                    $y,
+                    $src_x,
+                    $src_y,
+                    $childWidth,
+                    $childHeight,
+                    $src_w,
+                    $src_h
+                );
+                $I2->close();
 
-				$x += $childWidth + $borderWidth;
+                $x += $childWidth + $borderWidth;
 
-				if ($x >= ($childWidth + $borderWidth) * $this->maxHorPhotosCountOnThumbnail())
-				{
-					$x = 0;
-					$y += $childHeight + $borderHeight;
-				}
-			}
+                if (
+                    $x >=
+                    ($childWidth + $borderWidth) *
+                        $this->maxHorPhotosCountOnThumbnail()
+                ) {
+                    $x = 0;
+                    $y += $childHeight + $borderHeight;
+                }
+            }
 
-			$I->store($fullFn);
-			$I->close();
-		}
+            $I->store($fullFn);
+            $I->close();
+        }
 
-		@chmod($fullFn, 0775);
+        @chmod($fullFn, 0775);
 
-		$this
-			->setPicW($width)
-			->setPicH($height)
-			->setPicT(\diImage::TYPE_JPEG)
-			->save();
+        $this->setPicW($width)
+            ->setPicH($height)
+            ->setPicT(\diImage::TYPE_JPEG)
+            ->save();
 
-		return $this;
-	}
+        return $this;
+    }
 }

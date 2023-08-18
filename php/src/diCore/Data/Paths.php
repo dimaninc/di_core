@@ -12,27 +12,33 @@ use diCore\Helper\StringHelper;
 
 class Paths
 {
-	const PROTOCOL = null; // got from $_SERVER
-	const DOMAIN = null; // got from $_SERVER
+    const PROTOCOL = null; // got from $_SERVER
+    const DOMAIN = null; // got from $_SERVER
 
-	public static function fileSystem($target = null, $endingSlashNeeded = true, $field = null)
-	{
+    public static function fileSystem(
+        $target = null,
+        $endingSlashNeeded = true,
+        $field = null
+    ) {
         $subFolder = \diLib::getSubFolder();
 
-        if ($subFolder)
-        {
+        if ($subFolder) {
             $subFolder = '/' . $subFolder;
         }
 
-		return \diRequest::server('DOCUMENT_ROOT') . $subFolder . ($endingSlashNeeded ? '/' : '');
-	}
+        return \diRequest::server('DOCUMENT_ROOT') .
+            $subFolder .
+            ($endingSlashNeeded ? '/' : '');
+    }
 
-	public static function http($target = null, $endingSlashNeeded = true, $field = null)
-	{
+    public static function http(
+        $target = null,
+        $endingSlashNeeded = true,
+        $field = null
+    ) {
         $path = '';
 
-        if (\diLib::getSubFolder())
-        {
+        if (\diLib::getSubFolder()) {
             $path = '' . \diLib::getSubFolder() . '/' . $path;
 
             $path = $endingSlashNeeded
@@ -40,18 +46,19 @@ class Paths
                 : StringHelper::unslash($path, true);
         }
 
-		return $path;
-	}
+        return $path;
+    }
 
-	public static function domain()
-	{
-		return static::DOMAIN ?: \diRequest::domain();
-	}
+    public static function domain()
+    {
+        return static::DOMAIN ?: \diRequest::domain();
+    }
 
-	public static function defaultHttp()
-	{
-		$protocol = static::PROTOCOL ?: (\diRequest::isHttps() ? 'https' : 'http');
+    public static function defaultHttp()
+    {
+        $protocol =
+            static::PROTOCOL ?: (\diRequest::isHttps() ? 'https' : 'http');
 
-		return $protocol . '://' . static::domain();
-	}
+        return $protocol . '://' . static::domain();
+    }
 }

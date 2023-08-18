@@ -41,182 +41,182 @@
  */
 class diOAuth2ProfileModel extends diModel
 {
-	public function getVendorId()
-	{
-		return $this->table;
-	}
+    public function getVendorId()
+    {
+        return $this->table;
+    }
 
-	public function setVendorId($vendorId)
-	{
-		$this->table = $vendorId;
+    public function setVendorId($vendorId)
+    {
+        $this->table = $vendorId;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function getVendorName()
-	{
-		return diOAuth2Vendors::name($this->table);
-	}
+    public function getVendorName()
+    {
+        return diOAuth2Vendors::name($this->table);
+    }
 
-	/**
-	 * @param diModel $m
-	 * @return $this
-	 */
-	public function import(diModel $m)
-	{
-		$method = camelize("import_from_" . $this->getVendorName());
+    /**
+     * @param diModel $m
+     * @return $this
+     */
+    public function import(diModel $m)
+    {
+        $method = camelize('import_from_' . $this->getVendorName());
 
-		if (method_exists($this, $method))
-		{
-			$this->$method($m);
-		}
-		else
-		{
-			throw new \Exception("No method $method found");
-		}
+        if (method_exists($this, $method)) {
+            $this->$method($m);
+        } else {
+            throw new \Exception("No method $method found");
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public static function convertGender($gender)
-	{
-		switch ($gender)
-		{
-			case "0":
-			case "2":
-			case "male":
-				return "m";
-				break;
+    public static function convertGender($gender)
+    {
+        switch ($gender) {
+            case '0':
+            case '2':
+            case 'male':
+                return 'm';
+                break;
 
-			case "1";
-			case "female":
-				return "f";
-				break;
+            case '1':
+            case 'female':
+                return 'f';
+                break;
 
-			case null:
-			case false:
-			case "":
-			default:
-				return "";
-				break;
-		}
-	}
+            case null:
+            case false:
+            case '':
+            default:
+                return '';
+                break;
+        }
+    }
 
-	public function importFromFacebook(diModel $m)
-	{
-		$this
-			->setUid($m["id"])
-			->setFirstName($m["first_name"])
-			->setLastName($m["last_name"])
-			->setName($m["name"])
-			->setLink($m["link"])
-			->setSex(self::convertGender($m["gender"]))
-			//->setAvatar(isset($profileData["picture"]["data"]["url"]) ? $profileData["picture"]["data"]["url"] : null)
-			->setAvatar("http://graph.facebook.com/{$m["id"]}/picture?type=large")
-			->setEmail($m["email"]);
+    public function importFromFacebook(diModel $m)
+    {
+        $this->setUid($m['id'])
+            ->setFirstName($m['first_name'])
+            ->setLastName($m['last_name'])
+            ->setName($m['name'])
+            ->setLink($m['link'])
+            ->setSex(self::convertGender($m['gender']))
+            //->setAvatar(isset($profileData["picture"]["data"]["url"]) ? $profileData["picture"]["data"]["url"] : null)
+            ->setAvatar(
+                "http://graph.facebook.com/{$m['id']}/picture?type=large"
+            )
+            ->setEmail($m['email']);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function importFromOk(diModel $m)
-	{
-		$this
-			->setUid($m["uid"])
-			->setFirstName($m["first_name"])
-			->setLastName($m["last_name"])
-			->setName($m["name"])
-			->setDob($m["birthday"])
-			->setSex(self::convertGender($m["gender"]))
-			->setAvatar($m["pic_3"] ?: $m["pic_2"] ?: $m["pic_1"]);
+    public function importFromOk(diModel $m)
+    {
+        $this->setUid($m['uid'])
+            ->setFirstName($m['first_name'])
+            ->setLastName($m['last_name'])
+            ->setName($m['name'])
+            ->setDob($m['birthday'])
+            ->setSex(self::convertGender($m['gender']))
+            ->setAvatar($m['pic_3'] ?: $m['pic_2'] ?: $m['pic_1']);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function importFromVk(diModel $m)
-	{
-		$this
-			->setUid($m["id"])
-			->setLogin($m["screen_name"] ?: $m["nick_name"])
-			->setFirstName($m["first_name"])
-			->setLastName($m["last_name"])
-			->setName($m["first_name"] . " " . $m["last_name"])
-			->setDob(\diDateTime::format("Y-m-d", $m["bdate"]))
-			->setSex(self::convertGender($m["gender"]))
-			->setAvatar($m["photo_big"]);
+    public function importFromVk(diModel $m)
+    {
+        $this->setUid($m['id'])
+            ->setLogin($m['screen_name'] ?: $m['nick_name'])
+            ->setFirstName($m['first_name'])
+            ->setLastName($m['last_name'])
+            ->setName($m['first_name'] . ' ' . $m['last_name'])
+            ->setDob(\diDateTime::format('Y-m-d', $m['bdate']))
+            ->setSex(self::convertGender($m['gender']))
+            ->setAvatar($m['photo_big']);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function importFromGoogle(diModel $m)
-	{
-		$this
-			->setUid($m["id"])
-			->setEmail($m["email"])
-			->setLogin(preg_replace("/\@.+$/", "", $m["email"]))
-			->setFirstName($m["given_name"])
-			->setLastName($m["family_name"])
-			->setName($m["given_name"] . " " . $m["family_name"])
-			->setLink($m["link"])
-			->setSex(self::convertGender($m["gender"]))
-			->setAvatar($m["picture"]);
+    public function importFromGoogle(diModel $m)
+    {
+        $this->setUid($m['id'])
+            ->setEmail($m['email'])
+            ->setLogin(preg_replace("/\@.+$/", '', $m['email']))
+            ->setFirstName($m['given_name'])
+            ->setLastName($m['family_name'])
+            ->setName($m['given_name'] . ' ' . $m['family_name'])
+            ->setLink($m['link'])
+            ->setSex(self::convertGender($m['gender']))
+            ->setAvatar($m['picture']);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function importFromYandex(diModel $m)
-	{
-		$this
-			->setUid($m["id"])
-			->setEmail($m["default_email"])
-			->setLogin(preg_replace("/\@.+$/", "", $m["default_email"]))
-			->setFirstName($m["first_name"])
-			->setLastName($m["last_name"])
-			->setName($m["first_name"] . " " . $m["last_name"])
-			->setDob($m["birthday"])
-			->setSex(self::convertGender($m["sex"]))
-			->setAvatar("https://avatars.mds.yandex.net/get-yapic/" . $m["default_avatar_id"] . "/islands-200");
+    public function importFromYandex(diModel $m)
+    {
+        $this->setUid($m['id'])
+            ->setEmail($m['default_email'])
+            ->setLogin(preg_replace("/\@.+$/", '', $m['default_email']))
+            ->setFirstName($m['first_name'])
+            ->setLastName($m['last_name'])
+            ->setName($m['first_name'] . ' ' . $m['last_name'])
+            ->setDob($m['birthday'])
+            ->setSex(self::convertGender($m['sex']))
+            ->setAvatar(
+                'https://avatars.mds.yandex.net/get-yapic/' .
+                    $m['default_avatar_id'] .
+                    '/islands-200'
+            );
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function importFromMailru(diModel $m)
-	{
-		$this
-			->setUid($m["uid"])
-			->setEmail($m["email"])
-			->setLogin(preg_replace("/\@.+$/", "", $m["email"]))
-			->setLink($m["link"])
-			->setFirstName($m["first_name"])
-			->setLastName($m["last_name"])
-			->setName($m["nick"] ?: $m["first_name"] . " " . $m["last_name"])
-			->setDob(diDateTime::format("Y-m-d", $m["dirthday"]))
-			->setSex(self::convertGender($m["sex"]))
-			->setAvatar($m["pic_180"] ?: $m["pic_128"] ?: $m["pic"]);
+    public function importFromMailru(diModel $m)
+    {
+        $this->setUid($m['uid'])
+            ->setEmail($m['email'])
+            ->setLogin(preg_replace("/\@.+$/", '', $m['email']))
+            ->setLink($m['link'])
+            ->setFirstName($m['first_name'])
+            ->setLastName($m['last_name'])
+            ->setName($m['nick'] ?: $m['first_name'] . ' ' . $m['last_name'])
+            ->setDob(diDateTime::format('Y-m-d', $m['dirthday']))
+            ->setSex(self::convertGender($m['sex']))
+            ->setAvatar($m['pic_180'] ?: $m['pic_128'] ?: $m['pic']);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function importFromInstagram(diModel $m)
-	{
-		$this
-			->setUid($m["id"])
-			->setLogin($m["username"])
-			->setName($m["full_name"])
-			->setWww($m["website"])
-			->setAvatar($m["profile_picture"]);
+    public function importFromInstagram(diModel $m)
+    {
+        $this->setUid($m['id'])
+            ->setLogin($m['username'])
+            ->setName($m['full_name'])
+            ->setWww($m['website'])
+            ->setAvatar($m['profile_picture']);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function importFromTwitter(diModel $m)
-	{
-		$this
-			->setUid($m["id"])
-			->setLogin($m["screen_name"])
-			->setName($m["name"])
-			->setWww(isset($m["entities"]["url"]["urls"][0]["expanded_url"]) ? $m["entities"]["url"]["urls"][0]["expanded_url"] : $m["url"])
-			->setAvatar($m["profile_image_url"] ?: $m["profile_image_url_https"]);
+    public function importFromTwitter(diModel $m)
+    {
+        $this->setUid($m['id'])
+            ->setLogin($m['screen_name'])
+            ->setName($m['name'])
+            ->setWww(
+                isset($m['entities']['url']['urls'][0]['expanded_url'])
+                    ? $m['entities']['url']['urls'][0]['expanded_url']
+                    : $m['url']
+            )
+            ->setAvatar(
+                $m['profile_image_url'] ?: $m['profile_image_url_https']
+            );
 
-		return $this;
-	}
+        return $this;
+    }
 }

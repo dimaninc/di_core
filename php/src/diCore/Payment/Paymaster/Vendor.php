@@ -12,5 +12,4 @@ use diCore\Tool\SimpleContainer;
 
 class Vendor extends SimpleContainer
 {
-
 }

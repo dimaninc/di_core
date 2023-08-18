@@ -284,7 +284,10 @@ class diAdminFilters
         if (gettype($input) == 'object' && $input instanceof \diSelect) {
             // setting clean name for 'get' submit
             if (strpos($input->getAttr('name'), 'admin_filter[') === 0) {
-                $input->setAttr('name', substr($input->getAttr('name'), 13, -1));
+                $input->setAttr(
+                    'name',
+                    substr($input->getAttr('name'), 13, -1)
+                );
             }
 
             // getting first option
@@ -420,7 +423,10 @@ class diAdminFilters
             );
 
             if ($this->getNote($field)) {
-                $filterRowsAr[] = $this->getRowHtml($this->getNote($field), $field);
+                $filterRowsAr[] = $this->getRowHtml(
+                    $this->getNote($field),
+                    $field
+                );
             }
         }
 
@@ -812,7 +818,9 @@ EOF;
             );
         }
 
-        return $field === null ? $this->tableData : $this->tableData[$field] ?? null;
+        return $field === null
+            ? $this->tableData
+            : $this->tableData[$field] ?? null;
     }
 
     public function gatherData($field)
@@ -960,14 +968,20 @@ EOF;
 
                 $this->ar[$idx]['value'] = $value;
 
-                if ($value || ($value == '0' && substr($a['type'], 0, 3) == 'str')) {
+                if (
+                    $value ||
+                    ($value == '0' && substr($a['type'], 0, 3) == 'str')
+                ) {
                     $replace_ar = [
                         '[-field-]' => $options['tablePrefix'] . $a['field'],
                         '[-value-]' => $value,
                     ];
 
                     if (
-                        in_array($a['type'], ['date_range', 'date_str_range']) &&
+                        in_array($a['type'], [
+                            'date_range',
+                            'date_str_range',
+                        ]) &&
                         $where_tpl == self::DEFAULT_WHERE_TPL
                     ) {
                         if ($a['type'] == 'date_range') {
@@ -1017,7 +1031,9 @@ EOF;
             $this->setData($a['field'], $value);
         }
 
-        $this->where = $where_ar ? 'WHERE ' . join(" $this->andor ", $where_ar) : '';
+        $this->where = $where_ar
+            ? 'WHERE ' . join(" $this->andor ", $where_ar)
+            : '';
 
         return $this;
     }
@@ -1126,7 +1142,11 @@ EOF;
                             "admin_filter[{$field}][{$_idx}][{$_ff}]",
                             \diDateTime::format(
                                 $tpl,
-                                ArrayHelper::get($ar, ['value', $_idx - 1], $default)
+                                ArrayHelper::get(
+                                    $ar,
+                                    ['value', $_idx - 1],
+                                    $default
+                                )
                             )
                         );
                     }
@@ -1373,7 +1393,12 @@ EOF;
         $prefix_ar = [],
         $suffix_ar = []
     ) {
-        return $this->setSelectFromArrayInput($field, $ar, $prefix_ar, $suffix_ar);
+        return $this->setSelectFromArrayInput(
+            $field,
+            $ar,
+            $prefix_ar,
+            $suffix_ar
+        );
     }
 
     public function setSelectFromArrayInput(
@@ -1417,7 +1442,10 @@ EOF;
 
         $resetNeeded = !in_array($field, ['sortby', 'dir']);
 
-        $this->setInput($field, $sel)->setInputResetButton($field, $resetNeeded);
+        $this->setInput($field, $sel)->setInputResetButton(
+            $field,
+            $resetNeeded
+        );
 
         $this->values_ar[$field] = $sel->getSimpleItemsAr();
 
@@ -1498,7 +1526,10 @@ EOF;
             for ($i = 0; $i < $columns; $i++) {
                 $table .=
                     "<td style=\"padding-right: 20px; vertical-align: top;\">" .
-                    join('<br />', array_slice($ar, $per_column * $i, $per_column)) .
+                    join(
+                        '<br />',
+                        array_slice($ar, $per_column * $i, $per_column)
+                    ) .
                     '</td>';
             }
 
@@ -1703,7 +1734,10 @@ EOF;
                     default:
                         if (
                             !$ar['value'] &&
-                            in_array($ar['type'], explode(',', 'int,float,double'))
+                            in_array(
+                                $ar['type'],
+                                explode(',', 'int,float,double')
+                            )
                         ) {
                             $ar['value'] = '';
                         }
@@ -1749,8 +1783,12 @@ EOF;
     }
 }
 
-function diaf_get_date_range_filter($field, $value, $not = false, $table_prefix = '')
-{
+function diaf_get_date_range_filter(
+    $field,
+    $value,
+    $not = false,
+    $table_prefix = ''
+) {
     global $db;
 
     $date1 = $value['timestamp1'] ?? null;
@@ -1803,8 +1841,12 @@ function diaf_minus_one2($field, $value, $not = false, $table_prefix = '')
     }
 }
 
-function diaf_minus_one_hundred($field, $value, $not = false, $table_prefix = '')
-{
+function diaf_minus_one_hundred(
+    $field,
+    $value,
+    $not = false,
+    $table_prefix = ''
+) {
     $not_str = $not ? '!' : '';
 
     if ($value == -100) {
@@ -1844,8 +1886,12 @@ function diaf_empty($field, $value, $not = false, $table_prefix = '')
     return '';
 }
 
-function diaf_get_subcategories_ids($field, $value, $not = false, $table_prefix = '')
-{
+function diaf_get_subcategories_ids(
+    $field,
+    $value,
+    $not = false,
+    $table_prefix = ''
+) {
     $cs = new cmsStuff('categories');
     $ar = $cs->get_children_idz($value, [$value]);
 
@@ -1915,8 +1961,12 @@ function diaf_tags($field, $value, $not = false, $table_prefix = '')
     return "(id IN (SELECT target_id FROM tag_links WHERE tag_id IN ($value) AND type='$F->table')$w_suffix)";
 }
 
-function diaf_checkboxes_minus_one($field, $value, $not = false, $table_prefix = '')
-{
+function diaf_checkboxes_minus_one(
+    $field,
+    $value,
+    $not = false,
+    $table_prefix = ''
+) {
     $ar = explode(',', $value);
     foreach ($ar as $k => $v) {
         if ($ar[$k] == -1) {

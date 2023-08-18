@@ -32,7 +32,7 @@
  */
 class diBannerDailyStatCollection extends diCollection
 {
-	const type = diTypes::banner_daily_stat;
-	protected $table = "banner_daily_stat";
-	protected $modelType = "banner_daily_stat";
+    const type = diTypes::banner_daily_stat;
+    protected $table = 'banner_daily_stat';
+    protected $modelType = 'banner_daily_stat';
 }

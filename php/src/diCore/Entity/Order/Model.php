@@ -52,9 +52,9 @@ class Model extends \diModel implements \diCore\Interfaces\CartOrder
 {
     use CartOrder;
 
-	const type = Types::order;
-	const table = 'order';
-	protected $table = 'order';
+    const type = Types::order;
+    const table = 'order';
+    protected $table = 'order';
 
     /**
      * CartOrder settings

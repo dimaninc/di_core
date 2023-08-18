@@ -43,7 +43,7 @@ namespace diCore\Entity\AdminTask;
  */
 class Collection extends \diCollection
 {
-	const type = \diTypes::admin_task;
-	protected $table = 'admin_tasks';
-	protected $modelType = 'admin_task';
+    const type = \diTypes::admin_task;
+    protected $table = 'admin_tasks';
+    protected $modelType = 'admin_task';
 }

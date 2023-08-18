@@ -18,61 +18,61 @@ namespace diCore\Data;
  */
 class Environment
 {
-	const mainDomain = null;
-	const mainPort = null;
-	const useModuleCache = null;
-	const initiating = null;
+    const mainDomain = null;
+    const mainPort = null;
+    const useModuleCache = null;
+    const initiating = null;
 
     const dbEncoding = null;
     const dbCollation = null;
 
-	private static $class;
+    private static $class;
 
     protected static function getClass()
-	{
-		if (!self::$class) {
-			self::$class = \diLib::getChildClass(self::class);
-		}
+    {
+        if (!self::$class) {
+            self::$class = \diLib::getChildClass(self::class);
+        }
 
-		return self::$class;
-	}
+        return self::$class;
+    }
 
-	final public static function resetClass()
-	{
-		self::$class = null;
-	}
+    final public static function resetClass()
+    {
+        self::$class = null;
+    }
 
-	final public static function getMainDomain()
-	{
-		/** @var Environment $class */
-		$class = self::getClass();
+    final public static function getMainDomain()
+    {
+        /** @var Environment $class */
+        $class = self::getClass();
 
-		return $class::mainDomain;
-	}
+        return $class::mainDomain;
+    }
 
-	final public static function getMainPort()
-	{
-		/** @var Environment $class */
-		$class = self::getClass();
+    final public static function getMainPort()
+    {
+        /** @var Environment $class */
+        $class = self::getClass();
 
-		return $class::mainPort;
-	}
+        return $class::mainPort;
+    }
 
-	final public static function getUseModuleCache()
-	{
-		/** @var Environment $class */
-		$class = self::getClass();
+    final public static function getUseModuleCache()
+    {
+        /** @var Environment $class */
+        $class = self::getClass();
 
-		return $class::useModuleCache;
-	}
+        return $class::useModuleCache;
+    }
 
-	final public static function getInitiating()
-	{
-		/** @var Environment $class */
-		$class = self::getClass();
+    final public static function getInitiating()
+    {
+        /** @var Environment $class */
+        $class = self::getClass();
 
-		return $class::initiating;
-	}
+        return $class::initiating;
+    }
 
     final public static function getDbEncoding()
     {

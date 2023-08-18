@@ -10,22 +10,22 @@ namespace diCore\Tool\Embed;
 
 class Helper
 {
-	protected static $queryParamsToRemove = [];
-	protected static $identifyParams = [];
+    protected static $queryParamsToRemove = [];
+    protected static $identifyParams = [];
 
-	public static function getQueryParamsToRemove()
-	{
-		return static::$queryParamsToRemove;
-	}
+    public static function getQueryParamsToRemove()
+    {
+        return static::$queryParamsToRemove;
+    }
 
-	public static function is()
-	{
-		foreach (static::$identifyParams as $name => $value) {
-			if (\diRequest::get($name) == $value) {
-				return true;
-			}
-		}
+    public static function is()
+    {
+        foreach (static::$identifyParams as $name => $value) {
+            if (\diRequest::get($name) == $value) {
+                return true;
+            }
+        }
 
-		return false;
-	}
+        return false;
+    }
 }

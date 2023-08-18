@@ -11,69 +11,72 @@ use diCore\Entity\PaymentReceipt\Model;
 
 class PaymentReceipts extends PaymentDrafts
 {
-	protected function initTable()
-	{
-		$this->setTable('payment_receipts');
-	}
+    protected function initTable()
+    {
+        $this->setTable('payment_receipts');
+    }
 
-	protected function setupFilters()
-	{
-		parent::setupFilters();
+    protected function setupFilters()
+    {
+        parent::setupFilters();
 
-		$this->getFilters()
-			->addFilter([
-				'field' => 'draft_id',
-				'type' => 'int',
-				'title' => 'ID черновика',
-			])
-			->buildQuery();
-	}
+        $this->getFilters()
+            ->addFilter([
+                'field' => 'draft_id',
+                'type' => 'int',
+                'title' => 'ID черновика',
+            ])
+            ->buildQuery();
+    }
 
-	public function renderList()
-	{
-		parent::renderList();
+    public function renderList()
+    {
+        parent::renderList();
 
-		$this->getList()
-			->removeColumn(['paid'])
-			->setColumnAttr('date_reserved', 'value', function(Model $m) {
-				return
-                    '<div style="white-space: nowrap">' . \diDateTime::simpleFormat($m->getDatePayed()) . '</div>' .
+        $this->getList()
+            ->removeColumn(['paid'])
+            ->setColumnAttr('date_reserved', 'value', function (Model $m) {
+                return '<div style="white-space: nowrap">' .
+                    \diDateTime::simpleFormat($m->getDatePayed()) .
+                    '</div>' .
                     ($m->hasDateUploaded()
-                        ? '<div style="background: green; color: white;white-space: nowrap">' . \diDateTime::simpleFormat($m->getDateUploaded()) . '</div>'
+                        ? '<div style="background: green; color: white;white-space: nowrap">' .
+                            \diDateTime::simpleFormat($m->getDateUploaded()) .
+                            '</div>'
                         : '');
-			})
-			->insertColumnsAfter('date_reserved', [
-				'draft_id' => [
+            })
+            ->insertColumnsAfter('date_reserved', [
+                'draft_id' => [
                     'bodyAttrs' => [
                         'class' => 'lite',
                     ],
                     'title' => 'Draft',
-				],
-			])
-			->setColumnAttr('vendor', 'headAttrs', ['width' => '10%']);
-	}
+                ],
+            ])
+            ->setColumnAttr('vendor', 'headAttrs', ['width' => '10%']);
+    }
 
-	public function getFormFields()
-	{
-		$ar = parent::getFormFields();
+    public function getFormFields()
+    {
+        $ar = parent::getFormFields();
 
-		unset($ar['paid']);
-		unset($ar['pay_manual']);
+        unset($ar['paid']);
+        unset($ar['pay_manual']);
 
-		return extend($ar, [
-			'rnd' => [
-				'type' => 'string',
-				'title' => 'Случайный код',
-				'default' => '',
-				'flags' => 'hidden',
-			],
+        return extend($ar, [
+            'rnd' => [
+                'type' => 'string',
+                'title' => 'Случайный код',
+                'default' => '',
+                'flags' => 'hidden',
+            ],
 
-			'date_payed' => [
-				'type' => 'datetime_str',
-				'title' => 'Дата оплаты',
-				'default' => '',
-				'flags' => 'static',
-			],
+            'date_payed' => [
+                'type' => 'datetime_str',
+                'title' => 'Дата оплаты',
+                'default' => '',
+                'flags' => 'static',
+            ],
 
             'date_uploaded' => [
                 'type' => 'datetime_str',
@@ -82,12 +85,12 @@ class PaymentReceipts extends PaymentDrafts
                 'flags' => 'static',
             ],
 
-			'draft_id' => [
-				'type' => 'int',
-				'title' => 'ID черновика',
-				'default' => '',
-				'flags' => 'static',
-			],
+            'draft_id' => [
+                'type' => 'int',
+                'title' => 'ID черновика',
+                'default' => '',
+                'flags' => 'static',
+            ],
 
             'fiscal_mark' => [
                 'type' => 'string',
@@ -123,11 +126,11 @@ class PaymentReceipts extends PaymentDrafts
                 'default' => '',
                 'flags' => 'static',
             ],
-		]);
-	}
+        ]);
+    }
 
-	public function getModuleCaption()
-	{
-		return 'Платежи';
-	}
+    public function getModuleCaption()
+    {
+        return 'Платежи';
+    }
 }

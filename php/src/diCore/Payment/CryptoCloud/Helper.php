@@ -53,10 +53,13 @@ class Helper
 
     public function initPayment(Draft $draft, $opts = [])
     {
-        $opts = extend([
-            'customerEmail' => '',
-            'customerPhone' => '',
-        ], $opts);
+        $opts = extend(
+            [
+                'customerEmail' => '',
+                'customerPhone' => '',
+            ],
+            $opts
+        );
 
         $url = static::getUrl(static::INIT_PAYMENT_METHOD);
         $query = [
@@ -70,16 +73,11 @@ class Helper
         static::debugLog('Sending request to POST ' . $url);
         static::debugLog(json_encode($query));
 
-        $res = Requests::post(
-            $url,
-            static::getRequestHeaders(),
-            $query,
-            [
-                'transport' => Fsockopen::class,
-                'timeout' => 14,
-                'connect_timeout' => 14,
-            ]
-        );
+        $res = Requests::post($url, static::getRequestHeaders(), $query, [
+            'transport' => Fsockopen::class,
+            'timeout' => 14,
+            'connect_timeout' => 14,
+        ]);
 
         static::debugLog('Response: ' . json_encode($res->body));
         $body = $res->decode_body();
@@ -96,9 +94,7 @@ class Helper
             throw new \Exception('Non success CryptoCloud response');
         }
 
-        $draft
-            ->setOuterNumber($body['invoice_id'])
-            ->save();
+        $draft->setOuterNumber($body['invoice_id'])->save();
 
         return $body['pay_url'];
     }

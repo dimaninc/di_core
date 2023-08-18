@@ -64,26 +64,28 @@ use diCore\Helper\Banner;
  */
 class diBannerModel extends \diModel
 {
-	const type = diTypes::banner;
-	protected $table = "banners";
+    const type = diTypes::banner;
+    protected $table = 'banners';
 
-	public function getPlaceTitle()
-	{
-		return Banner::getPlaceTitle($this->getPlace());
-	}
+    public function getPlaceTitle()
+    {
+        return Banner::getPlaceTitle($this->getPlace());
+    }
 
-	public function getRedirectHref()
-	{
-		return diLib::getWorkerPath('banner', 'redirect', [$this->getId()]) .
-			'?uri=' . urlencode(diRequest::server('REQUEST_URI'));
-	}
+    public function getRedirectHref()
+    {
+        return diLib::getWorkerPath('banner', 'redirect', [$this->getId()]) .
+            '?uri=' .
+            urlencode(diRequest::server('REQUEST_URI'));
+    }
 
-	public function getCustomTemplateVars()
-	{
-		return extend(parent::getCustomTemplateVars(), [
-			'redirect_href' => $this->getRedirectHref(),
-			'place_title' => $this->getPlaceTitle(),
-			'href_target_attribute' => $this->getHrefTarget() == 'blank' ? ' target="_blank"' : '',
-		]);
-	}
+    public function getCustomTemplateVars()
+    {
+        return extend(parent::getCustomTemplateVars(), [
+            'redirect_href' => $this->getRedirectHref(),
+            'place_title' => $this->getPlaceTitle(),
+            'href_target_attribute' =>
+                $this->getHrefTarget() == 'blank' ? ' target="_blank"' : '',
+        ]);
+    }
 }

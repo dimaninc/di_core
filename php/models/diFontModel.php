@@ -56,7 +56,7 @@
  */
 class diFontModel extends \diModel
 {
-	const type = \diTypes::font;
-	const slug_field_name = 'token';
-	protected $table = "fonts";
+    const type = \diTypes::font;
+    const slug_field_name = 'token';
+    protected $table = 'fonts';
 }

@@ -1,3 +1,5 @@
 <?php
 /** @deprecated  */
-class diTagsPage extends \diCore\Admin\Page\Tags {}
+class diTagsPage extends \diCore\Admin\Page\Tags
+{
+}

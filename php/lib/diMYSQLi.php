@@ -18,7 +18,11 @@ class diMYSQLi extends diMYSQL
     {
         $time1 = utime();
 
-        $this->link = @new \mysqli($this->host, $this->username, $this->password);
+        $this->link = @new \mysqli(
+            $this->host,
+            $this->username,
+            $this->password
+        );
 
         if (!$this->link || $this->link->connect_error) {
             $message =

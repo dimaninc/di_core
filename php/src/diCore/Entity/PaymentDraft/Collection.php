@@ -58,7 +58,7 @@ namespace diCore\Entity\PaymentDraft;
  */
 class Collection extends \diCollection
 {
-	const type = \diTypes::payment_draft;
-	protected $table = 'payment_drafts';
-	protected $modelType = 'payment_draft';
+    const type = \diTypes::payment_draft;
+    protected $table = 'payment_drafts';
+    protected $modelType = 'payment_draft';
 }

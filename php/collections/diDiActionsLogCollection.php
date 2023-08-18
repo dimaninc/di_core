@@ -7,6 +7,6 @@
 
 class diDiActionsLogCollection extends diCollection
 {
-	protected $table = "di_actions_log";
-	protected $modelType = "di_actions_log";
+    protected $table = 'di_actions_log';
+    protected $modelType = 'di_actions_log';
 }

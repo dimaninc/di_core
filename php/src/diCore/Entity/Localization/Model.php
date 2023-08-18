@@ -29,9 +29,9 @@ use diCore\Database\FieldType;
  */
 class Model extends \diModel
 {
-	const type = \diTypes::localization;
-	protected $table = 'localization';
-	protected $localizedFields = ['value'];
+    const type = \diTypes::localization;
+    protected $table = 'localization';
+    protected $localizedFields = ['value'];
 
     protected static $fieldTypes = [
         'id' => FieldType::int,
@@ -40,16 +40,12 @@ class Model extends \diModel
         'en_value' => FieldType::string,
     ];
 
-    protected static $publicFields = [
-        'name',
-        'value',
-        'en_value',
-    ];
+    protected static $publicFields = ['name', 'value', 'en_value'];
 
-	public function getValueForLanguage($language)
-	{
-		$field = static::getLocalizedFieldName('value', $language);
+    public function getValueForLanguage($language)
+    {
+        $field = static::getLocalizedFieldName('value', $language);
 
-		return $this->get($field);
-	}
+        return $this->get($field);
+    }
 }

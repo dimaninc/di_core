@@ -44,6 +44,8 @@ abstract class LocalizationMigration extends Migration
     {
         $this->getDb()->delete(
             'localization',
-            "WHERE {$this->getDb()->escapeField('name')}" . $this->getDb()::in($this->names));
+            "WHERE {$this->getDb()->escapeField('name')}" .
+                $this->getDb()::in($this->names)
+        );
     }
 }

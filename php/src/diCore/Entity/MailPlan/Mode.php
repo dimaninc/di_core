@@ -12,16 +12,16 @@ use diCore\Tool\SimpleContainer;
 
 class Mode extends SimpleContainer
 {
-	const standard = 1;
-	const test = 2;
+    const standard = 1;
+    const test = 2;
 
-	public static $names = [
-		self::standard => 'standard',
-		self::test => 'test',
-	];
+    public static $names = [
+        self::standard => 'standard',
+        self::test => 'test',
+    ];
 
-	public static $titles = [
-		self::standard => 'Standard',
-		self::test => 'Test',
-	];
+    public static $titles = [
+        self::standard => 'Standard',
+        self::test => 'Test',
+    ];
 }

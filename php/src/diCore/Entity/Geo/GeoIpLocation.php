@@ -43,15 +43,15 @@ namespace diCore\Entity\Geo;
  */
 class GeoIpLocation
 {
-	/** @var string */
-	protected $ip;
-	protected $data = [];
+    /** @var string */
+    protected $ip;
+    protected $data = [];
 
-	protected static $providers = [
-		//FreeGeoIpLocation::class,
-		//ExtremeIpLookupLocation::class,
-		GeoLiteLocation::class,
-	];
+    protected static $providers = [
+        //FreeGeoIpLocation::class,
+        //ExtremeIpLookupLocation::class,
+        GeoLiteLocation::class,
+    ];
 
     public static $crimeaRegions = [
         'Crimea',
@@ -71,65 +71,61 @@ class GeoIpLocation
         'Zaporizhzhya Oblast',
     ];
 
-	public function __construct($ip = null)
-	{
-		$this->ip = $ip;
+    public function __construct($ip = null)
+    {
+        $this->ip = $ip;
 
-		if (isInteger($this->ip)) {
-			$this->ip = bin2ip($this->ip);
-		}
+        if (isInteger($this->ip)) {
+            $this->ip = bin2ip($this->ip);
+        }
 
-		$this->readData();
-	}
+        $this->readData();
+    }
 
-	/**
-	 * @param int|string|null $ip
-	 * @return GeoIpLocation
-	 * @throws \Exception
-	 */
-	public static function create($ip = null)
-	{
-		foreach (self::$providers as $provider) {
-			if (class_exists($provider)) {
-				return new $provider($ip);
-			}
-		}
+    /**
+     * @param int|string|null $ip
+     * @return GeoIpLocation
+     * @throws \Exception
+     */
+    public static function create($ip = null)
+    {
+        foreach (self::$providers as $provider) {
+            if (class_exists($provider)) {
+                return new $provider($ip);
+            }
+        }
 
-		throw new \Exception('No providers found');
-	}
+        throw new \Exception('No providers found');
+    }
 
-	protected function useCache()
-	{
-		return false;
-	}
+    protected function useCache()
+    {
+        return false;
+    }
 
-	protected function readData()
-	{
-		if (!$this->exists() && $this->getBinIp()) {
-			$this
-				->fetchData()
-                ->fixData();
-		}
+    protected function readData()
+    {
+        if (!$this->exists() && $this->getBinIp()) {
+            $this->fetchData()->fixData();
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @link http://stackoverflow.com/questions/409999/getting-the-location-from-an-ip-address
-	 * Needs to be overridden
-	 * @return $this
-	 */
-	protected function fetchData()
-	{
-		return $this;
-	}
+    /**
+     * @link http://stackoverflow.com/questions/409999/getting-the-location-from-an-ip-address
+     * Needs to be overridden
+     * @return $this
+     */
+    protected function fetchData()
+    {
+        return $this;
+    }
 
     protected function fixData()
     {
         if ($this->isCrimea() || $this->isNovorossia()) {
-            $this
-                ->setCountryCode('RU')
-                ->setCountryName('Russia');
+            $this->setCountryCode('RU')->setCountryName('Russia');
         }
 
         return $this;
@@ -142,88 +138,94 @@ class GeoIpLocation
 
     public function isNovorossia()
     {
-        return in_array($this->getRegionName(), GeoIpLocation::$novorossiaRegions);
+        return in_array(
+            $this->getRegionName(),
+            GeoIpLocation::$novorossiaRegions
+        );
     }
 
-	public function __call($method, $arguments)
-	{
-		$fullMethod = underscore($method);
-		$value = isset($arguments[0]) ? $arguments[0] : null;
+    public function __call($method, $arguments)
+    {
+        $fullMethod = underscore($method);
+        $value = isset($arguments[0]) ? $arguments[0] : null;
 
-		$x = strpos($fullMethod, '_');
-		$method = substr($fullMethod, 0, $x);
-		$field = substr($fullMethod, $x + 1);
+        $x = strpos($fullMethod, '_');
+        $method = substr($fullMethod, 0, $x);
+        $field = substr($fullMethod, $x + 1);
 
-		switch ($method) {
-			case 'get':
-				return $this->get($field);
+        switch ($method) {
+            case 'get':
+                return $this->get($field);
 
-			case 'has':
-				return $this->has($field);
+            case 'has':
+                return $this->has($field);
 
-			case 'exists':
-				return $this->exists($field);
+            case 'exists':
+                return $this->exists($field);
 
-			case 'set':
-				return $this->set($field, $value);
-		}
+            case 'set':
+                return $this->set($field, $value);
+        }
 
-		throw new \Exception(
-			sprintf('Invalid method %s::%s(%s)', get_class($this), $method, print_r($arguments, 1))
-		);
-	}
+        throw new \Exception(
+            sprintf(
+                'Invalid method %s::%s(%s)',
+                get_class($this),
+                $method,
+                print_r($arguments, 1)
+            )
+        );
+    }
 
-	/**
-	 * @param string|null $field
-	 * @return string|int|null|array
-	 */
-	public function get($field = null)
-	{
-		if (is_null($field)) {
-			return $this->data;
-		}
+    /**
+     * @param string|null $field
+     * @return string|int|null|array
+     */
+    public function get($field = null)
+    {
+        if (is_null($field)) {
+            return $this->data;
+        }
 
-		if (!$this->exists($field)) {
-			return null;
-		}
+        if (!$this->exists($field)) {
+            return null;
+        }
 
-		return $this->data[$field];
-	}
+        return $this->data[$field];
+    }
 
-	/**
-	 * @param null|string $field
-	 * @return bool
-	 */
-	public function exists($field = null)
-	{
-		return is_null($field)
-			? !!$this->data
-			: isset($this->data[$field]);
-	}
+    /**
+     * @param null|string $field
+     * @return bool
+     */
+    public function exists($field = null)
+    {
+        return is_null($field) ? !!$this->data : isset($this->data[$field]);
+    }
 
-	public function has($field)
-	{
-		return !empty($this->data[$field]);
-	}
+    public function has($field)
+    {
+        return !empty($this->data[$field]);
+    }
 
-	public function set($field, $value = null)
-	{
-		if (is_null($value)) {
-			$this->data = extend($this->data, $field);
-		} else {
-			$this->data[$field] = $value;
-		}
+    public function set($field, $value = null)
+    {
+        if (is_null($value)) {
+            $this->data = extend($this->data, $field);
+        } else {
+            $this->data[$field] = $value;
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function getIp()
-	{
-		return $this->ip ?: get_user_ip();
-	}
+    public function getIp()
+    {
+        return $this->ip ?: get_user_ip();
+    }
 
-	public function getBinIp()
-	{
-		return ip2bin($this->getIp());
-	}
+    public function getBinIp()
+    {
+        return ip2bin($this->getIp());
+    }
 }

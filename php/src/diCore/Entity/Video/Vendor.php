@@ -39,9 +39,9 @@ class Vendor extends SimpleContainer
     ];
 
     public static $titles = [
-        self::OWN => "Собственное видео",
-        self::YOU_TUBE => "YouTube",
-        self::VIMEO => "Vimeo",
+        self::OWN => 'Собственное видео',
+        self::YOU_TUBE => 'YouTube',
+        self::VIMEO => 'Vimeo',
         self::RU_TUBE => 'RuTube',
         //self::FACEBOOK => 'Facebook', // todo: embed
         self::ODNOKLASSNIKI => 'Odnoklassniki',
@@ -49,12 +49,15 @@ class Vendor extends SimpleContainer
     ];
 
     protected static $patterns = [
-        self::YOU_TUBE => '/^.*((youtu\.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??(v=)?([^#\&\?\"\']+)/',
-        self::VIMEO => '/(https?:\/\/)?(www\.)?(player\.)?vimeo\.com\/([a-z]*\/)*([0-9]{6,11})[?]?.*/',
+        self::YOU_TUBE =>
+            '/^.*((youtu\.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??(v=)?([^#\&\?\"\']+)/',
+        self::VIMEO =>
+            '/(https?:\/\/)?(www\.)?(player\.)?vimeo\.com\/([a-z]*\/)*([0-9]{6,11})[?]?.*/',
         self::RU_TUBE => '#(https?://)rutube\.ru/video/([^/]+)/#',
         self::FACEBOOK => '#facebook\.com/watch/\?v=(\d+)#',
         self::ODNOKLASSNIKI => '#//ok\.ru/video(embed)?/(\d+)#',
-        self::VK => '#//vk\.com/(video(\d+)_(\d+)|video_ext\.php\?oid=-?(\d+)&id=(\d+))#',
+        self::VK =>
+            '#//vk\.com/(video(\d+)_(\d+)|video_ext\.php\?oid=-?(\d+)&id=(\d+))#',
     ];
 
     protected static $links = [
@@ -136,25 +139,40 @@ class Vendor extends SimpleContainer
 
     private static function getVimeoData($videoUid)
     {
-        return unserialize(self::getFile(sprintf("http://vimeo.com/api/v2/video/%s.php", $videoUid)));
+        return unserialize(
+            self::getFile(
+                sprintf('http://vimeo.com/api/v2/video/%s.php', $videoUid)
+            )
+        );
     }
 
     private static function getRuTubeData($videoUid)
     {
-        return (array)json_decode(self::getFile(sprintf('https://rutube.ru/api/video/%s?format=json', $videoUid)));
+        return (array) json_decode(
+            self::getFile(
+                sprintf('https://rutube.ru/api/video/%s?format=json', $videoUid)
+            )
+        );
     }
 
     public static function getThumbnail($vendor, $videoUid)
     {
         switch ($vendor) {
             case self::YOU_TUBE:
-                return sprintf("//img.youtube.com/vi/%s/default.jpg", $videoUid); //http:
+                return sprintf(
+                    '//img.youtube.com/vi/%s/default.jpg',
+                    $videoUid
+                ); //http:
 
             case self::VIMEO:
                 $info = self::getVimeoData($videoUid);
 
-                return isset($info[0]["thumbnail_medium"])
-                    ? str_replace('http://', 'https://', $info[0]["thumbnail_medium"])
+                return isset($info[0]['thumbnail_medium'])
+                    ? str_replace(
+                        'http://',
+                        'https://',
+                        $info[0]['thumbnail_medium']
+                    )
                     : null;
 
             case self::RU_TUBE:
@@ -168,13 +186,17 @@ class Vendor extends SimpleContainer
     {
         switch ($vendor) {
             case self::YOU_TUBE:
-                return sprintf("//img.youtube.com/vi/%s/0.jpg", $videoUid); //http:
+                return sprintf('//img.youtube.com/vi/%s/0.jpg', $videoUid); //http:
 
             case self::VIMEO:
                 $info = self::getVimeoData($videoUid);
 
-                return isset($info[0]["thumbnail_large"])
-                    ? str_replace('http://', 'https://', $info[0]["thumbnail_large"])
+                return isset($info[0]['thumbnail_large'])
+                    ? str_replace(
+                        'http://',
+                        'https://',
+                        $info[0]['thumbnail_large']
+                    )
                     : null;
 
             case self::RU_TUBE:
@@ -192,13 +214,15 @@ class Vendor extends SimpleContainer
     {
         switch ($vendor) {
             case self::YOU_TUBE:
-                $rawData = self::getFile("http://youtube.com/get_video_info?video_id=" . $videoUid);
+                $rawData = self::getFile(
+                    'http://youtube.com/get_video_info?video_id=' . $videoUid
+                );
                 if ($rawData) {
                     parse_str($rawData, $data);
 
                     //"view_count"
-                    if (isset($data["title"])) {
-                        return $data["title"];
+                    if (isset($data['title'])) {
+                        return $data['title'];
                     }
                 }
                 break;
@@ -206,16 +230,12 @@ class Vendor extends SimpleContainer
             case self::VIMEO:
                 $info = self::getVimeoData($videoUid);
 
-                return isset($info[0]['title'])
-                    ? $info[0]['title']
-                    : null;
+                return isset($info[0]['title']) ? $info[0]['title'] : null;
 
             case self::RU_TUBE:
                 $info = self::getRuTubeData($videoUid);
 
-                return isset($info['title'])
-                    ? $info['title']
-                    : null;
+                return isset($info['title']) ? $info['title'] : null;
         }
 
         return null;

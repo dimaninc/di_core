@@ -8,17 +8,14 @@
  */
 class diPayment extends \diCore\Payment\Payment
 {
-	public static function create($targetType, $targetId, $userId)
-	{
-		if (\diLib::exists(static::childClassName))
-		{
-			$className = static::childClassName;
-		}
-		else
-		{
-			$className = get_called_class();
-		}
+    public static function create($targetType, $targetId, $userId)
+    {
+        if (\diLib::exists(static::childClassName)) {
+            $className = static::childClassName;
+        } else {
+            $className = get_called_class();
+        }
 
-		return new $className($targetType, $targetId, $userId);
-	}
+        return new $className($targetType, $targetId, $userId);
+    }
 }

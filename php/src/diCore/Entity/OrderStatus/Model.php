@@ -34,6 +34,6 @@ namespace diCore\Entity\OrderStatus;
  */
 class Model extends \diModel
 {
-	const type = \diTypes::order_status;
-	protected $table = 'order_status';
+    const type = \diTypes::order_status;
+    protected $table = 'order_status';
 }

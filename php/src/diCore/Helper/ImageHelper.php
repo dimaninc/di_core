@@ -10,71 +10,100 @@ namespace diCore\Helper;
 
 class ImageHelper
 {
-	const IMAGE_MAGICK = 1;
-	const PH_MAGICK = 2;
-	const IMAGICK = 3;
-	const GD = 4;
+    const IMAGE_MAGICK = 1;
+    const PH_MAGICK = 2;
+    const IMAGICK = 3;
+    const GD = 4;
 
-	const DEFAULT_BACKGROUND_COLOR = '#000000';
+    const DEFAULT_BACKGROUND_COLOR = '#000000';
 
-	protected static function vendor()
-	{
-		if (class_exists('\phMagick\Core\Runner') && false) {
-			return self::PH_MAGICK;
-		} elseif (class_exists('\Imagick')) {
-			return self::IMAGICK;
-		} elseif (function_exists('imagepng')) {
-			return self::GD;
-		}
+    protected static function vendor()
+    {
+        if (class_exists('\phMagick\Core\Runner') && false) {
+            return self::PH_MAGICK;
+        } elseif (class_exists('\Imagick')) {
+            return self::IMAGICK;
+        } elseif (function_exists('imagepng')) {
+            return self::GD;
+        }
 
-		throw new \Exception('No image processing modules found');
-	}
+        throw new \Exception('No image processing modules found');
+    }
 
-	public static function rotate($angle, $inFilename, $outFilename = null, $backgroundColor = self::DEFAULT_BACKGROUND_COLOR)
-	{
+    public static function rotate(
+        $angle,
+        $inFilename,
+        $outFilename = null,
+        $backgroundColor = self::DEFAULT_BACKGROUND_COLOR
+    ) {
         $origInFilename = $inFilename;
         $inFilename = realpath($inFilename);
 
-		if (!$inFilename) {
-		    throw new \Exception('File not found: ' . $origInFilename . ', ' . $inFilename);
+        if (!$inFilename) {
+            throw new \Exception(
+                'File not found: ' . $origInFilename . ', ' . $inFilename
+            );
         }
 
-		switch (self::vendor()) {
-			case self::PH_MAGICK:
-				self::rotatePhMagick($angle, $inFilename, $outFilename, $backgroundColor);
-				break;
+        switch (self::vendor()) {
+            case self::PH_MAGICK:
+                self::rotatePhMagick(
+                    $angle,
+                    $inFilename,
+                    $outFilename,
+                    $backgroundColor
+                );
+                break;
 
-			case self::IMAGICK:
-				self::rotateIMagick($angle, $inFilename, $outFilename, $backgroundColor);
-				break;
+            case self::IMAGICK:
+                self::rotateIMagick(
+                    $angle,
+                    $inFilename,
+                    $outFilename,
+                    $backgroundColor
+                );
+                break;
 
-			case self::GD:
-				self::rotateGd($angle, $inFilename, $outFilename, $backgroundColor);
-				break;
-		}
-	}
+            case self::GD:
+                self::rotateGd(
+                    $angle,
+                    $inFilename,
+                    $outFilename,
+                    $backgroundColor
+                );
+                break;
+        }
+    }
 
-	public static function rotatePhMagick($angle, $inFilename, $outFilename = null, $backgroundColor = self::DEFAULT_BACKGROUND_COLOR)
-	{
-		throw new \Exception('Not yet implemented');
-		$phMagick = new \phMagick\Core\Runner($filename);
-		$tn = new \phMagick\Action\Resize\Proportional($filename, $filename);
-		$tn->setWidth($resultWidth)->setHeight($resultHeight);
-		$phMagick->run($tn);
-	}
+    public static function rotatePhMagick(
+        $angle,
+        $inFilename,
+        $outFilename = null,
+        $backgroundColor = self::DEFAULT_BACKGROUND_COLOR
+    ) {
+        throw new \Exception('Not yet implemented');
+        $phMagick = new \phMagick\Core\Runner($filename);
+        $tn = new \phMagick\Action\Resize\Proportional($filename, $filename);
+        $tn->setWidth($resultWidth)->setHeight($resultHeight);
+        $phMagick->run($tn);
+    }
 
-	public static function rotateIMagick($angle, $inFilename, $outFilename = null, $backgroundColor = self::DEFAULT_BACKGROUND_COLOR)
-	{
-		if ($outFilename === null) {
-			$outFilename = $inFilename;
-		}
+    public static function rotateIMagick(
+        $angle,
+        $inFilename,
+        $outFilename = null,
+        $backgroundColor = self::DEFAULT_BACKGROUND_COLOR
+    ) {
+        if ($outFilename === null) {
+            $outFilename = $inFilename;
+        }
 
-		$im = new \Imagick($inFilename);
-		$im->stripImage();
-		$im->rotateImage($backgroundColor, $angle);
-		$im->writeImage($outFilename);
-		$im->clear();
-	}
+        $im = new \Imagick($inFilename);
+        $im->stripImage();
+        $im->rotateImage($backgroundColor, $angle);
+        $im->writeImage($outFilename);
+        $im->clear();
+    }
 
     public static function autoRotate(\Imagick $image, $background = '#000000')
     {
@@ -110,112 +139,182 @@ class ImageHelper
         $image->setImageOrientation(\Imagick::ORIENTATION_TOPLEFT);
     }
 
-	public static function rotateGd($angle, $inFilename, $outFilename = null, $backgroundColor = self::DEFAULT_BACKGROUND_COLOR)
-	{
-		if ($outFilename === null) {
-			$outFilename = $inFilename;
-		}
+    public static function rotateGd(
+        $angle,
+        $inFilename,
+        $outFilename = null,
+        $backgroundColor = self::DEFAULT_BACKGROUND_COLOR
+    ) {
+        if ($outFilename === null) {
+            $outFilename = $inFilename;
+        }
 
-		$img = new \diImage();
-		$source = $img->open($inFilename);
+        $img = new \diImage();
+        $source = $img->open($inFilename);
 
-		if ($img->isImageType(\diImage::TYPE_PNG)) {
-			imagealphablending($source, false);
-			imagesavealpha($source, true);
-			$color = imagecolorallocatealpha($source, 0, 0, 0, 127);
-		} else {
-			$color = rgb_allocate($source, $backgroundColor);
-		}
+        if ($img->isImageType(\diImage::TYPE_PNG)) {
+            imagealphablending($source, false);
+            imagesavealpha($source, true);
+            $color = imagecolorallocatealpha($source, 0, 0, 0, 127);
+        } else {
+            $color = rgb_allocate($source, $backgroundColor);
+        }
 
-		$rotation = imagerotate($source, -$angle, $color);
+        $rotation = imagerotate($source, -$angle, $color);
 
-		if ($img->isImageType(\diImage::TYPE_PNG)) {
-			imagealphablending($rotation, false);
-			imagesavealpha($rotation, true);
-		}
+        if ($img->isImageType(\diImage::TYPE_PNG)) {
+            imagealphablending($rotation, false);
+            imagesavealpha($rotation, true);
+        }
 
-		$img->store($outFilename, $rotation);
+        $img->store($outFilename, $rotation);
 
-		imagedestroy($source);
-		imagedestroy($rotation);
-	}
+        imagedestroy($source);
+        imagedestroy($rotation);
+    }
 
-	public static function watermark($watermarkFilename, $inFilename, $outFilename = null, $x = 'right', $y = 'bottom')
-	{
-		$watermarkFilename = realpath($watermarkFilename);
-		$inFilename = realpath($inFilename);
+    public static function watermark(
+        $watermarkFilename,
+        $inFilename,
+        $outFilename = null,
+        $x = 'right',
+        $y = 'bottom'
+    ) {
+        $watermarkFilename = realpath($watermarkFilename);
+        $inFilename = realpath($inFilename);
 
-		switch (self::vendor()) {
-			case self::PH_MAGICK:
-				self::watermarkPhMagick($watermarkFilename, $inFilename, $outFilename, $x, $y);
-				break;
+        switch (self::vendor()) {
+            case self::PH_MAGICK:
+                self::watermarkPhMagick(
+                    $watermarkFilename,
+                    $inFilename,
+                    $outFilename,
+                    $x,
+                    $y
+                );
+                break;
 
-			case self::IMAGICK:
-				self::watermarkIMagick($watermarkFilename, $inFilename, $outFilename, $x, $y);
-				break;
+            case self::IMAGICK:
+                self::watermarkIMagick(
+                    $watermarkFilename,
+                    $inFilename,
+                    $outFilename,
+                    $x,
+                    $y
+                );
+                break;
 
-			case self::GD:
-				self::watermarkGd($watermarkFilename, $inFilename, $outFilename, $x, $y);
-				break;
-		}
-	}
+            case self::GD:
+                self::watermarkGd(
+                    $watermarkFilename,
+                    $inFilename,
+                    $outFilename,
+                    $x,
+                    $y
+                );
+                break;
+        }
+    }
 
-	public static function calculateWatermarkCoordinates($watermarkFilename, $inFilename, $x, $y)
-	{
-		list($srcWidth, $srcHeight) = is_file($inFilename) ? getimagesize($inFilename) : [0, 0, 0];
-		list($wmWidth, $wmHeight) = is_file($watermarkFilename) ? getimagesize($watermarkFilename) : [0, 0, 0];
+    public static function calculateWatermarkCoordinates(
+        $watermarkFilename,
+        $inFilename,
+        $x,
+        $y
+    ) {
+        list($srcWidth, $srcHeight) = is_file($inFilename)
+            ? getimagesize($inFilename)
+            : [0, 0, 0];
+        list($wmWidth, $wmHeight) = is_file($watermarkFilename)
+            ? getimagesize($watermarkFilename)
+            : [0, 0, 0];
 
-		if ($x == 'left') $x = 0;
-		elseif ($x == 'right') $x = $srcWidth - $wmWidth;
-		elseif ($x == 'center') $x = ($srcWidth - $wmWidth) >> 1;
-		else $x = $x >= 0 ? $x : $srcWidth - $wmWidth + (int)$x;
+        if ($x == 'left') {
+            $x = 0;
+        } elseif ($x == 'right') {
+            $x = $srcWidth - $wmWidth;
+        } elseif ($x == 'center') {
+            $x = $srcWidth - $wmWidth >> 1;
+        } else {
+            $x = $x >= 0 ? $x : $srcWidth - $wmWidth + (int) $x;
+        }
 
-		if ($y == 'top') $y = 0;
-		elseif ($y == 'bottom') $y = $srcHeight - $wmHeight;
-		elseif ($y == 'center') $y = ($srcHeight - $wmHeight) >> 1;
-		else $y = $y >= 0 ? $y : $srcHeight - $wmHeight + (int)$y;
+        if ($y == 'top') {
+            $y = 0;
+        } elseif ($y == 'bottom') {
+            $y = $srcHeight - $wmHeight;
+        } elseif ($y == 'center') {
+            $y = $srcHeight - $wmHeight >> 1;
+        } else {
+            $y = $y >= 0 ? $y : $srcHeight - $wmHeight + (int) $y;
+        }
 
-		return [
-			'x' => $x,
-			'y' => $y,
-		];
-	}
+        return [
+            'x' => $x,
+            'y' => $y,
+        ];
+    }
 
-	public static function watermarkPhMagick($watermarkFilename, $inFilename, $outFilename = null, $x = 'right', $y = 'bottom')
-	{
-		throw new \Exception('Not yet implemented');
-	}
+    public static function watermarkPhMagick(
+        $watermarkFilename,
+        $inFilename,
+        $outFilename = null,
+        $x = 'right',
+        $y = 'bottom'
+    ) {
+        throw new \Exception('Not yet implemented');
+    }
 
-	public static function watermarkIMagick($watermarkFilename, $inFilename, $outFilename = null, $x = 'right', $y = 'bottom')
-	{
-		if ($outFilename === null) {
-			$outFilename = $inFilename;
-		}
+    public static function watermarkIMagick(
+        $watermarkFilename,
+        $inFilename,
+        $outFilename = null,
+        $x = 'right',
+        $y = 'bottom'
+    ) {
+        if ($outFilename === null) {
+            $outFilename = $inFilename;
+        }
 
-		$xy = self::calculateWatermarkCoordinates($watermarkFilename, $inFilename, $x, $y);
+        $xy = self::calculateWatermarkCoordinates(
+            $watermarkFilename,
+            $inFilename,
+            $x,
+            $y
+        );
 
-		$wm = new \Imagick($watermarkFilename);
-		$im = new \Imagick($inFilename);
+        $wm = new \Imagick($watermarkFilename);
+        $im = new \Imagick($inFilename);
 
-		$im->compositeImage($wm, \Imagick::COMPOSITE_OVER, $xy['x'], $xy['y']);
-		$im->writeImage($outFilename);
+        $im->compositeImage($wm, \Imagick::COMPOSITE_OVER, $xy['x'], $xy['y']);
+        $im->writeImage($outFilename);
 
-		$wm->clear();
-		$im->clear();
-	}
+        $wm->clear();
+        $im->clear();
+    }
 
-	public static function watermarkGd($watermarkFilename, $inFilename, $outFilename = null, $x = 'right', $y = 'bottom')
-	{
-		if ($outFilename === null) {
-			$outFilename = $inFilename;
-		}
+    public static function watermarkGd(
+        $watermarkFilename,
+        $inFilename,
+        $outFilename = null,
+        $x = 'right',
+        $y = 'bottom'
+    ) {
+        if ($outFilename === null) {
+            $outFilename = $inFilename;
+        }
 
-		$xy = self::calculateWatermarkCoordinates($watermarkFilename, $inFilename, $x, $y);
+        $xy = self::calculateWatermarkCoordinates(
+            $watermarkFilename,
+            $inFilename,
+            $x,
+            $y
+        );
 
-		$img = new \diImage();
-		$img->open($inFilename);
-		$img->merge_wm($watermarkFilename, $xy['x'], $xy['y']);
-		$img->store($outFilename);
-		$img->close();
-	}
+        $img = new \diImage();
+        $img->open($inFilename);
+        $img->merge_wm($watermarkFilename, $xy['x'], $xy['y']);
+        $img->store($outFilename);
+        $img->close();
+    }
 }

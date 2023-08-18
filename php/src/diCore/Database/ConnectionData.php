@@ -23,18 +23,22 @@ class ConnectionData
 
     public function __construct($connData)
     {
-        $this
-            ->parseConnData($connData);
+        $this->parseConnData($connData);
     }
 
     protected function parseConnData($connData)
     {
-        $this
-            ->setHost(ArrayHelper::get($connData, 'host'))
+        $this->setHost(ArrayHelper::get($connData, 'host'))
             ->setPort(ArrayHelper::get($connData, 'port'))
-            ->setLogin(ArrayHelper::get($connData, 'login') ?: ArrayHelper::get($connData, 'username'))
+            ->setLogin(
+                ArrayHelper::get($connData, 'login') ?:
+                ArrayHelper::get($connData, 'username')
+            )
             ->setPassword(ArrayHelper::get($connData, 'password'))
-            ->setDatabase(ArrayHelper::get($connData, 'database') ?: ArrayHelper::get($connData, 'dbname'))
+            ->setDatabase(
+                ArrayHelper::get($connData, 'database') ?:
+                ArrayHelper::get($connData, 'dbname')
+            )
             ->setSsl(ArrayHelper::get($connData, 'ssl'))
             ->setSslCert(ArrayHelper::get($connData, 'cert'))
             ->setSslKey(ArrayHelper::get($connData, 'key'));

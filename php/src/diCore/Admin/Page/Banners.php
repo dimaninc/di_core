@@ -34,9 +34,11 @@ class Banners extends \diCore\Admin\BasePage
             'id' => 'ID',
             'format' => [
                 'title' => 'Формат',
-                'value' => function(Model $banner) {
+                'value' => function (Model $banner) {
                     return $banner->hasPic()
-                        ? strtoupper(StringHelper::fileExtension($banner->getPic())) . " {$banner->getPicW()}x{$banner->getPicH()}"
+                        ? strtoupper(
+                                StringHelper::fileExtension($banner->getPic())
+                            ) . " {$banner->getPicW()}x{$banner->getPicH()}"
                         : 'Текстовый';
                 },
                 'attrs' => [
@@ -47,7 +49,7 @@ class Banners extends \diCore\Admin\BasePage
                 'attrs' => [
                     'width' => '15%',
                 ],
-                'value' => function(\diBannerModel $banner) {
+                'value' => function (\diBannerModel $banner) {
                     return $banner->getPlaceTitle();
                 },
             ],
@@ -66,8 +68,10 @@ class Banners extends \diCore\Admin\BasePage
             ],
             'dates' => [
                 'title' => 'Даты',
-                'value' => function(Model $banner) {
-                    return \diDateTime::format('d.m.Y', $banner->getDate1()) . ' - ' . \diDateTime::format('d.m.Y', $banner->getDate2());
+                'value' => function (Model $banner) {
+                    return \diDateTime::format('d.m.Y', $banner->getDate1()) .
+                        ' - ' .
+                        \diDateTime::format('d.m.Y', $banner->getDate2());
                 },
                 'attrs' => [
                     'width' => '10%',
@@ -106,65 +110,85 @@ class Banners extends \diCore\Admin\BasePage
 
         $js = '';
 
-        $bu_rs = $this->getDb()->rs(Banner::urisTable, "WHERE banner_id='" . $this->getId() . "' ORDER BY uri ASC");
-        while ($bu_rs && $bu_r = $this->getDb()->fetch($bu_rs))
-        {
-            $uri_ar[$bu_r->positive ? 'positive' : 'negative'][] = str_out($bu_r->uri);
+        $bu_rs = $this->getDb()->rs(
+            Banner::urisTable,
+            "WHERE banner_id='" . $this->getId() . "' ORDER BY uri ASC"
+        );
+        while ($bu_rs && ($bu_r = $this->getDb()->fetch($bu_rs))) {
+            $uri_ar[$bu_r->positive ? 'positive' : 'negative'][] = str_out(
+                $bu_r->uri
+            );
         }
 
-        if (!count($uri_ar['positive'])) $uri_ar['positive'][0] = '/*';
-        if (!count($uri_ar['negative'])) $uri_ar['negative'][0] = '';
+        if (!count($uri_ar['positive'])) {
+            $uri_ar['positive'][0] = '/*';
+        }
+        if (!count($uri_ar['negative'])) {
+            $uri_ar['negative'][0] = '';
+        }
 
-        if ($this->getForm()->static_mode)
-        {
+        if ($this->getForm()->static_mode) {
             $this->getForm()
                 ->setInput('uris_positive', join('<br>', $uri_ar['positive']))
                 ->setInput('uris_negative', join('<br>', $uri_ar['negative']));
-        }
-        else
-        {
-            $js .= "var diref_" . $this->getForm()->getTable() . " = new diDynamicRows();\n";
+        } else {
+            $js .=
+                'var diref_' .
+                $this->getForm()->getTable() .
+                " = new diDynamicRows();\n";
 
-            foreach ($uri_ar as $sign => $ar)
-            {
+            foreach ($uri_ar as $sign => $ar) {
                 $uri_inputs = '';
                 $ref_field = "{$sign}";
                 $uri_inputs .= "<div data-purpose=\"anchor\" data-field=\"{$ref_field}\" data-position=\"top\"></div>";
 
-                for ($i = 0; $i < count($ar); $i++)
-                {
+                for ($i = 0; $i < count($ar); $i++) {
                     $idx = $i + 1;
 
-                    $uri_inputs .= $this->getForm()->get_dynamic_row($idx, $sign, $ar[$i]);
+                    $uri_inputs .= $this->getForm()->get_dynamic_row(
+                        $idx,
+                        $sign,
+                        $ar[$i]
+                    );
 
-                    if ($idx > $last_idx_ar[$sign])
-                    {
+                    if ($idx > $last_idx_ar[$sign]) {
                         $last_idx_ar[$sign] = $idx;
                     }
                 }
 
                 $uri_inputs .= "<div data-purpose=\"anchor\" data-field=\"{$ref_field}\" data-position=\"bottom\"></div>";
-                $uri_inputs .= "<div id=\"js_{$ref_field}_resource\" style=\"display:none;\">" .
-                    $this->getForm()->get_dynamic_row("%NEWID%", $ref_field, "") .
-                    "</div>";
+                $uri_inputs .=
+                    "<div id=\"js_{$ref_field}_resource\" style=\"display:none;\">" .
+                    $this->getForm()->get_dynamic_row(
+                        '%NEWID%',
+                        $ref_field,
+                        ''
+                    ) .
+                    '</div>';
 
-                $js .= "diref_" . $this->getForm()->table . ".init('$ref_field', 'URL', 1, {$last_idx_ar[$sign]});\n";
+                $js .=
+                    'diref_' .
+                    $this->getForm()->table .
+                    ".init('$ref_field', 'URL', 1, {$last_idx_ar[$sign]});\n";
 
-                $this->getForm()->setInput("uris_{$sign}",
-                    "<a href=\"#\" onclick=\"return diref_" . $this->getForm()->table . ".add('$ref_field');\">[+] Добавить URL</a>" . $uri_inputs
+                $this->getForm()->setInput(
+                    "uris_{$sign}",
+                    "<a href=\"#\" onclick=\"return diref_" .
+                        $this->getForm()->table .
+                        ".add('$ref_field');\">[+] Добавить URL</a>" .
+                        $uri_inputs
                 );
             }
         }
 
         $this->getTpl()->assign([
-            "BEFORE_FORM" => "<script type=\"text/javascript\">$js</script>",
+            'BEFORE_FORM' => "<script type=\"text/javascript\">$js</script>",
         ]);
     }
 
     public function submitForm()
     {
-        $this->getSubmit()
-            ->store_pics('pic');
+        $this->getSubmit()->store_pics('pic');
     }
 
     protected function afterSubmitForm()
@@ -213,7 +237,10 @@ class Banners extends \diCore\Admin\BasePage
                 'type' => 'pic',
                 'title' => 'Изображение',
                 'default' => '',
-                'notes' => ['Поддерживаемые форматы - JPEG, GIF, PNG, FLASH', 'В случае, если изображение не подгружено - баннер текстовый'],
+                'notes' => [
+                    'Поддерживаемые форматы - JPEG, GIF, PNG, FLASH',
+                    'В случае, если изображение не подгружено - баннер текстовый',
+                ],
             ],
 
             'date1' => [

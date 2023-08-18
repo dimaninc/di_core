@@ -37,7 +37,7 @@ namespace diCore\Entity\AdminTableEditLog;
  */
 class Collection extends \diCollection
 {
-	const type = \diTypes::admin_table_edit_log;
-	protected $table = 'admin_table_edit_log';
-	protected $modelType = 'admin_table_edit_log';
+    const type = \diTypes::admin_table_edit_log;
+    protected $table = 'admin_table_edit_log';
+    protected $modelType = 'admin_table_edit_log';
 }

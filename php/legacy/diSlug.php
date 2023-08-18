@@ -1,3 +1,5 @@
 <?php
 /** @deprecated  */
-class diSlug extends \diCore\Helper\Slug {}
+class diSlug extends \diCore\Helper\Slug
+{
+}

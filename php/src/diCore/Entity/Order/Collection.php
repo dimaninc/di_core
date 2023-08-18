@@ -58,7 +58,7 @@ namespace diCore\Entity\Order;
  */
 class Collection extends \diCollection
 {
-	const type = \diTypes::order;
-	protected $table = 'order';
-	protected $modelType = 'order';
+    const type = \diTypes::order;
+    protected $table = 'order';
+    protected $modelType = 'order';
 }

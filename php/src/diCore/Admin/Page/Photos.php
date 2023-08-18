@@ -15,237 +15,237 @@ use diCore\Entity\Photo\Model;
 
 class Photos extends \diCore\Admin\BasePage
 {
-	const FILTER_DEFAULT_ALBUM_ID = null;
+    const FILTER_DEFAULT_ALBUM_ID = null;
 
-	const TOKEN_MODE_SINGLE = 1;
-	const TOKEN_MODE_MULTI = 2;
+    const TOKEN_MODE_SINGLE = 1;
+    const TOKEN_MODE_MULTI = 2;
 
-	protected $tokenMode = self::TOKEN_MODE_MULTI;
+    protected $tokenMode = self::TOKEN_MODE_MULTI;
 
-	protected $listMode = self::LIST_GRID;
+    protected $listMode = self::LIST_GRID;
 
-	protected $options = [
-		'filters' => [
-			'defaultSorter' => [
-				'sortBy' => 'order_num',
-				'dir' => 'ASC',
-			],
-		],
-	];
+    protected $options = [
+        'filters' => [
+            'defaultSorter' => [
+                'sortBy' => 'order_num',
+                'dir' => 'ASC',
+            ],
+        ],
+    ];
 
-	protected $filters = [
-		'album_id' => [
-			'field' => 'album_id',
-			'type' => 'int',
-			'title' => 'Альбом',
-			'showAllOption' => true,
-			'default_value' => self::FILTER_DEFAULT_ALBUM_ID,
-		],
-	];
+    protected $filters = [
+        'album_id' => [
+            'field' => 'album_id',
+            'type' => 'int',
+            'title' => 'Альбом',
+            'showAllOption' => true,
+            'default_value' => self::FILTER_DEFAULT_ALBUM_ID,
+        ],
+    ];
 
-	protected function initTable()
-	{
-		$this->setTable('photos');
-	}
+    protected function initTable()
+    {
+        $this->setTable('photos');
+    }
 
-	protected function getFilterSettings($field = null)
-	{
-		if ($field === null) {
-			return $this->filters;
-		} else {
-			if (isset($this->filters[$field])) {
-				return $this->filters[$field];
-			} else {
-				throw new \Exception("No filter for '$field' specified");
-			}
-		}
-	}
+    protected function getFilterSettings($field = null)
+    {
+        if ($field === null) {
+            return $this->filters;
+        } else {
+            if (isset($this->filters[$field])) {
+                return $this->filters[$field];
+            } else {
+                throw new \Exception("No filter for '$field' specified");
+            }
+        }
+    }
 
-	protected function getAlbumsForFilter()
-	{
-		$albums = Albums::create()
-			->orderByOrderNum();
+    protected function getAlbumsForFilter()
+    {
+        $albums = Albums::create()->orderByOrderNum();
 
-		return $albums;
-	}
+        return $albums;
+    }
 
-	protected function getAlbumsForForm()
-	{
-		$albums = Albums::create()
-			->orderByTitle();
+    protected function getAlbumsForForm()
+    {
+        $albums = Albums::create()->orderByTitle();
 
-		return $albums;
-	}
+        return $albums;
+    }
 
-	protected function setupFilters()
-	{
-		foreach ($this->getFilterSettings() as $field => $filter) {
-			$this->getFilters()
-				->addFilter($filter);
-		}
+    protected function setupFilters()
+    {
+        foreach ($this->getFilterSettings() as $field => $filter) {
+            $this->getFilters()->addFilter($filter);
+        }
 
-		$this->getFilters()
-			->buildQuery()
-			->setSelectFromCollectionInput('album_id', $this->getAlbumsForFilter(),
-				!empty($this->getFilterSettings('album_id')['showAllOption']) ? [0 => 'Все альбомы'] : []
-			);
-	}
+        $this->getFilters()
+            ->buildQuery()
+            ->setSelectFromCollectionInput(
+                'album_id',
+                $this->getAlbumsForFilter(),
+                !empty($this->getFilterSettings('album_id')['showAllOption'])
+                    ? [0 => 'Все альбомы']
+                    : []
+            );
+    }
 
-	protected function forceOrderAllowed(Model $m, $action)
+    protected function forceOrderAllowed(Model $m, $action)
     {
         return false;
     }
 
-	public function renderList()
-	{
-		$orderAllowed = function(Model $m, $action) {
-		    if ($this->forceOrderAllowed($m, $action)) {
-		        return true;
+    public function renderList()
+    {
+        $orderAllowed = function (Model $m, $action) {
+            if ($this->forceOrderAllowed($m, $action)) {
+                return true;
             }
 
-			if (!$this->getFilters()->getData('album_id')) {
-				return false;
-			}
+            if (!$this->getFilters()->getData('album_id')) {
+                return false;
+            }
 
-			return true;
-		};
+            return true;
+        };
 
-		$this->getGrid()
-			->addButtons([
-				'up' => [
-					'allowed' => $orderAllowed,
-				],
-				'edit' => [],
-				'del' => [],
-				'visible' => [],
-				'down' => [
-					'allowed' => $orderAllowed,
-				],
-			]);
-	}
+        $this->getGrid()->addButtons([
+            'up' => [
+                'allowed' => $orderAllowed,
+            ],
+            'edit' => [],
+            'del' => [],
+            'visible' => [],
+            'down' => [
+                'allowed' => $orderAllowed,
+            ],
+        ]);
+    }
 
-	public function renderForm()
-	{
-		/** @var \diPhotoModel $photo */
-		$photo = $this->getForm()->getModel();
+    public function renderForm()
+    {
+        /** @var \diPhotoModel $photo */
+        $photo = $this->getForm()->getModel();
 
-		if (!$this->getId()) {
-			$this->getForm()
-				->setHiddenInput([
-					'token',
-					'date',
-					'comments_last_date',
-					'comments_count',
-				]);
-		} else {
-			$tokens = '';
+        if (!$this->getId()) {
+            $this->getForm()->setHiddenInput([
+                'token',
+                'date',
+                'comments_last_date',
+                'comments_count',
+            ]);
+        } else {
+            $tokens = '';
 
-			switch ($this->tokenMode) {
-				case self::TOKEN_MODE_SINGLE:
-					$tokens = $photo->getToken();
-					break;
+            switch ($this->tokenMode) {
+                case self::TOKEN_MODE_SINGLE:
+                    $tokens = $photo->getToken();
+                    break;
 
-				case self::TOKEN_MODE_MULTI:
-					$tokens = join("\n", $photo->getAllTokens());
-					break;
-			}
+                case self::TOKEN_MODE_MULTI:
+                    $tokens = join("\n", $photo->getAllTokens());
+                    break;
+            }
 
-			$this->getForm()
-				->setData('token', $tokens);
-		}
+            $this->getForm()->setData('token', $tokens);
+        }
 
-		$this->getForm()
-			->setSelectFromCollectionInput('album_id', $this->getAlbumsForForm());
-	}
+        $this->getForm()->setSelectFromCollectionInput(
+            'album_id',
+            $this->getAlbumsForForm()
+        );
+    }
 
-	public function submitForm()
-	{
-		$this->getSubmit()
-			->makeSlug()
-			->storeImage('pic');
-	}
+    public function submitForm()
+    {
+        $this->getSubmit()
+            ->makeSlug()
+            ->storeImage('pic');
+    }
 
-	public function getFormTabs()
-	{
-		return [];
-	}
+    public function getFormTabs()
+    {
+        return [];
+    }
 
-	public function getFormFields()
-	{
-		return [
-			'token' => [
-				'type' => 'text',
+    public function getFormFields()
+    {
+        return [
+            'token' => [
+                'type' => 'text',
                 'title' => $this->localized([
                     'en' => 'Token',
                     'ru' => 'Токен для вставки',
                 ]),
-				'default' => '',
-				'flags' => ['static', 'virtual'],
-			],
+                'default' => '',
+                'flags' => ['static', 'virtual'],
+            ],
 
-			'album_id' => [
-				'type' => 'int',
+            'album_id' => [
+                'type' => 'int',
                 'title' => $this->localized([
                     'en' => 'Album',
                     'ru' => 'Альбом',
                 ]),
-				'default' => 0,
-			],
+                'default' => 0,
+            ],
 
-			'title' => [
-				'type' => 'string',
+            'title' => [
+                'type' => 'string',
                 'title' => $this->localized([
                     'en' => 'Title',
                     'ru' => 'Название',
                 ]),
-				'default' => '',
-			],
+                'default' => '',
+            ],
 
-			'slug_source' => [
-				'type' => 'string',
+            'slug_source' => [
+                'type' => 'string',
                 'title' => $this->localized([
                     'en' => 'Slug source',
                     'ru' => 'Название для URL',
                 ]),
-				'default' => '',
-			],
+                'default' => '',
+            ],
 
-			'content' => [
-				'type' => 'wysiwyg',
+            'content' => [
+                'type' => 'wysiwyg',
                 'title' => $this->localized([
                     'en' => 'Description',
                     'ru' => 'Описание',
                 ]),
-				'default' => '',
-			],
+                'default' => '',
+            ],
 
-			'pic' => [
-				'type' => 'pic',
+            'pic' => [
+                'type' => 'pic',
                 'title' => $this->localized([
                     'en' => 'Pic',
                     'ru' => 'Фото',
                 ]),
-				'default' => '',
-			],
+                'default' => '',
+            ],
 
-			'visible' => [
-				'type' => 'checkbox',
+            'visible' => [
+                'type' => 'checkbox',
                 'title' => $this->localized([
                     'en' => 'Visible',
                     'ru' => 'Отображать на сайте',
                 ]),
-				'default' => 1,
-			],
+                'default' => 1,
+            ],
 
-			'date' => [
-				'type' => 'datetime_str',
+            'date' => [
+                'type' => 'datetime_str',
                 'title' => $this->localized([
                     'en' => 'Created at',
                     'ru' => 'Дата создания',
                 ]),
-				'default' => '',
+                'default' => '',
                 'flags' => ['static', 'untouchable', 'initially_hidden'],
-			],
+            ],
 
             'comments_enabled' => [
                 'type' => 'checkbox',
@@ -275,62 +275,62 @@ class Photos extends \diCore\Admin\BasePage
                 'default' => '',
                 'flags' => ['static'],
             ],
-		];
-	}
+        ];
+    }
 
-	public function getLocalFields()
-	{
-		return [
-			'slug' => [
-				'type' => 'string',
-				'title' => 'Slug',
-				'default' => '',
-			],
+    public function getLocalFields()
+    {
+        return [
+            'slug' => [
+                'type' => 'string',
+                'title' => 'Slug',
+                'default' => '',
+            ],
 
-			'order_num' => [
-				'type' => 'order_num',
-				'title' => 'ord',
-				'default' => 0,
-				'direction' => -1,
-			],
+            'order_num' => [
+                'type' => 'order_num',
+                'title' => 'ord',
+                'default' => 0,
+                'direction' => -1,
+            ],
 
-			'pic_w' => [
-				'type' => 'int',
-				'title' => 'Pic w',
-				'default' => 0,
-			],
+            'pic_w' => [
+                'type' => 'int',
+                'title' => 'Pic w',
+                'default' => 0,
+            ],
 
-			'pic_h' => [
-				'type' => 'int',
-				'title' => 'Pic h',
-				'default' => 0,
-			],
+            'pic_h' => [
+                'type' => 'int',
+                'title' => 'Pic h',
+                'default' => 0,
+            ],
 
-			'pic_t' => [
-				'type' => 'int',
-				'title' => 'Pic h',
-				'default' => 0,
-			],
+            'pic_t' => [
+                'type' => 'int',
+                'title' => 'Pic h',
+                'default' => 0,
+            ],
 
-			'pic_tn_w' => [
-				'type' => 'int',
-				'title' => 'Pic w',
-				'default' => 0,
-			],
+            'pic_tn_w' => [
+                'type' => 'int',
+                'title' => 'Pic w',
+                'default' => 0,
+            ],
 
-			'pic_tn_h' => [
-				'type' => 'int',
-				'title' => 'Pic h',
-				'default' => 0,
-			],
-		];
-	}
+            'pic_tn_h' => [
+                'type' => 'int',
+                'title' => 'Pic h',
+                'default' => 0,
+            ],
+        ];
+    }
 
-	public function getModuleCaption()
-	{
-		return [
-			'ru' => 'Фото',
-			'en' => 'Photos',
-		];
-	}
+    public function getModuleCaption()
+    {
+        return [
+            'ru' => 'Фото',
+            'en' => 'Photos',
+        ];
+    }
 }

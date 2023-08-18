@@ -166,7 +166,8 @@ class Payment
 
     public static function systemTitle($systemId)
     {
-        return System::title($systemId) ?: 'Unknown payment system #' . $systemId;
+        return System::title($systemId) ?:
+            'Unknown payment system #' . $systemId;
     }
 
     public static function getCurrentVendors()
@@ -194,10 +195,16 @@ class Payment
             : 'Unknown currency #' . $currencyId;
     }
 
-    public function initiateProcess($amount, $paymentSystemName, $paymentVendorName)
-    {
+    public function initiateProcess(
+        $amount,
+        $paymentSystemName,
+        $paymentVendorName
+    ) {
         $paymentSystemId = System::id($paymentSystemName);
-        $paymentVendorId = System::vendorIdByName($paymentSystemId, $paymentVendorName);
+        $paymentVendorId = System::vendorIdByName(
+            $paymentSystemId,
+            $paymentVendorName
+        );
 
         /** @var Draft $draft */
         $draft = $this->getNewDraft(
@@ -232,14 +239,22 @@ class Payment
                 return $this->initSberbank($draft);
 
             default:
-                throw new \Exception('Unsupported payment system #' . $draft->getPaySystem());
+                throw new \Exception(
+                    'Unsupported payment system #' . $draft->getPaySystem()
+                );
         }
     }
 
-    public function getNewDraft($amount, $systemId, $vendorId = 0, $currency = self::rub)
-    {
-        static::log("Creating draft for [target: {$this->getTargetType()}#{$this->getTargetId()}, " .
-            "user: {$this->getUserId()}, amount: $amount, system: $systemId, vendor: $vendorId]");
+    public function getNewDraft(
+        $amount,
+        $systemId,
+        $vendorId = 0,
+        $currency = self::rub
+    ) {
+        static::log(
+            "Creating draft for [target: {$this->getTargetType()}#{$this->getTargetId()}, " .
+                "user: {$this->getUserId()}, amount: $amount, system: $systemId, vendor: $vendorId]"
+        );
         static::log('Route: ' . \diRequest::requestUri());
 
         $draft = Draft::create();
@@ -250,16 +265,15 @@ class Payment
             ->setUserId($this->getUserId())
             ->setTargetType($this->getTargetType())
             ->setTargetId($this->getTargetId())
-            ->setPaySystem((int)$systemId)
-            ->setVendor((int)$vendorId)
+            ->setPaySystem((int) $systemId)
+            ->setVendor((int) $vendorId)
             ->setCurrency($currency)
             ->setAmount($amount)
             ->setIp(ip2bin());
 
         $this->beforeDraftSave($draft);
 
-        $draft
-            ->save();
+        $draft->save();
 
         static::log("Draft created: #{$draft->getId()}");
 
@@ -286,8 +300,15 @@ class Payment
      * @return Draft
      * @throws \Exception
      */
-    public static function createDraft($targetType, $targetId, $userId, $amount, $systemId, $vendorId = 0, $currency = self::rub)
-    {
+    public static function createDraft(
+        $targetType,
+        $targetId,
+        $userId,
+        $amount,
+        $systemId,
+        $vendorId = 0,
+        $currency = self::rub
+    ) {
         $P = static::basicCreate($targetType, $targetId, $userId);
 
         return $P->getNewDraft($amount, $systemId, $vendorId, $currency);
@@ -352,12 +373,13 @@ EOF;
         $vendorId = null,
         callable $hrefCallback = null,
         $selectedVendorId = null
-    )
-    {
-        $selected = $selectedVendorId && (
-                $selectedVendorId == $vendorId ||
-                (static::SELECT_FIRST_VENDOR_BY_DEFAULT && !$selectedVendorId && static::$counter == 0)
-            );
+    ) {
+        $selected =
+            $selectedVendorId &&
+            ($selectedVendorId == $vendorId ||
+                (static::SELECT_FIRST_VENDOR_BY_DEFAULT &&
+                    !$selectedVendorId &&
+                    static::$counter == 0));
 
         if (static::isPaymentMethodAvailable($systemId, $vendorId)) {
             return [
@@ -365,7 +387,9 @@ EOF;
                     'id' => $vendorId,
                     'name' => System::vendorName($systemId, $vendorId),
                     'title' => System::vendorTitle($systemId, $vendorId),
-                    'href' => $hrefCallback ? $hrefCallback($systemId, $vendorId) : null,
+                    'href' => $hrefCallback
+                        ? $hrefCallback($systemId, $vendorId)
+                        : null,
                     'selected_class' => $selected ? 'selected' : '',
                 ],
                 'system' => [
@@ -379,8 +403,10 @@ EOF;
         return null;
     }
 
-    public static function getTemplateData(callable $hrefCallback = null, $selectedVendorId = null)
-    {
+    public static function getTemplateData(
+        callable $hrefCallback = null,
+        $selectedVendorId = null
+    ) {
         $ar = [
             'payment_vendor_rows' => [],
         ];
@@ -397,13 +423,19 @@ EOF;
 
                 foreach ($vendors as $vendorId) {
                     $ar['payment_vendor_rows'][] = static::getPaymentVendorRow(
-                        $systemId, $vendorId, $hrefCallback, $selectedVendorId
+                        $systemId,
+                        $vendorId,
+                        $hrefCallback,
+                        $selectedVendorId
                     );
                     static::$counter++;
                 }
             } else {
                 $ar['payment_vendor_rows'][] = static::getPaymentVendorRow(
-                    $systemId, null, $hrefCallback, $selectedVendorId
+                    $systemId,
+                    null,
+                    $hrefCallback,
+                    $selectedVendorId
                 );
                 static::$counter++;
             }
@@ -442,52 +474,65 @@ EOF;
 
     protected function getCustomerEmail()
     {
-        return AuthTool::i()->getUserModel()->getEmail();
+        return AuthTool::i()
+            ->getUserModel()
+            ->getEmail();
     }
 
     protected function getCustomerPhone()
     {
-        return AuthTool::i()->getUserModel()->getPhone();
+        return AuthTool::i()
+            ->getUserModel()
+            ->getPhone();
     }
 
     public function initYandex(Draft $draft)
     {
-        $paymentVendor = \diCore\Payment\Yandex\Vendor::code($draft->getVendor());
+        $paymentVendor = \diCore\Payment\Yandex\Vendor::code(
+            $draft->getVendor()
+        );
         $kassa = Kassa::create();
 
-        return static::wrapFormIntoHtml($kassa::getForm($draft, [
-            'autoSubmit' => true,
-            'customerEmail' => $this->getCustomerEmail(),
-            'customerPhone' => $this->getCustomerPhone(),
-            'paymentSystem' => $paymentVendor,
-            'additionalParams' => [
-                'shopSuccessURL' => $kassa->getSuccessUrl($draft),
-                'shopFailURL' => $kassa->getFailUrl($draft),
-            ],
-        ]));
+        return static::wrapFormIntoHtml(
+            $kassa::getForm($draft, [
+                'autoSubmit' => true,
+                'customerEmail' => $this->getCustomerEmail(),
+                'customerPhone' => $this->getCustomerPhone(),
+                'paymentSystem' => $paymentVendor,
+                'additionalParams' => [
+                    'shopSuccessURL' => $kassa->getSuccessUrl($draft),
+                    'shopFailURL' => $kassa->getFailUrl($draft),
+                ],
+            ])
+        );
     }
 
     public function initRobokassa(Draft $draft)
     {
         $rk = Robokassa::basicCreate();
 
-        return static::wrapFormIntoHtml($rk::getForm($draft, [
-            'autoSubmit' => true,
-            'customerEmail' => $this->getCustomerEmail(),
-            'customerPhone' => $this->getCustomerPhone(),
-            'description' => static::ORDER_DESCRIPTION,
-        ]));
+        return static::wrapFormIntoHtml(
+            $rk::getForm($draft, [
+                'autoSubmit' => true,
+                'customerEmail' => $this->getCustomerEmail(),
+                'customerPhone' => $this->getCustomerPhone(),
+                'description' => static::ORDER_DESCRIPTION,
+            ])
+        );
     }
 
     public function initTinkoff(Draft $draft)
     {
         $t = Tinkoff::create();
 
-        header('Location: ' . $t->getFormUri($draft, [
-            'customerEmail' => $this->getCustomerEmail(),
-            'customerPhone' => $this->getCustomerPhone(),
-            'description' => static::ORDER_DESCRIPTION,
-        ]));
+        header(
+            'Location: ' .
+                $t->getFormUri($draft, [
+                    'customerEmail' => $this->getCustomerEmail(),
+                    'customerPhone' => $this->getCustomerPhone(),
+                    'description' => static::ORDER_DESCRIPTION,
+                ])
+        );
 
         return null;
     }
@@ -496,36 +541,51 @@ EOF;
     {
         $sb = Sberbank::create();
 
-        header('Location: ' . $sb->getFormUri($draft, [
-            'customerEmail' => $this->getCustomerEmail(),
-            'customerPhone' => $this->getCustomerPhone(),
-            'description' => static::ORDER_DESCRIPTION,
-        ]));
+        header(
+            'Location: ' .
+                $sb->getFormUri($draft, [
+                    'customerEmail' => $this->getCustomerEmail(),
+                    'customerPhone' => $this->getCustomerPhone(),
+                    'description' => static::ORDER_DESCRIPTION,
+                ])
+        );
 
         return null;
     }
 
     public function initPaypal(Draft $draft)
     {
-        $successUrl = \diPaths::defaultHttp() . CMS::makeUrl([CMS::ct('payment_callback'), 'thanks'], [
-                'orderNumber' => $draft->getId(),
-                'draftNumber' => $draft->getId(),
-            ]);
-        $failUrl = \diPaths::defaultHttp() . CMS::makeUrl([CMS::ct('payment_callback'), 'failed'], [
-                'draftNumber' => $draft->getId(),
-            ]);
+        $successUrl =
+            \diPaths::defaultHttp() .
+            CMS::makeUrl(
+                [CMS::ct('payment_callback'), 'thanks'],
+                [
+                    'orderNumber' => $draft->getId(),
+                    'draftNumber' => $draft->getId(),
+                ]
+            );
+        $failUrl =
+            \diPaths::defaultHttp() .
+            CMS::makeUrl(
+                [CMS::ct('payment_callback'), 'failed'],
+                [
+                    'draftNumber' => $draft->getId(),
+                ]
+            );
 
         $pp = Paypal::create();
 
-        return static::wrapFormIntoHtml($pp::getForm($draft, [
-            'autoSubmit' => true,
-            'orderTitle' => static::ORDER_DESCRIPTION,
-            'currency' => 'RUB',
-            'additionalParams' => [
-                'return' => $successUrl,
-                'cancel_return' => $failUrl,
-            ],
-        ]));
+        return static::wrapFormIntoHtml(
+            $pp::getForm($draft, [
+                'autoSubmit' => true,
+                'orderTitle' => static::ORDER_DESCRIPTION,
+                'currency' => 'RUB',
+                'additionalParams' => [
+                    'return' => $successUrl,
+                    'cancel_return' => $failUrl,
+                ],
+            ])
+        );
     }
 
     public function initMixplat(Draft $draft)
@@ -546,23 +606,38 @@ EOF;
 
         if ($result->isSuccess()) {
             $draft
-                ->setVendor(\diCore\Payment\Mixplat\MobileVendors::id($result->getData('operator')))
+                ->setVendor(
+                    \diCore\Payment\Mixplat\MobileVendors::id(
+                        $result->getData('operator')
+                    )
+                )
                 ->setStatus(\diCore\Payment\Mixplat\ResultStatus::PENDING)
                 ->save();
 
-            $this->log('MixPlat initiated successfully: ' . print_r($result->getData(), true));
+            $this->log(
+                'MixPlat initiated successfully: ' .
+                    print_r($result->getData(), true)
+            );
         } else {
-            $this->log('MixPlat not initiated: (' . $result->getErrorCode() . ') ' . $result->getError());
+            $this->log(
+                'MixPlat not initiated: (' .
+                    $result->getErrorCode() .
+                    ') ' .
+                    $result->getError()
+            );
 
             $ok = false;
 
             switch ($result->getErrorCode()) {
                 case 8: //Operator is not active
                     // todo: Localization here
-                    $message = 'Технические проблемы на стороне оператора связи';
+                    $message =
+                        'Технические проблемы на стороне оператора связи';
 
                     $draft
-                        ->setStatus(\diCore\Payment\Mixplat\ResultStatus::OPSOS_NOT_SUPPORTED)
+                        ->setStatus(
+                            \diCore\Payment\Mixplat\ResultStatus::OPSOS_NOT_SUPPORTED
+                        )
                         ->save();
 
                     break;
@@ -572,13 +647,19 @@ EOF;
                     $message = 'Платёж невозможен для Вашего оператора связи';
 
                     $draft
-                        ->setStatus(\diCore\Payment\Mixplat\ResultStatus::OPSOS_NOT_SUPPORTED)
+                        ->setStatus(
+                            \diCore\Payment\Mixplat\ResultStatus::OPSOS_NOT_SUPPORTED
+                        )
                         ->save();
 
                     break;
 
                 default:
-                    $message = '(' . $result->getErrorCode() . ') ' . $result->getError();
+                    $message =
+                        '(' .
+                        $result->getErrorCode() .
+                        ') ' .
+                        $result->getError();
                     break;
             }
         }

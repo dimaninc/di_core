@@ -34,13 +34,11 @@ trait Hierarchy
      */
     public static function asHierarchyCol()
     {
-        $col = static::create()
-            ->orderByOrderNum();
+        $col = static::create()->orderByOrderNum();
 
         $col->map(function (Model $m) use ($col) {
             if ($m->getParent() > 0) {
-                $col->getById($m->getParent())
-                    ->addChildren($m);
+                $col->getById($m->getParent())->addChildren($m);
             }
         });
 
@@ -60,9 +58,11 @@ trait Hierarchy
 
             return extend(
                 $m->getPublicData(),
-                $children ? [
-                    '_children' => $children,
-                ] : []
+                $children
+                    ? [
+                        '_children' => $children,
+                    ]
+                    : []
             );
         });
     }

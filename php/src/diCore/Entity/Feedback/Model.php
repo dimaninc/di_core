@@ -37,16 +37,16 @@ namespace diCore\Entity\Feedback;
  */
 class Model extends \diModel
 {
-	const type = \diTypes::feedback;
-	const table = 'feedback';
-	protected $table = 'feedback';
+    const type = \diTypes::feedback;
+    const table = 'feedback';
+    protected $table = 'feedback';
 
-	public function validate()
-	{
-		if (!$this->hasContent()) {
-			$this->addValidationError('Content required', 'content');
-		}
+    public function validate()
+    {
+        if (!$this->hasContent()) {
+            $this->addValidationError('Content required', 'content');
+        }
 
-		return parent::validate();
-	}
+        return parent::validate();
+    }
 }

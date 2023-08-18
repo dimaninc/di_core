@@ -90,39 +90,37 @@ use diCore\Helper\StringHelper;
  */
 class Model extends \diModel
 {
-	const type = \diTypes::ad;
+    const type = \diTypes::ad;
     const table = 'ads';
-	protected $table = 'ads';
+    protected $table = 'ads';
 
-	/**
-	 * Returns query conditions array for order_num calculating
-	 *
-	 * @return array
-	 */
-	public function getQueryArForMove()
-	{
-		return [
-			"block_id = '{$this->getBlockId()}'",
-		];
-	}
-	
-	public function getHrefTargetName()
-	{
-		return HrefTarget::name($this->getHrefTarget());
-	}
+    /**
+     * Returns query conditions array for order_num calculating
+     *
+     * @return array
+     */
+    public function getQueryArForMove()
+    {
+        return ["block_id = '{$this->getBlockId()}'"];
+    }
 
-	public function getHrefTargetAttribute()
-	{
-		return HrefTarget::htmlAttribute($this->getHrefTarget());
-	}
+    public function getHrefTargetName()
+    {
+        return HrefTarget::name($this->getHrefTarget());
+    }
 
-	public function getCustomTemplateVars()
-	{
-		return extend(parent::getCustomTemplateVars(), [
-			'title_safe' => StringHelper::out($this->getTitle()),
-			'content_safe' => StringHelper::out($this->getContent()),
-			'href_target_name' => $this->getHrefTargetName(),
-			'href_target_attribute' => $this->getHrefTargetAttribute(),
-		]);
-	}
+    public function getHrefTargetAttribute()
+    {
+        return HrefTarget::htmlAttribute($this->getHrefTarget());
+    }
+
+    public function getCustomTemplateVars()
+    {
+        return extend(parent::getCustomTemplateVars(), [
+            'title_safe' => StringHelper::out($this->getTitle()),
+            'content_safe' => StringHelper::out($this->getContent()),
+            'href_target_name' => $this->getHrefTargetName(),
+            'href_target_attribute' => $this->getHrefTargetAttribute(),
+        ]);
+    }
 }

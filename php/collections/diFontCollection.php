@@ -62,7 +62,7 @@
  */
 class diFontCollection extends diCollection
 {
-	const type = diTypes::font;
-	protected $table = "fonts";
-	protected $modelType = "font";
+    const type = diTypes::font;
+    protected $table = 'fonts';
+    protected $modelType = 'font';
 }

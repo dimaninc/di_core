@@ -63,18 +63,18 @@ use diCore\Data\Types;
  */
 class Collection extends \diCollection
 {
-	const type = Types::mail_queue;
-	protected $table = 'mail_queue';
-	protected $modelType = 'mail_queue';
+    const type = Types::mail_queue;
+    protected $table = 'mail_queue';
+    protected $modelType = 'mail_queue';
 
-	/**
-	 * @return $this
-	 * @throws \Exception
-	 */
-	public static function createActual()
-	{
-		return static::create()
-			->filterByVisible(1)
-			->filterBySent(0);
-	}
+    /**
+     * @return $this
+     * @throws \Exception
+     */
+    public static function createActual()
+    {
+        return static::create()
+            ->filterByVisible(1)
+            ->filterBySent(0);
+    }
 }

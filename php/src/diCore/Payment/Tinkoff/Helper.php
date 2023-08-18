@@ -32,34 +32,40 @@ class Helper extends BaseHelper
         return $this;
     }
 
-	protected function getApi()
+    protected function getApi()
     {
         if (!$this->api) {
-            $this->api = new MerchantApi(static::getLogin(), static::getPassword());
+            $this->api = new MerchantApi(
+                static::getLogin(),
+                static::getPassword()
+            );
         }
 
         return $this->api;
     }
 
-	/**
-	 * @param Draft $draft
-	 * @param array $opts
-	 * @return string
-	 */
-	public function getFormUri(Draft $draft, $opts = [])
-	{
-		$opts = extend([
-			'amount' => $draft->getAmount(),
-			'userId' => $draft->getUserId(),
-			'draftId' => $draft->getId(),
-			'description' => '',
-			'customerEmail' => '',
-			'customerPhone' => '',
-			'paymentVendor' => '',
-			'additionalParams' => [],
-		], $opts);
+    /**
+     * @param Draft $draft
+     * @param array $opts
+     * @return string
+     */
+    public function getFormUri(Draft $draft, $opts = [])
+    {
+        $opts = extend(
+            [
+                'amount' => $draft->getAmount(),
+                'userId' => $draft->getUserId(),
+                'draftId' => $draft->getId(),
+                'description' => '',
+                'customerEmail' => '',
+                'customerPhone' => '',
+                'paymentVendor' => '',
+                'additionalParams' => [],
+            ],
+            $opts
+        );
 
-		$params = [
+        $params = [
             'OrderId' => $opts['draftId'],
             'Amount' => sprintf('%d', $opts['amount'] * 100),
             'Description' => $opts['description'],
@@ -67,19 +73,21 @@ class Helper extends BaseHelper
             'DATA' => $opts['additionalParams'],
         ];
 
-		$response = $this->getApi()->init(array_filter($params));
+        $response = $this->getApi()->init(array_filter($params));
 
         static::log("Init:\n" . print_r($params, true));
         static::log("Response:\n" . print_r($response, true));
 
-		if ($this->getApi()->getError()) {
-            throw new \Exception('Tinkoff init error: ' . $this->getApi()->getError());
+        if ($this->getApi()->getError()) {
+            throw new \Exception(
+                'Tinkoff init error: ' . $this->getApi()->getError()
+            );
         }
 
         return $this->getApi()->getPaymentUrl();
-	}
+    }
 
-	public function generateToken($params)
+    public function generateToken($params)
     {
         foreach ($params as &$param) {
             if (gettype($param) === 'boolean') {
@@ -130,7 +138,9 @@ class Helper extends BaseHelper
             if (\diRequest::request('Success') === 'true') {
                 self::log('Success method OK');
             } else {
-                throw new \Exception('Success method not OK: ' . print_r($_GET, true));
+                throw new \Exception(
+                    'Success method not OK: ' . print_r($_GET, true)
+                );
             }
 
             return $successCallback($this);
@@ -151,7 +161,7 @@ class Helper extends BaseHelper
         return $failCallback($this);
     }
 
-	/*
+    /*
 	public function getState(\diCore\Entity\PaymentDraft\Model $draft)
     {
         $this->getApi()->getState([

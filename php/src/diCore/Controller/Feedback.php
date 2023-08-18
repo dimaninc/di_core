@@ -15,136 +15,132 @@ use diCore\Entity\Feedback\Model;
 
 class Feedback extends \diBaseController
 {
-	const MODEL_TYPE = Types::feedback;
+    const MODEL_TYPE = Types::feedback;
 
-	protected $sendEmail = true;
-	protected $useTwig = true;
-	protected $mailBodyTemplateFolder = '`emails/feedback'; //fasttemplate
-	protected $mailBodyTemplate = 'emails/feedback/admin'; //twig
-	protected $mailSubject = 'Новое сообщение обратной связи';
-	protected $instantSend = true;
+    protected $sendEmail = true;
+    protected $useTwig = true;
+    protected $mailBodyTemplateFolder = '`emails/feedback'; //fasttemplate
+    protected $mailBodyTemplate = 'emails/feedback/admin'; //twig
+    protected $mailSubject = 'Новое сообщение обратной связи';
+    protected $instantSend = true;
 
-	/** @var Model */
-	private $feedback;
+    /** @var Model */
+    private $feedback;
 
-	public function sendAction()
-	{
-		$ar = [
-			'ok' => true,
-			'message' => '',
-		];
+    public function sendAction()
+    {
+        $ar = [
+            'ok' => true,
+            'message' => '',
+        ];
 
-		try {
-			$this->gatherData();
+        try {
+            $this->gatherData();
 
-			$this->getModel()
-				->save();
-		} catch (\Exception $e) {
-			$ar['ok'] = false;
-			$ar['message'] = $e->getMessage();
-		}
+            $this->getModel()->save();
+        } catch (\Exception $e) {
+            $ar['ok'] = false;
+            $ar['message'] = $e->getMessage();
+        }
 
-		if ($ar['ok'] && $this->sendEmail)
-		{
-			$this->sendEmailNotification();
-		}
+        if ($ar['ok'] && $this->sendEmail) {
+            $this->sendEmailNotification();
+        }
 
-		return $ar;
-	}
+        return $ar;
+    }
 
-	protected function initModel()
-	{
-		$this->feedback = \diModel::create(static::MODEL_TYPE);
+    protected function initModel()
+    {
+        $this->feedback = \diModel::create(static::MODEL_TYPE);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function getModel()
-	{
-		if (!$this->feedback)
-		{
-			$this->initModel();
-		}
+    protected function getModel()
+    {
+        if (!$this->feedback) {
+            $this->initModel();
+        }
 
-		return $this->feedback;
-	}
+        return $this->feedback;
+    }
 
-	protected function gatherData()
-	{
-		$this->getModel()
-			->initFromRequest('post')
-			->killId()
-			->setIp(ip2bin());
+    protected function gatherData()
+    {
+        $this->getModel()
+            ->initFromRequest('post')
+            ->killId()
+            ->setIp(ip2bin());
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function getSender()
-	{
-		return \diConfiguration::get('sender_email');
-	}
+    protected function getSender()
+    {
+        return \diConfiguration::get('sender_email');
+    }
 
-	protected function getRecipientsString()
-	{
-		return \diConfiguration::get('feedback_email');
-	}
-	
-	protected function getRecipients()
-	{
-		return preg_split("/[,;\r\n\s]+/", $this->getRecipientsString());
-	}
+    protected function getRecipientsString()
+    {
+        return \diConfiguration::get('feedback_email');
+    }
 
-	protected function getMailSubject()
-	{
-		return $this->mailSubject;
-	}
+    protected function getRecipients()
+    {
+        return preg_split("/[,;\r\n\s]+/", $this->getRecipientsString());
+    }
 
-	protected function getMailBody()
-	{
-		if (!$this->useTwig)
-		{
-			return $this->initWebTpl()->getTpl()
-				->define($this->mailBodyTemplateFolder, [
-					'body',
-				])
-				->assign($this->getModel()->getTemplateVars())
-				->parse('body');
-		}
+    protected function getMailSubject()
+    {
+        return $this->mailSubject;
+    }
 
-		$body = $this->getTwig()
-			->parse($this->mailBodyTemplate, [
-				'feedback' => $this->getModel(),
-				'title' => Config::getSiteTitle(),
-				'domain' => Config::getMainDomain(),
-			]);
+    protected function getMailBody()
+    {
+        if (!$this->useTwig) {
+            return $this->initWebTpl()
+                ->getTpl()
+                ->define($this->mailBodyTemplateFolder, ['body'])
+                ->assign($this->getModel()->getTemplateVars())
+                ->parse('body');
+        }
 
-		$html = $this->getTwig()
-			->parse('emails/email_html_base', [
-				'body' => $body,
-				'title' => Config::getSiteTitle(),
-				'domain' => Config::getMainDomain(),
-			]);
+        $body = $this->getTwig()->parse($this->mailBodyTemplate, [
+            'feedback' => $this->getModel(),
+            'title' => Config::getSiteTitle(),
+            'domain' => Config::getMainDomain(),
+        ]);
 
-		return $html;
-	}
+        $html = $this->getTwig()->parse('emails/email_html_base', [
+            'body' => $body,
+            'title' => Config::getSiteTitle(),
+            'domain' => Config::getMainDomain(),
+        ]);
 
-	protected function sendEmail($from, $to, $subj, $body)
-	{
-		return $this->instantSend
-			? Queue::basicCreate()->addAndSend($from, $to, $subj, $body)
-			: Queue::basicCreate()->add($from, $to, $subj, $body);
-	}
+        return $html;
+    }
 
-	protected function sendEmailNotification()
-	{
-		foreach ($this->getRecipients() as $recipient)
-		{
-			if ($recipient = trim($recipient))
-			{
-				$this->sendEmail($this->getSender(), $recipient, $this->getMailSubject(), $this->getMailBody());
-			}
-		}
+    protected function sendEmail($from, $to, $subj, $body)
+    {
+        return $this->instantSend
+            ? Queue::basicCreate()->addAndSend($from, $to, $subj, $body)
+            : Queue::basicCreate()->add($from, $to, $subj, $body);
+    }
 
-		return $this;
-	}
+    protected function sendEmailNotification()
+    {
+        foreach ($this->getRecipients() as $recipient) {
+            if ($recipient = trim($recipient)) {
+                $this->sendEmail(
+                    $this->getSender(),
+                    $recipient,
+                    $this->getMailSubject(),
+                    $this->getMailBody()
+                );
+            }
+        }
+
+        return $this;
+    }
 }

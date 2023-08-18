@@ -25,6 +25,6 @@
  */
 class diAdminWikiModel extends diModel
 {
-	const type = diTypes::admin_wiki;
-	protected $table = "admin_wiki";
+    const type = diTypes::admin_wiki;
+    protected $table = 'admin_wiki';
 }

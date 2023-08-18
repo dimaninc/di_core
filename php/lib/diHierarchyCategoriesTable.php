@@ -1,5 +1,5 @@
 <?php
 class diHierarchyCategoriesTable extends diHierarchyTable
 {
-	protected $table = "categories";
+    protected $table = 'categories';
 }

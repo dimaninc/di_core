@@ -50,7 +50,9 @@ class ArrayHelper
      */
     public static function combine($ar1, $ar2 = null)
     {
-        return $ar2 === null ? array_combine($ar1, $ar1) : array_combine($ar1, $ar2);
+        return $ar2 === null
+            ? array_combine($ar1, $ar1)
+            : array_combine($ar1, $ar2);
     }
 
     /**
@@ -122,8 +124,11 @@ class ArrayHelper
      *
      * @return array
      */
-    public static function filterByKey($ar, $allowedKeys = [], $disallowedKeys = [])
-    {
+    public static function filterByKey(
+        $ar,
+        $allowedKeys = [],
+        $disallowedKeys = []
+    ) {
         if ($allowedKeys) {
             $ar = array_intersect_key($ar, array_flip($allowedKeys));
         }
@@ -208,8 +213,12 @@ class ArrayHelper
      * @param string $type
      * @return mixed
      */
-    public static function getValue($ar, $idx, $defaultValue = null, $type = null)
-    {
+    public static function getValue(
+        $ar,
+        $idx,
+        $defaultValue = null,
+        $type = null
+    ) {
         $ar = (array) $ar;
 
         $type = $type ?: gettype($defaultValue);
@@ -231,8 +240,12 @@ class ArrayHelper
         }
     }
 
-    public static function get($deepArray, $path, $defaultValue = null, $type = null)
-    {
+    public static function get(
+        $deepArray,
+        $path,
+        $defaultValue = null,
+        $type = null
+    ) {
         if (!$deepArray || is_scalar($deepArray)) {
             return $defaultValue;
         }

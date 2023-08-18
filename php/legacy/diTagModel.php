@@ -1,3 +1,5 @@
 <?php
 /** @deprecated  */
-class diTagModel extends \diCore\Entity\Tag\Model {}
+class diTagModel extends \diCore\Entity\Tag\Model
+{
+}

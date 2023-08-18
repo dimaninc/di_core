@@ -42,14 +42,14 @@ abstract class Migration
             ->startTransaction();
 
         try {
-            $result = $state
-                ? $this->upWrapper()
-                : $this->downWrapper();
+            $result = $state ? $this->upWrapper() : $this->downWrapper();
 
             if ($this->getDb()->getLog() || $result === false) {
                 $this->getDb()->rollbackTransaction();
 
-                throw new \Exception('Error(s) during migration: ' . $this->getDb()->getLogStr());
+                throw new \Exception(
+                    'Error(s) during migration: ' . $this->getDb()->getLogStr()
+                );
             } else {
                 $this->getDb()->commitTransaction();
             }
@@ -89,7 +89,9 @@ abstract class Migration
                 $_GET['folderId'] = $folderId;
                 \diBaseController::autoCreate('db', 'restore', [], true);
             } else {
-                $this->getDb()->q(file_get_contents(StringHelper::slash($folder) . $file));
+                $this->getDb()->q(
+                    file_get_contents(StringHelper::slash($folder) . $file)
+                );
             }
         }
 

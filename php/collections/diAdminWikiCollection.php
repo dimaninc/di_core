@@ -29,7 +29,7 @@
  */
 class diAdminWikiCollection extends diCollection
 {
-	const type = diTypes::admin_wiki;
-	protected $table = "admin_wiki";
-	protected $modelType = "admin_wiki";
+    const type = diTypes::admin_wiki;
+    protected $table = 'admin_wiki';
+    protected $modelType = 'admin_wiki';
 }

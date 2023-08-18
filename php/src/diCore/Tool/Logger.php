@@ -13,75 +13,88 @@ use diCore\Helper\StringHelper;
 
 class Logger
 {
-	use \diSingleton;
+    use \diSingleton;
 
-	const SUB_FOLDER = 'log/debug/';
-	const EXTENSION = '.txt';
-	const DATE_TIME_FORMAT = '[d.m.Y H:i:s]';
-	const CHMOD = 0777;
+    const SUB_FOLDER = 'log/debug/';
+    const EXTENSION = '.txt';
+    const DATE_TIME_FORMAT = '[d.m.Y H:i:s]';
+    const CHMOD = 0777;
 
-	const PURPOSE_SIMPLE = 1;
-	const PURPOSE_VARIABLE = 2;
+    const PURPOSE_SIMPLE = 1;
+    const PURPOSE_VARIABLE = 2;
 
-	protected $uid;
+    protected $uid;
 
-	protected function init()
-	{
-	    $this->uid = StringHelper::random(10);
-	}
+    protected function init()
+    {
+        $this->uid = StringHelper::random(10);
+    }
 
-	public function getFolder()
-	{
-		return Config::getLogFolder();
-	}
+    public function getFolder()
+    {
+        return Config::getLogFolder();
+    }
 
-	protected function getFilename($purpose, $fnSuffix = '')
-	{
-		return \diDateTime::format('Y_m_d') . $fnSuffix . static::EXTENSION;
-	}
+    protected function getFilename($purpose, $fnSuffix = '')
+    {
+        return \diDateTime::format('Y_m_d') . $fnSuffix . static::EXTENSION;
+    }
 
-	protected function getFullFilename($purpose, $fnSuffix = '')
-	{
-		return $this->getFolder() . static::SUB_FOLDER . $this->getFilename($purpose, $fnSuffix);
-	}
+    protected function getFullFilename($purpose, $fnSuffix = '')
+    {
+        return $this->getFolder() .
+            static::SUB_FOLDER .
+            $this->getFilename($purpose, $fnSuffix);
+    }
 
-	protected function getDateTime($purpose)
-	{
-		return \diDateTime::format(static::DATE_TIME_FORMAT);
-	}
+    protected function getDateTime($purpose)
+    {
+        return \diDateTime::format(static::DATE_TIME_FORMAT);
+    }
 
-	protected function saveLine($line, $purpose, $fnSuffix = '')
-	{
-		$fn = $this->getFullFilename($purpose, $fnSuffix);
+    protected function saveLine($line, $purpose, $fnSuffix = '')
+    {
+        $fn = $this->getFullFilename($purpose, $fnSuffix);
 
-		$f = fopen($fn, 'a');
-		fputs($f, $this->uid . '> ' . $this->getDateTime($purpose) . ' ' . $line . "\n");
-		fclose($f);
+        $f = fopen($fn, 'a');
+        fputs(
+            $f,
+            $this->uid .
+                '> ' .
+                $this->getDateTime($purpose) .
+                ' ' .
+                $line .
+                "\n"
+        );
+        fclose($f);
 
-		@chmod($fn, static::CHMOD);
+        @chmod($fn, static::CHMOD);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function log($message, $module = '', $fnSuffix = '')
-	{
-		if ($module) {
-			$module = "[$module] ";
-		}
+    public function log($message, $module = '', $fnSuffix = '')
+    {
+        if ($module) {
+            $module = "[$module] ";
+        }
 
-		$this->saveLine($module . $message, self::PURPOSE_SIMPLE, $fnSuffix);
+        $this->saveLine($module . $message, self::PURPOSE_SIMPLE, $fnSuffix);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function variable()
-	{
-		$arguments = func_get_args();
+    public function variable()
+    {
+        $arguments = func_get_args();
 
-		foreach ($arguments as $arg) {
-			$this->saveLine(print_r($arg, true) ?: var_export($arg, true), self::PURPOSE_VARIABLE);
-		}
+        foreach ($arguments as $arg) {
+            $this->saveLine(
+                print_r($arg, true) ?: var_export($arg, true),
+                self::PURPOSE_VARIABLE
+            );
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 }

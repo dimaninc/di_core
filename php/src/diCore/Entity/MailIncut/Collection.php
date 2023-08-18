@@ -31,35 +31,33 @@ namespace diCore\Entity\MailIncut;
  */
 class Collection extends \diCollection
 {
-	const type = \diTypes::mail_incut;
-	protected $table = 'mail_incuts';
-	protected $modelType = 'mail_incut';
+    const type = \diTypes::mail_incut;
+    protected $table = 'mail_incuts';
+    protected $modelType = 'mail_incut';
 
-	/**
-	 * @return Collection
-	 * @throws \Exception
-	 */
-	public static function createText()
-	{
-		/** @var Collection $col */
-		$col = \diCollection::create(static::type);
-		$col
-			->filterByType(Type::text);
+    /**
+     * @return Collection
+     * @throws \Exception
+     */
+    public static function createText()
+    {
+        /** @var Collection $col */
+        $col = \diCollection::create(static::type);
+        $col->filterByType(Type::text);
 
-		return $col;
-	}
+        return $col;
+    }
 
-	/**
-	 * @return Collection
-	 * @throws \Exception
-	 */
-	public static function createBinaryAttachment()
-	{
-		/** @var Collection $col */
-		$col = \diCollection::create(static::type);
-		$col
-			->filterByType(Type::binary_attachment);
+    /**
+     * @return Collection
+     * @throws \Exception
+     */
+    public static function createBinaryAttachment()
+    {
+        /** @var Collection $col */
+        $col = \diCollection::create(static::type);
+        $col->filterByType(Type::binary_attachment);
 
-		return $col;
-	}
+        return $col;
+    }
 }

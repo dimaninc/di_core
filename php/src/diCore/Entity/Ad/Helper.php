@@ -15,297 +15,301 @@ use diCore\Entity\AdBlock\Model as Block;
 
 class Helper
 {
-	const TEMPLATE_NAME = 'snippets/ad_block';
-	const CUSTOM_TEMPLATE_NAME = 'snippets/custom_ad_block';
+    const TEMPLATE_NAME = 'snippets/ad_block';
+    const CUSTOM_TEMPLATE_NAME = 'snippets/custom_ad_block';
 
-	const TRANSITION_DEFAULT = 0;
-	const TRANSITION_CROSS_FADE = 1;
-	const TRANSITION_SLIDE_L2R = 2;
-	const TRANSITION_SLIDE_R2L = 3;
-	const TRANSITION_SLIDE_T2B = 4;
-	const TRANSITION_SLIDE_B2T = 5;
+    const TRANSITION_DEFAULT = 0;
+    const TRANSITION_CROSS_FADE = 1;
+    const TRANSITION_SLIDE_L2R = 2;
+    const TRANSITION_SLIDE_R2L = 3;
+    const TRANSITION_SLIDE_T2B = 4;
+    const TRANSITION_SLIDE_B2T = 5;
 
-	const TRANSITION_STYLE_DEFAULT = 0;
-	const TRANSITION_STYLE_BOTH_SLIDING = 1;
-	const TRANSITION_STYLE_ONLY_NEW_SLIDING = 2;
+    const TRANSITION_STYLE_DEFAULT = 0;
+    const TRANSITION_STYLE_BOTH_SLIDING = 1;
+    const TRANSITION_STYLE_ONLY_NEW_SLIDING = 2;
 
-	const ORDER_IN_ORDER = 0;
-	const ORDER_RANDOM = 1;
+    const ORDER_IN_ORDER = 0;
+    const ORDER_RANDOM = 1;
 
-	static $adTransitionsAr = [
-		self::TRANSITION_DEFAULT => 'По умолчанию',
-		self::TRANSITION_CROSS_FADE => 'Проявление (crossfade)',
-		self::TRANSITION_SLIDE_L2R => 'Скроллинг (слева направо)',
-		self::TRANSITION_SLIDE_R2L => 'Скроллинг (справа налево)',
-		self::TRANSITION_SLIDE_T2B => 'Скроллинг (сверху вниз)',
-		self::TRANSITION_SLIDE_B2T => 'Скроллинг (снизу вверх)',
-	];
+    static $adTransitionsAr = [
+        self::TRANSITION_DEFAULT => 'По умолчанию',
+        self::TRANSITION_CROSS_FADE => 'Проявление (crossfade)',
+        self::TRANSITION_SLIDE_L2R => 'Скроллинг (слева направо)',
+        self::TRANSITION_SLIDE_R2L => 'Скроллинг (справа налево)',
+        self::TRANSITION_SLIDE_T2B => 'Скроллинг (сверху вниз)',
+        self::TRANSITION_SLIDE_B2T => 'Скроллинг (снизу вверх)',
+    ];
 
-	static $adTransitionStylesAr = [
-		self::TRANSITION_STYLE_DEFAULT => 'По умолчанию',
-		self::TRANSITION_STYLE_BOTH_SLIDING => 'Новый слайд вытесняет старый',
-		self::TRANSITION_STYLE_ONLY_NEW_SLIDING => 'Новый слайд наезжает на старый',
-	];
+    static $adTransitionStylesAr = [
+        self::TRANSITION_STYLE_DEFAULT => 'По умолчанию',
+        self::TRANSITION_STYLE_BOTH_SLIDING => 'Новый слайд вытесняет старый',
+        self::TRANSITION_STYLE_ONLY_NEW_SLIDING =>
+            'Новый слайд наезжает на старый',
+    ];
 
-	static $adSlidesOrdersAr = [
-		self::ORDER_IN_ORDER => 'По порядку',
-		self::ORDER_RANDOM => 'В случайном порядке',
-	];
+    static $adSlidesOrdersAr = [
+        self::ORDER_IN_ORDER => 'По порядку',
+        self::ORDER_RANDOM => 'В случайном порядке',
+    ];
 
-	/**
-	 * @var CMS
-	 */
-	private $Z;
+    /**
+     * @var CMS
+     */
+    private $Z;
 
-	/**
-	 * @var array
-	 */
-	private $ads = [];
-	/**
-	 * @var Block
-	 */
-	private $block;
+    /**
+     * @var array
+     */
+    private $ads = [];
+    /**
+     * @var Block
+     */
+    private $block;
 
-	public static function printBlock($blockId = null, $token = null, CMS $CMS = null)
-	{
-		global $Z;
+    public static function printBlock(
+        $blockId = null,
+        $token = null,
+        CMS $CMS = null
+    ) {
+        global $Z;
 
-		$a = new static($CMS ?: $Z);
+        $a = new static($CMS ?: $Z);
 
-		if (!$blockId) {
-		    $blocks = Blocks::create()
+        if (!$blockId) {
+            $blocks = Blocks::create()
                 ->filterByVisible(1)
                 ->orderByOrderNum();
 
-		    $blockId = $blocks->getFirstItem();
+            $blockId = $blocks->getFirstItem();
         }
 
-		return $a->render($blockId, $token);
-	}
+        return $a->render($blockId, $token);
+    }
 
-	public static function incutBlocks($content, CMS $Z = null)
-	{
-		$ar1 = $ar2 = [];
+    public static function incutBlocks($content, CMS $Z = null)
+    {
+        $ar1 = $ar2 = [];
 
-		$blocks = Blocks::create();
-		/** @var Block $block */
+        $blocks = Blocks::create();
+        /** @var Block $block */
         foreach ($blocks as $block) {
-			$ar1[] = sprintf(Block::INCUT_TEMPLATE, $block->getId());
-			$ar2[] = self::printBlock($block, '_AD_BLOCK', $Z);
-		}
+            $ar1[] = sprintf(Block::INCUT_TEMPLATE, $block->getId());
+            $ar2[] = self::printBlock($block, '_AD_BLOCK', $Z);
+        }
 
-		$content = str_replace($ar1, $ar2, $content);
+        $content = str_replace($ar1, $ar2, $content);
 
-		return $content;
-	}
+        return $content;
+    }
 
-	public function __construct(CMS $Z)
-	{
-		$this->Z = $Z;
-	}
+    public function __construct(CMS $Z)
+    {
+        $this->Z = $Z;
+    }
 
-	protected function getZ()
-	{
-		return $this->Z;
-	}
+    protected function getZ()
+    {
+        return $this->Z;
+    }
 
-	public function getTpl()
-	{
-		return $this->getZ()->getTpl();
-	}
+    public function getTpl()
+    {
+        return $this->getZ()->getTpl();
+    }
 
-	public function getTwig()
-	{
-		return $this->getZ()->getTwig();
-	}
+    public function getTwig()
+    {
+        return $this->getZ()->getTwig();
+    }
 
-	protected function populateBlock($blockId)
-	{
-		$this->block = is_object($blockId) && $blockId instanceof \diModel
-			? $blockId
-			: Block::createById($blockId);
+    protected function populateBlock($blockId)
+    {
+        $this->block =
+            is_object($blockId) && $blockId instanceof \diModel
+                ? $blockId
+                : Block::createById($blockId);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function blockIsNeeded()
-	{
-		return true;
-	}
+    protected function blockIsNeeded()
+    {
+        return true;
+    }
 
-	public function render($blockId, $token = null)
-	{
-		$this->populateBlock($blockId);
+    public function render($blockId, $token = null)
+    {
+        $this->populateBlock($blockId);
 
-		if ($this->blockIsNeeded() && !$this->getBlock()->exists()) {
-			return '';
-		}
+        if ($this->blockIsNeeded() && !$this->getBlock()->exists()) {
+            return '';
+        }
 
-		$this->checkTitleAndContentOfSlides();
+        $this->checkTitleAndContentOfSlides();
 
-		if ($this->getTpl() && $this->getTpl()->defined('ad_block')) {
-			return $this->oldRender($token);
-		}
+        if ($this->getTpl() && $this->getTpl()->defined('ad_block')) {
+            return $this->oldRender($token);
+        }
 
-		$templateName = $this->getTwig()->exists(static::CUSTOM_TEMPLATE_NAME)
-			? static::CUSTOM_TEMPLATE_NAME
-			: static::TEMPLATE_NAME;
+        $templateName = $this->getTwig()->exists(static::CUSTOM_TEMPLATE_NAME)
+            ? static::CUSTOM_TEMPLATE_NAME
+            : static::TEMPLATE_NAME;
 
-		$data = [
-			'block' => $this->getBlock(),
-			'ads' => $this->getAds(),
-		];
+        $data = [
+            'block' => $this->getBlock(),
+            'ads' => $this->getAds(),
+        ];
 
-		return $token
-			? $this->getTwig()
-				->render($templateName, $token, $data)
-				->get($token)
-			: $this->getTwig()
-				->parse($templateName, $data);
-	}
+        return $token
+            ? $this->getTwig()
+                ->render($templateName, $token, $data)
+                ->get($token)
+            : $this->getTwig()->parse($templateName, $data);
+    }
 
-	/**
-	 * @return Block
-	 * @throws \Exception
-	 */
-	protected function getBlock()
-	{
-		return $this->block ?: Block::create();
-	}
+    /**
+     * @return Block
+     * @throws \Exception
+     */
+    protected function getBlock()
+    {
+        return $this->block ?: Block::create();
+    }
 
-	protected function getHolidayDates()
-	{
-		$ar = preg_split('#[;,\s]+#', Configuration::safeGet('holidays'));
+    protected function getHolidayDates()
+    {
+        $ar = preg_split('#[;,\s]+#', Configuration::safeGet('holidays'));
 
-		return $ar;
-	}
+        return $ar;
+    }
 
-	protected function isHoliday()
-	{
-		return !!array_intersect([
-			\diDateTime::format('m/d'),
-			\diDateTime::format('d.m'),
-		], $this->getHolidayDates());
-	}
+    protected function isHoliday()
+    {
+        return !!array_intersect(
+            [\diDateTime::format('m/d'), \diDateTime::format('d.m')],
+            $this->getHolidayDates()
+        );
+    }
 
-	/**
-	 * @return Collection
-	 * @throws \Exception
-	 */
-	protected function getAds()
-	{
-		if (!isset($this->ads[$this->getBlock()->getId()])) {
-			$this->ads[$this->getBlock()->getId()] = $this->getBlock()->fetchAdsForHelper(function() {
-			    return $this->fetchAds();
+    /**
+     * @return Collection
+     * @throws \Exception
+     */
+    protected function getAds()
+    {
+        if (!isset($this->ads[$this->getBlock()->getId()])) {
+            $this->ads[
+                $this->getBlock()->getId()
+            ] = $this->getBlock()->fetchAdsForHelper(function () {
+                return $this->fetchAds();
             });
-		}
+        }
 
-		return $this->ads[$this->getBlock()->getId()];
-	}
+        return $this->ads[$this->getBlock()->getId()];
+    }
 
-	protected function fetchAds()
-	{
-		$wd = \diDateTime::weekDay();
+    protected function fetchAds()
+    {
+        $wd = \diDateTime::weekDay();
 
-		$holidayValues = [
-			ShowOnHolidays::always,
-			$this->isHoliday()
-				? ShowOnHolidays::only
-				: ShowOnHolidays::except,
-		];
+        $holidayValues = [
+            ShowOnHolidays::always,
+            $this->isHoliday() ? ShowOnHolidays::only : ShowOnHolidays::except,
+        ];
 
-		$col = Collection::create()
-			->filterByBlockId($this->getBlock()->getId());
+        $col = Collection::create()->filterByBlockId(
+            $this->getBlock()->getId()
+        );
 
-		if ($this->considerDates()) {
-			$col
-				->filterManual('show_date1 IS NULL OR CURDATE() >= show_date1')
-				->filterManual('show_date2 IS NULL OR CURDATE() <= show_date2');
-		}
+        if ($this->considerDates()) {
+            $col->filterManual(
+                'show_date1 IS NULL OR CURDATE() >= show_date1'
+            )->filterManual('show_date2 IS NULL OR CURDATE() <= show_date2');
+        }
 
-		if ($this->considerTimes()) {
-			$col
-				->filterManual('show_time1 IS NULL OR CURTIME() >= show_time1')
-				->filterManual('show_time2 IS NULL OR CURTIME() <= show_time2');
-		}
+        if ($this->considerTimes()) {
+            $col->filterManual(
+                'show_time1 IS NULL OR CURTIME() >= show_time1'
+            )->filterManual('show_time2 IS NULL OR CURTIME() <= show_time2');
+        }
 
-		if ($this->considerWeekdays()) {
-			$col
-				->filterManual("show_on_weekdays = '' OR INSTR(show_on_weekdays, ',$wd,') > 0");
-		}
+        if ($this->considerWeekdays()) {
+            $col->filterManual(
+                "show_on_weekdays = '' OR INSTR(show_on_weekdays, ',$wd,') > 0"
+            );
+        }
 
-		if ($this->considerHolidays()) {
-			$col
-				->filterByShowOnHolidays($holidayValues);
-		}
+        if ($this->considerHolidays()) {
+            $col->filterByShowOnHolidays($holidayValues);
+        }
 
-		$col
-			->filterByVisible(1)
-			->orderByOrderNum();
+        $col->filterByVisible(1)->orderByOrderNum();
 
-		return $col;
-	}
+        return $col;
+    }
 
-	protected function considerDates()
-	{
-		return true;
-	}
+    protected function considerDates()
+    {
+        return true;
+    }
 
-	protected function considerTimes()
-	{
-		return true;
-	}
+    protected function considerTimes()
+    {
+        return true;
+    }
 
-	protected function considerWeekdays()
-	{
-		return true;
-	}
+    protected function considerWeekdays()
+    {
+        return true;
+    }
 
-	protected function considerHolidays()
-	{
-		return true;
-	}
+    protected function considerHolidays()
+    {
+        return true;
+    }
 
-	protected function checkTitleAndContentOfSlides()
-	{
-		if (
-		    !$this->getBlock()->hasDefaultSlideTitle() &&
+    protected function checkTitleAndContentOfSlides()
+    {
+        if (
+            !$this->getBlock()->hasDefaultSlideTitle() &&
             !$this->getBlock()->hasDefaultSlideContent()
         ) {
-			return $this;
-		}
+            return $this;
+        }
 
-		/** @var Model $ad */
-		foreach ($this->getAds() as $ad) {
-			if (!$ad->hasTitle()) {
-				$ad->setTitle($this->getBlock()->getDefaultSlideTitle());
-			}
+        /** @var Model $ad */
+        foreach ($this->getAds() as $ad) {
+            if (!$ad->hasTitle()) {
+                $ad->setTitle($this->getBlock()->getDefaultSlideTitle());
+            }
 
-			if (!$ad->hasContent()) {
-				$ad->setContent($this->getBlock()->getDefaultSlideContent());
-			}
-		}
+            if (!$ad->hasContent()) {
+                $ad->setContent($this->getBlock()->getDefaultSlideContent());
+            }
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function oldRender($token)
-	{
-		self::getTpl()
-			->clear('AD_ROWS');
+    protected function oldRender($token)
+    {
+        self::getTpl()->clear('AD_ROWS');
 
-		/** @var Model $ad */
-		foreach ($this->getAds() as $ad) {
-			$this->getTpl()
-				->assign($ad->getTemplateVarsExtended(), 'A_')
-				->process('AD_ROWS', '.ad_row');
-		}
+        /** @var Model $ad */
+        foreach ($this->getAds() as $ad) {
+            $this->getTpl()
+                ->assign($ad->getTemplateVarsExtended(), 'A_')
+                ->process('AD_ROWS', '.ad_row');
+        }
 
-		$this->getTpl()
-			->assign($this->getBlock()->getTemplateVarsExtended(), 'AB_');
+        $this->getTpl()->assign(
+            $this->getBlock()->getTemplateVarsExtended(),
+            'AB_'
+        );
 
-		return $this->getAds()->count()
-			? $this->getTpl()->parse($token, 'ad_block')
-			: '';
-	}
+        return $this->getAds()->count()
+            ? $this->getTpl()->parse($token, 'ad_block')
+            : '';
+    }
 }

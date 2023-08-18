@@ -31,23 +31,26 @@ class Page
 
     public function __construct()
     {
-        $this
-            ->cleanServerVarsFromFlushParam();
+        $this->cleanServerVarsFromFlushParam();
     }
 
     protected function cleanServerVarsFromFlushParam()
     {
         if (!empty($_SERVER['REQUEST_URI'])) {
-            $_SERVER['REQUEST_URI'] = StringHelper::removeQueryStringParameter($_SERVER['REQUEST_URI'], [
-                static::FLUSH_PARAM,
-            ]);
+            $_SERVER['REQUEST_URI'] = StringHelper::removeQueryStringParameter(
+                $_SERVER['REQUEST_URI'],
+                [static::FLUSH_PARAM]
+            );
         }
 
         if (!empty($_SERVER['QUERY_STRING'])) {
-            $_SERVER['QUERY_STRING'] = ltrim(StringHelper::removeQueryStringParameter(
-                '?' . $_SERVER['QUERY_STRING'], [
-                    static::FLUSH_PARAM,
-                ]), '?');
+            $_SERVER['QUERY_STRING'] = ltrim(
+                StringHelper::removeQueryStringParameter(
+                    '?' . $_SERVER['QUERY_STRING'],
+                    [static::FLUSH_PARAM]
+                ),
+                '?'
+            );
         }
 
         return $this;
@@ -55,8 +58,7 @@ class Page
 
     protected function canBeUsed()
     {
-        return
-            ($this->force || !Auth::i()->authorized()) &&
+        return ($this->force || !Auth::i()->authorized()) &&
             !\diRequest::get(static::FLUSH_PARAM);
     }
 
@@ -95,17 +97,14 @@ class Page
 
     protected function getCacheFromModel(Model $cache, $options = [])
     {
-        return $cache->exists()
-            ? $cache->getContent()
-            : null;
+        return $cache->exists() ? $cache->getContent() : null;
     }
 
     public function rebuildAll()
     {
         /** @var Collection $col */
         $col = \diCollection::create(Types::page_cache);
-        $col
-            ->filterByActive(1);
+        $col->filterByActive(1);
         /** @var Model $cache */
         foreach ($col as $cache) {
             $this->rebuild($cache);
@@ -127,21 +126,26 @@ class Page
 
         $this->rebuildWorker($cacheModel);
 
-        $cacheModel
-            ->setUpdatedAt(\diDateTime::sqlFormat())
-            ->save();
+        $cacheModel->setUpdatedAt(\diDateTime::sqlFormat())->save();
 
         return $this;
     }
 
     protected function rebuildWorker(Model $cacheModel)
     {
-        $uri = Config::getMainProtocol() . Config::getMainDomain() . $cacheModel->getRebuildUri();
-        $content = file_get_contents($uri, false, stream_context_create([
-            'http' => [
-                'ignore_errors' => true,
-            ],
-        ]));
+        $uri =
+            Config::getMainProtocol() .
+            Config::getMainDomain() .
+            $cacheModel->getRebuildUri();
+        $content = file_get_contents(
+            $uri,
+            false,
+            stream_context_create([
+                'http' => [
+                    'ignore_errors' => true,
+                ],
+            ])
+        );
 
         $this->storeContent($cacheModel, $content);
 

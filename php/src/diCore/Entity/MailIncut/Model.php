@@ -28,66 +28,76 @@ namespace diCore\Entity\MailIncut;
  */
 class Model extends \diModel
 {
-	const type = \diTypes::mail_incut;
-	protected $table = 'mail_incuts';
+    const type = \diTypes::mail_incut;
+    protected $table = 'mail_incuts';
 
-	const TOKEN = '{{{-MAIL-INCUT-%d-}}}';
+    const TOKEN = '{{{-MAIL-INCUT-%d-}}}';
 
-	/**
-	 * @param string $content
-	 * @param int|null $targetType
-	 * @param int|null $targetId
-	 * @return Model
-	 * @throws \Exception
-	 */
-	public static function createText($content, $targetType = null, $targetId = null)
-	{
-		/** @var Model $m */
-		$m = static::create(static::type);
-		$m
-			->setType(Type::text)
-			->setEssentials($content, $targetType, $targetId);
+    /**
+     * @param string $content
+     * @param int|null $targetType
+     * @param int|null $targetId
+     * @return Model
+     * @throws \Exception
+     */
+    public static function createText(
+        $content,
+        $targetType = null,
+        $targetId = null
+    ) {
+        /** @var Model $m */
+        $m = static::create(static::type);
+        $m->setType(Type::text)->setEssentials(
+            $content,
+            $targetType,
+            $targetId
+        );
 
-		return $m;
-	}
+        return $m;
+    }
 
-	/**
-	 * @param string $content
-	 * @param int|null $targetType
-	 * @param int|null $targetId
-	 * @return Model
-	 * @throws \Exception
-	 */
-	public static function createBinaryAttachment($content, $targetType = null, $targetId = null)
-	{
-		/** @var Model $m */
-		$m = static::create(static::type);
-		$m
-			->setType(Type::binary_attachment)
-			->setEssentials($content, $targetType, $targetId);
+    /**
+     * @param string $content
+     * @param int|null $targetType
+     * @param int|null $targetId
+     * @return Model
+     * @throws \Exception
+     */
+    public static function createBinaryAttachment(
+        $content,
+        $targetType = null,
+        $targetId = null
+    ) {
+        /** @var Model $m */
+        $m = static::create(static::type);
+        $m->setType(Type::binary_attachment)->setEssentials(
+            $content,
+            $targetType,
+            $targetId
+        );
 
-		return $m;
-	}
+        return $m;
+    }
 
-	public function setEssentials($content, $targetType = null, $targetId = null)
-	{
-		$this
-			->setContent($content)
-			->setTargetType($targetType)
-			->setTargetId($targetId);
+    public function setEssentials(
+        $content,
+        $targetType = null,
+        $targetId = null
+    ) {
+        $this->setContent($content)
+            ->setTargetType($targetType)
+            ->setTargetId($targetId);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function getToken()
-	{
-		return $this->hasId()
-			? static::token($this->getId())
-			: null;
-	}
+    public function getToken()
+    {
+        return $this->hasId() ? static::token($this->getId()) : null;
+    }
 
-	public static function token($id)
-	{
-		return sprintf(static::TOKEN, $id);
-	}
+    public static function token($id)
+    {
+        return sprintf(static::TOKEN, $id);
+    }
 }

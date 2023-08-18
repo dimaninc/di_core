@@ -65,7 +65,7 @@
  */
 class diBannerCollection extends diCollection
 {
-	const type = diTypes::banner;
-	protected $table = "banners";
-	protected $modelType = "banner";
+    const type = diTypes::banner;
+    protected $table = 'banners';
+    protected $modelType = 'banner';
 }

@@ -101,19 +101,24 @@ use diCore\Data\Types;
  */
 class Model extends \diModel
 {
-	const type = Types::video;
-	const slug_field_name = self::SLUG_FIELD_NAME;
-	protected $table = 'videos';
-	protected $customFileFields = ['video_mp4', 'video_m4v', 'video_ogv', 'video_webm'];
+    const type = Types::video;
+    const slug_field_name = self::SLUG_FIELD_NAME;
+    protected $table = 'videos';
+    protected $customFileFields = [
+        'video_mp4',
+        'video_m4v',
+        'video_ogv',
+        'video_webm',
+    ];
 
-	public function getToken()
-	{
-		return $this->hasId()
-			? '[VIDEO-' . str_pad($this->getId(), 6, '0', STR_PAD_LEFT) . ']'
-			: null;
-	}
+    public function getToken()
+    {
+        return $this->hasId()
+            ? '[VIDEO-' . str_pad($this->getId(), 6, '0', STR_PAD_LEFT) . ']'
+            : null;
+    }
 
-	public function getFolderForField($field)
+    public function getFolderForField($field)
     {
         if (in_array($field, $this->getFileFields())) {
             return $this->getFilesFolder();
@@ -122,95 +127,110 @@ class Model extends \diModel
         return parent::getFolderForField($field);
     }
 
-	public function getVideoFileByFormat($formatExt)
-	{
-		return $this->has('video_' . $formatExt)
-			? $this->getFilesFolder() . $this->get('video_' . $formatExt)
-			: '';
-	}
+    public function getVideoFileByFormat($formatExt)
+    {
+        return $this->has('video_' . $formatExt)
+            ? $this->getFilesFolder() . $this->get('video_' . $formatExt)
+            : '';
+    }
 
-	public function getHtmlVideoSources()
-	{
-		return \diWebVideoPlayer::getFormatRowsHtml([
-			'getFilenameCallback' => function($formatId) {
-				return $this->getVideoFileByFormat(\diWebVideoFormats::$extensions[$formatId]);
-			},
-		]);
-	}
+    public function getHtmlVideoSources()
+    {
+        return \diWebVideoPlayer::getFormatRowsHtml([
+            'getFilenameCallback' => function ($formatId) {
+                return $this->getVideoFileByFormat(
+                    \diWebVideoFormats::$extensions[$formatId]
+                );
+            },
+        ]);
+    }
 
-	public function getTemplateVars()
-	{
-		$ar = parent::getTemplateVars();
+    public function getTemplateVars()
+    {
+        $ar = parent::getTemplateVars();
 
-		foreach (\diWebVideoFormats::$extensions as $formatId => $formatExt) {
-			if ($this->has('video_' . $formatExt)) {
-				$ar['video_' . $formatExt] = $this->getVideoFileByFormat($formatExt);
-			}
-		}
+        foreach (\diWebVideoFormats::$extensions as $formatId => $formatExt) {
+            if ($this->has('video_' . $formatExt)) {
+                $ar['video_' . $formatExt] = $this->getVideoFileByFormat(
+                    $formatExt
+                );
+            }
+        }
 
-		return $ar;
-	}
+        return $ar;
+    }
 
-	public function getHref()
-	{
-		return $this->__getPrefixForHref() . '/' . CMS::ct('videos') . '/' . $this->getSlug() . '/';
-	}
+    public function getHref()
+    {
+        return $this->__getPrefixForHref() .
+            '/' .
+            CMS::ct('videos') .
+            '/' .
+            $this->getSlug() .
+            '/';
+    }
 
-	public function getVideoVendorPreview()
-	{
-		if ($this->getVendor() == Vendor::OWN) {
-			return null;
-		}
+    public function getVideoVendorPreview()
+    {
+        if ($this->getVendor() == Vendor::OWN) {
+            return null;
+        }
 
-		return Vendor::getPoster($this->getVendor(), $this->getVendorVideoUid());
-	}
+        return Vendor::getPoster(
+            $this->getVendor(),
+            $this->getVendorVideoUid()
+        );
+    }
 
-	/**
-	 * Custom model template vars
-	 *
-	 * @return array
-	 */
-	public function getCustomTemplateVars()
-	{
-		$ar = extend(parent::getCustomTemplateVars(), [
-			'token' => $this->getToken(),
-		]);
+    /**
+     * Custom model template vars
+     *
+     * @return array
+     */
+    public function getCustomTemplateVars()
+    {
+        $ar = extend(parent::getCustomTemplateVars(), [
+            'token' => $this->getToken(),
+        ]);
 
-		if ($this->getVendor() != Vendor::OWN) {
-			$ar = extend($ar, [
-				'pic_tn' => $this->getVideoVendorPreview(),
-				'pic_tn_safe' => $this->hasPic()
-                    ? \diLib::getSubFolder('force') . $this->getPicsFolder() . $this->getPic()
+        if ($this->getVendor() != Vendor::OWN) {
+            $ar = extend($ar, [
+                'pic_tn' => $this->getVideoVendorPreview(),
+                'pic_tn_safe' => $this->hasPic()
+                    ? \diLib::getSubFolder('force') .
+                        $this->getPicsFolder() .
+                        $this->getPic()
                     : $this->getVideoVendorPreview(),
-				'vendor_link' => $this->getVendorLink(),
-				'vendor_embed_link' => $this->getVendorEmbedLink(),
-			]);
-		}
+                'vendor_link' => $this->getVendorLink(),
+                'vendor_embed_link' => $this->getVendorEmbedLink(),
+            ]);
+        }
 
-		return $ar;
-	}
+        return $ar;
+    }
 
-	public function getVendorLink()
-	{
-		return Vendor::getLink($this->getVendor(), $this->getVendorVideoUid());
-	}
+    public function getVendorLink()
+    {
+        return Vendor::getLink($this->getVendor(), $this->getVendorVideoUid());
+    }
 
-	public function getVendorEmbedLink()
-	{
-		return Vendor::getEmbedLink($this->getVendor(), $this->getVendorVideoUid());
-	}
+    public function getVendorEmbedLink()
+    {
+        return Vendor::getEmbedLink(
+            $this->getVendor(),
+            $this->getVendorVideoUid()
+        );
+    }
 
-	/**
-	 * Returns query conditions array for order_num calculating
-	 *
-	 * @return array
-	 */
-	public function getQueryArForMove()
-	{
-		$ar = [
-			"album_id = '{$this->getAlbumId()}'",
-		];
+    /**
+     * Returns query conditions array for order_num calculating
+     *
+     * @return array
+     */
+    public function getQueryArForMove()
+    {
+        $ar = ["album_id = '{$this->getAlbumId()}'"];
 
-		return $ar;
-	}
+        return $ar;
+    }
 }

@@ -8,51 +8,53 @@ namespace diCore\Payment\Mixplat;
 
 class HandleResult
 {
-	/**
-	 * @var bool
-	 */
+    /**
+     * @var bool
+     */
 
-	private $isSignCorrect;
+    private $isSignCorrect;
 
-	/**
-	 * @var array
-	 */
+    /**
+     * @var array
+     */
 
-	private $data;
+    private $data;
 
-	/**
-	 * @param bool $isSignCorrect
-	 * @param array $data
-	 */
+    /**
+     * @param bool $isSignCorrect
+     * @param array $data
+     */
 
-	public function __construct( $isSignCorrect, $data )
-	{
-		$this->isSignCorrect	= $isSignCorrect;
-		$this->data				= $data;
-	}
+    public function __construct($isSignCorrect, $data)
+    {
+        $this->isSignCorrect = $isSignCorrect;
+        $this->data = $data;
+    }
 
-	/**
-	 * Флаг корректности подписи
-	 * @return bool
-	 */
+    /**
+     * Флаг корректности подписи
+     * @return bool
+     */
 
-	public function isSignCorrect()
-	{
-		return $this->isSignCorrect;
-	}
+    public function isSignCorrect()
+    {
+        return $this->isSignCorrect;
+    }
 
-	/**
-	 * Данные
-	 * @return array
-	 */
+    /**
+     * Данные
+     * @return array
+     */
 
-	public function getData($key = null)
-	{
-		return $key !== null && isset($this->data[$key]) ? $this->data[$key] : $this->data;
-	}
+    public function getData($key = null)
+    {
+        return $key !== null && isset($this->data[$key])
+            ? $this->data[$key]
+            : $this->data;
+    }
 
-	public function isStatusSuccess()
-	{
-		return $this->getData('status') == ResultStatus::SUCCESS;
-	}
+    public function isStatusSuccess()
+    {
+        return $this->getData('status') == ResultStatus::SUCCESS;
+    }
 }

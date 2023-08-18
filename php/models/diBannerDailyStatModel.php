@@ -31,70 +31,64 @@ use diCore\Helper\Banner;
  */
 class diBannerDailyStatModel extends diModel
 {
-	const type = diTypes::banner_daily_stat;
-	protected $table = "banner_daily_stat";
+    const type = diTypes::banner_daily_stat;
+    protected $table = 'banner_daily_stat';
 
-	public static function add($bannerId, $statType, $uri = '')
-	{
-		if (Banner::isCurrentDomainIgnored())
-		{
-			return false;
-		}
+    public static function add($bannerId, $statType, $uri = '')
+    {
+        if (Banner::isCurrentDomainIgnored()) {
+            return false;
+        }
 
-		/** @var diBannerModel $banner */
-		$banner = \diModel::create(diTypes::banner, $bannerId);
+        /** @var diBannerModel $banner */
+        $banner = \diModel::create(diTypes::banner, $bannerId);
 
-		if (!$banner->exists())
-		{
-			return false;
-		}
+        if (!$banner->exists()) {
+            return false;
+        }
 
-		$uri = $uri ?: \diRequest::server('REQUEST_URI');
-		$date = date("Y-m-d");
+        $uri = $uri ?: \diRequest::server('REQUEST_URI');
+        $date = date('Y-m-d');
 
-		/** @var diBannerDailyStatCollection $statCol */
-		$statCol = \diCollection::create(self::type);
-		/** @var diBannerDailyStatModel $stat */
-		$stat = $statCol
-			->filterByBannerId($bannerId)
-			->filterByUri($uri)
-			->filterByType($statType)
-			->filterByDate($date)
-			->getFirstItem();
+        /** @var diBannerDailyStatCollection $statCol */
+        $statCol = \diCollection::create(self::type);
+        /** @var diBannerDailyStatModel $stat */
+        $stat = $statCol
+            ->filterByBannerId($bannerId)
+            ->filterByUri($uri)
+            ->filterByType($statType)
+            ->filterByDate($date)
+            ->getFirstItem();
 
-		if ($stat->exists())
-		{
-			$stat
-				->setCount($stat->getCount() + 1);
-		}
-		else
-		{
-			$stat
-				->setBannerId($bannerId)
-				->setType($statType)
-				->setUri($uri)
-				->setDate($date)
-				->setCount(1);
-		}
+        if ($stat->exists()) {
+            $stat->setCount($stat->getCount() + 1);
+        } else {
+            $stat
+                ->setBannerId($bannerId)
+                ->setType($statType)
+                ->setUri($uri)
+                ->setDate($date)
+                ->setCount(1);
+        }
 
-		$stat->save();
+        $stat->save();
 
-		switch ($statType)
-		{
-			case Banner::STAT_VIEW:
-				$banner
-					->setViewsCount($banner->getViewsCount() + 1)
-					->setLastViewDate(\diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME));
-				break;
+        switch ($statType) {
+            case Banner::STAT_VIEW:
+                $banner
+                    ->setViewsCount($banner->getViewsCount() + 1)
+                    ->setLastViewDate(
+                        \diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME)
+                    );
+                break;
 
-			case Banner::STAT_CLICK:
-				$banner
-					->setClicksCount($banner->getClicksCount() + 1);
-				break;
-		}
+            case Banner::STAT_CLICK:
+                $banner->setClicksCount($banner->getClicksCount() + 1);
+                break;
+        }
 
-		$banner->save();
+        $banner->save();
 
-		return true;
-	}
+        return true;
+    }
 }

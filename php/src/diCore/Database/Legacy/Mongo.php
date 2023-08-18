@@ -23,91 +23,94 @@ use MongoDB\Model\CollectionInfo;
  */
 class Mongo extends \diDB
 {
-	const CHARSET_INIT_NEEDED = false;
-	const DEFAULT_PORT = 27017;
+    const CHARSET_INIT_NEEDED = false;
+    const DEFAULT_PORT = 27017;
 
-	/**
-	 * @var Client
-	 */
-	protected $mongo;
-	/** @var string|null */
-	protected $lastInsertId = null;
+    /**
+     * @var Client
+     */
+    protected $mongo;
+    /** @var string|null */
+    protected $lastInsertId = null;
 
-	protected function __connect()
-	{
-		$time1 = utime();
+    protected function __connect()
+    {
+        $time1 = utime();
 
-		$this->mongo = new Client($this->getServerConnectionString());
-		$this->link = $this->mongo->selectDatabase($this->getDatabase());
+        $this->mongo = new Client($this->getServerConnectionString());
+        $this->link = $this->mongo->selectDatabase($this->getDatabase());
 
-		$time2 = utime();
-		$this->execution_time += $time2 - $time1;
+        $time2 = utime();
+        $this->execution_time += $time2 - $time1;
 
-		$this->time_log("connect", $time2 - $time1);
+        $this->time_log('connect', $time2 - $time1);
 
-		return true;
-	}
+        return true;
+    }
 
-	protected function getServerConnectionString()
-	{
-		$s = 'mongodb://';
+    protected function getServerConnectionString()
+    {
+        $s = 'mongodb://';
 
-		if ($this->getUsername()) {
-			$s .= $this->getUsername() . ':' . $this->getPassword() . '@';
-		}
+        if ($this->getUsername()) {
+            $s .= $this->getUsername() . ':' . $this->getPassword() . '@';
+        }
 
-		$s .= $this->getHost();
+        $s .= $this->getHost();
 
-		if ($this->getPort()) {
-			$s .= ':' . $this->getPort();
-		}
+        if ($this->getPort()) {
+            $s .= ':' . $this->getPort();
+        }
 
-		$s .= '/';
+        $s .= '/';
 
-		/*
+        /*
 		if ($this->getDatabase())
 		{
 			$s .= $this->getDatabase();
 		}
 		*/
 
-		return $s;
-	}
+        return $s;
+    }
 
-	public function getCollectionResource($collectionName)
-	{
-		return $this->getLink()->selectCollection($collectionName);
-	}
+    public function getCollectionResource($collectionName)
+    {
+        return $this->getLink()->selectCollection($collectionName);
+    }
 
-	public function insert($table, $fieldValues = [])
-	{
-		$time1 = utime();
+    public function insert($table, $fieldValues = [])
+    {
+        $time1 = utime();
 
-		$insertResult = $this->getCollectionResource($table)
-			->insertOne($fieldValues);
-		/** @var ObjectId $id */
-		$id = $insertResult->getInsertedId();
+        $insertResult = $this->getCollectionResource($table)->insertOne(
+            $fieldValues
+        );
+        /** @var ObjectId $id */
+        $id = $insertResult->getInsertedId();
 
-		$time2 = utime();
-		$this->execution_time += $time2 - $time1;
-		$this->time_log('insert', $time2 - $time1);
+        $time2 = utime();
+        $this->execution_time += $time2 - $time1;
+        $this->time_log('insert', $time2 - $time1);
 
-		return $this->lastInsertId = (string)$id;
-	}
+        return $this->lastInsertId = (string) $id;
+    }
 
-	public function update($table, $fieldValues = [], $filterOrId = '')
+    public function update($table, $fieldValues = [], $filterOrId = '')
     {
         $updated = 0;
 
         $time1 = utime();
 
         if (is_scalar($filterOrId)) {
-            $r = $this->getCollectionResource($table)
-                ->updateOne([
+            $r = $this->getCollectionResource($table)->updateOne(
+                [
                     '_id' => new ObjectId($filterOrId),
-                ], [
+                ],
+                [
                     '$set' => $fieldValues,
-                ]);
+                ]
+            );
             $updated = $r->getModifiedCount();
         } elseif (is_array($filterOrId)) {
             if (ArrayHelper::hasStringKey($filterOrId)) {
@@ -122,10 +125,9 @@ class Mongo extends \diDB
                 ];
             }
 
-            $r = $this->getCollectionResource($table)
-                ->updateMany($filter, [
-                    '$set' => $fieldValues,
-                ]);
+            $r = $this->getCollectionResource($table)->updateMany($filter, [
+                '$set' => $fieldValues,
+            ]);
             $updated = $r->getModifiedCount();
         }
 
@@ -136,46 +138,54 @@ class Mongo extends \diDB
         return $updated;
     }
 
-	public static function convertDirection($direction)
-	{
-		switch (mb_strtolower($direction)) {
-			case 'asc':
-				$direction = 1;
-				break;
+    public static function convertDirection($direction)
+    {
+        switch (mb_strtolower($direction)) {
+            case 'asc':
+                $direction = 1;
+                break;
 
-			case 'desc':
-				$direction = -1;
-				break;
-		}
+            case 'desc':
+                $direction = -1;
+                break;
+        }
 
-		return $direction;
-	}
+        return $direction;
+    }
 
-	public function rs($table, $q_ending = "", $q_fields = "*")
-	{
-		if (is_array($q_ending)) {
-			$ar = extend([
-				'filter' => [],
-				'sort' => [],
-				'skip' => null,
-				'limit' => null,
-			], $q_ending);
+    public function rs($table, $q_ending = '', $q_fields = '*')
+    {
+        if (is_array($q_ending)) {
+            $ar = extend(
+                [
+                    'filter' => [],
+                    'sort' => [],
+                    'skip' => null,
+                    'limit' => null,
+                ],
+                $q_ending
+            );
 
-			foreach ($ar['sort'] as $field => &$direction) {
-				$direction = static::convertDirection($direction);
-			}
+            foreach ($ar['sort'] as $field => &$direction) {
+                $direction = static::convertDirection($direction);
+            }
 
-			$options = array_filter($ar) ?: [];
-			unset($options['filter']);
+            $options = array_filter($ar) ?: [];
+            unset($options['filter']);
 
-			/** @var Cursor $cursor */
-			$cursor = $this->getCollectionResource($table)->find($ar['filter'], $options);
+            /** @var Cursor $cursor */
+            $cursor = $this->getCollectionResource($table)->find(
+                $ar['filter'],
+                $options
+            );
 
-			return $cursor;
-		} else {
-			throw new \Exception('Mongo can not execute queries, array filter needed');
-		}
-	}
+            return $cursor;
+        } else {
+            throw new \Exception(
+                'Mongo can not execute queries, array filter needed'
+            );
+        }
+    }
 
     public function delete($table, $filterOrId = '')
     {
@@ -184,10 +194,9 @@ class Mongo extends \diDB
         $time1 = utime();
 
         if (is_scalar($filterOrId)) {
-            $r = $this->getCollectionResource($table)
-                ->deleteOne([
-                    '_id' => new ObjectId($filterOrId),
-                ]);
+            $r = $this->getCollectionResource($table)->deleteOne([
+                '_id' => new ObjectId($filterOrId),
+            ]);
             $deleted = $r->getDeletedCount();
         } elseif (is_array($filterOrId)) {
             if (ArrayHelper::hasStringKey($filterOrId)) {
@@ -202,15 +211,16 @@ class Mongo extends \diDB
                 ];
             }
 
-            $r = $this->getCollectionResource($table)
-                ->deleteMany($filter);
+            $r = $this->getCollectionResource($table)->deleteMany($filter);
             $deleted = $r->getDeletedCount();
         } elseif (!$filterOrId && $filterOrId !== '') {
-            $this->getCollectionResource($table)
-                ->drop();
+            $this->getCollectionResource($table)->drop();
             $deleted = true;
 
-            $this->_log("Warning, empty Q_ENDING in delete, collection '$table' dropped", false);
+            $this->_log(
+                "Warning, empty Q_ENDING in delete, collection '$table' dropped",
+                false
+            );
         }
 
         $time2 = utime();
@@ -220,105 +230,118 @@ class Mongo extends \diDB
         return $deleted;
     }
 
-	protected function __close()
-	{
-		return true;
-	}
+    protected function __close()
+    {
+        return true;
+    }
 
-	protected function __error()
-	{
-		return null;
-	}
+    protected function __error()
+    {
+        return null;
+    }
 
-	protected function __q($q)
-	{
-		return null;
-	}
+    protected function __q($q)
+    {
+        return null;
+    }
 
-	protected function __rq($q)
-	{
-		return null;
-	}
+    protected function __rq($q)
+    {
+        return null;
+    }
 
-	protected function __mq($q)
-	{
-		return null;
-	}
+    protected function __mq($q)
+    {
+        return null;
+    }
 
-	protected function __mq_flush()
-	{
-		return true;
-	}
+    protected function __mq_flush()
+    {
+        return true;
+    }
 
-	protected function __reset(&$rs)
-	{
-	}
+    protected function __reset(&$rs)
+    {
+    }
 
-	/**
-	 * @param $rs Cursor
-	 * @return object
-	 */
-	protected function __fetch($rs)
-	{
-		return (object)$this->__fetch_array($rs);
-	}
+    /**
+     * @param $rs Cursor
+     * @return object
+     */
+    protected function __fetch($rs)
+    {
+        return (object) $this->__fetch_array($rs);
+    }
 
-	/**
-	 * @param $rs Cursor
-	 * @return array
-	 */
-	protected function __fetch_array($rs)
-	{
-		return null;
-	}
+    /**
+     * @param $rs Cursor
+     * @return array
+     */
+    protected function __fetch_array($rs)
+    {
+        return null;
+    }
 
-	protected function __count($options)
-	{
-		$options = extend([
-			'collectionName' => null,
-			'filters' => [],
-		], $options);
+    protected function __count($options)
+    {
+        $options = extend(
+            [
+                'collectionName' => null,
+                'filters' => [],
+            ],
+            $options
+        );
 
-		$options['filters'] = extend([
-			'filter' => [],
-			'sort' => [],
-			'skip' => null,
-			'limit' => null,
-		], ArrayHelper::filterByKey($options['filters'], ['filter', 'skip', 'limit']));
+        $options['filters'] = extend(
+            [
+                'filter' => [],
+                'sort' => [],
+                'skip' => null,
+                'limit' => null,
+            ],
+            ArrayHelper::filterByKey($options['filters'], [
+                'filter',
+                'skip',
+                'limit',
+            ])
+        );
 
-		$filter = $options['filters']['filter'];
-		$options['filters'] = array_filter($options['filters']) ?: [];
-		unset($options['filters']['filter']);
+        $filter = $options['filters']['filter'];
+        $options['filters'] = array_filter($options['filters']) ?: [];
+        unset($options['filters']['filter']);
 
-		return $options['collectionName']
-			? $this->getCollectionResource($options['collectionName'])->count($filter, $options['filters'])
-			: null;
-	}
+        return $options['collectionName']
+            ? $this->getCollectionResource($options['collectionName'])->count(
+                $filter,
+                $options['filters']
+            )
+            : null;
+    }
 
-	protected function __insert_id()
-	{
-		return $this->lastInsertId;
-	}
+    protected function __insert_id()
+    {
+        return $this->lastInsertId;
+    }
 
-	protected function __affected_rows()
-	{
-		return null;
-	}
+    protected function __affected_rows()
+    {
+        return null;
+    }
 
-	public function escape_string($s, $binary = false)
-	{
-		return $s;
-	}
+    public function escape_string($s, $binary = false)
+    {
+        return $s;
+    }
 
-	protected function __set_charset($name)
-	{
-		return true;
-	}
+    protected function __set_charset($name)
+    {
+        return true;
+    }
 
-	protected function __get_charset()
-	{
-		return 'utf8';
-	}
+    protected function __get_charset()
+    {
+        return 'utf8';
+    }
 
     public function getTablesInfo()
     {
@@ -337,25 +360,29 @@ class Mongo extends \diDB
         return $ar;
     }
 
-	public function getTableNames()
-	{
-		$ar = [];
+    public function getTableNames()
+    {
+        $ar = [];
 
-		/** @var CollectionInfo $col */
-		foreach ($this->getLink()->listCollections() as $col) {
-			$ar[] = $col->getName();
-		}
+        /** @var CollectionInfo $col */
+        foreach ($this->getLink()->listCollections() as $col) {
+            $ar[] = $col->getName();
+        }
 
-		return $ar;
-	}
+        return $ar;
+    }
 
     public function getFields($table)
     {
         $fields = [];
 
-        $ar = ArrayHelper::get($this->rs($table, [
-            'limit' => 1,
-        ])->toArray(), 0, []);
+        $ar = ArrayHelper::get(
+            $this->rs($table, [
+                'limit' => 1,
+            ])->toArray(),
+            0,
+            []
+        );
         foreach ($ar as $name => $value) {
             $type = gettype($value);
 

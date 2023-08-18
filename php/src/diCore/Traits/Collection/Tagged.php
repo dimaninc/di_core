@@ -52,25 +52,33 @@ trait Tagged
     */
     protected function taggedConstructor($options = [])
     {
-        $options = extend([
-            'realType' => null,
-            'groupBy' => ['id'],
-            'tagsClass' => \diTags::class,
-        ], $options);
+        $options = extend(
+            [
+                'realType' => null,
+                'groupBy' => ['id'],
+                'tagsClass' => \diTags::class,
+            ],
+            $options
+        );
 
         $options['realType'] = $options['realType'] ?: static::realType;
 
-        if (!$options['realType'])
-        {
+        if (!$options['realType']) {
             throw new \Exception('taggedConstructor: realType not defined');
         }
 
         $this->realType = $options['realType'];
-        $this->classInstance = new $options['tagsClass'];
+        $this->classInstance = new ($options['tagsClass'])();
 
-        $this
-            ->select('*')
-            ->selectExpression("GROUP_CONCAT(COALESCE(t.id, ''), '" . self::$TAG_INFO_SEPARATOR . "', COALESCE(t.slug, ''), '" . self::$TAG_INFO_SEPARATOR . "', COALESCE(t.title, '')) AS tags", true)
+        $this->select('*')
+            ->selectExpression(
+                "GROUP_CONCAT(COALESCE(t.id, ''), '" .
+                    self::$TAG_INFO_SEPARATOR .
+                    "', COALESCE(t.slug, ''), '" .
+                    self::$TAG_INFO_SEPARATOR .
+                    "', COALESCE(t.title, '')) AS tags",
+                true
+            )
             ->groupBy($options['groupBy']);
     }
 
@@ -82,19 +90,37 @@ trait Tagged
      */
     protected function getTaggedQueryTable()
     {
-        $q = $this->addAliasToTable($this->getTable(), true) .
-            ' LEFT JOIN ' . $this->getMapTable() .
-            ' ON ' . $this->getTargetIdField() . ' = ' . $this->getMainIdField() .
-            ' AND ' . $this->getTargetTypeField() . ' = ' . $this->realType .
-            ' LEFT JOIN ' . $this->getTagTable() .
-            ' ON ' . $this->getTagIdField() . ' = ' . $this->getGenericTagIdField();
+        $q =
+            $this->addAliasToTable($this->getTable(), true) .
+            ' LEFT JOIN ' .
+            $this->getMapTable() .
+            ' ON ' .
+            $this->getTargetIdField() .
+            ' = ' .
+            $this->getMainIdField() .
+            ' AND ' .
+            $this->getTargetTypeField() .
+            ' = ' .
+            $this->realType .
+            ' LEFT JOIN ' .
+            $this->getTagTable() .
+            ' ON ' .
+            $this->getTagIdField() .
+            ' = ' .
+            $this->getGenericTagIdField();
 
-        if ($this->tagId !== null)
-        {
+        if ($this->tagId !== null) {
             $q .=
-                ' INNER JOIN ' . $this->getMapTable(2) .
-                ' ON ' . $this->getTargetIdField(2) . ' = ' . $this->getMainIdField() .
-                ' AND ' . $this->getTargetTypeField(2) . ' = ' . $this->realType;
+                ' INNER JOIN ' .
+                $this->getMapTable(2) .
+                ' ON ' .
+                $this->getTargetIdField(2) .
+                ' = ' .
+                $this->getMainIdField() .
+                ' AND ' .
+                $this->getTargetTypeField(2) .
+                ' = ' .
+                $this->realType;
 
             $this->filterManual($this->getTagIdField(2) . ' = ' . $this->tagId);
         }
@@ -104,17 +130,26 @@ trait Tagged
 
     private function getTagTable()
     {
-        return $this->addAliasToTable($this->classInstance->getTableName('tags'), $this->tag_table_alias);
+        return $this->addAliasToTable(
+            $this->classInstance->getTableName('tags'),
+            $this->tag_table_alias
+        );
     }
 
     private function getMapTable($index = '')
     {
-        return $this->addAliasToTable($this->classInstance->getTableName('map'), $this->map_table_alias . $index);
+        return $this->addAliasToTable(
+            $this->classInstance->getTableName('map'),
+            $this->map_table_alias . $index
+        );
     }
 
     private function getTagIdField($index = '')
     {
-        return $this->addAliasToField($this->classInstance->getFieldName('tag_id'), $this->map_table_alias . $index);
+        return $this->addAliasToField(
+            $this->classInstance->getFieldName('tag_id'),
+            $this->map_table_alias . $index
+        );
     }
 
     private function getGenericTagIdField($index = '')
@@ -124,12 +159,18 @@ trait Tagged
 
     private function getTargetIdField($index = '')
     {
-        return $this->addAliasToField($this->classInstance->getFieldName('target_id'), $this->map_table_alias . $index);
+        return $this->addAliasToField(
+            $this->classInstance->getFieldName('target_id'),
+            $this->map_table_alias . $index
+        );
     }
 
     private function getTargetTypeField($index = '')
     {
-        return $this->addAliasToField($this->classInstance->getFieldName('target_type'), $this->map_table_alias . $index);
+        return $this->addAliasToField(
+            $this->classInstance->getFieldName('target_type'),
+            $this->map_table_alias . $index
+        );
     }
 
     private function getMainIdField()

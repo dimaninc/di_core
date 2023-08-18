@@ -35,66 +35,58 @@ abstract class Model extends \diModel
 {
     use TargetInside;
 
-	const type = \diTypes::mail_plan;
-	protected $table = 'mail_plans';
-	protected $sentMailsCount = 0;
+    const type = \diTypes::mail_plan;
+    protected $table = 'mail_plans';
+    protected $sentMailsCount = 0;
 
-	protected $customDateFields = [
-		'started_at',
-		'processed_at',
-	];
+    protected $customDateFields = ['started_at', 'processed_at'];
 
-	public function getModeName()
-	{
-		return Mode::name($this->getMode());
-	}
+    public function getModeName()
+    {
+        return Mode::name($this->getMode());
+    }
 
-	public function getModeTitle()
-	{
-		return Mode::title($this->getMode());
-	}
+    public function getModeTitle()
+    {
+        return Mode::title($this->getMode());
+    }
 
-	public function getCustomTemplateVars()
-	{
-		return extend(parent::getCustomTemplateVars(), [
-			'mode_name' => $this->getModeName(),
-			'mode_title' => $this->getModeTitle(),
-		]);
-	}
+    public function getCustomTemplateVars()
+    {
+        return extend(parent::getCustomTemplateVars(), [
+            'mode_name' => $this->getModeName(),
+            'mode_title' => $this->getModeTitle(),
+        ]);
+    }
 
-	protected function beforeProcess()
-	{
-		$this
-			->setStartedAt(\diDateTime::sqlFormat())
-			->save();
+    protected function beforeProcess()
+    {
+        $this->setStartedAt(\diDateTime::sqlFormat())->save();
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function afterProcess()
-	{
-		$this
-			->setProcessedAt(\diDateTime::sqlFormat())
-			->save();
+    protected function afterProcess()
+    {
+        $this->setProcessedAt(\diDateTime::sqlFormat())->save();
 
-		return $this;
-	}
+        return $this;
+    }
 
-	/**
-	 * @return $this
-	 */
-	abstract protected function mainProcess();
+    /**
+     * @return $this
+     */
+    abstract protected function mainProcess();
 
-	public function process()
-	{
-		return $this
-			->beforeProcess()
-			->mainProcess()
-			->afterProcess();
-	}
+    public function process()
+    {
+        return $this->beforeProcess()
+            ->mainProcess()
+            ->afterProcess();
+    }
 
-	public function getSentMailsCount()
-	{
-		return $this->sentMailsCount;
-	}
+    public function getSentMailsCount()
+    {
+        return $this->sentMailsCount;
+    }
 }

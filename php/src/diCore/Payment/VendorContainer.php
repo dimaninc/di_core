@@ -12,54 +12,54 @@ use diCore\Tool\SimpleContainer;
 
 class VendorContainer extends SimpleContainer
 {
-	public static $codes = [];
-	public static $minLimits = [];
-	public static $maxLimits = [];
+    public static $codes = [];
+    public static $minLimits = [];
+    public static $maxLimits = [];
 
-	public static function code($id)
-	{
-		return static::$codes[$id] ?? null;
-	}
+    public static function code($id)
+    {
+        return static::$codes[$id] ?? null;
+    }
 
-	public static function codeByName($name)
-	{
-		$id = static::id($name);
+    public static function codeByName($name)
+    {
+        $id = static::id($name);
 
-		return $id ? static::code($id) : null;
-	}
+        return $id ? static::code($id) : null;
+    }
 
-	public static function minLimit($id)
-	{
-		return static::$minLimits[$id] ?? null;
-	}
+    public static function minLimit($id)
+    {
+        return static::$minLimits[$id] ?? null;
+    }
 
-	public static function minLimitByName($name)
-	{
-		$id = static::id($name);
+    public static function minLimitByName($name)
+    {
+        $id = static::id($name);
 
-		return $id ? static::minLimit($id) : null;
-	}
+        return $id ? static::minLimit($id) : null;
+    }
 
-	public static function maxLimit($id)
-	{
-		return static::$maxLimits[$id] ?? null;
-	}
+    public static function maxLimit($id)
+    {
+        return static::$maxLimits[$id] ?? null;
+    }
 
-	public static function maxLimitByName($name)
-	{
-		$id = static::id($name);
+    public static function maxLimitByName($name)
+    {
+        $id = static::id($name);
 
-		return $id ? static::maxLimit($id) : null;
-	}
+        return $id ? static::maxLimit($id) : null;
+    }
 
-	public static function id($name)
-	{
-		$id = parent::id($name);
+    public static function id($name)
+    {
+        $id = parent::id($name);
 
-		if ($id === null) {
-			$id = array_search($name, static::$codes, true) ?: null;
-		}
+        if ($id === null) {
+            $id = array_search($name, static::$codes, true) ?: null;
+        }
 
-		return $id;
-	}
+        return $id;
+    }
 }

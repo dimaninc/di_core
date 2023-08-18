@@ -31,7 +31,7 @@ namespace diCore\Entity\DiMigrationsLog;
  */
 class Model extends \diModel
 {
-	const type = \diTypes::di_migrations_log;
-	const table = 'di_migrations_log';
-	protected $table = 'di_migrations_log';
+    const type = \diTypes::di_migrations_log;
+    const table = 'di_migrations_log';
+    protected $table = 'di_migrations_log';
 }

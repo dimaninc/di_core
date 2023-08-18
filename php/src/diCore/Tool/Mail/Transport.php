@@ -8,21 +8,20 @@
 
 namespace diCore\Tool\Mail;
 
-
 use diCore\Tool\SimpleContainer;
 
 class Transport extends SimpleContainer
 {
-	const SMTP = 1;
-	const SENDMAIL = 2;
+    const SMTP = 1;
+    const SENDMAIL = 2;
 
-	public static $titles = [
-		self::SMTP => 'SMTP',
-		self::SENDMAIL => 'sendmail',
-	];
+    public static $titles = [
+        self::SMTP => 'SMTP',
+        self::SENDMAIL => 'sendmail',
+    ];
 
-	public static $names = [
-		self::SMTP => 'SMTP',
-		self::SENDMAIL => 'SENDMAIL',
-	];
+    public static $names = [
+        self::SMTP => 'SMTP',
+        self::SENDMAIL => 'SENDMAIL',
+    ];
 }

@@ -12,12 +12,18 @@ use diCore\Database\Legacy\Sqlite;
 
 class SqliteConnection extends Connection
 {
-	const engine = Engine::SQLITE;
+    const engine = Engine::SQLITE;
 
-	protected function connect(ConnectionData $connData)
-	{
-		$this->db = new Sqlite(null, null, null, $connData->getDatabase(), $this);
+    protected function connect(ConnectionData $connData)
+    {
+        $this->db = new Sqlite(
+            null,
+            null,
+            null,
+            $connData->getDatabase(),
+            $this
+        );
 
-		return $this;
-	}
+        return $this;
+    }
 }

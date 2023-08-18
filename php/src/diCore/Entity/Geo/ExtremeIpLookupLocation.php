@@ -12,7 +12,11 @@ class ExtremeIpLookupLocation extends GeoIpLocation
 {
     protected function fetchData()
     {
-        $this->data = (array)json_decode(file_get_contents('http://extreme-ip-lookup.com/json/' . $this->getIp()));
+        $this->data = (array) json_decode(
+            file_get_contents(
+                'http://extreme-ip-lookup.com/json/' . $this->getIp()
+            )
+        );
 
         $this->data['countryName'] = $this->data['country'];
 

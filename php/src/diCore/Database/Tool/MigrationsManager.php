@@ -25,7 +25,10 @@ class MigrationsManager
     const FOLDER_LOCAL = 1;
     const FOLDER_CORE_MIGRATIONS = 2;
 
-    public static $foldersIdsAr = [self::FOLDER_LOCAL, self::FOLDER_CORE_MIGRATIONS];
+    public static $foldersIdsAr = [
+        self::FOLDER_LOCAL,
+        self::FOLDER_CORE_MIGRATIONS,
+    ];
     public static $customFoldersIdsAr = [];
 
     public function __construct()
@@ -40,7 +43,8 @@ class MigrationsManager
 
     protected function initFolder()
     {
-        static::$localFolder = Config::getSourcesFolder() . static::defaultFolder;
+        static::$localFolder =
+            Config::getSourcesFolder() . static::defaultFolder;
 
         return $this;
     }
@@ -75,7 +79,9 @@ class MigrationsManager
         }
 
         $wildcard = $options['idxOrWildcard'] ?: '*';
-        $ar = glob_recursive(StringHelper::slash($folder) . $wildcard . '_*.php');
+        $ar = glob_recursive(
+            StringHelper::slash($folder) . $wildcard . '_*.php'
+        );
 
         if ($options['filterNotExecuted']) {
             $ar = array_filter($ar, function ($name) {
@@ -91,7 +97,8 @@ class MigrationsManager
 
         if ($options['sort']) {
             usort($ar, function ($a, $b) {
-                return static::getIdxByFileName($a) < static::getIdxByFileName($b)
+                return static::getIdxByFileName($a) <
+                    static::getIdxByFileName($b)
                     ? -1
                     : 1;
             });
@@ -122,7 +129,9 @@ class MigrationsManager
         foreach (static::getFolderIds() as $folderId) {
             $files = array_merge(
                 $files,
-                $this->getMigrationsInFolder($folderId, ['idxOrWildcard' => $idx])
+                $this->getMigrationsInFolder($folderId, [
+                    'idxOrWildcard' => $idx,
+                ])
             );
         }
 
@@ -211,7 +220,12 @@ EOF;
             }
         }
 
-        $contents = sprintf($contents, static::getClassNameByIdx($idx), $idx, $name);
+        $contents = sprintf(
+            $contents,
+            static::getClassNameByIdx($idx),
+            $idx,
+            $name
+        );
         $fn = $fullFolder . static::getMigrationFileName($idx, $name);
 
         file_put_contents($fn, $contents);

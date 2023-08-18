@@ -12,14 +12,19 @@ use diCore\Database\Legacy\Postgresql;
  */
 class PostgresqlConnection extends Connection
 {
-	const engine = Engine::POSTGRESQL;
+    const engine = Engine::POSTGRESQL;
 
-	protected function connect(ConnectionData $connData)
-	{
-		$this->db = new Postgresql(extend([
-		    'connection' => $this,
-        ], $connData->get()));
+    protected function connect(ConnectionData $connData)
+    {
+        $this->db = new Postgresql(
+            extend(
+                [
+                    'connection' => $this,
+                ],
+                $connData->get()
+            )
+        );
 
-		return $this;
-	}
+        return $this;
+    }
 }

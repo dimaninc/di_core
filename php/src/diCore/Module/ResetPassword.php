@@ -10,9 +10,8 @@ namespace diCore\Module;
 
 class ResetPassword extends \diModule
 {
-	public function render()
-	{
-		$this->getTwig()
-			->renderPage('reset_password/page');
-	}
+    public function render()
+    {
+        $this->getTwig()->renderPage('reset_password/page');
+    }
 }

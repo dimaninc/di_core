@@ -10,11 +10,11 @@ namespace diCore\Database;
  */
 class MysqlOldConnection extends Connection
 {
-	const engine = Engine::MYSQL_OLD;
+    const engine = Engine::MYSQL_OLD;
 
-	protected function connect(ConnectionData $connData)
-	{
-		$this->db = new \diMYSQL(
+    protected function connect(ConnectionData $connData)
+    {
+        $this->db = new \diMYSQL(
             $connData->getHost(),
             $connData->getLogin(),
             $connData->getPassword(),
@@ -22,6 +22,6 @@ class MysqlOldConnection extends Connection
             $this
         );
 
-		return $this;
-	}
+        return $this;
+    }
 }

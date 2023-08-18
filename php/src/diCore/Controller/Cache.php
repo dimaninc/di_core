@@ -17,127 +17,128 @@ use diCore\Tool\Cache\Page;
 
 class Cache extends \diBaseAdminController
 {
-	public static function rebuildTemplateAndContentCache()
-	{
-		$Z = new \diCurrentCMS();
-		$Z->init_tpl();
-		$Z->getTpl()->rebuild_cache();
-		$Z->build_content_table_cache();
-	}
+    public static function rebuildTemplateAndContentCache()
+    {
+        $Z = new \diCurrentCMS();
+        $Z->init_tpl();
+        $Z->getTpl()->rebuild_cache();
+        $Z->build_content_table_cache();
+    }
 
-	public function rebuildAction()
-	{
-		self::rebuildTemplateAndContentCache();
-		\diTwig::flushCache();
+    public function rebuildAction()
+    {
+        self::rebuildTemplateAndContentCache();
+        \diTwig::flushCache();
 
-		$this->redirect();
-	}
+        $this->redirect();
+    }
 
-	public function updateCommentsCountsAction()
-	{
-		$errors = Comment::updateCounts();
+    public function updateCommentsCountsAction()
+    {
+        $errors = Comment::updateCounts();
 
-		if (!$errors) {
-			$this->redirect();
-		}
+        if (!$errors) {
+            $this->redirect();
+        }
 
-		return $errors ?: null;
-	}
+        return $errors ?: null;
+    }
 
-	public function updateModuleAction()
-	{
-		try {
-			$MC = Module::basicCreate();
-			$cacheModuleId = $this->param(0, \diRequest::get('id'));
+    public function updateModuleAction()
+    {
+        try {
+            $MC = Module::basicCreate();
+            $cacheModuleId = $this->param(0, \diRequest::get('id'));
 
-			if ($cacheModuleId) {
-				$MC->rebuild($cacheModuleId);
-			} else {
-				$MC->rebuildAll();
-			}
-		} catch (\Exception $e) {
-			return [
-				'done' => false,
-				'error' => $e->getMessage(),
-			];
-		}
+            if ($cacheModuleId) {
+                $MC->rebuild($cacheModuleId);
+            } else {
+                $MC->rebuildAll();
+            }
+        } catch (\Exception $e) {
+            return [
+                'done' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
 
-		return [
-			'done' => true,
-		];
-	}
+        return [
+            'done' => true,
+        ];
+    }
 
-	public function updatePageAction()
-	{
-		try {
-			$PC = Page::basicCreate();
-			$id = $this->param(0, \diRequest::get('id'));
+    public function updatePageAction()
+    {
+        try {
+            $PC = Page::basicCreate();
+            $id = $this->param(0, \diRequest::get('id'));
 
-			if ($id) {
-				$PC->rebuild($id);
-			} else {
-				$PC->rebuildAll();
-			}
-		} catch (\Exception $e) {
-			return [
-				'done' => false,
-				'error' => $e->getMessage(),
-			];
-		}
+            if ($id) {
+                $PC->rebuild($id);
+            } else {
+                $PC->rebuildAll();
+            }
+        } catch (\Exception $e) {
+            return [
+                'done' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
 
-		return [
-			'done' => true,
-		];
-	}
+        return [
+            'done' => true,
+        ];
+    }
 
-	public function updateCommentsHtmlForAction()
-	{
-		try {
-			$CC = Comment::basicCreate();
-			$cacheCommentId = $this->param(0, \diRequest::get('id', 0));
+    public function updateCommentsHtmlForAction()
+    {
+        try {
+            $CC = Comment::basicCreate();
+            $cacheCommentId = $this->param(0, \diRequest::get('id', 0));
 
-			if ($cacheCommentId) {
-				$CC->rebuildHtml($cacheCommentId);
-			} else {
-				$CC->rebuildAll();
-			}
-		} catch (\Exception $e) {
-			return [
-				'done' => false,
-				'error' => $e->getMessage(),
-			];
-		}
+            if ($cacheCommentId) {
+                $CC->rebuildHtml($cacheCommentId);
+            } else {
+                $CC->rebuildAll();
+            }
+        } catch (\Exception $e) {
+            return [
+                'done' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
 
-		return [
-			'done' => true,
-		];
-	}
+        return [
+            'done' => true,
+        ];
+    }
 
-	public function updateCommentCollectionsAction()
-	{
-		try {
-			$CC = Comment::basicCreate();
+    public function updateCommentCollectionsAction()
+    {
+        try {
+            $CC = Comment::basicCreate();
 
-			/** @var CacheCol $col */
-			$col = \diCollection::create(Types::comment_cache);
-			$col
-				->selectTargetType()
-				->selectTargetId()
-				->filterByActive(1);
-			/** @var CacheModel $cacheModel */
-			foreach ($col as $cacheModel)
-			{
-				$CC->rebuildByTarget($cacheModel->getTargetType(), $cacheModel->getTargetId());
-			}
-		} catch (\Exception $e) {
-			return [
-				'done' => false,
-				'error' => $e->getMessage(),
-			];
-		}
+            /** @var CacheCol $col */
+            $col = \diCollection::create(Types::comment_cache);
+            $col->selectTargetType()
+                ->selectTargetId()
+                ->filterByActive(1);
+            /** @var CacheModel $cacheModel */
+            foreach ($col as $cacheModel) {
+                $CC->rebuildByTarget(
+                    $cacheModel->getTargetType(),
+                    $cacheModel->getTargetId()
+                );
+            }
+        } catch (\Exception $e) {
+            return [
+                'done' => false,
+                'error' => $e->getMessage(),
+            ];
+        }
 
-		return [
-			'done' => true,
-		];
-	}
+        return [
+            'done' => true,
+        ];
+    }
 }

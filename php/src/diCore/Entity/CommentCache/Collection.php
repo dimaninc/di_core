@@ -43,7 +43,7 @@ namespace diCore\Entity\CommentCache;
  */
 class Collection extends \diCollection
 {
-	const type = \diTypes::comment_cache;
-	protected $table = 'comment_cache';
-	protected $modelType = 'comment_cache';
+    const type = \diTypes::comment_cache;
+    protected $table = 'comment_cache';
+    protected $modelType = 'comment_cache';
 }

@@ -25,30 +25,29 @@ class Model extends \diModel
     use OrderItem;
     use TargetInside;
 
-	const type = \diTypes::cart_item;
-	protected $table = 'cart_item';
+    const type = \diTypes::cart_item;
+    protected $table = 'cart_item';
 
-	public function getIdForCart()
-	{
-		return $this->getTargetType() . '-' . $this->getTargetId();
-	}
-
-	public function getTitleForCart()
-	{
-		return $this->getItem()->get('title');
-	}
-
-	public function getCustomTemplateVars()
-	{
-		return extend(parent::getCustomTemplateVars(), [
-			'id_for_cart' => $this->getIdForCart(),
-		]);
-	}
-
-	public function updateTargetData()
+    public function getIdForCart()
     {
-        $this
-            ->setPrice($this->getTargetModel()->getPrice());
+        return $this->getTargetType() . '-' . $this->getTargetId();
+    }
+
+    public function getTitleForCart()
+    {
+        return $this->getItem()->get('title');
+    }
+
+    public function getCustomTemplateVars()
+    {
+        return extend(parent::getCustomTemplateVars(), [
+            'id_for_cart' => $this->getIdForCart(),
+        ]);
+    }
+
+    public function updateTargetData()
+    {
+        $this->setPrice($this->getTargetModel()->getPrice());
 
         return $this;
     }

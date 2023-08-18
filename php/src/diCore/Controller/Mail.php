@@ -15,16 +15,16 @@ use diCore\Tool\Mail\Queue;
 
 class Mail extends \diBaseAdminController
 {
-	protected $sendPerAttempt = 1000;
+    protected $sendPerAttempt = 1000;
 
-	public function sendAllAction()
-	{
-		$mq = Queue::basicCreate();
+    public function sendAllAction()
+    {
+        $mq = Queue::basicCreate();
 
-		$cc = $mq->sendAllSafe($this->sendPerAttempt);
+        $cc = $mq->sendAllSafe($this->sendPerAttempt);
 
-		return "$cc email(s) sent";
-	}
+        return "$cc email(s) sent";
+    }
 
     public function sendAction()
     {
@@ -36,35 +36,36 @@ class Mail extends \diBaseAdminController
         $this->redirect();
     }
 
-	public function setVisibleAction()
-	{
-		$mq = Queue::basicCreate();
-		$mq->setVisible();
+    public function setVisibleAction()
+    {
+        $mq = Queue::basicCreate();
+        $mq->setVisible();
 
-		$this->redirect();
-	}
+        $this->redirect();
+    }
 
-	public function processPlanAction()
-	{
-		$plans = Collection::create()
-			->filterByStartedAt(null, '=');
+    public function processPlanAction()
+    {
+        $plans = Collection::create()->filterByStartedAt(null, '=');
 
-		$sent = 0;
+        $sent = 0;
 
-		/** @var Model $plan */
-		foreach ($plans as $plan) {
-			$plan->process();
-			$sent += $plan->getSentMailsCount();
+        /** @var Model $plan */
+        foreach ($plans as $plan) {
+            $plan->process();
+            $sent += $plan->getSentMailsCount();
 
-			Logger::getInstance()->log(
-			    $plan->getSentMailsCount() . ' emails sent for plan#' . $plan->getId(),
+            Logger::getInstance()->log(
+                $plan->getSentMailsCount() .
+                    ' emails sent for plan#' .
+                    $plan->getId(),
                 'mail::processPlanAction'
             );
-		}
+        }
 
-		return [
-			'processed' => $plans->count(),
-			'sent' => $sent,
-		];
-	}
+        return [
+            'processed' => $plans->count(),
+            'sent' => $sent,
+        ];
+    }
 }

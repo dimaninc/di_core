@@ -91,7 +91,7 @@ namespace diCore\Entity\Ad;
  */
 class Collection extends \diCollection
 {
-	const type = \diTypes::ad;
-	protected $table = 'ads';
-	protected $modelType = 'ad';
+    const type = \diTypes::ad;
+    protected $table = 'ads';
+    protected $modelType = 'ad';
 }

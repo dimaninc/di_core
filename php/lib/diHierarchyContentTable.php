@@ -1,5 +1,5 @@
 <?php
 class diHierarchyContentTable extends diHierarchyTable
 {
-	protected $table = "content";
+    protected $table = 'content';
 }

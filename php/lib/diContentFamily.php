@@ -154,7 +154,9 @@ class diContentFamily
             return $this->error();
         }
 
-        $this->family[(int) $this->getModel()->getLevelNum()] = $this->getModel();
+        $this->family[
+            (int) $this->getModel()->getLevelNum()
+        ] = $this->getModel();
 
         $parent = $this->getModel()->getParent();
         while (isset($this->getZ()->tables[$this->table][$parent])) {

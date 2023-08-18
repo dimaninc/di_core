@@ -9,4 +9,6 @@
 namespace diCore\Database\Entity\Mongo;
 
 /** @deprecated  */
-class Collection extends \diCollection {}
+class Collection extends \diCollection
+{
+}

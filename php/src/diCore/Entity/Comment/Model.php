@@ -61,223 +61,260 @@ class Model extends \diModel
 {
     use TargetInside;
 
-	const type = \diTypes::comment;
-	protected $table = 'comments';
+    const type = \diTypes::comment;
+    protected $table = 'comments';
 
-	/** @var  \diModel */
-	protected $target;
-	/** @var  \diModel */
-	protected $user;
+    /** @var  \diModel */
+    protected $target;
+    /** @var  \diModel */
+    protected $user;
 
-	const COMMENTS_COUNT_FIELD = 'comments_count';
-	const COMMENTS_LAST_DATE_FIELD = 'comments_last_date';
+    const COMMENTS_COUNT_FIELD = 'comments_count';
+    const COMMENTS_LAST_DATE_FIELD = 'comments_last_date';
 
-	const CONTENT_CUT_LENGTH = 100;
+    const CONTENT_CUT_LENGTH = 100;
 
-	const UPDATE_COLLECTION_CACHE_ON_UPDATE = false;
+    const UPDATE_COLLECTION_CACHE_ON_UPDATE = false;
 
-	protected static $userExcludeFields = [
-		'password',
-		'activation_key',
-	];
+    protected static $userExcludeFields = ['password', 'activation_key'];
 
-	protected function updateCommentsCountForTargetNeeded()
-	{
-		return false;
-	}
+    protected function updateCommentsCountForTargetNeeded()
+    {
+        return false;
+    }
 
-	public function validate()
-	{
-		if (!$this->getContent()) {
-			$this->addValidationError('Content required', 'content');
-		}
+    public function validate()
+    {
+        if (!$this->getContent()) {
+            $this->addValidationError('Content required', 'content');
+        }
 
-		if (!$this->getTargetType() || !$this->getTargetId()) {
-			$this->addValidationError('Target required', 'target_id');
-		}
+        if (!$this->getTargetType() || !$this->getTargetId()) {
+            $this->addValidationError('Target required', 'target_id');
+        }
 
-		return parent::validate();
-	}
+        return parent::validate();
+    }
 
-	// todo: make some tags to pass into comment's content
-	public function getCustomTemplateVars()
-	{
-		$contentCut = nl2br(StringHelper::out(StringHelper::cutEnd($this->getContent(), self::CONTENT_CUT_LENGTH)));
-		$contentHtml = nl2br(StringHelper::out($this->getContent()));
-		$contentHtmlWithLinks = $this->getContentHtmlWithLinks();
+    // todo: make some tags to pass into comment's content
+    public function getCustomTemplateVars()
+    {
+        $contentCut = nl2br(
+            StringHelper::out(
+                StringHelper::cutEnd(
+                    $this->getContent(),
+                    self::CONTENT_CUT_LENGTH
+                )
+            )
+        );
+        $contentHtml = nl2br(StringHelper::out($this->getContent()));
+        $contentHtmlWithLinks = $this->getContentHtmlWithLinks();
 
-		return extend(parent::getCustomTemplateVars(), [
-			'content_html' => $contentHtml,
-			'content_html_with_links' => $contentHtmlWithLinks,
-			'content_cut' => $contentCut,
-		]);
-	}
+        return extend(parent::getCustomTemplateVars(), [
+            'content_html' => $contentHtml,
+            'content_html_with_links' => $contentHtmlWithLinks,
+            'content_cut' => $contentCut,
+        ]);
+    }
 
-	public function getContentHtmlWithLinks()
-	{
-		return nl2br(StringHelper::wrapUrlWithTag(StringHelper::out($this->getContent())));
-	}
+    public function getContentHtmlWithLinks()
+    {
+        return nl2br(
+            StringHelper::wrapUrlWithTag(StringHelper::out($this->getContent()))
+        );
+    }
 
-	public function beforeSave()
-	{
-		parent::beforeSave();
+    public function beforeSave()
+    {
+        parent::beforeSave();
 
-		// order_num, level_num
-		if (!$this->getId()) {
-			$h = new \diHierarchyCommentsTable();
+        // order_num, level_num
+        if (!$this->getId()) {
+            $h = new \diHierarchyCommentsTable();
 
-			$skipIdsAr = $h->getChildrenIdsAr($this->getParent(), array($this->getParent()));
-			$r = $this->getDb()->r($this->getTable(), $skipIdsAr, 'MAX(order_num) AS num');
+            $skipIdsAr = $h->getChildrenIdsAr($this->getParent(), [
+                $this->getParent(),
+            ]);
+            $r = $this->getDb()->r(
+                $this->getTable(),
+                $skipIdsAr,
+                'MAX(order_num) AS num'
+            );
 
-			$this
-				->setLevelNum($h->getChildLevelNum($this->getParent()))
-				->setOrderNum((int)$r->num + 1);
+            $this->setLevelNum(
+                $h->getChildLevelNum($this->getParent())
+            )->setOrderNum((int) $r->num + 1);
 
-			$this->getDb()->update($this->getTable(), [
-				'*order_num' => 'order_num+1',
-			], "WHERE order_num >= '{$this->getOrderNum()}'");
-		}
+            $this->getDb()->update(
+                $this->getTable(),
+                [
+                    '*order_num' => 'order_num+1',
+                ],
+                "WHERE order_num >= '{$this->getOrderNum()}'"
+            );
+        }
 
-		if (!$this->getIp()) {
-			$this->setIp(ip2bin());
-		}
+        if (!$this->getIp()) {
+            $this->setIp(ip2bin());
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function afterSave()
-	{
-		parent::afterSave();
+    public function afterSave()
+    {
+        parent::afterSave();
 
-		if (
-		    $this->updateCommentsCountForTargetNeeded() &&
+        if (
+            $this->updateCommentsCountForTargetNeeded() &&
             $this->getTargetModel()->exists(static::COMMENTS_COUNT_FIELD)
         ) {
-			$this->getTargetModel()
-				->set(static::COMMENTS_COUNT_FIELD, $this->getTargetModel()->get(static::COMMENTS_COUNT_FIELD) + 1)
-				->set(static::COMMENTS_LAST_DATE_FIELD, \diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME))
-				->save();
-		}
+            $this->getTargetModel()
+                ->set(
+                    static::COMMENTS_COUNT_FIELD,
+                    $this->getTargetModel()->get(static::COMMENTS_COUNT_FIELD) +
+                        1
+                )
+                ->set(
+                    static::COMMENTS_LAST_DATE_FIELD,
+                    \diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME)
+                )
+                ->save();
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function afterKill()
-	{
-		parent::afterKill();
+    protected function afterKill()
+    {
+        parent::afterKill();
 
-		if (
-		    $this->updateCommentsCountForTargetNeeded() &&
+        if (
+            $this->updateCommentsCountForTargetNeeded() &&
             $this->getTargetModel()->exists(static::COMMENTS_COUNT_FIELD)
         ) {
-			$this->getTargetModel()
-				->set(static::COMMENTS_COUNT_FIELD, $this->getTargetModel()->get(static::COMMENTS_COUNT_FIELD) - 1)
-				->save();
-		}
+            $this->getTargetModel()
+                ->set(
+                    static::COMMENTS_COUNT_FIELD,
+                    $this->getTargetModel()->get(static::COMMENTS_COUNT_FIELD) -
+                        1
+                )
+                ->save();
+        }
 
-		if ($this->hasVisible()) {
-			$this->afterToggleVisible();
-		}
+        if ($this->hasVisible()) {
+            $this->afterToggleVisible();
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function afterToggleVisible()
-	{
-		if (static::UPDATE_COLLECTION_CACHE_ON_UPDATE) {
-			$Comments = \diComments::create($this->getTargetType(), $this->getTargetId());
-			$Comments
-				->updateCache(true);
-		}
-	}
+    public function afterToggleVisible()
+    {
+        if (static::UPDATE_COLLECTION_CACHE_ON_UPDATE) {
+            $Comments = \diComments::create(
+                $this->getTargetType(),
+                $this->getTargetId()
+            );
+            $Comments->updateCache(true);
+        }
+    }
 
-	/**
-	 * @return \diModel
-	 * @throws \Exception
-	 */
-	public function getUserModel()
-	{
-		if (!$this->user) {
-			if (!($this->user = $this->getRelated('user'))) {
-				$this->user = CollectionCache::getModel(
-					$this->getUserType() == \diComments::utAdmin
+    /**
+     * @return \diModel
+     * @throws \Exception
+     */
+    public function getUserModel()
+    {
+        if (!$this->user) {
+            if (!($this->user = $this->getRelated('user'))) {
+                $this->user = CollectionCache::getModel(
+                    $this->getUserType() == \diComments::utAdmin
                         ? \diTypes::admin
                         : \diTypes::user,
-					$this->getUserId(),
-					true
-				);
-			}
-		}
+                    $this->getUserId(),
+                    true
+                );
+            }
+        }
 
-		return $this->user;
-	}
+        return $this->user;
+    }
 
-	/**
-	 * @return \diModel
-	 * @throws \Exception
-	 */
-	public function getTargetModel()
-	{
-		if (!$this->target || !$this->target->exists()) {
-			$this->target = \diModel::create($this->getTargetType(), $this->getTargetId(), 'id');
-		}
+    /**
+     * @return \diModel
+     * @throws \Exception
+     */
+    public function getTargetModel()
+    {
+        if (!$this->target || !$this->target->exists()) {
+            $this->target = \diModel::create(
+                $this->getTargetType(),
+                $this->getTargetId(),
+                'id'
+            );
+        }
 
-		return $this->target;
-	}
+        return $this->target;
+    }
 
-	public function setTargetModel(\diModel $target)
-	{
-		$this->target = $target;
+    public function setTargetModel(\diModel $target)
+    {
+        $this->target = $target;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function getHrefSuffix()
-	{
-		return '#comment' . $this->getId();
-	}
+    protected function getHrefSuffix()
+    {
+        return '#comment' . $this->getId();
+    }
 
-	protected function getSuffixForPhpView()
-	{
-		$related = [
-			"->setRelated('href', '{$this->getHref()}')",
-		];
+    protected function getSuffixForPhpView()
+    {
+        $related = ["->setRelated('href', '{$this->getHref()}')"];
 
-		/** @var \diCore\Entity\User\Model $user */
-		if ($user = $this->getRelated('user')) {
-			$related[] = "->setRelated('user', " . $user->asPhp(static::$userExcludeFields) . ")";
-		}
+        /** @var \diCore\Entity\User\Model $user */
+        if ($user = $this->getRelated('user')) {
+            $related[] =
+                "->setRelated('user', " .
+                $user->asPhp(static::$userExcludeFields) .
+                ')';
+        }
 
-		return join("\n", $related);
-	}
+        return join("\n", $related);
+    }
 
-	public function getHref()
-	{
-		// if href cached inside
-		if ($this->getRelated('href')) {
-			return $this->getRelated('href');
-		}
+    public function getHref()
+    {
+        // if href cached inside
+        if ($this->getRelated('href')) {
+            return $this->getRelated('href');
+        }
 
-		return $this->getTargetModel()->getHref() . $this->getHrefSuffix();
-	}
+        return $this->getTargetModel()->getHref() . $this->getHrefSuffix();
+    }
 
-	public function getUserAppearance(\diModel $user = null)
-	{
-		$user = $user ?: $this->getUserModel();
-		$typeSuffix = $this->getUserType() == \diComments::utAdmin ? ' (Admin)' : '';
+    public function getUserAppearance(\diModel $user = null)
+    {
+        $user = $user ?: $this->getUserModel();
+        $typeSuffix =
+            $this->getUserType() == \diComments::utAdmin ? ' (Admin)' : '';
 
-		return $user->getStringAppearanceForAdmin() . $typeSuffix;
-	}
+        return $user->getStringAppearanceForAdmin() . $typeSuffix;
+    }
 
-	public function getDescriptionForAdmin()
-	{
-		return
-			\diTypes::getTitle($this->getTargetType()) . ': ' .
-			($this->getTargetModel()->get('title') ?: $this->getTargetType() . '#' . $this->getTargetId());
-	}
+    public function getDescriptionForAdmin()
+    {
+        return \diTypes::getTitle($this->getTargetType()) .
+            ': ' .
+            ($this->getTargetModel()->get('title') ?:
+                $this->getTargetType() . '#' . $this->getTargetId());
+    }
 
-	public function isUserAllowed(\diCore\Entity\User\Model $user)
-	{
-		return $this->getUserType() == \diComments::utUser && $this->getUserId() == $user->getId();
-	}
+    public function isUserAllowed(\diCore\Entity\User\Model $user)
+    {
+        return $this->getUserType() == \diComments::utUser &&
+            $this->getUserId() == $user->getId();
+    }
 }

@@ -7,4 +7,6 @@
  * Time: 14:34
  * @deprecated
  */
-class diVideoVendors extends \diCore\Entity\Video\Vendor {}
+class diVideoVendors extends \diCore\Entity\Video\Vendor
+{
+}

@@ -200,8 +200,12 @@ class BreadCrumbs
         return $element;
     }
 
-    public function add($titleOrElement, $href = '', $class = '', $word_wrap = false)
-    {
+    public function add(
+        $titleOrElement,
+        $href = '',
+        $class = '',
+        $word_wrap = false
+    ) {
         $element = extend(
             [
                 'title' => null,
@@ -304,7 +308,9 @@ class BreadCrumbs
 
             $this->getTwig()->assign([
                 'top_title' => join($this->divider, $ar),
-                'top_title_div' => $this->getTpl()->getAssigned('TOP_TITLE_DIV'),
+                'top_title_div' => $this->getTpl()->getAssigned(
+                    'TOP_TITLE_DIV'
+                ),
             ]);
         } else {
             $this->getTwig()->assign([

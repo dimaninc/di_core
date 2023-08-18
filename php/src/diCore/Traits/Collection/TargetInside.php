@@ -25,8 +25,8 @@ trait TargetInside
 {
     public function filterByTarget(\diModel $target)
     {
-        return $this
-            ->filterByTargetType($target->modelType())
-            ->filterByTargetId($target->getId());
+        return $this->filterByTargetType(
+            $target->modelType()
+        )->filterByTargetId($target->getId());
     }
 }

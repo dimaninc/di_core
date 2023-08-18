@@ -379,7 +379,9 @@ class diTwig
         $template = $template ?: $this->templateForIndex;
 
         if (!$template) {
-            throw new \Exception('Template not defined for diTwig->renderIndex');
+            throw new \Exception(
+                'Template not defined for diTwig->renderIndex'
+            );
         }
 
         return $this->render(

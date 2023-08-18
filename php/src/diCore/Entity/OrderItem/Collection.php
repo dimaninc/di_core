@@ -34,7 +34,7 @@ class Collection extends \diCollection
     use OrderItem;
     use TargetInside;
 
-	const type = \diTypes::order_item;
-	protected $table = 'order_item';
-	protected $modelType = 'order_item';
+    const type = \diTypes::order_item;
+    protected $table = 'order_item';
+    protected $modelType = 'order_item';
 }

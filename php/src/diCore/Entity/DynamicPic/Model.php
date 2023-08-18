@@ -70,126 +70,134 @@ namespace diCore\Entity\DynamicPic;
  */
 class Model extends \diModel
 {
-	const type = \diTypes::dynamic_pic;
-	protected $table = 'dipics';
+    const type = \diTypes::dynamic_pic;
+    protected $table = 'dipics';
 
-	/**
-	 * @return string
-	 */
-	public function getTargetTable()
-	{
-		return $this->get("_table");
-	}
+    /**
+     * @return string
+     */
+    public function getTargetTable()
+    {
+        return $this->get('_table');
+    }
 
-	/**
-	 * @return string
-	 */
-	public function getTargetField()
-	{
-		return $this->get("_field");
-	}
+    /**
+     * @return string
+     */
+    public function getTargetField()
+    {
+        return $this->get('_field');
+    }
 
-	/**
-	 * @return integer
-	 */
-	public function getTargetId()
-	{
-		return $this->get("_id");
-	}
+    /**
+     * @return integer
+     */
+    public function getTargetId()
+    {
+        return $this->get('_id');
+    }
 
-	/**
-	 * @return bool
-	 */
-	public function hasTargetTable()
-	{
-		return $this->has("_table");
-	}
+    /**
+     * @return bool
+     */
+    public function hasTargetTable()
+    {
+        return $this->has('_table');
+    }
 
-	/**
-	 * @return bool
-	 */
-	public function hasTargetField()
-	{
-		return $this->has("_field");
-	}
+    /**
+     * @return bool
+     */
+    public function hasTargetField()
+    {
+        return $this->has('_field');
+    }
 
-	/**
-	 * @return bool
-	 */
-	public function hasTargetId()
-	{
-		return $this->has("_id");
-	}
+    /**
+     * @return bool
+     */
+    public function hasTargetId()
+    {
+        return $this->has('_id');
+    }
 
-	/**
-	 * @param string $value
-	 * @return $this
-	 */
-	public function setTargetTable($value)
-	{
-		return $this->set("_table", $value);
-	}
+    /**
+     * @param string $value
+     * @return $this
+     */
+    public function setTargetTable($value)
+    {
+        return $this->set('_table', $value);
+    }
 
-	/**
-	 * @param string $value
-	 * @return $this
-	 */
-	public function setTargetField($value)
-	{
-		return $this->set("_field", $value);
-	}
+    /**
+     * @param string $value
+     * @return $this
+     */
+    public function setTargetField($value)
+    {
+        return $this->set('_field', $value);
+    }
 
-	/**
-	 * @param integer $value
-	 * @return $this
-	 */
-	public function setTargetId($value)
-	{
-		return $this->set("_id", $value);
-	}
+    /**
+     * @param integer $value
+     * @return $this
+     */
+    public function setTargetId($value)
+    {
+        return $this->set('_id', $value);
+    }
 
-	public function getPicsFolder()
-	{
-		return get_pics_folder($this->getRelated("table") ?: $this->getTargetTable() ?: $this->getTable());
-	}
+    public function getPicsFolder()
+    {
+        return get_pics_folder(
+            $this->getRelated('table') ?:
+            $this->getTargetTable() ?:
+            $this->getTable()
+        );
+    }
 
-	public static function getDynamicPicVars(\diModel $model, $relatedTable = null)
-	{
-		$ar = [];
+    public static function getDynamicPicVars(
+        \diModel $model,
+        $relatedTable = null
+    ) {
+        $ar = [];
 
-		$pic = $model->getRelated("pic") ?: $model->get("pic");
+        $pic = $model->getRelated('pic') ?: $model->get('pic');
 
-		if ($pic)
-		{
-			$folder = get_pics_folder($relatedTable ?: $model->getTable());
+        if ($pic) {
+            $folder = get_pics_folder($relatedTable ?: $model->getTable());
 
-			$ar = [
-				"pic" => $folder . $pic,
-				"pic_tn" => $folder . get_tn_folder() . $pic,
-				"pic_tn2" => $folder . get_tn_folder(2) . $pic,
-				"pic_tn3" => $folder . get_tn_folder(3) . $pic,
-				"pic_big" => $folder . get_big_folder() . $pic,
-				"pic_orig" => $folder . get_orig_folder() . $pic,
-			];
-		}
+            $ar = [
+                'pic' => $folder . $pic,
+                'pic_tn' => $folder . get_tn_folder() . $pic,
+                'pic_tn2' => $folder . get_tn_folder(2) . $pic,
+                'pic_tn3' => $folder . get_tn_folder(3) . $pic,
+                'pic_big' => $folder . get_big_folder() . $pic,
+                'pic_orig' => $folder . get_orig_folder() . $pic,
+            ];
+        }
 
-		return $ar;
-	}
+        return $ar;
+    }
 
-	public function getTemplateVars()
-	{
-		/*
+    public function getTemplateVars()
+    {
+        /*
 		if (!$this->getRelated("table"))
 		{
 			throw new Exception("Related table not set");
 		}
 		*/
 
-		$ar = array_merge(
-			parent::getTemplateVars(),
-			static::getDynamicPicVars($this, $this->getRelated("table") ?: $this->getTargetTable())
-		);
+        $ar = array_merge(
+            parent::getTemplateVars(),
+            static::getDynamicPicVars(
+                $this,
+                $this->getRelated('table') ?: $this->getTargetTable()
+            )
+        );
 
-		return $ar;
-	}
+        return $ar;
+    }
 }

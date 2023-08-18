@@ -28,7 +28,7 @@ namespace diCore\Entity\Cart;
  */
 class Collection extends \diCollection
 {
-	const type = \diTypes::cart;
-	protected $table = 'cart';
-	protected $modelType = 'cart';
+    const type = \diTypes::cart;
+    protected $table = 'cart';
+    protected $modelType = 'cart';
 }

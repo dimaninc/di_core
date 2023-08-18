@@ -40,7 +40,7 @@ namespace diCore\Entity\Feedback;
  */
 class Collection extends \diCollection
 {
-	const type = \diTypes::feedback;
-	protected $table = 'feedback';
-	protected $modelType = 'feedback';
+    const type = \diTypes::feedback;
+    protected $table = 'feedback';
+    protected $modelType = 'feedback';
 }

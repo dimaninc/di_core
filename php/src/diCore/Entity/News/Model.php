@@ -103,11 +103,20 @@ class Model extends \diBasePrevNextModel
 
     public function getSourceForSlug()
     {
-        return mb_substr($this->getDate(), 0, 10) . ' ' . ($this->getSlugSource() ?: $this->getMenuTitle() ?: $this->getTitle());
+        return mb_substr($this->getDate(), 0, 10) .
+            ' ' .
+            ($this->getSlugSource() ?:
+            $this->getMenuTitle() ?:
+                $this->getTitle());
     }
 
     public function getHref()
     {
-        return $this->__getPrefixForHref() . '/' . \diCurrentCMS::ct('news') . '/' . $this->getSlug() . '/';
+        return $this->__getPrefixForHref() .
+            '/' .
+            \diCurrentCMS::ct('news') .
+            '/' .
+            $this->getSlug() .
+            '/';
     }
 }

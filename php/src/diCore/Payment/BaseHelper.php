@@ -33,7 +33,10 @@ abstract class BaseHelper
      */
     public static function create($options = [])
     {
-        $className = \diLib::getChildClass(static::class, static::childClassName);
+        $className = \diLib::getChildClass(
+            static::class,
+            static::childClassName
+        );
 
         $helper = new $className($options);
 
@@ -47,20 +50,20 @@ abstract class BaseHelper
 
     public static function log($message)
     {
-        Logger::getInstance()->log($message, System::name(static::system), static::logSuffix);
+        Logger::getInstance()->log(
+            $message,
+            System::name(static::system),
+            static::logSuffix
+        );
     }
 
     public static function getLogin()
     {
-        return static::testMode
-            ? static::loginDemo
-            : static::login;
+        return static::testMode ? static::loginDemo : static::login;
     }
 
     public static function getPassword()
     {
-        return static::testMode
-            ? static::passwordDemo
-            : static::password;
+        return static::testMode ? static::passwordDemo : static::password;
     }
 }

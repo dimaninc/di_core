@@ -8,7 +8,6 @@
 
 namespace diCore\Payment\Tinkoff;
 
-
 use diCore\Tool\SimpleContainer;
 
 class PaymentObject extends SimpleContainer
@@ -52,7 +51,8 @@ class PaymentObject extends SimpleContainer
         self::gambling_prize => 'Выигрыш азартной игры',
         self::lottery => 'Лотерейный билет',
         self::lottery_prize => 'Выигрыш лотереи',
-        self::intellectual_activity => 'Предоставление результатов интеллектуальной деятельности',
+        self::intellectual_activity =>
+            'Предоставление результатов интеллектуальной деятельности',
         self::payment => 'Платеж',
         self::agent_commission => 'Агентское вознаграждение',
         self::composite => 'Составной предмет расчета',

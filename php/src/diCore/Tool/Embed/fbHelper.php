@@ -10,7 +10,7 @@ namespace diCore\Tool\Embed;
 
 class fbHelper extends Helper
 {
-	public static $queryParamsToRemove = [];
+    public static $queryParamsToRemove = [];
 
-	public static $identifyParams = [];
+    public static $identifyParams = [];
 }

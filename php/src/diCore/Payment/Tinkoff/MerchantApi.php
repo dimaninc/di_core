@@ -74,7 +74,6 @@ class MerchantApi
         return $this->buildQuery('Init', $args);
     }
 
-
     public function getState($args)
     {
         return $this->buildQuery('GetState', $args);
@@ -138,7 +137,6 @@ class MerchantApi
         }
         $url = $this->_combineUrl($url, $path);
 
-
         return $this->_sendRequest($url, $args);
     }
 
@@ -175,7 +173,9 @@ class MerchantApi
         $url = '';
         foreach ($args as $arg) {
             if (is_string($arg)) {
-                if ($arg[strlen($arg) - 1] !== '/') $arg .= '/';
+                if ($arg[strlen($arg) - 1] !== '/') {
+                    $arg .= '/';
+                }
                 $url .= $arg;
             } else {
                 continue;
@@ -207,16 +207,16 @@ class MerchantApi
             curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($curl, CURLOPT_POST, true);
             curl_setopt($curl, CURLOPT_POSTFIELDS, $args);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, array(
+            curl_setopt($curl, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
-            ));
+            ]);
 
             $out = curl_exec($curl);
             $this->response = $out;
             $json = json_decode($out);
 
             if ($json) {
-                if (@$json->ErrorCode !== "0") {
+                if (@$json->ErrorCode !== '0') {
                     $this->error = @$json->Details;
                 } else {
                     $this->paymentUrl = @$json->PaymentURL;
@@ -228,9 +228,14 @@ class MerchantApi
             curl_close($curl);
 
             return $out;
-
         } else {
-            throw new HttpException('Can not create connection to ' . $api_url . ' with args ' . $args, 404);
+            throw new HttpException(
+                'Can not create connection to ' .
+                    $api_url .
+                    ' with args ' .
+                    $args,
+                404
+            );
         }
     }
 }

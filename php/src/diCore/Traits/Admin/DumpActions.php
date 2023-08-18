@@ -38,14 +38,13 @@ trait DumpActions
         $headers = \diRequest::get('headers', 1);
 
         if ($headers) {
-            header("Content-Type: application/download");
+            header('Content-Type: application/download');
             header("Content-Disposition: attachment; filename=\"$this->file\"");
-            header("Content-Length: " . filesize($this->folder . $this->file));
-            header("Pragma: no-cache");
-            header("Expires: 0");
+            header('Content-Length: ' . filesize($this->folder . $this->file));
+            header('Pragma: no-cache');
+            header('Expires: 0');
         }
 
         readfile($this->folder . $this->file);
     }
-
 }

@@ -10,28 +10,28 @@ namespace diCore\Tool\Embed;
 
 class vkHelper extends Helper
 {
-	public static $queryParamsToRemove = [
-		'api_url',
-		'api_id',
-		'api_settings',
-		'viewer_id',
-		'viewer_type',
-		'sid',
-		'user_id',
-		'group_id',
-		'is_app_user',
-		'secret',
-		'access_token',
-		'auth_key',
-		'language',
-		'parent_language',
-		'ad_info',
-		'is_secure',
+    public static $queryParamsToRemove = [
+        'api_url',
+        'api_id',
+        'api_settings',
+        'viewer_id',
+        'viewer_type',
+        'sid',
+        'user_id',
+        'group_id',
+        'is_app_user',
+        'secret',
+        'access_token',
+        'auth_key',
+        'language',
+        'parent_language',
+        'ad_info',
+        'is_secure',
         'is_favorite',
         'stats_hash',
-		'ads_app_id',
-		'referrer',
-		'lc_name',
+        'ads_app_id',
+        'referrer',
+        'lc_name',
         'platform',
         'is_widescreen',
         'whitelist_scopes',
@@ -40,14 +40,14 @@ class vkHelper extends Helper
         'sign',
         'sign_keys',
         'hash',
-		'api_script',
+        'api_script',
         'access_token_settings',
-	];
+    ];
 
-	public static $identifyParams = [];
+    public static $identifyParams = [];
 
-	public static function is()
-	{
-		return \diRequest::get('lc_name') !== null;
-	}
+    public static function is()
+    {
+        return \diRequest::get('lc_name') !== null;
+    }
 }

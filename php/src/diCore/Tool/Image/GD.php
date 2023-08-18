@@ -8,8 +8,6 @@
 
 namespace diCore\Tool\Image;
 
-
 class GD extends Base
 {
-
 }

@@ -6,8 +6,8 @@
  * Time: 15:54
  */
 
-diLib::incInterface("diException");
+diLib::incInterface('diException');
 
 class diRuntimeException extends \RuntimeException implements diException
 {
-} 
+}

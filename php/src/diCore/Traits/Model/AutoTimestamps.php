@@ -26,7 +26,10 @@ trait AutoTimestamps
 {
     protected function generateTimestamps()
     {
-        if (defined('static::SKIP_TIMESTAMP_FIELDS') && static::SKIP_TIMESTAMP_FIELDS) {
+        if (
+            defined('static::SKIP_TIMESTAMP_FIELDS') &&
+            static::SKIP_TIMESTAMP_FIELDS
+        ) {
             return $this;
         }
 
@@ -43,7 +46,8 @@ trait AutoTimestamps
 
     public function getPairString($glue = '<br>')
     {
-        return \diDateTime::simpleFormat($this->getCreatedAt()) . $glue
-            . \diDateTime::simpleFormat($this->getUpdatedAt());
+        return \diDateTime::simpleFormat($this->getCreatedAt()) .
+            $glue .
+            \diDateTime::simpleFormat($this->getUpdatedAt());
     }
 }

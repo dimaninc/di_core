@@ -72,20 +72,15 @@ use diCore\Tool\CollectionCache;
  */
 class Model extends \diModel
 {
-	const type = Types::photo;
-	const slug_field_name = self::SLUG_FIELD_NAME;
-	const table = 'photos';
-	protected $table = 'photos';
+    const type = Types::photo;
+    const slug_field_name = self::SLUG_FIELD_NAME;
+    const table = 'photos';
+    protected $table = 'photos';
 
-	/** @var \diCore\Entity\Album\Model */
-	protected $album;
+    /** @var \diCore\Entity\Album\Model */
+    protected $album;
 
-	public static $tokenAlignments = [
-		'left',
-		'right',
-		'center',
-		null,
-	];
+    public static $tokenAlignments = ['left', 'right', 'center', null];
 
     protected static $picStoreSettings = [
         'pic' => [
@@ -106,55 +101,53 @@ class Model extends \diModel
         return static::getPicStoreSettings('pic');
     }
 
-	public function getToken($alignment = null)
-	{
-		$token = $this->getId()
-			? '[PHOTO-' . str_pad($this->getId(), 6, '0', STR_PAD_LEFT) . ']'
-			: null;
+    public function getToken($alignment = null)
+    {
+        $token = $this->getId()
+            ? '[PHOTO-' . str_pad($this->getId(), 6, '0', STR_PAD_LEFT) . ']'
+            : null;
 
-		if ($token && $alignment) {
-			$token .= '[' . strtoupper($alignment) . ']';
-		}
+        if ($token && $alignment) {
+            $token .= '[' . strtoupper($alignment) . ']';
+        }
 
-		return $token;
-	}
+        return $token;
+    }
 
-	public function getAllTokens()
-	{
-		$ar = [];
+    public function getAllTokens()
+    {
+        $ar = [];
 
-		foreach (static::$tokenAlignments as $alignment) {
-			$ar[$alignment] = $this->getToken($alignment);
-		}
+        foreach (static::$tokenAlignments as $alignment) {
+            $ar[$alignment] = $this->getToken($alignment);
+        }
 
-		return $ar;
-	}
+        return $ar;
+    }
 
-	/**
-	 * Custom model template vars
-	 *
-	 * @return array
-	 */
-	public function getCustomTemplateVars()
-	{
-		return extend(parent::getCustomTemplateVars(), [
-			'token' => $this->getToken(),
-		]);
-	}
+    /**
+     * Custom model template vars
+     *
+     * @return array
+     */
+    public function getCustomTemplateVars()
+    {
+        return extend(parent::getCustomTemplateVars(), [
+            'token' => $this->getToken(),
+        ]);
+    }
 
-	/**
-	 * Returns query conditions array for order_num calculating
-	 *
-	 * @return array
-	 */
-	public function getQueryArForMove()
-	{
-		$ar = [
-			"album_id = '{$this->getAlbumId()}'",
-		];
+    /**
+     * Returns query conditions array for order_num calculating
+     *
+     * @return array
+     */
+    public function getQueryArForMove()
+    {
+        $ar = ["album_id = '{$this->getAlbumId()}'"];
 
-		return $ar;
-	}
+        return $ar;
+    }
 
     public function getPicSubFolders()
     {
@@ -169,7 +162,11 @@ class Model extends \diModel
     public function getAlbum()
     {
         if (!$this->album) {
-            $this->album = CollectionCache::getModel(Types::album, $this->getAlbumId(), true);
+            $this->album = CollectionCache::getModel(
+                Types::album,
+                $this->getAlbumId(),
+                true
+            );
         }
 
         return $this->album;

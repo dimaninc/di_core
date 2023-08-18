@@ -29,19 +29,19 @@ class Model extends \diModel implements \diCore\Interfaces\CartOrder
         getItem as protected parentGetItem;
     }
 
-	const type = Types::cart;
-	protected $table = 'cart';
+    const type = Types::cart;
+    protected $table = 'cart';
 
-	/** @var $this */
-	protected static $instance;
-	const only_one_instance = true;
+    /** @var $this */
+    protected static $instance;
+    const only_one_instance = true;
 
     /**
      * CartOrder settings
      */
     const item_filter_field = 'cart_id';
     const item_type = Types::cart_item;
-	const pre_cache_needed = false;
+    const pre_cache_needed = false;
 
     /**
      * @param null $id
@@ -50,45 +50,47 @@ class Model extends \diModel implements \diCore\Interfaces\CartOrder
      * @return $this
      * @throws \Exception
      */
-	public static function autoCreate($id = null, $sessionId = null, $userId = null)
-	{
-	    if (static::only_one_instance && static::$instance) {
-	        return static::$instance;
+    public static function autoCreate(
+        $id = null,
+        $sessionId = null,
+        $userId = null
+    ) {
+        if (static::only_one_instance && static::$instance) {
+            return static::$instance;
         }
 
-		if ($id) {
-			/** @var $this $model */
-			$model = self::create(self::type, $id);
-		} else {
-			$q = [
-				"session_id = '" . ($sessionId ?: \diSession::id()) . "'",
-			];
+        if ($id) {
+            /** @var $this $model */
+            $model = self::create(self::type, $id);
+        } else {
+            $q = ["session_id = '" . ($sessionId ?: \diSession::id()) . "'"];
 
-			if (Auth::i()->getUserId()) {
-				$q[] = "user_id = '" . ($userId ?: Auth::i()->getUserId()) . "'";
-			}
+            if (Auth::i()->getUserId()) {
+                $q[] =
+                    "user_id = '" . ($userId ?: Auth::i()->getUserId()) . "'";
+            }
 
-			$model = \diCollection::create(self::type)->filterManual(join(' OR ', $q))->getFirstItem();
-		}
+            $model = \diCollection::create(self::type)
+                ->filterManual(join(' OR ', $q))
+                ->getFirstItem();
+        }
 
-		if (!$model->exists()) {
-			$model
-				->setSessionId($sessionId ?: \diSession::id());
-		}
+        if (!$model->exists()) {
+            $model->setSessionId($sessionId ?: \diSession::id());
+        }
 
-		if (!$model->hasUserId() && ($userId || Auth::i()->getUserId())) {
-            $model
-                ->setUserId($userId ?: Auth::i()->getUserId());
+        if (!$model->hasUserId() && ($userId || Auth::i()->getUserId())) {
+            $model->setUserId($userId ?: Auth::i()->getUserId());
         }
 
         if (static::only_one_instance) {
             static::$instance = $model;
         }
 
-		return $model;
-	}
+        return $model;
+    }
 
-	protected function prepareOptions($options)
+    protected function prepareOptions($options)
     {
         return $options;
     }
@@ -98,7 +100,7 @@ class Model extends \diModel implements \diCore\Interfaces\CartOrder
      * @param $options array
      * @return integer
      */
-	public function getQuantityOfItem($item, $options)
+    public function getQuantityOfItem($item, $options)
     {
         return $item->getQuantity();
     }
@@ -133,90 +135,85 @@ class Model extends \diModel implements \diCore\Interfaces\CartOrder
         return 1;
     }
 
-	public static function migrateToUser($sessionId = null, $userId = null)
-	{
-		if ($sessionId === null) {
-			$sessionId = \diSession::id();
-		}
+    public static function migrateToUser($sessionId = null, $userId = null)
+    {
+        if ($sessionId === null) {
+            $sessionId = \diSession::id();
+        }
 
-		if ($userId === null && Auth::i()->authorized()) {
-			$userId = Auth::i()->getUserId();
-		}
+        if ($userId === null && Auth::i()->authorized()) {
+            $userId = Auth::i()->getUserId();
+        }
 
-		if ($userId && $sessionId)
-		{
-			/** @var Collection $userCol */
-			$userCol = \diCollection::create(self::type);
-			/** @var Model $userCart */
-			$userCart = $userCol
-				->filterByUserId($userId)
-				->getFirstItem();
+        if ($userId && $sessionId) {
+            /** @var Collection $userCol */
+            $userCol = \diCollection::create(self::type);
+            /** @var Model $userCart */
+            $userCart = $userCol->filterByUserId($userId)->getFirstItem();
 
-			/** @var Collection $sessionCol */
-			$sessionCol = \diCollection::create(self::type);
-			/** @var Model $sessionCart */
-			$sessionCart = $sessionCol
-				->filterBySessionId($sessionId)
-				->getFirstItem();
+            /** @var Collection $sessionCol */
+            $sessionCol = \diCollection::create(self::type);
+            /** @var Model $sessionCart */
+            $sessionCart = $sessionCol
+                ->filterBySessionId($sessionId)
+                ->getFirstItem();
 
-			if ($userCart->exists()) {
-				/** @var CartItem $item */
-				foreach ($sessionCart->getItems() as $item)
-				{
-					$item
-						->setCartId($userCart->getId())
-						->save();
-				}
+            if ($userCart->exists()) {
+                /** @var CartItem $item */
+                foreach ($sessionCart->getItems() as $item) {
+                    $item->setCartId($userCart->getId())->save();
+                }
 
-				$sessionCart->hardDestroy();
+                $sessionCart->hardDestroy();
 
-				return $userCart;
-			} else {
-				$sessionCart
-					->setUserId($userId)
-					->save();
+                return $userCart;
+            } else {
+                $sessionCart->setUserId($userId)->save();
 
-				return $sessionCart;
-			}
-		}
+                return $sessionCart;
+            }
+        }
 
-		return static::autoCreate();
-	}
+        return static::autoCreate();
+    }
 
-	public function getItem($targetType, $targetId, $additionalFields = [])
-	{
+    public function getItem($targetType, $targetId, $additionalFields = [])
+    {
         /** @var CartItem $item */
-	    $item = $this->parentGetItem($targetType, $targetId, $additionalFields);
+        $item = $this->parentGetItem($targetType, $targetId, $additionalFields);
 
-		if (!$item->exists()) {
-			$item
-				->setCartId($this->getId())
-				->setTargetType($targetType)
-				->setTargetId($targetId)
+        if (!$item->exists()) {
+            $item
+                ->setCartId($this->getId())
+                ->setTargetType($targetType)
+                ->setTargetId($targetId)
                 ->updateTargetData();
 
-			foreach ($additionalFields as $k => $v) {
-				$item
-					->set($k, $v);
-			}
+            foreach ($additionalFields as $k => $v) {
+                $item->set($k, $v);
+            }
 
-			$this->items[] = $item;
+            $this->items[] = $item;
 
-			if (static::pre_cache_needed) {
+            if (static::pre_cache_needed) {
                 $cachedCol = CollectionCache::get($item->getTargetType());
 
                 if ($cachedCol) {
                     $cachedCol->addItem($item->getTargetModel());
                 } else {
-                    CollectionCache::addManual($item->getTargetType(), 'id', $item->getTargetId());
+                    CollectionCache::addManual(
+                        $item->getTargetType(),
+                        'id',
+                        $item->getTargetId()
+                    );
                 }
             }
-		}
+        }
 
-		return $item;
-	}
+        return $item;
+    }
 
-	public function killRelatedData()
+    public function killRelatedData()
     {
         parent::killRelatedData();
 

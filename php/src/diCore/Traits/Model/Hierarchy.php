@@ -38,7 +38,8 @@ trait Hierarchy
      */
     public function getChildren()
     {
-        return $this->getRelated('_children') ?: static::getCollectionClass()::createEmpty();
+        return $this->getRelated('_children') ?:
+            static::getCollectionClass()::createEmpty();
     }
 
     public function hasChildren()

@@ -34,10 +34,13 @@ trait DynamicPic
 
     private function checkCacheByField($field)
     {
-        if ($this->cacheByField && !isset(self::$colByField[$this->getTable()][$field])) {
-            self::$colByField[$this->getTable()][$field] = Collection::createByTargetTable(
-                $this->getTable(), $field
-            );
+        if (
+            $this->cacheByField &&
+            !isset(self::$colByField[$this->getTable()][$field])
+        ) {
+            self::$colByField[$this->getTable()][
+                $field
+            ] = Collection::createByTargetTable($this->getTable(), $field);
         }
 
         return $this;
@@ -45,8 +48,13 @@ trait DynamicPic
 
     private function checkCacheForTable()
     {
-        if ($this->cacheForTable && !isset(self::$colForTable[$this->getTable()])) {
-            self::$colForTable[$this->getTable()] = Collection::createByTargetTable($this->getTable());
+        if (
+            $this->cacheForTable &&
+            !isset(self::$colForTable[$this->getTable()])
+        ) {
+            self::$colForTable[
+                $this->getTable()
+            ] = Collection::createByTargetTable($this->getTable());
         }
 
         return $this;
@@ -54,16 +62,18 @@ trait DynamicPic
 
     public function getDynamicPicsByField($field)
     {
-        $this
-            ->checkCacheByField($field)
-            ->checkCacheForTable();
+        $this->checkCacheByField($field)->checkCacheForTable();
 
         if (!empty(self::$colByField[$this->getTable()][$field])) {
             $col = self::$colByField[$this->getTable()][$field];
         } elseif (!empty(self::$colForTable[$this->getTable()])) {
             $col = self::$colForTable[$this->getTable()];
         } else {
-            $col = Collection::createByTarget($this->getTable(), $this->getId(), $field);
+            $col = Collection::createByTarget(
+                $this->getTable(),
+                $this->getId(),
+                $field
+            );
         }
 
         $ar = [];

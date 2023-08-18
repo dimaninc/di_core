@@ -59,7 +59,7 @@ class Collection extends \diCollection
 {
     use TargetInside;
 
-	const type = \diTypes::ad_block;
-	protected $table = 'ad_blocks';
-	protected $modelType = 'ad_block';
+    const type = \diTypes::ad_block;
+    protected $table = 'ad_blocks';
+    protected $modelType = 'ad_block';
 }

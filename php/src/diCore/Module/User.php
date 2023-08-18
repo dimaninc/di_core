@@ -11,19 +11,12 @@ namespace diCore\Module;
 
 class User extends \diModule
 {
-	public function render()
-	{
-		if ($this->getTwig()->exists('text'))
-		{
-			$this->getTwig()
-				->renderPage('text');
-		}
-		else
-		{
-			$this->getTpl()
-				->define('user', [
-					'page',
-				]);
-		}
-	}
+    public function render()
+    {
+        if ($this->getTwig()->exists('text')) {
+            $this->getTwig()->renderPage('text');
+        } else {
+            $this->getTpl()->define('user', ['page']);
+        }
+    }
 }

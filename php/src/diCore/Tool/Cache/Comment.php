@@ -18,219 +18,241 @@ use diCore\Traits\BasicCreate;
 
 class Comment
 {
-	use BasicCreate;
+    use BasicCreate;
 
-	/** @var \diComments */
-	protected $Manager;
+    /** @var \diComments */
+    protected $Manager;
 
-	public function __construct($options = [])
-	{
-		$options = extend([
-			'Manager' => null,
-		], $options);
+    public function __construct($options = [])
+    {
+        $options = extend(
+            [
+                'Manager' => null,
+            ],
+            $options
+        );
 
-		if ($options['Manager'])
-		{
-			$this->setManager($options['Manager']);
-		}
-	}
+        if ($options['Manager']) {
+            $this->setManager($options['Manager']);
+        }
+    }
 
-	public function setManager(\diComments $Manager)
-	{
-		$this->Manager = $Manager;
+    public function setManager(\diComments $Manager)
+    {
+        $this->Manager = $Manager;
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function getManager()
-	{
-		return $this->Manager;
-	}
+    public function getManager()
+    {
+        return $this->Manager;
+    }
 
-	public static function updateCounts()
-	{
-		$errors = [];
-		$addError = function($s) use($errors) {
-			$errors[] = $s;
-		};
+    public static function updateCounts()
+    {
+        $errors = [];
+        $addError = function ($s) use ($errors) {
+            $errors[] = $s;
+        };
 
-		/** @var Model $comment */
-		$comment = \diModel::create(Types::comment);
+        /** @var Model $comment */
+        $comment = \diModel::create(Types::comment);
 
-		Connection::get()->getDb()->rs_go(function($r, $counter) use($comment, $addError) {
-			try {
-				$model = \diModel::create($r->target_type, $r->target_id);
-				$model
-					->set($comment::COMMENTS_COUNT_FIELD, $r->count)
-					->set($comment::COMMENTS_LAST_DATE_FIELD, $r->dt)
-					->save();
-			} catch (\Exception $e) {
-				$addError($e->getMessage() . ' for ' . \diTypes::getName($r->target_type) . '#' . $r->target_id);
-			}
-		}, 'comments', 'GROUP BY target_type,target_id', 'target_type, target_id, COUNT(id) AS count, MAX(date) AS dt');
+        Connection::get()
+            ->getDb()
+            ->rs_go(
+                function ($r, $counter) use ($comment, $addError) {
+                    try {
+                        $model = \diModel::create(
+                            $r->target_type,
+                            $r->target_id
+                        );
+                        $model
+                            ->set($comment::COMMENTS_COUNT_FIELD, $r->count)
+                            ->set($comment::COMMENTS_LAST_DATE_FIELD, $r->dt)
+                            ->save();
+                    } catch (\Exception $e) {
+                        $addError(
+                            $e->getMessage() .
+                                ' for ' .
+                                \diTypes::getName($r->target_type) .
+                                '#' .
+                                $r->target_id
+                        );
+                    }
+                },
+                'comments',
+                'GROUP BY target_type,target_id',
+                'target_type, target_id, COUNT(id) AS count, MAX(date) AS dt'
+            );
 
-		return $errors;
-	}
+        return $errors;
+    }
 
-	/**
-	 * @param \diModel|int $targetType
-	 * @param null|int $targetId
-	 * @return Collection
-	 */
-	protected function createCollectionByTarget($targetType, $targetId = null, \diComments $Comments = null)
-	{
-		$col = Collection::createForTarget($targetType, $targetId);
-		$col
-			->filterByVisible(1);
+    /**
+     * @param \diModel|int $targetType
+     * @param null|int $targetId
+     * @return Collection
+     */
+    protected function createCollectionByTarget(
+        $targetType,
+        $targetId = null,
+        \diComments $Comments = null
+    ) {
+        $col = Collection::createForTarget($targetType, $targetId);
+        $col->filterByVisible(1);
 
-		return $col;
-	}
+        return $col;
+    }
 
-	public function rebuildByTarget($targetType, $targetId = null, \diComments $Comments = null)
-	{
-		$Manager = $Comments ?: $this->getManager() ?: \diComments::create($targetType, $targetId);
+    public function rebuildByTarget(
+        $targetType,
+        $targetId = null,
+        \diComments $Comments = null
+    ) {
+        $Manager =
+            $Comments ?:
+            $this->getManager() ?:
+            \diComments::create($targetType, $targetId);
 
-		/** @var Collection $comments */
-		$comments = $this->createCollectionByTarget($targetType, $targetId, $Manager);
+        /** @var Collection $comments */
+        $comments = $this->createCollectionByTarget(
+            $targetType,
+            $targetId,
+            $Manager
+        );
 
-		/** @var \diCore\Entity\User\Collection $users */
-		$users = \diCollection::create(Types::user);
-		$users
-			->filterById($comments->map('user_id'));
+        /** @var \diCore\Entity\User\Collection $users */
+        $users = \diCollection::create(Types::user);
+        $users->filterById($comments->map('user_id'));
 
-		/** @var Model $comment */
-		foreach ($comments as $comment)
-		{
-			/** @var \diCore\Entity\User\Model $user */
-			$user = $users[$comment->getUserId()];
+        /** @var Model $comment */
+        foreach ($comments as $comment) {
+            /** @var \diCore\Entity\User\Model $user */
+            $user = $users[$comment->getUserId()];
 
-			$comment
-				->setRelated('user', $user);
-		}
+            $comment->setRelated('user', $user);
+        }
 
-		$comments
-			->buildCache(Collection::CACHE_BY_TARGET);
+        $comments->buildCache(Collection::CACHE_BY_TARGET);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function rebuildHtml($id)
-	{
-		if ($id instanceof CacheModel)
-		{
-			$cacheModel = $id;
-		}
-		else
-		{
-			/** @var CacheModel $cacheModel */
-			$cacheModel = Model::create(Types::comment_cache, $id);
-		}
+    public function rebuildHtml($id)
+    {
+        if ($id instanceof CacheModel) {
+            $cacheModel = $id;
+        } else {
+            /** @var CacheModel $cacheModel */
+            $cacheModel = Model::create(Types::comment_cache, $id);
+        }
 
-		if (!$cacheModel->exists())
-		{
-			throw new \Exception("Module #{$id} doesn't exist");
-		}
+        if (!$cacheModel->exists()) {
+            throw new \Exception("Module #{$id} doesn't exist");
+        }
 
-		// todo: use page field of table
-		$this
-			->setManager(\diComments::create($cacheModel->getTargetType(), $cacheModel->getTargetId()))
-			->rebuildWorker($cacheModel);
+        // todo: use page field of table
+        $this->setManager(
+            \diComments::create(
+                $cacheModel->getTargetType(),
+                $cacheModel->getTargetId()
+            )
+        )->rebuildWorker($cacheModel);
 
-		$cacheModel
-			->setUpdatedAt(\diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME))
-			->save();
+        $cacheModel
+            ->setUpdatedAt(
+                \diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME)
+            )
+            ->save();
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function rebuildWorker(CacheModel $cacheModel)
-	{
-		$this->storeHtml($cacheModel, $this->getManager()->getDefaultRowsHtml());
+    protected function rebuildWorker(CacheModel $cacheModel)
+    {
+        $this->storeHtml(
+            $cacheModel,
+            $this->getManager()->getDefaultRowsHtml()
+        );
 
-		return $this;
-	}
+        return $this;
+    }
 
-	protected function storeHtml(CacheModel $cacheModel, $content)
-	{
-		$cacheModel->setHtml($content);
+    protected function storeHtml(CacheModel $cacheModel, $content)
+    {
+        $cacheModel->setHtml($content);
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function rebuildAll()
-	{
-		/** @var CacheCol $col */
-		$col = \diCollection::create(Types::comment_cache);
-		$col
-			->filterByActive(1);
-		/** @var CacheModel $cache */
-		foreach ($col as $cache)
-		{
-			$this->rebuildHtml($cache);
-		}
-	}
+    public function rebuildAll()
+    {
+        /** @var CacheCol $col */
+        $col = \diCollection::create(Types::comment_cache);
+        $col->filterByActive(1);
+        /** @var CacheModel $cache */
+        foreach ($col as $cache) {
+            $this->rebuildHtml($cache);
+        }
+    }
 
-	public function getCachedHtmlContents($target, $options = [])
-	{
-		$options = extend([
-			'createIfNotExists' => false,
-		], $options);
+    public function getCachedHtmlContents($target, $options = [])
+    {
+        $options = extend(
+            [
+                'createIfNotExists' => false,
+            ],
+            $options
+        );
 
-		if (is_array($target))
-		{
-			$target = extend([
-				'type' => null,
-				'id' => null,
-			], $target);
+        if (is_array($target)) {
+            $target = extend(
+                [
+                    'type' => null,
+                    'id' => null,
+                ],
+                $target
+            );
 
-			$targetType = $target['type'];
-			$targetId = $target['id'];
-		}
-		elseif ($target instanceof \diModel)
-		{
-			$targetType = $target->modelType();
-			$targetId = $target->getId();
-		}
-		else
-		{
-			$targetType = null;
-			$targetId = null;
-		}
+            $targetType = $target['type'];
+            $targetId = $target['id'];
+        } elseif ($target instanceof \diModel) {
+            $targetType = $target->modelType();
+            $targetId = $target->getId();
+        } else {
+            $targetType = null;
+            $targetId = null;
+        }
 
-		if (!$targetType || !$targetId)
-		{
-			throw new \Exception('Undefined target for comment cache');
-		}
+        if (!$targetType || !$targetId) {
+            throw new \Exception('Undefined target for comment cache');
+        }
 
-		/** @var CacheCol $col */
-		$col = \diCollection::create(Types::comment_cache);
-		$col
-			->filterByTargetType($targetType)
-			->filterByTargetId($targetId);
+        /** @var CacheCol $col */
+        $col = \diCollection::create(Types::comment_cache);
+        $col->filterByTargetType($targetType)->filterByTargetId($targetId);
 
-		/** @var CacheModel $cacheModel */
-		$cacheModel = $col->getFirstItem();
+        /** @var CacheModel $cacheModel */
+        $cacheModel = $col->getFirstItem();
 
-		if (!$cacheModel->exists() && $options['createIfNotExists'])
-		{
-			$cacheModel
-				->setTargetType($targetType)
-				->setTargetId($targetId)
-				->setUpdatedAt(\diDateTime::sqlFormat());
+        if (!$cacheModel->exists() && $options['createIfNotExists']) {
+            $cacheModel
+                ->setTargetType($targetType)
+                ->setTargetId($targetId)
+                ->setUpdatedAt(\diDateTime::sqlFormat());
 
-			$this->rebuildWorker($cacheModel);
+            $this->rebuildWorker($cacheModel);
 
-			$cacheModel
-				->save();
-		}
+            $cacheModel->save();
+        }
 
-		return $this->getHtmlCacheFromModel($cacheModel, $options);
-	}
+        return $this->getHtmlCacheFromModel($cacheModel, $options);
+    }
 
-	protected function getHtmlCacheFromModel(CacheModel $cache, $options = [])
-	{
-		return $cache->exists()
-			? $cache->getHtml()
-			: null;
-	}
+    protected function getHtmlCacheFromModel(CacheModel $cache, $options = [])
+    {
+        return $cache->exists() ? $cache->getHtml() : null;
+    }
 }
