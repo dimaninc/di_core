@@ -12,47 +12,53 @@ use diCore\Tool\SimpleContainer;
 
 class FieldType extends SimpleContainer
 {
-	const string = 1;
-	const bool = 2;
+    const string = 1;
+    const bool = 2;
+    const ip_string = 4;
 
-	const int = 11;
-	const float = 12;
-	const double = 13;
+    const int = 11;
+    const float = 12;
+    const double = 13;
+    const ip_int = 14;
 
-	const date = 21;
-	const time = 22;
-	const datetime = 23;
-	const timestamp = 24;
+    const date = 21;
+    const time = 22;
+    const datetime = 23;
+    const timestamp = 24;
 
-	const mongo_id = 32;
+    const mongo_id = 32;
 
-	public static $names = [
-		self::string => 'string',
-		self::bool => 'bool',
-		self::int => 'int',
-		self::float => 'float',
-		self::double => 'double',
-		self::date => 'date',
-		self::time => 'time',
-		self::datetime => 'datetime',
-		self::timestamp => 'timestamp',
-		self::mongo_id => 'mongo_id',
-	];
+    public static $names = [
+        self::string => 'string',
+        self::bool => 'bool',
+        self::ip_string => 'ip_string',
+        self::int => 'int',
+        self::float => 'float',
+        self::double => 'double',
+        self::ip_int => 'ip_int',
+        self::date => 'date',
+        self::time => 'time',
+        self::datetime => 'datetime',
+        self::timestamp => 'timestamp',
+        self::mongo_id => 'mongo_id',
+    ];
 
-	public static $titles = [
-		self::string => 'String',
-		self::bool => 'Bool',
-		self::int => 'Int',
-		self::float => 'Float',
-		self::double => 'Double',
-		self::date => 'Date',
-		self::time => 'Time',
-		self::datetime => 'Datetime',
-		self::timestamp => 'Timestamp',
-		self::mongo_id => 'Mongo id',
-	];
+    public static $titles = [
+        self::string => 'String',
+        self::bool => 'Bool',
+        self::ip_string => 'String IP-address',
+        self::int => 'Int',
+        self::float => 'Float',
+        self::double => 'Double',
+        self::ip_int => 'Integer IP-address',
+        self::date => 'Date',
+        self::time => 'Time',
+        self::datetime => 'Datetime',
+        self::timestamp => 'Timestamp',
+        self::mongo_id => 'Mongo id',
+    ];
 
-	public static function type($id, Connection $connection)
+    public static function type($id, Connection $connection)
     {
         switch ($id) {
             case self::bool:

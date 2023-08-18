@@ -1919,10 +1919,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         $ar = [];
 
         foreach ($expressionsAr as $k => $v) {
-            $ar[] =
-                $this->getDb()->escapeField($k) .
-                '=' .
-                $this->getDb()->escapeValue($v);
+            $ar[] = $this->getDb()->escapeFieldValue($k, $v);
         }
 
         return $this->filterManual(join(' OR ', $ar));

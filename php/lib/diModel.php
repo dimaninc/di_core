@@ -1032,10 +1032,8 @@ class diModel implements \ArrayAccess
                     $v = $ar[$k . '_date'];
                 }
             } elseif ($this->isIpField($k)) {
-                $ar[$k . '_num'] = $v;
-
+                $ar[$k . '_num'] = isInteger($v) ? $v : ip2bin($v);
                 $v = isInteger($v) ? bin2ip($v) : $v;
-
                 $ar[$k . '_str'] = $v;
             }
 
@@ -2063,6 +2061,10 @@ class diModel implements \ArrayAccess
 
         foreach ($ar as $k => &$v) {
             if (is_scalar($v)) {
+                if ($this->isIpField($k)) {
+                    $v = static::tuneFieldValueByTypeBeforeDb($k, $v);
+                }
+
                 $v = $this->escapeValue($v, $k);
             }
         }
@@ -2167,9 +2169,11 @@ class diModel implements \ArrayAccess
                 $result = $this->getDb()->update(
                     $this->getDb()->escapeTable($this->getTable()),
                     $ar,
-                    "WHERE {$this->getDb()->escapeField(
-                        $this->getIdFieldName()
-                    )} = {$this->getDb()->escapeValue($this->getId())}" .
+                    'WHERE ' .
+                        $this->getDb()->escapeFieldValue(
+                            $this->getIdFieldName(),
+                            $this->getId()
+                        ) .
                         $this->getDb()->getUpdateSingleLimit()
                 );
 
@@ -2360,7 +2364,7 @@ class diModel implements \ArrayAccess
             ->q(static::getCreateTableQuery());
     }
 
-    // todo
+    // todo: implement this function to create table from model structure
     public static function getCreateTableQuery()
     {
         $db = static::getConnection()->getDb();
@@ -2577,7 +2581,7 @@ ENGINE = InnoDB;";
 
     /**
      * Returns query conditions array for order_num calculating
-     *
+     * @todo Add support of assoc array to use in non-relational databases
      * @return array
      */
     public function getQueryArForMove()
@@ -2585,7 +2589,10 @@ ENGINE = InnoDB;";
         $ar = [];
 
         if ($this->exists('parent')) {
-            $ar[] = "parent = '{$this->get('parent')}'";
+            $ar[] = $this->getDb()->escapeFieldValue(
+                'parent',
+                $this->get('parent')
+            );
         }
 
         return $ar;
@@ -2645,9 +2652,12 @@ ENGINE = InnoDB;";
                 [
                     '*order_num' => 'order_num + 1',
                 ],
-                "WHERE {$this->getDb()->escapeField(
-                    'order_num'
-                )} >= {$this->getDb()->escapeValue($this->get('order_num'))}"
+                'WHERE ' .
+                    $this->getDb()->escapeFieldValue(
+                        'order_num',
+                        $this->get('order_num'),
+                        '>='
+                    )
             );
         }
 
@@ -2954,6 +2964,18 @@ ENGINE = InnoDB;";
                     $value = new UTCDatetime(
                         (new \DateTime($value))->getTimestamp() * 1000
                     );
+                }
+                break;
+
+            case FieldType::ip_string:
+                if (isInteger($value)) {
+                    $value = bin2ip($value);
+                }
+                break;
+
+            case FieldType::ip_int:
+                if (!isInteger($value)) {
+                    $value = ip2bin($value);
                 }
                 break;
         }

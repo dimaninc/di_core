@@ -855,11 +855,12 @@ class Submit
                 [
                     '*order_num' => 'order_num + 1',
                 ],
-                "WHERE {$this->getDb()->escapeField(
-                    'order_num'
-                )} >= {$this->getDb()->escapeValue(
-                    $this->getData('order_num')
-                )}"
+                'WHERE ' .
+                    $this->getDb()->escapeFieldValue(
+                        'order_num',
+                        $this->getData('order_num'),
+                        '>='
+                    )
             );
         } else {
             $r = $this->getDb()->r(

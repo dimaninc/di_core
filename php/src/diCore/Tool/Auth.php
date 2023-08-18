@@ -8,101 +8,115 @@
 
 namespace diCore\Tool;
 
+use diCore\Data\Config;
 use diCore\Data\Types;
+use diCore\Entity\User\Model as User;
+use diCore\Entity\UserSession\Collection as UserSessions;
+use diCore\Entity\UserSession\Model as UserSession;
 use diCore\Traits\BasicCreate;
 
 class Auth
 {
-	use BasicCreate;
+    use BasicCreate;
 
-	const COOKIE_PROVIDER = \diCookie::class;
+    const COOKIE_PROVIDER = \diCookie::class;
 
-	const SOURCE_POST = 1;
-	const SOURCE_COOKIE = 2;
-	const SOURCE_SESSION = 3;
+    // post request
+    const SOURCE_POST = 1;
+    // stored cookies
+    const SOURCE_COOKIE = 2;
+    // php session
+    const SOURCE_SESSION = 3;
+    // stored in cookies or received in headers user_session token
+    const SOURCE_USER_SESSION = 4;
 
-	const CLEAR_USER_ID_COOKIE_ON_SIGN_OUT = true;
+    const CLEAR_USER_ID_COOKIE_ON_SIGN_OUT = true;
 
-	const COOKIE_LIFE_TIME_REMEMBERED = '+2 weeks';
-	const COOKIE_LIFE_TIME_GUEST = '+30 min';
+    const COOKIE_LIFE_TIME_REMEMBERED = '+2 weeks';
+    const COOKIE_LIFE_TIME_GUEST = '+30 min';
 
-	const COOKIE_PATH = '/';
+    const COOKIE_PATH = '/';
 
-	const COOKIE_USER_ID = 'auth_user_id';
-	const COOKIE_SECRET = 'auth_secret';
-	const COOKIE_REMEMBER = 'auth_remember';
+    const COOKIE_USER_ID = 'auth_user_id';
+    const COOKIE_SECRET = 'auth_secret';
+    const COOKIE_REMEMBER = 'auth_remember';
 
-	const POST_LOGIN_FIELD = 'vm_login';
-	const POST_PASSWORD_FIELD = 'vm_password';
-	const POST_REMEMBER_FIELD = 'vm_remember';
+    // new way of auth using user_session
+    const HEADER_TOKEN = 'auth_token';
 
-	const TEMPLATE_VAR_PREFIX = 'LOGGED_IN_';
+    const POST_LOGIN_FIELD = 'vm_login';
+    const POST_PASSWORD_FIELD = 'vm_password';
+    const POST_REMEMBER_FIELD = 'vm_remember';
 
-	const USER_MODEL_TYPE = Types::user;
+    const TEMPLATE_VAR_PREFIX = 'LOGGED_IN_';
 
-	const SESSION_USER_ID_FIELD = 'user_id';
+    const USER_MODEL_TYPE = Types::user;
 
-	/** @var Auth */
-	protected static $instance;
+    const SESSION_USER_ID_FIELD = 'user_id';
 
-	/** @var \diCore\Entity\User\Model */
-	private $user;
-	/** @var int */
-	private $authSource;
-	/** @var integer|null */
-	private $errorCode = null;
-	/** @var \FastTemplate */
-	private $tpl;
-	/** @var bool */
-	private $redirectAllowed = true;
-	/**
-	 * Ids of super users
-	 * @var array
-	 */
-	protected static $superUsers = [];
+    /** @var Auth */
+    protected static $instance;
 
-	public function __construct($redirectAllowed = true)
-	{
-		\diSession::start();
+    /** @var User */
+    private $user;
+    /** @var UserSession */
+    private $userSession;
+    /** @var int */
+    private $authSource;
+    /** @var integer|null */
+    private $errorCode = null;
+    /** @var \FastTemplate */
+    private $tpl;
+    /** @var bool */
+    private $redirectAllowed = true;
+    /**
+     * Ids of super users
+     * @var array
+     */
+    protected static $superUsers = [];
 
-		$this
-			->setRedirectAllowed($redirectAllowed)
-			->authUsingSession()
-			->authUsingCookies()
-			->authUsingPost()
-			->storeSession()
-			->storeCookies()
-			->redirectIfNeeded();
+    public function __construct($redirectAllowed = true)
+    {
+        \diSession::start();
 
-		static::$instance = $this;
-	}
+        $this->setRedirectAllowed($redirectAllowed)
+            ->authUsingSession()
+            ->authUsingCookies()
+            ->authUsingHeaders()
+            ->authUsingPost()
+            ->storeSession()
+            ->storeCookies()
+            ->redirectIfNeeded();
 
-	public static function getSuperUserIds()
+        static::$instance = $this;
+    }
+
+    public static function getSuperUserIds()
     {
         return static::$superUsers;
     }
 
-	/**
-	 * @return Auth
-	 */
-	public static function create($redirectAllowed = true)
-	{
-		return static::basicCreate($redirectAllowed);
-	}
+    /**
+     * @return Auth
+     */
+    public static function create($redirectAllowed = true)
+    {
+        return static::basicCreate($redirectAllowed);
+    }
 
-	/**
-	 * @return Auth
-	 */
-	public static function i()
-	{
-		if (!static::$instance) {
-			static::$instance = static::create();
-		}
+    /**
+     * @return Auth
+     */
+    public static function i()
+    {
+        if (!static::$instance) {
+            static::$instance = static::create();
+        }
 
-		return static::$instance;
-	}
+        return static::$instance;
+    }
 
-	public static function isFirstVisit()
+    public static function isFirstVisit()
     {
         if (
             \diRequest::cookie(static::COOKIE_USER_ID) ||
@@ -114,312 +128,395 @@ class Auth
         return true;
     }
 
-	/**
-	 * @return \diCore\Entity\User\Model
-	 */
-	public function getUserModel()
-	{
-		return $this->user;
-	}
+    public function getUserModel()
+    {
+        return $this->user;
+    }
 
-	public function authorized()
-	{
-		return $this->reallyAuthorized();
-	}
+    public function getUserSession()
+    {
+        return $this->userSession ?: UserSession::create();
+    }
 
-	public function reallyAuthorized()
-	{
-		return $this->getUserModel()->exists() && $this->getUserModel()->active();
-	}
+    public function authorized()
+    {
+        return $this->reallyAuthorized();
+    }
 
-	protected function setErrorCode($code)
-	{
-		$this->errorCode = $code;
+    public function reallyAuthorized()
+    {
+        return $this->getUserModel()->exists() &&
+            $this->getUserModel()->active();
+    }
 
-		return $this;
-	}
+    protected function setErrorCode($code)
+    {
+        $this->errorCode = $code;
 
-	public function getErrorCode()
-	{
-		return $this->errorCode;
-	}
+        return $this;
+    }
 
-	public function getUserId()
-	{
-		return $this->getUserModel()->getId();
-	}
+    public function getErrorCode()
+    {
+        return $this->errorCode;
+    }
 
-	public function isSuperUser()
-	{
-		return in_array($this->getUserId(), self::getSuperUserIds());
-	}
+    public function getUserId()
+    {
+        return $this->getUserModel()->getId();
+    }
 
-	public function isRedirectAllowed()
-	{
-		return $this->redirectAllowed;
-	}
+    public function isSuperUser()
+    {
+        return in_array($this->getUserId(), self::getSuperUserIds());
+    }
 
-	public function setRedirectAllowed($redirectAllowed)
-	{
-		$this->redirectAllowed = $redirectAllowed;
+    public function isRedirectAllowed()
+    {
+        return $this->redirectAllowed;
+    }
 
-		return $this;
-	}
+    public function setRedirectAllowed($redirectAllowed)
+    {
+        $this->redirectAllowed = $redirectAllowed;
 
-	public function logout()
-	{
-		return $this
-			->clearCookies()
-			->clearSession();
-	}
+        return $this;
+    }
 
-	private function storeSession()
-	{
-		if ($this->reallyAuthorized()) {
-			$_SESSION[static::SESSION_USER_ID_FIELD] = $this->getUserId();
-		} else {
-			$this->clearSession();
-		}
+    public function logout()
+    {
+        return $this->clearCookies()->clearSession();
+    }
 
-		return $this;
-	}
+    private function storeSession()
+    {
+        if ($this->reallyAuthorized()) {
+            if (Config::isUserSessionUsed()) {
+                $this->userSession = UserSession::fastCreate(
+                    $this->getUserModel()
+                )->save();
+            }
 
-	private function clearSession()
-	{
-		unset($_SESSION[static::SESSION_USER_ID_FIELD]);
-
-		return $this;
-	}
-
-	protected function getDomainForCookie()
-	{
-		/** @var \diCookie $className */
-		$className = static::COOKIE_PROVIDER;
-
-		return $className::getDomainForAll();
-	}
-
-	protected function rememberUser()
-	{
-		return \diRequest::post(static::POST_REMEMBER_FIELD, '') || \diCookie::get(static::COOKIE_REMEMBER);
-	}
-
-	protected function needToStoreCookies($force = false)
-	{
-		return $force || in_array($this->authSource, [self::SOURCE_POST, self::SOURCE_COOKIE]);
-	}
-
-	protected function setCookie($name, $value = null, $date = null, $path = null, $domain = null)
-	{
-		/** @var \diCookie $className */
-		$className = static::COOKIE_PROVIDER;
-		$className::set($name, $value, $date, $path ?: static::COOKIE_PATH, $domain ?: $this->getDomainForCookie());
-
-		return $this;
-	}
-
-	protected function removeCookie($name, $path = null, $domain = null)
-	{
-		/** @var \diCookie $className */
-		$className = static::COOKIE_PROVIDER;
-		$className::remove($name, $path ?: static::COOKIE_PATH, $domain ?: $this->getDomainForCookie());
-
-		return $this;
-	}
-
-	protected function storeCookies($remember = false)
-	{
-		if ($this->reallyAuthorized() && $this->needToStoreCookies($remember)) {
-			$cookieTime = strtotime($this->rememberUser() || $remember ? static::COOKIE_LIFE_TIME_REMEMBERED : static::COOKIE_LIFE_TIME_GUEST);
-
-			$id = $this->getUserId();
-			$secret = \diBaseUserModel::hash($this->getUserModel()->getPassword(), 'cookie', 'db');
-
-			$this
-				->setCookie(static::COOKIE_USER_ID, $id, $cookieTime)
-				->setCookie(static::COOKIE_SECRET, $secret, $cookieTime);
-
-			if ($this->rememberUser() || $remember) {
-				$this->setCookie(static::COOKIE_REMEMBER, 1, $cookieTime);
-			}
-		}
-
-		return $this;
-	}
-
-	protected function clearCookies()
-	{
-		$this
-            ->removeCookie(static::COOKIE_SECRET)
-            ->removeCookie(static::COOKIE_REMEMBER);
-
-		if (static::CLEAR_USER_ID_COOKIE_ON_SIGN_OUT) {
-		    $this
-                ->removeCookie(static::COOKIE_USER_ID);
+            $_SESSION[static::SESSION_USER_ID_FIELD] = $this->getUserId();
+        } else {
+            $this->clearSession();
         }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	// todo: check activated status
-	private function authorize($id, $passwordHash, $source = self::SOURCE_POST)
-	{
-		if ($this->authorized()) {
-			return false;
-		}
+    private function clearSession()
+    {
+        unset($_SESSION[static::SESSION_USER_ID_FIELD]);
 
-		$this->user = \diModel::create(static::USER_MODEL_TYPE, $id);
-		$sourceStr = $source == self::SOURCE_POST ? 'raw' : 'cookie';
+        return $this;
+    }
 
-		if (
-		    $this->getUserModel()->exists() &&
+    protected function getDomainForCookie()
+    {
+        /** @var \diCookie $className */
+        $className = static::COOKIE_PROVIDER;
+
+        return $className::getDomainForAll();
+    }
+
+    protected function rememberUser()
+    {
+        return \diRequest::post(static::POST_REMEMBER_FIELD, '') ||
+            \diCookie::get(static::COOKIE_REMEMBER);
+    }
+
+    protected function needToStoreCookies($force = false)
+    {
+        return $force ||
+            in_array($this->authSource, [
+                self::SOURCE_POST,
+                self::SOURCE_COOKIE,
+            ]);
+    }
+
+    protected function setCookie(
+        $name,
+        $value = null,
+        $date = null,
+        $path = null,
+        $domain = null
+    ) {
+        /** @var \diCookie $className */
+        $className = static::COOKIE_PROVIDER;
+        $className::set(
+            $name,
+            $value,
+            $date,
+            $path ?: static::COOKIE_PATH,
+            $domain ?: $this->getDomainForCookie()
+        );
+
+        return $this;
+    }
+
+    protected function removeCookie($name, $path = null, $domain = null)
+    {
+        /** @var \diCookie $className */
+        $className = static::COOKIE_PROVIDER;
+        $className::remove(
+            $name,
+            $path ?: static::COOKIE_PATH,
+            $domain ?: $this->getDomainForCookie()
+        );
+
+        return $this;
+    }
+
+    protected function storeCookies($remember = false)
+    {
+        if ($this->reallyAuthorized() && $this->needToStoreCookies($remember)) {
+            $cookieTime = strtotime(
+                $this->rememberUser() || $remember
+                    ? static::COOKIE_LIFE_TIME_REMEMBERED
+                    : static::COOKIE_LIFE_TIME_GUEST
+            );
+
+            $id = $this->getUserId();
+            $secret = \diBaseUserModel::hash(
+                $this->getUserModel()->getPassword(),
+                'cookie',
+                'db'
+            );
+
+            $this->setCookie(
+                static::COOKIE_USER_ID,
+                $id,
+                $cookieTime
+            )->setCookie(static::COOKIE_SECRET, $secret, $cookieTime);
+
+            if ($this->rememberUser() || $remember) {
+                $this->setCookie(static::COOKIE_REMEMBER, 1, $cookieTime);
+            }
+        }
+
+        return $this;
+    }
+
+    protected function clearCookies()
+    {
+        $this->removeCookie(static::COOKIE_SECRET)->removeCookie(
+            static::COOKIE_REMEMBER
+        );
+
+        if (static::CLEAR_USER_ID_COOKIE_ON_SIGN_OUT) {
+            $this->removeCookie(static::COOKIE_USER_ID);
+        }
+
+        return $this;
+    }
+
+    // todo: check activated status
+    private function authorize($id, $passwordHash, $source = self::SOURCE_POST)
+    {
+        if ($this->authorized()) {
+            return false;
+        }
+
+        if ($source === self::SOURCE_USER_SESSION) {
+            $this->userSession = UserSessions::create()
+                ->filterByToken($id)
+                ->getFirstItem();
+
+            if (!$this->userSession->exists()) {
+                return false;
+            }
+
+            $this->user = $this->userSession->getUser();
+            $this->userSession->updateSeenAt()->save();
+            $passwordOk = true;
+        } else {
+            $this->user = \diModel::create(static::USER_MODEL_TYPE, $id);
+            $sourceStr = $source === self::SOURCE_POST ? 'raw' : 'cookie';
+            $passwordOk = $this->getUserModel()->isPasswordOk(
+                $passwordHash,
+                $sourceStr
+            );
+        }
+
+        if (
+            $this->getUserModel()->exists() &&
             $this->getUserModel()->active() &&
-            $this->getUserModel()->isPasswordOk($passwordHash, $sourceStr)
+            $passwordOk
         ) {
-			$this->storeSession();
+            $this->storeSession();
 
-			return true;
-		} else {
-			$this->getUserModel()->destroy();
-		}
+            return true;
+        }
 
-		return false;
-	}
+        $this->getUserModel()->destroy();
 
-	public function forceAuthorize(\diBaseUserModel $user, $storeCookies = false)
-	{
-		$this->user = $user;
+        return false;
+    }
 
-		$this
-			->storeSession()
-			->storeCookies($storeCookies);
+    public function forceAuthorize(
+        \diBaseUserModel $user,
+        $storeCookies = false
+    ) {
+        $this->user = $user;
 
-		return $this;
-	}
+        $this->storeSession()->storeCookies($storeCookies);
 
-	protected function updateAuthorizedUserData()
-	{
-		if ($this->authorized()) {
-			$this->getUserModel()
-				->setValidationNeeded(false)
-				->setLastVisitDate(\diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME))
-				->setIp(ip2bin())
-				->save()
-				->setValidationNeeded(true);
-		}
+        return $this;
+    }
 
-		return $this;
-	}
+    protected function updateAuthorizedUserData()
+    {
+        if ($this->authorized()) {
+            $this->getUserModel()
+                ->setValidationNeeded(false)
+                ->setLastVisitDate(\diDateTime::sqlFormat())
+                ->setIp(ip2bin())
+                ->save()
+                ->setValidationNeeded(true);
+        }
 
-	private function authUsingSession()
-	{
-		$id = \diRequest::session(static::SESSION_USER_ID_FIELD, 0);
+        return $this;
+    }
 
-		$this->user = \diModel::create(static::USER_MODEL_TYPE, $id, 'id');
+    private function authUsingSession()
+    {
+        $id = \diRequest::session(static::SESSION_USER_ID_FIELD, 0);
 
-		if ($this->authorized()) {
-			$this->authSource = self::SOURCE_SESSION;
+        $this->user = \diModel::create(static::USER_MODEL_TYPE, $id, 'id');
 
-			$this->updateAuthorizedUserData();
-		} else {
-			$this->getUserModel()->destroy();
-		}
+        if ($this->authorized()) {
+            $this->authSource = self::SOURCE_SESSION;
 
-		return $this;
-	}
+            $this->updateAuthorizedUserData();
+        } else {
+            $this->getUserModel()->destroy();
+        }
 
-	private function authUsingCookies()
-	{
-		if ($this->authorized()) {
-			return $this;
-		}
+        return $this;
+    }
 
-		$id = (int)\diCookie::get(static::COOKIE_USER_ID);
-		$password = \diCookie::get(static::COOKIE_SECRET);
+    private function authUsingCookies()
+    {
+        if ($this->authorized()) {
+            return $this;
+        }
 
-		if ($this->authorize($id, $password, self::SOURCE_COOKIE)) {
-			$this->authSource = self::SOURCE_COOKIE;
+        $id = (int) \diCookie::get(static::COOKIE_USER_ID);
+        $password = \diCookie::get(static::COOKIE_SECRET);
 
-			$this->updateAuthorizedUserData();
-		}
+        if ($this->authorize($id, $password, self::SOURCE_COOKIE)) {
+            $this->authSource = self::SOURCE_COOKIE;
 
-		return $this;
-	}
+            $this->updateAuthorizedUserData();
+        }
 
-	private function authUsingPost()
-	{
-		if ($this->authorized()) {
-			return $this;
-		}
+        return $this;
+    }
 
-		$login = \diRequest::post(static::POST_LOGIN_FIELD, '');
-		$password = \diRequest::post(static::POST_PASSWORD_FIELD, '');
+    private function authUsingHeaders()
+    {
+        $token = \diRequest::header(static::HEADER_TOKEN);
 
-		if ($login && $password && $this->authorize($login, $password, self::SOURCE_POST)) {
-			$this->authSource = self::SOURCE_POST;
+        if (
+            $token &&
+            $this->authorize($token, null, self::SOURCE_USER_SESSION)
+        ) {
+            $this->authSource = self::SOURCE_USER_SESSION;
 
-			$this->updateAuthorizedUserData();
-		}
+            $this->updateAuthorizedUserData();
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	private function redirectIfNeeded()
-	{
-		if ($this->isRedirectAllowed() && $this->redirectNeeded()) {
-			header('Location: ' . \diRequest::requestUri());
+    private function authUsingPost()
+    {
+        if ($this->authorized()) {
+            return $this;
+        }
 
-			die();
-		}
+        $login =
+            \diRequest::post(static::POST_LOGIN_FIELD) ?:
+            \diRequest::rawPost(static::POST_LOGIN_FIELD);
+        $password =
+            \diRequest::post(static::POST_PASSWORD_FIELD) ?:
+            \diRequest::rawPost(static::POST_PASSWORD_FIELD);
 
-		return $this;
-	}
+        if (
+            $login &&
+            $password &&
+            $this->authorize($login, $password, self::SOURCE_POST)
+        ) {
+            $this->authSource = self::SOURCE_POST;
 
-	private function redirectNeeded()
-	{
-		return in_array($this->authSource, [self::SOURCE_POST]); //, self::SOURCE_COOKIE
-	}
+            $this->updateAuthorizedUserData();
+        }
 
-	/** @deprecated  */
-	public function assignTemplateVariables(\FastTemplate $tpl)
-	{
-		$this->tpl = $tpl;
+        return $this;
+    }
 
-		$tpl
-			->assign($this->getUserModel()->getTemplateVarsExtended(), static::TEMPLATE_VAR_PREFIX)
-			->assign([
-				'BOOLEAN' => $this->authorized() ? 'true' : 'false',
-			], static::TEMPLATE_VAR_PREFIX);
+    private function redirectIfNeeded()
+    {
+        if ($this->isRedirectAllowed() && $this->redirectNeeded()) {
+            header('Location: ' . \diRequest::requestUri());
 
-		if ($this->authorized()) {
-			if ($tpl->exists('user_panel')) {
-				$tpl->process('LOGIN_PANEL', 'user_panel');
-			}
-		} else {
-            $tpl->exists('auth_panel') && $tpl->process('LOGIN_PANEL', 'auth_panel');
-            $tpl->exists('auth_popup') && $tpl->process('LOGIN_POPUP', 'auth_popup');
-		}
+            die();
+        }
 
-		return $this;
-	}
+        return $this;
+    }
 
-	public function assignTwig(\diTwig $twig, $clearTpl = true)
-	{
-		$twig
-			->assign([
-				'authUser' => $this->getUserModel(),
-			]);
+    private function redirectNeeded()
+    {
+        return in_array($this->authSource, [self::SOURCE_POST]); //, self::SOURCE_COOKIE
+    }
 
-		if (!$this->tpl) {
-			return $this;
-		}
+    /** @deprecated  */
+    public function assignTemplateVariables(\FastTemplate $tpl)
+    {
+        $this->tpl = $tpl;
 
-		$twig
-			->importFromFastTemplate($this->tpl, [
-				'login_panel',
-				'login_popup',
-			], $clearTpl);
+        $tpl->assign(
+            $this->getUserModel()->getTemplateVarsExtended(),
+            static::TEMPLATE_VAR_PREFIX
+        )->assign(
+            [
+                'BOOLEAN' => $this->authorized() ? 'true' : 'false',
+            ],
+            static::TEMPLATE_VAR_PREFIX
+        );
 
-		return $this;
-	}
+        if ($this->authorized()) {
+            if ($tpl->exists('user_panel')) {
+                $tpl->process('LOGIN_PANEL', 'user_panel');
+            }
+        } else {
+            $tpl->exists('auth_panel') &&
+                $tpl->process('LOGIN_PANEL', 'auth_panel');
+            $tpl->exists('auth_popup') &&
+                $tpl->process('LOGIN_POPUP', 'auth_popup');
+        }
+
+        return $this;
+    }
+
+    public function assignTwig(\diTwig $twig, $clearTpl = true)
+    {
+        $twig->assign([
+            'authUser' => $this->getUserModel(),
+        ]);
+
+        if (!$this->tpl) {
+            return $this;
+        }
+
+        $twig->importFromFastTemplate(
+            $this->tpl,
+            ['login_panel', 'login_popup'],
+            $clearTpl
+        );
+
+        return $this;
+    }
 }
