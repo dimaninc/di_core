@@ -3010,20 +3010,23 @@ ENGINE = InnoDB;";
         $source = 'raw',
         $field = 'password'
     ) {
+        $storedPassword = $this->get($field);
+
+        if (!$password || !$storedPassword) {
+            return false;
+        }
+
         switch ($source) {
             default:
             case 'raw':
                 return $this->verifyPasswordToDb($password, $field);
 
             case 'db':
-                return $password == $this->get($field);
+                return $password == $storedPassword;
 
             case 'cookie':
                 return $password ==
-                    static::hashPasswordFromDbToCookie(
-                        $this->get($field),
-                        $field
-                    );
+                    static::hashPasswordFromDbToCookie($storedPassword, $field);
         }
     }
 
