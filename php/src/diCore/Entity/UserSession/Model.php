@@ -70,6 +70,26 @@ class Model extends \diModel
             ->updateSeenAt();
     }
 
+    public static function fastRestore($token, $userAgent = null, $ip = null)
+    {
+        if (!$token) {
+            return static::create();
+        }
+
+        $sessions = Collection::create()
+            ->filterByToken($token)
+            ->filterByUserAgent($userAgent ?: \diRequest::userAgent());
+
+        if ($ip) {
+            $sessions->filterByIp($ip);
+        }
+
+        /** @var self $session */
+        $session = $sessions->getFirstItem();
+
+        return $session;
+    }
+
     public function generateToken()
     {
         return $this->setToken(StringHelper::random(static::token_length));

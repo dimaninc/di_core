@@ -74,7 +74,7 @@ class Auth extends \diBaseController
 
     public function loginAction()
     {
-        $lang = \diRequest::post('language');
+        $lang = \diRequest::post('language') ?: \diRequest::rawPost('language');
         $Auth = AuthTool::create(false);
 
         if (Config::isRestApiSupported()) {
@@ -102,7 +102,26 @@ class Auth extends \diBaseController
         $Auth = AuthTool::create();
         $Auth->logout();
 
+        if (!\diRequest::request('redirect') && Config::isRestApiSupported()) {
+            return $this->unauthorized([
+                'ok' => true,
+            ]);
+        }
+
         $this->redirect();
+
+        return null;
+    }
+
+    public function checkAction()
+    {
+        $Auth = AuthTool::create();
+
+        if (!$Auth->authorized()) {
+            return $this->unauthorized();
+        }
+
+        return $this->okay();
     }
 
     public function loginForAdminAction()

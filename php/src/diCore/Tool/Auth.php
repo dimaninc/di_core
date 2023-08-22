@@ -11,7 +11,6 @@ namespace diCore\Tool;
 use diCore\Data\Config;
 use diCore\Data\Types;
 use diCore\Entity\User\Model as User;
-use diCore\Entity\UserSession\Collection as UserSessions;
 use diCore\Entity\UserSession\Model as UserSession;
 use diCore\Traits\BasicCreate;
 
@@ -185,21 +184,28 @@ class Auth
 
     public function logout()
     {
-        return $this->clearCookies()->clearSession();
+        return $this->clearCookies()
+            ->clearSession()
+            ->clearUserSession();
     }
 
     private function storeSession()
     {
         if ($this->reallyAuthorized()) {
             if (Config::isUserSessionUsed()) {
-                $this->userSession = UserSession::fastCreate(
-                    $this->getUserModel()
-                )->save();
+                if (
+                    $this->authSource === self::SOURCE_POST &&
+                    !$this->getUserSession()->exists()
+                ) {
+                    $this->userSession = UserSession::fastCreate(
+                        $this->getUserModel()
+                    )->save();
+                }
             }
 
             $_SESSION[static::SESSION_USER_ID_FIELD] = $this->getUserId();
         } else {
-            $this->clearSession();
+            $this->clearSession()->clearUserSession();
         }
 
         return $this;
@@ -208,6 +214,15 @@ class Auth
     private function clearSession()
     {
         unset($_SESSION[static::SESSION_USER_ID_FIELD]);
+
+        return $this;
+    }
+
+    private function clearUserSession()
+    {
+        if (Config::isUserSessionUsed()) {
+            $this->getUserSession()->hardDestroy();
+        }
 
         return $this;
     }
@@ -319,9 +334,7 @@ class Auth
         }
 
         if ($source === self::SOURCE_USER_SESSION) {
-            $this->userSession = UserSessions::create()
-                ->filterByToken($id)
-                ->getFirstItem();
+            $this->userSession = UserSession::fastRestore($id);
 
             if (!$this->userSession->exists()) {
                 return false;
@@ -416,6 +429,10 @@ class Auth
 
     private function authUsingHeaders()
     {
+        if ($this->authorized()) {
+            return $this;
+        }
+
         $token = \diRequest::header(static::HEADER_TOKEN);
 
         if (

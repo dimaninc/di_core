@@ -284,10 +284,12 @@ class diBaseController
             $paramsAr = static::getQueryRouteAr();
         }
 
+        $updateParams = false;
+
         if (!$classBaseName || !$action) {
             $classBaseName = $paramsAr[0] ?? '';
             $action = $paramsAr[1] ?? '';
-            $params = array_slice($paramsAr, static::TINY_ACTIONS ? 1 : 2);
+            $updateParams = true;
 
             if (!$classBaseName) {
                 throw new \Exception('Empty controller name passed');
@@ -305,6 +307,9 @@ class diBaseController
 
         /** @var diBaseController $c */
         $c = new $className($params);
+        if ($updateParams) {
+            $params = array_slice($paramsAr, $c::TINY_ACTIONS ? 1 : 2);
+        }
         $c->act($action, $params);
 
         if (!$silent && $c->getResponse()->hasReturnData()) {
