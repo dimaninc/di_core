@@ -190,7 +190,6 @@ class Fonts extends \diCore\Admin\BasePage
         return [
             'order_num' => [
                 'type' => 'order_num',
-                'title' => '',
                 'default' => 0,
                 'direction' => 1,
             ],

@@ -31,7 +31,6 @@ class Feedback extends \diBaseController
     {
         $ar = [
             'ok' => true,
-            'message' => '',
         ];
 
         try {
@@ -39,6 +38,12 @@ class Feedback extends \diBaseController
 
             $this->getModel()->save();
         } catch (\Exception $e) {
+            if (Config::isRestApiSupported()) {
+                return $this->badRequest([
+                    'message' => $e->getMessage(),
+                ]);
+            }
+
             $ar['ok'] = false;
             $ar['message'] = $e->getMessage();
         }
@@ -73,6 +78,10 @@ class Feedback extends \diBaseController
             ->killId()
             ->setIp(ip2bin());
 
+        if (\diCore\Tool\Auth::i()->authorized()) {
+            $this->getModel()->setUserId(\diCore\Tool\Auth::i()->getUserId());
+        }
+
         return $this;
     }
 
@@ -83,7 +92,7 @@ class Feedback extends \diBaseController
 
     protected function getRecipientsString()
     {
-        return \diConfiguration::get('feedback_email');
+        return \diConfiguration::safeGet('feedback_email', '');
     }
 
     protected function getRecipients()

@@ -63,7 +63,6 @@ class Feedback extends \diCore\Admin\BasePage
                 },
             ],
             'date' => [
-                'title' => 'Дата',
                 'value' => function (Model $model) {
                     return \diDateTime::simpleFormat($model->getDate());
                 },
@@ -101,43 +100,40 @@ class Feedback extends \diCore\Admin\BasePage
         return [
             'user_id' => [
                 'type' => 'int',
-                'title' => 'Пользователь',
                 'default' => '',
             ],
 
             'name' => [
                 'type' => 'string',
-                'title' => 'Имя',
                 'default' => '',
             ],
 
             'email' => [
                 'type' => 'string',
-                'title' => 'E-mail',
                 'default' => '',
             ],
 
             'phone' => [
                 'type' => 'string',
-                'title' => 'Телефон',
                 'default' => '',
             ],
 
             'content' => [
                 'type' => 'text',
-                'title' => 'Текст сообщения',
+                'title' => $this->localized([
+                    'ru' => 'Текст сообщения',
+                    'en' => 'Message',
+                ]),
                 'default' => '',
             ],
 
             'ip' => [
                 'type' => 'ip',
-                'title' => 'IP отправителя',
                 'default' => '',
             ],
 
             'date' => [
                 'type' => 'datetime_str',
-                'title' => 'Дата/время',
                 'default' => '',
             ],
         ];
@@ -150,7 +146,10 @@ class Feedback extends \diCore\Admin\BasePage
 
     public function getModuleCaption()
     {
-        return 'Обратная связь';
+        return [
+            'en' => 'Feedback',
+            'ru' => 'Обратная связь',
+        ];
     }
 
     public function addButtonNeededInCaption()

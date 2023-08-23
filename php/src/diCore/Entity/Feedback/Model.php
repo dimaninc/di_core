@@ -7,6 +7,8 @@
 
 namespace diCore\Entity\Feedback;
 
+use diCore\Database\FieldType;
+
 /**
  * Class Model
  * Methods list for IDE
@@ -40,6 +42,17 @@ class Model extends \diModel
     const type = \diTypes::feedback;
     const table = 'feedback';
     protected $table = 'feedback';
+
+    protected static $fieldTypes = [
+        'id' => FieldType::int,
+        'user_id' => FieldType::int,
+        'name' => FieldType::string,
+        'email' => FieldType::string,
+        'phone' => FieldType::string,
+        'content' => FieldType::string,
+        'ip' => FieldType::ip_int,
+        'date' => FieldType::timestamp,
+    ];
 
     public function validate()
     {
