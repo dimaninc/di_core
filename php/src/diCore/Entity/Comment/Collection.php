@@ -7,6 +7,7 @@
 
 namespace diCore\Entity\Comment;
 
+use diCore\Traits\Collection\AutoTimestamps;
 use diCore\Traits\Collection\TargetInside;
 
 /**
@@ -60,6 +61,7 @@ use diCore\Traits\Collection\TargetInside;
  */
 class Collection extends \diCollection
 {
+    use AutoTimestamps;
     use TargetInside;
 
     const type = \diTypes::comment;
@@ -80,7 +82,7 @@ class Collection extends \diCollection
     /**
      * @param int|\diModel $targetType
      * @param int|null $targetId
-     * @return Collection
+     * @return self
      * @throws \Exception
      */
     public static function createForTarget($targetType, $targetId = null)
@@ -90,7 +92,7 @@ class Collection extends \diCollection
             $targetType = $targetType->modelType();
         }
 
-        /** @var Collection $col */
+        /** @var self $col */
         $col = static::create(static::type);
         $col->setTargetType($targetType)
             ->setTargetId($targetId)

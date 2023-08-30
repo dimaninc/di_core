@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS `comments`(
 	`moderated` TINYINT NOT NULL DEFAULT '1',
     `karma` int default '0',
     `evil_score` int default '0',
-	INDEX `idx`(target_type,target_id,visible,moderated,order_num),
-	INDEX `user`(user_id),
+	INDEX `idx`(target_type, target_id, visible, moderated, order_num),
+	INDEX `user`(user_type, user_id),
 	PRIMARY KEY (`id`)
 )
 DEFAULT CHARSET='utf8'

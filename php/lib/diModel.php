@@ -161,7 +161,15 @@ class diModel implements \ArrayAccess
      */
     protected $collectionResource;
 
+    /**
+     * @var array [field => type]
+     */
     protected static $fieldTypes = [];
+    /**
+     * @var array [field => type]
+     * use [field => FieldType::unset] to delete field from $fieldTypes
+     */
+    protected static $customFieldTypes = [];
 
     protected $upsertFields = [];
 
@@ -2855,7 +2863,12 @@ ENGINE = InnoDB;";
 
     public static function getFieldTypes()
     {
-        return static::$fieldTypes;
+        $ar = extend(static::$fieldTypes, static::$customFieldTypes);
+        $ar = array_filter($ar, function ($type) {
+            return $type !== FieldType::unset;
+        });
+
+        return $ar;
     }
 
     public static function getFieldType($field)

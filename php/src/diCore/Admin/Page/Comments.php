@@ -8,6 +8,7 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Admin\Data\FormFlag;
 use diCore\Data\Types;
 use diCore\Entity\Comment\Model;
 use diCore\Helper\ArrayHelper;
@@ -169,55 +170,77 @@ class Comments extends \diCore\Admin\BasePage
         return [
             'target_type' => [
                 'type' => 'int',
-                'title' => 'Тип записи',
+                'title' => $this->localized([
+                    'ru' => 'Тип записи',
+                    'en' => 'Target type',
+                ]),
                 'default' => '',
                 'flags' => ['hidden'],
             ],
 
             'target_id' => [
                 'type' => 'int',
-                'title' => 'Комментарий к',
+                'title' => $this->localized([
+                    'ru' => 'Запись',
+                    'en' => 'Target',
+                ]),
                 'default' => 0,
                 'flags' => ['static'],
             ],
 
             'user_id' => [
                 'type' => 'int',
-                'title' => 'Автор',
                 'default' => 0,
                 'flags' => ['static'],
             ],
 
             'content' => [
                 'type' => 'text',
-                'title' => 'Комментарий',
+                'title' => $this->localized([
+                    'ru' => 'Комментарий',
+                    'en' => 'Comment',
+                ]),
                 'default' => '',
             ],
 
             'ip' => [
                 'type' => 'ip',
-                'title' => 'IP/Host',
                 'default' => '',
                 'flags' => ['static'],
             ],
 
-            'date' => [
+            'created_at' => [
                 'type' => 'datetime_str',
-                'title' => 'Дата публикации',
-                'default' => time(),
-                'flags' => ['static'],
+                'default' => '',
+                'flags' => [
+                    FormFlag::static,
+                    FormFlag::untouchable,
+                    FormFlag::initially_hidden,
+                ],
+            ],
+
+            'updated_at' => [
+                'type' => 'datetime_str',
+                'default' => '',
+                'flags' => [FormFlag::static, FormFlag::initially_hidden],
             ],
 
             'karma' => [
                 'type' => 'int',
-                'title' => 'Карма',
+                'title' => $this->localized([
+                    'ru' => 'Карма',
+                    'en' => 'Karma',
+                ]),
                 'default' => 0,
                 'flags' => ['static'],
             ],
 
             'evil_score' => [
                 'type' => 'int',
-                'title' => 'Уровень зла (модерация)',
+                'title' => $this->localized([
+                    'ru' => 'Уровень зла (для модерации)',
+                    'en' => 'Evil score (for moderation)',
+                ]),
                 'default' => 0,
                 'flags' => ['static'],
             ],
@@ -229,13 +252,11 @@ class Comments extends \diCore\Admin\BasePage
         return [
             'parent' => [
                 'type' => 'int',
-                'title' => 'Parent',
                 'default' => 0,
             ],
 
             'level_num' => [
                 'type' => 'int',
-                'title' => 'Level num',
                 'default' => 0,
             ],
         ];

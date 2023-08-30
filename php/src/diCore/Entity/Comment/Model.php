@@ -7,8 +7,10 @@
 
 namespace diCore\Entity\Comment;
 
+use diCore\Database\FieldType;
 use diCore\Helper\StringHelper;
 use diCore\Tool\CollectionCache;
+use diCore\Traits\Model\AutoTimestamps;
 use diCore\Traits\Model\TargetInside;
 
 /**
@@ -59,9 +61,11 @@ use diCore\Traits\Model\TargetInside;
  */
 class Model extends \diModel
 {
+    use AutoTimestamps;
     use TargetInside;
 
     const type = \diTypes::comment;
+    const table = 'comments';
     protected $table = 'comments';
 
     /** @var  \diModel */
@@ -77,6 +81,33 @@ class Model extends \diModel
     const UPDATE_COLLECTION_CACHE_ON_UPDATE = false;
 
     protected static $userExcludeFields = ['password', 'activation_key'];
+
+    protected static $fieldTypes = [
+        'id' => FieldType::int,
+        'user_type' => FieldType::int,
+        'user_id' => FieldType::int,
+        'owner_id' => FieldType::int,
+        'parent' => FieldType::int,
+        'target_type' => FieldType::int,
+        'target_id' => FieldType::int,
+        'content' => FieldType::string,
+        'order_num' => FieldType::int,
+        'level_num' => FieldType::int,
+        'visible' => FieldType::int,
+        'moderated' => FieldType::int,
+        'karma' => FieldType::int,
+        'evil_score' => FieldType::int,
+        'ip' => FieldType::ip_int,
+        'created_at' => FieldType::timestamp,
+        'updated_at' => FieldType::timestamp,
+    ];
+
+    public function prepareForSave()
+    {
+        $this->generateTimestamps();
+
+        return parent::prepareForSave();
+    }
 
     protected function updateCommentsCountForTargetNeeded()
     {

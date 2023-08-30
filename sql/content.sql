@@ -38,6 +38,8 @@ CREATE TABLE IF NOT EXISTS content(
 	to_show_content tinyint default '1',
 	order_num bigint,
 	top tinyint default '0',
+    created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NULL DEFAULT NULL,
 	comments_count int default '0',
 	comments_last_date datetime default null,
 	comments_enabled tinyint default '1',

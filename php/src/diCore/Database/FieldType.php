@@ -12,6 +12,8 @@ use diCore\Tool\SimpleContainer;
 
 class FieldType extends SimpleContainer
 {
+    const unset = -1;
+
     const string = 1;
     const bool = 2;
     const ip_string = 4;
@@ -29,6 +31,7 @@ class FieldType extends SimpleContainer
     const mongo_id = 32;
 
     public static $names = [
+        self::unset => 'unset',
         self::string => 'string',
         self::bool => 'bool',
         self::ip_string => 'ip_string',
@@ -44,6 +47,7 @@ class FieldType extends SimpleContainer
     ];
 
     public static $titles = [
+        self::unset => 'Unset',
         self::string => 'String',
         self::bool => 'Bool',
         self::ip_string => 'String IP-address',
