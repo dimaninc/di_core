@@ -16,6 +16,7 @@ class FieldType extends SimpleContainer
 
     const string = 1;
     const bool = 2;
+    const bool_int = 3; // boolean in model, integer in database
     const ip_string = 4;
 
     const int = 11;
@@ -34,6 +35,7 @@ class FieldType extends SimpleContainer
         self::unset => 'unset',
         self::string => 'string',
         self::bool => 'bool',
+        self::bool_int => 'bool_int',
         self::ip_string => 'ip_string',
         self::int => 'int',
         self::float => 'float',
@@ -50,6 +52,7 @@ class FieldType extends SimpleContainer
         self::unset => 'Unset',
         self::string => 'String',
         self::bool => 'Bool',
+        self::bool_int => 'Bool (integer)',
         self::ip_string => 'String IP-address',
         self::int => 'Int',
         self::float => 'Float',
@@ -66,10 +69,20 @@ class FieldType extends SimpleContainer
     {
         switch ($id) {
             case self::bool:
-                if ($connection::getEngine() === Engine::MYSQL) {
+            case self::bool_int:
+                if ($connection::getEngine() !== Engine::POSTGRESQL) {
                     return 'tinyint';
                 }
                 break;
+
+            case self::ip_string:
+                if ($connection::getEngine() === Engine::POSTGRESQL) {
+                    return 'cidr';
+                }
+                return 'varchar(32)';
+
+            case self::ip_int:
+                return 'bigint';
         }
 
         return static::name($id);

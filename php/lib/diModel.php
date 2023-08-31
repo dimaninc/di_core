@@ -1037,7 +1037,7 @@ class diModel implements \ArrayAccess
                         }, static::getTemplateDateVars($v))
                     );
 
-                    $v = $ar[$k . '_date'];
+                    $v = $ar[$k . '_iso'];
                 }
             } elseif ($this->isIpField($k)) {
                 $ar[$k . '_num'] = isInteger($v) ? $v : ip2bin($v);
@@ -2892,13 +2892,15 @@ ENGINE = InnoDB;";
 
     public function getPublicData()
     {
-        return ArrayHelper::filterByKey(
+        return ArrayHelper::mapAssoc(function ($k, $v) {
+            return [$k, static::tuneFieldValueByTypeForPublicData($k, $v)];
+        }, ArrayHelper::filterByKey(
             extend(
                 $this->getTemplateVarsExtended(),
                 $this->getBasicTemplateVars()
             ),
             static::getPublicFields()
-        );
+        ));
     }
 
     /**
@@ -2913,6 +2915,32 @@ ENGINE = InnoDB;";
         }
 
         return $this->collectionResource;
+    }
+
+    public static function tuneFieldValueByTypeForPublicData($field, $value)
+    {
+        $type = static::getFieldType($field);
+
+        switch ($type) {
+            case FieldType::bool_int:
+                $value = (bool) $value;
+                break;
+
+            case FieldType::int:
+                $value = (int) $value;
+                break;
+
+            case FieldType::float:
+            case FieldType::double:
+                $value = (float) $value;
+                break;
+
+            case FieldType::bool:
+                $value = !!$value;
+                break;
+        }
+
+        return $value;
     }
 
     public static function tuneFieldValueByTypeAfterDb($field, $value)
@@ -2953,6 +2981,7 @@ ENGINE = InnoDB;";
                 break;
 
             case FieldType::int:
+            case FieldType::bool_int:
                 $value = (int) $value;
                 break;
 

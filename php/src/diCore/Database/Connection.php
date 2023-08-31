@@ -215,4 +215,9 @@ abstract class Connection
     {
         return static::engine === Engine::MONGO;
     }
+
+    public static function isBooleanTypeSupported()
+    {
+        return false;
+    }
 }

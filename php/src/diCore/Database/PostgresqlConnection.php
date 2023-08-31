@@ -27,4 +27,9 @@ class PostgresqlConnection extends Connection
 
         return $this;
     }
+
+    public static function isBooleanTypeSupported()
+    {
+        return true;
+    }
 }
