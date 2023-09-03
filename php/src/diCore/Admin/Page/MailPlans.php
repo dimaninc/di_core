@@ -24,7 +24,7 @@ class MailPlans extends \diCore\Admin\BasePage
 
     protected function initTable()
     {
-        $this->setTable('mail_plans');
+        $this->setTable(Model::table);
     }
 
     public function renderList()

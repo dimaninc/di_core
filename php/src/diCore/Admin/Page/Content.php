@@ -28,7 +28,7 @@ class Content extends \diCore\Admin\BasePage
 
     protected function initTable()
     {
-        $this->setTable('content');
+        $this->setTable(Model::table);
     }
 
     protected function getButtonsArForList()
@@ -175,9 +175,7 @@ class Content extends \diCore\Admin\BasePage
                     'en' => 'Type',
                 ]),
                 'default' => 'user',
-                'values' => array_keys(
-                    \diContentTypes::get($this->getLanguage())
-                ),
+                'values' => array_keys(\diContentTypes::get($this->getLanguage())),
             ],
 
             'title' => [

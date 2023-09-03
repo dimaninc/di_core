@@ -26,7 +26,7 @@ class Feedback extends \diCore\Admin\BasePage
 
     protected function initTable()
     {
-        $this->setTable('feedback');
+        $this->setTable(Model::table);
     }
 
     public function renderList()
@@ -57,9 +57,7 @@ class Feedback extends \diCore\Admin\BasePage
                     'class' => 'lite',
                 ],
                 'value' => function (Model $model) {
-                    return StringHelper::out(
-                        str_cut_end($model->getContent(), 200)
-                    );
+                    return StringHelper::out(str_cut_end($model->getContent(), 200));
                 },
             ],
             'date' => [

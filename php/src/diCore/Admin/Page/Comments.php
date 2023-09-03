@@ -27,7 +27,7 @@ class Comments extends \diCore\Admin\BasePage
 
     protected function initTable()
     {
-        $this->setTable('comments');
+        $this->setTable(Model::table);
     }
 
     public static function getUsedTargetTypes()
@@ -54,17 +54,14 @@ class Comments extends \diCore\Admin\BasePage
             ->addFilter([
                 'field' => 'target_type',
                 'type' => 'int',
-                'title' => 'Тип объекта',
             ])
             ->addFilter([
                 'field' => 'target_id',
                 'type' => 'int',
-                'title' => 'ID объекта',
             ])
             ->addFilter([
                 'field' => 'user_id',
                 'type' => 'string',
-                'title' => 'Автор',
                 'where_tpl' => \diAdminFilters::get_user_id_where(
                     $this->getUsedUserFields()
                 ),
@@ -73,7 +70,7 @@ class Comments extends \diCore\Admin\BasePage
             ->setSelectFromArrayInput(
                 'target_type',
                 $this->getUsedTargetTypesTitles(),
-                [0 => 'Все типы']
+                [0 => $this->getLanguage() == 'ru' ? 'Все типы' : 'All types']
             );
     }
 
@@ -119,10 +116,10 @@ class Comments extends \diCore\Admin\BasePage
                     'class' => 'lite',
                 ],
             ],
-            'date' => [
+            'created_at' => [
                 'title' => 'Дата',
                 'value' => function (Model $m) {
-                    return \diDateTime::simpleFormat(strtotime($m->getDate()));
+                    return \diDateTime::simpleFormat(strtotime($m->getCreatedAt()));
                 },
                 'headAttrs' => [
                     'width' => '10%',
