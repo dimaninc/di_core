@@ -10,7 +10,6 @@ namespace diCore\Tool\Cache;
 
 use diCore\Data\Config;
 use diCore\Data\Http\HttpCode;
-use diCore\Data\Types;
 use diCore\Entity\PageCache\Collection;
 use diCore\Entity\PageCache\Model;
 use diCore\Helper\StringHelper;
@@ -102,9 +101,7 @@ class Page
 
     public function rebuildAll()
     {
-        /** @var Collection $col */
-        $col = \diCollection::create(Types::page_cache);
-        $col->filterByActive(1);
+        $col = Collection::create()->filterByActive(1);
         /** @var Model $cache */
         foreach ($col as $cache) {
             $this->rebuild($cache);
@@ -117,7 +114,7 @@ class Page
             $cacheModel = $id;
         } else {
             /** @var Model $cacheModel */
-            $cacheModel = Model::create(Types::page_cache, $id);
+            $cacheModel = Model::createById($id);
         }
 
         if (!$cacheModel->exists()) {

@@ -48,12 +48,14 @@ class Model extends \diModel
     const ERROR_401_URI = '#error_401';
     const ERROR_403_URI = '#error_403';
     const ERROR_404_URI = '#error_404';
+    const ERROR_410_URI = '#error_410';
     const ERROR_500_URI = '#error_500';
 
     public static $errorUris = [
         HttpCode::UNAUTHORIZED => self::ERROR_401_URI,
         HttpCode::FORBIDDEN => self::ERROR_403_URI,
         HttpCode::NOT_FOUND => self::ERROR_404_URI,
+        HttpCode::GONE => self::ERROR_410_URI,
         HttpCode::INTERNAL_SERVER_ERROR => self::ERROR_500_URI,
     ];
 
@@ -73,18 +75,14 @@ class Model extends \diModel
     {
         /** @var Collection $col */
         $col = \diCollection::create(static::type);
-        $col->filterByUri(
-            $forceUri ?: \diRequest::requestUri()
-        )->filterByActive(1);
+        $col->filterByUri($forceUri ?: \diRequest::requestUri())->filterByActive(1);
 
         return $col->getFirstItem();
     }
 
     public static function getUriByHttpErrorCode($code)
     {
-        return isset(static::$errorUris[$code])
-            ? static::$errorUris[$code]
-            : '#error_' . $code;
+        return static::$errorUris[$code] ?? '#error_' . $code;
     }
 
     public static function getHttpErrorCodeByUri($uri)
@@ -106,6 +104,13 @@ class Model extends \diModel
         $uri .= StringHelper::getUrlParamGlue($uri) . Page::FLUSH_PARAM . '=1';
 
         return $uri;
+    }
+
+    public function prepareForSave()
+    {
+        $this->generateTimestamps();
+
+        return parent::prepareForSave();
     }
 
     public function afterSave()
