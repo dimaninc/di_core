@@ -125,6 +125,11 @@ class HttpException extends \Exception
         return static::fastCreate(HttpCode::NOT_FOUND, $data);
     }
 
+    public static function gone($data = null)
+    {
+        return static::fastCreate(HttpCode::GONE, $data);
+    }
+
     public static function badRequest($data = null)
     {
         return static::fastCreate(HttpCode::BAD_REQUEST, $data);

@@ -944,7 +944,8 @@ abstract class CMS
 
     protected function openGraphNeeded()
     {
-        return !$this->isResponseCode(HttpCode::NOT_FOUND);
+        return !$this->isResponseCode(HttpCode::NOT_FOUND) &&
+            !$this->isResponseCode(HttpCode::GONE);
     }
 
     protected function languageAlternatesNeeded()
@@ -1364,9 +1365,11 @@ abstract class CMS
             return $this;
         }
 
-        $contentReady = $this->isResponseCode(HttpCode::NOT_FOUND)
-            ? !!count($this->getCachedContentCollection())
-            : $this->getContentModel()->exists();
+        $contentReady =
+            $this->isResponseCode(HttpCode::NOT_FOUND) ||
+            $this->isResponseCode(HttpCode::GONE)
+                ? !!count($this->getCachedContentCollection())
+                : $this->getContentModel()->exists();
 
         if ($contentReady && !$this->Twig->getAssigned('content_page')) {
             $this->Twig->assign($this->getTwigBasicsData());
