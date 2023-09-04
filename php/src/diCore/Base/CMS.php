@@ -1359,9 +1359,9 @@ abstract class CMS
         return $this;
     }
 
-    protected function assignTwigBasics()
+    public function assignTwigBasics($force = false)
     {
-        if ($this->twigBasicsAssigned) {
+        if ($this->twigBasicsAssigned && !$force) {
             return $this;
         }
 
@@ -1370,8 +1370,10 @@ abstract class CMS
             $this->isResponseCode(HttpCode::GONE)
                 ? !!count($this->getCachedContentCollection())
                 : $this->getContentModel()->exists();
+        $shouldWork =
+            $force || ($contentReady && !$this->Twig->getAssigned('content_page'));
 
-        if ($contentReady && !$this->Twig->getAssigned('content_page')) {
+        if ($shouldWork) {
             $this->Twig->assign($this->getTwigBasicsData());
 
             $this->twigBasicsAssigned = true;
