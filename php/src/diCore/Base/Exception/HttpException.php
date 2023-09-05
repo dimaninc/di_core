@@ -117,6 +117,12 @@ class HttpException extends \Exception
             $e->setBody($data);
         }
 
+        if (!empty($data['message'])) {
+            $e->message = $data['message'];
+        } elseif ($data && is_string($data)) {
+            $e->message = $data;
+        }
+
         return $e;
     }
 

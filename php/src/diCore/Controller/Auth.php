@@ -30,8 +30,7 @@ class Auth extends \diBaseController
             'enter_new_password.keys_not_match' => 'Keys do not match',
             'enter_new_password.password_not_valid' =>
                 'Password is not valid (min length is 6 chars)',
-            'enter_new_password.passwords_not_match' =>
-                'Passwords do not match',
+            'enter_new_password.passwords_not_match' => 'Passwords do not match',
             'enter_new_password.user_not_exist' => 'User does not exist',
             'enter_new_password.user_not_active' => 'User is not active',
 
@@ -63,8 +62,7 @@ class Auth extends \diBaseController
             'activate.sign_out_first' =>
                 'Вы не можете активировать аккаунт, т.к. вы авторизованы',
             'activate.account_not_found' => 'Пользователь не найден',
-            'activate.account_already_activated' =>
-                'Аккаунт уже активирован ранее',
+            'activate.account_already_activated' => 'Аккаунт уже активирован ранее',
             'activate.key_not_match' => 'Код активации не подходит',
             'activate.key_is_empty' => 'Код активации пуст',
             'activate.unknown_error' => 'Неизвестная ошибка',
@@ -74,7 +72,7 @@ class Auth extends \diBaseController
 
     public function loginAction()
     {
-        $lang = \diRequest::post('language') ?: \diRequest::rawPost('language');
+        $lang = \diRequest::postExt('language');
         $Auth = AuthTool::create(false);
 
         if (Config::isRestApiSupported()) {
@@ -137,9 +135,7 @@ class Auth extends \diBaseController
                 !$this->isAdminAuthorized() ||
                 $this->getAdminModel()->getLevel() != 'root'
             ) {
-                throw new \Exception(
-                    'This action is allowed only for root admins'
-                );
+                throw new \Exception('This action is allowed only for root admins');
             }
 
             $userId = $this->param(0);
@@ -370,11 +366,7 @@ class Auth extends \diBaseController
 
     protected function getUserForActivate()
     {
-        return Model::create(
-            Types::user,
-            $this->getUserUidForActivate(),
-            'slug'
-        );
+        return Model::create(Types::user, $this->getUserUidForActivate(), 'slug');
     }
 
     public function resetAction()
@@ -428,21 +420,15 @@ class Auth extends \diBaseController
 
         try {
             if (AuthTool::i()->authorized()) {
-                throw new \Exception(
-                    self::L('enter_new_password.sign_out_first')
-                );
+                throw new \Exception(self::L('enter_new_password.sign_out_first'));
             }
 
             if (!\diEmail::isValid($email)) {
-                throw new \Exception(
-                    self::L('enter_new_password.email_not_valid')
-                );
+                throw new \Exception(self::L('enter_new_password.email_not_valid'));
             }
 
             if (!Model::isActivationKeyValid($key)) {
-                throw new \Exception(
-                    self::L('enter_new_password.key_not_valid')
-                );
+                throw new \Exception(self::L('enter_new_password.key_not_valid'));
             }
 
             if (Model::isPasswordValid($password)) {
@@ -460,21 +446,15 @@ class Auth extends \diBaseController
             $user = Model::createBySlug($email);
 
             if (!$user->exists()) {
-                throw new \Exception(
-                    self::L('enter_new_password.user_not_exist')
-                );
+                throw new \Exception(self::L('enter_new_password.user_not_exist'));
             }
 
             if (!$user->active()) {
-                throw new \Exception(
-                    self::L('enter_new_password.user_not_active')
-                );
+                throw new \Exception(self::L('enter_new_password.user_not_active'));
             }
 
             if ($user->getActivationKey() != $key) {
-                throw new \Exception(
-                    self::L('enter_new_password.keys_not_match')
-                );
+                throw new \Exception(self::L('enter_new_password.keys_not_match'));
             }
 
             $user
@@ -495,6 +475,9 @@ class Auth extends \diBaseController
         return $ar;
     }
 
+    /**
+     * @deprecated Use Cabinet::setPasswordAction
+     */
     public function setPasswordAction()
     {
         $ar = [

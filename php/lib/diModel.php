@@ -289,11 +289,8 @@ class diModel implements \ArrayAccess
      * @return $this
      * @throws \Exception
      */
-    public static function createForTableNoStrict(
-        $table,
-        $ar = null,
-        $options = []
-    ) {
+    public static function createForTableNoStrict($table, $ar = null, $options = [])
+    {
         $type = \diTypes::getNameByTable($table);
         $typeName = static::existsFor($type, 'type');
 
@@ -388,10 +385,7 @@ class diModel implements \ArrayAccess
             $ar = [];
 
             foreach ($r->getIterator() as $field => $value) {
-                $ar[$field] = static::tuneFieldValueByTypeAfterDb(
-                    $field,
-                    $value
-                );
+                $ar[$field] = static::tuneFieldValueByTypeAfterDb($field, $value);
             }
 
             $r = $ar;
@@ -517,18 +511,13 @@ class diModel implements \ArrayAccess
         ) {
             return \diRequest::protocol() .
                 '://' .
-                ArrayHelper::get(\diCurrentCMS::$languageDomains, [
-                    $language,
-                    0,
-                ]) .
+                ArrayHelper::get(\diCurrentCMS::$languageDomains, [$language, 0]) .
                 \diLib::getSubFolder(true);
         }
 
         if ($language && $language != \diCurrentCMS::$defaultLanguage) {
             $prefix =
-                \diCurrentCMS::LANGUAGE_MODE == Language::URL
-                    ? '/' . $language
-                    : '';
+                \diCurrentCMS::LANGUAGE_MODE == Language::URL ? '/' . $language : '';
         } elseif (!empty($Z) && !$language) {
             $prefix = $Z->getLanguageHrefPrefix();
         } else {
@@ -620,11 +609,7 @@ class diModel implements \ArrayAccess
             $extraOptions['regenerateIfDuplicate'] &&
             empty($extraOptions['uniqueMaker'])
         ) {
-            $extraOptions['uniqueMaker'] = function (
-                $origSlug,
-                $delimiter,
-                $index
-            ) {
+            $extraOptions['uniqueMaker'] = function ($origSlug, $delimiter, $index) {
                 return $this->getSourceForSlug();
             };
 
@@ -787,10 +772,7 @@ class diModel implements \ArrayAccess
             : \diPaths::fileSystem($this, true, $field);
 
         return $filename
-            ? $pathPrefix .
-                    $this->getFolderForField($field) .
-                    $subFolder .
-                    $filename
+            ? $pathPrefix . $this->getFolderForField($field) . $subFolder . $filename
             : '';
     }
 
@@ -931,12 +913,7 @@ class diModel implements \ArrayAccess
         }
 
         return file_get_contents(
-            $this->wrapFileWithPath(
-                $this->get($field),
-                $previewIdx,
-                false,
-                $field
-            )
+            $this->wrapFileWithPath($this->get($field), $previewIdx, false, $field)
         );
     }
 
@@ -961,18 +938,13 @@ class diModel implements \ArrayAccess
                         ] = $this->wrapFileWithPath($v, $i);
 
                         if ($isLocalized) {
-                            $ar[
-                                static::LOCALIZED_PREFIX . $k . '_tn' . $idx
-                            ] = $ar[
+                            $ar[static::LOCALIZED_PREFIX . $k . '_tn' . $idx] = $ar[
                                 static::LOCALIZED_PREFIX .
                                     $k .
                                     '_tn' .
                                     $idx .
                                     '_with_path'
-                            ] = $this->wrapFileWithPath(
-                                $this->localized($k),
-                                $i
-                            );
+                            ] = $this->wrapFileWithPath($this->localized($k), $i);
                         }
                     } else {
                         $ar[
@@ -1030,9 +1002,7 @@ class diModel implements \ArrayAccess
                 if ($v) {
                     $ar = extend(
                         $ar,
-                        ArrayHelper::mapAssoc(function ($field, $value) use (
-                            $k
-                        ) {
+                        ArrayHelper::mapAssoc(function ($field, $value) use ($k) {
                             return [$k . '_' . $field, $value];
                         }, static::getTemplateDateVars($v))
                     );
@@ -1151,13 +1121,8 @@ class diModel implements \ArrayAccess
             $options
         );
 
-        $queryAr = array_merge(
-            $options['queryAr'],
-            $options['additionalQueryAr']
-        );
-        $limit = $options['onlyFirstRecord']
-            ? $this->getDb()->limitOffset(1)
-            : '';
+        $queryAr = array_merge($options['queryAr'], $options['additionalQueryAr']);
+        $limit = $options['onlyFirstRecord'] ? $this->getDb()->limitOffset(1) : '';
 
         $ar = [];
 
@@ -1181,9 +1146,7 @@ class diModel implements \ArrayAccess
 
     protected function processIdBeforeGetRecord($id, $field)
     {
-        return static::getConnection()::isMongo()
-            ? new ObjectID($id)
-            : (int) $id;
+        return static::getConnection()::isMongo() ? new ObjectID($id) : (int) $id;
     }
 
     protected function prepareIdAndFieldForGetRecord($id, $fieldAlias = null)
@@ -1251,10 +1214,7 @@ class diModel implements \ArrayAccess
             }
 
             foreach ($ar as $field => $value) {
-                $ar[$field] = static::tuneFieldValueByTypeAfterDb(
-                    $field,
-                    $value
-                );
+                $ar[$field] = static::tuneFieldValueByTypeAfterDb($field, $value);
             }
         }
 
@@ -1349,9 +1309,7 @@ class diModel implements \ArrayAccess
      */
     public function existsOrig($field = null)
     {
-        return is_null($field)
-            ? !!$this->origData
-            : isset($this->origData[$field]);
+        return is_null($field) ? !!$this->origData : isset($this->origData[$field]);
     }
 
     /**
@@ -1430,10 +1388,7 @@ class diModel implements \ArrayAccess
     {
         if (is_null($field)) {
             return ArrayHelper::mapAssoc(function ($key, $value) {
-                return [
-                    $key,
-                    static::tuneFieldValueByTypeBeforeDb($key, $value),
-                ];
+                return [$key, static::tuneFieldValueByTypeBeforeDb($key, $value)];
             }, $this->get());
         }
 
@@ -1447,10 +1402,7 @@ class diModel implements \ArrayAccess
 
     public function getAllLocalizedFields()
     {
-        return array_merge(
-            $this->localizedFields,
-            $this->customLocalizedFields
-        );
+        return array_merge($this->localizedFields, $this->customLocalizedFields);
     }
 
     public function isFieldLocalized($field)
@@ -2339,10 +2291,8 @@ class diModel implements \ArrayAccess
      *
      * @return array
      */
-    public static function getFieldsWithTablePrefix(
-        $prefix = '',
-        $fieldPrefix = ''
-    ) {
+    public static function getFieldsWithTablePrefix($prefix = '', $fieldPrefix = '')
+    {
         $m = new static();
 
         return array_map(
@@ -2431,8 +2381,7 @@ ENGINE = InnoDB;";
         foreach ($fileFields as $field) {
             if ($this->has($field)) {
                 foreach ($subFolders as $subFolder) {
-                    $killFiles[] =
-                        $picsFolder . $subFolder . $this->get($field);
+                    $killFiles[] = $picsFolder . $subFolder . $this->get($field);
                 }
             }
         }
@@ -2468,10 +2417,7 @@ ENGINE = InnoDB;";
         }
 
         if ($field === null && $this->getTable() !== 'dipics') {
-            $pics = DynamicPics::createByTarget(
-                $this->getTable(),
-                $this->getId()
-            );
+            $pics = DynamicPics::createByTarget($this->getTable(), $this->getId());
 
             if ($pics->count()) {
                 $pics->hardDestroy();
@@ -2523,10 +2469,7 @@ ENGINE = InnoDB;";
 
         if ($options['force'] || !$this->has($field)) {
             do {
-                $this->set(
-                    $field,
-                    get_unique_id($options['length']) . '.' . $ext
-                );
+                $this->set($field, get_unique_id($options['length']) . '.' . $ext);
 
                 $exists =
                     $options['checkMode'] == 'db'
@@ -2597,10 +2540,7 @@ ENGINE = InnoDB;";
         $ar = [];
 
         if ($this->exists('parent')) {
-            $ar[] = $this->getDb()->escapeFieldValue(
-                'parent',
-                $this->get('parent')
-            );
+            $ar[] = $this->getDb()->escapeFieldValue('parent', $this->get('parent'));
         }
 
         return $ar;
@@ -2629,9 +2569,7 @@ ENGINE = InnoDB;";
         );
         $this->set(
             $field,
-            $order_r && $order_r->cc
-                ? intval($order_r->num) + $sign
-                : $init_value
+            $order_r && $order_r->cc ? intval($order_r->num) + $sign : $init_value
         );
 
         return $this;
@@ -2703,8 +2641,7 @@ ENGINE = InnoDB;";
             return !!$this->getId();
         }
 
-        return $this->exists($offset) ||
-            !!$this->getExtendedTemplateVar($offset);
+        return $this->exists($offset) || !!$this->getExtendedTemplateVar($offset);
     }
 
     /**
@@ -2747,9 +2684,7 @@ ENGINE = InnoDB;";
     public function asPhp($excludeFields = [])
     {
         $s =
-            '\\diModel::create(\\diTypes::' .
-            \diTypes::getName(static::type) .
-            ', ';
+            '\\diModel::create(\\diTypes::' . \diTypes::getName(static::type) . ', ';
         $s .= $this->asPhpArray($excludeFields);
         $s .= ')';
         $s .= $this->getSuffixForPhpView();
@@ -2895,10 +2830,7 @@ ENGINE = InnoDB;";
         return ArrayHelper::mapAssoc(function ($k, $v) {
             return [$k, static::tuneFieldValueByTypeForPublicData($k, $v)];
         }, ArrayHelper::filterByKey(
-            extend(
-                $this->getTemplateVarsExtended(),
-                $this->getBasicTemplateVars()
-            ),
+            extend($this->getTemplateVarsExtended(), $this->getBasicTemplateVars()),
             static::getPublicFields()
         ));
     }
@@ -3047,11 +2979,8 @@ ENGINE = InnoDB;";
      *
      * return boolean
      */
-    public function isPasswordOk(
-        $password,
-        $source = 'raw',
-        $field = 'password'
-    ) {
+    public function isPasswordOk($password, $source = 'raw', $field = 'password')
+    {
         $storedPassword = $this->get($field);
 
         if (!$password || !$storedPassword) {

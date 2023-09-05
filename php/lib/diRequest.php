@@ -58,10 +58,7 @@ class diRequest
 
     public static function urlBase($slash = false)
     {
-        return static::protocol() .
-            '://' .
-            static::domain() .
-            ($slash ? '/' : '');
+        return static::protocol() . '://' . static::domain() . ($slash ? '/' : '');
     }
 
     public static function referrer($default = '')
@@ -127,12 +124,13 @@ class diRequest
         );
     }
 
-    public static function single(
-        $method,
-        $name,
-        $defaultValue = null,
-        $type = null
-    ) {
+    public static function postExt($name, $defaultValue = null, $type = null)
+    {
+        return self::post($name, self::rawPost($name, $defaultValue, $type), $type);
+    }
+
+    public static function single($method, $name, $defaultValue = null, $type = null)
+    {
         $scope = self::all($method);
 
         return ArrayHelper::get($scope, $name, $defaultValue, $type);
@@ -144,13 +142,11 @@ class diRequest
         global $$varName;
 
         /*
-		if ($method == 'session')
-		{
+		if ($method == 'session') {
 			diSession::start();
 		}
 
-		if (!isset($$varName))
-		{
+		if (!isset($$varName)) {
 			throw new Exception("Undefined variable \${$varName}");
 		}
 		*/
@@ -204,21 +200,13 @@ class diRequest
         }
     }
 
-    public static function rawPost(
-        $name = null,
-        $defaultValue = null,
-        $type = null
-    ) {
+    public static function rawPost($name = null, $defaultValue = null, $type = null)
+    {
         self::processRawPost();
 
         return $name === null
             ? self::$postRawData
-            : ArrayHelper::get(
-                self::$postRawParsed,
-                $name,
-                $defaultValue,
-                $type
-            );
+            : ArrayHelper::get(self::$postRawParsed, $name, $defaultValue, $type);
     }
 
     public static function rawPostParsed()

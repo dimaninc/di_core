@@ -8,7 +8,7 @@
 
 namespace diCore\Controller;
 
-use diCore\Entity\User\Model;
+use diCore\Entity\User\Model as User;
 use diCore\Tool\Auth as AuthTool;
 
 class Cabinet extends \diBaseController
@@ -23,8 +23,7 @@ class Cabinet extends \diBaseController
         ],
         'ru' => [
             'set_password.sign_in_first' => 'Авторизуйтесь для смены пароля',
-            'set_password.wrong_old_password' =>
-                'Введён неверный старый пароль',
+            'set_password.wrong_old_password' => 'Введён неверный старый пароль',
             'set_password.password_not_valid' =>
                 'Некорректный пароль (мин.длина - 6 символов)',
             'set_password.passwords_not_match' => 'Пароли не совпадают',
@@ -33,24 +32,22 @@ class Cabinet extends \diBaseController
 
     public function setPasswordAction()
     {
-        $ar = [
-            'ok' => false,
-        ];
-
         if (!AuthTool::i()->authorized()) {
-            $ar['message'] = self::L('set_password.sign_in_first');
-        } else {
-            try {
-                /** @var Model $user */
-                $user = AuthTool::i()->getUserModel();
-                $user->cabinetSubmitPassword();
-
-                $ar['ok'] = true;
-            } catch (\Exception $e) {
-                $ar['message'] = $e->getMessage();
-            }
+            return $this->unauthorized([
+                'message' => static::L('set_password.sign_in_first'),
+            ]);
         }
 
-        return $ar;
+        try {
+            /** @var User $user */
+            $user = AuthTool::i()->getUserModel();
+            $user->cabinetSubmitPassword();
+        } catch (\Exception $e) {
+            return $this->internalServerError([
+                'message' => $e->getMessage(),
+            ]);
+        }
+
+        return $this->okay();
     }
 }

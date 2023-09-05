@@ -44,6 +44,10 @@ class diBaseController
         'en' => [],
         'ru' => [],
     ];
+    protected static $customLanguage = [
+        'en' => [],
+        'ru' => [],
+    ];
 
     public function __construct($params = [])
     {
@@ -56,6 +60,11 @@ class diBaseController
     protected static function isRestApiSupported()
     {
         return Config::isRestApiSupported();
+    }
+
+    protected static function isEqualHyphenAndUnderscoreInApiPath()
+    {
+        return Config::isEqualHyphenAndUnderscoreInApiPath();
     }
 
     /**
@@ -88,9 +97,7 @@ class diBaseController
     protected function adminRightsHardCheck()
     {
         if (!$this->isAdminAuthorized()) {
-            throw new \Exception(
-                'You have no access to this controller/action'
-            );
+            throw new \Exception('You have no access to this controller/action');
         }
 
         return $this;
@@ -296,10 +303,7 @@ class diBaseController
             }
         }
 
-        $className = \diLib::getClassNameFor(
-            $classBaseName,
-            \diLib::CONTROLLER
-        );
+        $className = \diLib::getClassNameFor($classBaseName, \diLib::CONTROLLER);
 
         if (!\diLib::exists($className)) {
             throw new \Exception("Controller class '$className' doesn't exist");
@@ -348,11 +352,13 @@ class diBaseController
         }
 
         if ($action || static::TINY_ACTIONS) {
+            if (static::isEqualHyphenAndUnderscoreInApiPath()) {
+                $action = str_replace('-', '_', $action);
+            }
+
             $actionPart = static::TINY_ACTIONS ? '' : '_' . $action;
             $source =
-                strtolower(\diRequest::getMethodStr()) .
-                $actionPart .
-                '_action';
+                strtolower(\diRequest::getMethodStr()) . $actionPart . '_action';
             $methodName = '_' . camelize($source);
 
             // first looking for REST API methods like _putSomeAction
@@ -577,6 +583,7 @@ class diBaseController
             $lang = Config::getMainLanguage();
         }
 
-        return static::$language[$lang][$key] ?? $key;
+        return static::$customLanguage[$lang][$key] ??
+            (static::$language[$lang][$key] ?? $key);
     }
 }

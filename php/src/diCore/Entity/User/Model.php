@@ -9,8 +9,10 @@
 namespace diCore\Entity\User;
 
 use diCore\Base\CMS;
+use diCore\Base\Exception\HttpException;
 use diCore\Controller\Cabinet;
 use diCore\Data\Config;
+use diCore\Data\Configuration;
 use diCore\Data\Types;
 use diCore\Tool\Mail\Queue;
 
@@ -171,20 +173,24 @@ class Model extends \diBaseUserModel
 
     public function cabinetSubmitPassword()
     {
-        $oldPassword = \diRequest::post('old_password', '');
-        $newPassword = \diRequest::post('new_password', '');
-        $newPassword2 = \diRequest::post('new_password2', '');
+        $oldPassword = \diRequest::postExt('old_password', '');
+        $newPassword = \diRequest::postExt('new_password', '');
+        $newPassword2 = \diRequest::postExt('new_password2', '');
 
         if (!$oldPassword || !static::isPasswordOk($oldPassword)) {
-            throw new \Exception(Cabinet::L('set_password.wrong_old_password'));
+            throw HttpException::badRequest(
+                Cabinet::L('set_password.wrong_old_password')
+            );
         }
 
         if (!static::isPasswordValid($newPassword)) {
-            throw new \Exception(Cabinet::L('set_password.password_not_valid'));
+            throw HttpException::badRequest(
+                Cabinet::L('set_password.password_not_valid')
+            );
         }
 
         if ($newPassword != $newPassword2) {
-            throw new \Exception(
+            throw HttpException::badRequest(
                 Cabinet::L('set_password.passwords_not_match')
             );
         }
@@ -226,7 +232,7 @@ class Model extends \diBaseUserModel
 
     protected function getSender($reason)
     {
-        return \diConfiguration::get('sender_email');
+        return Configuration::get('sender_email');
     }
 
     protected function getMailSubject($reason)

@@ -20,6 +20,8 @@
 
 */
 
+use diCore\Data\Configuration;
+
 define('IMG_TYPE_GIF', 1);
 define('IMG_TYPE_JPG', 2);
 define('IMG_TYPE_JPEG', 2);
@@ -156,11 +158,7 @@ class diImage
 
     public static function isImageType($type)
     {
-        return in_array($type, [
-            self::TYPE_GIF,
-            self::TYPE_JPEG,
-            self::TYPE_PNG,
-        ]);
+        return in_array($type, [self::TYPE_GIF, self::TYPE_JPEG, self::TYPE_PNG]);
     }
 
     public static function isFlashType($type)
@@ -231,10 +229,7 @@ class diImage
             $image = $this->post_function($image);
         }
 
-        $q =
-            $dst_type == 3
-                ? round($this->jpeg_quality / 10)
-                : $this->jpeg_quality;
+        $q = $dst_type == 3 ? round($this->jpeg_quality / 10) : $this->jpeg_quality;
         if ($q >= 10 && $dst_type == 3) {
             $q = 9;
         }
@@ -441,14 +436,7 @@ class diImage
                 $pixel_over_white = imagecolorat($dst_img, 0, 0);
 
                 if ($pixel_over_black != $pixel_over_white) {
-                    imagefilledrectangle(
-                        $dst_img,
-                        0,
-                        0,
-                        $w,
-                        $h,
-                        $this->transparent
-                    );
+                    imagefilledrectangle($dst_img, 0, 0, $w, $h, $this->transparent);
                     imagecopyresized(
                         $dst_img,
                         $this->image,
@@ -469,7 +457,6 @@ class diImage
             default:
                 break;
         }
-        //
 
         return $dst_img;
     }
@@ -498,15 +485,15 @@ class diImage
             $wm &&
             is_file(
                 get_absolute_path() .
-                    diConfiguration::getFolder() .
-                    diConfiguration::get($wm)
+                    Configuration::getFolder() .
+                    Configuration::get($wm)
             )
         ) {
             $this->merge_wm_to(
                 $dst_img,
                 get_absolute_path() .
-                    diConfiguration::getFolder() .
-                    diConfiguration::get($wm),
+                    Configuration::getFolder() .
+                    Configuration::get($wm),
                 $wm_x_pos,
                 $wm_y_pos
             );
@@ -552,18 +539,18 @@ class diImage
 
         if (
             $wm &&
-            diConfiguration::exists($wm) &&
+            Configuration::exists($wm) &&
             is_file(
                 get_absolute_path() .
-                    diConfiguration::getFolder() .
-                    diConfiguration::get($wm)
+                    Configuration::getFolder() .
+                    Configuration::get($wm)
             )
         ) {
             $this->merge_wm_to(
                 $dst_img,
                 get_absolute_path() .
-                    diConfiguration::getFolder() .
-                    diConfiguration::get($wm),
+                    Configuration::getFolder() .
+                    Configuration::get($wm),
                 $wm_x_pos,
                 $wm_y_pos
             );
@@ -926,29 +913,9 @@ class diImage
         for ($i = 0; $i < $radius; $i++) {
             imagecopy($imgBlur, $imgCanvas, 0, 0, 1, 1, $w - 1, $h - 1); // up left
             imagecopymerge($imgBlur, $imgCanvas, 1, 1, 0, 0, $w, $h, 50); // down right
-            imagecopymerge(
-                $imgBlur,
-                $imgCanvas,
-                0,
-                1,
-                1,
-                0,
-                $w - 1,
-                $h,
-                33.33333
-            ); // down left
+            imagecopymerge($imgBlur, $imgCanvas, 0, 1, 1, 0, $w - 1, $h, 33.33333); // down left
             imagecopymerge($imgBlur, $imgCanvas, 1, 0, 0, 1, $w, $h - 1, 25); // up right
-            imagecopymerge(
-                $imgBlur,
-                $imgCanvas,
-                0,
-                0,
-                1,
-                0,
-                $w - 1,
-                $h,
-                33.33333
-            ); // left
+            imagecopymerge($imgBlur, $imgCanvas, 0, 0, 1, 0, $w - 1, $h, 33.33333); // left
             imagecopymerge($imgBlur, $imgCanvas, 1, 0, 0, 0, $w, $h, 25); // right
             imagecopymerge($imgBlur, $imgCanvas, 0, 0, 0, 1, $w, $h - 1, 20); // up
             imagecopymerge($imgBlur, $imgCanvas, 0, 1, 0, 0, $w, $h, 16.666667); // down
@@ -961,42 +928,12 @@ class diImage
             // time increases heavily.
             imagecopy($imgBlur2, $imgCanvas2, 0, 0, 0, 0, $w, $h);
             imagecopymerge($imgBlur2, $imgCanvas2, 0, 0, 0, 0, $w, $h, 50);
-            imagecopymerge(
-                $imgBlur2,
-                $imgCanvas2,
-                0,
-                0,
-                0,
-                0,
-                $w,
-                $h,
-                33.33333
-            );
+            imagecopymerge($imgBlur2, $imgCanvas2, 0, 0, 0, 0, $w, $h, 33.33333);
             imagecopymerge($imgBlur2, $imgCanvas2, 0, 0, 0, 0, $w, $h, 25);
-            imagecopymerge(
-                $imgBlur2,
-                $imgCanvas2,
-                0,
-                0,
-                0,
-                0,
-                $w,
-                $h,
-                33.33333
-            );
+            imagecopymerge($imgBlur2, $imgCanvas2, 0, 0, 0, 0, $w, $h, 33.33333);
             imagecopymerge($imgBlur2, $imgCanvas2, 0, 0, 0, 0, $w, $h, 25);
             imagecopymerge($imgBlur2, $imgCanvas2, 0, 0, 0, 0, $w, $h, 20);
-            imagecopymerge(
-                $imgBlur2,
-                $imgCanvas2,
-                0,
-                0,
-                0,
-                0,
-                $w,
-                $h,
-                16.666667
-            );
+            imagecopymerge($imgBlur2, $imgCanvas2, 0, 0, 0, 0, $w, $h, 16.666667);
             imagecopymerge($imgBlur2, $imgCanvas2, 0, 0, 0, 0, $w, $h, 50);
             imagecopy($imgCanvas2, $imgBlur2, 0, 0, 0, 0, $w, $h);
         }
