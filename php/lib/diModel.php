@@ -3030,7 +3030,7 @@ ENGINE = InnoDB;";
      */
     public static function hashPasswordFromDbToCookie($password, $field = null)
     {
-        if (static::use_insecure_password_hash) {
+        if (static::use_insecure_password_hash && $password) {
             return md5($password);
         }
 
