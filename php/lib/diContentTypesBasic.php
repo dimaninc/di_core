@@ -17,6 +17,8 @@ class diContentTypesBasic
                 // 'possibleGetParams' => [],
             ],
             'href' => 'Ссылка',
+            'reset_password' => 'Сброс пароля',
+            'enter_new_password' => 'Введение нового пароля',
             'user' => 'Текстовый раздел',
         ],
 
@@ -27,6 +29,8 @@ class diContentTypesBasic
                 // 'possibleGetParams' => [],
             ],
             'href' => 'Link',
+            'reset_password' => 'Reset password',
+            'enter_new_password' => 'Enter new password',
             'user' => 'Text page',
         ],
     ];

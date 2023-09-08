@@ -18,6 +18,9 @@ class diBaseController
      */
     const TINY_ACTIONS = false;
 
+    const RESULT_KEY = 'ok';
+    const MESSAGE_KEY = 'message';
+
     /**
      * @var Response
      */
@@ -334,8 +337,8 @@ class diBaseController
         }
 
         StringHelper::printJson([
-            'ok' => false,
-            'message' => $e->getMessage(),
+            static::RESULT_KEY => false,
+            static::MESSAGE_KEY => $e->getMessage(),
         ]);
     }
 
@@ -501,27 +504,14 @@ class diBaseController
 
     protected function okay($returnData = [])
     {
-        return $this->standardResponse(
-            HttpCode::OK,
-            extend(
-                [
-                    'ok' => true,
-                ],
-                $returnData
-            )
-        );
+        return $this->standardResponse(HttpCode::OK, static::e(true, $returnData));
     }
 
     protected function notFound($returnData = [])
     {
         return $this->standardResponse(
             HttpCode::NOT_FOUND,
-            extend(
-                [
-                    'ok' => false,
-                ],
-                $returnData
-            )
+            static::e(false, $returnData)
         );
     }
 
@@ -529,12 +519,7 @@ class diBaseController
     {
         return $this->standardResponse(
             HttpCode::UNAUTHORIZED,
-            extend(
-                [
-                    'ok' => false,
-                ],
-                $returnData
-            )
+            static::e(false, $returnData)
         );
     }
 
@@ -542,12 +527,7 @@ class diBaseController
     {
         return $this->standardResponse(
             HttpCode::FORBIDDEN,
-            extend(
-                [
-                    'ok' => false,
-                ],
-                $returnData
-            )
+            static::e(false, $returnData)
         );
     }
 
@@ -555,12 +535,7 @@ class diBaseController
     {
         return $this->standardResponse(
             HttpCode::BAD_REQUEST,
-            extend(
-                [
-                    'ok' => false,
-                ],
-                $returnData
-            )
+            static::e(false, $returnData)
         );
     }
 
@@ -568,13 +543,29 @@ class diBaseController
     {
         return $this->standardResponse(
             HttpCode::INTERNAL_SERVER_ERROR,
-            extend(
-                [
-                    'ok' => false,
-                ],
-                $returnData
-            )
+            static::e(false, $returnData)
         );
+    }
+
+    protected static function e()
+    {
+        $args = func_get_args();
+
+        if (is_array($args) && count($args)) {
+            foreach ($args as &$x) {
+                if (is_string($x)) {
+                    $x = [
+                        static::MESSAGE_KEY => $x,
+                    ];
+                } elseif (is_bool($x)) {
+                    $x = [
+                        static::RESULT_KEY => $x,
+                    ];
+                }
+            }
+        }
+
+        return extend(...$args);
     }
 
     public static function L($key, $lang = null)

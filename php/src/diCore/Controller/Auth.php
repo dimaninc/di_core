@@ -23,6 +23,13 @@ class Auth extends \diBaseController
             'common.enter_email' => 'Enter E-mail',
             'sign_in.unsuccessful' => 'E-mail or password is wrong',
 
+            'reset_password.sign_out_first' =>
+                'You are signed in, unable to reset password',
+            'reset_password.user_not_found' => 'User not found',
+            'reset_password.user_not_active' => 'User is not active',
+            'reset_password.no_email' => 'No email provided',
+            'reset_password.no_token' => 'No token provided',
+
             'enter_new_password.sign_out_first' =>
                 'You are signed in, enter new password in cabinet',
             'enter_new_password.email_not_valid' => 'E-mail is not valid',
@@ -47,6 +54,13 @@ class Auth extends \diBaseController
         'ru' => [
             'common.enter_email' => 'Введите E-mail',
             'sign_in.unsuccessful' => 'E-mail или пароль не подходят',
+
+            'reset_password.sign_out_first' =>
+                'Вы не можете сбросить пароль, т.к. вы авторизованы',
+            'reset_password.user_not_found' => 'Пользователь не найден',
+            'reset_password.user_not_active' => 'Пользователь не активен',
+            'reset_password.no_email' => 'Email не передан',
+            'reset_password.no_token' => 'Токен не передан',
 
             'enter_new_password.sign_out_first' =>
                 'Вы авторизованы, задайте новый пароль в личном кабинете',
@@ -91,7 +105,7 @@ class Auth extends \diBaseController
             'ok' => $Auth->authorized(),
             'message' => $Auth->authorized()
                 ? ''
-                : self::L('sign_in.unsuccessful', $lang),
+                : static::L('sign_in.unsuccessful', $lang),
         ];
     }
 
@@ -185,14 +199,14 @@ class Auth extends \diBaseController
         if ($this->param(1) == \diOAuth2::callbackParam) {
             $a->processReturn();
 
-            $this->redirectTo(\diSession::getAndKill(self::BACK_KEY) ?: '/');
+            $this->redirectTo(\diSession::getAndKill(static::BACK_KEY) ?: '/');
         } elseif ($this->param(1) == \diOAuth2::unlinkParam) {
             return [
                 'ok' => $a->unlink(),
             ];
         } else {
             \diSession::set(
-                self::BACK_KEY,
+                static::BACK_KEY,
                 \diRequest::get('back') ?: \diRequest::referrer()
             );
 
@@ -275,7 +289,7 @@ class Auth extends \diBaseController
 
             $user
                 ->setActive(1)
-                ->setActivationKey(Model::generateActivationKey())
+                ->generateAndSetToken()
                 ->save();
 
             $href = $this->getActivateRedirectUrl(true);
@@ -323,12 +337,12 @@ class Auth extends \diBaseController
 
     protected function getEmptyUserUidErrorMessage()
     {
-        return self::L('common.enter_email');
+        return static::L('common.enter_email');
     }
 
     protected function getUserUidForReset()
     {
-        $email = \diRequest::post('email');
+        $email = \diRequest::postExt('email');
 
         if (!$email) {
             throw new \Exception($this->getEmptyUserUidErrorMessage());
@@ -358,7 +372,7 @@ class Auth extends \diBaseController
         $key = $this->param(1);
 
         if (!$key) {
-            throw new \Exception(self::L('activate.key_is_empty'));
+            throw new \Exception(static::L('activate.key_is_empty'));
         }
 
         return $key;
@@ -369,110 +383,145 @@ class Auth extends \diBaseController
         return Model::create(Types::user, $this->getUserUidForActivate(), 'slug');
     }
 
+    /**
+     * @deprecated
+     * Back compatibility
+     */
     public function resetAction()
     {
-        $ar = [
-            'ok' => false,
-        ];
-
-        try {
-            if (AuthTool::i()->authorized()) {
-                throw new \Exception(
-                    'Вы не можете сбросить пароль, т.к. вы авторизованы'
-                );
-            }
-
-            /** @var Model $user */
-            $user = $this->getUserForReset();
-
-            if (!$user->exists()) {
-                throw new \Exception('Пользователь не найден');
-            }
-
-            if (!$user->active()) {
-                throw new \Exception(
-                    'Аккаунт отключён, свяжитесь с администратором'
-                );
-            }
-
-            $user
-                ->setValidationNeeded(false)
-                ->notifyAboutResetPasswordByEmail($this->getTwig());
-
-            $ar['ok'] = true;
-        } catch (\Exception $e) {
-            $ar['message'] = $e->getMessage();
+        if (\diRequest::isGet()) {
+            return $this->_getResetPasswordAction();
+        } elseif (\diRequest::isPost()) {
+            return $this->_postResetPasswordAction();
+        } else {
+            return $this->notFound('Unsupported method');
         }
-
-        return $ar;
     }
 
-    public function enterNewPasswordAction()
+    /**
+     * POST /api/auth/reset_password
+     */
+    public function _postResetPasswordAction()
     {
-        $ar = [
-            'ok' => false,
-        ];
-
-        $email = \diRequest::post('email', '');
-        $key = \diRequest::post('key', '');
-        $password = \diRequest::post('password', '');
-        $password2 = \diRequest::post('password2', '');
-
-        try {
-            if (AuthTool::i()->authorized()) {
-                throw new \Exception(self::L('enter_new_password.sign_out_first'));
-            }
-
-            if (!\diEmail::isValid($email)) {
-                throw new \Exception(self::L('enter_new_password.email_not_valid'));
-            }
-
-            if (!Model::isActivationKeyValid($key)) {
-                throw new \Exception(self::L('enter_new_password.key_not_valid'));
-            }
-
-            if (Model::isPasswordValid($password)) {
-                throw new \Exception(
-                    self::L('enter_new_password.password_not_valid')
-                );
-            }
-
-            if ($password != $password2) {
-                throw new \Exception(
-                    self::L('enter_new_password.passwords_not_match')
-                );
-            }
-
-            $user = Model::createBySlug($email);
-
-            if (!$user->exists()) {
-                throw new \Exception(self::L('enter_new_password.user_not_exist'));
-            }
-
-            if (!$user->active()) {
-                throw new \Exception(self::L('enter_new_password.user_not_active'));
-            }
-
-            if ($user->getActivationKey() != $key) {
-                throw new \Exception(self::L('enter_new_password.keys_not_match'));
-            }
-
-            $user
-                ->setValidationNeeded(false)
-                ->setPasswordExt($password)
-                ->setActivationKey(Model::generateActivationKey())
-                ->save();
-
-            if ($user->authenticateAfterEnteringNewPassword()) {
-                AuthTool::i()->forceAuthorize($user, true);
-            }
-
-            $ar['ok'] = true;
-        } catch (\Exception $e) {
-            $ar['message'] = $e->getMessage();
+        if (AuthTool::i()->authorized()) {
+            return $this->badRequest(static::L('reset_password.sign_out_first'));
         }
 
-        return $ar;
+        /** @var Model $user */
+        $user = $this->getUserForReset();
+
+        if (!$user->exists()) {
+            return $this->notFound(static::L('reset_password.user_not_found'));
+        }
+
+        if (!$user->active()) {
+            return $this->badRequest(static::L('reset_password.user_not_active'));
+        }
+
+        $user
+            ->setValidationNeeded(false)
+            ->notifyAboutResetPasswordByEmail($this->getTwig());
+
+        return $this->okay();
+    }
+
+    protected function getResetPasswordRedirectLink()
+    {
+        return CMS::languageHrefPrefix() .
+            '/' .
+            CMS::ct('reset_password') .
+            '/' .
+            $this->param(0) .
+            '/' .
+            $this->param(1) .
+            '/';
+    }
+
+    /**
+     * GET /api/auth/reset_password/:email/:token
+     */
+    public function _getResetPasswordAction()
+    {
+        if (AuthTool::i()->authorized()) {
+            return $this->badRequest(static::L('reset_password.sign_out_first'));
+        }
+
+        if (!$this->param(0)) {
+            return $this->badRequest(static::L('reset_password.no_email'));
+        }
+
+        if (!$this->param(1)) {
+            return $this->badRequest(static::L('reset_password.no_token'));
+        }
+
+        $this->redirectTo($this->getResetPasswordRedirectLink());
+
+        return null;
+    }
+
+    /**
+     * GET /api/auth/enter_new_password
+     */
+    public function _postEnterNewPasswordAction()
+    {
+        $email = \diRequest::postExt('email', '');
+        $key = \diRequest::postExt('key', '');
+        $password = \diRequest::postExt('password', '');
+        $password2 = \diRequest::postExt('password2', '');
+
+        if (AuthTool::i()->authorized()) {
+            return $this->badRequest(static::L('enter_new_password.sign_out_first'));
+        }
+
+        if (!\diEmail::isValid($email)) {
+            return $this->badRequest(
+                static::L('enter_new_password.email_not_valid')
+            );
+        }
+
+        if (!Model::isTokenValid($key)) {
+            return $this->badRequest(static::L('enter_new_password.key_not_valid'));
+        }
+
+        if (Model::isPasswordValid($password)) {
+            return $this->badRequest(
+                static::L('enter_new_password.password_not_valid')
+            );
+        }
+
+        if ($password != $password2) {
+            return $this->badRequest(
+                static::L('enter_new_password.passwords_not_match')
+            );
+        }
+
+        $user = Model::createBySlug($email);
+
+        if (!$user->exists()) {
+            return $this->notFound(static::L('enter_new_password.user_not_exist'));
+        }
+
+        if (!$user->active()) {
+            return $this->badRequest(
+                static::L('enter_new_password.user_not_active')
+            );
+        }
+
+        if ($user->getActivationKey() != $key) {
+            return $this->badRequest(static::L('enter_new_password.keys_not_match'));
+        }
+
+        $user
+            ->setValidationNeeded(false)
+            ->setPasswordExt($password)
+            ->generateAndSetToken()
+            ->save();
+
+        if ($user->authenticateAfterEnteringNewPassword()) {
+            AuthTool::i()->forceAuthorize($user, true);
+        }
+
+        return $this->okay();
     }
 
     /**

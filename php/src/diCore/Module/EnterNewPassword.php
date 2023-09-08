@@ -23,7 +23,7 @@ class EnterNewPassword extends \diModule
         $user =
             !Auth::i()->authorized() &&
             \diEmail::isValid($email) &&
-            Model::isActivationKeyValid($key)
+            Model::isTokenValid($key)
                 ? \diModel::create(\diTypes::user, $email, 'slug')
                 : \diModel::create(\diTypes::user);
 
@@ -45,7 +45,7 @@ class EnterNewPassword extends \diModule
                 $user
                     ->setValidationNeeded(false)
                     ->setPasswordExt($password)
-                    ->setActivationKey(Model::generateActivationKey())
+                    ->generateAndSetToken()
                     ->save();
 
                 Auth::i()->forceAuthorize($user, true);

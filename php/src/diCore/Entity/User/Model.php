@@ -21,13 +21,10 @@ use diCore\Tool\Mail\Queue;
  * Methods list for IDE
  *
  * @method string	getPassword
- * @method string	getActivationKey
  *
  * @method bool hasPassword
- * @method bool hasActivationKey
  *
  * @method $this setPassword($value)
- * @method $this setActivationKey($value)
  */
 class Model extends \diBaseUserModel
 {
@@ -37,6 +34,9 @@ class Model extends \diBaseUserModel
     protected $table = 'users';
 
     const MIN_PASSWORD_LENGTH = 6;
+
+    const TOKEN_FIELD_NAME = 'activation_key';
+    const TOKEN_LENGTH = 32;
 
     protected $instantSend = false;
 
@@ -67,14 +67,50 @@ class Model extends \diBaseUserModel
         ];
     }
 
+    public function getActivationKey()
+    {
+        return $this->get(static::TOKEN_FIELD_NAME);
+    }
+
+    public function hasActivationKey()
+    {
+        return $this->has(static::TOKEN_FIELD_NAME);
+    }
+
+    public function setActivationKey($value)
+    {
+        return $this->set(static::TOKEN_FIELD_NAME, $value);
+    }
+
+    /**
+     * @deprecated
+     */
     public static function generateActivationKey()
+    {
+        return static::generateToken();
+    }
+
+    public static function generateToken()
     {
         return get_unique_id();
     }
 
+    public function generateAndSetToken()
+    {
+        return $this->setActivationKey(static::generateToken());
+    }
+
+    /**
+     * @deprecated
+     */
     public static function isActivationKeyValid($key)
     {
-        return strlen($key) == 32;
+        return static::isTokenValid($key);
+    }
+
+    public static function isTokenValid($key)
+    {
+        return strlen($key) == static::TOKEN_LENGTH;
     }
 
     public static function generatePassword()
@@ -132,9 +168,7 @@ class Model extends \diBaseUserModel
 
     public function setInitiatingValues()
     {
-        $this->setPasswordExt(static::generatePassword())->setActivationKey(
-            static::generateActivationKey()
-        );
+        $this->setPasswordExt(static::generatePassword())->generateAndSetToken();
 
         return $this;
     }
@@ -301,7 +335,7 @@ class Model extends \diBaseUserModel
     public function notifyAboutResetPasswordByEmail(\diTwig $twig)
     {
         if (!$this->hasActivationKey()) {
-            $this->setActivationKey(static::generateActivationKey())->save();
+            $this->generateAndSetToken()->save();
         }
 
         if ($this->hasEmail()) {
