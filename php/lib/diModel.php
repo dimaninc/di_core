@@ -2454,6 +2454,11 @@ ENGINE = InnoDB;";
         return $this;
     }
 
+    protected function createFilename($field, $length = null)
+    {
+        return get_unique_id($length ?: 32);
+    }
+
     public function generateFileName($field, $origFilename, $options = [])
     {
         $options = extend(
@@ -2465,11 +2470,14 @@ ENGINE = InnoDB;";
             $options
         );
 
-        $ext = get_file_ext($origFilename);
+        $ext = StringHelper::fileExtension($origFilename);
 
         if ($options['force'] || !$this->has($field)) {
             do {
-                $this->set($field, get_unique_id($options['length']) . '.' . $ext);
+                $this->set(
+                    $field,
+                    $this->createFilename($field, $options['length']) . '.' . $ext
+                );
 
                 $exists =
                     $options['checkMode'] == 'db'
