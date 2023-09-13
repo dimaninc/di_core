@@ -30,6 +30,20 @@ class Cabinet extends \diBaseController
         ],
     ];
 
+    public function _getMeAction()
+    {
+        if (!AuthTool::i()->authorized()) {
+            return $this->unauthorized();
+        }
+
+        /** @var User $user */
+        $user = AuthTool::i()->getUserModel();
+
+        return $this->okay([
+            'user' => $user->getPublicData(),
+        ]);
+    }
+
     public function setPasswordAction()
     {
         if (!AuthTool::i()->authorized()) {
