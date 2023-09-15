@@ -220,10 +220,7 @@ class Base
      */
     public function isAdminSuper()
     {
-        return in_array(
-            $this->getAdminModel()->getLogin(),
-            $this->superUsersAr
-        );
+        return in_array($this->getAdminModel()->getLogin(), $this->superUsersAr);
     }
 
     public function hasPage()
@@ -297,9 +294,7 @@ class Base
 
     protected function getStaticTimestampEnding()
     {
-        return class_exists('\diStaticBuild')
-            ? '?v=' . \diStaticBuild::VERSION
-            : '';
+        return class_exists('\diStaticBuild') ? '?v=' . \diStaticBuild::VERSION : '';
     }
 
     private function getTemplateVariables()
@@ -320,8 +315,7 @@ class Base
 
             'site_subfolder' => \diLib::getSubFolder(),
             'site_path' =>
-                (\diLib::getSubFolder() ? '/' . \diLib::getSubFolder() : '') .
-                '/',
+                (\diLib::getSubFolder() ? '/' . \diLib::getSubFolder() : '') . '/',
             'site_language' => $this->getLanguage(),
             'current_year' => date('Y'),
             'page_title' => $this->getPageTitle(),
@@ -556,19 +550,12 @@ class Base
 
     public function getPageTitle()
     {
-        return strip_tags($this->caption) .
-            ': ' .
-            $this->getSiteTitle() .
-            ' admin';
+        return strip_tags($this->caption) . ': ' . $this->getSiteTitle() . ' admin';
     }
 
     public function expandCollapseBlockNeeded()
     {
-        return (in_array($this->getTable(), [
-            'content',
-            'categories',
-            'orders',
-        ]) &&
+        return (in_array($this->getTable(), ['content', 'categories', 'orders']) &&
             $this->getMethod() === 'list') ||
             $this->forceShowExpandCollapse;
     }
@@ -722,8 +709,7 @@ class Base
             $this->method = $this->filename == 'form.php' ? 'form' : 'list';
         } else {
             $this->path = $this->module;
-            $this->filename =
-                $this->method == 'form' ? 'form.php' : 'content.php';
+            $this->filename = $this->method == 'form' ? 'form.php' : 'content.php';
         }
         //
 
@@ -748,10 +734,7 @@ class Base
                 $pathForCheck .= '_' . $m;
             }
 
-            foreach (
-                $this->getAdminMenuFullTree()
-                as $groupTitle => $groupOpts
-            ) {
+            foreach ($this->getAdminMenuFullTree() as $groupTitle => $groupOpts) {
                 if (
                     in_array($pathForCheck, $groupOpts['paths']) &&
                     $this->hasAccess($groupOpts)
@@ -845,9 +828,10 @@ class Base
     {
         $super = in_array($moduleName, $this->superUserModules);
         $local = in_array($moduleName, $this->localUserModules);
+        $isDebugMode = \diCurrentCMS::debugMode();
 
-        return (!$super || $this->isAdminSuper()) &&
-            (!$local || \diCurrentCMS::debugMode());
+        return (!$super || $this->isAdminSuper() || $isDebugMode) &&
+            (!$local || $isDebugMode);
     }
 
     protected static function menuAdd()
@@ -946,17 +930,11 @@ class Base
             }
 
             if ($options['prefixRows']) {
-                $ar['items'] = array_merge(
-                    $options['prefixRows'],
-                    $ar['items']
-                );
+                $ar['items'] = array_merge($options['prefixRows'], $ar['items']);
             }
 
             if ($options['suffixRows']) {
-                $ar['items'] = array_merge(
-                    $ar['items'],
-                    $options['suffixRows']
-                );
+                $ar['items'] = array_merge($ar['items'], $options['suffixRows']);
             }
         }
 
@@ -969,9 +947,7 @@ class Base
             static::getVocabulary('menu.emails') => $this->getAdminMenuRow(
                 'mail_queue'
             ),
-            static::getVocabulary('menu.admins') => $this->getAdminMenuRow(
-                'admins'
-            ),
+            static::getVocabulary('menu.admins') => $this->getAdminMenuRow('admins'),
         ];
     }
 
@@ -1017,9 +993,7 @@ class Base
         return [
             $this->getVocabulary('menu.settings') => [
                 'items' => [
-                    '<b>' .
-                    $this->getVocabulary('menu.edit_settings') .
-                    '</b>' => [
+                    '<b>' . $this->getVocabulary('menu.edit_settings') . '</b>' => [
                         'module' => 'configuration',
                     ],
                     $this->getVocabulary('menu.rebuild_cache') .
