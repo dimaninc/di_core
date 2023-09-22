@@ -360,8 +360,10 @@ class diBaseController
             }
 
             $actionPart = static::TINY_ACTIONS ? '' : '_' . $action;
-            $source =
-                strtolower(\diRequest::getMethodStr()) . $actionPart . '_action';
+            $requestMethod = self::isCli()
+                ? 'cli'
+                : strtolower(\diRequest::getMethodStr());
+            $source = $requestMethod . $actionPart . '_action';
             $methodName = '_' . camelize($source);
 
             // first looking for REST API methods like _putSomeAction
