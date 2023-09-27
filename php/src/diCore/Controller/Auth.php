@@ -17,6 +17,7 @@ use diCore\Tool\Auth as AuthTool;
 class Auth extends \diBaseController
 {
     const BACK_KEY = 'oAuth2Back';
+    const REDIRECT_AFTER_LOGIN = true;
 
     protected static $language = [
         'en' => [
@@ -84,35 +85,50 @@ class Auth extends \diBaseController
         ],
     ];
 
+    /**
+     * @var AuthTool
+     */
+    protected $Auth;
+
+    public function __construct($params = [])
+    {
+        parent::__construct($params);
+
+        $this->Auth = AuthTool::create(static::REDIRECT_AFTER_LOGIN);
+    }
+
     public function loginAction()
     {
         $lang = \diRequest::postExt('language');
-        $Auth = AuthTool::create(false);
 
         if (Config::isRestApiSupported()) {
-            if (!$Auth->authorized()) {
+            if (!$this->Auth->authorized()) {
                 return $this->unauthorized();
             }
 
             if (Config::isUserSessionUsed()) {
-                return $this->ok([
-                    'token' => $Auth->getUserSession()->getToken(),
-                ]);
+                return $this->ok($this->getLoginSuccessResponseBody());
             }
         }
 
         return [
-            'ok' => $Auth->authorized(),
-            'message' => $Auth->authorized()
+            'ok' => $this->Auth->authorized(),
+            'message' => $this->Auth->authorized()
                 ? ''
                 : static::L('sign_in.unsuccessful', $lang),
         ];
     }
 
+    protected function getLoginSuccessResponseBody()
+    {
+        return [
+            'token' => $this->Auth->getUserSession()->getToken(),
+        ];
+    }
+
     public function logoutAction()
     {
-        $Auth = AuthTool::create();
-        $Auth->logout();
+        $this->Auth->logout();
 
         if (!\diRequest::request('redirect') && Config::isRestApiSupported()) {
             return $this->unauthorized([
@@ -127,9 +143,7 @@ class Auth extends \diBaseController
 
     public function checkAction()
     {
-        $Auth = AuthTool::create();
-
-        if (!$Auth->authorized()) {
+        if (!$this->Auth->authorized()) {
             return $this->unauthorized();
         }
 

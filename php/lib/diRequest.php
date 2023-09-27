@@ -259,8 +259,10 @@ class diRequest
         return self::server('REQUEST_METHOD');
     }
 
-    public static function enableCors($whitelistDomains = [])
-    {
+    public static function enableCors(
+        $whitelistDomains = [],
+        callable $onOptionsRequest = null
+    ) {
         $origin = self::server('HTTP_ORIGIN');
 
         if ($whitelistDomains && in_array($origin, $whitelistDomains)) {
@@ -284,6 +286,12 @@ class diRequest
 
         if (self::isOptions()) {
             header('Allow: POST, GET, OPTIONS, PUT, DELETE, HEAD');
+
+            if (is_callable($onOptionsRequest)) {
+                $onOptionsRequest();
+            }
+
+            die();
         }
     }
 }
