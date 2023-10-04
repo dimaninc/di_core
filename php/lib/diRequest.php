@@ -277,7 +277,7 @@ class diRequest
                 'Access-Control-Allow-Methods: POST, GET, OPTIONS, PUT, DELETE, HEAD'
             );
             header(
-                'Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization'
+                'Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization, Auth-Token'
             );
             header(
                 'Access-Control-Expose-Headers: Content-Length, Date, X-Request-Id'
