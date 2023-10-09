@@ -91,10 +91,7 @@ class diTags
             'tags' => $opts['tags_table'] ?: $opts['tag_id_field'] . 's',
             'map' =>
                 $opts['map_table'] ?:
-                $opts['target_id_field'] .
-                    '_' .
-                    $opts['tag_id_field'] .
-                    '_links',
+                $opts['target_id_field'] . '_' . $opts['tag_id_field'] . '_links',
         ])->setFields([
             'tag_id' => $opts['tag_id_field'],
             'target_type' => $opts['target_type_field'],
@@ -327,10 +324,7 @@ class diTags
             "{$this->fields['target_id']} = '$targetId'",
         ]);
 
-        $this->getDb()->delete(
-            $this->tables['map'],
-            'WHERE ' . join(' AND ', $ar)
-        );
+        $this->getDb()->delete($this->tables['map'], 'WHERE ' . join(' AND ', $ar));
 
         $counter = 0;
 
@@ -396,11 +390,7 @@ class diTags
     public function storeTargetsFromPost($targetType, $tagId, $postVarKey)
     {
         if (isset($_POST[$postVarKey]) && is_array($_POST[$postVarKey])) {
-            return $this->storeTargets(
-                $targetType,
-                $tagId,
-                $_POST[$postVarKey]
-            );
+            return $this->storeTargets($targetType, $tagId, $_POST[$postVarKey]);
         }
 
         return false;
@@ -415,10 +405,7 @@ class diTags
             "{$this->fields['tag_id']} = '$tagId'",
         ]);
 
-        $this->getDb()->delete(
-            $this->tables['map'],
-            'WHERE ' . join(' AND ', $ar)
-        );
+        $this->getDb()->delete($this->tables['map'], 'WHERE ' . join(' AND ', $ar));
 
         $counter = 0;
 
@@ -497,8 +484,7 @@ class diTags
             $qAr[] = "{$this->fields['target_type']} = '$type'";
         }
 
-        $qAr[] =
-            "m.{$this->fields['target_id']}" . $this->getDb()->in($targetId);
+        $qAr[] = "m.{$this->fields['target_id']}" . $this->getDb()->in($targetId);
 
         $rs = $this->getDb()->rs(
             "{$this->tables['map']} m INNER JOIN {$this->tables['tags']} t " .
