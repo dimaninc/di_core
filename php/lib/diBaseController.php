@@ -43,6 +43,14 @@ class diBaseController
 
     protected $twigCreateOptions = [];
 
+    protected static $baseLanguage = [
+        'en' => [
+            'auth.sign_in_first' => 'Sign in first',
+        ],
+        'ru' => [
+            'auth.sign_in_first' => 'Авторизуйтесь для работы',
+        ],
+    ];
     protected static $language = [
         'en' => [],
         'ru' => [],
@@ -570,13 +578,27 @@ class diBaseController
         return extend(...$args);
     }
 
+    protected static function localLanguageStrings($lang)
+    {
+        return [];
+    }
+
+    public static function allLanguageStrings($lang)
+    {
+        return extend(
+            static::$baseLanguage[$lang],
+            static::$language[$lang],
+            static::$customLanguage[$lang],
+            static::localLanguageStrings($lang)
+        );
+    }
+
     public static function L($key, $lang = null)
     {
         if ($lang === null) {
             $lang = Config::getMainLanguage();
         }
 
-        return static::$customLanguage[$lang][$key] ??
-            (static::$language[$lang][$key] ?? $key);
+        return self::allLanguageStrings($lang)[$key] ?? $key;
     }
 }
