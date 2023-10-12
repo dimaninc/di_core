@@ -25,6 +25,7 @@ class Config
     const restApiSupported = false;
     const restApiInAdminSupported = false;
     const equalHyphenAndUnderscoreInApiPath = false;
+    const addUrlBaseToPicFieldsInPublicData = false;
     const useUserSession = false;
     const folderForAssets = '';
     const folderForUserAssets = 'uploads/';
@@ -170,6 +171,14 @@ class Config
         $class = self::getClass();
 
         return $class::equalHyphenAndUnderscoreInApiPath;
+    }
+
+    final public static function shouldAddUrlBaseToPicFieldsInPublicData()
+    {
+        /** @var Config $class */
+        $class = self::getClass();
+
+        return $class::addUrlBaseToPicFieldsInPublicData;
     }
 
     final public static function isUserSessionUsed()

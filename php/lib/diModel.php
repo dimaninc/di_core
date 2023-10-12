@@ -45,6 +45,10 @@ class diModel implements \ArrayAccess
     const open_graph_pic_field = 'pic';
     const validation_error_prefix_needed = false;
     const use_insecure_password_hash = true;
+    /**
+     * null - inherit from Config
+     */
+    const add_url_base_to_pic_fields_in_public_data = null;
 
     // this should be redefined
     protected $table;
@@ -2835,12 +2839,30 @@ ENGINE = InnoDB;";
 
     public function getPublicData()
     {
-        return ArrayHelper::mapAssoc(function ($k, $v) {
+        $data = ArrayHelper::mapAssoc(function ($k, $v) {
             return [$k, static::tuneFieldValueByTypeForPublicData($k, $v)];
         }, ArrayHelper::filterByKey(
             extend($this->getTemplateVarsExtended(), $this->getBasicTemplateVars()),
             static::getPublicFields()
         ));
+
+        if (
+            static::add_url_base_to_pic_fields_in_public_data ??
+            Config::shouldAddUrlBaseToPicFieldsInPublicData()
+        ) {
+            $urlBase = \diRequest::urlBase(true);
+
+            foreach ($this->getPicFields() as $field) {
+                if (
+                    isset($data[$field]) &&
+                    !StringHelper::startsWith($data[$field], $urlBase)
+                ) {
+                    $data[$field] = $urlBase . $data[$field];
+                }
+            }
+        }
+
+        return $data;
     }
 
     /**
