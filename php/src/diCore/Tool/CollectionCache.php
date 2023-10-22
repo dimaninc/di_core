@@ -216,7 +216,7 @@ class CollectionCache
         return self::PREFIX_REDIS . 'type=' . $modelType;
     }
 
-    public static function useRedis(\Predis\Client $client)
+    public static function usePRedis(\Predis\Client $client)
     {
         self::$storage = self::STORAGE_PREDIS;
 
