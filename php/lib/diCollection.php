@@ -267,11 +267,8 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
      * @return $this
      * @throws \Exception
      */
-    public static function create(
-        $type = null,
-        $options = [],
-        $queryFields = null
-    ) {
+    public static function create($type = null, $options = [], $queryFields = null)
+    {
         $type = $type ?: static::type;
 
         if (!$type) {
@@ -630,9 +627,35 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         return count($ar) ? $ar[0] : $this->getNewEmptyItem();
     }
 
+    /**
+     * @return \diModel[]
+     */
     public function asArray()
     {
         return $this->slice();
+    }
+
+    /**
+     * Returns array of assoc arrays (instead of models)
+     * @var bool $assoc returns assoc array if true
+     * @return array[]
+     */
+    public function asDataArray($assoc = false)
+    {
+        $ar = array_map(function (\diModel $m) {
+            return $m->get();
+        }, $this->asArray());
+
+        if (!$assoc) {
+            return $ar;
+        }
+
+        return ArrayHelper::combine(
+            array_map(function (\diModel $m) {
+                return $m->getId();
+            }, $ar),
+            $ar
+        );
     }
 
     public function asPublicDataArray()
@@ -1158,9 +1181,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
             if ($this->sqlParts['where']) {
                 foreach ($this->sqlParts['where'] as $val) {
                     if ($val['value'] !== null) {
-                        $val[
-                            'value'
-                        ] = $modelClass::tuneFieldValueByTypeBeforeDb(
+                        $val['value'] = $modelClass::tuneFieldValueByTypeBeforeDb(
                             $val['field'],
                             $val['value']
                         );
@@ -1179,10 +1200,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
                             $operator => $val['value'],
                         ];
                     } elseif ($val['operator'] == 'between') {
-                        if (
-                            is_array($val['value']) &&
-                            count($val['value']) == 2
-                        ) {
+                        if (is_array($val['value']) && count($val['value']) == 2) {
                             $newFilter = [
                                 '$gte' => ArrayHelper::get($val['value'], 0),
                                 '$lte' => ArrayHelper::get($val['value'], 1),
@@ -1197,9 +1215,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
                         }
                     } else {
                         throw new \Exception(
-                            'Operator "' .
-                                $val['operator'] .
-                                '" not supported yet'
+                            'Operator "' . $val['operator'] . '" not supported yet'
                         );
                     }
 
@@ -1348,9 +1364,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
      */
     private function exists($offset = null)
     {
-        return isset(
-            $this->items[$offset !== null ? $offset : $this->position]
-        );
+        return isset($this->items[$offset !== null ? $offset : $this->position]);
     }
 
     /**
@@ -1564,8 +1578,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
     public function walk($callback, array $arguments = [])
     {
         $results = [];
-        $useItemCallback =
-            is_string($callback) && strpos($callback, '::') === false;
+        $useItemCallback = is_string($callback) && strpos($callback, '::') === false;
 
         foreach ($this as $id => $item) {
             if ($useItemCallback) {
@@ -1660,9 +1673,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
     public function update($newData = [])
     {
         if ($this->readOnly) {
-            throw new \diDatabaseException(
-                'Unable to update read-only collection'
-            );
+            throw new \diDatabaseException('Unable to update read-only collection');
         }
 
         if ($newData) {
@@ -1825,9 +1836,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
             $field = $this->getDb()->escapeField($field);
             $value = $this->getDb()->escapeValue($value);
 
-            return $this->filterManual(
-                'INSTR(' . $field . ', ' . $value . ') = 1'
-            );
+            return $this->filterManual('INSTR(' . $field . ', ' . $value . ') = 1');
         }
 
         if (static::supportedIlike()) {
@@ -1879,9 +1888,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         if (static::supportedInstr()) {
             $field = $this->getDb()->escapeField($field);
             $value = $this->getDb()->escapeValue($value);
-            return $this->filterManual(
-                'INSTR(' . $field . ', ' . $value . ') > 0'
-            );
+            return $this->filterManual('INSTR(' . $field . ', ' . $value . ') > 0');
         }
 
         if (static::supportedIlike()) {
@@ -1946,10 +1953,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
 
     public function orderByLocalized($field, $direction = null)
     {
-        return $this->orderBy(
-            \diModel::getLocalizedFieldName($field),
-            $direction
-        );
+        return $this->orderBy(\diModel::getLocalizedFieldName($field), $direction);
     }
 
     public function orderByExpression($field, $direction = null)
@@ -2082,10 +2086,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
                                 }
                             } else {
                                 if (is_array($value)) {
-                                    if (
-                                        strtolower($val['operator']) ==
-                                        'between'
-                                    ) {
+                                    if (strtolower($val['operator']) == 'between') {
                                         $value = join(
                                             ' AND ',
                                             array_map(function ($v) {
@@ -2127,9 +2128,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
                                             break;
                                     }
                                 } else {
-                                    switch (
-                                        trim(strtoupper($val['operator']))
-                                    ) {
+                                    switch (trim(strtoupper($val['operator']))) {
                                         case '=':
                                         case 'IN':
                                             return '1 = 0';
@@ -2336,10 +2335,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
             $this->getCachePathAndFilename($cacheKind),
             $this->getCacheContents($cacheKind)
         );
-        chmod(
-            $this->getCachePathAndFilename($cacheKind),
-            static::cacheFileChmod
-        );
+        chmod($this->getCachePathAndFilename($cacheKind), static::cacheFileChmod);
 
         return $this;
     }
@@ -2349,10 +2345,8 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         return is_file($this->getCachePathAndFilename($cacheKind));
     }
 
-    public function loadCache(
-        $cacheKind = self::CACHE_ALL,
-        $forceRebuild = false
-    ) {
+    public function loadCache($cacheKind = self::CACHE_ALL, $forceRebuild = false)
+    {
         if ($forceRebuild) {
             $this->buildCache($cacheKind);
         }

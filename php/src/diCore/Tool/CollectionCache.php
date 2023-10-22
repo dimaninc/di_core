@@ -10,6 +10,18 @@ namespace diCore\Tool;
 
 class CollectionCache
 {
+    const PREFIX_REDIS = 'CollectionCache:';
+
+    const STORAGE_RAM = 1;
+    const STORAGE_PREDIS = 2;
+
+    protected static $storage = self::STORAGE_RAM;
+
+    /**
+     * @var \Predis\Client
+     */
+    protected static $predisClient = null;
+
     protected static $data = [];
 
     public static function addForCollection(
@@ -56,7 +68,18 @@ class CollectionCache
         foreach ($collections as $col) {
             $modelType = \diTypes::getId($col->getModelType());
 
-            self::$data[$modelType] = $col;
+            switch (self::$storage) {
+                case self::STORAGE_PREDIS:
+                    self::$predisClient->set(
+                        self::getRedisKey($modelType),
+                        json_encode($col->asDataArray())
+                    );
+                    break;
+
+                default:
+                    self::$data[$modelType] = $col;
+                    break;
+            }
         }
     }
 
@@ -87,7 +110,17 @@ class CollectionCache
     public static function remove($modelTypes = null)
     {
         if ($modelTypes === null) {
-            self::$data = [];
+            switch (self::$storage) {
+                case self::STORAGE_PREDIS:
+                    self::$predisClient->del(
+                        self::$predisClient->keys(self::getRedisKey('*'))
+                    );
+                    break;
+
+                default:
+                    self::$data = [];
+                    break;
+            }
         } else {
             if (!is_array($modelTypes)) {
                 $modelTypes = [$modelTypes];
@@ -96,8 +129,16 @@ class CollectionCache
             foreach ($modelTypes as $modelType) {
                 $modelType = \diTypes::getId($modelType);
 
-                if (isset(self::$data[$modelType])) {
-                    unset(self::$data[$modelType]);
+                switch (self::$storage) {
+                    case self::STORAGE_PREDIS:
+                        self::$predisClient->del(self::getRedisKey($modelType));
+                        break;
+
+                    default:
+                        if (isset(self::$data[$modelType])) {
+                            unset(self::$data[$modelType]);
+                        }
+                        break;
                 }
             }
         }
@@ -111,11 +152,31 @@ class CollectionCache
     {
         $modelType = \diTypes::getId($modelType);
 
-        if (!isset(self::$data[$modelType]) && $force) {
-            self::$data[$modelType] = \diCollection::create($modelType);
-        }
+        switch (self::$storage) {
+            case self::STORAGE_PREDIS:
+                $json = self::$predisClient->get(self::getRedisKey($modelType));
+                $ar = $json ? json_decode($json, true) : null;
 
-        return isset(self::$data[$modelType]) ? self::$data[$modelType] : null;
+                if ($ar !== null) {
+                    $col = \diCollection::createEmpty($modelType)->addItems($ar);
+                } elseif ($force) {
+                    $col = \diCollection::create($modelType);
+                    self::add([$col]);
+                } else {
+                    $col = null;
+                }
+
+                return $col;
+
+            default:
+                if (!isset(self::$data[$modelType]) && $force) {
+                    self::$data[$modelType] = \diCollection::create($modelType);
+                }
+
+                return isset(self::$data[$modelType])
+                    ? self::$data[$modelType]
+                    : null;
+        }
     }
 
     /**
@@ -126,7 +187,13 @@ class CollectionCache
     {
         $modelType = \diTypes::getId($modelType);
 
-        return isset(self::$data[$modelType]);
+        switch (self::$storage) {
+            case self::STORAGE_PREDIS:
+                return self::$predisClient->exists(self::getRedisKey($modelType));
+
+            default:
+                return isset(self::$data[$modelType]);
+        }
     }
 
     /**
@@ -142,5 +209,17 @@ class CollectionCache
         return $col && $col[$modelId]
             ? $col[$modelId]
             : \diModel::create($modelType, $force ? $modelId : null, 'id');
+    }
+
+    public static function getRedisKey($modelType)
+    {
+        return self::PREFIX_REDIS . 'type=' . $modelType;
+    }
+
+    public static function useRedis(\Predis\Client $client)
+    {
+        self::$storage = self::STORAGE_PREDIS;
+
+        self::$predisClient = $client;
     }
 }

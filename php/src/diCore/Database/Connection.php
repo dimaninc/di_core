@@ -30,9 +30,9 @@ abstract class Connection
 
     /**
      * Possible ConnectionData records (used for dev env, with different passwords)
-     * @var array
+     * @var ConnectionData[]
      */
-    protected $allData = [];
+    protected $dataVariants = [];
 
     /** @var \diDB */
     protected $db;
@@ -124,9 +124,7 @@ abstract class Connection
             }
         } else {
             if (self::exists($name)) {
-                throw new \diRuntimeException(
-                    "Connection '$name' already exists"
-                );
+                throw new \diRuntimeException("Connection '$name' already exists");
             }
 
             self::$connections[$name] = $conn;
@@ -161,8 +159,7 @@ abstract class Connection
     {
         $errors = [];
 
-        /** @var ConnectionData $connData */
-        foreach ($this->allData as $connData) {
+        foreach ($this->dataVariants as $connData) {
             try {
                 $this->connect($connData);
 
@@ -201,7 +198,7 @@ abstract class Connection
 
     protected function addConnData($connData)
     {
-        $this->allData[] = new ConnectionData($connData);
+        $this->dataVariants[] = new ConnectionData($connData);
 
         return $this;
     }
