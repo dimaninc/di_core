@@ -2854,7 +2854,7 @@ ENGINE = InnoDB;";
 
             foreach ($this->getPicFields() as $field) {
                 if (
-                    isset($data[$field]) &&
+                    !empty($data[$field]) &&
                     !StringHelper::startsWith($data[$field], $urlBase)
                 ) {
                     $data[$field] = $urlBase . $data[$field];
