@@ -36,12 +36,17 @@ class Cabinet extends \diBaseController
             return $this->unauthorized();
         }
 
+        return $this->okay($this->getMeResponseBody());
+    }
+
+    protected function getMeResponseBody()
+    {
         /** @var User $user */
         $user = AuthTool::i()->getUserModel();
 
-        return $this->okay([
+        return [
             'user' => $user->getPublicData(),
-        ]);
+        ];
     }
 
     public function setPasswordAction()
