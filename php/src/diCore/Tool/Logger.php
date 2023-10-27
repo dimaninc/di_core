@@ -25,9 +25,18 @@ class Logger
 
     protected $uid;
 
+    protected $logToStdout = false;
+
     protected function init()
     {
         $this->uid = StringHelper::random(10);
+    }
+
+    public function enableLogToStdout()
+    {
+        $this->logToStdout = true;
+
+        return $this;
     }
 
     public function getFolder()
@@ -56,16 +65,15 @@ class Logger
     {
         $fn = $this->getFullFilename($purpose, $fnSuffix);
 
+        $data =
+            $this->uid . '> ' . $this->getDateTime($purpose) . ' ' . $line . "\n";
+
+        if ($this->logToStdout) {
+            echo $data;
+        }
+
         $f = fopen($fn, 'a');
-        fputs(
-            $f,
-            $this->uid .
-                '> ' .
-                $this->getDateTime($purpose) .
-                ' ' .
-                $line .
-                "\n"
-        );
+        fputs($f, $data);
         fclose($f);
 
         @chmod($fn, static::CHMOD);
