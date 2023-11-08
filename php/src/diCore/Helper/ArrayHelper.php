@@ -22,7 +22,7 @@ class ArrayHelper
                 $var instanceof \Countable);
     }
 
-    // simple, non associative, with sequential indexes
+    // simple, non-associative, with sequential indexes
     public static function isSequential($ar)
     {
         if ($ar === []) {
@@ -50,9 +50,7 @@ class ArrayHelper
      */
     public static function combine($ar1, $ar2 = null)
     {
-        return $ar2 === null
-            ? array_combine($ar1, $ar1)
-            : array_combine($ar1, $ar2);
+        return $ar2 === null ? array_combine($ar1, $ar1) : array_combine($ar1, $ar2);
     }
 
     /**
@@ -124,11 +122,8 @@ class ArrayHelper
      *
      * @return array
      */
-    public static function filterByKey(
-        $ar,
-        $allowedKeys = [],
-        $disallowedKeys = []
-    ) {
+    public static function filterByKey($ar, $allowedKeys = [], $disallowedKeys = [])
+    {
         if ($allowedKeys) {
             $ar = array_intersect_key($ar, array_flip($allowedKeys));
         }
@@ -140,7 +135,7 @@ class ArrayHelper
         return $ar;
     }
 
-    public static function filterRecursive($ar, $callback = null)
+    public static function filterRecursive(array $ar, callable $callback = null)
     {
         foreach ($ar as &$value) {
             if (is_array($value)) {
@@ -148,7 +143,7 @@ class ArrayHelper
             }
         }
 
-        return array_filter($ar, $callback);
+        return array_filter($ar, $callback, ARRAY_FILTER_USE_BOTH);
     }
 
     /**
@@ -213,12 +208,8 @@ class ArrayHelper
      * @param string $type
      * @return mixed
      */
-    public static function getValue(
-        $ar,
-        $idx,
-        $defaultValue = null,
-        $type = null
-    ) {
+    public static function getValue($ar, $idx, $defaultValue = null, $type = null)
+    {
         $ar = (array) $ar;
 
         $type = $type ?: gettype($defaultValue);
@@ -240,12 +231,8 @@ class ArrayHelper
         }
     }
 
-    public static function get(
-        $deepArray,
-        $path,
-        $defaultValue = null,
-        $type = null
-    ) {
+    public static function get($deepArray, $path, $defaultValue = null, $type = null)
+    {
         if (!$deepArray || is_scalar($deepArray)) {
             return $defaultValue;
         }
