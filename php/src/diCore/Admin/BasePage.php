@@ -130,11 +130,7 @@ abstract class BasePage
     /** @var array */
     protected $customOptions = [];
 
-    public static $listOptions = [
-        'showControlPanel',
-        'showHeader',
-        'formBasePath',
-    ];
+    public static $listOptions = ['showControlPanel', 'showHeader', 'formBasePath'];
 
     protected $staticInjections = [
         'js' => [],
@@ -178,6 +174,8 @@ abstract class BasePage
         $afterM = Base::getClassMethodName($o->getMethod(), 'after');
 
         try {
+            $o->getAdmin()->beforeRender();
+
             if (!method_exists($o, $m)) {
                 throw new \Exception(
                     'Class ' . get_class($o) . " doesn't have '$m' method"
@@ -201,6 +199,8 @@ abstract class BasePage
             }
 
             $o->$afterM();
+
+            $o->getAdmin()->afterRender();
         } catch (\Exception $e) {
             if (CMS::isDev()) {
                 throw $e;
@@ -456,16 +456,12 @@ abstract class BasePage
 
     protected function isPagesNavyNeeded()
     {
-        return \diConfiguration::exists(
-            'admin_per_page[' . $this->getTable() . ']'
-        );
+        return \diConfiguration::exists('admin_per_page[' . $this->getTable() . ']');
     }
 
     protected function getCountPerPage()
     {
-        return \diConfiguration::get(
-            'admin_per_page[' . $this->getTable() . ']'
-        );
+        return \diConfiguration::get('admin_per_page[' . $this->getTable() . ']');
     }
 
     /**
@@ -674,9 +670,7 @@ abstract class BasePage
         }
 
         if ($strict) {
-            throw new \Exception(
-                'Where the hell are we? No current model detected'
-            );
+            throw new \Exception('Where the hell are we? No current model detected');
         }
 
         return new \diModel();
@@ -729,23 +723,17 @@ abstract class BasePage
 
     protected function getListRuleCallbacks()
     {
-        return $this->hasFilters()
-            ? $this->getFilters()->getRuleCallbacks()
-            : [];
+        return $this->hasFilters() ? $this->getFilters()->getRuleCallbacks() : [];
     }
 
     protected function getListQueryLimit()
     {
-        return $this->hasPagesNavy()
-            ? $this->getPagesNavy()->getSqlLimit()
-            : '';
+        return $this->hasPagesNavy() ? $this->getPagesNavy()->getSqlLimit() : '';
     }
 
     protected function getListPageSize()
     {
-        return $this->hasPagesNavy()
-            ? $this->getPagesNavy()->getPerPage()
-            : null;
+        return $this->hasPagesNavy() ? $this->getPagesNavy()->getPerPage() : null;
     }
 
     protected function getListPageNumber()
@@ -796,10 +784,7 @@ abstract class BasePage
                     $this->listCollection->orderBy($field, $direction);
                 }
             } else {
-                $this->listCollection->orderBy(
-                    $options['sortBy'],
-                    $options['dir']
-                );
+                $this->listCollection->orderBy($options['sortBy'], $options['dir']);
             }
         }
 
@@ -910,8 +895,7 @@ abstract class BasePage
     {
         return class_exists('\diExternalFolders') &&
             $model->exists(\diExternalFolders::FIELD_NAME) &&
-            $model->get(\diExternalFolders::FIELD_NAME) !=
-                \diExternalFolders::MAIN
+            $model->get(\diExternalFolders::FIELD_NAME) != \diExternalFolders::MAIN
             ? ''
             : '/';
     }
@@ -956,15 +940,11 @@ abstract class BasePage
             $this->getFilters()->setSortableState(isset($filters['sortByAr']));
 
             if (isset($filters['defaultSorter'])) {
-                $this->getFilters()->set_default_sorter(
-                    $filters['defaultSorter']
-                );
+                $this->getFilters()->set_default_sorter($filters['defaultSorter']);
             }
 
             if (isset($filters['buttonOptions'])) {
-                $this->getFilters()->setButtonOptions(
-                    $filters['buttonOptions']
-                );
+                $this->getFilters()->setButtonOptions($filters['buttonOptions']);
             }
 
             $this->setupFilters();
@@ -1275,14 +1255,11 @@ abstract class BasePage
 
             $this->getForm()->setInput(
                 TableEditLog::ADMIN_TAB_NAME,
-                $this->getTwig()->parse(
-                    'admin/admin_table_edit_log/form_field',
-                    [
-                        'records' => $records,
-                        'admins' => $admins,
-                        'options' => $options,
-                    ]
-                )
+                $this->getTwig()->parse('admin/admin_table_edit_log/form_field', [
+                    'records' => $records,
+                    'admins' => $admins,
+                    'options' => $options,
+                ])
             );
         }
 
@@ -1389,9 +1366,7 @@ abstract class BasePage
         $this->beforeRenderList();
         $this->renderList();
 
-        $sortBy = $this->hasFilters()
-            ? $this->getFilters()->getSortBy()
-            : 'title';
+        $sortBy = $this->hasFilters() ? $this->getFilters()->getSortBy() : 'title';
         $dir = $this->hasFilters() ? $this->getFilters()->getDir() : 'ASC';
 
         $page = $this->hasPagesNavy()
@@ -1422,12 +1397,9 @@ abstract class BasePage
             $anchorNeeded && $this->useAnchorInRedirectAfterSubmitUrl()
                 ? '#' . \diNiceTable::getRowAnchorName($this->getId())
                 : '';
-        $params = $paramsNeeded
-            ? $this->getQueryParamsForRedirectAfterSubmit()
-            : [];
+        $params = $paramsNeeded ? $this->getQueryParamsForRedirectAfterSubmit() : [];
 
-        return Base::getPageUri($this->getBasePath(), $method, $params) .
-            $anchor;
+        return Base::getPageUri($this->getBasePath(), $method, $params) . $anchor;
     }
 
     protected function redirectAfterSubmit()
@@ -1466,14 +1438,9 @@ abstract class BasePage
         return $flags;
     }
 
-    public static function getFieldProperties(
-        $fieldsAr,
-        $field,
-        $property = null
-    ) {
-        return $property
-            ? $fieldsAr[$field][$property] ?? null
-            : $fieldsAr[$field];
+    public static function getFieldProperties($fieldsAr, $field, $property = null)
+    {
+        return $property ? $fieldsAr[$field][$property] ?? null : $fieldsAr[$field];
     }
 
     public static function getFieldOptions($fieldsAr, $field)
@@ -1600,12 +1567,8 @@ abstract class BasePage
         return $fieldsAr;
     }
 
-    public static function setFieldOption(
-        $fieldsAr,
-        $field,
-        $option,
-        $value = null
-    ) {
+    public static function setFieldOption($fieldsAr, $field, $option, $value = null)
+    {
         if ($value === null && is_array($option)) {
             foreach ($option as $k => $v) {
                 $fieldsAr = self::setFieldOption($fieldsAr, $field, $k, $v);
@@ -1691,9 +1654,7 @@ abstract class BasePage
     {
         global $admin_captions_ar;
 
-        if (
-            isset($admin_captions_ar[$this->getLanguage()][$this->getTable()])
-        ) {
+        if (isset($admin_captions_ar[$this->getLanguage()][$this->getTable()])) {
             $s = $admin_captions_ar[$this->getLanguage()][$this->getTable()];
             if (($x = strpos($s, ' / ')) !== false) {
                 $s = substr($s, 0, $x);

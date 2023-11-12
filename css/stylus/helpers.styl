@@ -74,6 +74,10 @@ ul-norm()
     margin 0
     padding 0
 
+cssVar(name, value) {
+    {unquote('--' + name)}: value
+}
+
 columns(x, gap = null)
     -webkit-columns x
     -moz-columnns x

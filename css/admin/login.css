@@ -1,3 +1,20 @@
+body[data-skin="entrine"] {
+  --font-primary: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
+  --color-text: #4a4a4a;
+  --color-link: #7601ac;
+  --color-link-hover: #f00;
+  --menu-width: 230px;
+  --menu-font-family: var(--font-primary);
+  --menu-font-weight: 600;
+  --menu-text-background: #374254;
+  --menu-text-background-hover: var(--menu-text-background);
+  --menu-text-color: #cbd9f0;
+  --menu-text-color-hover: #5ab5df;
+  --logo-width: var(--menu-width);
+  --logo-height: 48px;
+  --logo-background: #2a3246;
+  --button-background-primary: #5ab5df;
+}
 @font-face {
   font-family: 'Monserrat';
   src: url("/assets/fonts/skin/entrine/Montserrat-Regular.eot");
@@ -128,7 +145,6 @@ body[data-skin="entrine"] .site-title {
   font-size: 16px;
 }
 body[data-skin="entrine"] .description {
-  font-size: 16px;
   line-height: 30px;
 }
 .login-form {
@@ -139,7 +155,11 @@ body[data-skin="entrine"] .description {
   left: 50%;
   width: 380px;
   margin-top: 50px;
-  margin-left: -190px;
+  -webkit-transform: translateX(-50%);
+  -moz-transform: translateX(-50%);
+  -o-transform: translateX(-50%);
+  -ms-transform: translateX(-50%);
+  transform: translateX(-50%);
   background-color: #e5e5e5;
   border-radius: 20px;
   padding: 20px;
@@ -148,15 +168,13 @@ body[data-skin="entrine"] .login-form {
   background-color: transparent;
   border-radius: 0;
   margin-top: 30px;
-  width: 230px;
-  margin-left: -115px;
+  width: var(--menu-width);
   padding: 0;
 }
 @media screen and (max-width: 767px) {
   .login-form {
     margin-top: 20px;
     width: 90%;
-    margin-left: -45%;
   }
 }
 .login-form > div:not(:first-child) {
@@ -164,6 +182,9 @@ body[data-skin="entrine"] .login-form {
 }
 body[data-skin="entrine"] .login-form > div:not(:first-child) {
   margin-top: 20px;
+}
+.login-form .login-field-name {
+  display: none;
 }
 .login-form > .error {
   color: #f00;
@@ -211,24 +232,22 @@ body[data-skin="entrine"] .login-form input[type="password"] {
   }
 }
 .login-form button {
-  background-color: #9600db;
-  -webkit-transition: background-color 0.5s ease;
-  -moz-transition: background-color 0.5s ease;
-  -o-transition: background-color 0.5s ease;
-  -ms-transition: background-color 0.5s ease;
-  transition: background-color 0.5s ease;
-  color: #fff;
+  color: var(--button-text-color-primary);
+  background-color: var(--button-background-primary);
+  -webkit-transition: background-color 0.3s ease;
+  -moz-transition: background-color 0.3s ease;
+  -o-transition: background-color 0.3s ease;
+  -ms-transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease;
   cursor: pointer;
 }
 .login-form button:hover {
-  background-color: #f00;
+  background-color: var(--button-background-hover-primary);
 }
 body[data-skin="entrine"] .login-form button {
-  background-color: #5ab5df;
   background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg height=%2215%22 viewBox=%220 0 18 15%22 width=%2218%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cpath d=%22m10.5 12.75v-.06225c-.8835.51375-1.9065.81225-3 .81225-3.30825 0-6-2.69175-6-6s2.69175-6 6-6c1.0935 0 2.1165.2985 3 .81225v-1.68375c-.9195-.402-1.932-.6285-3-.6285-4.1415 0-7.5 3.35775-7.5 7.5s3.3585 7.5 7.5 7.5c1.068 0 2.0805-.2265 3-.6285zm3-7.194 2.22225 1.944-2.22225 1.944v-1.194h-6v-1.5h6zm-1.5-3.306v3h-6v4.5h6v3l6-5.25z%22 fill=%22%23fff%22/%3E%3C/svg%3E");
   background-position: right 18px center;
   background-repeat: no-repeat;
-  color: #fff;
   text-align: left;
   padding-left: 18px;
   border: 0;

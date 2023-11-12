@@ -9,17 +9,19 @@
 		{% if login_errors['password'] %}
 			<div class="error">{{ login_errors['password'][_tech['site_language']] }}</div>
 		{% endif %}
-		<div>
+		<div class="login-field">
+			<div class="login-field-name">Login</div>
 			<input type="text" name="admin_login" placeholder="Login" value="{{ login_credentials['login'] }}">
 		</div>
-		<div>
+		<div class="login-field">
+			<div class="login-field-name">Password</div>
 			<input type="password" name="admin_password" placeholder="Password">
 		</div>
-		<div>
+		<div class="login-checkbox">
 			<input type="checkbox" name="admin_remember" id="admin_remember" value="1" checked="checked">
 			<label for="admin_remember">{{ lang['remember_me'] }}</label>
 		</div>
-		<div>
+		<div class="login-submit">
 			<button type="submit">{{ lang['sign_in'] }}</button>
 		</div>
 	</div>

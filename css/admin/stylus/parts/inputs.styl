@@ -5,7 +5,7 @@ input[type="number"]
 input[type="password"]
 input[type="url"]
 textarea
-  font-family $classicFont
+  font-family var(--font-primary)
   font-size 14px
   font-weight normal
   background-color white
@@ -15,7 +15,6 @@ textarea
   border-radius $classicBorderRadiusInput
   align-self center
   {$entrineSkin} &
-    font-family $entrineFont
     border-radius $entrineBorderRadiusInput
     padding 5px
     border-color $entrineColorInputBorder
@@ -23,7 +22,7 @@ textarea
       padding 5px
 
 select
-  font-family $classicFont
+  font-family var(--font-primary)
   font-size 14px
   align-self center
   border-color $classicColorInputBorder

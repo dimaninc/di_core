@@ -3,7 +3,7 @@ $buttonSize = 26px
 $gapSize = (($menuPanelHeight - $buttonSize) / 2)
 
 .menu-panel
-    display flex
+    display var(--menu-panel-display, flex)
     align-items center
     justify-content center
     background white
@@ -11,7 +11,15 @@ $gapSize = (($menuPanelHeight - $buttonSize) / 2)
     border-bottom 1px solid #CCCCCC
     border-right #ccc solid 1px
     height ($menuPanelHeight - 1px)
-    //max-width 200px
+
+    {$entrineSkin} & {
+        background $entrineColorBgDarker
+        color white
+        height 48px
+        font-weight 600
+        border 0
+    }
+
     > span
         display block
         flex-shrink 0
@@ -56,13 +64,6 @@ $gapSize = (($menuPanelHeight - $buttonSize) / 2)
         > span
             position absolute
             opacity 0
-    {$entrineSkin} &
-        font-family $entrineFont
-        background $entrineColorBgDarker
-        color white
-        height 48px
-        font-weight 600
-        border-bottom 0
 
 ul.left-menu
     ul-norm()
@@ -72,22 +73,19 @@ ul.left-menu
             display block
             position relative
             padding 7px 7px 7px 20px
-            background-color #edf0f4
+            background-color var(--menu-text-background)
             border-bottom 1px solid #cfcfcf
-            font bold 12px / 18px $classicMenuFont
-            color #444
+            font-family var(--menu-font-family)
+            font-weight var(--menu-font-weight)
+            font-size var(--menu-font-size)
+            line-height var(--menu-line-height)
+            color var(--menu-text-color)
             cursor pointer
-            text-transform uppercase
+            text-transform var(--menu-text-transform)
             box-sizing border-box
-            //width $classicMenuWidth
             transition .3s
             {$entrineSkin} &
-                font-family $entrineFont
-                font-weight 600
                 border-bottom 0
-                background-color $entrineColorBgDark
-                color $entrineColorTextMenu
-                //width auto //$entrineMenuWidth
                 padding-left 27px
                 padding-right 35px
                 &:after
@@ -98,11 +96,10 @@ ul.left-menu
                     top 50%
                     margin-top -3px
                     transition .5s
-            &:hover
-                background-color #dde5e5
-                {$entrineSkin} &
-                    //background-color $entrineColorBgDarker
-                    color $entrineColorTextMenuSelected
+            &:hover {
+                color var(--menu-text-color-hover, var(--menu-text-color))
+                background-color var(--menu-text-background-hover, var(--menu-text-background))
+            }
         > ul
             ul-norm()
             display none

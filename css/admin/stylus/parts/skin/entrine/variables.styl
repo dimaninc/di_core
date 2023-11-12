@@ -22,3 +22,25 @@ $entrineSkin = 'body[data-skin="entrine"]'
 
 $entrineBorderRadiusInput = 0
 $entrineBorderRadiusButton = 0
+
+{$entrineSkin} {
+  cssVar(font-primary, $entrineFont)
+
+  cssVar(color-text, $entrineColorText)
+  cssVar(color-link, #7601AC)
+  cssVar(color-link-hover, red)
+
+  cssVar(menu-width, $entrineMenuWidth)
+  cssVar(menu-font-family, var(--font-primary))
+  cssVar(menu-font-weight, 600)
+  cssVar(menu-text-background, $entrineColorBgDark)
+  cssVar(menu-text-background-hover, var(--menu-text-background))
+  cssVar(menu-text-color, $entrineColorTextMenu)
+  cssVar(menu-text-color-hover, $entrineColorTextMenuSelected)
+
+  cssVar(logo-width, var(--menu-width))
+  cssVar(logo-height, $entrineBaseHeight)
+  cssVar(logo-background, $entrineColorBgDarker)
+
+  cssVar(button-background-primary, #5AB5DF)
+}

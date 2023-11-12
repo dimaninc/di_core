@@ -32,11 +32,9 @@
             border-bottom 1px solid #CFCFCF
     .title
     .value
-        font-family $classicFont
+        font-family var(--font-primary)
         font-size 12px
         vertical-align top
-        {$entrineSkin} &
-            font-family $entrineFont
     .title
         width 200px
         padding 3px 10px 0 0
@@ -115,11 +113,11 @@
                     border-radius 5px
                     padding 3px 5px
                     background-color #ddd
-                    color $classicColorLink
+                    color var(--color-link)
                     transition .3s
                     &:hover
                         background-color #e7e7e7
-                        color $classicColorLinkHover
+                        color var(--color-link-hover)
                     & + span
                         margin-left 15px
         .new-tag
@@ -567,7 +565,7 @@ ul.table-edit-log
     border-radius 8px
     body[data-floating-submit="true"] &
         position fixed
-        left $classicMenuWidth
+        left var(--menu-width)
         right 0
         bottom 0
         z-index 1
@@ -590,7 +588,6 @@ ul.table-edit-log
         padding 0 5px
         justify-content center
     {$entrineSkin} &
-        left $entrineMenuWidth
         justify-content flex-start
         border 0
         border-radius 0

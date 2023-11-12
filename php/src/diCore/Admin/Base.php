@@ -590,6 +590,16 @@ class Base
         return $this;
     }
 
+    public function beforeRender()
+    {
+        return $this;
+    }
+
+    public function afterRender()
+    {
+        return $this;
+    }
+
     public function load()
     {
         /** @var BasePage $class */

@@ -85,7 +85,6 @@ a
     text-align center
     font-size 16px
     body[data-skin="entrine"] &
-        font-size 16px
         line-height 30px
 
 .login-form
@@ -94,7 +93,7 @@ a
     left 50%
     width 380px
     margin-top 50px
-    margin-left (@width / -2)
+    transform translateX(-50%)
     background-color #E5E5E5
     border-radius 20px
     padding 20px
@@ -102,18 +101,23 @@ a
         background-color transparent
         border-radius 0
         margin-top 30px
-        width $entrineMenuWidth
-        margin-left (@width / -2)
+        width var(--menu-width) // $entrineMenuWidth
         padding 0
     @media screen and (max-width: 767px)
         margin-top 20px
         width 90%
-        margin-left (@width / -2)
-    & > div
-        &:not(:first-child)
+    & > div {
+        &:not(:first-child) {
             margin-top 15px
-            body[data-skin="entrine"] &
+
+            body[data-skin="entrine"] & {
                 margin-top 20px
+            }
+        }
+    }
+    .login-field-name {
+        display none
+    }
     > .error
         color red
         text-align center
@@ -142,18 +146,16 @@ a
             font-size 18px
             height 28px
     button
-        background-color #9600DB
-        transition background-color .5s ease
-        color white
+        color var(--button-text-color-primary)
+        background-color var(--button-background-primary)
+        transition background-color .3s ease
         cursor pointer
         &:hover
-            background-color red
+            background-color var(--button-background-hover-primary)
         body[data-skin="entrine"] &
-            background-color $entrineColorTextMenuSelected
             background-image embedurl('../../../i/admin/skin/entrine/login.svg', 'utf8')
             background-position right 18px center
             background-repeat no-repeat
-            color white
             text-align left
             padding-left 18px
             border 0

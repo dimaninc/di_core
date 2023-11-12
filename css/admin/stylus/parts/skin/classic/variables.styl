@@ -22,3 +22,33 @@ $classicColorInputBorder = #B2B2B2
 
 $classicBorderRadiusInput = 4px
 $classicBorderRadiusButton = 8px
+
+:root {
+  cssVar(font-primary, $classicFont)
+
+  cssVar(text-size, 12px)
+
+  cssVar(color-text, black)
+  cssVar(color-background, white)
+  cssVar(color-link, #7601AC)
+  cssVar(color-link-hover, red)
+
+  cssVar(menu-width, 200px) // $classicMenuWidth
+  cssVar(menu-font-family, $classicMenuFont)
+  cssVar(menu-font-size, 12px)
+  cssVar(menu-font-weight, bold)
+  cssVar(menu-line-height, 1.33)
+  cssVar(menu-text-background, #edf0f4)
+  cssVar(menu-text-background-hover, #dde5e5)
+  cssVar(menu-text-color, #444)
+  cssVar(menu-text-transform, uppercase)
+  cssVar(menu-top, var(--logo-height))
+
+  cssVar(logo-width, var(--menu-width))
+  cssVar(logo-height, $classicBaseHeight)
+  cssVar(logo-background, var(--color-link))
+
+  cssVar(button-background-primary, var(--color-link))
+  cssVar(button-background-hover-primary, var(--color-link-hover))
+  cssVar(button-text-color-primary, white)
+}

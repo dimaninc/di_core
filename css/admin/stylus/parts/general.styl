@@ -1,14 +1,12 @@
-body
-    background white
+body {
     margin 0
     padding 0
-    font-family $classicFont
-    color black
-    font-size 11px
+    font-family var(--font-primary)
+    font-size var(--text-size)
     font-weight normal
-    &[data-skin="entrine"]
-        color $entrineColorText
-        font-family $entrineFont
+    color var(--color-text)
+    background var(--color-background)
+}
 
 table
     border-collapse collapse
@@ -125,11 +123,11 @@ table
 
 a
     text-decoration none
-    color $classicColorLink
+    color var(--color-link)
     transition .3s
     &:hover
         text-decoration none
-        color $classicColorLinkHover
+        color var(--color-link-hover)
     &.video-tn
         display block
         position absolute
@@ -283,11 +281,10 @@ u
         position absolute
         // border-right #ccc solid 1px
         padding-bottom $classicFooterHeight
-        width $classicMenuWidth
+        width var(--menu-width) // $classicMenuWidth
+        top var(--menu-top, 0px)
         box-sizing border-box
         {$entrineSkin} &
-            // border-right 0
-            width $entrineMenuWidth
             padding-bottom $entrineFooterHeight
             @media screen and (max-width: 767px)
                 padding-bottom 0
@@ -303,10 +300,9 @@ u
     > .content
         background white
         position relative
-        margin-left 201px
+        margin-left var(--menu-width)
         padding-bottom 20px
         {$entrineSkin} &
-            margin-left $entrineMenuWidth
             padding-bottom 40px
             @media screen and (max-width: 767px)
                 margin-left 0
@@ -373,8 +369,8 @@ u
         font-size 12px
         box-sizing border-box
         {$entrineSkin} &
-            width $entrineMenuWidth
-            right $entrineMenuWidth * 2
+            width var(--menu-width) // $entrineMenuWidth
+            right calc(var(--menu-width) * 2) // $entrineMenuWidth * 2
             top 0
             line-height $entrineBaseHeight
             height $entrineBaseHeight
@@ -459,7 +455,7 @@ u
         {$entrineSkin} &
             font-family $entrineFont
             font-weight 400
-            width $entrineMenuWidth
+            width var(--menu-width) // $entrineMenuWidth
             line-height $entrineBaseHeight
             height $entrineBaseHeight
             font-size 16px
@@ -492,7 +488,7 @@ u
         &.go-to-face
             right 141px
             {$entrineSkin} &
-                right $entrineMenuWidth
+                right var(--menu-width) // $entrineMenuWidth
                 color $entrineColorTextMenuSelected
                 @media screen and (max-width: 1470px)
                     right $entrineMenuWidthNarrow1
@@ -536,18 +532,15 @@ u
                         @media screen and (max-width: 767px)
                             display none
     > .logo
-        background #7601AC
+        background var(--logo-background)
         font-family Tahoma, Verdana, Segoe, sans-serif
         position absolute
-        width 200px
-        height $classicBaseHeight
+        width var(--logo-width)
+        height var(--logo-height)
         box-sizing border-box
         padding-left $classicStandardPadding
         {$entrineSkin} &
             font-family $entrineFont
-            width $entrineMenuWidth
-            height $entrineBaseHeight
-            background $entrineColorBgDarker
             padding-left 27px
             @media screen and (max-width: 767px)
                 padding-left 50px
@@ -659,7 +652,7 @@ u
         flex-direction column
         justify-content center
         box-sizing border-box
-        width $classicMenuWidth
+        width var(--menu-width) // $classicMenuWidth
         height $classicFooterHeight
         border-right 1px solid #B1B1B1
         text-align center
@@ -667,7 +660,6 @@ u
         @media $mqPhone
             display none
         {$entrineSkin} &
-            width $entrineMenuWidth
             height $entrineFooterHeight
     .console-container
         flex 1
