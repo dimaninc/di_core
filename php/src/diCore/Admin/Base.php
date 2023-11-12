@@ -560,6 +560,11 @@ class Base
             $this->forceShowExpandCollapse;
     }
 
+    public function footerNeeded()
+    {
+        return true;
+    }
+
     protected function printContentPage()
     {
         if ($this->currentMethodExists()) {
@@ -1047,12 +1052,7 @@ class Base
             return $this;
         }
 
-        $this->getTpl()->define('`_index/left_menu', [
-            'left_menu',
-            'left_menu_row0',
-            'left_menu_row1',
-        ]);
-
+        $rows = [];
         $visibleIds = explode(
             ',',
             \diRequest::cookie('admin_visible_left_menu_ids', '')
@@ -1065,6 +1065,8 @@ class Base
             }
 
             $i++;
+            $selected = false;
+            $subRows = [];
 
             foreach ($groupOpts['items'] as $itemTitle => $item) {
                 if (is_scalar($item)) {
@@ -1075,8 +1077,8 @@ class Base
 
                 $item = extend(
                     [
-                        'link' => null,
-                        'link_suffix' => null,
+                        'link' => '',
+                        'link_suffix' => '',
                         'module' => null,
                     ],
                     $item
@@ -1090,45 +1092,30 @@ class Base
                     $item['link'] = self::getPageUri($item['module']);
                 }
 
-                $href = $item['link'] . $item['link_suffix'];
-                $state = in_array($i, $visibleIds);
+                if (
+                    $this->getPage()->getTable() &&
+                    in_array($this->getPage()->getTable(), [$item['module']])
+                ) {
+                    $selected = true;
+                }
 
-                $this->getTpl()
-                    ->assign(
-                        [
-                            //'ID' => $r->id,
-                            'TITLE' => $itemTitle,
-                            'HREF' => $href,
-                            'TARGET' => !empty($item['target'])
-                                ? " target=\"{$item['target']}\""
-                                : '',
-                            'STYLE_DISPLAY' => $state
-                                ? 'display: block;'
-                                : 'display: none;',
-                            'STATE' => $state ? 1 : 0,
-                        ],
-                        'M_'
-                    )
-                    ->process('LEFT_MENU_ROWS1', '.left_menu_row1');
+                $subRows[] = extend($item, [
+                    'title' => $itemTitle,
+                    'href' => $item['link'] . $item['link_suffix'],
+                ]);
             }
 
-            $this->getTpl()
-                ->assign(
-                    [
-                        'ID' => $i,
-                        'TITLE' => $groupTitle,
-                    ],
-                    'M_'
-                )
-                ->process('LEFT_MENU_ROWS0', '.left_menu_row0')
-                ->clear('LEFT_MENU_ROWS1')
-                ->assign('LEFT_MENU_ROWS1', '');
+            $rows[] = [
+                'id' => $i,
+                'title' => $groupTitle,
+                'state' => in_array($i, $visibleIds),
+                'selected' => $selected,
+                'subRows' => $subRows,
+            ];
         }
 
-        $this->getTpl()->process('left_menu');
-
         $this->getTwig()->assign([
-            'left_menu' => $this->getTpl()->getAssigned('LEFT_MENU'),
+            'left_menu_rows' => $rows,
         ]);
 
         return $this;

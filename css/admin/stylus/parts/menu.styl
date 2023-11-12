@@ -67,14 +67,14 @@ $gapSize = (($menuPanelHeight - $buttonSize) / 2)
 
 ul.left-menu
     ul-norm()
-    border-right #ccc solid 1px
+    border-right var(--menu-border-right)
     > li
         > b
             display block
             position relative
             padding 7px 7px 7px 20px
             background-color var(--menu-text-background)
-            border-bottom 1px solid #cfcfcf
+            border-bottom var(--menu-item-border-bottom)
             font-family var(--menu-font-family)
             font-weight var(--menu-font-weight)
             font-size var(--menu-font-size)
@@ -84,11 +84,11 @@ ul.left-menu
             text-transform var(--menu-text-transform)
             box-sizing border-box
             transition .3s
-            {$entrineSkin} &
-                border-bottom 0
+            {$entrineSkin} & {
                 padding-left 27px
                 padding-right 35px
-                &:after
+
+                &:after {
                     content ''
                     position absolute
                     triangle(6px, 8px, 'right', $entrineColorTextMenuSelected)
@@ -96,6 +96,8 @@ ul.left-menu
                     top 50%
                     margin-top -3px
                     transition .5s
+                }
+            }
             &:hover {
                 color var(--menu-text-color-hover, var(--menu-text-color))
                 background-color var(--menu-text-background-hover, var(--menu-text-background))
@@ -104,7 +106,7 @@ ul.left-menu
             ul-norm()
             display none
             border-bottom 1px solid #cfcfcf
-            width 199px
+            // width 199px
             {$entrineSkin} &
                 border-bottom 0
                 width auto
@@ -135,10 +137,7 @@ ul.left-menu
         &[data-state="1"]
             > b
                 {$entrineSkin} &
-                    //background-color $entrineColorBgDarker
-                    //color $entrineColorTextMenuSelected
                     &:after
                         transform rotate(90deg)
-        &[data-sub-menu-state="1"]
             > ul
                 display block

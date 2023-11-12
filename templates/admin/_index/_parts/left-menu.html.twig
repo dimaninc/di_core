@@ -1,0 +1,10 @@
+{% for row in left_menu_rows %}
+<li data-id="{{ row['id'] }}" data-state="{{ row['state'] ? 1 : '' }}" class="{{ row['selected'] ? 'selected' : '' }}">
+    <b>{{ row['title']|raw }}</b>
+    <ul>
+    {% for subRow in row['subRows'] %}
+        <li><a href="{{ subRow['href']}}"{% if subRow['target'] %} _target="{{ subRow['target'] }}"{% endif %}>{{ subRow['title']|raw }}</a></li>
+    {% endfor %}
+    </ul>
+</li>
+{% endfor %}

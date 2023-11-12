@@ -10,10 +10,14 @@ body[data-skin="entrine"] {
   --menu-text-background-hover: var(--menu-text-background);
   --menu-text-color: #cbd9f0;
   --menu-text-color-hover: #5ab5df;
+  --menu-item-border-bottom: 0;
+  --menu-top: var(--logo-height);
   --logo-width: var(--menu-width);
   --logo-height: 48px;
   --logo-background: #2a3246;
   --button-background-primary: #5ab5df;
+  --footer-height: 60px;
+  --floating-submit-height: 60px;
 }
 @font-face {
   font-family: 'Monserrat';

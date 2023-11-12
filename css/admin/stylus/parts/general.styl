@@ -276,16 +276,14 @@ u
             background-color $entrineColorBgDark
 
 .admin-layout
-    padding-bottom 40px
+    padding-bottom var(--footer-height)
     > .nav
         position absolute
-        // border-right #ccc solid 1px
-        padding-bottom $classicFooterHeight
-        width var(--menu-width) // $classicMenuWidth
+        padding-bottom var(--footer-height)
+        width var(--menu-width)
         top var(--menu-top, 0px)
         box-sizing border-box
         {$entrineSkin} &
-            padding-bottom $entrineFooterHeight
             @media screen and (max-width: 767px)
                 padding-bottom 0
         @media screen and (max-width: 767px)
@@ -369,8 +367,8 @@ u
         font-size 12px
         box-sizing border-box
         {$entrineSkin} &
-            width var(--menu-width) // $entrineMenuWidth
-            right calc(var(--menu-width) * 2) // $entrineMenuWidth * 2
+            width var(--menu-width)
+            right calc(var(--menu-width) * 2)
             top 0
             line-height $entrineBaseHeight
             height $entrineBaseHeight
@@ -455,7 +453,7 @@ u
         {$entrineSkin} &
             font-family $entrineFont
             font-weight 400
-            width var(--menu-width) // $entrineMenuWidth
+            width var(--menu-width)
             line-height $entrineBaseHeight
             height $entrineBaseHeight
             font-size 16px
@@ -488,7 +486,7 @@ u
         &.go-to-face
             right 141px
             {$entrineSkin} &
-                right var(--menu-width) // $entrineMenuWidth
+                right var(--menu-width)
                 color $entrineColorTextMenuSelected
                 @media screen and (max-width: 1470px)
                     right $entrineMenuWidthNarrow1
@@ -599,8 +597,8 @@ u
             background $entrineColorBgDark
             font-size 20px
             font-weight 400
-            margin-left $entrineMenuWidth
-            margin-right $entrineMenuWidth * 3
+            margin-left var(--menu-width)
+            margin-right calc(var(--menu-width) * 3)
             ellipsis()
             @media screen and (max-width: 1470px)
                 margin-right $entrineMenuWidthNarrow1 * 3
@@ -636,7 +634,7 @@ u
     bottom 0
     left 0
     right 0
-    height $classicFooterHeight
+    height var(--footer-height)
     border-top 1px solid #B1B1B1
     color black
     font-size 11px
@@ -652,15 +650,13 @@ u
         flex-direction column
         justify-content center
         box-sizing border-box
-        width var(--menu-width) // $classicMenuWidth
-        height $classicFooterHeight
+        width var(--menu-width)
+        height var(--floating-submit-height)
         border-right 1px solid #B1B1B1
         text-align center
         line-height 150%
         @media $mqPhone
             display none
-        {$entrineSkin} &
-            height $entrineFooterHeight
     .console-container
         flex 1
         background-color inherit
@@ -668,11 +664,10 @@ u
         border-bottom 5px solid #ddd
         padding 0 5px 0 40px
         box-sizing border-box
-        height $classicFooterHeight
+        height var(--floating-submit-height)
         transition .5s
         overflow hidden
         {$entrineSkin} &
-            height $entrineFooterHeight
             border-top-color white
             border-top-width 6px
             border-bottom-color white
@@ -682,11 +677,6 @@ u
             border-top-color #ffe
             border-bottom-color #ffe
         .console
-            /*
-            height $classicFooterHeight
-            {$entrineSkin} &
-                height $entrineFooterHeight
-            */
             > div
                 line-height 15px
                 {$entrineSkin} &

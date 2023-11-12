@@ -575,7 +575,7 @@ ul.table-edit-log
         margin 0
         padding 0 20px
         background-color #ddd
-        height $classicFooterHeight
+        height var(--floating-submit-height)
         @media screen and (max-width: 767px)
             left 0
             padding 0 10px
@@ -599,11 +599,10 @@ ul.table-edit-log
             padding 0
             left 0
     body[data-skin="entrine"][data-floating-submit="true"] &
-        height $entrineFooterHeight
         padding 0
     .submit-status-line
         font-size 11px
-        line-height @font-size
+        line-height 1
         height @font-size
         background #edf0f4
         border-top 1px solid #CFCFCF

@@ -382,7 +382,9 @@ Helper =
             .on 'end', -> done()
         @
 
-    assignAdminStylusTaskToGulp: (gulp) ->
+    assignAdminStylusTaskToGulp: (gulp, opts = {}) ->
+        opts = @extend { skipCopyCoreAssets: false }, opts
+
         watch =
             'admin-stylus':
                 mask: @getCoreFolder() + @folders.stylus + Helper.masks.stylus
@@ -405,11 +407,13 @@ Helper =
         gulp.task 'admin-assets-watch', (done) ->
             for process of watch
                 do (process, mask = watch[process].mask, hasProcess = watch[process].hasProcess) ->
-                    if hasProcess
-                        task = gulp.series process, 'copy-core-assets'
-                    else
-                        task = gulp.series 'copy-core-assets'
-                    gulp.watch mask, task
+                    args = []
+                    args.push process if hasProcess
+                    args.push 'copy-core-assets' unless opts.skipCopyCoreAssets
+
+                    if (args.length)
+                        task = gulp.series(args...)
+                        gulp.watch mask, task
                     true
             done()
         @

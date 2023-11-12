@@ -30,6 +30,7 @@ data-floating-submit="{{ _settings['floating_submit'] }}">
             <span data-purpose="collapse" title="{{ lang['menu.collapse_all'] }}">&ndash;</span>
         </div>
         <ul class="left-menu">{{ left_menu|raw }}</ul>
+        <ul class="left-menu">{% include 'admin/_index/_parts/left-menu.html.twig' %}</ul>
     </div>
 
     <div class="content">
@@ -52,19 +53,9 @@ data-floating-submit="{{ _settings['floating_submit'] }}">
 
 </div>
 
-<div class="footer">
-    <div class="copyright">
-        <div>&copy; {{ _tech['cms_name'] }} 2002-{{ _tech['current_year'] }}</div>
-        {% if _tech['cms_support_email'] %}
-            <div><a href="mailto:{{ _tech['cms_support_email'] }}">{{ _tech['cms_support_email'] }}</a></div>
-        {% endif %}
-    </div>
-    <div class="console-container">
-        <div class="up">&#x25B2;</div>
-        <div class="down">&#x25BC;</div>
-        <div class="console" id="status_line"></div>
-    </div>
-</div>
+{% if X.footerNeeded() %}
+    {% include 'admin/_index/_parts/footer.html.twig' %}
+{% endif %}
 
 {% include 'admin/_index/_parts/static_injections.html.twig' %}
 

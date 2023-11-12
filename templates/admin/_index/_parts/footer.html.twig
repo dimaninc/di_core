@@ -1,0 +1,13 @@
+<div class="footer">
+    <div class="copyright">
+        <div>&copy; {{ _tech['cms_name'] }} 2002-{{ _tech['current_year'] }}</div>
+        {% if _tech['cms_support_email'] %}
+            <div><a href="mailto:{{ _tech['cms_support_email'] }}">{{ _tech['cms_support_email'] }}</a></div>
+        {% endif %}
+    </div>
+    <div class="console-container">
+        <div class="up">&#x25B2;</div>
+        <div class="down">&#x25BC;</div>
+        <div class="console" id="status_line"></div>
+    </div>
+</div>
