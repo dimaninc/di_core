@@ -169,36 +169,34 @@ abstract class BasePage
 
         $o->tryToInitTable();
 
-        $m = Base::getClassMethodName($o->getMethod());
-        $beforeM = Base::getClassMethodName($o->getMethod(), 'before');
-        $afterM = Base::getClassMethodName($o->getMethod(), 'after');
-
         try {
             $o->getAdmin()->beforeRender();
 
-            if (!method_exists($o, $m)) {
-                throw new \Exception(
-                    'Class ' . get_class($o) . " doesn't have '$m' method"
-                );
-            }
+            switch ($o->getMethod()) {
+                case 'list':
+                    if ($o->beforeRenderList()) {
+                        $o->renderList();
+                    }
+                    $o->afterRenderList();
+                    break;
 
-            if (!method_exists($o, $beforeM)) {
-                throw new \Exception(
-                    'Class ' . get_class($o) . " doesn't have '$beforeM' method"
-                );
-            }
+                case 'form':
+                    if ($o->beforeRenderForm()) {
+                        $o->renderForm();
+                    }
+                    $o->afterRenderForm();
+                    break;
 
-            if (!method_exists($o, $afterM)) {
-                throw new \Exception(
-                    'Class ' . get_class($o) . " doesn't have '$afterM' method"
-                );
-            }
+                case 'submit':
+                    if ($o->beforeSubmitForm()) {
+                        $o->submitForm();
+                    }
+                    $o->afterSubmitForm();
+                    break;
 
-            if ($o->$beforeM()) {
-                $o->$m();
+                default:
+                    throw new \Exception("Unknown method '{$o->getMethod()}'");
             }
-
-            $o->$afterM();
 
             $o->getAdmin()->afterRender();
         } catch (\Exception $e) {

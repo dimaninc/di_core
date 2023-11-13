@@ -311,22 +311,22 @@ u
             display block
             clear both
         > .caption
+            position var(--caption-position)
+            box-sizing border-box
             display flex
             align-items center
-            padding-left $classicStandardPadding
-            height 40px
-            line-height 1.5
-            font-family Tahoma, sans-serif
-            font-size 12px
-            background white
-            border-bottom 1px solid #CCCCCC
-            margin-bottom $classicStandardPadding
-            box-sizing border-box
+            height var(--caption-height)
+            padding-left var(--content-padding-hor)
+            padding-right var(--content-padding-hor)
+            border-bottom var(--caption-border-bottom)
+            margin-bottom var(--caption-margin-bottom)
+            line-height var(--caption-line-height)
+            font-family var(--caption-font-family)
+            font-size var(--caption-font-size)
+            font-weight var(--caption-font-weight)
+            background var(--caption-background-color)
+            color var(--caption-text-color)
             {$entrineSkin} &
-                font-family $entrineFont
-                height $entrineBaseHeight
-                background-color $entrineColorBgLightGray
-                border-bottom 0
                 @media screen and (max-width: 767px)
                     padding-left 12px
                     padding-right 12px
@@ -335,8 +335,8 @@ u
                 height auto
                 line-height 20px
             b
-                text-transform uppercase
                 display flex
+                text-transform var(--caption-text-transform)
                 > i
                     font-style normal
                 > s

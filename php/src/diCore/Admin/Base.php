@@ -456,7 +456,7 @@ class Base
 
     public function getMethod()
     {
-        return $this->method;
+        return strtolower($this->method);
     }
 
     public function getRefinedMethod()

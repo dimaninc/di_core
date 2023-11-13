@@ -2,20 +2,18 @@
 
 namespace diCore\Admin;
 
-use diCore\Admin\Data\Skin;
-use diCore\Data\Config;
 use diCore\Traits\BasicCreate;
 
 class Caption
 {
     use BasicCreate;
 
-    /** @var \diCore\Admin\Base */
+    /** @var Base */
     private $X;
     /** @var string */
     protected $delimiter = '<s>/</s>';
 
-    public function __construct($X)
+    public function __construct(Base $X)
     {
         $this->X = $X;
     }

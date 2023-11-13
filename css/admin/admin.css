@@ -17,6 +17,18 @@
   --menu-border-right: 1px solid #ccc;
   --menu-item-border-bottom: 1px solid #cfcfcf;
   --menu-top: var(--logo-height);
+  --content-padding-hor: 20px;
+  --caption-position: static;
+  --caption-font-family: Tahoma, sans-serif;
+  --caption-font-size: 12px;
+  --caption-font-weight: bold;
+  --caption-line-height: 1.5;
+  --caption-background-color: #fff;
+  --caption-text-color: inherit;
+  --caption-text-transform: uppercase;
+  --caption-margin-bottom: 20px;
+  --caption-border-bottom: 1px solid #ccc;
+  --caption-height: 40px;
   --logo-width: var(--menu-width);
   --logo-height: 71px;
   --logo-background: var(--color-link);
@@ -43,6 +55,10 @@ body[data-skin="entrine"] {
   --logo-width: var(--menu-width);
   --logo-height: 48px;
   --logo-background: #2a3246;
+  --caption-font-family: var(--font-primary);
+  --caption-background-color: #f1f1f1;
+  --caption-height: 48px;
+  --caption-border-bottom: 0;
   --button-background-primary: #5ab5df;
   --footer-height: 60px;
   --floating-submit-height: 60px;
@@ -1003,6 +1019,10 @@ body[data-skin="entrine"] .admin-layout > .content {
   clear: both;
 }
 .admin-layout > .content > .caption {
+  position: var(--caption-position);
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
   display: -webkit-box;
   display: -moz-box;
   display: -webkit-flex;
@@ -1015,23 +1035,17 @@ body[data-skin="entrine"] .admin-layout > .content {
   -ms-flex-align: center;
   -webkit-align-items: center;
   align-items: center;
-  padding-left: 20px;
-  height: 40px;
-  line-height: 1.5;
-  font-family: Tahoma, sans-serif;
-  font-size: 12px;
-  background: #fff;
-  border-bottom: 1px solid #ccc;
-  margin-bottom: 20px;
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-}
-body[data-skin="entrine"] .admin-layout > .content > .caption {
-  font-family: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
-  height: 48px;
-  background-color: #f1f1f1;
-  border-bottom: 0;
+  height: var(--caption-height);
+  padding-left: var(--content-padding-hor);
+  padding-right: var(--content-padding-hor);
+  border-bottom: var(--caption-border-bottom);
+  margin-bottom: var(--caption-margin-bottom);
+  line-height: var(--caption-line-height);
+  font-family: var(--caption-font-family);
+  font-size: var(--caption-font-size);
+  font-weight: var(--caption-font-weight);
+  background: var(--caption-background-color);
+  color: var(--caption-text-color);
 }
 @media screen and (max-width: 767px) {
   body[data-skin="entrine"] .admin-layout > .content > .caption {
@@ -1047,13 +1061,13 @@ body[data-skin="entrine"] .admin-layout > .content > .caption {
   }
 }
 .admin-layout > .content > .caption b {
-  text-transform: uppercase;
   display: -webkit-box;
   display: -moz-box;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: box;
   display: flex;
+  text-transform: var(--caption-text-transform);
 }
 .admin-layout > .content > .caption b > i {
   font-style: normal;
