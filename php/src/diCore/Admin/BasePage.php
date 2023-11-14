@@ -149,9 +149,9 @@ abstract class BasePage
         $this->collectId();
     }
 
-    private function collectId()
+    protected function collectId()
     {
-        $this->originalId = $this->id = $this->getAdmin()->getId();
+        $this->setId($this->getAdmin()->getId(), true);
 
         return $this;
     }
@@ -648,9 +648,20 @@ abstract class BasePage
         return $this->id;
     }
 
-    public function setId($id)
+    public function setId($id, $setOriginal = false)
     {
         $this->id = $id;
+
+        if ($setOriginal) {
+            $this->setOriginalId($id);
+        }
+
+        return $this;
+    }
+
+    public function setOriginalId($id)
+    {
+        $this->originalId = $id;
 
         return $this;
     }

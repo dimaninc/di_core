@@ -35,6 +35,11 @@
   --button-background-primary: var(--color-link);
   --button-background-hover-primary: var(--color-link-hover);
   --button-text-color-primary: #fff;
+  --form-row-margin: 0 20px 3px;
+  --form-row-padding: 8px 10px;
+  --form-row-border: 1px solid #cfcfcf;
+  --form-row-border-radius: 8px;
+  --form-row-background-color: #fafafa;
   --footer-height: 40px;
   --floating-submit-height: 40px;
 }
@@ -60,6 +65,11 @@ body[data-skin="entrine"] {
   --caption-height: 48px;
   --caption-border-bottom: 0;
   --button-background-primary: #5ab5df;
+  --form-row-margin: 0 20px 20px;
+  --form-row-padding: 0;
+  --form-row-border: 0;
+  --form-row-border-radius: 0;
+  --form-row-background-color: none;
   --footer-height: 60px;
   --floating-submit-height: 60px;
 }
@@ -2156,11 +2166,11 @@ ul.left-menu > li[data-state="1"] > ul {
   display: -ms-flexbox;
   display: box;
   display: flex;
-  border: 1px solid #cfcfcf;
-  border-radius: 8px;
-  background-color: #fafafa;
-  margin: 0 20px 3px 20px;
-  padding: 8px 10px;
+  border: var(--form-row-border);
+  border-radius: var(--form-row-border-radius);
+  background-color: var(--form-row-background-color);
+  margin: var(--form-row-margin);
+  padding: var(--form-row-padding);
   min-height: 18px;
   zoom: 1;
 }
@@ -2171,13 +2181,6 @@ ul.left-menu > li[data-state="1"] > ul {
   line-height: 0;
   font-size: 0;
   clear: both;
-}
-body[data-skin="entrine"] .diadminform-row {
-  border: 0;
-  border-radius: 0;
-  background-color: transparent;
-  margin-bottom: 20px;
-  padding: 0;
 }
 @media screen and (max-width: 767px) {
   .diadminform-row:nth-of-type(odd) {

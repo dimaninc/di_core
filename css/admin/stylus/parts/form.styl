@@ -1,19 +1,13 @@
 .diadminform-row
     position relative
     display flex
-    border 1px solid #CFCFCF
-    border-radius 8px
-    background-color #FAFAFA
-    margin 0 $classicStandardPadding 3px $classicStandardPadding
-    padding 8px 10px
+    border var(--form-row-border)
+    border-radius var(--form-row-border-radius)
+    background-color var(--form-row-background-color)
+    margin var(--form-row-margin)
+    padding var(--form-row-padding)
     min-height 18px
     clearing-after()
-    {$entrineSkin} &
-        border 0
-        border-radius 0
-        background-color transparent
-        margin-bottom 20px
-        padding 0
     &:nth-of-type(odd)
         @media screen and (max-width: 767px)
             background #eee

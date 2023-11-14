@@ -449,6 +449,13 @@ class Base
         return $this->id;
     }
 
+    public function setId($id)
+    {
+        $this->id = $id;
+
+        return $this;
+    }
+
     public function getModule()
     {
         return $this->module;
@@ -670,8 +677,9 @@ class Base
 
     private function readParams()
     {
-        $this->id = \diRequest::request('id', $this->getUriParam(2, ''));
-        $this->id = StringHelper::in($this->id);
+        $this->setId(
+            StringHelper::in(\diRequest::request('id', $this->getUriParam(2, '')))
+        );
 
         return $this;
     }
