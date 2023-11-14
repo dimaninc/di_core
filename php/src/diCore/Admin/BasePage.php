@@ -290,6 +290,11 @@ abstract class BasePage
         return $ar[$this->getLanguage()];
     }
 
+    public function isColonNeededInFormTitles()
+    {
+        return $this->getAdmin()->isColonNeededInFormTitles();
+    }
+
     protected function printList()
     {
         switch ($this->listMode) {

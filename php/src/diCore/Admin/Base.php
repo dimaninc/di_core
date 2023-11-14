@@ -560,6 +560,11 @@ class Base
         return strip_tags($this->caption) . ': ' . $this->getSiteTitle() . ' admin';
     }
 
+    public function isColonNeededInFormTitles()
+    {
+        return true;
+    }
+
     public function expandCollapseBlockNeeded()
     {
         return (in_array($this->getTable(), ['content', 'categories', 'orders']) &&
@@ -1102,7 +1107,10 @@ class Base
 
                 if (
                     $this->getPage()->getTable() &&
-                    in_array($this->getPage()->getTable(), [$item['module']])
+                    in_array($this->getPage()->getTable(), [
+                        $item['module'],
+                        preg_replace('#/.+$#', '', $item['module']),
+                    ])
                 ) {
                     $selected = true;
                 }

@@ -1558,12 +1558,12 @@ EOF;
 
                             $html .= $this->getRow(
                                 $field,
-                                "{$fieldTitle}{$notesStar}:",
+                                $fieldTitle . $notesStar,
                                 "$input1 &nbsp;<span id=\"{$field}_console\" class=\"error\"></span>"
                             );
                             $html .= $this->getRow(
                                 $field . '2',
-                                "{$this->L('confirm')} {$t2}{$notesStar}:",
+                                "{$this->L('confirm')} {$t2}{$notesStar}",
                                 $input2
                             );
 
@@ -1590,7 +1590,7 @@ EOF;
                             //(isset($this->uploaded_images_w[$k]) && $this->uploaded_images_w[$k] > 200 || ( &&
                             $html .= $this->getRow(
                                 $field,
-                                "{$fieldTitle}{$notesStar}:",
+                                $fieldTitle . $notesStar,
                                 $tag && ($this->static_mode || $this->data[$field])
                                     ? "$tag<div>$input</div>"
                                     : $input
@@ -1602,7 +1602,7 @@ EOF;
                             $input = $this->wrapInput($field, $input);
                             $html .= $this->getRow(
                                 $field,
-                                $fieldTitle . $notesStar . ':',
+                                $fieldTitle . $notesStar,
                                 $input
                             );
 
@@ -1625,7 +1625,7 @@ EOF;
 
                         $html .= $this->getRow(
                             $field,
-                            "{$caption}:",
+                            $caption,
                             $_notes,
                             'data-purpose="notes"'
                         );
@@ -1755,11 +1755,12 @@ EOF;
             $rowAttrs .= ' data-static="true"';
         }
 
+        $titleSuffix = $this->AdminPage->isColonNeededInFormTitles() ? ':' : '';
+        $dataType = $this->getFieldType($field);
+
         return <<<EOF
-<div id="tr_{$field}" class="diadminform-row"{$rowAttrs} data-field="$field" data-type="{$this->getFieldType(
-            $field
-        )}">
-	<label class="title" for="$field">$title</label>
+<div id="tr_{$field}" class="diadminform-row"{$rowAttrs} data-field="$field" data-type="$dataType">
+	<label class="title" for="$field">$title$titleSuffix</label>
 	<div class="value">$value</div>
 </div>
 EOF;
