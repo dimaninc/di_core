@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS comments
     updated_at  TIMESTAMP NULL     DEFAULT NULL
 );
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx__comment__user
+CREATE INDEX IF NOT EXISTS idx__comment__user
     ON comments (user_type, user_id);
 
 CREATE INDEX IF NOT EXISTS idx__comment__main

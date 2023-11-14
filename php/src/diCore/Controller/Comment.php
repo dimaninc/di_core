@@ -50,16 +50,13 @@ class Comment extends \diBaseController
     {
         parent::__construct($params);
 
-        $this->targetType = \diRequest::post('target_type', 0);
-        $this->targetId = \diRequest::post('target_id', 0);
-        $this->template = \diRequest::post('template', '');
+        $this->targetType = \diRequest::postExt('target_type', 0);
+        $this->targetId = \diRequest::postExt('target_id', 0);
+        $this->template = \diRequest::postExt('template', '');
 
         $this->checkAuth()->initTpl();
 
-        $this->Comments = \diComments::create(
-            $this->targetType,
-            $this->targetId
-        );
+        $this->Comments = \diComments::create($this->targetType, $this->targetId);
         $this->Comments->setTpl($this->getTpl())->setTwig($this->getTwig());
     }
 
@@ -68,6 +65,15 @@ class Comment extends \diBaseController
         $this->response([
             'html' => $this->Comments->getBlockHtml(),
             'total_count' => $this->Comments->getTotalCount(),
+        ]);
+    }
+
+    public function listAction()
+    {
+        return $this->ok([
+            'items' => $this->Comments
+                ->getInitialCommentsCollection()
+                ->asPublicDataArray(),
         ]);
     }
 
@@ -84,7 +90,7 @@ class Comment extends \diBaseController
             'message' => '',
         ];
 
-        $commentId = $this->param(0, \diRequest::post('id', 0));
+        $commentId = $this->param(0, \diRequest::postExt('id', 0));
 
         /** @var Model $comment */
         $comment = $this->getCommentModel($commentId);
@@ -119,8 +125,8 @@ class Comment extends \diBaseController
                 ->setUserType($this->userType)
                 ->setUserId($this->userId)
                 ->setOwnerId($ownerId)
-                ->setContent(\diRequest::post('content', ''))
-                ->setParent(\diRequest::post('parent', 0))
+                ->setContent(\diRequest::postExt('content', ''))
+                ->setParent(\diRequest::postExt('parent', 0))
                 ->setVisible($this->Comments->moderatedBeforeShow() ? 0 : 1) // todo: use only setModerated()
                 ->setModerated($this->Comments->moderatedBeforeShow() ? 0 : 1)
                 ->save();
@@ -135,6 +141,7 @@ class Comment extends \diBaseController
 
             $result['ok'] = true;
             $result['id'] = $comment->getId();
+            $result['data'] = $comment->getPublicData();
         } catch (\Exception $e) {
             $result['message'] = $e->getMessage();
 
@@ -171,9 +178,9 @@ class Comment extends \diBaseController
 
     public function refreshAction()
     {
-        $where = \diRequest::post('where');
-        $firstCommentId = \diRequest::post('first_comment_id', 0);
-        $lastCommentId = \diRequest::post('last_comment_id', 0);
+        $where = \diRequest::postExt('where');
+        $firstCommentId = \diRequest::postExt('first_comment_id', 0);
+        $lastCommentId = \diRequest::postExt('last_comment_id', 0);
         $response = [];
 
         switch ($where) {

@@ -93,13 +93,28 @@ class Model extends \diModel
         'content' => FieldType::string,
         'order_num' => FieldType::int,
         'level_num' => FieldType::int,
-        'visible' => FieldType::int,
+        'visible' => FieldType::bool_int,
         'moderated' => FieldType::int,
         'karma' => FieldType::int,
         'evil_score' => FieldType::int,
         'ip' => FieldType::ip_int,
         'created_at' => FieldType::timestamp,
         'updated_at' => FieldType::timestamp,
+    ];
+
+    protected static $publicFields = [
+        'id',
+        'user_id',
+        'user',
+        'parent',
+        'target_type',
+        'target_id',
+        'content',
+        'order_num',
+        'level_num',
+        'visible',
+        'created_at',
+        'updated_at',
     ];
 
     public function prepareForSave()
@@ -132,10 +147,7 @@ class Model extends \diModel
     {
         $contentCut = nl2br(
             StringHelper::out(
-                StringHelper::cutEnd(
-                    $this->getContent(),
-                    self::CONTENT_CUT_LENGTH
-                )
+                StringHelper::cutEnd($this->getContent(), self::CONTENT_CUT_LENGTH)
             )
         );
         $contentHtml = nl2br(StringHelper::out($this->getContent()));
@@ -145,6 +157,7 @@ class Model extends \diModel
             'content_html' => $contentHtml,
             'content_html_with_links' => $contentHtmlWithLinks,
             'content_cut' => $contentCut,
+            'user' => $this->getUserModel()->getPublicData(),
         ]);
     }
 
@@ -203,8 +216,7 @@ class Model extends \diModel
             $this->getTargetModel()
                 ->set(
                     static::COMMENTS_COUNT_FIELD,
-                    $this->getTargetModel()->get(static::COMMENTS_COUNT_FIELD) +
-                        1
+                    $this->getTargetModel()->get(static::COMMENTS_COUNT_FIELD) + 1
                 )
                 ->set(
                     static::COMMENTS_LAST_DATE_FIELD,
@@ -227,8 +239,7 @@ class Model extends \diModel
             $this->getTargetModel()
                 ->set(
                     static::COMMENTS_COUNT_FIELD,
-                    $this->getTargetModel()->get(static::COMMENTS_COUNT_FIELD) -
-                        1
+                    $this->getTargetModel()->get(static::COMMENTS_COUNT_FIELD) - 1
                 )
                 ->save();
         }
@@ -329,8 +340,7 @@ class Model extends \diModel
     public function getUserAppearance(\diModel $user = null)
     {
         $user = $user ?: $this->getUserModel();
-        $typeSuffix =
-            $this->getUserType() == \diComments::utAdmin ? ' (Admin)' : '';
+        $typeSuffix = $this->getUserType() == \diComments::utAdmin ? ' (Admin)' : '';
 
         return $user->getStringAppearanceForAdmin() . $typeSuffix;
     }
