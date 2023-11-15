@@ -7,7 +7,6 @@
 
 namespace diCore\Entity\Admin;
 
-use diCore\Admin\Page\Admins as Guide;
 use diCore\Data\Config;
 use diCore\Database\FieldType;
 
@@ -63,7 +62,7 @@ class Model extends \diBaseUserModel
 
     const COMPLEX_QUERY_PREFIX = 'admin_';
 
-    protected $levels;
+    protected static $levels;
 
     protected $fields = [
         'login',
@@ -89,16 +88,17 @@ class Model extends \diBaseUserModel
         'phone' => FieldType::string,
         'address' => FieldType::string,
         'date' => FieldType::string,
-        'ip' => FieldType::int,
+        'ip' => FieldType::ip_int,
         'host' => FieldType::string,
         'level' => FieldType::string,
-        'active' => FieldType::string,
+        'active' => FieldType::int,
     ];
 
     public function getTemplateVars()
     {
         $ar = extend(parent::getTemplateVars(), [
-            'level_str' => $this->getLevelStr(),
+            'level_str' => $this->getLevelTitle(),
+            'level_title' => $this->getLevelTitle(),
             'name' => $this->getName(),
         ]);
 
@@ -107,7 +107,7 @@ class Model extends \diBaseUserModel
 
     public function isRoot()
     {
-        return $this->getLevel() === 'root' || Config::isInitiating();
+        return $this->getLevel() === Level::root || Config::isInitiating();
     }
 
     public function getName()
@@ -120,41 +120,47 @@ class Model extends \diBaseUserModel
         return [$this->getFirstName(), $this->getLastName()];
     }
 
-    public function getLevelStr()
+    public function getLevelTitle()
     {
         if (!$this->exists()) {
             return null;
         }
 
-        $this->cacheLevels();
+        static::cacheLevels();
 
-        return isset($this->levels[$this->getLevel()])
-            ? $this->levels[$this->getLevel()]
-            : '---';
+        return static::$levels[$this->getLevel()] ?? '---';
     }
 
-    protected function cacheLevels()
+    public static function getLevels()
     {
-        if ($this->levels === null) {
-            /** @var Guide $adminPageClassName */
-            $adminPageClassName = \diLib::getClassNameFor(
-                'admins',
-                \diLib::ADMIN_PAGE
-            );
+        static::cacheLevels();
 
-            if (class_exists($adminPageClassName)) {
-                $this->levels = $adminPageClassName::$levelsAr;
-            } else {
-                $this->levels = Guide::$levelsAr;
+        return static::$levels ?? [];
+    }
+
+    public static function translateLevels($levels = [], $language = null)
+    {
+        foreach ($levels as $name => &$title) {
+            if (is_array($title)) {
+                $title = $title[$language];
             }
-
-            $this->levels = extend(Guide::$baseLevelsAr, $this->levels);
-            $this->levels = Guide::translateLevels(
-                $this->levels,
-                $this->__getLanguage()
-            );
         }
 
-        return $this;
+        return $levels;
+    }
+
+    protected static function cacheLevels()
+    {
+        if (static::$levels === null) {
+            /** @var Level $levelClassName */
+            $levelClassName = \diLib::getChildClass(Level::class);
+
+            if (class_exists($levelClassName)) {
+                static::$levels = static::translateLevels(
+                    $levelClassName::titles(),
+                    static::__getLanguage()
+                );
+            }
+        }
     }
 }

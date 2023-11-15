@@ -14,28 +14,47 @@ abstract class SimpleContainer
     public static $titles = [];
     public static $descriptions = [];
 
+    public static $customNames = [];
+    public static $customTitles = [];
+    public static $customDescriptions = [];
+
     public static function name($id)
     {
-        return static::$names[$id] ?? null;
+        return static::names()[$id] ?? null;
     }
 
     public static function title($id)
     {
-        return static::$titles[$id] ?? null;
+        return static::titles()[$id] ?? null;
     }
 
     public static function description($id)
     {
-        return static::$descriptions[$id] ?? null;
+        return static::descriptions()[$id] ?? null;
+    }
+
+    public static function names()
+    {
+        return extend(static::$names, static::$customNames);
+    }
+
+    public static function titles()
+    {
+        return extend(static::$titles, static::$customTitles);
+    }
+
+    public static function descriptions()
+    {
+        return extend(static::$descriptions, static::$customDescriptions);
     }
 
     public static function id($name)
     {
         if (isInteger($name)) {
-            return isset(static::$names[$name]) ? (int) $name : null;
+            return isset(static::names()[$name]) ? (int) $name : null;
         }
 
-        $id = array_search($name, static::$names);
+        $id = array_search($name, static::names());
 
         if ($id === false) {
             $id = defined("static::$name") ? constant("static::$name") : null;
@@ -46,7 +65,7 @@ abstract class SimpleContainer
 
     public static function idByTitle($title)
     {
-        $id = array_search($title, static::$titles) ?: null;
+        $id = array_search($title, static::titles()) ?: null;
 
         return $id;
     }
@@ -65,7 +84,7 @@ abstract class SimpleContainer
     {
         $ar = [];
 
-        foreach (static::$names as $id => $name) {
+        foreach (static::names() as $id => $name) {
             $ar[] = static::getCollectionElement($id);
         }
 

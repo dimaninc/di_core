@@ -117,10 +117,7 @@ class Auth
 
     public static function isFirstVisit()
     {
-        if (
-            \diRequest::cookie(static::COOKIE_USER_ID) ||
-            self::i()->authorized()
-        ) {
+        if (\diRequest::cookie(static::COOKIE_USER_ID) || self::i()->authorized()) {
             return false;
         }
 
@@ -144,8 +141,7 @@ class Auth
 
     public function reallyAuthorized()
     {
-        return $this->getUserModel()->exists() &&
-            $this->getUserModel()->active();
+        return $this->getUserModel()->exists() && $this->getUserModel()->active();
     }
 
     protected function setErrorCode($code)
@@ -244,10 +240,7 @@ class Auth
     protected function needToStoreCookies($force = false)
     {
         return $force ||
-            in_array($this->authSource, [
-                self::SOURCE_POST,
-                self::SOURCE_COOKIE,
-            ]);
+            in_array($this->authSource, [self::SOURCE_POST, self::SOURCE_COOKIE]);
     }
 
     protected function setCookie(
@@ -299,11 +292,11 @@ class Auth
                 'db'
             );
 
-            $this->setCookie(
-                static::COOKIE_USER_ID,
-                $id,
+            $this->setCookie(static::COOKIE_USER_ID, $id, $cookieTime)->setCookie(
+                static::COOKIE_SECRET,
+                $secret,
                 $cookieTime
-            )->setCookie(static::COOKIE_SECRET, $secret, $cookieTime);
+            );
 
             if ($this->rememberUser() || $remember) {
                 $this->setCookie(static::COOKIE_REMEMBER, 1, $cookieTime);
@@ -367,10 +360,8 @@ class Auth
         return false;
     }
 
-    public function forceAuthorize(
-        \diBaseUserModel $user,
-        $storeCookies = false
-    ) {
+    public function forceAuthorize(\diBaseUserModel $user, $storeCookies = false)
+    {
         $this->user = $user;
 
         $this->storeSession()->storeCookies($storeCookies);
@@ -435,10 +426,7 @@ class Auth
 
         $token = \diRequest::header(static::HEADER_TOKEN);
 
-        if (
-            $token &&
-            $this->authorize($token, null, self::SOURCE_USER_SESSION)
-        ) {
+        if ($token && $this->authorize($token, null, self::SOURCE_USER_SESSION)) {
             $this->authSource = self::SOURCE_USER_SESSION;
 
             $this->updateAuthorizedUserData();
@@ -453,12 +441,8 @@ class Auth
             return $this;
         }
 
-        $login =
-            \diRequest::post(static::POST_LOGIN_FIELD) ?:
-            \diRequest::rawPost(static::POST_LOGIN_FIELD);
-        $password =
-            \diRequest::post(static::POST_PASSWORD_FIELD) ?:
-            \diRequest::rawPost(static::POST_PASSWORD_FIELD);
+        $login = \diRequest::postExt(static::POST_LOGIN_FIELD);
+        $password = \diRequest::postExt(static::POST_PASSWORD_FIELD);
 
         if (
             $login &&
@@ -509,10 +493,8 @@ class Auth
                 $tpl->process('LOGIN_PANEL', 'user_panel');
             }
         } else {
-            $tpl->exists('auth_panel') &&
-                $tpl->process('LOGIN_PANEL', 'auth_panel');
-            $tpl->exists('auth_popup') &&
-                $tpl->process('LOGIN_POPUP', 'auth_popup');
+            $tpl->exists('auth_panel') && $tpl->process('LOGIN_PANEL', 'auth_panel');
+            $tpl->exists('auth_popup') && $tpl->process('LOGIN_POPUP', 'auth_popup');
         }
 
         return $this;

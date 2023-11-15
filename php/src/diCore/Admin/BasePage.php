@@ -1227,7 +1227,7 @@ abstract class BasePage
 
     protected function printEditLog()
     {
-        if ($this->useEditLog() && $this->getId()) {
+        if ($this->useEditLog() && !$this->hideEditLog() && $this->getId()) {
             $records = TableEditLogs::create()
                 ->filterByTargetTable($this->getTable())
                 ->filterByTargetId([$this->getId(), (int) $this->getId()])
@@ -1484,7 +1484,7 @@ abstract class BasePage
     {
         $ar = $this->filterFields($this->getFormFields());
 
-        if ($this->useEditLog() && $this->getId()) {
+        if ($this->useEditLog() && !$this->hideEditLog() && $this->getId()) {
             $ar[TableEditLog::ADMIN_TAB_NAME] = [
                 'type' => 'string',
                 'title' => $this->localized([
@@ -1692,7 +1692,7 @@ abstract class BasePage
 
     public function linkNeededInCaption($method)
     {
-        return $method != 'list';
+        return $method !== 'list';
     }
 
     public function addButtonNeededInCaption()
@@ -1718,6 +1718,14 @@ abstract class BasePage
          *   'strip_tags' => true, // html tags from content will be stripped
          * ]
          */
+    }
+
+    /**
+     * Write logs on edit (if self::useEditLog() enabled) but don't show it in admin form
+     */
+    public function hideEditLog()
+    {
+        return false;
     }
 
     protected function reallySubmit()

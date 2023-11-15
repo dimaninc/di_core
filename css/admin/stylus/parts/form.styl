@@ -1,6 +1,7 @@
 .diadminform-row
     position relative
     display flex
+    gap var(--form-row-gap)
     border var(--form-row-border)
     border-radius var(--form-row-border-radius)
     background-color var(--form-row-background-color)
@@ -30,14 +31,12 @@
         font-size 12px
         vertical-align top
     .title
-        width 200px
-        padding 3px 10px 0 0
+        width var(--form-row-title-width)
+        padding-top var(--form-row-title-padding-top)
         box-sizing border-box
         {$entrineSkin} &
-            width 140px
             text-align right
             position relative
-            padding-top 18px
             @media screen and (max-width: 767px)
                 width auto
                 text-align left

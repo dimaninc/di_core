@@ -1198,7 +1198,11 @@ EOF;
         if ($this->AdminPage) {
             $formTabs = $this->AdminPage->getFormTabs();
 
-            if ($this->AdminPage->useEditLog() && $this->getId()) {
+            if (
+                $this->AdminPage->useEditLog() &&
+                !$this->AdminPage->hideEditLog() &&
+                $this->getId()
+            ) {
                 $formTabs[
                     TableEditLog::ADMIN_TAB_NAME
                 ] = TableEditLog::adminTabTitle($this->getX()->getLanguage());
@@ -1271,18 +1275,18 @@ EOF;
                         ]);
                     }
 
-                    if ($v['type'] == 'email') {
+                    if ($v['type'] === 'email') {
                         $this->setInputAttribute($field, ['type' => 'email']);
                     }
 
-                    if ($v['type'] == 'tel') {
+                    if ($v['type'] === 'tel') {
                         $this->setInputAttribute($field, ['type' => 'tel']);
                     }
 
-                    if ($v['type'] == 'url') {
+                    if ($v['type'] === 'url') {
                         $this->setInputAttribute($field, ['type' => 'url']);
                     }
-                } elseif ($v['type'] == 'password') {
+                } elseif ($v['type'] === 'password') {
                     $this->setInputAttribute($field, [
                         'value' => '',
                         'type' => 'password',
@@ -1524,10 +1528,23 @@ EOF;
                     }
                 }
 
+                $adminLevel = $this->AdminPage
+                    ->getAdmin()
+                    ->getAdminModel()
+                    ->getLevel();
+                $hideFor = $v['hideFor'] ?? [];
+                $showFor = $v['showFor'] ?? [];
+                $hiddenFor = $hideFor && in_array($adminLevel, $hideFor);
+                $shownFor = !$showFor || in_array($adminLevel, $showFor);
+                $initiallyHidden =
+                    $this->isFlag($field, FormFlag::initially_hidden) &&
+                    !$this->getId();
+
                 $hidden =
                     $this->isFlag($field, FormFlag::hidden) ||
-                    ($this->isFlag($field, FormFlag::initially_hidden) &&
-                        !$this->getId());
+                    $initiallyHidden ||
+                    $hiddenFor ||
+                    !$shownFor;
 
                 if ($hidden) {
                     $html .=
@@ -1592,7 +1609,7 @@ EOF;
                                 $field,
                                 $fieldTitle . $notesStar,
                                 $tag && ($this->static_mode || $this->data[$field])
-                                    ? "$tag<div>$input</div>"
+                                    ? "$tag<div class=\"value-inner\">$input</div>"
                                     : $input
                             );
 
@@ -1623,12 +1640,9 @@ EOF;
                         $caption = $this->L('notes_caption');
                         $caption = $caption[count($v['notes']) > 1];
 
-                        $html .= $this->getRow(
-                            $field,
-                            $caption,
-                            $_notes,
-                            'data-purpose="notes"'
-                        );
+                        $html .= $this->getRow($field, $caption, $_notes, [
+                            'attrs' => 'data-purpose="notes"',
+                        ]);
                     }
                 }
             }
@@ -1653,24 +1667,24 @@ EOF;
             }
 
             $result =
-                "<div class=\"diadminform_tabs\"><ul>" .
+                '<div class="diadminform_tabs"><ul>' .
                 join($tab_head_separator, $tab_head_ar) .
-                "</ul></div>\n\n";
+                '</ul></div>';
 
-            $result .= "<div data-purpose=\"tab-pages\">\n";
+            $result .= '<div data-purpose="tab-pages">';
 
-            foreach ($formTabs as $field => $v) {
+            foreach ($formTabs as $tab => $v) {
                 $result .=
-                    "<div data-tab=\"{$field}\">" .
-                    ($tabs[$field] ?? '') .
-                    "</div>\n\n";
+                    "<div data-tab=\"{$tab}\">" . ($tabs[$tab] ?? '') . "</div>\n\n";
             }
 
             $result .= "</div>\n";
         } else {
-            $result = $tabs['general'] ?? '';
+            $result =
+                '<div data-purpose="tab-pages"><div data-tab class="selected">' .
+                ($tabs['general'] ?? '') .
+                '</div></div>';
         }
-        //
 
         return $result;
     }
@@ -1741,27 +1755,40 @@ EOF;
         return json_encode(json_decode($value), JSON_PRETTY_PRINT);
     }
 
-    protected function getRow($field, $title, $value, $rowAttrs = '')
+    protected function getRow($field, $title, $value, $options = [])
     {
-        if (is_array($rowAttrs)) {
-            $rowAttrs = ArrayHelper::toAttributesString($rowAttrs);
+        $options = extend(
+            [
+                'attrs' => '',
+            ],
+            $options
+        );
+
+        $attrs = $options['attrs'];
+        $description = $this->getFieldProperty($field, 'description');
+        $descriptionTag = $description
+            ? "\n<div class=\"description\">{$description}</div>"
+            : '';
+
+        if (is_array($attrs)) {
+            $attrs = ArrayHelper::toAttributesString($attrs);
         }
 
         if ($this->getFieldProperty($field, 'drag_and_drop_uploading')) {
-            $rowAttrs .= ' data-drag-and-drop-uploading="true"';
+            $attrs .= ' data-drag-and-drop-uploading="true"';
         }
 
         if ($this->isStatic($field)) {
-            $rowAttrs .= ' data-static="true"';
+            $attrs .= ' data-static="true"';
         }
 
         $titleSuffix = $this->AdminPage->isColonNeededInFormTitles() ? ':' : '';
         $dataType = $this->getFieldType($field);
 
         return <<<EOF
-<div id="tr_{$field}" class="diadminform-row"{$rowAttrs} data-field="$field" data-type="$dataType">
+<div id="tr_{$field}" class="diadminform-row" data-field="$field" data-type="{$dataType}" {$attrs}>
 	<label class="title" for="$field">$title$titleSuffix</label>
-	<div class="value">$value</div>
+	<div class="value">$value</div>$descriptionTag
 </div>
 EOF;
     }

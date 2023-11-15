@@ -35,11 +35,14 @@
   --button-background-primary: var(--color-link);
   --button-background-hover-primary: var(--color-link-hover);
   --button-text-color-primary: #fff;
+  --form-row-gap: 10px;
   --form-row-margin: 0 20px 3px;
   --form-row-padding: 8px 10px;
   --form-row-border: 1px solid #cfcfcf;
   --form-row-border-radius: 8px;
   --form-row-background-color: #fafafa;
+  --form-row-title-width: 190px;
+  --form-row-title-padding-top: 3px;
   --footer-height: 40px;
   --floating-submit-height: 40px;
 }
@@ -65,11 +68,14 @@ body[data-skin="entrine"] {
   --caption-height: 48px;
   --caption-border-bottom: 0;
   --button-background-primary: #5ab5df;
+  --form-row-gap: 10px;
   --form-row-margin: 0 20px 20px;
   --form-row-padding: 0;
   --form-row-border: 0;
   --form-row-border-radius: 0;
   --form-row-background-color: none;
+  --form-row-title-width: 130px;
+  --form-row-title-padding-top: 18px;
   --footer-height: 60px;
   --floating-submit-height: 60px;
 }
@@ -2166,6 +2172,7 @@ ul.left-menu > li[data-state="1"] > ul {
   display: -ms-flexbox;
   display: box;
   display: flex;
+  gap: var(--form-row-gap);
   border: var(--form-row-border);
   border-radius: var(--form-row-border-radius);
   background-color: var(--form-row-background-color);
@@ -2212,17 +2219,15 @@ ul.left-menu > li[data-state="1"] > ul {
   vertical-align: top;
 }
 .diadminform-row .title {
-  width: 200px;
-  padding: 3px 10px 0 0;
+  width: var(--form-row-title-width);
+  padding-top: var(--form-row-title-padding-top);
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
 }
 body[data-skin="entrine"] .diadminform-row .title {
-  width: 140px;
   text-align: right;
   position: relative;
-  padding-top: 18px;
 }
 @media screen and (max-width: 767px) {
   body[data-skin="entrine"] .diadminform-row .title {

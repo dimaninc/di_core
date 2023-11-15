@@ -166,8 +166,7 @@ class Payment
 
     public static function systemTitle($systemId)
     {
-        return System::title($systemId) ?:
-            'Unknown payment system #' . $systemId;
+        return System::title($systemId) ?: 'Unknown payment system #' . $systemId;
     }
 
     public static function getCurrentVendors()
@@ -178,7 +177,7 @@ class Payment
             /** @var VendorContainer $class */
             $class = System::getSystemClass($systemId);
 
-            foreach ($class::$titles as $vendorId => $vendorTitle) {
+            foreach ($class::titles() as $vendorId => $vendorTitle) {
                 if (Payment::isVendorUsed($systemId, $vendorId)) {
                     $vendors[$vendorId] = $systemTitle . ': ' . $vendorTitle;
                 }
@@ -195,11 +194,8 @@ class Payment
             : 'Unknown currency #' . $currencyId;
     }
 
-    public function initiateProcess(
-        $amount,
-        $paymentSystemName,
-        $paymentVendorName
-    ) {
+    public function initiateProcess($amount, $paymentSystemName, $paymentVendorName)
+    {
         $paymentSystemId = System::id($paymentSystemName);
         $paymentVendorId = System::vendorIdByName(
             $paymentSystemId,
@@ -207,11 +203,7 @@ class Payment
         );
 
         /** @var Draft $draft */
-        $draft = $this->getNewDraft(
-            $amount,
-            $paymentSystemId,
-            $paymentVendorId
-        );
+        $draft = $this->getNewDraft($amount, $paymentSystemId, $paymentVendorId);
 
         switch ($draft->getPaySystem()) {
             case System::mixplat:
@@ -488,9 +480,7 @@ EOF;
 
     public function initYandex(Draft $draft)
     {
-        $paymentVendor = \diCore\Payment\Yandex\Vendor::code(
-            $draft->getVendor()
-        );
+        $paymentVendor = \diCore\Payment\Yandex\Vendor::code($draft->getVendor());
         $kassa = Kassa::create();
 
         return static::wrapFormIntoHtml(
@@ -631,8 +621,7 @@ EOF;
             switch ($result->getErrorCode()) {
                 case 8: //Operator is not active
                     // todo: Localization here
-                    $message =
-                        'Технические проблемы на стороне оператора связи';
+                    $message = 'Технические проблемы на стороне оператора связи';
 
                     $draft
                         ->setStatus(
@@ -656,10 +645,7 @@ EOF;
 
                 default:
                     $message =
-                        '(' .
-                        $result->getErrorCode() .
-                        ') ' .
-                        $result->getError();
+                        '(' . $result->getErrorCode() . ') ' . $result->getError();
                     break;
             }
         }

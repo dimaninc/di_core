@@ -9,6 +9,7 @@
 namespace diCore\Traits\Admin;
 
 use diCore\Entity\Localization\Collection;
+use Menu\Data\Language;
 
 trait MultiColumn
 {
@@ -41,10 +42,12 @@ trait MultiColumn
         }
 
         foreach (Collection::getPossibleLanguages() as $lang) {
+            $langTitle = Language::title($lang);
+
             $fieldTitle =
-                $lang !== Collection::getDefaultLanguage()
+                $lang !== Collection::getDefaultLanguage() && false
                     ? "($lang)"
-                    : "{$properties['title']} ($lang)";
+                    : "{$properties['title']} ($langTitle)";
 
             $ar[\diModel::getLocalizedFieldName($field, $lang)] = extend(
                 $properties,

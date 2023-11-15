@@ -12,6 +12,7 @@ use diCore\Admin\Data\Skin;
 use diCore\Base\CMS;
 use diCore\Data\Config;
 use diCore\Database\Connection;
+use diCore\Entity\Admin\Level;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 
@@ -37,7 +38,7 @@ class Base
     /** @var BasePage */
     protected $adminPage;
 
-    private $version = '5.1';
+    private $version = '5.2';
 
     protected $defaultSuperUsersAr = ['dimaninc'];
     protected $superUsersAr = [];
@@ -468,13 +469,13 @@ class Base
 
     public function getRefinedMethod()
     {
-        if ($this->getModule() == 'login') {
+        if ($this->getModule() === 'login') {
             return '';
         }
 
         $method = $this->getMethod();
 
-        if ($method == 'form') {
+        if ($method === 'form') {
             $method = $this->getId() ? 'edit' : 'add';
         }
 
@@ -659,7 +660,7 @@ class Base
     public function getStartModule()
     {
         if ($this->adminUser->authorizedForSetup()) {
-            $level = 'root';
+            $level = Level::root;
         } else {
             $level = $this->getAdminModel()->exists()
                 ? $this->getAdminModel()->getLevel()
@@ -672,7 +673,7 @@ class Base
     protected function getStartModuleByAdminLevel($level)
     {
         switch ($level) {
-            case 'root':
+            case Level::root:
                 return 'content';
 
             default:
@@ -915,7 +916,7 @@ class Base
         foreach ($names as $moduleName => $opts) {
             $options = extend(
                 [
-                    'permissions' => ['root'],
+                    'permissions' => [Level::root],
                     'isVisible' => true, // boolean or callback
                     'super' => false,
                     'showList' => true,
@@ -1003,7 +1004,7 @@ class Base
                         'module' => 'di_lib_admin_pages/form',
                     ],
                 ],
-                'permissions' => ['root'],
+                'permissions' => [Level::root],
                 'paths' => [
                     'dump',
                     'migrations',
@@ -1033,7 +1034,7 @@ class Base
                             urlencode(\diRequest::requestUri()),
                     ],
                 ],
-                'permissions' => ['root'],
+                'permissions' => [Level::root],
                 'paths' => ['configuration'],
             ],
         ];
@@ -1109,7 +1110,7 @@ class Base
                     $this->getPage()->getTable() &&
                     in_array($this->getPage()->getTable(), [
                         $item['module'],
-                        preg_replace('#/.+$#', '', $item['module']),
+                        preg_replace('#/.+$#', '', $item['module'] ?? ''),
                     ])
                 ) {
                     $selected = true;

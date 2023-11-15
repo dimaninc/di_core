@@ -15,48 +15,6 @@ class Admins extends \diCore\Admin\BasePage
         ],
     ];
 
-    public static $baseLevelsAr = [
-        'root' => [
-            'ru' => 'Главный админ',
-            'en' => 'Root admin',
-        ],
-    ];
-
-    public static $levelsAr = [];
-
-    public function __construct(\diCore\Admin\Base $X)
-    {
-        parent::__construct($X);
-
-        static::$levelsAr = self::translateLevels(
-            array_merge(static::$baseLevelsAr, static::$levelsAr),
-            $this->getAdmin()->getLanguage()
-        );
-    }
-
-    public static function translateLevels($levels = [], $language = null)
-    {
-        foreach ($levels as $name => &$title) {
-            if (is_array($title)) {
-                $title = $title[$language];
-            }
-        }
-
-        return $levels;
-    }
-
-    public static function getLevelsAr()
-    {
-        return static::$levelsAr;
-    }
-
-    public static function getLevelTitle($level)
-    {
-        return isset(static::$levelsAr[$level])
-            ? static::$levelsAr[$level]
-            : $level;
-    }
-
     protected function initTable()
     {
         $this->setTable('admins');
@@ -73,7 +31,7 @@ class Admins extends \diCore\Admin\BasePage
             ],
             'level' => [
                 'value' => function (Model $model) {
-                    return $this->getLevelTitle($model->getLevel());
+                    return $model->getLevelTitle();
                 },
                 'attrs' => [
                     'width' => '30%',
@@ -90,7 +48,7 @@ class Admins extends \diCore\Admin\BasePage
 
     public function renderForm()
     {
-        $this->getForm()->setSelectFromArrayInput('level', self::getLevelsAr());
+        $this->getForm()->setSelectFromArrayInput('level', Model::getLevels());
     }
 
     public function submitForm()
@@ -167,8 +125,8 @@ class Admins extends \diCore\Admin\BasePage
                     'ru' => 'Уровень доступа',
                     'en' => 'Access level',
                 ]),
-                'default' => current(array_keys(static::$levelsAr)),
-                'values' => array_keys(static::$levelsAr),
+                'default' => current(array_keys(Model::getLevels())),
+                'values' => array_keys(Model::getLevels()),
             ],
 
             'date' => [

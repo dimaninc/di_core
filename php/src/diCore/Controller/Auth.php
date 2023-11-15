@@ -11,6 +11,7 @@ namespace diCore\Controller;
 use diCore\Base\CMS;
 use diCore\Data\Config;
 use diCore\Data\Types;
+use diCore\Entity\Admin\Level;
 use diCore\Entity\User\Model;
 use diCore\Tool\Auth as AuthTool;
 
@@ -161,7 +162,7 @@ class Auth extends \diBaseController
 
             if (
                 !$this->isAdminAuthorized() ||
-                $this->getAdminModel()->getLevel() != 'root'
+                $this->getAdminModel()->getLevel() !== Level::root
             ) {
                 throw new \Exception('This action is allowed only for root admins');
             }
