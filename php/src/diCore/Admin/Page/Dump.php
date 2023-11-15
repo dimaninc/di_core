@@ -9,6 +9,8 @@ use diCore\Helper\StringHelper;
 
 class Dump extends \diCore\Admin\BasePage
 {
+    const basePath = 'dump';
+
     protected $vocabulary = [
         'ru' => [
             'caption.files' => 'Копии файлов',
@@ -48,11 +50,7 @@ class Dump extends \diCore\Admin\BasePage
         ],
     ];
 
-    protected $excludedTables = [
-        'banner_stat2',
-        'mail_queue',
-        'search_results',
-    ];
+    protected $excludedTables = ['banner_stat2', 'mail_queue', 'search_results'];
 
     public function renderList()
     {
@@ -91,10 +89,7 @@ class Dump extends \diCore\Admin\BasePage
             'total' => $totalStr,
             'free' => $freeStr,
             'free_percent' => sprintf('%.2f', ($free / $total) * 100),
-            'used_percent' => sprintf(
-                '%.2f',
-                (($total - $free) / $total) * 100
-            ),
+            'used_percent' => sprintf('%.2f', (($total - $free) / $total) * 100),
         ];
 
         return $disks;
@@ -108,10 +103,7 @@ class Dump extends \diCore\Admin\BasePage
         $tablesSel->setCurrentValue(function ($table) use ($tablesSel) {
             return !in_array($table, $this->excludedTables) &&
                 substr($table, 0, 13) != 'search_index_' &&
-                !preg_match(
-                    '/\[[^\]]+\]$/',
-                    $tablesSel->getTextByValue($table)
-                );
+                !preg_match('/\[[^\]]+\]$/', $tablesSel->getTextByValue($table));
         });
 
         $tablesSel
@@ -269,16 +261,14 @@ class Dump extends \diCore\Admin\BasePage
                     $th = $regs[5];
                     $tm = $regs[6];
                     $ts = $regs[7];
-                    $compressed =
-                        isset($regs[8]) && strtolower($regs[8]) == '.gz';
+                    $compressed = isset($regs[8]) && strtolower($regs[8]) == '.gz';
                 } else {
                     $name = $regs2[1];
                     list($dy, $dm, $dd, $th, $tm, $ts) = explode(
                         ',',
                         date('Y,m,d,H,i,s', filemtime($folder . $f))
                     );
-                    $compressed =
-                        isset($regs[2]) && strtolower($regs[2]) == '.gz';
+                    $compressed = isset($regs[2]) && strtolower($regs[2]) == '.gz';
                 }
 
                 $ext = $compressed ? 'gz' : 'sql';

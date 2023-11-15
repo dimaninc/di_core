@@ -1107,8 +1107,7 @@ class Base
                 }
 
                 if (
-                    $this->getPage()->getTable() &&
-                    in_array($this->getPage()->getTable(), [
+                    in_array($this->getPage()->getBasePath(), [
                         $item['module'],
                         preg_replace('#/.+$#', '', $item['module'] ?? ''),
                     ])
