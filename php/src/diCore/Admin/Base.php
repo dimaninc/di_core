@@ -654,20 +654,16 @@ class Base
         return $this->getStartModule();
     }
 
-    /*
-     * rewrite this in diAdmin class if needed
-     */
+    public function getAdminLevel()
+    {
+        return $this->adminUser->authorizedForSetup()
+            ? Level::root
+            : $this->getAdminModel()->getLevel();
+    }
+
     public function getStartModule()
     {
-        if ($this->adminUser->authorizedForSetup()) {
-            $level = Level::root;
-        } else {
-            $level = $this->getAdminModel()->exists()
-                ? $this->getAdminModel()->getLevel()
-                : null;
-        }
-
-        return $this->getStartModuleByAdminLevel($level);
+        return $this->getStartModuleByAdminLevel($this->getAdminLevel());
     }
 
     protected function getStartModuleByAdminLevel($level)
@@ -679,6 +675,16 @@ class Base
             default:
                 return null;
         }
+    }
+
+    public function getStartMethod()
+    {
+        return $this->getStartMethodByAdminLevel($this->getAdminLevel());
+    }
+
+    protected function getStartMethodByAdminLevel($level)
+    {
+        return static::DEFAULT_METHOD;
     }
 
     private function readParams()
@@ -722,7 +728,7 @@ class Base
         }
 
         $this->module = $this->getUriParam(0, $this->getStartPath());
-        $this->method = $this->getUriParam(1, self::DEFAULT_METHOD);
+        $this->method = $this->getUriParam(1, $this->getStartMethod());
 
         // back compatibility
         if (\diRequest::get('path')) {
