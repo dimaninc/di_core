@@ -16,7 +16,7 @@ use diCore\Tool\Mail\Queue;
 class Comment extends \diBaseController
 {
     /** @var \diComments  */
-    private $Comments;
+    protected $Comments;
 
     protected $targetType;
     protected $targetId;
@@ -54,8 +54,13 @@ class Comment extends \diBaseController
         $this->targetId = \diRequest::postExt('target_id', 0);
         $this->template = \diRequest::postExt('template', '');
 
-        $this->checkAuth()->initTpl();
+        $this->checkAuth()
+            ->initTpl()
+            ->init();
+    }
 
+    protected function init()
+    {
         $this->Comments = \diComments::create($this->targetType, $this->targetId);
         $this->Comments->setTpl($this->getTpl())->setTwig($this->getTwig());
     }

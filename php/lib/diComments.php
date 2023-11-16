@@ -94,16 +94,18 @@ class diComments
         } else {
             $this->targetType = $targetType;
             $this->targetId = $targetId;
-            $this->target = \diModel::create(
-                $this->targetType,
-                $this->targetId
-            );
+            $this->target = \diModel::create($this->targetType, $this->targetId);
         }
 
-        $this->queryAr = [
-            "target_type = '$this->targetType'",
-            "target_id = '$this->targetId'",
-        ];
+        $this->queryAr = [];
+
+        if ($this->targetType) {
+            $this->queryAr[] = "target_type = '$this->targetType'";
+        }
+
+        if ($this->targetId) {
+            $this->queryAr[] = "target_id = '$this->targetId'";
+        }
 
         $this->initCounts();
 
@@ -149,6 +151,21 @@ class diComments
     public function getTarget()
     {
         return $this->target;
+    }
+
+    public function addCondition($field, $value)
+    {
+        $value = $this->getDb()->escapeValue($value);
+        $this->queryAr[] = "$field = $value";
+
+        return $this;
+    }
+
+    public function addQuery($query)
+    {
+        $this->queryAr[] = $query;
+
+        return $this;
     }
 
     protected function initPagesNavy()
@@ -255,10 +272,8 @@ class diComments
             : '';
     }
 
-    protected function beforeParseRow(
-        CommentModel $comment,
-        \diBaseUserModel $user
-    ) {
+    protected function beforeParseRow(CommentModel $comment, \diBaseUserModel $user)
+    {
         return $this;
     }
 
@@ -301,7 +316,7 @@ class diComments
     protected function getAdditionalQueryAr()
     {
         return [
-                //"visible='1'",
+                // "visible='1'",
             ];
     }
 
@@ -544,10 +559,7 @@ class diComments
 
     public function isHtmlCacheException()
     {
-        return in_array($this->targetType, [
-            Types::admin_task,
-            Types::admin_wiki,
-        ]);
+        return in_array($this->targetType, [Types::admin_task, Types::admin_wiki]);
     }
 
     public function isHtmlCacheUsed()
