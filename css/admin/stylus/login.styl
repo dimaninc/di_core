@@ -31,7 +31,7 @@ a
         padding 80px 20px
         width 500px
         box-shadow 0 2px 39px 6px rgba(0, 0, 0, .09)
-        @media screen and (max-width: 767px)
+        @media $mqTablet
             width auto
             margin 0
             padding 20px
@@ -46,7 +46,7 @@ a
         display none
         font-size 16px
         line-height 60px
-    @media screen and (max-width: 767px)
+    @media $mqTablet
         line-height 70px
     i
         font-style normal
@@ -104,7 +104,7 @@ a
         margin-top 30px
         width var(--menu-width)
         padding 0
-    @media screen and (max-width: 767px)
+    @media $mqTablet
         margin-top 20px
         width 90%
     & > div {
@@ -143,7 +143,7 @@ a
             border-radius 3px
             height $entrineBaseHeight
             font-size 16px
-        @media screen and (max-width: 767px)
+        @media $mqTablet
             font-size 18px
             height 28px
     button
@@ -180,7 +180,7 @@ a
     text-align center
     margin-top 50px
     font-size 16px
-    @media screen and (max-width: 767px)
+    @media $mqTablet
         margin-top 30px
     body[data-skin="entrine"] &
         display none
@@ -202,5 +202,5 @@ a
     font-size 16px
     body[data-skin="entrine"] &
         display none
-    @media screen and (max-width: 767px)
+    @media $mqTablet
         margin-top 30px

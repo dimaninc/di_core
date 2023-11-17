@@ -6,7 +6,7 @@
 	padding-left $classicStandardPadding
 	border-bottom 1px solid #CCCCCC
 	margin-bottom $classicStandardPadding
-	@media screen and (max-width: 767px)
+	@media $mqTablet
 		padding-left 12px
 		padding-right 5px
 	.buttons
@@ -14,7 +14,7 @@
 		flex-wrap wrap
 		padding 10px 0
 		margin-left 150px
-		@media screen and (max-width: 767px)
+		@media $mqTablet
 			margin-left 0
 		> *
 			vertical-align top
@@ -22,7 +22,7 @@
 	.row
 		display flex
 		padding-bottom 7px
-		@media screen and (max-width: 767px)
+		@media $mqTablet
 			flex-wrap wrap
 		{$entrineSkin} &
 			padding-bottom 15px
@@ -34,7 +34,7 @@
 			padding-top 5px
 			width 150px
 			font-weight normal
-			@media screen and (max-width: 767px)
+			@media $mqTablet
 				width 100%
 				font-weight bold
 		select + select
@@ -42,7 +42,7 @@
 		select + button
 			margin-left 10px
 		input
-			@media screen and (max-width: 767px)
+			@media $mqTablet
 				flex 1
 				min-width 0
 		.admin-filter-date-wrapper
@@ -98,7 +98,7 @@
 		background-color #bbb
 		transition background-color .5s ease
 		align-self center
-		@media screen and (max-width: 767px)
+		@media $mqTablet
 			margin-left 5px
 		&:hover
 			background-color #777

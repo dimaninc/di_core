@@ -14,7 +14,7 @@
 		border-radius 0
 		border-width 3px
 		padding 20px
-		@media screen and (max-width: 767px)
+		@media $mqTablet
 			padding 10px
 	+ .dynamic-row
 		margin-top 10px
@@ -57,7 +57,7 @@
 			input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size])
 			textarea
 				width 300px
-				@media screen and (max-width: 450px)
+				@media $mqPhone
 					width calc(80vw - 50px)
 			code
 				display block
@@ -74,7 +74,7 @@
 					width 500px
 					@media screen and (max-width: 1150px)
 						width calc(80vw - 230px)
-					@media screen and (max-width: 767px)
+					@media $mqTablet
 						width calc(80vw - 50px)
 			&.wide
 				input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size])
@@ -82,7 +82,7 @@
 					width 750px
 					@media screen and (max-width: 1150px)
 						width calc(80vw - 230px)
-					@media screen and (max-width: 767px)
+					@media $mqTablet
 						width calc(80vw - 50px)
 			&.full-width
 				display block

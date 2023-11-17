@@ -18,7 +18,7 @@ textarea
     border-radius $entrineBorderRadiusInput
     padding 5px
     border-color $entrineColorInputBorder
-    @media screen and (max-width: 767px)
+    @media $mqTablet
       padding 5px
 
 select
@@ -29,12 +29,12 @@ select
   {$entrineSkin} &
     //padding 15px
     border-color $entrineColorInputBorder
-  //@media screen and (max-width: 767px)
+  //@media $mqTablet
   //    padding 5px
   &[size="1"]
     {$entrineSkin} &
       height 48px
-      @media screen and (max-width: 767px)
+      @media $mqTablet
         height 42px
 
 textarea
@@ -43,5 +43,5 @@ textarea
   align-self stretch
   {$entrineSkin} &
     padding 15px
-    @media screen and (max-width: 767px)
+    @media $mqTablet
       padding 5px

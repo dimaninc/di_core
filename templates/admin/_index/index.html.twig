@@ -13,10 +13,18 @@ data-floating-submit="{{ _settings['floating_submit'] }}">
 <div class="admin-layout">
 
     <div class="logo"><b>{{ _tech['cms_name'] }} {{ _tech['xx_version'] }}</b><div class="menu-toggle"></div></div>
-    <div class="head-auth-info"><span>{{ admin['login'] }}</span> <i>{{ admin['level_str'] }}</i></div>
-    <a href="{{ _tech['site_path'] }}" class="head-href go-to-face" target="_blank"><span>{{ lang['go_to_site'] }}</span></a>
-    <a href="{{ _tech['logout_href'] }}" class="head-href logout"><span>{{ lang['sign_out'] }}</span></a>
-    <div class="site-title">{{ _tech['site_title'] }}</div>
+
+    <div class="head">
+        <div class="site-title">{{ _tech['site_title'] }}</div>
+        <div class="head-links">
+            <a href="{{ _tech['site_path'] }}" class="head-href go-to-face" target="_blank">{{ lang['go_to_site'] }}</a>
+            <a href="{{ _tech['logout_href'] }}" class="head-href logout">{{ lang['sign_out'] }}</a>
+            <div class="head-auth-info">
+                <span class="login">{{ admin['login'] }}</span>
+                <span class="level">{{ admin['level_str'] }}</span>
+            </div>
+        </div>
+    </div>
 
     <div class="nav">
         <div class="menu-panel">

@@ -4,7 +4,7 @@ ul.admin-grid
 	display flex
 	flex-wrap wrap
 	justify-content space-between
-	@media screen and (max-width: 767px)
+	@media $mqTablet
 		margin 0 12px 10px 12px
 	> li
 		width 24%
@@ -17,7 +17,7 @@ ul.admin-grid
 		text-align center
 		@media screen and (max-width: 1350px)
 			width 32%
-		@media screen and (max-width: 1024px)
+		@media $mqTabletLandscape
 			width 49%
 		@media screen and (max-width: 550px)
 			width 100%

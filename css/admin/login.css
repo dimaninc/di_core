@@ -131,7 +131,7 @@ body[data-skin="entrine"] .login-form-wrapper {
   -webkit-box-shadow: 0 2px 39px 6px rgba(0,0,0,0.09);
   box-shadow: 0 2px 39px 6px rgba(0,0,0,0.09);
 }
-@media screen and (max-width: 767px) {
+@media $mqTablet {
   body[data-skin="entrine"] .login-form-wrapper {
     width: auto;
     margin: 0;
@@ -149,7 +149,7 @@ body[data-skin="entrine"] .login-form-wrapper {
         display none
         font-size 16px
         line-height 60px
-    @media screen and (max-width: 767px)
+    @media $mqTablet
         line-height 70px
     i
         font-style normal
@@ -235,7 +235,7 @@ body[data-skin="entrine"] .login-form {
   width: var(--menu-width);
   padding: 0;
 }
-@media screen and (max-width: 767px) {
+@media $mqTablet {
   .login-form {
     margin-top: 20px;
     width: 90%;
@@ -286,7 +286,7 @@ body[data-skin="entrine"] .login-form input[type="password"] {
   height: 48px;
   font-size: 16px;
 }
-@media screen and (max-width: 767px) {
+@media $mqTablet {
   .login-form button,
   .login-form input[type="text"],
   .login-form input[type="email"],
@@ -340,7 +340,7 @@ body[data-skin="entrine"] .login-form input[type="password"] {
   margin-top: 50px;
   font-size: 16px;
 }
-@media screen and (max-width: 767px) {
+@media $mqTablet {
   .to-home {
     margin-top: 30px;
   }
@@ -375,7 +375,7 @@ body[data-skin="entrine"] .to-home {
 body[data-skin="entrine"] .contacts {
   display: none;
 }
-@media screen and (max-width: 767px) {
+@media $mqTablet {
   .contacts {
     margin-top: 30px;
   }

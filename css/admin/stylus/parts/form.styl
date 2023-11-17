@@ -10,9 +10,9 @@
     min-height 18px
     clearing-after()
     &:nth-of-type(odd)
-        @media screen and (max-width: 767px)
+        @media $mqTablet
             background #eee
-    @media screen and (max-width: 767px)
+    @media $mqTablet
         margin-left 0
         margin-right 0
         margin-bottom 0
@@ -23,7 +23,7 @@
         display block
         padding-left 5px
     &:last-of-type
-        @media screen and (max-width: 767px)
+        @media $mqTablet
             border-bottom 1px solid #CFCFCF
     .title
     .value
@@ -37,14 +37,14 @@
         {$entrineSkin} &
             text-align right
             position relative
-            @media screen and (max-width: 767px)
+            @media $mqTablet
                 width auto
                 text-align left
                 padding-left 12px
         ^[0][data-purpose="notes"] ^[-1..1]
             {$entrineSkin} &
                 padding-top 0
-        @media screen and (max-width: 767px)
+        @media $mqTablet
             display block
             float none
             width auto
@@ -76,10 +76,10 @@
         ^[0][data-type="password"] ^[1..-1]
             flex-wrap wrap
         {$entrineSkin} &
-            @media screen and (max-width: 767px)
+            @media $mqTablet
                 margin-left 12px
                 margin-right 12px
-        @media screen and (max-width: 767px)
+        @media $mqTablet
             width auto
             margin-left 7px
         button
@@ -127,7 +127,7 @@
             {$entrineSkin} &
                 background-color $entrineColorTextMenuSelected
                 border-radius 0
-            @media screen and (max-width: 767px)
+            @media $mqTablet
                 width 100%
             &:before
                 content attr(data-caption)
@@ -302,7 +302,7 @@
         margin 0 5px
         font-weight bold
         top 25px
-        @media screen and (max-width: 767px)
+        @media $mqTablet
             top 15px
 
 .admin-form-uploading-area
@@ -375,16 +375,16 @@
         padding 0
         {$entrineSkin} &
             margin 0 20px
-            @media screen and (max-width: 767px)
+            @media $mqTablet
                 margin 0 12px 5px
-        @media screen and (max-width: 767px)
+        @media $mqTablet
             margin-left 12px
         li
             margin 0 5px 5px 0
             {$entrineSkin} &
                 margin-right 20px
                 margin-bottom 20px
-                @media screen and (max-width: 767px)
+                @media $mqTablet
                     margin-right 12px
                     margin-bottom 12px
             &:last-child
@@ -418,7 +418,7 @@
                     max-width ($entrineBaseWidth * 2) + 20px
                     height $entrineBaseHeight
                     padding 5px
-                    @media screen and (max-width: 767px)
+                    @media $mqTablet
                         min-width 0
                         max-width none
                         width auto
@@ -569,10 +569,10 @@ ul.table-edit-log
         padding 0 20px
         background-color #ddd
         height var(--floating-submit-height)
-        @media screen and (max-width: 767px)
+        @media $mqTablet
             left 0
             padding 0 10px
-    @media screen and (max-width: 767px)
+    @media $mqTablet
         margin-left 0
         margin-right 0
         border 0
@@ -586,7 +586,7 @@ ul.table-edit-log
         border-radius 0
         background-color white
         margin-left 160px
-        @media screen and (max-width: 767px)
+        @media $mqTablet
             margin-left 12px
             margin-right 12px
             padding 0
@@ -604,7 +604,7 @@ ul.table-edit-log
         flex-basis 100%
         text-align center
         margin-top 10px
-        @media screen and (max-width: 767px)
+        @media $mqTablet
             padding-bottom 5px
             border-bottom 1px solid #CFCFCF
         {$entrineSkin} &
