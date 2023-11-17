@@ -9,7 +9,6 @@
 
 .site-title {
   flex 1
-  background #333
   color white
   height $classicBaseHeight
   line-height $classicBaseHeight
@@ -17,10 +16,14 @@
   font-family Arial, Helvetica, sans-serif
   padding-left $classicStandardPadding
   padding-right 10px
+  ellipsis()
 
   @media $mqTabletLandscape {
     max-width 100%
-    ellipsis()
+  }
+
+  {$classicSkin} & {
+    background #333
   }
 
   {$entrineSkin} & {
@@ -30,47 +33,34 @@
     background $entrineColorBgDark
     font-size 20px
     font-weight 400
-    margin-left var(--menu-width)
-    margin-right calc(var(--menu-width) * 3)
-    ellipsis()
-    @media screen and (max-width: 1470px) {
-      margin-right $entrineMenuWidthNarrow1 * 3
-    }
-    @media $mqTabletLandscape {
-      margin-right $entrineMenuWidthNarrow2 * 3
-    }
-    @media $mqTablet {
-      margin-right 101px
-      padding-left 15px
-    }
-    @media $mqPhone {
-      margin-left 0
-      margin-right 0
-      font-size 16px
-    }
   }
 }
 
 .head-links {
   display flex
-  flex-wrap wrap
-  gap 1px
-  width 281px
-  border-left 1px solid transparent
   font-size 12px
 
   @media $mqTablet {
     width 100px
   }
+
+  {$classicSkin} & {
+    flex-wrap wrap
+    width 281px
+    gap 1px
+    border-left 1px solid transparent
+  }
+
+  {$entrineSkin} & {
+    background $entrineColorBgDark
+  }
 }
 
 .head-auth-info {
-  flex-basis 90%
-  flex-grow 1
+  flex 1
   display flex
   justify-content center
   align-items center
-  background #777
   padding 5px
   text-align center
   color #ffd
@@ -82,26 +72,15 @@
     height 23px
   }
 
+  {$classicSkin} & {
+    flex-basis 90%
+    background #777
+  }
+
   {$entrineSkin} & {
-    width var(--menu-width)
-    right calc(var(--menu-width) * 2)
-    line-height $entrineBaseHeight
+    order -1
     height $entrineBaseHeight
-    background $entrineColorBgDark
     color white
-    padding 0
-    font-size 16px
-    font-weight 400
-
-    @media screen and (max-width: 1470px) {
-      width $entrineMenuWidthNarrow1
-      right $entrineMenuWidthNarrow1 * 2
-    }
-
-    @media $mqTabletLandscape {
-      width $entrineMenuWidthNarrow2
-      right $entrineMenuWidthNarrow2 * 2
-    }
 
     @media $mqTablet {
       width 100px
@@ -119,19 +98,10 @@
     position relative
 
     {$entrineSkin} & {
+      white-space nowrap
+
       &:before {
-        content ''
-        position absolute
-        width 18px
-        height 18px
-        left (-14px - @width)
-        top 50%
-        transform translateY(-50%)
         background embedurl('../../../i/admin/skin/entrine/user.svg')
-        background-size cover
-        @media $mqTablet {
-          display none
-        }
       }
     }
   }
@@ -143,7 +113,7 @@
     padding 1px 4px
     border-radius 4px
     position relative
-    margin-left 4px
+    margin-left 8px
 
     @media $mqTablet {
       display none
@@ -154,20 +124,21 @@
       color white
       background $entrineColorBgDarker
       padding 7px
-      max-width 100px
+
+      @media $mqMDPI {
+        display none
+      }
     }
   }
 }
 
 .head-href {
-  flex-basis 40%
-  flex-grow 1
+  flex 1
   display flex
   justify-content center
   align-items center
   height 50% // 35px
   padding 5px
-  background #555
   color white
   font-family Arial, Helvetica, sans-serif
   transition background .5s linear, color .5s linear
@@ -183,22 +154,18 @@
     height 23px
   }
 
+  {$classicSkin} & {
+    flex-basis 40%
+    background #555
+  }
+
   {$entrineSkin} & {
-     font-family $entrineFont
-     font-weight 400
-     width var(--menu-width)
      line-height $entrineBaseHeight
      height $entrineBaseHeight
-     font-size 16px
-     background $entrineColorBgDark
+     white-space nowrap
 
      @media screen and (max-width: 1470px) {
-       width $entrineMenuWidthNarrow1
        font-size 14px
-     }
-
-     @media $mqTabletLandscape {
-       width $entrineMenuWidthNarrow2
      }
 
      @media $mqTablet {
@@ -226,39 +193,17 @@
 
   &.go-to-face {
     {$entrineSkin} & {
-      right var(--menu-width)
       color $entrineColorTextMenuSelected
-      @media screen and (max-width: 1470px) {
-        right $entrineMenuWidthNarrow1
-      }
-      @media $mqTabletLandscape {
-        right $entrineMenuWidthNarrow2
-      }
+
       @media $mqTablet {
-        right 0
         color white
       }
     }
 
     > span {
       {$entrineSkin} & {
-        @media $mqTablet {
-          font-size 12px
-        }
-
         &:before {
-          content ''
-          position absolute
-          width 18px
-          height 18px
-          left (-10px - @width)
-          top 50%
-          transform translateY(-50%)
           background embedurl('../../../i/admin/skin/entrine/globe.svg')
-          background-size cover
-          @media $mqTablet {
-            display none
-          }
         }
       }
     }
@@ -268,18 +213,37 @@
     > span {
       {$entrineSkin} & {
         &:before {
-          content ''
-          position absolute
-          width 18px
-          height 18px
-          left (-12px - @width)
-          top 50%
-          transform translateY(-50%)
           background embedurl('../../../i/admin/skin/entrine/log-out.svg')
-          background-size cover
-          @media $mqTablet {
-            display none
-          }
+        }
+      }
+    }
+  }
+}
+
+.button-with-icon {
+  span:first-child {
+    {$entrineSkin} & {
+      padding-left 32px
+      font-family $entrineFont
+      font-size 16px
+      font-weight 400
+
+      @media $mqTablet {
+        font-size 12px
+      }
+
+      &:before {
+        content ''
+        position absolute
+        width 18px
+        height 18px
+        left 4px
+        top 50%
+        transform translateY(-50%)
+        background-size cover
+
+        @media $mqTablet {
+          display none
         }
       }
     }
