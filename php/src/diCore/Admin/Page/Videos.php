@@ -214,16 +214,7 @@ class Videos extends \diCore\Admin\BasePage
     {
         $this->getSubmit()
             ->makeSlug()
-            ->storeImage($this->picFields, [
-                [
-                    'type' => Submit::IMAGE_TYPE_PREVIEW,
-                    'resize' => \diImage::DI_THUMB_FIT,
-                ],
-                [
-                    'type' => Submit::IMAGE_TYPE_MAIN,
-                    //'resize' => diImage::DI_THUMB_FIT,
-                ],
-            ])
+            ->storeImage($this->picFields)
             ->storeFile($this->videoFields, function (
                 $F,
                 $field,

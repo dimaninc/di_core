@@ -8,6 +8,7 @@
 
 namespace diCore\Entity\Video;
 
+use diCore\Admin\Submit;
 use diCore\Base\CMS;
 use diCore\Data\Types;
 
@@ -111,6 +112,18 @@ class Model extends \diModel
         'video_webm',
     ];
 
+    protected static $picStoreSettings = [
+        'pic' => [
+            [
+                'type' => Submit::IMAGE_TYPE_PREVIEW,
+                'resize' => \diImage::DI_THUMB_CROP,
+            ],
+            [
+                'type' => Submit::IMAGE_TYPE_MAIN,
+            ],
+        ],
+    ];
+
     public function getToken()
     {
         return $this->hasId()
@@ -195,10 +208,16 @@ class Model extends \diModel
 
         if ($this->getVendor() != Vendor::OWN) {
             $ar = extend($ar, [
+                'pic_safe' => $this->hasPic()
+                    ? \diLib::getSubFolder('force') .
+                        $this->getPicsFolder() .
+                        $this->getPic()
+                    : $this->getVideoVendorPreview(),
                 'pic_tn' => $this->getVideoVendorPreview(),
                 'pic_tn_safe' => $this->hasPic()
                     ? \diLib::getSubFolder('force') .
                         $this->getPicsFolder() .
+                        $this->getTnFolder() .
                         $this->getPic()
                     : $this->getVideoVendorPreview(),
                 'vendor_link' => $this->getVendorLink(),
