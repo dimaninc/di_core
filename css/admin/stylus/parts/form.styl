@@ -9,9 +9,13 @@
     padding var(--form-row-padding)
     min-height 18px
     clearing-after()
-    &:nth-of-type(odd)
-        @media $mqTablet
-            background #eee
+    {$classicSkin} & {
+        &:nth-of-type(odd) {
+            @media $mqTablet {
+                background #eee
+            }
+        }
+    }
     @media $mqTablet
         margin-left 0
         margin-right 0
@@ -548,14 +552,10 @@ ul.table-edit-log
 
 .submit-block
     display flex
-    justify-content center
     align-items center
     flex-wrap wrap
-    border 1px solid #CFCFCF
     margin 10px 20px
-    background-color #edf0f4
     padding 10px 0
-    border-radius 8px
     body[data-floating-submit="true"] &
         position fixed
         left var(--menu-width)
@@ -567,7 +567,6 @@ ul.table-edit-log
         border 0
         margin 0
         padding 0 20px
-        background-color #ddd
         height var(--floating-submit-height)
         @media $mqTablet
             left 0
@@ -580,10 +579,13 @@ ul.table-edit-log
         background none
         padding 0 5px
         justify-content center
+    {$classicSkin} & {
+        justify-content center
+        border 1px solid #CFCFCF
+        border-radius 8px
+        background-color #edf0f4
+    }
     {$entrineSkin} &
-        justify-content flex-start
-        border 0
-        border-radius 0
         background-color white
         margin-left 160px
         @media $mqTablet
@@ -591,26 +593,27 @@ ul.table-edit-log
             margin-right 12px
             padding 0
             left 0
+    body[data-skin="classic"][data-floating-submit="true"] &
+        background-color #ddd
     body[data-skin="entrine"][data-floating-submit="true"] &
         padding 0
     .submit-status-line
         font-size 11px
         line-height 1
         height @font-size
-        background #edf0f4
-        border-top 1px solid #CFCFCF
         padding-top 5px
         font-style italic
         flex-basis 100%
-        text-align center
         margin-top 10px
-        @media $mqTablet
+        @media $mqTablet {
             padding-bottom 5px
             border-bottom 1px solid #CFCFCF
-        {$entrineSkin} &
-            background none
-            border-top 0
-            text-align left
+        }
+        {$classicSkin} & {
+            background #edf0f4
+            border-top 1px solid #CFCFCF
+            text-align center
+        }
 
 .save_frame
     display none

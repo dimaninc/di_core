@@ -263,12 +263,9 @@ var diAdminForm = function (table, id, auto_save_timeout) {
             var field = $inp.attr('name');
             var chunk = $inp.data('chunk');
             var $wrapper = $inp.closest('.file-input-wrapper');
-            var $existingPreviewArea = $wrapper.siblings('.existing-pic-holder');
-            if (!$existingPreviewArea.length) {
-                $existingPreviewArea = $wrapper
-                    .parent()
-                    .siblings('.existing-pic-holder');
-            }
+            var $valueWrapper = $wrapper.closest('.value');
+            var $rowWrapper = $wrapper.closest('.diadminform-row');
+            var $existingPreviewArea = $valueWrapper.find('.existing-pic-holder');
             var $previewArea;
             var ext;
             var isPic;
@@ -276,9 +273,9 @@ var diAdminForm = function (table, id, auto_save_timeout) {
 
             var getPreviewArea = function () {
                 if (!$previewArea) {
-                    $previewArea = $(
-                        '<div class="existing-pic-holder"/>'
-                    ).insertBefore($wrapper);
+                    $previewArea = $('<div class="existing-pic-holder"/>').prependTo(
+                        $valueWrapper
+                    );
                 }
 
                 return $previewArea;
@@ -346,6 +343,10 @@ var diAdminForm = function (table, id, auto_save_timeout) {
                             $existingPreviewArea.remove();
 
                             getPreviewArea().append($row);
+                            $rowWrapper
+                                .attr('data-exists', 'true')
+                                .data('exists', true);
+                            $('.empty-pic-placeholder').remove();
 
                             (function ($row, file, isSvg) {
                                 var reader = new FileReader();

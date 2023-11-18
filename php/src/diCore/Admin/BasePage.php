@@ -310,7 +310,7 @@ abstract class BasePage
         return $this;
     }
 
-    protected function setFloatingSubmit($state = true)
+    public function setFloatingSubmit($state = true)
     {
         $this->floatingSubmit = !!$state;
 

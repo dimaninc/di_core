@@ -9,6 +9,7 @@
 namespace diCore\Admin;
 
 use diCore\Admin\Data\FormFlag;
+use diCore\Admin\Data\FormSnippet;
 use diCore\Admin\Data\Skin;
 use diCore\Data\Config;
 use diCore\Data\Configuration;
@@ -39,6 +40,18 @@ class Form
         self::wysiwygCK => 'ck',
         self::wysiwygTinyMCE => 'tinymce',
         self::wysiwygNone => null,
+    ];
+
+    /**
+     * @var array name => snippet html code
+     */
+    protected static $snippets = [
+        FormSnippet::PIC_PLACEHOLDER => '',
+    ];
+
+    public static $customLngStrings = [
+        'en' => [],
+        'ru' => [],
     ];
 
     public static $lngStrings = [
@@ -546,7 +559,10 @@ class Form
             $this->getX()
                 ->getTwig()
                 ->assign([
-                    'form_lang' => self::$lngStrings[self::$language],
+                    'form_lang' => array_merge_recursive(
+                        self::$lngStrings[self::$language],
+                        self::$customLngStrings[self::$language]
+                    ),
                 ]);
 
             $this->vocabularyAssigned = true;
@@ -606,19 +622,47 @@ class Form
 
         if (isset($this->fieldProperties[$field][$property])) {
             return $this->fieldProperties[$field][$property];
-        } elseif (
-            $field !== null &&
-            $property !== null &&
-            isset($a[$field][$property])
-        ) {
+        }
+
+        if ($field !== null && $property !== null && isset($a[$field][$property])) {
             return $a[$field][$property];
-        } elseif ($field && $property === null && isset($a[$field])) {
+        }
+
+        if ($field && $property === null && isset($a[$field])) {
             return $a[$field];
-        } elseif ($field === null) {
+        }
+
+        if ($field === null) {
             return $a;
         }
 
         return null;
+    }
+
+    public static function setSnippet($name, $html)
+    {
+        if (!isset(self::$snippets[$name])) {
+            throw new \Exception("Snippet '$name' not defined in Admin Form");
+        }
+
+        self::$snippets[$name] = $html;
+    }
+
+    public static function getSnippet($name)
+    {
+        if (!isset(self::$snippets[$name])) {
+            throw new \Exception("Snippet '$name' not defined in Admin Form");
+        }
+
+        return self::$snippets[$name] ?? '';
+    }
+
+    public static function addCustomLngStrings(string $language, array $keyValue)
+    {
+        self::$customLngStrings[$language] = extend(
+            self::$customLngStrings[$language] ?? [],
+            $keyValue
+        );
     }
 
     public static function L($token, $vars = [], $language = null)
@@ -630,7 +674,9 @@ class Form
 
         $language = $language ?: self::$language;
 
-        $s = self::$lngStrings[$language][$token] ?? $token;
+        $s =
+            self::$customLngStrings[$language][$token] ??
+            (self::$lngStrings[$language][$token] ?? $token);
 
         if ($vars && is_array($vars)) {
             $s = str_replace(
@@ -664,7 +710,9 @@ class Form
             StringHelper::endsWith($field, 'html_title')
         ) {
             return 70;
-        } elseif (
+        }
+
+        if (
             StringHelper::endsWith($field, 'meta_description') ||
             StringHelper::endsWith($field, 'html_description')
         ) {
@@ -1018,42 +1066,38 @@ EOF;
 
         if ($this->static_mode) {
             $edit_btn = $this->isButtonShown('edit', $show_ar, $hide_ar)
-                ? "<button type=\"button\" onclick=\"admin_form_{$this->table}_{$this->id}.switch_to_edit_mode();\">{$this->L(
+                ? "<button type=\"button\" data-action=\"edit\" onclick=\"admin_form_{$this->table}_{$this->id}.switch_to_edit_mode();\">{$this->L(
                     'edit'
                 )}</button>"
                 : '';
             $cancel_btn = $this->isButtonShown('cancel', $show_ar, $hide_ar)
-                ? "<button type=\"button\" id=\"btn-cancel\" onclick=\"admin_form_{$this->table}_{$this->id}.cancel_click();\">{$this->L(
+                ? "<button type=\"button\" data-action=\"cancel\" id=\"btn-cancel\" onclick=\"admin_form_{$this->table}_{$this->id}.cancel_click();\">{$this->L(
                     'cancel'
                 )}</button>"
                 : '';
 
             return <<<EOF
 <div class="submit-block">
-
 	$help_link
-
 	$edit_btn
-
 	$cancel_btn
-
 </div>
 
 $js
 EOF;
         } else {
             $save_btn = $this->isButtonShown('save', $show_ar, $hide_ar)
-                ? "<button type=\"submit\" id=\"btn-save\" onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->getButtonIcon(
+                ? "<button type=\"submit\" data-action=\"save\" id=\"btn-save\" onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->getButtonIcon(
                     'save'
                 )}{$this->L('save')}</button>"
                 : '';
             $clone_btn = $this->isButtonShown('clone', $show_ar, $hide_ar)
-                ? "<button type=\"button\" id=\"btn-clone\" onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->L(
+                ? "<button type=\"button\" data-action=\"clone\" id=\"btn-clone\" onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->L(
                     'clone'
                 )}</button>"
                 : '';
             $quick_save_btn = $this->isButtonShown('quick_save', $show_ar, $hide_ar)
-                ? "<button type=\"button\" id=\"btn-quick-save\" onclick=\"admin_form_{$this->table}_{$this->id}.quick_save();\">{$this->getButtonIcon(
+                ? "<button type=\"button\" data-action=\"apply\" id=\"btn-quick-save\" onclick=\"admin_form_{$this->table}_{$this->id}.quick_save();\">{$this->getButtonIcon(
                     'quick_save'
                 )}{$this->L('quick_save')}</button>"
                 : '';
@@ -1062,17 +1106,17 @@ EOF;
                 $show_ar,
                 $hide_ar
             )
-                ? "<button type=\"button\" id=\"btn-create-and-add-another\">{$this->getButtonIcon(
+                ? "<button type=\"button\" data-action=\"create-and-add\" id=\"btn-create-and-add-another\">{$this->getButtonIcon(
                     'create_and_add_another'
                 )}{$this->L('create_and_add_another')}</button>"
                 : '';
             $dispatch_btn = $this->isButtonShown('dispatch', $show_ar, $hide_ar)
-                ? "<button type=\"submit\" name=\"dispatch\" id=\"btn-dispatch\" value='1' onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true); return confirm('{$this->L(
+                ? "<button type=\"submit\" data-action=\"dispatch\" name=\"dispatch\" id=\"btn-dispatch\" value='1' onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true); return confirm('{$this->L(
                     'confirm_dispatch'
                 )}');\">{$this->L('dispatch')}</button>"
                 : '';
             $dispatch_test_btn = $this->isButtonShown('dispatch', $show_ar, $hide_ar)
-                ? "<button type=\"submit\" name=\"dispatch_test\" value='1' id=\"btn-dispatch-test\" onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->L(
+                ? "<button type=\"submit\" data-action=\"dispatch-test\" name=\"dispatch_test\" value='1' id=\"btn-dispatch-test\" onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->L(
                     'dispatch_test'
                 )}</button>"
                 : '';
@@ -1081,7 +1125,7 @@ EOF;
                 $show_ar,
                 $hide_ar
             )
-                ? "<button type=\"submit\" name=\"submit_and_add\" id=\"btn-submit_and_add\" value=1 onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->L(
+                ? "<button type=\"submit\" data-action=\"submit-and-add\" name=\"submit_and_add\" id=\"btn-submit_and_add\" value=1 onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->L(
                     'submit_and_add'
                 )}</button>"
                 : '';
@@ -1090,7 +1134,7 @@ EOF;
                 $show_ar,
                 $hide_ar
             )
-                ? "<button type=\"submit\" name=\"submit_and_next\" id=\"btn-submit_and_next\" value=1 onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->L(
+                ? "<button type=\"submit\" data-action=\"submit-and-next\" name=\"submit_and_next\" id=\"btn-submit_and_next\" value=1 onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true);\">{$this->L(
                     'submit_and_next'
                 )}</button>"
                 : '';
@@ -1099,12 +1143,12 @@ EOF;
                 $show_ar,
                 $hide_ar
             )
-                ? "<button type=\"submit\" name=\"submit_and_send\" id=\"btn-submit_and_send\" value=1 onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true); return confirm('{$this->L(
+                ? "<button type=\"submit\" data-action=\"submit-and-send\" name=\"submit_and_send\" id=\"btn-submit_and_send\" value=1 onclick=\"admin_form_{$this->table}_{$this->id}.set_able_to_leave_page(true); return confirm('{$this->L(
                     'confirm_send'
                 )}');\">{$this->L('submit_and_send')}</button>"
                 : '';
             $cancel_btn = $this->isButtonShown('cancel', $show_ar, $hide_ar)
-                ? "<button type=\"button\" id=\"btn-cancel\" onclick=\"admin_form_{$this->table}_{$this->id}.cancel();\">{$this->getButtonIcon(
+                ? "<button type=\"button\" data-action=\"cancel\" id=\"btn-cancel\" onclick=\"admin_form_{$this->table}_{$this->id}.cancel();\">{$this->getButtonIcon(
                     'cancel'
                 )}{$this->L('cancel')}</button>"
                 : '';
@@ -1595,22 +1639,29 @@ EOF;
                             } elseif (!empty($this->uploaded_files[$field])) {
                                 $tag = $this->uploaded_files[$field];
                             } else {
-                                $tag = '';
+                                $tag = self::getSnippet(
+                                    FormSnippet::PIC_PLACEHOLDER
+                                );
                             }
 
                             if ($this->static_mode) {
                                 $input = '';
+                            } else {
+                                $input =
+                                    "<div class=\"value-inner\">" .
+                                    $this->wrapInput($field, $input) .
+                                    '</div>';
                             }
 
-                            $input = $this->wrapInput($field, $input);
-
-                            //(isset($this->uploaded_images_w[$k]) && $this->uploaded_images_w[$k] > 200 || ( &&
                             $html .= $this->getRow(
                                 $field,
                                 $fieldTitle . $notesStar,
+                                $tag . $input
+                                /*
                                 $tag && ($this->static_mode || $this->data[$field])
-                                    ? "$tag<div class=\"value-inner\">$input</div>"
+                                    ? $tag . $input
                                     : $input
+                                */
                             );
 
                             break;
@@ -1780,6 +1831,10 @@ EOF;
 
         if ($this->isStatic($field)) {
             $attrs .= ' data-static="true"';
+        }
+
+        if ($this->getModel()->has($field)) {
+            $attrs .= ' data-exists="true"';
         }
 
         $titleSuffix = $this->AdminPage->isColonNeededInFormTitles() ? ':' : '';
