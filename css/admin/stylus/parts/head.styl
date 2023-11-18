@@ -38,6 +38,7 @@
 
 .head-links {
   display flex
+  align-items center
   font-size 12px
 
   @media $mqTablet {
@@ -46,13 +47,25 @@
 
   {$classicSkin} & {
     flex-wrap wrap
-    width 281px
     gap 1px
     border-left 1px solid transparent
+
+    @media $mqNoTabletLandscape {
+      width 281px
+    }
   }
 
   {$entrineSkin} & {
     background $entrineColorBgDark
+
+    @media $mqNoTabletLandscape {
+      gap 12px
+    }
+
+    @media $mqTablet {
+      flex-direction column
+      align-items flex-end
+    }
   }
 }
 
@@ -61,62 +74,57 @@
   display flex
   justify-content center
   align-items center
-  padding 5px
   text-align center
-  color #ffd
   box-sizing border-box
-  height 50%
 
   @media $mqTablet {
     order -1
-    height 23px
   }
 
   {$classicSkin} & {
     flex-basis 90%
+    height 50%
     background #777
+    color #ffd
+    padding 5px
+
+    @media $mqTablet {
+      height 23px
+    }
   }
 
   {$entrineSkin} & {
     order -1
-    height $entrineBaseHeight
     color white
 
+    &:before {
+      background-image embedurl('../../../i/admin/skin/entrine/user.svg')
+    }
+
     @media $mqTablet {
-      width 100px
-      right 0
-      line-height 23px
-      height 23px
-      text-align left
-      font-size 13px
-      padding-left 5px
+      display none
     }
   }
 
   .login {
-    display inline-block
-    position relative
-
-    {$entrineSkin} & {
-      white-space nowrap
-
-      &:before {
-        background embedurl('../../../i/admin/skin/entrine/user.svg')
-      }
-    }
+    white-space nowrap
   }
 
   .level {
-    font-size 10px
-    line-height 15px
-    background #555
-    padding 1px 4px
+    line-height 1.5
     border-radius 4px
-    position relative
     margin-left 8px
+    max-width 120px
+    ellipsis()
 
     @media $mqTablet {
       display none
+    }
+
+    {$classicSkin} & {
+      font-size 10px
+      background #555
+      padding 1px 4px
     }
 
     {$entrineSkin} & {
@@ -137,11 +145,8 @@
   display flex
   justify-content center
   align-items center
-  height 50% // 35px
-  padding 5px
   color white
-  font-family Arial, Helvetica, sans-serif
-  transition background .5s linear, color .5s linear
+  transition .5s
   box-sizing border-box
 
   &:hover {
@@ -149,102 +154,84 @@
     color white
   }
 
-  @media $mqTablet {
-    flex-basis 90%
-    height 23px
-  }
-
   {$classicSkin} & {
+    font-family Arial, Helvetica, sans-serif
     flex-basis 40%
     background #555
+    padding 5px
+    height 50%
+
+    @media $mqTablet {
+      flex-basis 90%
+      height 23px
+    }
   }
 
   {$entrineSkin} & {
-     line-height $entrineBaseHeight
-     height $entrineBaseHeight
      white-space nowrap
 
-     @media screen and (max-width: 1470px) {
+     @media $mqHiDPI {
        font-size 14px
      }
 
      @media $mqTablet {
-       width 100px
-       line-height 24px
-       height 24px
-       padding-left 5px
-       font-size 13px
-       text-align left
+       height 50%
+       line-height 1.2
      }
 
      &:hover {
        background $entrineColorBgDarker
      }
-
-     > span {
-       display inline-block
-       height $entrineBaseHeight
-     }
   }
 
-  > span {
-    position relative
-  }
-
-  &.go-to-face {
+  &.home-link {
     {$entrineSkin} & {
       color $entrineColorTextMenuSelected
 
-      @media $mqTablet {
-        color white
-      }
-    }
-
-    > span {
-      {$entrineSkin} & {
-        &:before {
-          background embedurl('../../../i/admin/skin/entrine/globe.svg')
-        }
+      &:before {
+        background-image embedurl('../../../i/admin/skin/entrine/globe.svg')
       }
     }
   }
 
   &.logout {
-    > span {
-      {$entrineSkin} & {
-        &:before {
-          background embedurl('../../../i/admin/skin/entrine/log-out.svg')
-        }
+    {$entrineSkin} & {
+      &:before {
+        background-image embedurl('../../../i/admin/skin/entrine/log-out.svg')
       }
     }
   }
 }
 
 .button-with-icon {
-  span:first-child {
-    {$entrineSkin} & {
-      padding-left 32px
-      font-family $entrineFont
-      font-size 16px
-      font-weight 400
+  {$entrineSkin} & {
+    position relative
+    padding-left 32px
+    padding-right 16px
+    font-family $entrineFont
+    font-size 16px
+    font-weight 400
+
+    @media $mqTabletLandscape {
+      font-size 12px
+    }
+
+    @media $mqTablet {
+      padding-left 16px
+    }
+
+    &:before {
+      content ''
+      position absolute
+      width 18px
+      height 18px
+      left 4px
+      top 50%
+      transform translateY(-50%)
+      background-size cover
 
       @media $mqTablet {
-        font-size 12px
-      }
-
-      &:before {
-        content ''
-        position absolute
-        width 18px
-        height 18px
-        left 4px
-        top 50%
-        transform translateY(-50%)
-        background-size cover
-
-        @media $mqTablet {
-          display none
-        }
+        display none
       }
     }
   }
