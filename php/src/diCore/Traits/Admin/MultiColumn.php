@@ -9,10 +9,22 @@
 namespace diCore\Traits\Admin;
 
 use diCore\Entity\Localization\Collection;
-use Menu\Data\Language;
 
 trait MultiColumn
 {
+    protected static function processLangTitle($fieldProperties, $lang)
+    {
+        $fn = $fieldProperties['langTitleGetter'] ?? null;
+
+        if ($fn && is_callable($fn)) {
+            return $fn($fieldProperties['title'], $lang);
+        }
+
+        return $lang !== Collection::getDefaultLanguage()
+            ? "($lang)"
+            : "{$fieldProperties['title']} ($lang)";
+    }
+
     protected function getMultiColumn(
         $field,
         $titleOrProps,
@@ -29,6 +41,8 @@ trait MultiColumn
                     'type' => 'string',
                     'default' => $default,
                     'tab' => null,
+                    // fn (string $fieldTitle, string $lang) => string
+                    'langTitleGetter' => null,
                 ],
                 $titleOrProps
             );
@@ -38,16 +52,12 @@ trait MultiColumn
                 'type' => $type ?: 'string',
                 'default' => $default,
                 'tab' => $tab,
+                'langTitleGetter' => null,
             ];
         }
 
         foreach (Collection::getPossibleLanguages() as $lang) {
-            $langTitle = Language::title($lang);
-
-            $fieldTitle =
-                $lang !== Collection::getDefaultLanguage() && false
-                    ? "($lang)"
-                    : "{$properties['title']} ($langTitle)";
+            $fieldTitle = self::processLangTitle($properties, $lang);
 
             $ar[\diModel::getLocalizedFieldName($field, $lang)] = extend(
                 $properties,
@@ -60,14 +70,36 @@ trait MultiColumn
         return $ar;
     }
 
-    protected function getMultiTitle($tab = null)
+    protected function getMultiTitle($optionsOrTab = null)
     {
-        return $this->getMultiColumn('title', 'Title', 'string', $tab);
+        $options = [
+            'title' => 'Title',
+            'type' => 'string',
+        ];
+
+        if (is_scalar($optionsOrTab)) {
+            $options['tab'] = $optionsOrTab;
+        } else {
+            $options = extend($options, $optionsOrTab);
+        }
+
+        return $this->getMultiColumn('title', $options);
     }
 
-    protected function getMultiContent($tab = null)
+    protected function getMultiContent($optionsOrTab = null)
     {
-        return $this->getMultiColumn('content', 'Description', 'text', $tab);
+        $options = [
+            'title' => 'Description',
+            'type' => 'text',
+        ];
+
+        if (is_scalar($optionsOrTab)) {
+            $options['tab'] = $optionsOrTab;
+        } else {
+            $options = extend($options, $optionsOrTab);
+        }
+
+        return $this->getMultiColumn('content', $options);
     }
 
     protected function getListMultiColumn($field, $widthSum, $props = [])
