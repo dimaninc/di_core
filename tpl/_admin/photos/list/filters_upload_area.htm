@@ -12,18 +12,15 @@
 		var uploader,
 			baseUrl = '/api/admin_photos/';
 
-		function getUploaderUrl()
-		{
+		function getUploaderUrl() {
 			return baseUrl + 'upload/?album_id=' + $('select[name="album_id"]').val();
 		}
 
-		function getProgressUrl()
-		{
+		function getProgressUrl() {
 			return baseUrl + 'progress/';
 		}
 
-		function initUploader()
-		{
+		function initUploader() {
 			uploader = new ss.SimpleUpload({
 				//dropzone: $('.filter-block .upload-area'),
 				button: $('.filter-block .upload-area'),
@@ -64,8 +61,7 @@
 					this.setProgressContainer(wrapper); // designate the containing div to be removed after upload
 				},
 				onComplete: function(filename, response) {
-					if (!response)
-					{
+					if (!response) {
 						alert(filename + ' upload failed');
 
 						return false;
@@ -73,14 +69,11 @@
 
 					var method = response.direction > 0 ? 'append' : 'prepend';
 
-					$('ul.admin-grid')[method](response.html);
+					$('ul[data-role="admin-grid"]')[method](response.html);
 
-					if (response.success)
-					{
+					if (response.success) {
 						console.log('uploaded', filename);
-					}
-					else
-					{
+					} else {
 						console.log(response.msg);
 					}
 				}

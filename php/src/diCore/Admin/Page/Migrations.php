@@ -306,7 +306,7 @@ class Migrations extends \diCore\Admin\BasePage
 
     public function printList()
     {
-        if ($this->getMethod() != 'list') {
+        if ($this->getMethod() !== 'list') {
             parent::printList();
         }
     }

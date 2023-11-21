@@ -1664,6 +1664,18 @@ abstract class BasePage
         return $fieldsAr;
     }
 
+    public function getFieldTitle($name)
+    {
+        return $this->doesFieldExist($name)
+            ? ($this->getFieldProperty($name, 'title') ?:
+                Form::getFieldTitle(
+                    $name,
+                    $this->getFieldProperty($name),
+                    $this->getLanguage()
+                ))
+            : null;
+    }
+
     public function getModuleCaption()
     {
         global $admin_captions_ar;

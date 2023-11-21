@@ -12,20 +12,25 @@ use diCore\Helper\ArrayHelper;
 
 class Grid
 {
+    // this one lives in di_core templates
+    const DEFAULT_TEMPLATE_PATH = 'admin/_index/grid/page';
+    // this one can live in project templates
+    const CUSTOM_TEMPLATE_PATH = 'admin/_index/grid-custom/page';
+
     /** @var BasePage */
     private $AdminPage;
 
     /** @var array */
-    private $buttonsAr;
+    private $buttonsAr = [];
 
     /** @var \diModel */
     private $curModel;
 
     /** @var array */
-    private $options;
+    protected $options;
 
-    /** @var string */
-    private $templateName = 'admin/_index/grid/page';
+    /** @var string | null */
+    protected $templateName = null;
 
     public function __construct(BasePage $AdminPage, $options = [])
     {
@@ -173,7 +178,15 @@ class Grid
 
     protected function getTemplateName()
     {
-        return $this->templateName;
+        if ($this->templateName) {
+            return $this->templateName;
+        }
+
+        if ($this->getTwig()->exists(static::CUSTOM_TEMPLATE_PATH)) {
+            return static::CUSTOM_TEMPLATE_PATH;
+        }
+
+        return static::DEFAULT_TEMPLATE_PATH;
     }
 
     public function printElements(\diCollection $collection)
@@ -227,9 +240,7 @@ class Grid
 
             $model->setRelated([
                 'edit_href' => $editHref,
-                'img_url_prefix' => $this->getAdminPage()->getImgUrlPrefix(
-                    $model
-                ),
+                'img_url_prefix' => $this->getAdminPage()->getImgUrlPrefix($model),
                 'buttons' => $htmlButtons,
             ]);
         }

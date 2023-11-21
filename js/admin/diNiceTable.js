@@ -31,7 +31,7 @@ var diNiceTable = function (opts) {
 
     if (!settings.$table) {
         settings.$table = $(
-            '.dinicetable_div > table[data-table="{0}"],ul.admin-grid[data-table="{0}"]'.format(
+            '.dinicetable_div > table[data-table="{0}"],ul[data-role="admin-grid"][data-table="{0}"]'.format(
                 settings.table
             )
         );
@@ -245,7 +245,7 @@ var diNiceTable = function (opts) {
 
 diNiceTable.typeSelectors = {
     list: '.dinicetable_div',
-    grid: '.admin-grid[data-table]'
+    grid: '[data-role="admin-grid"][data-table]'
 };
 
 diNiceTable.getInstance = function (type) {

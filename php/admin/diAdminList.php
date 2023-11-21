@@ -242,14 +242,7 @@ class diAdminList
 
     public function getFieldTitle($name)
     {
-        return $this->getAdminPage()->doesFieldExist($name)
-            ? ($this->getAdminPage()->getFieldProperty($name, 'title') ?:
-                Form::getFieldTitle(
-                    $name,
-                    $this->getAdminPage()->getFieldProperty($name),
-                    $this->getAdminPage()->getLanguage()
-                ))
-            : null;
+        return $this->getAdminPage()->getFieldTitle($name);
     }
 
     private function initColumns()
@@ -401,9 +394,7 @@ class diAdminList
             } elseif (substr($name, 0, 1) == '#') {
                 $name = substr($name, 1);
                 $isToggle = CMS::isFieldToggle($name);
-                $method = camelize(
-                    ($isToggle ? 'toggle' : $name) . '_btn_cell'
-                );
+                $method = camelize(($isToggle ? 'toggle' : $name) . '_btn_cell');
 
                 switch ($name) {
                     case 'create':
@@ -433,10 +424,7 @@ class diAdminList
                             $p['href'] = $this->getCurModel()->getHref();
                         } else {
                             if (is_callable($p['href'])) {
-                                $p['href'] = $p['href'](
-                                    $this->getCurModel(),
-                                    $name
-                                );
+                                $p['href'] = $p['href']($this->getCurModel(), $name);
                             }
 
                             $p['href'] = $this->replaceValues($p['href']);
@@ -471,10 +459,7 @@ class diAdminList
                         );
 
                         if (is_callable($p['active'])) {
-                            $p['active'] = $p['active'](
-                                $this->getCurModel(),
-                                $name
-                            );
+                            $p['active'] = $p['active']($this->getCurModel(), $name);
                         }
 
                         $p['href'] = $this->replaceValues($p['href']);

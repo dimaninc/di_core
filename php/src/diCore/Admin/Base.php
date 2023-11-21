@@ -677,12 +677,12 @@ class Base
         }
     }
 
-    public function getStartMethod()
+    public function getStartMethod($module)
     {
-        return $this->getStartMethodByAdminLevel($this->getAdminLevel());
+        return $this->getStartMethodByAdminLevel($module, $this->getAdminLevel());
     }
 
-    protected function getStartMethodByAdminLevel($level)
+    protected function getStartMethodByAdminLevel($module, $level)
     {
         return static::DEFAULT_METHOD;
     }
@@ -728,7 +728,7 @@ class Base
         }
 
         $this->module = $this->getUriParam(0, $this->getStartPath());
-        $this->method = $this->getUriParam(1, $this->getStartMethod());
+        $this->method = $this->getUriParam(1, $this->getStartMethod($this->module));
 
         // back compatibility
         if (\diRequest::get('path')) {
