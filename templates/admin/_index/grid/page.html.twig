@@ -2,6 +2,8 @@
 
 {{ before_table|raw }}
 
+{% block before_grid %}{% endblock %}
+
 <ul class="{% block wrapper_class %}admin-grid{% endblock %}" data-role="admin-grid" data-table="{{ table }}"{% block wrapper_attributes %}{% endblock %}>
 	{% block before_rows %}{% endblock %}
 	{% for row in rows %}
@@ -23,6 +25,8 @@
 	{% endfor %}
 	{% block after_rows %}{% for i in 1..3 %}<li class="layout-helper"></li>{% endfor %}{% endblock %}
 </ul>
+
+{% block after_grid %}{% endblock %}
 
 {{ after_table|raw }}
 
