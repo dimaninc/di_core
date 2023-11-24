@@ -127,7 +127,6 @@ class diImage
 
     public function __construct($fn = null)
     {
-        //$this->image = false;
         $this->changed = false;
         $this->orig_fn = '';
         $this->w = 0;
@@ -141,7 +140,7 @@ class diImage
 
         $this->set_bg_color('#ffffff');
 
-        if (!is_null($fn)) {
+        if ($fn) {
             $this->open($fn);
         }
     }
@@ -166,47 +165,61 @@ class diImage
         return in_array($type, [self::TYPE_SWF, self::TYPE_SWC]);
     }
 
+    public static function isImageMagickInstalled()
+    {
+        $command = 'convert -version';
+        exec($command, $output, $returnCode);
+
+        return $returnCode === 0;
+    }
+
     function open($fn)
     {
+        $this->image = null;
         $this->orig_fn = $fn;
+
         list($this->w, $this->h, $this->t) = is_file($fn)
             ? getimagesize($fn)
             : [0, 0, 0];
 
-        if (
-            $this->t >= 1 &&
-            $this->t <= 3 &&
-            $this->w * $this->h > self::MAX_GD_WIDTH * self::MAX_GD_HEIGHT &&
-            class_exists('IMagick')
-        ) {
-            $im = new \Imagick($fn);
-            $im->resizeImage(
-                self::MAX_GD_WIDTH,
-                self::MAX_GD_HEIGHT,
-                \Imagick::FILTER_CATROM,
-                1,
-                true
-            );
-            $im->writeImage();
-            $im->clear();
-            $im->destroy();
-
-            unset($im);
-
-            list($this->w, $this->h, $this->t) = getimagesize($fn);
+        if ($this->t < 1 || $this->t > 3) {
+            return $this->image;
         }
 
-        if (
-            $this->t >= 1 &&
-            $this->t <= 3 &&
-            $this->w * $this->h <= self::MAX_GD_WIDTH * self::MAX_GD_HEIGHT
-        ) {
+        $maxSize = max(self::MAX_GD_WIDTH, self::MAX_GD_HEIGHT);
+        $maxArea = self::MAX_GD_WIDTH * self::MAX_GD_HEIGHT;
+
+        if ($this->w * $this->h > $maxArea) {
+            if (class_exists('Imagick')) {
+                $im = new \Imagick($fn);
+                $im->resizeImage(
+                    $maxSize,
+                    $maxSize,
+                    \Imagick::FILTER_CATROM,
+                    1,
+                    true
+                );
+                $im->writeImage();
+                $im->clear();
+                $im->destroy();
+
+                unset($im);
+
+                list($this->w, $this->h, $this->t) = getimagesize($fn);
+            } elseif (self::isImageMagickInstalled()) {
+                $dimensions = $maxSize . 'x' . $maxSize;
+                $command = "convert $fn -resize $dimensions $fn";
+                exec($command);
+
+                list($this->w, $this->h, $this->t) = getimagesize($fn);
+            }
+        }
+
+        if ($this->w * $this->h <= $maxArea) {
             $create_func = static::createFunction($this->t);
             $this->image = $create_func($fn);
 
             $this->read_info();
-        } else {
-            $this->image = false;
         }
 
         return $this->image;
@@ -217,7 +230,7 @@ class diImage
         return !!$this->image;
     }
 
-    function store($dst_fn = '', $image = false)
+    function store($dst_fn = '', $image = null)
     {
         $dst_type = $this->dst_type ?: $this->t;
 
@@ -322,7 +335,7 @@ class diImage
     function get_thumb($mode, $w, $h = 0)
     {
         if (!$this->image) {
-            return false;
+            return null;
         }
 
         if (($mode & DI_THUMB_EXPAND_SIZE_MASK) == DI_THUMB_EXPAND_TO_SIZE) {
@@ -680,7 +693,7 @@ class diImage
     function get_flipped_horizontal()
     {
         if (!$this->image) {
-            return false;
+            return null;
         }
 
         $dst_img = imagecreatetruecolor($this->w, $this->h);
@@ -719,7 +732,7 @@ class diImage
     function get_flipped_vertical()
     {
         if (!$this->image) {
-            return false;
+            return null;
         }
 
         $dst_img = imagecreatetruecolor($this->w, $this->h);
