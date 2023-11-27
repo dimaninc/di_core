@@ -8,6 +8,7 @@
 
 namespace diCore\Admin;
 
+use diCore\Admin\Data\FormFlag;
 use diCore\Data\Config;
 use diCore\Data\Configuration;
 use diCore\Database\Connection;
@@ -121,9 +122,7 @@ class Submit
             $this->_form_fields = isset($GLOBALS[$this->table . '_form_fields'])
                 ? $GLOBALS[$this->table . '_form_fields']
                 : [];
-            $this->_local_fields = isset(
-                $GLOBALS[$this->table . '_local_fields']
-            )
+            $this->_local_fields = isset($GLOBALS[$this->table . '_local_fields'])
                 ? $GLOBALS[$this->table . '_local_fields']
                 : [];
             $this->_all_fields = isset($GLOBALS[$this->table . '_all_fields'])
@@ -164,11 +163,7 @@ class Submit
                     $skip = true;
                 }
 
-                if (
-                    $this->getId() &&
-                    !$value &&
-                    in_array($type, ['pic', 'file'])
-                ) {
+                if ($this->getId() && !$value && in_array($type, ['pic', 'file'])) {
                     $skip = true;
                 }
 
@@ -345,7 +340,8 @@ class Submit
                     'dynamic_files',
                     'separator',
                 ]) &&
-                !$this->isFlag($f, 'virtual')
+                !$this->isFlag($f, FormFlag::virtual) &&
+                !$this->isFlag($f, FormFlag::initially_hidden)
             ) {
                 // echo $f;
 
@@ -423,11 +419,7 @@ class Submit
                 case 'password':
                     $this->setData($f, $value ?: '')->setData(
                         $f . '2',
-                        \diRequest::post(
-                            $f . '2',
-                            $v['default'] ?? '',
-                            'string'
-                        )
+                        \diRequest::post($f . '2', $v['default'] ?? '', 'string')
                     );
                     break;
 
@@ -451,10 +443,10 @@ class Submit
                     break;
 
                 case 'checkboxes':
-                    $saver = $this->getFieldProperty(
-                        $f,
-                        'saverBeforeSubmit'
-                    ) ?: [self::class, 'checkboxesSaver'];
+                    $saver = $this->getFieldProperty($f, 'saverBeforeSubmit') ?: [
+                        self::class,
+                        'checkboxesSaver',
+                    ];
                     $saver($this, $f);
                     break;
 
@@ -472,10 +464,7 @@ class Submit
         // new fields
         foreach ($this->_ff as $f) {
             if (!empty($_POST[$f . Form::NEW_FIELD_SUFFIX])) {
-                $this->setData(
-                    $f,
-                    \diRequest::post($f . Form::NEW_FIELD_SUFFIX)
-                );
+                $this->setData($f, \diRequest::post($f . Form::NEW_FIELD_SUFFIX));
             }
         }
 
@@ -498,9 +487,7 @@ class Submit
             switch ($v['type']) {
                 case 'order_num':
                     $direction = isset($v['direction']) ? $v['direction'] : 1;
-                    $queryEnding = isset($v['queryEnding'])
-                        ? $v['queryEnding']
-                        : '';
+                    $queryEnding = isset($v['queryEnding']) ? $v['queryEnding'] : '';
                     $force = !empty($v['force']);
 
                     if (is_callable($queryEnding)) {
@@ -573,10 +560,7 @@ class Submit
                             );
                         });
                     } else {
-                        $this->setData(
-                            $f,
-                            $this->getModel()->getOrigData($f) ?: ''
-                        );
+                        $this->setData($f, $this->getModel()->getOrigData($f) ?: '');
                     }
                     break;
 
@@ -750,11 +734,8 @@ class Submit
         return $this->slugFieldName;
     }
 
-    public function makeSlug(
-        $origin = null,
-        $slugField = null,
-        $extraOptions = []
-    ) {
+    public function makeSlug($origin = null, $slugField = null, $extraOptions = [])
+    {
         if (is_array($origin) && !$extraOptions) {
             $extraOptions = $origin;
             $origin = null;
@@ -953,14 +934,9 @@ class Submit
 
     function make_datetime($field, $date = true, $time = false)
     {
-        if (
-            $this->isFlag($field, 'static') ||
-            $this->isFlag($field, 'hidden')
-        ) {
+        if ($this->isFlag($field, 'static') || $this->isFlag($field, 'hidden')) {
             $default =
-                substr($this->_all_fields[$field]['type'], -4) == '_str'
-                    ? ''
-                    : 0;
+                substr($this->_all_fields[$field]['type'], -4) == '_str' ? '' : 0;
 
             $this->setData($field, \diRequest::post($field, $default));
         } else {
@@ -1092,9 +1068,7 @@ class Submit
                 'name' => $origFilename,
                 'tmp_name' => \diPaths::fileSystem() . $tmpPath . $tmpFilename,
                 'error' => 0,
-                'size' => filesize(
-                    \diPaths::fileSystem() . $tmpPath . $tmpFilename
-                ),
+                'size' => filesize(\diPaths::fileSystem() . $tmpPath . $tmpFilename),
             ];
         }
 
@@ -1112,8 +1086,7 @@ class Submit
         }
 
         $hasFilesOptions =
-            $filesOptions ||
-            $this->getModel()->getPicStoreSettings(current($field));
+            $filesOptions || $this->getModel()->getPicStoreSettings(current($field));
 
         // back compatibility
         if (
@@ -1137,9 +1110,7 @@ class Submit
         foreach ($field as $f) {
             $fieldFileOptions = self::prepareFileOptions(
                 $f,
-                $filesOptions ?:
-                $this->getModel()->getPicStoreSettings($f) ?:
-                [],
+                $filesOptions ?: $this->getModel()->getPicStoreSettings($f) ?: [],
                 $this->getModel(),
                 $this->getTable()
             );
@@ -1154,11 +1125,7 @@ class Submit
                 );
 
                 if (!$this->getData($f)) {
-                    $this->generateFilename(
-                        $f,
-                        $baseFolder,
-                        $_FILES[$f]['name']
-                    );
+                    $this->generateFilename($f, $baseFolder, $_FILES[$f]['name']);
                 } elseif ($oldExt != $newExt) {
                     $this->setData(
                         $f,
@@ -1263,19 +1230,14 @@ class Submit
     ) {
         $baseName =
             self::cleanFilename(
-                transliterate_rus_to_eng(
-                    StringHelper::fileBaseName($origFilename)
-                )
+                transliterate_rus_to_eng(StringHelper::fileBaseName($origFilename))
             ) ?:
             get_unique_id(self::FILE_NAME_RANDOM_LENGTH);
         $endingIdx = 0;
-        $extension =
-            '.' . strtolower(StringHelper::fileExtension($origFilename));
+        $extension = '.' . strtolower(StringHelper::fileExtension($origFilename));
 
         $extLen = mb_strlen($extension);
-        $maxBaseLen = $maxLen
-            ? min(mb_strlen($baseName), $maxLen - $extLen)
-            : 0;
+        $maxBaseLen = $maxLen ? min(mb_strlen($baseName), $maxLen - $extLen) : 0;
 
         do {
             switch ($naming) {
@@ -1286,9 +1248,7 @@ class Submit
 
                 case self::FILE_NAMING_ORIGINAL:
                     $filename = $baseName;
-                    $suffix = $endingIdx
-                        ? self::FILE_NAME_GLUE . $endingIdx
-                        : '';
+                    $suffix = $endingIdx ? self::FILE_NAME_GLUE . $endingIdx : '';
                     $suffixLen = mb_strlen($suffix);
                     $maxFnLen = $maxBaseLen - $suffixLen;
 
@@ -1370,9 +1330,7 @@ class Submit
                 $old_file_ext = $this->getData($field)
                     ? strtolower(get_file_ext($this->getData($field)))
                     : '';
-                $new_file_ext = strtolower(
-                    get_file_ext($_FILES[$field]['name'])
-                );
+                $new_file_ext = strtolower(get_file_ext($_FILES[$field]['name']));
 
                 if (!$this->getData($field)) {
                     $this->generateFilename(
@@ -1439,10 +1397,7 @@ class Submit
                 );
             }
 
-            file_put_contents(
-                $_FILES[$field]['tmp_name'][$id],
-                base64_decode($raw)
-            );
+            file_put_contents($_FILES[$field]['tmp_name'][$id], base64_decode($raw));
 
             $_FILES[$field]['size'][$id] = filesize(
                 $_FILES[$field]['tmp_name'][$id]
@@ -1507,15 +1462,11 @@ class Submit
             ];
 
             if (isset($_POST[$field . '_alt_title'][$id])) {
-                $db_ar['alt_title'] = str_in(
-                    $_POST[$field . '_alt_title'][$id]
-                );
+                $db_ar['alt_title'] = str_in($_POST[$field . '_alt_title'][$id]);
             }
 
             if (isset($_POST[$field . '_html_title'][$id])) {
-                $db_ar['html_title'] = str_in(
-                    $_POST[$field . '_html_title'][$id]
-                );
+                $db_ar['html_title'] = str_in($_POST[$field . '_html_title'][$id]);
             }
 
             // pic
@@ -1529,8 +1480,7 @@ class Submit
                 !$_FILES[$varName]['error'][$id]
             ) {
                 $ext =
-                    '.' .
-                    strtolower(get_file_ext($_FILES[$varName]['name'][$id]));
+                    '.' . strtolower(get_file_ext($_FILES[$varName]['name'][$id]));
 
                 if ($test_r && $test_r->$f) {
                     $db_ar[$f] = replace_file_ext($test_r->$f, $ext);
@@ -1621,9 +1571,7 @@ class Submit
             }
             //
 
-            $callback = isset(
-                $this->_all_fields[$field]['after_submit_callback']
-            )
+            $callback = isset($this->_all_fields[$field]['after_submit_callback'])
                 ? $this->_all_fields[$field]['after_submit_callback']
                 : '';
 
@@ -1682,11 +1630,8 @@ class Submit
         return $this;
     }
 
-    public static function rebuildDynamicPics(
-        $module,
-        $field = null,
-        $id = null
-    ) {
+    public static function rebuildDynamicPics($module, $field = null, $id = null)
+    {
         $Submit = new self(BasePage::liteCreate($module));
         $callback =
             $Submit->_all_fields[$field]['callback'] ??
@@ -1906,10 +1851,7 @@ class Submit
         }
 
         if (
-            !(
-                move_uploaded_file($F['tmp_name'], $fn) ||
-                rename($F['tmp_name'], $fn)
-            )
+            !(move_uploaded_file($F['tmp_name'], $fn) || rename($F['tmp_name'], $fn))
         ) {
             dierror("Unable to copy file {$F['name']} to {$fn}");
         }
@@ -2046,9 +1988,7 @@ class Submit
             }
         }
 
-        list($sourceWidth, $sourceHeight, $imgType) = getimagesize(
-            $F['tmp_name']
-        );
+        list($sourceWidth, $sourceHeight, $imgType) = getimagesize($F['tmp_name']);
 
         if (\diImage::isImageType($imgType)) {
             $I = new \diImage();
@@ -2120,10 +2060,7 @@ class Submit
                         $tnWM = extend($tnWM, $fileOptionsTn['watermark']);
                     }
 
-                    list(
-                        $resultWidth,
-                        $resultHeight,
-                    ) = self::getResultDimensions([
+                    list($resultWidth, $resultHeight) = self::getResultDimensions([
                         'widthParam' => $widthParam,
                         'heightParam' => $heightParam,
                         'rule' => $fileOptionsTn['rule'],
@@ -2303,9 +2240,7 @@ class Submit
                 }
             }
 
-            list($ar['pic_w'], $ar['pic_h'], $ar['pic_t']) = getimagesize(
-                $full_fn
-            );
+            list($ar['pic_w'], $ar['pic_h'], $ar['pic_t']) = getimagesize($full_fn);
         } else {
             list($ar['pic_w'], $ar['pic_h'], $ar['pic_t']) = [0, 0, 0];
 
@@ -2359,23 +2294,11 @@ function dias_save_file($F, $field, $pics_folder, $fn, Submit $obj)
 /** @deprecated */
 function dias_save_dynamic_pic($F, $tableOrSubmit, $what, &$ar, $pics_folder)
 {
-    Submit::storeDynamicPicCallback(
-        $F,
-        $tableOrSubmit,
-        $what,
-        $ar,
-        $pics_folder
-    );
+    Submit::storeDynamicPicCallback($F, $tableOrSubmit, $what, $ar, $pics_folder);
 }
 
 /** @deprecated */
 function diasSaveDynamicPic($F, $tableOrSubmit, $what, &$ar, $pics_folder)
 {
-    Submit::storeDynamicPicCallback(
-        $F,
-        $tableOrSubmit,
-        $what,
-        $ar,
-        $pics_folder
-    );
+    Submit::storeDynamicPicCallback($F, $tableOrSubmit, $what, $ar, $pics_folder);
 }

@@ -58,6 +58,8 @@ abstract class BasePage
 
     private $floatingSubmit = false;
 
+    private $redirectAfterSubmitNeeded = true;
+
     const LIST_LIST = 1;
     const LIST_GRID = 2;
 
@@ -251,6 +253,16 @@ abstract class BasePage
         return $Page;
     }
 
+    public function liteSubmit()
+    {
+        if ($this->beforeSubmitForm()) {
+            $this->submitForm();
+        }
+        $this->afterSubmitForm();
+
+        return $this;
+    }
+
     public function setRenderCallback(callable $callback)
     {
         $this->renderCallback = $callback;
@@ -320,6 +332,18 @@ abstract class BasePage
     public function getFloatingSubmit()
     {
         return $this->floatingSubmit;
+    }
+
+    public function isRedirectAfterSubmitNeeded()
+    {
+        return $this->redirectAfterSubmitNeeded;
+    }
+
+    public function setRedirectAfterSubmitNeeded(bool $redirectAfterSubmitNeeded)
+    {
+        $this->redirectAfterSubmitNeeded = $redirectAfterSubmitNeeded;
+
+        return $this;
     }
 
     public function tryToInitTable()
@@ -1418,7 +1442,9 @@ abstract class BasePage
 
     protected function redirectAfterSubmit()
     {
-        $this->redirectTo($this->getRedirectAfterSubmitUrl());
+        if ($this->isRedirectAfterSubmitNeeded()) {
+            $this->redirectTo($this->getRedirectAfterSubmitUrl());
+        }
 
         return $this;
     }

@@ -177,6 +177,8 @@ class Base
 
     private function liteInit()
     {
+        $this->adminUser = \diAdminUser::create();
+
         return $this;
     }
 
