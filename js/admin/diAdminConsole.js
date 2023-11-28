@@ -18,12 +18,14 @@ var diAdminConsole = function (_opts) {
             var sign = $(this).hasClass('up') ? -1 : 1;
             var diff = sign * e.$container.height();
 
-            e.$container.stop(true, true).animate(
-                {
-                    scrollTop: e.$container.get(0).scrollTop + diff
-                },
-                opts.scrollTimeout * 300
-            );
+            if (e.$container.length > 0) {
+                e.$container.stop(true, true).animate(
+                    {
+                        scrollTop: e.$container.get(0).scrollTop + diff
+                    },
+                    opts.scrollTimeout * 300
+                );
+            }
         });
     }
 
@@ -44,12 +46,14 @@ var diAdminConsole = function (_opts) {
     this.add = function (line) {
         e.$console.append(getLineHtml(line));
 
-        e.$container.stop(true, true).animate(
-            {
-                scrollTop: e.$console.get(0).scrollHeight
-            },
-            opts.scrollTimeout * 1000
-        );
+        if (e.$container.length > 0) {
+            e.$container.stop(true, true).animate(
+                {
+                    scrollTop: e.$console.get(0).scrollHeight
+                },
+                opts.scrollTimeout * 1000
+            );
+        }
 
         lines++;
         toggleNavy();

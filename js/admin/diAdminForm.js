@@ -87,6 +87,12 @@ var diAdminForm = function (table, id, auto_save_timeout) {
         initiating = false;
     }
 
+    this.setId = function (id) {
+        this.id = id;
+
+        return this;
+    };
+
     this.L = function (name, vars) {
         var v =
             typeof local[this.getLanguage()][name] !== 'undefined'
@@ -212,162 +218,174 @@ var diAdminForm = function (table, id, auto_save_timeout) {
     };
 
     this.initFileInputs = function () {
-        $('.diadminform-row .value').on('change', 'input[type="file"]', function () {
-            var xhttp = new XMLHttpRequest();
+        $('body').on(
+            'change',
+            '.diadminform-row .value input[type="file"]',
+            function () {
+                var xhttp = new XMLHttpRequest();
 
-            function sendFileChunk(
-                file,
-                tmpFilename,
-                chunkSize,
-                chunkIdx,
-                chunksCount,
-                resetInput
-            ) {
-                if (chunkIdx < chunksCount) {
-                    var offset = chunkIdx * chunkSize;
-                    xhttp.onreadystatechange = function () {
-                        if (this.readyState == 4 && this.status == 200) {
-                            chunkIdx++;
-                            sendFileChunk(
-                                file,
-                                tmpFilename,
-                                chunkSize,
-                                chunkIdx,
-                                chunksCount,
-                                resetInput
-                            );
-                        }
-                    };
-                    xhttp.open(
-                        'POST',
-                        di.getWorkerPath('files', 'chunk_upload') +
-                            '?table=' +
-                            self.table +
-                            '&field=' +
-                            field +
-                            '&tmp_filename=' +
-                            di.urlencode(tmpFilename),
-                        true
-                    );
-                    xhttp.setRequestHeader(
-                        'Content-Type',
-                        'application/octet-stream'
-                    );
-                    xhttp.send(file.slice(offset, offset + chunkSize));
-                } else {
-                    resetInput();
-                }
-            }
-
-            var $inp = $(this);
-            var field = $inp.attr('name');
-            var chunk = $inp.data('chunk');
-            var $wrapper = $inp.closest('.file-input-wrapper');
-            var $valueWrapper = $wrapper.closest('.value');
-            var $rowWrapper = $wrapper.closest('.diadminform-row');
-            var $existingPreviewArea = $valueWrapper.find('.existing-pic-holder');
-            var $previewArea;
-            var ext;
-            var isPic;
-            var isSvg;
-
-            var getPreviewArea = function () {
-                if (!$previewArea) {
-                    $previewArea = $('<div class="existing-pic-holder"/>').prependTo(
-                        $valueWrapper
-                    );
-                }
-
-                return $previewArea;
-            };
-
-            if (this.files.length) {
-                if (chunk) {
-                    var file = this.files[0];
-                    var chunkSize = chunk;
-                    var chunksCount = Math.ceil(file.size / chunkSize, chunkSize);
-                    var chunkIdx = 0;
-                    var tmpFilename =
-                        new Date().getTime() + '-' + get_unique_id(16) + '.tmp';
-                    var $inpUploaded = $(
-                        'input[name="__uploaded__{0}"]'.format(field)
-                    );
-                    var $inpOrigFilename = $(
-                        'input[name="__orig_filename__{0}"]'.format(field)
-                    );
-
-                    $inpUploaded.val(tmpFilename);
-                    $inpOrigFilename.val(basename(this.value));
-
-                    var resetInput = function () {
-                        $wrapper.removeAttr('data-progress');
-
-                        try {
-                            $inp[0].value = '';
-                            if ($inp[0].value) {
-                                $inp[0].type = 'text';
-                                $inp[0].type = 'file';
+                function sendFileChunk(
+                    file,
+                    tmpFilename,
+                    chunkSize,
+                    chunkIdx,
+                    chunksCount,
+                    resetInput
+                ) {
+                    if (chunkIdx < chunksCount) {
+                        var offset = chunkIdx * chunkSize;
+                        xhttp.onreadystatechange = function () {
+                            if (this.readyState == 4 && this.status == 200) {
+                                chunkIdx++;
+                                sendFileChunk(
+                                    file,
+                                    tmpFilename,
+                                    chunkSize,
+                                    chunkIdx,
+                                    chunksCount,
+                                    resetInput
+                                );
                             }
-                        } catch (e) {
-                            console.log('Unable to reset input after upload: ', e);
-                        }
-                    };
-
-                    sendFileChunk(
-                        file,
-                        tmpFilename,
-                        chunkSize,
-                        chunkIdx,
-                        chunksCount,
-                        resetInput
-                    );
-
-                    $wrapper.attr('data-progress', '+');
+                        };
+                        xhttp.open(
+                            'POST',
+                            di.getWorkerPath('files', 'chunk_upload') +
+                                '?table=' +
+                                self.table +
+                                '&field=' +
+                                field +
+                                '&tmp_filename=' +
+                                di.urlencode(tmpFilename),
+                            true
+                        );
+                        xhttp.setRequestHeader(
+                            'Content-Type',
+                            'application/octet-stream'
+                        );
+                        xhttp.send(file.slice(offset, offset + chunkSize));
+                    } else {
+                        resetInput();
+                    }
                 }
 
-                $wrapper
-                    .addClass('selected')
-                    .attr('data-caption', basename(this.value));
+                var $inp = $(this);
+                var field = $inp.attr('name');
+                var chunk = $inp.data('chunk');
+                var $wrapper = $inp.closest('.file-input-wrapper');
+                var $valueWrapper = $wrapper.closest('.value');
+                var $rowWrapper = $wrapper.closest('.diadminform-row');
+                var $existingPreviewArea = $valueWrapper.find(
+                    '.existing-pic-holder'
+                );
+                var $previewArea;
+                var ext;
+                var isPic;
+                var isSvg;
 
-                ext = get_file_ext(this.value || '').toLowerCase();
-                isPic = in_array(ext, extensions.pic);
-                isSvg = ext === 'svg';
+                var getPreviewArea = function () {
+                    if (!$previewArea) {
+                        $previewArea = $(
+                            '<div class="existing-pic-holder"/>'
+                        ).prependTo($valueWrapper);
+                    }
 
-                if (isPic) {
-                    for (var i in this.files) {
-                        if (this.files.hasOwnProperty(i)) {
-                            var $row = $(
-                                '<div class="container embed no-bottom-margin"><img src=""></div>'
-                            );
+                    return $previewArea;
+                };
 
-                            $existingPreviewArea.remove();
+                if (this.files.length) {
+                    if (chunk) {
+                        var file = this.files[0];
+                        var chunkSize = chunk;
+                        var chunksCount = Math.ceil(
+                            file.size / chunkSize,
+                            chunkSize
+                        );
+                        var chunkIdx = 0;
+                        var tmpFilename =
+                            new Date().getTime() + '-' + get_unique_id(16) + '.tmp';
+                        var $inpUploaded = $(
+                            'input[name="__uploaded__{0}"]'.format(field)
+                        );
+                        var $inpOrigFilename = $(
+                            'input[name="__orig_filename__{0}"]'.format(field)
+                        );
 
-                            getPreviewArea().append($row);
-                            $rowWrapper
-                                .attr('data-exists', 'true')
-                                .data('exists', true);
-                            $('.empty-pic-placeholder').remove();
+                        $inpUploaded.val(tmpFilename);
+                        $inpOrigFilename.val(basename(this.value));
 
-                            (function ($row, file, isSvg) {
-                                var reader = new FileReader();
+                        var resetInput = function () {
+                            $wrapper.removeAttr('data-progress');
 
-                                reader.onload = function (e) {
-                                    var $img = $row.find('img');
+                            try {
+                                $inp[0].value = '';
+                                if ($inp[0].value) {
+                                    $inp[0].type = 'text';
+                                    $inp[0].type = 'file';
+                                }
+                            } catch (e) {
+                                console.log(
+                                    'Unable to reset input after upload: ',
+                                    e
+                                );
+                            }
+                        };
 
-                                    $img.attr('src', e.target.result);
-                                    if (isSvg) {
-                                        $img.css({
-                                            width: '200px'
-                                        });
-                                    }
-                                };
-                                reader.readAsDataURL(file);
-                            })($row, this.files[i], isSvg);
+                        sendFileChunk(
+                            file,
+                            tmpFilename,
+                            chunkSize,
+                            chunkIdx,
+                            chunksCount,
+                            resetInput
+                        );
+
+                        $wrapper.attr('data-progress', '+');
+                    }
+
+                    $wrapper
+                        .addClass('selected')
+                        .attr('data-caption', basename(this.value));
+
+                    ext = get_file_ext(this.value || '').toLowerCase();
+                    isPic = in_array(ext, extensions.pic);
+                    isSvg = ext === 'svg';
+
+                    if (isPic) {
+                        for (var i in this.files) {
+                            if (this.files.hasOwnProperty(i)) {
+                                var $row = $(
+                                    '<div class="container embed no-bottom-margin"><img src=""></div>'
+                                );
+
+                                $existingPreviewArea.remove();
+
+                                getPreviewArea().append($row);
+                                $rowWrapper
+                                    .attr('data-exists', 'true')
+                                    .data('exists', true);
+                                $('.empty-pic-placeholder').remove();
+
+                                (function ($row, file, isSvg) {
+                                    var reader = new FileReader();
+
+                                    reader.onload = function (e) {
+                                        var $img = $row.find('img');
+
+                                        $img.attr('src', e.target.result);
+                                        if (isSvg) {
+                                            $img.css({
+                                                width: '200px'
+                                            });
+                                        }
+                                    };
+                                    reader.readAsDataURL(file);
+                                })($row, this.files[i], isSvg);
+                            }
                         }
                     }
                 }
             }
-        });
+        );
 
         return this;
     };
