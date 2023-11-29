@@ -2478,65 +2478,64 @@ body[data-skin="entrine"] .admin-form-uploading-area-submit button {
   -webkit-flex-wrap: wrap;
   -ms-flex-wrap: wrap;
   flex-wrap: wrap;
-  margin: 0 20px 5px 20px;
   list-style: none;
+  margin: 0;
   padding: 0;
 }
+body[data-skin="classic"] .diadminform_tabs > ul {
+  gap: 5px;
+  margin: 0 20px 5px 20px;
+}
+@media screen and (max-width: 768px) {
+  body[data-skin="classic"] .diadminform_tabs > ul {
+    margin-left: 12px;
+  }
+}
 body[data-skin="entrine"] .diadminform_tabs > ul {
+  gap: 20px;
   margin: 0 20px;
 }
 @media screen and (max-width: 768px) {
   body[data-skin="entrine"] .diadminform_tabs > ul {
     margin: 0 12px 5px;
+    gap: 12px;
   }
 }
-@media screen and (max-width: 768px) {
-  .diadminform_tabs > ul {
-    margin-left: 12px;
-  }
-}
-.diadminform_tabs > ul li {
-  margin: 0 5px 5px 0;
+body[data-skin="classic"] .diadminform_tabs > ul li {
+  margin-bottom: 5px;
 }
 body[data-skin="entrine"] .diadminform_tabs > ul li {
-  margin-right: 20px;
   margin-bottom: 20px;
 }
 @media screen and (max-width: 768px) {
   body[data-skin="entrine"] .diadminform_tabs > ul li {
-    margin-right: 12px;
     margin-bottom: 12px;
   }
 }
-.diadminform_tabs > ul li:last-child {
-  margin-right: 0;
-}
 .diadminform_tabs > ul li > a {
-  display: block;
+  --font-size: inherit;
+  --font-weight: normal;
+  --border-radius: 0;
+  --border: none;
+  --padding: 0;
+  --color: inherit;
+  --background-color: none;
+  --selected-color: none;
+  --selected-background-color: none;
+  --selected-box-shadow: none;
   position: relative;
-  padding: 8px 10px;
-  font-size: 12px;
-  font-weight: bold;
-  background-color: #fff;
-  border: 1px solid #cfcfcf;
-  border-radius: 8px;
-  z-index: 5;
-  -webkit-box-sizing: border-box;
-  -moz-box-sizing: border-box;
-  box-sizing: border-box;
-}
-.diadminform_tabs > ul li > a > div {
-  vertical-align: middle;
-  display: inline-block;
-  width: 100%;
-}
-body[data-skin="entrine"] .diadminform_tabs > ul li > a {
   display: -webkit-box;
   display: -moz-box;
   display: -webkit-flex;
   display: -ms-flexbox;
   display: box;
   display: flex;
+  -webkit-box-orient: vertical;
+  -moz-box-orient: vertical;
+  -o-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
   -webkit-box-pack: center;
   -moz-box-pack: center;
   -o-box-pack: center;
@@ -2549,16 +2548,40 @@ body[data-skin="entrine"] .diadminform_tabs > ul li > a {
   -ms-flex-align: center;
   -webkit-align-items: center;
   align-items: center;
-  background-color: #f1f1f1;
-  color: #4a4a4a;
-  border: 0;
-  border-radius: 0;
-  font-weight: 600;
+  padding: var(--padding);
+  font-size: var(--font-size);
+  font-weight: var(--font-weight);
+  color: var(--color);
+  background-color: var(--background-color);
+  border: var(--border);
+  border-radius: var(--border-radius);
+  z-index: 5;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+  text-decoration: none;
+}
+body[data-skin="classic"] .diadminform_tabs > ul li > a {
+  --border-radius: 8px;
+  --border: 1px solid #cfcfcf;
+  --font-size: 12px;
+  --font-weight: bold;
+  --padding: 8px 10px;
+  --background-color: #fff;
+  --selected-color: #edf0f4;
+  --selected-background-color: #edf0f4;
+}
+body[data-skin="entrine"] .diadminform_tabs > ul li > a {
+  --font-weight: 600;
+  --background-color: #f1f1f1;
+  --color: #4a4a4a;
+  --padding: 5px;
+  --selected-background-color: #f1f1f1;
+  --selected-box-shadow: inset 0 -2px 0 0 #5ab5df;
   text-align: center;
   min-width: 180px;
   max-width: 380px;
   height: 48px;
-  padding: 5px;
 }
 @media screen and (max-width: 768px) {
   body[data-skin="entrine"] .diadminform_tabs > ul li > a {
@@ -2572,13 +2595,10 @@ body[data-skin="entrine"] .diadminform_tabs > ul li > a {
 }
 .diadminform_tabs > ul li > a:hover,
 .diadminform_tabs > ul li > a.selected {
-  background-color: #edf0f4;
-}
-body[data-skin="entrine"] .diadminform_tabs > ul li > a:hover,
-body[data-skin="entrine"] .diadminform_tabs > ul li > a.selected {
-  background-color: #f1f1f1;
-  -webkit-box-shadow: inset 0 -2px 0 0 #5ab5df;
-  box-shadow: inset 0 -2px 0 0 #5ab5df;
+  color: var(--selected-color);
+  background-color: var(--selected-background-color);
+  -webkit-box-shadow: var(--selected-box-shadow);
+  box-shadow: var(--selected-box-shadow);
 }
 .existing-pic-holder {
   display: inline-block;

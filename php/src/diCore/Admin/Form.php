@@ -1713,7 +1713,7 @@ EOF;
                         $v = $v[$this->getX()->getLanguage()];
                     }
 
-                    $tab_head_ar[] = "<li data-tab='{$field}'><a data-tab=\"{$field}\" href=\"{$_SERVER['REQUEST_URI']}#$field\"><div>$v</div></a></li>";
+                    $tab_head_ar[] = "<li data-tab='{$field}'><a data-tab=\"{$field}\" href=\"{$_SERVER['REQUEST_URI']}#$field\">$v</a></li>";
                 }
             }
 

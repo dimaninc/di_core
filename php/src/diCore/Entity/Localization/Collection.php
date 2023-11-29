@@ -56,6 +56,17 @@ class Collection extends \diCollection
         return $cmsClass::$defaultLanguage;
     }
 
+    public static function getLangFields($field)
+    {
+        $ar = [];
+
+        foreach (static::getPossibleLanguages() as $lang) {
+            $ar[] = \diModel::getLocalizedFieldName($field, $lang);
+        }
+
+        return $ar;
+    }
+
     public function asArrayByLanguage()
     {
         $ar = array_fill_keys(static::getPossibleLanguages(), []);

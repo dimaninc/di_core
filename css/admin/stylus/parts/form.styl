@@ -374,67 +374,95 @@
     > ul
         display flex
         flex-wrap wrap
-        margin 0 20px 5px 20px
         list-style none
+        margin 0
         padding 0
-        {$entrineSkin} &
+        {$classicSkin} & {
+            gap 5px
+            margin 0 20px 5px 20px
+            @media $mqTablet {
+                margin-left 12px
+            }
+        }
+        {$entrineSkin} & {
+            gap 20px
             margin 0 20px
-            @media $mqTablet
+            @media $mqTablet {
                 margin 0 12px 5px
-        @media $mqTablet
-            margin-left 12px
+                gap 12px
+            }
+        }
         li
-            margin 0 5px 5px 0
-            {$entrineSkin} &
-                margin-right 20px
+            {$classicSkin} & {
+                margin-bottom 5px
+            }
+            {$entrineSkin} & {
                 margin-bottom 20px
-                @media $mqTablet
-                    margin-right 12px
+                @media $mqTablet {
                     margin-bottom 12px
-            &:last-child
-                margin-right 0
+                }
+            }
             > a
-                display block
+                --font-size inherit
+                --font-weight normal
+                --border-radius 0
+                --border none
+                --padding 0
+                --color inherit
+                --background-color none
+                --selected-color none
+                --selected-background-color none
+                --selected-box-shadow none
                 position relative
-                padding 8px 10px
-                font-size 12px
-                font-weight bold
-                background-color white
-                border 1px solid #cfcfcf
-                border-radius 8px
+                display flex
+                flex-direction column
+                justify-content center
+                align-items center
+                padding var(--padding)
+                font-size var(--font-size)
+                font-weight var(--font-weight)
+                color var(--color)
+                background-color var(--background-color)
+                border var(--border)
+                border-radius var(--border-radius)
                 z-index 5
                 box-sizing border-box
-                > div
-                    vertical-align middle
-                    display inline-block
-                    width 100%
+                text-decoration none
+                {$classicSkin} & {
+                    --border-radius 8px
+                    --border 1px solid #cfcfcf
+                    --font-size 12px
+                    --font-weight bold
+                    --padding 8px 10px
+                    --background-color white
+                    --selected-color #EDF0F4
+                    --selected-background-color #EDF0F4
+                }
                 {$entrineSkin} &
-                    display flex
-                    justify-content center
-                    align-items center
-                    background-color $entrineColorBgLightGray
-                    color $entrineColorText
-                    border 0
-                    border-radius 0
-                    font-weight 600
+                    --font-weight 600
+                    --background-color $entrineColorBgLightGray
+                    --color $entrineColorText
+                    --padding 5px
+                    --selected-background-color $entrineColorBgLightGray
+                    --selected-box-shadow inset 0 -2px 0 0 $entrineColorTextMenuSelected
                     text-align center
                     min-width $entrineBaseWidth
                     max-width ($entrineBaseWidth * 2) + 20px
                     height $entrineBaseHeight
-                    padding 5px
-                    @media $mqTablet
+                    @media $mqTablet {
                         min-width 0
                         max-width none
                         width auto
                         height 40px
                         padding-top 0
                         padding-bottom 0
-                &:hover
-                &.selected
-                    background-color #EDF0F4
-                    {$entrineSkin} &
-                        background-color $entrineColorBgLightGray
-                        box-shadow inset 0 -2px 0 0 $entrineColorTextMenuSelected
+                    }
+                &:hover,
+                &.selected {
+                    color var(--selected-color)
+                    background-color var(--selected-background-color)
+                    box-shadow var(--selected-box-shadow)
+                }
 
 .existing-pic-holder
     display inline-block
