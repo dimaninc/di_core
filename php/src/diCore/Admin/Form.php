@@ -563,6 +563,7 @@ class Form
                         self::$lngStrings[self::$language],
                         self::$customLngStrings[self::$language]
                     ),
+                    'NEW_FIELD_SUFFIX' => self::NEW_FIELD_SUFFIX,
                 ]);
 
             $this->vocabularyAssigned = true;
@@ -1815,7 +1816,10 @@ EOF;
             $options
         );
 
-        $attrs = $options['attrs'];
+        $attrs = extend(
+            $this->getFieldOption($field, 'extraAttributes') ?? [],
+            $options['attrs']
+        );
         $description = $this->getFieldProperty($field, 'description');
         $descriptionTag = $description
             ? "\n<div class=\"description\">{$description}</div>"
@@ -3517,7 +3521,7 @@ EOF;
         }
 
         if (is_null($columns)) {
-            $columns = $this->getFieldOption($field, 'columns') ?: 1;
+            $columns = $this->getFieldOption($field, 'columns');
         }
 
         if (is_null($ableToAddNew)) {
@@ -3527,6 +3531,7 @@ EOF;
         $multiple =
             $this->getFieldOption($field, 'multiple') ??
             ($this->getFieldProperty($field, 'multiple') ?? true);
+        $hideAllToggle = $this->getFieldOption($field, 'hideAllToggle');
 
         // field name or function($feedModel, $targetTable, $targetField, $targetId)
         // todo: use ($Form, $field) here after feedModel
@@ -3553,16 +3558,18 @@ EOF;
             $values = explode(',', $values);
         }
 
+        $defaultCheckedHelper = function ($k, $v, Form $Form, $field) use ($values) {
+            return (is_string($this->getData($field)) &&
+                StringHelper::contains(
+                    ',' . $this->getData($field) . ',',
+                    ',' . $k . ','
+                )) ||
+                in_array($k, $values);
+        };
         $checkedHelper =
-            $this->getFieldOption($field, 'checkedHelper') ?:
-            function ($k, $v, Form $Form, $field) use ($values) {
-                return (is_string($this->getData($field)) &&
-                    StringHelper::contains(
-                        ',' . $this->getData($field) . ',',
-                        ',' . $k . ','
-                    )) ||
-                    in_array($k, $values);
-            };
+            $this->getFieldOption($field, 'checkedHelper') ?: $defaultCheckedHelper;
+
+        $this->force_inputs_fields[$field] = true;
 
         if ($this->isStatic($field)) {
             $ar = [];
@@ -3571,134 +3578,96 @@ EOF;
                 $ar[] = $feed[$k] ?? "[tag#{$k}]";
             }
 
-            $table = $ar ? join(', ', $ar) : '&mdash;';
-        } else {
-            $tags = [];
+            $this->inputs[$field] = $ar ? join(', ', $ar) : '&mdash;';
 
-            foreach ($feed as $k => $v) {
-                $v =
-                    is_array($v) || $v instanceof \diModel
-                        ? $v
-                        : [
-                            $defaultTitleField => $v,
-                        ];
-
-                if (is_array($v)) {
-                    $v = extend(
-                        [
-                            'enabled' => true,
-                        ],
-                        $v
-                    );
-                } elseif ($v instanceof \diModel) {
-                    if ($v->getRelated('enabled') === null) {
-                        $v->setRelated('enabled', true);
-                    }
-                }
-
-                $checked = $checkedHelper($k, $v, $this, $field);
-
-                $disabled =
-                    $this->static_mode ||
-                    (is_array($v) && empty($v['enabled'])) ||
-                    ($v instanceof \diModel && !$v->getRelated('enabled'));
-
-                $attributes = [
-                    'type' => $multiple ? 'checkbox' : 'radio',
-                    'name' => $field . '[]',
-                    'value' => $k,
-                    'id' => $field . '[' . $k . ']',
-                ];
-
-                if ($checked) {
-                    $attributes['checked'] = 'checked';
-                }
-
-                if ($disabled) {
-                    $attributes['disabled'] = 'true';
-                }
-
-                $title = is_callable($titleGetter)
-                    ? $titleGetter($v, $this->getTable(), $field, $this->getId())
-                    : $v[$titleGetter];
-
-                // string or function($feedModel, $callbackParams)
-                $outerPrefix = $this->getFieldOption($field, 'outerPrefix') ?: '';
-                $outerSuffix = $this->getFieldOption($field, 'outerSuffix') ?: '';
-                $innerPrefix = $this->getFieldOption($field, 'innerPrefix') ?: '';
-                $innerSuffix = $this->getFieldOption($field, 'innerSuffix') ?: '';
-
-                if (is_callable($outerPrefix)) {
-                    $outerPrefix = $outerPrefix($v, $this, $field);
-                }
-
-                if (is_callable($outerSuffix)) {
-                    $outerSuffix = $outerSuffix($v, $this, $field);
-                }
-
-                if (is_callable($innerPrefix)) {
-                    $innerPrefix = $innerPrefix($v, $this, $field);
-                }
-
-                if (is_callable($innerSuffix)) {
-                    $innerSuffix = $innerSuffix($v, $this, $field);
-                }
-
-                $tags[] = sprintf(
-                    '<input %s> %s<label for="%s">%s%s%s</label>%s',
-                    ArrayHelper::toAttributesString($attributes),
-                    $outerPrefix,
-                    $attributes['id'],
-                    $innerPrefix,
-                    $title,
-                    $innerSuffix,
-                    $outerSuffix
-                );
-            }
-
-            $table = '';
-
-            if ($tags) {
-                $toggle = $multiple
-                    ? sprintf(
-                        '<div class="tags-toggle"><span data-purpose="toggle-on">%s</span><span data-purpose="toggle-off">%s</span></div>',
-                        self::L('tag.toggle_on'),
-                        self::L('tag.toggle_off')
-                    )
-                    : '';
-
-                $table = '<div class="tags-grid">' . $toggle . '<table><tr>';
-
-                $per_column = ceil(count($tags) / $columns);
-
-                for ($i = 0; $i < $columns; $i++) {
-                    $table .=
-                        '<td style="padding-right: 20px; vertical-align: top;">' .
-                        join(
-                            '<br />',
-                            array_slice($tags, $per_column * $i, $per_column)
-                        ) .
-                        '</td>';
-                }
-
-                $table .= '</tr></table></div>';
-            }
-
-            if ($ableToAddNew) {
-                $table .=
-                    '<div class="new-tag">' .
-                    '<input type="text" name="' .
-                    $field .
-                    self::NEW_FIELD_SUFFIX .
-                    '" value="" placeholder="' .
-                    $this->L('tag.enter_new') .
-                    '">' .
-                    '</div>';
-            }
+            return $this;
         }
 
-        $this->inputs[$field] = $table;
-        $this->force_inputs_fields[$field] = true;
+        $variants = [];
+
+        foreach ($feed as $k => $v) {
+            if (!is_array($v) && !($v instanceof \diModel)) {
+                $v = [$defaultTitleField => $v];
+            }
+
+            if (is_array($v)) {
+                $v = extend(['enabled' => true], $v);
+            } elseif ($v instanceof \diModel) {
+                if ($v->getRelated('enabled') === null) {
+                    $v->setRelated('enabled', true);
+                }
+            }
+
+            $checked = $checkedHelper($k, $v, $this, $field);
+
+            $disabled =
+                $this->static_mode ||
+                (is_array($v) && empty($v['enabled'])) ||
+                ($v instanceof \diModel && !$v->getRelated('enabled'));
+
+            $attributes = [
+                'type' => $multiple ? 'checkbox' : 'radio',
+                'name' => $field . '[]',
+                'value' => $k,
+                'id' => $field . '[' . $k . ']',
+            ];
+
+            if ($checked) {
+                $attributes['checked'] = 'checked';
+            }
+
+            if ($disabled) {
+                $attributes['disabled'] = 'true';
+            }
+
+            $title = is_callable($titleGetter)
+                ? $titleGetter($v, $this->getTable(), $field, $this->getId())
+                : $v[$titleGetter];
+
+            // string or function($feedModel, $callbackParams)
+            $outerPrefix = $this->getFieldOption($field, 'outerPrefix') ?: '';
+            $outerSuffix = $this->getFieldOption($field, 'outerSuffix') ?: '';
+            $innerPrefix = $this->getFieldOption($field, 'innerPrefix') ?: '';
+            $innerSuffix = $this->getFieldOption($field, 'innerSuffix') ?: '';
+
+            if (is_callable($outerPrefix)) {
+                $outerPrefix = $outerPrefix($v, $this, $field);
+            }
+
+            if (is_callable($outerSuffix)) {
+                $outerSuffix = $outerSuffix($v, $this, $field);
+            }
+
+            if (is_callable($innerPrefix)) {
+                $innerPrefix = $innerPrefix($v, $this, $field);
+            }
+
+            if (is_callable($innerSuffix)) {
+                $innerSuffix = $innerSuffix($v, $this, $field);
+            }
+
+            $variants[] = [
+                'title' => $title,
+                'attributes' => $attributes,
+                'attributesStr' => ArrayHelper::toAttributesString($attributes),
+                'outerPrefix' => $outerPrefix,
+                'innerPrefix' => $innerPrefix,
+                'innerSuffix' => $innerSuffix,
+                'outerSuffix' => $outerSuffix,
+            ];
+        }
+
+        $this->inputs[$field] = $this->getTwig()->parse(
+            'admin/_form/input/checkboxes-list',
+            [
+                'columns' => $columns,
+                'field' => $field,
+                'multiple' => $multiple,
+                'ableToAddNew' => $ableToAddNew,
+                'hideAllToggle' => $hideAllToggle,
+                'variants' => $variants,
+            ]
+        );
 
         return $this;
     }

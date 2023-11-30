@@ -2067,6 +2067,15 @@ body[data-skin="entrine"] .diadminform-row .value button {
 .diadminform-row .value .tags-grid .tags-toggle > span + span {
   margin-left: 15px;
 }
+.diadminform-row .value .tags-grid .tags-grid-inner {
+  --gap: 20px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  -webkit-column-gap: var(--gap);
+  -moz-column-gap: var(--gap);
+  column-gap: var(--gap);
+}
 .diadminform-row .value .new-tag {
   margin-top: 10px;
 }

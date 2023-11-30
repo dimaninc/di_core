@@ -101,10 +101,12 @@
                 white-space nowrap
             input[type="text"]
                 min-width 200px
-        .tags-grid
-            .tags-toggle
+        .tags-grid {
+            .tags-toggle {
+                // global on/off
                 margin-bottom 10px
-                > span
+
+                > span {
                     font-size 12px
                     cursor pointer
                     border-radius 5px
@@ -112,11 +114,25 @@
                     background-color #ddd
                     color var(--color-link)
                     transition .3s
-                    &:hover
+
+                    &:hover {
                         background-color #e7e7e7
                         color var(--color-link-hover)
-                    & + span
+                    }
+
+                    & + span {
                         margin-left 15px
+                    }
+                }
+            }
+
+            .tags-grid-inner {
+                --gap 20px
+
+                ul-norm()
+                column-gap var(--gap)
+            }
+        }
         .new-tag
             margin-top 10px
             input[type="text"]
