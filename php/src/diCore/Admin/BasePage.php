@@ -142,6 +142,7 @@ abstract class BasePage
     protected $staticCodeInjections = [
         'js' => [],
         'css' => [],
+        'html' => [],
     ];
 
     public function __construct(Base $X)
@@ -1129,6 +1130,13 @@ abstract class BasePage
     public function injectCssCode($code)
     {
         $this->staticCodeInjections['css'][] = $code;
+
+        return $this;
+    }
+
+    public function injectHtmlCode($code)
+    {
+        $this->staticCodeInjections['html'][] = $code;
 
         return $this;
     }

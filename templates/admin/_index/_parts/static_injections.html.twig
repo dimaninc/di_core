@@ -19,3 +19,6 @@
 {% for cssName in static_injections['css'] %}
     <link rel="stylesheet" href="/_admin/_static/css/{{ cssName }}.css">
 {% endfor %}
+{% if static_code_injections['html']|length %}
+    {{ static_code_injections['html']|join('\n')|raw }}
+{% endif %}
