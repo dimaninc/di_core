@@ -542,6 +542,14 @@ class StringHelper
         return $x !== false ? mb_substr($filename, $x + 1) : '';
     }
 
+    public static function addSuffixToFilename($filename, $suffix)
+    {
+        return self::fileBaseName($filename) .
+            $suffix .
+            '.' .
+            self::fileExtension($filename);
+    }
+
     public static function replaceFileExtension($fn, $newExtension = '')
     {
         if ($newExtension && $newExtension[0] != '.') {
