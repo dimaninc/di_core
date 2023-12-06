@@ -1,7 +1,11 @@
 .dynamic-add
-	margin 10px 0
-	{$entrineSkin} &
+	cursor pointer
+	{$classicSkin} & {
+		margin 10px 0
+	}
+	{$entrineSkin} & {
 		margin 20px 0
+	}
 
 .dynamic-row
 	border 1px solid #aaa
@@ -17,9 +21,12 @@
 		@media $mqTablet
 			padding 10px
 	+ .dynamic-row
-		margin-top 10px
-		{$entrineSkin} &
+		{$classicSkin} & {
+			margin-top 10px
+		}
+		{$entrineSkin} & {
 			margin-top 20px
+		}
 	&:hover
 		background-color #ffe
 	&.ui-sortable-helper

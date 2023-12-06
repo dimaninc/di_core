@@ -283,22 +283,32 @@
     &[data-type="dynamic_pics"]
     &[data-type="dynamic_files"]
         flex-wrap wrap
-        .title
-            flex-basis 100%
+        .title {
             padding-bottom 10px
-            {$entrineSkin} &
+
+            {$classicSkin} & {
+                flex-basis 100%
+            }
+            {$entrineSkin} & {
+                flex-basis 100%
                 text-align left
                 font-weight bold
-        .value
-            border-left 3px solid $classicColorLink
-            padding 5px 0 5px 10px
-            display block
-            {$entrineSkin} &
+            }
+        }
+        .value {
+            {$classicSkin} & {
+                border-left 3px solid $classicColorLink
+                padding 5px 0 5px 10px
+            }
+            {$entrineSkin} & {
+                border-left 3px solid $entrineColorTextMenuSelected
                 padding 5px 0 5px 20px
-                border-color $entrineColorTextMenuSelected
-            .file-input-wrapper
+            }
+            .file-input-wrapper {
                 display inline-block
                 width auto
+            }
+        }
     &[data-field="table"]
         .value
             .model-info

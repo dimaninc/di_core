@@ -2343,28 +2343,33 @@ body[data-skin="entrine"] .diadminform-row .value .static-text {
 .diadminform-row[data-type="dynamic"] .title,
 .diadminform-row[data-type="dynamic_pics"] .title,
 .diadminform-row[data-type="dynamic_files"] .title {
+  padding-bottom: 10px;
+}
+body[data-skin="classic"] .diadminform-row[data-type="dynamic"] .title,
+body[data-skin="classic"] .diadminform-row[data-type="dynamic_pics"] .title,
+body[data-skin="classic"] .diadminform-row[data-type="dynamic_files"] .title {
   -webkit-flex-basis: 100%;
   flex-basis: 100%;
-  padding-bottom: 10px;
 }
 body[data-skin="entrine"] .diadminform-row[data-type="dynamic"] .title,
 body[data-skin="entrine"] .diadminform-row[data-type="dynamic_pics"] .title,
 body[data-skin="entrine"] .diadminform-row[data-type="dynamic_files"] .title {
+  -webkit-flex-basis: 100%;
+  flex-basis: 100%;
   text-align: left;
   font-weight: bold;
 }
-.diadminform-row[data-type="dynamic"] .value,
-.diadminform-row[data-type="dynamic_pics"] .value,
-.diadminform-row[data-type="dynamic_files"] .value {
+body[data-skin="classic"] .diadminform-row[data-type="dynamic"] .value,
+body[data-skin="classic"] .diadminform-row[data-type="dynamic_pics"] .value,
+body[data-skin="classic"] .diadminform-row[data-type="dynamic_files"] .value {
   border-left: 3px solid #7601ac;
   padding: 5px 0 5px 10px;
-  display: block;
 }
 body[data-skin="entrine"] .diadminform-row[data-type="dynamic"] .value,
 body[data-skin="entrine"] .diadminform-row[data-type="dynamic_pics"] .value,
 body[data-skin="entrine"] .diadminform-row[data-type="dynamic_files"] .value {
+  border-left: 3px solid #5ab5df;
   padding: 5px 0 5px 20px;
-  border-color: #5ab5df;
 }
 .diadminform-row[data-type="dynamic"] .value .file-input-wrapper,
 .diadminform-row[data-type="dynamic_pics"] .value .file-input-wrapper,
@@ -3604,6 +3609,9 @@ table.actions-log tr:last-of-type td {
   background: #ffd;
 }
 .dynamic-add {
+  cursor: pointer;
+}
+body[data-skin="classic"] .dynamic-add {
   margin: 10px 0;
 }
 body[data-skin="entrine"] .dynamic-add {
@@ -3629,7 +3637,7 @@ body[data-skin="entrine"] .dynamic-row {
     padding: 10px;
   }
 }
-.dynamic-row + .dynamic-row {
+body[data-skin="classic"] .dynamic-row + .dynamic-row {
   margin-top: 10px;
 }
 body[data-skin="entrine"] .dynamic-row + .dynamic-row {
