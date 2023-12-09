@@ -8,14 +8,17 @@
 	}
 
 .dynamic-row
-	border 1px solid #aaa
-	padding 10px
-	border-radius 10px
-	//display inline-block
-	//width 97%
+	--line-gap 15px
 	transition background-color .3s ease
+	{$classicSkin} & {
+		border 1px solid #aaa
+		border-radius 10px
+		padding 10px
+		&:hover {
+			background-color #ffe
+		}
+	}
 	{$entrineSkin} &
-		border-radius 0
 		border-width 3px
 		padding 20px
 		@media $mqTablet
@@ -27,8 +30,6 @@
 		{$entrineSkin} & {
 			margin-top 20px
 		}
-	&:hover
-		background-color #ffe
 	&.ui-sortable-helper
 	&.di-sortable-helper
 		background-color #fea
@@ -46,21 +47,24 @@
 		clear right
 	ul.line
 		display flex
+		gap var(--line-gap)
 		flex-wrap wrap
 		align-items flex-start
-		margin 0 25px 0 0
+		margin 0
 		padding 0
 		list-style none
+		{$classicSkin} & {
+			margin-right 25px
+		}
 		> li
 			display flex
 			align-items center
-			margin 5px 0
-			&:not(:last-child)
-				margin-right 15px
-			//+ li
-			//	margin-left 15px
-			> *
-				margin-left 5px
+			{$classicSkin} & {
+				margin 5px 0
+				> * {
+					margin-left 5px
+				}
+			}
 			input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size])
 			textarea
 				width 300px

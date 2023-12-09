@@ -3619,17 +3619,22 @@ body[data-skin="entrine"] .dynamic-add {
   margin: 20px 0;
 }
 .dynamic-row {
-  border: 1px solid #aaa;
-  padding: 10px;
-  border-radius: 10px;
+  --line-gap: 15px;
   -webkit-transition: background-color 0.3s ease;
   -moz-transition: background-color 0.3s ease;
   -o-transition: background-color 0.3s ease;
   -ms-transition: background-color 0.3s ease;
   transition: background-color 0.3s ease;
 }
+body[data-skin="classic"] .dynamic-row {
+  border: 1px solid #aaa;
+  border-radius: 10px;
+  padding: 10px;
+}
+body[data-skin="classic"] .dynamic-row:hover {
+  background-color: #ffe;
+}
 body[data-skin="entrine"] .dynamic-row {
-  border-radius: 0;
   border-width: 3px;
   padding: 20px;
 }
@@ -3643,9 +3648,6 @@ body[data-skin="classic"] .dynamic-row + .dynamic-row {
 }
 body[data-skin="entrine"] .dynamic-row + .dynamic-row {
   margin-top: 20px;
-}
-.dynamic-row:hover {
-  background-color: #ffe;
 }
 .dynamic-row.ui-sortable-helper,
 .dynamic-row.di-sortable-helper {
@@ -3679,6 +3681,7 @@ body[data-skin="entrine"] .dynamic-row + .dynamic-row {
   display: -ms-flexbox;
   display: box;
   display: flex;
+  gap: var(--line-gap);
   -webkit-box-lines: multiple;
   -moz-box-lines: multiple;
   -o-box-lines: multiple;
@@ -3691,9 +3694,12 @@ body[data-skin="entrine"] .dynamic-row + .dynamic-row {
   -ms-flex-align: start;
   -webkit-align-items: flex-start;
   align-items: flex-start;
-  margin: 0 25px 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
+}
+body[data-skin="classic"] .dynamic-row ul.line {
+  margin-right: 25px;
 }
 .dynamic-row ul.line > li {
   display: -webkit-box;
@@ -3708,12 +3714,11 @@ body[data-skin="entrine"] .dynamic-row + .dynamic-row {
   -ms-flex-align: center;
   -webkit-align-items: center;
   align-items: center;
+}
+body[data-skin="classic"] .dynamic-row ul.line > li {
   margin: 5px 0;
 }
-.dynamic-row ul.line > li:not(:last-child) {
-  margin-right: 15px;
-}
-.dynamic-row ul.line > li > * {
+body[data-skin="classic"] .dynamic-row ul.line > li > * {
   margin-left: 5px;
 }
 .dynamic-row ul.line > li input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),

@@ -1848,8 +1848,16 @@ EOF;
         $titleSuffix = $this->AdminPage->isColonNeededInFormTitles() ? ':' : '';
         $dataType = $this->getFieldType($field);
 
+        $className = join(
+            ' ',
+            array_filter([
+                'diadminform-row',
+                $this->getFieldOption($field, 'rowClassName'),
+            ])
+        );
+
         return <<<EOF
-<div id="tr_{$field}" class="diadminform-row" data-field="$field" data-type="{$dataType}" {$attrs}>
+<div id="tr_{$field}" class="$className" data-field="$field" data-type="{$dataType}" {$attrs}>
 	<label class="title" for="$field">$title$titleSuffix</label>
 	<div class="value">$value</div>$descriptionTag
 </div>
