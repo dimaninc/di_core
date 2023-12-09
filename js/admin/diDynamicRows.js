@@ -10,6 +10,7 @@ var diDynamicRows = function (opts) {
         droppedFiles,
         $lastCreatedRow,
         lastCreatedRowId;
+    var addBottomRowInsideWrapper;
 
     var local = {
         ru: {
@@ -300,6 +301,9 @@ var diDynamicRows = function (opts) {
         $wrapper = $anc.parent();
         $formRow = $wrapper.closest('.diadminform-row');
         $rowsWrapper = $wrapper.find('.dynamic-wrapper');
+        addBottomRowInsideWrapper = $rowsWrapper.data(
+            'add-bottom-row-inside-wrapper'
+        );
         this.formTab = $formRow.closest('[data-tab]').data('tab');
 
         setTimeout(function () {
@@ -432,10 +436,12 @@ var diDynamicRows = function (opts) {
         opts.beforeAddRow && opts.beforeAddRow(this, $e, id);
 
         if (this.directions[field] > 0) {
-            //$e.insertBefore($anc);
-            $e.appendTo($rowsWrapper);
+            if (addBottomRowInsideWrapper) {
+                $e.insertBefore($rowsWrapper.find('.dynamic-add').last());
+            } else {
+                $e.appendTo($rowsWrapper);
+            }
         } else {
-            //$e.insertAfter($anc);
             $e.prependTo($rowsWrapper);
         }
 

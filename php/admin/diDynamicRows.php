@@ -287,6 +287,7 @@ class diDynamicRows
             'afterDelRow',
         ];
 
+        $addBottomRowInsideWrapper = $this->getOption('addBottomRowInsideWrapper');
         $direction = $this->info_ar[$this->field]['direction'] ?? 1;
         $s = '';
         $edgeOrderNumber = 0;
@@ -305,8 +306,12 @@ class diDynamicRows
             $s .= $this->getAddRowHtml('before');
         }
 
+        $addBottomRowInsideWrapperAttr = $addBottomRowInsideWrapper
+            ? ' data-add-bottom-row-inside-wrapper="true"'
+            : '';
+
         $s .= "<div data-purpose=\"anchor\" data-field=\"{$this->field}\" data-position=\"top\"></div>";
-        $s .= "<div class=\"dynamic-wrapper\">";
+        $s .= "<div class=\"dynamic-wrapper\"{$addBottomRowInsideWrapperAttr}>";
 
         while ($r = $this->getDb()->fetch($rs)) {
             $this->data_id = (int) $r->id;
@@ -327,6 +332,10 @@ class diDynamicRows
             ) {
                 $edgeOrderNumber = $x;
             }
+        }
+
+        if ($addBottomRowInsideWrapper) {
+            $s .= $this->getAddRowHtml('after');
         }
 
         $s .= '</div>';
@@ -365,7 +374,10 @@ class diDynamicRows
             ');</script>';
 
         if (!$this->static_mode) {
-            $s .= $this->getAddRowHtml('after');
+            if (!$addBottomRowInsideWrapper) {
+                $s .= $this->getAddRowHtml('after');
+            }
+
             $s .= $this->getAdvancedUploadingArea();
         }
 
