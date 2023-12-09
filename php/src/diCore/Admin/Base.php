@@ -320,6 +320,16 @@ class Base
         return $this;
     }
 
+    public function getAdminSkinId()
+    {
+        return Config::getAdminSkin();
+    }
+
+    public function isLocalSkin()
+    {
+        return $this->getAdminSkinId() == Skin::local;
+    }
+
     private function getTemplateVariables()
     {
         return [
@@ -332,7 +342,7 @@ class Base
                 '?back=' .
                 urlencode(\diRequest::requestUri()),
 
-            'admin_skin' => Skin::name(Config::getAdminSkin()),
+            'admin_skin' => Skin::name($this->getAdminSkinId()),
             'cms_name' => Config::getCmsName(),
             'cms_support_email' => Config::getCmsSupportEmail(),
 

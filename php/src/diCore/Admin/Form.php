@@ -976,7 +976,11 @@ class Form
 
     protected function getButtonIcon($name)
     {
-        switch (Config::getAdminSkin()) {
+        switch (
+            $this->getX()
+                ->getAdmin()
+                ->getAdminSkinId()
+        ) {
             case Skin::entrine:
                 $icons = [
                     'save' =>
