@@ -281,12 +281,21 @@ var diAdminForm = function (table, id, auto_save_timeout) {
                 var ext;
                 var isPic;
                 var isSvg;
+                var $dynamicWrapper = $inp.closest('.dynamic-wrapper');
+                var $dynamicRow = $inp.closest('.dynamic-row');
+                var isDynamic = $dynamicWrapper.length > 0;
 
                 var getPreviewArea = function () {
                     if (!$previewArea) {
-                        $previewArea = $(
-                            '<div class="existing-pic-holder"/>'
-                        ).prependTo($valueWrapper);
+                        $previewArea = $('<div class="existing-pic-holder"/>');
+
+                        if (isDynamic) {
+                            $previewArea.insertBefore(
+                                $dynamicRow.find('.file-input-wrapper')
+                            );
+                        } else {
+                            $previewArea.prependTo($valueWrapper);
+                        }
                     }
 
                     return $previewArea;
@@ -357,13 +366,17 @@ var diAdminForm = function (table, id, auto_save_timeout) {
                                     '<div class="container embed no-bottom-margin"><img src=""></div>'
                                 );
 
-                                $existingPreviewArea.remove();
+                                if (!isDynamic) {
+                                    $existingPreviewArea.remove();
 
-                                getPreviewArea().append($row);
-                                $rowWrapper
-                                    .attr('data-exists', 'true')
-                                    .data('exists', true);
-                                $('.empty-pic-placeholder').remove();
+                                    getPreviewArea().append($row);
+                                    $rowWrapper
+                                        .attr('data-exists', 'true')
+                                        .data('exists', true);
+                                    $('.empty-pic-placeholder').remove();
+                                } else {
+                                    getPreviewArea().append($row);
+                                }
 
                                 (function ($row, file, isSvg) {
                                     var reader = new FileReader();

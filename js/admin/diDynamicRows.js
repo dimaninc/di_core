@@ -31,6 +31,14 @@ var diDynamicRows = function (opts) {
     this.formTab = null;
 
     function constructor() {
+        var eventNames = [
+            'afterInit',
+            'beforeAddRow',
+            'afterAddRow',
+            'beforeDelRow',
+            'afterDelRow'
+        ];
+
         opts = $.extend(
             {
                 field: null,
@@ -41,11 +49,19 @@ var diDynamicRows = function (opts) {
                 sortable: false,
                 language: 'ru',
                 afterInit: function (DynamicRows) {},
+                beforeAddRow: function (DynamicRows, $row, id) {},
                 afterAddRow: function (DynamicRows, $row, id) {},
+                beforeDelRow: function (DynamicRows, id) {},
                 afterDelRow: function (DynamicRows, id) {}
             },
             opts
         );
+
+        eventNames.forEach(function (name) {
+            if (typeof opts[name] === 'string') {
+                opts[name] = eval(opts[name]);
+            }
+        });
 
         if (opts.field) {
             self.init(opts.field, opts.fieldTitle, opts.direction, opts.counter);
@@ -413,6 +429,8 @@ var diDynamicRows = function (opts) {
             .addClass('dynamic-row')
             .html(html);
 
+        opts.beforeAddRow && opts.beforeAddRow(this, $e, id);
+
         if (this.directions[field] > 0) {
             //$e.insertBefore($anc);
             $e.appendTo($rowsWrapper);
@@ -468,6 +486,8 @@ var diDynamicRows = function (opts) {
         if (!this.is_field_inited(field)) {
             return;
         }
+
+        opts.beforeDelRow && opts.beforeDelRow(this, id);
 
         if (!confirm('Удалить ' + this.field_titles[field] + '?')) {
             return;

@@ -141,6 +141,15 @@ class Base
 
     private $uriParams = [];
 
+    protected $staticFiles = [
+        'js' => ['_static/js/local.js'],
+        'css' => ['_static/css/local.css'],
+    ];
+    protected $customStaticFiles = [
+        'js' => [],
+        'css' => [],
+    ];
+
     public function __construct($mode = null)
     {
         static::$_language = $this->language;
@@ -300,6 +309,17 @@ class Base
         return class_exists('\diStaticBuild') ? '?v=' . \diStaticBuild::VERSION : '';
     }
 
+    public function addStaticFiles($type, $files)
+    {
+        if (!is_array($files)) {
+            $files = [$files];
+        }
+
+        $this->staticFiles[$type] = extend($this->staticFiles[$type], $files);
+
+        return $this;
+    }
+
     private function getTemplateVariables()
     {
         return [
@@ -333,6 +353,14 @@ class Base
             'xx_id' => $this->getId(),
 
             'static_timestamp' => $this->getStaticTimestampEnding(),
+            'static_js_files' => extend(
+                $this->staticFiles['js'],
+                $this->customStaticFiles['js']
+            ),
+            'static_css_files' => extend(
+                $this->staticFiles['css'],
+                $this->customStaticFiles['css']
+            ),
         ];
     }
 

@@ -45,6 +45,10 @@
 
 	{{ wysiwyg_head_script|raw }}
 
-	<script type="text/javascript" charset="utf-8" src="_static/js/local.js?v={{ _tech['static_timestamp'] }}"></script>
-	<link rel="stylesheet" type="text/css" href="_static/css/local.css?v={{ _tech['static_timestamp'] }}">
+	{% for f in _tech['static_js_files'] %}
+	<script type="text/javascript" charset="utf-8" src="{{ f }}?v={{ _tech['static_timestamp'] }}"></script>
+	{% endfor %}
+	{% for f in _tech['static_css_files'] %}
+	<link rel="stylesheet" type="text/css" href="{{ f }}?v={{ _tech['static_timestamp'] }}">
+	{% endfor %}
 </head>

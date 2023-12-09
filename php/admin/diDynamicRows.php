@@ -279,13 +279,16 @@ class diDynamicRows
 
     function get_html()
     {
-        // todo: now these treated as strings, remake as plain code
-        $eventNames = ['afterInit', 'afterAddRow', 'afterDelRow'];
+        $eventNames = [
+            'afterInit',
+            'beforeAddRow',
+            'afterAddRow',
+            'beforeDelRow',
+            'afterDelRow',
+        ];
 
         $direction = $this->info_ar[$this->field]['direction'] ?? 1;
-
         $s = '';
-
         $edgeOrderNumber = 0;
 
         if (!isset($this->info_ar[$this->field]['after_rows'])) {
@@ -409,10 +412,16 @@ class diDynamicRows
 
     public function getAddRowHtml($position)
     {
-        $onClick = "return {$this->js_var_name}.add('{$this->field}');";
+        $onClick =
+            $this->getOption('addRowOnClick') ?:
+            "return {$this->js_var_name}.add('{$this->field}');";
         $caption = $this->getOption('addRowCaption');
         $innerHtml = $this->getOption('addRowText');
         $cssClass = $this->getOption('addRowCssClass') ?: 'simple-button';
+
+        if (is_callable($onClick)) {
+            $onClick = $onClick($this);
+        }
 
         return "<div class=\"dynamic-add $cssClass\" data-position=\"$position\" data-caption=\"$caption\" onclick=\"$onClick\">$innerHtml</div>\n";
     }
