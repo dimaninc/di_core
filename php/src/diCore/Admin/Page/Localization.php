@@ -75,7 +75,7 @@ class Localization extends \diCore\Admin\BasePage
 
     public static function valueOut(Model $m, $field)
     {
-        $orig = $s = $m->get($field);
+        $orig = $s = $m->get($field) ?? '';
         $origEscaped = StringHelper::out($orig);
 
         $s = utf8_wordwrap($s, 21, ' ', true);

@@ -25,6 +25,16 @@ trait MultiColumn
             : "{$fieldProperties['title']} ($lang)";
     }
 
+    protected static function getLanguages($properties)
+    {
+        return !empty($properties['languages']) && is_array($properties['languages'])
+            ? array_intersect(
+                Collection::getPossibleLanguages(),
+                $properties['languages']
+            )
+            : Collection::getPossibleLanguages();
+    }
+
     protected function getMultiColumn(
         $field,
         $titleOrProps,
@@ -33,30 +43,32 @@ trait MultiColumn
     ) {
         $ar = [];
         $default = '';
+        $defaultProps = [
+            'default' => $default,
+            'languages' => null,
+            'langTitleGetter' => null,
+        ];
 
         if (is_array($titleOrProps) && $type === null && $tab === null) {
             $properties = extend(
+                $defaultProps,
                 [
                     'title' => '',
                     'type' => 'string',
-                    'default' => $default,
                     'tab' => null,
                     // fn (string $fieldTitle, string $lang) => string
-                    'langTitleGetter' => null,
                 ],
                 $titleOrProps
             );
         } else {
-            $properties = [
+            $properties = extend($defaultProps, [
                 'title' => $titleOrProps,
                 'type' => $type ?: 'string',
-                'default' => $default,
                 'tab' => $tab,
-                'langTitleGetter' => null,
-            ];
+            ]);
         }
 
-        foreach (Collection::getPossibleLanguages() as $lang) {
+        foreach (self::getLanguages($properties) as $lang) {
             $fieldTitle = self::processLangTitle($properties, $lang);
 
             $ar[\diModel::getLocalizedFieldName($field, $lang)] = extend(
@@ -105,9 +117,10 @@ trait MultiColumn
     protected function getListMultiColumn($field, $widthSum, $props = [])
     {
         $ar = [];
-        $width = $widthSum / count(Collection::getPossibleLanguages());
+        $languages = self::getLanguages($props);
+        $width = $widthSum / count($languages);
 
-        foreach (Collection::getPossibleLanguages() as $lang) {
+        foreach ($languages as $lang) {
             $ar[\diModel::getLocalizedFieldName($field, $lang)] = extend(
                 [
                     'headAttrs' => [
@@ -128,7 +141,7 @@ trait MultiColumn
 
     protected function addMultiColumnFilters($field, $props)
     {
-        foreach (Collection::getPossibleLanguages() as $lang) {
+        foreach (self::getLanguages($props) as $lang) {
             $fieldTitle = "{$props['title']} ($lang)";
 
             $this->getFilters()->addFilter(
