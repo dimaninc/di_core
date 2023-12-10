@@ -490,7 +490,9 @@ class diModel implements \ArrayAccess
 
     public function getAdminHref()
     {
-        return '/_admin/' . $this->getTable() . '/form/' . $this->getId() . '/';
+        $idSuffix = $this->hasId() ? $this->getId() . '/' : '';
+
+        return '/_admin/' . $this->getTable() . '/form/' . $idSuffix;
     }
 
     public function getFullAdminHref()

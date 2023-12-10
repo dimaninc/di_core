@@ -598,7 +598,10 @@ class Base
 
     public function getPageTitle()
     {
-        return strip_tags($this->caption) . ': ' . $this->getSiteTitle() . ' admin';
+        return strip_tags($this->caption ?? '') .
+            ': ' .
+            $this->getSiteTitle() .
+            ' admin';
     }
 
     public function isColonNeededInFormTitles()
