@@ -1,4 +1,6 @@
 .filter-block
+	--name-width 150px
+
 	font-family var(--font-primary)
 	color black
 	font-size 12px
@@ -13,7 +15,7 @@
 		display flex
 		flex-wrap wrap
 		padding 10px 0
-		margin-left 150px
+		margin-left var(--name-width)
 		@media $mqTablet
 			margin-left 0
 		> *
@@ -32,7 +34,7 @@
 		> b
 			display block
 			padding-top 5px
-			width 150px
+			width var(--name-width)
 			font-weight normal
 			@media $mqTablet
 				width 100%

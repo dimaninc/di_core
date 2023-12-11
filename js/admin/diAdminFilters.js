@@ -28,16 +28,21 @@ var diAdminFilters = function (_opts) {
         baseUri = kill_uri_params(window.location.href, opts.fields);
         uriGlue = baseUri.indexOf('?') === -1 ? '?' : '&';
 
-        e.$form
-            .submit(function () {
-                return self.apply();
-            })
-            .find('button[data-purpose="reset"]')
-            .click(function () {
-                self.reset();
+        e.$form.submit(function () {
+            return self.apply();
+        });
 
-                return false;
+        e.$form
+            .find('[data-submit-on-change="true"],[data-submit-on-change="1"]')
+            .on('change', function () {
+                return self.apply();
             });
+
+        e.$form.find('button[data-purpose="reset"]').click(function () {
+            self.reset();
+
+            return false;
+        });
 
         this.setupResetFilterButtons().setupDateInputs();
 

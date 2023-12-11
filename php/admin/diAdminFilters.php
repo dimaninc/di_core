@@ -429,7 +429,7 @@ class diAdminFilters
 
         return <<<EOF
 <form name="admin_filter_form[{$this->table}]" method="get" action="" data-purpose="filter" data-table="$this->table" {$style}>
-<div class="filter-block">
+<div class="filter-block" data-table="$this->table">
 	{$filterRows}
 	{$sorterBlock}
 	{$this->get_buttons_block()}
@@ -549,6 +549,8 @@ EOF;
             'rule' => null, // callback or constant for predefined callback, instead of where_tpl
             'where_tpl' => $where_tpl,
             'title' => $title,
+            'placeholder' => '',
+            'submitOnChange' => false, // submit filter form on change
             'default_value' => $default_value,
             'default_value2' => $default_value2,
             'strict' => false,
@@ -562,6 +564,12 @@ EOF;
 
         if (is_array($field)) {
             $opts = extend($opts, $field);
+        }
+
+        if ($opts['submitOnChange']) {
+            $this->set_input_params($opts['field'], [
+                'data-submit-on-change' => $opts['submitOnChange'],
+            ]);
         }
 
         $key = $opts['alias'] ?: $opts['field'];
@@ -1088,16 +1096,29 @@ EOF;
                             $ar['value'],
                             $ar['feed']
                         );
+
+                        if ($ar['submitOnChange']) {
+                            $input->setAttr([
+                                'data-submit-on-change' => $ar['submitOnChange'],
+                            ]);
+                        }
                     } else {
+                        $attrs = [
+                            'id' => $fieldName,
+                            'name' => $field,
+                            'value' => StringHelper::out($ar['value']),
+                            'placeholder' => StringHelper::out($ar['placeholder']),
+                            'size' => $size,
+                            'type' => 'text',
+                        ];
+
+                        if ($ar['submitOnChange']) {
+                            $attrs['data-submit-on-change'] = $ar['submitOnChange'];
+                        }
+
                         $input = sprintf(
                             '<input %s>',
-                            ArrayHelper::toAttributesString([
-                                'id' => $fieldName,
-                                'name' => $field,
-                                'value' => StringHelper::out($ar['value']),
-                                'size' => $size,
-                                'type' => 'text',
-                            ])
+                            ArrayHelper::toAttributesString($attrs)
                         );
                     }
 
