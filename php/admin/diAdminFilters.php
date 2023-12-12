@@ -828,6 +828,12 @@ EOF;
         $value = $this->getPredefinedData($field);
 
         if (!$this->reset) {
+            $value = $this->getData($field) ?: $value;
+
+            if ($value) {
+                return (string) $value;
+            }
+
             $value = $this->getTableData($field) ?: $value;
 
             /*
