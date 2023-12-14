@@ -1951,6 +1951,23 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         return $this;
     }
 
+    public function orderBySelectedExpression($field, $direction = null)
+    {
+        $direction = strtoupper($direction ?: 'ASC');
+
+        if (!in_array($direction, $this->possibleDirections)) {
+            throw new Exception("Unknown direction '{$direction}'");
+        }
+
+        $options = [
+            'rawValue' => false,
+        ];
+
+        $this->sqlParts['orderBy'][] = compact('field', 'direction', 'options');
+
+        return $this;
+    }
+
     public function orderByLocalized($field, $direction = null)
     {
         return $this->orderBy(\diModel::getLocalizedFieldName($field), $direction);
