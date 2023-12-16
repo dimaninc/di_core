@@ -71,7 +71,7 @@ class Phone
 
     public static function clean($phone, $prefix = '')
     {
-        $phone = preg_replace('/[^\d]+/', '', $phone);
+        $phone = preg_replace('/[^\d]+/', '', $phone ?: '');
 
         if (substr($phone, 0, 2) == '00') {
             $phone = substr($phone, 2);

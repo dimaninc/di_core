@@ -40,6 +40,9 @@ class diPagesNavy
 
     private $init_on_last_page = false;
 
+    /** @deprecated */
+    public $parts = null;
+
     /**
      * @var callable|null
      */
@@ -266,14 +269,9 @@ class diPagesNavy
 
         if (
             isset($pagesnavy_sortby_ar[$this->table]) &&
-            !in_array(
-                $this->sortby,
-                array_keys($pagesnavy_sortby_ar[$this->table])
-            )
+            !in_array($this->sortby, array_keys($pagesnavy_sortby_ar[$this->table]))
         ) {
-            $this->sortby = current(
-                array_keys($pagesnavy_sortby_ar[$this->table])
-            );
+            $this->sortby = current(array_keys($pagesnavy_sortby_ar[$this->table]));
         }
 
         if (
@@ -288,16 +286,12 @@ class diPagesNavy
                 $f();
             }
             $this->page =
-                $this->reverse || $this->init_on_last_page
-                    ? $this->total_pages
-                    : 1;
+                $this->reverse || $this->init_on_last_page ? $this->total_pages : 1;
         }
 
         if (
             isset($_GET[$this->page_param]) &&
-            ((!$this->reverse &&
-                !$this->init_on_last_page &&
-                $this->page == 1) ||
+            ((!$this->reverse && !$this->init_on_last_page && $this->page == 1) ||
                 (($this->reverse || $this->init_on_last_page) &&
                     $this->page == $this->total_pages)) &&
             empty($GLOBALS['DIPAGESNAVY_FORCE_NO_404'])
@@ -307,9 +301,8 @@ class diPagesNavy
         }
 
         $this->start =
-            ($this->reverse
-                ? $this->total_pages - $this->page
-                : $this->page - 1) * $this->per_page;
+            ($this->reverse ? $this->total_pages - $this->page : $this->page - 1) *
+            $this->per_page;
 
         return $this;
     }
@@ -400,13 +393,8 @@ class diPagesNavy
         return $this->get_sibling_r('prev', $id, $orderby, $dir, $circular);
     }
 
-    public function get_sibling_r(
-        $position,
-        $id,
-        $orderby,
-        $dir,
-        $circular = true
-    ) {
+    public function get_sibling_r($position, $id, $orderby, $dir, $circular = true)
+    {
         $r = $this->getDb()->r($this->table, $id);
 
         if ($position == 'prev') {
@@ -434,10 +422,7 @@ class diPagesNavy
         );
 
         if (!$r2) {
-            $r2 = $this->getDb()->r(
-                $this->table,
-                $this->where . $where_orderby
-            );
+            $r2 = $this->getDb()->r($this->table, $this->where . $where_orderby);
             //echo "$position $this->where$where_orderby<br>";
         }
 
@@ -575,11 +560,7 @@ class diPagesNavy
                 $p = $_pages['ar'][$i];
 
                 if ($p == $dots) {
-                    $tmp_s = str_replace(
-                        '{DOTS}',
-                        $dots,
-                        $this->tpl_ar['dots']
-                    );
+                    $tmp_s = str_replace('{DOTS}', $dots, $this->tpl_ar['dots']);
                 } else {
                     $tpl = $p == $this->page ? 'selected' : 'link';
 

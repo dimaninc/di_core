@@ -171,7 +171,7 @@ abstract class CMS
 
     private $routes = [];
     private $origRoutes = [];
-    public $m1, $m2, $m3, $m4, $m5;
+    public $m0, $m1, $m2, $m3, $m4, $m5;
 
     public $tables;
     public $ct_ar = []; // clean titles ar ['type' => 'clean_title']
@@ -230,7 +230,11 @@ abstract class CMS
     /** @deprecated */
     public $title_var;
     /** @deprecated */
+    public $caption_var;
+    /** @deprecated */
     public $content_var;
+    /** @deprecated */
+    public $content2_var;
     /** @deprecated */
     public $short_content_var;
     /** @deprecated */
@@ -241,6 +245,24 @@ abstract class CMS
     public $html_keywords_var;
     /** @deprecated */
     public $tag_var;
+    /** @deprecated */
+    public $description_var;
+    /** @deprecated */
+    public $name_var;
+    /** @deprecated */
+    public $href_var;
+    /** @deprecated */
+    public $client_var;
+    /** @deprecated */
+    public $type_var;
+    /** @deprecated */
+    public $model_var;
+    /** @deprecated */
+    public $position_var;
+    /** @deprecated */
+    public $value_var;
+    /** @deprecated */
+    public $to_user_prefix_var;
 
     public static $possible_toggle_fields_ar = [
         'active',
@@ -2018,7 +2040,7 @@ abstract class CMS
 
     protected function processTextForMeta($text)
     {
-        return strip_tags($text);
+        return strip_tags($text ?: '');
     }
 
     /**

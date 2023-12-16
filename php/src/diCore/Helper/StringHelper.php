@@ -156,6 +156,14 @@ class StringHelper
 
     public static function startsWith($haystack, $needle)
     {
+        if (!$needle) {
+            return true;
+        }
+
+        if (!$haystack) {
+            return false;
+        }
+
         if (is_array($haystack)) {
             foreach ($haystack as $h) {
                 if (self::startsWith($h, $needle)) {
@@ -554,6 +562,10 @@ class StringHelper
     {
         if ($newExtension && $newExtension[0] != '.') {
             $newExtension = '.' . $newExtension;
+        }
+
+        if (!$fn) {
+            return $newExtension;
         }
 
         $x = mb_strrpos($fn, '.');

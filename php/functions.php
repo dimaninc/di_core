@@ -293,6 +293,10 @@ function isInteger($value)
         return false;
     }
 
+    if (!is_scalar($value)) {
+        return false;
+    }
+
     return !is_int($value) ? ctype_digit($value) : true;
 }
 
@@ -325,11 +329,7 @@ function remove_ending_slash($path)
 /** @deprecated  */
 function create_folders_chain($start_path, $path_to_create, $mod = 0775)
 {
-    \diCore\Helper\FileSystemHelper::createTree(
-        $start_path,
-        $path_to_create,
-        $mod
-    );
+    \diCore\Helper\FileSystemHelper::createTree($start_path, $path_to_create, $mod);
 }
 
 /** @deprecated */
@@ -339,12 +339,8 @@ function isLeapYear($year)
 }
 
 /** @deprecated  */
-function highlight_urls(
-    $text,
-    $cut_len = 0,
-    $cut_all_words = false,
-    $tagAttrs = []
-) {
+function highlight_urls($text, $cut_len = 0, $cut_all_words = false, $tagAttrs = [])
+{
     return StringHelper::wrapUrlWithTag($text, [
         'cutLength' => $cut_len,
         'cutAllWords' => $cut_all_words,
@@ -615,11 +611,7 @@ function transliterate_rus_to_eng($text, $lowerCase = true)
         $text = mb_strtolower($text);
     }
 
-    return str_replace(
-        array_keys($trans_table),
-        array_values($trans_table),
-        $text
-    );
+    return str_replace(array_keys($trans_table), array_values($trans_table), $text);
 }
 
 function get_user_ip()
@@ -875,9 +867,7 @@ function json_encode2($a = false)
                 ['\\', '/', "\n", "\t", "\r", '\b', "\f", '"'],
                 ['\\\\', '\\/', '\\n', '\\t', '\\r', '\\b', '\\f', '\"'],
             ];
-            return '"' .
-                str_replace($jsonReplaces[0], $jsonReplaces[1], $a) .
-                '"';
+            return '"' . str_replace($jsonReplaces[0], $jsonReplaces[1], $a) . '"';
         } else {
             return $a;
         }
@@ -1007,9 +997,7 @@ function str_filesize($size)
 
 function get_age($d, $m, $y)
 {
-    return $y
-        ? date('Y') - $y - (date('md') < lead0($m) . lead0($d) ? 1 : 0)
-        : 0;
+    return $y ? date('Y') - $y - (date('md') < lead0($m) . lead0($d) ? 1 : 0) : 0;
 }
 
 function clean_filename($fn, $lowerCase = true)
@@ -1095,10 +1083,8 @@ function check_uploaded_file($full_fn, $orig_fn = '', $types_ar = [])
     return in_array($ext, $ar);
 }
 
-function escape_bad_html(
-    $s,
-    $allowed = 'p|br|b|i|u|a|img|object|embed|param|iframe'
-) {
+function escape_bad_html($s, $allowed = 'p|br|b|i|u|a|img|object|embed|param|iframe')
+{
     $s = preg_replace("/<((?!\/?($allowed)\b)[^>]*)>/xis", '&lt;\1&gt;', $s);
 
     preg_match_all('/<iframe[^>]*>/', $s, $regs);
@@ -1330,8 +1316,7 @@ if (!function_exists('http_build_url')) {
         is_array($url) || ($url = parse_url($url));
         is_array($parts) || ($parts = parse_url($parts));
 
-        (isset($url['query']) && is_string($url['query'])) ||
-            ($url['query'] = null);
+        (isset($url['query']) && is_string($url['query'])) || ($url['query'] = null);
         (isset($parts['query']) && is_string($parts['query'])) ||
             ($parts['query'] = null);
 
@@ -1365,19 +1350,12 @@ if (!function_exists('http_build_url')) {
             }
         } else {
             if (isset($parts['path']) && $flags & HTTP_URL_JOIN_PATH) {
-                if (
-                    isset($url['path']) &&
-                    substr($parts['path'], 0, 1) !== '/'
-                ) {
+                if (isset($url['path']) && substr($parts['path'], 0, 1) !== '/') {
                     // Workaround for trailing slashes
                     $url['path'] .= 'a';
                     $url['path'] =
                         rtrim(
-                            str_replace(
-                                basename($url['path']),
-                                '',
-                                $url['path']
-                            ),
+                            str_replace(basename($url['path']), '', $url['path']),
                             '/'
                         ) .
                         '/' .
