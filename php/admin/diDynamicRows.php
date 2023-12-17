@@ -62,6 +62,7 @@ class diDynamicRows
     public $info_ar;
     public $abs_path;
     public $data_table, $data_id;
+    public $js_var_name;
 
     private $uploaded_images = [];
     private $uploaded_files = [];

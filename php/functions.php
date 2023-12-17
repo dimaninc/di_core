@@ -968,7 +968,7 @@ function ip2bin($ip = null)
 
 function bin2ip($bin)
 {
-    return long2ip($bin);
+    return long2ip($bin ?? 0);
 }
 
 /** @deprecated */

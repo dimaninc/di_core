@@ -125,6 +125,25 @@ class Model extends \diModel
         return $this;
     }
 
+    public static function htmlEntitiesToUtf8($str)
+    {
+        /* old approach
+        $enc = 'HTML-ENTITIES';
+        $origEnc = 'UTF-8';
+
+        return mb_convert_encoding($str, $enc, $origEnc);
+        */
+
+        return mb_encode_numericentity(
+            htmlspecialchars_decode(
+                htmlentities($str, ENT_NOQUOTES, 'UTF-8', false),
+                ENT_NOQUOTES
+            ),
+            [0x80, 0x10ffff, 0, ~0],
+            'UTF-8'
+        );
+    }
+
     public function parseData($maxUncutLength = null)
     {
         if ($this->dataParsed) {
@@ -135,9 +154,9 @@ class Model extends \diModel
             $maxUncutLength = static::MAX_UNCUT_LENGTH;
         }
 
-        $this->setOldValues(
-            unserialize($this->getOldData()) ?: []
-        )->setNewValues(unserialize($this->getNewData()) ?: []);
+        $this->setOldValues(unserialize($this->getOldData()) ?: [])->setNewValues(
+            unserialize($this->getNewData()) ?: []
+        );
 
         $newData = $this->getNewValues();
         $diffs = [];
@@ -151,22 +170,15 @@ class Model extends \diModel
 
             $origEnc = 'UTF-8';
             $enc = 'HTML-ENTITIES';
-            $oldValue = mb_convert_encoding($oldValue, $enc, $origEnc);
-            $newValue = mb_convert_encoding($newValue, $enc, $origEnc);
+            $oldValue = static::htmlEntitiesToUtf8($oldValue);
+            $newValue = static::htmlEntitiesToUtf8($newValue);
 
-            $diff = new \FineDiff(
-                $oldValue,
-                $newValue,
-                \FineDiff::$wordGranularity
-            );
+            $diff = new \FineDiff($oldValue, $newValue, \FineDiff::$wordGranularity);
             $diffs[$field] = html_entity_decode(
                 mb_convert_encoding($diff->renderDiffToHTML(), $origEnc, $enc)
             );
 
-            if (
-                $maxUncutLength &&
-                mb_strlen($diffs[$field]) > $maxUncutLength
-            ) {
+            if ($maxUncutLength && mb_strlen($diffs[$field]) > $maxUncutLength) {
                 preg_match_all(
                     '#<\s*?(ins|del)\b[^>]*>(.*?)</(ins|del)\b[^>]*>#s',
                     $diffs[$field],

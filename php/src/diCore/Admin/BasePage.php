@@ -198,7 +198,32 @@ abstract class BasePage
                     break;
 
                 default:
-                    throw new \Exception("Unknown method '{$o->getMethod()}'");
+                    $m = Base::getClassMethodName($o->getMethod());
+                    $beforeM = Base::getClassMethodName($o->getMethod(), 'before');
+                    $afterM = Base::getClassMethodName($o->getMethod(), 'after');
+
+                    if (!method_exists($o, $m)) {
+                        throw new \Exception("Unknown method '{$o->getMethod()}'");
+                    }
+
+                    if (!method_exists($o, $beforeM)) {
+                        throw new \Exception(
+                            "No before-handler fo '{$o->getMethod()}'"
+                        );
+                    }
+
+                    if (!method_exists($o, $afterM)) {
+                        throw new \Exception(
+                            "No after-handler fo '{$o->getMethod()}'"
+                        );
+                    }
+
+                    if ($o->$beforeM()) {
+                        $o->$m();
+                    }
+                    $o->$afterM();
+
+                    break;
             }
 
             $o->getAdmin()->afterRender();
