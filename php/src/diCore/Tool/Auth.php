@@ -53,6 +53,19 @@ class Auth
 
     const SESSION_USER_ID_FIELD = 'user_id';
 
+    /**
+     * Set to false, if only user token auth should be used
+     */
+    const USE_PHP_SESSION = true;
+    /**
+     * Set to false, if cookies should not be used
+     */
+    const USE_COOKIES = true;
+    /**
+     * Set to false, if headers should not be used
+     */
+    const USE_HEADERS = true;
+
     /** @var Auth */
     protected static $instance;
 
@@ -69,7 +82,7 @@ class Auth
     /** @var bool */
     private $redirectAllowed = true;
     /**
-     * Ids of super users
+     * Ids of superusers
      * @var array
      */
     protected static $superUsers = [];
@@ -77,6 +90,8 @@ class Auth
     public function __construct($redirectAllowed = true)
     {
         \diSession::start();
+
+        $this->user = \diModel::create(static::USER_MODEL_TYPE);
 
         $this->setRedirectAllowed($redirectAllowed)
             ->authUsingSession()
@@ -385,9 +400,16 @@ class Auth
 
     private function authUsingSession()
     {
+        if (!static::USE_PHP_SESSION) {
+            return $this;
+        }
+
+        // todo: add setting of user id type: int or string
         $id = \diRequest::session(static::SESSION_USER_ID_FIELD, 0);
 
-        $this->user = \diModel::create(static::USER_MODEL_TYPE, $id, 'id');
+        if ($id) {
+            $this->user = \diModel::create(static::USER_MODEL_TYPE, $id, 'id');
+        }
 
         if ($this->authorized()) {
             $this->authSource = self::SOURCE_SESSION;
@@ -402,7 +424,7 @@ class Auth
 
     private function authUsingCookies()
     {
-        if ($this->authorized()) {
+        if ($this->authorized() || !static::USE_COOKIES) {
             return $this;
         }
 
@@ -420,7 +442,7 @@ class Auth
 
     private function authUsingHeaders()
     {
-        if ($this->authorized()) {
+        if ($this->authorized() || !static::USE_HEADERS) {
             return $this;
         }
 
