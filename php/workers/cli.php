@@ -5,6 +5,6 @@ if (\diRequest::get('controller') && \diRequest::get('action')) {
     \diBaseController::autoCreate(
         \diRequest::get('controller'),
         \diRequest::get('action'),
-        explode('/', \diRequest::get('params'))
+        explode('/', \diRequest::get('params', ''))
     );
 }

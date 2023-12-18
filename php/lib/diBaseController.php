@@ -234,7 +234,7 @@ class diBaseController
             $path = static::getCurrentFolder();
 
             $paramsStr = trim(
-                substr(static::getFullQueryRoute(), strlen($path) + 1),
+                substr(static::getFullQueryRoute() ?: '', strlen($path) + 1),
                 '/'
             );
         }

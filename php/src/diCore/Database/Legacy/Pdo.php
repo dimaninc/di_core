@@ -59,8 +59,7 @@ abstract class Pdo extends \diDB
             );
         } catch (\PDOException $e) {
             $message =
-                "Pdo: Unable to connect to host $this->host: " .
-                $e->getMessage();
+                "Pdo: Unable to connect to host $this->host: " . $e->getMessage();
 
             $this->_log($message);
 
@@ -111,17 +110,14 @@ abstract class Pdo extends \diDB
             $this->lastResult = $this->link->query($q);
 
             try {
-                $this->lastInsertId =
-                    $this->__insert_id() ?: $this->lastInsertId;
+                $this->lastInsertId = $this->__insert_id() ?: $this->lastInsertId;
             } catch (\PDOException $e) {
                 $this->lastInsertId = null;
             }
 
             return $this->lastResult;
         } catch (\PDOException $e) {
-            return $this->_log(
-                "Unable to execute query `{$q}`: {$e->getMessage()}"
-            );
+            return $this->_log("Unable to execute query `{$q}`: {$e->getMessage()}");
         }
     }
 
@@ -184,10 +180,9 @@ abstract class Pdo extends \diDB
 
     public function escape_string($s, $binary = false)
     {
-        $s = $this->link->quote(
-            $s,
-            $binary ? \PDO::PARAM_LOB : \PDO::PARAM_STR
-        );
+        $s = $s
+            ? $this->link->quote($s, $binary ? \PDO::PARAM_LOB : \PDO::PARAM_STR)
+            : '';
 
         if (strlen($s) >= 2) {
             $s = substr($s, 1, strlen($s) - 2);
