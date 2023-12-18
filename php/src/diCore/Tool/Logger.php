@@ -39,6 +39,13 @@ class Logger
         return $this;
     }
 
+    public function disableLogToStdout()
+    {
+        $this->logToStdout = false;
+
+        return $this;
+    }
+
     public function getFolder()
     {
         return Config::getLogFolder();
