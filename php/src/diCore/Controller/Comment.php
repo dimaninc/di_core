@@ -8,6 +8,7 @@
 
 namespace diCore\Controller;
 
+use diCore\Data\Config;
 use diCore\Entity\Comment\Model;
 use diCore\Entity\User\Model as User;
 use diCore\Tool\Auth as AuthTool;
@@ -133,11 +134,10 @@ class Comment extends \diBaseController
                 ->setContent(\diRequest::postExt('content', ''))
                 ->setParent(\diRequest::postExt('parent', 0))
                 ->setVisible($this->Comments->moderatedBeforeShow() ? 0 : 1) // todo: use only setModerated()
-                ->setModerated($this->Comments->moderatedBeforeShow() ? 0 : 1)
-                ->save();
+                ->setModerated($this->Comments->moderatedBeforeShow() ? 0 : 1);
+            $comment->save();
 
-            // for output, sql-like format
-            $comment->setDate(date('Y-m-d H:i:s'));
+            $comment->setDate(\diDateTime::sqlFormat());
 
             $this->setNewComment($comment)
                 ->afterAddComment()
@@ -153,6 +153,10 @@ class Comment extends \diBaseController
             if ($comment->getId()) {
                 $result['ok'] = true;
                 $result['id'] = $comment->getId();
+            } else {
+                if (Config::isRestApiSupported()) {
+                    throw $e;
+                }
             }
         }
 

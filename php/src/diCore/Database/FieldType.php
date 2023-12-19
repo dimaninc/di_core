@@ -87,4 +87,39 @@ class FieldType extends SimpleContainer
 
         return static::name($id);
     }
+
+    public static function integerTypes()
+    {
+        return [self::int, self::ip_int, self::bool_int];
+    }
+
+    public static function floatTypes()
+    {
+        return [self::float, self::double];
+    }
+
+    public static function numberTypes()
+    {
+        return array_merge(self::integerTypes(), self::floatTypes());
+    }
+
+    public static function stringTypes()
+    {
+        return [self::string, self::ip_string];
+    }
+
+    public static function isInteger($type)
+    {
+        return in_array($type, self::integerTypes());
+    }
+
+    public static function isFloat($type)
+    {
+        return in_array($type, self::floatTypes());
+    }
+
+    public static function isNumber($type)
+    {
+        return in_array($type, self::numberTypes());
+    }
 }

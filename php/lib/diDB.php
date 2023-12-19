@@ -194,9 +194,7 @@ abstract class diDB
         if (!$this->debugFileName) {
             do {
                 $this->debugFileName =
-                    \diDateTime::format('Y-m-d-H-i-s-') .
-                    get_unique_id() .
-                    '.csv';
+                    \diDateTime::format('Y-m-d-H-i-s-') . get_unique_id() . '.csv';
             } while (is_file($this->getDebugLogFileName()));
         }
 
@@ -227,11 +225,7 @@ abstract class diDB
             );
         }
 
-        FileSystemHelper::createTree(
-            Config::getLogFolder(),
-            $this->logFolder,
-            0777
-        );
+        FileSystemHelper::createTree(Config::getLogFolder(), $this->logFolder, 0777);
 
         file_put_contents(
             $this->getDebugLogFileName(),
@@ -857,8 +851,7 @@ abstract class diDB
 
         foreach ($ar as $f => $v) {
             if ($v === null) {
-                $q_ar[] =
-                    static::QUOTE_FIELD . $f . static::QUOTE_FIELD . ' = NULL';
+                $q_ar[] = static::QUOTE_FIELD . $f . static::QUOTE_FIELD . ' = NULL';
 
                 continue;
             }
@@ -885,10 +878,8 @@ abstract class diDB
     /*
      * enter $keyField if it differs from 'id'
      */
-    protected static function insertUpdateQuery(
-        $fields_values,
-        $keyField = null
-    ) {
+    protected static function insertUpdateQuery($fields_values, $keyField = null)
+    {
         $q1 = static::insertUpdateQueryBeginning($keyField);
         $q3 =
             static::fields_and_values_to_string_for_update($fields_values) .
@@ -930,10 +921,7 @@ abstract class diDB
             $fieldValues = [$fieldValues];
         }
 
-        $q1 =
-            '(' .
-            self::fields_to_string_for_insert(current($fieldValues)) .
-            ')';
+        $q1 = '(' . self::fields_to_string_for_insert(current($fieldValues)) . ')';
         $q2_ar = [];
 
         foreach ($fieldValues as $ar) {
@@ -943,11 +931,7 @@ abstract class diDB
         $time1 = utime();
 
         $this->lockTable($t);
-        if (
-            !$this->__rq(
-                "INSERT INTO {$t}{$q1} VALUES" . join(',', $q2_ar) . ';'
-            )
-        ) {
+        if (!$this->__rq("INSERT INTO {$t}{$q1} VALUES" . join(',', $q2_ar) . ';')) {
             $this->_log("Unable to insert into table $t", true);
 
             $this->unlockTable($t);
@@ -987,8 +971,7 @@ abstract class diDB
                 $this->escapeFieldValue('id', $q_ending) .
                 $this->getUpdateSingleLimit();
         } elseif (is_array($q_ending)) {
-            $q_ending =
-                'WHERE ' . $this->escapeField('id') . $this->in($q_ending);
+            $q_ending = 'WHERE ' . $this->escapeField('id') . $this->in($q_ending);
         } elseif (!$q_ending && $q_ending !== '') {
             $this->_log("Warning, empty Q_ENDING in update ($table)", false);
 
@@ -1068,16 +1051,19 @@ abstract class diDB
     /*
      * enter $keyField if it differs from 'id'
      */
-    public function insert_or_update(
-        $table,
-        $fields_values = [],
-        $keyField = null
-    ) {
+    public function insert_or_update($table, $fields_values = [], $keyField = null)
+    {
         $t = $this->get_table_name($table);
 
         $q1 = '(' . static::fields_to_string_for_insert($fields_values) . ')';
         $q2 = '(' . static::values_to_string_for_insert($fields_values) . ')';
         $q3 = static::insertUpdateQuery($fields_values, $keyField);
+
+        print_r($fields_values);
+        print_r($q1);
+        print_r($q2);
+        print_r($q3);
+        die();
 
         $time1 = utime();
 

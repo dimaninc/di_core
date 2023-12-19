@@ -178,6 +178,7 @@ class diModel implements \ArrayAccess
     protected $upsertFields = [];
 
     protected static $publicFields = [];
+    protected static $customPublicFields = [];
 
     /**
      * @param null|array|object $ar
@@ -2032,6 +2033,10 @@ class diModel implements \ArrayAccess
                 }
 
                 $v = $this->escapeValue($v, $k);
+
+                if (static::isFieldNumber($k)) {
+                    $v = static::tuneFieldValueByTypeBeforeDb($k, $v);
+                }
             }
         }
 
@@ -2827,6 +2832,21 @@ ENGINE = InnoDB;";
         return $ar[$field] ?? null;
     }
 
+    public static function isFieldInteger($field)
+    {
+        return FieldType::isInteger(static::getFieldType($field));
+    }
+
+    public static function isFieldFloat($field)
+    {
+        return FieldType::isFloat(static::getFieldType($field));
+    }
+
+    public static function isFieldNumber($field)
+    {
+        return FieldType::isNumber(static::getFieldType($field));
+    }
+
     public function setUpsertFields(array $fields)
     {
         $this->upsertFields = $fields;
@@ -2836,7 +2856,7 @@ ENGINE = InnoDB;";
 
     public static function getPublicFields()
     {
-        return static::$publicFields;
+        return array_merge(static::$publicFields, static::$customPublicFields);
     }
 
     public function getPublicData()
