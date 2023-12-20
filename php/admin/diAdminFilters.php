@@ -1169,8 +1169,8 @@ EOF;
                     }
 
                     if ($ar['type'] == 'date_str_range' && $r1) {
-                        $r1->d1_min = strtotime($r1->d1_min);
-                        $r1->d1_max = strtotime($r1->d1_max);
+                        $r1->d1_min = strtotime($r1->d1_min ?: '');
+                        $r1->d1_max = strtotime($r1->d1_max ?: '');
                     }
 
                     $y1 = min(
