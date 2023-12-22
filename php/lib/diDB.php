@@ -1059,12 +1059,6 @@ abstract class diDB
         $q2 = '(' . static::values_to_string_for_insert($fields_values) . ')';
         $q3 = static::insertUpdateQuery($fields_values, $keyField);
 
-        print_r($fields_values);
-        print_r($q1);
-        print_r($q2);
-        print_r($q3);
-        die();
-
         $time1 = utime();
 
         $this->lockTable($t);
