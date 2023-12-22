@@ -8,6 +8,7 @@ use diCore\Helper\ArrayHelper;
 use diCore\Base\CMS;
 use diCore\Data\Config;
 use diCore\Data\Http\Response;
+use diCore\Tool\Logger;
 
 class diBaseController
 {
@@ -76,6 +77,11 @@ class diBaseController
     protected static function isEqualHyphenAndUnderscoreInApiPath()
     {
         return Config::isEqualHyphenAndUnderscoreInApiPath();
+    }
+
+    protected static function logErrorsToFile()
+    {
+        return true;
     }
 
     /**
@@ -340,14 +346,37 @@ class diBaseController
             static::makeResponse($e, true);
         }
 
-        if (static::isRestApiSupported()) {
+        if (static::isCli()) {
+            $info = json_encode(\diRequest::convertFromCommandLine());
+        } else {
+            $path = \diRequest::requestUri();
+            $method = \diRequest::getMethodStr();
+            $info = "$method $path";
+        }
+
+        $message = "Error in API ($info): {$e->getMessage()}";
+        static::logMessage($message);
+
+        if (static::isRestApiSupported() && !static::isCli()) {
             HttpCode::header(HttpCode::INTERNAL_SERVER_ERROR);
         }
 
-        StringHelper::printJson([
-            static::RESULT_KEY => false,
-            static::MESSAGE_KEY => $e->getMessage(),
-        ]);
+        StringHelper::printJson(
+            [
+                static::RESULT_KEY => false,
+                static::MESSAGE_KEY => $e->getMessage(),
+            ],
+            !static::isCli()
+        );
+    }
+
+    protected static function logMessage($message)
+    {
+        if (!static::logErrorsToFile()) {
+            return;
+        }
+
+        Logger::getInstance()->log($message);
     }
 
     public function act($action = '', $paramsAr = [])
