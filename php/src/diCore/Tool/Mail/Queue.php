@@ -72,6 +72,15 @@ class Queue
         $ids = [];
 
         foreach ($to as $singleTo) {
+            if (!$singleTo) {
+                Logger::getInstance()->log(
+                    "Empty recipient with subj='$subject'",
+                    'Queue::add'
+                );
+
+                continue;
+            }
+
             $model = Model::create()
                 ->setSender($from)
                 ->setRecipient($singleTo)
@@ -153,9 +162,7 @@ class Queue
 
     public function processIncuts(Model $model)
     {
-        $incutIds = $model->hasIncutIds()
-            ? explode(',', $model->getIncutIds())
-            : [];
+        $incutIds = $model->hasIncutIds() ? explode(',', $model->getIncutIds()) : [];
 
         if ($incutIds) {
             foreach ($incutIds as $incutId) {
@@ -258,10 +265,7 @@ class Queue
                     $this->setLastError(Error::UNKNOWN_FATAL);
                 }
             } catch (\Exception $e) {
-                Logger::getInstance()->log(
-                    $e->getMessage(),
-                    'Queue::sendWorker'
-                );
+                Logger::getInstance()->log($e->getMessage(), 'Queue::sendWorker');
                 $res = false;
             }
         }
