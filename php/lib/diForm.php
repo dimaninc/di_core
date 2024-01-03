@@ -17,6 +17,8 @@
         * birth
 */
 
+use diCore\Helper\StringHelper;
+
 /**
  * Use models instead
  * @deprecated
@@ -182,7 +184,7 @@ class diForm
         if ($array_of_additional_keys) {
             foreach ($array_of_additional_keys as $p) {
                 $this->errors->define($p);
-            };
+            }
         }
     }
 
@@ -203,11 +205,7 @@ class diForm
             $f = $p['f'];
             $t = $p['t'];
 
-            if (
-                $t == 'checkbox' &&
-                !isset($GLOBALS[$var][$f]) &&
-                $this->is_submit
-            ) {
+            if ($t == 'checkbox' && !isset($GLOBALS[$var][$f]) && $this->is_submit) {
                 $GLOBALS[$var][$f] = 0;
             }
 
@@ -392,12 +390,7 @@ class diForm
         $v = $this->data[$f];
 
         if (
-            in_array($t, [
-                'date_str',
-                'time_str',
-                'datetime_str',
-                'timestamp',
-            ]) &&
+            in_array($t, ['date_str', 'time_str', 'datetime_str', 'timestamp']) &&
             strtoupper($v) == 'NOW()'
         ) {
             $f = "*$f";
@@ -492,14 +485,12 @@ class diForm
                 $tpl->assign([
                     'FF_FIELD' => $f,
                     'FF_TITLE' => $p['title'],
-                    'FF_VALUE' => str_out($this->data[$f]),
+                    'FF_VALUE' => StringHelper::out($this->data[$f]),
                     'FF_CHECKED' =>
                         $t == 'checkbox' && $this->data[$f]
                             ? " checked=\"checked\""
                             : '',
-                    'FF_INPUT' => isset($this->inputs[$f])
-                        ? $this->inputs[$f]
-                        : '',
+                    'FF_INPUT' => isset($this->inputs[$f]) ? $this->inputs[$f] : '',
 
                     'ERROR_TOKEN' => $f,
                     'ERROR_TEXT' => $this->errors->get_strings($f),
@@ -537,11 +528,8 @@ class diForm
         }
     }
 
-    function assign_tpl_values(
-        &$tpl,
-        $cur_rec = false,
-        $tpl_value_suffix = '_VALUE'
-    ) {
+    function assign_tpl_values(&$tpl, $cur_rec = false, $tpl_value_suffix = '_VALUE')
+    {
         foreach ($this->all_params as $p) {
             $f = $p['f'];
             $t = $p['t'];
@@ -761,10 +749,7 @@ class diForm
     function set_submit_params($ar)
     {
         $this->submit_params = $this->parse_form_params($ar);
-        $this->all_params = array_merge(
-            $this->submit_params,
-            $this->local_params
-        );
+        $this->all_params = array_merge($this->submit_params, $this->local_params);
 
         foreach ($this->submit_params as $p) {
             $this->hold[$p['f']] = 'false';
@@ -774,10 +759,7 @@ class diForm
     function set_local_params($ar)
     {
         $this->local_params = $this->parse_form_params($ar);
-        $this->all_params = array_merge(
-            $this->submit_params,
-            $this->local_params
-        );
+        $this->all_params = array_merge($this->submit_params, $this->local_params);
     }
 
     function parse_form_params($ar)
@@ -827,10 +809,7 @@ class diForm
             $this->{$kind . '_params'},
             $this->parse_form_params($name_and_type)
         );
-        $this->all_params = array_merge(
-            $this->submit_params,
-            $this->local_params
-        );
+        $this->all_params = array_merge($this->submit_params, $this->local_params);
     }
 }
 
@@ -866,11 +845,7 @@ function does_record_exist2($table, $ar)
     }
 
     $q =
-        'WHERE CONCAT(' .
-        join(',', $fields_ar) .
-        ")='" .
-        join('', $values_ar) .
-        "'";
+        'WHERE CONCAT(' . join(',', $fields_ar) . ")='" . join('', $values_ar) . "'";
 
     if ($r = $db->r($table, $q)) {
         foreach ($ar as $a) {

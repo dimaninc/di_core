@@ -259,6 +259,20 @@ class diRequest
         return self::server('REQUEST_METHOD');
     }
 
+    public static function getRemoteIp()
+    {
+        $ip =
+            self::server('HTTP_CLIENT_IP') ?:
+            self::server('HTTP_X_FORWARDED_FOR') ?:
+            self::server('REMOTE_ADDR');
+
+        if ($x = strpos($ip, ',')) {
+            $ip = substr($ip, 0, $x);
+        }
+
+        return $ip;
+    }
+
     public static function enableCors(
         $whitelistDomains = [],
         callable $onOptionsRequest = null

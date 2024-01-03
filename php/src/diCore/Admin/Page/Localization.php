@@ -80,7 +80,7 @@ class Localization extends \diCore\Admin\BasePage
 
         $s = utf8_wordwrap($s, 21, ' ', true);
         $s = strip_tags($s);
-        $s = str_cut_end($s, 100);
+        $s = StringHelper::cutEnd($s, 100);
 
         return $s .
             "<div class=\"display-none\" data-purpose=\"orig\" data-orig-value=\"$origEscaped\"></div>";

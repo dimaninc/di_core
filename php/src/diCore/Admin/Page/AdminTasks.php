@@ -195,7 +195,7 @@ class AdminTasks extends \diCore\Admin\BasePage
                     return $model->getTitle() .
                         '<div class="lite">' .
                         StringHelper::out(
-                            str_cut_end($model->getContent(), 150)
+                            StringHelper::cutEnd($model->getContent(), 150)
                         ) .
                         '</div>';
                 },

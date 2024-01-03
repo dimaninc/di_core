@@ -1,5 +1,7 @@
 <?php
 
+use diCore\Helper\StringHelper;
+
 class diActionsLogController extends diBaseAdminController
 {
     public function getAction()
@@ -16,7 +18,7 @@ class diActionsLogController extends diBaseAdminController
             $r->info = diActionsLog::getActionInfoStr($r);
         }
 
-        print_json([
+        StringHelper::printJson([
             'ok' => 1,
             'data' => $data,
         ]);

@@ -1211,13 +1211,14 @@ class Submit
             $fields = [$fields];
         }
 
-        $source = ArrayHelper::someValue(
-            $fields,
-            function ($field) use ($m) {
-                return $m->get($field);
-            },
-            true
-        );
+        $source =
+            ArrayHelper::someValue(
+                $fields,
+                function ($field) use ($m) {
+                    return $m->get($field);
+                },
+                true
+            ) ?? '';
 
         return self::cleanFilename(transliterate_rus_to_eng($source));
     }
@@ -1327,10 +1328,12 @@ class Submit
             //$this->setData($field, $this->getCurRec($field));
 
             if (isset($_FILES[$field]) && !$_FILES[$field]['error']) {
-                $old_file_ext = $this->getData($field)
-                    ? strtolower(get_file_ext($this->getData($field)))
+                $oldExt = $this->getData($field)
+                    ? strtolower(StringHelper::fileExtension($this->getData($field)))
                     : '';
-                $new_file_ext = strtolower(get_file_ext($_FILES[$field]['name']));
+                $newExt = strtolower(
+                    StringHelper::fileExtension($_FILES[$field]['name'])
+                );
 
                 if (!$this->getData($field)) {
                     $this->generateFilename(
@@ -1338,12 +1341,12 @@ class Submit
                         $folder,
                         $_FILES[$field]['name']
                     );
-                } elseif ($old_file_ext != $new_file_ext) {
+                } elseif ($oldExt != $newExt) {
                     $this->setData(
                         $field,
                         StringHelper::replaceFileExtension(
                             $this->getData($field),
-                            $new_file_ext
+                            $newExt
                         )
                     );
                 }
@@ -1454,19 +1457,23 @@ class Submit
                         : 0,
                 'visible' => !empty($_POST[$field . '_visible'][$id]) ? 1 : 0,
                 'title' => isset($_POST[$field . '_title'][$id])
-                    ? str_in($_POST[$field . '_title'][$id])
+                    ? StringHelper::in($_POST[$field . '_title'][$id])
                     : '',
                 'content' => isset($_POST[$field . '_content'][$id])
-                    ? str_in($_POST[$field . '_content'][$id])
+                    ? StringHelper::in($_POST[$field . '_content'][$id])
                     : '',
             ];
 
             if (isset($_POST[$field . '_alt_title'][$id])) {
-                $db_ar['alt_title'] = str_in($_POST[$field . '_alt_title'][$id]);
+                $db_ar['alt_title'] = StringHelper::in(
+                    $_POST[$field . '_alt_title'][$id]
+                );
             }
 
             if (isset($_POST[$field . '_html_title'][$id])) {
-                $db_ar['html_title'] = str_in($_POST[$field . '_html_title'][$id]);
+                $db_ar['html_title'] = StringHelper::in(
+                    $_POST[$field . '_html_title'][$id]
+                );
             }
 
             // pic
@@ -1480,10 +1487,16 @@ class Submit
                 !$_FILES[$varName]['error'][$id]
             ) {
                 $ext =
-                    '.' . strtolower(get_file_ext($_FILES[$varName]['name'][$id]));
+                    '.' .
+                    strtolower(
+                        StringHelper::fileExtension($_FILES[$varName]['name'][$id])
+                    );
 
                 if ($test_r && $test_r->$f) {
-                    $db_ar[$f] = replace_file_ext($test_r->$f, $ext);
+                    $db_ar[$f] = StringHelper::replaceFileExtension(
+                        $test_r->$f,
+                        $ext
+                    );
                 } else {
                     $db_ar[$f] = self::getGeneratedFilename(
                         \diPaths::fileSystem($this->getModel()) . $pics_folder,
@@ -1493,11 +1506,11 @@ class Submit
                     );
                 }
 
-                $db_ar['orig_fn'] = str_in($_FILES[$varName]['name'][$id]);
+                $db_ar['orig_fn'] = StringHelper::in($_FILES[$varName]['name'][$id]);
 
-                $callback = isset($this->_all_fields[$field]['callback'])
-                    ? $this->_all_fields[$field]['callback']
-                    : self::$defaultDynamicPicCallback;
+                $callback =
+                    $this->_all_fields[$field]['callback'] ??
+                    self::$defaultDynamicPicCallback;
 
                 $F = [
                     'name' => $_FILES[$varName]['name'][$id],

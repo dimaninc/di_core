@@ -115,7 +115,7 @@ class Banners extends \diCore\Admin\BasePage
             "WHERE banner_id='" . $this->getId() . "' ORDER BY uri ASC"
         );
         while ($bu_rs && ($bu_r = $this->getDb()->fetch($bu_rs))) {
-            $uri_ar[$bu_r->positive ? 'positive' : 'negative'][] = str_out(
+            $uri_ar[$bu_r->positive ? 'positive' : 'negative'][] = StringHelper::out(
                 $bu_r->uri
             );
         }
@@ -159,11 +159,7 @@ class Banners extends \diCore\Admin\BasePage
                 $uri_inputs .= "<div data-purpose=\"anchor\" data-field=\"{$ref_field}\" data-position=\"bottom\"></div>";
                 $uri_inputs .=
                     "<div id=\"js_{$ref_field}_resource\" style=\"display:none;\">" .
-                    $this->getForm()->get_dynamic_row(
-                        '%NEWID%',
-                        $ref_field,
-                        ''
-                    ) .
+                    $this->getForm()->get_dynamic_row('%NEWID%', $ref_field, '') .
                     '</div>';
 
                 $js .=

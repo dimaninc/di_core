@@ -6,6 +6,8 @@
         * birthdate
 */
 
+use diCore\Helper\StringHelper;
+
 class diSVNUpdater
 {
     private $svn;
@@ -57,11 +59,7 @@ class diSVNUpdater
 
         $this->log('Connected to the Client App FTP Server');
 
-        list(
-            $dirs_ar,
-            $files_ar,
-            $new_version,
-        ) = $this->get_contents_from_svn();
+        list($dirs_ar, $files_ar, $new_version) = $this->get_contents_from_svn();
 
         if ($new_version == $this->current_version) {
             $this->log_info_ar['total_message'] = 4;
@@ -124,7 +122,7 @@ class diSVNUpdater
     function get_log_line($ar)
     {
         return "<{$ar['type']} idx=\"{$ar['idx']}\">" .
-            str_out($ar['content']) .
+            StringHelper::out($ar['content']) .
             "</{$ar['type']}>\n";
     }
 
@@ -150,10 +148,7 @@ class diSVNUpdater
         foreach ($files_ar as $f) {
             $tmp_fn = get_unique_id() . '.tmp';
 
-            $fp = fopen(
-                diPaths::fileSystem() . get_tmp_folder() . $tmp_fn,
-                'w'
-            );
+            $fp = fopen(diPaths::fileSystem() . get_tmp_folder() . $tmp_fn, 'w');
             fputs($fp, $f['contents']);
             fclose($fp);
 

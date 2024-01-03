@@ -103,8 +103,7 @@ class Banner
                 'width' => $r->pic_w,
                 'height' => $r->pic_h,
                 'href' =>
-                    "/redir/{$r->id}/?uri=" .
-                    urlencode(\diRequest::requestUri()),
+                    "/redir/{$r->id}/?uri=" . urlencode(\diRequest::requestUri()),
                 'target' => $r->href_target == 'blank' ? ' target=_blank' : '',
                 'title' => $r->title,
             ],
@@ -150,10 +149,8 @@ class Banner
 
         for ($i = 0; $i < count(self::$ignoredDomainsAr); $i++) {
             if (
-                substr(
-                    $host,
-                    strlen($host) - strlen(self::$ignoredDomainsAr[$i])
-                ) == self::$ignoredDomainsAr[$i]
+                substr($host, strlen($host) - strlen(self::$ignoredDomainsAr[$i])) ==
+                self::$ignoredDomainsAr[$i]
             ) {
                 return true;
             }
@@ -170,7 +167,7 @@ class Banner
 
     public static function needToShow($banner_id)
     {
-        $uri = str_replace('%', '%%', str_in($_SERVER['REQUEST_URI']));
+        $uri = str_replace('%', '%%', StringHelper::in($_SERVER['REQUEST_URI']));
         $query = "WHERE banner_id='$banner_id' and '$uri' LIKE REPLACE(uri,'*','%%') and positive='%d'";
 
         $u_r1 = self::getDb()->r(self::urisTable, sprintf($query, 1));
@@ -194,7 +191,7 @@ class Banner
             }
 
             foreach ($_POST[$key] as $idx => $uri) {
-                $uri = str_in($uri);
+                $uri = StringHelper::in($uri);
 
                 if ($uri) {
                     if ($uri[0] != '/' && $uri[0] != '*') {
@@ -316,8 +313,7 @@ class Banner
                 static::needToShow($banner->getId()) &&
                 (!$limits[$banner->getPlace()] ||
                     ($limits[$banner->getPlace()] &&
-                        $counts[$banner->getPlace()] <
-                            $limits[$banner->getPlace()]))
+                        $counts[$banner->getPlace()] < $limits[$banner->getPlace()]))
             ) {
                 $ar[] = $banner;
 

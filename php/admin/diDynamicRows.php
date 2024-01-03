@@ -651,9 +651,9 @@ class diDynamicRows
                     $static = $this->static_mode || $this->isFlag($ar, 'static');
 
                     $this->inputs[$name] = $static
-                        ? str_out($value)
+                        ? StringHelper::out($value)
                         : "<input type=\"{$type}\" name=\"$name\" id=\"$name\" value=\"" .
-                            str_out($value) .
+                            StringHelper::out($value) .
                             "\"$input_params>";
                     break;
             }
@@ -717,7 +717,7 @@ class diDynamicRows
         if ($this->isFlag($field, 'hidden')) {
             $this->inputs[$name] =
                 "<input type=hidden name=\"$name\" value=\"" .
-                str_out($value) .
+                StringHelper::out($value) .
                 "\">";
         }
 
@@ -777,9 +777,9 @@ class diDynamicRows
             ? '<textarea ' .
                 join(' ', $ar) .
                 '>' .
-                str_out($this->data[$field]) .
+                StringHelper::out($this->data[$field]) .
                 '</textarea>'
-            : nl2br(str_out($this->data[$field]));
+            : nl2br(StringHelper::out($this->data[$field]));
     }
 
     function set_select_from_array_input(
@@ -798,7 +798,7 @@ class diDynamicRows
 
         if ($this->static_mode) {
             $this->inputs[$name] = isset($ar[$this->data[$name]])
-                ? str_out($ar[$this->data[$name]])
+                ? StringHelper::out($ar[$this->data[$name]])
                 : '---';
         } else {
             $sel = new diSelect($name, $this->data[$name]);
@@ -1328,8 +1328,8 @@ EOF;
         preg_match('/^([^[]+)\[([^]]+)\]$/', $field, $matches);
 
         $field2 = substr($matches[1], strlen($this->field) + 1);
-        $f = remove_ending_slash(Config::getPublicFolder()) . $fullName;
-        $ext = strtoupper(get_file_ext($fullName));
+        $f = StringHelper::unslash(Config::getPublicFolder()) . $fullName;
+        $ext = strtoupper(StringHelper::fileExtension($fullName));
         $imgWrapperNeeded = false;
 
         if (is_file($f)) {
@@ -1534,8 +1534,8 @@ EOF;
             );
         }
 
-        $ids_ar = [];
-        $initial_ids_ar = $_POST["{$this->field}_ids_ar"];
+        $resultIds = [];
+        $initialIds = $_POST["{$this->field}_ids_ar"];
 
         $fileFields = [];
         $fields = (array) $this->getProperty('fields');
@@ -1567,7 +1567,7 @@ EOF;
             $this->defaultMultiplePicField = current($fileFields);
         }
 
-        foreach ($initial_ids_ar as $id) {
+        foreach ($initialIds as $id) {
             if (!(int) $id) {
                 continue;
             }
@@ -1644,7 +1644,7 @@ EOF;
                     $data_for_db,
                     $this->test_r->id
                 ) or $this->getDb()->dierror();
-                $ids_ar[] = $this->test_r->id;
+                $resultIds[] = $this->test_r->id;
             } else {
                 if (!$techFieldsSet) {
                     $data_for_db['_table'] = $this->data['_table'] = $this->table;
@@ -1653,14 +1653,17 @@ EOF;
                     //this->data["date"] = time();
                 }
 
-                ($ids_ar[] = $this->getDb()->insert(
-                    $this->data_table,
-                    $data_for_db
-                )) or $this->getDb()->dierror();
+                $newId = $this->getDb()->insert($this->data_table, $data_for_db);
+
+                if (!$newId) {
+                    $this->getDb()->dierror();
+                }
+
+                $resultIds[] = $newId;
             }
         }
 
-        $ids_ar = array_merge($ids_ar, $this->submitMultipleFiles());
+        $resultIds = array_merge($resultIds, $this->submitMultipleFiles());
 
         // it's killing time!
         $filesToKill = [];
@@ -1669,19 +1672,16 @@ EOF;
             ? $m->getPicsFolder()
             : $dynamic_pics_folder . "$this->table/";
 
-        ($kill_rs = $this->getDb()->rs(
-            $this->data_table,
-            "WHERE $this->subquery and id not in ('" . join("','", $ids_ar) . "')"
-        )) or $this->getDb()->dierror();
+        $killQuery =
+            "WHERE $this->subquery and id" .
+            $this->getDb()::in($resultIds, false, false);
+        $kill_rs = $this->getDb()->rs($this->data_table, $killQuery);
         while ($kill_r = $this->getDb()->fetch($kill_rs)) {
             foreach ($fileFields as $field) {
                 $filesToKill[] = $kill_r->$field;
             }
         }
-        $this->getDb()->delete(
-            $this->data_table,
-            "WHERE $this->subquery and id not in ('" . join("','", $ids_ar) . "')"
-        ) or $this->getDb()->dierror();
+        $this->getDb()->delete($this->data_table, $killQuery);
 
         foreach ($filesToKill as $fn) {
             @unlink($this->abs_path . $pics_folder . $fn);
@@ -1689,7 +1689,6 @@ EOF;
             @unlink($this->abs_path . $pics_folder . $tn2_folder . $fn);
             @unlink($this->abs_path . $pics_folder . $tn3_folder . $fn);
         }
-        //
 
         // making order num to look ok
         $order_num = 0;
@@ -1707,11 +1706,10 @@ EOF;
                 $r->id
             );
         }
-        //
 
         if (is_callable($afterSaveCallback)) {
-            foreach ($ids_ar as $_idx => $_id) {
-                $initial_id = $initial_ids_ar[$_idx];
+            foreach ($resultIds as $_idx => $_id) {
+                $initial_id = $initialIds[$_idx];
 
                 $afterSaveCallback($this, $_id, $initial_id);
             }
@@ -1964,7 +1962,7 @@ EOF;
                 case 'string':
                 case 'str':
                 case 'varchar':
-                    $this->data[$f] = str_in($this->data[$f]);
+                    $this->data[$f] = StringHelper::in($this->data[$f]);
                     break;
 
                 case 'text':

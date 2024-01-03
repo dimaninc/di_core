@@ -105,7 +105,7 @@ class Model extends \diModel
     {
         $contentHtml = nl2br(StringHelper::out($this->getContent()));
         $contentHtmlWithLinks = nl2br(
-            highlight_urls(StringHelper::out($this->getContent()))
+            StringHelper::wrapUrlWithTag(StringHelper::out($this->getContent()))
         );
 
         return extend(parent::getCustomTemplateVars(), [
@@ -138,9 +138,7 @@ class Model extends \diModel
             return static::$statuses;
         }
 
-        return isset(static::$statuses[$status])
-            ? static::$statuses[$status]
-            : null;
+        return isset(static::$statuses[$status]) ? static::$statuses[$status] : null;
     }
 
     public static function priorityStr($priority = null)

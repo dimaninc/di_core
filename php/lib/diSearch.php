@@ -1,6 +1,7 @@
 <?php
 
 use diCore\Data\Config;
+use diCore\Helper\StringHelper;
 
 $disearch_min_word_length = 3;
 
@@ -201,8 +202,7 @@ abstract class diSearch
             'primaryFields' => $search_q_ar[$table]['primaryFields'] ?? [],
             'fields' => $search_q_ar[$table]['fields'],
             'where' => !empty($search_q_ar[$table]['where'])
-                ? 'WHERE ' .
-                    str_replace('t.', '', $search_q_ar[$table]['where'])
+                ? 'WHERE ' . str_replace('t.', '', $search_q_ar[$table]['where'])
                 : '',
             'callback' => !empty($search_q_ar[$table]['callback'])
                 ? $search_q_ar[$table]['callback']
@@ -340,7 +340,7 @@ abstract class diSearch
     {
         $sr_r = $this->getDb()->r(
             'search_replaces',
-            "WHERE query='" . str_in($query) . "'"
+            "WHERE query='" . StringHelper::in($query) . "'"
         );
 
         if ($sr_r) {
@@ -348,7 +348,7 @@ abstract class diSearch
         } else {
             $sr_r = $this->getDb()->r(
                 'search_replaces',
-                "WHERE '" . str_in($query) . "' LIKE query"
+                "WHERE '" . StringHelper::in($query) . "' LIKE query"
             );
 
             if ($sr_r) {
@@ -396,10 +396,7 @@ abstract class diSearch
             if (strlen(strpos(" {$this->index_ar[$id]}", " $w"))) {
                 $cc++;
             }
-            if (
-                $orig_text_field &&
-                strlen(strpos(" $orig_text_field", " $w"))
-            ) {
+            if ($orig_text_field && strlen(strpos(" $orig_text_field", " $w"))) {
                 $cc0++;
             }
         }
@@ -431,9 +428,7 @@ class diTextfileSearch extends diSearch
     {
         parent::__construct($table);
 
-        $this->index_filename = isset(
-            $GLOBALS[$this->table . '_index_filename']
-        )
+        $this->index_filename = isset($GLOBALS[$this->table . '_index_filename'])
             ? $GLOBALS[$this->table . '_index_filename']
             : "uploads/search/{$this->table}.idx";
     }
@@ -701,9 +696,7 @@ class diDBSearch extends diSearch
         ]);
 
         $match =
-            "MATCH (content) AGAINST ('" .
-            addslashes($query) .
-            "' IN BOOLEAN MODE)";
+            "MATCH (content) AGAINST ('" . addslashes($query) . "' IN BOOLEAN MODE)";
         $primaryMatch =
             "MATCH (primary_content) AGAINST ('" .
             addslashes($query) .

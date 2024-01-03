@@ -30,6 +30,8 @@ use diCore\Admin\BasePage;
 use diCore\Admin\Submit;
 use diCore\Database\Connection;
 use diCore\Database\Engine;
+use diCore\Helper\FileSystemHelper;
+use diCore\Helper\StringHelper;
 
 class Configuration
 {
@@ -248,12 +250,8 @@ class Configuration
      * @param int $imageType Submit::IMAGE_TYPE_MAIN, etc.
      * @return bool|string|null
      */
-    public static function getDimensionParam(
-        $dimension,
-        $table,
-        $field,
-        $imageType
-    ) {
+    public static function getDimensionParam($dimension, $table, $field, $imageType)
+    {
         $suffix = Submit::getPreviewSuffix($imageType);
 
         return Configuration::exists([
@@ -335,9 +333,7 @@ class Configuration
     public static function throwException($name)
     {
         $d = debug_backtrace();
-        $info = isset($d[0])
-            ? "{$d[0]['file']}:{$d[0]['line']}"
-            : 'no debug info';
+        $info = isset($d[0]) ? "{$d[0]['file']}:{$d[0]['line']}" : 'no debug info';
 
         throw new \Exception(
             "There's no variable '$name' in diConfiguration::\$data ($info)"
@@ -424,20 +420,20 @@ class Configuration
                 in_array(self::getPropertyType($k), ['pic', 'file'])
             ) {
                 if (isset($_FILES[$k]) && $_FILES[$k]['error'] == 0) {
-                    create_folders_chain(
+                    FileSystemHelper::createTree(
                         \diPaths::fileSystem(),
                         self::getFolder(),
                         $this->dirChmod
                     );
 
-                    $ext = strtolower('.' . get_file_ext($_FILES[$k]['name']));
+                    $ext = strtolower(
+                        '.' . StringHelper::fileExtension($_FILES[$k]['name'])
+                    );
 
                     do {
                         $pic = substr(get_unique_id(), 0, 10) . $ext;
                     } while (
-                        is_file(
-                            \diPaths::fileSystem() . self::getFolder() . $pic
-                        )
+                        is_file(\diPaths::fileSystem() . self::getFolder() . $pic)
                     );
 
                     if (
@@ -560,8 +556,7 @@ class Configuration
 
         if (!$res) {
             throw new \Exception(
-                'Unable to init configuration table: ' .
-                    $this->getDb()->getLogStr()
+                'Unable to init configuration table: ' . $this->getDb()->getLogStr()
             );
         }
 
@@ -597,13 +592,7 @@ class Configuration
             $s = $this->adjustBeforeDB($r->{$this->valueField}, $type, true);
 
             if (
-                !in_array($type, [
-                    'int',
-                    'integer',
-                    'float',
-                    'double',
-                    'checkbox',
-                ])
+                !in_array($type, ['int', 'integer', 'float', 'double', 'checkbox'])
             ) {
                 $s = "\"$s\"";
             }
@@ -641,9 +630,7 @@ class Configuration
     {
         switch ($type) {
             default:
-                return $forCache
-                    ? addcslashes($value, '"')
-                    : addslashes($value);
+                return $forCache ? addcslashes($value, '"') : addslashes($value);
 
             case 'checkbox':
             case 'int':

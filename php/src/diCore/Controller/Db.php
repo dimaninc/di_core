@@ -126,19 +126,17 @@ class Db extends \diBaseAdminController
             isset($_FILES['dump']) &&
             trim($_FILES['dump']['name']) != '' &&
             $_FILES['dump']['size'] &&
-            in_array(strtolower(get_file_ext($_FILES['dump']['name'])), [
-                'gz',
-                'sql',
-            ])
+            in_array(
+                strtolower(StringHelper::fileExtension($_FILES['dump']['name'])),
+                ['gz', 'sql']
+            )
         ) {
             $fn = $this->folder . $_FILES['dump']['name'];
 
             if (move_uploaded_file($_FILES['dump']['tmp_name'], $fn)) {
                 $ar['ok'] = 1;
             } else {
-                $ar[
-                    'text'
-                ] = "Unable to copy {$_FILES['dump']['tmp_name']} � $fn";
+                $ar['text'] = "Unable to copy {$_FILES['dump']['tmp_name']} � $fn";
             }
 
             $ar = extend($ar, $this->getDumpInfo($fn));
@@ -212,8 +210,7 @@ class Db extends \diBaseAdminController
         $date_fn_format = 'Y_m_d__H_i_s';
         $date_sql_comment = 'Y/m/d H:i:s';
 
-        $filename =
-            $this->folder . $fn . '__dump_' . date($date_fn_format) . '.sql';
+        $filename = $this->folder . $fn . '__dump_' . date($date_fn_format) . '.sql';
         if ($compress) {
             $filename .= '.gz';
         }
@@ -222,7 +219,7 @@ class Db extends \diBaseAdminController
             'ok' => false,
             'system' => false,
             'text' => '',
-            'format' => get_file_ext($filename),
+            'format' => StringHelper::fileExtension($filename),
             'file' => basename($filename),
             'name' => $fn,
             'size' => null,
@@ -309,16 +306,11 @@ EOF;
                     $name = $r->Field;
                     $type = $r->Type;
                     $null = $r->Null == 'YES' ? ' NULL' : ' NOT NULL';
-                    $def =
-                        $r->Default != null
-                            ? ' DEFAULT ' . $r->Default . ''
-                            : '';
+                    $def = $r->Default != null ? ' DEFAULT ' . $r->Default . '' : '';
                     $extra = $r->Extra ? ' ' . $r->Extra : '';
 
                     if (!$this->keepDefaultGenerated()) {
-                        $extra = trim(
-                            str_replace('DEFAULT_GENERATED', '', $extra)
-                        );
+                        $extra = trim(str_replace('DEFAULT_GENERATED', '', $extra));
                         if ($extra) {
                             $extra = ' ' . $extra;
                         }
@@ -354,9 +346,7 @@ EOF;
                 }
 
                 $engine =
-                    substr($table, 0, 13) == 'search_index_'
-                        ? 'MyISAM'
-                        : 'InnoDB';
+                    substr($table, 0, 13) == 'search_index_' ? 'MyISAM' : 'InnoDB';
 
                 // get each key info
                 foreach ($indexAr as $key_name => $columns) {
@@ -466,7 +456,7 @@ EOF;
     {
         return [
             'size' => filesize($filename),
-            'format' => get_file_ext($filename),
+            'format' => StringHelper::fileExtension($filename),
             'file' => basename($filename),
         ];
     }
@@ -562,10 +552,7 @@ EOF;
                     reset($sql_comments);
 
                     foreach ($sql_comments as $sql_c) {
-                        if (
-                            !$line ||
-                            substr($line, 0, strlen($sql_c)) == $sql_c
-                        ) {
+                        if (!$line || substr($line, 0, strlen($sql_c)) == $sql_c) {
                             $to_skip_line = true;
                             break;
                         }
@@ -605,13 +592,9 @@ EOF;
                     if (substr($query, 0, 12) == '/*!40101 SET') {
                         // skipping this trash
                         $query = '';
-                    } elseif (
-                        substr($query, -23) == 'DEFAULT CHARSET=latin1;'
-                    ) {
+                    } elseif (substr($query, -23) == 'DEFAULT CHARSET=latin1;') {
                         $query =
-                            substr($query, 0, -7) .
-                            Config::getDbEncoding() .
-                            ';';
+                            substr($query, 0, -7) . Config::getDbEncoding() . ';';
                     }
 
                     $this->getDb()->resetLog();

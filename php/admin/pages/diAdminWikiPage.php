@@ -1,4 +1,7 @@
 <?php
+
+use diCore\Helper\StringHelper;
+
 /**
  * Created by PhpStorm.
  * User: dimaninc
@@ -37,7 +40,7 @@ class diAdminWikiPage extends \diCore\Admin\BasePage
                 'value' => function (diAdminWikiModel $model) {
                     return $model->getTitle() .
                         "<div class=\"lite\">" .
-                        str_cut_end(strip_tags($model->getContent()), 150) .
+                        StringHelper::cutEnd(strip_tags($model->getContent()), 150) .
                         '</div>';
                 },
                 'headAttrs' => [
@@ -112,8 +115,7 @@ class diAdminWikiPage extends \diCore\Admin\BasePage
         if (!$this->isNew()) {
             /** @var diTags $class */
             $class =
-                $this->getSubmit()->getFieldOption('tag_id', 'class') ?:
-                'diTags';
+                $this->getSubmit()->getFieldOption('tag_id', 'class') ?: 'diTags';
 
             $tagsBefore = $class::tagIdsAr(
                 diTypes::getId($this->getTable()),

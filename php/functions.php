@@ -5,6 +5,7 @@
 
 require dirname(__FILE__) . '/lib/diLib.php';
 
+use diCore\Helper\FileSystemHelper;
 use diCore\Helper\StringHelper;
 
 $html_encodings_ar = [
@@ -278,13 +279,13 @@ function getDynamicPicsFolder()
 /** @deprecated */
 function str_in($str)
 {
-    return diStringHelper::in($str);
+    return StringHelper::in($str);
 }
 
 /** @deprecated */
 function str_out($str, $replaceAmp = false)
 {
-    return diStringHelper::out($str, $replaceAmp);
+    return StringHelper::out($str, $replaceAmp);
 }
 
 function isInteger($value)
@@ -317,19 +318,19 @@ function lead0($num)
 /** @deprecated  */
 function add_ending_slash($path)
 {
-    return \diCore\Helper\StringHelper::slash($path);
+    return StringHelper::slash($path);
 }
 
 /** @deprecated  */
 function remove_ending_slash($path)
 {
-    return \diCore\Helper\StringHelper::unslash($path);
+    return StringHelper::unslash($path);
 }
 
 /** @deprecated  */
 function create_folders_chain($start_path, $path_to_create, $mod = 0775)
 {
-    \diCore\Helper\FileSystemHelper::createTree($start_path, $path_to_create, $mod);
+    FileSystemHelper::createTree($start_path, $path_to_create, $mod);
 }
 
 /** @deprecated */
@@ -390,19 +391,16 @@ function send_email(
     );
 }
 
+/** @deprecated  */
 function str_cut_end($s, $max_len, $trailer = '...')
 {
-    return \diCore\Helper\StringHelper::cutEnd($s, $max_len, $trailer);
+    return StringHelper::cutEnd($s, $max_len, $trailer);
 }
 
+/** @deprecated  */
 function smart_str_cut_end($s, $max_len, $trailer = '...', $is_utf8 = false)
 {
-    return \diCore\Helper\StringHelper::smartCutEnd(
-        $s,
-        $max_len,
-        $trailer,
-        $is_utf8
-    );
+    return StringHelper::smartCutEnd($s, $max_len, $trailer, $is_utf8);
 }
 
 /**
@@ -414,11 +412,7 @@ function smart_str_cut_end($s, $max_len, $trailer = '...', $is_utf8 = false)
  */
 function get_dir_array($sPath, $dir_in_filename = false, $recursive = false)
 {
-    return \diCore\Helper\FileSystemHelper::folderContents(
-        $sPath,
-        $dir_in_filename,
-        $recursive
-    );
+    return FileSystemHelper::folderContents($sPath, $dir_in_filename, $recursive);
 }
 
 if (!function_exists('glob_recursive')) {
@@ -444,7 +438,7 @@ if (!function_exists('glob_recursive')) {
 /** @deprecated  */
 function get_file_ext($fn)
 {
-    return \diCore\Helper\StringHelper::fileExtension($fn);
+    return StringHelper::fileExtension($fn);
 }
 
 // returns an array:
@@ -614,18 +608,10 @@ function transliterate_rus_to_eng($text, $lowerCase = true)
     return str_replace(array_keys($trans_table), array_values($trans_table), $text);
 }
 
+/** @deprecated  */
 function get_user_ip()
 {
-    $ip =
-        \diRequest::server('HTTP_CLIENT_IP') ?:
-        \diRequest::server('HTTP_X_FORWARDED_FOR') ?:
-        \diRequest::server('REMOTE_ADDR');
-
-    if ($x = strpos($ip, ',')) {
-        $ip = substr($ip, 0, $x);
-    }
-
-    return $ip;
+    return \diRequest::getRemoteIp();
 }
 
 //
@@ -952,7 +938,7 @@ function utime()
 /** @deprecated  */
 function replace_file_ext($fn, $new_ext = '')
 {
-    return \diCore\Helper\StringHelper::replaceFileExtension($fn, $new_ext);
+    return StringHelper::replaceFileExtension($fn, $new_ext);
 }
 
 function ip2bin($ip = null)
@@ -1078,7 +1064,9 @@ function check_uploaded_file($full_fn, $orig_fn = '', $types_ar = [])
         }
     }
 
-    $ext = mb_strtolower(get_file_ext($orig_fn ? $orig_fn : $full_fn));
+    $ext = mb_strtolower(
+        StringHelper::fileExtension($orig_fn ? $orig_fn : $full_fn)
+    );
 
     return in_array($ext, $ar);
 }
@@ -1091,7 +1079,7 @@ function escape_bad_html($s, $allowed = 'p|br|b|i|u|a|img|object|embed|param|ifr
 
     foreach ($regs[0] as $tag) {
         if (strpos($tag, " src=\"http://www.youtube.com/") === false) {
-            $s = str_replace($tag, str_out($tag), $s);
+            $s = str_replace($tag, StringHelper::out($tag), $s);
         }
     }
 

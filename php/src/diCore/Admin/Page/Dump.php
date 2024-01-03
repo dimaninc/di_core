@@ -227,7 +227,7 @@ class Dump extends \diCore\Admin\BasePage
                 $ar[] = [
                     'type' => 'folder',
                     'name' => $currentFolder,
-                    'name_slashed' => add_ending_slash($currentFolder),
+                    'name_slashed' => StringHelper::slash($currentFolder),
                 ];
             }
 

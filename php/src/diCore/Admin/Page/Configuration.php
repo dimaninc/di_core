@@ -147,7 +147,7 @@ class Configuration extends \diCore\Admin\BasePage
                         $val;
                     $ff_orig = '/' . Cfg::getInstance()->getFolder() . $val;
                     $path = '/' . Cfg::getInstance()->getFolder();
-                    $ext = strtoupper(get_file_ext($ff));
+                    $ext = strtoupper(StringHelper::fileExtension($ff));
 
                     $info = "$ext";
 
@@ -155,9 +155,7 @@ class Configuration extends \diCore\Admin\BasePage
                         list($ff_w, $ff_h, $ff_t) = getimagesize($ff);
                         $ff_s = str_filesize(filesize($ff));
                         $info .=
-                            $ff_w || $ff_h
-                                ? " {$ff_w}x{$ff_h}, $ff_s"
-                                : " $ff_s";
+                            $ff_w || $ff_h ? " {$ff_w}x{$ff_h}, $ff_s" : " $ff_s";
                     } else {
                         $ff_w = $ff_h = $ff_t = 0;
                     }
@@ -171,13 +169,9 @@ class Configuration extends \diCore\Admin\BasePage
                         //$ff_w2 = $ff_w > 500 ? 500 : $ff_w;
                         $img_tag = "<div class='uploaded-pic'>$img_tag</div>";
                         // style='width: {$ff_w2}px; overflow-x: auto;'
-                    } elseif (
-                        in_array($ext, ['MP4', 'M4V', 'OGV', 'WEBM', 'AVI'])
-                    ) {
+                    } elseif (in_array($ext, ['MP4', 'M4V', 'OGV', 'WEBM', 'AVI'])) {
                         // video
-                        $mime_type = \diCore\Admin\Form::get_mime_type_by_ext(
-                            $ext
-                        );
+                        $mime_type = \diCore\Admin\Form::get_mime_type_by_ext($ext);
                         // type=\"$mime_type\"
                         $img_tag = "<div><video preload=\"none\" controls width=400 height=225><source src=\"$ff_orig\"></video></div>";
                     } else {
@@ -254,15 +248,9 @@ class Configuration extends \diCore\Admin\BasePage
         }
 
         $this->getTpl()->assign([
-            'TABS_LIST' => join(
-                ',',
-                array_keys(Cfg::getInstance()->getTabsAr())
-            ),
+            'TABS_LIST' => join(',', array_keys(Cfg::getInstance()->getTabsAr())),
             'FIRST_TAB' => current(array_keys(Cfg::getInstance()->getTabsAr())),
-            'WORKER_URI' => \diLib::getAdminWorkerPath(
-                'configuration',
-                'store'
-            ),
+            'WORKER_URI' => \diLib::getAdminWorkerPath('configuration', 'store'),
         ]);
 
         foreach (Cfg::getInstance()->getTabsAr() as $k => $v) {

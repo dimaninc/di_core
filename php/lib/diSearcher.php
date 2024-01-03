@@ -1,6 +1,8 @@
 <?php
 
+use diCore\Data\Config;
 use diCore\Data\Configuration;
+use diCore\Helper\StringHelper;
 
 class diSearcher
 {
@@ -26,13 +28,13 @@ class diSearcher
         $this->db = $db;
 
         $this->tables_ar = $tables_ar;
-        $this->search_mode = \diCore\Data\Config::getSearchEngine();
+        $this->search_mode = Config::getSearchEngine();
 
         $ids = diRequest::get('search_ids', '');
 
-        $this->orig_search_ids_ar = $ids ? explode(',', str_in($ids)) : [];
-        $this->current_area = str_in(diRequest::get('a', ''));
-        $this->q = str_in(diRequest::get('q', ''));
+        $this->orig_search_ids_ar = $ids ? explode(',', StringHelper::in($ids)) : [];
+        $this->current_area = StringHelper::in(diRequest::get('a', ''));
+        $this->q = StringHelper::in(diRequest::get('q', ''));
         $this->orig_page = diRequest::get('page', 1);
 
         diSearch::hey();
@@ -78,8 +80,7 @@ class diSearcher
             $search_r = $this->orig_search_ids_ar
                 ? $db->r(
                     'searches',
-                    "WHERE t='$table' and id" .
-                        $db->in($this->orig_search_ids_ar)
+                    "WHERE t='$table' and id" . $db->in($this->orig_search_ids_ar)
                 )
                 : false;
 

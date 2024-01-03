@@ -12,6 +12,8 @@
         * some new stuff
 */
 
+use diCore\Helper\StringHelper;
+
 /**
  * Class DBUpdater
  * @deprecated
@@ -68,9 +70,7 @@ class DBUpdater
                             case 'sql':
                                 $this->log[] = "executing $path/$f";
 
-                                $this->db->mq(
-                                    file_get_contents($path . '/' . $f)
-                                );
+                                $this->db->mq(file_get_contents($path . '/' . $f));
 
                                 break;
                         }
@@ -85,8 +85,7 @@ class DBUpdater
                 } else {
                     $this->log[] = "<b>Update $name not done!</b> It will be executed next time";
                     $this->log[] =
-                        '<b>DB Errors:</b><br>' .
-                        join('<br>', $this->db->getLog());
+                        '<b>DB Errors:</b><br>' . join('<br>', $this->db->getLog());
                 }
             } else {
                 $this->log[] = "Skipping update $name (already done)";
@@ -137,7 +136,7 @@ class DBUpdater
     {
         $this->db->insert('db_updates', [
             'name' => $name,
-            'info' => str_in($info),
+            'info' => StringHelper::in($info),
             '*done_at' => 'now()',
         ]);
     }

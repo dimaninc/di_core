@@ -57,7 +57,9 @@ class Feedback extends \diCore\Admin\BasePage
                     'class' => 'lite',
                 ],
                 'value' => function (Model $model) {
-                    return StringHelper::out(str_cut_end($model->getContent(), 200));
+                    return StringHelper::out(
+                        StringHelper::cutEnd($model->getContent(), 200)
+                    );
                 },
             ],
             'date' => [

@@ -741,8 +741,6 @@ abstract class CMS
 
         if ($n && !$this->getAuth()->authorized()) {
             $this->errorNotAuthorized();
-
-            return false;
         }
 
         return true;
@@ -1418,7 +1416,7 @@ abstract class CMS
     public function init_tpl()
     {
         $this->tpl = new \FastTemplate(
-            remove_ending_slash($this->tpl_dir), //.$this->language
+            StringHelper::unslash($this->tpl_dir), //.$this->language
             str_replace('%LANGUAGE%', $this->language, $this->tpl_cache_php)
         );
 
@@ -2339,13 +2337,17 @@ abstract class CMS
      */
     public function strCutEnd($s, $max_len, $trailer = '...')
     {
-        $s2 = str_cut_end($s, $max_len, $trailer);
+        $s2 = StringHelper::cutEnd($s, $max_len, $trailer);
 
-        if ($s != $s2) {
-            return "<span title=\"" . str_out($s) . "\">" . str_out($s2) . '</span>';
-        } else {
-            return str_out($s);
+        if ($s == $s2) {
+            return StringHelper::out($s);
         }
+
+        return sprintf(
+            '<span title="%s">%s</span>',
+            StringHelper::out($s),
+            StringHelper::out($s2)
+        );
     }
 
     /**
