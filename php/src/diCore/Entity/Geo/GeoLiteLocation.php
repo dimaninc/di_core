@@ -79,9 +79,11 @@ class GeoLiteLocation extends GeoIpLocation
                 'metro_code' => null,
             ];
         } else {
-            Logger::getInstance()->log(
-                'Geo data for IP not found: ' . $this->getIp()
-            );
+            if (static::shouldLogAboutIpNotFound($this->getIp())) {
+                Logger::getInstance()->log(
+                    'Geo data for IP not found: ' . $this->getIp()
+                );
+            }
 
             $this->data = [];
         }

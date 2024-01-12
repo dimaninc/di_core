@@ -53,6 +53,8 @@ class GeoIpLocation
         GeoLiteLocation::class,
     ];
 
+    public static $localIps = ['127.0.0.1'];
+
     public static $crimeaRegions = [
         'Crimea',
         'Republic of Crimea',
@@ -138,10 +140,7 @@ class GeoIpLocation
 
     public function isNovorossia()
     {
-        return in_array(
-            $this->getRegionName(),
-            GeoIpLocation::$novorossiaRegions
-        );
+        return in_array($this->getRegionName(), GeoIpLocation::$novorossiaRegions);
     }
 
     public function __call($method, $arguments)
@@ -221,11 +220,21 @@ class GeoIpLocation
 
     public function getIp()
     {
-        return $this->ip ?: get_user_ip();
+        return $this->ip ?: \diRequest::getRemoteIp();
     }
 
     public function getBinIp()
     {
         return ip2bin($this->getIp());
+    }
+
+    public static function isLocalIp($ip)
+    {
+        return in_array($ip, static::$localIps);
+    }
+
+    public static function shouldLogAboutIpNotFound($ip)
+    {
+        return !static::isLocalIp($ip);
     }
 }
