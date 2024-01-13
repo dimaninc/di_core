@@ -2,6 +2,7 @@
 
 use diCore\Data\Config;
 use diCore\Helper\FileSystemHelper;
+use diCore\Helper\StringHelper;
 use Twig\Environment;
 use Twig\Loader\FilesystemLoader;
 use Twig\TwigFilter;
@@ -191,6 +192,10 @@ class diTwig
 
     protected static function wrapTemplateName($name)
     {
+        if (StringHelper::endsWith($name, static::FILE_EXTENSION)) {
+            return $name;
+        }
+
         return $name . static::FILE_EXTENSION;
     }
 
@@ -379,9 +384,7 @@ class diTwig
         $template = $template ?: $this->templateForIndex;
 
         if (!$template) {
-            throw new \Exception(
-                'Template not defined for diTwig->renderIndex'
-            );
+            throw new \Exception('Template not defined for diTwig->renderIndex');
         }
 
         return $this->render(

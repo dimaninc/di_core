@@ -137,13 +137,17 @@ class diAdminFilters
 
     private $useCookie = true;
 
+    /** @var \diTwig */
+    private $twig;
+    private $twigBasicsAssigned = false;
+
     public function __construct(
         $table,
         $sortBy = 'id',
         $dir = 'ASC',
         $possibleSortByAr = []
     ) {
-        if (gettype($table) === 'object') {
+        if ($table instanceof BasePage) {
             $this->AdminPage = $table;
 
             $this->table = $this->AdminPage->getTable();
@@ -157,6 +161,34 @@ class diAdminFilters
             ->getDb();
 
         $this->gatherInitialData($sortBy, $dir, $possibleSortByAr);
+    }
+
+    public function getTwig()
+    {
+        if (!$this->twig) {
+            $this->twig = $this->AdminPage
+                ? $this->AdminPage->getTwig()
+                : \diTwig::create();
+
+            $this->assignTwigBasics();
+        }
+
+        return $this->twig;
+    }
+
+    protected function assignTwigBasics()
+    {
+        if (!$this->twigBasicsAssigned) {
+            $this->twig->assign([
+                'F' => $this,
+                'lang' => $this->L(),
+                'table' => $this->table,
+            ]);
+
+            $this->twigBasicsAssigned = true;
+        }
+
+        return $this;
     }
 
     protected function gatherInitialData(
@@ -424,18 +456,11 @@ class diAdminFilters
             }
         }
 
-        $filterRows = join("\n", $filterRowsAr);
-        $style = $this->hidden ? 'style="display: none;"' : '';
-
-        return <<<EOF
-<form name="admin_filter_form[{$this->table}]" method="get" action="" data-purpose="filter" data-table="$this->table" {$style}>
-<div class="filter-block" data-table="$this->table">
-	{$filterRows}
-	{$sorterBlock}
-	{$this->get_buttons_block()}
-</div>
-</form>
-EOF;
+        return $this->getTwig()->parse('admin/_filter/ui', [
+            'hidden' => $this->hidden,
+            'rows' => join("\n", $filterRowsAr),
+            'sorter' => $sorterBlock,
+        ]);
     }
 
     public static function get_user_id_where(
@@ -766,31 +791,6 @@ EOF;
     public function getButtonsSuffix()
     {
         return $this->buttonsSuffix;
-    }
-
-    public function get_buttons_block($opts = [])
-    {
-        $opts = extend(
-            [
-                'prefix' => $this->getButtonsPrefix(),
-                'suffix' => $this->getButtonsSuffix(),
-            ],
-            $this->buttonOptions,
-            (array) $opts
-        );
-
-        return <<<EOF
-<div class="buttons">
-{$opts['prefix']}
-	<button type="submit" class="violet" data-purpose="apply">{$this->L(
-            'form.submit.title'
-        )}</button>
-	<button type="button" class="gray" data-purpose="reset">{$this->L(
-            'form.reset.title'
-        )}</button>
-{$opts['suffix']}
-</div>
-EOF;
     }
 
     public function get_where($tablePrefix = '')
@@ -1675,11 +1675,13 @@ EOF;
         return $this;
     }
 
-    public function L($token, $language = null)
+    public function L($token = null, $language = null)
     {
         $language = $language ?: $this->language;
 
-        return self::$lngStrings[$language][$token] ?? $token;
+        return $token
+            ? static::$lngStrings[$language][$token] ?? $token
+            : static::$lngStrings[$language];
     }
 
     function convert_from_and_to_dates()

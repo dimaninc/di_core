@@ -1,0 +1,7 @@
+<form name="admin_filter_form[{{ table }}]" method="get" action="" data-purpose="filter" data-table="{{ table }}"{% if hidden %} style="display: none;"{% endif %}>
+    <div class="filter-block" data-table="{{ table }}">
+        {{ rows|raw }}
+        {{ sorter|raw }}
+        {% include 'admin/_filter/button-block.html.twig' %}
+    </div>
+</form>
