@@ -65,6 +65,10 @@ class Auth
      * Set to false, if headers should not be used
      */
     const USE_HEADERS = true;
+    /**
+     * If true, token can also be passed as static::HEADER_TOKEN get param
+     */
+    const LOOK_FOR_HEADERS_IN_GET_PARAMS = true;
 
     /** @var Auth */
     protected static $instance;
@@ -447,6 +451,10 @@ class Auth
         }
 
         $token = \diRequest::header(static::HEADER_TOKEN);
+
+        if (!$token && static::LOOK_FOR_HEADERS_IN_GET_PARAMS) {
+            $token = \diRequest::get(static::HEADER_TOKEN);
+        }
 
         if ($token && $this->authorize($token, null, self::SOURCE_USER_SESSION)) {
             $this->authSource = self::SOURCE_USER_SESSION;
