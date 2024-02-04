@@ -44,7 +44,7 @@ var diAdminFilters = function (_opts) {
             return false;
         });
 
-        this.setupResetFilterButtons().setupDateInputs();
+        this.setupResetFilterButtons().setupDateInputs().setupCopyToClipboard();
 
         return this;
     };
@@ -271,6 +271,27 @@ var diAdminFilters = function (_opts) {
         this.gatherFilterValues();
 
         return this.filters;
+    };
+
+    this.setupCopyToClipboard = function () {
+        di.loadScript('/assets/js/_core/vendor/clipboard.min.js', () => {
+            const $btn = $('[data-clipboard-text]');
+            const clipboard = new Clipboard('[data-clipboard-text]');
+
+            clipboard.on('success', function (e) {
+                $btn.addClass('success');
+
+                setTimeout(() => {
+                    $btn.removeClass('success');
+                }, 1000);
+            });
+
+            clipboard.on('error', function (e) {
+                $btn.addClass('error');
+            });
+        });
+
+        return this;
     };
 
     this.constructor();

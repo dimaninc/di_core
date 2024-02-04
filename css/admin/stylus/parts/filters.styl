@@ -1,5 +1,10 @@
 .filter-block
 	--name-width 150px
+	--filter-block--tablet--pl 12px
+	--filter-block--tablet--pr 5px
+	--reset-filter--ml 10px
+	--reset-filter--mr 10px
+	--reset-filter--size 20px
 
 	font-family var(--font-primary)
 	color black
@@ -9,18 +14,19 @@
 	border-bottom 1px solid #CCCCCC
 	margin-bottom $classicStandardPadding
 	@media $mqTablet
-		padding-left 12px
-		padding-right 5px
+		padding-left var(--filter-block--tablet--pl)
+		padding-right var(--filter-block--tablet--pr)
 	.buttons
 		display flex
+		align-items center
 		flex-wrap wrap
+		gap 10px
 		padding 10px 0
 		margin-left var(--name-width)
 		@media $mqTablet
 			margin-left 0
 		> *
 			vertical-align top
-			margin 0 10px 10px 0
 	.row
 		display flex
 		padding-bottom 7px
@@ -39,14 +45,21 @@
 			@media $mqTablet
 				width 100%
 				font-weight bold
-		select + select
-			margin-left 10px
-		select + button
-			margin-left 10px
+		select {
+			max-width 100%
+
+			+ button
+			+ select {
+				margin-left 10px
+			}
+		}
 		input
-			@media $mqTablet
+		select {
+			@media $mqTablet {
 				flex 1
 				min-width 0
+			}
+		}
 		.admin-filter-date-wrapper
 			position relative
 			display flex
@@ -91,12 +104,12 @@
 		display inline-block
 		cursor pointer
 		position relative
-		margin-left 10px
-		margin-right 10px
+		margin-left var(--reset-filter--ml)
+		margin-right var(--reset-filter--mr)
 		border-radius 50%
 		flex 0 1 auto
-		width 20px
-		height @width
+		width var(--reset-filter--size)
+		height var(--reset-filter--size)
 		background-color #bbb
 		transition background-color .5s ease
 		align-self center

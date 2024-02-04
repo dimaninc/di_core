@@ -2,5 +2,8 @@
     {{ F.getButtonsPrefix()|raw }}
     <button type="submit" class="violet" data-purpose="apply">{{ lang['form.submit.title'] }}</button>
     <button type="button" class="gray" data-purpose="reset">{{ lang['form.reset.title'] }}</button>
+    {% if F.shouldFilterShowCopyLinkToClipboardButton() %}
+        <span data-purpose="copy-link" class="secondary" title="{{ lang['link.copy.title'] }}" data-clipboard-text="{{ href }}">{% include lang['link.copy.icon'] %}</span>
+    {% endif %}
     {{ F.getButtonsSuffix()|raw }}
 </div>

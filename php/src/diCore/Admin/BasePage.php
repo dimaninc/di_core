@@ -1813,4 +1813,14 @@ abstract class BasePage
     {
         return static::$customListButtonTitles;
     }
+
+    public function getListHref($params = [])
+    {
+        return Base::getPageUri($this->getModule(), 'list', $params);
+    }
+
+    public function getListFullHref($params = [])
+    {
+        return \diPaths::defaultHttp() . $this->getListHref($params);
+    }
 }

@@ -23,6 +23,7 @@ button
     background-color #848484
   &.red
     background-color red
+  &.secondary
   &.blue
   &.violet
   &.gray
@@ -34,23 +35,41 @@ button
     border 0
     &:hover
       background-color red
+    &.outline
+      box-shadow 0 0 0 1px gray inset
+
+[data-purpose="copy-link"] {
+  cursor pointer
+  font-size 0
+  padding 4px
+  background #eee
+  transition .3s
+
+  {$classicSkin} & {
+    border-radius $classicBorderRadiusButton
+  }
+
+  &.success {
+    background greenyellow
+  }
+
+  &.error {
+    background pink
+  }
+
+  svg {
+    width 18px
+    height 18px
+  }
+}
 
 .filter-block
 .diadminform-row:not([data-type="wysiwyg"]) // do not use the styles for wysiwyg editor
 .submit-block
   button
-    //margin-right 10px
-    //margin 0 10px 10px 10px
     cursor pointer
     box-sizing border-box
     transition .3s
-    + button
-      margin-left 10px
-    /*
-    @media $mqTablet
-      &:not(:last-of-type)
-        margin-right 0
-    */
     > svg
       path
         transition .3s

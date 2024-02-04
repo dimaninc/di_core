@@ -43,8 +43,10 @@
 */
 
 use diCore\Admin\BasePage;
+use diCore\Admin\Config;
 use diCore\Admin\FilterRule;
 use diCore\Admin\Form;
+use diCore\Data\Configuration;
 use diCore\Database\Engine;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
@@ -57,6 +59,9 @@ class diAdminFilters
     const DEFAULT_INPUT_SIZE_NUMBER = 6;
 
     const EMPTY_STRING = '$EMPTY$';
+
+    const PARAM_SORT_FIELD = 'sortby';
+    const PARAM_SORT_DIR = 'dir';
 
     public static $dirAr = [
         'ru' => [
@@ -77,6 +82,8 @@ class diAdminFilters
             'form.caption' => 'Sort by',
             'form.submit.title' => 'Apply filter',
             'form.reset.title' => 'Reset',
+            'link.copy.title' => 'Copy link',
+            'link.copy.icon' => 'svg/copy-link.svg',
             'calendar' => 'Calendar',
         ],
 
@@ -84,6 +91,8 @@ class diAdminFilters
             'form.caption' => 'Сортировать',
             'form.submit.title' => 'Применить фильтр',
             'form.reset.title' => 'Сбросить',
+            'link.copy.title' => 'Копировать ссылку',
+            'link.copy.icon' => 'svg/copy-link.svg',
             'calendar' => 'Календарь',
         ],
     ];
@@ -174,6 +183,15 @@ class diAdminFilters
         }
 
         return $this->twig;
+    }
+
+    public function getAdminPage()
+    {
+        if (!$this->AdminPage) {
+            throw new \Exception('AdminPage not defined in diAdminFilters');
+        }
+
+        return $this->AdminPage;
     }
 
     protected function assignTwigBasics()
@@ -373,6 +391,11 @@ class diAdminFilters
         return $this;
     }
 
+    public function shouldFilterShowCopyLinkToClipboardButton()
+    {
+        return Config::shouldFilterShowCopyLinkToClipboardButton();
+    }
+
     public function set_static_input($field, $input)
     {
         $this->static_inputs_ar[$field] = $input;
@@ -410,19 +433,21 @@ class diAdminFilters
 
     public function getBlockHtml()
     {
-        if ($this->getInput('sortby')) {
+        if ($this->getInput(static::PARAM_SORT_FIELD)) {
             $sorterBlock = $this->getRowHtml(
                 $this->getFieldHtml(
                     $this->L('form.caption'),
-                    $this->getInput('sortby') . ' ' . $this->getInput('dir')
+                    $this->getInput(static::PARAM_SORT_FIELD) .
+                        ' ' .
+                        $this->getInput(static::PARAM_SORT_DIR)
                 ),
-                'sortby'
+                static::PARAM_SORT_FIELD
             );
 
-            if ($this->getNote('sortby')) {
+            if ($this->getNote(static::PARAM_SORT_FIELD)) {
                 $sorterBlock .= $this->getRowHtml(
-                    $this->getNote('sortby'),
-                    'sortby-note'
+                    $this->getNote(static::PARAM_SORT_FIELD),
+                    static::PARAM_SORT_FIELD . '-note'
                 );
             }
         } else {
@@ -458,9 +483,49 @@ class diAdminFilters
 
         return $this->getTwig()->parse('admin/_filter/ui', [
             'hidden' => $this->hidden,
-            'rows' => join("\n", $filterRowsAr),
+            'href' => $this->getHref(),
             'sorter' => $sorterBlock,
+            'rows' => join("\n", $filterRowsAr),
         ]);
+    }
+
+    public function getHref()
+    {
+        $params = array_filter($this->data);
+
+        foreach ($params as &$value) {
+            if (
+                is_array($value) &&
+                (isset($value['timestamp1']) || isset($value['timestamp2']))
+            ) {
+                unset($value['timestamp1']);
+                unset($value['timestamp2']);
+            }
+        }
+
+        if (
+            $this->getSortBy() != $this->default_sortby ||
+            $this->getDir() != $this->default_dir
+        ) {
+            $params[static::PARAM_SORT_FIELD] = $this->getSortBy();
+            $params[static::PARAM_SORT_DIR] = $this->getDir();
+        }
+
+        if (
+            !$this->getAdminPage()
+                ->getPagesNavy()
+                ->isStartingPage()
+        ) {
+            $params[
+                $this->getAdminPage()
+                    ->getPagesNavy()
+                    ->getPageParam()
+            ] = $this->getAdminPage()
+                ->getPagesNavy()
+                ->getPage();
+        }
+
+        return $this->getAdminPage()->getListFullHref($params);
     }
 
     public static function get_user_id_where(
@@ -738,8 +803,8 @@ class diAdminFilters
         }
 
         if ($this->getSortableState()) {
-            $ar[] = 'sortby';
-            $ar[] = 'dir';
+            $ar[] = static::PARAM_SORT_FIELD;
+            $ar[] = static::PARAM_SORT_DIR;
         }
 
         if ($print_script_tags) {
@@ -830,7 +895,7 @@ class diAdminFilters
         if (!$this->reset) {
             $value = $this->getData($field) ?: $value;
 
-            if ($value) {
+            if ($value && is_scalar($value)) {
                 return (string) $value;
             }
 
@@ -868,8 +933,8 @@ class diAdminFilters
 
         // sorter
         if (!$this->reset) {
-            $this->setSortBy($this->getTableData('sortby'));
-            $this->setDir($this->getTableData('dir'));
+            $this->setSortBy($this->getTableData(static::PARAM_SORT_FIELD));
+            $this->setDir($this->getTableData(static::PARAM_SORT_DIR));
         }
 
         if ($this->possible_sortby_ar) {
@@ -1382,10 +1447,10 @@ EOF;
     protected function getValueForField($field)
     {
         switch ($field) {
-            case 'sortby':
+            case static::PARAM_SORT_FIELD:
                 return $this->getSortBy();
 
-            case 'dir':
+            case static::PARAM_SORT_DIR:
                 return $this->getDir();
 
             default:
@@ -1442,7 +1507,10 @@ EOF;
             }
         }
 
-        $resetNeeded = !in_array($field, ['sortby', 'dir']);
+        $resetNeeded = !in_array($field, [
+            static::PARAM_SORT_FIELD,
+            static::PARAM_SORT_DIR,
+        ]);
 
         $this->setInput($field, $sel)->setInputResetButton($field, $resetNeeded);
 
@@ -1719,15 +1787,14 @@ EOF;
                     case 'date_range':
                     case 'date_str_range':
                         return date(
-                            diConfiguration::get('date_format'),
+                            Configuration::get('date_format'),
                             $ar['value']['timestamp1']
                         ) .
                             ' to ' .
                             date(
-                                diConfiguration::get('date_format'),
+                                Configuration::get('date_format'),
                                 $ar['value']['timestamp2']
                             );
-                        break;
 
                     default:
                         if (
@@ -1747,11 +1814,7 @@ EOF;
                         } else {
                             return $ar['value'];
                         }
-
-                        break;
                 }
-
-                break;
             }
         }
 

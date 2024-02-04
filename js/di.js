@@ -120,6 +120,28 @@ var di = {
         })()
     },
 
+    // loaders
+
+    loadScript: (url, callback) => {
+        const script = document.createElement('script');
+        script.src = url;
+        script.onload = callback;
+
+        const x = document.getElementsByTagName('script')[0];
+        x.parentNode.insertBefore(script, x);
+    },
+
+    loadStyle: (url, callback) => {
+        const link = document.createElement('link');
+        link.href = url;
+        link.type = 'text/css';
+        link.rel = 'stylesheet';
+        link.media = 'screen,print';
+        link.onload = callback;
+
+        document.getElementsByTagName('head')[0].appendChild(link);
+    },
+
     // string
 
     wordWrap: function (str, width, separator, cut) {

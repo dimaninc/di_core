@@ -102,6 +102,15 @@ class diPagesNavy
         return $this->page;
     }
 
+    public function isStartingPage()
+    {
+        if ($this->reverse) {
+            return $this->getPage() == $this->total_pages;
+        }
+
+        return $this->getPage() == 1;
+    }
+
     public function getPageParam()
     {
         return $this->page_param;
