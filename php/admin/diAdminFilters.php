@@ -512,6 +512,7 @@ class diAdminFilters
         }
 
         if (
+            $this->getAdminPage()->hasPagesNavy() &&
             !$this->getAdminPage()
                 ->getPagesNavy()
                 ->isStartingPage()

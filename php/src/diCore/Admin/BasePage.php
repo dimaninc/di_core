@@ -9,6 +9,7 @@
 namespace diCore\Admin;
 
 use diCore\Base\CMS;
+use diCore\Data\Configuration;
 use diCore\Entity\Admin\Collection as Admins;
 use diCore\Entity\AdminTableEditLog\Collection as TableEditLogs;
 use diCore\Entity\AdminTableEditLog\Model as TableEditLog;
@@ -509,12 +510,12 @@ abstract class BasePage
 
     protected function isPagesNavyNeeded()
     {
-        return \diConfiguration::exists('admin_per_page[' . $this->getTable() . ']');
+        return Configuration::exists('admin_per_page[' . $this->getTable() . ']');
     }
 
     protected function getCountPerPage()
     {
-        return \diConfiguration::get('admin_per_page[' . $this->getTable() . ']');
+        return Configuration::get('admin_per_page[' . $this->getTable() . ']');
     }
 
     /**
