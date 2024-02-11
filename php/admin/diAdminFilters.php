@@ -197,11 +197,14 @@ class diAdminFilters
     protected function assignTwigBasics()
     {
         if (!$this->twigBasicsAssigned) {
-            $this->twig->assign([
-                'F' => $this,
-                'lang' => $this->L(),
-                'table' => $this->table,
-            ]);
+            $this->twig->assign(
+                [
+                    'F' => $this,
+                    'lang' => $this->L(),
+                    'table' => $this->table,
+                ],
+                true
+            );
 
             $this->twigBasicsAssigned = true;
         }
