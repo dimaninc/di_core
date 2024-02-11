@@ -3056,7 +3056,7 @@ ENGINE = InnoDB;";
     public static function hashPasswordFromRawToDb($rawPassword, $field = null)
     {
         if (static::use_insecure_password_hash) {
-            return md5($rawPassword);
+            return md5($rawPassword ?? '');
         }
 
         return password_hash($rawPassword, PASSWORD_BCRYPT);
@@ -3083,7 +3083,7 @@ ENGINE = InnoDB;";
     public static function hashPasswordFromDbToCookie($password, $field = null)
     {
         if (static::use_insecure_password_hash && $password) {
-            return md5($password);
+            return md5($password ?? '');
         }
 
         return $password;
