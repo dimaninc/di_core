@@ -266,7 +266,7 @@ class diRequest
             self::server('HTTP_X_FORWARDED_FOR') ?:
             self::server('REMOTE_ADDR');
 
-        if ($x = strpos($ip, ',')) {
+        if ($x = strpos($ip ?? '', ',')) {
             $ip = substr($ip, 0, $x);
         }
 

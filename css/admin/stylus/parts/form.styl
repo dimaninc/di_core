@@ -606,9 +606,12 @@ ul.table-edit-log
         max-width 90%
 
 .submit-block
+    --gap 12px
+
     display flex
     align-items center
     flex-wrap wrap
+    gap var(--gap)
     margin 10px 20px
     padding 10px 0
     body[data-floating-submit="true"] &
@@ -623,10 +626,11 @@ ul.table-edit-log
         margin 0
         padding 0 20px
         height var(--floating-submit-height)
-        @media $mqTablet
+        @media $mqTablet {
             left 0
             padding 0 10px
-    @media $mqTablet
+        }
+    @media $mqTablet {
         margin-left 0
         margin-right 0
         border 0
@@ -634,20 +638,23 @@ ul.table-edit-log
         background none
         padding 0 5px
         justify-content center
+    }
     {$classicSkin} & {
         justify-content center
         border 1px solid #CFCFCF
         border-radius 8px
         background-color #edf0f4
     }
-    {$entrineSkin} &
+    {$entrineSkin} & {
         background-color white
         margin-left 160px
-        @media $mqTablet
+        @media $mqTablet {
             margin-left 12px
             margin-right 12px
             padding 0
             left 0
+        }
+    }
     body[data-skin="classic"][data-floating-submit="true"] &
         background-color #ddd
     body[data-skin="entrine"][data-floating-submit="true"] &

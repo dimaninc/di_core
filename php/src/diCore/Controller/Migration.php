@@ -51,6 +51,26 @@ class Migration extends \diBaseAdminController
     }
 
     /**
+     * Runs last migration
+     */
+    public function upLastNotExecutedAction()
+    {
+        try {
+            $migrationExecuted = $this->Manager->upLastNotExecuted();
+        } catch (\Exception $e) {
+            return $this->internalServerError([
+                'message' => $e->getMessage(),
+            ]);
+        }
+
+        $this->redirect();
+
+        return [
+            'migrationExecuted' => $migrationExecuted,
+        ];
+    }
+
+    /**
      * Rollbacks last migration
      */
     public function downLastAction()

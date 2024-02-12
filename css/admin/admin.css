@@ -2799,6 +2799,7 @@ ul.table-edit-log > li > table td:nth-child(2) {
   }
 }
 .submit-block {
+  --gap: 12px;
   display: -webkit-box;
   display: -moz-box;
   display: -webkit-flex;
@@ -2817,6 +2818,7 @@ ul.table-edit-log > li > table td:nth-child(2) {
   -webkit-flex-wrap: wrap;
   -ms-flex-wrap: wrap;
   flex-wrap: wrap;
+  gap: var(--gap);
   margin: 10px 20px;
   padding: 10px 0;
 }
