@@ -23,6 +23,8 @@ class Sender
     const defaultUseSSL = true;
     const defaultFromName = 'Robot';
     const defaultFromEmail = 'noreply@domain.com';
+    const defaultSmtpLogin = null; // needed for selectel
+    const defaultSmtpPassword = null; // needed for selectel
 
     const secureSending = true;
     const debugSending = false;
@@ -33,12 +35,13 @@ class Sender
     protected static $accounts = [
         /*
 		 * simple format: only password
-		'james@hetfield.com' => 'password',
+		'james@hetfield.com' => 'password if needed',
 		 *
 		 * or extended format: password + vendor
 		'fred@durst.com' => [
 			'vendor' => Vendor::yandex,
-			'password' => 'password',
+            'login' => 'if differs from email',
+			'password' => 'password if needed',
 			'useSSL' => true,
 		],
 		*/
@@ -109,9 +112,7 @@ class Sender
                 break;
 
             default:
-                throw new \Exception(
-                    'Unknown mail transport: ' . static::transport
-                );
+                throw new \Exception('Unknown mail transport: ' . static::transport);
         }
     }
 
@@ -163,9 +164,7 @@ class Sender
         $mail->Body = $bodyPlain ?: $bodyHtml;
 
         if (!empty($options['replyTo'])) {
-            $options['replyTo'] = \diEmail::parseNameAndEmail(
-                $options['replyTo']
-            );
+            $options['replyTo'] = \diEmail::parseNameAndEmail($options['replyTo']);
 
             $mail->addReplyTo(
                 $options['replyTo']['email'],
@@ -280,10 +279,7 @@ class Sender
 
             if ($mail->Mailer == 'smtp') {
                 if ($vendor != Vendor::own) {
-                    $mail->Port = Vendor::smtpPort(
-                        $vendor,
-                        static::secureSending
-                    );
+                    $mail->Port = Vendor::smtpPort($vendor, static::secureSending);
                 }
 
                 if (static::getAccountUseSSL($fromEmail)) {
@@ -302,7 +298,7 @@ class Sender
                 }
 
                 if ($mail->Password) {
-                    $mail->Username = $fromEmail;
+                    $mail->Username = static::getAccountLogin($fromEmail);
                 }
             }
         }
@@ -324,10 +320,17 @@ class Sender
         return $a['vendor'] ?? static::defaultVendor;
     }
 
+    protected static function getAccountLogin($email)
+    {
+        $a = static::$accounts[$email] ?? null;
+
+        return $a['login'] ?? static::defaultSmtpLogin;
+    }
+
     protected static function getAccountPassword($email)
     {
         $a = static::$accounts[$email] ?? null;
 
-        return $a['password'] ?? $a;
+        return $a['password'] ?? ($a ?: static::defaultSmtpPassword);
     }
 }

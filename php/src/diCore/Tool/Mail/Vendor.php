@@ -17,6 +17,7 @@ class Vendor extends SimpleContainer
     const microsoft = 3;
     const mailru = 4;
     const masterhost = 5;
+    const selectel = 6;
     const own = 50;
 
     public static $titles = [
@@ -25,6 +26,7 @@ class Vendor extends SimpleContainer
         self::microsoft => 'Microsoft',
         self::mailru => 'Mail.ru',
         self::masterhost => 'Masterhost',
+        self::selectel => 'Selectel',
         self::own => 'Own SMTP',
     ];
 
@@ -34,6 +36,7 @@ class Vendor extends SimpleContainer
         self::microsoft => 'microsoft',
         self::mailru => 'mailru',
         self::masterhost => 'masterhost',
+        self::selectel => 'selectel',
         self::own => 'own',
     ];
 
@@ -43,6 +46,7 @@ class Vendor extends SimpleContainer
         self::microsoft => 'smtp.office365.com',
         self::mailru => 'ssl://smtp.mail.ru',
         self::masterhost => 'smtp.masterhost.ru',
+        self::selectel => 'smtp.mail.selcloud.ru',
     ];
 
     protected static $smtpPorts = [
@@ -65,6 +69,10 @@ class Vendor extends SimpleContainer
         self::masterhost => [
             true => 465,
             false => 25,
+        ],
+        self::selectel => [
+            true => 1126,
+            false => 1126,
         ],
     ];
 
