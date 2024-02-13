@@ -331,6 +331,10 @@ class Sender
     {
         $a = static::$accounts[$email] ?? null;
 
-        return $a['password'] ?? ($a ?: static::defaultSmtpPassword);
+        if (is_string($a) && $a) {
+            return $a;
+        }
+
+        return $a['password'] ?: static::defaultSmtpPassword ?: null;
     }
 }
