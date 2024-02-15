@@ -5,6 +5,7 @@ namespace diCore\Controller;
 use diCore\Data\Config;
 use diCore\Database\Engine;
 use diCore\Helper\StringHelper;
+use diCore\Tool\Logger;
 use diCore\Traits\Admin\DumpActions;
 
 class Db extends \diBaseAdminController
@@ -249,9 +250,11 @@ class Db extends \diBaseAdminController
                 $ar = extend($ar, $this->getDumpInfo($filename));
 
                 return $ar;
+            } else {
+                Logger::getInstance()->log($command, 'Db');
+                Logger::getInstance()->log($a, 'Db');
             }
         }
-        //
 
         $dt = date($date_sql_comment);
 
@@ -428,9 +431,13 @@ EOF;
                         $end_symbol = ';';
                     }
 
+                    $values = array_map(function ($k) use ($r) {
+                        return $r[$k] ?? null;
+                    }, array_keys($fieldsAr));
+
                     $sql .=
                         '(' .
-                        join(',', $this->prepareString(array_values($r))) .
+                        join(',', $this->prepareString($values)) .
                         "){$end_symbol}\n";
 
                     $this->tryToFlush($fp, $sql, $compress);
