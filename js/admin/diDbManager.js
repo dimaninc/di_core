@@ -35,12 +35,14 @@ function diDbManager(_opts) {
             self.selectAllTables(false);
         });
 
-        $('input#system').on('click change', function () {
-            $('.dump-settings').css(
-                'visibility',
-                this.checked ? 'hidden' : 'visible'
-            );
-        });
+        $('input#system')
+            .on('click change', function () {
+                $('.dump-settings').css(
+                    'visibility',
+                    this.checked ? 'hidden' : 'visible'
+                );
+            })
+            .change();
 
         $('button[data-action="execute"]').click(function () {
             self.executeQuery('here the query');
@@ -238,9 +240,9 @@ function diDbManager(_opts) {
                 ') [' +
                 res.format +
                 ']</small></td>' +
-                '<td><button type="button" data-action="restore">Restore...</button> ' +
+                '<td><button type="button" data-action="restore">Restore</button> ' +
                 '<button type="button" data-action="download">Download</button> ' +
-                '<button type="button" data-action="delete">Delete...</button> ' +
+                '<button type="button" data-action="delete">Delete</button> ' +
                 '<button type="button" data-action="view">View</button></td></tr>'
         );
     }

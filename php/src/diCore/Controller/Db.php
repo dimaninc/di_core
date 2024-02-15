@@ -208,10 +208,11 @@ class Db extends \diBaseAdminController
         $tablesAr = explode(',', \diRequest::get('tables', ''));
         $tablesList = join(' ', $tablesAr);
 
-        $date_fn_format = 'Y_m_d__H_i_s';
-        $date_sql_comment = 'Y/m/d H:i:s';
+        $dateFnFormat = 'Y_m_d__H_i_s';
+        $dateCommentFormat = 'Y/m/d H:i:s';
 
-        $filename = $this->folder . $fn . '__dump_' . date($date_fn_format) . '.sql';
+        $filename = $this->folder . $fn . '__dump_' . date($dateFnFormat) . '.sql';
+
         if ($compress) {
             $filename .= '.gz';
         }
@@ -228,18 +229,18 @@ class Db extends \diBaseAdminController
 
         // trying to exec system command
         if ($system) {
-            $command_suffix = $compress ? ' | gzip' : '';
+            $commandSuffix = $compress ? ' | gzip' : '';
 
             $command =
                 'mysqldump --host=' .
                 $this->getDb()->getHost() .
                 ' --user=' .
                 $this->getDb()->getUsername() .
-                ' --password=' .
+                ' --password="' .
                 $this->getDb()->getPassword() .
-                ' --opt --skip-extended-insert ' .
+                '" --opt --skip-extended-insert ' .
                 $this->getDb()->getDatabase() .
-                " {$tablesList} {$command_suffix} > $filename";
+                " {$tablesList}{$commandSuffix} > $filename";
 
             system($command, $a);
 
@@ -256,7 +257,7 @@ class Db extends \diBaseAdminController
             }
         }
 
-        $dt = date($date_sql_comment);
+        $dt = date($dateCommentFormat);
 
         $a = self::getTablesList($this->getDb());
         $allTablesAr = array_keys($a['tablesForSelectAr']);
