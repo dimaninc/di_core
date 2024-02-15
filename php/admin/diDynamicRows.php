@@ -1571,19 +1571,23 @@ EOF;
             if (!(int) $id) {
                 continue;
             }
-            $this->data_id = (int) $id;
 
+            $this->data_id = (int) $id;
             $this->test_r =
                 $id > 0
                     ? $this->getDb()->r(
                         $this->data_table,
                         "WHERE $this->subquery and id='$id'"
                     )
-                    : false;
-            $this->storedModel->initFrom($this->test_r);
+                    : null;
+
+            $rowExists = !!$this->test_r;
+
+            $this->getStoredModel()
+                ->destroy()
+                ->initFrom($this->test_r);
 
             $this->data = [];
-            $data_for_db = [];
 
             // tech fields
             if (is_callable($techFieldsCallback)) {
@@ -1595,8 +1599,6 @@ EOF;
                 );
 
                 foreach ($techData as $k => $v) {
-                    $data_for_db[$k] = $this->data[$k] = $v;
-
                     $this->getStoredModel()->set($k, $v);
                 }
 
@@ -1617,16 +1619,18 @@ EOF;
                     $v['default'] = '';
                 }
 
+                $isFileType = in_array($v['type'], ['pic', 'file']);
+
                 $this->set_data($k, $v, $id);
 
-                if (in_array($v['type'], ['pic', 'file']) && !$this->data[$k]) {
-                } else {
-                    if ($v['type'] == 'radio') {
+                if ($this->data[$k] || !$isFileType) {
+                    if ($v['type'] === 'radio') {
                         $rf = $this->field . '_' . $k;
-                        $data_for_db[$k] =
-                            isset($_POST[$rf]) && $_POST[$rf] == $id ? 1 : 0;
+                        $val = isset($_POST[$rf]) && $_POST[$rf] == $id ? 1 : 0;
+
+                        $this->getStoredModel()->set($k, $val);
                     } elseif (isset($this->data[$k])) {
-                        $data_for_db[$k] = $this->data[$k];
+                        $this->getStoredModel()->set($k, $this->data[$k]);
                     }
                 }
             }
@@ -1634,33 +1638,25 @@ EOF;
             if (is_callable($beforeSaveCallback)) {
                 $techData = $beforeSaveCallback($this, $id);
 
-                $data_for_db = extend($data_for_db, $techData);
                 $this->data = extend($this->data, $techData);
+
+                $this->getStoredModel()->set($techData);
             }
 
-            if ($this->storedModel->exists() && $this->test_r) {
-                $this->getDb()->update(
-                    $this->data_table,
-                    $data_for_db,
-                    $this->test_r->id
-                ) or $this->getDb()->dierror();
-                $resultIds[] = $this->test_r->id;
-            } else {
-                if (!$techFieldsSet) {
-                    $data_for_db['_table'] = $this->data['_table'] = $this->table;
-                    $data_for_db['_field'] = $this->data['_field'] = $this->field;
-                    $data_for_db['_id'] = $this->data['_id'] = $this->id;
-                    //this->data["date"] = time();
-                }
+            if (!$rowExists && !$techFieldsSet) {
+                $this->data['_table'] = $this->table;
+                $this->data['_field'] = $this->field;
+                $this->data['_id'] = $this->id;
 
-                $newId = $this->getDb()->insert($this->data_table, $data_for_db);
-
-                if (!$newId) {
-                    $this->getDb()->dierror();
-                }
-
-                $resultIds[] = $newId;
+                $this->getStoredModel()->set([
+                    '_table' => $this->table,
+                    '_field' => $this->field,
+                    '_id' => $this->id,
+                ]);
             }
+
+            $this->getStoredModel()->save();
+            $resultIds[] = $this->getStoredModel()->getId();
         }
 
         $resultIds = array_merge($resultIds, $this->submitMultipleFiles());
@@ -1724,11 +1720,14 @@ EOF;
 
     protected function submitMultipleFiles()
     {
-        if (!$this->getProperty('multiple_uploading')) {
+        if (
+            !$this->getProperty('multipleUploading') &&
+            !$this->getProperty('multiple_uploading')
+        ) {
             return [];
         }
 
-        $ids_ar = [];
+        $ids = [];
 
         $multiField = self::getMultipleUploadFieldName($this->field);
 
@@ -1776,11 +1775,12 @@ EOF;
                 $orderNum++;
                 $this->data_id = (int) $id;
 
-                $this->test_r = false;
-                $this->storedModel->initFrom($this->test_r);
+                $this->test_r = null;
+                $this->getStoredModel()
+                    ->destroy()
+                    ->initFrom($this->test_r);
 
                 $this->data = [];
-                $data_for_db = [];
 
                 // tech fields
                 if (is_callable($techFieldsCallback)) {
@@ -1791,8 +1791,9 @@ EOF;
                         $this
                     );
 
-                    $data_for_db = extend($data_for_db, $_a);
                     $this->data = extend($this->data, $_a);
+
+                    $this->getStoredModel()->set($_a);
 
                     $techFieldsSet = true;
                 }
@@ -1816,11 +1817,11 @@ EOF;
                     if (in_array($v['type'], ['pic', 'file']) && !$this->data[$k]) {
                     } else {
                         if ($v['type'] === 'radio') {
-                            $data_for_db[$k] = 0;
+                            $this->getStoredModel()->set($k, 0);
                         } elseif ($v['type'] === 'checkbox') {
-                            $data_for_db[$k] = $v['default'];
+                            $this->getStoredModel()->set($k, $v['default']);
                         } elseif (isset($this->data[$k])) {
-                            $data_for_db[$k] = $this->data[$k];
+                            $this->getStoredModel()->set($k, $this->data[$k]);
                         }
                     }
                 }
@@ -1833,55 +1834,59 @@ EOF;
                         $this
                     );
 
-                    $data_for_db = extend($data_for_db, $_a);
                     $this->data = extend($this->data, $_a);
+
+                    $this->getStoredModel()->set($_a);
                 }
 
                 if (is_callable($beforeSaveCallback)) {
                     $_a = $beforeSaveCallback($this);
 
-                    $data_for_db = extend($data_for_db, $_a);
                     $this->data = extend($this->data, $_a);
+
+                    $this->getStoredModel()->set($_a);
                 }
 
                 if (!$techFieldsSet) {
-                    $data_for_db['_table'] = $this->data['_table'] = $this->table;
-                    $data_for_db['_field'] = $this->data['_field'] = $this->field;
-                    $data_for_db['_id'] = $this->data['_id'] = $this->id;
+                    $this->getStoredModel()->set([
+                        '_table' => $this->table,
+                        '_field' => $this->field,
+                        '_id' => $this->id,
+                    ]);
                 }
 
                 if (
                     isset($fields['order_num']) &&
-                    empty($data_for_db['order_num'])
+                    !$this->getStoredModel()->has('order_num')
                 ) {
-                    $data_for_db['order_num'] = $this->data['order_num'] = $orderNum;
+                    $this->data['order_num'] = $orderNum;
+
+                    $this->getStoredModel()->set('order_num', $orderNum);
                 }
 
                 if (isset($fields['default']) && $orderNum == 1) {
-                    $data_for_db['default'] = $this->data['default'] = 1;
+                    $this->data['default'] = 1;
+
+                    $this->getStoredModel()->set('default', 1);
                 }
 
                 if (isset($fields['by_default']) && $orderNum == 1) {
-                    $data_for_db['by_default'] = $this->data['by_default'] = 1;
+                    $this->data['by_default'] = 1;
+
+                    $this->getStoredModel()->set('by_default', 1);
                 }
 
                 try {
-                    $model = \diModel::createForTable(
-                        $this->data_table,
-                        $data_for_db
-                    );
-                    $model->killId()->save();
-                    $insertedId = $model->getId();
-                    $ids_ar[] = $insertedId;
+                    $this->getStoredModel()->save();
+
+                    $ids[] = $this->getStoredModel()->getId();
                 } catch (\Exception $e) {
                     Logger::getInstance()->variable('exception', $e->getMessage());
                 }
-
-                //$id--;
             }
         }
 
-        return $ids_ar;
+        return $ids;
     }
 
     public function set_data($f, $v, $id)
@@ -2001,8 +2006,6 @@ EOF;
                     break;
             }
         }
-
-        $this->getStoredModel()->set($f, $this->data[$f]);
 
         return $this;
     }
