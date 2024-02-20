@@ -8,6 +8,7 @@
 namespace diCore\Entity\MailQueue;
 
 use diCore\Data\Types;
+use diCore\Database\FieldType;
 
 /**
  * Class Model
@@ -62,6 +63,24 @@ class Model extends \diModel
 
     protected static $binaryFields = ['attachment'];
 
+    protected static $fieldTypes = [
+        'id' => FieldType::int,
+        'date' => FieldType::timestamp,
+        'sender' => FieldType::string,
+        'recipient' => FieldType::string,
+        'recipient_id' => FieldType::int,
+        'reply_to' => FieldType::string,
+        'subject' => FieldType::string,
+        'body' => FieldType::string,
+        'plain_body' => FieldType::int,
+        'attachment' => FieldType::string,
+        'incut_ids' => FieldType::string,
+        'visible' => FieldType::int,
+        'sent' => FieldType::int,
+        'news_id' => FieldType::int,
+        'settings' => FieldType::string,
+    ];
+
     const BODY_TYPE_HTML = 0;
     const BODY_TYPE_PLAIN_TEXT = 1;
 
@@ -89,11 +108,7 @@ class Model extends \diModel
         if ($name === null) {
             if (is_array($email)) {
                 if (!empty($email['name'])) {
-                    $sender = sprintf(
-                        '%s <%s>',
-                        $email['name'],
-                        $email['email']
-                    );
+                    $sender = sprintf('%s <%s>', $email['name'], $email['email']);
                 } else {
                     $sender = $email['email'];
                 }
