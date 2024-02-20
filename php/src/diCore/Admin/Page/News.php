@@ -64,7 +64,6 @@ class News extends \diCore\Admin\BasePage
             'id' => 'ID',
             '#href' => [],
             'date' => [
-                'title' => 'Дата',
                 'value' => function (Model $n) {
                     return \diDateTime::simpleFormat($n->getDate());
                 },
@@ -77,7 +76,6 @@ class News extends \diCore\Admin\BasePage
                 ],
             ],
             'title' => [
-                'title' => 'Заголовок',
                 'attrs' => [
                     'width' => '90%',
                 ],
@@ -313,7 +311,7 @@ EOF;
                 'type' => 'string',
                 'title' => $this->localized([
                     'ru' => 'Meta-заголовок',
-                    'en' => 'Meta title',
+                    'en' => 'Meta-title',
                 ]),
                 'default' => '',
                 'tab' => 'meta',
@@ -323,7 +321,7 @@ EOF;
                 'type' => 'string',
                 'title' => $this->localized([
                     'ru' => 'Meta-ключевые слова',
-                    'en' => 'Meta keywords',
+                    'en' => 'Meta-keywords',
                 ]),
                 'default' => '',
                 'tab' => 'meta',
@@ -333,7 +331,7 @@ EOF;
                 'type' => 'string',
                 'title' => $this->localized([
                     'ru' => 'Meta-описание',
-                    'en' => 'Meta description',
+                    'en' => 'Meta-description',
                 ]),
                 'default' => '',
                 'tab' => 'meta',
