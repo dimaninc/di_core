@@ -171,12 +171,7 @@ class diSelect
     {
         $key = array_search($value, array_column($this->itemsAr, 'value'));
 
-        return $this->addItem(
-            $value,
-            $text,
-            $attrsAr,
-            $key !== false ? $key : null
-        );
+        return $this->addItem($value, $text, $attrsAr, $key !== false ? $key : null);
     }
 
     public function setItemAttribute($value, $attrsAr = [])
@@ -264,18 +259,20 @@ class diSelect
 
         $this->addItemArray($prefixAr);
 
-        /** @var diModel $model */
-        foreach ($collection as $model) {
-            $data = extend(
-                [
-                    'value' => $model->getId(),
-                    'text' => $model->get('title'),
-                    'attributes' => [],
-                ],
-                call_user_func($format, $model)
-            );
+        if ($collection) {
+            /** @var diModel $model */
+            foreach ($collection as $model) {
+                $data = extend(
+                    [
+                        'value' => $model->getId(),
+                        'text' => $model->get('title'),
+                        'attributes' => [],
+                    ],
+                    call_user_func($format, $model)
+                );
 
-            $this->addItem($data['value'], $data['text'], $data['attributes']);
+                $this->addItem($data['value'], $data['text'], $data['attributes']);
+            }
         }
 
         $this->addItemArray($suffixAr);
@@ -321,8 +318,7 @@ class diSelect
 
         foreach ($this->itemsAr as $item) {
             $attrs =
-                $this->getSelected($item['value']) .
-                " value=\"{$item['value']}\"";
+                $this->getSelected($item['value']) . " value=\"{$item['value']}\"";
 
             if ($item['attrs']) {
                 if (is_array($item['attrs'])) {
@@ -339,10 +335,7 @@ class diSelect
             }
 
             $html .=
-                $this->indent .
-                " <option{$attrs}>" .
-                $item['text'] .
-                "</option>\n";
+                $this->indent . " <option{$attrs}>" . $item['text'] . "</option>\n";
         }
 
         $html .= $this->indent . '</select>';
@@ -354,10 +347,7 @@ class diSelect
     {
         if (is_array($this->currentValue)) {
             return in_array($value, $this->currentValue);
-        } elseif (
-            $this->currentValue === true ||
-            $this->currentValue === false
-        ) {
+        } elseif ($this->currentValue === true || $this->currentValue === false) {
             return $this->currentValue;
         } elseif (
             is_callable($this->currentValue) &&
