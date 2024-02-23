@@ -396,7 +396,7 @@ class diAdminFilters
 
     public function shouldFilterShowCopyLinkToClipboardButton()
     {
-        return Config::shouldFilterShowCopyLinkToClipboardButton();
+        return Config::basicCreate()::shouldFilterShowCopyLinkToClipboardButton();
     }
 
     public function set_static_input($field, $input)
@@ -1263,7 +1263,7 @@ class diAdminFilters
                     }
 
                     $wrapSelects = function ($idx) use ($sel, $field, $ar) {
-                        $glue = '<span class="date-sep">.</span>';
+                        $glue = Config::basicCreate()::getDateRangeFilterGlue();
                         $dtSelects = join($glue, [
                             $sel['d' . $idx],
                             $sel['m' . $idx],
@@ -1271,10 +1271,13 @@ class diAdminFilters
                         ]);
                         $set = !empty($ar['value'][$idx - 1]);
                         $setClass = $set ? ' set' : '';
+                        $emptyContent = Config::basicCreate()::getDateRangeFilterEmptyContent(
+                            $idx
+                        );
 
                         return <<<EOF
 <span class="admin-filter-date-wrapper{$setClass}" data-field="$field" data-idx="$idx">
-    <span class="empty-dates">&mdash;&mdash;$glue&mdash;&mdash;$glue&mdash;&mdash;&mdash;&mdash;</span>
+    <span class="empty-dates">$emptyContent</span>
     <span class="reset-filter"></span>
     <span class="selects">$dtSelects</span>
 </span>
@@ -1283,7 +1286,7 @@ EOF;
 
                     $s =
                         $wrapSelects(1) .
-                        '<span class="sel-sep">...</span>' .
+                        Config::basicCreate()::getDateRangeFilterSeparator() .
                         $wrapSelects(2);
 
                     // js
