@@ -10,7 +10,10 @@ namespace diCore\Admin;
 
 use diCore\Admin\Data\Skin;
 use diCore\Base\CMS;
+use diCore\Base\Exception\HttpException;
 use diCore\Data\Config;
+use diCore\Data\Http\HttpCode;
+use diCore\Data\Http\Response;
 use diCore\Database\Connection;
 use diCore\Entity\Admin\Level;
 use diCore\Helper\ArrayHelper;
@@ -89,6 +92,8 @@ class Base
             'menu.settings' => 'Служебное',
             'menu.edit_settings' => 'Настройки',
             'menu.rebuild_cache' => 'Обновить кеш',
+            'error.caption' => 'Ошибка',
+            'error.page_not_found' => 'Админ.страница не найдена',
         ],
         'en' => [
             'logo_description' => 'Content management system',
@@ -115,6 +120,8 @@ class Base
             'menu.settings' => 'Settings',
             'menu.edit_settings' => 'Edit settings',
             'menu.rebuild_cache' => 'Rebuild cache',
+            'error.caption' => 'Error',
+            'error.page_not_found' => 'Admin page not found',
         ],
     ];
 
@@ -131,6 +138,9 @@ class Base
     protected $path;
     /** @deprecated */
     protected $filename;
+
+    /** @var Response */
+    protected $response;
 
     /** @var Caption */
     protected $caption;
@@ -275,11 +285,24 @@ class Base
                     'e' => $e,
                 ]
             );
+
+            $this->caption->setForceValue(static::getVocabulary('error.caption'));
+
+            if ($this->isResponseCode(HttpCode::OK)) {
+                $code =
+                    $e instanceof HttpException
+                        ? $e->getCode()
+                        : HttpCode::INTERNAL_SERVER_ERROR;
+
+                $this->setResponseCode($code);
+            }
         }
 
         $this->printMainMenu()
             ->printCaption()
             ->printHead();
+
+        HttpCode::header($this->getResponseCode());
 
         echo $this->getFinalHtml();
     }
@@ -628,14 +651,20 @@ class Base
         } else {
             global $db, $tn_folder, $tn2_folder, $files_folder;
 
+            $fn =
+                \diPaths::fileSystem() .
+                self::getSubFolder() .
+                "/$this->path/$this->filename";
+
+            if (!is_file($fn)) {
+                throw HttpException::notFound(
+                    static::getVocabulary('error.page_not_found')
+                );
+            }
+
             ob_start();
 
-            require \diPaths::fileSystem() .
-                self::getSubFolder() .
-                '/' .
-                $this->path .
-                '/' .
-                $this->filename;
+            require $fn;
 
             $this->getTpl()->assign([
                 'PAGE' => ob_get_contents(),
@@ -1156,6 +1185,7 @@ class Base
                 }
 
                 if (
+                    $this->hasPage() &&
                     in_array($this->getPage()->getBasePath(), [
                         $item['module'],
                         preg_replace('#/.+$#', '', $item['module'] ?? ''),
@@ -1273,5 +1303,40 @@ class Base
         }
 
         return null;
+    }
+    public function getResponse()
+    {
+        if (!$this->response) {
+            $this->response = new Response();
+        }
+
+        return $this->response;
+    }
+
+    /**
+     * @return int
+     */
+    public function getResponseCode()
+    {
+        return $this->getResponse()->getResponseCode();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isResponseCode($code)
+    {
+        return $this->getResponse()->isResponseCode($code);
+    }
+
+    /**
+     * @param int $responseCode
+     * @return $this
+     */
+    public function setResponseCode($responseCode)
+    {
+        $this->getResponse()->setResponseCode($responseCode);
+
+        return $this;
     }
 }

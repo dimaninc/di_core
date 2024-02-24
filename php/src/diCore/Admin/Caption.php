@@ -13,9 +13,18 @@ class Caption
     /** @var string */
     protected $delimiter = '<s>/</s>';
 
+    protected $forceValue = null;
+
     public function __construct(Base $X)
     {
         $this->X = $X;
+    }
+
+    public function setForceValue($title)
+    {
+        $this->forceValue = $title;
+
+        return $this;
     }
 
     protected function getX()
@@ -44,6 +53,10 @@ class Caption
 
     public function get()
     {
+        if ($this->forceValue !== null) {
+            return $this->forceValue;
+        }
+
         if ($this->getX()->getPage()) {
             $methodCaption = $this->getX()
                 ->getPage()
@@ -67,11 +80,9 @@ class Caption
     {
         global $admin_captions_ar;
 
-        $no_caption = [
-            'en' =>
-                'This module title is not defined. Please contact administrator.',
-            'ru' =>
-                'Заголовок для этого раздела не определен. Свяжитесь с администратором.',
+        $noCaption = [
+            'en' => 'Title is not defined',
+            'ru' => 'Заголовок для этого раздела не задан',
         ];
 
         $path = $this->getX()->getOldSchoolPath(
@@ -103,7 +114,7 @@ class Caption
             return $s;
         }
 
-        return $no_caption[$this->getX()->getLanguage()];
+        return $noCaption[$this->getX()->getLanguage()];
     }
 
     private function addButtonNeeded()
