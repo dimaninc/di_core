@@ -75,11 +75,9 @@ class PaymentDrafts extends BasePage
                 $paymentClass::getCurrentSystems(),
                 ['' => 'Все провайдеры']
             )
-            ->setSelectFromArrayInput(
-                'vendor',
-                $paymentClass::getCurrentVendors(),
-                ['' => 'Все способы']
-            );
+            ->setSelectFromArrayInput('vendor', $paymentClass::getCurrentVendors(), [
+                '' => 'Все способы',
+            ]);
     }
 
     public function renderList()
@@ -113,10 +111,7 @@ class PaymentDrafts extends BasePage
                 ],
                 'value' => function (Model $m) {
                     /** @var User $user */
-                    $user = CollectionCache::getModel(
-                        Types::user,
-                        $m->getUserId()
-                    );
+                    $user = CollectionCache::getModel(Types::user, $m->getUserId());
 
                     return $user;
                 },
@@ -138,10 +133,7 @@ class PaymentDrafts extends BasePage
                 'value' => function (Model $m) {
                     return join(
                         ' / ',
-                        array_filter([
-                            $m->getPaySystemStr(),
-                            $m->getVendorStr(),
-                        ])
+                        array_filter([$m->getPaySystemStr(), $m->getVendorStr()])
                     );
                 },
             ],
@@ -194,10 +186,7 @@ class PaymentDrafts extends BasePage
 
         $target =
             $draft->hasTargetType() && $draft->hasTargetId()
-                ? \diModel::create(
-                    $draft->getTargetType(),
-                    $draft->getTargetId()
-                )
+                ? \diModel::create($draft->getTargetType(), $draft->getTargetId())
                 : new \diModel();
 
         $this->getForm()
@@ -210,18 +199,10 @@ class PaymentDrafts extends BasePage
             ->setInput('geo', $draft->getLocationStr())
             ->setInput(
                 'partner_code_id',
-                \diPartnerCodeModel::getInfoForAdminById(
-                    $draft->getPartnerCodeId()
-                )
+                \diPartnerCodeModel::getInfoForAdminById($draft->getPartnerCodeId())
             )
-            ->setInput(
-                'currency',
-                Payment::currencyTitle($draft->getCurrency())
-            )
-            ->setInput(
-                'pay_system',
-                Payment::systemTitle($draft->getPaySystem())
-            )
+            ->setInput('currency', Payment::currencyTitle($draft->getCurrency()))
+            ->setInput('pay_system', Payment::systemTitle($draft->getPaySystem()))
             ->setInput(
                 'user_id',
                 $user->exists()
@@ -333,7 +314,6 @@ class PaymentDrafts extends BasePage
 
             'ip' => [
                 'type' => 'ip',
-                'title' => 'IP-адрес',
                 'default' => '',
                 'flags' => ['static'],
             ],

@@ -495,6 +495,10 @@ class Form
             'ru' => 'Дата/время удаления',
             'en' => 'Date/time of deletion',
         ],
+        'seen_at' => [
+            'ru' => 'Последнее посещение',
+            'en' => 'Seen at',
+        ],
         'ip' => [
             'ru' => 'IP-адрес',
             'en' => 'IP address',

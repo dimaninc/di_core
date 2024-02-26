@@ -207,15 +207,10 @@ class Auth
     private function storeSession()
     {
         if ($this->reallyAuthorized()) {
-            if (Config::isUserSessionUsed()) {
-                if (
-                    $this->authSource === self::SOURCE_POST &&
-                    !$this->getUserSession()->exists()
-                ) {
-                    $this->userSession = UserSession::fastCreate(
-                        $this->getUserModel()
-                    )->save();
-                }
+            if ($this->userSessionCreationNeeded()) {
+                $this->userSession = UserSession::fastCreate(
+                    $this->getUserModel()
+                )->save();
             }
 
             $_SESSION[static::SESSION_USER_ID_FIELD] = $this->getUserId();
@@ -498,9 +493,35 @@ class Auth
         return $this;
     }
 
-    private function redirectNeeded()
+    protected function redirectNeeded()
     {
         return in_array($this->authSource, [self::SOURCE_POST]); //, self::SOURCE_COOKIE
+    }
+
+    protected function createTokenOnSignUp()
+    {
+        return false;
+    }
+
+    protected function isAuthSourceSuitableForUserTokenCreation()
+    {
+        if ($this->authSource == self::SOURCE_POST) {
+            return true;
+        }
+
+        // sign-up case
+        if ($this->authSource === null) {
+            return $this->createTokenOnSignUp();
+        }
+
+        return false;
+    }
+
+    protected function userSessionCreationNeeded()
+    {
+        return Config::isUserSessionUsed() &&
+            $this->isAuthSourceSuitableForUserTokenCreation() &&
+            !$this->getUserSession()->exists();
     }
 
     /** @deprecated  */

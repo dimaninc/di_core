@@ -26,6 +26,28 @@ class UserSession extends \diCore\Admin\BasePage
         $this->setTable('user_session');
     }
 
+    protected function getUsedUserFields()
+    {
+        return ['email'];
+    }
+
+    protected function setupFilters()
+    {
+        $this->getFilters()
+            ->addFilter([
+                'field' => 'token',
+                'type' => 'string',
+            ])
+            ->addFilter([
+                'field' => 'user_id',
+                'type' => 'string',
+                'where_tpl' => \diAdminFilters::get_user_id_where(
+                    $this->getUsedUserFields()
+                ),
+            ])
+            ->buildQuery();
+    }
+
     public function renderList()
     {
         $this->getList()->addColumns([
@@ -37,12 +59,15 @@ class UserSession extends \diCore\Admin\BasePage
             ],
             'user_id' => [
                 'headAttrs' => [
-                    'width' => '10%',
+                    'width' => '30%',
                 ],
+                'value' => function (Model $m) {
+                    return $m->getUser()->getStringAppearanceForAdmin();
+                },
             ],
             'user_agent' => [
                 'headAttrs' => [
-                    'width' => '10%',
+                    'width' => '30%',
                 ],
             ],
             'ip' => [
@@ -91,15 +116,17 @@ class UserSession extends \diCore\Admin\BasePage
         return [
             'token' => [
                 'type' => 'string',
+                'title' => $this->localized([
+                    'ru' => 'Токен',
+                    'en' => 'Token',
+                ]),
                 'default' => '',
+                'flags' => [FormFlag::static],
             ],
 
             'user_id' => [
                 'type' => 'int',
-                'title' => $this->localized([
-                    'ru' => 'Пользователь',
-                    'en' => 'User',
-                ]),
+                'flags' => [FormFlag::static],
                 'default' => '',
             ],
 
@@ -109,15 +136,13 @@ class UserSession extends \diCore\Admin\BasePage
                     'ru' => 'Браузер',
                     'en' => 'User agent',
                 ]),
+                'flags' => [FormFlag::static],
                 'default' => '',
             ],
 
             'ip' => [
                 'type' => 'ip',
-                'title' => $this->localized([
-                    'ru' => 'IP-адрес',
-                    'en' => 'IP address',
-                ]),
+                'flags' => [FormFlag::static],
                 'default' => '',
             ],
 
@@ -139,10 +164,7 @@ class UserSession extends \diCore\Admin\BasePage
 
             'seen_at' => [
                 'type' => 'datetime_str',
-                'title' => $this->localized([
-                    'ru' => 'Последнее посещение',
-                    'en' => 'Seen at',
-                ]),
+                'flags' => [FormFlag::static, FormFlag::untouchable],
                 'default' => '',
             ],
         ];
@@ -151,6 +173,11 @@ class UserSession extends \diCore\Admin\BasePage
     public function getLocalFields()
     {
         return [];
+    }
+
+    public function addButtonNeededInCaption()
+    {
+        return false;
     }
 
     public function getModuleCaption()

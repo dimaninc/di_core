@@ -315,6 +315,11 @@ class Auth extends \diBaseController
         $this->redirectTo($href);
     }
 
+    protected function afterSuccessfulSignUp(Model $user)
+    {
+        return $this;
+    }
+
     public function signUpAction()
     {
         $ar = [
@@ -332,7 +337,13 @@ class Auth extends \diBaseController
 
             $ar['ok'] = true;
 
+            $this->afterSuccessfulSignUp($user);
+
             AuthTool::i()->forceAuthorize($user, true);
+
+            if (Config::isUserSessionUsed()) {
+                return $this->ok($this->getLoginSuccessResponseBody());
+            }
         } catch (\diValidationException $e) {
             $ar['errors'] = $user::getMessagesOfValidationException($e);
         } catch (\Exception $e) {
