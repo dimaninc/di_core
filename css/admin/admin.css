@@ -1758,7 +1758,7 @@ ul.left-menu {
   padding: 0;
   border-right: var(--menu-border-right);
 }
-ul.left-menu > li > b {
+ul.left-menu > li .group-title {
   display: block;
   position: relative;
   padding: 7px 7px 7px 20px;
@@ -1771,6 +1771,7 @@ ul.left-menu > li > b {
   color: var(--menu-text-color);
   cursor: pointer;
   text-transform: var(--menu-text-transform);
+  text-decoration: none;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
@@ -1780,11 +1781,11 @@ ul.left-menu > li > b {
   -ms-transition: 0.3s;
   transition: 0.3s;
 }
-body[data-skin="entrine"] ul.left-menu > li > b {
+body[data-skin="entrine"] ul.left-menu > li .group-title {
   padding-left: 27px;
   padding-right: 35px;
 }
-body[data-skin="entrine"] ul.left-menu > li > b:after {
+body[data-skin="entrine"] ul.left-menu > li .group-title:after {
   content: '';
   position: absolute;
   width: 0;
@@ -1802,7 +1803,7 @@ body[data-skin="entrine"] ul.left-menu > li > b:after {
   -ms-transition: 0.5s;
   transition: 0.5s;
 }
-ul.left-menu > li > b:hover {
+ul.left-menu > li .group-title:hover {
   color: var(--menu-text-color-hover, var(--menu-text-color));
   background-color: var(--menu-text-background-hover, var(--menu-text-background));
 }

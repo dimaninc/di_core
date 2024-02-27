@@ -843,6 +843,8 @@ class Base
 
             foreach ($this->getAdminMenuFullTree() as $groupTitle => $groupOpts) {
                 if (
+                    !empty($groupOpts['paths']) &&
+                    is_array($groupOpts['paths']) &&
                     in_array($pathForCheck, $groupOpts['paths']) &&
                     $this->hasAccess($groupOpts)
                 ) {
@@ -1160,7 +1162,7 @@ class Base
             $selected = false;
             $subRows = [];
 
-            foreach ($groupOpts['items'] as $itemTitle => $item) {
+            foreach ($groupOpts['items'] ?? [] as $itemTitle => $item) {
                 if (is_scalar($item)) {
                     $item = [
                         'module' => $item,
@@ -1203,6 +1205,7 @@ class Base
             $rows[] = [
                 'id' => $i,
                 'title' => $groupTitle,
+                'href' => $groupOpts['href'] ?? null,
                 'state' => in_array($i, $visibleIds),
                 'selected' => $selected,
                 'subRows' => $subRows,

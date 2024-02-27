@@ -69,7 +69,7 @@ ul.left-menu
     ul-norm()
     border-right var(--menu-border-right)
     > li
-        > b
+        .group-title
             display block
             position relative
             padding 7px 7px 7px 20px
@@ -82,6 +82,7 @@ ul.left-menu
             color var(--menu-text-color)
             cursor pointer
             text-transform var(--menu-text-transform)
+            text-decoration none
             box-sizing border-box
             transition .3s
             {$entrineSkin} & {

@@ -24,7 +24,7 @@ var diAdminBase = function () {
 
             $menuRows.each(function () {
                 var $menuRow = $(this);
-                var $menuTitle = $('> b', $menuRow);
+                var $menuTitle = $('.group-title', $menuRow);
                 var $menuItems = $('> ul > li > a', $menuRow);
 
                 if (showAll) {
@@ -127,7 +127,7 @@ var diAdminBase = function () {
             });
         };
 
-        $menuRows.find('> b').click(function () {
+        $menuRows.find('.group-title').click(function () {
             toggleMenuRow($(this).parent('li'));
         });
 
