@@ -1206,6 +1206,7 @@ class Base
                 'id' => $i,
                 'title' => $groupTitle,
                 'href' => $groupOpts['href'] ?? null,
+                'target' => $groupOpts['target'] ?? null,
                 'state' => in_array($i, $visibleIds),
                 'selected' => $selected,
                 'subRows' => $subRows,

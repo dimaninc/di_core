@@ -155,3 +155,29 @@ triangle(width = 10px, height = 10px, direction = 'bottom', color = #000)
     // Mixin styles for passed direction
     styles = directions[direction]
     {styles}
+
+macos-scrollbar($color = gray, $mt = 0, $mb = 0, $w = 8px) {
+    &::-webkit-scrollbar {
+        visibility: hidden;
+        width: $w;
+        height: $w;
+    }
+
+    &::-webkit-scrollbar-track {
+        margin: $mt 0 $mb 0;
+        background-color: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        border-radius: $w / 2;
+        background-color: transparent;
+    }
+
+    &::-webkit-scrollbar-button {
+        display: none;
+    }
+
+    &:hover::-webkit-scrollbar-thumb {
+        background-color: $color;
+    }
+}
