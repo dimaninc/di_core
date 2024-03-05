@@ -280,6 +280,13 @@ class ConnectionData
                 'password' => $password,
                 'database' => $database,
             ],
+            [
+                'host' => '/var/run/postgresql',
+                'port' => 5432,
+                'login' => 'postgres',
+                'password' => $password,
+                'database' => $database,
+            ],
         ];
     }
 }

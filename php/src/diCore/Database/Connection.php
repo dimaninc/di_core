@@ -2,6 +2,7 @@
 
 namespace diCore\Database;
 
+use diCore\Base\CMS;
 use diCore\Data\Environment;
 use diCore\Helper\ArrayHelper;
 
@@ -175,7 +176,7 @@ abstract class Connection
         if (!$this->data) {
             $message = "No suitable database connection data for '$this->name'";
 
-            if (Environment::getInitiating()) {
+            if (Environment::getInitiating() || CMS::debugMode()) {
                 $message .= ', errors: ' . join('; ', $errors);
             }
 

@@ -45,7 +45,7 @@ class Postgresql extends Pdo
         }
 
         $ar = ArrayHelper::mapAssoc(function ($key, $value) {
-            return [$key, urlencode($value)];
+            return [$key, urlencode($value ?? '')];
         }, $ar);
 
         $dsn = $this->driver . ':' . ArrayHelper::toString($ar, '=', ';');
