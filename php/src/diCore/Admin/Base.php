@@ -937,10 +937,16 @@ class Base
     {
         $super = in_array($moduleName, $this->superUserModules);
         $local = in_array($moduleName, $this->localUserModules);
-        $isDebugMode = \diCurrentCMS::debugMode();
 
-        return (!$super || $this->isAdminSuper() || $isDebugMode) &&
-            (!$local || $isDebugMode);
+        if ($this->adminUser->authorizedForSetup()) {
+            return true;
+        }
+
+        if (\diCurrentCMS::isDev() && $local) {
+            return true;
+        }
+
+        return !$super || $this->isAdminSuper();
     }
 
     protected static function menuAdd()
