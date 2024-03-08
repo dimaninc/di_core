@@ -289,4 +289,20 @@ class ConnectionData
             ],
         ];
     }
+
+    public static function localMongoConnData($database)
+    {
+        return [
+            [
+                'host' => 'localhost',
+                'port' => 27017,
+                'database' => $database,
+            ],
+            [
+                'host' => 'localhost',
+                'port' => 27117,
+                'database' => $database,
+            ],
+        ];
+    }
 }

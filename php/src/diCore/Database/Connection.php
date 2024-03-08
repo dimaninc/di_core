@@ -117,6 +117,11 @@ abstract class Connection
         return ConnectionData::localPostgresConnData($database);
     }
 
+    public static function localMongoConnData($database)
+    {
+        return ConnectionData::localMongoConnData($database);
+    }
+
     private static function add($name, Connection $conn)
     {
         if (is_array($name)) {
