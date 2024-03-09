@@ -44,6 +44,24 @@ class Migrations extends \diCore\Admin\BasePage
         }
     }
 
+    protected function initPagesNavy()
+    {
+        if (!$this->PagesNavy && $this->isPagesNavyNeeded()) {
+            $this->PagesNavy = new \diPagesNavy(
+                $this->getTable(),
+                $this->getCountPerPage(),
+                0
+            );
+        }
+
+        return $this;
+    }
+
+    protected function shouldPrintPagesNavy()
+    {
+        return false;
+    }
+
     public function getManager()
     {
         if (!$this->Manager) {
@@ -68,7 +86,10 @@ class Migrations extends \diCore\Admin\BasePage
     public function getMethodCaption($action)
     {
         if ($action == 'log') {
-            return 'Журнал';
+            return [
+                'ru' => 'Журнал',
+                'en' => 'Migrations log',
+            ];
         }
 
         return parent::getMethodCaption($action);
@@ -127,7 +148,6 @@ class Migrations extends \diCore\Admin\BasePage
                 ],
                 'noHref' => true,
             ],
-            //'#del' => '',
         ]);
     }
 
@@ -146,8 +166,6 @@ class Migrations extends \diCore\Admin\BasePage
 
     public function renderList()
     {
-        $that = $this;
-
         $this->getList()->addColumns([
             'id' => 'ID',
             'description' => [
@@ -268,6 +286,14 @@ class Migrations extends \diCore\Admin\BasePage
             ],
         ]);
 
+        $perPage = null;
+
+        try {
+            $perPage = $this->getCountPerPage();
+        } catch (\Exception $e) {
+            // it's ok, unlimited migrations count
+        }
+
         foreach ($this->getManager()::getFolderIds() as $folderId) {
             // printing folder
             $folder = $this->getManager()->getFolderById($folderId);
@@ -278,21 +304,33 @@ class Migrations extends \diCore\Admin\BasePage
                 'subFolder' => '',
             ]);
 
-            $migrations = $this->getManager()->getMigrationsInFolder($folder, [
+            $allMigrations = $this->getManager()->getMigrationsInFolder($folder, [
                 'sort' => 'desc',
             ]);
 
+            if ($perPage) {
+                $this->getPagesNavy()->setTotalRecords(count($allMigrations));
+            }
+
+            $migrations = $perPage
+                ? array_slice(
+                    $allMigrations,
+                    $this->getPagesNavy()->getStart(),
+                    $this->getPagesNavy()->getPerPage()
+                )
+                : $allMigrations;
+
             foreach ($migrations as $i => $fn) {
                 $idx = $this->getManager()::getIdxByFileName($fn);
-
-                /** @var Migration $className */
-                $className = $this->getManager()::getClassNameByIdx($idx);
-                require_once $fn;
 
                 $subFolder = basename(dirname($fn));
                 if ($subFolder == 'migrations') {
                     $subFolder = '';
                 }
+
+                /** @var Migration $className */
+                $className = $this->getManager()::getClassNameByIdx($idx);
+                require_once $fn;
 
                 $this->getList()->addRow([
                     'id' => $idx,
@@ -300,6 +338,19 @@ class Migrations extends \diCore\Admin\BasePage
                     'date' => filemtime($fn),
                     'subFolder' => $subFolder,
                 ]);
+
+                if ($perPage && $i >= $perPage - 1) {
+                    $this->getList()->addRow([
+                        'id' => '-',
+                        'description' => "<div class=\"navy\">{$this->getPagesNavy()->print_pages(
+                            $this->getListHref()
+                        )}</div",
+                        'folder' => true,
+                        'subFolder' => '',
+                    ]);
+
+                    break;
+                }
             }
         }
     }

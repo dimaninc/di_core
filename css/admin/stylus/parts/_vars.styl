@@ -34,3 +34,12 @@ $mqPhonePortrait = $mqPhone + " and (max-height: " + $widthTablet + ")" + $mqPar
 $mqPhoneLandscape = $mqTablet + " and (min-height: 300px)" + " and (max-height: " + $widthPhone + ")" + $mqPartLandscape
 $mqNoPhone = "screen and (min-width: " + ($widthPhone + 1px) + ")"
 $mqNoTabletAndIe = $mqNoTablet + $mqIe
+
+:root {
+  cssVar(navy-gap, 5px)
+  cssVar(navy-margin, 5px)
+  cssVar(navy-hor-alignment, center)
+  cssVar(navy-ver-alignment, center)
+  cssVar(navy-item-padding, 3px 8px)
+  cssVar(navy-font-size, 12px)
+}

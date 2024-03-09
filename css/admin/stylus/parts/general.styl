@@ -580,23 +580,21 @@ iframe
     width 200px
 
 .navy
-    margin 0 $classicStandardPadding
-    text-align center
-    {$entrineSkin} &
-        text-align left
+    display flex
+    flex-wrap wrap
+    gap var(--navy-gap)
+    justify-content var(--navy-hor-alignment)
+    align-items  var(--navy-ver-alignment)
+    margin 0 var(--content-padding-hor)
     a
     b
     span
-        display inline-block
-        padding 3px 8px
-        font-size 12px
-        margin 0 5px 5px 0
+        padding var(--navy-item-padding)
+        font-size var(--navy-font-size)
         border 1px dotted #aaa
         {$entrineSkin} &
             border 0
-            padding 10px 15px
             background #f9f9f9
-            margin 0 15px 5px 0
     a
         background white
         &:hover

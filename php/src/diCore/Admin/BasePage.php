@@ -38,7 +38,7 @@ abstract class BasePage
     private $Submit;
 
     /** @var \diPagesNavy */
-    private $PagesNavy;
+    protected $PagesNavy;
 
     /** @var string */
     protected $table;
@@ -471,7 +471,7 @@ abstract class BasePage
      * @return $this
      * @throws \Exception
      */
-    private function initPagesNavy()
+    protected function initPagesNavy()
     {
         if (
             (!$this->PagesNavy && $this->isPagesNavyNeeded()) ||
@@ -510,12 +510,17 @@ abstract class BasePage
 
     protected function isPagesNavyNeeded()
     {
-        return Configuration::exists('admin_per_page[' . $this->getTable() . ']');
+        return !!Configuration::exists('admin_per_page[' . $this->getTable() . ']');
     }
 
     protected function getCountPerPage()
     {
         return Configuration::get('admin_per_page[' . $this->getTable() . ']');
+    }
+
+    protected function shouldPrintPagesNavy()
+    {
+        return $this->isPagesNavyNeeded();
     }
 
     /**
@@ -1190,7 +1195,7 @@ abstract class BasePage
     protected function afterRenderList()
     {
         if ($this->hasList() || $this->hasGrid()) {
-            if ($this->hasPagesNavy()) {
+            if ($this->hasPagesNavy() && $this->shouldPrintPagesNavy()) {
                 $this->getTpl()
                     ->assign([
                         'PAGES_NAVY' => $this->getPagesNavy()->print_pages(
