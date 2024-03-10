@@ -298,7 +298,11 @@ function isInteger($value)
         return false;
     }
 
-    return !is_int($value) ? ctype_digit($value) : true;
+    if (is_int($value)) {
+        return true;
+    }
+
+    return ctype_digit($value);
 }
 
 function is_not_null($value)

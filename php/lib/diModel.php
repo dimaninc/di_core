@@ -1173,7 +1173,6 @@ class diModel implements \ArrayAccess
                 ? $this->getIdFieldName()
                 : $this->getSlugFieldName();
         }
-        //
 
         return [
             'id' => $id,
