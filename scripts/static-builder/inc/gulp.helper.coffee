@@ -194,7 +194,12 @@ Helper =
 
     assignSassTaskToGulp: (gulp, opts = {}) ->
         unless sass
-            sass = @req('gulp-sass')(@req 'node-sass')
+            try
+                origSass = @req 'node-sass'
+            catch e
+                origSass = @req 'sass'
+            sass = @req('gulp-sass')(origSass)
+
         opts = @extend {fn: null, buildFolder: null, taskName: 'sass'}, opts
         gulp.task opts.taskName, (done) =>
             gulp.src @fullPath opts.fn
