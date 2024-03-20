@@ -1623,7 +1623,7 @@ EOF;
 
                 $this->set_data($k, $v, $id);
 
-                if ($this->data[$k] || !$isFileType) {
+                if (!empty($this->data[$k]) || !$isFileType) {
                     if ($v['type'] === 'radio') {
                         $rf = $this->field . '_' . $k;
                         $val = isset($_POST[$rf]) && $_POST[$rf] == $id ? 1 : 0;
