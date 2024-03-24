@@ -10,7 +10,9 @@ var diAudioPlayer = function (_opts) {
         opts = $.extend(
             {
                 audio: null,
-                onEnd: null,
+                noErrorsCatching: false,
+                onStart: null,
+                onEnd: null
             },
             _opts || {}
         );
@@ -24,6 +26,10 @@ var diAudioPlayer = function (_opts) {
     function constructor() {
         if (opts.audio) {
             self.setElement(opts.audio);
+
+            if (opts.onStart) {
+                $(self.audio).on('play', opts.onStart);
+            }
 
             if (opts.onEnd) {
                 $(self.audio).on('ended', opts.onEnd);
@@ -95,7 +101,7 @@ var diAudioPlayer = function (_opts) {
         return !!this.getSource() && audioLoaded;
     };
 
-    this.play = function () {
+    this.play = function (promiseSetter) {
         if (typeof this.audio.play !== 'undefined') {
             if (!audioLoaded) {
                 this.audio.load();
@@ -106,16 +112,22 @@ var diAudioPlayer = function (_opts) {
             var promise = this.audio.play();
 
             if (promise !== undefined) {
-                promise
-                    .then(function () {
-                        //console.log('diAudioPlayer: audio track started');
-                    })
-                    .catch(function (error) {
+                promise.then(function () {
+                    //console.log('diAudioPlayer: audio track started');
+                });
+
+                if (!opts.noErrorsCatching) {
+                    promise.catch(function (error) {
                         console.log(
                             'diAudioPlayer: error playing audio track',
                             error
                         );
                     });
+                }
+
+                if (promiseSetter) {
+                    promiseSetter(promise);
+                }
             }
         } else {
             throw 'Audio player not initialized';
@@ -191,6 +203,10 @@ var diAudioPlayer = function (_opts) {
                 this.audio.volume = volume;
             } catch (e) {
                 console.log('Error while setting audio volume:', e);
+
+                if (!opts.noErrorsCatching) {
+                    throw e;
+                }
             }
         }
 
