@@ -12,6 +12,7 @@ var diAudioPlayer = function (_opts) {
                 audio: null,
                 noErrorsCatching: false,
                 onStart: null,
+                onTimeUpdate: null,
                 onEnd: null
             },
             _opts || {}
@@ -29,6 +30,10 @@ var diAudioPlayer = function (_opts) {
 
             if (opts.onStart) {
                 $(self.audio).on('play', opts.onStart);
+            }
+
+            if (opts.onTimeUpdate) {
+                $(self.audio).on('timeupdate', opts.onTimeUpdate);
             }
 
             if (opts.onEnd) {
