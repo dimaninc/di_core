@@ -117,9 +117,9 @@ var diAudioPlayer = function (_opts) {
             var promise = this.audio.play();
 
             if (promise !== undefined) {
-                promise.then(function () {
-                    //console.log('diAudioPlayer: audio track started');
-                });
+                //promise.then(function () {
+                //console.log('diAudioPlayer: audio track started');
+                //});
 
                 if (!opts.noErrorsCatching) {
                     promise.catch(function (error) {
