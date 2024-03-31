@@ -113,8 +113,7 @@ class Kassa
         $this->processRequest();
 
         $this->log(
-            'Request processed, now trying to pass action: ' .
-                $this->getAction()
+            'Request processed, now trying to pass action: ' . $this->getAction()
         );
 
         switch ($this->getAction()) {
@@ -165,11 +164,7 @@ class Kassa
             case 'PKCS7':
                 // Checking for a certificate sign. If the checking fails, respond with '200' error code.
                 if (($request = $this->verifySign()) == null) {
-                    $response = $this->buildResponse(
-                        $this->getAction(),
-                        null,
-                        200
-                    );
+                    $response = $this->buildResponse($this->getAction(), null, 200);
                     return $this->sendResponse($response, true);
                 }
 
@@ -228,12 +223,7 @@ class Kassa
     {
         $this->log('Sending error response: ' . $message);
 
-        $response = $this->buildResponse(
-            $this->getAction(),
-            null,
-            100,
-            $message
-        );
+        $response = $this->buildResponse($this->getAction(), null, 100, $message);
 
         return $this->sendResponse($response, $forcePrintAndExit);
     }
@@ -414,15 +404,19 @@ class Kassa
         );
 
         array_walk($opts, function (&$item) {
-            $item = \diDB::_out($item);
+            $item = is_scalar($item) ? \diDB::_out($item) : $item;
         });
+
+        if (!empty($opts['additionalParams'])) {
+            array_walk($opts['additionalParams'], function (&$item) {
+                $item = is_scalar($item) ? \diDB::_out($item) : $item;
+            });
+        }
 
         $button = !$opts['autoSubmit']
             ? "<button type=\"submit\">{$opts['buttonCaption']}</button>"
             : '';
-        $redirectScript = $opts['autoSubmit']
-            ? Payment::getAutoSubmitScript()
-            : '';
+        $redirectScript = $opts['autoSubmit'] ? Payment::getAutoSubmitScript() : '';
 
         $params = extend(
             [
