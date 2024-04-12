@@ -1446,9 +1446,19 @@ abstract class BasePage
         $sortBy = $this->hasFilters() ? $this->getFilters()->getSortBy() : 'title';
         $dir = $this->hasFilters() ? $this->getFilters()->getDir() : 'ASC';
 
-        $page = $this->hasPagesNavy()
-            ? $this->getPagesNavy()->get_page_of($this->getId(), $sortBy, $dir)
-            : null;
+        $page = null;
+
+        try {
+            if ($this->hasPagesNavy()) {
+                $page = $this->getPagesNavy()->get_page_of(
+                    $this->getId(),
+                    $sortBy,
+                    $dir
+                );
+            }
+        } catch (\Exception $e) {
+            // skip, no page then
+        }
 
         if ($page) {
             $ar['page'] = $page;
@@ -1468,12 +1478,14 @@ abstract class BasePage
     protected function getRedirectAfterSubmitUrl()
     {
         $method = \diRequest::post('__redirect_to', 'list');
-        $anchorNeeded = $method === 'list';
+        $anchorNeeded =
+            $method === 'list' &&
+            !!$this->getId() &&
+            $this->useAnchorInRedirectAfterSubmitUrl();
         $paramsNeeded = $method === 'list';
-        $anchor =
-            $anchorNeeded && $this->useAnchorInRedirectAfterSubmitUrl()
-                ? '#' . \diNiceTable::getRowAnchorName($this->getId())
-                : '';
+        $anchor = $anchorNeeded
+            ? '#' . \diNiceTable::getRowAnchorName($this->getId())
+            : '';
         $params = $paramsNeeded ? $this->getQueryParamsForRedirectAfterSubmit() : [];
 
         return Base::getPageUri($this->getBasePath(), $method, $params) . $anchor;
