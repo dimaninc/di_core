@@ -854,12 +854,12 @@ class diAdminFilters
 
     public function getButtonsPrefix()
     {
-        return $this->buttonsPrefix;
+        return $this->buttonsPrefix . ($this->buttonOptions['prefix'] ?? '');
     }
 
     public function getButtonsSuffix()
     {
-        return $this->buttonsSuffix;
+        return $this->buttonsSuffix . ($this->buttonOptions['suffix'] ?? '');
     }
 
     public function get_where($tablePrefix = '')
