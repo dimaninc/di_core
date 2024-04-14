@@ -335,6 +335,10 @@ class Sender
             return $a;
         }
 
+        if (!$a || !is_array($a)) {
+            return null;
+        }
+
         return $a['password'] ?: static::defaultSmtpPassword ?: null;
     }
 }
