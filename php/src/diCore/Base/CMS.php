@@ -94,21 +94,32 @@ abstract class CMS
 
     /**
      * Domains to detect 'dev' environment
+     * @deprecated use self::$envDomains instead
      * @var array
      */
     public static $devDomains = [];
 
     /**
      * Domains to detect 'stage' environment
+     * @deprecated use self::$envDomains instead
      * @var array
      */
     public static $stageDomains = [];
 
     /**
-     * Domains to detect 'stage' environment
+     * Domains to detect 'stage2' environment
+     * @deprecated use self::$envDomains instead
      * @var array
      */
     public static $stage2Domains = [];
+
+    /**
+     * Domains to detect custom environments
+     * @var array
+     */
+    public static $envDomains = [
+        // envId => [domains...]
+    ];
 
     const ENV_DEV = 1;
     const ENV_STAGE = 2;
@@ -121,6 +132,8 @@ abstract class CMS
         self::ENV_STAGE2 => 'stage2',
         self::ENV_PROD => 'prod',
     ];
+
+    public static $customEnvNames = [];
 
     /**
      * Assoc array: 'lang' => ['domain1', 'domain2'],
@@ -171,7 +184,7 @@ abstract class CMS
 
     private $routes = [];
     private $origRoutes = [];
-    public $m0, $m1, $m2, $m3, $m4, $m5;
+    public $m0, $m1, $m2, $m3, $m4, $m5, $m6;
 
     public $tables;
     public $ct_ar = []; // clean titles ar ['type' => 'clean_title']
@@ -474,6 +487,12 @@ abstract class CMS
         /** @var CMS $class */
         $class = \diLib::getChildClass(static::class);
 
+        foreach (static::$envDomains as $envId => $domains) {
+            if (in_array($domain, $domains)) {
+                return $envId;
+            }
+        }
+
         if (in_array($domain, $class::$devDomains)) {
             return self::ENV_DEV;
         } elseif (in_array($domain, $class::$stageDomains)) {
@@ -487,7 +506,8 @@ abstract class CMS
 
     public static function getEnvironmentName()
     {
-        return static::$envNames[static::getEnvironment()];
+        return static::$envNames[static::getEnvironment()] ??
+            (static::$customEnvNames[static::getEnvironment()] ?? null);
     }
 
     public static function isDev()
