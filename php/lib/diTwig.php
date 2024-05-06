@@ -143,6 +143,17 @@ class diTwig
         return $this;
     }
 
+    protected function addLead0Filter()
+    {
+        $this->getEngine()->addFilter(
+            new TwigFilter('lead0', function ($num) {
+                return lead0($num);
+            })
+        );
+
+        return $this;
+    }
+
     protected function getAllPaths()
     {
         return extend(
