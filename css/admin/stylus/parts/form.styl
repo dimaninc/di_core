@@ -16,7 +16,7 @@
             }
         }
     }
-    @media $mqTablet
+    @media $mqTablet {
         margin-left 0
         margin-right 0
         margin-bottom 0
@@ -26,14 +26,18 @@
         border-bottom 0
         display block
         padding-left 5px
-    &:last-of-type
-        @media $mqTablet
+    }
+    &:last-of-type {
+        @media $mqTablet {
             border-bottom 1px solid #CFCFCF
+        }
+    }
     .title
-    .value
+    .value {
         font-family var(--font-primary)
         font-size 12px
         vertical-align top
+    }
     .title
         width var(--form-row-title-width)
         padding-top var(--form-row-title-padding-top)
@@ -68,39 +72,52 @@
         display flex
         flex-wrap wrap
         align-items center
+        gap 6px 0
         ^[0][data-type="pic"] ^[1..-1]
-        ^[0][data-type="file"] ^[1..-1]
+        ^[0][data-type="file"] ^[1..-1] {
             display block
             //flex-wrap wrap
+        }
         ^[0][data-type="checkboxes"] ^[1..-1]
-        ^[0][data-purpose="notes"] ^[1..-1]
+        ^[0][data-purpose="notes"] ^[1..-1] {
             flex-direction column
             align-items flex-start
             justify-content center
-        ^[0][data-type="password"] ^[1..-1]
+        }
+        ^[0][data-type="password"] ^[1..-1] {
             flex-wrap wrap
-        {$entrineSkin} &
-            @media $mqTablet
+        }
+        {$entrineSkin} & {
+            @media $mqTablet {
                 margin-left 12px
                 margin-right 12px
-        @media $mqTablet
+            }
+        }
+        @media $mqTablet {
             width auto
             margin-left 7px
-        button
+        }
+        button {
             margin 0
-            {$entrineSkin} &
-                margin 0
-        label.or-enter
+            {$entrineSkin} & {
+               margin 0
+            }
+        }
+        label.or-enter {
             flex 1
             display flex
             align-items center
-            @media $mqPhone
+            @media $mqPhone {
                 flex-wrap wrap
-            span
+            }
+            span {
                 padding 0 7px
                 white-space nowrap
-            input[type="text"]
+            }
+            input[type="text"] {
                 min-width 200px
+            }
+        }
         .tags-grid {
             .tags-toggle {
                 // global on/off
@@ -133,10 +150,13 @@
                 column-gap var(--gap)
             }
         }
-        .new-tag
+        .new-tag {
             margin-top 10px
-            input[type="text"]
+
+            input[type="text"] {
                 width 100%
+            }
+        }
         .file-input-wrapper
             position relative
             width 50%

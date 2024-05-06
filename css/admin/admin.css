@@ -2015,6 +2015,7 @@ body[data-skin="entrine"] .diadminform-row[data-purpose="notes"] .title {
   -ms-flex-align: center;
   -webkit-align-items: center;
   align-items: center;
+  gap: 6px 0;
 }
 .diadminform-row[data-type="pic"] .value,
 .diadminform-row[data-type="file"] .value {
