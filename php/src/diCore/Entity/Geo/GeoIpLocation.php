@@ -67,7 +67,9 @@ class GeoIpLocation
     ];
 
     public static $novorossiaRegions = [
+        'Donetsk',
         'Donetsk Oblast',
+        'Kherson',
         'Kherson Oblast',
         'Luhansk',
         'Zaporizhzhya Oblast',
