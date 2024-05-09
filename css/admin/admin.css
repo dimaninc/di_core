@@ -4891,7 +4891,6 @@ body[data-skin="entrine"] .list-control-panel {
 }
 .list-control-panel .toggle-all input[type="checkbox"] {
   position: relative;
-  top: 2px;
   margin-right: 8px;
 }
 .list-control-panel .toggle-all label {
