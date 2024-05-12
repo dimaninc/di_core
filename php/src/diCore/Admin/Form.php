@@ -3494,7 +3494,7 @@ EOF;
         }
 
         $s .= '</div>';
-        $this->uploaded_images[$field] = $s;
+        // $this->uploaded_images[$field] = $s;
 
         $s .= "<div data-purpose=\"anchor\" data-field=\"{$field}\" data-position=\"bottom\"></div>";
         $s .=
