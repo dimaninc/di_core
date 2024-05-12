@@ -483,26 +483,18 @@ abstract class BasePage
             $where = $this->getFilters()->get_where();
             $cbs = $this->getFilters()->getRuleCallbacks();
 
-            if (!$where && $cbs) {
-                $col = \diCollection::createForTable($this->getTable());
-
-                foreach ($cbs as $cb) {
-                    $cb($col);
-                }
-
-                $this->PagesNavy = new \diPagesNavy(
-                    $this->getTable(),
-                    $this->getCountPerPage(),
-                    $col->getRealCount()
-                );
-            } else {
-                $this->PagesNavy = new \diPagesNavy(
-                    $this->getTable(),
-                    $this->getCountPerPage(),
-                    //$this->hasFilters() ? $this->getFilters()->get_where() : ''
-                    $where
-                );
+            $col = \diCollection::createForTable($this->getTable());
+            foreach ($cbs as $cb) {
+                $cb($col);
             }
+
+            $this->PagesNavy = new \diPagesNavy(
+                $this->getTable(),
+                $this->getCountPerPage(),
+                $where
+                    ? \diCollection::mergeStringQueries($where, $col->getFullQuery())
+                    : $col->getRealCount()
+            );
         }
 
         return $this;

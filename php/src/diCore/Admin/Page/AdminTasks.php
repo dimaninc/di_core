@@ -59,6 +59,12 @@ class AdminTasks extends \diCore\Admin\BasePage
                 'rule' => FilterRule::contains,
             ])
             ->addFilter([
+                'field' => 'content',
+                'type' => 'string',
+                'title' => 'Текст',
+                'rule' => FilterRule::contains,
+            ])
+            ->addFilter([
                 'field' => 'admin_id',
                 'type' => 'int',
                 'title' => 'Исполнитель',
