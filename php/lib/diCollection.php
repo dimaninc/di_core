@@ -2373,7 +2373,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         }
 
         foreach ($queries as &$q) {
-            $q = preg_replace('/WHERE\s+/i', '', $q);
+            $q = preg_replace('/^\s*WHERE\s+/i', '', $q);
             $q = "($q)";
         }
 
