@@ -7,7 +7,7 @@
  */
 
 use diCore\Data\Types;
-use diCore\Entity\Comment\Model as CommentModel;
+use diCore\Entity\Comment\Model;
 
 class diComments
 {
@@ -272,12 +272,12 @@ class diComments
             : '';
     }
 
-    protected function beforeParseRow(CommentModel $comment, \diBaseUserModel $user)
+    protected function beforeParseRow(Model $comment, \diBaseUserModel $user)
     {
         return $this;
     }
 
-    protected function getUserModelForComment(CommentModel $comment)
+    protected function getUserModelForComment(Model $comment)
     {
         if ($this->admins && $this->users) {
             $user =
@@ -295,7 +295,7 @@ class diComments
         return $user;
     }
 
-    public function getRowHtml(CommentModel $comment)
+    public function getRowHtml(Model $comment)
     {
         $user = $this->getUserModelForComment($comment);
 
@@ -370,7 +370,7 @@ class diComments
             $this->comments->setPageSize($size)->setPageNumber(1);
         }
 
-        /** @var CommentModel $comment */
+        /** @var Model $comment */
         foreach ($this->comments as $comment) {
             if ($comment->getUserType() == self::utAdmin) {
                 $adminIds[] = (int) $comment->getUserId();
