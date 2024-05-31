@@ -211,17 +211,11 @@ class Queue
     }
 
     // by default the first message is being sent
-    public function send($id = 0)
+    public function send($id = null)
     {
-        /** @var Collection $messages */
-        $messages = Collection::createActual();
-
-        if ($id) {
-            $messages->filterById($id);
-        }
-
-        /** @var Model $message */
-        $message = $messages->getFirstItem();
+        $message = $id
+            ? Model::createById($id)
+            : Collection::createActual()->getFirstItem();
 
         if ($message->exists()) {
             return $this->sendMessage($message);

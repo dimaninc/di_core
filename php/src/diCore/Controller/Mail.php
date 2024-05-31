@@ -29,7 +29,7 @@ class Mail extends \diBaseAdminController
     public function sendAction()
     {
         $mq = Queue::basicCreate();
-        $id = $this->param(0, 0);
+        $id = $this->param(0, '');
 
         $mq->send($id);
 

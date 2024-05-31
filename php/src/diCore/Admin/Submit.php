@@ -300,6 +300,9 @@ class Submit
         }
     }
 
+    /**
+     * @deprecated
+     */
     function redirect()
     {
         $params_ar = [];
