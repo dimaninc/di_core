@@ -386,9 +386,10 @@ EOF;
 <head>
 <title>Payment system redirect</title>
 $baseTag
-<meta http-equiv="refresh" content="0; url={$url}" />
+<meta http-equiv="refresh" content="1; url=$url" />
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="robots" content="noindex, nofollow">
+<script>window.top.location.href = "$url";</script>
 </head>
 <body>{$options['body']}</body>
 </html>
