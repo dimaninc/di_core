@@ -53,6 +53,12 @@ class diTwig
     private $templateForIndex;
 
     /**
+     * @var string
+     * Unique string suffix (e.g. for SVG ids)
+     */
+    protected $currentUniqueId = null;
+
+    /**
      * diTwig constructor.
      * @param array $options
      */
@@ -114,6 +120,27 @@ class diTwig
 
     protected function addFilters()
     {
+        return $this;
+    }
+
+    protected function addUniqueIdFilter()
+    {
+        $this->addFunction('update_unique_id', function () {
+            $this->currentUniqueId = StringHelper::random();
+
+            return '';
+        });
+
+        $this->getEngine()->addFilter(
+            new TwigFilter('unique_id', function ($baseName) {
+                if (!$this->currentUniqueId) {
+                    $this->currentUniqueId = StringHelper::random();
+                }
+
+                return $baseName . '_' . $this->currentUniqueId;
+            })
+        );
+
         return $this;
     }
 
