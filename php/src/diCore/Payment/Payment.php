@@ -36,6 +36,9 @@ class Payment
     const ORDER_DESCRIPTION = 'Payment';
     const ORDER_THANKS = 'Thank you';
 
+    // redirect to top-level frame (html) or simple header('Location: ...')
+    const REDIRECT_IN_TOP_LEVEL_FRAME = true;
+
     protected static $paymentVendorsUsed = [
         /* example:
         System::mixplat,
@@ -88,6 +91,11 @@ class Payment
     public static function enabled()
     {
         return Configuration::get('epay_enabled');
+    }
+
+    public static function shouldRedirectInTopLevelFrame()
+    {
+        return static::REDIRECT_IN_TOP_LEVEL_FRAME;
     }
 
     public static function getPaymentVendorsUsed()
@@ -311,6 +319,33 @@ class Payment
         return "<input name=\"{$name}\" value=\"{$value}\" type=\"hidden\">";
     }
 
+    public static function prepareRedirectOptions(array $options = [])
+    {
+        return extend(
+            [
+                'body' => '',
+                'lang' => 'ru',
+            ],
+            $options
+        );
+    }
+
+    public static function redirectTo(string $url, array $options = [])
+    {
+        if (static::shouldRedirectInTopLevelFrame()) {
+            return static::htmlRedirect($url, $options);
+        }
+
+        static::headerRedirect($url);
+
+        return null;
+    }
+
+    public static function headerRedirect(string $url)
+    {
+        header("Location: $url");
+    }
+
     public static function getAutoSubmitScript()
     {
         return <<<'EOF'
@@ -320,33 +355,42 @@ document.forms[0].submit();
 EOF;
     }
 
-    public static function wrapFormIntoHtml($form, $lang = 'ru')
+    public static function wrapFormIntoHtml($form, array $options = [])
     {
+        $options = static::prepareRedirectOptions($options);
+
         return <<<EOF
 <!doctype html>
-<html lang="{$lang}">
+<html lang="{$options['lang']}">
 <head>
 <title>Payment system redirect</title>
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="robots" content="noindex, nofollow">
 </head>
-<body>{$form}</body>
+<body>{$form}{$options['body']}</body>
 </html>
 EOF;
     }
 
-    public static function htmlRedirect($url, $body, $lang = 'ru')
+    public static function htmlRedirect(string $url, array $options = [])
     {
+        $options = static::prepareRedirectOptions($options);
+
+        $baseTag = static::shouldRedirectInTopLevelFrame()
+            ? '<base target="_top">'
+            : '';
+
         return <<<EOF
 <!doctype html>
-<html lang="{$lang}">
+<html lang="{$options['lang']}">
 <head>
 <title>Payment system redirect</title>
+$baseTag
 <meta http-equiv="refresh" content="0; url={$url}" />
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta name="robots" content="noindex, nofollow">
 </head>
-<body>{$body}</body>
+<body>{$options['body']}</body>
 </html>
 EOF;
     }
@@ -515,32 +559,26 @@ EOF;
     {
         $t = Tinkoff::create();
 
-        header(
-            'Location: ' .
-                $t->getFormUri($draft, [
-                    'customerEmail' => $this->getCustomerEmail(),
-                    'customerPhone' => $this->getCustomerPhone(),
-                    'description' => static::ORDER_DESCRIPTION,
-                ])
+        return static::redirectTo(
+            $t->getFormUri($draft, [
+                'customerEmail' => $this->getCustomerEmail(),
+                'customerPhone' => $this->getCustomerPhone(),
+                'description' => static::ORDER_DESCRIPTION,
+            ])
         );
-
-        return null;
     }
 
     public function initSberbank(Draft $draft)
     {
         $sb = Sberbank::create();
 
-        header(
-            'Location: ' .
-                $sb->getFormUri($draft, [
-                    'customerEmail' => $this->getCustomerEmail(),
-                    'customerPhone' => $this->getCustomerPhone(),
-                    'description' => static::ORDER_DESCRIPTION,
-                ])
+        return static::redirectTo(
+            $sb->getFormUri($draft, [
+                'customerEmail' => $this->getCustomerEmail(),
+                'customerPhone' => $this->getCustomerPhone(),
+                'description' => static::ORDER_DESCRIPTION,
+            ])
         );
-
-        return null;
     }
 
     public function initPaypal(Draft $draft)
@@ -666,7 +704,9 @@ EOF;
             'customerPhone' => $this->getCustomerPhone(),
         ]);
 
-        return static::htmlRedirect($payUrl, $cc::getRedirectHtmlBody($draft));
+        return static::htmlRedirect($payUrl, [
+            'body' => $cc::getRedirectHtmlBody($draft),
+        ]);
     }
 
     public function initSmsOnline(Draft $draft)
