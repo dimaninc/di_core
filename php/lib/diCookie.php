@@ -13,6 +13,17 @@ class diCookie
 {
     const DEBUG = false;
 
+    protected static function defaultSetOptions()
+    {
+        return [
+            'asOptions' => false,
+            'expire' => null,
+            'secure' => null,
+            'httpOnly' => null,
+            'sameSite' => false,
+        ];
+    }
+
     /**
      * Sets the cookie
      *
@@ -40,12 +51,10 @@ class diCookie
         }
 
         $options = extend(
+            static::defaultSetOptions(),
             [
-                'expire' => null,
                 'path' => $path,
                 'domain' => $domain,
-                'secure' => null,
-                'httpOnly' => null,
             ],
             $options
         );
@@ -58,15 +67,26 @@ class diCookie
             $options['domain'] = static::getDomainForAll();
         }
 
-        setcookie(
-            $name,
-            $value,
-            (int) $options['expire'],
-            $options['path'] ?: '',
-            $options['domain'] ?: '',
-            (bool) $options['secure'],
-            (bool) $options['httpOnly']
-        );
+        if ($options['asOptions']) {
+            setcookie($name, $value, [
+                'expires' => (int) $options['expire'],
+                'path' => $options['path'] ?: '',
+                'domain' => $options['domain'] ?: '',
+                'secure' => (bool) $options['secure'],
+                'httponly' => (bool) $options['httpOnly'],
+                'samesite' => (bool) $options['sameSite'],
+            ]);
+        } else {
+            setcookie(
+                $name,
+                $value,
+                (int) $options['expire'],
+                $options['path'] ?: '',
+                $options['domain'] ?: '',
+                (bool) $options['secure'],
+                (bool) $options['httpOnly']
+            );
+        }
 
         if (static::DEBUG) {
             if ($options['expire']) {
@@ -105,12 +125,8 @@ class diCookie
      * @param null $domain
      * @param array $options
      */
-    public static function remove(
-        $name,
-        $path = null,
-        $domain = null,
-        $options = []
-    ) {
+    public static function remove($name, $path = null, $domain = null, $options = [])
+    {
         if (static::DEBUG) {
             static::log("Cookie remove: '$name'");
         }
