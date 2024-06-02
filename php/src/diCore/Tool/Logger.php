@@ -8,6 +8,7 @@
 
 namespace diCore\Tool;
 
+use diCore\Base\CMS;
 use diCore\Data\Config;
 use diCore\Helper\StringHelper;
 
@@ -53,6 +54,10 @@ class Logger
 
     protected function getFilename($purpose, $fnSuffix = '')
     {
+        if (CMS::isHardDebug()) {
+            $fnSuffix .= '-hard';
+        }
+
         return \diDateTime::format('Y_m_d') . $fnSuffix . static::EXTENSION;
     }
 
