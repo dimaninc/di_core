@@ -13,14 +13,14 @@ class CollectionCache
     const PREFIX_REDIS = 'CollectionCache:';
 
     const STORAGE_RAM = 1;
-    const STORAGE_PREDIS = 2;
+    const STORAGE_REDIS = 2;
 
     protected static $storage = self::STORAGE_RAM;
 
     /**
-     * @var \Predis\Client
+     * @var \Redis
      */
-    protected static $predisClient = null;
+    protected static $redisClient = null;
 
     protected static $data = [];
 
@@ -69,8 +69,8 @@ class CollectionCache
             $modelType = \diTypes::getId($col->getModelType());
 
             switch (self::$storage) {
-                case self::STORAGE_PREDIS:
-                    self::$predisClient->set(
+                case self::STORAGE_REDIS:
+                    self::$redisClient->set(
                         self::getRedisKey($modelType),
                         json_encode($col->asDataArray())
                     );
@@ -111,9 +111,9 @@ class CollectionCache
     {
         if ($modelTypes === null) {
             switch (self::$storage) {
-                case self::STORAGE_PREDIS:
-                    self::$predisClient->del(
-                        self::$predisClient->keys(self::getRedisKey('*'))
+                case self::STORAGE_REDIS:
+                    self::$redisClient->del(
+                        self::$redisClient->keys(self::getRedisKey('*'))
                     );
                     break;
 
@@ -130,8 +130,8 @@ class CollectionCache
                 $modelType = \diTypes::getId($modelType);
 
                 switch (self::$storage) {
-                    case self::STORAGE_PREDIS:
-                        self::$predisClient->del(self::getRedisKey($modelType));
+                    case self::STORAGE_REDIS:
+                        self::$redisClient->del(self::getRedisKey($modelType));
                         break;
 
                     default:
@@ -153,8 +153,8 @@ class CollectionCache
         $modelType = \diTypes::getId($modelType);
 
         switch (self::$storage) {
-            case self::STORAGE_PREDIS:
-                $json = self::$predisClient->get(self::getRedisKey($modelType));
+            case self::STORAGE_REDIS:
+                $json = self::$redisClient->get(self::getRedisKey($modelType));
                 $ar = $json ? json_decode($json, true) : null;
 
                 if ($ar !== null) {
@@ -173,9 +173,7 @@ class CollectionCache
                     self::$data[$modelType] = \diCollection::create($modelType);
                 }
 
-                return isset(self::$data[$modelType])
-                    ? self::$data[$modelType]
-                    : null;
+                return self::$data[$modelType] ?? null;
         }
     }
 
@@ -188,8 +186,8 @@ class CollectionCache
         $modelType = \diTypes::getId($modelType);
 
         switch (self::$storage) {
-            case self::STORAGE_PREDIS:
-                return self::$predisClient->exists(self::getRedisKey($modelType));
+            case self::STORAGE_REDIS:
+                return self::$redisClient->exists(self::getRedisKey($modelType));
 
             default:
                 return isset(self::$data[$modelType]);
@@ -216,10 +214,9 @@ class CollectionCache
         return self::PREFIX_REDIS . 'type=' . $modelType;
     }
 
-    public static function usePRedis(\Predis\Client $client)
+    public static function useRedis(\Redis $client)
     {
-        self::$storage = self::STORAGE_PREDIS;
-
-        self::$predisClient = $client;
+        self::$storage = self::STORAGE_REDIS;
+        self::$redisClient = $client;
     }
 }
