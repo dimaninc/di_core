@@ -275,7 +275,6 @@ class ArrayHelper
     {
         if (self::isAssoc($path) && $value === null) {
             return self::mergeRecursive($array, $path);
-            //return array_merge_recursive($array, $path);
         }
 
         if (!is_array($path)) {

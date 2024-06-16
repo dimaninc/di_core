@@ -1454,7 +1454,7 @@ class diModel implements \ArrayAccess
     public function updateJsonData(string $field, array|string $path, $value = null)
     {
         $type = static::getFieldType($field);
-        $fieldData = $this->getJsonData($field);
+        $fieldData = $this->getJsonData($field) ?: [];
         $newData =
             ArrayHelper::isAssoc($path) && $value === null
                 ? $path
