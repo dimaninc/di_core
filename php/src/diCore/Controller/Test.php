@@ -10,7 +10,7 @@ class Test extends \diBaseController
     {
         die();
 
-        // parent::__construct($params);
+        parent::__construct($params);
     }
 
     public function dbAction()
@@ -28,10 +28,13 @@ class Test extends \diBaseController
                     'c1' => 1,
                     'c2' => 2,
                 ],
+                'd' => 'Multiline
+text',
             ],
             '*col5' => 'CURRENT_TIMESTAMP',
             'col6' => 'DROP "zhopa"\'\';{}!@#$%^&*()`±',
         ]);
+        simple_debug($insert1);
 
         $update1 = $db->getFullQueryForUpdate(
             'alias.table',

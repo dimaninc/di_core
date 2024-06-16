@@ -826,7 +826,7 @@ abstract class diDB
                     $k = substr($k, 1);
                 }
 
-                return static::QUOTE_FIELD . $k . static::QUOTE_FIELD;
+                return $this->quoteField($k);
             }, array_keys($ar))
         );
     }
@@ -883,7 +883,7 @@ abstract class diDB
             } elseif ($v === null) {
                 $outAr[] = 'NULL';
             } else {
-                $outAr[] = $this->getJsonFieldQuery($v) ?? $this->escapeValue($v);
+                $outAr[] = $this->getJsonFieldQuery($v) ?? $this->quoteValue($v);
             }
         }
 
@@ -903,7 +903,7 @@ abstract class diDB
                 return $this->escapeField(substr($f, 1)) . '=' . $v;
             }
 
-            $value = $this->getJsonFieldQuery($v) ?? $this->escapeValue($v);
+            $value = $this->getJsonFieldQuery($v) ?? $this->quoteValue($v);
 
             return $this->escapeField($f) . '=' . $value;
         };
@@ -980,7 +980,8 @@ abstract class diDB
         $time1 = utime();
 
         $this->lockTable($t);
-        if (!$this->__rq($this->getFullQueryForInsert($table, $fieldValues))) {
+        $q = $this->getFullQueryForInsert($table, $fieldValues);
+        if (!$this->__rq($q)) {
             $this->_log("Unable to insert into table $t");
             $this->unlockTable($t);
 
@@ -991,7 +992,7 @@ abstract class diDB
 
         $time2 = utime();
         $this->execution_time += $time2 - $time1;
-        $this->time_log('insert', $time2 - $time1);
+        $this->time_log('insert', $time2 - $time1, $q);
 
         return $this->lastInsertId;
     }
@@ -1125,7 +1126,7 @@ abstract class diDB
 
         $time2 = utime();
         $this->execution_time += $time2 - $time1;
-        $this->time_log('insert', $time2 - $time1);
+        $this->time_log('insert_or_update', $time2 - $time1, $query);
 
         return $id;
     }
@@ -1289,11 +1290,7 @@ abstract class diDB
         $x = strpos($string, '.');
 
         if ($x !== false) {
-            $alias =
-                static::QUOTE_FIELD .
-                substr($string, 0, $x) .
-                static::QUOTE_FIELD .
-                '.';
+            $alias = $this->quoteField(substr($string, 0, $x)) . '.';
             $field = substr($string, $x + 1);
         } else {
             $alias = '';
@@ -1304,10 +1301,12 @@ abstract class diDB
             return $alias . $field;
         }
 
-        return $alias .
-            static::QUOTE_FIELD .
-            $this->escape_string($field) .
-            static::QUOTE_FIELD;
+        return $alias . $this->quoteField($this->escape_string($field));
+    }
+
+    public function quoteField($string)
+    {
+        return static::QUOTE_FIELD . $string . static::QUOTE_FIELD;
     }
 
     /**
@@ -1319,9 +1318,12 @@ abstract class diDB
      */
     public function escapeValue($string)
     {
-        return static::QUOTE_VALUE .
-            $this->escape_string($string) .
-            static::QUOTE_VALUE;
+        return $this->quoteValue($this->escape_string($string));
+    }
+
+    public function quoteValue($string)
+    {
+        return static::QUOTE_VALUE . $string . static::QUOTE_VALUE;
     }
 
     public function escapeFieldValue($field, $value, $operator = '=')
