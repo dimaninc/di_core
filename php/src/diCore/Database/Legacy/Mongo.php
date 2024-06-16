@@ -301,8 +301,8 @@ class Mongo extends \diDB
             ],
             ArrayHelper::filterByKey($options['filters'], [
                 'filter',
-                'skip',
-                'limit',
+                // 'skip',
+                // 'limit',
             ])
         );
 
