@@ -3101,7 +3101,7 @@ ENGINE = InnoDB;";
 
             case FieldType::json:
                 if (is_string($value)) {
-                    $value = json_decode($value);
+                    $value = json_decode($value, true);
                 }
                 break;
         }
