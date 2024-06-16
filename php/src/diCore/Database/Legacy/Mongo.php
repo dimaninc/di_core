@@ -461,4 +461,26 @@ class Mongo extends \diDB
             'count' => $result[0]['countValue'] ?? null,
         ];
     }
+
+    public static function fromBson($item)
+    {
+        if (
+            $item instanceof \MongoDB\Model\BSONDocument ||
+            $item instanceof \MongoDB\Model\BSONArray
+        ) {
+            $array = [];
+
+            foreach ($item as $key => $value) {
+                $array[$key] = self::fromBson($value);
+            }
+
+            return $array;
+        }
+
+        if (is_array($item)) {
+            return array_map([self::class, 'fromBson'], $item);
+        }
+
+        return $item;
+    }
 }

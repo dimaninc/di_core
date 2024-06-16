@@ -1407,7 +1407,7 @@ class diModel implements \ArrayAccess
         return static::tuneFieldValueByTypeBeforeDb($field, $this->get($field));
     }
 
-    public function getJsonData($field, $key = null)
+    public function getJsonData(string $field, array|string $path = null)
     {
         if (!isset($this->jsonData[$field])) {
             $v = $this->get($field);
@@ -1417,25 +1417,50 @@ class diModel implements \ArrayAccess
                     ? json_decode($v, true, 512, JSON_THROW_ON_ERROR)
                     : $v)
                 : null;
+
+            if ($this->jsonData[$field] instanceof \MongoDB\Model\BSONDocument) {
+                $this->jsonData[$field] = \diCore\Database\Legacy\Mongo::fromBson(
+                    $this->jsonData[$field]
+                );
+            }
         }
 
-        return $key === null
+        return $path === null
             ? $this->jsonData[$field]
-            : $this->jsonData[$field][$key] ?? null;
+            : ArrayHelper::get($this->jsonData[$field], $path);
     }
 
-    public function hasJsonData($field, $key)
+    public function hasJsonData(string $field, array|string $path)
     {
-        return !!$this->getJsonData($field, $key);
+        return !!$this->getJsonData($field, $path);
     }
 
-    public function updateJsonData($field, array|string $key, $value = null)
+    public function setJsonData(string $field, array|string $path, $value = null)
+    {
+        $this->jsonData[$field] =
+            ArrayHelper::isAssoc($path) && $value === null
+                ? $path
+                : ArrayHelper::set([], $path, $value);
+        $finalValue =
+            static::getFieldType($field) === FieldType::json
+                ? $this->jsonData[$field]
+                : json_encode($this->jsonData[$field]);
+
+        $this->set($field, $finalValue);
+
+        return $this;
+    }
+
+    public function updateJsonData(string $field, array|string $path, $value = null)
     {
         $type = static::getFieldType($field);
         $fieldData = $this->getJsonData($field);
-        $newData = is_array($key) && $value === null ? $key : [$key => $value];
+        $newData =
+            ArrayHelper::isAssoc($path) && $value === null
+                ? $path
+                : ArrayHelper::set([], $path, $value);
 
-        $this->jsonData[$field] = extend($fieldData, $newData);
+        $this->jsonData[$field] = ArrayHelper::mergeRecursive($fieldData, $newData);
         $finalValue =
             $type === FieldType::json
                 ? $this->jsonData[$field]
@@ -1446,7 +1471,7 @@ class diModel implements \ArrayAccess
         return $this;
     }
 
-    public function killJsonData($field, $key = null)
+    public function killJsonData(string $field, string $key = null)
     {
         if ($key === null) {
             unset($this->jsonData[$field]);

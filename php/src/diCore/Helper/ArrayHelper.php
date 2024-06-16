@@ -25,6 +25,10 @@ class ArrayHelper
     // simple, non-associative, with sequential indexes
     public static function isSequential($ar)
     {
+        if (!is_array($ar)) {
+            return false;
+        }
+
         if ($ar === []) {
             return true;
         }
@@ -263,6 +267,39 @@ class ArrayHelper
 
     /**
      * @param array $array
+     * @param array|string $path if set assoc array and value === null, then
+     * @param $value
+     * @return array
+     */
+    public static function set(array $array, array|string $path, $value = null)
+    {
+        if (self::isAssoc($path) && $value === null) {
+            return self::mergeRecursive($array, $path);
+            //return array_merge_recursive($array, $path);
+        }
+
+        if (!is_array($path)) {
+            $path = [$path];
+        }
+
+        $result = $array;
+        $current = &$result;
+
+        foreach ($path as $key) {
+            if (!isset($current[$key])) {
+                $current[$key] = [];
+            }
+
+            $current = &$current[$key];
+        }
+
+        $current = $value;
+
+        return $result;
+    }
+
+    /**
+     * @param array $array
      * @return array
      */
     public static function shuffleAssoc($array)
@@ -340,8 +377,12 @@ class ArrayHelper
         return $out;
     }
 
-    public static function isAssoc(array $ar)
+    public static function isAssoc($ar)
     {
+        if (!is_array($ar)) {
+            return false;
+        }
+
         if ([] === $ar) {
             return false;
         }
@@ -411,5 +452,24 @@ class ArrayHelper
         }
 
         return null;
+    }
+
+    public static function mergeRecursive(array &$array1, array &$array2)
+    {
+        $merged = $array1;
+
+        foreach ($array2 as $key => &$value) {
+            if (
+                is_array($value) &&
+                isset($merged[$key]) &&
+                is_array($merged[$key])
+            ) {
+                $merged[$key] = self::mergeRecursive($merged[$key], $value);
+            } else {
+                $merged[$key] = $value;
+            }
+        }
+
+        return $merged;
     }
 }
