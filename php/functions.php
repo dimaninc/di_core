@@ -288,6 +288,9 @@ function str_out($str, $replaceAmp = false)
     return StringHelper::out($str, $replaceAmp);
 }
 
+/*
+ * Is integer (true for both string and number values)
+ */
 function isInteger($value)
 {
     if (is_null($value)) {
@@ -303,6 +306,18 @@ function isInteger($value)
     }
 
     return ctype_digit($value);
+}
+
+/*
+ * Is number (string number will return false)
+ */
+function isNumber($input)
+{
+    if (is_numeric($input) && !is_string($input)) {
+        return true;
+    }
+
+    return false;
 }
 
 function is_not_null($value)

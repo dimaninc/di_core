@@ -100,12 +100,7 @@ class AdminPagesManager
 
     protected $ipFieldNames = ['ip'];
 
-    protected $staticFieldNames = [
-        'date',
-        'created_at',
-        'edited_at',
-        'updated_at',
-    ];
+    protected $staticFieldNames = ['date', 'created_at', 'edited_at', 'updated_at'];
 
     protected $untouchableFieldNames = [
         'date',
@@ -213,8 +208,7 @@ EOF;
 
         $fields = $this->getFieldsOfTable($connName, $table);
         $className =
-            $className ?:
-            self::getClassNameByTable($table, $this->getNamespace());
+            $className ?: self::getClassNameByTable($table, $this->getNamespace());
         $caption = $caption ?: \diTypes::getTitle(\diTypes::getId($table));
         $fieldsInfo = $this->getFieldsInfo($fields);
         $columns = $this->getColumns($connName, $table);
@@ -319,8 +313,7 @@ EOF;
             return "\n                'title' => '',";
         };
 
-        $suffix =
-            $this->getFlagsStr($field) . $this->getExtraPropertiesStr($field);
+        $suffix = $this->getFlagsStr($field) . $this->getExtraPropertiesStr($field);
 
         return <<<EOF
             '{$field}' => [
@@ -398,11 +391,7 @@ EOF;
         }
 
         // '/\(.+$/'
-        $type = preg_replace(
-            ModelsManager::typeTuneRegex,
-            '',
-            mb_strtolower($type)
-        );
+        $type = preg_replace(ModelsManager::typeTuneRegex, '', mb_strtolower($type));
 
         switch ($type) {
             case 'timestamp':
@@ -430,6 +419,9 @@ EOF;
             case 'bigint':
                 return 'int';
 
+            case 'json':
+                return 'json';
+
             default:
                 return 'string';
         }
@@ -449,18 +441,12 @@ EOF;
     protected function getColumns($connName, $table)
     {
         $modelName = ModelsManager::extractClass(
-            ModelsManager::getModelClassNameByTable(
-                $table,
-                $this->getNamespace()
-            )
+            ModelsManager::getModelClassNameByTable($table, $this->getNamespace())
         );
 
         $ar = [];
 
-        foreach (
-            $this->getFieldsOfTable($connName, $table)
-            as $field => $type
-        ) {
+        foreach ($this->getFieldsOfTable($connName, $table) as $field => $type) {
             $fieldAlt = underscore($field);
 
             if (

@@ -1812,7 +1812,11 @@ EOF;
 
     public static function valueFormatterJson($value, $field)
     {
-        return json_encode(json_decode($value), JSON_PRETTY_PRINT);
+        if (is_string($value)) {
+            $value = json_decode($value);
+        }
+
+        return json_encode($value, JSON_PRETTY_PRINT);
     }
 
     protected function getRow($field, $title, $value, $options = [])

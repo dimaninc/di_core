@@ -1286,15 +1286,13 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
     public function getFullQuery()
     {
         if (static::getConnection()::isMongo()) {
-            $ar = [
+            return [
                 'filter' => $this->getQueryWhere(),
                 //todo: 'group' => $this->getQueryGroupBy(),
                 'sort' => $this->getQueryOrderBy(),
                 'skip' => $this->getStartFrom(),
                 'limit' => $this->getPageSize(),
             ];
-
-            return $ar;
         }
 
         $ar = array_filter([
@@ -1464,8 +1462,31 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         return $this->realCount;
     }
 
-    public function aggregateSum($field)
+    public function aggregateSum(string|array $field)
     {
+        if (self::getConnection()::isMongo()) {
+            if (is_array($field)) {
+                $field = join('.', $field);
+            }
+
+            /** @var Mongo $link */
+            $res = $this->getDb()->getAggregateValues([
+                'collectionName' => $this->getTable(),
+                'field' => $field,
+                'filter' => $this->getFullQuery()['filter'],
+                'sum' => true,
+            ]);
+
+            return $res['sum'] ?? null;
+        }
+
+        if (is_array($field)) {
+            $f1 = current($field);
+            $field = join('.', array_slice($field, 1));
+
+            $field = "CAST(JSON_EXTRACT($f1, '$.$field') AS UNSIGNED)";
+        }
+
         $ar = $this->getDb()->ar(
             $this->getQueryTable(),
             $this->getQueryWhere(),
@@ -1477,6 +1498,22 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
 
     public function aggregateCount($field = '*')
     {
+        if (self::getConnection()::isMongo()) {
+            /** @var Mongo $link */
+            $res = $this->getDb()->getAggregateValues([
+                'collectionName' => $this->getTable(),
+                'filter' => $this->getFullQuery()['filter'],
+                'count' => true,
+            ]);
+
+            return $res['count'] ?? null;
+        }
+
+        if (is_array($field)) {
+            // WHERE JSON_CONTAINS_PATH(properties, 'one', '$.count');
+            throw new \diDatabaseException('todo: aggregateCount for JSON');
+        }
+
         $ar = $this->getDb()->ar(
             $this->getQueryTable(),
             $this->getQueryWhere(),

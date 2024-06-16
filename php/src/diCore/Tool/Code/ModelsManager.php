@@ -136,26 +136,23 @@ EOF;
 
         if ($modelNeeded) {
             $typeName = self::getModelNameByTable($table);
-            $modelClassName =
-                $modelClassName ?:
-                self::getModelClassNameByTable($table, $this->getNamespace());
+            $modelClassName = self::getModelClassNameByTable(
+                $modelClassName ?: $table,
+                $this->getNamespace()
+            );
             $annotations = $this->getModelMethodsAnnotations(
                 $fields,
                 $connName,
                 $modelClassName
             );
 
-            $slugFieldName = $this->doesTableHaveField(
-                $connName,
-                $table,
-                'slug'
-            )
+            $slugFieldName = $this->doesTableHaveField($connName, $table, 'slug')
                 ? "\n    const slug_field_name = self::SLUG_FIELD_NAME;"
                 : '';
 
             $replaces = [
-                '{{ date }}' => date('d.m.Y'),
-                '{{ time }}' => date('H:i'),
+                '{{ date }}' => \diDateTime::simpleDateFormat(),
+                '{{ time }}' => \diDateTime::simpleTimeFormat(),
                 '{{ className }}' => self::extractClass($modelClassName),
                 '{{ table }}' => $table,
                 '{{ getMethods }}' => join("\n", $annotations['get']),
@@ -177,9 +174,7 @@ EOF;
                 '{{ slugFieldName }}' => $slugFieldName,
                 '{{ modelType }}' => $typeName,
                 '{{ namespace }}' => $this->getNamespace()
-                    ? "\nnamespace " .
-                        self::extractNamespace($modelClassName) .
-                        ';'
+                    ? "\nnamespace " . self::extractNamespace($modelClassName) . ';'
                     : '',
                 '{{ connectionLine }}' => $connectionNameStr,
                 '{{ fieldTypes }}' => $this->getFieldTypesArrayStr($fields),
@@ -200,10 +195,7 @@ EOF;
                 throw new \Exception("Model $fn already exists");
             }
 
-            FileSystemHelper::createTree(
-                Config::getSourcesFolder(),
-                dirname($fn)
-            );
+            FileSystemHelper::createTree(Config::getSourcesFolder(), dirname($fn));
 
             file_put_contents(Config::getSourcesFolder() . $fn, $contents);
             chmod(Config::getSourcesFolder() . $fn, self::fileChmod);
@@ -211,12 +203,10 @@ EOF;
 
         if ($collectionNeeded) {
             $typeName = self::getModelNameByTable($table);
-            $collectionClassName =
-                $collectionClassName ?:
-                self::getCollectionClassNameByTable(
-                    $table,
-                    $this->getNamespace()
-                );
+            $collectionClassName = self::getCollectionClassNameByTable(
+                $collectionClassName ?: $table,
+                $this->getNamespace()
+            );
             $collectionAnnotations = $this->getCollectionMethodsAnnotations(
                 $fields,
                 $connName,
@@ -224,8 +214,8 @@ EOF;
             );
 
             $replaces = [
-                '{{ date }}' => date('d.m.Y'),
-                '{{ time }}' => date('H:i'),
+                '{{ date }}' => \diDateTime::simpleDateFormat(),
+                '{{ time }}' => \diDateTime::simpleTimeFormat(),
                 '{{ className }}' => self::extractClass($collectionClassName),
                 '{{ table }}' => $table,
                 '{{ modelType }}' => $typeName,
@@ -245,10 +235,7 @@ EOF;
                     'filterByLocalized'
                 ]
                     ? "\n *\n" .
-                        join(
-                            "\n",
-                            $collectionAnnotations['filterByLocalized']
-                        ) .
+                        join("\n", $collectionAnnotations['filterByLocalized']) .
                         "\n *\n" .
                         join("\n", $collectionAnnotations['orderByLocalized']) .
                         "\n *\n" .
@@ -277,10 +264,7 @@ EOF;
                 throw new \Exception("Collection $fn already exists");
             }
 
-            FileSystemHelper::createTree(
-                Config::getSourcesFolder(),
-                dirname($fn)
-            );
+            FileSystemHelper::createTree(Config::getSourcesFolder(), dirname($fn));
 
             file_put_contents(Config::getSourcesFolder() . $fn, $contents);
             chmod(Config::getSourcesFolder() . $fn, self::fileChmod);
@@ -315,18 +299,14 @@ EOF;
             : camelize('di_' . self::getModelNameByTable($table) . '_model');
     }
 
-    public static function getCollectionClassNameByTable(
-        $table,
-        $namespace = ''
-    ) {
+    public static function getCollectionClassNameByTable($table, $namespace = '')
+    {
         return $namespace
             ? $namespace .
                     '\\Entity\\' .
                     camelize(self::getModelNameByTable($table), false) .
                     '\\Collection'
-            : camelize(
-                'di_' . self::getModelNameByTable($table) . '_collection'
-            );
+            : camelize('di_' . self::getModelNameByTable($table) . '_collection');
     }
 
     protected function getFieldTypesArrayStr($fields)
@@ -367,11 +347,8 @@ EOF;
         return in_array($field, static::$skippedInCollectionAnnotationFields);
     }
 
-    protected function getModelMethodsAnnotations(
-        $fields,
-        $connName,
-        $className
-    ) {
+    protected function getModelMethodsAnnotations($fields, $connName, $className)
+    {
         $ar = [
             'get' => [],
             'has' => [],
@@ -439,10 +416,7 @@ EOF;
                 ' * @method ' .
                 $typeStr .
                 $typeTab .
-                $this->getDb($connName)->getFieldMethodForModel(
-                    $field,
-                    'localized'
-                );
+                $this->getDb($connName)->getFieldMethodForModel($field, 'localized');
         }
 
         return $ar;
@@ -478,24 +452,15 @@ EOF;
 
             $ar['filterBy'][] =
                 " * @method $className " .
-                $this->getDb($connName)->getFieldMethodForModel(
-                    $field,
-                    'filterBy'
-                ) .
+                $this->getDb($connName)->getFieldMethodForModel($field, 'filterBy') .
                 "(\$value, \$operator = null)";
             $ar['orderBy'][] =
                 " * @method $className " .
-                $this->getDb($connName)->getFieldMethodForModel(
-                    $field,
-                    'orderBy'
-                ) .
+                $this->getDb($connName)->getFieldMethodForModel($field, 'orderBy') .
                 "(\$direction = null)";
             $ar['select'][] =
                 " * @method $className " .
-                $this->getDb($connName)->getFieldMethodForModel(
-                    $field,
-                    'select'
-                );
+                $this->getDb($connName)->getFieldMethodForModel($field, 'select');
 
             // localization tests
             $fieldComponents = explode('_', $field);
@@ -560,6 +525,10 @@ EOF;
             case 'boolean':
                 return 'bool';
 
+            case 'array':
+            case 'json':
+                return 'array';
+
             default:
                 return 'string';
         }
@@ -595,6 +564,10 @@ EOF;
             case 'bool':
             case 'boolean':
                 return 'bool';
+
+            case 'array':
+            case 'json':
+                return 'json';
 
             default:
                 return 'string';
@@ -742,10 +715,7 @@ EOF;
         return $this->usedCollectionTraits
             ? join(
                     "\n",
-                    array_map(
-                        [self::class, 'mapUsed'],
-                        $this->usedCollectionTraits
-                    )
+                    array_map([self::class, 'mapUsed'], $this->usedCollectionTraits)
                 ) . "\n\n    "
             : '';
     }

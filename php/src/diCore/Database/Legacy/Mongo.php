@@ -369,6 +369,8 @@ class Mongo extends \diDB
             $ar[] = $col->getName();
         }
 
+        sort($ar);
+
         return $ar;
     }
 
@@ -405,5 +407,58 @@ class Mongo extends \diDB
         }
 
         return $method . ucfirst($field);
+    }
+
+    public function getAggregateValues(array $options)
+    {
+        $options = extend(
+            [
+                'collectionName' => '',
+                'field' => '',
+                'filter' => [],
+                'count' => false,
+                'min' => false,
+                'max' => false,
+                'sum' => false,
+            ],
+            $options
+        );
+
+        $collection = $this->getCollectionResource($options['collectionName']);
+        $pipeline = array_merge(
+            $options['filter'] ? [['$match' => $options['filter']]] : [],
+            [
+                [
+                    '$group' => extend(
+                        [
+                            '_id' => 'getAggregateValues',
+                        ],
+                        $options['count'] ? ['countValue' => ['$sum' => 1]] : [],
+                        $options['min']
+                            ? ['minValue' => ['$min' => '$' . $options['field']]]
+                            : [],
+                        $options['max']
+                            ? ['maxValue' => ['$max' => '$' . $options['field']]]
+                            : [],
+                        $options['sum']
+                            ? ['sumValue' => ['$sum' => '$' . $options['field']]]
+                            : []
+                    ),
+                ],
+            ]
+        );
+
+        $result = $collection->aggregate($pipeline)->toArray();
+
+        if (empty($result)) {
+            return null;
+        }
+
+        return [
+            'min' => $result[0]['minValue'] ?? null,
+            'max' => $result[0]['maxValue'] ?? null,
+            'sum' => $result[0]['sumValue'] ?? null,
+            'count' => $result[0]['countValue'] ?? null,
+        ];
     }
 }

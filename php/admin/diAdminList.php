@@ -281,6 +281,8 @@ class diAdminList
         foreach ($this->getCurRec() as $k => $v) {
             if (is_scalar($v) || !$v) {
                 $this->replaceAr['%' . $k . '%'] = $v ?: '';
+            } else {
+                $this->replaceAr['%' . $k . '%'] = json_encode($v);
             }
         }
 

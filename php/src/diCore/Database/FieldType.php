@@ -18,6 +18,7 @@ class FieldType extends SimpleContainer
     const bool = 2;
     const bool_int = 3; // boolean in model, integer in database
     const ip_string = 4;
+    const json = 5;
 
     const int = 11;
     const float = 12;
@@ -37,6 +38,7 @@ class FieldType extends SimpleContainer
         self::bool => 'bool',
         self::bool_int => 'bool_int',
         self::ip_string => 'ip_string',
+        self::json => 'json',
         self::int => 'int',
         self::float => 'float',
         self::double => 'double',
@@ -54,6 +56,7 @@ class FieldType extends SimpleContainer
         self::bool => 'Bool',
         self::bool_int => 'Bool (integer)',
         self::ip_string => 'String IP-address',
+        self::json => 'JSON',
         self::int => 'Int',
         self::float => 'Float',
         self::double => 'Double',

@@ -65,6 +65,12 @@ class diModel implements \ArrayAccess
     /** @var array */
     protected $relatedData = [];
 
+    /**
+     * @var array
+     * Decoded data of JSON fields [field => data]
+     */
+    protected $jsonData = [];
+
     /** @var int|string|null */
     protected $id;
     /** @var int|string|null */
@@ -1399,6 +1405,68 @@ class diModel implements \ArrayAccess
         }
 
         return static::tuneFieldValueByTypeBeforeDb($field, $this->get($field));
+    }
+
+    public function getJsonData($field, $key = null)
+    {
+        if (!isset($this->jsonData[$field])) {
+            $v = $this->get($field);
+
+            $this->jsonData[$field] = $this->has($field)
+                ? (is_string($v)
+                    ? json_decode($v, true, 512, JSON_THROW_ON_ERROR)
+                    : $v)
+                : null;
+        }
+
+        return $key === null
+            ? $this->jsonData[$field]
+            : $this->jsonData[$field][$key] ?? null;
+    }
+
+    public function hasJsonData($field, $key)
+    {
+        return !!$this->getJsonData($field, $key);
+    }
+
+    public function updateJsonData($field, array|string $key, $value = null)
+    {
+        $type = static::getFieldType($field);
+        $fieldData = $this->getJsonData($field);
+        $newData = is_array($key) && $value === null ? $key : [$key => $value];
+
+        $this->jsonData[$field] = extend($fieldData, $newData);
+        $finalValue =
+            $type === FieldType::json
+                ? $this->jsonData[$field]
+                : json_encode($this->jsonData[$field]);
+
+        $this->set($field, $finalValue);
+
+        return $this;
+    }
+
+    public function killJsonData($field, $key = null)
+    {
+        if ($key === null) {
+            unset($this->jsonData[$field]);
+            return $this->kill($field);
+        }
+
+        $type = static::getFieldType($field);
+
+        $fieldData = $this->getJsonData($field);
+        unset($fieldData[$key]);
+
+        $this->jsonData[$field] = $fieldData;
+        $finalValue =
+            $type === FieldType::json
+                ? $this->jsonData[$field]
+                : json_encode($this->jsonData[$field]);
+
+        $this->set($field, $finalValue);
+
+        return $this;
     }
 
     public function localized($field, $lang = null)
@@ -2930,7 +2998,9 @@ ENGINE = InnoDB;";
     {
         if ($value instanceof ObjectID) {
             return (string) $value;
-        } elseif ($value instanceof UTCDatetime) {
+        }
+
+        if ($value instanceof UTCDatetime) {
             return \diDateTime::sqlFormat($value->toDateTime()->getTimestamp());
         }
 
@@ -3001,6 +3071,12 @@ ENGINE = InnoDB;";
             case FieldType::ip_int:
                 if (!isInteger($value)) {
                     $value = ip2bin($value);
+                }
+                break;
+
+            case FieldType::json:
+                if (is_string($value)) {
+                    $value = json_decode($value);
                 }
                 break;
         }

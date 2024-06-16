@@ -998,29 +998,46 @@ class diAdminFilters
 
                     case 'date_range':
                     case 'date_str_range':
-                        $r1 =
-                            $a['default_value'] === null
-                                ? self::getDb()->r(
+                        $dMin = null;
+
+                        if ($a['default_value'] === null) {
+                            if (
+                                self::getDb() instanceof
+                                \diCore\Database\Legacy\Mongo
+                            ) {
+                                $res = self::getDb()->getAggregateValues([
+                                    'collectionName' => $this->table,
+                                    'field' => $a['field'],
+                                    'min' => true,
+                                ]);
+
+                                $dMin = $res['min'];
+                            } else {
+                                $r1 = self::getDb()->r(
                                     self::getDb()->escapeTable($this->table),
                                     '',
                                     "MIN({$a['field']}) as d1_min"
-                                )
-                                : null; //,MAX($a['field']) as d1_max
+                                );
 
-                        if ($a['type'] == 'date_str_range' && $r1) {
-                            $r1->d1_min = \diDateTime::timestamp($r1->d1_min);
+                                $dMin = $r1->d1_min;
+                            }
+                        }
+
+                        if ($a['type'] == 'date_str_range' && $dMin) {
+                            $dMin = \diDateTime::timestamp($dMin);
                         }
 
                         $t1 =
                             $a['default_value'] !== null
                                 ? $a['default_value']
-                                : ($r1 && $r1->d1_min
-                                    ? $r1->d1_min
-                                    : 'Y-m-01'); // 1st day of current month
+                                : ($dMin ?:
+                                'Y-m-01');
+                        // 1st day of current month
                         $t2 =
                             $a['default_value2'] !== null
                                 ? $a['default_value2']
-                                : '+1 day'; // tomorrow
+                                : '+1 day';
+                        // tomorrow
 
                         $dt1 = \diDateTime::simpleDateFormat($t1);
                         $dt2 = \diDateTime::simpleDateFormat($t2);
@@ -1203,11 +1220,26 @@ class diAdminFilters
                 case 'date_str_range':
                     $sel = [];
 
-                    $r1 = self::getDb()->r(
-                        self::getDb()->escapeTable($this->table),
-                        '',
-                        "MIN($field) as d1_min,MAX($field) as d1_max"
-                    );
+                    if (self::getDb() instanceof \diCore\Database\Legacy\Mongo) {
+                        $res = self::getDb()->getAggregateValues([
+                            'collectionName' => $this->table,
+                            'field' => $field,
+                            'min' => true,
+                            'max' => true,
+                        ]);
+
+                        $dMin = $res['min'];
+                        $dMax = $res['max'];
+                    } else {
+                        $r1 = self::getDb()->r(
+                            self::getDb()->escapeTable($this->table),
+                            '',
+                            "MIN($field) as d1_min,MAX($field) as d1_max"
+                        );
+
+                        $dMin = $r1->d1_min;
+                        $dMax = $r1->d1_max;
+                    }
 
                     foreach (self::$dateRangeAr as $_f) {
                         $_ff = 'd' . $_f[0];
@@ -1216,7 +1248,7 @@ class diAdminFilters
                             $tpl = 'Y';
                         }
                         $_idx = $_f[1];
-                        $default = $_idx == 1 ? $r1->d1_min : $r1->d1_max;
+                        $default = $_idx == 1 ? $dMin : $dMax;
 
                         $sel[$_f] = new \diSelect(
                             "admin_filter[{$field}][{$_idx}][{$_ff}]",
@@ -1237,9 +1269,9 @@ class diAdminFilters
                         $sel['m2']->addItem(lead0($i));
                     }
 
-                    if ($ar['type'] == 'date_str_range' && $r1) {
-                        $r1->d1_min = strtotime($r1->d1_min ?: '');
-                        $r1->d1_max = strtotime($r1->d1_max ?: '');
+                    if ($ar['type'] == 'date_str_range' && ($dMin || $dMax)) {
+                        $dMin = strtotime($dMin ?: '');
+                        $dMax = strtotime($dMax ?: '');
                     }
 
                     $y1 = min(
@@ -1247,14 +1279,14 @@ class diAdminFilters
                         !empty($ar['value'][0])
                             ? \diDateTime::format('Y', $ar['value'][0])
                             : 50000,
-                        $r1 ? \diDateTime::format('Y', $r1->d1_min) : 50000
+                        $dMin ? \diDateTime::format('Y', $dMin) : 50000
                     );
                     $y2 = max(
                         \diDateTime::format('Y') + 3,
                         !empty($ar['value'][1])
                             ? \diDateTime::format('Y', $ar['value'][1])
                             : 0,
-                        $r1 ? \diDateTime::format('Y', $r1->d1_max) : 0
+                        $dMax ? \diDateTime::format('Y', $dMax) : 0
                     );
 
                     for ($i = $y1; $i <= $y2; $i++) {

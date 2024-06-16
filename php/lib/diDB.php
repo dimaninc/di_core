@@ -56,6 +56,7 @@
 */
 
 use diCore\Data\Config;
+use diCore\Helper\ArrayHelper;
 use diCore\Helper\FileSystemHelper;
 use diCore\Helper\StringHelper;
 
@@ -816,19 +817,63 @@ abstract class diDB
         return $r;
     }
 
-    public static function fields_to_string_for_insert($ar)
+    public function fieldsToStringForInsert($ar)
     {
         return join(
             ',',
             array_map(function ($k) {
-                return static::QUOTE_FIELD .
-                    ($k && $k[0] == '*' ? substr($k, 1) : $k) .
-                    static::QUOTE_FIELD;
+                if ($k && $k[0] == '*') {
+                    $k = substr($k, 1);
+                }
+
+                return static::QUOTE_FIELD . $k . static::QUOTE_FIELD;
             }, array_keys($ar))
         );
     }
 
-    public static function values_to_string_for_insert($ar)
+    protected function getJsonFieldQuery($value)
+    {
+        $quote = function ($s) {
+            if (is_null($s)) {
+                return 'NULL';
+            }
+
+            if (isNumber($s)) {
+                return $s;
+            }
+
+            if (is_bool($s)) {
+                return $s;
+            }
+
+            if (is_array($s)) {
+                return $this->getJsonFieldQuery($s);
+            }
+
+            return $this->escapeValue($s);
+        };
+
+        if (is_array($value) && ArrayHelper::isAssoc($value)) {
+            $ar = call_user_func_array(
+                'array_merge',
+                array_map(null, array_keys($value), array_values($value))
+            );
+
+            return 'JSON_OBJECT(' .
+                join(',', array_map(fn($i) => $quote($i), $ar)) .
+                ')';
+        }
+
+        if (is_array($value) && ArrayHelper::isSequential($value)) {
+            return 'JSON_ARRAY(' .
+                join(',', array_map(fn($i) => $quote($i), $value)) .
+                ')';
+        }
+
+        return null;
+    }
+
+    public function valuesToStringForInsert($ar)
     {
         $outAr = [];
 
@@ -838,51 +883,46 @@ abstract class diDB
             } elseif ($v === null) {
                 $outAr[] = 'NULL';
             } else {
-                $outAr[] = static::QUOTE_VALUE . $v . static::QUOTE_VALUE;
+                $outAr[] = $this->getJsonFieldQuery($v) ?? $this->escapeValue($v);
             }
         }
 
         return join(',', $outAr);
     }
 
-    public static function fields_and_values_to_string_for_update($ar)
+    public function fieldsAndValuesToStringForUpdate($ar)
     {
-        $q_ar = [];
+        $values = [];
 
-        foreach ($ar as $f => $v) {
+        $getter = function ($f, $v) {
             if ($v === null) {
-                $q_ar[] = static::QUOTE_FIELD . $f . static::QUOTE_FIELD . ' = NULL';
-
-                continue;
+                return $this->escapeField($f) . '=NULL';
             }
 
-            $q_ar[] =
-                $f[0] === '*'
-                    ? static::QUOTE_FIELD .
-                        substr($f, 1) .
-                        static::QUOTE_FIELD .
-                        ' = ' .
-                        $v
-                    : static::QUOTE_FIELD .
-                        $f .
-                        static::QUOTE_FIELD .
-                        ' = ' .
-                        static::QUOTE_VALUE .
-                        $v .
-                        static::QUOTE_VALUE;
+            if ($f[0] === '*') {
+                return $this->escapeField(substr($f, 1)) . '=' . $v;
+            }
+
+            $value = $this->getJsonFieldQuery($v) ?? $this->escapeValue($v);
+
+            return $this->escapeField($f) . '=' . $value;
+        };
+
+        foreach ($ar as $f => $v) {
+            $values[] = $getter($f, $v);
         }
 
-        return join(',', $q_ar);
+        return join(',', $values);
     }
 
     /*
      * enter $keyField if it differs from 'id'
      */
-    protected static function insertUpdateQuery($fields_values, $keyField = null)
+    protected function insertUpdateQuery($fields_values, $keyField = null)
     {
         $q1 = static::insertUpdateQueryBeginning($keyField);
         $q3 =
-            static::fields_and_values_to_string_for_update($fields_values) .
+            $this->fieldsAndValuesToStringForUpdate($fields_values) .
             static::insertUpdateQueryEnding();
 
         return " {$q1} {$q3}";
@@ -912,28 +952,36 @@ abstract class diDB
         return $this;
     }
 
-    public function insert($table, $fieldValues = [])
+    public function getFullQueryForInsert($table, $fieldValues = [])
     {
         $t = $this->get_table_name($table);
 
-        // preparing for multi-insert
+        // for multi-insert
         if (!is_array(current($fieldValues))) {
             $fieldValues = [$fieldValues];
         }
 
-        $q1 = '(' . self::fields_to_string_for_insert(current($fieldValues)) . ')';
+        $q1 = '(' . $this->fieldsToStringForInsert(current($fieldValues)) . ')';
         $q2_ar = [];
 
         foreach ($fieldValues as $ar) {
-            $q2_ar[] = '(' . self::values_to_string_for_insert($ar) . ')';
+            $q2_ar[] = '(' . $this->valuesToStringForInsert($ar) . ')';
         }
+
+        $q2 = join(',', $q2_ar);
+
+        return "INSERT INTO {$t}{$q1} VALUES{$q2};";
+    }
+
+    public function insert($table, $fieldValues = [])
+    {
+        $t = $this->get_table_name($table);
 
         $time1 = utime();
 
         $this->lockTable($t);
-        if (!$this->__rq("INSERT INTO {$t}{$q1} VALUES" . join(',', $q2_ar) . ';')) {
-            $this->_log("Unable to insert into table $t", true);
-
+        if (!$this->__rq($this->getFullQueryForInsert($table, $fieldValues))) {
+            $this->_log("Unable to insert into table $t");
             $this->unlockTable($t);
 
             return false;
@@ -958,13 +1006,10 @@ abstract class diDB
         return $this->limitOffset(1);
     }
 
-    public function update($table, $fieldValues = [], $q_ending = '')
+    public function getFullQueryForUpdate($table, $fieldValues = [], $q_ending = '')
     {
-        $time1 = utime();
-
         $t = $this->get_table_name($table);
 
-        // fast construction to get record by id
         if (is_numeric($q_ending)) {
             $q_ending =
                 'WHERE ' .
@@ -972,23 +1017,28 @@ abstract class diDB
                 $this->getUpdateSingleLimit();
         } elseif (is_array($q_ending)) {
             $q_ending = 'WHERE ' . $this->escapeField('id') . $this->in($q_ending);
-        } elseif (!$q_ending && $q_ending !== '') {
-            $this->_log("Warning, empty Q_ENDING in update ($table)", false);
-
-            return false;
-            //$q_ending = "WHERE 1=0";
+        } elseif (!$q_ending) {
+            //  && $q_ending !== ''
+            throw new \diDatabaseException(
+                "Warning, empty Q_ENDING in update ($table)"
+            );
         }
-        //
 
-        $q =
-            "UPDATE $t SET " .
-            self::fields_and_values_to_string_for_update($fieldValues) .
-            " $q_ending";
+        $q = $this->fieldsAndValuesToStringForUpdate($fieldValues);
+
+        return "UPDATE $t SET {$q} $q_ending";
+    }
+
+    public function update($table, $fieldValues = [], $q_ending = '')
+    {
+        $t = $this->get_table_name($table);
+        $q = $this->getFullQueryForUpdate($table, $fieldValues, $q_ending);
+
+        $time1 = utime();
 
         $this->lockTable($t);
         if (!$this->__rq($q)) {
-            $this->_log("Unable to update: $q", true);
-
+            $this->_log("Unable to update table $t");
             $this->unlockTable($t);
 
             return false;
@@ -1055,9 +1105,9 @@ abstract class diDB
     {
         $t = $this->get_table_name($table);
 
-        $q1 = '(' . static::fields_to_string_for_insert($fields_values) . ')';
-        $q2 = '(' . static::values_to_string_for_insert($fields_values) . ')';
-        $q3 = static::insertUpdateQuery($fields_values, $keyField);
+        $q1 = '(' . $this->fieldsToStringForInsert($fields_values) . ')';
+        $q2 = '(' . $this->valuesToStringForInsert($fields_values) . ')';
+        $q3 = $this->insertUpdateQuery($fields_values, $keyField);
 
         $time1 = utime();
 
@@ -1250,12 +1300,14 @@ abstract class diDB
             $field = $string;
         }
 
-        return $field !== '*'
-            ? $alias .
-                    static::QUOTE_FIELD .
-                    $this->escape_string($field) .
-                    static::QUOTE_FIELD
-            : $alias . $field;
+        if ($field === '*') {
+            return $alias . $field;
+        }
+
+        return $alias .
+            static::QUOTE_FIELD .
+            $this->escape_string($field) .
+            static::QUOTE_FIELD;
     }
 
     /**
@@ -1274,11 +1326,7 @@ abstract class diDB
 
     public function escapeFieldValue($field, $value, $operator = '=')
     {
-        return $this->escapeField($field) .
-            ' ' .
-            $operator .
-            ' ' .
-            $this->escapeValue($value);
+        return "{$this->escapeField($field)} $operator {$this->escapeValue($value)}";
     }
 
     public function limitOffset($limit = null, $offset = null)
