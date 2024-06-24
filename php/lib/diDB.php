@@ -833,6 +833,20 @@ abstract class diDB
 
     protected function getJsonFieldQuery($value)
     {
+        if (is_array($value) || is_object($value)) {
+            $value = ArrayHelper::fromObject($value);
+
+            return $this->getJsonForStructure($value);
+        }
+
+        return $this->quoteValue($value);
+    }
+
+    /*
+     * Default for Mysql
+     */
+    protected function getJsonForStructure($value)
+    {
         $quote = function ($s) {
             if (is_null($s)) {
                 return 'NULL';
@@ -847,7 +861,7 @@ abstract class diDB
             }
 
             if (is_array($s)) {
-                return $this->getJsonFieldQuery($s);
+                return $this->getJsonForStructure($s);
             }
 
             return $this->escapeValue($s);
@@ -883,7 +897,7 @@ abstract class diDB
             } elseif ($v === null) {
                 $outAr[] = 'NULL';
             } else {
-                $outAr[] = $this->getJsonFieldQuery($v) ?? $this->quoteValue($v);
+                $outAr[] = $this->getJsonFieldQuery($v); //  ?? $this->quoteValue($v)
             }
         }
 
@@ -903,7 +917,7 @@ abstract class diDB
                 return $this->escapeField(substr($f, 1)) . '=' . $v;
             }
 
-            $value = $this->getJsonFieldQuery($v) ?? $this->quoteValue($v);
+            $value = $this->getJsonFieldQuery($v); //  ?? $this->quoteValue($v)
 
             return $this->escapeField($f) . '=' . $value;
         };

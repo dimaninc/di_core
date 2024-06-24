@@ -169,4 +169,11 @@ ORDER BY ordinal_position ASC");
     {
         return $this;
     }
+
+    protected function getJsonForStructure($value)
+    {
+        $s = json_encode($value);
+
+        return "'$s'::jsonb";
+    }
 }
