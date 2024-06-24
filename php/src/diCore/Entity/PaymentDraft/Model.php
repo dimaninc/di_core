@@ -60,11 +60,7 @@ class Model extends \diModel
     protected $table = 'payment_drafts';
 
     const TARGET_IS_NECESSARY = true;
-    protected $customDateFields = [
-        'date_reserved',
-        'date_payed',
-        'date_uploaded',
-    ];
+    protected $customDateFields = ['date_reserved', 'date_payed', 'date_uploaded'];
 
     public static function isUserIdNeeded()
     {
@@ -109,14 +105,10 @@ class Model extends \diModel
                 return \diCore\Payment\Yandex\Vendor::title($this->getVendor());
 
             case System::robokassa:
-                return \diCore\Payment\Robokassa\Vendor::title(
-                    $this->getVendor()
-                );
+                return \diCore\Payment\Robokassa\Vendor::title($this->getVendor());
 
             case System::tinkoff:
-                return \diCore\Payment\Tinkoff\Vendor::title(
-                    $this->getVendor()
-                );
+                return \diCore\Payment\Tinkoff\Vendor::title($this->getVendor());
 
             case System::mixplat:
                 return \diCore\Payment\Mixplat\MobileVendors::title(
@@ -133,9 +125,7 @@ class Model extends \diModel
                 return 'CryptoCloud';
 
             default:
-                return $this->hasVendor()
-                    ? 'Vendor #' . $this->getVendor()
-                    : '';
+                return $this->hasVendor() ? 'Vendor #' . $this->getVendor() : '';
         }
     }
 
@@ -144,10 +134,7 @@ class Model extends \diModel
         $ar = [$this->getPaySystemStr()];
 
         if (
-            !in_array($this->getPaySystem(), [
-                System::paypal,
-                System::crypto_cloud,
-            ])
+            !in_array($this->getPaySystem(), [System::paypal, System::crypto_cloud])
         ) {
             $ar[] = $this->getVendorStr() ?: 'Unknown?';
         }
@@ -200,5 +187,10 @@ class Model extends \diModel
                 $location->getCountryName(),
             ])
         );
+    }
+
+    public function getDataForNewReceipt()
+    {
+        return $this->getWithoutId();
     }
 }
