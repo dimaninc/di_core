@@ -698,19 +698,26 @@ code, samp, kbd
     text-align left
     color #555
 
-pre
+pre {
     padding 0.1em 0.5em 0.3em 0.7em
     border-left 11px solid #ccc
     margin 0 0 0 0.3em
     overflow auto
-    // width 93%
-    code
+    max-width 100%
+
+    code {
         line-height 1.6em
         font-size 13px
-    &.code
+    }
+
+    &.code {
         background #ffe
-        code
+
+        code {
             color black
+        }
+    }
+}
 
 .dyn-cell
     float left

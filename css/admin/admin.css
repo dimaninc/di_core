@@ -959,8 +959,6 @@ u:hover {
 }
 body[data-skin="entrine"] .close {
   background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBzdHlsZT0iZmlsbDogI0RGNUE1QTsiIGQ9Ik0xMiAyYzUuNTE0IDAgMTAgNC40ODYgMTAgMTBzLTQuNDg2IDEwLTEwIDEwLTEwLTQuNDg2LTEwLTEwIDQuNDg2LTEwIDEwLTEwem0wLTJjLTYuNjI3IDAtMTIgNS4zNzMtMTIgMTJzNS4zNzMgMTIgMTIgMTIgMTItNS4zNzMgMTItMTItNS4zNzMtMTItMTItMTJ6bTYgMTYuNTM4bC00LjU5Mi00LjU0OCA0LjU0Ni00LjU4Ny0xLjQxNi0xLjQwMy00LjU0NSA0LjU4OS00LjU4OC00LjU0My0xLjQwNSAxLjQwNSA0LjU5MyA0LjU1Mi00LjU0NyA0LjU5MiAxLjQwNSAxLjQwNSA0LjU1NS00LjU5NiA0LjU5MSA0LjU1IDEuNDAzLTEuNDE2eiIvPjwvc3ZnPg==");
-  -webkit-background-size: 18px 18px;
-  -moz-background-size: 18px 18px;
   background-size: 18px 18px;
   background-position: center center;
   width: 36px;
@@ -1012,8 +1010,6 @@ body[data-skin="entrine"] .simple-button:before {
   -ms-transform: translateY(-50%);
   transform: translateY(-50%);
   background: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0Ij48cGF0aCBmaWxsPSJ3aGl0ZSIgZD0iTTEyIDJjNS41MTQgMCAxMCA0LjQ4NiAxMCAxMHMtNC40ODYgMTAtMTAgMTAtMTAtNC40ODYtMTAtMTAgNC40ODYtMTAgMTAtMTB6bTAtMmMtNi42MjcgMC0xMiA1LjM3My0xMiAxMnM1LjM3MyAxMiAxMiAxMiAxMi01LjM3MyAxMi0xMi01LjM3My0xMi0xMi0xMnptNiAxM2gtNXY1aC0ydi01aC01di0yaDV2LTVoMnY1aDV2MnoiLz48L3N2Zz4=");
-  -webkit-background-size: cover;
-  -moz-background-size: cover;
   background-size: cover;
 }
 body[data-skin="entrine"] .simple-button:hover {
@@ -1215,8 +1211,6 @@ body[data-skin="entrine"] .admin-layout > .logo > b {
   left: 12px;
   margin-top: -12px;
   background: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxOCIgaGVpZ2h0PSIxMiIgdmlld0JveD0iMCAwIDE4IDEyIj4KICAgIDxnIGZpbGw9IiNGRkZGRkYiIGZpbGwtcnVsZT0iZXZlbm9kZCI+CiAgICAgICAgPHBhdGggZD0iTTE3LjEwNSA1SC44OTVDLjQwNSA1IDAgNS4zNiAwIDUuODA2YzAgLjQzOC40MDUuNzk2Ljg5NS43OTZoMTYuMjFjLjQ5IDAgLjg5NS0uMzU4Ljg5NS0uNzk2QzE4IDUuMzYgMTcuNTk1IDUgMTcuMTA1IDV6TS44OTUgMS42MDJoMTYuMjFjLjQ5IDAgLjg5NS0uMzYuODk1LS44MDZDMTggLjM2IDE3LjU5NSAwIDE3LjEwNSAwSC44OTVDLjQwNSAwIDAgLjM2IDAgLjc5NmMwIC40NDYuNDA1LjgwNi44OTUuODA2ek0xNy4xMDUgMTBILjg5NWMtLjQ5IDAtLjg5NS4zNTgtLjg5NS43OTYgMCAuNDQ2LjQwNS44MDYuODk1LjgwNmgxNi4yMWMuNDkgMCAuODk1LS4zNi44OTUtLjgwNiAwLS40MzgtLjQwNS0uNzk2LS44OTUtLjc5NnoiLz4KICAgIDwvZz4KPC9zdmc+Cg==") center center no-repeat;
-  -webkit-background-size: contain;
-  -moz-background-size: contain;
   background-size: contain;
 }
 @media screen and (max-width: 768px) {
@@ -1608,6 +1602,7 @@ pre {
   border-left: 11px solid #ccc;
   margin: 0 0 0 0.3em;
   overflow: auto;
+  max-width: 100%;
 }
 pre code {
   line-height: 1.6em;
@@ -1688,8 +1683,6 @@ del {
   right: 0;
   bottom: 0;
   background: url("/_core/i/ani/loading.gif") center center no-repeat;
-  -webkit-background-size: 20% 20%;
-  -moz-background-size: 20% 20%;
   background-size: 20% 20%;
 }
 .menu-panel {
@@ -2016,6 +2009,8 @@ body[data-skin="entrine"] .diadminform-row[data-purpose="notes"] .title {
   -webkit-align-items: center;
   align-items: center;
   gap: 6px 0;
+  max-width: 100%;
+  min-width: 0;
 }
 .diadminform-row[data-type="pic"] .value,
 .diadminform-row[data-type="file"] .value {
@@ -2349,6 +2344,10 @@ body[data-skin="entrine"] .diadminform-row .value .static {
   padding: 8px;
   border-radius: 8px;
   background: #ddd;
+  white-space: pre;
+  line-height: 1;
+  max-width: 100%;
+  overflow-x: auto;
 }
 body[data-skin="entrine"] .diadminform-row .value .static-text {
   margin: -18px 0 0 0;
@@ -3275,8 +3274,6 @@ body[data-skin="entrine"] .button-with-icon:before {
   -o-transform: translateY(-50%);
   -ms-transform: translateY(-50%);
   transform: translateY(-50%);
-  -webkit-background-size: cover;
-  -moz-background-size: cover;
   background-size: cover;
 }
 @media screen and (max-width: 768px) {
@@ -3401,8 +3398,6 @@ table.dinicetable tr td.href a {
   width: 18px;
   height: 18px;
   background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTk5OTk5IiBzdHJva2Utd2lkdGg9IjIiCiAgICAgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBjbGFzcz0iZmVhdGhlciBmZWF0aGVyLWV4dGVybmFsLWxpbmsiIHg9IjBweCIgeT0iMHB4Ij4KICAgIDxwYXRoIGQ9Ik0xOCAxM3Y2YTIgMiAwIDAgMS0yIDJINWEyIDIgMCAwIDEtMi0yVjhhMiAyIDAgMCAxIDItMmg2Ii8+CiAgICA8cG9seWxpbmUgcG9pbnRzPSIxNSAzIDIxIDMgMjEgOSIvPgogICAgPGxpbmUgeDE9IjEwIiB5MT0iMTQiIHgyPSIyMSIgeTI9IjMiLz4KPC9zdmc+");
-  -webkit-background-size: cover;
-  -moz-background-size: cover;
   background-size: cover;
 }
 body[data-skin="entrine"] table.dinicetable tr td.href a {
@@ -3449,8 +3444,6 @@ table.dinicetable tr td.color-tn > div {
   height: 50px;
   border-radius: 50%;
   background: transparent center center no-repeat;
-  -webkit-background-size: cover;
-  -moz-background-size: cover;
   background-size: cover;
 }
 table.dinicetable tr td.color-tn > div:not(:first-child) {
@@ -3520,8 +3513,6 @@ body[data-skin="entrine"] .nicetable-button {
   width: 48px;
   height: 48px;
   background: none;
-  -webkit-background-size: 18px 18px !important;
-  -moz-background-size: 18px 18px !important;
   background-size: 18px 18px !important;
   background-repeat: no-repeat !important;
   background-position: center center !important;
@@ -4357,8 +4348,6 @@ ul.filters-of-cat > li {
   background-image: -o-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
   background-image: -ms-linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
   background-image: linear-gradient(45deg, rgba(255,255,255,0.15) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.15) 75%, transparent 75%, transparent);
-  -webkit-background-size: 40px 40px;
-  -moz-background-size: 40px 40px;
   background-size: 40px 40px;
 }
 .progress-striped .progress-bar-success {

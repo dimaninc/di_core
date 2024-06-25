@@ -73,6 +73,8 @@
         flex-wrap wrap
         align-items center
         gap 6px 0
+        max-width 100%
+        min-width 0
         ^[0][data-type="pic"] ^[1..-1]
         ^[0][data-type="file"] ^[1..-1] {
             display block
@@ -273,14 +275,20 @@
             {$entrineSkin} &
                 padding-top 18px
                 //min-height 40px
-        .static-text
+        .static-text {
             padding 8px
             border-radius 8px
             background #ddd
-            {$entrineSkin} &
+            white-space pre
+            line-height 1
+            max-width 100%
+            overflow-x auto
+            {$entrineSkin} & {
                 margin -18px 0 0 0
                 padding 10px
                 border-radius 0
+            }
+        }
         .wysiwyg
         .textarea
             margin 5px 0
