@@ -13,6 +13,7 @@ Helper =
         sprite: 'images/sprite-src/**/*.png'
         js: '**/**/*.js'
         coffee: '**/**/*.coffee'
+        ts: '**/**/*.ts'
         react: '**/**/*.jsx'
     folders:
         css: 'css/'
@@ -336,6 +337,37 @@ Helper =
             .pipe sourcemaps.write '.'
             .pipe gulp.dest @fullPath opts.jsBuildFolder
             .on 'end', -> done()
+        @
+
+    assignTypescriptTaskToGulp: (gulp, opts = {}) ->
+        ts = @req 'gulp-typescript' unless ts
+        sourcemaps = @req 'gulp-sourcemaps' unless sourcemaps
+        concat = @req 'gulp-concat' unless concat
+        merge = @req 'merge2' unless merge
+        tsProject = ts.createProject('tsconfig.json')
+        #opts = @extend {folder: 'ts', mask: '*.ts', buildFolder: null, taskName: 'typescript'}, opts
+        opts = @extend {buildFolder: null, destFilename: 'app.js', taskName: 'typescript'}, opts
+        ###
+        gulp.task opts.taskName, (done) =>
+            gulp.src @fullPath opts.folder + opts.mask
+            .pipe sourcemaps.init()
+            .pipe tsProject()
+            .pipe sourcemaps.write '.'
+            .pipe gulp.dest @fullPath opts.buildFolder
+            .on 'end', -> done()
+        ###
+        gulp.task opts.taskName, =>
+            tsResult = tsProject.src()
+            .pipe(sourcemaps.init())
+            .pipe(tsProject());
+
+            merge([
+                tsResult.dts.pipe(gulp.dest(@fullPath(opts.buildFolder + '/definitions'))),
+                tsResult.js
+                .pipe(concat(opts.destFilename))
+                .pipe(sourcemaps.write('.'))
+                .pipe(gulp.dest(@fullPath opts.buildFolder))
+            ])
         @
 
     assignJavascriptConcatTaskToGulp: (gulp, opts = {}) ->
