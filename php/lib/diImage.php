@@ -239,17 +239,27 @@ class diImage
         }
 
         if ($this->post_function) {
-            $image = $this->post_function($image);
+            $pf = $this->post_function;
+            $image = $pf($image);
         }
 
-        $q = $dst_type == 3 ? round($this->jpeg_quality / 10) : $this->jpeg_quality;
-        if ($q >= 10 && $dst_type == 3) {
-            $q = 9;
+        switch ($dst_type) {
+            case self::TYPE_GIF:
+                return imagegif($image, $dst_fn);
+
+            case self::TYPE_JPEG:
+                return imagejpeg($image, $dst_fn, $this->jpeg_quality);
+
+            case self::TYPE_PNG:
+                $q = round($this->jpeg_quality / 10);
+                if ($q >= 10) {
+                    $q = 9;
+                }
+
+                return imagejpeg($image, $dst_fn, $q);
         }
 
-        $store_func = $this->storeFunction($dst_type);
-
-        return $store_func ? $store_func($image, $dst_fn, $q) : false;
+        return false;
     }
 
     function set_bg_color($html_color)
@@ -260,7 +270,7 @@ class diImage
     function read_info()
     {
         switch ($this->t) {
-            case 1:
+            case self::TYPE_GIF:
                 // calculating transparent color
                 $this->info = new GifInfo($this->orig_fn);
                 if (
@@ -276,7 +286,6 @@ class diImage
                 } else {
                     $this->transparent = imagecolorat($this->image, 0, 0);
                 }
-                //
 
                 break;
         }
@@ -871,6 +880,9 @@ class diImage
         return $func_suffix ? "imagecreatefrom{$func_suffix}" : '';
     }
 
+    /**
+     * @deprecated Do not use it, imagegif has 2 arguments, it throws error if used with $quality
+     */
     public static function storeFunction($img_type)
     {
         $func_suffix =
