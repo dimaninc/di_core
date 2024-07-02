@@ -79,6 +79,9 @@ Helper = {
   req: function(module) {
     return require(this.workFolder + '/node_modules/' + module);
   },
+  reqLocal: function(module) {
+    return require(this.workFolder + '/' + module);
+  },
   fullPath: function(path) {
     var k, neg, v;
     if (typeof path === 'object') {
@@ -536,21 +539,29 @@ Helper = {
       destFilename: 'app.js',
       taskName: 'typescript'
     }, opts);
-
-    /*
-    gulp.task opts.taskName, (done) =>
-        gulp.src @fullPath opts.folder + opts.mask
-        .pipe sourcemaps.init()
-        .pipe tsProject()
-        .pipe sourcemaps.write '.'
-        .pipe gulp.dest @fullPath opts.buildFolder
-        .on 'end', -> done()
-     */
     gulp.task(opts.taskName, (function(_this) {
       return function() {
         var tsResult;
         tsResult = tsProject.src().pipe(sourcemaps.init()).pipe(tsProject());
         return merge([tsResult.dts.pipe(gulp.dest(_this.fullPath(opts.buildFolder + '/definitions'))), tsResult.js.pipe(concat(opts.destFilename)).pipe(sourcemaps.write('.')).pipe(gulp.dest(_this.fullPath(opts.buildFolder)))]);
+      };
+    })(this));
+    return this;
+  },
+  assignWebpackTypescriptTaskToGulp: function(gulp, opts) {
+    var webpack;
+    if (opts == null) {
+      opts = {};
+    }
+    webpack = this.req('webpack-stream');
+    opts = this.extend({
+      entryFiles: [],
+      buildFolder: null,
+      taskName: 'typescript'
+    }, opts);
+    gulp.task(opts.taskName, (function(_this) {
+      return function() {
+        return gulp.src(opts.entryFiles).pipe(webpack(_this.reqLocal('webpack.config.js'))).pipe(gulp.dest(_this.fullPath(opts.buildFolder)));
       };
     })(this));
     return this;

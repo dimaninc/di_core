@@ -44,6 +44,8 @@ Helper =
 
     req: (module) -> require @workFolder + '/node_modules/' + module
 
+    reqLocal: (module) -> require @workFolder + '/' + module
+
     fullPath: (path) ->
         if typeof path is 'object'
             for k, v of path
@@ -345,17 +347,7 @@ Helper =
         concat = @req 'gulp-concat' unless concat
         merge = @req 'merge2' unless merge
         tsProject = ts.createProject('tsconfig.json')
-        #opts = @extend {folder: 'ts', mask: '*.ts', buildFolder: null, taskName: 'typescript'}, opts
         opts = @extend {buildFolder: null, destFilename: 'app.js', taskName: 'typescript'}, opts
-        ###
-        gulp.task opts.taskName, (done) =>
-            gulp.src @fullPath opts.folder + opts.mask
-            .pipe sourcemaps.init()
-            .pipe tsProject()
-            .pipe sourcemaps.write '.'
-            .pipe gulp.dest @fullPath opts.buildFolder
-            .on 'end', -> done()
-        ###
         gulp.task opts.taskName, =>
             tsResult = tsProject.src()
             .pipe(sourcemaps.init())
@@ -368,6 +360,15 @@ Helper =
                 .pipe(sourcemaps.write('.'))
                 .pipe(gulp.dest(@fullPath opts.buildFolder))
             ])
+        @
+
+    assignWebpackTypescriptTaskToGulp: (gulp, opts = {}) ->
+        webpack = @req 'webpack-stream'
+        opts = @extend {entryFiles: [], buildFolder: null, taskName: 'typescript'}, opts
+        gulp.task opts.taskName, =>
+            gulp.src(opts.entryFiles)
+            .pipe(webpack(@reqLocal('webpack.config.js')))
+            .pipe(gulp.dest(@fullPath(opts.buildFolder)))
         @
 
     assignJavascriptConcatTaskToGulp: (gulp, opts = {}) ->
