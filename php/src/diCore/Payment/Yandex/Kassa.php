@@ -403,21 +403,6 @@ class Kassa
             $opts
         );
 
-        array_walk($opts, function (&$item) {
-            $item = is_scalar($item) ? \diDB::_out($item) : $item;
-        });
-
-        if (!empty($opts['additionalParams'])) {
-            array_walk($opts['additionalParams'], function (&$item) {
-                $item = is_scalar($item) ? \diDB::_out($item) : $item;
-            });
-        }
-
-        $button = !$opts['autoSubmit']
-            ? "<button type=\"submit\">{$opts['buttonCaption']}</button>"
-            : '';
-        $redirectScript = $opts['autoSubmit'] ? Payment::getAutoSubmitScript() : '';
-
         $params = extend(
             [
                 'shopId' => $shopId,
@@ -432,28 +417,7 @@ class Kassa
             $opts['additionalParams']
         );
 
-        $paramsStr = join(
-            "\n\t",
-            array_filter(
-                array_map(
-                    function ($name, $value) {
-                        return $value !== null
-                            ? Payment::getHiddenInput($name, $value)
-                            : '';
-                    },
-                    array_keys($params),
-                    $params
-                )
-            )
-        );
-
-        $form = <<<EOF
-<form action="{$action}" method="post" target="_top">
-	{$paramsStr}
-	{$button}
-</form>
-$redirectScript
-EOF;
+        $form = Payment::formHtml($action, $params, $opts);
 
         static::log("Yandex.Kassa form:\n" . $form);
 

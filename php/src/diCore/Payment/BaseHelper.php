@@ -33,10 +33,7 @@ abstract class BaseHelper
      */
     public static function create($options = [])
     {
-        $className = \diLib::getChildClass(
-            static::class,
-            static::childClassName
-        );
+        $className = \diLib::getChildClass(static::class, static::childClassName);
 
         $helper = new $className($options);
 

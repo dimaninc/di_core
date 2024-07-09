@@ -316,7 +316,48 @@ class Payment
 
     public static function getHiddenInput($name, $value)
     {
-        return "<input name=\"{$name}\" value=\"{$value}\" type=\"hidden\">";
+        $value = \diDB::_out($value);
+
+        return "<input name=\"$name\" value=\"$value\" type=\"hidden\">";
+    }
+
+    public static function inputsOfParams(array $params)
+    {
+        $inputs = array_filter(
+            array_map(
+                function ($name, $value) {
+                    return $value !== null
+                        ? static::getHiddenInput($name, $value)
+                        : '';
+                },
+                array_keys($params),
+                $params
+            )
+        );
+
+        return join("\n", $inputs);
+    }
+
+    public static function formHtml(
+        string $action,
+        array $params = [],
+        array $opts = []
+    ) {
+        $button = empty($opts['autoSubmit'])
+            ? '<button type="submit">' .
+                \diDB::_out($opts['buttonCaption']) .
+                '</button>'
+            : '';
+        $redirectScript = $opts['autoSubmit'] ? Payment::getAutoSubmitScript() : '';
+        $paramsStr = Payment::inputsOfParams($params);
+
+        return <<<EOF
+<form action="$action" method="post" target="_top">
+	{$paramsStr}
+	{$button}
+</form>
+$redirectScript
+EOF;
     }
 
     public static function prepareRedirectOptions(array $options = [])

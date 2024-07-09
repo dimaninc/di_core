@@ -9,6 +9,7 @@
 namespace diCore\Payment\Paymaster;
 
 use diCore\Entity\PaymentDraft\Model as Draft;
+use diCore\Payment\Payment;
 use diCore\Tool\Logger;
 use diCore\Traits\BasicCreate;
 
@@ -56,17 +57,6 @@ class Helper
 
         $paymentVendor = Vendor::code($draft->getVendor());
 
-        array_walk($opts, function (&$item) {
-            $item = \diDB::_out($item);
-        });
-
-        $button = !$opts['autoSubmit']
-            ? "<button type=\"submit\">{$opts['buttonCaption']}</button>"
-            : '';
-        $redirectScript = $opts['autoSubmit']
-            ? \diCore\Payment\Payment::getAutoSubmitScript()
-            : '';
-
         $params = extend(
             [
                 'LMI_MERCHANT_ID' => static::MERCHANT_ID,
@@ -87,31 +77,7 @@ class Helper
             $params['Receipt'] = static::getReceipt($draft);
         }
 
-        $paramsStr = join(
-            "\n\t",
-            array_filter(
-                array_map(
-                    function ($name, $value) {
-                        return $value !== null
-                            ? \diCore\Payment\Payment::getHiddenInput(
-                                $name,
-                                $value
-                            )
-                            : '';
-                    },
-                    array_keys($params),
-                    $params
-                )
-            )
-        );
-
-        $form = <<<EOF
-<form action="{$action}" method="post" target="_top">
-	{$paramsStr}
-	{$button}
-</form>
-$redirectScript
-EOF;
+        $form = Payment::formHtml($action, $params, $opts);
 
         static::log("Robokassa form:\n" . $form);
 

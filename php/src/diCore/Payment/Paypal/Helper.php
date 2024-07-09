@@ -8,6 +8,7 @@
 
 namespace diCore\Payment\Paypal;
 
+use diCore\Entity\PaymentDraft\Model as PaymentDraft;
 use diCore\Payment\Payment;
 use diCore\Tool\Logger;
 
@@ -59,10 +60,8 @@ class Helper
         return static::testMode ? static::testUrl : static::productionUrl;
     }
 
-    public static function getForm(
-        \diCore\Entity\PaymentDraft\Model $draft,
-        $opts = []
-    ) {
+    public static function getForm(PaymentDraft $draft, $opts = [])
+    {
         $action = static::getUrl();
         $business = static::email;
 
@@ -82,17 +81,6 @@ class Helper
             ],
             $opts
         );
-
-        array_walk($opts, function (&$item) {
-            $item = \diDB::_out($item);
-        });
-
-        $button = !$opts['autoSubmit']
-            ? "<button type=\"submit\">{$opts['buttonCaption']}</button>"
-            : '';
-        $redirectScript = $opts['autoSubmit']
-            ? Payment::getAutoSubmitScript()
-            : '';
 
         $params = extend(
             [
@@ -115,28 +103,7 @@ class Helper
             $opts['additionalParams']
         );
 
-        $paramsStr = join(
-            "\n\t",
-            array_filter(
-                array_map(
-                    function ($name, $value) {
-                        return $value !== null
-                            ? \diPayment::getHiddenInput($name, $value)
-                            : '';
-                    },
-                    array_keys($params),
-                    $params
-                )
-            )
-        );
-
-        $form = <<<EOF
-<form action="{$action}" method="post" target="_top">
-	{$paramsStr}
-	{$button}
-</form>
-$redirectScript
-EOF;
+        $form = Payment::formHtml($action, $params, $opts);
 
         static::log("Paypal form:\n" . $form);
 
@@ -160,7 +127,6 @@ EOF;
                 throw new \Exception(
                     'Unsupported payment type: ' . $transactionType
                 );
-                break;
         }
 
         //$customData = json_decode($$this->data['custom'], true);
@@ -216,9 +182,7 @@ EOF;
                 return $transport::requestRequests(static::getUrl(), $query);
 
             default:
-                throw new \Exception(
-                    'Unsupported transport: ' . static::transport
-                );
+                throw new \Exception('Unsupported transport: ' . static::transport);
         }
     }
 
