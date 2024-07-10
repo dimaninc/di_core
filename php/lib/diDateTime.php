@@ -24,8 +24,8 @@ class diDateTime
 
     const FORMAT_SQL_DATE = 'Y-m-d';
     const FORMAT_SQL_TIME = 'H:i:s';
-    const FORMAT_SQL_DATE_TIME =
-        self::FORMAT_SQL_DATE . ' ' . self::FORMAT_SQL_TIME;
+    const FORMAT_SQL_DATE_TIME = self::FORMAT_SQL_DATE . ' ' . self::FORMAT_SQL_TIME;
+    const FORMAT_FILENAME_DATE_TIME = 'Y-m-d-H-i-s';
     const FORMAT_SIMPLE_DATE_TIME = 'd.m.Y H:i';
     const FORMAT_SIMPLE_DATE = 'd.m.Y';
     const FORMAT_SIMPLE_TIME = 'H:i';
@@ -134,6 +134,11 @@ class diDateTime
     public static function sqlTimeFormat($dt = null)
     {
         return self::format(self::FORMAT_SQL_TIME, $dt);
+    }
+
+    public static function filenameFormat($dt = null)
+    {
+        return self::format(self::FORMAT_FILENAME_DATE_TIME, $dt);
     }
 
     public static function isoFormat($dt = null)
@@ -305,14 +310,9 @@ class diDateTime
 
         if (!$seconds) {
             return $vocabulary['just_now'];
-        } elseif (
-            strtotime($vocabulary['long_term_limit'], $timestamp) < $now
-        ) {
+        } elseif (strtotime($vocabulary['long_term_limit'], $timestamp) < $now) {
             // more than a month ago
-            return self::format(
-                $vocabulary['long_term_date_format'],
-                $timestamp
-            );
+            return self::format($vocabulary['long_term_date_format'], $timestamp);
         } else {
             // secs
             if ($seconds < 60) {
@@ -355,11 +355,8 @@ class diDateTime
         }
     }
 
-    public static function engPassedBy(
-        $timestamp,
-        $now = null,
-        $vocabulary = null
-    ) {
+    public static function engPassedBy($timestamp, $now = null, $vocabulary = null)
+    {
         return self::passedBy(
             $timestamp,
             $now,
