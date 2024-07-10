@@ -22,11 +22,15 @@
 
 use diCore\Data\Configuration;
 
+/** @deprecated  */
 define('IMG_TYPE_GIF', 1);
+/** @deprecated  */
 define('IMG_TYPE_JPG', 2);
+/** @deprecated  */
 define('IMG_TYPE_JPEG', 2);
+/** @deprecated  */
 define('IMG_TYPE_PNG', 3);
-
+/** @deprecated  */
 $image_type_to_ext_ar = [
     IMG_TYPE_GIF => 'gif',
     IMG_TYPE_JPEG => 'jpeg',
@@ -61,6 +65,7 @@ class diImage
     const TYPE_PNG = 3;
     const TYPE_SWF = 4;
     const TYPE_SWC = 13;
+    const TYPE_WEBP = 18;
     const TYPE_HTML5 = 98;
     const TYPE_SWIFFY = 99;
 
@@ -70,6 +75,7 @@ class diImage
         self::TYPE_PNG => 'Png',
         self::TYPE_SWF => 'Swf',
         self::TYPE_SWC => 'Swc',
+        self::TYPE_WEBP => 'Webp',
         self::TYPE_HTML5 => 'HTML5',
         self::TYPE_SWIFFY => 'Swiffy',
     ];
@@ -78,12 +84,14 @@ class diImage
         self::TYPE_GIF => 'gif',
         self::TYPE_JPEG => 'jpg',
         self::TYPE_PNG => 'png',
+        self::TYPE_WEBP => 'webp',
     ];
 
     public static $typeNames = [
         self::TYPE_GIF => 'gif',
         self::TYPE_JPEG => 'jpeg',
         self::TYPE_PNG => 'png',
+        self::TYPE_WEBP => 'webp',
     ];
 
     const DI_THUMB_MODE_MASK = 0x000f;
@@ -157,7 +165,12 @@ class diImage
 
     public static function isImageType($type)
     {
-        return in_array($type, [self::TYPE_GIF, self::TYPE_JPEG, self::TYPE_PNG]);
+        return in_array($type, [
+            self::TYPE_GIF,
+            self::TYPE_JPEG,
+            self::TYPE_PNG,
+            self::TYPE_WEBP,
+        ]);
     }
 
     public static function isFlashType($type)
@@ -173,7 +186,7 @@ class diImage
         return $returnCode === 0;
     }
 
-    function open($fn)
+    public function open($fn)
     {
         $this->image = null;
         $this->orig_fn = $fn;
@@ -182,7 +195,7 @@ class diImage
             ? getimagesize($fn)
             : [0, 0, 0];
 
-        if ($this->t < 1 || $this->t > 3) {
+        if (!self::isImageType($this->t)) {
             return $this->image;
         }
 
@@ -257,6 +270,9 @@ class diImage
                 }
 
                 return imagejpeg($image, $dst_fn, $q);
+
+            case self::TYPE_WEBP:
+                return imagewebp($image, $dst_fn, $this->jpeg_quality);
         }
 
         return false;
@@ -267,7 +283,7 @@ class diImage
         $this->bg_color = rgb_color($html_color);
     }
 
-    function read_info()
+    protected function read_info()
     {
         switch ($this->t) {
             case self::TYPE_GIF:
@@ -289,6 +305,8 @@ class diImage
 
                 break;
         }
+
+        return $this;
     }
 
     function close()
@@ -319,7 +337,13 @@ class diImage
         return $this->dst_type;
     }
 
-    function set_dst_type($type)
+    /** @deprecated  */
+    public function set_dst_type($type)
+    {
+        return $this->getDstType();
+    }
+
+    public function setDstType($type)
     {
         if (isset(self::$typeExtensions[$type])) {
             $this->dst_type = $type;
@@ -334,7 +358,7 @@ class diImage
     {
         $ext = strtolower($ext);
 
-        if ($ext == 'jpeg') {
+        if ($ext === 'jpeg') {
             $ext = 'jpg';
         }
 
@@ -383,20 +407,19 @@ class diImage
 
         // preparations
         switch ($this->t) {
-            case 1: //gif
-                $dst_img = imagecreate($w, $h); //($dst_w, $dst_h);
+            case self::TYPE_GIF:
+                $dst_img = imagecreate($w, $h);
                 imagepalettecopy($dst_img, $this->image);
                 break;
 
-            case 3: //png
-                $dst_img = imagecreatetruecolor($w, $h); //($dst_w, $dst_h);
-                //imagealphablending($this->image, true);
+            case self::TYPE_PNG:
+                $dst_img = imagecreatetruecolor($w, $h);
                 imagealphablending($dst_img, false);
                 imagesavealpha($dst_img, true);
                 break;
 
             default:
-                $dst_img = imagecreatetruecolor($w, $h); //($dst_w, $dst_h);
+                $dst_img = imagecreatetruecolor($w, $h);
                 break;
         }
 
@@ -436,7 +459,7 @@ class diImage
 
         // post processes
         switch ($this->t) {
-            case 1: //gif
+            case self::TYPE_GIF:
                 // for transparent gif
                 $pixel_over_black = imagecolorat($dst_img, 0, 0);
 
@@ -874,8 +897,7 @@ class diImage
 
     public static function createFunction($img_type)
     {
-        $func_suffix =
-            $img_type >= 1 && $img_type <= 3 ? self::$typeNames[$img_type] : '';
+        $func_suffix = self::$typeNames[$img_type] ?? '';
 
         return $func_suffix ? "imagecreatefrom{$func_suffix}" : '';
     }
@@ -885,8 +907,7 @@ class diImage
      */
     public static function storeFunction($img_type)
     {
-        $func_suffix =
-            $img_type >= 1 && $img_type <= 3 ? self::$typeNames[$img_type] : '';
+        $func_suffix = self::$typeNames[$img_type] ?? '';
 
         return $func_suffix ? "image{$func_suffix}" : '';
     }

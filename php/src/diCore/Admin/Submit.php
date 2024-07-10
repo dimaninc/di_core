@@ -1748,7 +1748,7 @@ class Submit
             $forceReSave = false;
 
             if (!empty($opts['forceFormat']) && !$isSvg) {
-                $I->set_dst_type($opts['forceFormat']);
+                $I->setDstType($opts['forceFormat']);
 
                 $oldType = \diImage::getTypeByExt($fileExt);
                 if ($oldType != $I->getDstType()) {
