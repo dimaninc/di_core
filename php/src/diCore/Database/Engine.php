@@ -17,6 +17,7 @@ class Engine extends SimpleContainer
     const SQLITE = 2;
     const POSTGRESQL = 3;
     const MONGO = 5;
+    const REDIS = 6;
 
     public static $names = [
         self::MYSQL => 'mysql',
@@ -24,6 +25,7 @@ class Engine extends SimpleContainer
         self::SQLITE => 'sqlite',
         self::POSTGRESQL => 'postgresql',
         self::MONGO => 'mongo',
+        self::REDIS => 'redis',
     ];
 
     public static $titles = [
@@ -32,11 +34,17 @@ class Engine extends SimpleContainer
         self::SQLITE => 'SQLite',
         self::POSTGRESQL => 'PostgreSQL',
         self::MONGO => 'MongoDB',
+        self::REDIS => 'Redis',
     ];
 
     public static function isNoSql($engine)
     {
         return in_array($engine, [self::MONGO]);
+    }
+
+    public static function isKeyValue($engine)
+    {
+        return in_array($engine, [self::REDIS]);
     }
 
     public static function isMySql($engine)
@@ -46,6 +54,7 @@ class Engine extends SimpleContainer
 
     public static function isRelational($engine)
     {
-        return !static::isNoSql($engine);
+        return static::isMySql($engine) ||
+            in_array($engine, [self::SQLITE, self::POSTGRESQL]);
     }
 }

@@ -11,6 +11,7 @@ namespace diCore\Tool;
 class CollectionCache
 {
     const PREFIX_REDIS = 'CollectionCache:';
+    const LIFETIME_REDIS = 3600; // 1 hour
 
     const STORAGE_RAM = 1;
     const STORAGE_REDIS = 2;
@@ -72,7 +73,8 @@ class CollectionCache
                 case self::STORAGE_REDIS:
                     self::$redisClient->set(
                         self::getRedisKey($modelType),
-                        json_encode($col->asDataArray())
+                        json_encode($col->asDataArray()),
+                        ['ex' => self::LIFETIME_REDIS]
                     );
                     break;
 

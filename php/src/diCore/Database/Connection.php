@@ -1,4 +1,10 @@
 <?php
+/**
+ * Created by PhpStorm.
+ * User: dimaninc
+ * Date: 04.05.2017
+ * Time: 22:31
+ */
 
 namespace diCore\Database;
 
@@ -6,12 +12,6 @@ use diCore\Base\CMS;
 use diCore\Data\Environment;
 use diCore\Helper\ArrayHelper;
 
-/**
- * Created by PhpStorm.
- * User: dimaninc
- * Date: 04.05.2017
- * Time: 22:31
- */
 abstract class Connection
 {
     const DEFAULT_NAME = 'default';
@@ -55,6 +55,11 @@ abstract class Connection
         return Engine::isNoSql(static::getEngine());
     }
 
+    public static function isKeyValue()
+    {
+        return Engine::isKeyValue(static::getEngine());
+    }
+
     public static function isRelational()
     {
         return Engine::isRelational(static::getEngine());
@@ -82,7 +87,7 @@ abstract class Connection
 
     /**
      * @param $name
-     * @return Connection
+     * @return Connection|RedisConnection
      */
     public static function get($name = null)
     {
@@ -148,12 +153,12 @@ abstract class Connection
     public static function getChildClassName($engine)
     {
         if (!($name = Engine::name($engine))) {
-            throw new \diRuntimeException('Unknown engine ' . $engine);
+            throw new \diRuntimeException("Unknown engine $engine");
         }
 
         return \diLib::parentNamespace(self::class) .
             '\\' .
-            ucfirst(camelize($name . '_connection'));
+            ucfirst(camelize("{$name}_connection"));
     }
 
     /**
