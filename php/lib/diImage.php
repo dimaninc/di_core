@@ -65,6 +65,7 @@ class diImage
     const TYPE_JPEG = 2;
     const TYPE_PNG = 3;
     const TYPE_SWF = 4;
+    const TYPE_BMP = 6;
     const TYPE_SWC = 13;
     const TYPE_WEBP = 18;
     const TYPE_HTML5 = 98;
@@ -75,6 +76,7 @@ class diImage
         self::TYPE_JPEG => 'Jpeg',
         self::TYPE_PNG => 'Png',
         self::TYPE_SWF => 'Swf',
+        self::TYPE_BMP => 'Bmp',
         self::TYPE_SWC => 'Swc',
         self::TYPE_WEBP => 'Webp',
         self::TYPE_HTML5 => 'HTML5',
@@ -85,6 +87,7 @@ class diImage
         self::TYPE_GIF => 'gif',
         self::TYPE_JPEG => 'jpg',
         self::TYPE_PNG => 'png',
+        self::TYPE_BMP => 'bmp',
         self::TYPE_WEBP => 'webp',
     ];
 
@@ -92,6 +95,7 @@ class diImage
         self::TYPE_GIF => 'gif',
         self::TYPE_JPEG => 'jpeg',
         self::TYPE_PNG => 'png',
+        self::TYPE_BMP => 'bmp',
         self::TYPE_WEBP => 'webp',
     ];
 
@@ -170,6 +174,7 @@ class diImage
             self::TYPE_GIF,
             self::TYPE_JPEG,
             self::TYPE_PNG,
+            self::TYPE_BMP,
             self::TYPE_WEBP,
         ]);
     }
@@ -308,6 +313,9 @@ class diImage
                 }
 
                 return imagejpeg($image, $dst_fn, $q);
+
+            case self::TYPE_BMP:
+                return imagebmp($image, $dst_fn, $this->jpeg_quality < 100);
 
             case self::TYPE_WEBP:
                 return imagewebp($image, $dst_fn, $this->jpeg_quality);
