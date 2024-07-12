@@ -8,10 +8,12 @@
 
 namespace diCore\Tool;
 
+use diCore\Helper\ArrayHelper;
+
 class CollectionCache
 {
     const PREFIX_REDIS = 'CollectionCache:';
-    const LIFETIME_REDIS = 3600; // 1 hour
+    const REDIS_DEFAULT_LIFETIME = 60; // 1 minute
 
     const STORAGE_RAM = 1;
     const STORAGE_REDIS = 2;
@@ -22,6 +24,12 @@ class CollectionCache
      * @var \Redis
      */
     protected static $redisClient = null;
+
+    /**
+     * @var array
+     * lifetime => cache lifetime in minutes
+     */
+    protected static $redisOptions = [];
 
     protected static $data = [];
 
@@ -74,7 +82,13 @@ class CollectionCache
                     self::$redisClient->set(
                         self::getRedisKey($modelType),
                         json_encode($col->asDataArray()),
-                        ['ex' => self::LIFETIME_REDIS]
+                        [
+                            'ex' => ArrayHelper::get(
+                                self::$redisOptions,
+                                'lifetime',
+                                self::REDIS_DEFAULT_LIFETIME
+                            ),
+                        ]
                     );
                     break;
 
@@ -216,9 +230,10 @@ class CollectionCache
         return self::PREFIX_REDIS . 'type=' . $modelType;
     }
 
-    public static function useRedis(\Redis $client)
+    public static function useRedis(\Redis $client, array $options = [])
     {
         self::$storage = self::STORAGE_REDIS;
         self::$redisClient = $client;
+        self::$redisOptions = $options;
     }
 }

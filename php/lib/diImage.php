@@ -20,6 +20,7 @@
 
 */
 
+use diCore\Data\Config;
 use diCore\Data\Configuration;
 
 /** @deprecated  */
@@ -184,6 +185,43 @@ class diImage
         exec($command, $output, $returnCode);
 
         return $returnCode === 0;
+    }
+
+    public static function isHeic(string $file): bool
+    {
+        if (!is_file($file)) {
+            return false;
+        }
+
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $file);
+        finfo_close($finfo);
+
+        return $mime_type === 'image/heic' || $mime_type === 'image/heif';
+    }
+
+    /*
+     * don't forget to set jpeg extension in destination filename
+     */
+    public static function convertHeicToJpeg(string $heicFile, string $jpegFile)
+    {
+        $src = escapeshellarg($heicFile);
+        $dst = escapeshellarg($jpegFile);
+
+        $command = Config::isMac()
+            ? "magick convert $src $dst"
+            : "heif-convert $src $dst";
+        exec($command, $output, $return_var);
+
+        // var_debug($command, $output, $return_var);
+
+        if ($return_var !== 0) {
+            throw new Exception(
+                'Error converting HEIC to JPEG: ' . implode("\n", $output)
+            );
+        }
+
+        return $jpegFile;
     }
 
     public function open($fn)

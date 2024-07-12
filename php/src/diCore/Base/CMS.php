@@ -800,7 +800,7 @@ abstract class CMS
 
     public function getModuleContents($module)
     {
-        /** @var \diModule $class */
+        /** @var \diModule|string $class */
         $class = static::getModuleClassName($module);
         if (!class_exists($class)) {
             $class = static::getModuleClassName('user');

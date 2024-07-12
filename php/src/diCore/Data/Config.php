@@ -431,4 +431,17 @@ class Config
     {
         return Paths::fileSystem();
     }
+
+    public static function isMac()
+    {
+        if (stristr(php_uname(), 'Darwin')) {
+            return true;
+        }
+
+        if (strtoupper(substr(PHP_OS, 0, 6)) === 'DARWIN') {
+            return true;
+        }
+
+        return false;
+    }
 }
