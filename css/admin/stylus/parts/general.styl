@@ -332,6 +332,7 @@ u
                     padding-left 12px
                     padding-right 12px
             @media $mqTablet
+                --caption-margin-bottom 8px
                 padding 5px 12px
                 height auto
                 line-height 20px
@@ -350,11 +351,17 @@ u
                     align-self center
                     &:not(:last-child)
                         margin-right 5px
-            .buttons
-                padding 0 0 0 30px
-                a
+            .buttons {
+                padding-left 30px
+                @media $mqTablet {
+                    padding-left 16px
+                }
+
+                a {
                     position relative
                     display inline
+                }
+            }
     > .logo
         position absolute
         background var(--logo-background)
@@ -585,7 +592,7 @@ iframe
     gap var(--navy-gap)
     justify-content var(--navy-hor-alignment)
     align-items  var(--navy-ver-alignment)
-    margin 0 var(--content-padding-hor)
+    margin var(--content-padding-ver) var(--content-padding-hor)
     a
     b
     span

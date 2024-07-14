@@ -27,6 +27,7 @@
   --menu-item-border-bottom: 1px solid #cfcfcf;
   --menu-top: var(--logo-height);
   --content-padding-hor: 20px;
+  --content-padding-ver: 8px;
   --caption-position: static;
   --caption-font-family: Tahoma, sans-serif;
   --caption-font-size: 12px;

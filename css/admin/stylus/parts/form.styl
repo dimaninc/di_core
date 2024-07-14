@@ -431,31 +431,22 @@
         margin 0
         padding 0
         {$classicSkin} & {
-            gap 5px
-            margin 0 20px 5px 20px
+            gap 4px
+            margin 0 20px 10px 20px
             @media $mqTablet {
                 margin-left 12px
             }
         }
         {$entrineSkin} & {
             gap 20px
-            margin 0 20px
+            margin 0 20px 10px
             @media $mqTablet {
                 margin 0 12px 5px
-                gap 12px
+                gap 8px
             }
         }
         li
-            {$classicSkin} & {
-                margin-bottom 5px
-            }
-            {$entrineSkin} & {
-                margin-bottom 20px
-                @media $mqTablet {
-                    margin-bottom 12px
-                }
-            }
-            > a
+            > a {
                 --font-size inherit
                 --font-weight normal
                 --border-radius 0
@@ -492,7 +483,7 @@
                     --selected-color var(--color-link)
                     --selected-background-color #EDF0F4
                 }
-                {$entrineSkin} &
+                {$entrineSkin} & {
                     --font-weight 600
                     --background-color $entrineColorBgLightGray
                     --color $entrineColorText
@@ -511,12 +502,15 @@
                         padding-top 0
                         padding-bottom 0
                     }
+                }
+
                 &:hover,
                 &.selected {
                     color var(--selected-color)
                     background-color var(--selected-background-color)
                     box-shadow var(--selected-box-shadow)
                 }
+            }
 
 .existing-pic-holder
     display inline-block
@@ -663,7 +657,7 @@ ul.table-edit-log
         border 0
         border-radius 0
         background none
-        padding 0 5px
+        padding 6px
         justify-content center
     }
     {$classicSkin} & {
@@ -671,6 +665,13 @@ ul.table-edit-log
         border 1px solid #CFCFCF
         border-radius 8px
         background-color #edf0f4
+
+        @media $mqTablet {
+            border none
+            border-radius 0
+            background none
+            margin-top 20px
+        }
     }
     {$entrineSkin} & {
         background-color white
