@@ -414,7 +414,7 @@ class ArrayHelper
         }
     }
 
-    public static function recursiveSum($array)
+    public static function recursiveSum(array $array)
     {
         $sum = 0;
 
@@ -429,7 +429,34 @@ class ArrayHelper
         return $sum;
     }
 
-    public static function some($array, $cb)
+    public static function every(array $array, callable $cb)
+    {
+        foreach ($array as $value) {
+            if (!$cb($value)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public static function everyValue(
+        array $array,
+        callable $cb,
+        bool $returnCallbackValue = false
+    ) {
+        foreach ($array as $value) {
+            $res = $cb($value);
+
+            if (!$res) {
+                return $returnCallbackValue ? $res : $value;
+            }
+        }
+
+        return null;
+    }
+
+    public static function some(array $array, callable $cb)
     {
         foreach ($array as $value) {
             if ($cb($value)) {
@@ -440,8 +467,11 @@ class ArrayHelper
         return false;
     }
 
-    public static function someValue($array, $cb, $returnCallbackValue = false)
-    {
+    public static function someValue(
+        array $array,
+        callable $cb,
+        bool $returnCallbackValue = false
+    ) {
         foreach ($array as $value) {
             $res = $cb($value);
 
