@@ -273,7 +273,7 @@ class diImage
 
         if ($this->w * $this->h <= $maxArea) {
             $create_func = static::createFunction($this->t);
-            $this->image = $create_func($fn);
+            $this->image = @$create_func($fn);
 
             $this->read_info();
         }
