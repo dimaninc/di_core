@@ -21,7 +21,7 @@ class Queue
     use BasicCreate;
 
     const INSTANT_SEND = false;
-    const SAFE_SEND_ERRORS_ALLOWED = 5;
+    const SAFE_SEND_ERRORS_ALLOWED = 0;
 
     const STORED_NEWS_ID_TARGET_TYPE = Types::news;
 
@@ -196,7 +196,7 @@ class Queue
         if ($model->hasNewsId()) {
             $col = IncutCollection::create()
                 //->filterByType(Type::binary_attachment)
-                ->filterByTargetType(self::STORED_NEWS_ID_TARGET_TYPE)
+                ->filterByTargetType(static::STORED_NEWS_ID_TARGET_TYPE)
                 ->filterByTargetId($model->getNewsId());
 
             /** @var \diCore\Entity\MailIncut\Model $incut */
@@ -291,7 +291,7 @@ class Queue
     public function sendAllSafe($limit = 0)
     {
         $i = 0;
-        //$errorsAllowed = static::SAFE_SEND_ERRORS_ALLOWED;
+        $errorsAllowed = static::SAFE_SEND_ERRORS_ALLOWED;
 
         do {
             if ($limit && $i >= $limit) {
@@ -304,13 +304,10 @@ class Queue
 
             if ($sent) {
                 $i++;
-            } else {
-                if ($this->isLastErrorFatal()) {
-                    break;
-                    //$errorsAllowed--;
-                }
+            } elseif ($this->isLastErrorFatal()) {
+                $errorsAllowed--;
             }
-        } while ($sent); // || $errorsAllowed)
+        } while ($sent || $errorsAllowed);
 
         return $i;
     }
