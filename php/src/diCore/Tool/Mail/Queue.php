@@ -21,7 +21,6 @@ class Queue
     use BasicCreate;
 
     const INSTANT_SEND = false;
-    const SAFE_SEND_ERRORS_ALLOWED = 0;
 
     const STORED_NEWS_ID_TARGET_TYPE = Types::news;
 
@@ -193,25 +192,27 @@ class Queue
 
     public function getAttachments(Model $model)
     {
-        if ($model->hasNewsId()) {
-            $col = IncutCollection::create()
-                //->filterByType(Type::binary_attachment)
-                ->filterByTargetType(static::STORED_NEWS_ID_TARGET_TYPE)
-                ->filterByTargetId($model->getNewsId());
-
-            /** @var \diCore\Entity\MailIncut\Model $incut */
-            $incut = $col->getFirstItem();
-
-            return $incut->exists() && $incut->hasContent()
-                ? unserialize($incut->getContent())
+        if (!$model->hasNewsId()) {
+            return $model->hasAttachment()
+                ? unserialize($model->getAttachment())
                 : [];
-        } else {
-            return unserialize($model->getAttachment());
         }
+
+        $col = IncutCollection::create()
+            //->filterByType(Type::binary_attachment)
+            ->filterByTargetType(static::STORED_NEWS_ID_TARGET_TYPE)
+            ->filterByTargetId($model->getNewsId());
+
+        /** @var \diCore\Entity\MailIncut\Model $incut */
+        $incut = $col->getFirstItem();
+
+        return $incut->exists() && $incut->hasContent()
+            ? unserialize($incut->getContent())
+            : [];
     }
 
     // by default the first message is being sent
-    public function send($id = null)
+    public function send(int|string $id = null)
     {
         $message = $id
             ? Model::createById($id)
@@ -267,12 +268,14 @@ class Queue
         return $res;
     }
 
-    public function sendAll($limit = 0)
+    public function sendAll($limit = 0): int
     {
-        /** @var Collection $messages */
+        $counter = 0;
         $messages = Collection::createActual();
 
-        $counter = 0;
+        if ($limit) {
+            $messages->setPageSize($limit);
+        }
 
         /** @var Model $message */
         foreach ($messages as $message) {
@@ -285,34 +288,37 @@ class Queue
             }
         }
 
-        return $this;
+        return $counter;
     }
 
-    public function sendAllSafe($limit = 0)
+    public function sendAllSafe($limit = 0): int
     {
-        $i = 0;
-        $errorsAllowed = static::SAFE_SEND_ERRORS_ALLOWED;
+        $counter = 0;
+        $messages = Collection::createActual();
 
-        do {
-            if ($limit && $i >= $limit) {
+        if ($limit) {
+            $messages->setPageSize($limit);
+        }
+
+        /** @var Model $message */
+        foreach ($messages as $message) {
+            $actualMessage = Model::createById($message->getId());
+
+            if ($actualMessage->hasVisible() && !$actualMessage->hasSent()) {
+                if ($this->sendMessage($actualMessage)) {
+                    $counter++;
+                }
+            }
+
+            if ($limit && $counter > $limit) {
                 break;
             }
+        }
 
-            $this->setLastError();
-
-            $sent = $this->send();
-
-            if ($sent) {
-                $i++;
-            } elseif ($this->isLastErrorFatal()) {
-                $errorsAllowed--;
-            }
-        } while ($sent || $errorsAllowed);
-
-        return $i;
+        return $counter;
     }
 
-    protected function sendMessage(Model $message)
+    protected function sendMessage(Model $message): bool
     {
         $message->setVisible(0)->save();
 
@@ -350,31 +356,24 @@ class Queue
         return $this;
     }
 
-    /**
-     * @return int
-     */
-    public function getLastError()
+    public function getLastError(): int
     {
         return $this->lastError;
     }
 
-    /**
-     * @param int $lastError
-     * @return $this
-     */
-    protected function setLastError($lastError = Error::NONE)
+    protected function setLastError(int $lastError = Error::NONE)
     {
         $this->lastError = $lastError;
 
         return $this;
     }
 
-    protected function isLastErrorFatal()
+    protected function isLastErrorFatal(): bool
     {
         return !$this->isLastErrorLite();
     }
 
-    protected function isLastErrorLite()
+    protected function isLastErrorLite(): bool
     {
         return in_array($this->getLastError(), [
             Error::NONE,

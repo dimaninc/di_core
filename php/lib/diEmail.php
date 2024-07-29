@@ -1,4 +1,19 @@
 <?php
+
+use diCore\Data\Http\Charset;
+
+/*
+ * php.ini:
+ * sendmail_path = /usr/local/bin/fake-sendmail -t -i
+ *
+ * Contents of /usr/local/bin/fake-sendmail
+#!/bin/sh
+TIMESTAMP=$(/bin/date +"%Y-%m-%d-%H-%M-%S")
+MS=$(python3 -c 'from time import time; print(str(round(time() * 1000))[-3:])')
+FILENAME=~/temp/sendmail/email_$TIMESTAMP-$MS.txt
+cat > $FILENAME
+*/
+
 class diEmail
 {
     public static $childClassName = 'diCustomEmail';
@@ -47,11 +62,9 @@ class diEmail
     {
         if (is_null($option)) {
             return $this->options;
-        } else {
-            return isset($this->options[$option])
-                ? $this->options[$option]
-                : null;
         }
+
+        return $this->options[$option] ?? null;
     }
 
     public function getOptions()
@@ -137,9 +150,7 @@ class diEmail
         ];
 
         $headerEnc = $mailEncodings[$encoding];
-        $enc = \diCore\Data\Http\Charset::title(
-            \diCore\Data\Http\Charset::id($encoding)
-        );
+        $enc = Charset::title(Charset::id($encoding));
 
         $content_transfer_encoding = $m->getOption('quotedPrintable')
             ? 'quoted-printable'
@@ -212,18 +223,11 @@ class diEmail
 
             if ($attachments) {
                 foreach ($attachments as $attachment) {
-                    if (
-                        empty($attachment['data']) &&
-                        !empty($attachment['path'])
-                    ) {
-                        $attachment['data'] = file_get_contents(
-                            $attachment['path']
-                        );
+                    if (empty($attachment['data']) && !empty($attachment['path'])) {
+                        $attachment['data'] = file_get_contents($attachment['path']);
 
                         if (empty($attachment['filename'])) {
-                            $attachment['filename'] = basename(
-                                $attachment['path']
-                            );
+                            $attachment['filename'] = basename($attachment['path']);
                         }
 
                         if (empty($attachment['content_type'])) {
@@ -263,7 +267,7 @@ class diEmail
             }
         }
 
-        $additionalParams = null;
+        $additionalParams = '';
 
         if ($m->getOption('addReturnPathSendMailParam')) {
             $additionalParams = "-f{$fromEmail}";

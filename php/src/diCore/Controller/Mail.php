@@ -15,21 +15,23 @@ use diCore\Tool\Mail\Queue;
 
 class Mail extends \diBaseAdminController
 {
-    protected $sendPerAttempt = 1000;
+    const DEBUG = true;
 
     public function sendAllAction()
     {
         $mq = Queue::basicCreate();
 
-        $cc = $mq->sendAllSafe($this->sendPerAttempt);
+        $sent = $mq->sendAllSafe($mq::SEND_PER_ATTEMPT);
 
-        return "$cc email(s) sent";
+        return [
+            'sent' => $sent,
+        ];
     }
 
     public function sendAction()
     {
         $mq = Queue::basicCreate();
-        $id = $this->param(0, '');
+        $id = $this->param(0);
 
         $mq->send($id);
 
@@ -39,6 +41,7 @@ class Mail extends \diBaseAdminController
     public function setVisibleAction()
     {
         $mq = Queue::basicCreate();
+
         $mq->setVisible();
 
         $this->redirect();
@@ -47,7 +50,6 @@ class Mail extends \diBaseAdminController
     public function processPlanAction()
     {
         $plans = Collection::create()->filterByStartedAt(null, '=');
-
         $sent = 0;
 
         /** @var Model $plan */
@@ -55,12 +57,12 @@ class Mail extends \diBaseAdminController
             $plan->process();
             $sent += $plan->getSentMailsCount();
 
-            Logger::getInstance()->log(
-                $plan->getSentMailsCount() .
-                    ' emails sent for plan#' .
-                    $plan->getId(),
-                'mail::processPlanAction'
-            );
+            if (static::DEBUG) {
+                Logger::getInstance()->log(
+                    "{$plan->getSentMailsCount()} emails sent for plan#{$plan->getId()}",
+                    'mail::processPlanAction'
+                );
+            }
         }
 
         return [
