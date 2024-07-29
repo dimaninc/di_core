@@ -22,6 +22,8 @@ class Queue
 
     const INSTANT_SEND = false;
 
+    const SEND_PER_ATTEMPT = 1000;
+
     const STORED_NEWS_ID_TARGET_TYPE = Types::news;
 
     private $incuts = [];
