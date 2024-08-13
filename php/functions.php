@@ -234,21 +234,21 @@ function get_orig_folder()
 {
     global $orig_folder;
 
-    return $orig_folder ?: 'orig/';
+    return isset($orig_folder) ? $orig_folder : 'orig/';
 }
 
 function get_big_folder()
 {
     global $big_folder;
 
-    return $big_folder ?: 'big/';
+    return isset($big_folder) ? $big_folder : 'big/';
 }
 
 function get_tmp_folder()
 {
     global $tmp_folder;
 
-    return $tmp_folder ?: 'uploads/tmp/';
+    return isset($tmp_folder) ? $tmp_folder : 'uploads/tmp/';
 }
 
 function getSettingsFolder()
