@@ -1,7 +1,6 @@
 <?php
-/*
-    // dimaninc
-*/
+// (q) dimaninc
+// this file should be compatible with 5.6
 
 require dirname(__FILE__) . '/lib/diLib.php';
 
@@ -26,7 +25,6 @@ mb_internal_encoding('UTF-8');
 define('DIE_NOTICE', 0);
 define('DIE_WARNING', 1);
 define('DIE_FATAL', 2);
-//
 
 define('SECS_PER_DAY', 86400);
 
@@ -236,21 +234,21 @@ function get_orig_folder()
 {
     global $orig_folder;
 
-    return $orig_folder ?? 'orig/';
+    return $orig_folder ?: 'orig/';
 }
 
 function get_big_folder()
 {
     global $big_folder;
 
-    return $big_folder ?? 'big/';
+    return $big_folder ?: 'big/';
 }
 
 function get_tmp_folder()
 {
     global $tmp_folder;
 
-    return $tmp_folder ?? 'uploads/tmp/';
+    return $tmp_folder ?: 'uploads/tmp/';
 }
 
 function getSettingsFolder()
@@ -973,7 +971,7 @@ function ip2bin($ip = null)
 
 function bin2ip($bin)
 {
-    return long2ip($bin ?? 0);
+    return long2ip($bin ?: 0);
 }
 
 /** @deprecated */
