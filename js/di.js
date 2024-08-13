@@ -122,17 +122,17 @@ var di = {
 
     // loaders
 
-    loadScript: (url, callback) => {
-        const script = document.createElement('script');
+    loadScript: function (url, callback) {
+        var script = document.createElement('script');
         script.src = url;
         script.onload = callback;
 
-        const x = document.getElementsByTagName('script')[0];
+        var x = document.getElementsByTagName('script')[0];
         x.parentNode.insertBefore(script, x);
     },
 
-    loadStyle: (url, callback) => {
-        const link = document.createElement('link');
+    loadStyle: function (url, callback) {
+        var link = document.createElement('link');
         link.href = url;
         link.type = 'text/css';
         link.rel = 'stylesheet';
