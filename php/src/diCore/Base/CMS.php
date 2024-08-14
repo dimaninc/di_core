@@ -1473,7 +1473,7 @@ abstract class CMS
     {
         $this->defineIndexTemplates();
 
-        $uri = \diRequest::requestUri();
+        $uri = \diRequest::requestUri() ?: '';
         $host = \diRequest::domain();
 
         $this->getTpl()
@@ -1623,7 +1623,7 @@ abstract class CMS
 
     public function getFullRoute()
     {
-        $r = trim(\diRequest::requestUri(), '/');
+        $r = trim(\diRequest::requestUri() ?: '', '/');
 
         if (
             \diLib::getSubFolder() &&
