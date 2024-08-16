@@ -230,6 +230,13 @@ class Mongo extends \diDB
         return $deleted;
     }
 
+    public function drop($table)
+    {
+        $this->getCollectionResource($table)->drop();
+
+        return true;
+    }
+
     protected function __close()
     {
         return true;

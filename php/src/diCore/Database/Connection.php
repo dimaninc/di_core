@@ -22,6 +22,10 @@ abstract class Connection
     private static $connections = [];
 
     const engine = null;
+    /**
+     * Has tables/collections inside
+     */
+    const consists_of_tables = true;
 
     /** @var ConnectionData */
     protected $data;
@@ -216,7 +220,16 @@ abstract class Connection
 
     public function getTableNames()
     {
+        if (!static::consistsOfTables()) {
+            return [];
+        }
+
         return $this->getDb()->getTableNames();
+    }
+
+    public static function consistsOfTables()
+    {
+        return static::consists_of_tables;
     }
 
     public static function isMongo()

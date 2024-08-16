@@ -1305,6 +1305,14 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         return join(' ', $ar);
     }
 
+    /*
+     * E.g. for redis key
+     */
+    public function getUniqueIdItems(): array
+    {
+        return [$this->getQueryFields(), $this->getFullQuery() ?: '__all__'];
+    }
+
     #[\ReturnTypeWillChange]
     public function rewind()
     {

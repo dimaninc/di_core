@@ -10,9 +10,14 @@ namespace diCore\Tool;
 
 use diCore\Helper\ArrayHelper;
 
+/*
+ * учитывать query в ключе
+ * отключать для коллекций, созданных вручную
+ */
 class CollectionCache
 {
-    const PREFIX_REDIS = 'CollectionCache:';
+    const REDIS_SEP = ':';
+    const REDIS_PREFIX = 'CollectionCache';
     const REDIS_DEFAULT_LIFETIME = 60; // 1 minute
 
     const STORAGE_RAM = 1;
@@ -80,7 +85,7 @@ class CollectionCache
             switch (self::$storage) {
                 case self::STORAGE_REDIS:
                     self::$redisClient->set(
-                        self::getRedisKey($modelType),
+                        self::getRedisKey($modelType, $col->getUniqueIdItems()),
                         json_encode($col->asDataArray()),
                         [
                             'ex' => ArrayHelper::get(
@@ -147,7 +152,9 @@ class CollectionCache
 
                 switch (self::$storage) {
                     case self::STORAGE_REDIS:
-                        self::$redisClient->del(self::getRedisKey($modelType));
+                        self::$redisClient->del(
+                            self::getRedisKey($modelType, ['*'])
+                        );
                         break;
 
                     default:
@@ -170,6 +177,7 @@ class CollectionCache
 
         switch (self::$storage) {
             case self::STORAGE_REDIS:
+                // todo: тут главный затык – как при гете из кеша узнать ключи?
                 $json = self::$redisClient->get(self::getRedisKey($modelType));
                 $ar = $json ? json_decode($json, true) : null;
 
@@ -197,13 +205,15 @@ class CollectionCache
      * @param int|string $modelType
      * @return boolean
      */
-    public static function exists($modelType)
+    public static function exists($modelType, $idItems = [])
     {
         $modelType = \diTypes::getId($modelType);
 
         switch (self::$storage) {
             case self::STORAGE_REDIS:
-                return self::$redisClient->exists(self::getRedisKey($modelType));
+                return self::$redisClient->exists(
+                    self::getRedisKey($modelType, $idItems)
+                );
 
             default:
                 return isset(self::$data[$modelType]);
@@ -225,9 +235,12 @@ class CollectionCache
             : \diModel::create($modelType, $force ? $modelId : null, 'id');
     }
 
-    public static function getRedisKey($modelType)
+    public static function getRedisKey($modelType, $idItems = [])
     {
-        return self::PREFIX_REDIS . 'type=' . $modelType;
+        return join(
+            self::REDIS_SEP,
+            array_merge([self::REDIS_PREFIX, 'type=' . $modelType], $idItems)
+        );
     }
 
     public static function useRedis(\Redis $client, array $options = [])
