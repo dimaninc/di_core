@@ -3971,7 +3971,7 @@ EOF;
         $dr->static_mode =
             $this->static_mode || $this->isFlag($field, FormFlag::static);
 
-        $this->inputs[$field] = $dr->get_html();
+        $this->inputs[$field] = "<div class=\"value-inner\">{$dr->get_html()}</div>";
         $this->force_inputs_fields[$field] = true;
 
         return $this;

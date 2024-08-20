@@ -3676,13 +3676,17 @@ table.actions-log tr:last-of-type td {
   background: #ffd;
 }
 .dynamic-add {
+  --margin-v: 10px;
   cursor: pointer;
 }
-body[data-skin="classic"] .dynamic-add {
-  margin: 10px 0;
+.dynamic-add:not(:first-child) {
+  margin-top: var(--margin-v);
+}
+.dynamic-add:not(:last-child) {
+  margin-bottom: var(--margin-v);
 }
 body[data-skin="entrine"] .dynamic-add {
-  margin: 20px 0;
+  --margin-v: 20px;
 }
 .dynamic-row {
   --line-gap: 15px;
@@ -3691,6 +3695,9 @@ body[data-skin="entrine"] .dynamic-add {
   -o-transition: background-color 0.3s ease;
   -ms-transition: background-color 0.3s ease;
   transition: background-color 0.3s ease;
+}
+.dynamic-row .close {
+  margin: 0 10px 10px 10px;
 }
 body[data-skin="classic"] .dynamic-row {
   border: 1px solid #aaa;
