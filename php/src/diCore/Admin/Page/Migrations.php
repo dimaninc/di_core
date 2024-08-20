@@ -88,8 +88,8 @@ class Migrations extends \diCore\Admin\BasePage
         if ($action == 'log') {
             return [
                 'ru' => 'Журнал',
-                'en' => 'Migrations log',
-            ];
+                'en' => 'History',
+            ][$this->getLanguage()];
         }
 
         return parent::getMethodCaption($action);

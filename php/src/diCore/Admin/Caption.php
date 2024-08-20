@@ -57,22 +57,22 @@ class Caption
             return $this->forceValue;
         }
 
-        if ($this->getX()->getPage()) {
-            $methodCaption = $this->getX()
-                ->getPage()
-                ->getCurrentMethodCaption();
-
-            $ar = [];
-            $ar[] = $this->getModuleCaptionHtml();
-
-            if ($methodCaption) {
-                $ar[] = sprintf('<i>%s</i>', $methodCaption);
-            }
-
-            return join($this->delimiter, array_filter($ar));
-        } else {
+        if (!$this->getX()->getPage()) {
             return $this->oldGet();
         }
+
+        $methodCaption = $this->getX()
+            ->getPage()
+            ->getCurrentMethodCaption();
+
+        $ar = [];
+        $ar[] = $this->getModuleCaptionHtml();
+
+        if ($methodCaption) {
+            $ar[] = sprintf('<i>%s</i>', $methodCaption);
+        }
+
+        return join($this->delimiter, array_filter($ar));
     }
 
     /** @deprecated */

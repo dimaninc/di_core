@@ -147,9 +147,7 @@ class diTwig
     protected function addStrFilesizeFilter()
     {
         $this->getEngine()->addFilter(
-            new TwigFilter('str_filesize', function ($size) {
-                return str_filesize($size);
-            })
+            new TwigFilter('str_filesize', fn($size) => str_filesize($size))
         );
 
         return $this;
@@ -158,13 +156,14 @@ class diTwig
     protected function addPregReplaceFilter()
     {
         $this->getEngine()->addFilter(
-            new TwigFilter('preg_replace', function (
-                $subject,
-                $pattern,
-                $replacement
-            ) {
-                return preg_replace($pattern, $replacement, $subject);
-            })
+            new TwigFilter(
+                'preg_replace',
+                fn($subject, $pattern, $replacement) => preg_replace(
+                    $pattern,
+                    $replacement,
+                    $subject
+                )
+            )
         );
 
         return $this;
@@ -173,9 +172,25 @@ class diTwig
     protected function addLead0Filter()
     {
         $this->getEngine()->addFilter(
-            new TwigFilter('lead0', function ($num) {
-                return lead0($num);
-            })
+            new TwigFilter('lead0', fn($num) => lead0($num))
+        );
+
+        return $this;
+    }
+
+    protected function addDigitCaseFilter()
+    {
+        $this->getEngine()->addFilter(
+            new TwigFilter(
+                'digit_case',
+                fn(
+                    $num,
+                    $s1,
+                    $s2,
+                    $s3 = null,
+                    $onlySuffix = false
+                ) => StringHelper::digitCase($num, $s1, $s2, $s3, $onlySuffix)
+            )
         );
 
         return $this;
