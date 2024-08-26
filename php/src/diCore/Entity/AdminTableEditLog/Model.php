@@ -104,6 +104,27 @@ class Model extends \diModel
         return $log;
     }
 
+    public static function createForCollection(
+        \diCollection|array $col,
+        $adminId = 0,
+        $useAllFields = true,
+        $save = true
+    ) {
+        $logs = [];
+
+        foreach ($col as $m) {
+            $log = static::createForModel($m, $adminId, $useAllFields);
+
+            if ($save) {
+                $log->save();
+            }
+
+            $logs[] = $log;
+        }
+
+        return $logs;
+    }
+
     public static function adminTabTitle($lang)
     {
         return static::$lang[$lang]['admin_tab_title'];
@@ -111,11 +132,7 @@ class Model extends \diModel
 
     public function getTargetAdminHref()
     {
-        return '/_admin/' .
-            $this->getTargetTable() .
-            '/form/' .
-            $this->getTargetId() .
-            '/';
+        return "/_admin/{$this->getTargetTable()}/form/{$this->getTargetId()}/";
     }
 
     public function setUseAllFields($state)
@@ -239,21 +256,33 @@ class Model extends \diModel
     {
         $a = $this->getRelated('old');
 
-        return $field === null ? $a : (isset($a[$field]) ? $a[$field] : null);
+        if ($field === null) {
+            return $a;
+        }
+
+        return $a[$field] ?? null;
     }
 
     public function getNewValues($field = null)
     {
         $a = $this->getRelated('new');
 
-        return $field === null ? $a : (isset($a[$field]) ? $a[$field] : null);
+        if ($field === null) {
+            return $a;
+        }
+
+        return $a[$field] ?? null;
     }
 
     public function getDataDiff($field = null)
     {
         $a = $this->getRelated('diff');
 
-        return $field === null ? $a : (isset($a[$field]) ? $a[$field] : null);
+        if ($field === null) {
+            return $a;
+        }
+
+        return $a[$field] ?? null;
     }
 
     protected function isFieldSkipped(\diModel $model, $field)

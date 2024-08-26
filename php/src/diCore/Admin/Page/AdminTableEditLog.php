@@ -120,9 +120,7 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
                     'width' => '15%',
                 ],
                 'value' => function (Model $model) {
-                    return $model->getTargetTable() .
-                        '#' .
-                        $model->getTargetId();
+                    return $model->getTargetTable() . '#' . $model->getTargetId();
                 },
             ],
             'admin_id' => [
@@ -149,13 +147,7 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
                     $ar = [];
 
                     foreach ($model->getDataDiff() as $field => $diff) {
-                        $ar[] =
-                            '<b>' .
-                            $field .
-                            '</b>' .
-                            '<div class="lite">' .
-                            $diff .
-                            '</div>';
+                        $ar[] = "<b>$field</b><div class=\"lite\">$diff</div>";
                     }
 
                     return join('', $ar);
@@ -205,13 +197,10 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
             )
             ->setInput(
                 'edit_log',
-                $this->getTwig()->parse(
-                    'admin/admin_table_edit_log/form_field',
-                    [
-                        'records' => [$model],
-                        'admins' => $admins,
-                    ]
-                )
+                $this->getTwig()->parse('admin/admin_table_edit_log/form_field', [
+                    'records' => [$model],
+                    'admins' => $admins,
+                ])
             );
     }
 

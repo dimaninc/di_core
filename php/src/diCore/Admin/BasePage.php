@@ -1319,7 +1319,9 @@ abstract class BasePage
                         $escaped
                     );
 
-                    return '(' . $semiEscaped . ')';
+                    return $semiEscaped;
+
+                    // return '(' . $semiEscaped . ')';
                 });
 
             $this->getForm()->setInput(
