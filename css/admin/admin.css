@@ -3373,6 +3373,9 @@ table.dinicetable tr td:not([data-field="title"]) {
 body[data-skin="entrine"] table.dinicetable tr td:not([data-field="title"]) {
   padding-left: 5px;
 }
+table.dinicetable tr td[data-href] {
+  cursor: pointer;
+}
 table.dinicetable tr td.id {
   position: relative;
   background-color: #d4d0c8;

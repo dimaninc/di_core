@@ -211,37 +211,32 @@ class diNiceTable
     public function getNavyBlock()
     {
         return "<p class=\"navy\">" .
-            $this->pn->print_pages(
-                "{$_SERVER['SCRIPT_NAME']}?path={$this->table}"
-            ) .
+            $this->pn->print_pages("{$_SERVER['SCRIPT_NAME']}?path={$this->table}") .
             '</p>';
     }
 
-    public function addColumn(
-        $title = '&nbsp;',
-        $more_params = [],
-        $field = null
-    ) {
-        if (!is_array($more_params)) {
-            $more_params = [];
+    public function addColumn($title = '&nbsp;', $moreParams = [], $field = null)
+    {
+        if (!is_array($moreParams)) {
+            $moreParams = [];
         }
 
         $this->cols[] = [
             'title' => $title,
-            'more_params' => $more_params,
+            'more_params' => $moreParams,
             'field' => $field,
         ];
 
         return $this;
     }
 
-    public function textCell($text, $more_td_params = [])
+    public function textCell($text, $moreTdParams = [])
     {
         $td_params = [
             //'class' => $this->row_class_prefix
         ];
 
-        $td_params = array_merge($td_params, $more_td_params);
+        $td_params = array_merge($td_params, $moreTdParams);
 
         return $this->fillCell($text, $td_params);
     }
@@ -253,15 +248,14 @@ class diNiceTable
             // 'edit' => 1,
         ]);
 
-        $td_params = [
+        $tdAttrs = [
+            'data-href' => $href,
             //'class' => $this->row_class_prefix,
-            'onclick' => "location.href='{$href}';",
-            'style' => 'cursor: pointer;',
         ];
 
-        $td_params = array_merge($td_params, $more_td_params);
+        $tdAttrs = array_merge($tdAttrs, $more_td_params);
 
-        return $this->fillCell($text, $td_params);
+        return $this->fillCell($text, $tdAttrs);
     }
 
     protected function btnCell($text)
@@ -482,10 +476,7 @@ class diNiceTable
             $inner .= " <input type=\"checkbox\" data-purpose=\"toggle\" data-id=\"{$this->getRowId()}\">";
         }
 
-        if (
-            $this->getRowModel()->exists('level_num') &&
-            $show_expand_collapse
-        ) {
+        if ($this->getRowModel()->exists('level_num') && $show_expand_collapse) {
             $expandClassName = in_array(
                 $this->getRowModel()->getId(),
                 $this->collapsedIds
@@ -518,11 +509,7 @@ class diNiceTable
             //'edit' => 1,
         ];
 
-        $href = Base::getPageUri(
-            $this->getFormPathBase(),
-            'form',
-            $queryParams
-        );
+        $href = Base::getPageUri($this->getFormPathBase(), 'form', $queryParams);
 
         return $this->btnCell($this->getButton('edit', $href));
     }
@@ -735,10 +722,7 @@ class diNiceTable
             $levelNumsToShow = [$levelNumsToShow];
         }
 
-        return in_array(
-            $this->getRowModel()->get('level_num'),
-            $levelNumsToShow
-        )
+        return in_array($this->getRowModel()->get('level_num'), $levelNumsToShow)
             ? $this->toggleBtnCell('to_show_content')
             : $this->emptyBtnCell();
     }

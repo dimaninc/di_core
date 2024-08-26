@@ -83,6 +83,7 @@ var diNiceTable = function (opts) {
     function constructor() {
         attachButtonEvents();
         initControlPanel();
+        self.attachRowEvents();
     }
 
     function initControlPanel() {
@@ -94,6 +95,19 @@ var diNiceTable = function (opts) {
     function log(message) {
         A.console.add(message);
     }
+
+    this.attachRowEvents = function () {
+        settings.$table.on('click', '[data-href]', function () {
+            var $c = $(this);
+            var href = $c.data('href');
+
+            if (href) {
+                location.href = href;
+            }
+        });
+
+        return this;
+    };
 
     function attachButtonEvents() {
         settings.$table.on('click', '.nicetable-button', function () {
