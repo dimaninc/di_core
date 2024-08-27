@@ -525,20 +525,20 @@ $get_params = http_build_query($get_params);
 <?php
 $class_ext = '';
 $src = '';
-if($ftp){
-	try{
-		$files = $ftp->scanDir("/".$ftp_base_folder.$upload_dir.$rfm_subfolder.$subdir);
-		if (!$ftp->isDir("/".$ftp_base_folder.$ftp_thumbs_dir.$rfm_subfolder.$subdir)){
-			create_folder(false,"/".$ftp_base_folder.$ftp_thumbs_dir.$rfm_subfolder.$subdir,$ftp,$config);
-		}
-	}catch(FtpClient\FtpException $e){
-		echo "Error: ";
-		echo $e->getMessage();
-		echo "<br/>Please check configurations";
-		die();
-	}
-}else{
-	$files	= scandir($current_path.$rfm_subfolder.$subdir);
+if ($ftp) {
+    try {
+        $files = $ftp->scanDir("/" . $ftp_base_folder . $upload_dir . $rfm_subfolder . $subdir);
+        if (!$ftp->isDir("/" . $ftp_base_folder . $ftp_thumbs_dir . $rfm_subfolder . $subdir)) {
+            create_folder(false, "/" . $ftp_base_folder . $ftp_thumbs_dir . $rfm_subfolder . $subdir, $ftp, $config);
+        }
+    } catch (FtpClient\FtpException $e) {
+        echo "Error: ";
+        echo $e->getMessage();
+        echo "<br/>Please check configurations";
+        die();
+    }
+} else {
+    $files = @scandir($current_path . $rfm_subfolder . $subdir);
 }
 
 $n_files= count($files);
