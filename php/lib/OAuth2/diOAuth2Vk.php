@@ -12,17 +12,14 @@ class diOAuth2Vk extends diOAuth2
         parent::downloadData();
 
         $tokenInfo = json_decode(
-            static::makeHttpRequest(
-                static::authUrlBase,
-                $this->getAuthUrlParams()
-            ),
+            static::makeHttpRequest(static::authUrlBase, $this->getAuthUrlParams()),
             true
         );
 
         if (count($tokenInfo)) {
             if (isset($tokenInfo['access_token'])) {
                 $params = [
-                    'v' => 5.71,
+                    'v' => 5.131,
                     'access_token' => $tokenInfo['access_token'],
                     'uids' => $tokenInfo['user_id'],
                     'fields' =>
