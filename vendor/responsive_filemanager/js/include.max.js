@@ -870,7 +870,7 @@ var encodeURL, show_animation, hide_animation, apply, apply_none, apply_img, app
             else {
                 var v = jQuery("#" + r, t.document);
                 v.val(p).trigger("change"), 0 == n ? "function" == typeof t.responsive_filemanager_callback && t.responsive_filemanager_callback(r) : "function" == typeof t[n] && t[n](r), Q()
-            } else e.inArray(c, ext_img) > -1 ? (p = p + "?" + (new Date).getTime(), s = '<img src="' + p + '" alt="' + u + '" />') : e.inArray(c, f) > -1 ? s = '<video controls source src="' + p + '" type="video/' + c + '">' + u + "</video>" : e.inArray(c, d) > -1 ? ("mp3" == c && (c = "mpeg"), s = '<audio controls src="' + p + '" type="audio/' + c + '">' + u + "</audio>") : s = '<a href="' + p + '" title="' + u + '">' + u + "</a>", 1 == jQuery("#crossdomain").val() ? t.postMessage({
+            } else e.inArray(c, ext_img) > -1 ? (p = jQuery("#add_time_to_img").val() ? p + "?" + (new Date).getTime() : p, s = '<img src="' + p + '" alt="' + u + '" />') : e.inArray(c, f) > -1 ? s = '<video controls source src="' + p + '" type="video/' + c + '">' + u + "</video>" : e.inArray(c, d) > -1 ? ("mp3" == c && (c = "mpeg"), s = '<audio controls src="' + p + '" type="audio/' + c + '">' + u + "</audio>") : s = '<a href="' + p + '" title="' + u + '">' + u + "</a>", 1 == jQuery("#crossdomain").val() ? t.postMessage({
             sender: "responsivefilemanager",
             url: p,
             field_id: null,

@@ -619,17 +619,24 @@ foreach($files as $k=>$file){
 $lazy_loading_enabled= ($lazy_loading_file_number_threshold == 0 || $lazy_loading_file_number_threshold != -1 && $n_files > $lazy_loading_file_number_threshold) ? true : false;
 //$lazy_loading_enabled = false;
 
-function filenameSort($x, $y) {
-	return $x['file_lcase'] <  $y['file_lcase'];
+function filenameSort($x, $y)
+{
+    return $x['file_lcase'] <=> $y['file_lcase'];
 }
-function dateSort($x, $y) {
-	return $x['date'] <  $y['date'];
+
+function dateSort($x, $y)
+{
+    return $x['date'] <=> $y['date'];
 }
-function sizeSort($x, $y) {
-	return $x['size'] <  $y['size'];
+
+function sizeSort($x, $y)
+{
+    return $x['size'] <=> $y['size'];
 }
-function extensionSort($x, $y) {
-	return $x['extension'] <  $y['extension'];
+
+function extensionSort($x, $y)
+{
+    return $x['extension'] <=> $y['extension'];
 }
 
 switch($sort_by){
