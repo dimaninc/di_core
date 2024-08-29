@@ -893,6 +893,7 @@ class Base
                 [
                     'needed' => [
                         'rfm' => $this->responsiveFileManagerNeeded(),
+                        'trailing_cleaning' => $this->trailingCleaningNeeded(),
                     ],
                     'extra_wysiwyg_settings' => $this->getExtraWysiwygSettings(),
                 ]
@@ -909,6 +910,11 @@ class Base
     protected function getExtraWysiwygSettings()
     {
         return '';
+    }
+
+    protected function trailingCleaningNeeded()
+    {
+        return true;
     }
 
     protected function responsiveFileManagerNeeded()

@@ -3,9 +3,27 @@
 {% block tinymce_init %}
 tinymce.init({
     selector: '.diadminform-row .value .wysiwyg textarea',
+    setup: function (editor) {
+        {% block tinymce_trailing_cleaning %}
+        {% if needed['trailing_cleaning'] %}
+        editor.on('BeforeSetContent', function (e) {
+            e.content = e.content.replace(/<p><span style="all: initial;"><\/span><\/p>/g, '');
+            e.content = e.content.replace(/(<p><\/p>\s*)+$/g, '');
+        });
+
+        editor.on('SaveContent', function (e) {
+            e.content = e.content.replace(/<p><span style="all: initial;"><\/span><\/p>/g, '');
+            e.content = e.content.replace(/(<p><\/p>\s*)+$/g, '');
+        });
+        {% endif %}
+        {% endblock %}
+    },
     width: '100%',
 	height: '350px',
 	convert_urls: false,
+    cleanup: true,
+    verify_html: false,
+    remove_trailing_brs: true,
     //relative_urls: false,
     //remove_script_host: false,
     image_advtab: true,
