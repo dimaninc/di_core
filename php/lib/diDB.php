@@ -421,11 +421,13 @@ abstract class diDB
 
     public function doesColumnExist($table, $column)
     {
+        $this->lockTable('INFORMATION_SCHEMA', 'READ');
         $rs = $this->q("SELECT NULL
             FROM INFORMATION_SCHEMA.COLUMNS
            WHERE table_name = '{$table}'
              AND table_schema = '{$this->getDatabase()}'
              AND column_name = '{$column}'");
+        $this->unlockTable('INFORMATION_SCHEMA');
 
         return $this->count($rs) > 0;
     }
@@ -682,7 +684,9 @@ abstract class diDB
 
         $q = $this->getQueryForRs($table, $q_ending, $q_fields);
 
+        $this->lockTable($table, 'READ');
         $rs = $this->__q($q);
+        $this->unlockTable($table);
 
         $time2 = utime();
         $this->execution_time += $time2 - $time1;
@@ -708,13 +712,15 @@ abstract class diDB
         if ((self::is_rs($table) || $table === false) && $q_ending === '') {
             return $this->fetch($table);
         }
-        //
 
         $q = $this->getQueryForR($table, $q_ending, $q_fields);
 
         $time1 = utime();
 
+        $this->lockTable($table, 'READ');
         $rs = $this->__q($q);
+        $this->unlockTable($table);
+
         $r = $rs ? $this->__fetch($rs) : false;
 
         $time2 = utime();
@@ -763,7 +769,9 @@ abstract class diDB
             "SELECT $q_fields FROM $t $q_ending ORDER BY RAND()" .
             $this->limitOffset($limit);
 
+        $this->lockTable($table, 'READ');
         $rs = $this->__q($q);
+        $this->unlockTable($table);
 
         $time2 = utime();
         $this->execution_time += $time2 - $time1;
@@ -789,13 +797,15 @@ abstract class diDB
         if ((self::is_rs($table) || $table === false) && $q_ending === '') {
             return $this->fetch_array($table);
         }
-        //
 
         $time1 = utime();
 
         $q = $this->getQueryForR($table, $q_ending, $q_fields);
 
+        $this->lockTable($table, 'READ');
         $rs = $this->__q($q);
+        $this->unlockTable($table);
+
         $r = $rs ? $this->fetch_array($rs) : false;
 
         $time2 = utime();
@@ -954,15 +964,11 @@ abstract class diDB
 
     public function lockTable($table)
     {
-        $this->__q("LOCK TABLES $table WRITE");
-
         return $this;
     }
 
     public function unlockTable($table = null)
     {
-        $this->__q('UNLOCK TABLES');
-
         return $this;
     }
 

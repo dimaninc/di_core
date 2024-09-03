@@ -186,4 +186,18 @@ class diMYSQL extends diDB
     {
         return ',id = LAST_INSERT_ID(id)';
     }
+
+    public function lockTable($table, $mode = 'WRITE')
+    {
+        $this->__q("LOCK TABLES $table $mode");
+
+        return $this;
+    }
+
+    public function unlockTable($table = null)
+    {
+        $this->__q('UNLOCK TABLES');
+
+        return $this;
+    }
 }

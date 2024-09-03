@@ -160,16 +160,6 @@ ORDER BY ordinal_position ASC");
         return '';
     }
 
-    public function lockTable($table)
-    {
-        return $this;
-    }
-
-    public function unlockTable($table = null)
-    {
-        return $this;
-    }
-
     protected function getJsonForStructure($value)
     {
         $s = json_encode($value);
