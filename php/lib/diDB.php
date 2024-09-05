@@ -59,6 +59,7 @@ use diCore\Data\Config;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\FileSystemHelper;
 use diCore\Helper\StringHelper;
+use diCore\Tool\Logger;
 
 abstract class diDB
 {
@@ -98,7 +99,7 @@ abstract class diDB
 
     protected $lastInsertId;
 
-    protected $ignoreReadLock = true;
+    protected $ignoreReadLock = false;
 
     public function __construct(
         $settingsOrHost,
@@ -693,9 +694,9 @@ abstract class diDB
 
         $q = $this->getQueryForRs($table, $q_ending, $q_fields);
 
-        $this->lockTable($table, 'READ');
+        $tablesToLock = $this->lockTable($q, 'READ');
         $rs = $this->__q($q);
-        $this->unlockTable($table, 'READ');
+        $this->unlockTable($tablesToLock, 'READ');
 
         $time2 = utime();
         $this->execution_time += $time2 - $time1;
@@ -726,9 +727,9 @@ abstract class diDB
 
         $time1 = utime();
 
-        $this->lockTable($table, 'READ');
+        $tablesToLock = $this->lockTable($q, 'READ');
         $rs = $this->__q($q);
-        $this->unlockTable($table);
+        $this->unlockTable($tablesToLock);
 
         $r = $rs ? $this->__fetch($rs) : false;
 
@@ -774,13 +775,12 @@ abstract class diDB
             $q_fields = join(',', $q_fields);
         }
 
-        $q =
-            "SELECT $q_fields FROM $t $q_ending ORDER BY RAND()" .
-            $this->limitOffset($limit);
+        $limitSuffix = $this->limitOffset($limit);
+        $q = "SELECT $q_fields FROM $t $q_ending ORDER BY RAND()$limitSuffix";
 
-        $this->lockTable($table, 'READ');
+        $tablesToLock = $this->lockTable($q, 'READ');
         $rs = $this->__q($q);
-        $this->unlockTable($table, 'READ');
+        $this->unlockTable($tablesToLock, 'READ');
 
         $time2 = utime();
         $this->execution_time += $time2 - $time1;
@@ -811,9 +811,9 @@ abstract class diDB
 
         $q = $this->getQueryForR($table, $q_ending, $q_fields);
 
-        $this->lockTable($table, 'READ');
+        $tablesToLock = $this->lockTable($q, 'READ');
         $rs = $this->__q($q);
-        $this->unlockTable($table, 'READ');
+        $this->unlockTable($tablesToLock, 'READ');
 
         $r = $rs ? $this->fetch_array($rs) : false;
 
@@ -973,12 +973,12 @@ abstract class diDB
 
     public function lockTable($table)
     {
-        return $this;
+        return [$table];
     }
 
     public function unlockTable($table = null)
     {
-        return $this;
+        return array_filter([$table]);
     }
 
     public function getFullQueryForInsert($table, $fieldValues = [])
@@ -1384,7 +1384,69 @@ abstract class diDB
         return camelize(underscore($method) . '_' . $field);
     }
 
-    /* these methods should be overwritten */
+    protected function logError($q, \Exception $e)
+    {
+        Logger::getInstance()->variable(
+            debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS)
+        );
+        Logger::getInstance()->log(
+            "Error executing query `$q`: {$e->getMessage()}",
+            \diRequest::requestUri()
+        );
+
+        return $this;
+    }
+
+    public static function extractTableNamesWithAliases($sql)
+    {
+        $combiner = function (
+            array $matches,
+            int $tableIndex,
+            int $aliasIndex,
+            bool $filterKeywords = false
+        ) {
+            if (empty($matches[$tableIndex])) {
+                return [];
+            }
+
+            $ar = [];
+
+            foreach ($matches[$tableIndex] as $i => $table) {
+                $alias = $matches[$aliasIndex][$i] ?? '';
+
+                if (
+                    $filterKeywords &&
+                    preg_match(
+                        '/^(WHERE|GROUP\s+BY|ORDER\s+BY|LIMIT|HAVING|ON)(\s|$)/i',
+                        $alias
+                    )
+                ) {
+                    $alias = '';
+                }
+
+                $ar[] = join(' AS ', array_filter([$table, $alias]));
+            }
+
+            return $ar;
+        };
+
+        // table alias
+        $pattern1 =
+            '/^\s*[`"]?([a-zA-Z0-9_]+)[`"]?((\s+AS)?\s+[`"]?([a-zA-Z0-9_]+)[`"]?)?$/i';
+        preg_match_all($pattern1, $sql, $matches1);
+
+        if (array_filter($matches1[1])) {
+            return $combiner($matches1, 1, 4);
+        }
+
+        // full or partial query
+        $pattern =
+            '/(\bFROM\b|\bJOIN\b|\bINTO\b)\s*[`"]?([a-zA-Z0-9_]+)[`"]?((\s+AS)?\s+[`"]?([a-zA-Z0-9_]+)[`"]?)?/i';
+
+        preg_match_all($pattern, $sql, $matches);
+
+        return $combiner($matches, 2, 5, true);
+    }
 
     abstract protected function __connect();
     abstract protected function __close();

@@ -189,13 +189,27 @@ class diMYSQL extends diDB
 
     public function lockTable($table, $mode = 'WRITE')
     {
-        if (strtoupper($mode) === 'READ' && $this->ignoreReadLock) {
-            return $this;
+        if (strtoupper($mode) === 'READ') {
+            if ($this->ignoreReadLock) {
+                return $this;
+            }
+
+            $tables = static::extractTableNamesWithAliases($table);
+            // simple_debug(print_r($tables, true));
+
+            $allTables = join(', ', array_map(fn($t) => "$t $mode", $tables));
+
+            if ($allTables) {
+                $this->__q("LOCK TABLES $allTables");
+                // simple_debug("LOCK TABLES $allTables");
+            }
+
+            return join(', ', $tables);
         }
 
         $this->__q("LOCK TABLES $table $mode");
 
-        return $this;
+        return [$table];
     }
 
     public function unlockTable($table = null, $mode = 'WRITE')
@@ -206,6 +220,6 @@ class diMYSQL extends diDB
 
         $this->__q('UNLOCK TABLES');
 
-        return $this;
+        return parent::unlockTable($table);
     }
 }

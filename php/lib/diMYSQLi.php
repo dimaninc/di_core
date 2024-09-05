@@ -18,11 +18,7 @@ class diMYSQLi extends diMYSQL
     {
         $time1 = utime();
 
-        $this->link = @new \mysqli(
-            $this->host,
-            $this->username,
-            $this->password
-        );
+        $this->link = @new \mysqli($this->host, $this->username, $this->password);
 
         if (!$this->link || $this->link->connect_error) {
             $message =
@@ -77,9 +73,8 @@ class diMYSQLi extends diMYSQL
         try {
             $res = $this->link->query($q);
         } catch (\Exception $e) {
-            Logger::getInstance()->log(
-                "Error executing query `$q`: {$e->getMessage()}"
-            );
+            $this->logError($q, $e);
+
             $res = false;
         }
         $this->lastInsertId = $this->__insert_id() ?: $this->lastInsertId;

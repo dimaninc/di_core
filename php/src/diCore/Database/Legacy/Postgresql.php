@@ -147,16 +147,19 @@ ORDER BY ordinal_position ASC");
 
     protected function getStartTransactionQuery()
     {
+        // todo
         return '';
     }
 
     protected function getCommitTransactionQuery()
     {
+        // todo
         return '';
     }
 
     protected function getRollbackTransactionQuery()
     {
+        // todo
         return '';
     }
 

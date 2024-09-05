@@ -117,6 +117,8 @@ abstract class Pdo extends \diDB
 
             return $this->lastResult;
         } catch (\PDOException $e) {
+            $this->logError($q, $e);
+
             return $this->_log("Unable to execute query `{$q}`: {$e->getMessage()}");
         }
     }
@@ -138,7 +140,7 @@ abstract class Pdo extends \diDB
 
     protected function __reset(&$rs)
     {
-        throw new \Exception('PDO doesn\'t support reset of cursor');
+        throw new \Exception('PDO does not support cursor reset');
     }
 
     /**
