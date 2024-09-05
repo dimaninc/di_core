@@ -189,13 +189,21 @@ class diMYSQL extends diDB
 
     public function lockTable($table, $mode = 'WRITE')
     {
+        if (strtoupper($mode) === 'READ' && $this->ignoreReadLock) {
+            return $this;
+        }
+
         $this->__q("LOCK TABLES $table $mode");
 
         return $this;
     }
 
-    public function unlockTable($table = null)
+    public function unlockTable($table = null, $mode = 'WRITE')
     {
+        if (strtoupper($mode) === 'READ' && $this->ignoreReadLock) {
+            return $this;
+        }
+
         $this->__q('UNLOCK TABLES');
 
         return $this;

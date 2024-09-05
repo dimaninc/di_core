@@ -98,6 +98,8 @@ abstract class diDB
 
     protected $lastInsertId;
 
+    protected $ignoreReadLock = true;
+
     public function __construct(
         $settingsOrHost,
         $username = null,
@@ -179,6 +181,13 @@ abstract class diDB
         $this->debug = true;
 
         $this->debugMessage(['URL', \diRequest::requestUri()]);
+
+        return $this;
+    }
+
+    public function ignoreReadLock($state = true)
+    {
+        $this->ignoreReadLock = $state;
 
         return $this;
     }
@@ -427,7 +436,7 @@ abstract class diDB
            WHERE table_name = '{$table}'
              AND table_schema = '{$this->getDatabase()}'
              AND column_name = '{$column}'");
-        $this->unlockTable('INFORMATION_SCHEMA');
+        $this->unlockTable('INFORMATION_SCHEMA', 'READ');
 
         return $this->count($rs) > 0;
     }
@@ -686,7 +695,7 @@ abstract class diDB
 
         $this->lockTable($table, 'READ');
         $rs = $this->__q($q);
-        $this->unlockTable($table);
+        $this->unlockTable($table, 'READ');
 
         $time2 = utime();
         $this->execution_time += $time2 - $time1;
@@ -771,7 +780,7 @@ abstract class diDB
 
         $this->lockTable($table, 'READ');
         $rs = $this->__q($q);
-        $this->unlockTable($table);
+        $this->unlockTable($table, 'READ');
 
         $time2 = utime();
         $this->execution_time += $time2 - $time1;
@@ -804,7 +813,7 @@ abstract class diDB
 
         $this->lockTable($table, 'READ');
         $rs = $this->__q($q);
-        $this->unlockTable($table);
+        $this->unlockTable($table, 'READ');
 
         $r = $rs ? $this->fetch_array($rs) : false;
 
