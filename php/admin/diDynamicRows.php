@@ -1687,20 +1687,24 @@ EOF;
         }
 
         // making order num to look ok
-        $order_num = 0;
+        $test = $this->getDb()->ar($this->data_table);
 
-        $rs = $this->getDb()->rs(
-            $this->data_table,
-            "WHERE $this->subquery ORDER BY order_num ASC,id ASC"
-        );
-        while ($rs && ($r = $this->getDb()->fetch($rs))) {
-            $this->getDb()->update(
+        if (isset($test['order_num'])) {
+            $order_num = 0;
+
+            $rs = $this->getDb()->rs(
                 $this->data_table,
-                [
-                    'order_num' => ++$order_num,
-                ],
-                $r->id
+                "WHERE $this->subquery ORDER BY order_num ASC,id ASC"
             );
+            while ($rs && ($r = $this->getDb()->fetch($rs))) {
+                $this->getDb()->update(
+                    $this->data_table,
+                    [
+                        'order_num' => ++$order_num,
+                    ],
+                    $r->id
+                );
+            }
         }
 
         if (is_callable($afterSaveCallback)) {
