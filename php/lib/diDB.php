@@ -1056,7 +1056,7 @@ abstract class diDB
 
         $q = $this->fieldsAndValuesToStringForUpdate($fieldValues);
 
-        return "UPDATE $t SET {$q} $q_ending";
+        return "UPDATE $t SET $q $q_ending";
     }
 
     public function update($table, $fieldValues = [], $q_ending = '')
@@ -1220,26 +1220,51 @@ abstract class diDB
 
     protected function getStartTransactionQuery()
     {
-        return 'START TRANSACTION';
+        return 'START TRANSACTION;';
     }
 
     protected function getCommitTransactionQuery()
     {
-        return 'COMMIT';
+        return 'COMMIT;';
     }
 
     protected function getRollbackTransactionQuery()
     {
-        return 'ROLLBACK';
+        return 'ROLLBACK;';
+    }
+
+    protected function startTransactionInner()
+    {
+        if ($this->getStartTransactionQuery()) {
+            $this->rq($this->getStartTransactionQuery());
+        }
+
+        return $this;
+    }
+
+    protected function commitTransactionInner()
+    {
+        if ($this->getCommitTransactionQuery()) {
+            $this->rq($this->getCommitTransactionQuery());
+        }
+
+        return $this;
+    }
+
+    protected function rollbackTransactionInner()
+    {
+        if ($this->getRollbackTransactionQuery()) {
+            $this->rq($this->getRollbackTransactionQuery());
+        }
+
+        return $this;
     }
 
     public function startTransaction()
     {
         $this->transactionNestingLevel++;
 
-        if ($this->getStartTransactionQuery()) {
-            $this->q($this->getStartTransactionQuery());
-        }
+        $this->startTransactionInner();
 
         return $this;
     }
@@ -1249,9 +1274,7 @@ abstract class diDB
         if ($this->transactionNestingLevel) {
             $this->transactionNestingLevel--;
 
-            if ($this->getCommitTransactionQuery()) {
-                $this->q($this->getCommitTransactionQuery());
-            }
+            $this->commitTransactionInner();
         }
 
         return $this;
@@ -1262,12 +1285,15 @@ abstract class diDB
         if ($this->transactionNestingLevel) {
             $this->transactionNestingLevel--;
 
-            if ($this->getRollbackTransactionQuery()) {
-                $this->q($this->getRollbackTransactionQuery());
-            }
+            $this->rollbackTransactionInner();
         }
 
         return $this;
+    }
+
+    public function getTransactionNestingLevel()
+    {
+        return $this->transactionNestingLevel;
     }
 
     public function getBetweenOperator($val1 = null, $val2 = null)

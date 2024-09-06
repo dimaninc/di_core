@@ -145,24 +145,6 @@ ORDER BY ordinal_position ASC");
         return '';
     }
 
-    protected function getStartTransactionQuery()
-    {
-        // todo
-        return '';
-    }
-
-    protected function getCommitTransactionQuery()
-    {
-        // todo
-        return '';
-    }
-
-    protected function getRollbackTransactionQuery()
-    {
-        // todo
-        return '';
-    }
-
     protected function getJsonForStructure($value)
     {
         $s = json_encode($value);

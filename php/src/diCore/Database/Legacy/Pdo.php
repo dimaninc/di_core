@@ -125,7 +125,13 @@ abstract class Pdo extends \diDB
 
     protected function __rq($q)
     {
-        return $this->__q($q);
+        try {
+            return $this->link->exec($q);
+        } catch (\PDOException $e) {
+            $this->logError($q, $e);
+
+            return $this->_log("Unable to execute query `{$q}`: {$e->getMessage()}");
+        }
     }
 
     protected function __mq($q)
@@ -201,5 +207,26 @@ abstract class Pdo extends \diDB
     protected function __get_charset()
     {
         return 'utf8';
+    }
+
+    protected function startTransactionInner()
+    {
+        $this->link->beginTransaction();
+
+        return $this;
+    }
+
+    protected function commitTransactionInner()
+    {
+        $this->link->commit();
+
+        return $this;
+    }
+
+    protected function rollbackTransactionInner()
+    {
+        $this->link->rollBack();
+
+        return $this;
     }
 }
