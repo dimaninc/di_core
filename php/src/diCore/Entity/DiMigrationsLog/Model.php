@@ -7,6 +7,8 @@
 
 namespace diCore\Entity\DiMigrationsLog;
 
+use diCore\Database\FieldType;
+
 /**
  * Class Model
  * Methods list for IDE
@@ -34,4 +36,15 @@ class Model extends \diModel
     const type = \diTypes::di_migrations_log;
     const table = 'di_migrations_log';
     protected $table = 'di_migrations_log';
+
+    protected $customStrictChangeOnSaveFields = ['direction'];
+
+    protected static $fieldTypes = [
+        'id' => FieldType::int,
+        'admin_id' => FieldType::int,
+        'idx' => FieldType::string,
+        'name' => FieldType::string,
+        'direction' => FieldType::int,
+        'date' => FieldType::timestamp,
+    ];
 }

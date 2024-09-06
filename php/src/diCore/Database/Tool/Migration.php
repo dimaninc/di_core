@@ -37,26 +37,14 @@ abstract class Migration
 
     public function run($state)
     {
-        $this->getDb()
-            ->resetLog()
-            ->startTransaction();
+        $this->getDb()->resetLog();
 
-        try {
-            $result = $state ? $this->upWrapper() : $this->downWrapper();
+        $result = $state ? $this->upWrapper() : $this->downWrapper();
 
-            if ($this->getDb()->getLog() || $result === false) {
-                $this->getDb()->rollbackTransaction();
-
-                throw new \Exception(
-                    'Error(s) during migration: ' . $this->getDb()->getLogStr()
-                );
-            } else {
-                $this->getDb()->commitTransaction();
-            }
-        } catch (\Exception $e) {
-            $this->getDb()->rollbackTransaction();
-
-            throw $e;
+        if ($this->getDb()->getLog() || $result === false) {
+            throw new \Exception(
+                'Error(s) during migration: ' . $this->getDb()->getLogStr()
+            );
         }
 
         return $this;

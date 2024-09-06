@@ -280,13 +280,13 @@ EOF;
     {
         $charset = Config::getDbEncoding();
         $collation = Config::getDbCollation();
+        $t = static::logTable;
 
+        // CREATE TABLE di_migrations_log
         switch ($this->getConn()::getEngine()) {
             case Engine::SQLITE:
                 return [
-                    'CREATE TABLE IF NOT EXISTS `' .
-                    static::logTable .
-                    "`(
+                    "CREATE TABLE IF NOT EXISTS `$t`(
                         id integer not null primary key autoincrement,
                         admin_id integer,
                         idx varchar(100),
@@ -294,18 +294,12 @@ EOF;
                         direction tinyint,
                         date timestamp default CURRENT_TIMESTAMP
                     );",
-                    'CREATE INDEX IF NOT EXISTS `' .
-                    static::logTable .
-                    '_idx` ON `' .
-                    static::logTable .
-                    '` (idx);',
+                    "CREATE INDEX IF NOT EXISTS `{$t}_idx` ON `$t` (idx);",
                 ];
 
             case Engine::POSTGRESQL:
                 return [
-                    "CREATE TABLE IF NOT EXISTS \"" .
-                    static::logTable .
-                    "\"(
+                    "CREATE TABLE IF NOT EXISTS \"$t\"(
                         id SERIAL primary key,
                         admin_id bigint,
                         idx varchar(100),
@@ -313,18 +307,12 @@ EOF;
                         direction smallint,
                         date timestamp default CURRENT_TIMESTAMP
                     );",
-                    'CREATE INDEX IF NOT EXISTS idx_' .
-                    static::logTable .
-                    ' ON ' .
-                    static::logTable .
-                    ' (idx);',
+                    "CREATE INDEX IF NOT EXISTS idx_$t ON $t (idx);",
                 ];
 
             default:
                 return [
-                    'CREATE TABLE IF NOT EXISTS `' .
-                    static::logTable .
-                    "`(
+                    "CREATE TABLE IF NOT EXISTS `$t`(
                         id bigint not null auto_increment,
                         admin_id bigint,
                         idx varchar(100),
@@ -333,7 +321,7 @@ EOF;
                         date timestamp not null default CURRENT_TIMESTAMP,
                         index main_idx(idx),
                         primary key(id)
-                    ) ENGINE=InnoDB DEFAULT CHARSET={$charset} COLLATE={$collation}",
+                    ) ENGINE=InnoDB DEFAULT CHARSET=$charset COLLATE=$collation",
                 ];
         }
     }
@@ -439,12 +427,12 @@ EOF;
     {
         $adminUser = \diAdminUser::create();
 
-        /** @var Model $log */
-        $log = \diModel::create(\diTypes::di_migrations_log);
-        $log->setAdminId($adminUser->getModel()->getId())
+        Model::create()
+            ->setAdminId($adminUser->getModel()->getId())
             ->setIdx($migration::$idx)
             ->setName($migration::$name)
             ->setDirection($state ? Migration::UP : Migration::DOWN)
+            ->setDate(\diDateTime::sqlFormat())
             ->save();
 
         return $this;
@@ -452,20 +440,21 @@ EOF;
 
     /**
      * @param $idx
-     * @return Model
+     * @return Model|\diModel
      * @throws \Exception
      */
     protected function getLastLogByIdx($idx)
     {
         $col = Collection::create();
 
-        if ($idx) {
-            $col->filterByIdx($idx)->orderById('desc');
-
-            return $col->getFirstItem();
-        } else {
+        if (!$idx) {
             return $col->getNewEmptyItem();
         }
+
+        return $col
+            ->filterByIdx($idx)
+            ->orderById('desc')
+            ->getFirstItem();
     }
 
     public function wasExecuted($idx)
