@@ -55,6 +55,7 @@
   --form-row-title-padding-top: 3px;
   --footer-height: 40px;
   --floating-submit-height: 40px;
+  --site-title-background: #333;
 }
 body[data-skin="entrine"] {
   --font-primary: Monserrat, "Open Sans", Helvetica, Arial, sans-serif;
@@ -91,6 +92,7 @@ body[data-skin="entrine"] {
   --navy-gap: 5px 15px;
   --navy-hor-alignment: flex-start;
   --navy-item-padding: 10px 15px;
+  --site-title-background: #374254;
 }
 @font-face {
   font-family: 'Monserrat';

@@ -10,6 +10,7 @@ $widthLaptopSmall = 1200px
 
 $classicSkin = 'body[data-skin="classic"]'
 $entrineSkin = 'body[data-skin="entrine"]'
+$v2024Skin = 'body[data-skin="v2024"]'
 $localSkin = 'body[data-skin="local"]'
 
 $mqIe = " and (-ms-high-contrast: active), (-ms-high-contrast: none)"
@@ -36,10 +37,10 @@ $mqNoPhone = "screen and (min-width: " + ($widthPhone + 1px) + ")"
 $mqNoTabletAndIe = $mqNoTablet + $mqIe
 
 :root {
-  cssVar(navy-gap, 5px)
-  cssVar(navy-margin, 5px)
-  cssVar(navy-hor-alignment, center)
-  cssVar(navy-ver-alignment, center)
-  cssVar(navy-item-padding, 3px 8px)
-  cssVar(navy-font-size, 12px)
+  --navy-gap 5px
+  --navy-margin 5px
+  --navy-hor-alignment center
+  --navy-ver-alignment center
+  --navy-item-padding 3px 8px
+  --navy-font-size 12px
 }

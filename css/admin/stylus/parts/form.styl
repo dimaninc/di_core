@@ -425,24 +425,26 @@
 
 .diadminform_tabs
     > ul
+        --gap 12px
         display flex
         flex-wrap wrap
         list-style none
         margin 0
         padding 0
+        gap var(--gap)
+        {$v2024Skin} &
         {$classicSkin} & {
-            gap 4px
             margin 0 20px 10px 20px
             @media $mqTablet {
                 margin-left 12px
             }
         }
         {$entrineSkin} & {
-            gap 20px
+            --gap 20px
             margin 0 20px 10px
             @media $mqTablet {
+                --gap 8px
                 margin 0 12px 5px
-                gap 8px
             }
         }
         li
@@ -472,6 +474,7 @@
                 z-index 5
                 box-sizing border-box
                 text-decoration none
+                {$v2024Skin} &
                 {$classicSkin} & {
                     --border-radius 8px
                     --border 1px solid #cfcfcf

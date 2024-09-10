@@ -16,21 +16,17 @@
   font-family Arial, Helvetica, sans-serif
   padding-left $classicStandardPadding
   padding-right 10px
+  background-color var(--site-title-background)
   ellipsis()
 
   @media $mqTabletLandscape {
     max-width 100%
   }
 
-  {$classicSkin} & {
-    background #333
-  }
-
   {$entrineSkin} & {
     height $entrineBaseHeight
     line-height $entrineBaseHeight
     font-family $entrineFont
-    background $entrineColorBgDark
     font-size 20px
     font-weight 400
   }
@@ -45,6 +41,7 @@
     width 100px
   }
 
+  {$v2024Skin} &
   {$classicSkin} & {
     flex-wrap wrap
     gap 1px
@@ -81,6 +78,7 @@
     order -1
   }
 
+  {$v2024Skin} &
   {$classicSkin} & {
     flex-basis 90%
     height 50%
@@ -121,6 +119,7 @@
       display none
     }
 
+    {$v2024Skin} &
     {$classicSkin} & {
       font-size 10px
       background #555
@@ -154,6 +153,7 @@
     color white
   }
 
+  {$v2024Skin} &
   {$classicSkin} & {
     font-family Arial, Helvetica, sans-serif
     flex-basis 40%
