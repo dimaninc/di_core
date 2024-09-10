@@ -367,13 +367,14 @@ abstract class CMS
         } catch (HttpException $e) {
             $this->renderBeforeError();
 
-            $this->getTwig()->renderPage('errors/' . $e->getCode(), [
+            $this->getTwig()->renderPage("errors/{$e->getCode()}", [
                 'exception' => $e,
             ]);
 
             $this->renderAfterError();
 
             HttpCode::header($this->getResponseCode());
+            $e->sendHeaders();
         } catch (\Exception $e) {
             $this->setResponseCode(
                 HttpCode::INTERNAL_SERVER_ERROR
@@ -2495,9 +2496,27 @@ abstract class CMS
 
     /**
      * Such page does not exist
+     * @var array|string $options List of options, or just string value of Not-Found-Message header
+     *      headers?: string[] or [header => value] array
+     *      headers: string to be the value of Not-Found-Message header
+     *      phrase?: String of status code
      */
-    public function errorNotFound()
+    public function errorNotFound($options = [])
     {
+        $options = extend(
+            [
+                'headers' => [],
+                'phrase' => null,
+            ],
+            is_array($options) ? $options : ['headers' => $options]
+        );
+
+        if (!is_array($options['headers'])) {
+            $options['headers'] = [
+                'Not-Found-Message' => $options['headers'],
+            ];
+        }
+
         $this->setResponseCode(HttpCode::NOT_FOUND);
 
         if ($this->notFoundBackTraceNeeded()) {
@@ -2506,7 +2525,11 @@ abstract class CMS
             echo '</pre>';
         }
 
-        throw new HttpException($this->getResponseCode());
+        throw new HttpException(
+            $this->getResponseCode(),
+            $options['phrase'],
+            $options['headers']
+        );
     }
 
     /**

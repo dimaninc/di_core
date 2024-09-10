@@ -196,6 +196,15 @@ class HttpException extends \Exception
         return $this;
     }
 
+    public function sendHeaders()
+    {
+        foreach ($this->getHeaders() as $header) {
+            header($header);
+        }
+
+        return $this;
+    }
+
     /**
      * Return the body message.
      *
