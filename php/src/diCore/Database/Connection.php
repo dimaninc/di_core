@@ -227,6 +227,11 @@ abstract class Connection
         return $this->getDb()->getTableNames();
     }
 
+    public function checkHealth()
+    {
+        return !!$this->getTableNames();
+    }
+
     public static function consistsOfTables()
     {
         return static::consists_of_tables;
@@ -235,6 +240,11 @@ abstract class Connection
     public static function isMongo()
     {
         return static::engine === Engine::MONGO;
+    }
+
+    public static function isPostgres()
+    {
+        return static::engine === Engine::POSTGRESQL;
     }
 
     public static function isBooleanTypeSupported()

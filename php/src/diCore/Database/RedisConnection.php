@@ -19,4 +19,13 @@ class RedisConnection extends Connection
 
         return $this;
     }
+
+    public function checkHealth()
+    {
+        try {
+            return $this->getDb()->ping();
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
 }

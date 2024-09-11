@@ -74,6 +74,11 @@ class diBaseController
         return Config::isRestApiSupported();
     }
 
+    protected static function isHttpCodeErrorResponseSupported()
+    {
+        return true;
+    }
+
     protected static function isEqualHyphenAndUnderscoreInApiPath()
     {
         return Config::isEqualHyphenAndUnderscoreInApiPath();
@@ -357,7 +362,7 @@ class diBaseController
         $message = "Error in API ($info): {$e->getMessage()}";
         static::logMessage($message);
 
-        if (static::isRestApiSupported() && !static::isCli()) {
+        if (static::isHttpCodeErrorResponseSupported() && !static::isCli()) {
             HttpCode::header(HttpCode::INTERNAL_SERVER_ERROR);
         }
 
@@ -436,13 +441,15 @@ class diBaseController
             if (static::isRestApiSupported()) {
                 HttpCode::header($data->getResponseCode());
             }
+
             $data = $data->getReturnData();
         }
 
         if ($data instanceof HttpException) {
-            if (static::isRestApiSupported()) {
+            if (static::isHttpCodeErrorResponseSupported()) {
                 HttpCode::header($data->getCode());
             }
+
             $data = $data->getBody();
         }
 
