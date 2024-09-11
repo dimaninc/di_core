@@ -181,7 +181,10 @@ class Slugs extends \diCore\Admin\BasePage
 
     public function getModuleCaption()
     {
-        return 'Slugs';
+        return [
+            'ru' => 'Слаги',
+            'en' => 'Slugs',
+        ];
     }
 
     public function addButtonNeededInCaption()

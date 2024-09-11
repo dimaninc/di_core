@@ -8,19 +8,19 @@
 
 namespace diCore\Tool;
 
-use diCore\Data\Types;
+use diCore\Data\Http\HttpCode;
+use diCore\Entity\Redirect\Collection;
+use diCore\Entity\Redirect\Model;
 
 class Redirector
 {
     public function __construct()
     {
-        /** @var \diRedirectCollection $urls */
-        $urls = \diCollection::create(Types::redirect);
-        $urls
+        $urls = Collection::create()
             ->filterByOldUrl(static::currentUrlWithoutQuery())
             ->filterByActive(1);
 
-        /** @var \diRedirectModel $url */
+        /** @var Model $url */
         foreach ($urls as $url) {
             if (
                 $url->getOldUrl() === static::currentUrl() ||
@@ -39,12 +39,12 @@ class Redirector
 
     public static function currentUrl()
     {
-        return \diRequest::server('REQUEST_URI');
+        return \diRequest::requestUri();
     }
 
     public static function urlQuery()
     {
-        return \diRequest::server('QUERY_STRING');
+        return \diRequest::requestQueryString();
     }
 
     public static function currentUrlWithoutQuery()
@@ -58,7 +58,7 @@ class Redirector
 
     public static function go($url, $status = null)
     {
-        if ($url instanceof \diRedirectModel) {
+        if ($url instanceof Model) {
             $urlModel = $url;
             $status = $url->getStatus();
             $url = $url->getNewUrl();
@@ -67,15 +67,13 @@ class Redirector
                 $url .= '?' . static::urlQuery();
             }
         } else {
-            $status = $status ?: 301;
+            $status = $status ?: HttpCode::MOVED_PERMANENTLY;
         }
 
-        switch ($status) {
-            case 301:
-                header('HTTP/1.1 301 Moved Permanently');
-                break;
+        if ($status) {
+            HttpCode::header($status);
         }
 
-        header('Location: ' . $url);
+        header("Location: $url");
     }
 }

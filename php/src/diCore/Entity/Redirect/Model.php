@@ -5,8 +5,12 @@
  * Time: 11:42
  */
 
+namespace diCore\Entity\Redirect;
+
+use diCore\Data\Types;
+
 /**
- * Class diRedirectModel
+ * Class Model
  * Methods list for IDE
  *
  * @method string	getOldUrl
@@ -23,15 +27,16 @@
  * @method bool hasDate
  * @method bool hasStrictForQuery
  *
- * @method diRedirectModel setOldUrl($value)
- * @method diRedirectModel setNewUrl($value)
- * @method diRedirectModel setStatus($value)
- * @method diRedirectModel setActive($value)
- * @method diRedirectModel setDate($value)
- * @method diRedirectModel setStrictForQuery($value)
+ * @method $this setOldUrl($value)
+ * @method $this setNewUrl($value)
+ * @method $this setStatus($value)
+ * @method $this setActive($value)
+ * @method $this setDate($value)
+ * @method $this setStrictForQuery($value)
  */
-class diRedirectModel extends diModel
+class Model extends \diModel
 {
-    const type = diTypes::redirect;
+    const type = Types::redirect;
+    const table = 'redirects';
     protected $table = 'redirects';
 }

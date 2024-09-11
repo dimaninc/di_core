@@ -154,6 +154,9 @@ class Tags extends \diCore\Admin\BasePage
 
     public function getModuleCaption()
     {
-        return 'Теги';
+        return [
+            'ru' => 'Теги',
+            'en' => 'Tags',
+        ];
     }
 }

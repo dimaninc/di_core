@@ -5,7 +5,11 @@
  * Time: 11:43
  */
 
-class diRedirectsPage extends \diCore\Admin\BasePage
+namespace diCore\Admin\Page;
+
+use diCore\Entity\Redirect\Model;
+
+class Redirects extends \diCore\Admin\BasePage
 {
     protected $options = [
         'filters' => [
@@ -40,8 +44,8 @@ class diRedirectsPage extends \diCore\Admin\BasePage
             ],
             'date' => [
                 'title' => 'Дата',
-                'value' => function (diRedirectModel $m) {
-                    return diDateTime::format('d.m.Y H:i', $m->getDate());
+                'value' => function (Model $m) {
+                    return \diDateTime::simpleFormat($m->getDate());
                 },
                 'headAttrs' => [
                     'width' => '10%',
@@ -112,6 +116,9 @@ class diRedirectsPage extends \diCore\Admin\BasePage
 
     public function getModuleCaption()
     {
-        return 'Редиректы';
+        return [
+            'ru' => 'Редиректы',
+            'en' => 'Redirects',
+        ];
     }
 }
