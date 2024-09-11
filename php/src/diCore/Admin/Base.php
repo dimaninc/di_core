@@ -12,6 +12,7 @@ use diCore\Admin\Data\Skin;
 use diCore\Base\CMS;
 use diCore\Base\Exception\HttpException;
 use diCore\Data\Config;
+use diCore\Data\FeatureToggle;
 use diCore\Data\Http\HttpCode;
 use diCore\Data\Http\Response;
 use diCore\Database\Connection;
@@ -87,11 +88,12 @@ class Base
             'menu.db.migrations.create' => 'Создать миграцию',
             'menu.db.models.create' => 'Создать модель/коллекцию',
             'menu.db.admin_pages.create' => 'Создать админ.страницу',
-            'menu.emails' => 'Письма',
+            'menu.additional_variable' => 'Дополнительные переменные',
             'menu.admins' => 'Админы',
-            'menu.settings' => 'Служебное',
             'menu.edit_settings' => 'Настройки',
+            'menu.emails' => 'Письма',
             'menu.rebuild_cache' => 'Обновить кеш',
+            'menu.settings' => 'Служебное',
             'error.caption' => 'Ошибка',
             'error.page_not_found' => 'Админ.страница не найдена',
         ],
@@ -115,11 +117,12 @@ class Base
             'menu.db.migrations.create' => 'Create migration',
             'menu.db.models.create' => 'Create model/collection',
             'menu.db.admin_pages.create' => 'Create admin page',
-            'menu.emails' => 'E-mails',
+            'menu.additional_variable' => 'Additional vars',
             'menu.admins' => 'Admins',
-            'menu.settings' => 'Settings',
             'menu.edit_settings' => 'Edit settings',
+            'menu.emails' => 'E-mails',
             'menu.rebuild_cache' => 'Rebuild cache',
+            'menu.settings' => 'Settings',
             'error.caption' => 'Error',
             'error.page_not_found' => 'Admin page not found',
         ],
@@ -980,6 +983,7 @@ class Base
         return extend(
             $this->getAdminMenuMainTree(),
             $this->getAdminMenuTechTree(),
+            $this->getAdminAdditionalVariableTree(),
             $this->getAdminMenuDatabaseTree(),
             $this->getAdminMenuSettingsTree()
         );
@@ -1069,6 +1073,19 @@ class Base
                 'mail_queue'
             ),
             static::getVocabulary('menu.admins') => $this->getAdminMenuRow('admins'),
+        ];
+    }
+
+    protected function getAdminAdditionalVariableTree()
+    {
+        if (!FeatureToggle::basicCreate()::isAdditionalTemplateEnabled()) {
+            return [];
+        }
+
+        return [
+            static::getVocabulary(
+                'menu.additional_variable'
+            ) => $this->getAdminMenuRow('additional_variable'),
         ];
     }
 
