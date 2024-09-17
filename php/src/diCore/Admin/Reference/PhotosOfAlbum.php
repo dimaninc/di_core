@@ -10,6 +10,7 @@ namespace diCore\Admin\Reference;
 
 use diCore\Admin\Submit;
 use diCore\Entity\Photo\Model;
+use diCore\Helper\Slug;
 use diCore\Helper\StringHelper;
 use diCore\Traits\BasicCreate;
 
@@ -67,12 +68,9 @@ class PhotosOfAlbum
                 //var_debug('slug', $DR->getTable(), $DR->getStoredId());
 
                 $slugSource =
-                    StringHelper::replaceFileExtension(
-                        $DR->getData('pic'),
-                        ''
-                    ) ?:
+                    StringHelper::replaceFileExtension($DR->getData('pic'), '') ?:
                     get_unique_id();
-                $slug = \diSlug::generate(
+                $slug = Slug::generate(
                     $slugSource,
                     $DR->getTable(),
                     $DR->getStoredId(),

@@ -79,18 +79,21 @@ class Slugs extends \diCore\Admin\BasePage
                     'width' => '25%',
                 ],
                 'value' => function (Model $s) {
-                    return $s->getTargetModel()->exists()
-                        ? join(
-                            ', ',
-                            array_filter([
-                                $s->getTargetModel()->get('title'),
-                                '#' . $s->getTargetModel()->getId(),
-                            ])
-                        )
+                    $target = $s->getTargetModel();
+
+                    return $target->exists()
+                        ? "<a href='{$target->getAdminHref()}'>" .
+                                join(
+                                    ', ',
+                                    array_filter([
+                                        $target->get('title'),
+                                        '#' . $target->getId(),
+                                    ])
+                                ) .
+                                '</a>'
                         : 'Not exists: ' .
                                 \diTypes::getName($s->getTargetType()) .
-                                '#' .
-                                $s->getTargetId();
+                                "#{$s->getTargetId()}";
                 },
                 'noHref' => true,
             ],
