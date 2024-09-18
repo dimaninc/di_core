@@ -30,6 +30,8 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
     const MAIN_TABLE_ALIAS = 'main_table';
     protected $alias = self::MAIN_TABLE_ALIAS;
 
+    const LITE_FIRST_ITEM_GETTER = true;
+
     // cache
     const CACHE_FOLDER = '_cfg/cache/';
     const CACHE_FILE_EXTENSION = '.php';
@@ -475,7 +477,6 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         $obj = new ArrayObject($this->items);
         $it = $obj->getIterator();
 
-        //foreach ($this as $k => $v)
         while ($it->valid()) {
             $k = $it->key();
             $v = $it->current();
@@ -842,6 +843,18 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
      */
     public function getFirstItem()
     {
+        if (static::LITE_FIRST_ITEM_GETTER) {
+            $this->setPageSize(1)
+                ->setPageNumber(1)
+                ->rewind()
+                ->valid();
+
+            $model = $this->current();
+            $this->count = $model->exists() ? 1 : 0;
+
+            return $model;
+        }
+
         if ($this->count()) {
             $this->setPageSize(1)
                 ->setPageNumber(1)
