@@ -134,7 +134,7 @@ class diContentFamily
     }
 
     /**
-     * @return diCurrentCMS
+     * @return CMS|\diCurrentCMS
      */
     protected function getZ()
     {
@@ -150,13 +150,13 @@ class diContentFamily
             ->findModel()
             ->afterRoutesCheck();
 
-        if (!$this->getModel()->exists()) {
-            return $this->error();
+        if (!$this->canModelBeRendered($this->getModel())) {
+            $this->error();
+
+            return $this;
         }
 
-        $this->family[
-            (int) $this->getModel()->getLevelNum()
-        ] = $this->getModel();
+        $this->family[(int) $this->getModel()->getLevelNum()] = $this->getModel();
 
         $parent = $this->getModel()->getParent();
         while (isset($this->getZ()->tables[$this->table][$parent])) {
@@ -178,6 +178,11 @@ class diContentFamily
     protected function isModelSuitable(Model $content)
     {
         return $content->getSlug() == $this->getZ()->getRoute(0);
+    }
+
+    protected function canModelBeRendered(Model $content)
+    {
+        return $content->exists();
     }
 
     protected function getContentCollection()
@@ -217,10 +222,8 @@ class diContentFamily
         return $this;
     }
 
-    private function error()
+    protected function error()
     {
-        $this->getZ()->errorNotFound();
-
-        return $this;
+        $this->getZ()->errorNotFound('Content page not found');
     }
 }
