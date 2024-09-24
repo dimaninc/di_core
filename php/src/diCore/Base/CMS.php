@@ -2265,9 +2265,10 @@ abstract class CMS
      *
      * @param \diModel|array|null $models
      * @param array $defaults
+     * @param array $options
      * @return $this
      */
-    public function assignMeta($models = null, $defaults = [])
+    public function assignMeta($models = null, $defaults = [], $options = [])
     {
         $defaults = extend(
             [
@@ -2276,6 +2277,13 @@ abstract class CMS
                 'keywords' => null,
             ],
             $defaults
+        );
+
+        $options = extend(
+            [
+                'onBeforePageSuffix' => null, // fn (CMS $Z) => {}
+            ],
+            $options
         );
 
         if (!$models) {
@@ -2326,6 +2334,10 @@ abstract class CMS
             if ($value) {
                 $this->setMeta($value, $field);
             }
+        }
+
+        if ($options['onBeforePageSuffix'] && is_callable($options['onBeforePageSuffix'])) {
+            $options['onBeforePageSuffix']($this);
         }
 
         $this->addPageSuffixToMetaTitle()->addPageSuffixToMetaDescription();
