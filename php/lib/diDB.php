@@ -852,6 +852,10 @@ abstract class diDB
 
     protected function getJsonFieldQuery($value)
     {
+        if (is_bool($value)) {
+            return $value ? 'TRUE' : 'FALSE';
+        }
+
         if (is_array($value) || is_object($value)) {
             $value = ArrayHelper::fromObject($value);
 

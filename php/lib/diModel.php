@@ -722,6 +722,11 @@ class diModel implements \ArrayAccess
         return in_array($field, $this->getIpFields());
     }
 
+    protected function isBoolField($field)
+    {
+        return static::getFieldType($field) === FieldType::bool;
+    }
+
     public function setPicsFolder($folder)
     {
         $this->picsFolder = $folder;
@@ -2104,8 +2109,21 @@ class diModel implements \ArrayAccess
         return $ar;
     }
 
+    protected function shouldBeEscaped($value, $field)
+    {
+        if ($this->isBoolField($field) && is_bool($value)) {
+            return false;
+        }
+
+        return true;
+    }
+
     protected function escapeValue($value, $field)
     {
+        if (!$this->shouldBeEscaped($value, $field)) {
+            return $value;
+        }
+
         $binary = in_array($field, $this->getBinaryFields());
 
         return $this->getDb()->escape_string($value, $binary);
@@ -2120,7 +2138,7 @@ class diModel implements \ArrayAccess
 
         foreach ($ar as $k => &$v) {
             if (is_scalar($v)) {
-                if ($this->isIpField($k)) {
+                if ($this->isIpField($k) || $this->isBoolField($k)) {
                     $v = static::tuneFieldValueByTypeBeforeDb($k, $v);
                 }
 
