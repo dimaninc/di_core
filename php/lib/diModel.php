@@ -50,7 +50,7 @@ class diModel implements \ArrayAccess
      */
     const add_url_base_to_pic_fields_in_public_data = null;
 
-    // this should be redefined
+    /** @deprecated @var string */
     protected $table;
 
     /** @var array */
@@ -88,9 +88,14 @@ class diModel implements \ArrayAccess
     protected $picsFolder = null;
     protected $picsTnFolders = [];
 
-    /** @var array Fields of the model */
+    /**
+     * @var array
+     * @deprecated
+     * Fields of the model
+     */
     protected $fields = [];
 
+    // todo: -> static
     protected $picFields = ['pic', 'pic2', 'ico'];
     /* redefine this in child class */
     protected $customPicFields = [];
@@ -115,6 +120,7 @@ class diModel implements \ArrayAccess
         ],
     ];
 
+    // todo: -> static
     protected $fileFields = [
         'pic',
         'pic2',
@@ -126,13 +132,17 @@ class diModel implements \ArrayAccess
         'swf',
         'final_pic',
     ];
+    // todo: -> static
     protected $customFileFields = [];
+    // todo: -> static
     protected $customFileFolders = [];
 
     /* this will be automatically generated on model creation */
+    // todo: -> static
     protected $localizedFields = [];
+    // todo: -> static
     protected $customLocalizedFields = [];
-
+    // todo: -> static
     protected $dateFields = [
         'date',
         'created_at',
@@ -141,17 +151,21 @@ class diModel implements \ArrayAccess
         'deleted_at',
     ];
     /* redefine this in child class */
+    // todo: -> static
     protected $customDateFields = [];
-
+    // todo: -> static
     protected static $binaryFields = [];
+    // todo: -> static
     protected static $customBinaryFields = [];
 
     /**
      * @var array Fields which should be compared strict in saveToDb() method
      */
+    // todo: -> static
     protected $strictChangeOnSaveFields = [];
+    // todo: -> static
     protected $customStrictChangeOnSaveFields = [];
-
+    // todo: -> static
     protected $ipFields = ['ip'];
     /* redefine this in child class */
     protected $customIpFields = [];
