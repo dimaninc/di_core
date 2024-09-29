@@ -119,7 +119,7 @@ class diHierarchyTable
         return array_reverse($ar);
     }
 
-    /** @deprecated  */
+    /** @deprecated use getParentsByParentId */
     public function getParentsArByParentId($id)
     {
         $ar = [];
@@ -151,12 +151,9 @@ class diHierarchyTable
         $ar = [];
         $idsAr = [];
 
-        /** @var \diModel $model */
         while (
             ($parentId = isset($model) ? $model->get('parent') : $id) &&
-            ($model = \diCollection::create($this->getType())
-                ->find($parentId)
-                ->getFirstItem())
+            ($model = \diModel::create($this->getType(), $parentId, 'id'))
         ) {
             $idsAr[] = $model->getId();
 
@@ -164,14 +161,14 @@ class diHierarchyTable
                 $ar[] = $model;
             }
 
-            if ($model->get('parent') > 0) {
-                $id = $model->get('parent');
-            } else {
+            if ($model->get('parent') <= 0) {
                 break;
             }
 
+            $id = $model->get('parent');
+
             if (in_array($id, $idsAr)) {
-                throw new \Exception('Parent/id infinite cycle for id=' . $id);
+                throw new \Exception("Parent/id infinite cycle for id=$id");
             }
         }
 
@@ -183,10 +180,7 @@ class diHierarchyTable
         $idsAr = [];
 
         while (
-            $r = $this->getDb()->r(
-                $this->getTable(),
-                isset($r) ? $r->parent : $id
-            )
+            $r = $this->getDb()->r($this->getTable(), isset($r) ? $r->parent : $id)
         ) {
             $idsAr[] = $r->id;
 
@@ -271,11 +265,8 @@ class diHierarchyTable
         return $ar;
     }
 
-    public function getFirstChild(
-        $id,
-        $orderBy = 'order_num',
-        $whereSuffix = ''
-    ) {
+    public function getFirstChild($id, $orderBy = 'order_num', $whereSuffix = '')
+    {
         $children = $this->getChildren($id, [], $orderBy, $whereSuffix);
 
         return count($children) ? $children[0] : $this->createModel();

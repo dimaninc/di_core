@@ -30,9 +30,18 @@ class Model extends \diModel
     const slug_field_name = self::SLUG_FIELD_NAME;
     protected $table = 'slugs';
 
+    public static function createByFullSlug(string $fullSlug)
+    {
+        $fullSlug = trim($fullSlug, '/');
+
+        return Collection::create()
+            ->filterByFullSlug($fullSlug)
+            ->getFirstItem();
+    }
+
     public function getHref()
     {
-        return '/' . $this->getFullSlug() . '/';
+        return "/{$this->getFullSlug()}/";
     }
 
     public function validate()

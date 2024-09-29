@@ -249,9 +249,9 @@ class diModel implements \ArrayAccess
     }
 
     /**
-     * @param $type
-     * @param null|array|object $ar
-     * @param array $options
+     * @param int $type Model type
+     * @param null|array|object|int|string $ar Model data or id/slug
+     * @param array|string $options Options object or identityFieldName as string
      * @return $this
      * @throws \Exception
      */
