@@ -420,7 +420,11 @@ EOF;
                 return 'int';
 
             case 'json':
+            case 'jsonb':
                 return 'json';
+
+            case 'text':
+                return 'wysiwyg';
 
             default:
                 return 'string';

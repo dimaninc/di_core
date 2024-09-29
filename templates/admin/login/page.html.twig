@@ -1,12 +1,13 @@
 <div class="login-form-wrapper">
     {% block before_form_title %}
-    {#<div class="logo"><i>di</i><b>CMS</b> {{ _tech['xx_version'] }}</div>#}
     {% if _tech['site_logo'] %}
         <div class="site-logo"><img src="{{ _tech['site_logo'] }}" alt="{{ _tech['site_title'] }}"></div>
     {% else %}
         <div class="site-title">{{ _tech['site_title'] }}</div>
     {% endif %}
-    <div class="description">{{ lang['logo_description'] }} v{{ _tech['xx_version'] }}</div>
+        {% block form_description %}
+        <div class="description">{{ lang['logo_description'] }} v{{ _tech['xx_version'] }}</div>
+        {% endblock %}
     {% endblock %}
 
     {% include 'admin/login/form.html.twig' %}
@@ -18,7 +19,9 @@
     {% block after_form_contacts %}
     <div class="contacts">
         {{ lang['support'] }}:
-        <a href="mailto:dicms.support@gmail.com">dicms.support@gmail.com</a>
+        {% if _tech['cms_support_email'] %}
+            <a href="mailto:{{ _tech['cms_support_email'] }}">{{ _tech['cms_support_email'] }}</a>
+        {% endif %}
     </div>
     {% endblock %}
 </div>

@@ -567,6 +567,7 @@ EOF;
 
             case 'array':
             case 'json':
+            case 'jsonb':
                 return 'json';
 
             default:

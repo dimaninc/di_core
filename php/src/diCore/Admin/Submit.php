@@ -458,6 +458,10 @@ class Submit
                 case 'separator':
                     break;
 
+                case 'json':
+                    $this->setData($f, $value ?: null);
+                    break;
+
                 default:
                     $this->setData($f, $value);
                     break;

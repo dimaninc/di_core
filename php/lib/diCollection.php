@@ -2154,7 +2154,9 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
 
             if (!empty($val['options']['manual'])) {
                 return $val['expression'];
-            } elseif (!empty($val['options']['rawValue'])) {
+            }
+
+            if (!empty($val['options']['rawValue'])) {
                 if (is_array($value)) {
                     $value = '(' . join(',', $value) . ')';
                 }
@@ -2172,7 +2174,16 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
                             ? '(' .
                                 join(
                                     ',',
-                                    array_map(function ($v) {
+                                    array_map(function ($v) use ($val) {
+                                        if (
+                                            !static::getModelClass()::shouldBeEscaped(
+                                                $v,
+                                                $val['field']
+                                            )
+                                        ) {
+                                            return $v;
+                                        }
+
                                         return $this->getDb()->escapeValue($v);
                                     }, $value)
                                 ) .
@@ -2180,7 +2191,12 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
                             : null;
                     }
                 } else {
-                    $value = $this->getDb()->escapeValue($val['value']);
+                    $value = static::getModelClass()::shouldBeEscaped(
+                        $val['value'],
+                        $val['field']
+                    )
+                        ? $this->getDb()->escapeValue($val['value'])
+                        : $val['value'];
                 }
             }
 
@@ -2218,6 +2234,8 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
                         $value = 'NULL';
                         break;
                 }
+            } elseif (is_bool($val['value'])) {
+                $value = $val['value'] ? 'TRUE' : 'FALSE';
             }
 
             $condition =

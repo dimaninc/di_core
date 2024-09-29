@@ -335,6 +335,10 @@ class Form
             'ru' => 'Описание',
             'en' => 'Description',
         ],
+        'properties' => [
+            'ru' => 'Свойства',
+            'en' => 'Properties',
+        ],
         'en_title' => [
             'ru' => 'Название',
             'en' => 'Title',
