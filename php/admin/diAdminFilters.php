@@ -1977,8 +1977,8 @@ function diaf_empty($field, $value, $not = false, $table_prefix = '')
 
 function diaf_get_subcategories_ids($field, $value, $not = false, $table_prefix = '')
 {
-    $cs = new cmsStuff('categories');
-    $ar = $cs->get_children_idz($value, [$value]);
+    $cs = new \diHierarchyCategoriesTable();
+    $ar = $cs->getChildrenIdsAr($value, [$value]);
 
     return "{$table_prefix}{$field} in ('" . join("','", $ar) . "')";
 }

@@ -1849,6 +1849,13 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         return $this;
     }
 
+    public function resetFilters()
+    {
+        $this->sqlParts['where'] = [];
+
+        return $this;
+    }
+
     public function filterBy($field, $operator, $value = null)
     {
         if (func_num_args() == 2) {

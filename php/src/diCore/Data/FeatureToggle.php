@@ -34,6 +34,7 @@ class FeatureToggle
     {
         return [
             'isAdditionalTemplateEnabled' => static::isAdditionalTemplateEnabled(),
+            'shouldSendErrorMessageInHeaderOnError' => static::shouldSendErrorMessageInHeaderOnError(),
         ];
     }
 
@@ -48,6 +49,11 @@ class FeatureToggle
     }
 
     public static function isAdditionalTemplateEnabled()
+    {
+        return false;
+    }
+
+    public static function shouldSendErrorMessageInHeaderOnError()
     {
         return false;
     }

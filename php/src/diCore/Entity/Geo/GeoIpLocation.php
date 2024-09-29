@@ -72,6 +72,7 @@ class GeoIpLocation
         'Kherson',
         'Kherson Oblast',
         'Luhansk',
+        'Zaporizhzhia',
         'Zaporizhzhya Oblast',
     ];
 

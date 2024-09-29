@@ -9,6 +9,7 @@
 use diCore\Base\CMS;
 use diCore\Entity\Slug\Collection;
 use diCore\Entity\Slug\Model;
+use diCore\Helper\Slug;
 use diCore\Tool\Logger;
 
 class diSlugsUnited
@@ -74,7 +75,21 @@ class diSlugsUnited
 
     protected function unique($source)
     {
-        return \diSlug::unique(
+        $getFullSlug = function (string $slug) {
+            // simple_debug("diSlugsUnited::unique: {$this->getModel()->getTargetModel()->getHrefBase()} / $slug");
+
+            return join(
+                '/',
+                array_filter([
+                    $this->getModel()
+                        ->getTargetModel()
+                        ->getHrefBase(),
+                    $slug,
+                ])
+            );
+        };
+
+        return Slug::unique(
             $source,
             $this->getModel()->getTable(),
             $this->getModel()->getId(),
@@ -83,12 +98,10 @@ class diSlugsUnited
                     'db' => $this->getModel()
                         ::getConnection()
                         ->getDb(),
-                    'queryConditions' => [
-                        $this->getModel()
-                            ::getConnection()
-                            ->getDb()
-                            ->escapeFieldValue('level_num', $this->levelNum),
-                    ],
+                    'collectionFilter' => function (\diCollection $col) {
+                        return $col->filterBy('level_num', $this->levelNum);
+                    },
+                    'getFullSlug' => $getFullSlug,
                 ],
                 $this->getUniqueOptions()
             )
@@ -97,7 +110,7 @@ class diSlugsUnited
 
     protected function prepare($source, $lowerCase = true)
     {
-        return \diSlug::prepare($source, '-', $lowerCase);
+        return Slug::prepare($source, '-', $lowerCase);
     }
 
     public function generate($source, $options = [])

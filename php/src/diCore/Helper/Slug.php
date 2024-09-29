@@ -34,7 +34,14 @@ class Slug
                 'slugFieldName' => 'slug',
                 'lowerCase' => true,
                 'delimiter' => '-',
+                /*
+                 * @deprecated: use collectionFilter
+                 * SQL query conditions joined with AND
+                 */
                 'queryConditions' => [],
+                'collectionFilter' => null, // fn (\diCollection $col, string $testingSlug) => $col->filterBy(...)
+                'extraUniqueChecker' => null, // fn (string $fullSlug) => true if unique and no dupes
+                'getFullSlug' => null, // fn (string $slug) => string = hrefBase + slug
                 'uniqueMaker' => function ($origSlug, $delimiter, $index) {
                     return $origSlug . $delimiter . $index;
                 },
@@ -42,6 +49,8 @@ class Slug
             ],
             $options
         );
+
+        // simple_debug( "[slug=$slug, table=$table, id=$id]\n" . print_r( ArrayHelper::filterByKey( $options, [], [ 'db', 'collectionFilter', 'extraUniqueChecker', 'getFullSlug', ] ), true ), 'Slug::unique', '-slug' );
 
         $i = 1;
 
@@ -53,8 +62,10 @@ class Slug
                 $options['delimiter'],
                 $options['lowerCase']
             );
-            $slug = $origSlug . $options['delimiter'] . strval($i++);
+            $slug = $origSlug . $options['delimiter'] . $i++;
         }
+
+        // simple_debug("origSlug=$origSlug", 'Slug::unique', '-slug');
 
         /** @var \diDB $db */
         $db = $options['db'];
@@ -68,31 +79,53 @@ class Slug
             $options['queryConditions']
         );
 
-        while (true) {
-            $model = \diCollection::createForTable(
-                $table,
-                'WHERE ' . join(' AND ', $queryAr)
-            )->getFirstItem();
+        $getCol = function ($testingSlug, $queryAr = []) use ($table, $options) {
+            $col = \diCollection::createForTable($table);
 
-            if (
-                !$model->exists() ||
-                $id == $model->get($options['idFieldName'])
-            ) {
+            if ($options['queryConditions']) {
+                $col->setQuery('WHERE ' . join(' AND ', $queryAr));
+            } else {
+                $col->filterBy($options['slugFieldName'], $testingSlug);
+
+                if ($options['collectionFilter']) {
+                    $options['collectionFilter']($col, $testingSlug);
+                }
+            }
+
+            // simple_debug( $col->getTable() . ': ' . $col->getFullQuery(), 'Slug::unique', '-slug' );
+
+            return $col;
+        };
+
+        $extraUniqueChecker = $options['extraUniqueChecker'];
+        $getFullSlug = $options['getFullSlug'] ?? fn(string $slug) => $slug;
+        // simple_debug('extraUniqueChecker set? ' . ($extraUniqueChecker ? 'yes' : 'no'));
+        // simple_debug('getFullSlug set? ' . ($getFullSlug ? 'yes' : 'no'));
+
+        do {
+            $col = $getCol($slug, $queryAr);
+            $ids = $col->map($options['idFieldName']);
+
+            $noDupes = !$col->count() || (count($ids) == 1 && in_array($id, $ids));
+            $extraUnique = is_callable($extraUniqueChecker)
+                ? $extraUniqueChecker($getFullSlug($slug))
+                : true;
+
+            if ($noDupes && $extraUnique) {
                 break;
             }
 
-            $slug = $options['uniqueMaker'](
-                $origSlug,
-                $options['delimiter'],
-                $i++
-            );
-            $slugValue = $db ? $db->escapeValue($slug) : "'$slug'";
+            $slug = $options['uniqueMaker']($origSlug, $options['delimiter'], $i++);
 
-            $queryAr = array_merge(
-                [$slugField . ' = ' . $slugValue],
-                $options['queryConditions']
-            );
-        }
+            if ($options['queryConditions']) {
+                $slugValue = $db ? $db->escapeValue($slug) : "'$slug'";
+
+                $queryAr = array_merge(
+                    [$slugField . ' = ' . $slugValue],
+                    $options['queryConditions']
+                );
+            }
+        } while (true);
 
         return $slug;
     }

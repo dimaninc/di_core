@@ -5,6 +5,7 @@ namespace diCore\Base;
 use diCore\Base\Exception\HttpException;
 use diCore\Data\Config;
 use diCore\Data\Configuration;
+use diCore\Data\FeatureToggle;
 use diCore\Data\Http\HttpCode;
 use diCore\Data\Http\Response;
 use diCore\Database\Connection;
@@ -1452,7 +1453,7 @@ abstract class CMS
         if (isset($_GET['404'])) {
             $this->define_templates()
                 ->initTplDefines()
-                ->errorNotFound();
+                ->errorNotFound('Evident 404');
         }
 
         return $this;
@@ -1656,7 +1657,7 @@ abstract class CMS
         }
 
         if (!$this->routes || !$this->routes[0]) {
-            $this->errorNotFound();
+            $this->errorNotFound('No routes');
         }
 
         $this->cleanupEmptyRoutes();
@@ -2470,28 +2471,22 @@ abstract class CMS
             $cache_file
         );
         chmod($this->tables_cache_fn_ar[$this->content_table], $this->fileChmod);
-        //
 
         $ct_rows = "<?php\n" . str_replace('$this->', '$z_', $ct_rows);
 
         // clean titles cache file
         file_put_contents($this->ct_cache_fn_ar[$this->content_table], $ct_rows);
         chmod($this->ct_cache_fn_ar[$this->content_table], $this->fileChmod);
-        //
 
         return $this;
     }
 
     /**
      * Such page exists, but query string has redundant params
-     *
-     * @return $this
      */
     public function errorExtraQueryParams()
     {
-        $this->errorNotFound();
-
-        return $this;
+        $this->errorNotFound('Redundant query params');
     }
 
     /**
@@ -2511,7 +2506,10 @@ abstract class CMS
             is_array($options) ? $options : ['headers' => $options]
         );
 
-        if (!is_array($options['headers'])) {
+        if (
+            !is_array($options['headers']) &&
+            FeatureToggle::basicCreate()::shouldSendErrorMessageInHeaderOnError()
+        ) {
             $options['headers'] = [
                 'Not-Found-Message' => $options['headers'],
             ];
@@ -2653,7 +2651,10 @@ abstract class CMS
             $die = true;
         }
 
-        if ($headerDebugMessage) {
+        if (
+            $headerDebugMessage &&
+            FeatureToggle::basicCreate()::shouldSendErrorMessageInHeaderOnError()
+        ) {
             $headerDebugName = $headerDebugName ?: 'Redirect-message';
 
             header($headerDebugName . ': ' . $headerDebugMessage);
