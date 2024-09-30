@@ -78,6 +78,7 @@ var diAdminForm = function (table, id, auto_save_timeout) {
         self.initPicHolders()
             .initRotateAndWaterMarkLinks()
             .initFileInputs()
+            .initFormJson()
             .initCheckboxesToggles()
             .initFieldMaxLength()
             .initOwnValueForSelect()
@@ -154,6 +155,37 @@ var diAdminForm = function (table, id, auto_save_timeout) {
 
             $off.on('click', function () {
                 $checkboxes.prop('checked', false);
+            });
+        });
+
+        return this;
+    };
+
+    this.initFormJson = function () {
+        const $blocks = $('.diadminform-json-wrapper');
+        $blocks.each(function () {
+            const $this = $(this);
+            const $masterInput = $this.find('[data-type="master-input"]');
+            const $inputs = $this
+                .find('input,textarea,select')
+                .filter(':not([data-type="master-input"])');
+
+            const setMasterValue = function () {
+                const res = {};
+
+                $inputs.each(function () {
+                    const $i = $(this);
+                    const field = $i.data('field');
+                    const value = $i.val();
+
+                    res[field] = value;
+                });
+
+                $masterInput.val(JSON.stringify(di.isObjectEmpty(res) ? null : res));
+            };
+
+            $inputs.on('change keyup paste blur focus', function () {
+                setMasterValue();
             });
         });
 

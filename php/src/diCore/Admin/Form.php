@@ -194,6 +194,7 @@ class Form
     public $inputs = [];
     public $force_inputs_fields = []; // local fields having inputs
     protected $inputAttributes = [];
+    protected $inputCssClasses = [];
     public $uploaded_images = [];
     public $uploaded_images_w = [];
     public $uploaded_files = [];
@@ -1790,12 +1791,9 @@ EOF;
             $this->getInputAttributes($field),
             $attributes
         );
+        $attrStr = $this->getInputAttributesString($field, $attributes);
 
-        return '<textarea ' .
-            $this->getInputAttributesString($field, $attributes) .
-            '>' .
-            $this->formatValue($field) .
-            '</textarea>';
+        return "<textarea $attrStr>{$this->formatValue($field)}</textarea>";
     }
 
     protected function formatValue($field)
@@ -1869,6 +1867,7 @@ EOF;
             array_filter([
                 'diadminform-row',
                 $this->getFieldOption($field, 'rowClassName'),
+                ...$this->inputCssClasses[$field] ?? [],
             ])
         );
 
@@ -2056,6 +2055,46 @@ EOF;
             }
 
             $this->inputAttributes[$f] = extend($this->inputAttributes[$f], $params);
+        }
+
+        return $this;
+    }
+
+    public function addInputCssClass($field, $cssClass)
+    {
+        if (!is_array($field)) {
+            $field = [$field];
+        }
+
+        if (!is_array($cssClass)) {
+            $cssClass = [$cssClass];
+        }
+
+        foreach ($field as $f) {
+            $this->inputCssClasses[$f] = array_merge(
+                $this->inputCssClasses[$f] ?? [],
+                $cssClass
+            );
+        }
+
+        return $this;
+    }
+
+    public function removeInputCssClass($field, $cssClass)
+    {
+        if (!is_array($field)) {
+            $field = [$field];
+        }
+
+        if (!is_array($cssClass)) {
+            $cssClass = [$cssClass];
+        }
+
+        foreach ($field as $f) {
+            $this->inputCssClasses[$f] = array_filter(
+                $this->inputCssClasses[$f] ?? [],
+                fn($c) => !in_array($c, $cssClass)
+            );
         }
 
         return $this;
@@ -2503,12 +2542,24 @@ EOF;
 
     public function setJsonInput($field)
     {
+        if ($schema = $this->getFieldProperty($field, 'schema')) {
+            return $this->addInputCssClass($field, 'diadminform-complex')->setInput(
+                $field,
+                FormJson::buildHtml([
+                    'schema' => $schema,
+                    'jsonValue' => $this->getData($field),
+                    'Form' => $this,
+                    'masterField' => $field,
+                ])
+            );
+        }
+
         if (!$this->isStatic($field)) {
             return $this->setTextareaInput($field);
         }
 
         $this->setFieldOption($field, 'valueFormatter', [
-            self::class,
+            static::class,
             'valueFormatterJson',
         ]);
 

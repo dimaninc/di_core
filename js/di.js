@@ -363,6 +363,10 @@ var di = {
 
     // object
 
+    isObjectEmpty: function (obj) {
+        return !this.keys(obj).length;
+    },
+
     objectFilter: function (obj, callback) {
         var res = {};
         var key;
