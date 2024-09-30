@@ -1979,6 +1979,9 @@ body[data-skin="entrine"] .diadminform-row .title {
     padding-left: 12px;
   }
 }
+.diadminform-row[data-purpose="notes"] .title {
+  font-style: italic;
+}
 body[data-skin="entrine"] .diadminform-row[data-purpose="notes"] .title {
   padding-top: 0;
 }
@@ -2056,6 +2059,9 @@ body[data-skin="entrine"] .diadminform-row[data-purpose="notes"] .title {
   -ms-flex-pack: center;
   -webkit-justify-content: center;
   justify-content: center;
+}
+.diadminform-row[data-purpose="notes"] .value {
+  font-style: italic;
 }
 .diadminform-row[data-type="password"] .value {
   -webkit-box-lines: multiple;

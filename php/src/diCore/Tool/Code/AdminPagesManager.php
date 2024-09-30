@@ -426,6 +426,10 @@ EOF;
             case 'text':
                 return 'wysiwyg';
 
+            case 'bool':
+            case 'boolean':
+                return 'checkbox';
+
             default:
                 return 'string';
         }

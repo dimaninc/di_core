@@ -1700,17 +1700,17 @@ EOF;
                             $v['notes'] = [$v['notes']];
                         }
 
-                        $_notes = '';
+                        $notes = join(
+                            '',
+                            array_map(
+                                fn($n) => "<div>$notesStar $n</div>",
+                                $v['notes']
+                            )
+                        );
+                        $caption = $this->L('notes_caption')[count($v['notes']) > 1];
 
-                        foreach ($v['notes'] as $_note) {
-                            $_notes .= "<div><i>{$notesStar} {$_note}</i></div>";
-                        }
-
-                        $caption = $this->L('notes_caption');
-                        $caption = $caption[count($v['notes']) > 1];
-
-                        $html .= $this->getRow($field, $caption, $_notes, [
-                            'attrs' => 'data-purpose="notes"',
+                        $html .= $this->getRow($field, $caption, $notes, [
+                            'purpose' => 'notes',
                         ]);
                     }
                 }
@@ -1829,37 +1829,17 @@ EOF;
     {
         $options = extend(
             [
-                'attrs' => '',
+                'attrs' => [],
+                'purpose' => null,
             ],
             $options
         );
 
-        $attrs = extend(
-            $this->getFieldOption($field, 'extraAttributes') ?? [],
-            $options['attrs']
-        );
         $description = $this->getFieldProperty($field, 'description');
         $descriptionTag = $description
-            ? "\n<div class=\"description\">{$description}</div>"
+            ? "\n<div class=\"description\">$description</div>"
             : '';
 
-        if (is_array($attrs)) {
-            $attrs = ArrayHelper::toAttributesString($attrs);
-        }
-
-        if ($this->getFieldProperty($field, 'drag_and_drop_uploading')) {
-            $attrs .= ' data-drag-and-drop-uploading="true"';
-        }
-
-        if ($this->isStatic($field)) {
-            $attrs .= ' data-static="true"';
-        }
-
-        if ($this->getModel()->has($field)) {
-            $attrs .= ' data-exists="true"';
-        }
-
-        $titleSuffix = $this->AdminPage->isColonNeededInFormTitles() ? ':' : '';
         $dataType = $this->getFieldType($field);
 
         $className = join(
@@ -1871,8 +1851,44 @@ EOF;
             ])
         );
 
+        $attrs = extend(
+            [
+                'class' => $className,
+                'data-field' => $field,
+            ],
+            $this->getFieldOption($field, 'extraAttributes') ?? [],
+            $options['attrs']
+        );
+
+        switch ($options['purpose']) {
+            case 'notes':
+                $attrs['data-purpose'] = 'notes';
+                break;
+
+            default:
+                $attrs['id'] = "tr_$field";
+                $attrs['data-type'] = $dataType;
+
+                if ($this->getFieldProperty($field, 'drag_and_drop_uploading')) {
+                    $attrs['data-drag-and-drop-uploading'] = 'true';
+                }
+
+                if ($this->isStatic($field)) {
+                    $attrs['data-static'] = 'true';
+                }
+
+                if ($this->getModel()->has($field)) {
+                    $attrs['data-exists'] = 'true';
+                }
+
+                break;
+        }
+
+        $titleSuffix = $this->AdminPage->isColonNeededInFormTitles() ? ':' : '';
+        $attrStr = ArrayHelper::toAttributesString($attrs);
+
         return <<<EOF
-<div id="tr_{$field}" class="$className" data-field="$field" data-type="{$dataType}" {$attrs}>
+<div $attrStr>
 	<label class="title" for="$field">$title$titleSuffix</label>
 	<div class="value">$value</div>$descriptionTag
 </div>

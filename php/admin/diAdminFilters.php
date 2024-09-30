@@ -458,6 +458,7 @@ class diAdminFilters
         }
 
         $filterRowsAr = [];
+        $F = Form::basicCreate($this->getAdminPage());
 
         foreach ($this->ar as $a) {
             $field = $a['field'];
@@ -467,7 +468,7 @@ class diAdminFilters
                     $this->AdminPage->getFormFields(),
                     $field . '.title'
                 ) ?:
-                Form::getFieldTitle(
+                $F::getFieldTitle(
                     $field,
                     $this->AdminPage->getFieldProperty($field),
                     $this->language
