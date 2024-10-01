@@ -70,7 +70,15 @@ class AdminPagesManager
         'ico_t',
     ];
 
-    protected $picFieldNames = ['pic', 'pic2', 'pic3', 'logo', 'img', 'ico'];
+    protected $picFieldNames = [
+        'pic',
+        'pic2',
+        'pic3',
+        'logo',
+        'img',
+        'ico',
+        'avatar',
+    ];
 
     protected $checkboxFieldNames = [
         'active',

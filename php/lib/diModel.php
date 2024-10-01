@@ -741,6 +741,11 @@ class diModel implements \ArrayAccess
         return static::getFieldType($field) === FieldType::bool;
     }
 
+    public static function isJsonField($field)
+    {
+        return static::getFieldType($field) === FieldType::json;
+    }
+
     public function setPicsFolder($folder)
     {
         $this->picsFolder = $folder;
@@ -1045,6 +1050,8 @@ class diModel implements \ArrayAccess
                 $ar[$k . '_num'] = isInteger($v) ? $v : ip2bin($v);
                 $v = isInteger($v) ? bin2ip($v) : $v;
                 $ar[$k . '_str'] = $v;
+            } elseif (static::isJsonField($k)) {
+                $ar[$k . '__parsed'] = $this->getJsonData($k);
             }
 
             $ar[$k] = $v;

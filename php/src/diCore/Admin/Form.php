@@ -308,6 +308,10 @@ class Form
             'ru' => 'Фамилия',
             'en' => 'Last name',
         ],
+        'position' => [
+            'ru' => 'Должность',
+            'en' => 'Position',
+        ],
         'phone' => [
             'ru' => 'Телефон',
             'en' => 'Phone',
@@ -383,6 +387,10 @@ class Form
         'ico' => [
             'ru' => 'Иконка',
             'en' => 'Icon',
+        ],
+        'avatar' => [
+            'ru' => 'Аватар',
+            'en' => 'Avatar',
         ],
         'logo' => [
             'ru' => 'Логотип',

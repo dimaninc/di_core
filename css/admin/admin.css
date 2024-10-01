@@ -3008,7 +3008,7 @@ body[data-skin="classic"] .submit-block .submit-status-line {
     grid-template-columns: 1fr;
   }
 }
-.head {
+.admin-layout > .head {
   display: -webkit-box;
   display: -moz-box;
   display: -webkit-flex;
@@ -3018,7 +3018,7 @@ body[data-skin="classic"] .submit-block .submit-status-line {
   margin-left: var(--menu-width);
 }
 @media screen and (max-width: 450px) {
-  .head {
+  .admin-layout > .head {
     margin-left: 50px;
   }
 }
