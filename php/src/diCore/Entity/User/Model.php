@@ -100,6 +100,11 @@ class Model extends \diBaseUserModel
         return $this->setActivationKey(static::generateToken());
     }
 
+    public function generateAndSetPassword()
+    {
+        return $this->setPasswordExt(static::generatePassword());
+    }
+
     /**
      * @deprecated
      */
@@ -168,7 +173,7 @@ class Model extends \diBaseUserModel
 
     public function setInitiatingValues()
     {
-        $this->setPasswordExt(static::generatePassword())->generateAndSetToken();
+        $this->generateAndSetPassword()->generateAndSetToken();
 
         return $this;
     }

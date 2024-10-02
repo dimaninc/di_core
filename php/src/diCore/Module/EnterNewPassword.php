@@ -41,7 +41,7 @@ class EnterNewPassword extends \diModule
             $password = \diRequest::post('password', '');
             $password2 = \diRequest::post('password2', '');
 
-            if ($password && $password2 && $password == $password2) {
+            if ($password && $password2 && $password === $password2) {
                 $user
                     ->setValidationNeeded(false)
                     ->setPasswordExt($password)

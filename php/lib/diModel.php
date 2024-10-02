@@ -96,7 +96,7 @@ class diModel implements \ArrayAccess
     protected $fields = [];
 
     // todo: -> static
-    protected $picFields = ['pic', 'pic2', 'ico'];
+    protected $picFields = ['pic', 'pic2', 'ico', 'avatar'];
     /* redefine this in child class */
     protected $customPicFields = [];
 
@@ -3268,7 +3268,12 @@ ENGINE = InnoDB;";
 
     public function getAppearanceFeedForAdmin()
     {
-        return [$this->get('title'), $this->get('name')];
+        return [
+            $this->get('title') ?:
+            $this->get('en_title') ?:
+            $this->get('ru_title') ?:
+            $this->get('name'),
+        ];
     }
 
     public function getStringAppearanceForAdmin()

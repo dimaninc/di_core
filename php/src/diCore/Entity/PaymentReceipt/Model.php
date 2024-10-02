@@ -206,10 +206,7 @@ class Model extends \diCore\Entity\PaymentDraft\Model
     {
         return [
             $this->exists()
-                ? 'Произведена ' .
-                    $this['date_payed_date'] .
-                    ' в ' .
-                    $this['date_payed_time']
+                ? "Произведена {$this['date_payed_date']} в {$this['date_payed_time']}"
                 : '&mdash;',
         ];
     }

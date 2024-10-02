@@ -1737,9 +1737,11 @@ abstract class BasePage
 
     public function getFieldTitle($name)
     {
+        $F = Form::basicCreate($this);
+
         return $this->doesFieldExist($name)
             ? ($this->getFieldProperty($name, 'title') ?:
-                Form::getFieldTitle(
+                $F::getFieldTitle(
                     $name,
                     $this->getFieldProperty($name),
                     $this->getLanguage()
