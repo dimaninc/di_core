@@ -576,7 +576,7 @@ class diTags
         $ar = [];
         $qAr = [];
 
-        if ($this->fields['target_type'] && $this->targetTypeUsed) {
+        if ($this->targetTypeUsed && $this->fields['target_type']) {
             $qAr[] = "{$this->fields['target_type']} = '$type'";
         }
 

@@ -146,7 +146,11 @@ EOF;
                 $modelClassName
             );
 
-            $slugFieldName = $this->doesTableHaveField($connName, $table, 'slug')
+            $slugFieldName = $this->doesTableHaveField(
+                $connName,
+                $table,
+                \diModel::SLUG_FIELD_NAME
+            )
                 ? "\n    const slug_field_name = self::SLUG_FIELD_NAME;"
                 : '';
 

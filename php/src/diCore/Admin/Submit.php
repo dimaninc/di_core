@@ -213,8 +213,8 @@ class Submit
             return $this;
         }
 
-        if ($this->_af && in_array('slug', $this->_af)) {
-            $this->slugFieldName = 'slug';
+        if ($this->_af && in_array(\diModel::SLUG_FIELD_NAME, $this->_af)) {
+            $this->slugFieldName = \diModel::SLUG_FIELD_NAME;
         }
 
         return $this;

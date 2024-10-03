@@ -291,7 +291,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
             [
                 'query' => null,
                 'queryFields' => $queryFields,
-                'cachedRecords' => null,
+                'cachedRecords' => null, // resource or query string
             ],
             $options
         );
@@ -1117,21 +1117,26 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
      */
     public function setCachedRecords($records)
     {
-        $this->cachedRecords = $records;
+        if (is_string($records)) {
+            $this->cachedRecords = $this->getDb()->q($records);
+        } else {
+            $this->cachedRecords = $records;
+        }
 
         return $this;
     }
 
     protected function getStartFrom()
     {
-        $startFrom =
-            $this->skip !== null
-                ? $this->skip
-                : ($this->pageSize
-                    ? ($this->pageNumber - 1) * $this->pageSize
-                    : 0);
+        if ($this->skip !== null) {
+            return $this->skip;
+        }
 
-        return $startFrom;
+        if (!$this->pageSize) {
+            return 0;
+        }
+
+        return ($this->pageNumber - 1) * $this->pageSize;
     }
 
     protected function getLimitQueryEnding()

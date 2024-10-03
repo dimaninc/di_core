@@ -85,7 +85,7 @@ abstract class Pdo extends \diDB
 
     protected function getDSN()
     {
-        return $dsn = "{$this->driver}:host={$this->host};dbname={$this->dbname};charset={$this->charset}";
+        return "{$this->driver}:host={$this->host};dbname={$this->dbname};charset={$this->charset}";
     }
 
     protected function __close()
@@ -178,7 +178,15 @@ abstract class Pdo extends \diDB
 
     protected function __insert_id()
     {
-        return $this->link->lastInsertId();
+        try {
+            return $this->link->lastInsertId();
+        } catch (\PDOException $e) {
+            if ($this->debug) {
+                $this->debugMessage($e->getMessage());
+            }
+
+            return null;
+        }
     }
 
     protected function __affected_rows()
