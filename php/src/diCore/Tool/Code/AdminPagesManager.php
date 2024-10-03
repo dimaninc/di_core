@@ -501,13 +501,13 @@ EOF;
                 $ar[] = <<<EOF
             '$field' => [
                 'bodyAttrs' => [
-                    'class' => 'no-padding',
+                    'class' => 'center no-padding',
                 ],
                 'value' => function (Model \$m) {
-                    \$pic = '/' . \$m['pic_tn_with_path'];
+                    \$pic = '/' . \$m['{$field}_tn_with_path'];
 
                     return \$m->hasPic()
-                        ? "<img src=\"{\$pic}\" alt='' style='max-width: 200px; max-height: 200px;'>"
+                        ? "<img src=\"\$pic\" alt='' style='max-width: 200px; max-height: 200px;'>"
                         : '&mdash;';
                 },
             ],
