@@ -106,6 +106,9 @@ class Slug
             $col = $getCol($slug, $queryAr);
             $ids = $col->map($options['idFieldName']);
 
+            // var_dump($col->getFullQuery());
+            // die();
+
             $noDupes = !$col->count() || (count($ids) == 1 && in_array($id, $ids));
             $extraUnique = is_callable($extraUniqueChecker)
                 ? $extraUniqueChecker($getFullSlug($slug))

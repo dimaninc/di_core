@@ -142,27 +142,25 @@ class CollectionCache
                     self::$data = [];
                     break;
             }
-        } else {
-            if (!is_array($modelTypes)) {
-                $modelTypes = [$modelTypes];
-            }
 
-            foreach ($modelTypes as $modelType) {
-                $modelType = \diTypes::getId($modelType);
+            return;
+        }
 
-                switch (self::$storage) {
-                    case self::STORAGE_REDIS:
-                        self::$redisClient->del(
-                            self::getRedisKey($modelType, ['*'])
-                        );
-                        break;
+        if (!is_array($modelTypes)) {
+            $modelTypes = [$modelTypes];
+        }
 
-                    default:
-                        if (isset(self::$data[$modelType])) {
-                            unset(self::$data[$modelType]);
-                        }
-                        break;
-                }
+        foreach ($modelTypes as $modelType) {
+            $modelType = \diTypes::getId($modelType);
+
+            switch (self::$storage) {
+                case self::STORAGE_REDIS:
+                    self::$redisClient->del(self::getRedisKey($modelType, ['*']));
+                    break;
+
+                default:
+                    unset(self::$data[$modelType]);
+                    break;
             }
         }
     }

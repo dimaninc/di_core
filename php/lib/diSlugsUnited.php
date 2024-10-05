@@ -14,33 +14,45 @@ use diCore\Tool\Logger;
 
 class diSlugsUnited
 {
-    private $targetType;
-    private $targetId;
-    private $levelNum;
+    const ENTITY_TYPE = Model::type;
+
+    protected $targetType;
+    protected $targetId;
+    protected $levelNum;
 
     /** @var Model */
-    private $model;
+    protected $model;
 
     public function __construct($targetType, $targetId, $levelNum = 0)
     {
         $this->targetType = $targetType;
         $this->targetId = $targetId;
         $this->levelNum = $levelNum;
-
-        $col = Collection::create()
-            ->filterByTargetType($this->targetType)
-            ->filterByTargetId($this->targetId);
-        $this->model = $col->getFirstItem();
+        $this->model = $this->getCollection()->getFirstItem();
 
         if (!$this->getModel()->exists()) {
-            $this->getModel()
-                ->setTargetType($this->targetType)
-                ->setTargetId($this->targetId)
-                ->setLevelNum($this->levelNum);
+            $this->initModel();
         }
     }
 
-    public static function emulateRealHref(Model $s, CMS $Z)
+    protected function getCollection()
+    {
+        return Collection::create(static::ENTITY_TYPE)
+            ->filterByTargetType($this->targetType)
+            ->filterByTargetId($this->targetId);
+    }
+
+    protected function initModel()
+    {
+        $this->getModel()
+            ->setTargetType($this->targetType)
+            ->setTargetId($this->targetId)
+            ->setLevelNum($this->levelNum);
+
+        return $this;
+    }
+
+    public static function emulateRealHref(\diModel $s, CMS $Z)
     {
     }
 
@@ -73,6 +85,13 @@ class diSlugsUnited
         return [];
     }
 
+    protected function getDefaultCollectionFilter(callable $getFullSlug)
+    {
+        return function (\diCollection $col, $testingSlug) {
+            return $col->filterBy('level_num', $this->levelNum);
+        };
+    }
+
     protected function unique($source)
     {
         $getFullSlug = function (string $slug) {
@@ -98,9 +117,9 @@ class diSlugsUnited
                     'db' => $this->getModel()
                         ::getConnection()
                         ->getDb(),
-                    'collectionFilter' => function (\diCollection $col) {
-                        return $col->filterBy('level_num', $this->levelNum);
-                    },
+                    'collectionFilter' => $this->getDefaultCollectionFilter(
+                        $getFullSlug
+                    ),
                     'getFullSlug' => $getFullSlug,
                 ],
                 $this->getUniqueOptions()
