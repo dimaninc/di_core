@@ -179,7 +179,7 @@ class Model extends \diModel
         $diffs = [];
 
         foreach ($this->getOldValues() as $field => $oldValue) {
-            $newValue = $newData[$field];
+            $newValue = $newData[$field] ?? '';
 
             if (!is_scalar($newValue) || !is_scalar($oldValue)) {
                 continue;
@@ -316,6 +316,11 @@ class Model extends \diModel
         }
 
         return true;
+    }
+
+    public function setFormFields(array $fields)
+    {
+        return $this->setRelated('formFields', $fields);
     }
 
     public function setBothData(\diModel $model, \diModel $oldModel = null)

@@ -1267,6 +1267,8 @@ abstract class BasePage
             ],
         ]);
 
+        $this->prepareForEditLog();
+
         $this->Form = Form::basicCreate($this);
         $this->getForm()->afterInit([
             'static_mode' => $this->getOption('staticMode'),
@@ -1280,59 +1282,61 @@ abstract class BasePage
         return $this->getForm()->getSubmitButtons();
     }
 
+    protected function prepareForEditLog()
+    {
+        $this->getTwig()
+            ->getEngine()
+            ->getExtension(EscaperExtension::class)
+            ->setEscaper('insdel', function ($twig, $string, $charset) {
+                $escaped = StringHelper::out($string);
+                $semiEscaped = str_replace(
+                    ['&lt;ins&gt;', '&lt;/ins&gt;', '&lt;del&gt;', '&lt;/del&gt;'],
+                    ['<ins>', '</ins>', '<del>', '</del>'],
+                    $escaped
+                );
+
+                return $semiEscaped;
+
+                // return '(' . $semiEscaped . ')';
+            });
+
+        return $this;
+    }
+
     protected function printEditLog()
     {
-        if ($this->useEditLog() && !$this->hideEditLog() && $this->getId()) {
-            $records = TableEditLogs::create()
-                ->filterByTargetTable($this->getTable())
-                ->filterByTargetId([$this->getId(), (int) $this->getId()])
-                ->orderById('DESC');
-
-            $admins = Admins::create();
-
-            /** @var TableEditLog $rec */
-            foreach ($records as $rec) {
-                $rec->parseData();
-            }
-
-            $options = extend(
-                [
-                    'show_only_diff' => false,
-                    'strip_tags' => false,
-                ],
-                (array) $this->useEditLog()
-            );
-
-            $this->getTwig()
-                ->getEngine()
-                ->getExtension(EscaperExtension::class)
-                ->setEscaper('insdel', function ($twig, $string, $charset) {
-                    $escaped = StringHelper::out($string);
-                    $semiEscaped = str_replace(
-                        [
-                            '&lt;ins&gt;',
-                            '&lt;/ins&gt;',
-                            '&lt;del&gt;',
-                            '&lt;/del&gt;',
-                        ],
-                        ['<ins>', '</ins>', '<del>', '</del>'],
-                        $escaped
-                    );
-
-                    return $semiEscaped;
-
-                    // return '(' . $semiEscaped . ')';
-                });
-
-            $this->getForm()->setInput(
-                TableEditLog::ADMIN_TAB_NAME,
-                $this->getTwig()->parse('admin/admin_table_edit_log/form_field', [
-                    'records' => $records,
-                    'admins' => $admins,
-                    'options' => $options,
-                ])
-            );
+        if (!$this->useEditLog() || $this->hideEditLog() || !$this->getId()) {
+            return $this;
         }
+
+        $records = TableEditLogs::create()
+            ->filterByTargetTable($this->getTable())
+            ->filterByTargetId([$this->getId(), (int) $this->getId()])
+            ->orderById('DESC');
+
+        $admins = Admins::create();
+
+        /** @var TableEditLog $rec */
+        foreach ($records as $rec) {
+            $rec->parseData();
+        }
+
+        $options = extend(
+            [
+                'show_only_diff' => false,
+                'strip_tags' => false,
+            ],
+            (array) $this->useEditLog()
+        );
+
+        $this->getForm()->setInput(
+            TableEditLog::ADMIN_TAB_NAME,
+            $this->getTwig()->parse('admin/admin_table_edit_log/form_field', [
+                'records' => $records,
+                'admins' => $admins,
+                'options' => $options,
+            ])
+        );
 
         return $this;
     }
@@ -1400,7 +1404,7 @@ abstract class BasePage
         if ($this->useEditLog()) {
             try {
                 $log = TableEditLog::create()
-                    ->setRelated('formFields', $this->getFormFieldsFiltered())
+                    ->setFormFields($this->getFormFieldsFiltered())
                     ->setTargetTable($this->getTable())
                     ->setTargetId($this->getId())
                     ->setAdminId(
