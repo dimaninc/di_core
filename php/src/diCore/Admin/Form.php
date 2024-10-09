@@ -89,6 +89,7 @@ class Form
             'placeholder.date.year' => 'YY',
             'placeholder.time.hour' => 'HH',
             'placeholder.time.minute' => 'MM',
+            'placeholder.time.second' => 'SS',
 
             'yes' => 'Yes',
             'no' => 'No',
@@ -149,6 +150,7 @@ class Form
             'placeholder.date.year' => 'ГГГГ',
             'placeholder.time.hour' => 'ЧЧ',
             'placeholder.time.minute' => 'ММ',
+            'placeholder.time.second' => 'СС',
 
             'yes' => 'Да',
             'no' => 'Нет',
@@ -3797,6 +3799,31 @@ EOF;
         );
     }
 
+    public static function parseDateValue($dt): array
+    {
+        if (!$dt || $dt === '0000-00-00 00:00:00') {
+            return [
+                'dy' => '',
+                'dm' => '',
+                'dd' => '',
+                'th' => '',
+                'tm' => '',
+                'ts' => '',
+            ];
+        }
+
+        $ar = getdate(\diDateTime::timestamp($dt));
+
+        return [
+            'dy' => $ar['year'],
+            'dm' => lead0($ar['mon']),
+            'dd' => lead0($ar['mday']),
+            'th' => lead0($ar['hours']),
+            'tm' => lead0($ar['minutes']),
+            'ts' => lead0($ar['seconds']),
+        ];
+    }
+
     public function get_datetime_input(
         $table,
         $field,
@@ -3805,28 +3832,7 @@ EOF;
         $time = false,
         $calendar_cfg = true
     ) {
-        if ($value && $value != '0000-00-00 00:00:00') {
-            $str_field_type =
-                substr($this->getFieldProperty($field, 'type'), -4) == '_str' ?: -1;
-
-            if ($str_field_type == -1) {
-                $str_field_type = !is_numeric($value);
-            }
-
-            $v = getdate($str_field_type ? strtotime($value) : $value);
-
-            $dy = $v['year'];
-            $dm = lead0($v['mon']);
-            $dd = lead0($v['mday']);
-            $th = lead0($v['hours']);
-            $tm = lead0($v['minutes']);
-        } else {
-            $dy = '';
-            $dm = '';
-            $dd = '';
-            $th = '';
-            $tm = '';
-        }
+        $dt = static::parseDateValue($value);
 
         $ph = [
             'dd' => $this->getFieldOption($field, 'use_placeholder')
@@ -3844,34 +3850,27 @@ EOF;
             'tm' => $this->getFieldOption($field, 'use_placeholder')
                 ? self::L('placeholder.time.minute')
                 : '',
+            'ts' => $this->getFieldOption($field, 'use_placeholder')
+                ? self::L('placeholder.time.second')
+                : '',
         ];
 
         $d =
-            "<input type=\"text\" name=\"{$field}[dd]\" id=\"{$field}[dd]\" value=\"$dd\" size=\"2\" placeholder=\"{$ph['dd']}\">" .
+            "<input type=\"text\" name=\"{$field}[dd]\" id=\"{$field}[dd]\" value=\"{$dt['dd']}\" size=\"2\" placeholder=\"{$ph['dd']}\">" .
             "<span class='date-sep'>.</span>" .
-            "<input type=\"text\" name=\"{$field}[dm]\" id=\"{$field}[dm]\" value=\"$dm\" size=\"2\" placeholder=\"{$ph['dm']}\">" .
+            "<input type=\"text\" name=\"{$field}[dm]\" id=\"{$field}[dm]\" value=\"{$dt['dm']}\" size=\"2\" placeholder=\"{$ph['dm']}\">" .
             "<span class='date-sep'>.</span>" .
-            "<input type=\"text\" name=\"{$field}[dy]\" id=\"{$field}[dy]\" value=\"$dy\" size=\"4\" placeholder=\"{$ph['dy']}\">";
+            "<input type=\"text\" name=\"{$field}[dy]\" id=\"{$field}[dy]\" value=\"{$dt['dy']}\" size=\"4\" placeholder=\"{$ph['dy']}\">";
 
         $t =
-            "<input type=\"text\" name=\"{$field}[th]\" id=\"{$field}[th]\" value=\"$th\" size=\"2\" placeholder=\"{$ph['th']}\">" .
+            "<input type=\"text\" name=\"{$field}[th]\" id=\"{$field}[th]\" value=\"{$dt['th']}\" size=\"2\" placeholder=\"{$ph['th']}\">" .
             "<span class='time-sep'>:</span>" .
-            "<input type=\"text\" name=\"{$field}[tm]\" id=\"{$field}[tm]\" value=\"$tm\" size=\"2\" placeholder=\"{$ph['tm']}\">";
+            "<input type=\"text\" name=\"{$field}[tm]\" id=\"{$field}[tm]\" value=\"{$dt['tm']}\" size=\"2\" placeholder=\"{$ph['tm']}\">";
 
-        $input = '';
-        if ($date) {
-            $input .= $d;
-        }
-        if ($input) {
-            $input .= '&nbsp;';
-        }
-        if ($time) {
-            $input .= $t;
-        }
+        $input = join('&nbsp;', array_filter([$date ? $d : '', $time ? $t : '']));
 
         if ($date && $calendar_cfg) {
-            //$uid = substr(get_unique_id(), 0, 8);
-            $uid = "{$table}_{$field}";
+            $uid = "{$table}_$field";
 
             if ($calendar_cfg === true) {
                 $calendar_cfg_js = "months_to_show: 1, date1: '$field', able_to_go_to_past: true";
