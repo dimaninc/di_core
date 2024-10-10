@@ -150,8 +150,9 @@ class diDateTime
 
     public static function mongoFormat($dt = null)
     {
-        $dt = self::sqlFormat($dt);
-        return new UTCDatetime((new \DateTime($dt))->getTimestamp() * 1000);
+        return new UTCDatetime(
+            (new \DateTime(self::sqlFormat($dt)))->getTimestamp() * 1000
+        );
     }
 
     public static function durationInIso8601($seconds)
@@ -168,23 +169,27 @@ class diDateTime
         return sprintf('P%dDT%dH%dM%dS', $days, $hours, $minutes, $seconds);
     }
 
-    public static function simpleFormat($dt = null)
+    public static function simpleFormat($dt = null, $strict = false)
     {
-        return self::format(self::FORMAT_SIMPLE_DATE_TIME, $dt);
+        return self::format(self::FORMAT_SIMPLE_DATE_TIME, $dt, $strict);
     }
 
-    public static function simpleDateFormat($dt = null)
+    public static function simpleDateFormat($dt = null, $strict = false)
     {
-        return self::format(self::FORMAT_SIMPLE_DATE, $dt);
+        return self::format(self::FORMAT_SIMPLE_DATE, $dt, $strict);
     }
 
-    public static function simpleTimeFormat($dt = null)
+    public static function simpleTimeFormat($dt = null, $strict = false)
     {
-        return self::format(self::FORMAT_SIMPLE_TIME, $dt);
+        return self::format(self::FORMAT_SIMPLE_TIME, $dt, $strict);
     }
 
-    public static function format($format, $dt = null)
+    public static function format($format, $dt = null, $strict = false)
     {
+        if ($strict && !$dt) {
+            return '';
+        }
+
         $dt = self::timestamp($dt ?: time());
         $a = getdate($dt);
 
@@ -207,9 +212,13 @@ class diDateTime
     {
         if ($dt === null) {
             return time();
-        } elseif (isInteger($dt)) {
+        }
+
+        if (isInteger($dt)) {
             return $dt;
-        } elseif ($dt instanceof UTCDatetime) {
+        }
+
+        if ($dt instanceof UTCDatetime) {
             return $dt->toDateTime()->getTimestamp();
         }
 
@@ -227,9 +236,7 @@ class diDateTime
             $leapYear = self::isLeapYear($leapYear);
         }
 
-        return isset(self::$daysInMonth[$leapYear][$m - 1])
-            ? self::$daysInMonth[$leapYear][$m - 1]
-            : null;
+        return self::$daysInMonth[$leapYear][$m - 1] ?? null;
     }
 
     public static function isLeapYear($year)

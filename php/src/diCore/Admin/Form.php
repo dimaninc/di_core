@@ -3824,6 +3824,18 @@ EOF;
         ];
     }
 
+    public static function getDatePlaceholders($usePlaceholder): array
+    {
+        return [
+            'dd' => $usePlaceholder ? static::L('placeholder.date.day') : '',
+            'dm' => $usePlaceholder ? static::L('placeholder.date.month') : '',
+            'dy' => $usePlaceholder ? static::L('placeholder.date.year') : '',
+            'th' => $usePlaceholder ? static::L('placeholder.time.hour') : '',
+            'tm' => $usePlaceholder ? static::L('placeholder.time.minute') : '',
+            'ts' => $usePlaceholder ? static::L('placeholder.time.second') : '',
+        ];
+    }
+
     public function get_datetime_input(
         $table,
         $field,
@@ -3833,39 +3845,34 @@ EOF;
         $calendar_cfg = true
     ) {
         $dt = static::parseDateValue($value);
+        $ph = static::getDatePlaceholders(
+            $this->getFieldOption($field, 'use_placeholder')
+        );
 
-        $ph = [
-            'dd' => $this->getFieldOption($field, 'use_placeholder')
-                ? self::L('placeholder.date.day')
-                : '',
-            'dm' => $this->getFieldOption($field, 'use_placeholder')
-                ? self::L('placeholder.date.month')
-                : '',
-            'dy' => $this->getFieldOption($field, 'use_placeholder')
-                ? self::L('placeholder.date.year')
-                : '',
-            'th' => $this->getFieldOption($field, 'use_placeholder')
-                ? self::L('placeholder.time.hour')
-                : '',
-            'tm' => $this->getFieldOption($field, 'use_placeholder')
-                ? self::L('placeholder.time.minute')
-                : '',
-            'ts' => $this->getFieldOption($field, 'use_placeholder')
-                ? self::L('placeholder.time.second')
-                : '',
-        ];
+        $inputAttrs = fn($subfield) => ArrayHelper::toAttributesString(
+            [
+                'type' => 'text',
+                'name' => "{$field}[$subfield]",
+                'id' => "{$field}[$subfield]",
+                'data-subfield' => $subfield,
+                'value' => $dt[$subfield],
+                'size' => $subfield === 'dy' ? 4 : 2,
+                'placeholder' => $ph[$subfield],
+            ],
+            true,
+            ArrayHelper::ESCAPE_HTML
+        );
 
-        $d =
-            "<input type=\"text\" name=\"{$field}[dd]\" id=\"{$field}[dd]\" value=\"{$dt['dd']}\" size=\"2\" placeholder=\"{$ph['dd']}\">" .
-            "<span class='date-sep'>.</span>" .
-            "<input type=\"text\" name=\"{$field}[dm]\" id=\"{$field}[dm]\" value=\"{$dt['dm']}\" size=\"2\" placeholder=\"{$ph['dm']}\">" .
-            "<span class='date-sep'>.</span>" .
-            "<input type=\"text\" name=\"{$field}[dy]\" id=\"{$field}[dy]\" value=\"{$dt['dy']}\" size=\"4\" placeholder=\"{$ph['dy']}\">";
+        $d = join("<span class='date-sep'>.</span>", [
+            "<input {$inputAttrs('dd')}>",
+            "<input {$inputAttrs('dm')}>",
+            "<input {$inputAttrs('dy')}>",
+        ]);
 
-        $t =
-            "<input type=\"text\" name=\"{$field}[th]\" id=\"{$field}[th]\" value=\"{$dt['th']}\" size=\"2\" placeholder=\"{$ph['th']}\">" .
-            "<span class='time-sep'>:</span>" .
-            "<input type=\"text\" name=\"{$field}[tm]\" id=\"{$field}[tm]\" value=\"{$dt['tm']}\" size=\"2\" placeholder=\"{$ph['tm']}\">";
+        $t = join("<span class='time-sep'>:</span>", [
+            "<input {$inputAttrs('th')}>",
+            "<input {$inputAttrs('tm')}>",
+        ]);
 
         $input = join('&nbsp;', array_filter([$date ? $d : '', $time ? $t : '']));
 

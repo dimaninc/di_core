@@ -46,8 +46,12 @@ trait AutoTimestamps
 
     public function getPairString($glue = '<br>')
     {
-        return \diDateTime::simpleFormat($this->getCreatedAt()) .
-            $glue .
-            \diDateTime::simpleFormat($this->getUpdatedAt());
+        return join(
+            $glue,
+            array_filter([
+                \diDateTime::simpleFormat($this->getCreatedAt(), true),
+                \diDateTime::simpleFormat($this->getUpdatedAt(), true),
+            ])
+        );
     }
 }

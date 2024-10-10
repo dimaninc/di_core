@@ -153,39 +153,34 @@ class FormJson
         );
 
         $dt = $this->Form::parseDateValue($this->getValue($field));
+        $ph = $this->Form::getDatePlaceholders($props['usePlaceholder']);
+        $f = "{$this->masterField}__$field";
 
-        $ph = [
-            'dd' => $props['usePlaceholder']
-                ? $this->Form::L('placeholder.date.day')
-                : '',
-            'dm' => $props['usePlaceholder']
-                ? $this->Form::L('placeholder.date.month')
-                : '',
-            'dy' => $props['usePlaceholder']
-                ? $this->Form::L('placeholder.date.year')
-                : '',
-            'th' => $props['usePlaceholder']
-                ? $this->Form::L('placeholder.time.hour')
-                : '',
-            'tm' => $props['usePlaceholder']
-                ? $this->Form::L('placeholder.time.minute')
-                : '',
-            'ts' => $props['usePlaceholder']
-                ? $this->Form::L('placeholder.time.second')
-                : '',
-        ];
+        $inputAttrs = fn($subfield) => ArrayHelper::toAttributesString(
+            [
+                'type' => 'text',
+                'name' => "{$f}[$subfield]",
+                'id' => "{$f}[$subfield]",
+                'data-field' => $field,
+                'data-subfield' => $subfield,
+                'value' => $dt[$subfield],
+                'size' => $subfield === 'dy' ? 4 : 2,
+                'placeholder' => $ph[$subfield],
+            ],
+            true,
+            ArrayHelper::ESCAPE_HTML
+        );
 
-        $d =
-            "<input type=\"text\" name=\"{$field}[dd]\" id=\"{$field}[dd]\" value=\"{$dt['dd']}\" size=\"2\" placeholder=\"{$ph['dd']}\">" .
-            "<span class='date-sep'>.</span>" .
-            "<input type=\"text\" name=\"{$field}[dm]\" id=\"{$field}[dm]\" value=\"{$dt['dm']}\" size=\"2\" placeholder=\"{$ph['dm']}\">" .
-            "<span class='date-sep'>.</span>" .
-            "<input type=\"text\" name=\"{$field}[dy]\" id=\"{$field}[dy]\" value=\"{$dt['dy']}\" size=\"4\" placeholder=\"{$ph['dy']}\">";
+        $d = join("<span class='date-sep'>.</span>", [
+            "<input {$inputAttrs('dd')}>",
+            "<input {$inputAttrs('dm')}>",
+            "<input {$inputAttrs('dy')}>",
+        ]);
 
-        $t =
-            "<input type=\"text\" name=\"{$field}[th]\" id=\"{$field}[th]\" value=\"{$dt['th']}\" size=\"2\" placeholder=\"{$ph['th']}\">" .
-            "<span class='time-sep'>:</span>" .
-            "<input type=\"text\" name=\"{$field}[tm]\" id=\"{$field}[tm]\" value=\"{$dt['tm']}\" size=\"2\" placeholder=\"{$ph['tm']}\">";
+        $t = join("<span class='time-sep'>:</span>", [
+            "<input {$inputAttrs('th')}>",
+            "<input {$inputAttrs('tm')}>",
+        ]);
 
         $date = in_array($props['type'], [
             'date',
@@ -202,12 +197,12 @@ class FormJson
         $input = join('&nbsp;', array_filter([$date ? $d : '', $time ? $t : '']));
 
         if ($date) {
-            $uid = "{$this->getForm()->getTable()}__{$this->masterField}__$field";
+            $uid = "{$this->getForm()->getTable()}__$f";
 
             $config = extend(
                 $props['calendarConfig'] ?: [
                     'months_to_show' => 1,
-                    'date1' => $field,
+                    'date1' => $f,
                     'able_to_go_to_past' => true,
                 ],
                 [

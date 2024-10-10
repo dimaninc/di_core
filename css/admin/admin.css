@@ -2287,6 +2287,10 @@ body[data-skin="entrine"] .diadminform-row .value input:not([type="checkbox"]):n
 body[data-skin="entrine"] .diadminform-row .value textarea {
   padding: 15px;
 }
+body[data-skin="entrine"] .diadminform-row .value input:not([type="checkbox"]):not([type="radio"])::placeholder,
+body[data-skin="entrine"] .diadminform-row .value textarea::placeholder {
+  font-size: 88%;
+}
 @media screen and (max-width: 768px) {
   body[data-skin="entrine"] .diadminform-row .value input:not([type="checkbox"]):not([type="radio"]),
   body[data-skin="entrine"] .diadminform-row .value textarea {

@@ -241,8 +241,12 @@
         textarea
             {$entrineSkin} &
                 padding 15px
-                @media $mqTablet
+                &::placeholder {
+                    font-size 88%
+                }
+                @media $mqTablet {
                     padding 5px
+                }
         > input[type="checkbox"]
         > input[type="radio"]
             {$entrineSkin} &

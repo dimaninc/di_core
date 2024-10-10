@@ -162,29 +162,59 @@ var diAdminForm = function (table, id, auto_save_timeout) {
     };
 
     this.initFormJson = function () {
-        const $blocks = $('.diadminform-json-wrapper');
+        var $blocks = $('.diadminform-json-wrapper');
+
         $blocks.each(function () {
-            const $this = $(this);
-            const $masterInput = $this.find('[data-type="master-input"]');
-            const $inputs = $this
+            var $this = $(this);
+            var $masterInput = $this.find('[data-type="master-input"]');
+            var $inputs = $this
                 .find('input,textarea,select')
                 .filter(':not([data-type="master-input"])');
 
-            const setMasterValue = function () {
-                const res = {};
+            var setMasterValue = function () {
+                var res = {};
+                var complexRes = {};
 
                 $inputs.each(function () {
-                    const $i = $(this);
-                    const field = $i.data('field');
-                    const value = $i.val();
+                    var $i = $(this);
+                    var field = $i.data('field');
+                    var subfield = $i.data('subfield');
+                    var value = $i.val();
+
+                    if ($i.attr('name').substr(0, 11) === 'dicalendar[') {
+                        return;
+                    }
+
+                    if (subfield) {
+                        complexRes[field] = complexRes[field] || {};
+                        complexRes[field][subfield] = value;
+
+                        return;
+                    }
 
                     res[field] = value;
                 });
 
+                for (var key in complexRes) {
+                    if (!complexRes.hasOwnProperty(key)) {
+                        continue;
+                    }
+
+                    var v = complexRes[key];
+
+                    var d = [v['dd'], v['dm'], v['dy']].filter(Boolean).join('.');
+                    var t = [v['th'], v['tm']].filter(Boolean).join(':');
+                    dt = [d, t].filter(Boolean).join(' ');
+
+                    if (dt) {
+                        res[key] = dt;
+                    }
+                }
+
                 $masterInput.val(JSON.stringify(di.isObjectEmpty(res) ? null : res));
             };
 
-            $inputs.on('change keyup paste blur focus', function () {
+            $inputs.on('change keyup paste blur focus input', function () {
                 setMasterValue();
             });
         });
@@ -472,13 +502,13 @@ var diAdminForm = function (table, id, auto_save_timeout) {
     };
 
     this.initRenameTo = function () {
-        const $btn = $('button[data-purpose="rename-file"]');
-        const field = $btn.closest('[data-field]').data('field');
+        var $btn = $('button[data-purpose="rename-file"]');
+        var field = $btn.closest('[data-field]').data('field');
 
         $btn.on('click', function (event) {
             event.preventDefault();
 
-            const $this = $(this);
+            var $this = $(this);
 
             if (!confirm($this.data('confirm'))) {
                 return;
@@ -504,16 +534,16 @@ var diAdminForm = function (table, id, auto_save_timeout) {
                             })
                     );
 
-                    const $picWrapper = $this
+                    var $picWrapper = $this
                         .closest('.value')
                         .find('.existing-pic-holder');
-                    const $link = $picWrapper.find('.link');
-                    const href = $link.attr('href');
-                    const newHref = dirname(href) + '/' + res.newFn;
+                    var $link = $picWrapper.find('.link');
+                    var href = $link.attr('href');
+                    var newHref = dirname(href) + '/' + res.newFn;
                     $link.html(res.newFn);
                     $link.attr('href', newHref);
 
-                    const $wrapper = $this.closest('.rename-to-wrapper');
+                    var $wrapper = $this.closest('.rename-to-wrapper');
                     $wrapper.remove();
                 }
             ).error(ajaxErrorHandler);
@@ -569,7 +599,7 @@ var diAdminForm = function (table, id, auto_save_timeout) {
                             );
                         }
 
-                        const $renameTo = $e.parent().find('.rename-to-wrapper');
+                        var $renameTo = $e.parent().find('.rename-to-wrapper');
 
                         $e.remove();
                         $renameTo.remove();
