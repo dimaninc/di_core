@@ -24,20 +24,20 @@ abstract class LocalizationMigration extends Migration
 
     protected function upWrapper()
     {
-        parent::upWrapper();
+        $res = parent::upWrapper();
 
         $this->updateCache();
 
-        return $this;
+        return $res;
     }
 
     protected function downWrapper()
     {
-        parent::downWrapper();
+        $res = parent::downWrapper();
 
         $this->updateCache();
 
-        return $this;
+        return $res;
     }
 
     public function down()

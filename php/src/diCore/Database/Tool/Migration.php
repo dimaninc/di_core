@@ -23,16 +23,12 @@ abstract class Migration
 
     protected function upWrapper()
     {
-        $this->up();
-
-        return $this;
+        return $this->up();
     }
 
     protected function downWrapper()
     {
-        $this->down();
-
-        return $this;
+        return $this->down();
     }
 
     public function run($state)
