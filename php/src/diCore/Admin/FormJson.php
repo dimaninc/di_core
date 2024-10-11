@@ -90,6 +90,10 @@ class FormJson
     protected function getInputHtml(string $field, array $props)
     {
         switch ($props['type']) {
+            case 'bool':
+            case 'checkbox':
+                return $this->getCheckboxInputHtml($field, $props);
+
             case 'date_str':
             case 'time_str':
             case 'datetime_str':
@@ -140,6 +144,25 @@ class FormJson
         );
 
         return "<textarea $attrStr>$value</textarea>";
+    }
+
+    protected function getCheckboxInputHtml(string $field, array $props)
+    {
+        $attrs = [
+            'type' => 'checkbox',
+            'name' => "{$this->masterField}__$field",
+            'data-field' => $field,
+            'checked' => $this->getValue($field) ? 'checked' : null,
+            'value' => 1,
+        ];
+
+        $attrStr = ArrayHelper::toAttributesString(
+            $attrs,
+            true,
+            ArrayHelper::ESCAPE_HTML
+        );
+
+        return "<input $attrStr />";
     }
 
     protected function getDateTimeInputHtml(string $field, array $props)
