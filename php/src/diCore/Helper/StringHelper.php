@@ -261,9 +261,8 @@ class StringHelper
 
         if (mb_strlen($s) > $maxLength) {
             $s =
-                rtrim(
-                    mb_substr(ltrim($s), 0, $maxLength - mb_strlen($trailer))
-                ) . $trailer;
+                rtrim(mb_substr(ltrim($s), 0, $maxLength - mb_strlen($trailer))) .
+                $trailer;
         }
 
         return $s;
@@ -385,9 +384,7 @@ class StringHelper
 
         for ($i = 0; $i < count($ar1); $i++) {
             if (
-                mb_strlen($lines2[count($lines2) - 1]) +
-                    1 +
-                    mb_strlen($ar2[$i]) <=
+                mb_strlen($lines2[count($lines2) - 1]) + 1 + mb_strlen($ar2[$i]) <=
                 $len
             ) {
                 $lines[count($lines) - 1] .= ' ' . $ar1[$i];
@@ -477,27 +474,18 @@ class StringHelper
                     );
 
                     $innerText =
-                        $len > $options['cutLength'] &&
-                        $options['cutLength'] > 0
-                            ? mb_substr(
-                                    $words[$j],
-                                    0,
-                                    $options['cutLength'] - 3
-                                ) . '...'
+                        $len > $options['cutLength'] && $options['cutLength'] > 0
+                            ? mb_substr($words[$j], 0, $options['cutLength'] - 3) .
+                                '...'
                             : $words[$j];
 
-                    $words[$j] =
-                        '<a ' . $attributes . '>' . $innerText . '</a>';
+                    $words[$j] = '<a ' . $attributes . '>' . $innerText . '</a>';
                 } elseif (
                     $options['cutAllWords'] &&
                     $options['cutLength'] > 0 &&
                     $len > $options['cutLength']
                 ) {
-                    $words[$j] = mb_substr(
-                        $words[$j],
-                        0,
-                        $options['cutLength']
-                    );
+                    $words[$j] = mb_substr($words[$j], 0, $options['cutLength']);
                 }
             }
 
@@ -509,20 +497,15 @@ class StringHelper
         return $text;
     }
 
-    public static function stripTagsWithContent(
-        $text,
-        $tags = '',
-        $invert = false
-    ) {
+    public static function stripTagsWithContent($text, $tags = '', $invert = false)
+    {
         preg_match_all('/<(.+?)[\s]*\/?[\s]*>/si', trim($tags), $tags);
         $tags = array_unique($tags[1]);
 
         if (is_array($tags) && count($tags) > 0) {
             if ($invert == false) {
                 $text = preg_replace(
-                    '@<(?!(?:' .
-                        implode('|', $tags) .
-                        ')\b)(\w+)\b.*?>.*?</\1>@si',
+                    '@<(?!(?:' . implode('|', $tags) . ')\b)(\w+)\b.*?>.*?</\1>@si',
                     '',
                     $text
                 );
@@ -563,6 +546,10 @@ class StringHelper
 
     public static function fileBaseName($filename)
     {
+        if (!$filename) {
+            return '';
+        }
+
         $x = mb_strrpos($filename, '.');
 
         return $x !== false ? mb_substr($filename, 0, $x) : '';
@@ -570,6 +557,10 @@ class StringHelper
 
     public static function fileExtension($filename)
     {
+        if (!$filename) {
+            return '';
+        }
+
         $x = mb_strrpos($filename, '.');
 
         return $x !== false ? mb_substr($filename, $x + 1) : '';
@@ -602,11 +593,8 @@ class StringHelper
         return $fn . $newExtension;
     }
 
-    public static function getTempFolderByFileName(
-        $fn,
-        $depth = 2,
-        $partLength = 2
-    ) {
+    public static function getTempFolderByFileName($fn, $depth = 2, $partLength = 2)
+    {
         $fn = static::replaceFileExtension($fn, '');
         $ar = str_split($fn, $partLength);
         $ar = array_slice($ar, 0, $depth);
@@ -691,13 +679,7 @@ class StringHelper
 
         if ($x % 10 == 1 && $x != 11) {
             return $returnOnlySuffix ? $s1 : "$x0 $s1";
-        } elseif (
-            $x % 10 >= 2 &&
-            $x % 10 <= 4 &&
-            $x != 12 &&
-            $x != 13 &&
-            $x != 14
-        ) {
+        } elseif ($x % 10 >= 2 && $x % 10 <= 4 && $x != 12 && $x != 13 && $x != 14) {
             return $returnOnlySuffix ? $s2 : "$x0 $s2";
         } else {
             return $returnOnlySuffix ? $s3 : "$x0 $s3";

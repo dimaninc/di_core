@@ -131,9 +131,28 @@ class Files extends \diBaseAdminController
         ];
     }
 
-    protected function delRelatedFiles(\diModel $model, $field = null)
+    protected function delRelatedFiles(\diModel $model, $field)
     {
-        if ($model->exists() && $model->has($field)) {
+        if (!$model->exists()) {
+            return false;
+        }
+
+        [$masterField, $subField] = Submit::getFieldNamePair($field ?? '');
+
+        if ($subField) {
+            if ($model->hasJsonData($masterField, $subField)) {
+                $model
+                    ->killRelatedFiles($field)
+                    ->resetFieldsOfRelatedFiles($field)
+                    ->save();
+
+                return true;
+            }
+
+            return false;
+        }
+
+        if ($model->has($field)) {
             $model
                 ->killRelatedFiles($field)
                 ->resetFieldsOfRelatedFiles($field)

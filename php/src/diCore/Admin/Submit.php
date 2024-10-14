@@ -96,6 +96,11 @@ class Submit
     public $page;
     public $redirect_href_ar;
 
+    /*
+     * JSON data to update main field in the end before db-save process
+     */
+    protected $jsonData = [];
+
     private $slugFieldName = 'clean_title';
 
     /** @var \diModel */
@@ -119,24 +124,12 @@ class Submit
             //back compatibility
             $this->table = $table;
 
-            $this->_form_fields = isset($GLOBALS[$this->table . '_form_fields'])
-                ? $GLOBALS[$this->table . '_form_fields']
-                : [];
-            $this->_local_fields = isset($GLOBALS[$this->table . '_local_fields'])
-                ? $GLOBALS[$this->table . '_local_fields']
-                : [];
-            $this->_all_fields = isset($GLOBALS[$this->table . '_all_fields'])
-                ? $GLOBALS[$this->table . '_all_fields']
-                : [];
-            $this->_ff = isset($GLOBALS[$this->table . '_ff'])
-                ? $GLOBALS[$this->table . '_ff']
-                : [];
-            $this->_lf = isset($GLOBALS[$this->table . '_lf'])
-                ? $GLOBALS[$this->table . '_lf']
-                : [];
-            $this->_af = isset($GLOBALS[$this->table . '_af'])
-                ? $GLOBALS[$this->table . '_af']
-                : [];
+            $this->_form_fields = $GLOBALS[$this->table . '_form_fields'] ?? [];
+            $this->_local_fields = $GLOBALS[$this->table . '_local_fields'] ?? [];
+            $this->_all_fields = $GLOBALS[$this->table . '_all_fields'] ?? [];
+            $this->_ff = $GLOBALS[$this->table . '_ff'] ?? [];
+            $this->_lf = $GLOBALS[$this->table . '_lf'] ?? [];
+            $this->_af = $GLOBALS[$this->table . '_af'] ?? [];
         }
 
         $this->model = \diModel::createForTableNoStrict(
@@ -282,21 +275,21 @@ class Submit
     {
         if (isInteger($name)) {
             return $name;
-        } else {
-            switch ($name) {
-                case 'orig':
-                    return self::IMAGE_TYPE_ORIG;
+        }
 
-                case 'big':
-                    return self::IMAGE_TYPE_BIG;
+        switch ($name) {
+            case 'orig':
+                return self::IMAGE_TYPE_ORIG;
 
-                case '':
-                case 'main':
-                    return self::IMAGE_TYPE_MAIN;
+            case 'big':
+                return self::IMAGE_TYPE_BIG;
 
-                default:
-                    throw new \Exception('Unknown image type: ' . $name);
-            }
+            case '':
+            case 'main':
+                return self::IMAGE_TYPE_MAIN;
+
+            default:
+                throw new \Exception('Unknown image type: ' . $name);
         }
     }
 
@@ -331,10 +324,12 @@ class Submit
     public function isSubmit()
     {
         foreach ($this->_form_fields as $f => $v) {
+            $field = self::formatName($f);
+
             if (
-                !isset($_POST[$f]) &&
-                !isset($_POST[$f . Form::NEW_FIELD_SUFFIX]) &&
-                !isset($_FILES[$f]) &&
+                !isset($_POST[$field]) &&
+                !isset($_POST[$field . Form::NEW_FIELD_SUFFIX]) &&
+                !isset($_FILES[$field]) &&
                 !in_array($v['type'], [
                     'checkbox',
                     'checkboxes',
@@ -373,8 +368,33 @@ class Submit
         return $this;
     }
 
+    public static function getFieldNamePair($field)
+    {
+        $x = strpos($field, '.');
+
+        if ($x === false) {
+            return [$field, null];
+        }
+
+        $masterField = substr($field, 0, $x);
+        $subField = substr($field, $x + 1);
+
+        return [$masterField, $subField];
+    }
+
     public function setData($field, $value = null)
     {
+        if (is_string($field)) {
+            [$masterField, $subField] = static::getFieldNamePair($field);
+
+            // part of complex json field
+            if ($subField) {
+                $this->jsonData[$masterField][$subField] = $value;
+
+                return $this;
+            }
+        }
+
         $this->getModel()->set($field, $value);
 
         return $this;
@@ -382,6 +402,17 @@ class Submit
 
     public function getData($field = null)
     {
+        [$masterField, $subField] = self::getFieldNamePair($field ?? '');
+
+        // part of complex json field
+        if ($subField) {
+            if (isset($this->jsonData[$masterField][$subField])) {
+                return $this->jsonData[$masterField][$subField];
+            }
+
+            return $this->getModel()->getJsonData($masterField, $subField);
+        }
+
         return $this->getModel()->get($field);
     }
 
@@ -401,6 +432,11 @@ class Submit
         return $this->gatherData();
     }
 
+    public static function formatName($field)
+    {
+        return str_replace('.', '___', $field);
+    }
+
     public function gatherData()
     {
         foreach ($this->_form_fields as $f => $v) {
@@ -411,10 +447,11 @@ class Submit
             $type = in_array($v['type'], ['float', 'double', 'int'])
                 ? $v['type']
                 : null;
-            $value = \diRequest::post($f, $v['default'] ?? null, $type);
+            $field = self::formatName($f);
+            $value = \diRequest::post($field, $v['default'] ?? null, $type);
 
             if (!empty($v['preprocessor'])) {
-                $value = \diRequest::post($f) ?: $v['default'] ?? null;
+                $value = \diRequest::post($field) ?: $v['default'] ?? null;
                 $value = $v['preprocessor']($value, $f, $this);
             }
 
@@ -422,7 +459,7 @@ class Submit
                 case 'password':
                     $this->setData($f, $value ?: '')->setData(
                         $f . '2',
-                        \diRequest::post($f . '2', $v['default'] ?? '', 'string')
+                        \diRequest::post($field . '2', $v['default'] ?? '', 'string')
                     );
                     break;
 
@@ -442,7 +479,7 @@ class Submit
                     break;
 
                 case 'checkbox':
-                    $this->setData($f, \diRequest::post($f) ? 1 : 0);
+                    $this->setData($f, \diRequest::post($field) ? 1 : 0);
                     break;
 
                 case 'checkboxes':
@@ -590,6 +627,21 @@ class Submit
         return $this;
     }
 
+    public function setJsonData()
+    {
+        if (!$this->jsonData) {
+            return $this;
+        }
+
+        foreach ($this->jsonData as $masterField => $data) {
+            foreach ($data as $subField => $value) {
+                $this->getModel()->updateJsonData($masterField, $subField, $value);
+            }
+        }
+
+        return $this;
+    }
+
     /** @deprecated */
     public function store_data()
     {
@@ -610,6 +662,8 @@ class Submit
         }
 
         $orig = $this->getModel()->getOrigWithId();
+
+        $this->setJsonData();
 
         $this->getModel()
             ->save()
@@ -945,12 +999,15 @@ class Submit
             $default =
                 substr($this->_all_fields[$field]['type'], -4) == '_str' ? '' : 0;
 
-            $this->setData($field, \diRequest::post($field, $default));
+            $this->setData(
+                $field,
+                \diRequest::post(self::formatName($field), $default)
+            );
         } else {
             $this->setData(
                 $field,
                 $this->get_datetime_from_ar(
-                    \diRequest::post($field, []),
+                    \diRequest::post(self::formatName($field), []),
                     $date,
                     $time,
                     substr($this->_all_fields[$field]['type'], -4) == '_str'
@@ -1066,12 +1123,13 @@ class Submit
 
     protected function tryToEmulateChunkFile($field)
     {
-        $tmpFilename = \diRequest::post('__uploaded__' . $field);
-        $origFilename = \diRequest::post('__orig_filename__' . $field);
+        $f = self::formatName($field);
+        $tmpFilename = \diRequest::post('__uploaded__' . $f);
+        $origFilename = \diRequest::post('__orig_filename__' . $f);
         $tmpPath = get_tmp_folder() . $this->getTable() . '/' . $field . '/';
 
         if ($tmpFilename && $origFilename) {
-            $_FILES[$field] = [
+            $_FILES[$f] = [
                 'name' => $origFilename,
                 'tmp_name' => \diPaths::fileSystem() . $tmpPath . $tmpFilename,
                 'error' => 0,
@@ -1082,18 +1140,19 @@ class Submit
         return $this;
     }
 
-    public function storeImage($field, $filesOptions = [])
+    public function storeImage($fields, $filesOptions = [])
     {
-        if (!is_array($field)) {
-            $field = explode(',', $field);
+        if (!is_array($fields)) {
+            $fields = [$fields];
         }
 
-        foreach ($field as $f) {
+        foreach ($fields as $f) {
             $this->tryToEmulateChunkFile($f);
         }
 
         $hasFilesOptions =
-            $filesOptions || $this->getModel()->getPicStoreSettings(current($field));
+            $filesOptions ||
+            $this->getModel()->getPicStoreSettings(current($fields));
 
         // back compatibility
         if (
@@ -1102,8 +1161,8 @@ class Submit
             (is_string($filesOptions) && $filesOptions)
         ) {
             return $filesOptions
-                ? $this->store_pics($field, $filesOptions)
-                : $this->store_pics($field);
+                ? $this->store_pics($fields, $filesOptions)
+                : $this->store_pics($fields);
         }
 
         $callback = [static::class, 'storeImageCallback'];
@@ -1114,7 +1173,9 @@ class Submit
             );
         }
 
-        foreach ($field as $f) {
+        foreach ($fields as $f) {
+            $field = self::formatName($f);
+
             $fieldFileOptions = self::prepareFileOptions(
                 $f,
                 $filesOptions ?: $this->getModel()->getPicStoreSettings($f) ?: [],
@@ -1123,16 +1184,20 @@ class Submit
             );
             $baseFolder = $fieldFileOptions[0]['folder'];
 
-            if (!empty($_FILES[$f]) && empty($_FILES[$f]['error'])) {
+            if (!empty($_FILES[$field]) && empty($_FILES[$field]['error'])) {
                 $oldExt = mb_strtolower(
                     StringHelper::fileExtension($this->getData($f))
                 );
                 $newExt = mb_strtolower(
-                    StringHelper::fileExtension($_FILES[$f]['name'])
+                    StringHelper::fileExtension($_FILES[$field]['name'])
                 );
 
                 if (!$this->getData($f)) {
-                    $this->generateFilename($f, $baseFolder, $_FILES[$f]['name']);
+                    $this->generateFilename(
+                        $f,
+                        $baseFolder,
+                        $_FILES[$field]['name']
+                    );
                 } elseif ($oldExt != $newExt) {
                     $this->setData(
                         $f,
@@ -1167,14 +1232,11 @@ class Submit
                     $resultHeight = Configuration::safeGet($heightParam);
 
                     if (!empty($opts['rule'])) {
-                        list($sourceWidth, $sourceHeight) = getimagesize(
-                            $_FILES[$f]['tmp_name']
+                        [$sourceWidth, $sourceHeight] = getimagesize(
+                            $_FILES[$field]['tmp_name']
                         );
 
-                        list(
-                            $resultWidth,
-                            $resultHeight,
-                        ) = self::getResultDimensions([
+                        [$resultWidth, $resultHeight] = self::getResultDimensions([
                             'widthParam' => $widthParam,
                             'heightParam' => $heightParam,
                             'rule' => $opts['rule'],
@@ -1199,7 +1261,7 @@ class Submit
                     */
                 }
 
-                $callback($this, $f, $fieldFileOptions, $_FILES[$f]);
+                $callback($this, $f, $fieldFileOptions, $_FILES[$field]);
             }
         }
 
@@ -1814,11 +1876,7 @@ class Submit
 
             chmod($fn, Submit::FILE_CHMOD);
 
-            if (\diSwiffy::is($fn)) {
-                list($w, $h, $t) = \diSwiffy::getDimensions($fn);
-            } else {
-                list($w, $h, $t) = getimagesize($fn);
-            }
+            [$w, $h, $t] = getimagesize($fn);
 
             $obj->setData([
                 $field . $suffix . '_w' => (int) $w,

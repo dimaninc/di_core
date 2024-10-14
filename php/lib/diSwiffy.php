@@ -9,6 +9,9 @@
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 
+/**
+ * @deprecated
+ */
 class diSwiffy
 {
     const dimensionsRegEx = "/<div id=\"swiffycontainer\" style=\"width: (\d+)px; height: (\d+)px\">/i";
@@ -40,12 +43,8 @@ class diSwiffy
         }
     }
 
-    public static function getHtml(
-        $filename,
-        $w = null,
-        $h = null,
-        $options = []
-    ) {
+    public static function getHtml($filename, $w = null, $h = null, $options = [])
+    {
         $options = extend(
             [
                 'style' => '',
@@ -55,9 +54,7 @@ class diSwiffy
         );
 
         if ($w === null || $h === null) {
-            list($w, $h) = self::getDimensions(
-                \diPaths::fileSystem() . $filename
-            );
+            list($w, $h) = self::getDimensions(\diPaths::fileSystem() . $filename);
         }
 
         if (!$w && !$h) {
@@ -75,8 +72,7 @@ class diSwiffy
         $attributes = extend(
             [
                 'src' => $filename,
-                'style' =>
-                    "width:{$w};height:{$h};border:0;" . $options['style'],
+                'style' => "width:{$w};height:{$h};border:0;" . $options['style'],
             ],
             $options['attributes']
         );

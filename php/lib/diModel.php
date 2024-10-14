@@ -968,38 +968,30 @@ class diModel implements \ArrayAccess
             if ($this->isPicField($k)) {
                 for ($i = 1; $i <= static::MAX_PREVIEWS_COUNT; $i++) {
                     $idx = $i > 1 ? $i : '';
+                    $tnIdx = "{$k}_tn$idx";
+                    $tnIdx2 = "{$k}_tn{$idx}_with_path";
 
                     if (!$this->exists($k . '_tn' . $idx)) {
-                        $ar[$k . '_tn' . $idx] = $ar[
-                            $k . '_tn' . $idx . '_with_path'
-                        ] = $this->wrapFileWithPath($v, $i);
+                        $ar[$tnIdx] = $ar[$tnIdx2] = $this->wrapFileWithPath($v, $i);
 
                         if ($isLocalized) {
-                            $ar[static::LOCALIZED_PREFIX . $k . '_tn' . $idx] = $ar[
-                                static::LOCALIZED_PREFIX .
-                                    $k .
-                                    '_tn' .
-                                    $idx .
-                                    '_with_path'
-                            ] = $this->wrapFileWithPath($this->localized($k), $i);
+                            $key = static::LOCALIZED_PREFIX . $tnIdx;
+                            $ar[$key] = $this->wrapFileWithPath(
+                                $this->localized($k),
+                                $i
+                            );
+                            $ar["{$key}_with_path"] = $ar[$key];
                         }
                     } else {
-                        $ar[
-                            $k . '_tn' . $idx . '_with_path'
-                        ] = $this->wrapFileWithPath(
-                            $this->get($k . '_tn' . $idx),
+                        $ar[$tnIdx2] = $this->wrapFileWithPath(
+                            $this->get($tnIdx),
                             $i
                         );
 
                         if ($isLocalized) {
-                            $ar[
-                                static::LOCALIZED_PREFIX .
-                                    $k .
-                                    '_tn' .
-                                    $idx .
-                                    '_with_path'
-                            ] = $this->wrapFileWithPath(
-                                $this->localized($k . '_tn' . $idx),
+                            $key = static::LOCALIZED_PREFIX . $tnIdx2;
+                            $ar[$key] = $this->wrapFileWithPath(
+                                $this->localized($tnIdx),
                                 $i
                             );
                         }
@@ -1052,6 +1044,12 @@ class diModel implements \ArrayAccess
                 $ar[$k . '_str'] = $v;
             } elseif (static::isJsonField($k)) {
                 $ar[$k . '__parsed'] = $this->getJsonData($k);
+
+                foreach ($this->getAllLocalizedFields() as $f) {
+                    $ar[$k . '__parsed'][
+                        static::LOCALIZED_PREFIX . $f
+                    ] = $this->getJsonData($k, static::getLocalizedFieldName($f));
+                }
             }
 
             $ar[$k] = $v;
@@ -2523,12 +2521,24 @@ ENGINE = InnoDB;";
 
         // own pics
         $picsFolder = $this->getPicsFolder();
+        $values = [];
 
         foreach ($fileFields as $field) {
             if ($this->has($field)) {
-                foreach ($subFolders as $subFolder) {
-                    $killFiles[] = $picsFolder . $subFolder . $this->get($field);
+                $values[] = $this->get($field);
+            } else {
+                [$masterField, $subField] = Submit::getFieldNamePair($field ?? '');
+
+                // part of json complex field
+                if ($subField && $this->hasJsonData($masterField, $subField)) {
+                    $values[] = $this->getJsonData($masterField, $subField);
                 }
+            }
+        }
+
+        foreach ($values as $value) {
+            foreach ($subFolders as $subFolder) {
+                $killFiles[] = $picsFolder . $subFolder . $value;
             }
         }
 
@@ -2576,23 +2586,25 @@ ENGINE = InnoDB;";
     public function resetFieldsOfRelatedFiles($field = null)
     {
         $fileFields = $field ? [$field] : $this->getFileFields();
-
         $fieldSuffixes = ['', '_tn', '_tn2', '_tn3'];
 
         foreach ($fileFields as $field) {
             if ($this->exists($field)) {
                 $this->set($field, '');
+            } else {
+                [$masterField, $subField] = Submit::getFieldNamePair($field ?? '');
+
+                if ($subField && $this->hasJsonData($masterField, $subField)) {
+                    $this->killJsonData($masterField, $subField);
+                }
             }
 
             foreach ($fieldSuffixes as $suffix) {
-                if (
-                    $this->exists($field . $suffix . '_w') &&
-                    $this->exists($field . $suffix . '_h')
-                ) {
-                    $this->set($field . $suffix . '_w', 0)->set(
-                        $field . $suffix . '_h',
-                        0
-                    );
+                $w = $field . $suffix . '_w';
+                $h = $field . $suffix . '_h';
+
+                if ($this->exists($w) && $this->exists($h)) {
+                    $this->set($w, 0)->set($h, 0);
                 }
             }
         }

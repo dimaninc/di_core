@@ -11,7 +11,6 @@ namespace diCore\Admin;
 use diCore\Admin\Data\FormFlag;
 use diCore\Admin\Data\FormSnippet;
 use diCore\Admin\Data\Skin;
-use diCore\Data\Config;
 use diCore\Data\Configuration;
 use diCore\Entity\AdminTableEditLog\Model as TableEditLog;
 use diCore\Helper\ArrayHelper;
@@ -211,7 +210,7 @@ class Form
     private $model;
     public $id;
     public $rec = null;
-    public $static_mode = true;
+    public $static_mode = false;
     protected static $language = 'ru';
     public $show_help = false;
     public $module_id; // module_id of current table
@@ -541,10 +540,6 @@ class Form
             ::getConnection()
             ->getDb();
 
-        if (true || \diRequest::get('edit', 0) || !$id) {
-            $this->static_mode = false;
-        }
-
         if (!$this->AdminPage) {
             if (!isset($GLOBALS[$this->table . '_all_fields'])) {
                 throw new \Exception(
@@ -751,12 +746,6 @@ class Form
         return false;
     }
 
-    /** @deprecated */
-    function is_flag($fieldOrFlagsAr, $flag)
-    {
-        return $this->isFlag($fieldOrFlagsAr, $flag);
-    }
-
     public function isFlag($fieldOrFlagsAr, $flag)
     {
         if (
@@ -797,21 +786,9 @@ class Form
         return self::$wysiwygAliases[$id];
     }
 
-    /** @deprecated */
-    public function is_static($field)
-    {
-        return $this->isStatic($field);
-    }
-
     public function isStatic($field)
     {
         return $this->static_mode || $this->isFlag($field, FormFlag::static);
-    }
-
-    /** @deprecated */
-    public static function is_button_shown($id, $show_ar = [], $hide_ar = [])
-    {
-        return static::isButtonShown($id, $show_ar, $hide_ar);
     }
 
     public static function isButtonShown($id, $show_ar = [], $hide_ar = [])
@@ -848,7 +825,18 @@ class Form
 
     public function getData($field = null)
     {
-        return $field === null ? $this->data : $this->data[$field] ?? null;
+        if ($field === null) {
+            return $this->data;
+        }
+
+        [$masterField, $subField] = Submit::getFieldNamePair($field);
+
+        // part of complex json field
+        if ($subField) {
+            return $this->getModel()->getJsonData($masterField, $subField);
+        }
+
+        return $this->data[$field] ?? null;
     }
 
     public function populateFiltersDataIfNew()
@@ -1501,7 +1489,7 @@ EOF;
                         'type' => 'hidden',
                         'value' => $this->formatValue($field),
                         'id' => $field,
-                        'name' => $field,
+                        'name' => $this->formatName($field),
                     ]);
 
                     $this->inputs[$field] =
@@ -1619,10 +1607,10 @@ EOF;
                     !$shownFor;
 
                 if ($hidden) {
-                    $html .=
-                        "\n<input type=\"hidden\" id=\"$field\" name=\"$field\" value=\"" .
-                        $this->formatValue($field) .
-                        "\">\n";
+                    $n = $this->formatName($field);
+                    $val = $this->formatValue($field);
+
+                    $html .= "\n<input type=\"hidden\" id=\"$field\" name=\"$n\" value=\"$val\">\n";
                 } else {
                     if (!empty($v['notes'])) {
                         $notesStarsCounter .= '*';
@@ -1652,7 +1640,7 @@ EOF;
                             );
                             $html .= $this->getRow(
                                 $field . '2',
-                                "{$this->L('confirm')} {$t2}{$notesStar}",
+                                "{$this->L('confirm')} $t2$notesStar",
                                 $input2
                             );
 
@@ -1778,7 +1766,7 @@ EOF;
         $attributes = extend(
             [
                 'type' => 'text',
-                'name' => $field,
+                'name' => $this->formatName($field),
                 'value' => $this->formatValue($field),
             ],
             $this->getInputAttributes($field),
@@ -1794,7 +1782,7 @@ EOF;
     {
         $attributes = extend(
             [
-                'name' => $field,
+                'name' => $this->formatName($field),
                 'cols' => $this->getFieldOption($field, 'cols') ?: 80,
                 'rows' => $this->getFieldOption($field, 'rows') ?: 10,
             ],
@@ -1804,6 +1792,11 @@ EOF;
         $attrStr = $this->getInputAttributesString($field, $attributes);
 
         return "<textarea $attrStr>{$this->formatValue($field)}</textarea>";
+    }
+
+    protected function formatName($field)
+    {
+        return Submit::formatName($field);
     }
 
     protected function formatValue($field)
@@ -1920,12 +1913,6 @@ EOF;
 			</div>";
     }
 
-    /** @deprecated */
-    public function get_field_options($field)
-    {
-        return $this->getFieldOption($field);
-    }
-
     public function getFieldOption($field, $option = null)
     {
         $o = (array) $this->getFieldProperty($field, 'options');
@@ -1950,12 +1937,6 @@ EOF;
         echo $this->get_html();
 
         return $this;
-    }
-
-    /** @deprecated */
-    public function set_input($field, $input, $static_input = '')
-    {
-        return $this->setInput($field, $input, $static_input);
     }
 
     public function setInput($field, $input, $static_input = '')
@@ -2055,18 +2036,6 @@ EOF;
         }
 
         return $this;
-    }
-
-    /** @deprecated */
-    function set_input_param($field, $param = [])
-    {
-        return $this->setInputAttribute($field, $param);
-    }
-
-    /** @deprecated */
-    public function setInputParam($field, $params = [])
-    {
-        return $this->setInputAttribute($field, $params);
     }
 
     public function setInputAttribute($field, $params = [])
@@ -2216,12 +2185,6 @@ EOF;
         return $this;
     }
 
-    /** @deprecated  */
-    function _set_typed_input($field, $include_ar = [], $exclude_ar = [])
-    {
-        return $this->setSelectFromOwnValues($field, $include_ar, $exclude_ar);
-    }
-
     function setSelectFromOwnValues($field, $include = [], $exclude = [])
     {
         $sel = new \diSelect($field, $this->getData($field));
@@ -2297,16 +2260,6 @@ EOF;
         return $this;
     }
 
-    /** @deprecated */
-    function set_select_from_array_input(
-        $field,
-        $ar,
-        $prefix_ar = [],
-        $suffix_ar = []
-    ) {
-        return $this->setSelectFromArrayInput($field, $ar, $prefix_ar, $suffix_ar);
-    }
-
     public function setSelectFromArrayInput(
         $field,
         $ar,
@@ -2341,12 +2294,6 @@ EOF;
         $this->force_inputs_fields[$field] = true;
 
         return $this;
-    }
-
-    /** @deprecated */
-    function set_select_from_array2_input($field, $ar)
-    {
-        return $this->setSelectFromArray2Input($field, $ar);
     }
 
     public function setSelectFromArray2Input(
@@ -2386,25 +2333,6 @@ EOF;
         $this->force_inputs_fields[$field] = true;
 
         return $this;
-    }
-
-    /** @deprecated */
-    public function set_select_from_db_input(
-        $field,
-        $db_rs,
-        $template_text = '%title%',
-        $template_value = '%id%',
-        $prefix_ar = [],
-        $suffix_ar = []
-    ) {
-        return $this->setSelectFromDbInput(
-            $field,
-            $db_rs,
-            $template_text,
-            $template_value,
-            $prefix_ar,
-            $suffix_ar
-        );
     }
 
     public function setSelectFromDbInput(
@@ -2508,12 +2436,6 @@ EOF;
         return $this;
     }
 
-    /** @deprecated */
-    public function set_wysiwyg_input($field)
-    {
-        return $this->setWysiwygInput($field);
-    }
-
     public function setWysiwygInput($field)
     {
         if ($this->static_mode || $this->isFlag($field, 'static')) {
@@ -2522,7 +2444,7 @@ EOF;
             )}</div>";
         } else {
             $attrs = $this->getInputAttributesString($field, [
-                'name' => $field,
+                'name' => $this->formatName($field),
                 'cols' => 80,
                 'rows' => 10,
             ]);
@@ -2543,16 +2465,6 @@ EOF;
         $this->force_inputs_fields[$field] = true;
 
         return $this;
-    }
-
-    /**
-     * @deprecated
-     * @param $field
-     * @return Form
-     */
-    public function set_textarea_input($field)
-    {
-        return $this->setTextareaInput($field);
     }
 
     public function setTextareaInput($field)
@@ -2759,12 +2671,7 @@ EOF;
             $ff_s = filesize($f);
             $previewWithText = false;
 
-            if (\diSwiffy::is($f)) {
-                // swiffy
-                list($ff_w, $ff_h) = \diSwiffy::getDimensions($f);
-
-                $imgTag = \diSwiffy::getHtml($httpName, $ff_w, $ff_h);
-            } elseif (in_array($ext, ['MP4', 'M4V', 'OGV', 'WEBM', 'AVI'])) {
+            if (in_array($ext, ['MP4', 'M4V', 'OGV', 'WEBM', 'AVI'])) {
                 // video
                 //$mime_type = self::get_mime_type_by_ext($ext);
                 // type=\"$mime_type\"
@@ -2923,12 +2830,6 @@ EOF;
             : '';
     }
 
-    /** @deprecated */
-    function set_pic_input($field, $path = false, $hide_if_no_file = false)
-    {
-        return $this->setPicInput($field, $path, $hide_if_no_file);
-    }
-
     /**
      * @param string|array $fields
      * @param bool|string $path
@@ -2973,7 +2874,7 @@ EOF;
                 ])
                 : '';
 
-            $name = $field;
+            $name = $this->formatName($field);
 
             if ($this->hasInputAttribute($field, 'multiple')) {
                 $name .= '[]';
@@ -3012,7 +2913,9 @@ EOF;
             }
 
             $this->inputs[$field] = $this->isFlag($field, FormFlag::static)
-                ? "<input type=\"hidden\" name=\"$field\" value=\"$v\">"
+                ? "<input type=\"hidden\" name=\"{$this->formatName(
+                    $field
+                )}\" value=\"$v\">"
                 : "<div class=\"file-input-wrapper\" data-caption=\"{$this->L(
                         'choose_file'
                     )}\"><input type=\"file\" name=\"$name\" value=\"\" size=\"70\" {$attributes}></div>" .
@@ -3061,16 +2964,6 @@ EOF;
         ]);
     }
 
-    /** @deprecated */
-    public function set_file_input(
-        $field,
-        $path = false,
-        $hide_if_no_file = false,
-        $show_del_link = true
-    ) {
-        return $this->setFileInput($field, $path, $hide_if_no_file, $show_del_link);
-    }
-
     /**
      * @param string|array $field
      * @param bool|string $path
@@ -3117,7 +3010,7 @@ EOF;
                 ])
                 : '';
 
-            $name = $field;
+            $name = $this->formatName($field);
 
             if ($this->hasInputAttribute($field, 'multiple')) {
                 $name .= '[]';
@@ -3143,18 +3036,19 @@ EOF;
             }
 
             $this->inputs[$field] = $this->isFlag($field, FormFlag::static)
-                ? '<input type="hidden" name="' . $field . '" value="' . $v . '">'
-                : '<div class="file-input-wrapper" data-caption="' .
-                    $this->L('choose_file') .
-                    '"><input ' .
+                ? "<input type=\"hidden\" name=\"{$this->formatName(
+                    $field
+                )}\" value=\"$v\">"
+                : "<div class=\"file-input-wrapper\" data-caption=\"{$this->L(
+                        'choose_file'
+                    )}\">" .
+                    '<input ' .
                     ArrayHelper::toAttributesString(
                         $attrs,
                         true,
                         ArrayHelper::ESCAPE_HTML
                     ) .
-                    '>' .
-                    $suffix .
-                    '</div>';
+                    ">$suffix</div>";
 
             $this->force_inputs_fields[$field] = true;
         }
@@ -3426,7 +3320,7 @@ EOF;
         $title = $pic_r ? StringHelper::out($pic_r->title) : '';
         $content = $pic_r ? StringHelper::out($pic_r->content) : '';
 
-        return $this->is_flag($field, 'static') || $this->static_mode
+        return $this->isFlag($field, 'static') || $this->static_mode
             ? "<div id=\"{$field}_div[{$id}]\" class=\"dynamic-row\">" .
                     $img_tag .
                     $tn_img_tag .
@@ -3528,7 +3422,7 @@ EOF;
 
         $a = $this->getAllFields();
 
-        return $this->is_flag($a[$field], 'static') || $this->static_mode
+        return $this->isFlag($a[$field], 'static') || $this->static_mode
             ? "<div id=\"{$field}_div[{$id}]\" class=\"dynamic-row\">" .
                     $img_tag .
                     //$tn_img_tag.
@@ -3596,12 +3490,6 @@ EOF;
         $this->force_inputs_fields[$field] = true;
 
         return $this;
-    }
-
-    /** @deprecated */
-    function set_cb_list_input($field, $feed, $columns = null, $ableToAddNew = null)
-    {
-        return $this->setCheckboxesListInput($field, $feed, $columns, $ableToAddNew);
     }
 
     public function setCheckboxesListInput(
@@ -3848,11 +3736,12 @@ EOF;
         $ph = static::getDatePlaceholders(
             $this->getFieldOption($field, 'use_placeholder')
         );
+        $f = $this->formatName($field);
 
         $inputAttrs = fn($subfield) => ArrayHelper::toAttributesString(
             [
                 'type' => 'text',
-                'name' => "{$field}[$subfield]",
+                'name' => "{$f}[$subfield]",
                 'id' => "{$field}[$subfield]",
                 'data-subfield' => $subfield,
                 'value' => $dt[$subfield],
@@ -3979,10 +3868,7 @@ EOF;
     private function resetManualFieldFlag($field, $flag)
     {
         if (isset($this->manualFieldFlags[$field])) {
-            if (
-                ($key = array_search($flag, $this->manualFieldFlags[$field])) !==
-                false
-            ) {
+            if (array_search($flag, $this->manualFieldFlags[$field]) !== false) {
                 unset($this->manualFieldFlags[$field][$flag]);
             }
         }
@@ -4008,12 +3894,6 @@ EOF;
         return $fields;
     }
 
-    /** @deprecated */
-    function set_hidden_input($field)
-    {
-        return $this->setHiddenInput($field);
-    }
-
     public function setHiddenInput($fields, $onlyIfEmpty = false)
     {
         if (!is_array($fields)) {
@@ -4031,12 +3911,6 @@ EOF;
         }
 
         return $this;
-    }
-
-    /** @deprecated */
-    function set_static_input($field)
-    {
-        return $this->setStaticInput($field);
     }
 
     public function setStaticInput($fields)
