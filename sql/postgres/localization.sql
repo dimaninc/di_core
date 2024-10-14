@@ -6,5 +6,5 @@ CREATE TABLE IF NOT EXISTS localization
     en_value TEXT
 );
 
-CREATE INDEX IF NOT EXISTS idx__localization__name
+CREATE UNIQUE INDEX IF NOT EXISTS idx__localization__name
     ON localization (name);
