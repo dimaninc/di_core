@@ -63,8 +63,6 @@ class Types
     const di_actions_log = 1006;
     const admin_task_participant = 1007;
     const admin_table_edit_log = 1008;
-    const additional_variable = 1009;
-    const additional_variable_value = 1010;
 
     public static $commonTables = [
         self::content => 'content',
@@ -111,8 +109,6 @@ class Types
         self::di_actions_log => 'di_actions_log',
         self::admin_task_participant => 'admin_task_participants',
         self::admin_table_edit_log => 'admin_table_edit_log',
-        self::additional_variable => 'additional_variable',
-        self::additional_variable_value => 'additional_variable_value',
     ];
 
     public static $commonNames = [
@@ -160,8 +156,6 @@ class Types
         self::di_actions_log => 'di_actions_log',
         self::admin_task_participant => 'admin_task_participant',
         self::admin_table_edit_log => 'admin_table_edit_log',
-        self::additional_variable => 'additional_variable',
-        self::additional_variable_value => 'additional_variable_value',
     ];
 
     public static $commonTitles = [
@@ -209,8 +203,6 @@ class Types
         self::di_actions_log => 'Действие',
         self::admin_task_participant => 'Исполнитель задачи',
         self::admin_table_edit_log => 'Изменение данных в таблице',
-        self::additional_variable => 'Дополнительная переменная',
-        self::additional_variable_value => 'Значение дополнительной переменной',
     ];
 
     /* override this in child class */

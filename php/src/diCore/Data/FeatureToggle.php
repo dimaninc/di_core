@@ -33,7 +33,6 @@ class FeatureToggle
     public static function coreAsArray(): array
     {
         return [
-            'isAdditionalTemplateEnabled' => static::isAdditionalTemplateEnabled(),
             'shouldSendErrorMessageInHeaderOnError' => static::shouldSendErrorMessageInHeaderOnError(),
         ];
     }
@@ -46,11 +45,6 @@ class FeatureToggle
     public static function asArray(): array
     {
         return extend(static::coreAsArray(), static::projectAsArray());
-    }
-
-    public static function isAdditionalTemplateEnabled()
-    {
-        return false;
     }
 
     public static function shouldSendErrorMessageInHeaderOnError()

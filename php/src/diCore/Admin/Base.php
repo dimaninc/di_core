@@ -88,7 +88,6 @@ class Base
             'menu.db.migrations.create' => 'Создать миграцию',
             'menu.db.models.create' => 'Создать модель/коллекцию',
             'menu.db.admin_pages.create' => 'Создать админ.страницу',
-            'menu.additional_variable' => 'Дополнительные переменные',
             'menu.admins' => 'Админы',
             'menu.edit_settings' => 'Настройки',
             'menu.emails' => 'Письма',
@@ -117,7 +116,6 @@ class Base
             'menu.db.migrations.create' => 'Create migration',
             'menu.db.models.create' => 'Create model/collection',
             'menu.db.admin_pages.create' => 'Create admin page',
-            'menu.additional_variable' => 'Additional vars',
             'menu.admins' => 'Admins',
             'menu.edit_settings' => 'Edit settings',
             'menu.emails' => 'E-mails',
@@ -983,7 +981,6 @@ class Base
         return extend(
             $this->getAdminMenuMainTree(),
             $this->getAdminMenuTechTree(),
-            $this->getAdminAdditionalVariableTree(),
             $this->getAdminMenuDatabaseTree(),
             $this->getAdminMenuSettingsTree()
         );
@@ -1073,19 +1070,6 @@ class Base
                 'mail_queue'
             ),
             static::getVocabulary('menu.admins') => $this->getAdminMenuRow('admins'),
-        ];
-    }
-
-    protected function getAdminAdditionalVariableTree()
-    {
-        if (!FeatureToggle::basicCreate()::isAdditionalTemplateEnabled()) {
-            return [];
-        }
-
-        return [
-            static::getVocabulary(
-                'menu.additional_variable'
-            ) => $this->getAdminMenuRow('additional_variable'),
         ];
     }
 
