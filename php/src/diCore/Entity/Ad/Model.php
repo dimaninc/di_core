@@ -7,6 +7,8 @@
 
 namespace diCore\Entity\Ad;
 
+use diCore\Admin\Submit;
+use diCore\Database\FieldType;
 use diCore\Helper\StringHelper;
 
 /**
@@ -93,6 +95,44 @@ class Model extends \diModel
     const type = \diTypes::ad;
     const table = 'ads';
     protected $table = 'ads';
+
+    protected static $fieldTypes = [
+        'id' => FieldType::int,
+        'block_id' => FieldType::int,
+        'category_id' => FieldType::int,
+        'title' => FieldType::string,
+        'content' => FieldType::string,
+        'href' => FieldType::string,
+        'href_target' => FieldType::int,
+        'properties' => FieldType::json,
+        'onclick' => FieldType::string,
+        'button_color' => FieldType::string,
+        'transition' => FieldType::int,
+        'transition_style' => FieldType::int,
+        'duration_of_show' => FieldType::int,
+        'duration_of_change' => FieldType::int,
+        'pic' => FieldType::string,
+        'pic_w' => FieldType::int,
+        'pic_h' => FieldType::int,
+        'visible' => FieldType::int,
+        'order_num' => FieldType::int,
+        'date' => FieldType::timestamp,
+        'show_date1' => FieldType::date,
+        'show_date2' => FieldType::date,
+        'show_time1' => FieldType::string,
+        'show_time2' => FieldType::string,
+        'show_on_weekdays' => FieldType::string,
+        'show_on_holidays' => FieldType::int,
+    ];
+
+    protected static $picStoreSettings = [
+        'pic' => [
+            [
+                'type' => Submit::IMAGE_TYPE_MAIN,
+                'resize' => \diImage::DI_THUMB_FIT,
+            ],
+        ],
+    ];
 
     /**
      * Returns query conditions array for order_num calculating

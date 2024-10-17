@@ -8,6 +8,7 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Admin\Data\FormFlag;
 use diCore\Data\Types;
 use diCore\Entity\Ad\Helper;
 use diCore\Entity\Ad\HrefTarget;
@@ -113,10 +114,7 @@ class Ads extends \diCore\Admin\BasePage
                 Helper::$adTransitionStylesAr
             )
             ->setSelectFromArrayInput('href_target', HrefTarget::$titles)
-            ->setSelectFromArrayInput(
-                'show_on_holidays',
-                ShowOnHolidays::$titles
-            )
+            ->setSelectFromArrayInput('show_on_holidays', ShowOnHolidays::$titles)
             ->setSelectFromCollectionInput(
                 'block_id',
                 CollectionCache::get(Types::ad_block)
@@ -125,7 +123,7 @@ class Ads extends \diCore\Admin\BasePage
 
     public function submitForm()
     {
-        $this->getSubmit()->storeImage('pic');
+        $this->getSubmit()->storeImage(['pic']);
     }
 
     protected function getQueryParamsForRedirectAfterSubmit()
@@ -295,6 +293,12 @@ class Ads extends \diCore\Admin\BasePage
                 'tab' => 'schedule',
             ],
 
+            'properties' => [
+                'type' => 'json',
+                'default' => null,
+                'flags' => [FormFlag::hidden],
+            ],
+
             'date' => [
                 'type' => 'datetime_str',
                 'title' => 'Дата создания',
@@ -327,6 +331,9 @@ class Ads extends \diCore\Admin\BasePage
 
     public function getModuleCaption()
     {
-        return 'Слайды рекламного блока';
+        return [
+            'ru' => 'Слайды рекламного блока',
+            'en' => 'Ad slides',
+        ];
     }
 }

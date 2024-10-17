@@ -11,6 +11,7 @@ namespace diCore\Database;
 class MysqlOldConnection extends Connection
 {
     const engine = Engine::MYSQL_OLD;
+    const alter_after_supported = true;
 
     protected function connect(ConnectionData $connData)
     {

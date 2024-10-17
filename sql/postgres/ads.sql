@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS ads
     content            TEXT,
     href               VARCHAR(255),
     href_target        smallint     DEFAULT '0',
+    properties         jsonb,
     onclick            VARCHAR(255) DEFAULT '',
     button_color       VARCHAR(10)  DEFAULT '',
     transition         smallint     DEFAULT '0',

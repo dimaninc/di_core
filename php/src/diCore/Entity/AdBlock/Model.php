@@ -7,6 +7,7 @@
 
 namespace diCore\Entity\AdBlock;
 
+use diCore\Database\FieldType;
 use diCore\Entity\Ad\Helper;
 use diCore\Traits\Model\TargetInside;
 
@@ -64,6 +65,26 @@ class Model extends \diModel
     const INCUT_TEMPLATE = '[AD-BLOCK-%d]';
     const INCUT_TEMPLATE_FOR_ADMIN = '[AD-BLOCK-%id%]';
 
+    protected static $fieldTypes = [
+        'id' => FieldType::int,
+        'purpose' => FieldType::int,
+        'target_type' => FieldType::int,
+        'target_id' => FieldType::int,
+        'title' => FieldType::string,
+        'default_slide_title' => FieldType::string,
+        'default_slide_content' => FieldType::string,
+        'properties' => FieldType::json,
+        'transition' => FieldType::int,
+        'transition_style' => FieldType::int,
+        'duration_of_show' => FieldType::int,
+        'duration_of_change' => FieldType::int,
+        'slides_order' => FieldType::int,
+        'ignore_hover_hold' => FieldType::int,
+        'visible' => FieldType::int,
+        'order_num' => FieldType::int,
+        'date' => FieldType::timestamp,
+    ];
+
     public function getToken()
     {
         return sprintf(static::INCUT_TEMPLATE, $this->getId());
@@ -83,7 +104,7 @@ class Model extends \diModel
 
     /**
      * Called in Helper class when fetching ads for block
-     * Rewrite this if some emulation for non existing block needed or something
+     * Rewrite this if some emulation for non-existing block needed or something
      * @param callable $nativeCallback
      * @return mixed
      */

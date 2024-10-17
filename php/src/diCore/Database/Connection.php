@@ -26,6 +26,10 @@ abstract class Connection
      * Has tables/collections inside
      */
     const consists_of_tables = true;
+    /**
+     * Is AFTER command supported in SQL
+     */
+    const alter_after_supported = false;
 
     /** @var ConnectionData */
     protected $data;
@@ -235,6 +239,11 @@ abstract class Connection
     public static function consistsOfTables()
     {
         return static::consists_of_tables;
+    }
+
+    public static function isAlterAfterSupported()
+    {
+        return static::alter_after_supported;
     }
 
     public static function isMongo()

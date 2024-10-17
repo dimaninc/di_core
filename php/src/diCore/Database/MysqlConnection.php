@@ -11,6 +11,7 @@ namespace diCore\Database;
 class MysqlConnection extends Connection
 {
     const engine = Engine::MYSQL;
+    const alter_after_supported = true;
 
     protected function connect(ConnectionData $connData)
     {

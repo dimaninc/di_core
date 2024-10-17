@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS ad_blocks(
   title varchar(255),
   default_slide_title varchar(255) default '',
   default_slide_content text,
+  properties json,
   transition tinyint default '0',
   transition_style tinyint default '0',
   duration_of_show int default '0',

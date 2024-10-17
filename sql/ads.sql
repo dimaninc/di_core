@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS ads (
   content            TEXT,
   href               VARCHAR(255),
   href_target        TINYINT      DEFAULT '0',
+  properties         json,
   onclick            VARCHAR(255) DEFAULT '',
   button_color       VARCHAR(10)  DEFAULT '',
   transition         TINYINT      DEFAULT '0',

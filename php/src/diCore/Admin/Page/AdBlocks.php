@@ -78,10 +78,7 @@ class AdBlocks extends BasePage
                 'transition_style',
                 Helper::$adTransitionStylesAr
             )
-            ->setSelectFromArrayInput(
-                'slides_order',
-                Helper::$adSlidesOrdersAr
-            );
+            ->setSelectFromArrayInput('slides_order', Helper::$adSlidesOrdersAr);
 
         if ($this->getId()) {
             $this->getForm()->setInput(
@@ -188,6 +185,12 @@ class AdBlocks extends BasePage
                 'default' => 0,
             ],
 
+            'properties' => [
+                'type' => 'json',
+                'default' => null,
+                'flags' => [FormFlag::hidden],
+            ],
+
             'date' => [
                 'type' => 'datetime_str',
                 'title' => 'Дата создания',
@@ -210,6 +213,9 @@ class AdBlocks extends BasePage
 
     public function getModuleCaption()
     {
-        return 'Рекламные блоки';
+        return [
+            'ru' => 'Рекламные блоки',
+            'en' => 'Ad blocks',
+        ];
     }
 }
