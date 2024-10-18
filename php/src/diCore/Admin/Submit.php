@@ -142,7 +142,6 @@ class Submit
 
             foreach ($ar as $field => $value) {
                 $type = $this->getFieldProperty($field, 'type');
-
                 $skip = false;
 
                 if (

@@ -8,6 +8,7 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Admin\Data\FormFlag;
 use diCore\Entity\Content\Model;
 
 class Content extends \diCore\Admin\BasePage
@@ -340,6 +341,12 @@ class Content extends \diCore\Admin\BasePage
                 'default' => '',
                 'tab' => 'pics',
                 'flags' => ['hidden'],
+            ],
+
+            'properties' => [
+                'type' => 'json',
+                'default' => null,
+                'flags' => [FormFlag::hidden],
             ],
 
             'ad_block_id' => [

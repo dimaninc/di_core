@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS content(
 	to_show_content tinyint default '1',
 	order_num bigint,
 	top tinyint default '0',
+    properties json,
     created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NULL DEFAULT NULL,
 	comments_count int default '0',

@@ -9,6 +9,7 @@
 namespace diCore\Entity\Content;
 
 use diCore\Data\Types;
+use diCore\Database\FieldType;
 use diCore\Entity\AdBlock\Model as AdBlock;
 use diCore\Traits\Model\AutoTimestamps;
 use diCore\Traits\Model\Hierarchy;
@@ -156,6 +157,10 @@ class Model extends \diModel
         'html_title',
         'html_description',
         'html_keywords',
+    ];
+
+    protected static $fieldTypes = [
+        'properties' => FieldType::json,
     ];
 
     /** @var AdBlock */

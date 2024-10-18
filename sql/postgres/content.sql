@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS content
     to_show_content    smallint       default '1',
     order_num          integer,
     top                smallint       default '0',
+    properties         jsonb,
     created_at         TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at         TIMESTAMP NULL DEFAULT NULL,
     comments_count     integer        default '0',

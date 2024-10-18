@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS content(
 	to_show_content tinyint default '1',
 	order_num integer,
 	top tinyint default '0',
+    properties text,
 	comments_count integer default '0',
 	comments_last_date datetime default null,
 	comments_enabled tinyint default '1',
