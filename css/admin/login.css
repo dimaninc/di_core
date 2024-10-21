@@ -197,11 +197,14 @@ body[data-skin="entrine"] .login-form-wrapper {
   }
 }
 .site-logo img {
+  min-width: 280px;
   max-width: 340px;
   max-height: 200px;
 }
 @media screen and (max-width: 450px) {
   .site-logo img {
+    min-width: unset;
+    width: 75%;
     max-width: 75%;
   }
 }
