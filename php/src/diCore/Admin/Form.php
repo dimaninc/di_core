@@ -1493,9 +1493,8 @@ EOF;
                     ]);
 
                     $this->inputs[$field] =
-                        "<div class=\"static\">$s</div><input " .
-                        $this->getInputAttributesString($field) .
-                        '>';
+                        "<div class=\"static\">$s</div>" .
+                        "<input {$this->getInputAttributesString($field)}>";
                 }
 
                 if (isset($this->inputs[$field])) {
@@ -1531,7 +1530,7 @@ EOF;
                             break;
 
                         case 'checkbox':
-                            $this->set_checkbox_input($field);
+                            $this->setCheckboxInput($field);
                             break;
 
                         case 'checkboxes':
@@ -2165,7 +2164,7 @@ EOF;
         return $this;
     }
 
-    function set_checkbox_input($field)
+    public function setCheckboxInput($field)
     {
         if ($this->static_mode || $this->isFlag($field, FormFlag::static)) {
             $this->inputs[$field] = $this->L(
@@ -2173,11 +2172,14 @@ EOF;
             );
         } else {
             $checked = (int) $this->getData($field) ? ' checked="checked"' : '';
-            $this->inputs[$field] =
-                "<input type='checkbox' name='$field'" .
-                $checked .
-                $this->getInputAttributesString($field) .
-                '>';
+            $attrs = [
+                'type' => 'checkbox',
+                'name' => $this->formatName($field),
+            ];
+            $this->inputs[$field] = "<input $checked{$this->getInputAttributesString(
+                $field,
+                $attrs
+            )}>";
         }
 
         $this->force_inputs_fields[$field] = true;

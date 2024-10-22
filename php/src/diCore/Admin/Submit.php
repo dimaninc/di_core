@@ -608,7 +608,7 @@ class Submit
                     break;
 
                 case 'checkbox':
-                    $this->setData($f, $this->getData($f) ? 1 : 0);
+                    $this->setData($f, $this->getData($f) ? true : false);
                     break;
 
                 case 'ip':

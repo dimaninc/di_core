@@ -3009,7 +3009,7 @@ ENGINE = InnoDB;";
     public function getPublicData()
     {
         $data = ArrayHelper::mapAssoc(function ($k, $v) {
-            return [$k, static::tuneFieldValueByTypeForPublicData($k, $v)];
+            return [$k, $this->tuneFieldValueByTypeForPublicData($k, $v)];
         }, ArrayHelper::filterByKey(
             extend($this->getTemplateVarsExtended(), $this->getBasicTemplateVars()),
             static::getPublicFields()
@@ -3048,30 +3048,28 @@ ENGINE = InnoDB;";
         return $this->collectionResource;
     }
 
-    public static function tuneFieldValueByTypeForPublicData($field, $value)
+    public function tuneFieldValueByTypeForPublicData($field, $value)
     {
-        $type = static::getFieldType($field);
-
-        switch ($type) {
+        switch (static::getFieldType($field)) {
             case FieldType::bool_int:
-                $value = (bool) $value;
-                break;
+                return (bool) $value;
 
             case FieldType::int:
-                $value = (int) $value;
-                break;
+                return (int) $value;
 
             case FieldType::float:
             case FieldType::double:
-                $value = (float) $value;
-                break;
+                return (float) $value;
 
             case FieldType::bool:
-                $value = !!$value;
-                break;
-        }
+                return !!$value;
 
-        return $value;
+            case FieldType::json:
+                return $this->getJsonData($field);
+
+            default:
+                return $value;
+        }
     }
 
     public static function tuneFieldValueByTypeAfterDb($field, $value)
