@@ -1888,10 +1888,11 @@ EOF;
 
         $titleSuffix = $this->AdminPage->isColonNeededInFormTitles() ? ':' : '';
         $attrStr = ArrayHelper::toAttributesString($attrs);
+        $f = $this->formatName($field);
 
         return <<<EOF
 <div $attrStr>
-	<label class="title" for="$field">$title$titleSuffix</label>
+	<label class="title" for="$f">$title$titleSuffix</label>
 	<div class="value">$value</div>$descriptionTag
 </div>
 EOF;
@@ -3012,35 +3013,26 @@ EOF;
                 ])
                 : '';
 
+            $suffix = '';
             $name = $this->formatName($field);
-
-            if ($this->hasInputAttribute($field, 'multiple')) {
-                $name .= '[]';
-            }
-
             $attrs = $this->getInputAttributes($field, [
                 'type' => 'file',
-                'name' => $name,
+                'name' =>
+                    $name .
+                    ($this->hasInputAttribute($field, 'multiple') ? '[]' : ''),
                 'size' => 70,
             ]);
-            $suffix = '';
 
             if ($chunk) {
                 $attrs['data-chunk'] = $chunk;
                 // to store chunk uploaded filename in tmp folder
                 $suffix =
-                    '<input type="hidden" name="__orig_filename__' .
-                    $field .
-                    '" value="">' .
-                    '<input type="hidden" name="__uploaded__' .
-                    $field .
-                    '" value="">';
+                    "<input type=\"hidden\" name=\"__orig_filename__$name\" value=\"\">" .
+                    "<input type=\"hidden\" name=\"__uploaded__$name\" value=\"\">";
             }
 
             $this->inputs[$field] = $this->isFlag($field, FormFlag::static)
-                ? "<input type=\"hidden\" name=\"{$this->formatName(
-                    $field
-                )}\" value=\"$v\">"
+                ? "<input type=\"hidden\" name=\"$name\" value=\"$v\">"
                 : "<div class=\"file-input-wrapper\" data-caption=\"{$this->L(
                         'choose_file'
                     )}\">" .
@@ -3112,7 +3104,8 @@ EOF;
                 '</a></td>';
         }
 
-        $html = "<input type=\"hidden\" id=\"$field\" name=\"$field\" value=\"{$this->getData(
+        $f = $this->formatName($field);
+        $html = "<input type=\"hidden\" id=\"$field\" name=\"$f\" value=\"{$this->getData(
             $field
         )}\" />\n";
         if ($orig_r) {
@@ -3181,7 +3174,8 @@ EOF;
                 '</td>';
         }
 
-        $html = "<input type=\"hidden\" id=\"$field\" name=\"$field\" value=\"{$this->getData(
+        $f = $this->formatName($field);
+        $html = "<input type=\"hidden\" id=\"$field\" name=\"$f\" value=\"{$this->getData(
             $field
         )}\" />\n";
         if ($orig_r) {
@@ -3944,23 +3938,22 @@ EOF;
 
     public function setColorInput($field)
     {
-        if (preg_match("/^[a-f0-9]{6}$/i", $this->getData($field))) {
+        if (preg_match("/^[a-f0-9]{6}$/i", $this->getData($field) ?: '')) {
             $this->setData($field, '#' . $this->getData($field));
         }
 
-        $view = "<div data-purpose=\"color-view\" data-field=\"$field\" style=\"background: {$this->getData(
-            $field
-        )}\"></div>";
+        $color = $this->getData($field);
+        $view = "<div data-purpose=\"color-view\" data-field=\"$field\" style=\"background: $color\"></div>";
 
         if (!$this->static_mode) {
+            $f = $this->formatName($field);
+
             $this->inputs[$field] =
-                "<input type=\"hidden\" name=\"$field\" value=\"{$this->getData(
-                    $field
-                )}\" />" .
+                "<input type=\"hidden\" name=\"$f\" value=\"$color\" />" .
                 $view .
                 "<div data-purpose=\"color-picker\" data-field=\"$field\"></div>";
         } else {
-            $this->inputs[$field] = $view . ' ' . $this->getData($field);
+            $this->inputs[$field] = "$view $color";
         }
 
         $this->force_inputs_fields[$field] = true;
@@ -4069,7 +4062,8 @@ EOF;
                 '</a></td>';
         }
 
-        $html = "<input type=\"hidden\" id=\"$field\" name=\"$field\" value=\"{$this->getData(
+        $f = $this->formatName($field);
+        $html = "<input type=\"hidden\" id=\"$field\" name=\"$f\" value=\"{$this->getData(
             $field
         )}\" />\n";
         if ($orig_fn) {

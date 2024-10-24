@@ -78,9 +78,9 @@
 	top: 4px;
 	right: 11px;
 	text-align: right;
-	margin: 0;
-	padding: 0;
-	height: 11px;
+	margin: 0 !important;
+	padding: 0 !important;
+	height: 11px !important;
 }
 .colorpicker_hex {
 	position: absolute;
