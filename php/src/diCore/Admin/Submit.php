@@ -2085,30 +2085,16 @@ class Submit
                 $suffix = $i > 1 ? "$i" : '';
 
                 $widthParam = Configuration::exists([
-                    $table .
-                    '_' .
-                    $groupField .
-                    '_' .
-                    $field .
-                    '_tn' .
-                    $suffix .
-                    '_width',
-                    $table . '_' . $groupField . '_tn' . $suffix . '_width',
-                    $table . '_tn' . $suffix . '_width',
-                    $groupField . '_tn' . $suffix . '_width',
+                    "{$table}_{$groupField}_{$field}_tn{$suffix}_width",
+                    "{$table}_{$groupField}_tn{$suffix}_width",
+                    "{$table}_tn{$suffix}_width",
+                    "{$groupField}_tn{$suffix}_width",
                 ]);
                 $heightParam = Configuration::exists([
-                    $table .
-                    '_' .
-                    $groupField .
-                    '_' .
-                    $field .
-                    '_tn' .
-                    $suffix .
-                    '_height',
-                    $table . '_' . $groupField . '_tn' . $suffix . '_height',
-                    $table . '_tn' . $suffix . '_height',
-                    $groupField . '_tn' . $suffix . '_height',
+                    "{$table}_{$groupField}_{$field}_tn{$suffix}_height",
+                    "{$table}_{$groupField}_tn{$suffix}_height",
+                    "{$table}_tn{$suffix}_height",
+                    "{$groupField}_tn{$suffix}_height",
                 ]);
 
                 if ($widthParam || $heightParam || !empty($fOpts['rule'])) {
