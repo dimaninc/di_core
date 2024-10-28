@@ -46,27 +46,27 @@
 }
 
 // min width
-@mixin for-phone-small-up {
+@mixin mq-phone-small-up {
   @media (min-width: 351px) {
     @content;
   }
 }
-@mixin for-phone-x-up {
+@mixin mq-phone-up {
   @media (min-width: 451px) {
     @content;
   }
 }
-@mixin for-phone-x-up {
+@mixin mq-phone-x-up {
   @media (min-width: 813px) {
     @content;
   }
 }
-@mixin for-tablet-up {
+@mixin mq-tablet-up {
   @media (min-width: 769px) {
     @content;
   }
 }
-@mixin for-tablet-landscape-up {
+@mixin mq-tablet-landscape-up {
   @media (min-width: 1025px) {
     @content;
   }
