@@ -2518,13 +2518,10 @@ abstract class CMS
             is_array($options) ? $options : ['headers' => $options]
         );
 
-        if (
-            !is_array($options['headers']) &&
-            FeatureToggle::basicCreate()::shouldSendErrorMessageInHeaderOnError()
-        ) {
-            $options['headers'] = [
-                'Not-Found-Message' => $options['headers'],
-            ];
+        if (!is_array($options['headers'])) {
+            $options['headers'] = FeatureToggle::basicCreate()::shouldSendErrorMessageInHeaderOnError()
+                ? ['Not-Found-Message' => $options['headers']]
+                : [];
         }
 
         $this->setResponseCode(HttpCode::NOT_FOUND);
