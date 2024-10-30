@@ -1625,7 +1625,7 @@ EOF;
 
                 if (!empty($this->data[$k]) || !$isFileType) {
                     if ($v['type'] === 'radio') {
-                        $rf = $this->field . '_' . $k;
+                        $rf = "{$this->field}_$k";
                         $val = isset($_POST[$rf]) && $_POST[$rf] == $id ? 1 : 0;
 
                         $this->getStoredModel()->set($k, $val);
@@ -1967,6 +1967,7 @@ EOF;
                     $this->data[$f] = doubleval($this->data[$f]);
                     break;
 
+                /*
                 default:
                 case 'string':
                 case 'str':
@@ -1979,6 +1980,7 @@ EOF;
                 case 'wysiwyg':
                     $this->data[$f] = addslashes($this->data[$f]);
                     break;
+                */
 
                 case 'pic':
                 case 'file':
@@ -2006,7 +2008,7 @@ EOF;
 
                 case 'checkbox':
                 case 'radio':
-                    $this->data[$f] = $this->data[$f] ? 1 : 0;
+                    $this->data[$f] = $this->data[$f] ? true : false;
                     break;
             }
         }
