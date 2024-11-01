@@ -183,6 +183,8 @@ abstract class CMS
      */
     protected $response;
 
+    protected $bodyClasses = [];
+
     private $routes = [];
     private $origRoutes = [];
     public $m0, $m1, $m2, $m3, $m4, $m5, $m6;
@@ -1199,6 +1201,15 @@ abstract class CMS
         return $this;
     }
 
+    protected function assignVarsBeforeFinalParse()
+    {
+        $this->getTwig()->assign([
+            'body_classes' => $this->getBodyClasses(),
+        ]);
+
+        return $this;
+    }
+
     /**
      * Override this. Parse head, counters and other stuff here
      *
@@ -1269,6 +1280,7 @@ abstract class CMS
         }
 
         return $this->assignCanonicalAddress()
+            ->assignVarsBeforeFinalParse()
             ->finalParse()
             ->getWholeFinalPage();
     }
@@ -2337,7 +2349,10 @@ abstract class CMS
             }
         }
 
-        if ($options['onBeforePageSuffix'] && is_callable($options['onBeforePageSuffix'])) {
+        if (
+            $options['onBeforePageSuffix'] &&
+            is_callable($options['onBeforePageSuffix'])
+        ) {
             $options['onBeforePageSuffix']($this);
         }
 
@@ -2519,7 +2534,9 @@ abstract class CMS
         );
 
         if (!is_array($options['headers'])) {
-            $options['headers'] = FeatureToggle::basicCreate()::shouldSendErrorMessageInHeaderOnError()
+            $options[
+                'headers'
+            ] = FeatureToggle::basicCreate()::shouldSendErrorMessageInHeaderOnError()
                 ? ['Not-Found-Message' => $options['headers']]
                 : [];
         }
@@ -3037,5 +3054,26 @@ abstract class CMS
         $this->getResponse()->setResponseCode($responseCode);
 
         return $this;
+    }
+
+    public function addBodyClass($class)
+    {
+        if (!in_array($class, $this->bodyClasses)) {
+            $this->bodyClasses[] = $class;
+        }
+
+        return $this;
+    }
+
+    public function removeBodyClass($class)
+    {
+        $this->bodyClasses = ArrayHelper::removeByValue($this->bodyClasses, $class);
+
+        return $this;
+    }
+
+    public function getBodyClasses()
+    {
+        return $this->bodyClasses;
     }
 }
