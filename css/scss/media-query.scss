@@ -128,7 +128,7 @@
     @content;
   }
 }
-@mixin mq-laptop-tiny {
+@mixin mq-laptop-tiny-down {
   @media (max-width: 919px) {
     @content;
   }
