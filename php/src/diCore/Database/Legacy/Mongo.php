@@ -407,6 +407,11 @@ class Mongo extends \diDB
         return $fields;
     }
 
+    public function getDumpCliCommand($options = [])
+    {
+        throw new \Exception('Implement getDumpCliCommand for mongo');
+    }
+
     public function getFieldMethodForModel($field, $method)
     {
         if ($field === '_id') {

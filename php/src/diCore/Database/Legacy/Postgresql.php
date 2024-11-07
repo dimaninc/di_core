@@ -22,6 +22,8 @@ class Postgresql extends Pdo
 
     const DSN_DELIMITER = ';';
 
+    protected static $dumpCommand = 'pg_dump';
+
     protected function getDSN()
     {
         $ar = [
@@ -119,13 +121,24 @@ ORDER BY relname");
 
         $rs = $this->q("SELECT column_name,data_type,character_maximum_length,ordinal_position
 FROM information_schema.columns
-WHERE table_name = '{$table}'
+WHERE table_name = '$table'
 ORDER BY ordinal_position ASC");
         while ($r = $this->fetch_array($rs)) {
             $fields[$r['column_name']] = $r['data_type'];
         }
 
         return $fields;
+    }
+
+    public function getDumpCliCommand($options = [])
+    {
+        $options = $this->prepareDumpCliCommandOptions($options);
+        $tables = $options['tables']
+            ? join(' ', array_map(fn($t) => "--table $t", $options['tables']))
+            : '';
+
+        return static::$dumpCommand .
+            " --host {$this->getHost()} --port {$this->getPort()} --no-owner -d {$this->getDatabase()} -U {$this->getUsername()} $tables{$options['commandSuffixWithFilename']}";
     }
 
     public static function insertUpdateQueryBeginning($keyField = null)

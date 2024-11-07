@@ -12,6 +12,8 @@ class diMYSQL extends diDB
 {
     const DEFAULT_PORT = 3306;
 
+    protected static $dumpCommand = 'mysqldump';
+
     protected function __connect()
     {
         $time1 = utime();
@@ -180,6 +182,15 @@ class diMYSQL extends diDB
         }
 
         return $fields;
+    }
+
+    public function getDumpCliCommand($options = [])
+    {
+        $options = $this->prepareDumpCliCommandOptions($options);
+        $tables = join(' ', $options['tables']);
+
+        return static::$dumpCommand .
+            " --host={$this->getHost()} --user={$this->getUsername()} --password=\"{$this->getPassword()}\" --opt --skip-extended-insert {$this->getDatabase()} $tables{$options['commandSuffixWithFilename']}";
     }
 
     public static function insertUpdateQueryEnding()

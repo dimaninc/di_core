@@ -63,6 +63,11 @@ class Sqlite extends Pdo
         return $fields;
     }
 
+    public function getDumpCliCommand($options = [])
+    {
+        throw new \Exception('Implement getDumpCliCommand for sqlite');
+    }
+
     protected function getStartTransactionQuery()
     {
         return 'BEGIN';

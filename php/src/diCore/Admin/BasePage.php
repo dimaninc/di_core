@@ -61,6 +61,8 @@ abstract class BasePage
 
     private $redirectAfterSubmitNeeded = true;
 
+    private $redirectSent = false;
+
     const LIST_LIST = 1;
     const LIST_GRID = 2;
 
@@ -235,6 +237,8 @@ abstract class BasePage
                 die($e->getMessage());
             }
         }
+
+        $o->tryToDieAfterRedirect();
 
         $o->assignStaticInjections();
 
@@ -1399,6 +1403,17 @@ abstract class BasePage
         $this->addEditLogRecord()->redirectAfterSubmit();
     }
 
+    public function tryToDieAfterRedirect()
+    {
+        if (
+            $this->getMethod() === 'submit' &&
+            $this->redirectSent &&
+            Config::basicCreate()::shouldSubmitUseHtmlRedirect()
+        ) {
+            die();
+        }
+    }
+
     protected function addEditLogRecord()
     {
         if ($this->useEditLog()) {
@@ -1428,6 +1443,14 @@ abstract class BasePage
 
     protected function redirectTo($uri)
     {
+        $this->redirectSent = true;
+
+        if (Config::basicCreate()::shouldSubmitUseHtmlRedirect()) {
+            echo "<html><head><meta http-equiv=\"refresh\" content=\"0; url=$uri\"></head></html><style>*{display:none}</style>";
+
+            return $this;
+        }
+
         header("Location: $uri");
 
         return $this;

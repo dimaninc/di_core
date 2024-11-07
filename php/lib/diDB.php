@@ -101,6 +101,8 @@ abstract class diDB
 
     protected $ignoreReadLock = false;
 
+    protected static $dumpCommand = null;
+
     public function __construct(
         $settingsOrHost,
         $username = null,
@@ -1478,6 +1480,29 @@ abstract class diDB
         return $combiner($matches, 2, 5, true);
     }
 
+    protected function prepareDumpCliCommandOptions($options = [])
+    {
+        $options = extend(
+            [
+                'tables' => [],
+                'commandSuffix' => '',
+                'filename' => '',
+            ],
+            $options
+        );
+
+        $options['commandSuffixWithFilename'] = $options['filename']
+            ? "{$options['commandSuffix']} > {$options['filename']}"
+            : '';
+
+        return $options;
+    }
+
+    public static function setDumpCommand(string $command)
+    {
+        static::$dumpCommand = $command;
+    }
+
     abstract protected function __connect();
     abstract protected function __close();
     abstract protected function __error();
@@ -1496,4 +1521,5 @@ abstract class diDB
     abstract public function getTablesInfo();
     abstract public function getTableNames();
     abstract public function getFields($table);
+    abstract public function getDumpCliCommand($options = []);
 }

@@ -185,7 +185,7 @@ class Db extends \diBaseAdminController
 
     public function createAction()
     {
-        $table_case_sensitivity = false;
+        //$table_case_sensitivity = false;
         //$table_case_sensitivity_str = $table_case_sensitivity ? "cs" : "ci";
 
         $compress = \diRequest::get('compress', 0);
@@ -206,7 +206,6 @@ class Db extends \diBaseAdminController
         }
 
         $tablesAr = explode(',', \diRequest::get('tables', ''));
-        $tablesList = join(' ', $tablesAr);
 
         $dateFnFormat = 'Y_m_d__H_i_s';
         $dateCommentFormat = 'Y/m/d H:i:s';
@@ -231,16 +230,11 @@ class Db extends \diBaseAdminController
         if ($system) {
             $commandSuffix = $compress ? ' | gzip' : '';
 
-            $command =
-                'mysqldump --host=' .
-                $this->getDb()->getHost() .
-                ' --user=' .
-                $this->getDb()->getUsername() .
-                ' --password="' .
-                $this->getDb()->getPassword() .
-                '" --opt --skip-extended-insert ' .
-                $this->getDb()->getDatabase() .
-                " {$tablesList}{$commandSuffix} > $filename";
+            $command = $this->getDb()->getDumpCliCommand([
+                'commandSuffix' => $commandSuffix,
+                'filename' => $filename,
+                'tables' => $tablesAr,
+            ]);
 
             system($command, $a);
 
