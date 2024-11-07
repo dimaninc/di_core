@@ -2283,7 +2283,7 @@ EOF;
             }
         } else {
             $sel = \diSelect::fastCreate(
-                $field,
+                $this->formatName($field),
                 $this->getData($field),
                 $ar,
                 $prefixAr,
@@ -2309,7 +2309,7 @@ EOF;
         if ($this->static_mode || $this->isFlag($field, FormFlag::static)) {
             $this->inputs[$field] = StringHelper::out($this->getData($field));
         } else {
-            $sel = new \diSelect($field, $this->getData($field));
+            $sel = new \diSelect($this->formatName($field), $this->getData($field));
             $sel->setAttr($this->getInputAttributes($field))
                 ->setAttr('data-own-value', $ownAllowed ?: '[empty]')
                 ->addItemArray($prefixAr)
@@ -2352,7 +2352,7 @@ EOF;
             $template_value = '%id%';
         }
 
-        $sel = new \diSelect($field, $this->getData($field));
+        $sel = new \diSelect($this->formatName($field), $this->getData($field));
 
         $sel->setAttr($this->getInputAttributes($field));
 
@@ -2417,7 +2417,7 @@ EOF;
             $format = null;
         }
 
-        $sel = new \diSelect($field, $this->getData($field));
+        $sel = new \diSelect($this->formatName($field), $this->getData($field));
         $sel->setAttr($this->getInputAttributes($field));
 
         if ($prefixAr) {
@@ -3938,20 +3938,20 @@ EOF;
 
     public function setColorInput($field)
     {
+        $f = $this->formatName($field);
+
         if (preg_match("/^[a-f0-9]{6}$/i", $this->getData($field) ?: '')) {
             $this->setData($field, '#' . $this->getData($field));
         }
 
         $color = $this->getData($field);
-        $view = "<div data-purpose=\"color-view\" data-field=\"$field\" style=\"background: $color\"></div>";
+        $view = "<div data-purpose=\"color-view\" data-field=\"$f\" style=\"background: $color\"></div>";
 
         if (!$this->static_mode) {
-            $f = $this->formatName($field);
-
             $this->inputs[$field] =
                 "<input type=\"hidden\" name=\"$f\" value=\"$color\" />" .
                 $view .
-                "<div data-purpose=\"color-picker\" data-field=\"$field\"></div>";
+                "<div data-purpose=\"color-picker\" data-field=\"$f\"></div>";
         } else {
             $this->inputs[$field] = "$view $color";
         }
