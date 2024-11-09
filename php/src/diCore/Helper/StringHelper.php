@@ -744,11 +744,12 @@ class StringHelper
             $words = explode(' ', $line);
             $formattedLine = '';
 
-            foreach ($words as $index => $word) {
-                if (mb_strlen($word) < 3 && $index > 0) {
-                    $formattedLine = mb_rtrim($formattedLine) . "&nbsp;$word";
+            for ($i = 0; $i < count($words); $i++) {
+                if (mb_strlen($words[$i]) < 3 && isset($words[$i + 1])) {
+                    $formattedLine .= $words[$i] . '&nbsp;' . $words[$i + 1];
+                    $i++;
                 } else {
-                    $formattedLine .= ($formattedLine ? ' ' : '') . $word;
+                    $formattedLine .= ($formattedLine ? ' ' : '') . $words[$i];
                 }
             }
 
