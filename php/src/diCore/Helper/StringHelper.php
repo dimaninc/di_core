@@ -728,37 +728,6 @@ class StringHelper
         );
     }
 
-    public static function typograph($text)
-    {
-        if (!$text) {
-            return '';
-        }
-
-        // $text = preg_replace('/[“„«]/', '&laquo;', $text);
-        // $text = preg_replace('/[”“»]/', '&raquo;', $text);
-
-        $lines = explode("\n", $text);
-        $formattedText = '';
-
-        foreach ($lines as $line) {
-            $words = explode(' ', $line);
-            $formattedLine = '';
-
-            for ($i = 0; $i < count($words); $i++) {
-                if (mb_strlen($words[$i]) < 3 && isset($words[$i + 1])) {
-                    $formattedLine .= $words[$i] . '&nbsp;' . $words[$i + 1];
-                    $i++;
-                } else {
-                    $formattedLine .= ($formattedLine ? ' ' : '') . $words[$i];
-                }
-            }
-
-            $formattedText .= "$formattedLine\n";
-        }
-
-        return mb_trim($formattedText);
-    }
-
     public static function replace($search, $replace, $subject, &$count = 0)
     {
         if (!is_array($search) && is_array($replace)) {

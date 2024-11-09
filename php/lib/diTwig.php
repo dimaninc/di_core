@@ -199,7 +199,19 @@ class diTwig
     protected function addTypographFilter()
     {
         $this->getEngine()->addFilter(
-            new TwigFilter('typograph', fn($text) => StringHelper::typograph($text))
+            new TwigFilter('typograph', function ($text) {
+                $t = new \Akh\Typograf\Typograf();
+
+                //$t->enableRule('Nbsp\ReplaceNbsp');
+                //$t->enableRule('Nbsp\*');
+                //$t->enableRule('*');
+
+                //$t->disableRule('Nbsp\ReplaceNbsp');
+                //$t->disableRule('Nbsp\*');
+                //$t->disableRule('*');
+
+                return $t->apply($text);
+            })
         );
 
         return $this;
