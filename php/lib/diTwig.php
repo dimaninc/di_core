@@ -196,6 +196,15 @@ class diTwig
         return $this;
     }
 
+    protected function addTypographFilter()
+    {
+        $this->getEngine()->addFilter(
+            new TwigFilter('typograph', fn($text) => StringHelper::typograph($text))
+        );
+
+        return $this;
+    }
+
     protected function getAllPaths()
     {
         return extend(

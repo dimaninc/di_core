@@ -671,6 +671,8 @@ select {
 }
 body[data-skin="entrine"] select {
   border-color: #dbdbdb;
+  padding-left: 15px;
+  padding-right: 15px;
 }
 body[data-skin="entrine"] select[size="1"] {
   height: 48px;
@@ -3726,8 +3728,8 @@ body[data-skin="entrine"] .nicetable-button[data-action="rollback"] {
   display: inline-block;
   cursor: pointer;
 }
-[data-purpose="tab-pages"] {
-  list-style: none;
+body[data-skin="entrine"] [data-purpose="tab-pages"] {
+  padding-top: 20px;
 }
 [data-purpose="tab-pages"] > [data-tab] {
   display: none;

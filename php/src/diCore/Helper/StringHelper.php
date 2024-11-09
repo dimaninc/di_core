@@ -728,6 +728,36 @@ class StringHelper
         );
     }
 
+    public static function typograph($text)
+    {
+        if (!$text) {
+            return '';
+        }
+
+        // $text = preg_replace('/[“„«]/', '&laquo;', $text);
+        // $text = preg_replace('/[”“»]/', '&raquo;', $text);
+
+        $lines = explode("\n", $text);
+        $formattedText = '';
+
+        foreach ($lines as $line) {
+            $words = explode(' ', $line);
+            $formattedLine = '';
+
+            foreach ($words as $index => $word) {
+                if (mb_strlen($word) < 3 && $index > 0) {
+                    $formattedLine = mb_rtrim($formattedLine) . "&nbsp;$word";
+                } else {
+                    $formattedLine .= ($formattedLine ? ' ' : '') . $word;
+                }
+            }
+
+            $formattedText .= "$formattedLine\n";
+        }
+
+        return mb_trim($formattedText);
+    }
+
     public static function replace($search, $replace, $subject, &$count = 0)
     {
         if (!is_array($search) && is_array($replace)) {
