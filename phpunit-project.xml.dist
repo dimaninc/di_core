@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- rename and copy this file to project root -->
+<phpunit bootstrap="vendor/dimaninc/di_core/php/lib/diLib.php"
+         backupGlobals="false">
+    <testsuites>
+        <testsuite name="Unit tests">
+            <directory suffix="Test.php">tests/unit</directory>
+            <!--<directory suffix="Test.php">tests/system</directory>-->
+        </testsuite>
+    </testsuites>
+</phpunit>

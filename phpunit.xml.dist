@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- copy this file to project root -->
+<phpunit bootstrap="php/lib/diLib.php"
+         colors="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         stopOnFailure="true">
+    <testsuites>
+        <testsuite name="Unit Tests">
+            <directory>php/tests</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>
