@@ -244,6 +244,11 @@ class diRequest
         return self::getMethodStr() == 'PUT';
     }
 
+    public static function isPatch()
+    {
+        return self::getMethodStr() == 'PATCH';
+    }
+
     public static function isDelete()
     {
         return self::getMethodStr() == 'DELETE';
