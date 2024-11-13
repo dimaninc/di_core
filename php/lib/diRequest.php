@@ -291,9 +291,9 @@ class diRequest
         }
 
         if ($domain) {
-            header('Access-Control-Allow-Origin: ' . $domain);
+            header("Access-Control-Allow-Origin: $domain");
             header(
-                'Access-Control-Allow-Methods: POST, GET, OPTIONS, PUT, DELETE, HEAD'
+                'Access-Control-Allow-Methods: POST, GET, OPTIONS, PUT, DELETE, HEAD, PATCH'
             );
             header(
                 'Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization, Auth-Token'
@@ -304,7 +304,7 @@ class diRequest
         }
 
         if (self::isOptions()) {
-            header('Allow: POST, GET, OPTIONS, PUT, DELETE, HEAD');
+            header('Allow: POST, GET, OPTIONS, PUT, DELETE, HEAD, PATCH');
 
             if (is_callable($onOptionsRequest)) {
                 $onOptionsRequest();
