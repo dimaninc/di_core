@@ -21,6 +21,7 @@
         * birthday
 */
 
+use diCore\Admin\Form;
 use diCore\Admin\Submit;
 use diCore\Data\Config;
 use diCore\Helper\ArrayHelper;
@@ -958,21 +959,23 @@ class diDynamicRows
 
     public function setColorInput($field)
     {
-        if (preg_match("/^[a-f0-9]{6}$/i", $this->getData($field))) {
-            $this->setData($field, '#' . $this->getData($field));
-        }
+        $this->setData($field, Form::normalizeColor($this->getData($field) ?: ''));
 
-        $view = "<div data-purpose=\"color-view\" data-field=\"$field\" style=\"background: {$this->getData(
-            $field
-        )}\"></div>";
+        $color = $this->getData($field);
+        $view = "<div data-purpose=\"color-view\" data-field=\"$field\" style=\"background: $color\"></div>";
 
         if (!$this->static_mode) {
+            /*
             $this->inputs[$field] =
                 "<input type=\"hidden\" name=\"$field\" value=\"{$this->getData(
                     $field
                 )}\" />" .
                 $view .
                 "<div data-purpose=\"color-picker\" data-field=\"$field\"></div>";
+            */
+            $this->inputs[
+                $field
+            ] = "<input type=\"text\" name=\"$field\" value=\"$color\" data-jscolor=\"{}\" size=\"20\" />";
         } else {
             $this->inputs[$field] = $view . ' ' . $this->getData($field);
         }

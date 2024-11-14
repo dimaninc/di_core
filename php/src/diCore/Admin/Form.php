@@ -3936,22 +3936,37 @@ EOF;
         return $this;
     }
 
+    public static function normalizeColor($color)
+    {
+        $color = $color ?: '';
+
+        if (preg_match("/^[a-f0-9]{6}$/i", $color)) {
+            return "#$color";
+        }
+
+        return $color;
+    }
+
     public function setColorInput($field)
     {
         $f = $this->formatName($field);
 
-        if (preg_match("/^[a-f0-9]{6}$/i", $this->getData($field) ?: '')) {
-            $this->setData($field, '#' . $this->getData($field));
-        }
+        $this->setData($field, static::normalizeColor($this->getData($field) ?: ''));
 
         $color = $this->getData($field);
         $view = "<div data-purpose=\"color-view\" data-field=\"$f\" style=\"background: $color\"></div>";
 
         if (!$this->static_mode) {
+            /*
             $this->inputs[$field] =
                 "<input type=\"hidden\" name=\"$f\" value=\"$color\" />" .
                 $view .
                 "<div data-purpose=\"color-picker\" data-field=\"$f\"></div>";
+            */
+
+            $this->inputs[
+                $field
+            ] = "<input type=\"text\" name=\"$f\" value=\"$color\" data-jscolor=\"{}\" size=\"20\" />";
         } else {
             $this->inputs[$field] = "$view $color";
         }

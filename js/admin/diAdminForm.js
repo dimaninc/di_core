@@ -72,7 +72,7 @@ var diAdminForm = function (table, id, auto_save_timeout) {
         self.clear_busy();
 
         initTabs();
-        initColorPickers();
+        self.initColorPickers();
         initTypeChange();
         initDelLinks();
         self.initPicHolders()
@@ -646,21 +646,25 @@ var diAdminForm = function (table, id, auto_save_timeout) {
         });
     };
 
-    function initColorPickers() {
-        $(self.e.form).on('click', '[data-purpose="color-view"]', function () {
+    this.initColorPickers = function () {
+        /*
+        $(this.e.form).on('click', '[data-purpose="color-view"]', function () {
             $(
                 '[data-purpose="color-picker"][data-field="{0}"]'.format(
                     $(this).data('field')
                 )
             ).slideToggle();
         });
+        */
 
         $('[data-purpose="color-picker"]:not([data-field$="%NEWID%]"])').each(
             function () {
                 self.setupColorPicker($(this));
             }
         );
-    }
+
+        return this;
+    };
 
     this.getFieldTitle = function (field, options) {
         options = options || {};

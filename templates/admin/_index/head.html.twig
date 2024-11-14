@@ -39,9 +39,11 @@
 ] %}
 <head>
 	{% include 'admin/_index/_parts/head_basic_tags.html.twig' %}
-
+    {#
 	<script type="text/javascript" charset="utf-8" src="{{ asset_locations['vendor'] }}colorPicker/js/colorpicker.js"></script>
 	<link rel="stylesheet" type="text/css" href="{{ asset_locations['vendor'] }}colorPicker/css/colorpicker.css">
+    #}
+    <script type="text/javascript" charset="utf-8" src="{{ asset_locations['vendor'] }}jscolor/jscolor.min.js"></script>
 
 	{{ wysiwyg_head_script|raw }}
 
