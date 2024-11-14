@@ -965,17 +965,11 @@ class diDynamicRows
         $view = "<div data-purpose=\"color-view\" data-field=\"$field\" style=\"background: $color\"></div>";
 
         if (!$this->static_mode) {
-            /*
-            $this->inputs[$field] =
-                "<input type=\"hidden\" name=\"$field\" value=\"{$this->getData(
-                    $field
-                )}\" />" .
-                $view .
-                "<div data-purpose=\"color-picker\" data-field=\"$field\"></div>";
-            */
+            $options = Form::defaultColorOptions();
+
             $this->inputs[
                 $field
-            ] = "<input type=\"text\" name=\"$field\" value=\"$color\" data-jscolor=\"{}\" size=\"20\" />";
+            ] = "<input type=\"text\" name=\"$field\" value=\"$color\" data-jscolor=\"$options\" size=\"20\" />";
         } else {
             $this->inputs[$field] = $view . ' ' . $this->getData($field);
         }

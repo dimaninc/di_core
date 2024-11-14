@@ -3947,6 +3947,15 @@ EOF;
         return $color;
     }
 
+    public static function defaultColorOptions()
+    {
+        return StringHelper::out(
+            json_encode([
+                'required' => false,
+            ])
+        );
+    }
+
     public function setColorInput($field)
     {
         $f = $this->formatName($field);
@@ -3957,16 +3966,11 @@ EOF;
         $view = "<div data-purpose=\"color-view\" data-field=\"$f\" style=\"background: $color\"></div>";
 
         if (!$this->static_mode) {
-            /*
-            $this->inputs[$field] =
-                "<input type=\"hidden\" name=\"$f\" value=\"$color\" />" .
-                $view .
-                "<div data-purpose=\"color-picker\" data-field=\"$f\"></div>";
-            */
+            $options = static::defaultColorOptions();
 
             $this->inputs[
                 $field
-            ] = "<input type=\"text\" name=\"$f\" value=\"$color\" data-jscolor=\"{}\" size=\"20\" />";
+            ] = "<input type=\"text\" name=\"$f\" value=\"$color\" data-jscolor=\"$options\" size=\"20\" />";
         } else {
             $this->inputs[$field] = "$view $color";
         }
