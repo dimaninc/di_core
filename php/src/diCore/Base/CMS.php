@@ -1149,9 +1149,15 @@ abstract class CMS
         $this->content_table = $table;
 
         $this->tables[$this->content_table] = [];
-        $this->tables_cache_fn_ar[$this->content_table] = $tables_cache_fn_ar
-            ? $tables_cache_fn_ar
-            : $this->tables_cache_fn_ar['content'];
+        $this->tables_cache_fn_ar[$this->content_table] =
+            $tables_cache_fn_ar ?: $this->tables_cache_fn_ar['content'];
+
+        return $this;
+    }
+
+    public function setDefaultPageType(string $defaultPageType)
+    {
+        $this->defaultPageType = $defaultPageType;
 
         return $this;
     }
