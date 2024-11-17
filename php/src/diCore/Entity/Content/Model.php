@@ -8,6 +8,7 @@
 
 namespace diCore\Entity\Content;
 
+use diCore\Admin\Submit;
 use diCore\Data\Types;
 use diCore\Database\FieldType;
 use diCore\Entity\AdBlock\Model as AdBlock;
@@ -161,6 +162,27 @@ class Model extends \diModel
 
     protected static $fieldTypes = [
         'properties' => FieldType::json,
+    ];
+
+    protected static $picStoreSettings = [
+        'pic' => [
+            [
+                'type' => Submit::IMAGE_TYPE_MAIN,
+                'resize' => \diImage::DI_THUMB_FIT,
+            ],
+        ],
+        'pic2' => [
+            [
+                'type' => Submit::IMAGE_TYPE_MAIN,
+                'resize' => \diImage::DI_THUMB_FIT,
+            ],
+        ],
+        'ico' => [
+            [
+                'type' => Submit::IMAGE_TYPE_MAIN,
+                'resize' => \diImage::DI_THUMB_FIT,
+            ],
+        ],
     ];
 
     /** @var AdBlock */

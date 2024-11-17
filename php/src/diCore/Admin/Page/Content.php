@@ -35,14 +35,14 @@ class Content extends \diCore\Admin\BasePage
     protected function getButtonsArForList()
     {
         return [
-            '#edit' => '',
+            '#edit' => [],
             '#create' => [
                 'maxLevelNum' => static::MAX_LEVEL_NUM,
             ],
-            '#del' => '',
-            '#visible' => '',
-            '#up' => '',
-            '#down' => '',
+            '#del' => [],
+            '#visible' => [],
+            '#up' => [],
+            '#down' => [],
         ];
     }
 
@@ -129,15 +129,7 @@ class Content extends \diCore\Admin\BasePage
         $this->generateSlugOnSubmit();
 
         $this->getSubmit()
-            ->storeImage(
-                ['pic', 'pic2', 'ico'],
-                [
-                    [
-                        'type' => \diCore\Admin\Submit::IMAGE_TYPE_MAIN,
-                        //'resize' => diImage::DI_THUMB_FIT,
-                    ],
-                ]
-            )
+            ->storeImage(['pic', 'pic2', 'ico'])
             ->makeOrderAndLevelNum();
     }
 
