@@ -8,6 +8,7 @@
 
 namespace diCore\Entity\Video;
 
+use diCore\Helper\StringHelper;
 use diCore\Tool\SimpleContainer;
 
 class Vendor extends SimpleContainer
@@ -48,6 +49,8 @@ class Vendor extends SimpleContainer
         self::VK => 'VK', // todo: embed https://toster.ru/q/414920 https://toster.ru/q/233109
     ];
 
+    const VK_EMBED_NEW = 'https://vk.com/video_ext.php?oid=%s&id=%s&hd=2';
+
     protected static $patterns = [
         self::YOU_TUBE =>
             '/^.*((youtu\.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??(v=)?([^#\&\?\"\']+)/',
@@ -57,7 +60,7 @@ class Vendor extends SimpleContainer
         self::FACEBOOK => '#facebook\.com/watch/\?v=(\d+)#',
         self::ODNOKLASSNIKI => '#//ok\.ru/video(embed)?/(\d+)#',
         self::VK =>
-            '#//vk\.com/(video(\d+)_(\d+)|video_ext\.php\?oid=-?(\d+)&id=(\d+))#',
+            '#//vk\.com/(video(-?\d+)_(\d+)|video_ext\.php\?oid=-?(\d+)&id=(\d+))#',
     ];
 
     protected static $links = [
@@ -274,6 +277,20 @@ class Vendor extends SimpleContainer
 
     public static function getEmbedLink($vendor, $videoUid)
     {
+        if ($vendor == self::VK) {
+            $props = explode('_', $videoUid);
+
+            if (count($props) === 2) {
+                if (StringHelper::startsWith($props[0], 'video-')) {
+                    $props[0] = mb_substr($props[0], 5);
+                }
+
+                list($oid, $id) = $props;
+
+                return sprintf(self::VK_EMBED_NEW, $oid, $id);
+            }
+        }
+
         return !empty(self::$embedLinks[$vendor])
             ? sprintf(self::$embedLinks[$vendor], $videoUid)
             : null;
