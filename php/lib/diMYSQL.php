@@ -200,27 +200,26 @@ class diMYSQL extends diDB
 
     public function lockTable($table, $mode = 'WRITE')
     {
-        if (strtoupper($mode) === 'READ') {
-            if ($this->ignoreReadLock) {
-                return $this;
-            }
-
-            $tables = static::extractTableNamesWithAliases($table);
-            // simple_debug(print_r($tables, true));
-
-            $allTables = join(', ', array_map(fn($t) => "$t $mode", $tables));
-
-            if ($allTables) {
-                $this->__q("LOCK TABLES $allTables");
-                // simple_debug("LOCK TABLES $allTables");
-            }
-
-            return join(', ', $tables);
+        if (strtoupper($mode) === 'READ' && $this->ignoreReadLock) {
+            return $this;
         }
 
-        $this->__q("LOCK TABLES $table $mode");
+        $tables = static::extractTableNamesWithAliases($table);
+        $allTables = join(', ', array_map(fn($t) => "$t $mode", $tables));
 
-        return [$table];
+        if ($allTables) {
+            $query = "LOCK TABLES $allTables";
+            $time1 = utime();
+
+            $this->__q($query);
+
+            $time2 = utime();
+            $this->execution_time += $time2 - $time1;
+
+            $this->time_log('lock', $time2 - $time1, $query, '', false);
+        }
+
+        return $tables ?: [$table]; // join(', ', $tables)
     }
 
     public function unlockTable($table = null, $mode = 'WRITE')
@@ -229,7 +228,15 @@ class diMYSQL extends diDB
             return $this;
         }
 
-        $this->__q('UNLOCK TABLES');
+        $query = 'UNLOCK TABLES';
+        $time1 = utime();
+
+        $this->__q($query);
+
+        $time2 = utime();
+        $this->execution_time += $time2 - $time1;
+
+        $this->time_log('unlock', $time2 - $time1, $query, '', false);
 
         return parent::unlockTable($table);
     }

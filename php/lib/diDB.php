@@ -383,7 +383,7 @@ abstract class diDB
         return false;
     }
 
-    protected function time_log($method, $duration, $query = '', $message = '')
+    protected function time_log($method, $duration, $query = '', $message = '', $explain = true)
     {
         if (!$this->debug) {
             return $this;
@@ -395,7 +395,7 @@ abstract class diDB
 
         $data = [$method, $query, $duration, $message];
 
-        $explainData = $query
+        $explainData = $explain && $query
             ? $this->__fetch_array($this->__q("EXPLAIN $query"))
             : null;
 
@@ -620,7 +620,7 @@ abstract class diDB
         return $result;
     }
 
-    public function rq($q)
+    public function rq($q, $skipTimeLog = false)
     {
         $time1 = utime();
 
@@ -633,7 +633,9 @@ abstract class diDB
             $this->_log("unable to exec query \"$q\"");
         }
 
-        $this->time_log('rq', $time2 - $time1, $q);
+        if (!$skipTimeLog) {
+            $this->time_log('rq', $time2 - $time1, $q);
+        }
 
         return $result;
     }
@@ -1242,7 +1244,7 @@ abstract class diDB
     protected function startTransactionInner()
     {
         if ($this->getStartTransactionQuery()) {
-            $this->rq($this->getStartTransactionQuery());
+            $this->rq($this->getStartTransactionQuery(), true);
         }
 
         return $this;
@@ -1251,7 +1253,7 @@ abstract class diDB
     protected function commitTransactionInner()
     {
         if ($this->getCommitTransactionQuery()) {
-            $this->rq($this->getCommitTransactionQuery());
+            $this->rq($this->getCommitTransactionQuery(), true);
         }
 
         return $this;
@@ -1260,7 +1262,7 @@ abstract class diDB
     protected function rollbackTransactionInner()
     {
         if ($this->getRollbackTransactionQuery()) {
-            $this->rq($this->getRollbackTransactionQuery());
+            $this->rq($this->getRollbackTransactionQuery(), true);
         }
 
         return $this;
@@ -1429,6 +1431,20 @@ abstract class diDB
         return $this;
     }
 
+    public static function extractTableNames($sql, $withAlias = false)
+    {
+        $tables = static::extractTableNamesWithAliases($sql);
+
+        if (!$withAlias) {
+            $tables = array_map(
+                fn ($t) => static::removeAliasFromTableName($t),
+                static::extractTableNamesWithAliases($sql)
+            );
+        }
+
+        return $tables;
+    }
+
     public static function extractTableNamesWithAliases($sql)
     {
         $combiner = function (
@@ -1478,6 +1494,11 @@ abstract class diDB
         preg_match_all($pattern, $sql, $matches);
 
         return $combiner($matches, 2, 5, true);
+    }
+
+    public static function removeAliasFromTableName(string $tableWithAlias)
+    {
+        return preg_replace('/\s+AS\s+.*|\s+.*/i', '', trim($tableWithAlias));
     }
 
     protected function prepareDumpCliCommandOptions($options = [])
