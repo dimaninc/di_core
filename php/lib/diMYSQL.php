@@ -205,10 +205,11 @@ class diMYSQL extends diDB
         }
 
         $tables = static::extractTableNamesWithAliases($table);
-        $allTables = join(', ', array_map(fn($t) => "$t $mode", $tables));
+        $quotedTables = array_map(fn ($t) => $this->quoteTableNameWithAlias($t), $tables);
+        $allTables = join(', ', array_map(fn($t) => "$t $mode", $quotedTables));
 
         if ($allTables) {
-            $query = "LOCK TABLES $allTables";
+            $query = "LOCK TABLE $allTables";
             $time1 = utime();
 
             $this->__q($query);

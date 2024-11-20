@@ -261,7 +261,7 @@ abstract class diDB
     {
         $quote = static::QUOTE_TABLE;
 
-        return "CREATE DATABASE IF NOT EXISTS {$quote}{$this->dbname}{$quote} /*!40100 COLLATE '" .
+        return "CREATE DATABASE IF NOT EXISTS $quote$this->dbname$quote /*!40100 COLLATE '" .
             Config::getDbCollation() .
             "' */";
     }
@@ -1437,7 +1437,7 @@ abstract class diDB
 
         if (!$withAlias) {
             $tables = array_map(
-                fn ($t) => static::removeAliasFromTableName($t),
+                [static::class, 'removeAliasFromTableName'],
                 static::extractTableNamesWithAliases($sql)
             );
         }
@@ -1499,6 +1499,22 @@ abstract class diDB
     public static function removeAliasFromTableName(string $tableWithAlias)
     {
         return preg_replace('/\s+AS\s+.*|\s+.*/i', '', trim($tableWithAlias));
+    }
+
+    public function quoteTableNameWithAlias(string $tableWithAlias) {
+        $parts = preg_split('/\s+AS\s+|\s+/i', trim($tableWithAlias), 2);
+
+        if (!$parts) {
+            return $tableWithAlias;
+        }
+
+        $tableName = $this->escapeTable($parts[0]);
+
+        if (!isset($parts[1])) {
+            return $tableName;
+        }
+
+        return "$tableName AS $parts[1]";
     }
 
     protected function prepareDumpCliCommandOptions($options = [])
