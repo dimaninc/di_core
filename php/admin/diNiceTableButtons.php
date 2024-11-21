@@ -226,7 +226,7 @@ class diNiceTableButtons
 
         $attributes = [
             'data-action' => $action,
-            'data-state' => $options['state'],
+            'data-state' => $options['state'] ?? false,
             'title' => $title,
         ];
 

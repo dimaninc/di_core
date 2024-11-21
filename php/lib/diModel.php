@@ -1336,7 +1336,11 @@ class diModel implements \ArrayAccess
      */
     public function exists($field = null)
     {
-        return is_null($field) ? !!$this->ar : isset($this->ar[$field]);
+        if (is_null($field)) {
+            return !!$this->ar;
+        }
+
+        return isset($this->ar[$field]); // || !!static::getFieldType($field)
     }
 
     /**

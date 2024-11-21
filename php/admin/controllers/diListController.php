@@ -114,8 +114,7 @@ class diListController extends \diBaseAdminController
         $this->getDb()->update(
             $table,
             [
-                '*' . $this->orderNumField =>
-                    $this->orderNumField . '+' . $delta,
+                "*$this->orderNumField" => "$this->orderNumField + $delta",
             ],
             "WHERE $this->orderNumField >= '$orderNum'"
         );
@@ -126,11 +125,7 @@ class diListController extends \diBaseAdminController
     private function getParentModel($table, $parentId)
     {
         if ($parentId > 0) {
-            $parentModel = \diModel::createForTableNoStrict(
-                $table,
-                $parentId,
-                'id'
-            );
+            $parentModel = \diModel::createForTableNoStrict($table, $parentId, 'id');
             $order = $parentModel->get($this->orderNumField) + 1;
         } else {
             $minRec = $this->getDb()->r(
@@ -218,10 +213,8 @@ class diListController extends \diBaseAdminController
 
         if (!$field) {
             $ar['message'] = 'No field specified';
-        } elseif (!$m->exists($field)) {
-            $ar[
-                'message'
-            ] = "Record #{$m->getId()} doesn't have field '$field'";
+        } elseif (!$m->exists($field) && !$m::getFieldType($field)) {
+            $ar['message'] = "Record #{$m->getId()} doesn't have field '$field'";
         } else {
             try {
                 $m->set($field, $m->get($field) ? 0 : 1)->save();
@@ -359,10 +352,7 @@ class diListController extends \diBaseAdminController
         $ids = explode(',', \diRequest::post('ids', ''));
         $ids = array_filter(array_map([StringHelper::class, 'in'], $ids));
 
-        return \diCollection::createForTableNoStrict($table)->filterBy(
-            'id',
-            $ids
-        );
+        return \diCollection::createForTableNoStrict($table)->filterBy('id', $ids);
     }
 
     /**
