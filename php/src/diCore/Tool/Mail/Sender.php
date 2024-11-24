@@ -218,10 +218,19 @@ class Sender
         $res = $mail->send();
 
         if (!$res) {
-            Logger::getInstance()->log('mail error: ' . $mail->ErrorInfo);
+            static::logError($mail->ErrorInfo);
         }
 
         return $res;
+    }
+
+    protected static function logError($message)
+    {
+        Logger::getInstance()->log(
+            "SMTP error: $message",
+            'Tool/Mail/Sender',
+            '-mail'
+        );
     }
 
     protected static function generateAttachmentId()
@@ -253,7 +262,7 @@ class Sender
         }
 
         $mail->Debugoutput = function ($str, $level) {
-            Logger::getInstance()->log($str, 'Mailer/' . $level);
+            Logger::getInstance()->log($str, "Mailer/$level", '-mail');
         };
 
         if ($fromEmail) {
@@ -266,12 +275,12 @@ class Sender
             $mail->Password = static::getAccountPassword($fromEmail) ?: '';
 
             if (!$mail->Host) {
-                throw new \Exception('SMTP host not defined for ' . $fromEmail);
+                throw new \Exception("SMTP host not defined for $fromEmail");
             }
 
             /*
 			if (!$mail->Password) {
-				throw new \Exception('SMTP password not defined for ' . $fromEmail);
+				throw new \Exception("SMTP password not defined for $fromEmail");
 			}
 			*/
 

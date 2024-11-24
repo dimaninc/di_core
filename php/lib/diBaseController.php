@@ -1,5 +1,6 @@
 <?php
 
+use diCore\Data\Environment;
 use diCore\Data\Http\HttpCode;
 use diCore\Base\Exception\HttpException;
 use diCore\Database\Connection;
@@ -63,6 +64,10 @@ class diBaseController
 
     public function __construct($params = [])
     {
+        if (Environment::shouldLogSpeed()) {
+            Logger::getInstance()->speed('constructor', static::class);
+        }
+
         \diSession::start();
 
         $this->action = \diRequest::request('action');
@@ -211,6 +216,10 @@ class diBaseController
             }
 
             if ($die) {
+                if (Environment::shouldLogSpeed()) {
+                    Logger::getInstance()->speed('createAttempt/die', static::class);
+                }
+
                 die();
             }
 
@@ -337,6 +346,10 @@ class diBaseController
             $params = array_slice($paramsAr, $c::TINY_ACTIONS ? 1 : 2);
         }
         $c->act($action, $params);
+
+        if (Environment::shouldLogSpeed()) {
+            Logger::getInstance()->speed('autoCreate/afterAct', static::class);
+        }
 
         if (!$silent && $c->getResponse()->hasReturnData()) {
             $c->defaultResponse();

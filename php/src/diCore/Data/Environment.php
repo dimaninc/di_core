@@ -21,6 +21,7 @@ class Environment
     const mainDomain = null;
     const mainPort = null;
     const useModuleCache = null;
+    const logSpeed = null;
     const initiating = null;
 
     const dbEncoding = null;
@@ -72,6 +73,14 @@ class Environment
         $class = self::getClass();
 
         return $class::initiating;
+    }
+
+    final public static function shouldLogSpeed()
+    {
+        /** @var Environment $class */
+        $class = self::getClass();
+
+        return $class::logSpeed;
     }
 
     final public static function getDbEncoding()

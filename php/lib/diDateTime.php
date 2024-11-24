@@ -193,7 +193,11 @@ class diDateTime
         $dt = self::timestamp($dt ?: time());
         $a = getdate($dt);
 
+        $ms = (float) (explode(' ', microtime())[0] ?? 0);
+
         $ar = [
+            '%мс%' => mb_substr($ms, 2),
+            '%мс3%' => mb_substr($ms, 2, 3),
             '%мес%' => mb_substr(self::$months[$a['mon']], 0, 3),
             '%месяц%' => self::$months[$a['mon']],
             '%месяца%' => self::$monthsGenitive[$a['mon']],

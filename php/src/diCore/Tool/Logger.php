@@ -18,7 +18,8 @@ class Logger
 
     const SUB_FOLDER = 'log/debug/';
     const EXTENSION = '.txt';
-    const DATE_TIME_FORMAT = '[d.m.Y H:i:s]';
+    // native php does not support "u", that's we use our own %мс3%
+    const DATE_TIME_FORMAT = '[d.m.Y H:i:s.%мс3%]';
     const CHMOD = 0777;
 
     const PURPOSE_SIMPLE = 1;
@@ -77,8 +78,7 @@ class Logger
     {
         $fn = $this->getFullFilename($purpose, $fnSuffix);
 
-        $data =
-            $this->uid . '> ' . $this->getDateTime($purpose) . ' ' . $line . "\n";
+        $data = "$this->uid> {$this->getDateTime($purpose)} $line\n";
 
         if ($this->logToStdout) {
             echo $data;
@@ -114,6 +114,17 @@ class Logger
                 self::PURPOSE_VARIABLE
             );
         }
+
+        return $this;
+    }
+
+    public function speed($message, $module = '')
+    {
+        if ($module) {
+            $module = "[$module] ";
+        }
+
+        $this->saveLine($module . $message, self::PURPOSE_SIMPLE, '-speed');
 
         return $this;
     }

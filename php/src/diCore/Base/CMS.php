@@ -5,6 +5,7 @@ namespace diCore\Base;
 use diCore\Base\Exception\HttpException;
 use diCore\Data\Config;
 use diCore\Data\Configuration;
+use diCore\Data\Environment;
 use diCore\Data\FeatureToggle;
 use diCore\Data\Http\HttpCode;
 use diCore\Data\Http\Response;
@@ -321,6 +322,10 @@ abstract class CMS
         $tables_cache_fn_ar = false,
         $ct_cache_fn_ar = false
     ) {
+        if (Environment::shouldLogSpeed()) {
+            Logger::getInstance()->speed('constructor', static::class);
+        }
+
         if ($this->authUsed) {
             $this->initAuth();
         }
@@ -365,6 +370,10 @@ abstract class CMS
 
     public function work()
     {
+        if (Environment::shouldLogSpeed()) {
+            Logger::getInstance()->speed('work', static::class);
+        }
+
         try {
             $this->go();
         } catch (HttpException $e) {
@@ -1293,6 +1302,10 @@ abstract class CMS
 
     public function finish()
     {
+        if (Environment::shouldLogSpeed()) {
+            Logger::getInstance()->speed('finish', static::class);
+        }
+
         echo $this->getContentsForFinish();
 
         return $this;
