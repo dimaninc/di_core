@@ -323,7 +323,10 @@ abstract class CMS
         $ct_cache_fn_ar = false
     ) {
         if (Environment::shouldLogSpeed()) {
-            Logger::getInstance()->speed('constructor', static::class);
+            Logger::getInstance()->speed(
+                'constructor: ' . \diRequest::requestUri(),
+                static::class
+            );
         }
 
         if ($this->authUsed) {
@@ -1303,7 +1306,7 @@ abstract class CMS
     public function finish()
     {
         if (Environment::shouldLogSpeed()) {
-            Logger::getInstance()->speed('finish', static::class);
+            Logger::getInstance()->speedFinish('finish', static::class);
         }
 
         echo $this->getContentsForFinish();

@@ -21,8 +21,18 @@ class Environment
     const mainDomain = null;
     const mainPort = null;
     const useModuleCache = null;
-    const logSpeed = null;
     const initiating = null;
+
+    /**
+     * true/'all' - log all api, admin page and cms module timings
+     * false/null - log nothing
+     * 'slow' - log only timings of slow processes
+     */
+    const logSpeed = null;
+    /**
+     * Slow speed value in seconds
+     */
+    const slowSpeedValue = 1;
 
     const dbEncoding = null;
     const dbCollation = null;
@@ -80,7 +90,23 @@ class Environment
         /** @var Environment $class */
         $class = self::getClass();
 
-        return $class::logSpeed;
+        return !!$class::logSpeed;
+    }
+
+    final public static function shouldLogOnlySlowSpeed()
+    {
+        /** @var Environment $class */
+        $class = self::getClass();
+
+        return $class::logSpeed === 'slow';
+    }
+
+    final public static function getSlowSpeedValue()
+    {
+        /** @var Environment $class */
+        $class = self::getClass();
+
+        return $class::slowSpeedValue;
     }
 
     final public static function getDbEncoding()

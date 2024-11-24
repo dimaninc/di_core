@@ -10,6 +10,7 @@ namespace diCore\Tool;
 
 use diCore\Base\CMS;
 use diCore\Data\Config;
+use diCore\Data\Environment;
 use diCore\Helper\StringHelper;
 
 class Logger
@@ -29,9 +30,13 @@ class Logger
 
     protected $logToStdout = false;
 
+    protected $startTimestamp = null;
+    protected $speedLines = [];
+
     protected function init()
     {
         $this->uid = StringHelper::random(10);
+        $this->startTimestamp = utime();
     }
 
     public function enableLogToStdout()
@@ -74,18 +79,30 @@ class Logger
         return \diDateTime::format(static::DATE_TIME_FORMAT);
     }
 
-    protected function saveLine($line, $purpose, $fnSuffix = '')
+    protected function makeLine($line, $purpose)
+    {
+        return "$this->uid> {$this->getDateTime($purpose)} $line\n";
+    }
+
+    protected function printLine($line, $purpose, $fnSuffix = '')
+    {
+        return $this->storeLine(
+            $this->makeLine($line, $purpose),
+            $purpose,
+            $fnSuffix
+        );
+    }
+
+    protected function storeLine($line, $purpose, $fnSuffix = '')
     {
         $fn = $this->getFullFilename($purpose, $fnSuffix);
 
-        $data = "$this->uid> {$this->getDateTime($purpose)} $line\n";
-
         if ($this->logToStdout) {
-            echo $data;
+            echo $line;
         }
 
         $f = fopen($fn, 'a');
-        fputs($f, $data);
+        fputs($f, $line);
         fclose($f);
 
         @chmod($fn, static::CHMOD);
@@ -99,7 +116,7 @@ class Logger
             $module = "[$module] ";
         }
 
-        $this->saveLine($module . $message, self::PURPOSE_SIMPLE, $fnSuffix);
+        $this->printLine($module . $message, self::PURPOSE_SIMPLE, $fnSuffix);
 
         return $this;
     }
@@ -109,7 +126,7 @@ class Logger
         $arguments = func_get_args();
 
         foreach ($arguments as $arg) {
-            $this->saveLine(
+            $this->printLine(
                 print_r($arg, true) ?: var_export($arg, true),
                 self::PURPOSE_VARIABLE
             );
@@ -124,7 +141,37 @@ class Logger
             $module = "[$module] ";
         }
 
-        $this->saveLine($module . $message, self::PURPOSE_SIMPLE, '-speed');
+        if (Environment::shouldLogOnlySlowSpeed()) {
+            $this->speedLines[] = $this->makeLine(
+                $module . $message,
+                self::PURPOSE_SIMPLE
+            );
+        } else {
+            $this->printLine($module . $message, self::PURPOSE_SIMPLE, '-speed');
+        }
+
+        return $this;
+    }
+
+    public function speedFinish($message, $module = '')
+    {
+        $timeDifference = utime() - ($this->startTimestamp ?? 0);
+
+        if ($module) {
+            $module = "[$module] ";
+        }
+
+        if (
+            Environment::shouldLogOnlySlowSpeed() &&
+            $timeDifference >= Environment::getSlowSpeedValue()
+        ) {
+            foreach ($this->speedLines as $l) {
+                $this->storeLine($l, self::PURPOSE_SIMPLE, '-speed');
+            }
+
+            $message = "{$timeDifference}s: $message";
+            $this->printLine($module . $message, self::PURPOSE_SIMPLE, '-speed');
+        }
 
         return $this;
     }

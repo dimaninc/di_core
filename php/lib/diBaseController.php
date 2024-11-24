@@ -217,7 +217,10 @@ class diBaseController
 
             if ($die) {
                 if (Environment::shouldLogSpeed()) {
-                    Logger::getInstance()->speed('createAttempt/die', static::class);
+                    Logger::getInstance()->speedFinish(
+                        'createAttempt/die',
+                        static::class
+                    );
                 }
 
                 die();
@@ -356,7 +359,10 @@ class diBaseController
         $c->act($action, $params);
 
         if (Environment::shouldLogSpeed()) {
-            Logger::getInstance()->speed('afterAct', 'BaseController/autoCreate');
+            Logger::getInstance()->speedFinish(
+                'afterAct',
+                'BaseController/autoCreate'
+            );
         }
 
         if (!$silent && $c->getResponse()->hasReturnData()) {

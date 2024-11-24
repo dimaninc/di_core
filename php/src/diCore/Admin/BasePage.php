@@ -288,6 +288,10 @@ abstract class BasePage
             ]);
         }
 
+        if (Environment::shouldLogSpeed()) {
+            Logger::getInstance()->speedFinish('finish', static::class);
+        }
+
         return $o;
     }
 
