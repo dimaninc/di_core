@@ -10,11 +10,13 @@ namespace diCore\Admin;
 
 use diCore\Base\CMS;
 use diCore\Data\Configuration;
+use diCore\Data\Environment;
 use diCore\Entity\Admin\Collection as Admins;
 use diCore\Entity\AdminTableEditLog\Collection as TableEditLogs;
 use diCore\Entity\AdminTableEditLog\Model as TableEditLog;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
+use diCore\Tool\Logger;
 use Twig\Extension\EscaperExtension;
 
 abstract class BasePage
@@ -150,6 +152,10 @@ abstract class BasePage
 
     public function __construct(Base $X)
     {
+        if (Environment::shouldLogSpeed()) {
+            Logger::getInstance()->speed('constructor', static::class);
+        }
+
         $this->X = $X;
 
         $this->collectId();
@@ -177,6 +183,13 @@ abstract class BasePage
 
         try {
             $o->getAdmin()->beforeRender();
+
+            if (Environment::shouldLogSpeed()) {
+                Logger::getInstance()->speed(
+                    "Method={$o->getMethod()}",
+                    static::class
+                );
+            }
 
             switch ($o->getMethod()) {
                 case 'list':
@@ -229,6 +242,10 @@ abstract class BasePage
                     break;
             }
 
+            if (Environment::shouldLogSpeed()) {
+                Logger::getInstance()->speed('Method worked', static::class);
+            }
+
             $o->getAdmin()->afterRender();
         } catch (\Exception $e) {
             if (CMS::isDev()) {
@@ -245,6 +262,10 @@ abstract class BasePage
         if ($o->hasRenderCallback()) {
             $cb = $o->getRenderCallback();
             $result = $cb();
+
+            if (Environment::shouldLogSpeed()) {
+                Logger::getInstance()->speed('hasRenderCallback', static::class);
+            }
 
             if ($result) {
                 $o->getTpl()->assign([

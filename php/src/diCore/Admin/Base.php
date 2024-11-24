@@ -12,13 +12,14 @@ use diCore\Admin\Data\Skin;
 use diCore\Base\CMS;
 use diCore\Base\Exception\HttpException;
 use diCore\Data\Config;
-use diCore\Data\FeatureToggle;
+use diCore\Data\Environment;
 use diCore\Data\Http\HttpCode;
 use diCore\Data\Http\Response;
 use diCore\Database\Connection;
 use diCore\Entity\Admin\Level;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
+use diCore\Tool\Logger;
 
 class Base
 {
@@ -304,6 +305,10 @@ class Base
             ->printHead();
 
         HttpCode::header($this->getResponseCode());
+
+        if (Environment::shouldLogSpeed()) {
+            Logger::getInstance()->speed('AdminBase/finish', static::class);
+        }
 
         echo $this->getFinalHtml();
     }
