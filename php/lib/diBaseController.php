@@ -345,10 +345,18 @@ class diBaseController
         if ($updateParams) {
             $params = array_slice($paramsAr, $c::TINY_ACTIONS ? 1 : 2);
         }
+
+        if (Environment::shouldLogSpeed()) {
+            Logger::getInstance()->speed(
+                "Action=$action",
+                'BaseController/autoCreate'
+            );
+        }
+
         $c->act($action, $params);
 
         if (Environment::shouldLogSpeed()) {
-            Logger::getInstance()->speed('autoCreate/afterAct', static::class);
+            Logger::getInstance()->speed('afterAct', 'BaseController/autoCreate');
         }
 
         if (!$silent && $c->getResponse()->hasReturnData()) {
