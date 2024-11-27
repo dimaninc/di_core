@@ -1,426 +1,359 @@
-/*
-    // dimaninc popups class
+var diPopups = function () {
+  var self = this;
+  var states = {};
+  var events = {};
 
-    * 2012/01/07
-        * reorganized into a class
-*/
+  this.e = {
+    $overlay: $('.dipopup-overlay,#gray-bg')
+  };
+  this.$popups = {};
+  this.optsAr = {};
+  this.id_prefix = '';
+  this.id_suffix = '-dipopup';
 
-var diPopups = function() {
-	var self = this,
-		states = {},
-		events = {};
+  this.defaultCallbacks = {
+    realShow: function (obj, id) {
+      obj.getPopupElement(id).addClass('dipopup--visible');
+    },
+    realHide: function (obj, id) {
+      obj.getPopupElement(id).removeClass('dipopup--visible');
+    }
+  };
 
-	var globalOptions = {
-        positioning: true,
-        positioningX: true,
-        positioningY: true,
-        mobilePositioning: true,
-        livePosition: true
+  this.callbacks = {};
+
+  this.setEvent = function (id, eventName, callback) {
+    if (typeof events[id] === 'undefined') {
+      events[id] = {};
+    }
+
+    events[id][eventName] = callback;
+
+    return this;
+  };
+
+  this.fireEvent = function (id, eventName) {
+    if (
+      typeof events[id] !== 'undefined' &&
+      typeof events[id][eventName] !== 'undefined'
+    ) {
+      events[id][eventName]({
+        name: eventName,
+        id: id,
+        element: this.getPopupElement(id),
+        diPopup: this
+      });
+    }
+  };
+
+  this.setCallback = function (name, callback) {
+    this.callbacks[name] = callback;
+
+    return this;
+  };
+
+  this.getCallback = function (name) {
+    return this.callbacks[name] || this.defaultCallbacks[name];
+  };
+
+  this.checkOverlay = function () {
+    if (!this.e.$overlay.length) {
+      this.e.$overlay = $('<div class="dipopup-overlay" id="gray-bg"></div>')
+        .appendTo($(document.body))
+        .on('click', function () {
+          self.hide_all();
+        });
+    }
+
+    return this;
+  };
+
+  this.onOverlay = function (eventName, callback) {
+    this.e.$overlay.on(eventName, callback);
+
+    return this;
+  };
+
+  this.offOverlay = function (eventName) {
+    this.e.$overlay.off(eventName);
+
+    return this;
+  };
+
+  this.showOverlay = function () {
+    this.checkOverlay();
+
+    if (
+      !this.e.$overlay.is(':visible') ||
+      this.e.$overlay.css('visibility') === 'hidden'
+    ) {
+      this.e.$overlay.addClass('dipopup-overlay--visible');
+    }
+
+    return this;
+  };
+
+  this.hideOverlay = function () {
+    this.checkOverlay();
+
+    $('html').removeClass('dipopup-shown');
+    this.e.$overlay.removeClass('dipopup-overlay--visible');
+
+    return this;
+  };
+
+  /** @deprecated */
+  this.checkBg = this.checkOverlay;
+  /** @deprecated */
+  this.onBg = this.onOverlay;
+  /** @deprecated */
+  this.offBg = this.offOverlay;
+  /** @deprecated */
+  this.show_bg = this.showOverlay;
+  /** @deprecated */
+  this.hide_bg = this.hideOverlay;
+
+  this.getPopupElement = function (id) {
+    return this.exists(id) ? this.$popups[id] : $();
+  };
+
+  function realShow(id) {
+    self.getCallback('realShow')(self, id);
+
+    return self;
+  }
+
+  function realHide(id) {
+    self.getCallback('realHide')(self, id);
+
+    return self;
+  }
+
+  this.setOptsFor = function (name, opts) {
+    this.optsAr[name] = opts || {};
+
+    var $e = this.getPopupElement(name);
+
+    if ($e) {
+      this.copyOptsToDom(name, $e);
+    }
+
+    return this;
+  };
+
+  this.show = function (name, _opts /* or showBackground */) {
+    var opts = {
+      name: name,
+      showCloseButton: true,
+      showBackground: true,
+      content: null
     };
+    var $e = this.getPopupElement(name);
 
-	this.e = {
-		$bg: $('#gray-bg')
-	};
-	this.$e_ar = {};
-	this.optsAr = {};
-	this.id_prefix = '';
-	this.id_suffix = '-dipopup';
+    if (typeof _opts === 'object') {
+      opts = $.extend(opts, _opts);
+    } else if (typeof _opts !== 'undefined') {
+      opts.showBackground = _opts;
+    }
 
-	this.defaultCallbacks = {
-		realShow: function (obj, id) {
-			obj.getPopupElement(id).fadeIn();
-			obj.update_position(id);
-		},
-		realHide: function (obj, id) {
-			obj.getPopupElement(id).fadeOut();
-		}
-	};
+    if (!this.exists(name)) {
+      if (opts.content) {
+        this.create(
+          $.extend(
+            {
+              name: name
+            },
+            opts
+          )
+        );
+      }
+    } else if (opts.content) {
+      this.setContent({
+        name: name,
+        content: opts.content
+      });
+    }
 
-	this.callbacks = {};
+    this.setOptsFor(name, opts);
 
-	function constructor() {
-		$(window)
-			.off('resize.dipopup-live orientationchange.dipopup-live')
-			.on('resize.dipopup-live orientationchange.dipopup-live', function() {
-				$.each(self.$e_ar, function(id, $popup) {
-					if ($popup.data('live-position')) {
-						self.update_position(id);
-					}
-				});
-			});
-	}
+    if ($e.data('detach') && !$e.parent().is('body')) {
+      $(document.body).append($e.detach());
+    }
 
-	this.setGlobalOptions = function(o) {
-		globalOptions = $.extend(globalOptions, o || {});
+    this.checkCloseButton(name);
 
-		return this;
-	};
+    realShow(name);
 
-	this.disableAutoPosition = function() {
-		return this.setGlobalOptions({
-            positioning: false,
-            positioningX: false,
-            positioningY: false,
-            mobilePositioning: false,
-            livePosition: false
-		});
-	};
+    states[name] = true;
 
-	this.setEvent = function(id, eventName, callback) {
-		if (typeof events[id] === 'undefined') {
-			events[id] = {};
-		}
+    if (opts.showBackground) {
+      this.showOverlay();
+    }
 
-		events[id][eventName] = callback;
+    $e.children('input[type="text"],input[type="email"],input[type="tel"],textarea')
+      .filter(':visible')
+      .eq(0)
+      .focus();
 
-		return this;
-	};
+    this.fireEvent(name, 'show');
 
-	this.fireEvent = function(id, eventName) {
-		if (typeof events[id] !== 'undefined' && typeof events[id][eventName] !== 'undefined') {
-			events[id][eventName]({
-				name: eventName,
-				id: id,
-				element: this.getPopupElement(id),
-				diPopup: this
-			});
-		}
-	};
+    $('html').addClass('dipopup-shown');
 
-	this.setCallback = function(name, callback) {
-		this.callbacks[name] = callback;
+    return this;
+  };
 
-		return this;
-	};
+  this.checkCloseButton = function (name) {
+    if (
+      !$('.dipopup--close', this.$popups[name]).length &&
+      !this.$popups[name].data('no-close')
+    ) {
+      this.$popups[name].prepend(
+        $('<div class="dipopup--close"></div>').on('click', function () {
+          self.hide(name);
+          self.hideOverlay();
+        })
+      );
+    }
 
-	this.getCallback = function(name) {
-		return this.callbacks[name] || this.defaultCallbacks[name];
-	};
+    return this;
+  };
 
-	this.checkBg = function() {
-		if (!this.e.$bg.length) {
-			this.e.$bg = $('<div id="gray-bg"></div>').appendTo($(document.body)).click(function() {
-				self.hide_all();
-			});
-		}
+  this.create = function (
+    name /* or options*/,
+    content /* = null*/,
+    options /* = null*/
+  ) {
+    if (
+      typeof name === 'object' &&
+      typeof content === 'undefined' &&
+      typeof options === 'undefined'
+    ) {
+      options = name;
+    } else {
+      options = options || {};
+      options.name = name;
+      options.content = content;
+    }
 
-		return this;
-	};
+    options = $.extend(
+      {
+        name: null,
+        content: null,
+        showCloseButton: true
+      },
+      options
+    );
 
-	this.onBg = function(eventName, callback) {
-		this.e.$bg.on(eventName, callback);
+    var $el = $('<div/>');
+    this.setOptsFor(options.name, options).copyOptsToDom(options.name, $el);
+    $el
+      .addClass('dipopup')
+      .data('type', 'dipopup')
+      .attr('data-type', 'dipopup')
+      .html(options.content)
+      .appendTo(document.body);
 
-		return this;
-	};
+    this.$popups[options.name] = $el;
 
-	this.offBg = function(eventName) {
-		this.e.$bg.off(eventName);
+    return this;
+  };
 
-		return this;
-	};
+  this.copyOptsToDom = function (name, $el) {
+    var options = this.optsAr[name] || {};
 
-	this.show_bg = function() {
-		this.checkBg();
+    $el
+      .data('name', name || options.name)
+      .attr('data-name', name || options.name)
+      .attr('data-no-close', !options.showCloseButton)
+      .data('no-close', !options.showCloseButton);
 
-		if (!this.e.$bg.is(':visible')) {
-			this.e.$bg.css({
-				opacity: 0
-			}).show().animate({
-				opacity: 1
-			});
-		}
+    return this;
+  };
 
-		return this;
-	};
+  this.exists = function (name) {
+    if (typeof this.$popups[name] === 'undefined') {
+      this.$popups[name] = $(
+        [
+          '#' + this.id_prefix + name + this.id_suffix,
+          '.dipopup[data-name="' + name + '"]',
+          '[data-type="dipopup"][data-name="' + name + '"]'
+        ].join(',')
+      );
+    }
 
-	this.hide_bg = function() {
-		$('html').removeClass('dipopup-shown');
-		this.e.$bg.fadeOut();
-	};
+    return !!this.$popups[name].length;
+  };
 
-	this.getPopupElement = function(id) {
-		return this.exists(id)
-			? this.$e_ar[id]
-			: $();
-	};
+  this.setContent = function (options) {
+    options = $.extend(
+      {
+        name: null,
+        content: null,
+        create: false
+      },
+      options
+    );
 
-	function realShow(id) {
-		self.getCallback('realShow')(self, id);
-	}
+    if (!this.exists(options.name)) {
+      if (options.create) {
+        this.create(options);
+      } else {
+        return this;
+      }
+    }
 
-	function realHide(id) {
-		self.getCallback('realHide')(self, id);
-	}
+    this.getPopupElement(options.name).html(options.content);
 
-	this.setOptsFor = function(name, opts) {
-		this.optsAr[name] = opts || {};
+    this.checkCloseButton(options.name);
 
-		var $e = this.getPopupElement(name);
+    return this;
+  };
 
-		if ($e) {
-            this.copyOptsToDom(name, $e);
+  this.isMobile = function () {
+    return is_mobile; //$(window).width() < 450;
+  };
+
+  this.visible = function (id) {
+    return states[id];
+  };
+
+  this.hide = function (id) {
+    realHide(id);
+
+    this.fireEvent(id, 'hide');
+
+    states[id] = false;
+
+    var atLeastOneVisible = false;
+
+    for (var i in this.$popups) {
+      if (this.$popups.hasOwnProperty(i)) {
+        if (this.visible(i)) {
+          atLeastOneVisible = true;
+
+          break;
         }
+      }
+    }
 
-		return this;
-	};
+    if (!atLeastOneVisible) {
+      this.hideOverlay();
+    }
 
-	this.show = function(name, _opts/* or showBackground */) {
-		var opts = {
-			name: name,
-            showCloseButton: true,
-			showBackground: true,
-			content: null,
-            positioning: globalOptions.positioning,
-            positioningX: globalOptions.positioningX,
-            positioningY: globalOptions.positioningY,
-            mobilePositioning: globalOptions.mobilePositioning,
-            livePosition: globalOptions.livePosition,
-			afterUpdatePosition: null
-		};
-		var $e = this.getPopupElement(name);
+    return this;
+  };
 
-		if (typeof _opts === 'object') {
-			opts = $.extend(opts, _opts);
-		} else if (typeof _opts !== 'undefined') {
-			opts.showBackground = _opts;
-		}
+  this.hide_all = function () {
+    this.hideOverlay();
 
-		if (!this.exists(name)) {
-			if (opts.content) {
-				this.create($.extend({
-					name: name
-				}, opts));
-			}
-		} else if (opts.content) {
-			this.setContent({
-				name: name,
-				content: opts.content
-			});
-		}
+    for (var id in this.$popups) {
+      if (this.$popups.hasOwnProperty(id)) {
+        this.hide(id);
+      }
+    }
 
-        this.setOptsFor(name, opts);
-
-        if ($e.data('detach') && !$e.parent().is('body')) {
-			$(document.body).append($e.detach());
-		}
-
-		this.checkCloseButton(name);
-
-		realShow(name);
-
-		states[name] = true;
-
-		if (opts.showBackground) {
-			this.show_bg();
-		}
-
-		$e.children('input[type="text"]:visible,textarea:visible').eq(0).focus();
-
-		this.fireEvent(name, 'show');
-
-		$('html').addClass('dipopup-shown');
-
-		return false;
-	};
-
-	this.checkCloseButton = function (name) {
-		if (!$('.close', this.$e_ar[name]).length && !this.$e_ar[name].data('no-close')) {
-			this.$e_ar[name].prepend($('<u class="close"></u>').click(function() {
-				self.hide(name);
-				self.hide_bg();
-			}));
-		}
-
-		return this;
-	};
-
-	this.create = function (name/* or options*/, content/* = null*/, options/* = null*/) {
-		if (typeof name === 'object' && typeof content === 'undefined' && typeof options === 'undefined') {
-			options = name;
-		} else {
-			options = options || {};
-			options.name = name;
-			options.content = content;
-		}
-
-		options = $.extend({
-			name: null,
-			content: null,
-			showCloseButton: true,
-			positioning: globalOptions.positioning, // calc position on show
-			positioningX: globalOptions.positioningX, // calc x-position on show
-			positioningY: globalOptions.positioningY, // calc y-position on show
-			mobilePositioning: globalOptions.mobilePositioning, // calc position on mobiles on show
-			livePosition: globalOptions.livePosition, // auto update position on window resize
-			afterUpdatePosition: null // after update position callback
-		}, options);
-
-		var $el = $('<div/>');
-		this
-			.setOptsFor(options.name, options)
-			.copyOptsToDom(options.name, $el);
-		$el
-			.addClass('dipopup')
-			.data('type', 'dipopup')
-			.attr('data-type', 'dipopup')
-			.html(options.content)
-			.appendTo(document.body);
-
-		this.$e_ar[options.name] = $el;
-
-		return this;
-	};
-
-	this.copyOptsToDom = function(name, $el) {
-		var options = this.optsAr[name] || {};
-
-        $el
-            .data('name', name || options.name)
-            .attr('data-name', name || options.name)
-            .attr('data-no-close', !options.showCloseButton)
-            .data('no-close', !options.showCloseButton)
-            .data('after-update-position', options.afterUpdatePosition)
-            .data('positioning', options.positioning)
-            .attr('data-positioning', options.positioning)
-            .data('positioning-x', options.positioningX)
-            .attr('data-positioning-x', options.positioningX)
-            .data('positioning-y', options.positioningY)
-            .attr('data-positioning-y', options.positioningY)
-            .data('mobile-positioning', options.mobilePositioning)
-            .attr('data-mobile-positioning', options.mobilePositioning)
-            .data('live-position', options.livePosition)
-            .attr('data-live-position', options.livePosition);
-
-		return this;
-	};
-
-	this.exists = function (name) {
-		if (typeof this.$e_ar[name] === 'undefined') {
-			this.$e_ar[name] = $([
-				'#' + this.id_prefix + name + this.id_suffix,
-				'.dipopup[data-name="' + name + '"]',
-				'[data-type="dipopup"][data-name="' + name + '"]'
-			].join(','));
-		}
-
-		return !!this.$e_ar[name].length;
-	};
-
-	this.setContent = function (options) {
-		options = $.extend({
-			name: null,
-			content: null,
-			create: false
-		}, options);
-
-		if (!this.exists(options.name)) {
-			if (options.create) {
-				this.create(options);
-			} else {
-				return this;
-			}
-		}
-
-		this.getPopupElement(options.name).html(options.content);
-
-		this
-			.checkCloseButton(options.name)
-			.update_position(options.name);
-
-		return this;
-	};
-
-	this.isMobile = function() {
-		return is_mobile; //$(window).width() < 450;
-	};
-
-	this.update_position = function(id) {
-		if (this.$e_ar[id]) {
-			var positioning = this.$e_ar[id].data('positioning');
-			var mobilePositioning = this.$e_ar[id].data('mobile-positioning');
-
-			if (this.isMobile() && mobilePositioning !== undefined) {
-				positioning = mobilePositioning;
-			} else if (positioning === undefined) {
-				positioning = true;
-			}
-
-			if (!positioning) {
-				return this;
-			}
-
-			var properties = {};
-
-			if (!this.$e_ar[id].data('manual-x') && this.$e_ar[id].data('positioning-x') !== false) {
-				properties.marginLeft = this.$e_ar[id].outerWidth() / -2;
-			}
-
-			if (!this.$e_ar[id].data('manual-y') && this.$e_ar[id].data('positioning-y') !== false) {
-				properties.marginTop = this.$e_ar[id].outerHeight() / -2;
-			}
-
-			this.$e_ar[id].css(properties);
-
-			var cb;
-
-			if (cb = this.$e_ar[id].data('after-update-position')) {
-				cb(this.$e_ar[id]);
-			}
-		}
-
-		return this;
-	};
-
-	this.visible = function(id) {
-		return states[id];
-	};
-
-	this.hide = function(id) {
-		realHide(id);
-
-		this.fireEvent(id, 'hide');
-
-		states[id] = false;
-
-		var atLeastOneVisible = false;
-
-		for (var i in this.$e_ar) {
-			if (this.$e_ar.hasOwnProperty(i)) {
-				if (this.visible(i)) {
-					atLeastOneVisible = true;
-
-					break;
-				}
-			}
-		}
-
-		if (!atLeastOneVisible) {
-			this.hide_bg();
-		}
-	};
-
-	this.hide_all = function() {
-		this.hide_bg();
-
-		for (var id in this.$e_ar) {
-			if (this.$e_ar.hasOwnProperty(id)) {
-				this.hide(id);
-			}
-		}
-
-		return false;
-	};
-
-	this.thanks = function(title, content) {
-		var id = 'thanks';
-
-		this.show(id);
-
-		$('.window_title', this.$e_ar[id]).html(title);
-		$('.window_text', this.$e_ar[id]).html(content);
-	};
-
-	constructor();
+    return this;
+  };
 };
 
 var dip = new diPopups();

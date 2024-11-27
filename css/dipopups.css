@@ -1,83 +1,42 @@
-/* dipopups */
-
-div#gray-bg {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	background: rgba(0,0,0,.6);
-	display: none;
-	z-index: 10;
+.dipopup-overlay {
+  position: fixed;
+  z-index: 10;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  transition: 0.3s opacity;
+  visibility: hidden;
+  opacity: 0;
 }
 
 .dipopup {
-	position: fixed;
-	z-index: 15;
-	left: 50%;
-	top: 50%;
-	display: none;
-	background: #fff;
-	box-shadow:	0 0 10px rgba(0,0,0,.5);
-
-	padding: 20px;
-	border-radius: 10px;
-	transition: none;
+  position: fixed;
+  z-index: 15;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: 0.3s opacity;
+  visibility: hidden;
+  opacity: 0;
 }
 
-.dipopup .close {
-	position: absolute;
-
-    top: 10px;
-    right: 10px;
-    width: 18px;
-    height: 18px;
-
-    background-image: url(/_core/i/dicalendar/close.png);
-	cursor: pointer;
-	transition: none;
+.dipopup-overlay.dipopup-overlay--visible,
+.dipopup.dipopup--visible {
+  visibility: visible;
+  opacity: 1;
 }
 
-.dipopup .close:hover {
-	background-position: 0 -18px;
-}
+.dipopup .dipopup--close {
+  --top: 10px;
+  --right: 10px;
+  --size: 18px;
 
-.dipopup .window_title {
-	font-size: 18px;
-	padding-bottom: 20px;
-	text-align: center;
-}
-
-.dipopup .login_input {
-	text-align: right;
-	padding: 0 0 5px 0;
-}
-
-.dipopup .login_input input,.login_window .login_input textarea {
-	width: 200px;
-	*width: 200px;
-	border: solid 1px #6381B1;
-	padding: 2px 3px;
-}
-
-.dipopup .login_input input {
-	height: 17px;
-}
-
-.dipopup .login_input textarea {
-	padding: 3px;
-	height: 48px;
-	*height: 54px;
-}
-
-/*
-.dipopup button[type="submit"] {
-	float: right;
-}
-*/
-
-.dipopup .login-error,.dipopup .hint {
-	color: #f00;
-	text-align: right;
-	padding-bottom: 2px;
+  position: absolute;
+  cursor: pointer;
+  top: var(--top);
+  right: var(--right);
+  width: var(--size);
+  height: var(--size);
 }
