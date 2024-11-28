@@ -4,7 +4,7 @@ var diPopups = function () {
   var events = {};
 
   this.e = {
-    $overlay: $('.dipopup-overlay,#gray-bg')
+    $overlay: $('.dipopup-overlay')
   };
   this.$popups = {};
   this.optsAr = {};
@@ -58,10 +58,10 @@ var diPopups = function () {
 
   this.checkOverlay = function () {
     if (!this.e.$overlay.length) {
-      this.e.$overlay = $('<div class="dipopup-overlay" id="gray-bg"></div>')
+      this.e.$overlay = $('<div class="dipopup-overlay"></div>')
         .appendTo($(document.body))
         .on('click', function () {
-          self.hide_all();
+          self.hideAll();
         });
     }
 
@@ -101,17 +101,6 @@ var diPopups = function () {
 
     return this;
   };
-
-  /** @deprecated */
-  this.checkBg = this.checkOverlay;
-  /** @deprecated */
-  this.onBg = this.onOverlay;
-  /** @deprecated */
-  this.offBg = this.offOverlay;
-  /** @deprecated */
-  this.show_bg = this.showOverlay;
-  /** @deprecated */
-  this.hide_bg = this.hideOverlay;
 
   this.getPopupElement = function (id) {
     return this.exists(id) ? this.$popups[id] : $();
@@ -343,7 +332,7 @@ var diPopups = function () {
     return this;
   };
 
-  this.hide_all = function () {
+  this.hideAll = function () {
     this.hideOverlay();
 
     for (var id in this.$popups) {
@@ -354,6 +343,19 @@ var diPopups = function () {
 
     return this;
   };
+
+  /** @deprecated */
+  this.checkBg = this.checkOverlay;
+  /** @deprecated */
+  this.onBg = this.onOverlay;
+  /** @deprecated */
+  this.offBg = this.offOverlay;
+  /** @deprecated */
+  this.show_bg = this.showOverlay;
+  /** @deprecated */
+  this.hide_bg = this.hideOverlay;
+  /** @deprecated */
+  this.hide_all = this.hideAll;
 };
 
 var dip = new diPopups();
