@@ -273,6 +273,10 @@ class Form
             'ru' => 'Название для URL',
             'en' => 'Slug source',
         ],
+        'parent' => [
+            'ru' => 'Родитель',
+            'en' => 'Parent',
+        ],
         'type' => [
             'ru' => 'Тип',
             'en' => 'Type',

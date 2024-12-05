@@ -50,9 +50,9 @@ class Content extends \diCore\Admin\BasePage
     {
         $this->getList()
             ->addColumns([
-                '_checkbox' => '',
-                '_expand' => '',
-                'id' => '',
+                '_checkbox' => [],
+                '_expand' => [],
+                'id' => [],
                 '#href' => [],
                 'title' => [
                     'headAttrs' => [
@@ -153,12 +153,8 @@ class Content extends \diCore\Admin\BasePage
         return [
             'parent' => [
                 'type' => 'int',
-                'title' => $this->localized([
-                    'ru' => 'Родитель',
-                    'en' => 'Parent',
-                ]),
                 'default' => -1,
-                'flags' => ['static'],
+                'flags' => [FormFlag::static],
             ],
 
             'type' => [
@@ -197,7 +193,7 @@ class Content extends \diCore\Admin\BasePage
                     'en' => 'Menu caption',
                 ]),
                 'default' => '',
-                'flags' => ['hidden'],
+                'flags' => [FormFlag::hidden],
             ],
 
             'short_content' => [
@@ -207,7 +203,7 @@ class Content extends \diCore\Admin\BasePage
                     'en' => 'Short content',
                 ]),
                 'default' => '',
-                'flags' => 'hidden',
+                'flags' => [FormFlag::hidden],
                 'tab' => 'content',
             ],
 
@@ -229,7 +225,7 @@ class Content extends \diCore\Admin\BasePage
                 ]),
                 'default' => '',
                 'tab' => 'content',
-                'flags' => ['hidden'],
+                'flags' => [FormFlag::hidden],
             ],
 
             'html_title' => [
@@ -257,7 +253,7 @@ class Content extends \diCore\Admin\BasePage
                     'en' => 'Comments feature enabled',
                 ]),
                 'default' => 0,
-                'flags' => ['hidden'],
+                'flags' => [FormFlag::hidden],
             ],
 
             'background_color' => [
@@ -268,7 +264,7 @@ class Content extends \diCore\Admin\BasePage
                 ]),
                 'default' => '',
                 'tab' => 'content',
-                'flags' => ['hidden'],
+                'flags' => [FormFlag::hidden],
             ],
 
             'color' => [
@@ -279,7 +275,7 @@ class Content extends \diCore\Admin\BasePage
                 ]),
                 'default' => '',
                 'tab' => 'content',
-                'flags' => ['hidden'],
+                'flags' => [FormFlag::hidden],
             ],
 
             'menu_class' => [
@@ -289,7 +285,7 @@ class Content extends \diCore\Admin\BasePage
                     'en' => 'CSS-class of menu item',
                 ]),
                 'default' => '',
-                'flags' => ['hidden'],
+                'flags' => [FormFlag::hidden],
             ],
 
             'class' => [
@@ -299,7 +295,7 @@ class Content extends \diCore\Admin\BasePage
                     'en' => 'CSS-class of caption',
                 ]),
                 'default' => '',
-                'flags' => ['hidden'],
+                'flags' => [FormFlag::hidden],
             ],
 
             'pic' => [
@@ -310,7 +306,7 @@ class Content extends \diCore\Admin\BasePage
                 ]),
                 'default' => '',
                 'tab' => 'pics',
-                'flags' => ['hidden'],
+                'flags' => [FormFlag::hidden],
             ],
 
             'pic2' => [
@@ -321,7 +317,7 @@ class Content extends \diCore\Admin\BasePage
                 ]),
                 'default' => '',
                 'tab' => 'pics',
-                'flags' => ['hidden'],
+                'flags' => [FormFlag::hidden],
             ],
 
             'ico' => [
@@ -332,7 +328,7 @@ class Content extends \diCore\Admin\BasePage
                 ]),
                 'default' => '',
                 'tab' => 'pics',
-                'flags' => ['hidden'],
+                'flags' => [FormFlag::hidden],
             ],
 
             'properties' => [
@@ -348,7 +344,7 @@ class Content extends \diCore\Admin\BasePage
                     'en' => 'Ad block',
                 ]),
                 'default' => '',
-                'flags' => ['hidden'],
+                'flags' => [FormFlag::hidden],
             ],
         ];
     }

@@ -1481,6 +1481,17 @@ abstract class BasePage
         return $this;
     }
 
+    protected function getQueryParamsForRedirectToFormAfterSubmit()
+    {
+        $ar = [];
+
+        if ($this->getSubmit()->getData('parent') > 0) {
+            $ar['parent'] = $this->getSubmit()->getData('parent');
+        }
+
+        return $ar;
+    }
+
     protected function getQueryParamsForRedirectAfterSubmit()
     {
         $ar = [];
@@ -1521,18 +1532,25 @@ abstract class BasePage
         return true;
     }
 
+    protected function getRedirectToValue()
+    {
+        return \diRequest::post('__redirect_to', 'list');
+    }
+
     protected function getRedirectAfterSubmitUrl()
     {
-        $method = \diRequest::post('__redirect_to', 'list');
+        $method = $this->getRedirectToValue();
         $anchorNeeded =
             $method === 'list' &&
             !!$this->getId() &&
             $this->useAnchorInRedirectAfterSubmitUrl();
-        $paramsNeeded = $method === 'list';
         $anchor = $anchorNeeded
             ? '#' . \diNiceTable::getRowAnchorName($this->getId())
             : '';
-        $params = $paramsNeeded ? $this->getQueryParamsForRedirectAfterSubmit() : [];
+        $params =
+            $method === 'list'
+                ? $this->getQueryParamsForRedirectAfterSubmit()
+                : $this->getQueryParamsForRedirectToFormAfterSubmit();
 
         return Base::getPageUri($this->getBasePath(), $method, $params) . $anchor;
     }
