@@ -195,6 +195,7 @@ table.dinicetable
                         background-color none
 
 .nicetable-button
+    position relative
     width 30px
     height 30px
     display inline-block
@@ -220,12 +221,37 @@ table.dinicetable
             background-image embedurl('../../../i/admin/skin/entrine/list/del.svg')
         &[data-action="active"]
         &[data-action="visible"]
+        &[data-action="en_visible"]
             &[data-state="0"]
             &[data-state="false"]
                 background-image embedurl('../../../i/admin/skin/entrine/list/visible-0.svg')
             &[data-state="1"]
             &[data-state="true"]
                 background-image embedurl('../../../i/admin/skin/entrine/list/visible-1.svg')
+        &[data-action="en_top"]
+        &[data-action="en_visible_top"]
+        &[data-action="en_visible_bottom"]
+        &[data-action="en_visible_left"]
+        &[data-action="en_visible_right"]
+        &[data-action="en_visible"] {
+            &:after {
+                content 'ENG'
+                position absolute
+                left 50%
+                top 0
+                transform translate(-50%, 0)
+                font-size 10px
+                color #3B5998
+            }
+
+            &[data-state="0"]
+            &[data-state="false"] {
+                &:after {
+                    color #777
+                }
+            }
+        }
+        &[data-action="en_visible_top"]
         &[data-action="visible_top"]
             &[data-state="0"]
             &[data-state="false"]
@@ -233,6 +259,7 @@ table.dinicetable
             &[data-state="1"]
             &[data-state="true"]
                 background-image embedurl('../../../i/admin/skin/entrine/list/visible_top-1.svg')
+        &[data-action="en_visible_bottom"]
         &[data-action="visible_bottom"]
             &[data-state="0"]
             &[data-state="false"]
@@ -247,6 +274,7 @@ table.dinicetable
             &[data-state="1"]
             &[data-state="true"]
                 background-image embedurl('../../../i/admin/skin/entrine/list/to_show_content-1.svg')
+        &[data-action="en_top"]
         &[data-action="top"]
             &[data-state="0"]
             &[data-state="false"]
