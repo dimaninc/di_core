@@ -2422,6 +2422,15 @@ body[data-skin="entrine"] .diadminform-row .value .static-text {
 .diadminform-row .value .input-suffix {
   margin-left: 10px;
 }
+.diadminform-row .value-inner {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  -o-box-flex: 1;
+  box-flex: 1;
+  -webkit-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
+}
 .diadminform-row[data-type="dynamic"],
 .diadminform-row[data-type="dynamic_pics"],
 .diadminform-row[data-type="dynamic_files"] {

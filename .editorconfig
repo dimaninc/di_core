@@ -1,0 +1,27 @@
+# EditorConfig is awesome: http://EditorConfig.org
+
+# top-most EditorConfig file
+root = true
+
+# Unix-style newlines with a newline ending every file
+[*]
+end_of_line = lf
+insert_final_newline = true
+
+[*.{php,html,twig,styl}]
+charset = utf-8
+indent_size = 4
+indent_style = space
+max_line_length = 120
+
+# Matches JavaScript files
+[*.{js,jsx,ts,tsx,css,scss}]
+charset = utf-8
+indent_size = 2
+indent_style = space
+max_line_length = 120
+
+# Matches the exact files either package.json or .gitlab-ci.yml
+[{package.json,.gitlab-ci.yml,docker-compose.yml}]
+indent_style = space
+indent_size = 2
