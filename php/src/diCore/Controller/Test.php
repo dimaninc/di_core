@@ -17,7 +17,7 @@ class Test extends \diBaseController
     {
         $db = Connection::get()->getDb();
 
-        $insert1 = $db->getFullQueryForInsert('alias.table', [
+        $data = [
             'col1' => 1,
             'col2' => '2',
             'col3' => [1, 2, 3, 'string', '4'],
@@ -30,36 +30,20 @@ class Test extends \diBaseController
                 ],
                 'd' => 'Multiline
 text',
+                'e' => 'DROP "zhopa"\'\';{}!@#$%^&*()`±',
             ],
             '*col5' => 'CURRENT_TIMESTAMP',
             'col6' => 'DROP "zhopa"\'\';{}!@#$%^&*()`±',
-        ]);
-        simple_debug($insert1);
+        ];
+
+        $insert1 = $db->getFullQueryForInsert('alias.table', $data);
 
         $update1 = $db->getFullQueryForUpdate(
             'alias.table',
-            [
-                'col1' => 1,
-                'col2' => '2',
-                'col3' => [1, 2, 3, 'string', '4'],
-                'col4' => [
-                    'a' => 1,
-                    'b' => '2',
-                    'c' => [
-                        'c1' => 1,
-                        'c2' => 2,
-                    ],
-                ],
-                '*col5' => 'CURRENT_TIMESTAMP',
-                'col6' => 'DROP "zhopa"\'\';{}!@#$%^&*()`±',
-                '*col100' => 'col6+1',
-            ],
+            extend($data, ['*col100' => 'col6+1']),
             1
         );
 
-        return [
-            'insert1' => $insert1,
-            'update1' => $update1,
-        ];
+        return "<pre>insert1\n$insert1<br />\n\nupdate1\n$update1</pre>";
     }
 }

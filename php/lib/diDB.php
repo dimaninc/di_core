@@ -383,8 +383,13 @@ abstract class diDB
         return false;
     }
 
-    protected function time_log($method, $duration, $query = '', $message = '', $explain = true)
-    {
+    protected function time_log(
+        $method,
+        $duration,
+        $query = '',
+        $message = '',
+        $explain = true
+    ) {
         if (!$this->debug) {
             return $this;
         }
@@ -395,9 +400,10 @@ abstract class diDB
 
         $data = [$method, $query, $duration, $message];
 
-        $explainData = $explain && $query
-            ? $this->__fetch_array($this->__q("EXPLAIN $query"))
-            : null;
+        $explainData =
+            $explain && $query
+                ? $this->__fetch_array($this->__q("EXPLAIN $query"))
+                : null;
 
         if ($explainData) {
             foreach ($explainData as $k => $v) {
@@ -918,13 +924,13 @@ abstract class diDB
     {
         $outAr = [];
 
-        foreach ($ar as $f => $v) {
-            if ($f[0] == '*') {
-                $outAr[] = $v;
-            } elseif ($v === null) {
+        foreach ($ar as $field => $value) {
+            if ($field[0] == '*') {
+                $outAr[] = $value;
+            } elseif ($value === null) {
                 $outAr[] = 'NULL';
             } else {
-                $outAr[] = $this->getJsonFieldQuery($v); //  ?? $this->quoteValue($v)
+                $outAr[] = $this->getJsonFieldQuery($value); //  ?? $this->quoteValue($v)
             }
         }
 
@@ -989,25 +995,25 @@ abstract class diDB
         return array_filter([$table]);
     }
 
-    public function getFullQueryForInsert($table, $fieldValues = [])
+    public function getFullQueryForInsert($table, $records = [])
     {
         $t = $this->get_table_name($table);
 
         // for multi-insert
-        if (!is_array(current($fieldValues))) {
-            $fieldValues = [$fieldValues];
+        if (!ArrayHelper::isSequential($records)) {
+            $records = [$records];
         }
 
-        $q1 = '(' . $this->fieldsToStringForInsert(current($fieldValues)) . ')';
-        $q2_ar = [];
+        $fieldsStr = "({$this->fieldsToStringForInsert(current($records))})";
+        $values = [];
 
-        foreach ($fieldValues as $ar) {
-            $q2_ar[] = '(' . $this->valuesToStringForInsert($ar) . ')';
+        foreach ($records as $rec) {
+            $values[] = "({$this->valuesToStringForInsert($rec)})";
         }
 
-        $q2 = join(',', $q2_ar);
+        $q2 = join(',', $values);
 
-        return "INSERT INTO {$t}{$q1} VALUES{$q2};";
+        return "INSERT INTO $t$fieldsStr VALUES$q2;";
     }
 
     public function insert($table, $fieldValues = [])
@@ -1501,7 +1507,8 @@ abstract class diDB
         return preg_replace('/\s+AS\s+.*|\s+.*/i', '', trim($tableWithAlias));
     }
 
-    public function quoteTableNameWithAlias(string $tableWithAlias) {
+    public function quoteTableNameWithAlias(string $tableWithAlias)
+    {
         $parts = preg_split('/\s+AS\s+|\s+/i', trim($tableWithAlias), 2);
 
         if (!$parts) {

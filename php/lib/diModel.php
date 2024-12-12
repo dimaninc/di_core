@@ -1469,6 +1469,9 @@ class diModel implements \ArrayAccess
             ArrayHelper::isAssoc($path) && $value === null
                 ? $path
                 : ArrayHelper::set([], $path, $value);
+
+        $this->compressJsonData($field);
+
         $finalValue =
             static::getFieldType($field) === FieldType::json
                 ? $this->jsonData[$field]
@@ -1489,6 +1492,9 @@ class diModel implements \ArrayAccess
                 : ArrayHelper::set([], $path, $value);
 
         $this->jsonData[$field] = ArrayHelper::mergeRecursive($fieldData, $newData);
+
+        $this->compressJsonData($field);
+
         $finalValue =
             $type === FieldType::json
                 ? $this->jsonData[$field]
@@ -1520,6 +1526,35 @@ class diModel implements \ArrayAccess
         $this->set($field, $finalValue);
 
         return $this;
+    }
+
+    protected function compressJsonData(string $field)
+    {
+        if (empty($this->jsonData[$field])) {
+            return $this;
+        }
+
+        if (!ArrayHelper::isAssoc($this->jsonData[$field])) {
+            return $this;
+        }
+
+        foreach ($this->jsonData[$field] as $key => $value) {
+            if ($value || static::shouldKeepEmptyJsonData($field, $key, $value)) {
+                continue;
+            }
+
+            unset($this->jsonData[$field][$key]);
+        }
+
+        return $this;
+    }
+
+    protected static function shouldKeepEmptyJsonData(
+        string $field,
+        string $key,
+        mixed $value
+    ) {
+        return true;
     }
 
     public function localized($field, $lang = null)
@@ -2134,7 +2169,7 @@ class diModel implements \ArrayAccess
 
     public static function shouldBeEscaped($value, $field)
     {
-        if (($x = strpos($field, '.')) !== false) {
+        if ($field && ($x = strpos($field, '.')) !== false) {
             $field = substr($field, $x + 1);
         }
 
@@ -2156,27 +2191,42 @@ class diModel implements \ArrayAccess
         return $this->getDb()->escape_string($value, $binary);
     }
 
+    protected function prepareValuesForDb($data, $key = null)
+    {
+        if (ArrayHelper::isSequential($data)) {
+            return array_map(fn($value) => $this->prepareValuesForDb($value), $data);
+        }
+
+        if (ArrayHelper::isAssoc($data)) {
+            return ArrayHelper::mapAssoc(
+                fn($key, $value) => [
+                    $this->escapeValue($key, null),
+                    $this->prepareValuesForDb($value, $key),
+                ],
+                $data
+            );
+        }
+
+        if ($this->isIpField($key) || static::isBoolField($key)) {
+            $data = static::tuneFieldValueByTypeBeforeDb($key, $data);
+        }
+
+        $data = $this->escapeValue($data, $key);
+
+        if (static::isFieldNumber($key)) {
+            $data = static::tuneFieldValueByTypeBeforeDb($key, $data);
+        }
+
+        return $data;
+    }
+
     /**
      * @return array
      */
-    protected function getDataForDb()
+    public function getDataForDb()
     {
         $ar = $this->getRawDataForDb();
-
-        foreach ($ar as $k => &$v) {
-            if (is_scalar($v)) {
-                if ($this->isIpField($k) || static::isBoolField($k)) {
-                    $v = static::tuneFieldValueByTypeBeforeDb($k, $v);
-                }
-
-                $v = $this->escapeValue($v, $k);
-
-                if (static::isFieldNumber($k)) {
-                    $v = static::tuneFieldValueByTypeBeforeDb($k, $v);
-                }
-            }
-        }
-
+        $ar = $this->prepareValuesForDb($ar);
         $ar = $this->processFieldsOnSave($ar);
 
         if (static::getConnection()::isMongo()) {
