@@ -871,6 +871,7 @@ class diModel implements \ArrayAccess
     public function rebuildPics($field)
     {
         $Submit = new Submit($this->getTable(), $this->getId());
+        $Submit->setData($this->get());
         $callback = [Submit::class, 'storeImageCallback'];
 
         $opts = $this->getOrigFileSettingsForRebuilding($field);
