@@ -60,7 +60,7 @@ class Vendor extends SimpleContainer
         self::FACEBOOK => '#facebook\.com/watch/\?v=(\d+)#',
         self::ODNOKLASSNIKI => '#//ok\.ru/video(embed)?/(\d+)#',
         self::VK =>
-            '#//vk\.com/(video(-?\d+)_(\d+)|video_ext\.php\?oid=-?(\d+)&id=(\d+))#',
+            '#//(vk\.com|vkvideo\.ru)/(video(-?\d+)_(\d+)|video_ext\.php\?oid=-?(\d+)&id=(\d+))#',
     ];
 
     protected static $links = [
@@ -69,7 +69,7 @@ class Vendor extends SimpleContainer
         self::RU_TUBE => 'https://rutube.ru/video/%s/',
         self::FACEBOOK => 'https://www.facebook.com/watch/?v=%s',
         self::ODNOKLASSNIKI => 'https://ok.ru/video/%s',
-        self::VK => 'https://vk.com/video-%s',
+        self::VK => 'https://vkvideo.ru/video-%s',
     ];
 
     protected static $embedLinks = [
@@ -79,7 +79,7 @@ class Vendor extends SimpleContainer
         self::FACEBOOK => 'https://www.facebook.com/watch/?v=%s',
         self::ODNOKLASSNIKI => 'https://ok.ru/videoembed/%s?nochat=1',
         //self::VK => 'https://vk.com/video_ext.php?oid=%s&id=%s&hash=%s&hd=2',
-        self::VK => 'https://vk.com/video_ext.php?oid=%s',
+        self::VK => 'https://vkvideo.ru/video_ext.php?oid=%s',
     ];
 
     public static function extractInfoFromEmbed($embed)
@@ -112,13 +112,13 @@ class Vendor extends SimpleContainer
                     break;
 
                 case self::VK:
-                    if (!empty($r[2]) && !empty($r[3])) {
+                    if (!empty($r[3]) && !empty($r[4])) {
                         // video link
-                        $ar['video_uid'] = $r[2] . '_' . $r[3];
+                        $ar['video_uid'] = $r[3] . '_' . $r[4];
                         $ar['vendor'] = $vendor;
-                    } elseif (!empty($r[4]) && !empty($r[5])) {
+                    } elseif (!empty($r[5]) && !empty($r[6])) {
                         // video link
-                        $ar['video_uid'] = $r[4] . '_' . $r[5];
+                        $ar['video_uid'] = $r[5] . '_' . $r[6];
                         $ar['vendor'] = $vendor;
                     }
                     break;
