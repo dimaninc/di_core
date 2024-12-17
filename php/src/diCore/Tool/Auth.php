@@ -333,6 +333,11 @@ class Auth
         return $this;
     }
 
+    protected static function fetchUserModel($id)
+    {
+        return \diModel::create(static::USER_MODEL_TYPE, $id);
+    }
+
     // todo: check activated status
     private function authorize($id, $passwordHash, $source = self::SOURCE_POST)
     {
@@ -351,7 +356,7 @@ class Auth
             $this->userSession->updateSeenAt()->save();
             $passwordOk = true;
         } else {
-            $this->user = \diModel::create(static::USER_MODEL_TYPE, $id);
+            $this->user = static::fetchUserModel($id);
             $sourceStr = $source === self::SOURCE_POST ? 'raw' : 'cookie';
             $passwordOk = $this->getUserModel()->isPasswordOk(
                 $passwordHash,
