@@ -24,6 +24,13 @@ class Environment
     const initiating = null;
 
     /**
+     * Max dimensions in pixels which can be handled by GD, if bigger, use IMagick first
+     * If not set, Config::maxGdArea used, then diImage::MAX_GD_WIDTH and diImage::MAX_GD_HEIGHT used
+     */
+    const maxGdWidth = null;
+    const maxGdHeight = null;
+
+    /**
      * true/'all' - log all api, admin page and cms module timings
      * false/null - log nothing
      * 'slow' - log only timings of slow processes
@@ -75,6 +82,22 @@ class Environment
         $class = self::getClass();
 
         return $class::useModuleCache;
+    }
+
+    final public static function getMaxGdWidth()
+    {
+        /** @var Environment $class */
+        $class = self::getClass();
+
+        return $class::maxGdWidth;
+    }
+
+    final public static function getMaxGdHeight()
+    {
+        /** @var Environment $class */
+        $class = self::getClass();
+
+        return $class::maxGdHeight;
     }
 
     final public static function getInitiating()

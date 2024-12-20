@@ -242,8 +242,11 @@ class diImage
             return $this->image;
         }
 
-        $maxSize = max(self::MAX_GD_WIDTH, self::MAX_GD_HEIGHT);
-        $maxArea = self::MAX_GD_WIDTH * self::MAX_GD_HEIGHT;
+        $maxWidth = Config::getMaxGdWidth() ?: self::MAX_GD_WIDTH;
+        $maxHeight = Config::getMaxGdHeight() ?: self::MAX_GD_HEIGHT;
+
+        $maxSize = max($maxWidth, $maxHeight);
+        $maxArea = $maxWidth * $maxHeight;
 
         if ($this->w * $this->h > $maxArea) {
             if (class_exists('Imagick')) {

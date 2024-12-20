@@ -37,6 +37,14 @@ class Config
     const adminSkin = Skin::classic;
     const cmsName = 'diCMS';
     const cmsSupportEmail = 'dicms.support@gmail.com';
+
+    /**
+     * Max dimensions in pixels which can be handled by GD, if bigger, use IMagick first
+     * If not set, diImage::MAX_GD_WIDTH and diImage::MAX_GD_HEIGHT used
+     */
+    const maxGdWidth = null;
+    const maxGdHeight = null;
+
     const initiating = false; // if true, then DB is auto-created and admin works w/o password
 
     const dbEncoding = 'utf8';
@@ -131,6 +139,22 @@ class Config
         $class = self::getClass();
 
         return $class::cmsSupportEmail;
+    }
+
+    final public static function getMaxGdWidth()
+    {
+        /** @var Config $class */
+        $class = self::getClass();
+
+        return Environment::getMaxGdWidth() ?? $class::maxGdWidth;
+    }
+
+    final public static function getMaxGdHeight()
+    {
+        /** @var Config $class */
+        $class = self::getClass();
+
+        return Environment::getMaxGdHeight() ?? $class::maxGdHeight;
     }
 
     final public static function isInitiating()
