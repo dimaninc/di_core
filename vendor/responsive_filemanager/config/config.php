@@ -11,8 +11,7 @@ require $corePath . '/php/functions.php';
 require $phpPath . '/common.php';
 
 $Admin = \diAdminUser::create(false);
-if (!$Admin->authorized())
-{
+if (!$Admin->authorized()) {
 	die('Access to file manager is denied');
 }
 
