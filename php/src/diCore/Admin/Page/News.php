@@ -278,6 +278,10 @@ EOF;
                 'default' => '',
             ],
 
+            'href' => [
+                'type' => 'href',
+            ],
+
             'short_content' => [
                 'type' => 'text',
                 'title' => $this->localized([

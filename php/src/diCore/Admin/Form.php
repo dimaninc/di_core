@@ -48,134 +48,6 @@ class Form
         FormSnippet::PIC_PLACEHOLDER => '',
     ];
 
-    public static $customLngStrings = [
-        'en' => [],
-        'ru' => [],
-    ];
-
-    public static $lngStrings = [
-        'en' => [
-            'notes_caption' => [
-                false => 'Note',
-                true => 'Notes',
-            ],
-
-            'view_help' => 'View help',
-            'save' => 'Save',
-            'clone' => 'Save as a new record',
-            'cancel' => 'Cancel',
-            'quick_save' => 'Apply',
-            'create_and_add_another' => 'Create and add another',
-            'dispatch' => 'Save and dispatch',
-            'dispatch_test' => 'Save and test dispatch',
-            'edit' => 'Edit record',
-            'calendar' => 'Calendar',
-            'clear' => 'Clear',
-            'submit_and_add' => 'Save and add new item',
-            'submit_and_next' => 'Save and go to next item',
-            'submit_and_send' => 'Save and send via email',
-            'delete' => 'Delete',
-            'delete_pic_confirmation' => 'Delete the pic? Are you sure?',
-            'delete_file_confirmation' => 'Delete the file? Are you sure?',
-            'rotate_pic_confirmation' => 'Rotate the pic? Are you sure?',
-            'rotate_pic.ccw' => 'Rotate pic 90° CCW',
-            'rotate_pic.cw' => 'Rotate pic 90° CW',
-            'watermark_pic_confirmation' => 'Watermark the pic? Are you sure?',
-            'watermark_pic' => 'Watermark pic',
-
-            'placeholder.date.day' => 'DD',
-            'placeholder.date.month' => 'MM',
-            'placeholder.date.year' => 'YY',
-            'placeholder.time.hour' => 'HH',
-            'placeholder.time.minute' => 'MM',
-            'placeholder.time.second' => 'SS',
-
-            'yes' => 'Yes',
-            'no' => 'No',
-
-            'confirm' => 'Confirm',
-            'confirm_dispatch' =>
-                'Dispatch this record to the subscribers? Are you sure?',
-            'confirm_send' => 'Send the reply to email? Are you sure?',
-
-            'or_enter' => 'or enter',
-            'your_variant' => 'Your own variant',
-            'add_item' => 'Add',
-            'link' => 'Link',
-            'not_selected' => 'Not selected',
-
-            'tab_general' => 'General',
-
-            'choose_file' => 'Choose file...',
-            'rename_to' => 'Rename to &laquo;{{ fn }}&raquo;',
-            'rename_to.confirm' => 'Rename to &laquo;{{ fn }}&raquo;?',
-
-            'tag.enter_new' => 'Add new items, comma separated',
-            'tag.toggle_on' => 'All on',
-            'tag.toggle_off' => 'All off',
-        ],
-
-        'ru' => [
-            'notes_caption' => [
-                false => 'Примечание',
-                true => 'Примечания',
-            ],
-
-            'view_help' => 'Помощь',
-            'save' => 'Сохранить',
-            'clone' => 'Сохранить как новую запись',
-            'cancel' => 'Отмена',
-            'quick_save' => 'Применить',
-            'create_and_add_another' => 'Сохранить и создать ещё',
-            'dispatch' => 'Сохранить и произвести рассылку',
-            'dispatch_test' => 'Сохранить и произвести тестовую рассылку',
-            'edit' => 'Редактировать',
-            'calendar' => 'Календарь',
-            'clear' => 'Очистить',
-            'submit_and_add' => 'Сохранить и добавить новый товар',
-            'submit_and_next' => 'Сохранить и перейти к следующей записи',
-            'submit_and_send' => 'Сохранить и отправить письмо',
-            'delete' => 'Удалить',
-            'delete_pic_confirmation' => 'Удалить картинку? Вы уверены?',
-            'delete_file_confirmation' => 'Удалить файл? Вы уверены?',
-            'rotate_pic_confirmation' => 'Повернуть картинку? Вы уверены?',
-            'rotate_pic.ccw' => 'Повернуть на 90° против часовой стрелки',
-            'rotate_pic.cw' => 'Повернуть на 90° по часовой стрелке',
-            'watermark_pic_confirmation' => 'Наложить водяной знак?',
-            'watermark_pic' => 'Наложить водяной знак',
-
-            'placeholder.date.day' => 'ДД',
-            'placeholder.date.month' => 'ММ',
-            'placeholder.date.year' => 'ГГГГ',
-            'placeholder.time.hour' => 'ЧЧ',
-            'placeholder.time.minute' => 'ММ',
-            'placeholder.time.second' => 'СС',
-
-            'yes' => 'Да',
-            'no' => 'Нет',
-
-            'confirm' => 'Подтвердите',
-            'confirm_dispatch' =>
-                'Пустить этот материал в рассылку подписчикам? Вы уверены?',
-            'confirm_send' => 'Отправить ответ на почту? Вы уверены?',
-
-            'or_enter' => 'или введите',
-            'your_variant' => 'Свой вариант',
-            'add_item' => 'Добавить',
-            'link' => 'Ссылка',
-            'not_selected' => 'Не выбрано',
-
-            'tab_general' => 'Основное',
-
-            'choose_file' => 'Выбрать файл...',
-            'rename_to' => 'Переименовать в &laquo;{{ fn }}&raquo;',
-            'rename_to.confirm' => 'Переименовать в &laquo;{{ fn }}&raquo;?',
-
-            'tag.enter_new' => 'Добавить новые, через запятую',
-            'tag.toggle_on' => 'Выделить все',
-            'tag.toggle_off' => 'Снять все',
-        ],
-    ];
     private $vocabularyAssigned = false;
 
     protected static $numericTypes = ['int', 'integer', 'float', 'double'];
@@ -230,302 +102,13 @@ class Form
         'hide' => [],
     ];
 
-    public static $customDefaultFieldTitles = [
-        /*
-        'meta_title' => [
-            'ru' => 'Meta-заголовок',
-            'en' => 'Meta-title',
-        ],
-        */
-    ];
+    /**
+     * @var FormFieldTitle
+     */
+    protected static $formFieldTitle;
 
-    public static $defaultFieldTitles = [
-        'id' => 'ID',
-        'href' => [
-            'ru' => 'Ссылка',
-            'en' => 'Link',
-        ],
-        'en_href' => [
-            'ru' => 'Ссылка',
-            'en' => 'Link',
-        ],
-        'link' => [
-            'ru' => 'Ссылка',
-            'en' => 'Link',
-        ],
-        'en_link' => [
-            'ru' => 'Ссылка',
-            'en' => 'Link',
-        ],
-        'website' => [
-            'ru' => 'Вебсайт',
-            'en' => 'Website',
-        ],
-        'category_id' => [
-            'ru' => 'Категория',
-            'en' => 'Category',
-        ],
-        'slug' => [
-            'ru' => 'Слаг',
-            'en' => 'Slug',
-        ],
-        'slug_source' => [
-            'ru' => 'Название для URL',
-            'en' => 'Slug source',
-        ],
-        'parent' => [
-            'ru' => 'Родитель',
-            'en' => 'Parent',
-        ],
-        'type' => [
-            'ru' => 'Тип',
-            'en' => 'Type',
-        ],
-        'user_id' => [
-            'ru' => 'Пользователь',
-            'en' => 'User',
-        ],
-        'email' => [
-            'ru' => 'E-mail',
-            'en' => 'E-mail',
-        ],
-        'login' => [
-            'ru' => 'Логин',
-            'en' => 'Login',
-        ],
-        'password' => [
-            'ru' => 'Пароль',
-            'en' => 'Password',
-        ],
-        'name' => [
-            'ru' => 'ФИО',
-            'en' => 'Name',
-        ],
-        'first_name' => [
-            'ru' => 'Имя',
-            'en' => 'First name',
-        ],
-        'middle_name' => [
-            'ru' => 'Отчество',
-            'en' => 'Middle name',
-        ],
-        'last_name' => [
-            'ru' => 'Фамилия',
-            'en' => 'Last name',
-        ],
-        'position' => [
-            'ru' => 'Должность',
-            'en' => 'Position',
-        ],
-        'phone' => [
-            'ru' => 'Телефон',
-            'en' => 'Phone',
-        ],
-        'address' => [
-            'ru' => 'Адрес',
-            'en' => 'Address',
-        ],
-        'title' => [
-            'ru' => 'Название',
-            'en' => 'Title',
-        ],
-        'caption' => [
-            'ru' => 'Заголовок',
-            'en' => 'Caption',
-        ],
-        'short_content' => [
-            'ru' => 'Краткий текст',
-            'en' => 'Short content',
-        ],
-        'content' => [
-            'ru' => 'Полный текст',
-            'en' => 'Content',
-        ],
-        'description' => [
-            'ru' => 'Описание',
-            'en' => 'Description',
-        ],
-        'properties' => [
-            'ru' => 'Свойства',
-            'en' => 'Properties',
-        ],
-        'en_title' => [
-            'ru' => 'Название',
-            'en' => 'Title',
-        ],
-        'en_short_content' => [
-            'ru' => 'Краткий текст',
-            'en' => 'Short content',
-        ],
-        'en_content' => [
-            'ru' => 'Полный текст',
-            'en' => 'Content',
-        ],
-        'en_description' => [
-            'ru' => 'Описание',
-            'en' => 'Description',
-        ],
-        'ru_title' => [
-            'ru' => 'Название',
-            'en' => 'Title',
-        ],
-        'ru_short_content' => [
-            'ru' => 'Краткий текст',
-            'en' => 'Short content',
-        ],
-        'ru_content' => [
-            'ru' => 'Полный текст',
-            'en' => 'Content',
-        ],
-        'ru_description' => [
-            'ru' => 'Описание',
-            'en' => 'Description',
-        ],
-        'pic' => [
-            'ru' => 'Изображение',
-            'en' => 'Pic',
-        ],
-        'en_pic' => [
-            'ru' => 'Изображение',
-            'en' => 'Pic',
-        ],
-        'ico' => [
-            'ru' => 'Иконка',
-            'en' => 'Icon',
-        ],
-        'avatar' => [
-            'ru' => 'Аватар',
-            'en' => 'Avatar',
-        ],
-        'logo' => [
-            'ru' => 'Логотип',
-            'en' => 'Logo',
-        ],
-        'color' => [
-            'ru' => 'Цвет',
-            'en' => 'Color',
-        ],
-        'visible' => [
-            'ru' => 'Отображать на сайте',
-            'en' => 'Visible',
-        ],
-        'en_visible' => [
-            'ru' => 'Отображать на сайте',
-            'en' => 'Visible',
-        ],
-        'active' => [
-            'ru' => 'Активно',
-            'en' => 'Active',
-        ],
-        'en_active' => [
-            'ru' => 'Активно',
-            'en' => 'Active',
-        ],
-        'top' => [
-            'ru' => 'В топе',
-            'en' => 'Promote',
-        ],
-        'en_top' => [
-            'ru' => 'В топе',
-            'en' => 'Promote',
-        ],
-        'like_count' => [
-            'ru' => 'Количество лайков',
-            'en' => 'Likes count',
-        ],
-        'dislike_count' => [
-            'ru' => 'Количество дизлайков',
-            'en' => 'Dislikes count',
-        ],
-        'comment_count' => [
-            'ru' => 'Количество комментариев',
-            'en' => 'Comments count',
-        ],
-        'comment_last_date' => [
-            'ru' => 'Дата/время последнего комментария',
-            'en' => 'Date/time of last comment',
-        ],
-        'comment_enabled' => [
-            'ru' => 'Комментарии разрешены',
-            'en' => 'Comments enabled',
-        ],
-        'meta_title' => [
-            'ru' => 'Meta-заголовок',
-            'en' => 'Meta-title',
-        ],
-        'meta_keywords' => [
-            'ru' => 'Meta-ключевые слова',
-            'en' => 'Meta-keywords',
-        ],
-        'meta_description' => [
-            'ru' => 'Meta-описание',
-            'en' => 'Meta-description',
-        ],
-        'ru_meta_title' => [
-            'ru' => 'Meta-заголовок',
-            'en' => 'Meta-title',
-        ],
-        'ru_meta_keywords' => [
-            'ru' => 'Meta-ключевые слова',
-            'en' => 'Meta-keywords',
-        ],
-        'ru_meta_description' => [
-            'ru' => 'Meta-описание',
-            'en' => 'Meta-description',
-        ],
-        'en_meta_title' => [
-            'ru' => 'Meta-заголовок',
-            'en' => 'Meta-title',
-        ],
-        'en_meta_keywords' => [
-            'ru' => 'Meta-ключевые слова',
-            'en' => 'Meta-keywords',
-        ],
-        'en_meta_description' => [
-            'ru' => 'Meta-описание',
-            'en' => 'Meta-description',
-        ],
-        'html_title' => [
-            'ru' => 'Meta-заголовок',
-            'en' => 'Meta-title',
-        ],
-        'html_keywords' => [
-            'ru' => 'Meta-ключевые слова',
-            'en' => 'Meta-keywords',
-        ],
-        'html_description' => [
-            'ru' => 'Meta-описание',
-            'en' => 'Meta-description',
-        ],
-        'created_at' => [
-            'ru' => 'Дата/время создания',
-            'en' => 'Date/time of creation',
-        ],
-        'updated_at' => [
-            'ru' => 'Дата/время последнего изменения',
-            'en' => 'Date/time of update',
-        ],
-        'applied_at' => [
-            'ru' => 'Дата/время применения',
-            'en' => 'Date/time of use',
-        ],
-        'done_at' => [
-            'ru' => 'Дата/время выполнения',
-            'en' => 'Date/time of completion',
-        ],
-        'deleted_at' => [
-            'ru' => 'Дата/время удаления',
-            'en' => 'Date/time of deletion',
-        ],
-        'seen_at' => [
-            'ru' => 'Последнее посещение',
-            'en' => 'Seen at',
-        ],
-        'ip' => [
-            'ru' => 'IP-адрес',
-            'en' => 'IP address',
-        ],
-    ];
+    /** @deprecated Use FormFieldTitle::$customDefaultFieldTitles */
+    public static $customDefaultFieldTitles = [];
 
     public function __construct($table, $id = 0, $module_id = 0)
     {
@@ -582,8 +165,8 @@ class Form
                 ->getTwig()
                 ->assign([
                     'form_lang' => array_merge_recursive(
-                        self::$lngStrings[self::$language],
-                        self::$customLngStrings[self::$language]
+                        FormLanguage::$lngStrings[self::$language],
+                        FormLanguage::$customLngStrings[self::$language]
                     ),
                     'NEW_FIELD_SUFFIX' => self::NEW_FIELD_SUFFIX,
                 ]);
@@ -682,8 +265,8 @@ class Form
 
     public static function addCustomLngStrings(string $language, array $keyValue)
     {
-        self::$customLngStrings[$language] = extend(
-            self::$customLngStrings[$language] ?? [],
+        FormLanguage::$customLngStrings[$language] = extend(
+            FormLanguage::$customLngStrings[$language] ?? [],
             $keyValue
         );
     }
@@ -698,8 +281,8 @@ class Form
         $language = $language ?: self::$language;
 
         $s =
-            self::$customLngStrings[$language][$token] ??
-            (self::$lngStrings[$language][$token] ?? $token);
+            FormLanguage::$customLngStrings[$language][$token] ??
+            (FormLanguage::$lngStrings[$language][$token] ?? $token);
 
         if ($vars && is_array($vars)) {
             $s = str_replace(
@@ -1215,6 +798,10 @@ EOF;
 
     public static function getFieldTitle($fieldName, $fieldProps, $language = 'ru')
     {
+        if (!self::$formFieldTitle) {
+            self::$formFieldTitle = FormFieldTitle::basicCreate();
+        }
+
         /*
         if ($fieldProps === null) {
             $fieldProps = $this->getX()->getFieldProperty($fieldName);
@@ -1225,20 +812,32 @@ EOF;
             return $fieldProps['title'];
         }
 
+        if (isset(self::$formFieldTitle::$custom[$fieldName])) {
+            return is_array(self::$formFieldTitle::$custom[$fieldName])
+                ? self::$formFieldTitle::$custom[$fieldName][$language]
+                : self::$formFieldTitle::$custom[$fieldName];
+        }
+
         if (isset(static::$customDefaultFieldTitles[$fieldName])) {
             return is_array(static::$customDefaultFieldTitles[$fieldName])
                 ? static::$customDefaultFieldTitles[$fieldName][$language]
                 : static::$customDefaultFieldTitles[$fieldName];
         }
 
-        if (isset(self::$defaultFieldTitles[$fieldName])) {
-            return is_array(self::$defaultFieldTitles[$fieldName])
-                ? self::$defaultFieldTitles[$fieldName][$language]
-                : self::$defaultFieldTitles[$fieldName];
+        if (isset(FormFieldTitle::$default[$fieldName])) {
+            return is_array(FormFieldTitle::$default[$fieldName])
+                ? FormFieldTitle::$default[$fieldName][$language]
+                : FormFieldTitle::$default[$fieldName];
         }
 
         // without language prefix
         $commonFieldName = preg_replace('#^[a-z]{2}_#', '', $fieldName);
+
+        if (isset(self::$formFieldTitle::$custom[$commonFieldName])) {
+            return is_array(self::$formFieldTitle::$custom[$commonFieldName])
+                ? self::$formFieldTitle::$custom[$commonFieldName][$language]
+                : self::$formFieldTitle::$custom[$commonFieldName];
+        }
 
         if (isset(static::$customDefaultFieldTitles[$commonFieldName])) {
             return is_array(static::$customDefaultFieldTitles[$commonFieldName])
@@ -1246,10 +845,10 @@ EOF;
                 : static::$customDefaultFieldTitles[$commonFieldName];
         }
 
-        if (isset(self::$defaultFieldTitles[$commonFieldName])) {
-            return is_array(self::$defaultFieldTitles[$commonFieldName])
-                ? self::$defaultFieldTitles[$commonFieldName][$language]
-                : self::$defaultFieldTitles[$commonFieldName];
+        if (isset(FormFieldTitle::$default[$commonFieldName])) {
+            return is_array(FormFieldTitle::$default[$commonFieldName])
+                ? FormFieldTitle::$default[$commonFieldName][$language]
+                : FormFieldTitle::$default[$commonFieldName];
         }
 
         return underscore($fieldName) === $fieldName
@@ -1321,6 +920,10 @@ EOF;
                 ($this->static_mode || $this->isFlag($v, FormFlag::static))
             ) {
                 $v['flags'][] = FormFlag::hidden;
+            }
+
+            if ($v['type'] == 'href' && !$this->isFlag($v, FormFlag::hidden)) {
+                $v['flags'][] = FormFlag::static;
             }
 
             if (
@@ -2162,7 +1765,7 @@ EOF;
 
             $this->setStaticInput($field)->setInput(
                 $field,
-                "<a href='{$href}' target=_blank>{$text}</a>"
+                "<a href='$href' target=_blank>$text</a>"
             );
         }
 

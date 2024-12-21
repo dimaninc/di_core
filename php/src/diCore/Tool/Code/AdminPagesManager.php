@@ -10,6 +10,7 @@ namespace diCore\Tool\Code;
 
 use diCore\Admin\Data\FormFlag;
 use diCore\Admin\Form;
+use diCore\Admin\FormFieldTitle;
 use diCore\Database\Connection;
 use diCore\Helper\StringHelper;
 use diCore\Helper\FileSystemHelper;
@@ -312,7 +313,8 @@ EOF;
             }
 
             if (
-                isset(Form::$defaultFieldTitles[$field]) ||
+                isset(FormFieldTitle::$default[$field]) ||
+                isset(FormFieldTitle::$custom[$field]) ||
                 isset(Form::$customDefaultFieldTitles[$field])
             ) {
                 return '';

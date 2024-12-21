@@ -570,7 +570,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
     }
 
     /**
-     * @param callable $filterCallback ($model, $idx, $col)
+     * @param string|callable $filterCallback fn ($model, $idx, $col) or field name
      * @return $this
      */
     public function filtered($filterCallback)
@@ -579,7 +579,11 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
 
         /** @var \diModel $model */
         foreach ($this as $idx => $model) {
-            if ($filterCallback($model, $idx, $this)) {
+            if (
+                (is_callable($filterCallback) &&
+                    $filterCallback($model, $idx, $this)) ||
+                (!is_callable($filterCallback) && $model->has($filterCallback))
+            ) {
                 $col->addItem($model);
             }
         }

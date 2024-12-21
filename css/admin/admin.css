@@ -3938,7 +3938,18 @@ body[data-skin="entrine"] .dynamic-row + .dynamic-row {
 body[data-skin="classic"] .dynamic-row ul.line {
   margin-right: 25px;
 }
-.dynamic-row ul.line > li {
+.line--v-center {
+  -webkit-box-align: center;
+  -moz-box-align: center;
+  -o-box-align: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center !important;
+  align-items: center !important;
+}
+ul.line {
+  margin-top: 8px !important;
+}
+> li {
   display: -webkit-box;
   display: -moz-box;
   display: -webkit-flex;
@@ -3952,30 +3963,30 @@ body[data-skin="classic"] .dynamic-row ul.line {
   -webkit-align-items: center;
   align-items: center;
 }
-body[data-skin="classic"] .dynamic-row ul.line > li {
+body[data-skin="classic"] > li {
   margin: 5px 0;
 }
-body[data-skin="classic"] .dynamic-row ul.line > li > * {
+body[data-skin="classic"] > li > * {
   margin-left: 5px;
 }
-.dynamic-row ul.line > li input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
-.dynamic-row ul.line > li textarea {
+> li input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
+> li textarea {
   width: 300px;
 }
 @media screen and (max-width: 450px) {
-  .dynamic-row ul.line > li input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
-  .dynamic-row ul.line > li textarea {
+  > li input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
+  > li textarea {
     width: calc(80vw - 50px);
   }
 }
-.dynamic-row ul.line > li code {
+> li code {
   display: block;
   white-space: pre;
   color: #000;
   padding: 5px;
   border: 1px solid #a9a9a9;
 }
-.dynamic-row ul.line > li.as-column {
+> li.as-column {
   -webkit-box-orient: vertical;
   -moz-box-orient: vertical;
   -o-box-orient: vertical;
@@ -3989,39 +4000,39 @@ body[data-skin="classic"] .dynamic-row ul.line > li > * {
   -webkit-align-items: flex-start;
   align-items: flex-start;
 }
-input.dynamic-row ul.line > li.wider:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
-.dynamic-row ul.line > li.wider textarea {
+input> li.wider:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
+> li.wider textarea {
   width: 500px;
 }
 @media screen and (max-width: 1150px) {
-  input.dynamic-row ul.line > li.wider:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
-  .dynamic-row ul.line > li.wider textarea {
+  input> li.wider:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
+  > li.wider textarea {
     width: calc(80vw - 230px);
   }
 }
 @media screen and (max-width: 768px) {
-  input.dynamic-row ul.line > li.wider:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
-  .dynamic-row ul.line > li.wider textarea {
+  input> li.wider:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
+  > li.wider textarea {
     width: calc(80vw - 50px);
   }
 }
-.dynamic-row ul.line > li.wide input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
-.dynamic-row ul.line > li.wide textarea {
+> li.wide input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
+> li.wide textarea {
   width: 750px;
 }
 @media screen and (max-width: 1150px) {
-  .dynamic-row ul.line > li.wide input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
-  .dynamic-row ul.line > li.wide textarea {
+  > li.wide input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
+  > li.wide textarea {
     width: calc(80vw - 230px);
   }
 }
 @media screen and (max-width: 768px) {
-  .dynamic-row ul.line > li.wide input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
-  .dynamic-row ul.line > li.wide textarea {
+  > li.wide input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
+  > li.wide textarea {
     width: calc(80vw - 50px);
   }
 }
-.dynamic-row ul.line > li.full-width {
+> li.full-width {
   display: block;
   -webkit-box-flex: 1;
   -moz-box-flex: 1;
@@ -4031,11 +4042,11 @@ input.dynamic-row ul.line > li.wider:not([type="checkbox"]):not([type="radio"]):
   -ms-flex: 1;
   flex: 1;
 }
-.dynamic-row ul.line > li.full-width input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
-.dynamic-row ul.line > li.full-width textarea {
+> li.full-width input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
+> li.full-width textarea {
   width: 90%;
 }
-.dynamic-row ul.line > li.pic-line {
+> li.pic-line {
   -webkit-box-align: start;
   -moz-box-align: start;
   -o-box-align: start;
@@ -4043,22 +4054,22 @@ input.dynamic-row ul.line > li.wider:not([type="checkbox"]):not([type="radio"]):
   -webkit-align-items: flex-start;
   align-items: flex-start;
 }
-.dynamic-row ul.line > li:not(.full-width) input:not([type="checkbox"]):not([type="radio"]):not([type="file"])[size],
-.dynamic-row ul.line > li:not(.full-width) textarea[cols] {
+> li:not(.full-width) input:not([type="checkbox"]):not([type="radio"]):not([type="file"])[size],
+> li:not(.full-width) textarea[cols] {
   width: auto;
 }
-.dynamic-row ul.line > li .existing-pic-holder {
+> li .existing-pic-holder {
   margin-bottom: 0;
 }
-.dynamic-row ul.line > li .hidden {
+> li .hidden {
   display: none;
 }
-.dynamic-row ul.line > li .didynamic-checkboxes,
-.dynamic-row ul.line > li .didynamic-static-checkboxes {
+> li .didynamic-checkboxes,
+> li .didynamic-static-checkboxes {
   cursor: pointer;
 }
-.dynamic-row ul.line > li .didynamic-checkboxes > span,
-.dynamic-row ul.line > li .didynamic-static-checkboxes > span {
+> li .didynamic-checkboxes > span,
+> li .didynamic-static-checkboxes > span {
   border-bottom: 1px dotted;
 }
 ul.admin-grid {
