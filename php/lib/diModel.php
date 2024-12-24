@@ -2212,6 +2212,10 @@ class diModel implements \ArrayAccess
             $data = static::tuneFieldValueByTypeBeforeDb($key, $data);
         }
 
+        if (static::isJsonField($key) && ($data === '' || $data === null)) {
+            return null;
+        }
+
         $data = $this->escapeValue($data, $key);
 
         if (static::isFieldNumber($key)) {

@@ -1808,15 +1808,19 @@ abstract class BasePage
     public function getFieldTitle($name)
     {
         $F = Form::basicCreate($this);
-
-        return $this->doesFieldExist($name)
-            ? ($this->getFieldProperty($name, 'title') ?:
-                $F::getFieldTitle(
-                    $name,
-                    $this->getFieldProperty($name),
-                    $this->getLanguage()
-                ))
+        $props = $this->doesFieldExist($name)
+            ? $this->getFieldProperty($name)
             : null;
+        $title =
+            $props['title'] ??
+            $F::getFieldTitle($name, $props, $this->getLanguage()) ?:
+            '';
+
+        if (StringHelper::startsWith($title, '#')) {
+            return '';
+        }
+
+        return $title;
     }
 
     public function getModuleCaption()
