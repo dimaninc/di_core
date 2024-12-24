@@ -151,6 +151,12 @@ class Content extends \diCore\Admin\BasePage
     public function getFormFields()
     {
         return [
+            'properties' => [
+                'type' => 'json',
+                'default' => null,
+                'flags' => [FormFlag::hidden],
+            ],
+
             'parent' => [
                 'type' => 'int',
                 'default' => -1,
@@ -328,12 +334,6 @@ class Content extends \diCore\Admin\BasePage
                 ]),
                 'default' => '',
                 'tab' => 'pics',
-                'flags' => [FormFlag::hidden],
-            ],
-
-            'properties' => [
-                'type' => 'json',
-                'default' => null,
                 'flags' => [FormFlag::hidden],
             ],
 
