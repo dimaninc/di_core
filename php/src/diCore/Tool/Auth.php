@@ -115,7 +115,7 @@ class Auth
     }
 
     /**
-     * @return Auth
+     * @return static
      */
     public static function create($redirectAllowed = true)
     {
@@ -123,7 +123,7 @@ class Auth
     }
 
     /**
-     * @return Auth
+     * @return static
      */
     public static function i()
     {
