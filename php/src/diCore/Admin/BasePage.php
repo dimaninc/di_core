@@ -1816,7 +1816,10 @@ abstract class BasePage
             $F::getFieldTitle($name, $props, $this->getLanguage()) ?:
             '';
 
-        if (StringHelper::startsWith($title, '#')) {
+        if (
+            StringHelper::startsWith($title, '#') ||
+            StringHelper::startsWith($title, '_')
+        ) {
             return '';
         }
 
