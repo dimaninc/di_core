@@ -292,16 +292,45 @@ class Sender
                 }
 
                 if (static::getAccountUseSSL($fromEmail)) {
-                    $mail->SMTPAuth = true;
-                    $mail->SMTPAutoTLS = true;
-                    $mail->SMTPSecure = 'tls';
-                    $mail->SMTPOptions = [
-                        'ssl' => [
-                            'verify_peer' => true,
-                            'verify_depth' => 3,
-                            'allow_self_signed' => true,
-                        ],
-                    ];
+                    switch ($vendor) {
+                        case Vendor::yandex:
+                            $mail->AuthType = 'LOGIN';
+                            $mail->SMTPAuth = true;
+                            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+                            $mail->SMTPOptions = [
+                                'ssl' => [
+                                    'verify_peer' => false,
+                                    'verify_peer_name' => false,
+                                    'allow_self_signed' => true,
+                                ],
+                            ];
+                            break;
+
+                        case Vendor::masterhost:
+                            $mail->SMTPAuth = true;
+                            $mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+                            $mail->SMTPOptions = [
+                                'ssl' => [
+                                    'verify_peer' => false,
+                                    'verify_peer_name' => false,
+                                    'allow_self_signed' => true,
+                                ],
+                            ];
+                            break;
+
+                        default:
+                            $mail->SMTPAuth = true;
+                            $mail->SMTPAutoTLS = true;
+                            $mail->SMTPSecure = 'tls';
+                            $mail->SMTPOptions = [
+                                'ssl' => [
+                                    'verify_peer' => true,
+                                    'verify_depth' => 3,
+                                    'allow_self_signed' => true,
+                                ],
+                            ];
+                            break;
+                    }
                 } else {
                     $mail->SMTPAutoTLS = false;
                 }
@@ -333,7 +362,7 @@ class Sender
     {
         $a = static::$accounts[$email] ?? null;
 
-        return $a['login'] ?? static::defaultSmtpLogin;
+        return $a['login'] ?? (static::defaultSmtpLogin ?? $email);
     }
 
     protected static function getAccountPassword($email)

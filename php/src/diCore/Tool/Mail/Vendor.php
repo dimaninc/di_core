@@ -55,7 +55,7 @@ class Vendor extends SimpleContainer
             false => 25,
         ],
         self::yandex => [
-            true => 25,
+            true => 465,
             false => 25,
         ],
         self::microsoft => [
