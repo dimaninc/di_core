@@ -349,7 +349,7 @@ EOF;
                 // get each key info
                 foreach ($indexAr as $key_name => $columns) {
                     $sql .= ",\n";
-                    $col_names = '`' . join('`,`', $columns) . '`';
+                    $colNames = '`' . join('`,`', $columns) . '`';
 
                     $prefix = '';
 
@@ -368,13 +368,13 @@ EOF;
                     }
 
                     if ($key_name == 'PRIMARY') {
-                        $sql .= "\tPRIMARY KEY ($col_names)";
+                        $sql .= "\tPRIMARY KEY ($colNames)";
                     } else {
                         if (substr($key_name, 0, 6) == 'UNIQUE') {
                             $key_name = substr($key_name, 7);
                         }
 
-                        $sql .= "\t" . $prefix . "KEY `$key_name`($col_names)";
+                        $sql .= "\t" . $prefix . "KEY `$key_name`($colNames)";
                     }
                 }
 
@@ -387,13 +387,29 @@ EOF;
             }
 
             if ($data) {
-                $col = \diCollection::createForTable($table);
+                $col = null;
+                $rs = null;
+
+                try {
+                    $col = \diCollection::createForTable($table);
+                    $rc = $col->count();
+                } catch (\Exception $e) {
+                    // if no collection exists for table
+                    $rs = $this->getDb()->rs($this->getDb()->escapeTable($table));
+                    $rc = $this->getDb()->count($rs);
+                }
 
                 if ($fields && empty($fieldsAr)) {
-                    $r = $col->getModelByIdx()->get();
+                    $r = $col
+                        ? $col->getModelByIdx()->get()
+                        : $this->getDb()->fetch_ar($rs);
 
                     foreach ($r as $Field => $Value) {
                         $fieldsAr[$Field] = 1;
+                    }
+
+                    if ($rs) {
+                        $this->getDb()->reset($rs);
                     }
                 }
 
@@ -409,20 +425,22 @@ EOF;
                             ')'
                         : '';
 
-                if ($multiple && $col->count()) {
-                    $sql .= "INSERT INTO `{$table}`{$fieldsListString} VALUES";
+                if ($multiple && $rc) {
+                    $sql .= "INSERT INTO `$table`$fieldsListString VALUES";
                 }
 
                 $end_symbol = $multiple ? ',' : ';';
 
-                for ($j = 0; $j < $col->count(); $j++) {
-                    $r = $col->getModelByIdx($j)->get();
+                for ($j = 0; $j < $rc; $j++) {
+                    $r = $col
+                        ? $col->getModelByIdx($j)->get()
+                        : $this->getDb()->fetch_ar($rs);
 
                     if (!$multiple) {
-                        $sql .= "INSERT INTO `{$table}`{$fieldsListString} VALUES";
+                        $sql .= "INSERT INTO `$table`$fieldsListString VALUES";
                     }
 
-                    if ($j == $col->count() - 1) {
+                    if ($j == $rc - 1) {
                         $end_symbol = ';';
                     }
 
