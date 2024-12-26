@@ -134,6 +134,11 @@ class Albums extends \diCore\Admin\BasePage
         ];
     }
 
+    protected function photosOfAlbumOptions()
+    {
+        return [];
+    }
+
     public function getFormFields()
     {
         /** @var PhotosOfAlbum $photosOfAlbum */
@@ -273,7 +278,9 @@ class Albums extends \diCore\Admin\BasePage
                 'flags' => ['static'],
             ],
 
-            'photos' => $photosOfAlbum::getFormFieldArray(),
+            'photos' => $photosOfAlbum::getFormFieldArray(
+                $this->photosOfAlbumOptions()
+            ),
         ];
     }
 

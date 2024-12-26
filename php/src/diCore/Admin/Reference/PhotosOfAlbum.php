@@ -45,10 +45,10 @@ class PhotosOfAlbum
             'tab' => 'photos',
             'table' => static::$table,
             'multiple_uploading' => true,
-            //'drag_and_drop_uploading' => true,
+            // 'drag_and_drop_uploading' => true,
             'sortby' => 'order_num ASC',
             'subquery' => function ($table, $field, $id) {
-                return "album_id = '{$id}'";
+                return "album_id = '$id'";
             },
             'techFieldsCallback' => function (
                 $table,
@@ -94,6 +94,7 @@ class PhotosOfAlbum
                 \diDynamicRows $DR
             ) {
                 return [
+                    'title' => '',
                     'visible' => 1,
                     'content' => '',
                 ];
