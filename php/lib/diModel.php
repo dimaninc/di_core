@@ -2757,7 +2757,6 @@ ENGINE = InnoDB;";
 
     /**
      * Returns query conditions array for order_num calculating
-     * @todo Add support of assoc array to use in non-relational databases
      * @return array
      */
     public function getQueryArForMove()
@@ -2766,6 +2765,16 @@ ENGINE = InnoDB;";
 
         if ($this->exists('parent')) {
             $ar[] = $this->getDb()->escapeFieldValue('parent', $this->get('parent'));
+
+            // todo: add support of following format to cover non-sql databases
+            /*
+            $ar[] = function (\diCollection $col) {
+                return $col->filterBy('parent', $this->get('parent'));
+            };
+            */
+
+            // todo 2)
+            // $ar[] = ['parent' => $this->get('parent')];
         }
 
         return $ar;

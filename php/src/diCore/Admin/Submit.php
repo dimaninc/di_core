@@ -567,8 +567,8 @@ class Submit
                 case 'date_str':
                 case 'time_str':
                 case 'datetime_str':
-                    if (!$this->getModel()->has($f)) {
-                        $this->getModel()->set($f, null);
+                    if (!$this->getData($f)) {
+                        $this->setData($f, null);
                     }
                     break;
 
@@ -586,8 +586,8 @@ class Submit
 
                 case 'pic':
                 case 'file':
-                    if (!$this->getModel()->has($f)) {
-                        $this->getModel()->set($f, '');
+                    if (!$this->getData($f)) {
+                        $this->setData($f, '');
                     }
                     break;
 
