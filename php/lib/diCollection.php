@@ -225,7 +225,10 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         return $return == 'class' ? $className : $type;
     }
 
-    public static function getModelClass(): \diModel
+    /**
+     * @return \diModel|string
+     */
+    public static function getModelClass()
     {
         return \diLib::getChildClass(static::class, 'Model');
     }
@@ -924,7 +927,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
 
     public function getModelType()
     {
-        return static::type ?: $this->modelType;
+        return static::type ?? static::getModelClass()::type ?: $this->modelType;
     }
 
     /**
@@ -1190,6 +1193,11 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         return $this->queryFields ?:
             $this->getBuiltQueryFields() ?:
             $this->addAliasToField('*');
+    }
+
+    public function hasQueryWhere()
+    {
+        return !!$this->getQueryWhere();
     }
 
     /**
@@ -1495,44 +1503,73 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         return $this->realCount;
     }
 
-    public function aggregateSum(string|array $field)
+    public function aggregateValues(string|array $field, array $options = [])
     {
+        $options = ArrayHelper::filterByKey(
+            extend(
+                [
+                    'count' => false,
+                    'min' => false,
+                    'max' => false,
+                    'sum' => false,
+                ],
+                $options
+            ),
+            ['count', 'min', 'max', 'sum']
+        );
+
         if (self::getConnection()::isMongo()) {
             if (is_array($field)) {
                 $field = join('.', $field);
             }
 
-            /** @var Mongo $link */
-            $res = $this->getDb()->getAggregateValues([
-                'collectionName' => $this->getTable(),
-                'field' => $field,
-                'filter' => $this->getFullQuery()['filter'],
-                'sum' => true,
-            ]);
+            $res = $this->getDb()->getAggregateValues(
+                extend($options, [
+                    'collectionName' => $this->getTable(),
+                    'field' => $field,
+                    'filter' => $this->getFullQuery()['filter'],
+                ])
+            );
 
-            return $res['sum'] ?? null;
+            return $res;
         }
 
         if (is_array($field)) {
             $f1 = current($field);
             $field = join('.', array_slice($field, 1));
-
             $field = "CAST(JSON_EXTRACT($f1, '$.$field') AS UNSIGNED)";
         }
+
+        $fieldQuery = join(
+            ',',
+            array_filter(
+                array_map(
+                    fn($func, $state) => $state
+                        ? "$func($field) AS " . self::getDb()->quoteField($func)
+                        : null,
+                    array_keys($options),
+                    array_values($options)
+                )
+            )
+        );
 
         $ar = $this->getDb()->ar(
             $this->getQueryTable(),
             $this->getQueryWhere(),
-            "SUM($field) AS s"
+            $fieldQuery
         );
 
-        return $ar['s'];
+        return $ar ?: [];
+    }
+
+    public function aggregateSum(string|array $field)
+    {
+        return $this->aggregateValues($field, ['sum' => true])['sum'];
     }
 
     public function aggregateCount($field = '*')
     {
         if (self::getConnection()::isMongo()) {
-            /** @var Mongo $link */
             $res = $this->getDb()->getAggregateValues([
                 'collectionName' => $this->getTable(),
                 'filter' => $this->getFullQuery()['filter'],
@@ -1554,6 +1591,16 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         );
 
         return $ar['cc'];
+    }
+
+    public function aggregateMin($field)
+    {
+        return $this->aggregateValues($field, ['min' => true])['min'];
+    }
+
+    public function aggregateMax($field)
+    {
+        return $this->aggregateValues($field, ['max' => true])['max'];
     }
 
     #[\ReturnTypeWillChange]

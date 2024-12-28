@@ -233,6 +233,9 @@ class diModel implements \ArrayAccess
         return $return == 'class' ? $className : $type;
     }
 
+    /**
+     * @return \diCollection|string
+     */
     public static function getCollectionClass()
     {
         return \diLib::getChildClass(static::class, 'Collection');
@@ -2756,6 +2759,7 @@ ENGINE = InnoDB;";
     }
 
     /**
+     * @deprecated Use $this->filterCollectionForMove
      * Returns query conditions array for order_num calculating
      * @return array
      */
@@ -2780,6 +2784,17 @@ ENGINE = InnoDB;";
         return $ar;
     }
 
+    public function filterCollectionForMove(\diCollection $col)
+    {
+        /*
+        if ($this->exists('parent')) {
+            $col->filterBy('parent', $this->get('parent'));
+        }
+        */
+
+        return $this;
+    }
+
     /**
      * @param integer $direction    Should be 1 or -1
      * @return $this
@@ -2788,25 +2803,35 @@ ENGINE = InnoDB;";
     {
         $initValue = $direction > 0 ? 1 : 65000;
         $sign = $direction > 0 ? 1 : -1;
-        $min_max = $direction > 0 ? 'MAX' : 'MIN';
-
-        $qAr = $this->getQueryArForMove();
-        $query = $qAr ? 'WHERE ' . join(' AND ', $qAr) : '';
+        $minMax = $direction > 0 ? 'max' : 'min';
         $field = static::normalizeFieldName(
             static::order_field_name ?: $this->orderFieldName
         );
 
-        $order_r = $this->getDb()->r(
-            $this->getDb()->escapeTable($this->getTable()),
-            $query,
-            "{$min_max}({$field}) AS num,COUNT(id) AS cc"
-        );
-        $this->set(
-            $field,
-            $order_r && $order_r->cc ? intval($order_r->num) + $sign : $initValue
-        );
+        $col = static::getCollectionClass()::createReadOnly();
+        $this->filterCollectionForMove($col);
 
-        return $this;
+        if ($col->hasQueryWhere()) {
+            $order = $col->aggregateValues($field, [
+                $minMax => true,
+                'count' => true,
+            ]);
+
+            $edge = !empty($order['count']) ? intval($order[$minMax]) : null;
+        } else {
+            $qAr = $this->getQueryArForMove();
+            $query = $qAr ? 'WHERE ' . join(' AND ', $qAr) : '';
+
+            $order_r = $this->getDb()->r(
+                $this->getDb()->escapeTable($this->getTable()),
+                $query,
+                "$minMax($field) AS num,COUNT(id) AS cc"
+            );
+
+            $edge = !empty($order_r->cc) ? intval($order_r->num) : null;
+        }
+
+        return $this->set($field, $edge !== null ? $edge + $sign : $initValue);
     }
 
     public function calculateAndSetOrderAndLevelNum($updateNeighbors = true)

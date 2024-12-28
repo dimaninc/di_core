@@ -259,21 +259,34 @@ class diListController extends \diBaseAdminController
             in_array($direction, $this->possibleDirections) &&
             $m->exists($this->orderNumField)
         ) {
-            $queryAr = $this->getQueryArForMove($m, [
-                "{$this->orderNumField}{$this->signs[$direction]}'{$m->get(
-                    $this->orderNumField
-                )}'",
-            ]);
+            $col = $m::getCollectionClass()::create();
+            $m->filterCollectionForMove($col);
 
-            $neighbor = new \diModel(
-                $this->getDb()->r(
-                    $m->getTable(),
-                    'WHERE ' .
-                        join(' AND ', $queryAr) .
-                        " ORDER BY {$this->orderNumField} {$this->orderDirections[$direction]}"
-                ),
-                $m->getTable()
-            );
+            if ($col->hasQueryWhere()) {
+                $col->filterBy(
+                    $this->orderNumField,
+                    $this->signs[$direction],
+                    $m->get($this->orderNumField)
+                )->orderBy($this->orderNumField, $this->orderDirections[$direction]);
+
+                $neighbor = $col->getFirstItem();
+            } else {
+                $queryAr = $this->getQueryArForMove($m, [
+                    "$this->orderNumField{$this->signs[$direction]}'{$m->get(
+                        $this->orderNumField
+                    )}'",
+                ]);
+
+                $neighbor = new \diModel(
+                    $this->getDb()->r(
+                        $m->getTable(),
+                        'WHERE ' .
+                            join(' AND ', $queryAr) .
+                            " ORDER BY {$this->orderNumField} {$this->orderDirections[$direction]}"
+                    ),
+                    $m->getTable()
+                );
+            }
 
             if ($neighbor->exists()) {
                 if (
@@ -327,6 +340,7 @@ class diListController extends \diBaseAdminController
         return $ar;
     }
 
+    /** @deprecated */
     protected function getQueryArForMove(\diModel $m, $ar = [])
     {
         return array_merge($ar, $m->getQueryArForMove());
