@@ -255,86 +255,94 @@ class diListController extends \diBaseAdminController
             'downFirst' => null,
         ];
 
-        if (
-            in_array($direction, $this->possibleDirections) &&
-            $m->exists($this->orderNumField)
-        ) {
-            $col = $m::getCollectionClass()::create();
-            $m->filterCollectionForMove($col);
+        if (!in_array($direction, $this->possibleDirections)) {
+            $ar['message'] = "Invalid direction: $direction";
 
-            if ($col->hasQueryWhere()) {
-                $col->filterBy(
-                    $this->orderNumField,
-                    $this->signs[$direction],
-                    $m->get($this->orderNumField)
-                )->orderBy($this->orderNumField, $this->orderDirections[$direction]);
+            return $ar;
+        }
 
-                $neighbor = $col->getFirstItem();
-            } else {
-                $queryAr = $this->getQueryArForMove($m, [
-                    "$this->orderNumField{$this->signs[$direction]}'{$m->get(
-                        $this->orderNumField
-                    )}'",
-                ]);
+        if (!$m->exists($this->orderNumField)) {
+            $ar['message'] = "Field $this->orderNumField not exists in model";
 
-                $neighbor = new \diModel(
-                    $this->getDb()->r(
-                        $m->getTable(),
-                        'WHERE ' .
-                            join(' AND ', $queryAr) .
-                            " ORDER BY {$this->orderNumField} {$this->orderDirections[$direction]}"
-                    ),
-                    $m->getTable()
-                );
-            }
+            return $ar;
+        }
 
-            if ($neighbor->exists()) {
-                if (
-                    $neighbor->get($this->orderNumField) <
-                    $m->get($this->orderNumField)
-                ) {
-                    $m1 = $neighbor;
-                    $m2 = $m;
-                } else {
-                    $m1 = $m;
-                    $m2 = $neighbor;
+        $col = $m::getCollectionClass()::create();
+        $m->filterCollectionForMove($col);
+
+        if ($col->hasQueryWhere()) {
+            $col->filterBy(
+                $this->orderNumField,
+                $this->signs[$direction],
+                $m->get($this->orderNumField)
+            )->orderBy($this->orderNumField, $this->orderDirections[$direction]);
+
+            $neighbor = $col->getFirstItem();
+        } else {
+            $queryAr = $this->getQueryArForMove($m, [
+                "$this->orderNumField{$this->signs[$direction]}'{$m->get(
+                    $this->orderNumField
+                )}'",
+            ]);
+
+            $neighbor = new \diModel(
+                $this->getDb()->r(
+                    $m->getTable(),
+                    'WHERE ' .
+                        join(' AND ', $queryAr) .
+                        " ORDER BY $this->orderNumField {$this->orderDirections[$direction]}"
+                ),
+                $m->getTable()
+            );
+        }
+
+        if (!$neighbor->exists()) {
+            $ar['message'] = 'Record is on the edge already';
+
+            return $ar;
+        }
+
+        if ($neighbor->get($this->orderNumField) < $m->get($this->orderNumField)) {
+            $m1 = $neighbor;
+            $m2 = $m;
+        } else {
+            $m1 = $m;
+            $m2 = $neighbor;
+        }
+
+        $col1 = $this->getFamilyCollection($m1, [$m1]);
+        $col2 = $this->getFamilyCollection($m2, [$m2]);
+
+        $num = $m1->get($this->orderNumField);
+        $counter = 0;
+        $limit = count($col2);
+        $field = $this->orderNumField;
+        $dir = 'up';
+
+        try {
+            array_map(function (\diModel $model) use (
+                $num,
+                $field,
+                &$ar,
+                $dir,
+                &$counter,
+                $limit
+            ) {
+                $model->set($field, $num + $counter++)->save();
+
+                if ($dir == 'up' && $counter > $limit) {
+                    $dir = 'down';
                 }
 
-                $col1 = $this->getFamilyCollection($m1, [$m1]);
-                $col2 = $this->getFamilyCollection($m2, [$m2]);
+                $ar[$dir][] = $model->getId();
+            }, array_merge($col2, $col1));
 
-                $num = $m1->get($this->orderNumField);
-                $counter = 0;
-                $limit = count($col2);
-                $field = $this->orderNumField;
-                $dir = 'up';
+            $this->postProcess($m);
 
-                try {
-                    array_map(function (\diModel $model) use (
-                        $num,
-                        $field,
-                        &$ar,
-                        $dir,
-                        &$counter,
-                        $limit
-                    ) {
-                        $model->set($field, $num + $counter++)->save();
-
-                        if ($dir == 'up' && $counter > $limit) {
-                            $dir = 'down';
-                        }
-
-                        $ar[$dir][] = $model->getId();
-                    }, array_merge($col2, $col1));
-
-                    $this->postProcess($m);
-
-                    $ar['downFirst'] = $m1->getId();
-                    $ar['ok'] = true;
-                } catch (\Exception $e) {
-                    $ar['message'] = $e->getMessage();
-                }
-            }
+            $ar['downFirst'] = $m1->getId();
+            $ar['ok'] = true;
+        } catch (\Exception $e) {
+            $ar['message'] = $e->getMessage();
         }
 
         return $ar;

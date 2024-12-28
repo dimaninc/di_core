@@ -198,7 +198,7 @@ abstract class Pdo extends \diDB
     {
         $s = $s
             ? $this->link->quote($s, $binary ? \PDO::PARAM_LOB : \PDO::PARAM_STR)
-            : '';
+            : "$s";
 
         if (strlen($s) >= 2) {
             $s = substr($s, 1, strlen($s) - 2);
