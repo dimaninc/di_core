@@ -2786,7 +2786,7 @@ ENGINE = InnoDB;";
      */
     public function calculateAndSetOrderNum($direction = 1)
     {
-        $init_value = $direction > 0 ? 1 : 65000;
+        $initValue = $direction > 0 ? 1 : 65000;
         $sign = $direction > 0 ? 1 : -1;
         $min_max = $direction > 0 ? 'MAX' : 'MIN';
 
@@ -2803,7 +2803,7 @@ ENGINE = InnoDB;";
         );
         $this->set(
             $field,
-            $order_r && $order_r->cc ? intval($order_r->num) + $sign : $init_value
+            $order_r && $order_r->cc ? intval($order_r->num) + $sign : $initValue
         );
 
         return $this;

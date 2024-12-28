@@ -16,6 +16,7 @@ class GifInfo
     public $m_width;
     public $m_height;
     public $m_colorFlag;
+    public $m_background;
     public $m_backgroundIndex;
 
     function __construct($filename)

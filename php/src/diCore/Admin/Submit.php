@@ -529,27 +529,12 @@ class Submit
 
             switch ($v['type']) {
                 case 'order_num':
-                    $direction = isset($v['direction']) ? $v['direction'] : 1;
-                    $queryEnding = isset($v['queryEnding']) ? $v['queryEnding'] : '';
+                    $direction = $v['direction'] ?? 1;
                     $force = !empty($v['force']);
 
-                    if (is_callable($queryEnding)) {
-                        $queryEnding = $queryEnding($this);
+                    if (!$this->getId() || $force) {
+                        $this->getModel()->calculateAndSetOrderNum($direction);
                     }
-
-                    if (!$queryEnding) {
-                        $model = \diModel::createForTableNoStrict(
-                            $this->getTable()
-                        )->initFromRequest();
-
-                        $qAr = $model->getQueryArForMove();
-
-                        if ($qAr) {
-                            $queryEnding = 'WHERE ' . join(' AND ', $qAr);
-                        }
-                    }
-
-                    $this->make_order_num($direction, $queryEnding, $force);
                     break;
 
                 case 'int':
@@ -831,40 +816,6 @@ class Submit
                 ])
             )
         );
-
-        return $this;
-    }
-
-    /** @deprecated */
-    function make_clean_title($origin = null)
-    {
-        return $this->makeSlug($origin);
-    }
-
-    // dir == -1/+1, shows - to increase or decrease new value's order num
-    function make_order_num($dir, $q_ending = '', $force = false)
-    {
-        if (!$this->getId() || $force) {
-            /*
-			$init_value = $dir > 0 ? 1 : 65000;
-			$sign = $dir > 0 ? 1 : -1;
-			$min_max = $dir > 0 ? 'MAX' : 'MIN';
-
-			$order_r = $this->getDb()->r($this->table, $q_ending, "$min_max(order_num) AS num,COUNT(id) AS cc");
-			$this->setData('order_num', $order_r && $order_r->cc ? intval($order_r->num) + $sign : $init_value);
-			*/
-
-            $this->getModel()->calculateAndSetOrderNum($dir);
-        }
-        /*
-		else
-		{
-			if ($this->getModel()->existsOrig())
-			{
-				$this->setData('order_num', $this->getModel()->getOrigData('order_num'));
-			}
-		}
-		*/
 
         return $this;
     }

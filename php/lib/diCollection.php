@@ -225,14 +225,16 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         return $return == 'class' ? $className : $type;
     }
 
-    public static function getModelClass()
+    public static function getModelClass(): \diModel
     {
         return \diLib::getChildClass(static::class, 'Model');
     }
 
     public static function getConnection()
     {
-        return Connection::get(static::connection_name);
+        return Connection::get(
+            static::connection_name ?? static::getModelClass()::connection_name
+        );
     }
 
     public static function getConnectionEngine()
@@ -910,7 +912,8 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
     public static function db()
     {
         return Connection::get(
-            static::connection_name ?: Connection::DEFAULT_NAME
+            static::connection_name ?? static::getModelClass()::connection_name ?:
+            Connection::DEFAULT_NAME
         )->getDb();
     }
 
