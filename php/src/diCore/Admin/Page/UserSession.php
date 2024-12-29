@@ -8,6 +8,7 @@
 namespace diCore\Admin\Page;
 
 use diCore\Admin\Data\FormFlag;
+use diCore\Admin\FilterRule;
 use diCore\Entity\UserSession\Model;
 
 class UserSession extends \diCore\Admin\BasePage
@@ -37,11 +38,12 @@ class UserSession extends \diCore\Admin\BasePage
             ->addFilter([
                 'field' => 'token',
                 'type' => 'string',
+                'rule' => FilterRule::equals,
             ])
             ->addFilter([
                 'field' => 'user_id',
                 'type' => 'string',
-                'where_tpl' => \diAdminFilters::get_user_id_where(
+                'where_tpl' => \diAdminFilters::getUserWhere(
                     $this->getUsedUserFields()
                 ),
             ])

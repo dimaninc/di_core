@@ -48,6 +48,7 @@ use diCore\Admin\FilterRule;
 use diCore\Admin\Form;
 use diCore\Data\Configuration;
 use diCore\Database\Engine;
+use diCore\Entity\User\Model as User;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 
@@ -415,7 +416,7 @@ class diAdminFilters
 
     public function getNote($field)
     {
-        return isset($this->notes[$field]) ? $this->notes[$field] : null;
+        return $this->notes[$field] ?? null;
     }
 
     private function getFieldHtml($title, $input)
@@ -466,7 +467,7 @@ class diAdminFilters
                 $a['title'] ?:
                 ArrayHelper::get(
                     $this->AdminPage->getFormFields(),
-                    $field . '.title'
+                    "$field.title"
                 ) ?:
                 $F::getFieldTitle(
                     $field,
@@ -533,9 +534,10 @@ class diAdminFilters
         return $this->getAdminPage()->getListFullHref($params);
     }
 
+    /** @deprecated use getUserWhere */
     public static function get_user_id_where(
         $userFields = ['name', 'login', 'email'],
-        $userTable = 'users'
+        $userTable = null
     ) {
         $condition = join(
             ' or ',
@@ -555,14 +557,14 @@ class diAdminFilters
         $field = self::getDb()->escapeField('[-field-]');
         $idField = self::getDb()->escapeField('id');
         $value = self::getDb()->escapeValue('[-value-]');
-        $userTable = self::getDb()->escapeTable($userTable);
+        $userTable = self::getDb()->escapeTable($userTable ?? User::create()::table);
 
         return "($field > 0 AND ($field = $value or $field in (SELECT $idField FROM $userTable WHERE $condition)))";
     }
 
     public static function getUserWhere(
         $userFields = ['name', 'login', 'email'],
-        $userTable = 'users'
+        $userTable = null
     ) {
         return function ($field, $value, $not = false, $tablePrefix = '') use (
             $userFields,
@@ -585,7 +587,9 @@ class diAdminFilters
             );
 
             $idField = self::getDb()->escapeField('id');
-            $userTable = self::getDb()->escapeTable($userTable);
+            $userTable = self::getDb()->escapeTable(
+                $userTable ?? User::create()::table
+            );
 
             return "($field > 0 AND ($field = $intValue or $field in (SELECT $idField FROM $userTable WHERE $condition)))";
         };
@@ -1028,17 +1032,10 @@ class diAdminFilters
                             $dMin = \diDateTime::timestamp($dMin);
                         }
 
-                        $t1 =
-                            $a['default_value'] !== null
-                                ? $a['default_value']
-                                : ($dMin ?:
-                                'Y-m-01');
                         // 1st day of current month
-                        $t2 =
-                            $a['default_value2'] !== null
-                                ? $a['default_value2']
-                                : '+1 day';
+                        $t1 = $a['default_value'] ?? ($dMin ?: 'Y-m-01');
                         // tomorrow
+                        $t2 = $a['default_value2'] ?? '+1 day';
 
                         $dt1 = \diDateTime::simpleDateFormat($t1);
                         $dt2 = \diDateTime::simpleDateFormat($t2);
@@ -1062,7 +1059,7 @@ class diAdminFilters
                 $this->ar[$idx]['value'] = $value;
 
                 if ($value || ($value == '0' && substr($a['type'], 0, 3) == 'str')) {
-                    $replace_ar = [
+                    $replaces = [
                         '[-field-]' => $options['tablePrefix'] . $a['field'],
                         '[-value-]' => $value,
                     ];
@@ -1091,27 +1088,26 @@ class diAdminFilters
                             'value' => $value,
                             'negative' => $a['not'],
                         ]);
-                        $w = null;
-                    } else {
-                        $w = is_callable($where_tpl)
-                            ? $where_tpl(
-                                $a['field'],
-                                $value,
-                                $a['not'],
-                                $options['tablePrefix'],
-                                $a['queryPrefix'],
-                                $a['querySuffix']
-                            )
-                            : str_replace(
-                                array_keys($replace_ar),
-                                array_values($replace_ar),
-                                $where_tpl
-                            );
+
+                        continue;
                     }
 
-                    if ($w) {
-                        $where_ar[] = $w;
-                    }
+                    $w = is_callable($where_tpl)
+                        ? $where_tpl(
+                            $a['field'],
+                            $value,
+                            $a['not'],
+                            $options['tablePrefix'],
+                            $a['queryPrefix'],
+                            $a['querySuffix']
+                        )
+                        : str_replace(
+                            array_keys($replaces),
+                            array_values($replaces),
+                            $where_tpl
+                        );
+
+                    $where_ar[] = $w;
                 }
             }
 

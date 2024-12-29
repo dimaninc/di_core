@@ -62,7 +62,7 @@ class Comments extends \diCore\Admin\BasePage
             ->addFilter([
                 'field' => 'user_id',
                 'type' => 'string',
-                'where_tpl' => \diAdminFilters::get_user_id_where(
+                'where_tpl' => \diAdminFilters::getUserWhere(
                     $this->getUsedUserFields()
                 ),
             ])
