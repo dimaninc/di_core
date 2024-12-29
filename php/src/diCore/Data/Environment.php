@@ -19,6 +19,8 @@ namespace diCore\Data;
 class Environment
 {
     const mainDomain = null;
+    // if admin and main website hosted on different domain
+    const websiteDomain = null;
     const mainPort = null;
     const useModuleCache = null;
     const initiating = null;
@@ -66,6 +68,14 @@ class Environment
         $class = self::getClass();
 
         return $class::mainDomain;
+    }
+
+    final public static function getWebsiteDomain()
+    {
+        /** @var Environment $class */
+        $class = self::getClass();
+
+        return $class::websiteDomain;
     }
 
     final public static function getMainPort()

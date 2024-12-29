@@ -377,7 +377,11 @@ class Base
 
             'site_subfolder' => \diLib::getSubFolder(),
             'site_path' =>
-                (\diLib::getSubFolder() ? '/' . \diLib::getSubFolder() : '') . '/',
+                (Environment::getWebsiteDomain()
+                    ? \diRequest::protocolExt() . Environment::getWebsiteDomain()
+                    : '') .
+                '/' .
+                \diLib::getSubFolder(),
             'site_language' => $this->getLanguage(),
             'current_year' => date('Y'),
             'page_title' => $this->getPageTitle(),

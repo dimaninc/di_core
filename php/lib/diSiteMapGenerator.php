@@ -39,7 +39,7 @@ class diSiteMapGenerator
     public function __construct()
     {
         $this->domain = \diRequest::domain();
-        $this->protocol = \diRequest::protocol() . '://';
+        $this->protocol = \diRequest::protocolExt();
     }
 
     /**
@@ -202,9 +202,7 @@ class diSiteMapGenerator
                     $out[$type] = join(
                         "\n",
                         array_map(function ($value) use ($type) {
-                            return "<{$type}>{$this->arToXml(
-                                $value
-                            )}</{$type}>";
+                            return "<{$type}>{$this->arToXml($value)}</{$type}>";
                         }, $ar)
                     );
 
@@ -230,10 +228,8 @@ class diSiteMapGenerator
 
     protected function store()
     {
-        $folder =
-            $this->folder === null ? \diPaths::fileSystem() : $this->folder;
-        $filename =
-            \diCore\Helper\StringHelper::slash($folder) . $this->filename;
+        $folder = $this->folder === null ? \diPaths::fileSystem() : $this->folder;
+        $filename = \diCore\Helper\StringHelper::slash($folder) . $this->filename;
 
         $xml = $this->getXml();
 

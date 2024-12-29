@@ -51,6 +51,11 @@ class diRequest
         return static::isHttps() ? 'https' : 'http';
     }
 
+    public static function protocolExt()
+    {
+        return static::protocol() . '://';
+    }
+
     public static function domain()
     {
         return static::server('HTTP_HOST') ?: Config::getMainDomain();
@@ -58,7 +63,7 @@ class diRequest
 
     public static function urlBase($slash = false)
     {
-        return static::protocol() . '://' . static::domain() . ($slash ? '/' : '');
+        return static::protocolExt() . static::domain() . ($slash ? '/' : '');
     }
 
     public static function referrer($default = '')
