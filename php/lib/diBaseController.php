@@ -620,11 +620,9 @@ class diBaseController
         );
     }
 
-    protected static function e()
+    protected static function e(...$args)
     {
-        $args = func_get_args();
-
-        if (is_array($args) && count($args)) {
+        if (count($args)) {
             foreach ($args as &$x) {
                 if (is_string($x)) {
                     $x = [

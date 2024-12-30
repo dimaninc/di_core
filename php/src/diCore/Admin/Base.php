@@ -965,9 +965,8 @@ class Base
         return !$super || $this->isAdminSuper();
     }
 
-    protected static function menuAdd()
+    protected static function menuAdd(...$ar)
     {
-        $ar = func_get_args();
         $result = [];
 
         foreach ($ar as $a) {

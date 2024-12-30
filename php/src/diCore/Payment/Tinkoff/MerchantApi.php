@@ -167,9 +167,8 @@ class MerchantApi
      *
      * @return string
      */
-    private function _combineUrl()
+    private function _combineUrl(...$args)
     {
-        $args = func_get_args();
         $url = '';
         foreach ($args as $arg) {
             if (is_string($arg)) {
@@ -177,8 +176,6 @@ class MerchantApi
                     $arg .= '/';
                 }
                 $url .= $arg;
-            } else {
-                continue;
             }
         }
 
@@ -230,10 +227,7 @@ class MerchantApi
             return $out;
         } else {
             throw new HttpException(
-                'Can not create connection to ' .
-                    $api_url .
-                    ' with args ' .
-                    $args,
+                "Can not create connection to $api_url with args $args",
                 404
             );
         }

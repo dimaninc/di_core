@@ -1152,9 +1152,8 @@ function simple_debug($message, $module = '', $fnSuffix = '')
 }
 
 /** @deprecated  */
-function var_debug()
+function var_debug(...$arguments)
 {
-    $arguments = func_get_args();
     $logger = \diCore\Tool\Logger::getInstance();
     call_user_func_array([$logger, 'variable'], $arguments);
 }
@@ -1170,16 +1169,13 @@ function cron_debug($script)
     chmod($fn, 0777);
 }
 
-function extend()
+function extend(...$args)
 {
-    $args = func_get_args();
     $extended = [];
 
-    if (is_array($args) && count($args)) {
-        foreach ($args as $array) {
-            if (is_array($array) || is_object($array)) {
-                $extended = array_replace($extended, (array) $array);
-            }
+    foreach ($args as $array) {
+        if (is_iterable($array)) {
+            $extended = array_replace($extended, (array) $array);
         }
     }
 

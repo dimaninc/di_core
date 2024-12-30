@@ -11,10 +11,10 @@ class diPropertyInheritance
 {
     private $ar = [];
 
-    public function __construct()
+    public function __construct(...$args)
     {
-        for ($i = 0; $i < func_num_args(); $i++) {
-            $this->push(func_get_arg($i));
+        foreach ($args as $arg) {
+            $this->push($arg);
         }
     }
 

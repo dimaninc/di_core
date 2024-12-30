@@ -121,10 +121,8 @@ class Logger
         return $this;
     }
 
-    public function variable()
+    public function variable(...$arguments)
     {
-        $arguments = func_get_args();
-
         foreach ($arguments as $arg) {
             $this->printLine(
                 print_r($arg, true) ?: var_export($arg, true),
