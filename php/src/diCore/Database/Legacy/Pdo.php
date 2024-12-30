@@ -58,8 +58,7 @@ abstract class Pdo extends \diDB
                 $options
             );
         } catch (\PDOException $e) {
-            $message =
-                "Pdo: Unable to connect to host $this->host: " . $e->getMessage();
+            $message = "Pdo: Unable to connect to host $this->host: {$e->getMessage()}";
 
             $this->_log($message);
 
@@ -70,10 +69,7 @@ abstract class Pdo extends \diDB
             $this->__q($this->getCreateDatabaseQuery());
         }
 
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-
-        $this->time_log('connect', $time2 - $time1);
+        $this->time_log('connect', utime() - $time1);
 
         return true;
     }
@@ -85,7 +81,7 @@ abstract class Pdo extends \diDB
 
     protected function getDSN()
     {
-        return "{$this->driver}:host={$this->host};dbname={$this->dbname};charset={$this->charset}";
+        return "$this->driver:host=$this->host;dbname=$this->dbname;charset=$this->charset";
     }
 
     protected function __close()
@@ -119,7 +115,7 @@ abstract class Pdo extends \diDB
         } catch (\PDOException $e) {
             $this->logError($q, $e);
 
-            return $this->_log("Unable to execute query `{$q}`: {$e->getMessage()}");
+            return $this->_log("Unable to execute query `$q`: {$e->getMessage()}");
         }
     }
 
@@ -130,7 +126,7 @@ abstract class Pdo extends \diDB
         } catch (\PDOException $e) {
             $this->logError($q, $e);
 
-            return $this->_log("Unable to execute query `{$q}`: {$e->getMessage()}");
+            return $this->_log("Unable to execute query `$q`: {$e->getMessage()}");
         }
     }
 

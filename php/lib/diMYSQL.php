@@ -44,10 +44,7 @@ class diMYSQL extends diDB
             throw new \diDatabaseException($message);
         }
 
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-
-        $this->time_log('connect', $time2 - $time1);
+        $this->time_log('connect', utime() - $time1);
 
         return true;
     }
@@ -205,7 +202,10 @@ class diMYSQL extends diDB
         }
 
         $tables = static::extractTableNamesWithAliases($table);
-        $quotedTables = array_map(fn ($t) => $this->quoteTableNameWithAlias($t), $tables);
+        $quotedTables = array_map(
+            fn($t) => $this->quoteTableNameWithAlias($t),
+            $tables
+        );
         $allTables = join(', ', array_map(fn($t) => "$t $mode", $quotedTables));
 
         if ($allTables) {
@@ -214,10 +214,7 @@ class diMYSQL extends diDB
 
             $this->__q($query);
 
-            $time2 = utime();
-            $this->execution_time += $time2 - $time1;
-
-            $this->time_log('lock', $time2 - $time1, $query, '', false);
+            $this->time_log('lock', utime() - $time1, $query, '', false);
         }
 
         return $tables ?: [$table]; // join(', ', $tables)
@@ -234,10 +231,7 @@ class diMYSQL extends diDB
 
         $this->__q($query);
 
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-
-        $this->time_log('unlock', $time2 - $time1, $query, '', false);
+        $this->time_log('unlock', utime() - $time1, $query, '', false);
 
         return parent::unlockTable($table);
     }

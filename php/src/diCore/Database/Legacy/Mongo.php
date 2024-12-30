@@ -40,10 +40,7 @@ class Mongo extends \diDB
         $this->mongo = new Client($this->getServerConnectionString());
         $this->link = $this->mongo->selectDatabase($this->getDatabase());
 
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-
-        $this->time_log('connect', $time2 - $time1);
+        $this->time_log('connect', utime() - $time1);
 
         return true;
     }
@@ -89,9 +86,7 @@ class Mongo extends \diDB
         /** @var ObjectId $id */
         $id = $insertResult->getInsertedId();
 
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-        $this->time_log('insert', $time2 - $time1);
+        $this->time_log('insert', utime() - $time1);
 
         return $this->lastInsertId = (string) $id;
     }
@@ -131,9 +126,7 @@ class Mongo extends \diDB
             $updated = $r->getModifiedCount();
         }
 
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-        $this->time_log('update', $time2 - $time1);
+        $this->time_log('update', utime() - $time1);
 
         return $updated;
     }
@@ -223,9 +216,7 @@ class Mongo extends \diDB
             );
         }
 
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-        $this->time_log('delete', $time2 - $time1);
+        $this->time_log('delete', utime() - $time1);
 
         return $deleted;
     }

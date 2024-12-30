@@ -84,7 +84,6 @@ abstract class diDB
     protected $logFolder = 'log/db/';
     protected $log;
     protected $execution_time = 0;
-    protected $execution_time_log = [];
 
     protected $tables_ar;
     protected $debug = false;
@@ -183,7 +182,7 @@ abstract class diDB
     {
         $this->debug = true;
 
-        $this->debugMessage(['URL', \diRequest::requestUri()]);
+        $this->debugMessage(['URL', \diRequest::requestUri(), utime()]);
 
         return $this;
     }
@@ -330,11 +329,6 @@ abstract class diDB
         return $this->execution_time;
     }
 
-    public function getExecutionLog()
-    {
-        return $this->execution_time_log;
-    }
-
     public function getLog()
     {
         return $this->log;
@@ -390,15 +384,17 @@ abstract class diDB
         $message = '',
         $explain = true
     ) {
+        $this->execution_time += $duration;
+
         if (!$this->debug) {
             return $this;
         }
 
-        $duration = sprintf('%.10f', $duration);
+        $durationStr = str_replace('.', ',', sprintf('%.10f', $duration));
 
         //$this->log[] = "$message: $duration sec";
 
-        $data = [$method, $query, $duration, $message];
+        $data = [$method, $query, $durationStr, $message ?: utime()];
 
         $explainData =
             $explain && $query
@@ -581,22 +577,11 @@ abstract class diDB
 
     public function connect()
     {
-        $time1 = utime();
-
-        $result = $this->__connect();
-
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-
-        return $result;
+        return $this->__connect();
     }
 
     public function close()
     {
-        if ($this->debug) {
-            $this->time_log('total', $this->execution_time);
-        }
-
         return $this->__close();
     }
 
@@ -608,20 +593,15 @@ abstract class diDB
     public function q($q)
     {
         $time1 = utime();
-
         $result = $this->__q($q);
-
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
+        $this->time_log('q', utime() - $time1, $q);
 
         $err = $this->error();
 
         if (!$result && $err) {
-            $this->_log("unable to exec query \"$q\"", false);
+            $this->_log("Unable to exec query $q", false);
             $this->_log($err, false);
         }
-
-        $this->time_log('q', $time2 - $time1, $q);
 
         return $result;
     }
@@ -632,15 +612,12 @@ abstract class diDB
 
         $result = $this->__rq($q);
 
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-
         if (!$result) {
-            $this->_log("unable to exec query \"$q\"");
+            $this->_log("Unable to exec RQ query $q");
         }
 
         if (!$skipTimeLog) {
-            $this->time_log('rq', $time2 - $time1, $q);
+            $this->time_log('rq', utime() - $time1, $q);
         }
 
         return $result;
@@ -652,14 +629,11 @@ abstract class diDB
 
         $result = $this->__mq($q);
 
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-
         if ($result === false) {
-            $this->_log("unable to exec query \"$q\"");
+            $this->_log("Unable to exec MQ query \"$q\"");
         }
 
-        $this->time_log('mq', $time2 - $time1, $q);
+        $this->time_log('mq', utime() - $time1, $q);
 
         return $result;
     }
@@ -700,21 +674,18 @@ abstract class diDB
 
     public function rs($table, $q_ending = '', $q_fields = '*')
     {
-        $time1 = utime();
-
         $q = $this->getQueryForRs($table, $q_ending, $q_fields);
 
         $tablesToLock = $this->lockTable($q, 'READ');
+
+        $time1 = utime();
         $rs = $this->__q($q);
+        $this->time_log('rs', utime() - $time1, $q);
+
         $this->unlockTable($tablesToLock, 'READ');
 
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-
-        $this->time_log('rs', $time2 - $time1, $q);
-
         if (!$rs) {
-            return $this->_log("unable to exec query \"$q\"");
+            return $this->_log("Unable to exec RS query $q");
         }
 
         return $rs;
@@ -735,24 +706,21 @@ abstract class diDB
 
         $q = $this->getQueryForR($table, $q_ending, $q_fields);
 
-        $time1 = utime();
-
         $tablesToLock = $this->lockTable($q, 'READ');
+
+        $time1 = utime();
         $rs = $this->__q($q);
+        $this->time_log('r', utime() - $time1, $q);
+
         $this->unlockTable($tablesToLock);
 
         $r = $rs ? $this->__fetch($rs) : false;
-
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-
-        $this->time_log('r', $time2 - $time1, $q);
 
         if (!$r) {
             $err = $this->error();
 
             if ($err) {
-                $this->_log("unable to exec query \"$q\"", false);
+                $this->_log("Unable to exec R query $q", false);
                 $this->_log($err, false);
             }
 
@@ -764,8 +732,6 @@ abstract class diDB
 
     public function random_rs($table, $limit, $q_ending = '', $q_fields = '*')
     {
-        $time1 = utime();
-
         $t = $this->get_table_name($table);
 
         /*
@@ -789,16 +755,15 @@ abstract class diDB
         $q = "SELECT $q_fields FROM $t $q_ending ORDER BY RAND()$limitSuffix";
 
         $tablesToLock = $this->lockTable($q, 'READ');
+
+        $time1 = utime();
         $rs = $this->__q($q);
+        $this->time_log('random_rs', utime() - $time1, $q);
+
         $this->unlockTable($tablesToLock, 'READ');
 
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-
-        $this->time_log('random_rs', $time2 - $time1, $q);
-
         if (!$rs) {
-            return $this->_log("unable to exec query $q");
+            return $this->_log("Unable to exec random RS query $q");
         }
 
         return $rs;
@@ -817,26 +782,23 @@ abstract class diDB
             return $this->fetch_array($table);
         }
 
-        $time1 = utime();
-
         $q = $this->getQueryForR($table, $q_ending, $q_fields);
 
         $tablesToLock = $this->lockTable($q, 'READ');
+
+        $time1 = utime();
         $rs = $this->__q($q);
+        $this->time_log('ar', utime() - $time1, $q);
+
         $this->unlockTable($tablesToLock, 'READ');
 
         $r = $rs ? $this->fetch_array($rs) : false;
-
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-
-        $this->time_log('ar', $time2 - $time1, $q);
 
         if (!$r) {
             $err = $this->error();
 
             if ($err) {
-                $this->_log("unable to exec query \"$q\"", false);
+                $this->_log("Unable to exec AR query $q", false);
                 $this->_log($err, false);
             }
 
@@ -1020,22 +982,21 @@ abstract class diDB
     {
         $t = $this->get_table_name($table);
 
-        $time1 = utime();
-
         $this->lockTable($t);
+
         $q = $this->getFullQueryForInsert($table, $fieldValues);
+
+        $time1 = utime();
         if (!$this->__rq($q)) {
             $this->_log("Unable to insert into table $t");
             $this->unlockTable($t);
 
             return false;
         }
+        $this->time_log('insert', utime() - $time1, $q);
+
         $this->lastInsertId = $this->__insert_id();
         $this->unlockTable($t);
-
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-        $this->time_log('insert', $time2 - $time1, $q);
 
         return $this->lastInsertId;
     }
@@ -1078,22 +1039,19 @@ abstract class diDB
         $t = $this->get_table_name($table);
         $q = $this->getFullQueryForUpdate($table, $fieldValues, $q_ending);
 
-        $time1 = utime();
-
         $this->lockTable($t);
+
+        $time1 = utime();
         if (!$this->__rq($q)) {
             $this->_log("Unable to update table $t");
             $this->unlockTable($t);
 
             return false;
         }
+        $this->time_log('update', utime() - $time1, $q);
 
         $this->affected_rows = $this->__affected_rows();
         $this->unlockTable($t);
-
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-        $this->time_log('update', $time2 - $time1, $q);
 
         return true;
     }
@@ -1105,8 +1063,6 @@ abstract class diDB
 
     public function delete($table, $q_ending = '')
     {
-        $time1 = utime();
-
         $t = $this->get_table_name($table);
 
         // fast construction to get record by id
@@ -1126,6 +1082,8 @@ abstract class diDB
         $q = "DELETE FROM $t $q_ending";
 
         $this->lockTable($t);
+
+        $time1 = utime();
         if (!$this->__rq($q)) {
             $this->_log("Unable to delete: $q", false);
 
@@ -1133,11 +1091,9 @@ abstract class diDB
 
             return false;
         }
-        $this->unlockTable($t);
+        $this->time_log('delete', utime() - $time1, $q);
 
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-        $this->time_log('delete', $time2 - $time1, $q);
+        $this->unlockTable($t);
 
         return true;
     }
@@ -1153,10 +1109,10 @@ abstract class diDB
         $q2 = '(' . $this->valuesToStringForInsert($fields_values) . ')';
         $q3 = $this->insertUpdateQuery($fields_values, $keyField);
 
-        $time1 = utime();
-
         $this->lockTable($t);
-        $query = "INSERT INTO {$t}{$q1} VALUES{$q2}{$q3};";
+        $query = "INSERT INTO $t$q1 VALUES$q2$q3;";
+
+        $time1 = utime();
         if (!$this->__rq($query)) {
             $this->_log("unable to insert/update into table $t", false);
 
@@ -1164,12 +1120,10 @@ abstract class diDB
 
             return false;
         }
+        $this->time_log('insert_or_update', utime() - $time1, $query);
+
         $id = $this->__insert_id();
         $this->unlockTable($t);
-
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-        $this->time_log('insert_or_update', $time2 - $time1, $query);
 
         return $id;
     }

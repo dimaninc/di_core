@@ -75,7 +75,9 @@ class Model extends \diModel
     {
         /** @var Collection $col */
         $col = \diCollection::create(static::type);
-        $col->filterByUri($forceUri ?: \diRequest::requestUri())->filterByActive(1);
+        $col->filterByUri($forceUri ?? \diRequest::requestUri())->filterByActive(
+            true
+        );
 
         return $col->getFirstItem();
     }

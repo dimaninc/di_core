@@ -21,9 +21,7 @@ class diMYSQLi extends diMYSQL
         $this->link = @new \mysqli($this->host, $this->username, $this->password);
 
         if (!$this->link || $this->link->connect_error) {
-            $message =
-                "diMySQLi: Unable to connect to host $this->host: " .
-                $this->link->connect_error;
+            $message = "diMySQLi: Unable to connect to host $this->host: {$this->link->connect_error}";
 
             $this->_log($message);
 
@@ -35,17 +33,14 @@ class diMYSQLi extends diMYSQL
         }
 
         if (!$this->link->select_db($this->dbname)) {
-            $message = "unable to select database $this->dbname";
+            $message = "Unable to select database $this->dbname";
 
             $this->_log($message);
 
             throw new \diDatabaseException($message);
         }
 
-        $time2 = utime();
-        $this->execution_time += $time2 - $time1;
-
-        $this->time_log('connect', $time2 - $time1);
+        $this->time_log('connect', utime() - $time1);
 
         return true;
     }
@@ -53,7 +48,7 @@ class diMYSQLi extends diMYSQL
     protected function __close()
     {
         if (!$this->link->close()) {
-            $message = 'unable to close connection';
+            $message = 'Unable to close mysqli connection';
 
             $this->_log($message);
 
