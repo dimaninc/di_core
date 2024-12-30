@@ -182,9 +182,20 @@ abstract class diDB
     {
         $this->debug = true;
 
-        $this->debugMessage(['URL', \diRequest::requestUri(), utime()]);
+        $this->debugMessage([
+            'URL',
+            \diRequest::requestUri(),
+            '',
+            '',
+            self::utimeStr(),
+        ]);
 
         return $this;
+    }
+
+    protected static function utimeStr()
+    {
+        return str_replace('.', ',', (string) utime());
     }
 
     public function ignoreReadLock($state = true)
@@ -394,7 +405,7 @@ abstract class diDB
 
         //$this->log[] = "$message: $duration sec";
 
-        $data = [$method, $query, $durationStr, $message ?: utime()];
+        $data = [$method, $query, $durationStr, $message ?: self::utimeStr()];
 
         $explainData =
             $explain && $query
