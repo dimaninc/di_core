@@ -1997,10 +1997,7 @@ abstract class CMS
             if (!in_array($k, $params)) {
                 if (static::debugMode()) {
                     Logger::getInstance()->log(
-                        'Query param not allowed: ' .
-                            $k .
-                            ', Page type: ' .
-                            $this->getContentModel()->getType()
+                        "Query param not allowed: $k, Page type: {$this->getContentModel()->getType()}"
                     );
                 }
 
