@@ -1229,7 +1229,7 @@ class diModel implements \ArrayAccess
             ])
             : $this->getDb()->ar(
                 $this->getDb()->escapeTable($this->getTable()),
-                $this->getDb()->escapeFieldValue($field, $id)
+                'WHERE ' . $this->getDb()->escapeFieldValue($field, $id)
             );
     }
 
