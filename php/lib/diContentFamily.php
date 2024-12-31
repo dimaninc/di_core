@@ -1,6 +1,7 @@
 <?php
 
 use diCore\Base\CMS;
+use diCore\Entity\Content\Collection;
 use diCore\Entity\Content\Model;
 
 /**
@@ -175,9 +176,15 @@ class diContentFamily
         return $this;
     }
 
+    /** @deprecated */
     protected function isModelSuitable(Model $content)
     {
-        return $content->getSlug() == $this->getZ()->getRoute(0);
+        return $content->getSlug() == $this->getModelIdentity();
+    }
+
+    protected function getModelIdentity()
+    {
+        return $this->getZ()->getRoute(0);
     }
 
     protected function canModelBeRendered(Model $content)
@@ -185,6 +192,7 @@ class diContentFamily
         return $content->exists();
     }
 
+    /** @deprecated */
     protected function getContentCollection()
     {
         return $this->getZ()->tables[$this->table];
@@ -192,17 +200,11 @@ class diContentFamily
 
     protected function findModel()
     {
-        /**
-         * @var int $id
-         * @var Model $content
-         */
-        foreach ($this->getContentCollection() as $id => $content) {
-            if ($this->isModelSuitable($content)) {
-                $this->setModel($content);
-
-                break;
-            }
-        }
+        /** @var Model $page */
+        $page = Collection::create()
+            ->filterByCleanTitle($this->getModelIdentity())
+            ->getFirstItem();
+        $this->setModel($page);
 
         return $this;
     }

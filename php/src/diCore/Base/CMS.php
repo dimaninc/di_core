@@ -839,7 +839,7 @@ abstract class CMS
 
         if (static::moduleExists($moduleName)) {
             $this->loadModule();
-        } elseif (!is_file("include/{$moduleName}.php")) {
+        } elseif (!is_file("include/$moduleName.php")) {
             // back compatibility
             $this->loadModule('user');
         } else {
@@ -847,7 +847,7 @@ abstract class CMS
             $db = $this->getDb();
             $tpl = $this->getTpl();
 
-            include "include/{$moduleName}.php";
+            include "include/$moduleName.php";
 
             $this->beforeParsePage();
 
