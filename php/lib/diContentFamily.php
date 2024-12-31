@@ -201,18 +201,21 @@ class diContentFamily
     protected function findModel()
     {
         /** @var Model $page */
-        /*
         $page = Collection::create()
             ->filterByCleanTitle($this->getModelIdentity())
             ->getFirstItem();
-        $this->setModel($page);
-        */
 
-        /** @var Model $page */
-        $page = Collection::create()
-            ->filterByCleanTitle($this->getModelIdentity())
-            ->getFirstItem();
-        $this->setModel($page);
+        if ($page->exists()) {
+            $this->setModel($page);
+        } else {
+            foreach ($this->getContentCollection() as $page) {
+                if ($this->isModelSuitable($page)) {
+                    $this->setModel($page);
+
+                    break;
+                }
+            }
+        }
 
         return $this;
     }
