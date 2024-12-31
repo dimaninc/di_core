@@ -201,6 +201,14 @@ class diContentFamily
     protected function findModel()
     {
         /** @var Model $page */
+        /*
+        $page = Collection::create()
+            ->filterByCleanTitle($this->getModelIdentity())
+            ->getFirstItem();
+        $this->setModel($page);
+        */
+
+        /** @var Model $page */
         $page = Collection::create()
             ->filterByCleanTitle($this->getModelIdentity())
             ->getFirstItem();
