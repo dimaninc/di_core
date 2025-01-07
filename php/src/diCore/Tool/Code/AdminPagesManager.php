@@ -125,6 +125,7 @@ class AdminPagesManager
         'updated_at',
     ];
 
+    // todo: add traits support, e.g. for TargetInside
     public function createPage($table, $caption, $className, $namespace = '')
     {
         // connection::table

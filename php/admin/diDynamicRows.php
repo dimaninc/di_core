@@ -495,22 +495,22 @@ class diDynamicRows
                 $v = ['type' => $v];
             }
 
-            if (in_array($v['type'], explode(',', 'date,time,datetime'))) {
-                $default_value = time();
+            if (in_array($v['type'], ['date', 'time', 'datetime'])) {
+                $defaultValue = \diDateTime::timestamp();
             } elseif (
-                in_array($v['type'], explode(',', 'date_str,time_str,datetime_str'))
+                in_array($v['type'], ['date_str', 'time_str', 'datetime_str'])
             ) {
-                $default_value = date('Y-m-d H:i:s');
+                $defaultValue = \diDateTime::sqlFormat();
             } else {
-                $default_value = isset($v['default']) ? $v['default'] : '';
+                $defaultValue = $v['default'] ?? '';
             }
 
             if (!empty($v['virtual']) && !empty($v['values_collector'])) {
                 $value = $r
                     ? $v['values_collector']($r->id, (array) $r)
-                    : $default_value;
+                    : $defaultValue;
             } else {
-                $value = $r && isset($r->$k) ? $r->$k : $default_value;
+                $value = $r->$k ?? $defaultValue;
             }
 
             $ar1[] = '{' . strtoupper($k) . '}';
@@ -568,9 +568,7 @@ class diDynamicRows
 
     function get_input($field, $id, $value, $properties = [])
     {
-        $ar = isset($this->info_ar[$this->field]['fields'][$field])
-            ? $this->info_ar[$this->field]['fields'][$field]
-            : $properties;
+        $ar = $this->info_ar[$this->field]['fields'][$field] ?? $properties;
 
         if (!is_array($ar)) {
             $ar = [
@@ -611,7 +609,11 @@ class diDynamicRows
                     break;
 
                 case 'text':
-                    $this->set_textarea_input($name);
+                    $this->setTextareaInput($name);
+                    break;
+
+                case 'wysiwyg':
+                    $this->setWysiwygInput($name);
                     break;
 
                 case 'color':
@@ -627,8 +629,8 @@ class diDynamicRows
                     break;
 
                 default:
-                    if (in_array($ar['type'], explode(',', 'int,float,double'))) {
-                        $input_params .= ' size=6';
+                    if (in_array($ar['type'], ['int', 'float', 'double'])) {
+                        $input_params .= ' size="6"';
                     } elseif (!empty($ar['input_size'])) {
                         $input_params .= " size=\"{$ar['input_size']}\"";
                     }
@@ -659,16 +661,12 @@ class diDynamicRows
                     break;
             }
         } else {
-            $template_text = isset($ar['template_text'])
-                ? $ar['template_text']
-                : '%title%';
-            $template_value = isset($ar['template_value'])
-                ? $ar['template_value']
-                : '%id%';
-            $format = isset($ar['format']) ? $ar['format'] : null;
-            $prefix_ar = isset($ar['prefix_ar']) ? $ar['prefix_ar'] : [];
-            $suffix_ar = isset($ar['suffix_ar']) ? $ar['suffix_ar'] : [];
-            $columns = isset($ar['columns']) ? $ar['columns'] : null;
+            $template_text = $ar['template_text'] ?? '%title%';
+            $template_value = $ar['template_value'] ?? '%id%';
+            $format = $ar['format'] ?? null;
+            $prefix_ar = $ar['prefix_ar'] ?? [];
+            $suffix_ar = $ar['suffix_ar'] ?? [];
+            $columns = $ar['columns'] ?? null;
 
             if ($ar['type'] == 'checkboxes') {
                 $options = [];
@@ -710,7 +708,7 @@ class diDynamicRows
                 );
             } else {
                 throw new \Exception(
-                    "Unknown feed for \${$this->table}_form_fields[\"{$this->field}\"][\"fields\"][\"$field\"]"
+                    "Unknown feed for \${$this->table}_form_fields[\"$this->field\"][\"fields\"][\"$field\"]"
                 );
             }
         }
@@ -725,24 +723,47 @@ class diDynamicRows
         return $this->inputs[$name];
     }
 
-    /*
-
-  inputs
-
-  */
-
-    function set_textarea_input($field)
+    protected function setWysiwygInput($field)
     {
-        $attributes = isset(
-            $this->info_ar[$this->field]['fields'][$this->current_field][
-                'attributes'
-            ]
-        )
-            ? $this->info_ar[$this->field]['fields'][$this->current_field][
-                'attributes'
-            ]
-            : [];
+        $outData = StringHelper::out($this->data[$field]);
 
+        if ($this->static_mode) {
+            $this->inputs[$field] = $outData;
+
+            return;
+        }
+
+        $props = $this->info_ar[$this->field]['fields'][$this->current_field] ?? [];
+        $attrStr = ArrayHelper::toAttributesString(
+            extend(
+                [
+                    'id' => $field,
+                    'name' => $field,
+                    'cols' => 60,
+                    'rows' => 10,
+                    'data-field-name' => $field,
+                ],
+                $props['attributes'] ?? []
+            )
+        );
+        $outData = StringHelper::out($this->data[$field]);
+
+        $this->inputs[
+            $field
+        ] = "<div class='wysiwyg'><textarea $attrStr>$outData</textarea></div>";
+    }
+
+    protected function setTextareaInput($field)
+    {
+        $outData = StringHelper::out($this->data[$field]);
+
+        if ($this->static_mode) {
+            $this->inputs[$field] = nl2br($outData);
+
+            return;
+        }
+
+        $props = $this->info_ar[$this->field]['fields'][$this->current_field] ?? [];
         $attributes = extend(
             [
                 'id' => $field,
@@ -751,36 +772,17 @@ class diDynamicRows
                 'rows' => 10,
                 'data-field-name' => $field,
             ],
-            $attributes
+            $props['attributes'] ?? []
         );
 
-        if (
-            !empty(
-                $this->info_ar[$this->field]['fields'][$this->current_field][
-                    'placeholder'
-                ]
-            )
-        ) {
-            $attributes['placeholder'] =
-                $this->info_ar[$this->field]['fields'][$this->current_field][
-                    'placeholder'
-                ];
+        if (!empty($props['placeholder'])) {
+            $attributes['placeholder'] = $props['placeholder'];
         }
 
-        $ar = [];
-        foreach ($attributes as $k => $v) {
-            if ($v !== null) {
-                $ar[] = "$k=\"$v\"";
-            }
-        }
+        $attrStr = ArrayHelper::toAttributesString($attributes);
+        $outData = StringHelper::out($this->data[$field]);
 
-        $this->inputs[$field] = !$this->static_mode
-            ? '<textarea ' .
-                join(' ', $ar) .
-                '>' .
-                StringHelper::out($this->data[$field]) .
-                '</textarea>'
-            : nl2br(StringHelper::out($this->data[$field]));
+        $this->inputs[$field] = "<textarea $attrStr>$outData</textarea>";
     }
 
     function set_select_from_array_input(

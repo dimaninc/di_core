@@ -336,6 +336,13 @@ EOF;
             return true;
         }
 
+        if (
+            in_array($field, ['target_type', 'target_id']) &&
+            in_array('TargetInside', $this->usedModelTraits)
+        ) {
+            return true;
+        }
+
         return in_array($field, static::$skippedInModelAnnotationFields);
     }
 
@@ -344,6 +351,13 @@ EOF;
         if (
             in_array($field, ['created_at', 'updated_at']) &&
             in_array('AutoTimestamps', $this->usedCollectionTraits)
+        ) {
+            return true;
+        }
+
+        if (
+            in_array($field, ['target_type', 'target_id']) &&
+            in_array('TargetInside', $this->usedCollectionTraits)
         ) {
             return true;
         }
@@ -702,55 +716,48 @@ EOF;
                 'diCore\Traits\Collection\AutoTimestamps';
         }
 
+        if (isset($fields['target_type']) && isset($fields['target_id'])) {
+            $this->usedModelTraits[] = 'TargetInside';
+            $this->usedModelNamespaces[] = 'diCore\Traits\Model\TargetInside';
+
+            $this->usedCollectionTraits[] = 'TargetInside';
+            $this->usedCollectionNamespaces[] =
+                'diCore\Traits\Collection\TargetInside';
+        }
+
         return $this;
+    }
+
+    protected function joinUsed($ar, $glue = "\n    ")
+    {
+        return join($glue, array_map([self::class, 'mapUsed'], $ar));
     }
 
     protected function getUsedModelTraits()
     {
         return $this->usedModelTraits
-            ? join(
-                    "\n",
-                    array_map([self::class, 'mapUsed'], $this->usedModelTraits)
-                ) . "\n\n    "
+            ? $this->joinUsed($this->usedModelTraits) . "\n\n    "
             : '';
     }
 
     protected function getUsedCollectionTraits()
     {
         return $this->usedCollectionTraits
-            ? join(
-                    "\n",
-                    array_map([self::class, 'mapUsed'], $this->usedCollectionTraits)
-                ) . "\n\n    "
+            ? $this->joinUsed($this->usedCollectionTraits) . "\n\n    "
             : '';
     }
 
     protected function getUsedModelNamespaces()
     {
         return $this->usedModelNamespaces
-            ? "\n" .
-                    join(
-                        "\n",
-                        array_map(
-                            [self::class, 'mapUsed'],
-                            $this->usedModelNamespaces
-                        )
-                    )
+            ? "\n" . $this->joinUsed($this->usedModelNamespaces, "\n")
             : '';
     }
 
     protected function getUsedCollectionNamespaces()
     {
         return $this->usedCollectionNamespaces
-            ? "\n" .
-                    join(
-                        "\n",
-                        array_map(
-                            [self::class, 'mapUsed'],
-                            $this->usedCollectionNamespaces
-                        )
-                    ) .
-                    "\n"
+            ? "\n" . $this->joinUsed($this->usedCollectionNamespaces, "\n") . "\n"
             : '';
     }
 

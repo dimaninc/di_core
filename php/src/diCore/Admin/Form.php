@@ -2061,7 +2061,7 @@ EOF;
 
             $this->inputs[
                 $field
-            ] = "<div class='wysiwyg'><textarea {$attrs}>{$this->formatValue(
+            ] = "<div class='wysiwyg'><textarea $attrs>{$this->formatValue(
                 $field
             )}</textarea></div>";
 

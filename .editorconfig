@@ -8,14 +8,14 @@ root = true
 end_of_line = lf
 insert_final_newline = true
 
-[*.{php,html,twig,styl}]
+[*.{php,html,twig}]
 charset = utf-8
 indent_size = 4
 indent_style = space
 max_line_length = 120
 
 # Matches JavaScript files
-[*.{js,jsx,ts,tsx,css,scss}]
+[*.{js,jsx,ts,tsx,css,scss,styl}]
 charset = utf-8
 indent_size = 2
 indent_style = space
