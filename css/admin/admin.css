@@ -3873,18 +3873,24 @@ body[data-skin="classic"] .dynamic-row:hover {
 }
 body[data-skin="entrine"] .dynamic-row {
   border-width: 3px;
-  padding: 20px;
+  padding-bottom: 20px;
 }
 @media screen and (max-width: 768px) {
   body[data-skin="entrine"] .dynamic-row {
-    padding: 10px;
+    padding-bottom: 10px;
   }
 }
 body[data-skin="classic"] .dynamic-row + .dynamic-row {
   margin-top: 10px;
 }
 body[data-skin="entrine"] .dynamic-row + .dynamic-row {
-  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 3px solid var(--menu-text-color-hover);
+}
+@media screen and (max-width: 768px) {
+  body[data-skin="entrine"] .dynamic-row + .dynamic-row {
+    padding-top: 10px;
+  }
 }
 .dynamic-row.ui-sortable-helper,
 .dynamic-row.di-sortable-helper {

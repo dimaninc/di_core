@@ -1,8 +1,8 @@
 <script type="text/javascript" src="{{ asset_locations['vendor'] }}tinymce/tinymce.min.js"></script>
-<script type="text/javascript">
+<script type="text/javascript">function initTinyMce(selector) {
 {% block tinymce_init %}
 tinymce.init({
-    selector: '.diadminform-row .value .wysiwyg textarea',
+    selector: selector || '.diadminform-row .value .wysiwyg textarea',
     setup: function (editor) {
         {% block tinymce_trailing_cleaning %}
         {% if needed['trailing_cleaning'] %}
@@ -71,4 +71,9 @@ tinymce.init({
 });
 {% endblock %}
 {% block after_init %}{% endblock %}
+}
+function destroyTinyMce(selector) {
+    tinymce.remove(selector || '.diadminform-row .value .wysiwyg textarea');
+}
+initTinyMce();
 </script>

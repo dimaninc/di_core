@@ -34,9 +34,9 @@
   }
   {$entrineSkin} & {
     border-width 3px
-    padding 20px
+    padding-bottom 20px
     @media $mqTablet {
-      padding 10px
+      padding-bottom 10px
     }
   }
   + .dynamic-row {
@@ -44,7 +44,11 @@
       margin-top 10px
     }
     {$entrineSkin} & {
-      margin-top 20px
+      padding-top 20px
+      border-top 3px solid var(--menu-text-color-hover)
+      @media $mqTablet {
+       padding-top 10px
+      }
     }
   }
   &.ui-sortable-helper

@@ -313,7 +313,7 @@ class diDynamicRows
             : '';
 
         $s .= "<div data-purpose=\"anchor\" data-field=\"{$this->field}\" data-position=\"top\"></div>";
-        $s .= "<div class=\"dynamic-wrapper\"{$addBottomRowInsideWrapperAttr}>";
+        $s .= "<div class=\"dynamic-wrapper\"$addBottomRowInsideWrapperAttr>";
 
         while ($r = $this->getDb()->fetch($rs)) {
             $this->data_id = (int) $r->id;
@@ -358,13 +358,13 @@ class diDynamicRows
             }
         }
 
-        $s .= "<div data-purpose=\"anchor\" data-field=\"{$this->field}\" data-position=\"bottom\"></div>";
+        $s .= "<div data-purpose=\"anchor\" data-field=\"$this->field\" data-position=\"bottom\"></div>";
         $s .=
-            "<div id=\"js_{$this->field}_resource\" style=\"display:none;\">" .
+            "<script id=\"js_{$this->field}_resource\" type=\"text/template\">" .
             $this->get_row(self::NEW_ID_STRING) .
-            '</div>';
+            '</script>';
         $s .=
-            "<div id=\"js_{$this->field}_js_resource\" style=\"display:none;\">" .
+            "<div id=\"js_{$this->field}_js_resource\" style=\"display: none;\">" .
             join("\n", $this->scripts) .
             '</div>';
 
