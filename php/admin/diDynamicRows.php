@@ -1527,14 +1527,8 @@ EOF;
     {
         global $dynamic_pics_folder, $tn_folder, $tn2_folder, $tn3_folder;
 
-        if (empty($_POST["{$this->field}_ids_ar"])) {
-            throw new \Exception(
-                "{$this->field}_ids_ar not defined. Please contact coders"
-            );
-        }
-
         $resultIds = [];
-        $initialIds = $_POST["{$this->field}_ids_ar"];
+        $initialIds = $_POST["{$this->field}_ids_ar"] ?? [];
 
         $fileFields = [];
         $fields = (array) $this->getProperty('fields');
