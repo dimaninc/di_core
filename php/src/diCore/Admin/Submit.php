@@ -729,11 +729,7 @@ class Submit
             ? (array) $this->_all_fields[$field]
             : [];
 
-        if (is_null($property)) {
-            return $o;
-        } else {
-            return isset($o[$property]) ? $o[$property] : null;
-        }
+        return is_null($property) ? $o : $o[$property] ?? null;
     }
 
     public function getFieldOption($field, $option = null)
@@ -742,11 +738,7 @@ class Submit
             ? (array) $this->_all_fields[$field]['options']
             : [];
 
-        if (is_null($option)) {
-            return $o;
-        } else {
-            return isset($o[$option]) ? $o[$option] : null;
-        }
+        return is_null($option) ? $o : $o[$option] ?? null;
     }
 
     /** @deprecated */
@@ -898,9 +890,11 @@ class Submit
             if (isset($post['tm'])) {
                 $ar['minutes'] = (int) $post['tm'];
             }
+            /*
             if (isset($post['ts'])) {
                 $ar['seconds'] = (int) $post['ts'];
             }
+            */
         }
 
         $ar['seconds'] = 0;
@@ -1470,10 +1464,7 @@ class Submit
             $db_ar = [
                 'order_num' => (int) $order_num,
                 'by_default' =>
-                    isset($_POST[$field . '_by_default']) &&
-                    $_POST[$field . '_by_default'] == $id
-                        ? 1
-                        : 0,
+                    \diRequest::post($field . '_by_default') == $id ? 1 : 0,
                 'visible' => !empty($_POST[$field . '_visible'][$id]) ? 1 : 0,
                 'title' => isset($_POST[$field . '_title'][$id])
                     ? StringHelper::in($_POST[$field . '_title'][$id])
@@ -1603,11 +1594,9 @@ class Submit
             }
             //
 
-            $callback = isset($this->_all_fields[$field]['after_submit_callback'])
-                ? $this->_all_fields[$field]['after_submit_callback']
-                : '';
+            $callback = $this->_all_fields[$field]['after_submit_callback'] ?? null;
 
-            if ($callback && is_callable($callback)) {
+            if (is_callable($callback)) {
                 $callback($id, $field, $test_r, $db_ar, $this);
             }
 
@@ -1992,13 +1981,37 @@ class Submit
             return [];
         };
 
-        $fn = $ar[$what];
+        $getDimensionName = function ($side, $suffix = '') use (
+            $table,
+            $groupField,
+            $field
+        ) {
+            $suffix2 = $suffix ? "_$suffix" : '';
 
+            return Configuration::exists([
+                "{$table}__{$groupField}__$field{$suffix2}__$side",
+                "{$table}_{$groupField}_$field{$suffix}_$side",
+                "{$table}__$groupField{$suffix2}__$side",
+                "{$table}_$groupField{$suffix}_$side",
+                "{$groupField}__$field{$suffix2}__$side",
+                "{$groupField}_$field{$suffix}_$side",
+                "$groupField{$suffix2}__$side",
+                "$groupField{$suffix}_$side",
+                "$table{$suffix2}__$side",
+                "$table{$suffix}_$side",
+            ]);
+        };
+
+        $getDimensionPair = fn($suffix = '') => [
+            $getDimensionName('width', $suffix),
+            $getDimensionName('height', $suffix),
+        ];
+
+        $fn = $ar[$what];
         $root = \diPaths::fileSystem();
         $full_fn = $root . $folder . $fn;
         $big_fn = $root . $folder . get_big_folder() . $fn;
         $orig_fn = $root . $folder . get_orig_folder() . $fn;
-
         $mode =
             $F['tmp_name'] == $orig_fn
                 ? self::IMAGE_STORE_MODE_REBUILD
@@ -2016,14 +2029,13 @@ class Submit
             }
         }
 
-        list($sourceWidth, $sourceHeight, $imgType) = getimagesize($F['tmp_name']);
+        [$sourceWidth, $sourceHeight, $imgType] = getimagesize($F['tmp_name']);
 
         if (\diImage::isImageType($imgType)) {
             $I = new \diImage();
             $I->open($F['tmp_name']);
 
             // thumbnail photos
-
             for ($i = 1; $i < 10; $i++) {
                 $fOpts = $getFileOptions($i);
                 // this tn needed if it's in list or for dipics
@@ -2034,19 +2046,7 @@ class Submit
                 }
 
                 $suffix = $i > 1 ? "$i" : '';
-
-                $widthParam = Configuration::exists([
-                    "{$table}_{$groupField}_{$field}_tn{$suffix}_width",
-                    "{$table}_{$groupField}_tn{$suffix}_width",
-                    "{$table}_tn{$suffix}_width",
-                    "{$groupField}_tn{$suffix}_width",
-                ]);
-                $heightParam = Configuration::exists([
-                    "{$table}_{$groupField}_{$field}_tn{$suffix}_height",
-                    "{$table}_{$groupField}_tn{$suffix}_height",
-                    "{$table}_tn{$suffix}_height",
-                    "{$groupField}_tn{$suffix}_height",
-                ]);
+                [$widthParam, $heightParam] = $getDimensionPair("_tn$suffix");
 
                 if ($widthParam || $heightParam || !empty($fOpts['rule'])) {
                     $tn_fn = $root . $folder . get_tn_folder($i) . $fn;
@@ -2074,7 +2074,7 @@ class Submit
                         $tnWM = extend($tnWM, $fileOptionsTn['watermark']);
                     }
 
-                    list($resultWidth, $resultHeight) = self::getResultDimensions([
+                    [$resultWidth, $resultHeight] = self::getResultDimensions([
                         'widthParam' => $widthParam,
                         'heightParam' => $heightParam,
                         'rule' => $fileOptionsTn['rule'],
@@ -2100,11 +2100,11 @@ class Submit
                     );
 
                     chmod($tn_fn, self::FILE_CHMOD);
-                    list(
+                    [
                         $ar['pic_tn' . $suffix . '_w'],
                         $ar['pic_tn' . $suffix . '_h'],
                         $ar['pic_tn' . $suffix . '_t'],
-                    ) = getimagesize($tn_fn);
+                    ] = getimagesize($tn_fn);
                 }
             }
 
@@ -2114,19 +2114,7 @@ class Submit
             $needed = $fOpts || !$isCustom;
 
             if ($needed) {
-                $widthParam = Configuration::exists([
-                    $table . '_' . $groupField . '_' . $field . '_width',
-                    $table . '_' . $groupField . '_width',
-                    $table . '_width',
-                    $groupField . '_width',
-                ]);
-                $heightParam = Configuration::exists([
-                    $table . '_' . $groupField . '_' . $field . '_height',
-                    $table . '_' . $groupField . '_height',
-                    $table . '_height',
-                    $groupField . '_height',
-                ]);
-
+                [$widthParam, $heightParam] = $getDimensionPair();
                 $fileOptionsMain = extend(
                     [
                         'resize' => DI_THUMB_FIT,
@@ -2143,7 +2131,7 @@ class Submit
                     $mainWM = extend($mainWM, $fileOptionsMain['watermark']);
                 }
 
-                list($resultWidth, $resultHeight) = self::getResultDimensions([
+                [$resultWidth, $resultHeight] = self::getResultDimensions([
                     'widthParam' => $widthParam,
                     'heightParam' => $heightParam,
                     'rule' => $fileOptionsMain['rule'],
@@ -2177,19 +2165,7 @@ class Submit
             $needed = $fOpts || !$isCustom;
 
             if ($needed) {
-                $widthParam = Configuration::exists([
-                    $table . '_' . $groupField . '_' . $field . '_big_width',
-                    $table . '_' . $groupField . '_big_width',
-                    $table . '_big_width',
-                    $groupField . '_big_width',
-                ]);
-                $heightParam = Configuration::exists([
-                    $table . '_' . $groupField . '_' . $field . '_big_height',
-                    $table . '_' . $groupField . '_big_height',
-                    $table . '_big_height',
-                    $groupField . '_big_height',
-                ]);
-
+                [$widthParam, $heightParam] = $getDimensionPair('_big');
                 $fileOptionsBig = extend(
                     [
                         'resize' => DI_THUMB_FIT,
@@ -2206,7 +2182,7 @@ class Submit
                     $bigWM = extend($bigWM, $fileOptionsBig['watermark']);
                 }
 
-                list($resultWidth, $resultHeight) = self::getResultDimensions([
+                [$resultWidth, $resultHeight] = self::getResultDimensions([
                     'widthParam' => $widthParam,
                     'heightParam' => $heightParam,
                     'rule' => $fileOptionsBig['rule'],
@@ -2254,9 +2230,9 @@ class Submit
                 }
             }
 
-            list($ar['pic_w'], $ar['pic_h'], $ar['pic_t']) = getimagesize($full_fn);
+            [$ar['pic_w'], $ar['pic_h'], $ar['pic_t']] = getimagesize($full_fn);
         } else {
-            list($ar['pic_w'], $ar['pic_h'], $ar['pic_t']) = [0, 0, 0];
+            [$ar['pic_w'], $ar['pic_h'], $ar['pic_t']] = [0, 0, 0];
 
             if ($mode == self::IMAGE_STORE_MODE_UPLOAD) {
                 move_uploaded_file($F['tmp_name'], $full_fn) ||
