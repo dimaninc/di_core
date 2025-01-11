@@ -56,6 +56,12 @@ class diTags
         'target_type' => 'target_type',
         'target_id' => 'target_id',
     ];
+    protected static $sortTagsBy = [
+        ['title', 'ASC'],
+        // 'order_num',
+        // ['top', 'DESC'],
+    ];
+    protected static $visibleTagField = 'visible';
 
     public function __construct()
     {
@@ -134,7 +140,11 @@ class diTags
 
     protected function tuneFeed(\diCollection $feed)
     {
-        $feed->orderBy('title');
+        foreach (static::$sortTagsBy as $fieldDirection) {
+            is_array($fieldDirection)
+                ? $feed->orderBy($fieldDirection[0], $fieldDirection[1] ?? null)
+                : $feed->orderBy($fieldDirection);
+        }
 
         return $feed;
     }
@@ -166,24 +176,35 @@ class diTags
 
     protected function getTagsQueryAr($targetType, $targetId)
     {
-        return array_filter([
+        $query = [
             $this->targetTypeUsed && $this->fields['target_type']
                 ? 'm.' . $this->fields['target_type'] . " = '$targetType'"
                 : '',
             'm.' . $this->fields['target_id'] . \diDB::in($targetId),
-            "t.visible = '1'",
-        ]);
+        ];
+
+        if (static::$visibleTagField) {
+            $query[] = 't.' . static::$visibleTagField;
+        }
+
+        return array_filter($query);
     }
 
     public function getTags($targetType, $targetId)
     {
         $ar = [];
-
-        $queryAr = $this->getTagsQueryAr($targetType, $targetId);
+        $where = join(' AND ', $this->getTagsQueryAr($targetType, $targetId));
+        $sortBy = join(
+            ',',
+            array_map(
+                fn($o) => is_array($o) ? "t.$o[0] " . ($o[1] ?? 'ASC') : "t.$o",
+                static::$sortTagsBy
+            )
+        );
 
         $tag_rs = $this->getDb()->rs(
             "{$this->tables['map']} m INNER JOIN {$this->tables['tags']} t ON t.id = m.{$this->fields['tag_id']}",
-            'WHERE ' . join(' AND ', $queryAr) . ' ORDER BY t.title ASC',
+            "WHERE $where ORDER BY $sortBy",
             't.*'
         );
         while ($tag_r = $this->getDb()->fetch($tag_rs)) {

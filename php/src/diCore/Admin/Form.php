@@ -3167,7 +3167,7 @@ EOF;
             $ar = [];
 
             foreach ($values as $k) {
-                $ar[] = $feed[$k] ?? "[tag#{$k}]";
+                $ar[] = $feed[$k] ?? "[tag#$k]";
             }
 
             $this->inputs[$field] = $ar ? join(', ', $ar) : '&mdash;';
