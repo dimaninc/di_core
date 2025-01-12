@@ -1,4 +1,4 @@
-import { TObject } from '@/types';
+import { TObject } from '../../types';
 
 export const findKey = (
   obj: TObject,

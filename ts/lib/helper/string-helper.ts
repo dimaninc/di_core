@@ -1,4 +1,4 @@
-import { TStringObject } from '../types';
+import { TStringObject } from '../../types';
 
 export const lead0 = (num: number | string) =>
   String(num).length === 1 ? `0${num}` : String(num);
