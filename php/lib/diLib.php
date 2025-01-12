@@ -199,8 +199,7 @@ class diLib
     {
         if (version_compare(PHP_VERSION, '7.0', '<')) {
             die(
-                'diCMS requires PHP 7.0 or higher. Current version is ' .
-                    PHP_VERSION
+                'diCMS requires PHP 7.0 or higher. Current version is ' . PHP_VERSION
             );
         }
     }
@@ -220,11 +219,7 @@ class diLib
         $suffixAr = [];
 
         if (!is_null($controller)) {
-            if (
-                is_array($controller) &&
-                is_null($action) &&
-                is_null($paramsAr)
-            ) {
+            if (is_array($controller) && is_null($action) && is_null($paramsAr)) {
                 $suffixAr = $controller;
             } else {
                 $suffixAr[] = $controller;
@@ -267,12 +262,7 @@ class diLib
                 return $ns . '\\' . 'Entity' . '\\' . $basicName . '\\Model';
 
             case self::COLLECTION:
-                return $ns .
-                    '\\' .
-                    'Entity' .
-                    '\\' .
-                    $basicName .
-                    '\\Collection';
+                return $ns . '\\' . 'Entity' . '\\' . $basicName . '\\Collection';
 
             case self::ADMIN_PAGE:
                 return $ns . '\\' . 'Admin\\Page' . '\\' . $basicName;
@@ -330,8 +320,7 @@ class diLib
         $parentFullClassName,
         $customClassName = null
     ) {
-        $basicName =
-            $customClassName ?: self::childNamespace($parentFullClassName);
+        $basicName = $customClassName ?: self::childNamespace($parentFullClassName);
         $subNamespace = self::parentNamespace($parentFullClassName);
         $subNamespace = preg_replace('/^[^\\\\]+\\\\/', '\\', $subNamespace);
 
@@ -341,6 +330,8 @@ class diLib
 
             if ($basicName == 'Auth' && $parentFullClassName == 'diAuth') {
                 $subNamespace = '\\Tool';
+            } else {
+                $basicName = underscore($basicName);
             }
         }
 
@@ -624,11 +615,7 @@ class diLib
 
                     if (
                         is_file(
-                            $root .
-                                $folderPath .
-                                $libSubFolder .
-                                $className .
-                                '.php'
+                            $root . $folderPath . $libSubFolder . $className . '.php'
                         )
                     ) {
                         $subFolder = $libSubFolder;
