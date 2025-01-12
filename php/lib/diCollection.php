@@ -1950,26 +1950,54 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         ]);
     }
 
+    public function filterInJson($field, $path, $value, $operator = null)
+    {
+        // todo: mongo support
+        // todo: mysql support
+        // todo: array support
+        if ($operator === null) {
+            $operator = '=';
+        }
+
+        if (is_array($path)) {
+            $path = join('.', $path);
+        }
+
+        $field = $this->getDb()->escape_string($field);
+        $value = $this->getDb()->escape_string($value);
+        $path = "$.$path";
+
+        if (static::getConnection()::isPostgres()) {
+            if ($operator === '=') {
+                $operator = '==';
+            }
+
+            return $this->filterManual("$field @@ '$path $operator \"$value\"'");
+        }
+
+        return "JSON_EXTRACT($field, '$path') $operator '$value'";
+    }
+
     public function startsWith($field, $value)
     {
         if (static::getConnection()::isMongo()) {
-            return $this->extFilterBy($field, 'REGEXP', '^' . $value);
+            return $this->extFilterBy($field, 'REGEXP', "^$value");
         }
 
         if (static::supportedInstr()) {
             $field = $this->getDb()->escapeField($field);
             $value = $this->getDb()->escapeValue($value);
 
-            return $this->filterManual('INSTR(' . $field . ', ' . $value . ') = 1');
+            return $this->filterManual("INSTR($field, $value) = 1");
         }
 
         if (static::supportedIlike()) {
-            return $this->extFilterBy($field, 'ILIKE', "'{$value}%'", [
+            return $this->extFilterBy($field, 'ILIKE', "'$value%'", [
                 'rawValue' => true,
             ]);
         }
 
-        return $this->extFilterBy($field, 'LIKE', $value . '%', [
+        return $this->extFilterBy($field, 'LIKE', "$value%", [
             'rawValue' => true,
         ]);
     }
@@ -1977,16 +2005,16 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
     public function endsWith($field, $value)
     {
         if (static::getConnection()::isMongo()) {
-            return $this->extFilterBy($field, 'REGEXP', $value . '$');
+            return $this->extFilterBy($field, 'REGEXP', "$value$");
         }
 
         if (static::supportedIlike()) {
-            return $this->extFilterBy($field, 'ILIKE', "'%{$value}'", [
+            return $this->extFilterBy($field, 'ILIKE', "'%$value'", [
                 'rawValue' => true,
             ]);
         }
 
-        return $this->extFilterBy($field, 'REGEXP', $value . '$');
+        return $this->extFilterBy($field, 'REGEXP', "$value$");
     }
 
     protected static function supportedInstr()
@@ -2012,16 +2040,16 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         if (static::supportedInstr()) {
             $field = $this->getDb()->escapeField($field);
             $value = $this->getDb()->escapeValue($value);
-            return $this->filterManual('INSTR(' . $field . ', ' . $value . ') > 0');
+            return $this->filterManual("INSTR($field, $value) > 0");
         }
 
         if (static::supportedIlike()) {
-            return $this->extFilterBy($field, 'ILIKE', "'%{$value}%'", [
+            return $this->extFilterBy($field, 'ILIKE', "'%$value%'", [
                 'rawValue' => true,
             ]);
         }
 
-        return $this->extFilterBy($field, 'LIKE', "'%{$value}%'", [
+        return $this->extFilterBy($field, 'LIKE', "'%$value%'", [
             'rawValue' => true,
         ]);
     }
@@ -2036,7 +2064,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         $this->sqlParts['where'][] = [
             'field' => null,
             'value' => null,
-            'expression' => '(' . $expression . ')',
+            'expression' => "($expression)",
             'options' => [
                 'manual' => true,
             ],
@@ -2045,12 +2073,22 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         return $this;
     }
 
-    public function filterOr($expressionsAr)
+    public function filterOr($expressionsAr, $options = [])
     {
+        $options = extend(
+            [
+                'escapeField' => true,
+            ],
+            $options
+        );
         $ar = [];
 
         foreach ($expressionsAr as $k => $v) {
-            $ar[] = $this->getDb()->escapeFieldValue($k, $v);
+            if ($options['escapeField']) {
+                $ar[] = $this->getDb()->escapeFieldValue($k, $v);
+            } else {
+                $ar[] = "$k = {$this->getDb()->escapeValue($v)}";
+            }
         }
 
         return $this->filterManual(join(' OR ', $ar));
@@ -2061,7 +2099,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         $direction = strtoupper($direction ?: 'ASC');
 
         if (!in_array($direction, $this->possibleDirections)) {
-            throw new Exception("Unknown direction '{$direction}'");
+            throw new Exception("Unknown direction '$direction'");
         }
 
         $field = $this->addAliasToField($field);
@@ -2080,7 +2118,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         $direction = strtoupper($direction ?: 'ASC');
 
         if (!in_array($direction, $this->possibleDirections)) {
-            throw new Exception("Unknown direction '{$direction}'");
+            throw new Exception("Unknown direction '$direction'");
         }
 
         $options = [
@@ -2102,7 +2140,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         $direction = strtoupper($direction ?: 'ASC');
 
         if (!in_array($direction, $this->possibleDirections)) {
-            throw new Exception("Unknown direction '{$direction}'");
+            throw new Exception("Unknown direction '$direction'");
         }
 
         $options = [
@@ -2224,9 +2262,10 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
                     if (strtolower($val['operator']) == 'between') {
                         $value = join(
                             ' AND ',
-                            array_map(function ($v) {
-                                return $this->getDb()->escapeValue($v);
-                            }, $value)
+                            array_map(
+                                fn($v) => $this->getDb()->escapeValue($v),
+                                $value
+                            )
                         );
                     } else {
                         $value = count($value)
