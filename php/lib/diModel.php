@@ -238,7 +238,13 @@ class diModel implements \ArrayAccess
      */
     public static function getCollectionClass()
     {
-        return \diLib::getChildClass(static::class, 'Collection');
+        $name = \diLib::getChildClass(static::class, 'Collection');
+
+        if ($name === 'diCollection') {
+            $name = \diCollection::existsFor(static::type);
+        }
+
+        return $name;
     }
 
     public static function getConnection()

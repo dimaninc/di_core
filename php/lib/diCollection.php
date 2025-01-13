@@ -230,7 +230,13 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
      */
     public static function getModelClass()
     {
-        return \diLib::getChildClass(static::class, 'Model');
+        $name = \diLib::getChildClass(static::class, 'Model');
+
+        if ($name === 'diModel') {
+            $name = \diModel::existsFor(static::type);
+        }
+
+        return $name;
     }
 
     public static function getConnection()
