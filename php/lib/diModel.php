@@ -2177,6 +2177,10 @@ class diModel implements \ArrayAccess
             $field = substr($field, $x + 1);
         }
 
+        if ($value === null) {
+            return false;
+        }
+
         if (static::isBoolField($field) && is_bool($value)) {
             return false;
         }
