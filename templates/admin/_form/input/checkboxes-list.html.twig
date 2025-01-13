@@ -3,6 +3,9 @@
     <div class="tags-toggle">
         <span data-purpose="toggle-on">{{ form_lang['tag.toggle_on'] }}</span>
         <span data-purpose="toggle-off">{{ form_lang['tag.toggle_off'] }}</span>
+        {% if showSearch %}
+            <div class="tags-search"><input type="search" placeholder="{{ form_lang['tag.search_placeholder'] }}" /></div>
+        {% endif %}
     </div>
     {% endif %}
     <ul class="tags-grid-inner" {% if columns %}data-columns="{{ columns }}" style="columns: {{ columns }};"{% endif %}>

@@ -145,9 +145,25 @@
             }
         }
         .tags-grid {
+            .tags-search {
+              flex 1
+
+              input[type="search"] {
+                flex 1
+
+                {$entrineSkin} & {
+                  padding 5px
+                }
+              }
+            }
+
             .tags-toggle {
                 // global on/off
                 margin-bottom 10px
+                display flex
+                align-items center
+                flex-wrap wrap
+                gap 8px
 
                 > span {
                     font-size 12px
@@ -161,10 +177,6 @@
                     &:hover {
                         background-color #e7e7e7
                         color var(--color-link-hover)
-                    }
-
-                    & + span {
-                        margin-left 15px
                     }
                 }
             }

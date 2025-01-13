@@ -1,91 +1,91 @@
 var diAdminConsole = function (_opts) {
-    var self = this,
-        lines = 0,
-        opts = $.extend(
-            {
-                highLightTimeout: 2,
-                scrollTimeout: 1
-            },
-            _opts || {}
-        ),
-        e = {
-            $container: $('.console-container'),
-            $console: $('.console')
-        };
+  var self = this,
+    lines = 0,
+    opts = $.extend(
+      {
+        highLightTimeout: 2,
+        scrollTimeout: 1
+      },
+      _opts || {}
+    ),
+    e = {
+      $container: $('.console-container'),
+      $console: $('.console')
+    };
 
-    function constructor() {
-        e.$container.find('.up,.down').click(function () {
-            var sign = $(this).hasClass('up') ? -1 : 1;
-            var diff = sign * e.$container.height();
+  function constructor() {
+    e.$container.find('.up,.down').click(function () {
+      var sign = $(this).hasClass('up') ? -1 : 1;
+      var diff = sign * e.$container.height();
 
-            if (e.$container.length > 0) {
-                e.$container.stop(true, true).animate(
-                    {
-                        scrollTop: e.$container.get(0).scrollTop + diff
-                    },
-                    opts.scrollTimeout * 300
-                );
-            }
-        });
+      if (e.$container.length > 0) {
+        e.$container.stop(true, true).animate(
+          {
+            scrollTop: e.$container.get(0).scrollTop + diff
+          },
+          opts.scrollTimeout * 300
+        );
+      }
+    });
+  }
+
+  function getLineHtml(line) {
+    var time = new Date().toTimeString().split(' ')[0];
+
+    return sprintf('<div><i>%s</i><span>%s</span></div>', time, line);
+  }
+
+  function toggleNavy(state) {
+    if (typeof state == 'undefined') {
+      state = lines > 2;
     }
 
-    function getLineHtml(line) {
-        var time = new Date().toTimeString().split(' ')[0];
+    e.$container.toggleClass('navy-needed', !!state);
+  }
 
-        return sprintf('<div><i>%s</i><span>%s</span></div>', time, line);
+  this.add = function (line) {
+    e.$console.append(getLineHtml(line));
+
+    if (e.$container.length > 0) {
+      e.$container.stop(true, true).animate(
+        {
+          scrollTop: e.$console.get(0).scrollHeight
+        },
+        opts.scrollTimeout * 1000
+      );
     }
 
-    function toggleNavy(state) {
-        if (typeof state == 'undefined') {
-            state = lines > 2;
-        }
+    lines++;
+    toggleNavy();
 
-        e.$container.toggleClass('navy-needed', !!state);
-    }
+    this.highlight();
 
-    this.add = function (line) {
-        e.$console.append(getLineHtml(line));
+    return this;
+  };
 
-        if (e.$container.length > 0) {
-            e.$container.stop(true, true).animate(
-                {
-                    scrollTop: e.$console.get(0).scrollHeight
-                },
-                opts.scrollTimeout * 1000
-            );
-        }
+  this.clear = function () {
+    e.$console.html('');
+    lines = 0;
+    toggleNavy();
 
-        lines++;
-        toggleNavy();
+    return this;
+  };
 
-        this.highlight();
+  this.set = function (line) {
+    this.clear().add(line);
 
-        return this;
-    };
+    return this;
+  };
 
-    this.clear = function () {
-        e.$console.html('');
-        lines = 0;
-        toggleNavy();
+  this.highlight = function () {
+    e.$container.addClass('highlighted');
 
-        return this;
-    };
+    setTimeout(function () {
+      e.$container.removeClass('highlighted');
+    }, opts.highLightTimeout * 1000);
 
-    this.set = function (line) {
-        this.clear().add(line);
+    return this;
+  };
 
-        return this;
-    };
-
-    this.highlight = function () {
-        e.$container.addClass('highlighted');
-
-        setTimeout(function () {
-            e.$container.removeClass('highlighted');
-        }, opts.highLightTimeout * 1000);
-
-        return this;
-    };
-
-    constructor();
+  constructor();
 };

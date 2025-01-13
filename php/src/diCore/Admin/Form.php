@@ -3258,6 +3258,7 @@ EOF;
                 'ableToAddNew' => $ableToAddNew,
                 'hideAllToggle' => $hideAllToggle,
                 'variants' => $variants,
+                'showSearch' => $this->getFieldOption($field, 'showSearch'),
             ]
         );
 
