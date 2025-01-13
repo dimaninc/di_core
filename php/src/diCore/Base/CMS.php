@@ -380,6 +380,8 @@ abstract class CMS
         try {
             $this->go();
         } catch (HttpException $e) {
+            $e->sendHeaders();
+
             $this->renderBeforeError();
 
             $this->getTwig()->renderPage("errors/{$e->getCode()}", [
@@ -389,7 +391,6 @@ abstract class CMS
             $this->renderAfterError();
 
             HttpCode::header($this->getResponseCode());
-            $e->sendHeaders();
         } catch (\Exception $e) {
             $this->setResponseCode(
                 HttpCode::INTERNAL_SERVER_ERROR
