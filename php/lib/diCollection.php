@@ -1226,10 +1226,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
                         );
                     }
 
-                    $existingFilter = isset($filter[$val['field']])
-                        ? $filter[$val['field']]
-                        : [];
-
+                    $existingFilter = $filter[$val['field']] ?? [];
                     $val['operator'] = mb_strtolower($val['operator']);
 
                     if (isset(self::$operators[$val['operator']])) {
@@ -1958,30 +1955,56 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
 
     public function filterInJson($field, $path, $value, $operator = null)
     {
-        // todo: mongo support
-        // todo: mysql support
         // todo: array support
-        if ($operator === null) {
-            $operator = '=';
+        if ($operator === null || in_array($operator, ['in', '='])) {
+            $operator = is_array($value) ? 'in' : '=';
         }
 
         if (is_array($path)) {
             $path = join('.', $path);
         }
 
+        if (static::getConnection()::isMongo()) {
+            return $this->extFilterBy("$field.$path", $operator, $value);
+        }
+
         $field = $this->getDb()->escape_string($field);
-        $value = $this->getDb()->escape_string($value);
+        $jsonOperator = '->';
         $path = "$.$path";
+
+        $quotedField = $this->getDb()->quoteField($field);
+        if (is_bool($value)) {
+            $quotedValue = $value ? 'TRUE' : 'FALSE';
+        } elseif (is_null($value)) {
+            if (static::getConnection()::isMysql()) {
+                // ->> converts value into string
+                $jsonOperator = '->>';
+                // json's null in mysql differs from general null
+                // todo: bad idea, cause both string 'null' and null will be filtered
+                $quotedValue = "'null'";
+            } else {
+                $quotedValue = 'NULL';
+            }
+        } else {
+            $quotedValue = is_numeric($value)
+                ? $value
+                : $this->getDb()->quoteValue($this->getDb()->escape_string($value));
+        }
 
         if (static::getConnection()::isPostgres()) {
             if ($operator === '=') {
                 $operator = '==';
             }
 
-            return $this->filterManual("$field @@ '$path $operator \"$value\"'");
+            return $this->filterManual(
+                "$quotedField @@ '$path $operator $quotedValue'"
+            );
         }
 
-        return "JSON_EXTRACT($field, '$path') $operator '$value'";
+        // "JSON_EXTRACT($field, '$path') $operator $quotedValue"
+        return $this->filterManual(
+            "$quotedField$jsonOperator'$path' $operator $quotedValue"
+        );
     }
 
     public function startsWith($field, $value)
@@ -2327,6 +2350,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
                     }
                 }
             } elseif (is_null($val['value'])) {
+                // todo: unify with filterInJson
                 switch ($val['operator']) {
                     case '=':
                         $val['operator'] = 'IS';
@@ -2339,6 +2363,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
                         break;
                 }
             } elseif (is_bool($val['value'])) {
+                // todo: unify with filterInJson
                 $value = $val['value'] ? 'TRUE' : 'FALSE';
             }
 

@@ -256,6 +256,11 @@ abstract class Connection
         return static::engine === Engine::POSTGRESQL;
     }
 
+    public static function isMysql()
+    {
+        return static::engine === Engine::MYSQL;
+    }
+
     public static function isBooleanTypeSupported()
     {
         return false;
