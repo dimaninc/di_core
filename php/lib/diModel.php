@@ -43,6 +43,7 @@ class diModel implements \ArrayAccess
     const order_field_name = 'order_num';
     const use_data_cache = false;
     const open_graph_pic_field = 'pic';
+    const prop_field = 'properties';
     const validation_error_prefix_needed = false;
     const use_insecure_password_hash = true;
     /**
@@ -1445,6 +1446,11 @@ class diModel implements \ArrayAccess
         return static::tuneFieldValueByTypeBeforeDb($field, $this->get($field));
     }
 
+    public function prop(array|string $path = null)
+    {
+        return $this->getJsonData(static::prop_field, $path);
+    }
+
     public function getJsonData(string $field, array|string $path = null)
     {
         if (!isset($this->jsonData[$field])) {
@@ -1468,9 +1474,19 @@ class diModel implements \ArrayAccess
             : ArrayHelper::get($this->jsonData[$field], $path);
     }
 
+    public function hasProp(array|string $path)
+    {
+        return $this->hasJsonData(static::prop_field, $path);
+    }
+
     public function hasJsonData(string $field, array|string $path)
     {
         return !!$this->getJsonData($field, $path);
+    }
+
+    public function setProp(array|string $path, $value = null)
+    {
+        return $this->setJsonData(static::prop_field, $path, $value);
     }
 
     public function setJsonData(string $field, array|string $path, $value = null)
@@ -1490,6 +1506,11 @@ class diModel implements \ArrayAccess
         $this->set($field, $finalValue);
 
         return $this;
+    }
+
+    public function updateProp(array|string $path, $value = null)
+    {
+        return $this->setJsonData(static::prop_field, $path, $value);
     }
 
     public function updateJsonData(string $field, array|string $path, $value = null)
@@ -1515,6 +1536,12 @@ class diModel implements \ArrayAccess
         return $this;
     }
 
+    public function killProp(string $path)
+    {
+        return $this->killJsonData(static::prop_field, $path);
+    }
+
+    // todo: add $path support instead of $key
     public function killJsonData(string $field, string $key = null)
     {
         if ($key === null) {

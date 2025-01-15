@@ -217,8 +217,10 @@ class {{ className }} extends \diCore\Admin\BasePage
 EOF;
 
         $fields = $this->getFieldsOfTable($connName, $table);
-        $className =
-            $className ?: self::getClassNameByTable($table, $this->getNamespace());
+        $className = self::getClassNameByTable(
+            $className ?: $table,
+            $this->getNamespace()
+        );
         $caption = $caption ?: \diTypes::getTitle(\diTypes::getId($table));
         $fieldsInfo = $this->getFieldsInfo($fields);
         $columns = $this->getColumns($connName, $table);
@@ -324,14 +326,31 @@ EOF;
             return "\n                'title' => '',";
         };
 
+        $default = $this->getDefault($field, $type);
         $suffix = $this->getFlagsStr($field) . $this->getExtraPropertiesStr($field);
 
         return <<<EOF
-            '{$field}' => [
-                'type' => '{$typeTuned}',{$getTitle()}
-                'default' => '',{$suffix}
+            '$field' => [
+                'type' => '$typeTuned',{$getTitle()}
+                'default' => $default,$suffix
             ],
 EOF;
+    }
+
+    protected function getDefault($field, $type)
+    {
+        if (
+            in_array($field, $this->checkboxFieldNames) ||
+            in_array($type, ['bool', 'boolean'])
+        ) {
+            return 'false';
+        }
+
+        if (in_array($type, ['json', 'jsonb'])) {
+            return 'null';
+        }
+
+        return "''";
     }
 
     protected function getExtraPropertiesStr($field)
