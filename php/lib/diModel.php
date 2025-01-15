@@ -1510,7 +1510,7 @@ class diModel implements \ArrayAccess
 
     public function updateProp(array|string $path, $value = null)
     {
-        return $this->setJsonData(static::prop_field, $path, $value);
+        return $this->updateJsonData(static::prop_field, $path, $value);
     }
 
     public function updateJsonData(string $field, array|string $path, $value = null)
