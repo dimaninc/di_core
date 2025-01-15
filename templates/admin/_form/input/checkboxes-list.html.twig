@@ -1,21 +1,34 @@
+{% set variantsChecked = false %}
 <div class="tags-grid">
-    {% if multiple and not hideAllToggle %}
     <div class="tags-toggle">
-        <span data-purpose="toggle-on">{{ form_lang['tag.toggle_on'] }}</span>
-        <span data-purpose="toggle-off">{{ form_lang['tag.toggle_off'] }}</span>
+        {% if initiallyShowOnlyChecked %}
+            <span data-purpose="show-all">{{ form_lang['tag.show_all'] }}</span>
+        {% endif %}
+        {% if multiple and not hideAllToggle %}
+            <span data-purpose="toggle-on">{{ form_lang['tag.toggle_on'] }}</span>
+            <span data-purpose="toggle-off">{{ form_lang['tag.toggle_off'] }}</span>
+        {% endif %}
         {% if showSearch %}
             <div class="tags-search"><input type="search" placeholder="{{ form_lang['tag.search_placeholder'] }}" /></div>
         {% endif %}
     </div>
-    {% endif %}
-    <ul class="tags-grid-inner" {% if columns %}data-columns="{{ columns }}" style="columns: {{ columns }};"{% endif %}>
+    <ul class="tags-grid-inner {% if initiallyShowOnlyChecked %}tags-grid-inner--initially-checked{% endif %}" {% if columns %}data-columns="{{ columns }}" style="columns: {{ columns }};"{% endif %}>
         {% for o in variants %}
-        <li>
+            {% if initiallyShowOnlyChecked and o['attributes']['checked'] %}
+                {% set classTag = 'class="initially-checked"' %}
+                {% set variantsChecked = true %}
+            {% else %}
+                {% set classTag = '' %}
+            {% endif %}
+        <li {{ classTag }}>
             <input {{ o['attributesStr']|raw }}>
             {{ o['outerPrefix'] }}<label for="{{ o['attributes']['id'] }}">{{ o['innerPrefix'] ~ o['title'] ~ o['innerSuffix'] }}</label>{{ o['outerSuffix'] }}
         </li>
         {% endfor %}
     </ul>
+    {% if initiallyShowOnlyChecked and not variantsChecked %}
+        <div class="tags--none-selected">{{ form_lang['tag.none_selected'] }}</div>
+    {% endif %}
 </div>
 
 {% if ableToAddNew %}

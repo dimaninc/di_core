@@ -2151,7 +2151,6 @@ body[data-skin="entrine"] .diadminform-row .value .tags-grid .tags-search input[
   padding: 5px;
 }
 .diadminform-row .value .tags-grid .tags-toggle {
-  margin-bottom: 10px;
   display: -webkit-box;
   display: -moz-box;
   display: -webkit-flex;
@@ -2171,6 +2170,9 @@ body[data-skin="entrine"] .diadminform-row .value .tags-grid .tags-search input[
   -ms-flex-wrap: wrap;
   flex-wrap: wrap;
   gap: 8px;
+}
+.diadminform-row .value .tags-grid .tags-toggle + .tags-grid-inner {
+  margin-top: 12px;
 }
 .diadminform-row .value .tags-grid .tags-toggle > span {
   font-size: 12px;
@@ -2197,6 +2199,12 @@ body[data-skin="entrine"] .diadminform-row .value .tags-grid .tags-search input[
   -webkit-column-gap: var(--gap);
   -moz-column-gap: var(--gap);
   column-gap: var(--gap);
+}
+.diadminform-row .value .tags-grid .tags-grid-inner.tags-grid-inner--initially-checked > li:not(.initially-checked) {
+  display: none;
+}
+.diadminform-row .value .tags-grid .tags--none-selected {
+  cursor: pointer;
 }
 .diadminform-row .value .new-tag {
   margin-top: 10px;

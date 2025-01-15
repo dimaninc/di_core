@@ -70,6 +70,8 @@ class FormLanguage
             'tag.toggle_on' => 'All on',
             'tag.toggle_off' => 'All off',
             'tag.search_placeholder' => 'Search...',
+            'tag.show_all' => 'Show all',
+            'tag.none_selected' => 'None selected',
         ],
 
         'ru' => [
@@ -132,6 +134,8 @@ class FormLanguage
             'tag.toggle_on' => 'Выделить все',
             'tag.toggle_off' => 'Снять все',
             'tag.search_placeholder' => 'Поиск...',
+            'tag.show_all' => 'Показать все',
+            'tag.none_selected' => 'Ничего не выбрано',
         ],
     ];
 }

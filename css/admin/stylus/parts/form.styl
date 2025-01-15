@@ -157,13 +157,16 @@
               }
             }
 
+            // global on/off
             .tags-toggle {
-                // global on/off
-                margin-bottom 10px
                 display flex
                 align-items center
                 flex-wrap wrap
                 gap 8px
+
+                + .tags-grid-inner {
+                  margin-top 12px
+                }
 
                 > span {
                     font-size 12px
@@ -186,6 +189,18 @@
 
                 ul-norm()
                 column-gap var(--gap)
+
+                &.tags-grid-inner--initially-checked {
+                  > li {
+                    &:not(.initially-checked) {
+                      display none
+                    }
+                  }
+                }
+            }
+
+            .tags--none-selected {
+              cursor pointer
             }
         }
         .new-tag {

@@ -146,9 +146,12 @@ var diAdminForm = function (table, id, auto_save_timeout) {
       var $row = $(this);
       var $on = $row.find('.tags-toggle > span[data-purpose="toggle-on"]');
       var $off = $row.find('.tags-toggle > span[data-purpose="toggle-off"]');
+      var $showAll = $row.find('.tags-toggle > span[data-purpose="show-all"]');
+      var $noneSelected = $row.find('.tags--none-selected');
       var $checkboxes = $row.find('.tags-grid input[type="checkbox"]');
       var $checkboxRows = $row.find('.tags-grid .tags-grid-inner > li');
       var $searchQuery = $row.find('.tags-search input[type="search"]');
+      var $tagsGridInner = $row.find('.tags-grid-inner');
 
       $on.on('click', function () {
         $checkboxes.prop('checked', true);
@@ -156,6 +159,12 @@ var diAdminForm = function (table, id, auto_save_timeout) {
 
       $off.on('click', function () {
         $checkboxes.prop('checked', false);
+      });
+
+      $showAll.add($noneSelected).on('click', function () {
+        $tagsGridInner.removeClass('tags-grid-inner--initially-checked');
+        $showAll.remove();
+        $noneSelected.remove();
       });
 
       $searchQuery.on('input', function () {

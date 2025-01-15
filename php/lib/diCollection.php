@@ -1986,9 +1986,12 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
                 $quotedValue = 'NULL';
             }
         } else {
+            $quotedValue = $this->getDb()->escape_string($value);
             $quotedValue = is_numeric($value)
                 ? $value
-                : $this->getDb()->quoteValue($this->getDb()->escape_string($value));
+                : (static::getConnection()::isPostgres()
+                    ? "\"$quotedValue\""
+                    : $this->getDb()->quoteValue($quotedValue));
         }
 
         if (static::getConnection()::isPostgres()) {

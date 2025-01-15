@@ -3249,6 +3249,10 @@ EOF;
             ];
         }
 
+        $initiallyShowOnlyChecked =
+            $this->getFieldOption($field, 'initiallyShowOnlyChecked') &&
+            !$this->getX()->isNew();
+
         $this->inputs[$field] = $this->getTwig()->parse(
             'admin/_form/input/checkboxes-list',
             [
@@ -3259,6 +3263,7 @@ EOF;
                 'hideAllToggle' => $hideAllToggle,
                 'variants' => $variants,
                 'showSearch' => $this->getFieldOption($field, 'showSearch'),
+                'initiallyShowOnlyChecked' => $initiallyShowOnlyChecked,
             ]
         );
 
