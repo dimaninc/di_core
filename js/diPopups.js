@@ -1,4 +1,4 @@
-var diPopups = function () {
+function diPopups() {
   var self = this;
   var states = {};
   var events = {};
@@ -356,6 +356,6 @@ var diPopups = function () {
   this.hide_bg = this.hideOverlay;
   /** @deprecated */
   this.hide_all = this.hideAll;
-};
+}
 
 var dip = new diPopups();
