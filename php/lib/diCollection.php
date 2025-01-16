@@ -1953,6 +1953,13 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         ]);
     }
 
+    public function filterInProp($path, $value, $operator = null)
+    {
+        $field = static::getModelClass()::prop_field;
+
+        return $this->filterInJson($field, $path, $value, $operator);
+    }
+
     public function filterInJson($field, $path, $value, $operator = null)
     {
         // todo: array support
