@@ -605,7 +605,10 @@ Helper = {
     uglifyOpts = opts.es6 ? {
       ecma: 2015,
       keep_classnames: true,
-      keep_fnames: true
+      keep_fnames: true,
+      output: {
+        comments: false
+      }
     } : {};
     if (!rename) {
       rename = this.req('gulp-rename');

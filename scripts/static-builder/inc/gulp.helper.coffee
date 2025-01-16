@@ -385,7 +385,7 @@ Helper =
     assignJavascriptMinTaskToGulp: (gulp, opts = {}) ->
         opts = @extend {input: null, outputFolder: null, taskName: 'js-min', es6: false}, opts
         uglify = if opts.es6 then @req('gulp-terser') else @req('gulp-uglify') unless uglify
-        uglifyOpts = if opts.es6 then { ecma: 2015, keep_classnames: true, keep_fnames: true } else {}
+        uglifyOpts = if opts.es6 then { ecma: 2015, keep_classnames: true, keep_fnames: true, output: { comments: false } } else {}
         rename = @req 'gulp-rename' unless rename
         gulp.task opts.taskName, (done) =>
             gulp.src @fullPath opts.input
