@@ -144,7 +144,7 @@ var di = {
   onInteraction: function (callback, force) {
     var done = false;
 
-    function load(e) {
+    function load() {
       if (done) {
         return;
       }
