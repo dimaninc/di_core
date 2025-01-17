@@ -564,6 +564,11 @@ class diModel implements \ArrayAccess
         return \diLib::getSubFolder(true) . $prefix;
     }
 
+    protected function __hrefBase($contentType)
+    {
+        return $this->__getPrefixForHref() . '/' . CMS::ct($contentType) . '/';
+    }
+
     protected static function __getLanguage()
     {
         /** @var CMS $Z */
