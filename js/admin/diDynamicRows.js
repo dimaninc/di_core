@@ -488,7 +488,7 @@ var diDynamicRows = function (opts) {
     lastCreatedRowId = id;
 
     typeof initTinyMce !== 'undefined' &&
-      initTinyMce(this.getRowSelector(id, 'textarea'));
+      initTinyMce(this.getRowSelector(id, '.wysiwyg textarea'));
     opts.afterAddRow && opts.afterAddRow(this, $e, id);
     opts.sortable && this.refreshSortable();
 

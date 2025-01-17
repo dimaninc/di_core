@@ -4054,7 +4054,6 @@ body[data-skin="classic"] .dynamic-row ul.line > li > * {
 .dynamic-row ul.line > li.wider input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
 .dynamic-row ul.line > li.wider textarea {
   width: 500px;
-  background: #ff0;
 }
 @media screen and (max-width: 1150px) {
   .dynamic-row ul.line > li.wider input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([size]),
