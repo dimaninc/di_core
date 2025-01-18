@@ -121,13 +121,17 @@ var di = {
 
   // loaders
 
-  loadScript: function (url, callback) {
-    var script = document.createElement('script');
-    script.src = url;
-    script.onload = callback;
+  loadScript: function (url, callback, onInteraction) {
+    var load = function () {
+      var script = document.createElement('script');
+      script.src = url;
+      script.onload = callback;
 
-    var x = document.getElementsByTagName('script')[0];
-    x.parentNode.insertBefore(script, x);
+      var x = document.getElementsByTagName('script')[0];
+      x.parentNode.insertBefore(script, x);
+    };
+
+    onInteraction ? di.onInteraction(load) : load();
   },
 
   loadStyle: function (url, callback) {
