@@ -14,13 +14,12 @@
     </div>
     <ul class="tags-grid-inner {% if initiallyShowOnlyChecked %}tags-grid-inner--initially-checked{% endif %}" {% if columns %}data-columns="{{ columns }}" style="columns: {{ columns }};"{% endif %}>
         {% for o in variants %}
+            {% set rowClass = '' %}
             {% if initiallyShowOnlyChecked and o['attributes']['checked'] %}
-                {% set classTag = 'class="initially-checked"' %}
+                {% set rowClass = 'initially-checked' %}
                 {% set variantsChecked = true %}
-            {% else %}
-                {% set classTag = '' %}
             {% endif %}
-        <li {{ classTag }}>
+        <li{% if rowClass %} class="{{ rowClass }}"{% endif %}>
             <input {{ o['attributesStr']|raw }}>
             {{ o['outerPrefix'] }}<label for="{{ o['attributes']['id'] }}">{{ o['innerPrefix'] ~ o['title'] ~ o['innerSuffix'] }}</label>{{ o['outerSuffix'] }}
         </li>

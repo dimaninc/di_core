@@ -2146,6 +2146,7 @@ body[data-skin="entrine"] .diadminform-row .value button {
   -webkit-flex: 1;
   -ms-flex: 1;
   flex: 1;
+  font-size: 15px;
 }
 body[data-skin="entrine"] .diadminform-row .value .tags-grid .tags-search input[type="search"] {
   padding: 5px;
