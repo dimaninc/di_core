@@ -3147,7 +3147,7 @@ EOF;
         if (is_callable($values)) {
             $values = $values($this->getTable(), $field, $this->getId());
         } elseif (!is_array($values)) {
-            $values = explode(',', $values);
+            $values = explode(',', $values ?? '');
         }
 
         $defaultCheckedHelper = function ($k, $v, Form $Form, $field) use ($values) {

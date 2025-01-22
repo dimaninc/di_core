@@ -1984,11 +1984,13 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
             $quotedValue = $value ? 'TRUE' : 'FALSE';
         } elseif (is_null($value)) {
             if (static::getConnection()::isMysql()) {
-                // ->> converts value into string
-                $jsonOperator = '->>';
-                // json's null in mysql differs from general null
-                // todo: bad idea, cause both string 'null' and null will be filtered
-                $quotedValue = "'null'";
+                $jsonOperator = in_array(strtolower($operator), ['=', 'in'])
+                    ? 'IS'
+                    : 'IS NOT';
+
+                return $this->filterManual(
+                    "JSON_EXTRACT($field, '$path') $jsonOperator NULL"
+                );
             } else {
                 $quotedValue = 'NULL';
             }
