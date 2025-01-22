@@ -278,7 +278,8 @@ class ArrayHelper
         }
 
         if (!is_array($path)) {
-            $path = [$path];
+            // $path = [$path];
+            $path = explode('.', $path);
         }
 
         $result = $array;

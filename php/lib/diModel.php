@@ -1451,11 +1451,6 @@ class diModel implements \ArrayAccess
         return static::tuneFieldValueByTypeBeforeDb($field, $this->get($field));
     }
 
-    public function prop(array|string $path = null)
-    {
-        return $this->getJsonData(static::prop_field, $path);
-    }
-
     public function getJsonData(string $field, array|string $path = null)
     {
         if (!isset($this->jsonData[$field])) {
@@ -1479,19 +1474,9 @@ class diModel implements \ArrayAccess
             : ArrayHelper::get($this->jsonData[$field], $path);
     }
 
-    public function hasProp(array|string $path)
-    {
-        return $this->hasJsonData(static::prop_field, $path);
-    }
-
     public function hasJsonData(string $field, array|string $path)
     {
         return !!$this->getJsonData($field, $path);
-    }
-
-    public function setProp(array|string $path, $value = null)
-    {
-        return $this->setJsonData(static::prop_field, $path, $value);
     }
 
     public function setJsonData(string $field, array|string $path, $value = null)
@@ -1511,11 +1496,6 @@ class diModel implements \ArrayAccess
         $this->set($field, $finalValue);
 
         return $this;
-    }
-
-    public function updateProp(array|string $path, $value = null)
-    {
-        return $this->updateJsonData(static::prop_field, $path, $value);
     }
 
     public function updateJsonData(string $field, array|string $path, $value = null)
@@ -1539,11 +1519,6 @@ class diModel implements \ArrayAccess
         $this->set($field, $finalValue);
 
         return $this;
-    }
-
-    public function killProp(string $path)
-    {
-        return $this->killJsonData(static::prop_field, $path);
     }
 
     // todo: add $path support instead of $key

@@ -14,6 +14,7 @@ use diCore\Database\FieldType;
 use diCore\Entity\AdBlock\Model as AdBlock;
 use diCore\Traits\Model\AutoTimestamps;
 use diCore\Traits\Model\Hierarchy;
+use diCore\Traits\Model\JsonProperties;
 
 /**
  * Class Model
@@ -143,6 +144,7 @@ class Model extends \diModel
 {
     use AutoTimestamps;
     use Hierarchy;
+    use JsonProperties;
 
     const type = Types::content;
     const table = 'content';

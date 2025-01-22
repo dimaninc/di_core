@@ -11,18 +11,63 @@ namespace diCore\Traits\Model;
  */
 trait JsonProperties
 {
-    public function getProperty(array|string $path)
+    public function hasProp(array|string $path)
+    {
+        return $this->hasJsonData('properties', $path);
+    }
+
+    public function prop(array|string $path)
     {
         return $this->getJsonData('properties', $path);
     }
 
-    public function setProperty(array|string $path, $value = null)
+    public function setProp(array|string $path, $value = null)
     {
         return $this->updateJsonData('properties', $path, $value);
     }
 
+    /** @deprecated  */
+    public function updateProp(array|string $path, $value = null)
+    {
+        return $this->setProp($path, $value);
+    }
+
+    public function incProp(array|string $path)
+    {
+        return $this->setProp($path, $this->prop($path) + 1);
+    }
+
+    public function decProp(array|string $path)
+    {
+        return $this->setProp($path, $this->prop($path) - 1);
+    }
+
+    public function killProp(string $path)
+    {
+        return $this->killJsonData('properties', $path);
+    }
+
+    /** @deprecated  */
+    public function hasProperty(array|string $path)
+    {
+        return $this->hasProp($path);
+    }
+
+    /** @deprecated  */
+    public function getProperty(array|string $path)
+    {
+        return $this->prop($path);
+    }
+
+    /** @deprecated  */
+    public function setProperty(array|string $path, $value = null)
+    {
+        return $this->setProp($path, $value);
+    }
+
+    /** @deprecated  */
     public function incProperty(array|string $path)
     {
-        return $this->setProperty($path, $this->getProperty($path) + 1);
+        return $this->incProp($path);
     }
 }

@@ -212,7 +212,7 @@ class diDateTime
         return $format;
     }
 
-    public static function timestamp($dt = null)
+    public static function timestamp($dt = null, $parseRus = false)
     {
         if ($dt === null) {
             return time();
@@ -226,7 +226,29 @@ class diDateTime
             return $dt->toDateTime()->getTimestamp();
         }
 
-        return strtotime($dt);
+        $res = strtotime($dt);
+
+        if ($parseRus && $res === false) {
+            $dt = mb_strtolower("$dt");
+
+            foreach (self::$months as $i => $month) {
+                $dt = str_replace(mb_strtolower($month), self::$engMonths[$i], $dt);
+                $dt = str_replace(
+                    mb_strtolower(self::$monthsGenitive[$i]),
+                    self::$engMonths[$i],
+                    $dt
+                );
+                $dt = str_replace(
+                    mb_substr(mb_strtolower($month), 0, 3),
+                    self::$engMonths[$i],
+                    $dt
+                );
+            }
+
+            $res = strtotime($dt);
+        }
+
+        return $res;
     }
 
     /**
