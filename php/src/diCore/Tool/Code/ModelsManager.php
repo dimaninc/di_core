@@ -154,6 +154,7 @@ EOF;
                 ? "\n    const slug_field_name = self::SLUG_FIELD_NAME;"
                 : '';
 
+            // todo: generate $customDateFields
             $replaces = [
                 '{{ date }}' => \diDateTime::simpleDateFormat(),
                 '{{ time }}' => \diDateTime::simpleTimeFormat(),

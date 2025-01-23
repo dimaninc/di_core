@@ -16,7 +16,7 @@ trait JsonProperties
         return $this->hasJsonData('properties', $path);
     }
 
-    public function prop(array|string $path)
+    public function prop(array|string $path = null)
     {
         return $this->getJsonData('properties', $path);
     }
