@@ -202,13 +202,9 @@ var diAdminForm = function (table, id, auto_save_timeout) {
           var field = $i.data('field');
           var subfield = $i.data('subfield');
           var type = $i.attr('type');
-          var value = $i.val();
+          var value = type === 'checkbox' ? this.checked : $i.val();
 
-          if (type === 'checkbox') {
-            value = !!value;
-          }
-
-          if ($i.attr('name').substr(0, 11) === 'dicalendar[') {
+          if ($i.attr('name').substring(0, 11) === 'dicalendar[') {
             return;
           }
 

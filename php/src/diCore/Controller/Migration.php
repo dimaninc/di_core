@@ -31,6 +31,24 @@ class Migration extends \diBaseAdminController
     }
 
     /**
+     * Shows all new local project migrations
+     */
+    public function showNewAction()
+    {
+        try {
+            $migrations = $this->Manager->getNewList();
+        } catch (\Exception $e) {
+            return $this->internalServerError([
+                'message' => $e->getMessage(),
+            ]);
+        }
+
+        return [
+            'migrations' => $migrations,
+        ];
+    }
+
+    /**
      * Runs all new local project migrations
      */
     public function upNewAction()

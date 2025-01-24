@@ -122,11 +122,20 @@ abstract class Pdo extends \diDB
     protected function __rq($q)
     {
         try {
-            return $this->link->exec($q);
+            $res = $this->link->exec($q);
+
+            // it returns number of affected rows or false
+            if (is_bool($res)) {
+                return $res;
+            }
+
+            return true;
         } catch (\PDOException $e) {
             $this->logError($q, $e);
 
-            return $this->_log("Unable to execute query `$q`: {$e->getMessage()}");
+            return $this->_log(
+                "Unable to raw-execute query `$q`: {$e->getMessage()}"
+            );
         }
     }
 
@@ -196,8 +205,8 @@ abstract class Pdo extends \diDB
             ? $this->link->quote($s, $binary ? \PDO::PARAM_LOB : \PDO::PARAM_STR)
             : "$s";
 
-        if (strlen($s) >= 2) {
-            $s = substr($s, 1, strlen($s) - 2);
+        if (mb_strlen($s) >= 2) {
+            $s = mb_substr($s, 1, mb_strlen($s) - 2);
         }
 
         return $s;

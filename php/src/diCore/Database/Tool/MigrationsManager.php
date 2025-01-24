@@ -377,12 +377,17 @@ EOF;
         return $this;
     }
 
-    public function upNew()
+    public function getNewList()
     {
-        $ar = $this->getMigrationsInFolder(static::FOLDER_LOCAL, [
+        return $this->getMigrationsInFolder(static::FOLDER_LOCAL, [
             'sort' => 'asc',
             'filterNotExecuted' => true,
         ]);
+    }
+
+    public function upNew()
+    {
+        $ar = $this->getNewList();
 
         foreach ($ar as $name) {
             $this->run(static::getIdxByFileName($name), true);
