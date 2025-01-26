@@ -177,6 +177,7 @@ class diModel implements \ArrayAccess
     protected $validationErrors = [];
 
     private $insertOrUpdateAllowed = false;
+    private $skipConflictOnInsert = false;
 
     /** @var callable */
     private $fieldsOnSaveCallback;
@@ -2288,7 +2289,32 @@ class diModel implements \ArrayAccess
             return $this;
         }
 
-        if ($this->isInsertOrUpdateAllowed()) {
+        if ($this->isSkipConflictOnInsert()) {
+            if (static::getConnection()::isMongo()) {
+                // todo: implement
+            } else {
+                $result = $this->getDb()->insertIgnore(
+                    $this->getDb()->escapeTable($this->getTable()),
+                    $ar
+                );
+
+                $this->disallowSkipConflictOnInsert();
+
+                if ($result) {
+                    $this->setId((int) $result);
+                } else {
+                    $e = new \diDatabaseException(
+                        'Unable to insert ignore ' .
+                            get_class($this) .
+                            ' in DB: ' .
+                            join("\n", $this->getDb()->getLog())
+                    );
+                    $e->setErrors($this->getDb()->getLog());
+
+                    throw $e;
+                }
+            }
+        } elseif ($this->isInsertOrUpdateAllowed()) {
             if (static::getConnection()::isMongo()) {
                 $keys = array_combine(
                     $this->upsertFields,
@@ -3033,6 +3059,25 @@ ENGINE = InnoDB;";
     public function isInsertOrUpdateAllowed()
     {
         return $this->insertOrUpdateAllowed;
+    }
+
+    public function allowSkipConflictOnInsert()
+    {
+        $this->skipConflictOnInsert = true;
+
+        return $this;
+    }
+
+    public function disallowSkipConflictOnInsert()
+    {
+        $this->skipConflictOnInsert = false;
+
+        return $this;
+    }
+
+    public function isSkipConflictOnInsert()
+    {
+        return $this->skipConflictOnInsert;
     }
 
     /**
