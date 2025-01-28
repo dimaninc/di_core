@@ -21,7 +21,7 @@
             {% endif %}
         <li{% if rowClass %} class="{{ rowClass }}"{% endif %}>
             <input {{ o['attributesStr']|raw }}>
-            {{ o['outerPrefix'] }}<label for="{{ o['attributes']['id'] }}">{{ o['innerPrefix'] ~ o['title'] ~ o['innerSuffix'] }}</label>{{ o['outerSuffix'] }}
+            {{ o['outerPrefix']|raw }}<label for="{{ o['attributes']['id'] }}">{{ o['innerPrefix']|raw ~ o['title'] ~ o['innerSuffix']|raw }}</label>{{ o['outerSuffix']|raw }}
         </li>
         {% endfor %}
     </ul>
