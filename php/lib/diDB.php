@@ -945,7 +945,16 @@ abstract class diDB
             $this->fieldsAndValuesToStringForUpdate($fields_values) .
             static::insertUpdateQueryEnding();
 
-        return " {$q1} {$q3}";
+        return " $q1 $q3";
+    }
+
+    protected function insertIgnoreQuery($table, $fieldsValues)
+    {
+        $t = $this->get_table_name($table);
+        $q1 = '(' . $this->fieldsToStringForInsert($fieldsValues) . ')';
+        $q2 = '(' . $this->valuesToStringForInsert($fieldsValues) . ')';
+
+        return "INSERT IGNORE INTO $t$q1 VALUES$q2";
     }
 
     public static function insertUpdateQueryBeginning($keyField = null)
@@ -1132,6 +1141,29 @@ abstract class diDB
             return false;
         }
         $this->time_log('insert_or_update', utime() - $time1, $query);
+
+        $id = $this->__insert_id();
+        $this->unlockTable($t);
+
+        return $id;
+    }
+
+    public function insertIgnore($table, $fieldsValues = [])
+    {
+        $t = $this->get_table_name($table);
+        $query = $this->insertIgnoreQuery($table, $fieldsValues);
+
+        $this->lockTable($t);
+
+        $time1 = utime();
+        if (!$this->__rq($query)) {
+            $this->_log("unable to insert ignore into table $t", false);
+
+            $this->unlockTable($t);
+
+            return false;
+        }
+        $this->time_log('insert_ignore', utime() - $time1, $query);
 
         $id = $this->__insert_id();
         $this->unlockTable($t);

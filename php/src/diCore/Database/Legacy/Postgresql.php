@@ -148,6 +148,15 @@ ORDER BY ordinal_position ASC");
         return "ON CONFLICT ($keyField) DO UPDATE SET";
     }
 
+    protected function insertIgnoreQuery($table, $fieldsValues)
+    {
+        $t = $this->get_table_name($table);
+        $q1 = '(' . $this->fieldsToStringForInsert($fieldsValues) . ')';
+        $q2 = '(' . $this->valuesToStringForInsert($fieldsValues) . ')';
+
+        return "INSERT INTO $t$q1 VALUES$q2 ON CONFLICT DO NOTHING";
+    }
+
     public function getUpdateSingleLimit()
     {
         return '';

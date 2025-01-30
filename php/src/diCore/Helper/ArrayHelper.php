@@ -402,17 +402,25 @@ class ArrayHelper
 
     public static function fromObject($obj)
     {
-        if (is_object($obj) || is_array($obj)) {
-            $ret = (array) $obj;
-
-            foreach ($ret as &$item) {
-                $item = self::fromObject($item);
-            }
-
-            return $ret;
-        } else {
+        if (!is_object($obj) && !is_array($obj)) {
             return $obj;
         }
+
+        if (is_array($obj) && in_array('static', $obj, true)) {
+            return $obj;
+        }
+
+        if (is_callable($obj)) {
+            return $obj;
+        }
+
+        $ret = (array) $obj;
+
+        foreach ($ret as &$item) {
+            $item = self::fromObject($item);
+        }
+
+        return $ret;
     }
 
     public static function recursiveSum(array $array)

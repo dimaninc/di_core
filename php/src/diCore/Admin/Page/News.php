@@ -8,6 +8,7 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Admin\Data\FormFlag;
 use diCore\Data\Types;
 use diCore\Entity\MailIncut\Collection as IncutCollection;
 use diCore\Entity\MailIncut\Model as IncutModel;
@@ -280,6 +281,7 @@ EOF;
 
             'href' => [
                 'type' => 'href',
+                'flags' => [FormFlag::static, FormFlag::virtual],
             ],
 
             'short_content' => [
