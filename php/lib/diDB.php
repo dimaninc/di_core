@@ -863,7 +863,7 @@ abstract class diDB
             }
 
             if (is_bool($s)) {
-                return $s;
+                return $s ? 'TRUE' : 'FALSE';
             }
 
             if (is_array($s)) {
