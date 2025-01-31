@@ -1468,7 +1468,8 @@ abstract class diDB
                 if (
                     $filterKeywords &&
                     preg_match(
-                        '/^(WHERE|GROUP\s+BY|ORDER\s+BY|LIMIT|HAVING|ON)(\s|$)/i',
+                        // '/^(WHERE|GROUP\s+BY|ORDER\s+BY|LIMIT|HAVING|ON)(\s|$)/i',
+                        '/^(WHERE|GROUP|BY|ORDER|LIMIT|HAVING|ON)(\s|$)/i',
                         $alias
                     )
                 ) {
