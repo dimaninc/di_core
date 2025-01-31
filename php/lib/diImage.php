@@ -315,7 +315,7 @@ class diImage
                     $q = 9;
                 }
 
-                return imagejpeg($image, $dst_fn, $q);
+                return imagepng($image, $dst_fn, $q);
 
             case self::TYPE_BMP:
                 return imagebmp($image, $dst_fn, $this->jpeg_quality < 100);
