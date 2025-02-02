@@ -1,237 +1,239 @@
 .filter-block
-	--name-width 150px
-	--filter-block--tablet--pl 12px
-	--filter-block--tablet--pr 5px
-	--reset-filter--ml 10px
-	--reset-filter--mr 10px
-	--reset-filter--size 20px
+  --name-width 150px
+  --filter-block--tablet--pl 12px
+  --filter-block--tablet--pr 5px
+  --reset-filter--ml 10px
+  --reset-filter--mr 10px
+  --reset-filter--size 20px
 
-	font-family var(--font-primary)
-	color black
-	font-size 12px
-	background-color white
-	padding-left $classicStandardPadding
-	border-bottom 1px solid #CCCCCC
-	margin-bottom $classicStandardPadding
-	@media $mqTablet
-		padding-left var(--filter-block--tablet--pl)
-		padding-right var(--filter-block--tablet--pr)
-	.buttons
-		display flex
-		align-items center
-		flex-wrap wrap
-		gap 10px
-		padding 10px 0
-		margin-left var(--name-width)
-		@media $mqTablet
-			margin-left 0
-		> *
-			vertical-align top
-	.row
-		display flex
-		padding-bottom 7px
-		@media $mqTablet
-			flex-wrap wrap
-		{$entrineSkin} &
-			padding-bottom 15px
-			align-items center
-		.error
-			@extend .diadminform-row .value .error
-		> b
-			display block
-			padding-top 5px
-			width var(--name-width)
-			font-weight normal
-			@media $mqTablet
-				width 100%
-				font-weight bold
-				padding-bottom 4px
-		select {
-			max-width 100%
+  font-family var(--font-primary)
+  color black
+  font-size 12px
+  background-color white
+  padding-left $classicStandardPadding
+  border-bottom 1px solid #CCCCCC
+  margin-bottom $classicStandardPadding
+  @media $mqTablet
+    padding-left var(--filter-block--tablet--pl)
+    padding-right var(--filter-block--tablet--pr)
+  .buttons
+    display flex
+    align-items center
+    flex-wrap wrap
+    gap 10px
+    padding 10px 0
+    margin-left var(--name-width)
+    @media $mqTablet
+      margin-left 0
+    > *
+      vertical-align top
+  .row
+    display flex
+    padding-bottom 7px
+    @media $mqTablet
+      flex-wrap wrap
+    {$entrineSkin} &
+      padding-bottom 15px
+      align-items center
+    .error
+      @extend .diadminform-row .value .error
+    > b
+      display block
+      padding-top 5px
+      width var(--name-width)
+      flex-shrink 0
+      font-weight normal
+      @media $mqTablet
+        width 100%
+        font-weight bold
+        padding-bottom 4px
+    select {
+      min-width 0
+      max-width 100%
 
-			+ button
-			+ select {
-				margin-left 10px
-			}
-		}
-		input
-		select {
-			@media $mqTablet {
-				flex 1
-				min-width 0
-			}
-		}
-		.admin-filter-date-wrapper
-			position relative
-			display flex
-			align-items center
-			.empty-dates
-				position absolute
-				display flex
-				justify-content center
-				align-items center
-				top 0
-				bottom 0
-				left 0
-				right 0
-				cursor pointer
-				border 1px solid $classicColorInputBorder
-				border-radius $classicBorderRadiusInput
-				.date-sep
-					margin 0 2px
-				{$entrineSkin} &
-					border-radius $entrineBorderRadiusInput
-			.reset-filter
-				margin-left 0
-				opacity .6
-			&.set
-				.empty-dates
-					display none
-			&:not(.set)
-				.reset-filter
-				.selects
-					visibility hidden
-			+ button
-				margin-left 5px
-		.date-sep
-		.sel-sep
-			align-self flex-end
-			{$entrineSkin} &
-				align-self center
-		.sel-sep
-			margin 0 5px
-	.reset-filter
-	[data-purpose="reset-filter"]
-		display inline-block
-		cursor pointer
-		position relative
-		margin-left var(--reset-filter--ml)
-		margin-right var(--reset-filter--mr)
-		border-radius 50%
-		flex 0 1 auto
-		width var(--reset-filter--size)
-		height var(--reset-filter--size)
-		background-color #bbb
-		transition background-color .5s ease
-		align-self center
-		@media $mqTablet
-			margin-left 5px
-		&:hover
-			background-color #777
-		&:after
-			content '+'
-			position absolute
-			display inline-block
-			color white
-			transform rotate(45deg)
-			left 0
-			top 0
-			right 0
-			bottom 0
-			text-align center
-			line-height 20px
-	.upload-area
-		display inline-block
-		border-radius 8px
-		background red
-		position relative
-		cursor pointer
-		.caption
-			color white
-			line-height 26px
-			background none
-			margin 0
-			padding 0 15px
-			border-bottom 0
-	.progress-box
-		display inline-block
-		.wrapper
-			padding-left 40px
-			background url(/_core/i/ani/loading.gif) left center no-repeat
-		.name
-			width 200px
-			white-space nowrap
-			text-overflow ellipsis
-			overflow hidden
-			line-height 16px
-		.size
-			line-height 16px
-			float left
-			margin-right 10px
-			background #eee
-			border-radius 5px
-			padding 5px
+      + button
+      + select {
+        margin-left 10px
+      }
+    }
+    input
+    select {
+      @media $mqTablet {
+        flex 1
+        min-width 0
+      }
+    }
+    .admin-filter-date-wrapper
+      position relative
+      display flex
+      align-items center
+      .empty-dates
+        position absolute
+        display flex
+        justify-content center
+        align-items center
+        top 0
+        bottom 0
+        left 0
+        right 0
+        cursor pointer
+        border 1px solid $classicColorInputBorder
+        border-radius $classicBorderRadiusInput
+        .date-sep
+          margin 0 2px
+        {$entrineSkin} &
+          border-radius $entrineBorderRadiusInput
+      .reset-filter
+        margin-left 0
+        opacity .6
+      &.set
+        .empty-dates
+          display none
+      &:not(.set)
+        .reset-filter
+        .selects
+          visibility hidden
+      + button
+        margin-left 5px
+    .date-sep
+    .sel-sep
+      align-self flex-end
+      {$entrineSkin} &
+        align-self center
+    .sel-sep
+      margin 0 5px
+  .reset-filter
+  [data-purpose="reset-filter"]
+    display inline-block
+    cursor pointer
+    position relative
+    margin-left var(--reset-filter--ml)
+    margin-right var(--reset-filter--mr)
+    border-radius 50%
+    flex 0 0 auto
+    width var(--reset-filter--size)
+    height var(--reset-filter--size)
+    background-color #bbb
+    transition background-color .5s ease
+    align-self center
+    @media $mqTablet
+      margin-left 5px
+    &:hover
+      background-color #777
+    &:after
+      content '+'
+      position absolute
+      display inline-block
+      color white
+      transform rotate(45deg)
+      left 0
+      top 0
+      right 0
+      bottom 0
+      text-align center
+      line-height 20px
+  .upload-area
+    display inline-block
+    border-radius 8px
+    background red
+    position relative
+    cursor pointer
+    .caption
+      color white
+      line-height 26px
+      background none
+      margin 0
+      padding 0 15px
+      border-bottom 0
+  .progress-box
+    display inline-block
+    .wrapper
+      padding-left 40px
+      background url(/_core/i/ani/loading.gif) left center no-repeat
+    .name
+      width 200px
+      white-space nowrap
+      text-overflow ellipsis
+      overflow hidden
+      line-height 16px
+    .size
+      line-height 16px
+      float left
+      margin-right 10px
+      background #eee
+      border-radius 5px
+      padding 5px
 
 .export-block
-	padding-top 15px
-	textarea
-		width 90%
-		height 150px
+  padding-top 15px
+  textarea
+    width 90%
+    height 150px
 
 .filter-caption
-	font-weight bold
-	font-size 12px
-	background #EDF0F4
-	border-radius 10px
-	padding 10px
-	text-align center
-	margin 0 0 10px 0
+  font-weight bold
+  font-size 12px
+  background #EDF0F4
+  border-radius 10px
+  padding 10px
+  text-align center
+  margin 0 0 10px 0
 
 ul.filters-of-cat
-	ul-norm()
-	> li
-		float left
-		margin 0 20px 0 0
-		padding 0
+  ul-norm()
+  > li
+    float left
+    margin 0 20px 0 0
+    padding 0
 
 @keyframes progress-bar-stripes
-	from
-		background-position 40px 0
-	to
-		background-position 0 0
+  from
+    background-position 40px 0
+  to
+    background-position 0 0
 
 .progress
-	overflow hidden
-	height 20px
-	margin-bottom 20px
-	background-color #f5f5f5
-	border-radius 4px
-	box-shadow inset 0 1px 2px rgba(0, 0, 0, 0.1)
+  overflow hidden
+  height 20px
+  margin-bottom 20px
+  background-color #f5f5f5
+  border-radius 4px
+  box-shadow inset 0 1px 2px rgba(0, 0, 0, 0.1)
 
 .progress-bar
-	float left
-	width 0
-	height 100%
-	font-size 12px
-	color white
-	text-align center
-	background-color #428bca
-	box-shadow inset 0 -1px 0 rgba(0, 0, 0, 0.15)
-	transition width 0.6s ease
-	.progress.active &
-		animation progress-bar-stripes 2s linear infinite
+  float left
+  width 0
+  height 100%
+  font-size 12px
+  color white
+  text-align center
+  background-color #428bca
+  box-shadow inset 0 -1px 0 rgba(0, 0, 0, 0.15)
+  transition width 0.6s ease
+  .progress.active &
+    animation progress-bar-stripes 2s linear infinite
 
 .progress-striped
-	.progress-bar
-		background-image linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent)
-		background-size 40px 40px
-	.progress-bar-success
-		background-image linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent)
-	.progress-bar-info
-		background-image linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent)
-	.progress-bar-warning
-		background-image linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent)
-	.progress-bar-danger
-		background-image linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent)
+  .progress-bar
+    background-image linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent)
+    background-size 40px 40px
+  .progress-bar-success
+    background-image linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent)
+  .progress-bar-info
+    background-image linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent)
+  .progress-bar-warning
+    background-image linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent)
+  .progress-bar-danger
+    background-image linear-gradient(45deg, rgba(255, 255, 255, 0.15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.15) 50%, rgba(255, 255, 255, 0.15) 75%, transparent 75%, transparent)
 
 .progress-bar-success
-	background-color #5cb85c
+  background-color #5cb85c
 
 .progress-bar-info
-	background-color #5bc0de
+  background-color #5bc0de
 
 .progress-bar-warning
-	background-color #f0ad4e
+  background-color #f0ad4e
 
 .progress-bar-danger
-	background-color #d9534f
+  background-color #d9534f
