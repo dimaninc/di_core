@@ -221,6 +221,21 @@ class diRequest
         return self::$postRawParsed;
     }
 
+    public static function extractFile($name)
+    {
+        if (!isset($_FILES[$name]['name'])) {
+            return [];
+        }
+
+        return [
+            'name' => $_FILES[$name]['name'],
+            'type' => $_FILES[$name]['type'],
+            'tmp_name' => $_FILES[$name]['tmp_name'],
+            'error' => $_FILES[$name]['error'],
+            'size' => $_FILES[$name]['size'],
+        ];
+    }
+
     public static function isHttps()
     {
         return static::server('SERVER_PORT') == 443 ||
