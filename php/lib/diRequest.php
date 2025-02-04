@@ -221,10 +221,29 @@ class diRequest
         return self::$postRawParsed;
     }
 
-    public static function extractFile($name)
+    /**
+     * @param $name string Param name
+     * @param $idx int Index for multiple uploads
+     * @return array
+     */
+    public static function extractFile($name, $idx = null)
     {
         if (!isset($_FILES[$name]['name'])) {
             return [];
+        }
+
+        if ($idx !== null) {
+            if (!isset($_FILES[$name]['name'][$idx])) {
+                return [];
+            }
+
+            return [
+                'name' => $_FILES[$name]['name'][$idx],
+                'type' => $_FILES[$name]['type'][$idx],
+                'tmp_name' => $_FILES[$name]['tmp_name'][$idx],
+                'error' => $_FILES[$name]['error'][$idx],
+                'size' => $_FILES[$name]['size'][$idx],
+            ];
         }
 
         return [

@@ -1867,10 +1867,19 @@ class Submit
             unlink($fn);
         }
 
+        FileSystemHelper::createTree(
+            \diPaths::fileSystem(),
+            [$options['folder'] . $options['subfolder']],
+            self::DIR_CHMOD
+        );
+
         if (
-            !(move_uploaded_file($F['tmp_name'], $fn) || rename($F['tmp_name'], $fn))
+            !(
+                @move_uploaded_file($F['tmp_name'], $fn) ||
+                @rename($F['tmp_name'], $fn)
+            )
         ) {
-            dierror("Unable to copy file {$F['name']} to {$fn}");
+            throw new \Exception("Unable to copy file {$F['tmp_name']} to $fn");
         }
 
         chmod($fn, self::FILE_CHMOD);

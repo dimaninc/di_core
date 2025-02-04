@@ -3049,20 +3049,19 @@ abstract class CMS
         return $this->response;
     }
 
-    /**
-     * @return int
-     */
-    public function getResponseCode()
+    public function getResponseCode(): int
     {
         return $this->getResponse()->getResponseCode();
     }
 
-    /**
-     * @return bool
-     */
-    public function isResponseCode($code)
+    public function isResponseCode($code): bool
     {
         return $this->getResponse()->isResponseCode($code);
+    }
+
+    public function isResponseCodeOk(): bool
+    {
+        return $this->getResponse()->isResponseCode(HttpCode::OK);
     }
 
     /**

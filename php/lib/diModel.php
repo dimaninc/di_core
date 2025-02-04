@@ -449,19 +449,34 @@ class diModel implements \ArrayAccess
         return $this;
     }
 
-    public function initFromRequest($method = 'post', $excludeKeys = [])
-    {
-        $data = \diRequest::all($method);
+    public static function createFromRequest(
+        $allowedKeys = [],
+        $disallowedKeys = [],
+        $method = 'post'
+    ) {
+        return static::create()->initFromRequest(
+            $method,
+            $disallowedKeys,
+            $allowedKeys
+        );
+    }
+
+    public function initFromRequest(
+        $method = 'post',
+        $excludeKeys = [],
+        $includeKeys = []
+    ) {
+        $data = ArrayHelper::filterByKey(
+            \diRequest::all($method),
+            $includeKeys,
+            $excludeKeys
+        );
 
         if ($method === 'post' && !$data) {
             $data = \diRequest::rawPostParsed();
         }
 
         foreach ($data as $key => $value) {
-            if (in_array($key, $excludeKeys)) {
-                continue;
-            }
-
             if ($method === 'post') {
                 $value = $value ?: \diRequest::rawPost($key);
             }
