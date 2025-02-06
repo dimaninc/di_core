@@ -1783,12 +1783,10 @@ class diModel implements \ArrayAccess
         if (is_null($field)) {
             $this->destroy();
         } elseif (is_string($field)) {
-            if ($this->exists($field)) {
-                unset($this->ar[$field]);
-            }
+            unset($this->ar[$field]);
         } elseif (is_array($field)) {
             foreach ($field as $f) {
-                $this->kill($f);
+                unset($this->ar[$f]);
             }
         }
 
