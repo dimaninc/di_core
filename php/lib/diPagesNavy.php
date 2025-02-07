@@ -510,7 +510,7 @@ class diPagesNavy
     public function print_pages(
         $base_uri,
         $separator = ' ',
-        $pages_max_shown = 10,
+        $pages_max_shown = 5,
         $dots = '...'
     ) {
         $s = '';

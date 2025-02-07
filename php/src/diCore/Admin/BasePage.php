@@ -68,6 +68,8 @@ abstract class BasePage
     const LIST_LIST = 1;
     const LIST_GRID = 2;
 
+    const PAGES_NAVY_MAX_SHOWN = 10;
+
     /**
      * How to render list: grid or list
      *
@@ -1220,8 +1222,9 @@ abstract class BasePage
                 $this->getTpl()
                     ->assign([
                         'PAGES_NAVY' => $this->getPagesNavy()->print_pages(
-                            $this->getAdmin()->getCurrentPageUri()
-                            //Base::getPageUri($this->getModule())
+                            $this->getAdmin()->getCurrentPageUri(),
+                            ' ',
+                            static::PAGES_NAVY_MAX_SHOWN
                         ),
                     ])
                     ->parse('navy');
