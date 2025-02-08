@@ -80,10 +80,52 @@ var diNiceTable = function (opts) {
     return CP;
   };
 
+  this.initSaveOrder = function () {
+    function handler(event) {
+      var $row = $(this).closest('[data-role="row"]');
+      var $wrapper = $(this).closest('.nicetable-order');
+      var $input = $row.find('input[name="order"]');
+      var newValue = parseInt($input.val());
+      var oldValue = parseInt($wrapper.data('prev-value'));
+      var type = $row.closest('table[data-table]').data('table');
+      var id = $row.closest('tr[data-id]').data('id');
+      var shouldSubmit = event.type === 'keyup' ? event.keyCode == 13 : true;
+
+      if (shouldSubmit && id && newValue != oldValue) {
+        call(
+          'order',
+          {
+            id: id,
+            value: newValue
+          },
+          function (res) {
+            if (!res.ok) {
+              log('Error changing order: for #' + id);
+              return;
+            }
+
+            log('Changed order: ' + oldValue + ' -> ' + newValue + ' for #' + id);
+            $wrapper.attr('data-prev-value', newValue).data('prev-value', newValue);
+          }
+        );
+      }
+    }
+
+    settings.$table
+      .find('[data-role="row"] .nicetable-order button')
+      .on('click', handler);
+
+    settings.$table
+      .find('[data-role="row"] .nicetable-order input[name="order"]')
+      .on('keyup', handler);
+
+    return this;
+  };
+
   function constructor() {
     attachButtonEvents();
     initControlPanel();
-    self.attachRowEvents();
+    self.attachRowEvents().initSaveOrder();
   }
 
   function initControlPanel() {

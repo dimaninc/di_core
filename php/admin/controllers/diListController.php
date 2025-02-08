@@ -109,7 +109,7 @@ class diListController extends \diBaseAdminController
         return $ar;
     }
 
-    private function moveRecordsDown($table, $orderNum, $delta)
+    private function moveRecordsDown($table, $orderNum, $delta = 1)
     {
         $this->getDb()->update(
             $table,
@@ -352,6 +352,27 @@ class diListController extends \diBaseAdminController
     protected function getQueryArForMove(\diModel $m, $ar = [])
     {
         return array_merge($ar, $m->getQueryArForMove());
+    }
+
+    public function orderAction()
+    {
+        $m = $this->getTargetModel();
+        $value = \diRequest::post('value');
+
+        if (!isInteger($value)) {
+            return $this->badRequest('Integer value required');
+        }
+
+        $value = (int) $value;
+
+        $this->moveRecordsDown($m->getTable(), $value);
+
+        $m->set('order_num', $value)->save();
+
+        return $this->okay([
+            'id' => $m->getId(),
+            'order' => $value,
+        ]);
     }
 
     /**

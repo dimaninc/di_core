@@ -210,8 +210,8 @@ class diNiceTable
 
     public function getNavyBlock()
     {
-        return "<p class=\"navy\">" .
-            $this->pn->print_pages("{$_SERVER['SCRIPT_NAME']}?path={$this->table}") .
+        return '<p class="navy">' .
+            $this->pn->print_pages("{$_SERVER['SCRIPT_NAME']}?path=$this->table") .
             '</p>';
     }
 
@@ -278,7 +278,7 @@ class diNiceTable
 
         if (!$this->anchorPlaced) {
             $anchorName = self::getRowAnchorName($this->getRowModel()->getId());
-            $anchor = "<a name='{$anchorName}' class='anchor'></a>";
+            $anchor = "<a name='$anchorName' class='anchor'></a>";
 
             $text = $anchor . $text;
 
@@ -334,7 +334,7 @@ class diNiceTable
 
         $s .=
             "<div class=\"dinicetable_div\">" .
-            "<table class=\"dinicetable\" data-table=\"{$this->table}\"><tbody>\n";
+            "<table class=\"dinicetable\" data-table=\"$this->table\"><tbody>\n";
 
         if ($print_headline == self::PRINT_HEADLINE) {
             $headCols = [];
@@ -538,6 +538,18 @@ class diNiceTable
     public function downBtnCell()
     {
         return $this->btnCell($this->getButton('down'));
+    }
+
+    public function orderBtnCell()
+    {
+        $o = $this->getRowModel()->get('order_num');
+        $input =
+            "<div class=\"nicetable-order\" data-prev-value=\"$o\">" .
+            "<input type=\"text\" name=\"order\" value=\"$o\" size=\"5\">" .
+            '<button type="button">✅</button>' .
+            '</div>';
+
+        return $this->fillCell($input);
     }
 
     public function playBtnCell($opts = [])

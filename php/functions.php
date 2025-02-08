@@ -303,6 +303,11 @@ function isInteger($value)
         return true;
     }
 
+    // negative support
+    if (is_string($value) && preg_match('/^-?\d+$/', $value)) {
+        return true;
+    }
+
     return ctype_digit($value);
 }
 

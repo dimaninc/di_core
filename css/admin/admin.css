@@ -3825,6 +3825,20 @@ body[data-skin="entrine"] .nicetable-button[data-action="rollback"] {
   padding: 2px;
   border-radius: 8px;
 }
+.nicetable-order {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: box;
+  display: flex;
+  gap: 2px;
+}
+.nicetable-order button {
+  padding: 0;
+  border: 0;
+  background: none;
+}
 [data-purpose="tabs"] {
   list-style: none;
 }
