@@ -153,6 +153,22 @@ class diTwig
         return $this;
     }
 
+    protected function addDivideThousandsFilter()
+    {
+        $this->getEngine()->addFilter(
+            new TwigFilter(
+                'divide_thousands',
+                fn($x, $divider = ',', $length = 3) => StringHelper::divideThousands(
+                    $x,
+                    $divider,
+                    $length
+                )
+            )
+        );
+
+        return $this;
+    }
+
     protected function addPregReplaceFilter()
     {
         $this->getEngine()->addFilter(

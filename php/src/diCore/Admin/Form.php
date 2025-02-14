@@ -3351,7 +3351,7 @@ EOF;
             [
                 'type' => 'text',
                 'name' => "{$f}[$subfield]",
-                'id' => "{$field}[$subfield]",
+                'id' => "{$f}[$subfield]",
                 'data-subfield' => $subfield,
                 'value' => $dt[$subfield],
                 'size' => $subfield === 'dy' ? 4 : 2,
@@ -3375,27 +3375,27 @@ EOF;
         $input = join('&nbsp;', array_filter([$date ? $d : '', $time ? $t : '']));
 
         if ($date && $calendar_cfg) {
-            $uid = "{$table}_$field";
+            $uid = "{$table}_$f";
 
             if ($calendar_cfg === true) {
-                $calendar_cfg_js = "months_to_show: 1, date1: '$field', able_to_go_to_past: true";
+                $calendar_cfg_js = "months_to_show: 1, date1: '$f', able_to_go_to_past: true";
             } else {
                 $calendar_cfg_js = $calendar_cfg;
             }
 
             $input .= <<<EOF
 <span class="calendar-controls">
-<button type="button" onclick="c_{$uid}.toggle();" class="calendar-toggle w_hover">{$this->L(
+<button type="button" onclick="c_$uid.toggle();" class="calendar-toggle w_hover">{$this->L(
                 'calendar'
             )}</button>
-<button type="button" onclick="c_{$uid}.clear();" class="calendar-clear w_hover" data-purpose="reset">{$this->L(
+<button type="button" onclick="c_$uid.clear();" class="calendar-clear w_hover" data-purpose="reset">{$this->L(
                 'clear'
             )}</button>
 </span>
 
 <script type="text/javascript">
-var c_{$uid} = new diCalendar({
-	instance_name: 'c_{$uid}',
+var c_$uid = new diCalendar({
+	instance_name: 'c_$uid',
 	position_base: 'parent',
 	language: '{$this->getX()->getLanguage()}',
 	$calendar_cfg_js
