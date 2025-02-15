@@ -2,7 +2,7 @@
 	<ul class="table-edit-log">
 	{% set colspan = options['show_only_diff'] ? 1 : 4 %}
 	{% for rec in records %}
-		<li>
+		<li data-id="{{ rec.getId() }}">
 			<div class="author">
 				<b>{% if admins[rec['admin_id']].exists() %}<a href="{{ admins[rec['admin_id']]['admin_href'] }}">{% endif %}{{ admins[rec['admin_id']]['login'] ?: 'Robot' }}{% if admins[rec['admin_id']].exists() %}</a>{% endif %}</b>
 				<i>{{ rec['created_at_date'] }} {{ rec['created_at_time'] }}</i>

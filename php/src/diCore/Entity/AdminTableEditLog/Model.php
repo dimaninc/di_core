@@ -179,7 +179,8 @@ class Model extends \diModel
         $diffs = [];
 
         foreach ($this->getOldValues() as $field => $oldValue) {
-            $newValue = $newData[$field] ?? '';
+            $oldValue = $this->normalizeValue($oldValue ?? '');
+            $newValue = $this->normalizeValue($newData[$field] ?? '');
 
             if (!is_scalar($newValue) || !is_scalar($oldValue)) {
                 continue;
@@ -260,7 +261,7 @@ class Model extends \diModel
             return $a;
         }
 
-        return $a[$field] ?? null;
+        return $this->normalizeValue($a[$field] ?? null);
     }
 
     public function getNewValues($field = null)
@@ -271,7 +272,16 @@ class Model extends \diModel
             return $a;
         }
 
-        return $a[$field] ?? null;
+        return $this->normalizeValue($a[$field] ?? null);
+    }
+
+    protected function normalizeValue($v)
+    {
+        if (is_array($v) || is_object($v)) {
+            return json_encode($v);
+        }
+
+        return $v;
     }
 
     public function getDataDiff($field = null)
