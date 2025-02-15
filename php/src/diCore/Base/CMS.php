@@ -185,6 +185,7 @@ abstract class CMS
     protected $response;
 
     protected $bodyClasses = [];
+    protected $bodyAttributes = [];
 
     private $routes = [];
     private $origRoutes = [];
@@ -1223,6 +1224,12 @@ abstract class CMS
     protected function assignVarsBeforeFinalParse()
     {
         $this->getTwig()->assign([
+            'body_attributes' => $this->getBodyAttributes(),
+            'body_attributes_str' => ArrayHelper::toAttributesString(
+                $this->getBodyAttributes(),
+                false,
+                ArrayHelper::ESCAPE_HTML
+            ),
             'body_classes' => $this->getBodyClasses(),
         ]);
 
@@ -3094,5 +3101,28 @@ abstract class CMS
     public function getBodyClasses()
     {
         return $this->bodyClasses;
+    }
+
+    public function addBodyAttribute($attr, $value = null)
+    {
+        if (is_array($attr) && $value === null) {
+            $this->bodyAttributes = [...$this->bodyAttributes, ...$attr];
+        } else {
+            $this->bodyAttributes[$attr] = $value;
+        }
+
+        return $this;
+    }
+
+    public function removeBodyAttribute($attr)
+    {
+        unset($this->bodyAttributes[$attr]);
+
+        return $this;
+    }
+
+    public function getBodyAttributes()
+    {
+        return $this->bodyAttributes;
     }
 }
