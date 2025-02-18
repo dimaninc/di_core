@@ -428,7 +428,7 @@ class diDynamicRows
     {
         $onClick =
             $this->getOption('addRowOnClick') ?:
-            "return {$this->js_var_name}.add('{$this->field}');";
+            "return $this->js_var_name.add('$this->field');";
         $caption = $this->getOption('addRowCaption');
         $innerHtml = $this->getOption('addRowText');
         $cssClass = $this->getOption('addRowCssClass') ?: 'simple-button';
@@ -513,12 +513,17 @@ class diDynamicRows
                 $value = $r->$k ?? $defaultValue;
             }
 
+            // input
             $ar1[] = '{' . strtoupper($k) . '}';
             $ar2[] = $this->get_input(
                 $k,
                 $id,
                 $v['type'] != 'password' ? $value : ''
             );
+
+            // value
+            $ar1[] = '{' . strtoupper($k) . '#VALUE}';
+            $ar2[] = $value;
 
             if ($v['type'] == 'password') {
                 $ar1[] = '{' . strtoupper($k) . '2}';
