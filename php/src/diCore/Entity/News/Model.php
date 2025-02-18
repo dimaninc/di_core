@@ -105,18 +105,16 @@ class Model extends \diBasePrevNextModel
     {
         return mb_substr($this->getDate(), 0, 10) .
             ' ' .
-            ($this->getSlugSource() ?:
-            $this->getMenuTitle() ?:
-                $this->getTitle());
+            ($this->getSlugSource() ?: $this->getMenuTitle() ?: $this->getTitle());
     }
 
     public function getHref()
     {
-        return $this->__getPrefixForHref() .
-            '/' .
-            \diCurrentCMS::ct('news') .
-            '/' .
-            $this->getSlug() .
-            '/';
+        return "{$this->__hrefBase('news')}{$this->getSlug()}/";
+    }
+
+    protected function getBasePrevNextConditions()
+    {
+        return array_merge(parent::getBasePrevNextConditions(), ["visible = '1'"]);
     }
 }

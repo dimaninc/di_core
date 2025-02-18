@@ -104,7 +104,7 @@ class diBasePrevNextModel extends \diModel
 
     protected function getBasePrevNextConditions()
     {
-        return ["visible = '1'", "id != '{$this->getId()}'"];
+        return array_merge($this->getQueryArForMove(), ["id != '{$this->getId()}'"]);
     }
 
     private function getPrevNextQueries($i)
@@ -128,7 +128,7 @@ class diBasePrevNextModel extends \diModel
 
             switch ($cAr['type']) {
                 case self::CONDITION_TYPE_SAME:
-                    $condition = "{$field} = '{$this->get($field)}'";
+                    $condition = "$field = '{$this->get($field)}'";
                     break;
 
                 default:
@@ -152,7 +152,7 @@ class diBasePrevNextModel extends \diModel
             $prevDir = $isAsc ? 'DESC' : 'ASC';
             $nextDir = $isAsc ? 'ASC' : 'DESC';
 
-            /* todo: check this stuff when cound of fields > 2 */
+            /* todo: check this stuff when count of fields > 2 */
             if ($i < count($this->orderByOptions['fields']) - 1 && $j > 0) {
                 // no condition needed
             } else {
