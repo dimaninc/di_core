@@ -2060,6 +2060,7 @@ class diModel implements \ArrayAccess
     {
         $this->ar = [];
         $this->relatedData = [];
+        $this->jsonData = [];
         $this->id = null;
 
         return $this;

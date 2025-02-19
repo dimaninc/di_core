@@ -65,6 +65,11 @@ class diDynamicRows
     public $data_table, $data_id;
     public $js_var_name;
 
+    /*
+     * JSON data to update main field in the end before db-save process
+     */
+    protected $jsonData = [];
+
     private $uploaded_images = [];
     private $uploaded_files = [];
     private $uploaded_images_w = [];
@@ -246,14 +251,84 @@ class diDynamicRows
         return $this->data;
     }
 
+    public static function extractDataSafe(\diModel|null $m, $field)
+    {
+        if (!$m) {
+            return null;
+        }
+
+        [$masterField, $subField] = Submit::getFieldNamePair($field ?? '');
+
+        // part of complex json field
+        if ($subField && $m->hasJsonData($masterField, $subField)) {
+            return $m->getJsonData($masterField, $subField);
+        }
+
+        return $m->get($field);
+    }
+
     public function getData($field)
     {
+        [$masterField, $subField] = Submit::getFieldNamePair($field ?? '');
+
+        // part of complex json field
+        if ($subField) {
+            if (isset($this->jsonData[$masterField][$subField])) {
+                return $this->jsonData[$masterField][$subField];
+            }
+
+            return $this->getStoredModel()->getJsonData($masterField, $subField);
+        }
+
         return isset($this->data[$field]) ? $this->data[$field] : null;
+    }
+
+    public function setDataAr($ar)
+    {
+        foreach ($ar as $k => $v) {
+            $this->setData($k, $v);
+        }
+
+        return $this;
     }
 
     public function setData($field, $value)
     {
+        [$masterField, $subField] = Submit::getFieldNamePair($field);
+
+        // part of complex json field
+        if ($subField) {
+            $this->jsonData[$masterField][$subField] = $value;
+
+            return $this;
+        }
+
+        $this->getStoredModel()->set($field, $value);
         $this->data[$field] = $value;
+
+        return $this;
+    }
+
+    protected function formatName($field)
+    {
+        return Submit::formatName($field);
+    }
+
+    public function setJsonData()
+    {
+        if (!$this->jsonData) {
+            return $this;
+        }
+
+        foreach ($this->jsonData as $masterField => $data) {
+            foreach ($data as $subField => $value) {
+                $this->getStoredModel()->updateJsonData(
+                    $masterField,
+                    $subField,
+                    $value
+                );
+            }
+        }
 
         return $this;
     }
@@ -316,9 +391,10 @@ class diDynamicRows
         $s .= "<div class=\"dynamic-wrapper\"$addBottomRowInsideWrapperAttr>";
 
         while ($r = $this->getDb()->fetch($rs)) {
+            $m = (new \diModel($r, '#any'))->_setReadOnly(true);
             $this->data_id = (int) $r->id;
 
-            $s .= $this->get_row($r);
+            $s .= $this->get_row($m);
 
             if (isset($r->order_num)) {
                 $x = $r->order_num;
@@ -361,7 +437,7 @@ class diDynamicRows
         $s .= "<div data-purpose=\"anchor\" data-field=\"$this->field\" data-position=\"bottom\"></div>";
         $s .=
             "<script id=\"js_{$this->field}_resource\" type=\"text/template\">" .
-            $this->get_row(self::NEW_ID_STRING) .
+            $this->get_row() .
             '</script>';
         $s .=
             "<div id=\"js_{$this->field}_js_resource\" style=\"display: none;\">" .
@@ -472,17 +548,10 @@ class diDynamicRows
         return $flags_ar && in_array($flag, $flags_ar);
     }
 
-    function get_row($r)
+    function get_row(\diModel $m = null)
     {
+        $id = $m ? $m->getId() : self::NEW_ID_STRING;
         $this->scripts = [];
-
-        if (is_object($r)) {
-            $id = $r->id;
-        } else {
-            $id = $r;
-            $r = false;
-        }
-
         $ar1 = $ar2 = [];
         $hiddens = [];
 
@@ -506,11 +575,9 @@ class diDynamicRows
             }
 
             if (!empty($v['virtual']) && !empty($v['values_collector'])) {
-                $value = $r
-                    ? $v['values_collector']($r->id, (array) $r)
-                    : $defaultValue;
+                $value = $m ? $v['values_collector']($id, $m->get()) : $defaultValue;
             } else {
-                $value = $r->$k ?? $defaultValue;
+                $value = static::extractDataSafe($m, $k) ?? $defaultValue;
             }
 
             // input
@@ -544,7 +611,7 @@ class diDynamicRows
                 as $key => $callback
             ) {
                 $ar1[] = '{' . $key . '}';
-                $ar2[] = $callback((array) $r);
+                $ar2[] = $callback($m ? $m->get() : []);
             }
         }
 
@@ -552,18 +619,19 @@ class diDynamicRows
             ? ''
             : "<span class=\"close\" title=\"{$this->L(
                 'delete'
-            )}\" data-field=\"{$this->field}\" data-id=\"{$id}\"></span>";
+            )}\" data-field=\"$this->field\" data-id=\"$id\"></span>";
 
         $order_num_div =
             !isset($this->info_ar[$this->field]['fields']['order_num']) &&
-            isset($r->order_num)
-                ? "<input type=hidden name=\"{$this->field}_order_num[$id]\" value=\"" .
-                    ($r ? $r->order_num : '') .
-                    "\" data-field-name='order_num'>"
+            $m &&
+            $m->exists('order_num')
+                ? "<input type=hidden name=\"{$this->field}_order_num[$id]\" value=\"{$m->get(
+                    'order_num'
+                )}\" data-field-name=\"order_num\">"
                 : '';
 
-        return "<div id=\"{$this->field}_div[{$id}]\" class=\"dynamic-row\" data-id=\"$id\" data-main-field=\"{$this->field}\">" .
-            "<input type=hidden name=\"{$this->field}_ids_ar[]\" value=\"{$id}\" data-field-name=\"ids_ar\">" .
+        return "<div id=\"{$this->field}_div[$id]\" class=\"dynamic-row\" data-id=\"$id\" data-main-field=\"$this->field\">" .
+            "<input type=hidden name=\"{$this->field}_ids_ar[]\" value=\"$id\" data-field-name=\"ids_ar\">" .
             join("\n", $hiddens) .
             $kill_div .
             $order_num_div .
@@ -581,7 +649,8 @@ class diDynamicRows
             ];
         }
 
-        $name = "{$this->field}_{$field}[$id]";
+        $f = $this->formatName($field);
+        $name = "{$this->field}_{$f}[$id]";
         $input_params = '';
 
         $this->data[$name] = $value;
@@ -595,12 +664,12 @@ class diDynamicRows
                     break;
 
                 case 'radio':
-                    $this->setRadioInput($name, "{$this->field}_{$field}", $id);
+                    $this->setRadioInput($name, "{$this->field}_$f", $id);
                     break;
 
                 case 'date':
                 case 'date_str':
-                    $this->set_datetime_input($name, true, false);
+                    $this->set_datetime_input($name);
                     break;
 
                 case 'time':
@@ -654,13 +723,13 @@ class diDynamicRows
                         $type = 'text';
                     }
 
-                    $input_params .= " data-field-name='{$field}'";
+                    $input_params .= " data-field-name='$field'";
 
                     $static = $this->static_mode || $this->isFlag($ar, 'static');
 
                     $this->inputs[$name] = $static
                         ? StringHelper::out($value)
-                        : "<input type=\"{$type}\" name=\"$name\" id=\"$name\" value=\"" .
+                        : "<input type=\"$type\" name=\"$name\" id=\"$name\" value=\"" .
                             StringHelper::out($value) .
                             "\"$input_params>";
                     break;
@@ -1586,6 +1655,7 @@ EOF;
                 ->initFrom($this->test_r);
 
             $this->data = [];
+            $this->jsonData = [];
 
             // tech fields
             if (is_callable($techFieldsCallback)) {
@@ -1596,9 +1666,10 @@ EOF;
                     $this
                 );
 
-                foreach ($techData as $k => $v) {
-                    $this->getStoredModel()->set($k, $v);
-                }
+                $this->setDataAr($techData);
+                //foreach ($techData as $k => $v) {
+                // $this->getStoredModel()->set($k, $v);
+                //}
 
                 $techFieldsSet = true;
             }
@@ -1626,9 +1697,11 @@ EOF;
                         $rf = "{$this->field}_$k";
                         $val = isset($_POST[$rf]) && $_POST[$rf] == $id ? 1 : 0;
 
-                        $this->getStoredModel()->set($k, $val);
+                        // $this->getStoredModel()->set($k, $val);
+                        $this->setData($k, $val);
                     } elseif (isset($this->data[$k])) {
-                        $this->getStoredModel()->set($k, $this->data[$k]);
+                        // $this->getStoredModel()->set($k, $this->data[$k]);
+                        $this->setData($k, $this->data[$k]);
                     }
                 }
             }
@@ -1638,7 +1711,8 @@ EOF;
 
                 $this->data = extend($this->data, $techData);
 
-                $this->getStoredModel()->set($techData);
+                $this->setDataAr($techData);
+                // $this->getStoredModel()->set($techData);
             }
 
             if (!$rowExists && !$techFieldsSet) {
@@ -1652,6 +1726,11 @@ EOF;
                     '_id' => $this->id,
                 ]);
             }
+
+            $this->setJsonData();
+
+            // var_dump($this->getStoredModel()->get());
+            // die();
 
             $this->getStoredModel()->save();
             $resultIds[] = $this->getStoredModel()->getId();
@@ -1793,9 +1872,9 @@ EOF;
                         $this
                     );
 
-                    $this->data = extend($this->data, $_a);
-
-                    $this->getStoredModel()->set($_a);
+                    // $this->data = extend($this->data, $_a);
+                    // $this->getStoredModel()->set($_a);
+                    $this->setDataAr($_a);
 
                     $techFieldsSet = true;
                 }
@@ -1819,11 +1898,14 @@ EOF;
                     if (in_array($v['type'], ['pic', 'file']) && !$this->data[$k]) {
                     } else {
                         if ($v['type'] === 'radio') {
-                            $this->getStoredModel()->set($k, 0);
+                            // $this->getStoredModel()->set($k, 0);
+                            $this->setData($k, 0);
                         } elseif ($v['type'] === 'checkbox') {
-                            $this->getStoredModel()->set($k, $v['default']);
+                            // $this->getStoredModel()->set($k, $v['default']);
+                            $this->setData($k, $v['default']);
                         } elseif (isset($this->data[$k])) {
-                            $this->getStoredModel()->set($k, $this->data[$k]);
+                            // $this->getStoredModel()->set($k, $this->data[$k]);
+                            $this->setData($k, $this->data[$k]);
                         }
                     }
                 }
@@ -1836,17 +1918,17 @@ EOF;
                         $this
                     );
 
-                    $this->data = extend($this->data, $_a);
-
-                    $this->getStoredModel()->set($_a);
+                    // $this->data = extend($this->data, $_a);
+                    // $this->getStoredModel()->set($_a);
+                    $this->setDataAr($_a);
                 }
 
                 if (is_callable($beforeSaveCallback)) {
                     $_a = $beforeSaveCallback($this);
 
-                    $this->data = extend($this->data, $_a);
-
-                    $this->getStoredModel()->set($_a);
+                    // $this->data = extend($this->data, $_a);
+                    // $this->getStoredModel()->set($_a);
+                    $this->setDataAr($_a);
                 }
 
                 if (!$techFieldsSet) {
@@ -1891,52 +1973,53 @@ EOF;
         return $ids;
     }
 
-    public function set_data($f, $v, $id)
+    public function set_data($field, $v, $id)
     {
-        if ($this->isFlag($f, 'local')) {
+        if ($this->isFlag($field, 'local')) {
             return $this;
         }
 
+        $f = $this->formatName($field);
         $ff = "{$this->field}_$f";
 
         switch ($v['type']) {
             case 'password':
-                $this->data[$f] = isset($_POST[$ff][$id])
+                $this->data[$field] = isset($_POST[$ff][$id])
                     ? $_POST[$ff][$id]
                     : $v['default'];
-                $this->data[$f . '2'] = isset($_POST[$ff . '2'][$id])
+                $this->data[$field . '2'] = isset($_POST[$ff . '2'][$id])
                     ? $_POST[$ff . '2'][$id]
                     : $v['default'];
                 break;
 
             case 'date':
             case 'date_str':
-                $this->make_datetime($f, $id, true, false);
+                $this->make_datetime($field, $id, true, false);
                 break;
 
             case 'time':
             case 'time_str':
-                $this->make_datetime($f, $id, false, true);
+                $this->make_datetime($field, $id, false, true);
                 break;
 
             case 'datetime':
             case 'datetime_str':
-                $this->make_datetime($f, $id, true, true);
+                $this->make_datetime($field, $id, true, true);
                 break;
 
             case 'pic':
             case 'file':
-                $this->store_pic($f, $id, $v);
+                $this->store_pic($field, $id, $v);
                 break;
 
             case 'checkboxes':
-                $this->data[$f] = !empty($_POST[$ff][$id])
+                $this->data[$field] = !empty($_POST[$ff][$id])
                     ? ',' . join(',', $_POST[$ff][$id]) . ','
                     : '';
                 break;
 
             default:
-                $this->data[$f] = isset($_POST[$ff][$id])
+                $this->data[$field] = isset($_POST[$ff][$id])
                     ? $_POST[$ff][$id]
                     : ($v['type'] == 'checkbox'
                         ? 0
@@ -1952,17 +2035,17 @@ EOF;
                 case 'date':
                 case 'time':
                 case 'datetime':
-                    $this->data[$f] = intval($this->data[$f]);
+                    $this->data[$field] = intval($this->data[$field]);
                     break;
 
                 case 'float':
-                    $this->data[$f] = str_replace(',', '.', $this->data[$f]);
-                    $this->data[$f] = floatval($this->data[$f]);
+                    $this->data[$field] = str_replace(',', '.', $this->data[$field]);
+                    $this->data[$field] = floatval($this->data[$field]);
                     break;
 
                 case 'double':
-                    $this->data[$f] = str_replace(',', '.', $this->data[$f]);
-                    $this->data[$f] = doubleval($this->data[$f]);
+                    $this->data[$field] = str_replace(',', '.', $this->data[$field]);
+                    $this->data[$field] = doubleval($this->data[$field]);
                     break;
 
                 /*
@@ -1982,31 +2065,31 @@ EOF;
 
                 case 'pic':
                 case 'file':
-                    if (empty($this->data[$f])) {
-                        $this->data[$f] = '';
+                    if (empty($this->data[$field])) {
+                        $this->data[$field] = '';
                     }
                     break;
 
                 case 'password':
                     if (
-                        $this->data[$f] &&
-                        $this->data[$f] == $this->data[$f . '2']
+                        $this->data[$field] &&
+                        $this->data[$field] == $this->data[$field . '2']
                     ) {
                         $this->data[
-                            $f
+                            $field
                         ] = $this->getCurrentModel()::hashPasswordFromRawToDb(
-                            $this->data[$f],
-                            $f
+                            $this->data[$field],
+                            $field
                         );
                     } else {
-                        $r = $this->getDb()->r($this->data_table, $id, $f);
-                        $this->data[$f] = $r ? $r->$f : '';
+                        $r = $this->getDb()->r($this->data_table, $id, $field);
+                        $this->data[$field] = $r ? $r->$field : '';
                     }
                     break;
 
                 case 'checkbox':
                 case 'radio':
-                    $this->data[$f] = $this->data[$f] ? true : false;
+                    $this->data[$field] = $this->data[$field] ? true : false;
                     break;
             }
         }
@@ -2016,7 +2099,8 @@ EOF;
 
     function make_datetime($field, $id, $date = true, $time = false)
     {
-        $ff = "{$this->field}_$field";
+        $f = $this->formatName($field);
+        $ff = "{$this->field}_$f";
 
         $ar = getdate();
 
@@ -2069,7 +2153,7 @@ EOF;
 
     public static function getMultipleUploadFieldName($field)
     {
-        return self::MULTIPLE_UPLOAD_FIELD_NAME . $field;
+        return self::MULTIPLE_UPLOAD_FIELD_NAME . Submit::formatName($field);
     }
 
     protected function store_pic($field, $id, $field_config)
@@ -2086,9 +2170,10 @@ EOF;
             0775
         );
 
+        $f = $this->formatName($field);
         $ff = $multiUploadMode
             ? self::getMultipleUploadFieldName($this->field)
-            : "{$this->field}_$field";
+            : "{$this->field}_$f";
 
         if ($multiUploadMode) {
             $id = self::MULTIPLE_UPLOAD_FIRST_ID - $id - 1;

@@ -1512,11 +1512,11 @@ EOF;
 
     function get_dynamic_row($id, $field, $value, $prefix = '', $suffix = '')
     {
-        return "<div id=\"{$field}_div[{$id}]\" class=\"dynamic-row\">
+        return "<div id=\"{$field}_div[$id]\" class=\"dynamic-row\">
 			$prefix
-			<input type=\"text\" id=\"{$field}[{$id}]\" name=\"{$field}[{$id}]\" value=\"{$value}\" />
+			<input type=\"text\" id=\"{$field}[$id]\" name=\"{$field}[$id]\" value=\"$value\" />
 			$suffix
-			[<a href=\"#\" onclick=\"return diref_{$this->table}.remove('{$field}',{$id});\">&ndash;</a>]
+			[<a href=\"#\" onclick=\"return diref_{$this->table}.remove('$field',$id);\">&ndash;</a>]
 			</div>";
     }
 

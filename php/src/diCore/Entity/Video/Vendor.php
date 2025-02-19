@@ -147,18 +147,28 @@ class Vendor extends SimpleContainer
 
     private static function getVimeoData($videoUid)
     {
-        return unserialize(
-            self::getFile(sprintf('http://vimeo.com/api/v2/video/%s.php', $videoUid))
-        );
+        $url = "http://vimeo.com/api/v2/video/$videoUid.php";
+
+        return unserialize(self::getFile($url));
     }
 
     private static function getRuTubeData($videoUid)
     {
-        return (array) json_decode(
-            self::getFile(
-                sprintf('https://rutube.ru/api/video/%s?format=json', $videoUid)
-            )
-        );
+        $url = "https://rutube.ru/api/video/$videoUid?format=json";
+
+        return (array) json_decode(self::getFile($url));
+    }
+
+    public static function getDurationInSeconds($vendor, $videoUid)
+    {
+        switch ($vendor) {
+            case self::RU_TUBE:
+                $info = self::getRuTubeData($videoUid);
+
+                return $info['duration'] ?? null;
+        }
+
+        return null;
     }
 
     public static function getThumbnail($vendor, $videoUid)
