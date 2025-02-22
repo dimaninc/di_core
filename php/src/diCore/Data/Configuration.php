@@ -413,7 +413,11 @@ class Configuration
         }
 
         $folder = \diPaths::fileSystem() . self::getFolder();
-        FileSystemHelper::createTree($folder, $this->dirChmod);
+        FileSystemHelper::createTree(
+            \diPaths::fileSystem(),
+            self::getFolder(),
+            $this->dirChmod
+        );
 
         foreach ($_FILES as $k => $v) {
             if (
