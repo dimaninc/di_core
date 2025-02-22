@@ -756,9 +756,11 @@ ul.table-edit-log
     {$entrineSkin} & {
         background-color white
         margin-left 160px
+        @media $mqHiDPI {
+          margin-left 12px
+          margin-right 12px
+        }
         @media $mqTablet {
-            margin-left 12px
-            margin-right 12px
             padding 0
             left 0
         }

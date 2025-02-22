@@ -3003,10 +3003,14 @@ body[data-skin="entrine"] .submit-block {
   background-color: #fff;
   margin-left: 160px;
 }
-@media screen and (max-width: 768px) {
+@media screen and (max-width: 1440px) {
   body[data-skin="entrine"] .submit-block {
     margin-left: 12px;
     margin-right: 12px;
+  }
+}
+@media screen and (max-width: 768px) {
+  body[data-skin="entrine"] .submit-block {
     padding: 0;
     left: 0;
   }
