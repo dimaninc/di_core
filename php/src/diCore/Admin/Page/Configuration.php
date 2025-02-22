@@ -141,47 +141,43 @@ class Configuration extends \diCore\Admin\BasePage
 
                 case 'pic':
                 case 'file':
-                    $ff =
-                        \diPaths::fileSystem() .
-                        Cfg::getInstance()->getFolder() .
-                        $val;
-                    $ff_orig = '/' . Cfg::getInstance()->getFolder() . $val;
-                    $path = '/' . Cfg::getInstance()->getFolder();
+                    $folder = Cfg::getInstance()->getFolder();
+                    $ff = \diPaths::fileSystem() . $folder . $val;
+                    $ff_orig = '/' . $folder . $val;
+                    $path = '/' . $folder;
                     $ext = strtoupper(StringHelper::fileExtension($ff));
-
-                    $info = "$ext";
+                    $info = $val;
+                    $ff_w = $ff_h = $ff_t = 0;
 
                     if (is_file($ff)) {
-                        list($ff_w, $ff_h, $ff_t) = getimagesize($ff);
+                        [$ff_w, $ff_h, $ff_t] = getimagesize($ff);
                         $ff_s = str_filesize(filesize($ff));
-                        $info .=
-                            $ff_w || $ff_h ? " {$ff_w}x{$ff_h}, $ff_s" : " $ff_s";
-                    } else {
-                        $ff_w = $ff_h = $ff_t = 0;
+                        $info .= $ff_w || $ff_h ? ", {$ff_w}x{$ff_h}px" : '';
+                        $info .= ", $ff_s";
                     }
 
                     if ($v['type'] == 'pic') {
-                        $img_tag =
+                        $imgTag =
                             $ff_t == 4 || $ff_t == 13
                                 ? "<script type=\"text/javascript\">run_movie(\"{$path}{$val}\", \"$ff_w\", \"$ff_h\", \"opaque\");</script>"
-                                : "<img src='$path{$val}' border='0'>";
+                                : "<img src='$path$val' border='0'>";
 
                         //$ff_w2 = $ff_w > 500 ? 500 : $ff_w;
-                        $img_tag = "<div class='uploaded-pic'>$img_tag</div>";
+                        $imgTag = "<div class='uploaded-pic'>$imgTag</div>";
                         // style='width: {$ff_w2}px; overflow-x: auto;'
                     } elseif (in_array($ext, ['MP4', 'M4V', 'OGV', 'WEBM', 'AVI'])) {
                         // video
-                        $mime_type = \diCore\Admin\Form::get_mime_type_by_ext($ext);
+                        // $mime_type = \diCore\Admin\Form::get_mime_type_by_ext($ext);
                         // type=\"$mime_type\"
-                        $img_tag = "<div><video preload=\"none\" controls width=400 height=225><source src=\"$ff_orig\"></video></div>";
+                        $imgTag = "<div><video preload=\"none\" controls width=400 height=225><source src=\"$ff_orig\"></video></div>";
                     } else {
-                        $img_tag = '';
+                        $imgTag = '';
                     }
 
                     $valueSuffix = $val
                         ? sprintf(
                             '<div>%s</div><div class="file-info">%s <a href="%s">%s</a></div>',
-                            $img_tag,
+                            $imgTag,
                             $info,
                             \diLib::getAdminWorkerPath(
                                 'configuration',

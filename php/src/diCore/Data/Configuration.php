@@ -182,11 +182,9 @@ class Configuration
     {
         if ($name2 = self::exists($name)) {
             return self::getPropertyOption($name2, $property);
-        } else {
-            self::throwException($name);
-
-            return null;
         }
+
+        self::throwException($name);
     }
 
     /**
@@ -199,9 +197,9 @@ class Configuration
     {
         if ($name = self::exists($name)) {
             return self::getPropertyOption($name, $property);
-        } else {
-            return $default;
         }
+
+        return $default;
     }
 
     public static function getArray($pattern = null)
@@ -309,7 +307,9 @@ class Configuration
                 continue;
             }
 
-            self::$data[$r[$this->nameField]]['value'] = $this->adjustAfterDB(
+            self::$data[$r[$this->nameField]][
+                $this->valueField
+            ] = $this->adjustAfterDB(
                 $r[$this->valueField],
                 self::getPropertyType($r[$this->nameField])
             );
@@ -320,9 +320,7 @@ class Configuration
 
     public static function getPropertyOption($name, $option)
     {
-        return isset(self::$data[$name][$option])
-            ? self::$data[$name][$option]
-            : null;
+        return self::$data[$name][$option] ?? null;
     }
 
     public static function getPropertyType($name)
@@ -344,13 +342,11 @@ class Configuration
     {
         if (!self::exists($name)) {
             self::throwException($name);
-
-            return null;
         }
 
         $r = $this->getDB()->ar(
             $this->tableName,
-            "WHERE {$this->nameField} = '$name'"
+            "WHERE $this->nameField = '$name'"
         );
 
         return $this->adjustAfterDB(
@@ -372,7 +368,7 @@ class Configuration
                     self::getPropertyType($name)
                 ),
             ],
-            'name'
+            $this->nameField
         );
 
         $this->getDB()->dierror();
@@ -403,71 +399,53 @@ class Configuration
                         $checkboxesAr[] = $full_k;
                     }
                 }
-            } else {
-                if (self::exists($k)) {
-                    $this->setToDB($k, $v);
 
-                    if (self::getPropertyType($k) == 'checkbox') {
-                        $checkboxesAr[] = $k;
-                    }
+                continue;
+            }
+
+            if (self::exists($k)) {
+                $this->setToDB($k, $v);
+
+                if (self::getPropertyType($k) == 'checkbox') {
+                    $checkboxesAr[] = $k;
                 }
             }
         }
 
-        foreach ((array) $_FILES as $k => $v) {
+        $folder = \diPaths::fileSystem() . self::getFolder();
+        FileSystemHelper::createTree($folder, $this->dirChmod);
+
+        foreach ($_FILES as $k => $v) {
             if (
-                self::exists($k) &&
-                in_array(self::getPropertyType($k), ['pic', 'file'])
+                !self::exists($k) ||
+                !in_array(self::getPropertyType($k), ['pic', 'file']) ||
+                !empty($_FILES[$k]['error'])
             ) {
-                if (isset($_FILES[$k]) && $_FILES[$k]['error'] == 0) {
-                    FileSystemHelper::createTree(
-                        \diPaths::fileSystem(),
-                        self::getFolder(),
-                        $this->dirChmod
-                    );
-
-                    $ext = strtolower(
-                        '.' . StringHelper::fileExtension($_FILES[$k]['name'])
-                    );
-
-                    do {
-                        $pic = substr(get_unique_id(), 0, 10) . $ext;
-                    } while (
-                        is_file(\diPaths::fileSystem() . self::getFolder() . $pic)
-                    );
-
-                    if (
-                        !move_uploaded_file(
-                            $_FILES[$k]['tmp_name'],
-                            \diPaths::fileSystem() . self::getFolder() . $pic
-                        )
-                    ) {
-                        throw new \Exception(
-                            "Unable to copy file {$_FILES[$k]['name']} to " .
-                                \diPaths::fileSystem() .
-                                self::getFolder() .
-                                $pic
-                        );
-                    }
-
-                    if (
-                        self::get($k) &&
-                        is_file(
-                            \diPaths::fileSystem() .
-                                self::getFolder() .
-                                self::get($k)
-                        )
-                    ) {
-                        unlink(
-                            \diPaths::fileSystem() .
-                                self::getFolder() .
-                                self::get($k)
-                        );
-                    }
-
-                    $this->setToDB($k, $pic);
-                }
+                continue;
             }
+
+            do {
+                $pic = Submit::getGeneratedFilename(
+                    $folder,
+                    $_FILES[$k]['name'],
+                    self::getPropertyOption($k, 'naming') ?:
+                    Submit::FILE_NAMING_RANDOM
+                );
+                $fullPic = $folder . $pic;
+            } while (is_file($fullPic));
+
+            if (!move_uploaded_file($_FILES[$k]['tmp_name'], $fullPic)) {
+                throw new \Exception(
+                    "Unable to copy file {$_FILES[$k]['name']} to $fullPic"
+                );
+            }
+
+            // removing old file after storing new one to renew filename
+            if (self::get($k) && is_file($folder . self::get($k))) {
+                unlink($folder . self::get($k));
+            }
+
+            $this->setToDB($k, $pic);
         }
 
         foreach (self::$data as $_k => $_v) {
@@ -491,17 +469,17 @@ class Configuration
 
     public static function hasFlag($name, $flag)
     {
-        if (self::exists($name)) {
-            $flags = self::getPropertyOption($name, 'flags');
-
-            if (!is_array($flags)) {
-                $flags = [$flags];
-            }
-
-            return in_array($flag, $flags);
+        if (!self::exists($name)) {
+            return false;
         }
 
-        return false;
+        $flags = self::getPropertyOption($name, 'flags');
+
+        if (!is_array($flags)) {
+            $flags = [$flags];
+        }
+
+        return in_array($flag, $flags);
     }
 
     public static function getData()
@@ -517,34 +495,37 @@ class Configuration
         switch (Connection::get()::getEngine()) {
             case Engine::SQLITE:
                 return [
-                    "CREATE TABLE IF NOT EXISTS `{$this->tableName}`(
+                    "CREATE TABLE IF NOT EXISTS `$this->tableName`(
                         id integer not null primary key autoincrement,
-                        {$this->nameField} varchar(255),
-                        {$this->valueField} text
+                        $this->nameField varchar(255),
+                        $this->valueField text
                     );",
-                    "CREATE INDEX IF NOT EXISTS `{$this->tableName}_idx` ON `{$this->tableName}` ({$this->nameField});",
+                    "CREATE INDEX IF NOT EXISTS `{$this->tableName}_idx` ON `$this->tableName` ($this->nameField);",
                 ];
 
             case Engine::POSTGRESQL:
                 return [
-                    "CREATE TABLE IF NOT EXISTS \"{$this->tableName}\"(
+                    "CREATE TABLE IF NOT EXISTS \"$this->tableName\"(
                         \"id\" SERIAL PRIMARY KEY,
-                        \"{$this->nameField}\" varchar(255),
-                        \"{$this->valueField}\" text,
-                        UNIQUE(\"{$this->nameField}\")
+                        \"$this->nameField\" varchar(255),
+                        \"$this->valueField\" text,
+                        UNIQUE(\"$this->nameField\")
 		            );",
                 ];
 
-            default:
+            case Engine::MYSQL:
                 return [
-                    "CREATE TABLE IF NOT EXISTS `{$this->tableName}`(
+                    "CREATE TABLE IF NOT EXISTS `$this->tableName`(
                         `id` int not null auto_increment,
-                        `{$this->nameField}` varchar(255),
-                        `{$this->valueField}` text,
+                        `$this->nameField` varchar(255),
+                        `$this->valueField` text,
                         unique key `idx`(`{$this->nameField}`),
                         primary key(`id`)
-		            ) ENGINE=InnoDB DEFAULT CHARSET={$charset} COLLATE={$collation};",
+		            ) ENGINE=InnoDB DEFAULT CHARSET=$charset COLLATE=$collation;",
                 ];
+
+            default:
+                throw new \Exception('Database engine not supported for config');
         }
     }
 
