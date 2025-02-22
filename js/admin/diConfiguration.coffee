@@ -13,7 +13,7 @@ class diConfiguration
                 window.location.reload()
             false
 
-        $ '.configuration form .grid .file-info a'
+        $ '.configuration form .grid .file-info a[data-purpose="del"]'
         .on 'click', ->
             confirm 'Вы уверены?'
 

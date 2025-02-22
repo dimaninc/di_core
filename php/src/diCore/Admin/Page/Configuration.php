@@ -146,7 +146,7 @@ class Configuration extends \diCore\Admin\BasePage
                     $ff_orig = '/' . $folder . $val;
                     $path = '/' . $folder;
                     $ext = strtoupper(StringHelper::fileExtension($ff));
-                    $info = $val;
+                    $info = "<a href=\"$path$val\" target=_blank>$val</a>";
                     $ff_w = $ff_h = $ff_t = 0;
 
                     if (is_file($ff)) {
@@ -159,7 +159,7 @@ class Configuration extends \diCore\Admin\BasePage
                     if ($v['type'] == 'pic') {
                         $imgTag =
                             $ff_t == 4 || $ff_t == 13
-                                ? "<script type=\"text/javascript\">run_movie(\"{$path}{$val}\", \"$ff_w\", \"$ff_h\", \"opaque\");</script>"
+                                ? "<script type=\"text/javascript\">run_movie(\"$path$val\", \"$ff_w\", \"$ff_h\", \"opaque\");</script>"
                                 : "<img src='$path$val' border='0'>";
 
                         //$ff_w2 = $ff_w > 500 ? 500 : $ff_w;
@@ -176,7 +176,7 @@ class Configuration extends \diCore\Admin\BasePage
 
                     $valueSuffix = $val
                         ? sprintf(
-                            '<div>%s</div><div class="file-info">%s <a href="%s">%s</a></div>',
+                            '<div>%s</div><div class="file-info">%s <a href="%s" data-purpose="del">%s</a></div>',
                             $imgTag,
                             $info,
                             \diLib::getAdminWorkerPath(
