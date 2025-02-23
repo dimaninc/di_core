@@ -1188,7 +1188,15 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
      */
     protected function getQueryTable()
     {
-        return $this->addAliasToTable($this->getTable());
+        $t = $this->addAliasToTable($this->getTable());
+
+        foreach ($this->sqlParts['join'] as $join) {
+            $operator = "{$join['type']} JOIN";
+
+            $t .= " $operator {$join['table']} {$join['alias']} ON {$join['on']}";
+        }
+
+        return $t;
     }
 
     /**
@@ -1914,6 +1922,32 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
     public function resetFilters()
     {
         $this->sqlParts['where'] = [];
+
+        return $this;
+    }
+
+    /**
+     * @param array{ table: string, alias: string, on: string } $options
+     * @return $this
+     */
+    public function innerJoin(array $options)
+    {
+        $this->sqlParts['join'][] = extend(
+            [
+                'type' => 'INNER',
+                'table' => null,
+                'alias' => null,
+                'on' => null,
+            ],
+            $options
+        );
+
+        return $this;
+    }
+
+    public function resetJoins()
+    {
+        $this->sqlParts['join'] = [];
 
         return $this;
     }
