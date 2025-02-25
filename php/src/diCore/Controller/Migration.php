@@ -18,14 +18,14 @@ class Migration extends \diBaseAdminController
 
     public function upAction()
     {
-        $this->Manager->run($this->param(0), true);
+        $this->Manager->run($this->param(0) ?: \diRequest::get('idx'), true);
 
         $this->redirect();
     }
 
     public function downAction()
     {
-        $this->Manager->run($this->param(0), false);
+        $this->Manager->run($this->param(0) ?: \diRequest::get('idx'), false);
 
         $this->redirect();
     }
