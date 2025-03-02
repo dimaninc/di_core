@@ -268,6 +268,27 @@ class ConnectionData
         return [
             [
                 'host' => 'localhost',
+                'port' => 15432,
+                'login' => 'postgres',
+                'password' => $password,
+                'database' => $database,
+            ],
+            [
+                'host' => '127.0.0.1',
+                'port' => 15432,
+                'login' => 'postgres',
+                'password' => $password,
+                'database' => $database,
+            ],
+            [
+                'host' => '/var/run/postgresql',
+                'port' => 15432,
+                'login' => 'postgres',
+                'password' => $password,
+                'database' => $database,
+            ],
+            [
+                'host' => 'localhost',
                 'port' => 5432,
                 'login' => 'postgres',
                 'password' => $password,
