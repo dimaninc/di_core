@@ -162,11 +162,22 @@ function diAudioPlayer(_opts) {
   };
 
   this.getCurrentTime = function () {
+    if (isNaN(this.audio.currentTime)) {
+      return 0;
+    }
+
     return this.audio.currentTime;
   };
 
   this.setCurrentTime = function (time) {
-    this.audio.currentTime = Number(time);
+    var t = Number(time);
+
+    if (isNaN(t)) {
+      console.debug('Attempt to set NaN audio current time');
+      return this;
+    }
+
+    this.audio.currentTime = t;
 
     return this;
   };
@@ -178,6 +189,10 @@ function diAudioPlayer(_opts) {
   };
 
   this.getDuration = function () {
+    if (isNaN(this.audio.duration)) {
+      return 0;
+    }
+
     return this.audio.duration;
   };
 
