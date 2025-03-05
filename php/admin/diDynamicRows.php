@@ -1745,9 +1745,10 @@ EOF;
             ? $m->getPicsFolder()
             : $dynamic_pics_folder . "$this->table/";
 
-        $killQuery =
-            "WHERE $this->subquery and id" .
-            $this->getDb()::in($resultIds, false, false);
+        $exceptQuery = $resultIds
+            ? "AND id{$this->getDb()::in($resultIds, false, false)}"
+            : '';
+        $killQuery = "WHERE $this->subquery $exceptQuery";
         $kill_rs = $this->getDb()->rs($this->data_table, $killQuery);
         while ($kill_r = $this->getDb()->fetch($kill_rs)) {
             foreach ($fileFields as $field) {
