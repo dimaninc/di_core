@@ -1338,22 +1338,19 @@ class Submit
                 continue;
             }
 
+            $f = self::formatName($field);
             //$this->setData($field, $this->getCurRec($field));
 
-            if (isset($_FILES[$field]) && !$_FILES[$field]['error']) {
+            if (isset($_FILES[$f]) && !$_FILES[$f]['error']) {
                 $oldExt = $this->getData($field)
                     ? strtolower(StringHelper::fileExtension($this->getData($field)))
                     : '';
                 $newExt = strtolower(
-                    StringHelper::fileExtension($_FILES[$field]['name'])
+                    StringHelper::fileExtension($_FILES[$f]['name'])
                 );
 
                 if (!$this->getData($field)) {
-                    $this->generateFilename(
-                        $field,
-                        $folder,
-                        $_FILES[$field]['name']
-                    );
+                    $this->generateFilename($field, $folder, $_FILES[$f]['name']);
                 } elseif ($oldExt != $newExt) {
                     $this->setData(
                         $field,
@@ -1372,11 +1369,11 @@ class Submit
                         [
                             'folder' => $folder,
                         ],
-                        $_FILES[$field]
+                        $_FILES[$f]
                     );
                 } else {
                     $callback(
-                        $_FILES[$field],
+                        $_FILES[$f],
                         $field,
                         $folder,
                         $this->getData($field),
