@@ -1425,23 +1425,25 @@ EOF;
         return StringHelper::out($value, true);
     }
 
-    public static function valueFormatterJson($value, $field)
+    public static function valuePrinterJson($value, $field)
     {
         if (is_string($value)) {
             $value = json_decode($value);
         }
 
         return print_r($value, true);
-        /*
-        return json_encode(
-            $value,
-            JSON_PRETTY_PRINT |
-                JSON_UNESCAPED_SLASHES |
-                JSON_UNESCAPED_UNICODE |
-                JSON_THROW_ON_ERROR,
-            5
+    }
+
+    public static function valueFormatterJson($value, $field)
+    {
+        if (is_string($value)) {
+            $value = json_decode($value);
+        }
+
+        return static::valueFormatterEscapeAmp(
+            json_encode($value, JSON_THROW_ON_ERROR),
+            $field
         );
-        */
     }
 
     protected function getRow($field, $title, $value, $options = [])
@@ -2111,16 +2113,13 @@ EOF;
             return $this->setTextareaInput($field);
         }
 
-        /*
         $this->setFieldOption($field, 'valueFormatter', [
             static::class,
             'valueFormatterJson',
         ]);
-        */
-        $formatted = self::valueFormatterJson($this->getData($field), $field);
+        $formatted = self::valuePrinterJson($this->getData($field), $field);
 
         $this->inputs[$field] = "<pre class=\"code\">$formatted</pre>";
-        // '<pre class="code">' . $this->formatValue($field) . '</pre>';
 
         $this->force_inputs_fields[$field] = true;
 
