@@ -1431,7 +1431,17 @@ EOF;
             $value = json_decode($value);
         }
 
-        return json_encode($value, JSON_PRETTY_PRINT);
+        return print_r($value, true);
+        /*
+        return json_encode(
+            $value,
+            JSON_PRETTY_PRINT |
+                JSON_UNESCAPED_SLASHES |
+                JSON_UNESCAPED_UNICODE |
+                JSON_THROW_ON_ERROR,
+            5
+        );
+        */
     }
 
     protected function getRow($field, $title, $value, $options = [])
@@ -1579,26 +1589,25 @@ EOF;
         }
 
         if (!StringHelper::contains($templateName, '/')) {
-            $templateName = 'admin/' . $this->getTable() . '/' . $templateName;
+            $templateName = "admin/{$this->getTable()}/$templateName";
         }
+
+        $vars = extend(
+            [
+                'id' => $this->getId(),
+                'table' => $this->getTable(),
+                'type' => \diTypes::getId($this->getTable()),
+                'field' => $field,
+                'value' => $this->getData($field),
+            ],
+            $data
+        );
 
         $this->setInput(
             $field,
             $this->getX()
                 ->getTwig()
-                ->parse(
-                    $templateName,
-                    extend(
-                        [
-                            'id' => $this->getId(),
-                            'table' => $this->getTable(),
-                            'type' => \diTypes::getId($this->getTable()),
-                            'field' => $field,
-                            'value' => $this->getData($field),
-                        ],
-                        $data
-                    )
-                )
+                ->parse($templateName, $vars)
         );
 
         return $this;
@@ -2049,27 +2058,23 @@ EOF;
     public function setWysiwygInput($field)
     {
         if ($this->static_mode || $this->isFlag($field, 'static')) {
-            $this->inputs[$field] = "<div class='static-text'>{$this->getData(
-                $field
-            )}</div>";
+            $v = $this->getData($field);
+            $this->inputs[$field] = "<div class='static-text'>$v</div>";
         } else {
             $attrs = $this->getInputAttributesString($field, [
                 'name' => $this->formatName($field),
                 'cols' => 80,
                 'rows' => 10,
             ]);
+            $v = $this->formatValue($field);
 
-            $this->inputs[
-                $field
-            ] = "<div class='wysiwyg'><textarea $attrs>{$this->formatValue(
-                $field
-            )}</textarea></div>";
+            $inp = "<div class='wysiwyg'><textarea $attrs>$v</textarea></div>";
 
             if ($this->getWysiwygVendor() == self::wysiwygCK) {
-                $this->inputs[
-                    $field
-                ] .= "<script type='text/javascript'>var editor_$field = CKEDITOR.replace('$field'); CKFinder.SetupCKEditor(editor_$field, {BasePath: '/_admin/ckfinder/', RememberLastFolder : false});</script>";
+                $inp .= "<script type='text/javascript'>var editor_$field = CKEDITOR.replace('$field'); CKFinder.SetupCKEditor(editor_$field, {BasePath: '/_admin/ckfinder/', RememberLastFolder: false});</script>";
             }
+
+            $this->inputs[$field] = $inp;
         }
 
         $this->force_inputs_fields[$field] = true;
