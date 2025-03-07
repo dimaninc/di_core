@@ -1472,11 +1472,15 @@ class diModel implements \ArrayAccess
         if (!isset($this->jsonData[$field])) {
             $v = $this->get($field);
 
-            $this->jsonData[$field] = $this->has($field)
-                ? (is_string($v)
-                    ? json_decode($v, true, 512, JSON_THROW_ON_ERROR)
-                    : $v)
-                : null;
+            try {
+                $this->jsonData[$field] = $this->has($field)
+                    ? (is_string($v)
+                        ? json_decode($v, true, 512, JSON_THROW_ON_ERROR)
+                        : $v)
+                    : null;
+            } catch (Exception $e) {
+                throw new Exception("JSON parse error: {$e->getMessage()}");
+            }
 
             if ($this->jsonData[$field] instanceof \MongoDB\Model\BSONDocument) {
                 $this->jsonData[$field] = \diCore\Database\Legacy\Mongo::fromBson(

@@ -2111,13 +2111,16 @@ EOF;
             return $this->setTextareaInput($field);
         }
 
+        /*
         $this->setFieldOption($field, 'valueFormatter', [
             static::class,
             'valueFormatterJson',
         ]);
+        */
+        $formatted = self::valueFormatterJson($this->getData($field), $field);
 
-        $this->inputs[$field] =
-            '<pre class="code">' . $this->formatValue($field) . '</pre>';
+        $this->inputs[$field] = "<pre class=\"code\">$formatted</pre>";
+        // '<pre class="code">' . $this->formatValue($field) . '</pre>';
 
         $this->force_inputs_fields[$field] = true;
 
