@@ -3460,17 +3460,17 @@ ENGINE = InnoDB;";
         return join(', ', array_filter($this->getAppearanceFeedForAdmin()));
     }
 
-    public function appearanceForAdmin($options = [])
+    public function getAdminLinkHtml()
     {
         $linkWord = Form::L('link', $this->__getLanguage());
 
+        return " [<a href=\"{$this->getAdminHref()}\" target=_blank>$linkWord</a>]";
+    }
+
+    public function appearanceForAdmin($options = [])
+    {
         return $this->exists()
-            ? $this->getStringAppearanceForAdmin() .
-                    sprintf(
-                        ' [<a href="%s" target="_blank">%s</a>]',
-                        $this->getAdminHref(),
-                        $linkWord
-                    )
+            ? $this->getStringAppearanceForAdmin() . $this->getAdminLinkHtml()
             : '---';
     }
 

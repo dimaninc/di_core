@@ -3155,14 +3155,11 @@ EOF;
             $values = explode(',', $values ?? '');
         }
 
-        $defaultCheckedHelper = function ($k, $v, Form $Form, $field) use ($values) {
-            return (is_string($this->getData($field)) &&
-                StringHelper::contains(
-                    ',' . $this->getData($field) . ',',
-                    ',' . $k . ','
-                )) ||
-                in_array($k, $values);
-        };
+        $defaultCheckedHelper = fn($k, $v, Form $Form, $field) => (is_string(
+            $this->getData($field)
+        ) &&
+            StringHelper::contains(",{$this->getData($field)},", ",$k,")) ||
+            in_array($k, $values);
         $checkedHelper =
             $this->getFieldOption($field, 'checkedHelper') ?: $defaultCheckedHelper;
 
