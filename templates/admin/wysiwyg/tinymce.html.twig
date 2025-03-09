@@ -1,7 +1,7 @@
 <script type="text/javascript" src="{{ asset_locations['vendor'] }}tinymce/tinymce.min.js"></script>
-<script type="text/javascript">function initTinyMce(selector) {
+<script type="text/javascript">function initTinyMce(selector, options) {
 {% block tinymce_init %}
-tinymce.init({
+var opts = Object.assign({
     selector: selector || '.diadminform-row .value .wysiwyg textarea',
     setup: function (editor) {
         {% block tinymce_trailing_cleaning %}
@@ -46,7 +46,6 @@ tinymce.init({
     {% block extra_settings %}{% endblock %}
     allow_script_urls: true,
     inline_styles: true,
-    verify_html: false,
     valid_elements : "@[id|class|style|title|dir<ltr?rtl|lang|xml::lang|data*],"
     + "a[rel|rev|charset|hreflang|tabindex|accesskey|type|"
     + "name|href|target|title|class],strong/b,em/i,strike,u,"
@@ -68,7 +67,8 @@ tinymce.init({
     + "q[cite],samp,select[disabled|multiple|name|size],small,"
     + "textarea[cols|rows|disabled|name|readonly],tt,var,big",
     extended_valid_elements: 'script[language|type|src]'
-});
+}, options || {});
+tinymce.init(opts);
 {% endblock %}
 {% block after_init %}{% endblock %}
 }
