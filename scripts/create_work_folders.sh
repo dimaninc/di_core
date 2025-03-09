@@ -14,6 +14,9 @@ chmod -R 777 db/files
 mkdir -p htdocs/uploads
 chmod -R 777 htdocs/uploads
 
+mkdir -p htdocs/uploads/Image
+chmod -R 777 htdocs/uploads/Image
+
 mkdir -p log/db
 chmod -R 777 log
 chmod -R 777 log/db

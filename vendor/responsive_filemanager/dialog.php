@@ -822,7 +822,7 @@ $files=$sorted;
 		foreach ($files as $file_array) {
 			$file = $file_array['file'];
 			$c1 = $file == '.';
-			$isDir = $file_array['dir'];
+			$isDir = !empty($file_array['dir']);
 			$c2 = substr($file, 0, 1) == '.' && $isDir;
 			$c3 = !$isDir; //isset($file_array['extension']) && $file_array['extension'] != strtolower(trans('Type_dir'));
 			$c4 = $file == '..' && $subdir == '';
@@ -929,7 +929,8 @@ $files=$sorted;
 				$file=$file_array['file'];
 
         $c1 = $file == '.' || $file == '..';
-        $c2 = !in_array(fix_strtolower($file_array['extension']), $ext);
+        $c2 = !empty($file_array['extension'])
+            && !in_array(fix_strtolower($file_array['extension']), $ext);
         $c3 = $isDir; //isset($file_array['extension']) && $file_array['extension'] != strtolower(trans('Type_dir'));
         $c4 = in_array($file, $hidden_files);
         $c5 = $filter != '' && stripos($file, $filter) === false && $n_files > $file_number_limit_js;
