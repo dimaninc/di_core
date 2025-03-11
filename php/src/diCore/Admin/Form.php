@@ -632,7 +632,9 @@ class Form
 
             if ($this->getId()) {
                 // showing "Apply" button only for existing records
-                $buttons['show'][] = 'quick_save';
+                if (Config::shouldFormShowApplyButton()) {
+                    $buttons['show'][] = 'quick_save';
+                }
             } else {
                 // showing "Create and add another" button only for new records
                 $buttons['show'][] = 'create_and_add_another';

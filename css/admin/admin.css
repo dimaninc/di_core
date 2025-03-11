@@ -2919,6 +2919,12 @@ ul.table-edit-log > li > table td:nth-child(2) {
   display: -ms-flexbox;
   display: box;
   display: flex;
+  -webkit-box-pack: center;
+  -moz-box-pack: center;
+  -o-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
   -webkit-box-align: center;
   -moz-box-align: center;
   -o-box-align: center;
@@ -2981,12 +2987,6 @@ body[data-floating-submit="true"] .submit-block {
   }
 }
 body[data-skin="classic"] .submit-block {
-  -webkit-box-pack: center;
-  -moz-box-pack: center;
-  -o-box-pack: center;
-  -ms-flex-pack: center;
-  -webkit-justify-content: center;
-  justify-content: center;
   border: 1px solid #cfcfcf;
   border-radius: 8px;
   background-color: #edf0f4;
@@ -3001,7 +3001,6 @@ body[data-skin="classic"] .submit-block {
 }
 body[data-skin="entrine"] .submit-block {
   background-color: #fff;
-  margin-left: 160px;
 }
 @media screen and (max-width: 1440px) {
   body[data-skin="entrine"] .submit-block {
@@ -3017,9 +3016,6 @@ body[data-skin="entrine"] .submit-block {
 }
 body[data-skin="classic"][data-floating-submit="true"] .submit-block {
   background-color: #ddd;
-}
-body[data-skin="entrine"][data-floating-submit="true"] .submit-block {
-  padding: 0;
 }
 .submit-block .submit-status-line {
   font-size: 11px;

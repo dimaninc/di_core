@@ -13,12 +13,19 @@ class Config
 
     const FILTER__SHOW_COPY_LINK_TO_CLIPBOARD_BUTTON = false;
 
+    const FORM__SHOW_APPLY_BUTTON = true;
+
     // use <meta http-equiv="refresh"> instead of header('Location:')
     const SUBMIT__USE_HTML_REDIRECT = false;
 
     public static function shouldFilterShowCopyLinkToClipboardButton()
     {
         return static::basicCreate()::FILTER__SHOW_COPY_LINK_TO_CLIPBOARD_BUTTON;
+    }
+
+    public static function shouldFormShowApplyButton()
+    {
+        return static::basicCreate()::FORM__SHOW_APPLY_BUTTON;
     }
 
     public static function shouldSubmitUseHtmlRedirect()
