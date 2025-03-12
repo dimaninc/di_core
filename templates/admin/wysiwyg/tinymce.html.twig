@@ -75,5 +75,10 @@ tinymce.init(opts);
 function destroyTinyMce(selector) {
     tinymce.remove(selector || '.diadminform-row .value .wysiwyg textarea');
 }
-initTinyMce();
+// inside dynamic rows
+initTinyMce('.diadminform-row .value .dynamic-wrapper .wysiwyg textarea', {
+    height: '200px'
+});
+// all others
+initTinyMce('.diadminform-row .value .wysiwyg textarea');
 </script>
