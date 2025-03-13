@@ -32,6 +32,7 @@
 */
 
 use diCore\Admin\Form;
+use diCore\Helper\ArrayHelper;
 
 class diTags
 {
@@ -290,12 +291,8 @@ class diTags
         return $this->storeTags(
             $targetType,
             $targetId,
-            isset($_POST[$postVarKey]) && is_array($_POST[$postVarKey])
-                ? $_POST[$postVarKey]
-                : [],
-            isset($_POST[$postVarKey . $this->new_field_suffix])
-                ? $_POST[$postVarKey . $this->new_field_suffix]
-                : ''
+            ArrayHelper::get($_POST, $postVarKey, []),
+            ArrayHelper::get($_POST, $this->new_field_suffix, '')
         );
     }
 

@@ -40,6 +40,9 @@ class diDynamicRows
     /** @var diModel */
     private $storedModel;
 
+    /** @var callable[] */
+    private $afterSaveEachCallbacks;
+
     /**
      * @deprecated
      * @var object
@@ -703,6 +706,13 @@ class diDynamicRows
                     break;
 
                 default:
+                    $valueOut = StringHelper::out($value);
+
+                    if ($this->static_mode || $this->isFlag($ar, 'static')) {
+                        $this->inputs[$name] = $valueOut;
+                        break;
+                    }
+
                     if (in_array($ar['type'], ['int', 'float', 'double'])) {
                         $input_params .= ' size="6"';
                     } elseif (!empty($ar['input_size'])) {
@@ -724,14 +734,9 @@ class diDynamicRows
                     }
 
                     $input_params .= " data-field-name='$field'";
+                    $input_params .= " type=\"$type\" name=\"$name\" id=\"$name\" value=\"$valueOut\"";
 
-                    $static = $this->static_mode || $this->isFlag($ar, 'static');
-
-                    $this->inputs[$name] = $static
-                        ? StringHelper::out($value)
-                        : "<input type=\"$type\" name=\"$name\" id=\"$name\" value=\"" .
-                            StringHelper::out($value) .
-                            "\"$input_params>";
+                    $this->inputs[$name] = "<input $input_params>";
                     break;
             }
         } else {
@@ -741,18 +746,23 @@ class diDynamicRows
             $prefix_ar = $ar['prefix_ar'] ?? [];
             $suffix_ar = $ar['suffix_ar'] ?? [];
             $columns = $ar['columns'] ?? null;
+            /** @var \diTags | null $tagsClass */
+            $tagsClass = $ar['tagsClass'] ?? null;
 
-            if ($ar['type'] == 'checkboxes') {
-                $options = [];
+            if (in_array($ar['type'], ['checkboxes', 'tags'])) {
+                if ($tagsClass && $id !== self::NEW_ID_STRING) {
+                    $this->data[$name] = $tagsClass::tagIdsAr(
+                        \diTypes::getId($this->getTable()),
+                        $id
+                    );
+                }
+
+                $options = [
+                    'format' => $format ?? $template_text,
+                ];
 
                 if ($columns) {
                     $options['columns'] = $columns;
-                }
-
-                if ($format) {
-                    $options['format'] = $format;
-                } elseif ($template_text) {
-                    $options['format'] = $template_text;
                 }
 
                 $this->set_cb_list_input($name, $ar['feed'], $options);
@@ -1160,13 +1170,31 @@ class diDynamicRows
         $tags_ar = [];
         $this->checked_static_ar = [];
 
+        $values =
+            $this->getFieldProperty($field, 'values') ?: $this->getData($field);
+
+        if (is_callable($values)) {
+            $values = $values($this->getTable(), $field, $this->getParentId());
+        } elseif (!is_array($values)) {
+            $values = explode(',', $values ?? '');
+        }
+
+        $defaultCheckedHelper = fn($id, self $DR, $field) => (is_string(
+            $this->getData($field)
+        ) &&
+            StringHelper::contains(",{$this->getData($field)},", ",$id,")) ||
+            in_array($id, $values);
+        $checkedHelper =
+            $this->getFieldProperty($field, 'checkedHelper') ?:
+            $defaultCheckedHelper;
+
         if (\diDB::is_rs($feed)) {
             while ($r = $this->getDb()->fetch($feed)) {
-                $checked = strpos($this->data[$field], ",$r->id,") !== false;
+                $checked = $checkedHelper($r->id, $this, $field);
 
                 $tags_ar[] = $this->get_checkbox_code([
                     'name' => "{$field}[]",
-                    'id' => "{$field}-{$r->id}",
+                    'id' => "$field-$r->id",
                     'value' => $r->id,
                     'text' => $r->title,
                     'checked' => $checked,
@@ -1178,11 +1206,11 @@ class diDynamicRows
             $feed_rc = $this->getDb()->count($feed);
         } elseif (is_array($feed)) {
             foreach ($feed as $k => $v) {
-                $checked = strpos($this->data[$field], ",$k,") !== false;
+                $checked = $checkedHelper($k, $this, $field);
 
                 $tags_ar[] = $this->get_checkbox_code([
                     'name' => "{$field}[]",
-                    'id' => "{$field}-{$k}",
+                    'id' => "$field-$k",
                     'value' => $k,
                     'text' => $v,
                     'checked' => $checked,
@@ -1194,7 +1222,7 @@ class diDynamicRows
         } elseif ($feed instanceof \diCollection) {
             /** @var \diModel $m */
             foreach ($feed as $m) {
-                $checked = strpos($this->data[$field], ",{$m->getId()},") !== false;
+                $checked = $checkedHelper($m->getId(), $this, $field);
 
                 $data = [
                     'value' => $m->getId(),
@@ -1217,7 +1245,7 @@ class diDynamicRows
 
                 $tags_ar[] = $this->get_checkbox_code([
                     'name' => "{$field}[]",
-                    'id' => "{$field}-{$data['value']}",
+                    'id' => "$field-{$data['value']}",
                     'value' => $data['value'],
                     'text' => $data['text'],
                     'checked' => $checked,
@@ -1228,8 +1256,7 @@ class diDynamicRows
 
             $feed_rc = $feed->count();
         } else {
-            echo "unknown feed for field $field";
-            $feed_rc = 0;
+            throw new \Exception("Unknown feed for field $field");
         }
 
         // table
@@ -1248,7 +1275,6 @@ class diDynamicRows
         }
 
         $table .= '</tr></table>';
-        //
 
         $maxTags =
             $this->info_ar[$this->field]['fields'][$this->current_field][
@@ -1785,13 +1811,21 @@ EOF;
             }
         }
 
-        if (is_callable($afterSaveCallback)) {
+        if (is_callable($afterSaveCallback) || $this->afterSaveEachCallbacks) {
             foreach ($resultIds as $_idx => $_id) {
-                $initial_id = $initialIds[$_idx];
+                $initialId = $initialIds[$_idx];
 
-                $afterSaveCallback($this, $_id, $initial_id);
+                if ($afterSaveCallback) {
+                    $afterSaveCallback($this, $_id, $initialId);
+                }
+
+                foreach ($this->afterSaveEachCallbacks as $cb) {
+                    $cb($_id);
+                }
             }
         }
+
+        $this->afterSaveEachCallbacks = [];
 
         if (is_callable($afterAllSavedCallback)) {
             $afterAllSavedCallback($this);
@@ -2014,17 +2048,44 @@ EOF;
                 break;
 
             case 'checkboxes':
+            case 'tags':
+                /** @var \diTags $tagsClass */
+                $tagsClass = $this->getFieldProperty($field, 'tagsClass');
+                $saver = $this->getFieldProperty($field, 'saverAfterSubmit');
+
+                if ($tagsClass) {
+                    $this->afterSaveEachCallbacks[] = fn(
+                        $rowId
+                    ) => $tagsClass::saveFromPost(
+                        \diTypes::getId($this->getTable()),
+                        $rowId,
+                        [$ff, $id]
+                    );
+
+                    break;
+                }
+
+                if ($saver) {
+                    $this->afterSaveEachCallbacks[] = fn($rowId) => $saver(
+                        $field,
+                        $id,
+                        $rowId,
+                        $this
+                    );
+
+                    break;
+                }
+
                 $this->data[$field] = !empty($_POST[$ff][$id])
                     ? ',' . join(',', $_POST[$ff][$id]) . ','
                     : '';
+
                 break;
 
             default:
-                $this->data[$field] = isset($_POST[$ff][$id])
-                    ? $_POST[$ff][$id]
-                    : ($v['type'] == 'checkbox'
-                        ? 0
-                        : $v['default']); //(int)
+                $this->data[$field] =
+                    $_POST[$ff][$id] ??
+                    ($v['type'] == 'checkbox' ? 0 : $v['default']);
         }
 
         if (empty($v['no_input_adjust'])) {
