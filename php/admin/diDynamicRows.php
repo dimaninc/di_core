@@ -1701,25 +1701,26 @@ EOF;
             }
 
             // form fields
-            foreach ($fields as $k => $v) {
-                if (!is_array($v)) {
-                    $v = ['type' => $v];
+            foreach ($fields as $k => $opts) {
+                if (!is_array($opts)) {
+                    $opts = ['type' => $opts];
                 }
 
-                if (!empty($v['virtual'])) {
+                if (!empty($opts['virtual'])) {
                     continue;
                 }
 
-                if (!isset($v['default'])) {
-                    $v['default'] = '';
+                if (!isset($opts['default'])) {
+                    $opts['default'] = '';
                 }
 
-                $isFileType = in_array($v['type'], ['pic', 'file']);
+                $isFileType = in_array($opts['type'], ['pic', 'file']);
 
-                $this->set_data($k, $v, $id);
+                // data (not files)
+                $this->setRowDataForField($k, $opts, $id);
 
                 if (!empty($this->data[$k]) || !$isFileType) {
-                    if ($v['type'] === 'radio') {
+                    if ($opts['type'] === 'radio') {
                         $rf = "{$this->field}_$k";
                         $val = isset($_POST[$rf]) && $_POST[$rf] == $id ? 1 : 0;
 
@@ -1819,8 +1820,13 @@ EOF;
                     $afterSaveCallback($this, $_id, $initialId);
                 }
 
-                foreach ($this->afterSaveEachCallbacks as $cb) {
-                    $cb($_id);
+                foreach (
+                    $this->afterSaveEachCallbacks
+                    as ['origId' => $origId, 'callback' => $cb]
+                ) {
+                    if ($initialId == $origId) {
+                        $cb($_id);
+                    }
                 }
             }
         }
@@ -1928,7 +1934,8 @@ EOF;
                         $v['default'] = '';
                     }
 
-                    $this->set_data($k, $v, $id);
+                    // files
+                    $this->setRowDataForField($k, $v, $id);
 
                     if (in_array($v['type'], ['pic', 'file']) && !$this->data[$k]) {
                     } else {
@@ -2008,7 +2015,17 @@ EOF;
         return $ids;
     }
 
-    public function set_data($field, $v, $id)
+    protected function addAfterSaveEachCallback($origId, $callback)
+    {
+        $this->afterSaveEachCallbacks[] = [
+            'origId' => $origId,
+            'callback' => $callback,
+        ];
+
+        return $this;
+    }
+
+    public function setRowDataForField($field, $opts, $origId)
     {
         if ($this->isFlag($field, 'local')) {
             return $this;
@@ -2017,34 +2034,34 @@ EOF;
         $f = $this->formatName($field);
         $ff = "{$this->field}_$f";
 
-        switch ($v['type']) {
+        switch ($opts['type']) {
             case 'password':
-                $this->data[$field] = isset($_POST[$ff][$id])
-                    ? $_POST[$ff][$id]
-                    : $v['default'];
-                $this->data[$field . '2'] = isset($_POST[$ff . '2'][$id])
-                    ? $_POST[$ff . '2'][$id]
-                    : $v['default'];
+                $this->data[$field] = isset($_POST[$ff][$origId])
+                    ? $_POST[$ff][$origId]
+                    : $opts['default'];
+                $this->data[$field . '2'] = isset($_POST[$ff . '2'][$origId])
+                    ? $_POST[$ff . '2'][$origId]
+                    : $opts['default'];
                 break;
 
             case 'date':
             case 'date_str':
-                $this->make_datetime($field, $id, true, false);
+                $this->make_datetime($field, $origId, true, false);
                 break;
 
             case 'time':
             case 'time_str':
-                $this->make_datetime($field, $id, false, true);
+                $this->make_datetime($field, $origId, false, true);
                 break;
 
             case 'datetime':
             case 'datetime_str':
-                $this->make_datetime($field, $id, true, true);
+                $this->make_datetime($field, $origId, true, true);
                 break;
 
             case 'pic':
             case 'file':
-                $this->store_pic($field, $id, $v);
+                $this->store_pic($field, $origId, $opts);
                 break;
 
             case 'checkboxes':
@@ -2054,42 +2071,41 @@ EOF;
                 $saver = $this->getFieldProperty($field, 'saverAfterSubmit');
 
                 if ($tagsClass) {
-                    $this->afterSaveEachCallbacks[] = fn(
-                        $rowId
-                    ) => $tagsClass::saveFromPost(
-                        \diTypes::getId($this->getTable()),
-                        $rowId,
-                        [$ff, $id]
+                    $this->addAfterSaveEachCallback(
+                        $origId,
+                        fn($rowId) => $tagsClass::saveFromPost(
+                            \diTypes::getId($this->getDataTable()),
+                            $rowId,
+                            [$ff, $origId]
+                        )
                     );
 
                     break;
                 }
 
                 if ($saver) {
-                    $this->afterSaveEachCallbacks[] = fn($rowId) => $saver(
-                        $field,
-                        $id,
-                        $rowId,
-                        $this
+                    $this->addAfterSaveEachCallback(
+                        $origId,
+                        fn($rowId) => $saver($field, $origId, $rowId, $this)
                     );
 
                     break;
                 }
 
-                $this->data[$field] = !empty($_POST[$ff][$id])
-                    ? ',' . join(',', $_POST[$ff][$id]) . ','
+                $this->data[$field] = !empty($_POST[$ff][$origId])
+                    ? ',' . join(',', $_POST[$ff][$origId]) . ','
                     : '';
 
                 break;
 
             default:
                 $this->data[$field] =
-                    $_POST[$ff][$id] ??
-                    ($v['type'] == 'checkbox' ? 0 : $v['default']);
+                    $_POST[$ff][$origId] ??
+                    ($opts['type'] == 'checkbox' ? 0 : $opts['default']);
         }
 
-        if (empty($v['no_input_adjust'])) {
-            switch ($v['type']) {
+        if (empty($opts['no_input_adjust'])) {
+            switch ($opts['type']) {
                 case 'int':
                 case 'tinyint':
                 case 'smallint':
@@ -2144,7 +2160,7 @@ EOF;
                             $field
                         );
                     } else {
-                        $r = $this->getDb()->r($this->data_table, $id, $field);
+                        $r = $this->getDb()->r($this->data_table, $origId, $field);
                         $this->data[$field] = $r ? $r->$field : '';
                     }
                     break;
