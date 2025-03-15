@@ -15,6 +15,7 @@ use diCore\Database\Connection;
 use diCore\Entity\DynamicPic\Collection as DynamicPics;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\FileSystemHelper;
+use diCore\Helper\ImageHelper;
 use diCore\Helper\Slug;
 use diCore\Helper\StringHelper;
 
@@ -1731,6 +1732,10 @@ class Submit
                 ? self::IMAGE_STORE_MODE_REBUILD
                 : self::IMAGE_STORE_MODE_UPLOAD;
         $needToUnlink = $mode == self::IMAGE_STORE_MODE_UPLOAD;
+
+        if (\diCore\Admin\Config::shouldSubmitClearExif()) {
+            ImageHelper::clearExifAndFix($F['tmp_name']);
+        }
 
         $I = new \diImage();
         $I->open($F['tmp_name']);

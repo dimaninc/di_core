@@ -17,6 +17,8 @@ class Config
 
     // use <meta http-equiv="refresh"> instead of header('Location:')
     const SUBMIT__USE_HTML_REDIRECT = false;
+    // clear exif data of images on upload in admin
+    const SUBMIT__CLEAR_EXIF = false;
 
     public static function shouldFilterShowCopyLinkToClipboardButton()
     {
@@ -31,6 +33,11 @@ class Config
     public static function shouldSubmitUseHtmlRedirect()
     {
         return static::basicCreate()::SUBMIT__USE_HTML_REDIRECT;
+    }
+
+    public static function shouldSubmitClearExif()
+    {
+        return static::basicCreate()::SUBMIT__CLEAR_EXIF;
     }
 
     public static function getDateRangeFilterGlue()

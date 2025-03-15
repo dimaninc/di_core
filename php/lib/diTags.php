@@ -496,6 +496,10 @@ class diTags
 
     public function getTagRecords($type, $targetId, $template = null)
     {
+        if (!$targetId) {
+            return null;
+        }
+
         $qAr = [];
 
         if ($this->fields['target_type'] && $this->targetTypeUsed) {
@@ -538,6 +542,10 @@ class diTags
 
     public function getTargetRecords($type, $tagId)
     {
+        if (!$tagId) {
+            return null;
+        }
+
         $qAr = [];
 
         if ($this->fields['target_type'] && $this->targetTypeUsed) {
@@ -591,6 +599,10 @@ class diTags
 
     public function getTagIdsAr($type, $targetId)
     {
+        if (!$targetId) {
+            return [];
+        }
+
         $ar = [];
         $qAr = [];
 
@@ -618,6 +630,10 @@ class diTags
 
     public function getTargetIdsAr($type, $tagId)
     {
+        if (!$tagId) {
+            return [];
+        }
+
         $ar = [];
 
         $qAr = array_filter([

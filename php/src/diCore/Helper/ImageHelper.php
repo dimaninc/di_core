@@ -21,9 +21,13 @@ class ImageHelper
     {
         if (class_exists('\phMagick\Core\Runner') && false) {
             return self::PH_MAGICK;
-        } elseif (class_exists('\Imagick')) {
+        }
+
+        if (class_exists('\Imagick')) {
             return self::IMAGICK;
-        } elseif (function_exists('imagepng')) {
+        }
+
+        if (function_exists('imagepng')) {
             return self::GD;
         }
 
@@ -40,9 +44,7 @@ class ImageHelper
         $inFilename = realpath($inFilename);
 
         if (!$inFilename) {
-            throw new \Exception(
-                'File not found: ' . $origInFilename . ', ' . $inFilename
-            );
+            throw new \Exception("File not found: $origInFilename, $inFilename");
         }
 
         switch (self::vendor()) {
@@ -65,12 +67,7 @@ class ImageHelper
                 break;
 
             case self::GD:
-                self::rotateGd(
-                    $angle,
-                    $inFilename,
-                    $outFilename,
-                    $backgroundColor
-                );
+                self::rotateGd($angle, $inFilename, $outFilename, $backgroundColor);
                 break;
         }
     }
@@ -103,6 +100,20 @@ class ImageHelper
         $im->rotateImage($backgroundColor, $angle);
         $im->writeImage($outFilename);
         $im->clear();
+    }
+
+    public static function clearExifAndFix($fullFilename)
+    {
+        $currentPermissions = fileperms($fullFilename) & 0777;
+
+        $im = new \Imagick($fullFilename);
+        self::autoRotate($im);
+        $im->stripImage();
+        $im->writeImage($fullFilename);
+        $im->clear();
+        $im->destroy();
+
+        chmod($fullFilename, $currentPermissions);
     }
 
     public static function autoRotate(\Imagick $image, $background = '#000000')
