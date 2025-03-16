@@ -1928,13 +1928,30 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
 
     /**
      * @param array{ table: string, alias: string, on: string } $options
-     * @return $this
      */
     public function innerJoin(array $options)
     {
         $this->sqlParts['join'][] = extend(
             [
                 'type' => 'INNER',
+                'table' => null,
+                'alias' => null,
+                'on' => null,
+            ],
+            $options
+        );
+
+        return $this;
+    }
+
+    /**
+     * @param array{ table: string, alias: string, on: string } $options
+     */
+    public function leftJoin(array $options)
+    {
+        $this->sqlParts['join'][] = extend(
+            [
+                'type' => 'LEFT',
                 'table' => null,
                 'alias' => null,
                 'on' => null,
