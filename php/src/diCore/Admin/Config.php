@@ -14,6 +14,7 @@ class Config
     const FILTER__SHOW_COPY_LINK_TO_CLIPBOARD_BUTTON = false;
 
     const FORM__SHOW_APPLY_BUTTON = true;
+    const FORM__POPULATE_FILTERS_DATA_IF_NEW = false;
 
     // use <meta http-equiv="refresh"> instead of header('Location:')
     const SUBMIT__USE_HTML_REDIRECT = false;
@@ -28,6 +29,11 @@ class Config
     public static function shouldFormShowApplyButton()
     {
         return static::basicCreate()::FORM__SHOW_APPLY_BUTTON;
+    }
+
+    public static function shouldFormPopulateFiltersDataIfNew()
+    {
+        return static::basicCreate()::FORM__POPULATE_FILTERS_DATA_IF_NEW;
     }
 
     public static function shouldSubmitUseHtmlRedirect()

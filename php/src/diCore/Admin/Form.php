@@ -335,14 +335,14 @@ class Form
 
     public function isFlag($fieldOrFlagsAr, $flag)
     {
-        if (
-            is_string($fieldOrFlagsAr) &&
-            ($flags = $this->getFieldProperty($fieldOrFlagsAr, 'flags'))
-        ) {
-        } elseif (is_array($fieldOrFlagsAr) && isset($fieldOrFlagsAr['flags'])) {
+        $flags = [];
+
+        if (is_string($fieldOrFlagsAr)) {
+            $flags = $this->getFieldProperty($fieldOrFlagsAr, 'flags') ?? [];
+        }
+
+        if (is_array($fieldOrFlagsAr) && isset($fieldOrFlagsAr['flags'])) {
             $flags = $fieldOrFlagsAr['flags'];
-        } else {
-            $flags = [];
         }
 
         if (!is_array($flags)) {

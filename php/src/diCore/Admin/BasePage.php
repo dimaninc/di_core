@@ -1306,6 +1306,10 @@ abstract class BasePage
             'static_mode' => $this->getOption('staticMode'),
         ]);
 
+        if (Config::shouldFormPopulateFiltersDataIfNew()) {
+            $this->getForm()->populateFiltersDataIfNew();
+        }
+
         return true;
     }
 
