@@ -16,6 +16,7 @@ use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 use diCore\Tool\Auth;
 use diCore\Tool\Cache\Page;
+use diCore\Tool\Debug\Timing;
 use diCore\Tool\Embed\App;
 use diCore\Tool\Logger;
 use diCore\Traits\BasicCreate;
@@ -317,12 +318,17 @@ abstract class CMS
     public $tables_cache_fn_ar = [];
     public $ct_cache_fn_ar = [];
 
+    /** @var Timing */
+    public $timing;
+
     public function __construct(
         $tpl_dir = false,
         $tpl_cache_php = false,
         $tables_cache_fn_ar = false,
         $ct_cache_fn_ar = false
     ) {
+        $this->timing = new Timing();
+
         if (Environment::shouldLogSpeed()) {
             Logger::getInstance()->speed(
                 'constructor: ' . \diRequest::requestUri(),
@@ -353,6 +359,11 @@ abstract class CMS
             Config::getCacheFolder() . static::TABLES_CONTENT_CLEAN_TITLES_PHP;
 
         $this->protocol = \diRequest::protocol();
+    }
+
+    public static function shouldSaveTiming()
+    {
+        return static::isHardDebug() || static::isDev();
     }
 
     /**
@@ -399,7 +410,7 @@ abstract class CMS
 
             HttpCode::header($this->getResponseCode());
         } finally {
-            $this->finish();
+            $this->beforeFinish()->finish();
         }
 
         return $this;
@@ -1309,6 +1320,16 @@ abstract class CMS
             ->assignVarsBeforeFinalParse()
             ->finalParse()
             ->getWholeFinalPage();
+    }
+
+    protected function beforeFinish()
+    {
+        if (static::shouldSaveTiming()) {
+            Logger::getInstance()->log($this->timing->getPeriodsPrinted());
+            Logger::getInstance()->log("Total: {$this->timing->getTotalTime(true)}");
+        }
+
+        return $this;
     }
 
     public function finish()
