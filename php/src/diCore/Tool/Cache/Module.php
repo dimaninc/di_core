@@ -106,6 +106,6 @@ class Module
 
     protected function getCacheFromModel(Model $cache, $options = [])
     {
-        return $cache->exists() ? $cache->getContent() : null;
+        return $cache->hasActive() ? $cache->getContent() : null;
     }
 }
