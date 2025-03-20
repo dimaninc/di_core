@@ -7,6 +7,7 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Admin\Data\FormFlag;
 use diCore\Entity\ModuleCache\Model;
 
 class ModuleCache extends \diCore\Admin\BasePage
@@ -109,17 +110,6 @@ class ModuleCache extends \diCore\Admin\BasePage
 
     public function renderForm()
     {
-        if (
-            !$this->getForm()
-                ->getModel()
-                ->hasId()
-        ) {
-            $this->getForm()->setHiddenInput([
-                'created_at',
-                'updated_at',
-                'content',
-            ]);
-        }
     }
 
     public function submitForm()
@@ -168,21 +158,29 @@ class ModuleCache extends \diCore\Admin\BasePage
                 'type' => 'text',
                 'title' => 'Кеш',
                 'default' => '',
-                'flags' => ['static'],
+                'flags' => [FormFlag::static, FormFlag::initially_hidden],
             ],
 
             'created_at' => [
                 'type' => 'datetime_str',
                 'title' => 'Дата создания',
                 'default' => '',
-                'flags' => ['static', 'untouchable'],
+                'flags' => [
+                    FormFlag::static,
+                    FormFlag::untouchable,
+                    FormFlag::initially_hidden,
+                ],
             ],
 
             'updated_at' => [
                 'type' => 'datetime_str',
                 'title' => 'Дата последнего обновления',
                 'default' => '',
-                'flags' => ['static', 'untouchable'],
+                'flags' => [
+                    FormFlag::static,
+                    FormFlag::untouchable,
+                    FormFlag::initially_hidden,
+                ],
             ],
         ];
     }

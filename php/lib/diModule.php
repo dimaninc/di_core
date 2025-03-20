@@ -72,8 +72,7 @@ abstract class diModule
 
     public function getResultPage()
     {
-        return $this->getTwig()->getPage() ?:
-            $this->getTpl()->getAssigned('PAGE');
+        return $this->getTwig()->getPage() ?: $this->getTpl()->getAssigned('PAGE');
     }
 
     abstract public function render();
@@ -92,7 +91,12 @@ abstract class diModule
 
     protected function doRender()
     {
-        if ($this->useModuleCache() && !$this->getRenderOption('noCache')) {
+        if (
+            $this->useModuleCache() &&
+            !$this->getRenderOption('noCache') &&
+            $this->canCacheBeRead()
+        ) {
+            // тут уже когда рендерим из кеша
             $bootstrapSettings = $this->getCurrentBootstrapSettings();
 
             if (empty($bootstrapSettings[self::NO_CACHE_OPTION])) {
@@ -105,9 +109,7 @@ abstract class diModule
             }
 
             if (!empty($contents)) {
-                $this->setBootstrapSettings(
-                    $bootstrapSettings
-                )->cachedBootstrap();
+                $this->setBootstrapSettings($bootstrapSettings)->cachedBootstrap();
 
                 $this->getTwig()->assign([
                     \diTwig::TOKEN_FOR_PAGE => $contents,
@@ -155,9 +157,7 @@ abstract class diModule
     protected function setRenderOptions($options)
     {
         $this->renderOptions = $options;
-        $this->setBootstrapSettings(
-            $this->getRenderOption('bootstrapSettings')
-        );
+        $this->setBootstrapSettings($this->getRenderOption('bootstrapSettings'));
 
         return $this;
     }
@@ -174,9 +174,7 @@ abstract class diModule
     protected function setBootstrapSettings($options)
     {
         if (!is_array($options)) {
-            $a = $options
-                ? explode(Module::BOOTSTRAP_SETTINGS_END, $options)
-                : [];
+            $a = $options ? explode(Module::BOOTSTRAP_SETTINGS_END, $options) : [];
             $options = [];
 
             foreach ($a as $kv) {
@@ -208,6 +206,11 @@ abstract class diModule
     protected function useModuleCache()
     {
         return Config::useModuleCache() && $this->useModuleCache;
+    }
+
+    protected function canCacheBeRead()
+    {
+        return true;
     }
 
     /**
@@ -273,12 +276,7 @@ abstract class diModule
         $headerDebugMessage = null,
         $headerDebugName = null
     ) {
-        $this->getZ()->redirect(
-            $href,
-            $die,
-            $headerDebugMessage,
-            $headerDebugName
-        );
+        $this->getZ()->redirect($href, $die, $headerDebugMessage, $headerDebugName);
 
         return $this;
     }

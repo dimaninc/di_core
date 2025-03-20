@@ -450,16 +450,11 @@ class diTwig
     {
         global $Z;
 
-        return $this->render(
-            $template,
-            self::TOKEN_FOR_PAGE,
-            extend(
-                [
-                    'Z' => $Z ?? null,
-                ],
-                $data
-            )
-        );
+        if (!$this->has('Z') && empty($data['Z']) && !empty($Z)) {
+            $data['Z'] = $Z ?? null;
+        }
+
+        return $this->render($template, self::TOKEN_FOR_PAGE, $data);
     }
 
     /**
@@ -477,16 +472,11 @@ class diTwig
             throw new \Exception('Template not defined for diTwig->renderIndex');
         }
 
-        return $this->render(
-            $template,
-            self::TOKEN_FOR_INDEX,
-            extend(
-                [
-                    'Z' => $Z ?? null,
-                ],
-                $data
-            )
-        );
+        if (!$this->has('Z') && empty($data['Z']) && !empty($Z)) {
+            $data['Z'] = $Z ?? null;
+        }
+
+        return $this->render($template, self::TOKEN_FOR_INDEX, $data);
     }
 
     /**

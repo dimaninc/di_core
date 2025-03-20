@@ -20,6 +20,7 @@ class ConnectionData
     protected $ssl;
     protected $sslCert;
     protected $sslKey;
+    protected $otherOptions = [];
 
     public function __construct($connData)
     {
@@ -42,6 +43,23 @@ class ConnectionData
             ->setSsl(ArrayHelper::get($connData, 'ssl'))
             ->setSslCert(ArrayHelper::get($connData, 'cert'))
             ->setSslKey(ArrayHelper::get($connData, 'key'));
+
+        $this->otherOptions = ArrayHelper::filterByKey(
+            $connData,
+            [],
+            [
+                'host',
+                'port',
+                'login',
+                'username',
+                'password',
+                'database',
+                'dbname',
+                'ssl',
+                'cert',
+                'key',
+            ]
+        );
 
         return $this;
     }
@@ -208,6 +226,20 @@ class ConnectionData
     public function setSslKey($sslKey)
     {
         $this->sslKey = $sslKey;
+
+        return $this;
+    }
+
+    public function getOtherOptions($key = null)
+    {
+        return $key === null
+            ? $this->otherOptions
+            : $this->otherOptions[$key] ?? null;
+    }
+
+    public function setOtherOption($key, $value)
+    {
+        $this->otherOptions[$key] = $value;
 
         return $this;
     }

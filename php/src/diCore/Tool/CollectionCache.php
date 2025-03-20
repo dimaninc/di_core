@@ -8,11 +8,12 @@
 
 namespace diCore\Tool;
 
+use diCore\Database\RedisConnection;
 use diCore\Helper\ArrayHelper;
 
 /*
- * учитывать query в ключе
- * отключать для коллекций, созданных вручную
+ * todo учитывать query в ключе
+ * todo отключать для коллекций, созданных вручную
  */
 class CollectionCache
 {
@@ -24,6 +25,11 @@ class CollectionCache
     const STORAGE_REDIS = 2;
 
     protected static $storage = self::STORAGE_RAM;
+
+    /**
+     * @var RedisConnection
+     */
+    protected static $redisConn = null;
 
     /**
      * @var \Redis
@@ -195,10 +201,10 @@ class CollectionCache
         }
     }
 
-    public static function redisGet($modelType, $force = false, $cacheIdAr = [])
+    public static function redisGet($modelType, $force = false, $cacheIdSuffix = [])
     {
         $modelType = \diTypes::getId($modelType);
-        $key = self::getRedisKey($modelType, $cacheIdAr);
+        $key = self::getRedisKey($modelType, $cacheIdSuffix);
 
         $json = self::$redisClient->get($key);
         $ar = $json ? json_decode($json, true) : null;
@@ -225,13 +231,20 @@ class CollectionCache
 
         switch (self::$storage) {
             case self::STORAGE_REDIS:
-                return self::$redisClient->exists(
-                    self::getRedisKey($modelType, $cacheIdSuffix)
-                );
+                return self::redisExists($modelType, $cacheIdSuffix);
 
             default:
                 return isset(self::$data[$modelType]);
         }
+    }
+
+    public static function redisExists($modelType, $cacheIdSuffix = [])
+    {
+        $modelType = \diTypes::getId($modelType);
+
+        return self::$redisClient->exists(
+            self::getRedisKey($modelType, $cacheIdSuffix)
+        );
     }
 
     /**
@@ -257,13 +270,23 @@ class CollectionCache
 
         return join(
             self::REDIS_SEP,
-            array_merge([self::REDIS_PREFIX, 'type=' . $modelType], $cacheIdSuffix)
+            array_merge(
+                array_filter([
+                    self::$redisConn->getConnData()->getOtherOptions('prefix'),
+                    self::REDIS_PREFIX,
+                    "type=$modelType",
+                ]),
+                $cacheIdSuffix
+            )
         );
     }
 
-    public static function setRedisStorage(\Redis $client, array $options = [])
-    {
-        self::$redisClient = $client;
+    public static function setRedisStorage(
+        RedisConnection $conn,
+        array $options = []
+    ) {
+        self::$redisConn = $conn;
+        self::$redisClient = $conn->getDb();
         self::$redisOptions = $options;
     }
 

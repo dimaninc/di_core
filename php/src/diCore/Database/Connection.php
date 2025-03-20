@@ -222,6 +222,11 @@ abstract class Connection
         return $this;
     }
 
+    public function getConnData()
+    {
+        return $this->data;
+    }
+
     public function getTableNames()
     {
         if (!static::consistsOfTables()) {

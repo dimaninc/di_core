@@ -9,7 +9,6 @@
 namespace diCore\Tool\Cache;
 
 use diCore\Base\CMS;
-use diCore\Data\Types;
 use diCore\Entity\ModuleCache\Collection;
 use diCore\Entity\ModuleCache\Model;
 use diCore\Traits\BasicCreate;
@@ -23,7 +22,7 @@ class Module
 
     protected function createCMS()
     {
-        return CMS::fast_lite_create();
+        return CMS::fast_lite_create()->assignTwigBasics(true);
     }
 
     public function rebuild($id)
@@ -31,8 +30,7 @@ class Module
         if ($id instanceof Model) {
             $cacheModel = $id;
         } else {
-            /** @var Model $cacheModel */
-            $cacheModel = Model::create(Types::module_cache, $id);
+            $cacheModel = Model::createById($id);
         }
 
         if (!$cacheModel->exists()) {
@@ -50,7 +48,8 @@ class Module
     {
         /** @var \diModule $module */
         $module = CMS::getModuleClassName($cacheModel->getModuleId());
-        $module = $module::create($this->createCMS(), [
+        $GLOBALS['Z'] = $this->createCMS();
+        $module = $module::create($GLOBALS['Z'], [
             'noCache' => true,
             'bootstrapSettings' => $cacheModel->getBootstrapSettings(),
         ]);
@@ -69,9 +68,7 @@ class Module
 
     public function rebuildAll()
     {
-        /** @var Collection $col */
-        $col = \diCollection::create(Types::module_cache);
-        $col->filterByActive(1);
+        $col = Collection::create()->filterByActive(1);
         /** @var Model $cache */
         foreach ($col as $cache) {
             $this->rebuild($cache);
@@ -80,16 +77,14 @@ class Module
 
     public function getCachedContents(\diModule $module, $options = [])
     {
-        /** @var Collection $col */
-        $col = \diCollection::create(Types::module_cache);
-        $col->filterByModuleId($module->getName())
+        /** @var Model $cache */
+        $cache = Collection::create()
+            ->filterByModuleId($module->getName())
             ->filterByQueryString($options['query_string'])
             ->filterByBootstrapSettings(
                 $this->prepareBootstrapSettings($options['bootstrap_settings'])
-            );
-
-        /** @var Model $cache */
-        $cache = $col->getFirstItem();
+            )
+            ->getFirstItem();
 
         return $this->getCacheFromModel($cache, $options);
     }

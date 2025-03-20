@@ -458,6 +458,7 @@ abstract class CMS
         $Z->setLanguage($options['language'] ?: static::getBrowserLanguage());
         $Z->load_content_table_cache();
         $Z->init_tpl();
+        $Z->getTwig();
         $Z->populateRoutes();
         $Z->initTplDefines();
         $Z->define_templates();
