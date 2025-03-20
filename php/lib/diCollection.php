@@ -178,6 +178,12 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
 
     protected $possibleDirections = ['ASC', 'DESC'];
 
+    /**
+     * @var string[]|null
+     * Cache id suffix for CollectionCache if redis used
+     */
+    protected $cacheIdSuffix;
+
     /** @var  Cursor */
     protected $cursor;
 
@@ -1352,9 +1358,11 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
     /*
      * E.g. for redis key
      */
-    public function getUniqueIdItems(): array
+    public function getCacheSuffixAr(): array
     {
-        return [$this->getQueryFields(), $this->getFullQuery() ?: '__all__'];
+        return $this->hasCacheIdSuffix()
+            ? $this->getCacheIdSuffix()
+            : [$this->getQueryFields(), $this->getFullQuery() ?: '__all__'];
     }
 
     #[\ReturnTypeWillChange]
@@ -2541,6 +2549,25 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
     /**
      * Cache methods
      */
+
+    public function setCacheIdSuffix($cacheIdSuffix)
+    {
+        $this->cacheIdSuffix = is_array($cacheIdSuffix)
+            ? $cacheIdSuffix
+            : [$cacheIdSuffix];
+
+        return $this;
+    }
+
+    public function getCacheIdSuffix()
+    {
+        return $this->cacheIdSuffix;
+    }
+
+    public function hasCacheIdSuffix()
+    {
+        return !!array_filter($this->cacheIdSuffix ?: []);
+    }
 
     protected function getCacheContents($cacheKind = self::CACHE_ALL)
     {
