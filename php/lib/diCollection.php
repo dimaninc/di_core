@@ -1440,6 +1440,15 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
             ($this->pageSize && count($this->items) >= $this->pageSize);
     }
 
+    public function getFullSqlQuery()
+    {
+        return $this->getDb()->getQueryForRs(
+            $this->getQueryTable(),
+            $this->getFullQuery(),
+            $this->getQueryFields()
+        );
+    }
+
     /**
      * Override this if joins or something like that needed
      * todo: make common mechanism for both model and collection of one type
