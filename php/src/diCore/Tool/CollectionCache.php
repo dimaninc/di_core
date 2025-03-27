@@ -8,11 +8,12 @@
 
 namespace diCore\Tool;
 
+use diCore\Database\RedisConnection;
 use diCore\Helper\ArrayHelper;
 
 /*
- * учитывать query в ключе
- * отключать для коллекций, созданных вручную
+ * todo учитывать query в ключе
+ * todo отключать для коллекций, созданных вручную
  */
 class CollectionCache
 {
@@ -24,6 +25,11 @@ class CollectionCache
     const STORAGE_REDIS = 2;
 
     protected static $storage = self::STORAGE_RAM;
+
+    /**
+     * @var RedisConnection
+     */
+    protected static $redisConn = null;
 
     /**
      * @var \Redis
@@ -84,17 +90,7 @@ class CollectionCache
 
             switch (self::$storage) {
                 case self::STORAGE_REDIS:
-                    self::$redisClient->set(
-                        self::getRedisKey($modelType, $col->getUniqueIdItems()),
-                        json_encode($col->asDataArray()),
-                        [
-                            'ex' => ArrayHelper::get(
-                                self::$redisOptions,
-                                'lifetime',
-                                self::REDIS_DEFAULT_LIFETIME
-                            ),
-                        ]
-                    );
+                    self::redisAddSingle($col);
                     break;
 
                 default:
@@ -102,6 +98,23 @@ class CollectionCache
                     break;
             }
         }
+    }
+
+    public static function redisAddSingle(\diCollection $col)
+    {
+        $modelType = \diTypes::getId($col->getModelType());
+
+        self::$redisClient->set(
+            self::getRedisKey($modelType, $col->getCacheSuffixAr()),
+            json_encode($col->asDataArray()),
+            [
+                'ex' => ArrayHelper::get(
+                    self::$redisOptions,
+                    'lifetime',
+                    self::REDIS_DEFAULT_LIFETIME
+                ),
+            ]
+        );
     }
 
     public static function addManual($dataType, $field, $values)
@@ -169,26 +182,15 @@ class CollectionCache
      * @param int|string $modelType
      * @return \diCollection
      */
-    public static function get($modelType, $force = false)
+    public static function get($modelType, $force = false, $cacheIdSuffix = [])
     {
         $modelType = \diTypes::getId($modelType);
 
         switch (self::$storage) {
             case self::STORAGE_REDIS:
                 // todo: тут главный затык – как при гете из кеша узнать ключи?
-                $json = self::$redisClient->get(self::getRedisKey($modelType));
-                $ar = $json ? json_decode($json, true) : null;
-
-                if ($ar !== null) {
-                    $col = \diCollection::createEmpty($modelType)->addItems($ar);
-                } elseif ($force) {
-                    $col = \diCollection::create($modelType);
-                    self::add([$col]);
-                } else {
-                    $col = null;
-                }
-
-                return $col;
+                // возможно, с вводом $cacheIdSuffix затык исчез
+                return self::redisGet($modelType, $force, $cacheIdSuffix);
 
             default:
                 if (!isset(self::$data[$modelType]) && $force) {
@@ -199,23 +201,50 @@ class CollectionCache
         }
     }
 
+    public static function redisGet($modelType, $force = false, $cacheIdSuffix = [])
+    {
+        $modelType = \diTypes::getId($modelType);
+        $key = self::getRedisKey($modelType, $cacheIdSuffix);
+
+        $json = self::$redisClient->get($key);
+        $ar = $json ? json_decode($json, true) : null;
+
+        if ($ar !== null) {
+            $col = \diCollection::createEmpty($modelType)->addItems($ar);
+        } elseif ($force) {
+            $col = \diCollection::create($modelType);
+            self::add([$col]);
+        } else {
+            $col = null;
+        }
+
+        return $col;
+    }
+
     /**
      * @param int|string $modelType
      * @return boolean
      */
-    public static function exists($modelType, $idItems = [])
+    public static function exists($modelType, $cacheIdSuffix = [])
     {
         $modelType = \diTypes::getId($modelType);
 
         switch (self::$storage) {
             case self::STORAGE_REDIS:
-                return self::$redisClient->exists(
-                    self::getRedisKey($modelType, $idItems)
-                );
+                return self::redisExists($modelType, $cacheIdSuffix);
 
             default:
                 return isset(self::$data[$modelType]);
         }
+    }
+
+    public static function redisExists($modelType, $cacheIdSuffix = [])
+    {
+        $modelType = \diTypes::getId($modelType);
+
+        return self::$redisClient->exists(
+            self::getRedisKey($modelType, $cacheIdSuffix)
+        );
     }
 
     /**
@@ -233,18 +262,46 @@ class CollectionCache
             : \diModel::create($modelType, $force ? $modelId : null, 'id');
     }
 
-    public static function getRedisKey($modelType, $idItems = [])
+    public static function getRedisKey($modelType, $cacheIdSuffix = [])
     {
+        if (!is_array($cacheIdSuffix)) {
+            $cacheIdSuffix = [$cacheIdSuffix];
+        }
+
         return join(
             self::REDIS_SEP,
-            array_merge([self::REDIS_PREFIX, 'type=' . $modelType], $idItems)
+            array_merge(
+                array_filter([
+                    self::$redisConn->getConnData()->getOtherOptions('prefix'),
+                    self::REDIS_PREFIX,
+                    "type=$modelType",
+                ]),
+                $cacheIdSuffix
+            )
         );
     }
 
-    public static function useRedis(\Redis $client, array $options = [])
+    public static function setRedisStorage(
+        RedisConnection $conn,
+        array $options = []
+    ) {
+        self::$redisConn = $conn;
+        self::$redisClient = $conn->getDb();
+        self::$redisOptions = $options;
+    }
+
+    public static function hasRedisClient()
+    {
+        return !!self::$redisClient;
+    }
+
+    public static function useRedis()
     {
         self::$storage = self::STORAGE_REDIS;
-        self::$redisClient = $client;
-        self::$redisOptions = $options;
+    }
+
+    public static function useRam()
+    {
+        self::$storage = self::STORAGE_RAM;
     }
 }

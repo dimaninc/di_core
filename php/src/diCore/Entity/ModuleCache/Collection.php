@@ -7,45 +7,43 @@
 
 namespace diCore\Entity\ModuleCache;
 
+use diCore\Traits\Collection\AutoTimestamps;
+
 /**
  * Class Collection
  * Methods list for IDE
  *
- * @method Collection filterById($value, $operator = null)
- * @method Collection filterByTitle($value, $operator = null)
- * @method Collection filterByModuleId($value, $operator = null)
- * @method Collection filterByQueryString($value, $operator = null)
- * @method Collection filterByBootstrapSettings($value, $operator = null)
- * @method Collection filterByUpdateEveryMinutes($value, $operator = null)
- * @method Collection filterByContent($value, $operator = null)
- * @method Collection filterByCreatedAt($value, $operator = null)
- * @method Collection filterByUpdatedAt($value, $operator = null)
- * @method Collection filterByActive($value, $operator = null)
+ * @method $this filterById($value, $operator = null)
+ * @method $this filterByTitle($value, $operator = null)
+ * @method $this filterByModuleId($value, $operator = null)
+ * @method $this filterByQueryString($value, $operator = null)
+ * @method $this filterByBootstrapSettings($value, $operator = null)
+ * @method $this filterByUpdateEveryMinutes($value, $operator = null)
+ * @method $this filterByContent($value, $operator = null)
+ * @method $this filterByActive($value, $operator = null)
  *
- * @method Collection orderById($direction = null)
- * @method Collection orderByTitle($direction = null)
- * @method Collection orderByModuleId($direction = null)
- * @method Collection orderByQueryString($direction = null)
- * @method Collection orderByBootstrapSettings($direction = null)
- * @method Collection orderByUpdateEveryMinutes($direction = null)
- * @method Collection orderByContent($direction = null)
- * @method Collection orderByCreatedAt($direction = null)
- * @method Collection orderByUpdatedAt($direction = null)
- * @method Collection orderByActive($direction = null)
+ * @method $this orderById($direction = null)
+ * @method $this orderByTitle($direction = null)
+ * @method $this orderByModuleId($direction = null)
+ * @method $this orderByQueryString($direction = null)
+ * @method $this orderByBootstrapSettings($direction = null)
+ * @method $this orderByUpdateEveryMinutes($direction = null)
+ * @method $this orderByContent($direction = null)
+ * @method $this orderByActive($direction = null)
  *
- * @method Collection selectId()
- * @method Collection selectTitle()
- * @method Collection selectModuleId()
- * @method Collection selectQueryString()
- * @method Collection selectBootstrapSettings()
- * @method Collection selectUpdateEveryMinutes()
- * @method Collection selectContent()
- * @method Collection selectCreatedAt()
- * @method Collection selectUpdatedAt()
- * @method Collection selectActive()
+ * @method $this selectId()
+ * @method $this selectTitle()
+ * @method $this selectModuleId()
+ * @method $this selectQueryString()
+ * @method $this selectBootstrapSettings()
+ * @method $this selectUpdateEveryMinutes()
+ * @method $this selectContent()
+ * @method $this selectActive()
  */
 class Collection extends \diCollection
 {
+    use AutoTimestamps;
+
     const type = \diTypes::module_cache;
     protected $table = 'module_cache';
     protected $modelType = 'module_cache';
