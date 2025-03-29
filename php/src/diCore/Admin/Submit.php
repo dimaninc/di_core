@@ -2254,8 +2254,9 @@ class Submit
 
     public static function checkboxesSaver(Submit $Submit, $field)
     {
+        $f = self::formatName($field);
         $sep = $Submit->getFieldOption($field, 'separator') ?: ',';
-        $value = join($sep, \diRequest::post($field, []));
+        $value = join($sep, \diRequest::post($f, []));
 
         if ($value && $Submit->getFieldOption($field, 'externalSeparators')) {
             $value = $sep . $value . $sep;

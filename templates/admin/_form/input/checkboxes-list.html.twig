@@ -32,6 +32,6 @@
 
 {% if ableToAddNew %}
     <div class="new-tag">
-        <input type="text" name="{{ field ~ NEW_FIELD_SUFFIX }}" value="" placeholder="{{ form_lang['tag.enter_new'] }}">
+        <input type="text" name="{{ fieldSafe ~ NEW_FIELD_SUFFIX }}" value="" placeholder="{{ form_lang['tag.enter_new'] }}">
     </div>
 {% endif %}

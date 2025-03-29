@@ -241,9 +241,11 @@ class ArrayHelper
             return $defaultValue;
         }
 
-        $reduce = function ($xs, $x) {
-            return $xs && array_key_exists($x, $xs) ? $xs[$x] : null;
-        };
+        $reduce = fn($xs, $x) => $xs &&
+        !is_scalar($xs) &&
+        array_key_exists($x, (array) $xs)
+            ? $xs[$x]
+            : null;
 
         if (!is_array($path)) {
             $path = explode('.', $path);

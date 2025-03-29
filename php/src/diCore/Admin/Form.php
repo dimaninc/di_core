@@ -483,7 +483,9 @@ class Form
 
     private function processDefaultValue($field)
     {
-        if (strtoupper($this->getData($field) ?: '') == 'NOW()') {
+        $val = $this->getData($field) ?: '';
+
+        if (is_string($val) && strtoupper($val) == 'NOW()') {
             switch ($this->getFieldProperty($field, 'type')) {
                 case 'date_str':
                     $this->setData($field, \diDateTime::sqlDateFormat());
@@ -3121,6 +3123,8 @@ EOF;
             return $this;
         }
 
+        $f = $this->formatName($field);
+
         if (is_null($columns)) {
             $columns = $this->getFieldOption($field, 'columns');
         }
@@ -3205,9 +3209,9 @@ EOF;
 
             $attributes = [
                 'type' => $multiple ? 'checkbox' : 'radio',
-                'name' => $field . '[]',
+                'name' => "{$f}[]",
                 'value' => $k,
-                'id' => $field . '[' . $k . ']',
+                'id' => "{$f}[$k]",
             ];
 
             if ($checked) {
@@ -3264,6 +3268,7 @@ EOF;
             [
                 'columns' => $columns,
                 'field' => $field,
+                'fieldSafe' => $f,
                 'multiple' => $multiple,
                 'ableToAddNew' => $ableToAddNew,
                 'hideAllToggle' => $hideAllToggle,
