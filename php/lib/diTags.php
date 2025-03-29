@@ -331,10 +331,8 @@ class diTags
         return $this;
     }
 
-    public function storeTags($targetType, $targetId, $tagsAr, $tagsStr = '')
+    protected function getQueryForTagDeletion($targetType, $targetId)
     {
-        $this->beforeStoreTags($targetType, $targetId, $tagsAr, $tagsStr);
-
         $ar = array_filter([
             $this->targetTypeUsed && $this->fields['target_type']
                 ? "{$this->fields['target_type']} = '$targetType'"
@@ -342,7 +340,24 @@ class diTags
             "{$this->fields['target_id']} = '$targetId'",
         ]);
 
-        $this->getDb()->delete($this->tables['map'], 'WHERE ' . join(' AND ', $ar));
+        return join(' AND ', $ar);
+    }
+
+    protected function deleteTagsBeforeSave($targetType, $targetId)
+    {
+        $this->getDb()->delete(
+            $this->tables['map'],
+            "WHERE {$this->getQueryForTagDeletion($targetType, $targetId)}"
+        );
+
+        return $this;
+    }
+
+    public function storeTags($targetType, $targetId, $tagsAr, $tagsStr = '')
+    {
+        $this->beforeStoreTags($targetType, $targetId, $tagsAr, $tagsStr);
+
+        $this->deleteTagsBeforeSave($targetType, $targetId);
 
         $counter = 0;
 
@@ -414,7 +429,7 @@ class diTags
         return false;
     }
 
-    public function storeTargets($targetType, $tagId, $targets)
+    protected function getQueryForTargetDeletion($targetType, $tagId)
     {
         $ar = array_filter([
             $this->targetTypeUsed && $this->fields['target_type']
@@ -423,7 +438,22 @@ class diTags
             "{$this->fields['tag_id']} = '$tagId'",
         ]);
 
-        $this->getDb()->delete($this->tables['map'], 'WHERE ' . join(' AND ', $ar));
+        return join(' AND ', $ar);
+    }
+
+    protected function deleteTargetsBeforeSave($targetType, $tagId)
+    {
+        $this->getDb()->delete(
+            $this->tables['map'],
+            "WHERE {$this->getQueryForTargetDeletion($targetType, $tagId)}"
+        );
+
+        return $this;
+    }
+
+    public function storeTargets($targetType, $tagId, $targets)
+    {
+        $this->deleteTargetsBeforeSave($targetType, $tagId);
 
         $counter = 0;
 
