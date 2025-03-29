@@ -991,9 +991,16 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         return $this;
     }
 
+    public function resetPageSize()
+    {
+        $this->pageSize = null;
+
+        return $this;
+    }
+
     protected function getStandardPageSize()
     {
-        return Configuration::get('per_page[' . $this->getTable() . ']');
+        return Configuration::get("per_page[{$this->getTable()}]");
     }
 
     public function initPagesNavy($pageSize = null, $pageParam = null)
@@ -1939,6 +1946,13 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
     public function resetFilters()
     {
         $this->sqlParts['where'] = [];
+
+        return $this;
+    }
+
+    public function resetOrderBy()
+    {
+        $this->sqlParts['orderBy'] = [];
 
         return $this;
     }

@@ -1447,6 +1447,7 @@ abstract class CMS
             '_tech' => [
                 'uri' => \diRequest::requestUri(),
                 'url' => \diRequest::requestUri(),
+                'path' => \diRequest::requestPath(),
                 'year' => date('Y'),
                 'timestamp' => time(),
                 'http_host' => $host,
