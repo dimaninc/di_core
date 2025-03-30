@@ -1,9 +1,7 @@
 {% set variantsChecked = false %}
-<div class="tags-grid">
+<div class="tags-grid {% if initiallyShowOnlyChecked %}tags-grid--initially-checked{% endif %}">
     <div class="tags-toggle">
-        {% if initiallyShowOnlyChecked %}
-            <span data-purpose="show-all">{{ form_lang['tag.show_all'] }}</span>
-        {% endif %}
+        <span data-purpose="show-all">{{ form_lang['tag.show_all'] }}</span>
         {% if multiple and not hideAllToggle %}
             <span data-purpose="toggle-on">{{ form_lang['tag.toggle_on'] }}</span>
             <span data-purpose="toggle-off">{{ form_lang['tag.toggle_off'] }}</span>
@@ -12,7 +10,7 @@
             <div class="tags-search"><input type="search" placeholder="{{ form_lang['tag.search_placeholder'] }}" /></div>
         {% endif %}
     </div>
-    <ul class="tags-grid-inner {% if initiallyShowOnlyChecked %}tags-grid-inner--initially-checked{% endif %}" {% if columns %}data-columns="{{ columns }}" style="columns: {{ columns }};"{% endif %}>
+    <ul class="tags-grid-inner" {% if columns %}data-columns="{{ columns }}" style="columns: {{ columns }};"{% endif %}>
         {% for o in variants %}
             {% set rowClass = '' %}
             {% if initiallyShowOnlyChecked and o['attributes']['checked'] %}

@@ -56,7 +56,9 @@ var diAdminForm = function (table, id, auto_save_timeout) {
       }, self.auto_save_timeout * 1000);
     }
 
-    if (!self.id) {
+    var noFocus = $(self.e.form).data('no-focus');
+
+    if (!self.id && !noFocus) {
       setTimeout(function () {
         $(self.e.form)
           .find('input')
@@ -151,7 +153,7 @@ var diAdminForm = function (table, id, auto_save_timeout) {
       var $checkboxes = $row.find('.tags-grid input[type="checkbox"]');
       var $checkboxRows = $row.find('.tags-grid .tags-grid-inner > li');
       var $searchQuery = $row.find('.tags-search input[type="search"]');
-      var $tagsGridInner = $row.find('.tags-grid-inner');
+      var $tagsGrid = $row.find('.tags-grid');
 
       $on.on('click', function () {
         $checkboxes.prop('checked', true);
@@ -162,9 +164,7 @@ var diAdminForm = function (table, id, auto_save_timeout) {
       });
 
       $showAll.add($noneSelected).on('click', function () {
-        $tagsGridInner.removeClass('tags-grid-inner--initially-checked');
-        $showAll.remove();
-        $noneSelected.remove();
+        $tagsGrid.removeClass('tags-grid--initially-checked');
       });
 
       $searchQuery.on('input', function () {

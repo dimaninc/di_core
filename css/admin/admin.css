@@ -2129,6 +2129,15 @@ body[data-skin="entrine"] .diadminform-row .value button {
 .diadminform-row .value label.or-enter input[type="text"] {
   min-width: 200px;
 }
+.diadminform-row .value .tags-grid.tags-grid--initially-checked .tags-grid-inner > li:not(.initially-checked) {
+  display: none;
+}
+.diadminform-row .value .tags-grid:not(.tags-grid--initially-checked) .tags-toggle [data-purpose="show-all"] {
+  display: none;
+}
+.diadminform-row .value .tags-grid:not(.tags-grid--initially-checked) .tags--none-selected {
+  display: none;
+}
 .diadminform-row .value .tags-grid .tags-search {
   -webkit-box-flex: 1;
   -moz-box-flex: 1;
@@ -2200,9 +2209,6 @@ body[data-skin="entrine"] .diadminform-row .value .tags-grid .tags-search input[
   -webkit-column-gap: var(--gap);
   -moz-column-gap: var(--gap);
   column-gap: var(--gap);
-}
-.diadminform-row .value .tags-grid .tags-grid-inner.tags-grid-inner--initially-checked > li:not(.initially-checked) {
-  display: none;
 }
 .diadminform-row .value .tags-grid .tags--none-selected {
   cursor: pointer;

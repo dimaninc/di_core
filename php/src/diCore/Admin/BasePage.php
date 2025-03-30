@@ -1382,6 +1382,9 @@ abstract class BasePage
         $this->printEditLog();
 
         $this->getTpl()->assign([
+            'ADMIN_FORM_ATTRIBUTES' => ArrayHelper::toAttributesString(
+                $this->getForm()->getFormAttributes()
+            ),
             'FORM' => $this->getForm()->get_html(),
             'SUBMIT_BLOCK' => $this->getFormSubmitButtonsBlock(),
         ]);

@@ -96,6 +96,8 @@ class Form
 
     private $pics_table = 'dipics';
 
+    protected $formAttributes = [];
+
     protected $submitButtonsOptions = [
         'show' => [],
         'show_additional' => [],
@@ -3734,5 +3736,28 @@ EOF;
         $this->force_inputs_fields[$field] = true;
 
         return $this;
+    }
+
+    public function addFormAttribute($name, $value = null)
+    {
+        if (is_array($name) && $value === null) {
+            $this->formAttributes = extend($this->formAttributes, $name);
+
+            return $this;
+        }
+
+        $this->formAttributes[$name] = $value;
+
+        return $this;
+    }
+
+    public function getFormAttributes()
+    {
+        return $this->formAttributes;
+    }
+
+    public function setNoInitialFocus()
+    {
+        return $this->addFormAttribute('data-no-focus', true);
     }
 }
