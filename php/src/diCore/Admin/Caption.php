@@ -47,8 +47,8 @@ class Caption
         return $this->getX()
             ->getPage()
             ->linkNeededInCaption($method)
-            ? sprintf('<a href="%s">%s</a>', $href, $caption)
-            : sprintf('<i>%s</i>', $caption);
+            ? "<a href=\"$href\">$caption</a>"
+            : "<i>$caption</i>";
     }
 
     public function get()
@@ -156,7 +156,7 @@ class Caption
             ->getAddButtonUrlQueryParams();
         $href = $this->getX()->getCurrentPageUri('form', $params);
         $title = $this->getX()->getVocabulary('add');
-        $tag = "<a href=\"{$href}\" class=\"simple-button\">{$title}</a>";
+        $tag = "<a href=\"$href\" class=\"simple-button\">$title</a>";
 
         return $tag;
     }

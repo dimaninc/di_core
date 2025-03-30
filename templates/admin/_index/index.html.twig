@@ -41,17 +41,13 @@ data-floating-submit="{{ _settings['floating_submit'] }}">
     </div>
 
     <div class="content">
-        {% if X.expandCollapseBlockNeeded() %}
-            <div class="expand-collapse-block" data-table="{{ _tech['xx_table'] }}">
-                <u data-action="collapse"></u>
-                <u data-action="expand"></u>
-            </div>
-        {% endif %}
-
         <div class="caption">
             <b>{{ caption.get()|raw }}</b>
             {% if caption.hasButtons() %}
                 <span class="buttons">{{ caption.getButtons()|raw }}</span>
+            {% endif %}
+            {% if X.captionHelpNeeded() %}
+                <a class="caption--help" href="{{ X.getHelpHref() }}" target="_blank">Помощь</a>
             {% endif %}
         </div>
 

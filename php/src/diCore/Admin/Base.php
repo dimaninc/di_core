@@ -260,6 +260,11 @@ class Base
         return $this->adminPage;
     }
 
+    public function getHelpHref()
+    {
+        return $this->getCurrentPageUri('help');
+    }
+
     /**
      * @param string|null $term
      * @return array|string|null
@@ -654,6 +659,15 @@ class Base
         return true;
     }
 
+    public function captionHelpNeeded()
+    {
+        if (!\diCore\Admin\Config::shouldShowHelp()) {
+            return false;
+        }
+
+        return $this->getPage()->hasHelp();
+    }
+
     protected function printContentPage()
     {
         if ($this->currentMethodExists()) {
@@ -1039,7 +1053,7 @@ class Base
             $ar['super'] = $options['super'];
             $ar['paths'] = array_merge(
                 $ar['paths'],
-                [$moduleName, $moduleName . '_form'],
+                [$moduleName, $moduleName . '_form', $moduleName . '_help'],
                 $options['extraPaths']
             );
 
@@ -1363,5 +1377,10 @@ class Base
         $this->getResponse()->setResponseCode($responseCode);
 
         return $this;
+    }
+
+    public function getCaption()
+    {
+        return $this->caption;
     }
 }

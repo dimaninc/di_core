@@ -82,11 +82,13 @@ abstract class BasePage
             'list' => 'Управление',
             'add' => 'Добавление',
             'edit' => 'Редактирование',
+            'help' => 'Помощь',
         ],
         'en' => [
             'list' => 'Manage',
             'add' => 'Add',
             'edit' => 'Edit',
+            'help' => 'Help',
         ],
     ];
 
@@ -215,6 +217,13 @@ abstract class BasePage
                     $o->afterSubmitForm();
                     break;
 
+                case 'help':
+                    if ($o->beforeRenderHelp()) {
+                        $o->renderHelp();
+                    }
+                    $o->afterRenderHelp();
+                    break;
+
                 default:
                     $m = Base::getClassMethodName($o->getMethod());
                     $beforeM = Base::getClassMethodName($o->getMethod(), 'before');
@@ -226,13 +235,13 @@ abstract class BasePage
 
                     if (!method_exists($o, $beforeM)) {
                         throw new \Exception(
-                            "No before-handler fo '{$o->getMethod()}'"
+                            "No before-handler for '{$o->getMethod()}'"
                         );
                     }
 
                     if (!method_exists($o, $afterM)) {
                         throw new \Exception(
-                            "No after-handler fo '{$o->getMethod()}'"
+                            "No after-handler for '{$o->getMethod()}'"
                         );
                     }
 
@@ -347,6 +356,32 @@ abstract class BasePage
     }
 
     public function submitForm()
+    {
+    }
+
+    public function hasHelp()
+    {
+        return false;
+    }
+
+    protected function beforeRenderHelp()
+    {
+        return true;
+    }
+
+    protected function afterRenderHelp()
+    {
+        $this->getTwig()->renderPage('admin/_index/help/page', [
+            'embed_pdf_path' => $this->getEmbedHelpPdfPath(),
+        ]);
+    }
+
+    public function getEmbedHelpPdfPath()
+    {
+        return null;
+    }
+
+    public function renderHelp()
     {
     }
 

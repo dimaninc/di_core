@@ -305,7 +305,7 @@ var diAdminListControlPanel = function (_opts) {
       prevId = rowsInfo[i].id;
       prevLevel = rowsInfo[i].level;
 
-      if (i == rowsInfo.length - 1) {
+      if (i === rowsInfo.length - 1) {
         hideExpandButton(rowsInfo[i].id);
       }
     }
@@ -324,7 +324,7 @@ var diAdminListControlPanel = function (_opts) {
           break;
         }
 
-        if (!state || level == origLevel + 1) {
+        if (!state || level === origLevel + 1) {
           $row.toggleClass('collapsed', !state);
 
           if (!state) {

@@ -1092,6 +1092,7 @@ body[data-skin="entrine"] .admin-layout > .content {
   -ms-flex-align: center;
   -webkit-align-items: center;
   align-items: center;
+  gap: 24px;
   height: var(--caption-height);
   padding-left: var(--content-padding-hor);
   padding-right: var(--content-padding-hor);
@@ -1146,16 +1147,52 @@ body[data-skin="entrine"] .admin-layout > .content > .caption b > a {
   margin-right: 5px;
 }
 .admin-layout > .content > .caption .buttons {
-  padding-left: 30px;
-}
-@media screen and (max-width: 768px) {
-  .admin-layout > .content > .caption .buttons {
-    padding-left: 16px;
-  }
+  margin-right: auto;
 }
 .admin-layout > .content > .caption .buttons a {
   position: relative;
   display: inline;
+}
+.admin-layout > .content > .caption .caption--help {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: box;
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+@media screen and (max-width: 450px) {
+  .admin-layout > .content > .caption .caption--help {
+    display: none;
+  }
+}
+.admin-layout > .content > .caption .caption--help:before {
+  --size: 18px;
+  content: '?';
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: box;
+  display: flex;
+  -webkit-box-pack: center;
+  -moz-box-pack: center;
+  -o-box-pack: center;
+  -ms-flex-pack: center;
+  -webkit-justify-content: center;
+  justify-content: center;
+  -webkit-box-align: center;
+  -moz-box-align: center;
+  -o-box-align: center;
+  -ms-flex-align: center;
+  -webkit-align-items: center;
+  align-items: center;
+  border-radius: 50%;
+  width: var(--size);
+  height: var(--size);
+  border: 1px solid;
 }
 .admin-layout > .logo {
   position: absolute;
@@ -1407,31 +1444,19 @@ table.banners_stat th.sel {
 .details_block > table > tbody > tr > td {
   vertical-align: top;
 }
-.admin_help_link img {
-  border: none;
-  float: right;
-  margin: 0 5px 0 0;
-}
-.bg_eee {
-  background: #eee;
-}
 .expand-collapse-block {
-  position: absolute;
-  right: 0;
-  padding: 10px 25px 0 10px;
-}
-@media screen and (max-width: 768px) {
-  .expand-collapse-block {
-    padding-top: 7px;
-    padding-right: 10px;
-  }
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: box;
+  display: flex;
+  gap: 8px;
 }
 .expand-collapse-block u {
-  display: inline-block;
   width: 18px;
   height: 18px;
   cursor: pointer;
-  margin-left: 5px;
 }
 .expand-collapse-block u[data-action="expand"] {
   background: url("/_core/i/admin/buttons/key_plus.gif") 0 0 no-repeat;
@@ -3428,6 +3453,16 @@ body[data-skin="entrine"] .button-with-icon:before {
     display: none;
   }
 }
+.admin--help--wrapper {
+  padding: 0 20px 40px;
+}
+.admin--help--pdf--frame {
+  width: 100%;
+  min-height: 600px;
+  height: 100%;
+  border: 0;
+  outline: none;
+}
 div.dinicetable_div {
   margin: 0 20px 20px 20px;
 }
@@ -5029,6 +5064,7 @@ ul.disk-stat > li > div.progress-bar {
   display: flex;
   padding: 8px;
   border-radius: 8px;
+  gap: 24px;
   background-color: #d4d0c8;
   margin: 0 20px 10px 20px;
   min-height: 22px;
@@ -5139,7 +5175,6 @@ body[data-skin="entrine"] .list-control-panel {
   }
 }
 .list-control-panel .toggle-all {
-  padding-right: 40px;
   line-height: 22px;
   display: -webkit-box;
   display: -moz-box;

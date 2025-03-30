@@ -84,7 +84,6 @@ class Form
     public $rec = null;
     public $static_mode = false;
     protected static $language = 'ru';
-    public $show_help = false;
     public $module_id; // module_id of current table
 
     private $formFields = [];
@@ -650,14 +649,6 @@ class Form
             : $buttons['show'];
         $hide_ar = $buttons['hide'] ?? [];
 
-        $help_link = $this->show_help
-            ? "<a href=\"help_files/toc.php?location=/" .
-                self::$language .
-                "/$this->table/\" rel=\"width:910,height:500,ajax:false,scrollbar:true,showControls:false\" id=\"adminHelp_toc\" class=\"mb\">{$this->L(
-                    'view_help'
-                )}</a>"
-            : '';
-
         $auto_save_timeout = Configuration::safeGet('auto_save_timeout', 0);
         $js = <<<EOF
 <script type="text/javascript">
@@ -687,7 +678,6 @@ EOF;
 
             return <<<EOF
 <div class="submit-block">
-	$help_link
 	$edit_btn
 	$cancel_btn
 </div>
@@ -766,8 +756,6 @@ EOF;
 <div class="submit-block">
 
 	$prefix
-
-	$help_link
 
 	$save_btn
 

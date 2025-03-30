@@ -6,5 +6,11 @@
         <li data-purpose="delete"><button type="button" data-purpose="delete">{{ List.L('delete') }}</button></li>
     </ul>
     <div class="toggle-all"><input type="checkbox" id="toggle-all"><label for="toggle-all">{{ List.L('toggle_all') }}</label></div>
+    {% if X.expandCollapseBlockNeeded() %}
+        <div class="expand-collapse-block" data-table="{{ _tech['xx_table'] }}">
+            <u data-action="collapse"></u>
+            <u data-action="expand"></u>
+        </div>
+    {% endif %}
     <div class="notes">{{ List.L('notes_about_children') }}</div>
 </div>

@@ -316,6 +316,7 @@ u
             box-sizing border-box
             display flex
             align-items center
+            gap 24px
             height var(--caption-height)
             padding-left var(--content-padding-hor)
             padding-right var(--content-padding-hor)
@@ -352,15 +353,32 @@ u
                     &:not(:last-child)
                         margin-right 5px
             .buttons {
-                padding-left 30px
-                @media $mqTablet {
-                    padding-left 16px
-                }
-
+                margin-right auto
                 a {
                     position relative
                     display inline
                 }
+            }
+            .caption--help {
+              display flex
+              gap 8px
+              margin-left auto
+
+              @media $mqPhone {
+                display none
+              }
+
+              &:before {
+                --size 18px
+                content '?'
+                display flex
+                justify-content center
+                align-items center
+                border-radius 50%
+                width var(--size)
+                height var(--size)
+                border 1px solid
+              }
             }
     > .logo
         position absolute
@@ -537,32 +555,17 @@ table.banners_stat td.sel, table.banners_stat th.sel
                 > td
                     vertical-align top
 
-.admin_help_link
-    img
-        border none
-        float right
-        margin 0 5px 0 0
-
-.bg_eee
-    background #eee
-
 .expand-collapse-block
-    position absolute
-    right 0
-    padding 10px 25px 0 10px
-    @media $mqTablet
-        padding-top 7px
-        padding-right 10px
-    u
-        display inline-block
-        width 18px
-        height 18px
-        cursor pointer
-        margin-left 5px
-    u[data-action="expand"]
-        background url(/_core/i/admin/buttons/key_plus.gif) 0 0 no-repeat
-    u[data-action="collapse"]
-        background url(/_core/i/admin/buttons/key_minus.gif) 0 0 no-repeat
+  display flex
+  gap 8px
+  u
+    width 18px
+    height 18px
+    cursor pointer
+    &[data-action="expand"]
+      background url(/_core/i/admin/buttons/key_plus.gif) 0 0 no-repeat
+    &[data-action="collapse"]
+      background url(/_core/i/admin/buttons/key_minus.gif) 0 0 no-repeat
 
 iframe
     &.comments-iframe

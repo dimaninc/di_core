@@ -163,6 +163,7 @@ var diAdminBase = function () {
       var action = $(this).data('action'),
         table = $(this).parent().data('table');
 
+      // todo: these functions not exist anymore
       if (table === 'orders') expand_collapse_all_orders(action === 'expand');
       else
         dint_expand_collapse_all(

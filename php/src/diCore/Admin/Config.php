@@ -11,6 +11,8 @@ class Config
 {
     use BasicCreate;
 
+    const GLOBAL__SHOW_HELP = false;
+
     const FILTER__SHOW_COPY_LINK_TO_CLIPBOARD_BUTTON = false;
 
     const FORM__SHOW_APPLY_BUTTON = true;
@@ -20,6 +22,11 @@ class Config
     const SUBMIT__USE_HTML_REDIRECT = false;
     // clear exif data of images on upload in admin
     const SUBMIT__CLEAR_EXIF = false;
+
+    public static function shouldShowHelp()
+    {
+        return static::basicCreate()::GLOBAL__SHOW_HELP;
+    }
 
     public static function shouldFilterShowCopyLinkToClipboardButton()
     {
