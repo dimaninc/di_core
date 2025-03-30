@@ -3145,6 +3145,8 @@ EOF;
         $titleGetter = $this->getFieldOption($field, 'titleGetter') ?: 'title';
         $defaultTitleField = is_string($titleGetter) ? $titleGetter : 'title';
 
+        $attributesGetter = $this->getFieldOption($field, 'attributesGetter');
+
         if (\diDB::is_rs($feed)) {
             $tmpFeed = [];
 
@@ -3215,6 +3217,13 @@ EOF;
                 'value' => $k,
                 'id' => "{$f}[$k]",
             ];
+
+            if ($attributesGetter) {
+                $attributes = extend(
+                    $attributes,
+                    $attributesGetter($k, $v, $this, $field)
+                );
+            }
 
             if ($checked) {
                 $attributes['checked'] = 'checked';
