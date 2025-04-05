@@ -203,10 +203,10 @@ Helper =
                 origSass = @req 'sass'
             sass = @req('gulp-sass')(origSass)
 
-        opts = @extend {fn: null, buildFolder: null, taskName: 'sass'}, opts
+        opts = @extend {fn: null, buildFolder: null, taskName: 'sass', sassOpts: {}}, opts
         gulp.task opts.taskName, (done) =>
             gulp.src @fullPath opts.fn
-                .pipe sass().on 'error', sass.logError
+                .pipe sass(opts.sassOpts).on 'error', sass.logError
                 #.on 'error', console.log
                 .pipe gulp.dest @fullPath opts.buildFolder
                 .on 'end', -> done()
