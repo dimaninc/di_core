@@ -429,7 +429,7 @@ class Form
 
     public function populateFiltersDataIfNew()
     {
-        if ($this->getX()->isNew()) {
+        if ($this->getX()->isNew() && $this->getX()->hasFilters()) {
             $this->setData(
                 $this->getX()
                     ->getFilters()
