@@ -101,10 +101,13 @@ class Auth extends \diBaseController
     public function loginAction()
     {
         $lang = \diRequest::postExt('language');
+        $message = $this->Auth->authorized()
+            ? ''
+            : static::L('sign_in.unsuccessful', $lang);
 
         if (Config::isRestApiSupported()) {
             if (!$this->Auth->authorized()) {
-                return $this->unauthorized();
+                return $this->unauthorized(['message' => $message]);
             }
 
             if (Config::isUserSessionUsed()) {
@@ -114,9 +117,7 @@ class Auth extends \diBaseController
 
         return [
             'ok' => $this->Auth->authorized(),
-            'message' => $this->Auth->authorized()
-                ? ''
-                : static::L('sign_in.unsuccessful', $lang),
+            'message' => $message,
         ];
     }
 

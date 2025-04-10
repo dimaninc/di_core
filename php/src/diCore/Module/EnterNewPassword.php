@@ -24,8 +24,8 @@ class EnterNewPassword extends \diModule
             !Auth::i()->authorized() &&
             \diEmail::isValid($email) &&
             Model::isTokenValid($key)
-                ? \diModel::create(\diTypes::user, $email, 'slug')
-                : \diModel::create(\diTypes::user);
+                ? $this->findUser($email)
+                : Model::create();
 
         if (
             $user->exists() &&
@@ -65,6 +65,11 @@ class EnterNewPassword extends \diModule
                 $this->getTpl()->define('enter_new_password/error', ['page']);
             }
         }
+    }
+
+    protected function findUser($email)
+    {
+        return Model::createBySlug($email);
     }
 
     public function redirectToDone()
