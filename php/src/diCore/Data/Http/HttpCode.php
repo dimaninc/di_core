@@ -20,6 +20,7 @@ class HttpCode extends SimpleContainer
     const UNAUTHORIZED = 401;
     const FORBIDDEN = 403;
     const NOT_FOUND = 404;
+    const CONFLICT = 409;
     const GONE = 410;
 
     const INTERNAL_SERVER_ERROR = 500;
@@ -33,6 +34,7 @@ class HttpCode extends SimpleContainer
         self::UNAUTHORIZED => 'Unauthorized',
         self::FORBIDDEN => 'Forbidden',
         self::NOT_FOUND => 'Not Found',
+        self::CONFLICT => 'Conflict',
         self::GONE => 'Gone',
 
         self::INTERNAL_SERVER_ERROR => 'Internal Server Error',
@@ -47,6 +49,7 @@ class HttpCode extends SimpleContainer
         self::UNAUTHORIZED => 'UNAUTHORIZED',
         self::FORBIDDEN => 'FORBIDDEN',
         self::NOT_FOUND => 'NOT_FOUND',
+        self::CONFLICT => 'CONFLICT',
         self::GONE => 'GONE',
 
         self::INTERNAL_SERVER_ERROR => 'INTERNAL_SERVER_ERROR',

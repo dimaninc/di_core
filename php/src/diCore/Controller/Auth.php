@@ -9,7 +9,9 @@
 namespace diCore\Controller;
 
 use diCore\Base\CMS;
+use diCore\Base\Exception\HttpException;
 use diCore\Data\Config;
+use diCore\Data\Http\HttpCode;
 use diCore\Data\Types;
 use diCore\Entity\Admin\Level;
 use diCore\Entity\User\Model;
@@ -176,7 +178,7 @@ class Auth extends \diBaseController
             $user = \diModel::create(Types::user, $userId);
 
             if (!$user->exists()) {
-                throw new \Exception('User not found, ID=' . $userId);
+                throw new \Exception("User not found, ID=$userId");
             }
 
             if (!$user->hasActive()) {
@@ -191,7 +193,7 @@ class Auth extends \diBaseController
             $A->forceAuthorize($user, true);
 
             if ($back) {
-                header('Location: ' . $back);
+                header("Location: $back");
                 die();
             }
 
@@ -316,6 +318,11 @@ class Auth extends \diBaseController
         $this->redirectTo($href);
     }
 
+    protected function beforeSignUp(Model $user)
+    {
+        return $this;
+    }
+
     protected function afterSuccessfulSignUp(Model $user)
     {
         return $this;
@@ -328,10 +335,11 @@ class Auth extends \diBaseController
             'errors' => [],
         ];
 
-        /** @var Model $user */
         $user = Model::create();
 
         try {
+            $this->beforeSignUp($user);
+
             $user->fastSignUp([
                 'twig' => $this->getTwig(),
             ]);
@@ -346,9 +354,23 @@ class Auth extends \diBaseController
                 return $this->ok($this->getLoginSuccessResponseBody());
             }
         } catch (\diValidationException $e) {
+            $this->getResponse()->setResponseCode(HttpCode::BAD_REQUEST);
+
             $ar['errors'] = $user::getMessagesOfValidationException($e);
+            $ar['message'] = join(
+                "<br />\n",
+                $user::getMessagesOfValidationException($e)
+            );
+        } catch (HttpException $e) {
+            $this->defaultResponse($e, true);
+        } catch (\diDatabaseException $e) {
+            $this->getResponse()->setResponseCode(HttpCode::CONFLICT);
+
+            $ar['message'] = 'Такой пользователь уже зарегистрирован в системе';
         } catch (\Exception $e) {
             $ar['message'] = $user::getMessageOfSaveException($e);
+
+            $this->getResponse()->setResponseCode(HttpCode::INTERNAL_SERVER_ERROR);
         }
 
         /*
