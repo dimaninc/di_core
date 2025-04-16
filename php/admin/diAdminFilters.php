@@ -942,8 +942,18 @@ class diAdminFilters
 
         // sorter
         if (!$this->reset) {
-            $this->setSortBy($this->getTableData(static::PARAM_SORT_FIELD));
-            $this->setDir($this->getTableData(static::PARAM_SORT_DIR));
+            $this->setSortBy(
+                \diRequest::get(
+                    static::PARAM_SORT_FIELD,
+                    $this->getTableData(static::PARAM_SORT_FIELD)
+                )
+            );
+            $this->setDir(
+                \diRequest::get(
+                    static::PARAM_SORT_DIR,
+                    $this->getTableData(static::PARAM_SORT_DIR)
+                )
+            );
         }
 
         if ($this->possible_sortby_ar) {
@@ -1088,26 +1098,24 @@ class diAdminFilters
                             'value' => $value,
                             'negative' => $a['not'],
                         ]);
+                    } else {
+                        $w = is_callable($where_tpl)
+                            ? $where_tpl(
+                                $a['field'],
+                                $value,
+                                $a['not'],
+                                $options['tablePrefix'],
+                                $a['queryPrefix'],
+                                $a['querySuffix']
+                            )
+                            : str_replace(
+                                array_keys($replaces),
+                                array_values($replaces),
+                                $where_tpl
+                            );
 
-                        continue;
+                        $where_ar[] = $w;
                     }
-
-                    $w = is_callable($where_tpl)
-                        ? $where_tpl(
-                            $a['field'],
-                            $value,
-                            $a['not'],
-                            $options['tablePrefix'],
-                            $a['queryPrefix'],
-                            $a['querySuffix']
-                        )
-                        : str_replace(
-                            array_keys($replaces),
-                            array_values($replaces),
-                            $where_tpl
-                        );
-
-                    $where_ar[] = $w;
                 }
             }
 
