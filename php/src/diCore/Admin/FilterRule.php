@@ -17,6 +17,7 @@ class FilterRule extends SimpleContainer
     const endsWith = 3;
     const equals = 4;
     const boolInt = 5;
+    const intWithNull = 6;
 
     public static $names = [
         self::contains => 'contains',
@@ -24,6 +25,7 @@ class FilterRule extends SimpleContainer
         self::endsWith => 'endsWith',
         self::equals => 'equals',
         self::boolInt => 'boolInt',
+        self::intWithNull => 'intWithNull',
     ];
 
     public static function callback($id)
@@ -98,6 +100,19 @@ class FilterRule extends SimpleContainer
                 $col->filterBy($props['field'], false);
             } else {
                 $col->filterBy($props['field'], !!$props['value']);
+            }
+        };
+    }
+
+    public static function intWithNull($props = [])
+    {
+        $props = self::extProps($props);
+
+        return function (\diCollection $col) use ($props) {
+            if ($props['value'] == -1) {
+                $col->filterBy($props['field'], 0);
+            } else {
+                $col->filterBy($props['field'], $props['value']);
             }
         };
     }
