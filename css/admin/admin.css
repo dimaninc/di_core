@@ -3981,15 +3981,15 @@ body[data-skin="entrine"] .dynamic-row {
     padding-bottom: 10px;
   }
 }
-body[data-skin="classic"] .dynamic-row + .dynamic-row {
+body[data-skin="classic"] .dynamic-row + .dynamic-row:not(.dynamic-row--lite) {
   margin-top: 10px;
 }
-body[data-skin="entrine"] .dynamic-row + .dynamic-row {
+body[data-skin="entrine"] .dynamic-row + .dynamic-row:not(.dynamic-row--lite) {
   padding-top: 20px;
   border-top: 3px solid var(--menu-text-color-hover);
 }
 @media screen and (max-width: 768px) {
-  body[data-skin="entrine"] .dynamic-row + .dynamic-row {
+  body[data-skin="entrine"] .dynamic-row + .dynamic-row:not(.dynamic-row--lite) {
     padding-top: 10px;
   }
 }

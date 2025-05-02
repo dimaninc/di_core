@@ -413,8 +413,14 @@ var diDynamicRows = function (opts) {
       return false;
     }
 
-    if (!$src.length || !$anc.length) {
-      console.log('diDynamicRows: no $src or $anc');
+    if (!$anc.length) {
+      console.log('diDynamicRows: no $anc found');
+
+      return false;
+    }
+
+    if (!$src.length) {
+      console.log('diDynamicRows: no $src found');
 
       return false;
     }
@@ -425,21 +431,13 @@ var diDynamicRows = function (opts) {
     var orderNum = this.counters[field];
 
     var html = $src.html() || '';
-    html = html.substr(html.indexOf('>') + 1);
-    html = html.substr(0, html.length - 6);
     html = html.replace(/%NEWID%/g, id);
 
     var js = $jsSrc.html() || '';
     js = js.replace(/%NEWID%/g, id);
 
-    var $e = $('<div />');
+    var $e = $(html);
     var $eJs = $('<script type="text/javascript">' + js + '</script>');
-
-    $e.attr('id', field + '_div[' + id + ']')
-      .attr('data-id', id)
-      .data('id', id)
-      .addClass('dynamic-row')
-      .html(html);
 
     opts.beforeAddRow && opts.beforeAddRow(this, $e, id);
 

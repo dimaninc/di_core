@@ -56,6 +56,7 @@ class diDynamicRows
     const NEW_ID_STRING = '%NEWID%';
 
     public $table, $id, $field;
+    protected $safeField;
     public $static_mode;
     public $inputs, $scripts, $data, $inputs_params;
     public $language = 'ru';
@@ -65,8 +66,14 @@ class diDynamicRows
     public $sortby = '';
     public $info_ar;
     public $abs_path;
-    public $data_table, $data_id;
+    public $data_table;
+    public $data_id;
     public $js_var_name;
+
+    /*
+     * Is lite mode (like string[] or int[] for a single multi-field)
+     */
+    protected $isLite = false;
 
     /*
      * JSON data to update main field in the end before db-save process
@@ -118,37 +125,18 @@ class diDynamicRows
             $this->info_ar = $$_all_fields;
         }
 
+        $this->enrichInfo();
+
         $this->db = \diModel::createForTable($this->table)
             ::getConnection()
             ->getDb();
         $this->static_mode = false;
+        $this->abs_path = Config::getPublicFolder();
+        // stored as json if no data table
+        $this->data_table = $this->info_ar[$this->field]['table'] ?? null;
+        $this->storedModel = \diModel::createForTableNoStrict($this->getDataTable());
 
-        $this->abs_path = Config::getPublicFolder(); //diPaths::fileSystem();
-        $this->data_table = $this->info_ar[$this->field]['table'];
-
-        $this->storedModel = \diModel::createForTableNoStrict($this->getDataTable()); // , $this->getParentId(), 'id'
-        //$this->storedModel = new \diModel();
-
-        $fields_to_check_ar = ['table', 'template', 'fields'];
-
-        foreach ($fields_to_check_ar as $f) {
-            if (empty($this->info_ar[$this->field]["$f"])) {
-                throw new Exception(
-                    "You should define the '$f' attribute for '{$this->field}' field in '{$this->table}' Form Fields"
-                );
-            }
-        }
-
-        if (empty($this->info_ar[$this->field]['subquery'])) {
-            $this->info_ar[$this->field]['subquery'] = function (
-                $table,
-                $field,
-                $id,
-                \diDynamicRows $DR = null
-            ) {
-                return "_table = '$table' and _field = '$field' and _id = '$id'";
-            };
-        }
+        $this->validateInfo();
 
         if (!empty($this->info_ar[$this->field]['options'])) {
             $this->setOption($this->info_ar[$this->field]['options']);
@@ -165,10 +153,73 @@ class diDynamicRows
             $this->sortby = $this->info_ar[$this->field]['sortby'];
         }
 
-        $this->js_var_name = "di_{$this->table}_{$this->field}";
+        $this->safeField = $this->formatName($this->field);
+        $this->js_var_name = "di_{$this->table}_$this->safeField";
         $this->inputs = [];
         $this->data = [];
         $this->inputs_params = [];
+    }
+
+    protected function enrichInfo()
+    {
+        switch ($this->info_ar[$this->field]['type']) {
+            case 'int[]':
+            case 'string[]':
+                $this->isLite = true;
+
+                if (
+                    empty($this->info_ar[$this->field]['fields']) &&
+                    empty($this->info_ar[$this->field]['template'])
+                ) {
+                    $this->info_ar[$this->field]['fields'] = [
+                        'value' => substr(
+                            $this->info_ar[$this->field]['type'],
+                            0,
+                            -2
+                        ),
+                    ];
+
+                    $this->info_ar[$this->field]['template'] =
+                        '<ul class="line">' .
+                        '<li class="full-width">{VALUE}</li>' .
+                        '</ul>';
+                }
+                break;
+        }
+
+        if (empty($this->info_ar[$this->field]['subquery'])) {
+            $this->info_ar[$this->field]['subquery'] = fn(
+                $table,
+                $field,
+                $id,
+                \diDynamicRows $DR = null
+            ) => "_table = '$table' AND _field = '$field' AND _id = '$id'";
+        }
+
+        return $this;
+    }
+
+    protected function validateInfo()
+    {
+        $fieldsToCheck = ['template', 'fields'];
+        if ($this->getDataTable() !== null) {
+            $fieldsToCheck[] = 'table';
+        }
+
+        foreach ($fieldsToCheck as $f) {
+            if (empty($this->info_ar[$this->field][$f])) {
+                throw new Exception(
+                    "You should define the '$f' attribute for '$this->field' field in '$this->table' Form Fields"
+                );
+            }
+        }
+
+        return $this;
+    }
+
+    public function isLite()
+    {
+        return $this->isLite;
     }
 
     /**
@@ -244,7 +295,7 @@ class diDynamicRows
     public function getCurrentModel()
     {
         return \diModel::createForTableNoStrict(
-            $this->data_table,
+            $this->getDataTable(),
             $this->getAllData()
         );
     }
@@ -343,13 +394,17 @@ class diDynamicRows
 
     function is_flag($field, $flag)
     {
-        return isset($this->info_ar['fields'][$field]['flags']) &&
-            ((is_array($this->info_ar['fields'][$field]['flags']) &&
-                in_array($flag, $this->info_ar['fields'][$field]['flags'])) ||
-                (!is_array($this->info_ar['fields'][$field]['flags']) &&
-                    $flag == $this->info_ar['fields'][$field]['flags']))
-            ? true
-            : false;
+        if (!isset($this->info_ar['fields'][$field]['flags'])) {
+            return false;
+        }
+
+        $fieldFlags = $this->info_ar['fields'][$field]['flags'];
+
+        if (is_array($fieldFlags)) {
+            return in_array($flag, $fieldFlags);
+        }
+
+        return $flag == $fieldFlags;
     }
 
     public function getOrderBy()
@@ -357,7 +412,44 @@ class diDynamicRows
         return $this->sortby ? "ORDER BY $this->sortby" : '';
     }
 
-    function get_html()
+    protected function getExistingRecs()
+    {
+        $recs = [];
+
+        if ($this->isLite) {
+            $rows =
+                $this->getAdminPage()
+                    ->getForm()
+                    ->getModel()
+                    ->extGet($this->field) ?:
+                [];
+
+            $recs = array_map(
+                fn($v, $i) => (new \diModel())->set('value', $v)->setId(-1 * $i - 1),
+                $rows,
+                array_keys($rows)
+            );
+
+            return $recs;
+        }
+
+        $rs = $this->getDataTable()
+            ? $this->getDb()->rs(
+                $this->getDataTable(),
+                "WHERE $this->subquery {$this->getOrderBy()}"
+            )
+            : null;
+
+        while ($r = $this->getDb()->fetch($rs)) {
+            $m = (new \diModel($r, '#any'))->_setReadOnly(true);
+
+            $recs[] = $m;
+        }
+
+        return $recs;
+    }
+
+    public function getHtml()
     {
         $eventNames = [
             'afterInit',
@@ -376,12 +468,9 @@ class diDynamicRows
             $this->info_ar[$this->field]['after_rows'] = '';
         }
 
-        $rs = $this->getDb()->rs(
-            $this->data_table,
-            "WHERE $this->subquery" . $this->getOrderBy()
-        );
+        $recs = $this->getExistingRecs();
 
-        if (!$this->static_mode && $this->getDb()->count($rs)) {
+        if (!$this->static_mode && count($recs)) {
             $s .= $this->getAdvancedUploadingArea();
             $s .= $this->getAddRowHtml('before');
         }
@@ -390,22 +479,16 @@ class diDynamicRows
             ? ' data-add-bottom-row-inside-wrapper="true"'
             : '';
 
-        $s .= "<div data-purpose=\"anchor\" data-field=\"{$this->field}\" data-position=\"top\"></div>";
+        $s .= "<div data-purpose=\"anchor\" data-field=\"$this->safeField\" data-position=\"top\"></div>";
         $s .= "<div class=\"dynamic-wrapper\"$addBottomRowInsideWrapperAttr>";
 
-        while ($r = $this->getDb()->fetch($rs)) {
-            $m = (new \diModel($r, '#any'))->_setReadOnly(true);
-            $this->data_id = (int) $r->id;
+        /** @var \diModel $m */
+        foreach ($recs as $m) {
+            $this->data_id = $m->getId();
 
-            $s .= $this->get_row($m);
+            $s .= $this->getRowHtml($m);
 
-            if (isset($r->order_num)) {
-                $x = $r->order_num;
-            } elseif (isset($r->idx)) {
-                $x = $r->idx;
-            } else {
-                $x = $r->id;
-            }
+            $x = $m->get('order_num') ?? ($m->get('idx') ?? $m->getId());
 
             if (
                 ($direction > 0 && $x > $edgeOrderNumber) ||
@@ -422,7 +505,7 @@ class diDynamicRows
         $s .= '</div>';
 
         $jsOpts = [
-            'field' => $this->field,
+            'field' => $this->safeField,
             'fieldTitle' => 'запись',
             'counter' => $edgeOrderNumber,
             'direction' => $direction,
@@ -437,22 +520,15 @@ class diDynamicRows
             }
         }
 
-        $s .= "<div data-purpose=\"anchor\" data-field=\"$this->field\" data-position=\"bottom\"></div>";
+        $s .= "<div data-purpose=\"anchor\" data-field=\"$this->safeField\" data-position=\"bottom\"></div>";
+        $s .= "<script id=\"js_{$this->safeField}_resource\" type=\"text/template\">{$this->getRowHtml()}</script>";
         $s .=
-            "<script id=\"js_{$this->field}_resource\" type=\"text/template\">" .
-            $this->get_row() .
-            '</script>';
-        $s .=
-            "<div id=\"js_{$this->field}_js_resource\" style=\"display: none;\">" .
+            "<div id=\"js_{$this->safeField}_js_resource\" style=\"display: none;\">" .
             join("\n", $this->scripts) .
             '</div>';
 
-        $s .=
-            '<script type="text/javascript">var ' .
-            $this->js_var_name .
-            ' = new diDynamicRows(' .
-            json_encode($jsOpts) .
-            ');</script>';
+        $optsStr = json_encode($jsOpts);
+        $s .= "<script>var $this->js_var_name = new diDynamicRows($optsStr)</script>";
 
         if (!$this->static_mode) {
             if (!$addBottomRowInsideWrapper) {
@@ -464,7 +540,7 @@ class diDynamicRows
 
         if ($this->dicontrols_code_needed) {
             $s .=
-                "<script type=\"text/javascript\">$(function() { $('[id^=\"dicontrol-\"]').diReplaceControls(); });</script>";
+                "<script>$(function() { $('[id^=\"dicontrol-\"]').diReplaceControls(); });</script>";
         }
 
         $s .= $this->info_ar[$this->field]['after_rows'];
@@ -507,7 +583,7 @@ class diDynamicRows
     {
         $onClick =
             $this->getOption('addRowOnClick') ?:
-            "return $this->js_var_name.add('$this->field');";
+            "return $this->js_var_name.add('$this->safeField');";
         $caption = $this->getOption('addRowCaption');
         $innerHtml = $this->getOption('addRowText');
         $cssClass = $this->getOption('addRowCssClass') ?: 'simple-button';
@@ -551,7 +627,7 @@ class diDynamicRows
         return $flags_ar && in_array($flag, $flags_ar);
     }
 
-    function get_row(\diModel $m = null)
+    protected function getRowHtml(\diModel $m = null)
     {
         $id = $m ? $m->getId() : self::NEW_ID_STRING;
         $this->scripts = [];
@@ -622,19 +698,21 @@ class diDynamicRows
             ? ''
             : "<span class=\"close\" title=\"{$this->L(
                 'delete'
-            )}\" data-field=\"$this->field\" data-id=\"$id\"></span>";
+            )}\" data-field=\"$this->safeField\" data-id=\"$id\"></span>";
 
         $order_num_div =
             !isset($this->info_ar[$this->field]['fields']['order_num']) &&
             $m &&
             $m->exists('order_num')
-                ? "<input type=hidden name=\"{$this->field}_order_num[$id]\" value=\"{$m->get(
+                ? "<input type=hidden name=\"{$this->safeField}_order_num[$id]\" value=\"{$m->get(
                     'order_num'
                 )}\" data-field-name=\"order_num\">"
                 : '';
 
-        return "<div id=\"{$this->field}_div[$id]\" class=\"dynamic-row\" data-id=\"$id\" data-main-field=\"$this->field\">" .
-            "<input type=hidden name=\"{$this->field}_ids_ar[]\" value=\"$id\" data-field-name=\"ids_ar\">" .
+        $cssClass = $this->isLite ? ' dynamic-row--lite' : '';
+
+        return "<div id=\"{$this->safeField}_div[$id]\" class=\"dynamic-row$cssClass\" data-id=\"$id\" data-main-field=\"$this->field\">" .
+            "<input type=hidden name=\"{$this->safeField}_ids_ar[]\" value=\"$id\" data-field-name=\"ids_ar\">" .
             join("\n", $hiddens) .
             $kill_div .
             $order_num_div .
@@ -653,7 +731,7 @@ class diDynamicRows
         }
 
         $f = $this->formatName($field);
-        $name = "{$this->field}_{$f}[$id]";
+        $name = "{$this->safeField}_{$f}[$id]";
         $input_params = '';
 
         $this->data[$name] = $value;
@@ -1081,7 +1159,7 @@ class diDynamicRows
             $checked = (int) $this->data[$field] ? ' checked' : '';
             $this->inputs[
                 $field
-            ] = "<input type='checkbox' name='$field' id='$field'{$checked}{$input_params} data-field-name='$field'>";
+            ] = "<input type='checkbox' name='$field' id='$field'$checked$input_params data-field-name='$field'>";
         }
     }
 
@@ -1105,7 +1183,7 @@ class diDynamicRows
             $checked = (int) $this->data[$field] ? ' checked=checked' : '';
             $this->inputs[
                 $field
-            ] = "<input type='radio' name='$name' id='$field' value='{$id}' {$checked}{$input_params} data-field-name='$field'>";
+            ] = "<input type='radio' name='$name' id='$field' value='$id'$checked$input_params data-field-name='$field'>";
         }
     }
 
@@ -1414,7 +1492,7 @@ EOF;
             $id,
         ]);
 
-        return ", <a href=\"{$path}\" data-field=\"{$field}\" data-confirm=\"{$message}\" " .
+        return ", <a href=\"$path\" data-field=\"$field\" data-confirm=\"$message\" " .
             "class=\"del-file\">{$this->L('delete')}</a>";
     }
 
@@ -1500,12 +1578,12 @@ EOF;
         //$fullName
         return !empty($this->data[$field]) &&
             (is_file(diPaths::fileSystem() . $fullName) || !$hideIfNoFile)
-            ? "<div class=\"existing-pic-holder\" data-field='{$field2}'>" .
+            ? "<div class=\"existing-pic-holder\" data-field='$field2'>" .
                     $imgTag .
-                    "<a href='{$httpName}' class='link'>" .
+                    "<a href='$httpName' class='link'>" .
                     basename($fullName) .
                     '</a>' .
-                    "<div class=\"info\">{$info}{$del_link}</div></div>"
+                    "<div class=\"info\">$info$del_link</div></div>"
             : '';
     }
 
@@ -1628,7 +1706,7 @@ EOF;
         global $dynamic_pics_folder, $tn_folder, $tn2_folder, $tn3_folder;
 
         $resultIds = [];
-        $initialIds = $_POST["{$this->field}_ids_ar"] ?? [];
+        $initialIds = $_POST["{$this->safeField}_ids_ar"] ?? [];
 
         $fileFields = [];
         $fields = (array) $this->getProperty('fields');
@@ -1640,6 +1718,9 @@ EOF;
         $afterSaveCallback =
             $this->getProperty('afterSave') ?: $this->getProperty('after_save');
         $afterAllSavedCallback = $this->getProperty('afterAllSaved');
+
+        // in lite mode here to store values
+        $liteValues = [];
 
         foreach ($fields as $k => $v) {
             if (!is_array($v)) {
@@ -1667,10 +1748,10 @@ EOF;
 
             $this->data_id = (int) $id;
             $this->test_r =
-                $id > 0
+                $id > 0 && $this->getDataTable()
                     ? $this->getDb()->r(
-                        $this->data_table,
-                        "WHERE $this->subquery and id='$id'"
+                        $this->getDataTable(),
+                        "WHERE $this->subquery AND id = '$id'"
                     )
                     : null;
 
@@ -1693,9 +1774,6 @@ EOF;
                 );
 
                 $this->setDataAr($techData);
-                //foreach ($techData as $k => $v) {
-                // $this->getStoredModel()->set($k, $v);
-                //}
 
                 $techFieldsSet = true;
             }
@@ -1721,13 +1799,11 @@ EOF;
 
                 if (!empty($this->data[$k]) || !$isFileType) {
                     if ($opts['type'] === 'radio') {
-                        $rf = "{$this->field}_$k";
+                        $rf = "{$this->safeField}_$k";
                         $val = isset($_POST[$rf]) && $_POST[$rf] == $id ? 1 : 0;
 
-                        // $this->getStoredModel()->set($k, $val);
                         $this->setData($k, $val);
                     } elseif (isset($this->data[$k])) {
-                        // $this->getStoredModel()->set($k, $this->data[$k]);
                         $this->setData($k, $this->data[$k]);
                     }
                 }
@@ -1739,10 +1815,9 @@ EOF;
                 $this->data = extend($this->data, $techData);
 
                 $this->setDataAr($techData);
-                // $this->getStoredModel()->set($techData);
             }
 
-            if (!$rowExists && !$techFieldsSet) {
+            if ($this->getDataTable() && !$rowExists && !$techFieldsSet) {
                 $this->data['_table'] = $this->table;
                 $this->data['_field'] = $this->field;
                 $this->data['_id'] = $this->id;
@@ -1756,76 +1831,79 @@ EOF;
 
             $this->setJsonData();
 
-            // var_dump($this->getStoredModel()->get());
-            // die();
-
-            $this->getStoredModel()->save();
-            $resultIds[] = $this->getStoredModel()->getId();
+            if ($this->isLite) {
+                $liteValues[] = $this->getStoredModel()->get('value');
+            } else {
+                $this->getStoredModel()->save();
+                $resultIds[] = $this->getStoredModel()->getId();
+            }
         }
 
         $resultIds = array_merge($resultIds, $this->submitMultipleFiles());
 
-        // it's killing time!
-        $filesToKill = [];
-        $m = \diModel::createForTableNoStrict($this->data_table);
-        $pics_folder = $m->modelType()
-            ? $m->getPicsFolder()
-            : $dynamic_pics_folder . "$this->table/";
+        if ($this->getDataTable()) {
+            // killing unneeded files
+            $filesToKill = [];
+            $m = \diModel::createForTableNoStrict($this->getDataTable());
+            $pics_folder = $m->modelType()
+                ? $m->getPicsFolder()
+                : $dynamic_pics_folder . "$this->table/";
 
-        $exceptQuery = $resultIds
-            ? "AND id{$this->getDb()::in($resultIds, false, false)}"
-            : '';
-        $killQuery = "WHERE $this->subquery $exceptQuery";
-        $kill_rs = $this->getDb()->rs($this->data_table, $killQuery);
-        while ($kill_r = $this->getDb()->fetch($kill_rs)) {
-            foreach ($fileFields as $field) {
-                $filesToKill[] = $kill_r->$field;
-            }
-        }
-        $this->getDb()->delete($this->data_table, $killQuery);
-
-        foreach ($filesToKill as $fn) {
-            @unlink($this->abs_path . $pics_folder . $fn);
-            @unlink($this->abs_path . $pics_folder . $tn_folder . $fn);
-            @unlink($this->abs_path . $pics_folder . $tn2_folder . $fn);
-            @unlink($this->abs_path . $pics_folder . $tn3_folder . $fn);
-        }
-
-        // making order num to look ok
-        $test = $this->getDb()->ar($this->data_table);
-
-        if (isset($test['order_num'])) {
-            $order_num = 0;
-
-            $rs = $this->getDb()->rs(
-                $this->data_table,
-                "WHERE $this->subquery ORDER BY order_num ASC,id ASC"
-            );
-            while ($rs && ($r = $this->getDb()->fetch($rs))) {
-                $this->getDb()->update(
-                    $this->data_table,
-                    [
-                        'order_num' => ++$order_num,
-                    ],
-                    $r->id
-                );
-            }
-        }
-
-        if (is_callable($afterSaveCallback) || $this->afterSaveEachCallbacks) {
-            foreach ($resultIds as $_idx => $_id) {
-                $initialId = $initialIds[$_idx];
-
-                if ($afterSaveCallback) {
-                    $afterSaveCallback($this, $_id, $initialId);
+            $exceptQuery = $resultIds
+                ? "AND id{$this->getDb()::in($resultIds, false, false)}"
+                : '';
+            $killQuery = "WHERE $this->subquery $exceptQuery";
+            $kill_rs = $this->getDb()->rs($this->getDataTable(), $killQuery);
+            while ($kill_r = $this->getDb()->fetch($kill_rs)) {
+                foreach ($fileFields as $field) {
+                    $filesToKill[] = $kill_r->$field;
                 }
+            }
+            $this->getDb()->delete($this->getDataTable(), $killQuery);
 
-                foreach (
-                    $this->afterSaveEachCallbacks
-                    as ['origId' => $origId, 'callback' => $cb]
-                ) {
-                    if ($initialId == $origId) {
-                        $cb($_id);
+            foreach ($filesToKill as $fn) {
+                @unlink($this->abs_path . $pics_folder . $fn);
+                @unlink($this->abs_path . $pics_folder . $tn_folder . $fn);
+                @unlink($this->abs_path . $pics_folder . $tn2_folder . $fn);
+                @unlink($this->abs_path . $pics_folder . $tn3_folder . $fn);
+            }
+
+            // making order num to look ok
+            $test = $this->getDb()->ar($this->getDataTable());
+
+            if (isset($test['order_num'])) {
+                $order_num = 0;
+
+                $rs = $this->getDb()->rs(
+                    $this->getDataTable(),
+                    "WHERE $this->subquery ORDER BY order_num ASC,id ASC"
+                );
+                while ($rs && ($r = $this->getDb()->fetch($rs))) {
+                    $this->getDb()->update(
+                        $this->getDataTable(),
+                        [
+                            'order_num' => ++$order_num,
+                        ],
+                        $r->id
+                    );
+                }
+            }
+
+            if (is_callable($afterSaveCallback) || $this->afterSaveEachCallbacks) {
+                foreach ($resultIds as $_idx => $_id) {
+                    $initialId = $initialIds[$_idx];
+
+                    if ($afterSaveCallback) {
+                        $afterSaveCallback($this, $_id, $initialId);
+                    }
+
+                    foreach (
+                        $this->afterSaveEachCallbacks
+                        as ['origId' => $origId, 'callback' => $cb]
+                    ) {
+                        if ($initialId == $origId) {
+                            $cb($_id);
+                        }
                     }
                 }
             }
@@ -1837,7 +1915,11 @@ EOF;
             $afterAllSavedCallback($this);
         }
 
-        return true;
+        if ($this->isLite) {
+            return $liteValues;
+        }
+
+        return null;
     }
 
     protected function submitMultipleFiles()
@@ -1861,7 +1943,7 @@ EOF;
             $id = self::MULTIPLE_UPLOAD_FIRST_ID;
 
             $maxOrderNum = $this->getDb()->r(
-                $this->data_table,
+                $this->getDataTable(),
                 "WHERE $this->subquery",
                 'MAX(order_num) AS o'
             );
@@ -2032,21 +2114,18 @@ EOF;
         }
 
         $f = $this->formatName($field);
-        $ff = "{$this->field}_$f";
+        $ff = "{$this->safeField}_$f";
 
         switch ($opts['type']) {
             case 'password':
-                $this->data[$field] = isset($_POST[$ff][$origId])
-                    ? $_POST[$ff][$origId]
-                    : $opts['default'];
-                $this->data[$field . '2'] = isset($_POST[$ff . '2'][$origId])
-                    ? $_POST[$ff . '2'][$origId]
-                    : $opts['default'];
+                $this->data[$field] = $_POST[$ff][$origId] ?? $opts['default'];
+                $this->data[$field . '2'] =
+                    $_POST[$ff . '2'][$origId] ?? $opts['default'];
                 break;
 
             case 'date':
             case 'date_str':
-                $this->make_datetime($field, $origId, true, false);
+                $this->make_datetime($field, $origId);
                 break;
 
             case 'time':
@@ -2126,21 +2205,6 @@ EOF;
                     $this->data[$field] = doubleval($this->data[$field]);
                     break;
 
-                /*
-                default:
-                case 'string':
-                case 'str':
-                case 'varchar':
-                    $this->data[$f] = StringHelper::in($this->data[$f]);
-                    break;
-
-                case 'text':
-                case 'blob':
-                case 'wysiwyg':
-                    $this->data[$f] = addslashes($this->data[$f]);
-                    break;
-                */
-
                 case 'pic':
                 case 'file':
                     if (empty($this->data[$field])) {
@@ -2160,7 +2224,11 @@ EOF;
                             $field
                         );
                     } else {
-                        $r = $this->getDb()->r($this->data_table, $origId, $field);
+                        $r = $this->getDb()->r(
+                            $this->getDataTable(),
+                            $origId,
+                            $field
+                        );
                         $this->data[$field] = $r ? $r->$field : '';
                     }
                     break;
@@ -2178,7 +2246,7 @@ EOF;
     function make_datetime($field, $id, $date = true, $time = false)
     {
         $f = $this->formatName($field);
-        $ff = "{$this->field}_$f";
+        $ff = "{$this->safeField}_$f";
 
         $ar = getdate();
 
@@ -2241,7 +2309,6 @@ EOF;
         $multiUploadMode = $this->isMultipleUploadRecord($id);
         $pics_folder = '/' . $this->getPicsFolder();
 
-        //$pics_folder = $dynamic_pics_folder."$this->table/";
         FileSystemHelper::createTree(
             $this->abs_path,
             $pics_folder . $tn_folder,
@@ -2250,8 +2317,8 @@ EOF;
 
         $f = $this->formatName($field);
         $ff = $multiUploadMode
-            ? self::getMultipleUploadFieldName($this->field)
-            : "{$this->field}_$f";
+            ? self::getMultipleUploadFieldName($this->safeField)
+            : "{$this->safeField}_$f";
 
         if ($multiUploadMode) {
             $id = self::MULTIPLE_UPLOAD_FIRST_ID - $id - 1;
@@ -2264,51 +2331,51 @@ EOF;
             }
         }
 
-        if (isset($_FILES[$ff]['name'][$id]) && !$_FILES[$ff]['error'][$id]) {
-            $ext =
-                '.' .
-                strtolower(StringHelper::fileExtension($_FILES[$ff]['name'][$id]));
+        if (empty($_FILES[$ff]['name'][$id]) || $_FILES[$ff]['error'][$id]) {
+            return $this;
+        }
 
-            if ($this->test_r && $this->test_r->$field) {
-                $this->data[$field] = StringHelper::replaceFileExtension(
-                    $this->test_r->$field,
-                    $ext
-                );
-            } else {
-                $this->data[$field] = Submit::getGeneratedFilename(
-                    Config::getPublicFolder() . $pics_folder,
-                    $_FILES[$ff]['name'][$id],
-                    $this->getFieldProperty($field, 'naming'),
-                    $this->getFieldProperty($field, 'maxNameLength')
-                );
-            }
+        $ext =
+            '.' . strtolower(StringHelper::fileExtension($_FILES[$ff]['name'][$id]));
 
-            //$fileOptions = $this->getFieldProperty($field, 'fileOptions');
-            $fileOptions = Submit::prepareFileOptions(
-                $field,
-                $this->getFieldProperty($field, 'fileOptions') ?:
-                $this->getStoredModel()->getPicStoreSettings($field) ?:
-                [],
-                $this->getStoredModel(),
-                $this->getTable()
+        if ($this->test_r && $this->test_r->$field) {
+            $this->data[$field] = StringHelper::replaceFileExtension(
+                $this->test_r->$field,
+                $ext
             );
-            $callback = isset($field_config['callback'])
-                ? $field_config['callback']
-                : [\diDynamicRows::class, 'storePicSimple'];
+        } else {
+            $this->data[$field] = Submit::getGeneratedFilename(
+                Config::getPublicFolder() . $pics_folder,
+                $_FILES[$ff]['name'][$id],
+                $this->getFieldProperty($field, 'naming'),
+                $this->getFieldProperty($field, 'maxNameLength')
+            );
+        }
 
-            $F = [
-                'name' => $_FILES[$ff]['name'][$id],
-                'type' => $_FILES[$ff]['type'][$id],
-                'tmp_name' => $_FILES[$ff]['tmp_name'][$id],
-                'error' => $_FILES[$ff]['error'][$id],
-                'size' => $_FILES[$ff]['size'][$id],
-            ];
+        $fileOptions = Submit::prepareFileOptions(
+            $field,
+            $this->getFieldProperty($field, 'fileOptions') ?:
+            $this->getStoredModel()->getPicStoreSettings($field) ?:
+            [],
+            $this->getStoredModel(),
+            $this->getTable()
+        );
+        $callback = isset($field_config['callback'])
+            ? $field_config['callback']
+            : [\diDynamicRows::class, 'storePicSimple'];
 
-            if ($callback && is_callable($callback)) {
-                $callback($F, $pics_folder, $field, $this->data, $this, [
-                    'fileOptions' => $fileOptions,
-                ]);
-            }
+        $F = [
+            'name' => $_FILES[$ff]['name'][$id],
+            'type' => $_FILES[$ff]['type'][$id],
+            'tmp_name' => $_FILES[$ff]['tmp_name'][$id],
+            'error' => $_FILES[$ff]['error'][$id],
+            'size' => $_FILES[$ff]['size'][$id],
+        ];
+
+        if ($callback && is_callable($callback)) {
+            $callback($F, $pics_folder, $field, $this->data, $this, [
+                'fileOptions' => $fileOptions,
+            ]);
         }
 
         return $this;

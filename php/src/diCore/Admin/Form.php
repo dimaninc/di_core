@@ -1048,8 +1048,10 @@ EOF;
                                 $this->set_dynamic_files_input($field);
                                 break;
 
+                            case 'int[]':
+                            case 'string[]':
                             case 'dynamic':
-                                $this->set_dynamic_input($field);
+                                $this->setDynamicInput($field);
                                 break;
 
                             case 'text':
@@ -1166,8 +1168,10 @@ EOF;
                             $this->set_dynamic_files_input($field);
                             break;
 
+                        case 'int[]':
+                        case 'string[]':
                         case 'dynamic':
-                            $this->set_dynamic_input($field);
+                            $this->setDynamicInput($field);
                             break;
 
                         case 'tags':
@@ -1522,7 +1526,7 @@ EOF;
 			$prefix
 			<input type=\"text\" id=\"{$field}[$id]\" name=\"{$field}[$id]\" value=\"$value\" />
 			$suffix
-			[<a href=\"#\" onclick=\"return diref_{$this->table}.remove('$field',$id);\">&ndash;</a>]
+			[<a href=\"#\" onclick=\"return diref_$this->table.remove('$field',$id);\">&ndash;</a>]
 			</div>";
     }
 
@@ -3547,13 +3551,13 @@ EOF;
         return $this;
     }
 
-    function set_dynamic_input($field)
+    protected function setDynamicInput($field)
     {
         $dr = new \diDynamicRows($this->AdminPage, $field);
         $dr->static_mode =
             $this->static_mode || $this->isFlag($field, FormFlag::static);
 
-        $this->inputs[$field] = "<div class=\"value-inner\">{$dr->get_html()}</div>";
+        $this->inputs[$field] = "<div class=\"value-inner\">{$dr->getHtml()}</div>";
         $this->force_inputs_fields[$field] = true;
 
         return $this;

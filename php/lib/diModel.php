@@ -1467,6 +1467,17 @@ class diModel implements \ArrayAccess
         return static::tuneFieldValueByTypeBeforeDb($field, $this->get($field));
     }
 
+    public function extGet(string $field)
+    {
+        [$masterField, $subField] = Submit::getFieldNamePair($field ?? '');
+
+        if ($subField && $this->hasJsonData($masterField, $subField)) {
+            return $this->getJsonData($masterField, $subField);
+        }
+
+        return $this->get($field);
+    }
+
     public function getJsonData(string $field, array|string $path = null)
     {
         if (!isset($this->jsonData[$field])) {

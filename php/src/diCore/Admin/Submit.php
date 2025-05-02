@@ -151,6 +151,8 @@ class Submit
                         'dynamic_pics',
                         'dynamic_files',
                         'dynamic',
+                        'string[]',
+                        'int[]',
                     ])
                 ) {
                     $skip = true;
@@ -337,6 +339,8 @@ class Submit
                     'dynamic_pics',
                     'dynamic_files',
                     'separator',
+                    'string[]',
+                    'int[]',
                 ]) &&
                 !$this->isFlag($f, FormFlag::virtual) &&
                 !$this->isFlag($f, FormFlag::initially_hidden)
@@ -641,7 +645,7 @@ class Submit
         foreach ($this->_all_fields as $f => $v) {
             if (in_array($v['type'], ['dynamic_pics', 'dynamic_files'])) {
                 $dynamicPicsFields[] = $f;
-            } elseif ($v['type'] == 'dynamic') {
+            } elseif ($v['type'] == 'dynamic' || substr($v['type'], -2) === '[]') {
                 $dynamicFields[] = $f;
             }
         }
@@ -665,7 +669,7 @@ class Submit
         }
 
         foreach ($dynamicFields as $f) {
-            $this->store_dynamic($f);
+            $this->storeDynamic($f);
         }
 
         foreach ($this->_all_fields as $f => $v) {
@@ -1709,11 +1713,17 @@ class Submit
         return $ar;
     }
 
-    function store_dynamic($field)
+    protected function storeDynamic($field)
     {
         $dr = new \diDynamicRows($this->AdminPage, $field);
 
-        $dr->submit();
+        $liteValues = $dr->submit();
+
+        if ($dr->isLite()) {
+            $this->setData($field, $liteValues);
+            $this->setJsonData();
+            $this->getModel()->save();
+        }
 
         return $this;
     }
