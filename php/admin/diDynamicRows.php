@@ -470,9 +470,9 @@ class diDynamicRows
 
         $recs = $this->getExistingRecs();
 
-        if (!$this->static_mode && count($recs)) {
+        if (!$this->static_mode && !$this->isLite && count($recs)) {
             $s .= $this->getAdvancedUploadingArea();
-            $s .= $this->getAddRowHtml('before');
+            $s .= $this->getAddRowButtonHtml('before');
         }
 
         $addBottomRowInsideWrapperAttr = $addBottomRowInsideWrapper
@@ -499,7 +499,7 @@ class diDynamicRows
         }
 
         if ($addBottomRowInsideWrapper) {
-            $s .= $this->getAddRowHtml('after');
+            $s .= $this->getAddRowButtonHtml('after');
         }
 
         $s .= '</div>';
@@ -532,7 +532,7 @@ class diDynamicRows
 
         if (!$this->static_mode) {
             if (!$addBottomRowInsideWrapper) {
-                $s .= $this->getAddRowHtml('after');
+                $s .= $this->getAddRowButtonHtml('after');
             }
 
             $s .= $this->getAdvancedUploadingArea();
@@ -579,7 +579,7 @@ class diDynamicRows
         );
     }
 
-    public function getAddRowHtml($position)
+    public function getAddRowButtonHtml($position)
     {
         $onClick =
             $this->getOption('addRowOnClick') ?:
@@ -587,6 +587,10 @@ class diDynamicRows
         $caption = $this->getOption('addRowCaption');
         $innerHtml = $this->getOption('addRowText');
         $cssClass = $this->getOption('addRowCssClass') ?: 'simple-button';
+
+        if ($this->isLite) {
+            $cssClass .= ' dynamic-add--lite';
+        }
 
         if (is_callable($onClick)) {
             $onClick = $onClick($this);

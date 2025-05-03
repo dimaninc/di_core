@@ -3947,6 +3947,9 @@ table.actions-log tr:last-of-type td {
 .dynamic-add:not(:first-child) {
   margin-top: var(--margin-v);
 }
+.dynamic-add:not(:first-child).dynamic-add--lite {
+  margin-top: 0;
+}
 .dynamic-add:not(:last-child) {
   margin-bottom: var(--margin-v);
 }

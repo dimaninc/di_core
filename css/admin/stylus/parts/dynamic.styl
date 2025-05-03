@@ -5,6 +5,10 @@
 
   &:not(:first-child) {
     margin-top var(--margin-v)
+
+    &.dynamic-add--lite {
+      margin-top 0
+    }
   }
 
   &:not(:last-child) {
@@ -12,7 +16,7 @@
   }
 
   {$entrineSkin} & {
-  --margin-v 20px
+    --margin-v 20px
   }
 }
 
