@@ -139,7 +139,7 @@ class ArrayHelper
         return $ar;
     }
 
-    public static function filterRecursive(array $ar, callable $callback = null)
+    public static function filterRecursive(array $ar, callable|null $callback = null)
     {
         foreach ($ar as &$value) {
             if (is_array($value)) {

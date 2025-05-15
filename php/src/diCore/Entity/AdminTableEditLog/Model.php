@@ -333,7 +333,7 @@ class Model extends \diModel
         return $this->setRelated('formFields', $fields);
     }
 
-    public function setBothData(\diModel $model, \diModel $oldModel = null)
+    public function setBothData(\diModel $model, \diModel|null $oldModel = null)
     {
         if ($oldModel) {
             $model = clone $model;

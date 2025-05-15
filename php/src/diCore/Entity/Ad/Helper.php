@@ -44,8 +44,7 @@ class Helper
     static $adTransitionStylesAr = [
         self::TRANSITION_STYLE_DEFAULT => 'По умолчанию',
         self::TRANSITION_STYLE_BOTH_SLIDING => 'Новый слайд вытесняет старый',
-        self::TRANSITION_STYLE_ONLY_NEW_SLIDING =>
-            'Новый слайд наезжает на старый',
+        self::TRANSITION_STYLE_ONLY_NEW_SLIDING => 'Новый слайд наезжает на старый',
     ];
 
     static $adSlidesOrdersAr = [
@@ -70,7 +69,7 @@ class Helper
     public static function printBlock(
         $blockId = null,
         $token = null,
-        CMS $CMS = null
+        CMS|null $CMS = null
     ) {
         global $Z;
 
@@ -87,7 +86,7 @@ class Helper
         return $a->render($blockId, $token);
     }
 
-    public static function incutBlocks($content, CMS $Z = null)
+    public static function incutBlocks($content, CMS|null $Z = null)
     {
         $ar1 = $ar2 = [];
 
@@ -218,9 +217,7 @@ class Helper
             $this->isHoliday() ? ShowOnHolidays::only : ShowOnHolidays::except,
         ];
 
-        $col = Collection::create()->filterByBlockId(
-            $this->getBlock()->getId()
-        );
+        $col = Collection::create()->filterByBlockId($this->getBlock()->getId());
 
         if ($this->considerDates()) {
             $col->filterManual(
@@ -303,10 +300,7 @@ class Helper
                 ->process('AD_ROWS', '.ad_row');
         }
 
-        $this->getTpl()->assign(
-            $this->getBlock()->getTemplateVarsExtended(),
-            'AB_'
-        );
+        $this->getTpl()->assign($this->getBlock()->getTemplateVarsExtended(), 'AB_');
 
         return $this->getAds()->count()
             ? $this->getTpl()->parse($token, 'ad_block')

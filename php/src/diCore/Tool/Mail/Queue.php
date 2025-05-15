@@ -214,7 +214,7 @@ class Queue
     }
 
     // by default the first message is being sent
-    public function send(int|string $id = null)
+    public function send(int|string|null $id = null)
     {
         $message = $id
             ? Model::createById($id)

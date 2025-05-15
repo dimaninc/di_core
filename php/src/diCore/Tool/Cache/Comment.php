@@ -64,10 +64,7 @@ class Comment
             ->rs_go(
                 function ($r, $counter) use ($comment, $addError) {
                     try {
-                        $model = \diModel::create(
-                            $r->target_type,
-                            $r->target_id
-                        );
+                        $model = \diModel::create($r->target_type, $r->target_id);
                         $model
                             ->set($comment::COMMENTS_COUNT_FIELD, $r->count)
                             ->set($comment::COMMENTS_LAST_DATE_FIELD, $r->dt)
@@ -98,7 +95,7 @@ class Comment
     protected function createCollectionByTarget(
         $targetType,
         $targetId = null,
-        \diComments $Comments = null
+        \diComments|null $Comments = null
     ) {
         $col = Collection::createForTarget($targetType, $targetId);
         $col->filterByVisible(1);
@@ -109,7 +106,7 @@ class Comment
     public function rebuildByTarget(
         $targetType,
         $targetId = null,
-        \diComments $Comments = null
+        \diComments|null $Comments = null
     ) {
         $Manager =
             $Comments ?:
@@ -162,9 +159,7 @@ class Comment
         )->rebuildWorker($cacheModel);
 
         $cacheModel
-            ->setUpdatedAt(
-                \diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME)
-            )
+            ->setUpdatedAt(\diDateTime::format(\diDateTime::FORMAT_SQL_DATE_TIME))
             ->save();
 
         return $this;
@@ -172,10 +167,7 @@ class Comment
 
     protected function rebuildWorker(CacheModel $cacheModel)
     {
-        $this->storeHtml(
-            $cacheModel,
-            $this->getManager()->getDefaultRowsHtml()
-        );
+        $this->storeHtml($cacheModel, $this->getManager()->getDefaultRowsHtml());
 
         return $this;
     }

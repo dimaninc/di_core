@@ -337,7 +337,7 @@ class Model extends \diModel
         return $this->getTargetModel()->getHref() . $this->getHrefSuffix();
     }
 
-    public function getUserAppearance(\diModel $user = null)
+    public function getUserAppearance(\diModel|null $user = null)
     {
         $user = $user ?: $this->getUserModel();
         $typeSuffix = $this->getUserType() == \diComments::utAdmin ? ' (Admin)' : '';

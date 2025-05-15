@@ -192,7 +192,7 @@ class diDynamicRows
                 $table,
                 $field,
                 $id,
-                \diDynamicRows $DR = null
+                \diDynamicRows|null $DR = null
             ) => "_table = '$table' AND _field = '$field' AND _id = '$id'";
         }
 

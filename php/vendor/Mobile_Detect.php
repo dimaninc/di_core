@@ -283,8 +283,7 @@ class Mobile_Detect
         // http://www.yarvik.com/en/matrix/tablets/
         'YarvikTablet' =>
             'Android.*\b(TAB210|TAB211|TAB224|TAB250|TAB260|TAB264|TAB310|TAB360|TAB364|TAB410|TAB411|TAB420|TAB424|TAB450|TAB460|TAB461|TAB464|TAB465|TAB467|TAB468|TAB07-100|TAB07-101|TAB07-150|TAB07-151|TAB07-152|TAB07-200|TAB07-201-3G|TAB07-210|TAB07-211|TAB07-212|TAB07-214|TAB07-220|TAB07-400|TAB07-485|TAB08-150|TAB08-200|TAB08-201-3G|TAB08-201-30|TAB09-100|TAB09-211|TAB09-410|TAB10-150|TAB10-201|TAB10-211|TAB10-400|TAB10-410|TAB13-201|TAB274EUK|TAB275EUK|TAB374EUK|TAB462EUK|TAB474EUK|TAB9-200)\b',
-        'MedionTablet' =>
-            'Android.*\bOYO\b|LIFE.*(P9212|P9514|P9516|S9512)|LIFETAB',
+        'MedionTablet' => 'Android.*\bOYO\b|LIFE.*(P9212|P9514|P9516|S9512)|LIFETAB',
         'ArnovaTablet' =>
             'AN10G2|AN7bG3|AN7fG3|AN8G3|AN8cG3|AN7G3|AN9G3|AN7dG3|AN7dG3ST|AN7dG3ChildPad|AN10bG3|AN10bG3DT|AN9G2',
         // http://www.intenso.de/kategorie_en.php?kategorie=33
@@ -334,8 +333,7 @@ class Mobile_Detect
         'SMiTTablet' =>
             'Android.*(\bMID\b|MID-560|MTV-T1200|MTV-PND531|MTV-P1101|MTV-PND530)',
         // http://www.rock-chips.com/index.php?do=prod&pid=2
-        'RockChipTablet' =>
-            'Android.*(RK2818|RK2808A|RK2918|RK3066)|RK2738|RK2808A',
+        'RockChipTablet' => 'Android.*(RK2818|RK2808A|RK2918|RK3066)|RK2738|RK2808A',
         // http://www.fly-phone.com/devices/tablets/ ; http://www.fly-phone.com/service/
         'FlyTablet' => 'IQ310|Fly Vision',
         // http://www.bqreaders.com/gb/tablets-prices-sale.html
@@ -619,14 +617,12 @@ class Mobile_Detect
         // https://developers.facebook.com/docs/sharing/best-practices
         'Bot' =>
             'Googlebot|facebookexternalhit|AdsBot-Google|Google Keyword Suggestion|Facebot|YandexBot|bingbot|ia_archiver|AhrefsBot|Ezooms|GSLFbot|WBSearchBot|Twitterbot|TweetmemeBot|Twikle|PaperLiBot|Wotbox|UnwindFetchor',
-        'MobileBot' =>
-            'Googlebot-Mobile|AdsBot-Google-Mobile|YahooSeeker/M1A1-R2D2',
+        'MobileBot' => 'Googlebot-Mobile|AdsBot-Google-Mobile|YahooSeeker/M1A1-R2D2',
         'DesktopMode' => 'WPDesktop',
         'TV' => 'SonyDTV|HbbTV', // experimental
         'WebKit' => '(webkit)[ /]([\w.]+)',
         // @todo: Include JXD consoles.
-        'Console' =>
-            '\b(Nintendo|Nintendo WiiU|Nintendo 3DS|PLAYSTATION|Xbox)\b',
+        'Console' => '\b(Nintendo|Nintendo WiiU|Nintendo 3DS|PLAYSTATION|Xbox)\b',
         'Watch' => 'SM-V700',
     ];
 
@@ -738,7 +734,7 @@ class Mobile_Detect
      * @param string $userAgent Inject the User-Agent header. If null, will use HTTP_USER_AGENT
      *                          from the $headers array instead.
      */
-    public function __construct(array $headers = null, $userAgent = null)
+    public function __construct(array $headers = [], $userAgent = null)
     {
         $this->setHttpHeaders($headers);
         $this->setUserAgent($userAgent);
@@ -763,7 +759,7 @@ class Mobile_Detect
      * @param array $httpHeaders The headers to set. If null, then using PHP's _SERVER to extract
      *                           the headers. The default null is left for backwards compatibilty.
      */
-    public function setHttpHeaders($httpHeaders = null)
+    public function setHttpHeaders($httpHeaders = [])
     {
         // use global _SERVER if $httpHeaders aren't defined
         if (!is_array($httpHeaders) || !count($httpHeaders)) {
@@ -1103,10 +1099,8 @@ class Mobile_Detect
                 if (is_array($matchType['matches'])) {
                     foreach ($matchType['matches'] as $_match) {
                         if (
-                            strpos(
-                                $this->httpHeaders[$mobileHeader],
-                                $_match
-                            ) !== false
+                            strpos($this->httpHeaders[$mobileHeader], $_match) !==
+                            false
                         ) {
                             return true;
                         }
@@ -1217,10 +1211,7 @@ class Mobile_Detect
         if ($this->getUserAgent() === 'Amazon CloudFront') {
             $cfHeaders = $this->getCfHeaders();
             if (
-                array_key_exists(
-                    'HTTP_CLOUDFRONT_IS_MOBILE_VIEWER',
-                    $cfHeaders
-                ) &&
+                array_key_exists('HTTP_CLOUDFRONT_IS_MOBILE_VIEWER', $cfHeaders) &&
                 $cfHeaders['HTTP_CLOUDFRONT_IS_MOBILE_VIEWER'] === 'true'
             ) {
                 return true;
@@ -1250,10 +1241,7 @@ class Mobile_Detect
         if ($this->getUserAgent() === 'Amazon CloudFront') {
             $cfHeaders = $this->getCfHeaders();
             if (
-                array_key_exists(
-                    'HTTP_CLOUDFRONT_IS_TABLET_VIEWER',
-                    $cfHeaders
-                ) &&
+                array_key_exists('HTTP_CLOUDFRONT_IS_TABLET_VIEWER', $cfHeaders) &&
                 $cfHeaders['HTTP_CLOUDFRONT_IS_TABLET_VIEWER'] === 'true'
             ) {
                 return true;
@@ -1446,12 +1434,10 @@ class Mobile_Detect
             ($this->version('Android', self::VERSION_TYPE_FLOAT) > 2.1 &&
                 $this->is('Webkit')) ||
             // Windows Phone 7.5-8 - Tested on the HTC Surround (7.5), HTC Trophy (7.5), LG-E900 (7.5), Nokia 800 (7.8), HTC Mazaa (7.8), Nokia Lumia 520 (8), Nokia Lumia 920 (8), HTC 8x (8)
-            $this->version('Windows Phone OS', self::VERSION_TYPE_FLOAT) >=
-                7.5 ||
+            $this->version('Windows Phone OS', self::VERSION_TYPE_FLOAT) >= 7.5 ||
             // Tested on the Torch 9800 (6) and Style 9670 (6), BlackBerry�R Torch 9810 (7), BlackBerry Z10 (10)
             ($this->is('BlackBerry') &&
-                $this->version('BlackBerry', self::VERSION_TYPE_FLOAT) >=
-                    6.0) ||
+                $this->version('BlackBerry', self::VERSION_TYPE_FLOAT) >= 6.0) ||
             // Blackberry Playbook (1.0-2.0) - Tested on PlayBook
             $this->match('Playbook.*Tablet') ||
             // Palm WebOS (1.4-3.0) - Tested on the Palm Pixi (1.4), Pre (1.4), Pre 2 (2.0), HP TouchPad (3.0)
@@ -1473,8 +1459,7 @@ class Mobile_Detect
                 $this->version('Android', self::VERSION_TYPE_FLOAT) >= 2.3) ||
             // Opera Mobile 11.5-12: Tested on Android 2.3
             ($this->is('Opera') &&
-                $this->version('Opera Mobi', self::VERSION_TYPE_FLOAT) >=
-                    11.5 &&
+                $this->version('Opera Mobi', self::VERSION_TYPE_FLOAT) >= 11.5 &&
                 $this->is('AndroidOS')) ||
             // Meego 1.2 - Tested on Nokia 950 and N9
             $this->is('MeeGoOS') ||
@@ -1490,8 +1475,7 @@ class Mobile_Detect
             // Kindle 3 and Fire  - Tested on the built-in WebKit browser for each
             ($this->match('Kindle Fire') ||
                 ($this->is('Kindle') &&
-                    $this->version('Kindle', self::VERSION_TYPE_FLOAT) >=
-                        3.0)) ||
+                    $this->version('Kindle', self::VERSION_TYPE_FLOAT) >= 3.0)) ||
             // Nook Color 1.4.1 - Tested on original Nook Color, not Nook Tablet
             ($this->is('AndroidOS') && $this->is('NookTablet')) ||
             // Chrome Desktop 16-24 - Tested on OS X 10.7 and Windows 7
@@ -1504,11 +1488,9 @@ class Mobile_Detect
             ($this->version('Firefox', self::VERSION_TYPE_FLOAT) >= 10.0 &&
                 !$isMobile) ||
             // Internet Explorer 7-9 - Tested on Windows XP, Vista and 7
-            ($this->version('IE', self::VERSION_TYPE_FLOAT) >= 7.0 &&
-                !$isMobile) ||
+            ($this->version('IE', self::VERSION_TYPE_FLOAT) >= 7.0 && !$isMobile) ||
             // Opera Desktop 10-12 - Tested on OS X 10.7 and Windows 7
-            ($this->version('Opera', self::VERSION_TYPE_FLOAT) >= 10 &&
-                !$isMobile)
+            ($this->version('Opera', self::VERSION_TYPE_FLOAT) >= 10 && !$isMobile)
         ) {
             return self::MOBILE_GRADE_A;
         }
@@ -1552,8 +1534,7 @@ class Mobile_Detect
             ($this->is('iOS') &&
                 $this->version('iPod', self::VERSION_TYPE_FLOAT) <= 3.2) ||
             // Internet Explorer 7 and older - Tested on Windows XP
-            ($this->version('IE', self::VERSION_TYPE_FLOAT) <= 7.0 &&
-                !$isMobile)
+            ($this->version('IE', self::VERSION_TYPE_FLOAT) <= 7.0 && !$isMobile)
         ) {
             return self::MOBILE_GRADE_C;
         }

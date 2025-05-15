@@ -449,7 +449,7 @@ EOF;
     protected static function getPaymentVendorRow(
         $systemId,
         $vendorId = null,
-        callable $hrefCallback = null,
+        callable|null $hrefCallback = null,
         $selectedVendorId = null
     ) {
         $selected =
@@ -482,7 +482,7 @@ EOF;
     }
 
     public static function getTemplateData(
-        callable $hrefCallback = null,
+        callable|null $hrefCallback = null,
         $selectedVendorId = null
     ) {
         $ar = [

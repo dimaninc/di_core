@@ -47,7 +47,7 @@ trait Hierarchy
         });
     }
 
-    public static function asHierarchyPublicDataArray(\diCollection $col = null)
+    public static function asHierarchyPublicDataArray(\diCollection|null $col = null)
     {
         if (!$col) {
             $col = static::asHierarchyCol();

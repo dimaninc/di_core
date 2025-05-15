@@ -49,7 +49,7 @@ class Sitemap extends \diModule
 
     protected function printSubRow(
         \diModel $m,
-        \diModel $page = null,
+        \diModel|null $page = null,
         $printLink = true,
         $levelNum = null
     ) {

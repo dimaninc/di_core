@@ -1478,7 +1478,7 @@ class diModel implements \ArrayAccess
         return $this->get($field);
     }
 
-    public function getJsonData(string $field, array|string $path = null)
+    public function getJsonData(string $field, array|string|null $path = null)
     {
         if (!isset($this->jsonData[$field])) {
             $v = $this->get($field);
@@ -1553,7 +1553,7 @@ class diModel implements \ArrayAccess
     }
 
     // todo: add $path support instead of $key
-    public function killJsonData(string $field, string $key = null)
+    public function killJsonData(string $field, string|null $key = null)
     {
         if ($key === null) {
             unset($this->jsonData[$field]);

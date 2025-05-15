@@ -401,7 +401,7 @@ class Payment extends \diBaseController
         return $this;
     }
 
-    protected function createReceipt($outerNumber, callable $beforeSave = null)
+    protected function createReceipt($outerNumber, callable|null $beforeSave = null)
     {
         $this->log('createReceipt begins');
 

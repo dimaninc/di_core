@@ -319,7 +319,7 @@ class diRequest
 
     public static function enableCors(
         $whitelistDomains = [],
-        callable $onOptionsRequest = null
+        callable|null $onOptionsRequest = null
     ) {
         $origin = self::server('HTTP_ORIGIN');
 

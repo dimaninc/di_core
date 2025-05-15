@@ -257,7 +257,7 @@ abstract class diSearch
         $fields_ar,
         $q_ending = '',
         $callback = '',
-        callable $post_callback = null
+        callable|null $post_callback = null
     ) {
         $r = is_object($r_or_id)
             ? $r_or_id
