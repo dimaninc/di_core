@@ -258,6 +258,11 @@ class diDynamicRows
         return $this->id;
     }
 
+    public function doesParentExist()
+    {
+        return !!$this->id;
+    }
+
     protected function L($token)
     {
         return $this->AdminPage->getForm()->L($token);
@@ -433,17 +438,16 @@ class diDynamicRows
             return $recs;
         }
 
-        $rs = $this->getDataTable()
-            ? $this->getDb()->rs(
-                $this->getDataTable(),
-                "WHERE $this->subquery {$this->getOrderBy()}"
-            )
-            : null;
+        $rs =
+            $this->getDataTable() && $this->doesParentExist()
+                ? $this->getDb()->rs(
+                    $this->getDataTable(),
+                    "WHERE $this->subquery {$this->getOrderBy()}"
+                )
+                : null;
 
         while ($r = $this->getDb()->fetch($rs)) {
-            $m = (new \diModel($r, '#any'))->_setReadOnly(true);
-
-            $recs[] = $m;
+            $recs[] = (new \diModel($r, '#any'))->_setReadOnly(true);
         }
 
         return $recs;
@@ -631,12 +635,12 @@ class diDynamicRows
         return $flags_ar && in_array($flag, $flags_ar);
     }
 
-    protected function getRowHtml(\diModel $m = null)
+    protected function getRowHtml(\diModel|null $m = null)
     {
         $id = $m ? $m->getId() : self::NEW_ID_STRING;
         $this->scripts = [];
         $ar1 = $ar2 = [];
-        $hiddens = [];
+        $hiddenInputs = [];
 
         foreach ($this->info_ar[$this->field]['fields'] as $k => $v) {
             if ($this->isFlag($k, 'local')) {
@@ -684,7 +688,7 @@ class diDynamicRows
             }
 
             if ($this->isFlag($k, 'hidden')) {
-                $hiddens[$k] = end($ar2);
+                $hiddenInputs[$k] = end($ar2);
             }
         }
 
@@ -717,7 +721,7 @@ class diDynamicRows
 
         return "<div id=\"{$this->safeField}_div[$id]\" class=\"dynamic-row$cssClass\" data-id=\"$id\" data-main-field=\"$this->field\">" .
             "<input type=hidden name=\"{$this->safeField}_ids_ar[]\" value=\"$id\" data-field-name=\"ids_ar\">" .
-            join("\n", $hiddens) .
+            join("\n", $hiddenInputs) .
             $kill_div .
             $order_num_div .
             str_replace($ar1, $ar2, $this->info_ar[$this->field]['template']) .
