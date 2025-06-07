@@ -9,4 +9,3 @@ CREATE TABLE IF NOT EXISTS mail_incuts
 
 CREATE INDEX IF NOT EXISTS idx__mail_incuts
     ON mail_incuts (target_type, target_id, type);
-
