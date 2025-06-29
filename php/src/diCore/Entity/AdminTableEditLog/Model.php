@@ -343,28 +343,6 @@ class Model extends \diModel
         $fields = $model->changedFields(['id']);
         $old = $new = [];
 
-        $hasRealChanges = function ($field) use ($model, $old, $new) {
-            if (
-                $model::isJsonField($field) &&
-                static::normalizeJson($old[$field]) ===
-                    static::normalizeJson($new[$field])
-            ) {
-                return false;
-            }
-
-            if (
-                !empty($old[$field]) &&
-                !empty($new[$field]) &&
-                is_string($old[$field]) &&
-                is_string($new[$field]) &&
-                trim($old[$field]) === trim($new[$field])
-            ) {
-                return false;
-            }
-
-            return true;
-        };
-
         foreach ($fields as $field) {
             if ($this->isFieldSkipped($model, $field)) {
                 continue;
@@ -373,7 +351,7 @@ class Model extends \diModel
             $old[$field] = $model->getOrigData($field);
             $new[$field] = $model->get($field);
 
-            if (!$hasRealChanges($field)) {
+            if (!$this->hasRealChanges($field, $model, $old, $new)) {
                 unset($old[$field]);
                 unset($new[$field]);
             }
@@ -387,6 +365,27 @@ class Model extends \diModel
         }
 
         return $this;
+    }
+
+    protected function hasRealChanges($field, $model, $old, $new)
+    {
+        if (
+            $model::isJsonField($field) &&
+            static::normalizeJson($old[$field]) ===
+                static::normalizeJson($new[$field])
+        ) {
+            return false;
+        }
+
+        if (
+            is_string($old[$field]) &&
+            is_string($new[$field]) &&
+            trim($old[$field]) === trim($new[$field])
+        ) {
+            return false;
+        }
+
+        return true;
     }
 
     protected static function normalizeJson($json)
