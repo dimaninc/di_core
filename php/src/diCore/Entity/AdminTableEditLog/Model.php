@@ -343,6 +343,28 @@ class Model extends \diModel
         $fields = $model->changedFields(['id']);
         $old = $new = [];
 
+        $hasRealChanges = function ($field) use ($model, $old, $new) {
+            if (
+                $model::isJsonField($field) &&
+                static::normalizeJson($old[$field]) ===
+                    static::normalizeJson($new[$field])
+            ) {
+                return false;
+            }
+
+            if (
+                !empty($old[$field]) &&
+                !empty($new[$field]) &&
+                is_string($old[$field]) &&
+                is_string($new[$field]) &&
+                trim($old[$field]) === trim($new[$field])
+            ) {
+                return false;
+            }
+
+            return true;
+        };
+
         foreach ($fields as $field) {
             if ($this->isFieldSkipped($model, $field)) {
                 continue;
@@ -351,11 +373,7 @@ class Model extends \diModel
             $old[$field] = $model->getOrigData($field);
             $new[$field] = $model->get($field);
 
-            if (
-                $model::isJsonField($field) &&
-                static::normalizeJson($old[$field]) ===
-                    static::normalizeJson($new[$field])
-            ) {
+            if (!$hasRealChanges($field)) {
                 unset($old[$field]);
                 unset($new[$field]);
             }
@@ -373,7 +391,7 @@ class Model extends \diModel
 
     protected static function normalizeJson($json)
     {
-        $decoded = $json && is_string($json) ? json_decode($json, true) : $json;
+        $decoded = $json && is_string($json) ? json_decode("$json", true) : $json;
 
         if (json_last_error() !== JSON_ERROR_NONE) {
             return null;
