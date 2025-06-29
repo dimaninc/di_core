@@ -350,6 +350,15 @@ class Model extends \diModel
 
             $old[$field] = $model->getOrigData($field);
             $new[$field] = $model->get($field);
+
+            if (
+                $model::isJsonField($field) &&
+                static::normalizeJson($old[$field]) ===
+                    static::normalizeJson($new[$field])
+            ) {
+                unset($old[$field]);
+                unset($new[$field]);
+            }
         }
 
         $old = $model->processFieldsOnSave($old);
@@ -360,6 +369,20 @@ class Model extends \diModel
         }
 
         return $this;
+    }
+
+    protected static function normalizeJson($json)
+    {
+        $decoded = $json && is_string($json) ? json_decode($json, true) : $json;
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return null;
+        }
+
+        return json_encode(
+            $decoded,
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        );
     }
 
     public function validate()
