@@ -22,6 +22,9 @@ class Helper extends BaseHelper
     /** @var MerchantApi */
     protected $api;
 
+    /** @var Draft */
+    protected $draft;
+
     public function initDraft(callable $getDraftCallback)
     {
         $draftId = \diRequest::request('OrderId', 0);
@@ -123,20 +126,6 @@ class Helper extends BaseHelper
     public function success(callable $successCallback)
     {
         try {
-            /*
-            $signature = strtolower(\diRequest::post('SignatureValue'));
-
-            if (!$this->getDraft()->exists())
-            {
-                throw new \Exception('No draft found');
-            }
-
-            if ($signature != static::getSignatureSuccess($this->getDraft()))
-            {
-                throw new \Exception('Signature not matched');
-            }
-            */
-
             if (\diRequest::request('Success') === 'true') {
                 self::log('Success method OK');
             } else {
@@ -161,6 +150,27 @@ class Helper extends BaseHelper
         self::log('Fail method OK: ' . print_r($_GET, true));
 
         return $failCallback($this);
+    }
+
+    public function tuneVendor(Draft $payment, $sourceStr)
+    {
+        if (!$sourceStr) {
+            return $this;
+        }
+
+        switch ($sourceStr) {
+            case 'SberPay':
+                $payment->setVendor(Vendor::SBERPAY);
+                break;
+
+            case 'SBP':
+                $payment->setVendor(Vendor::SBP);
+                break;
+        }
+
+        $payment->save();
+
+        return $this;
     }
 
     /*

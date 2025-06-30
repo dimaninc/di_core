@@ -364,6 +364,11 @@ class Payment extends \diBaseController
 
                     if (ArrayHelper::get($params, 'Status') === 'CONFIRMED') {
                         $this->createReceipt(\diRequest::rawPost('PaymentId', 0));
+
+                        $t->tuneVendor(
+                            $this->getReceipt(),
+                            ArrayHelper::get($params, ['Data', 'Source'])
+                        );
                     }
 
                     return 'OK';

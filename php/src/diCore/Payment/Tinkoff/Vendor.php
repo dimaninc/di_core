@@ -25,6 +25,7 @@ class Vendor extends VendorContainer
 
     const GOOGLE_PAY = 21;
     const APPLE_PAY = 22;
+    const MIR_PAY = 23;
 
     public static $titles = [
         self::BEELINE => 'Билайн',
@@ -40,6 +41,7 @@ class Vendor extends VendorContainer
 
         self::GOOGLE_PAY => 'Google Pay',
         self::APPLE_PAY => 'Apple Pay',
+        self::MIR_PAY => 'Mir Pay',
     ];
 
     public static $names = [
@@ -56,6 +58,7 @@ class Vendor extends VendorContainer
 
         self::GOOGLE_PAY => 'google-pay',
         self::APPLE_PAY => 'apple-pay',
+        self::MIR_PAY => 'mir',
     ];
 
     public static $codes = [
