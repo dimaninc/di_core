@@ -166,6 +166,10 @@ class Helper extends BaseHelper
             case 'SBP':
                 $payment->setVendor(Vendor::SBP);
                 break;
+
+            case 'MirPay':
+                $payment->setVendor(Vendor::MIR_PAY);
+                break;
         }
 
         $payment->save();

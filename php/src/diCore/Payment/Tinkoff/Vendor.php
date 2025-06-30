@@ -58,7 +58,7 @@ class Vendor extends VendorContainer
 
         self::GOOGLE_PAY => 'google-pay',
         self::APPLE_PAY => 'apple-pay',
-        self::MIR_PAY => 'mir',
+        self::MIR_PAY => 'mir-pay',
     ];
 
     public static $codes = [
