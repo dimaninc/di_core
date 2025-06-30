@@ -22,6 +22,8 @@ class Vendor extends VendorContainer
     const BANKING = 12;
     const SBP = 13;
     const SBERPAY = 14;
+    const TPAY = 15;
+    const YANDEX_PAY = 16;
 
     const GOOGLE_PAY = 21;
     const APPLE_PAY = 22;
@@ -38,6 +40,8 @@ class Vendor extends VendorContainer
         self::BANKING => 'Tinkoff',
         self::SBP => 'Система быстрых платежей',
         self::SBERPAY => 'SberPay',
+        self::TPAY => 'T-Pay',
+        self::YANDEX_PAY => 'Яндекс Pay',
 
         self::GOOGLE_PAY => 'Google Pay',
         self::APPLE_PAY => 'Apple Pay',
@@ -55,6 +59,8 @@ class Vendor extends VendorContainer
         self::BANKING => 'banking',
         self::SBP => 'sbp',
         self::SBERPAY => 'sberpay',
+        self::TPAY => 't-pay',
+        self::YANDEX_PAY => 'yandex-pay',
 
         self::GOOGLE_PAY => 'google-pay',
         self::APPLE_PAY => 'apple-pay',

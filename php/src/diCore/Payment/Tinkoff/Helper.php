@@ -158,21 +158,23 @@ class Helper extends BaseHelper
             return $this;
         }
 
-        switch ($sourceStr) {
-            case 'SberPay':
-                $payment->setVendor(Vendor::SBERPAY);
-                break;
+        $s = strtolower($sourceStr);
+        $map = [
+            'сards' => Vendor::CARD,
+            'sberpay' => Vendor::SBERPAY,
+            'sbp' => Vendor::SBP,
+            'qrsbp' => Vendor::SBP,
+            'mirpay' => Vendor::MIR_PAY,
+            'tinkoffpay' => Vendor::TPAY,
+            'yandexpay' => Vendor::YANDEX_PAY,
+        ];
+        $vendor = $map[$s] ?? null;
 
-            case 'SBP':
-                $payment->setVendor(Vendor::SBP);
-                break;
-
-            case 'MirPay':
-                $payment->setVendor(Vendor::MIR_PAY);
-                break;
+        if (!$vendor) {
+            return $this;
         }
 
-        $payment->save();
+        $payment->setVendor($vendor)->save();
 
         return $this;
     }
