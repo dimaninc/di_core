@@ -35,10 +35,7 @@ class Helper extends BaseHelper
     protected function getApi()
     {
         if (!$this->api) {
-            $this->api = new MerchantApi(
-                static::getLogin(),
-                static::getPassword()
-            );
+            $this->api = new MerchantApi(static::getLogin(), static::getPassword());
         }
 
         return $this->api;
@@ -89,13 +86,18 @@ class Helper extends BaseHelper
 
     public function generateToken($params)
     {
-        foreach ($params as &$param) {
+        foreach ($params as $key => &$param) {
             if (gettype($param) === 'boolean') {
                 $param = $param ? 'true' : 'false';
+            }
+
+            if (!is_scalar($param)) {
+                unset($params[$key]);
             }
         }
 
         unset($params['Token']);
+        // unset($params['Data']);
         $params['Password'] = static::getPassword();
         ksort($params);
 

@@ -360,6 +360,8 @@ class Payment extends \diBaseController
                 $params = \diRequest::rawPostParsed();
 
                 if ($t->checkToken($params)) {
+                    $t->log('Token matches');
+
                     if (ArrayHelper::get($params, 'Status') === 'CONFIRMED') {
                         $this->createReceipt(\diRequest::rawPost('PaymentId', 0));
                     }
