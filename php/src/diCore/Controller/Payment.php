@@ -466,7 +466,6 @@ class Payment extends \diBaseController
             if (!$existingReceipt) {
                 $this->log('Receipt created, ID = ' . $this->getReceipt()->getId());
                 $this->log('Receipt #' . $this->getReceipt()->getId() . ' created');
-
                 $this->log('Draft #' . $this->getDraft()->getId() . ' set as paid');
             } else {
                 $this->log('Receipt updated, ID = ' . $this->getReceipt()->getId());
@@ -482,7 +481,6 @@ class Payment extends \diBaseController
             $this->getDraft()
                 ->setPaid(1)
                 ->save();
-            //->hardDestroy();
 
             if (!$existingReceipt) {
                 $class = \diCore\Payment\Payment::getClass();

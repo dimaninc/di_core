@@ -154,6 +154,8 @@ class Helper extends BaseHelper
 
     public function tuneVendor(Draft $payment, $sourceStr)
     {
+        $this->log("tuneVendor: $sourceStr");
+
         if (!$sourceStr) {
             return $this;
         }
@@ -174,7 +176,7 @@ class Helper extends BaseHelper
             return $this;
         }
 
-        $payment->setVendor($vendor)->save();
+        $payment->setVendor($vendor);
 
         return $this;
     }
