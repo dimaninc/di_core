@@ -611,6 +611,26 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         return $col;
     }
 
+    /**
+     * @param string|callable $filterCallback fn ($model, $idx, $col) or field name
+     * @return \diModel
+     */
+    public function firstFiltered($filterCallback)
+    {
+        /** @var \diModel $model */
+        foreach ($this as $idx => $model) {
+            if (
+                (is_callable($filterCallback) &&
+                    $filterCallback($model, $idx, $this)) ||
+                (!is_callable($filterCallback) && $model->has($filterCallback))
+            ) {
+                return $model;
+            }
+        }
+
+        return $this->getNewEmptyItem();
+    }
+
     public function slice($start = 0, $length = null)
     {
         $this->load();
