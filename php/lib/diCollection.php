@@ -187,6 +187,9 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
     /** @var  Cursor */
     protected $cursor;
 
+    /** @var bool|null */
+    private $isLoadingChunk;
+
     /**
      * MongoDB operators
      * @var array
@@ -1412,7 +1415,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
 
     public function load()
     {
-        if ($this->isLoaded()) {
+        if ($this->isLoaded() || !$this->canChunkBeLoaded()) {
             return $this;
         }
 
@@ -1483,11 +1486,18 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         return $records;
     }
 
+    protected function canChunkBeLoaded()
+    {
+        return !$this->isLoadingChunk;
+    }
+
     /**
      * Loads rows chunk from database
      */
     private function loadChunk()
     {
+        $this->isLoadingChunk = true;
+
         if ($this->cachedRecords) {
             $rows = $this->cachedRecords;
         } else {
@@ -1525,6 +1535,8 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         if (count($this->items) == $this->count()) {
             $this->loaded = true;
         }
+
+        $this->isLoadingChunk = false;
 
         return $this;
     }
@@ -1686,8 +1698,10 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
     #[\ReturnTypeWillChange]
     public function offsetExists($offset)
     {
-        while (!$this->exists($offset) && !$this->isLoaded()) {
-            $this->loadChunk();
+        if ($this->canChunkBeLoaded()) {
+            while (!$this->exists($offset) && !$this->isLoaded()) {
+                $this->loadChunk();
+            }
         }
 
         return $this->exists($offset);
