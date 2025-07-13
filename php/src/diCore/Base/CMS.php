@@ -2345,6 +2345,7 @@ abstract class CMS
         $options = extend(
             [
                 'onBeforePageSuffix' => null, // fn (CMS $Z) => {}
+                'preprocessValues' => null, // fn (array $values) => array
             ],
             $options
         );
@@ -2354,6 +2355,8 @@ abstract class CMS
         } elseif (!is_array($models)) {
             $models = [$models];
         }
+
+        $values = [];
 
         foreach ($defaults as $field => $defaultValue) {
             $value = null;
@@ -2394,15 +2397,20 @@ abstract class CMS
                 }
             }
 
+            $values[$field] = $value;
+        }
+
+        if (is_callable($options['preprocessValues'])) {
+            $values = $options['preprocessValues']($values);
+        }
+
+        foreach ($values as $field => $value) {
             if ($value) {
                 $this->setMeta($value, $field);
             }
         }
 
-        if (
-            $options['onBeforePageSuffix'] &&
-            is_callable($options['onBeforePageSuffix'])
-        ) {
+        if (is_callable($options['onBeforePageSuffix'])) {
             $options['onBeforePageSuffix']($this);
         }
 

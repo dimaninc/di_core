@@ -341,7 +341,7 @@ class StringHelper
             }
 
             // Continue after the tag.
-            $position = $tagPosition + mb_strlen($tag);
+            $position = intval($tagPosition) + mb_strlen($tag);
         }
 
         // Print any remaining text.
@@ -679,11 +679,13 @@ class StringHelper
 
         if ($x % 10 == 1 && $x != 11) {
             return $returnOnlySuffix ? $s1 : "$x0 $s1";
-        } elseif ($x % 10 >= 2 && $x % 10 <= 4 && $x != 12 && $x != 13 && $x != 14) {
-            return $returnOnlySuffix ? $s2 : "$x0 $s2";
-        } else {
-            return $returnOnlySuffix ? $s3 : "$x0 $s3";
         }
+
+        if ($x % 10 >= 2 && $x % 10 <= 4 && $x != 12 && $x != 13 && $x != 14) {
+            return $returnOnlySuffix ? $s2 : "$x0 $s2";
+        }
+
+        return $returnOnlySuffix ? $s3 : "$x0 $s3";
     }
 
     public static function divideThousands($x, $divider = ',', $length = 3)
