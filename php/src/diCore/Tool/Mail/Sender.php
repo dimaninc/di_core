@@ -12,6 +12,8 @@ use diCore\Helper\StringHelper;
 use diCore\Traits\BasicCreate;
 use diCore\Tool\Logger;
 use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\OAuth;
+use League\OAuth2\Client\Provider\GenericProvider;
 
 class Sender
 {
@@ -43,6 +45,14 @@ class Sender
             'login' => 'if differs from email',
 			'password' => 'password if needed',
 			'useSSL' => true,
+		],
+         *
+		 * if oauth2 used
+		'chester@bennington.com' => [
+            'authType' => 'xoauth2',
+            'clientId' => 'application id',
+            'tenantId' => 'directory (tenant) id',
+            'secret' => 'secret value',
 		],
 		*/
     ];
@@ -338,6 +348,32 @@ class Sender
                 if ($mail->Password) {
                     $mail->Username = static::getAccountLogin($fromEmail);
                 }
+
+                if (static::getAccountAuthType($fromEmail) === 'xoauth2') {
+                    $clientId = static::getAccountProp($fromEmail, 'clientId');
+                    $clientSecret = static::getAccountProp($fromEmail, 'secret');
+                    $tenantId = static::getAccountProp($fromEmail, 'tenantId');
+
+                    $provider = new GenericProvider([
+                        'clientId' => $clientId,
+                        'clientSecret' => $clientSecret,
+                        // 'redirectUri' => 'http://localhost',
+                        'urlAuthorize' => "https://login.microsoftonline.com/$tenantId/oauth2/v2.0/authorize",
+                        'urlAccessToken' => "https://login.microsoftonline.com/$tenantId/oauth2/v2.0/token",
+                        'urlResourceOwnerDetails' => 'https://graph.microsoft.com/oidc/userinfo',
+                        'scopes' => 'https://graph.microsoft.com/Mail.Send',
+                    ]);
+
+                    $oauth = new OAuth([
+                        'provider'     => $provider,
+                        'clientId'     => $clientId,
+                        'clientSecret' => $clientSecret,
+                        'userName'     => $fromEmail,
+                    ]);
+
+                    $mail->AuthType = 'XOAUTH2';
+                    $mail->setOAuth($oauth);
+                }
             }
         }
 
@@ -378,5 +414,19 @@ class Sender
         }
 
         return $a['password'] ?: static::defaultSmtpPassword ?: null;
+    }
+
+    protected static function getAccountAuthType($email)
+    {
+        $a = static::$accounts[$email] ?? null;
+
+        return $a['authType'] ?? null;
+    }
+
+    protected static function getAccountProp($email, $prop)
+    {
+        $a = static::$accounts[$email] ?? null;
+
+        return $a[$prop] ?? null;
     }
 }
