@@ -107,7 +107,6 @@ class Sender
                     $attachments,
                     $options
                 );
-                break;
 
             case Transport::SMTP:
                 return static::viaSmtp(
@@ -119,11 +118,33 @@ class Sender
                     $attachments,
                     $options
                 );
-                break;
+
+            case Transport::CUSTOM:
+                return static::viaCustom(
+                    $from,
+                    $to,
+                    $subject,
+                    $bodyPlain,
+                    $bodyHtml,
+                    $attachments,
+                    $options
+                );
 
             default:
                 throw new \Exception('Unknown mail transport: ' . static::transport);
         }
+    }
+
+    public static function viaCustom(
+        $from,
+        $to,
+        $subject,
+        $bodyPlain,
+        $bodyHtml,
+        $attachments = [],
+        $options = []
+    ) {
+        throw new \Exception('Implement custom mail transport first');
     }
 
     public static function viaSendmail(
@@ -191,14 +212,14 @@ class Sender
         if ($attachments) {
             $attachmentIds = [];
 
-            while (
-                empty($attachment['content_id']) ||
-                in_array($attachment['content_id'], $attachmentIds)
-            ) {
-                $attachment['content_id'] = static::generateAttachmentId();
-            }
-
             foreach ($attachments as $attachment) {
+                while (
+                    empty($attachment['content_id']) ||
+                    in_array($attachment['content_id'], $attachmentIds)
+                ) {
+                    $attachment['content_id'] = static::generateAttachmentId();
+                }
+
                 $attachment = static::prepareAttachment($attachment);
 
                 if (!empty($attachment['data'])) {
@@ -237,7 +258,7 @@ class Sender
     protected static function logError($message)
     {
         Logger::getInstance()->log(
-            "SMTP error: $message",
+            "Mail error: $message",
             'Tool/Mail/Sender',
             '-mail'
         );
