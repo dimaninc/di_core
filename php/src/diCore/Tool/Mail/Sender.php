@@ -357,7 +357,7 @@ class Sender
                     $provider = new GenericProvider([
                         'clientId' => $clientId,
                         'clientSecret' => $clientSecret,
-                        // 'redirectUri' => 'http://localhost',
+                        'redirectUri' => static::getAccountProp($fromEmail, 'redirectUrl'),
                         'urlAuthorize' => "https://login.microsoftonline.com/$tenantId/oauth2/v2.0/authorize",
                         'urlAccessToken' => "https://login.microsoftonline.com/$tenantId/oauth2/v2.0/token",
                         'urlResourceOwnerDetails' => 'https://graph.microsoft.com/oidc/userinfo',
@@ -365,10 +365,11 @@ class Sender
                     ]);
 
                     $oauth = new OAuth([
-                        'provider'     => $provider,
-                        'clientId'     => $clientId,
+                        'provider' => $provider,
+                        'clientId' => $clientId,
                         'clientSecret' => $clientSecret,
-                        'userName'     => $fromEmail,
+                        'userName' => $fromEmail,
+                        'refreshToken' => static::getAccountProp($fromEmail, 'refreshToken'),
                     ]);
 
                     $mail->AuthType = 'XOAUTH2';
@@ -413,7 +414,7 @@ class Sender
             return null;
         }
 
-        return $a['password'] ?: static::defaultSmtpPassword ?: null;
+        return ($a['password'] ?? static::defaultSmtpPassword) ?: null;
     }
 
     protected static function getAccountAuthType($email)
