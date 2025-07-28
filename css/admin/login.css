@@ -200,6 +200,7 @@ body[data-skin="entrine"] .login-form-wrapper {
   min-width: 280px;
   max-width: 340px;
   max-height: 200px;
+  object-fit: contain;
 }
 @media screen and (max-width: 450px) {
   .site-logo img {
