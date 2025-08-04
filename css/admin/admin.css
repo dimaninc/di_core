@@ -4881,6 +4881,17 @@ body[data-skin="entrine"] .configuration .grid tbody tr td:first-child {
   -webkit-flex-direction: column;
   -ms-flex-direction: column;
   flex-direction: column;
+  -webkit-box-align: start;
+  -moz-box-align: start;
+  -o-box-align: start;
+  -ms-flex-align: start;
+  -webkit-align-items: flex-start;
+  align-items: flex-start;
+}
+.configuration .grid tbody tr td .conf-value select {
+  -webkit-align-self: unset;
+  align-self: unset;
+  -ms-flex-item-align: unset;
 }
 .configuration .grid tbody tr td input:not([type="checkbox"]):not([type="radio"]),
 .configuration .grid tbody tr td textarea {
