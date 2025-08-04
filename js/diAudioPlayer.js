@@ -107,6 +107,12 @@ function diAudioPlayer(_opts) {
   };
 
   this.play = function (promiseSetter) {
+    if (!this.audio) {
+      console.error('Play: audio player not initalized');
+
+      return this;
+    }
+
     if (typeof this.audio.play !== 'undefined') {
       if (!audioLoaded) {
         this.audio.load();
@@ -123,7 +129,7 @@ function diAudioPlayer(_opts) {
 
         if (!opts.noErrorsCatching) {
           promise.catch(function (error) {
-            console.log('diAudioPlayer: error playing audio track', error);
+            console.error('diAudioPlayer: error playing audio track', error);
           });
         }
 
@@ -139,6 +145,12 @@ function diAudioPlayer(_opts) {
   };
 
   this.pause = function () {
+    if (!this.audio) {
+      console.error('Pause: audio player not initalized');
+
+      return this;
+    }
+
     this.audio.pause();
 
     return this;
@@ -155,6 +167,10 @@ function diAudioPlayer(_opts) {
   };
 
   this.getState = function () {
+    if (!this.audio) {
+      return this.UNKNOWN;
+    }
+
     if (this.audio.paused) return this.PAUSE;
     if (this.audio.ended) return this.END;
     if (this.audio.played) return this.PLAY;
@@ -162,7 +178,7 @@ function diAudioPlayer(_opts) {
   };
 
   this.getCurrentTime = function () {
-    if (isNaN(this.audio.currentTime)) {
+    if (!this.audio.currentTime || isNaN(this.audio.currentTime)) {
       return 0;
     }
 
@@ -189,7 +205,7 @@ function diAudioPlayer(_opts) {
   };
 
   this.getDuration = function () {
-    if (isNaN(this.audio.duration)) {
+    if (!this.audio.duration || isNaN(this.audio.duration)) {
       return 0;
     }
 
