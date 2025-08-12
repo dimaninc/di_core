@@ -204,10 +204,11 @@ table.dinicetable
     [data-action="empty"]
         cursor default
     {$entrineSkin} &
+        --btn-size 18px
         width 48px
         height 48px
         background none
-        background-size 18px 18px !important
+        background-size var(--btn-size) var(--btn-size) !important
         background-repeat no-repeat !important
         background-position center center !important
         &[data-action]
@@ -219,6 +220,9 @@ table.dinicetable
             background-image embedurl('../../../i/admin/skin/entrine/list/create.svg')
         &[data-action="del"]
             background-image embedurl('../../../i/admin/skin/entrine/list/del.svg')
+        &[data-action="manage"]
+          --btn-size 22px
+          background-image embedurl('../../../i/admin/skin/entrine/list/manage.svg')
         &[data-action="active"]
         &[data-action="visible"]
         &[data-action="en_visible"]
