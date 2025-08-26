@@ -474,11 +474,7 @@ class Auth
         $login = \diRequest::postExt(static::POST_LOGIN_FIELD);
         $password = \diRequest::postExt(static::POST_PASSWORD_FIELD);
 
-        if (
-            $login &&
-            $password &&
-            $this->authorize($login, $password, self::SOURCE_POST)
-        ) {
+        if ($login && $password && $this->authorize($login, $password)) {
             $this->authSource = self::SOURCE_POST;
 
             $this->updateAuthorizedUserData();
@@ -573,5 +569,16 @@ class Auth
         );
 
         return $this;
+    }
+
+    public static function getLogoutHref($back = null)
+    {
+        if (!$back) {
+            $back = \diRequest::requestUri();
+        }
+
+        $back = urlencode($back);
+
+        return \diLib::getWorkerPath('auth', 'logout') . "?back=$back";
     }
 }
