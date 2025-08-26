@@ -57,9 +57,7 @@ class Model extends \diModel
     public static function fastCreate(\diModel $user)
     {
         if (!$user->exists()) {
-            throw new \Exception(
-                'Unable to create user session for empty user'
-            );
+            throw new \Exception('Unable to create user session for empty user');
         }
 
         return static::create()
@@ -76,9 +74,13 @@ class Model extends \diModel
             return static::create();
         }
 
-        $sessions = Collection::create()
-            ->filterByToken($token)
-            ->filterByUserAgent($userAgent ?: \diRequest::userAgent());
+        $sessions = Collection::create()->filterByToken($token);
+
+        // когда пользователь включает респонсив-режим в браузере,
+        // user agent меняется, и авторизация заканчивается
+        if ($userAgent) {
+            $sessions->filterByUserAgent($userAgent);
+        }
 
         if ($ip) {
             $sessions->filterByIp($ip);
