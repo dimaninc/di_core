@@ -642,27 +642,29 @@ class diDynamicRows
         $ar1 = $ar2 = [];
         $hiddenInputs = [];
 
-        foreach ($this->info_ar[$this->field]['fields'] as $k => $v) {
+        foreach ($this->info_ar[$this->field]['fields'] as $k => $props) {
             if ($this->isFlag($k, 'local')) {
                 continue;
             }
 
-            if (!is_array($v)) {
-                $v = ['type' => $v];
+            if (!is_array($props)) {
+                $props = ['type' => $props];
             }
 
-            if (in_array($v['type'], ['date', 'time', 'datetime'])) {
+            if (in_array($props['type'], ['date', 'time', 'datetime'])) {
                 $defaultValue = \diDateTime::timestamp();
             } elseif (
-                in_array($v['type'], ['date_str', 'time_str', 'datetime_str'])
+                in_array($props['type'], ['date_str', 'time_str', 'datetime_str'])
             ) {
                 $defaultValue = \diDateTime::sqlFormat();
             } else {
-                $defaultValue = $v['default'] ?? '';
+                $defaultValue = $props['default'] ?? '';
             }
 
-            if (!empty($v['virtual']) && !empty($v['values_collector'])) {
-                $value = $m ? $v['values_collector']($id, $m->get()) : $defaultValue;
+            if (!empty($props['virtual']) && !empty($props['values_collector'])) {
+                $value = $m
+                    ? $props['values_collector']($id, $m->get())
+                    : $defaultValue;
             } else {
                 $value = static::extractDataSafe($m, $k) ?? $defaultValue;
             }
@@ -672,14 +674,14 @@ class diDynamicRows
             $ar2[] = $this->get_input(
                 $k,
                 $id,
-                $v['type'] != 'password' ? $value : ''
+                $props['type'] != 'password' ? $value : ''
             );
 
             // value
             $ar1[] = '{' . strtoupper($k) . '#VALUE}';
             $ar2[] = $value;
 
-            if ($v['type'] == 'password') {
+            if ($props['type'] == 'password') {
                 $ar1[] = '{' . strtoupper($k) . '2}';
                 $ar2[] = $this->get_input($k . 2, $id, '', [
                     'type' => 'password',
@@ -1165,6 +1167,7 @@ class diDynamicRows
             }
 
             $checked = (int) $this->data[$field] ? ' checked' : '';
+
             $this->inputs[
                 $field
             ] = "<input type='checkbox' name='$field' id='$field'$checked$input_params data-field-name='$field'>";
