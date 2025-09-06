@@ -11,6 +11,8 @@ use diCore\Tool\Logger;
  */
 class diMYSQLi extends diMYSQL
 {
+    protected static $localDockerDumpCommand = 'docker exec -t mysql mysqldump';
+
     /** @var MySQLi */
     protected $link;
 

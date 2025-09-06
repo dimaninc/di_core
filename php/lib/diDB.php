@@ -101,6 +101,7 @@ abstract class diDB
     protected $ignoreReadLock = false;
 
     protected static $dumpCommand = null;
+    protected static $localDockerDumpCommand = null;
 
     public function __construct(
         $settingsOrHost,
@@ -1543,6 +1544,13 @@ abstract class diDB
     public static function setDumpCommand(string $command)
     {
         static::$dumpCommand = $command;
+    }
+
+    public static function setLocalDockerDumpCommand()
+    {
+        if (static::$localDockerDumpCommand) {
+            static::setDumpCommand(static::$localDockerDumpCommand);
+        }
     }
 
     abstract protected function __connect();

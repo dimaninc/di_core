@@ -116,7 +116,7 @@ function diDbManager(_opts) {
   }
 
   function worker(action, options) {
-    if (typeof options != 'object') {
+    if (typeof options !== 'object') {
       options = {
         file: options
       };
@@ -156,7 +156,9 @@ function diDbManager(_opts) {
       switch (action) {
         case 'create':
           if (res.ok) {
-            self.status('Dump has been created');
+            self.status(
+              'Dump created: `' + res.file + '`, ' + size_in_bytes(res.size)
+            );
 
             addDumpRow(res);
           }
@@ -169,9 +171,7 @@ function diDbManager(_opts) {
         case 'restore':
           if (res.ok) {
             self.status(
-              'Dump `' +
-                options.file +
-                '` has been successfully restored into Database'
+              'Dump `' + options.file + '` successfully restored into Database'
             );
 
             self.loadTablesIntoList(res.tablesForSelectAr);
@@ -191,7 +191,7 @@ function diDbManager(_opts) {
 
         case 'delete':
           if (res.ok) {
-            self.status(res.file + ' has been deleted');
+            self.status('`' + res.file + '` deleted');
           }
 
           $(
@@ -261,17 +261,18 @@ function diDbManager(_opts) {
   };
 
   this.createDump = function () {
-    var $options = $e.tables.find('option'),
-      tablesAr = [],
-      queryAr;
+    const $options = $e.tables.find('option');
+    const tablesAr = [];
 
-    $options.each(function () {
-      if (this.selected) {
-        tablesAr.push(this.value);
-      }
-    });
+    if ($options.filter(':selected').length !== $options.length) {
+      $options.each(function () {
+        if (this.selected) {
+          tablesAr.push(this.value);
+        }
+      });
+    }
 
-    queryAr = {
+    const queryAr = {
       compress: getCheckboxParam('#compress_dump'),
       drops: getCheckboxParam('#dump_drops'),
       creates: getCheckboxParam('#dump_creates'),
@@ -279,7 +280,7 @@ function diDbManager(_opts) {
       data: getCheckboxParam('#dump_data'),
       multiple: getCheckboxParam('#dump_multiple'),
       system: getCheckboxParam('#system'),
-      tables: tablesAr.join(','),
+      tables: tablesAr.join(',') || undefined,
       file: $e.dumpFileName.val(),
       folderId: 1
     };
@@ -322,7 +323,7 @@ function diDbManager(_opts) {
       return false;
     }
 
-    this.status('Deleting database dump ' + file + '...');
+    this.status('Deleting database dump `' + file + '`...');
 
     worker('delete', {
       file: file,

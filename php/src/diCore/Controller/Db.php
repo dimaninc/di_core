@@ -188,6 +188,10 @@ class Db extends \diBaseAdminController
         //$table_case_sensitivity = false;
         //$table_case_sensitivity_str = $table_case_sensitivity ? "cs" : "ci";
 
+        $a = self::getTablesList($this->getDb());
+        $allTablesAr = array_keys($a['tablesForSelectAr']);
+        unset($a);
+
         $compress = \diRequest::get('compress', 0);
         $drops = \diRequest::get('drops', 0);
         $creates = \diRequest::get('creates', 0);
@@ -205,11 +209,9 @@ class Db extends \diBaseAdminController
             $fn = $this->getDb()->getDatabase();
         }
 
-        $tablesAr = explode(',', \diRequest::get('tables', ''));
-
+        $tablesAr = explode(',', \diRequest::get('tables', '')) ?: $allTablesAr;
         $dateFnFormat = 'Y_m_d__H_i_s';
         $dateCommentFormat = 'Y/m/d H:i:s';
-
         $filename = $this->folder . $fn . '__dump_' . date($dateFnFormat) . '.sql';
 
         if ($compress) {
@@ -252,14 +254,6 @@ class Db extends \diBaseAdminController
         }
 
         $dt = date($dateCommentFormat);
-
-        $a = self::getTablesList($this->getDb());
-        $allTablesAr = array_keys($a['tablesForSelectAr']);
-        unset($a);
-
-        if (!$tablesAr) {
-            $tablesAr = $allTablesAr;
-        }
 
         $fp = $compress ? gzopen($filename, 'w9') : fopen($filename, 'w');
         if (!$fp) {

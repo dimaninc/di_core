@@ -23,6 +23,7 @@ class Postgresql extends Pdo
     const DSN_DELIMITER = ';';
 
     protected static $dumpCommand = 'pg_dump';
+    protected static $localDockerDumpCommand = 'docker exec -t postgres pg_dump';
 
     protected function getDSN()
     {
