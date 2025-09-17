@@ -58,17 +58,17 @@ abstract class Connection
         return static::engine;
     }
 
-    public static function isNoSql()
+    public static function isNoSql(): bool
     {
         return Engine::isNoSql(static::getEngine());
     }
 
-    public static function isKeyValue()
+    public static function isKeyValue(): bool
     {
         return Engine::isKeyValue(static::getEngine());
     }
 
-    public static function isRelational()
+    public static function isRelational(): bool
     {
         return Engine::isRelational(static::getEngine());
     }
@@ -77,7 +77,6 @@ abstract class Connection
      * @param string|array $connData
      * @param int $engine
      * @param string $name
-     * @return Connection
      */
     public static function open(
         $connData,
@@ -120,19 +119,24 @@ abstract class Connection
         return self::$connections;
     }
 
-    public static function localMysqlConnData($database)
+    public static function localMysqlConnData($database): array
     {
         return ConnectionData::localMysqlConnData($database);
     }
 
-    public static function localPostgresConnData($database)
+    public static function localPostgresConnData($database): array
     {
         return ConnectionData::localPostgresConnData($database);
     }
 
-    public static function localMongoConnData($database)
+    public static function localMongoConnData($database): array
     {
         return ConnectionData::localMongoConnData($database);
+    }
+
+    public static function localRedisConnData(): array
+    {
+        return ConnectionData::localRedisConnData();
     }
 
     private static function add($name, Connection $conn)
@@ -198,13 +202,16 @@ abstract class Connection
                 $message .= ', errors: ' . join('; ', $errors);
             }
 
-            throw new \diDatabaseException($message);
+            throw (new \diDatabaseException($message))->addMetadata([
+                'className' => static::class,
+                'connData' => $this->data,
+            ]);
         }
 
         return $this;
     }
 
-    protected function parseConnData($connData)
+    protected function parseConnData($connData): static
     {
         $allData = ArrayHelper::isAssoc($connData) ? [$connData] : $connData;
 
@@ -215,7 +222,7 @@ abstract class Connection
         return $this;
     }
 
-    protected function addConnData($connData)
+    protected function addConnData($connData): static
     {
         $this->dataVariants[] = new ConnectionData($connData);
 

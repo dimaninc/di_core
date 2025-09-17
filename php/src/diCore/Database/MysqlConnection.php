@@ -15,8 +15,14 @@ class MysqlConnection extends Connection
 
     protected function connect(ConnectionData $connData)
     {
+        $host = $connData->getHost();
+
+        if ($connData->getPort()) {
+            $host .= ':' . $connData->getPort();
+        }
+
         $this->db = new \diMYSQLi(
-            $connData->getHost(),
+            $host,
             $connData->getLogin(),
             $connData->getPassword(),
             $connData->getDatabase(),

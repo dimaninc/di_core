@@ -244,41 +244,44 @@ class ConnectionData
         return $this;
     }
 
-    public static function localMysqlConnData($database)
+    public static function localMysqlConnData($database): array
     {
+        $login = 'root';
         $password = '11111111';
 
         return [
             [
                 'host' => 'localhost',
-                'login' => 'root',
+                'port' => 3306,
+                'login' => $login,
                 'password' => $password,
                 'database' => $database,
             ],
             [
                 'host' => 'localhost',
-                'login' => 'root',
-                'password' => '',
-                'database' => $database,
-            ],
-            [
-                'host' => 'localhost',
-                'port' => 3306,
-                'login' => 'root',
+                'port' => 13306,
+                'login' => $login,
                 'password' => $password,
                 'database' => $database,
             ],
             [
                 'host' => '127.0.0.1',
                 'port' => 3306,
-                'login' => 'root',
+                'login' => $login,
+                'password' => $password,
+                'database' => $database,
+            ],
+            [
+                'host' => '127.0.0.1',
+                'port' => 13306,
+                'login' => $login,
                 'password' => $password,
                 'database' => $database,
             ],
             [
                 'host' => '127.0.0.1',
                 'port' => 3306,
-                'login' => 'root',
+                'login' => $login,
                 'password' => '',
                 'database' => $database,
             ],
@@ -355,6 +358,20 @@ class ConnectionData
                 'host' => 'localhost',
                 'port' => 27117,
                 'database' => $database,
+            ],
+        ];
+    }
+
+    public static function localRedisConnData()
+    {
+        return [
+            [
+                'host' => '127.0.0.1',
+                'port' => 6379,
+            ],
+            [
+                'host' => '127.0.0.1',
+                'port' => 16379,
             ],
         ];
     }

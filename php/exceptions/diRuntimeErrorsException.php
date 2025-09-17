@@ -11,7 +11,7 @@ class diRuntimeErrorsException extends diRuntimeException
     protected $errors = [];
 
     /**
-     * Set database error messages
+     * Set runtime error messages
      *
      * @param array $errors
      */
@@ -21,8 +21,7 @@ class diRuntimeErrorsException extends diRuntimeException
     }
 
     /**
-     * Get database errors
-     *
+     * Get runtime errors
      * @return array
      */
     public function getErrors()
