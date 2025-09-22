@@ -240,4 +240,44 @@ class GeoIpLocation
     {
         return !static::isLocalIp($ip);
     }
+
+    public static function locationStr($ip)
+    {
+        $location = new GeoLiteLocation($ip);
+
+        return join(
+            ', ',
+            array_filter([
+                $location->getCity(),
+                $location->getRegionName(),
+                $location->getCountryName(),
+            ])
+        );
+    }
+
+    public static function compactLocationStr($ip)
+    {
+        $location = new GeoLiteLocation($ip);
+
+        $city = $location->getCity();
+        $region = $location->getRegionName();
+
+        if (
+            in_array($region, [
+                "$city",
+                "$city Oblast",
+                "$city Krai",
+                "$city Region",
+                "$city City",
+            ]) ||
+            ($city === 'St Petersburg' && $region === 'St.-Petersburg')
+        ) {
+            $region = null;
+        }
+
+        return join(
+            ', ',
+            array_filter([$city, $region, $location->getCountryName()])
+        );
+    }
 }

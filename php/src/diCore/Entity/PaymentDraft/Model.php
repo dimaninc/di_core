@@ -7,6 +7,7 @@
 
 namespace diCore\Entity\PaymentDraft;
 
+use diCore\Entity\Geo\GeoIpLocation;
 use diCore\Payment\System;
 use diCore\Payment\Payment;
 use diCore\Traits\Model\TargetInside;
@@ -177,16 +178,7 @@ class Model extends \diModel
 
     public function getLocationStr()
     {
-        $location = \diGeo::location(bin2ip($this->getIp()));
-
-        return join(
-            ', ',
-            array_filter([
-                $location->getCity(),
-                $location->getRegionName(),
-                $location->getCountryName(),
-            ])
-        );
+        return GeoIpLocation::compactLocationStr($this->getIp());
     }
 
     public function getDataForNewReceipt()
