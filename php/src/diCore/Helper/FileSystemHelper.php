@@ -56,11 +56,8 @@ class FileSystemHelper
         return $result;
     }
 
-    public static function createTree(
-        $basePath,
-        $pathEndingsToCreate,
-        $mod = 0775
-    ) {
+    public static function createTree($basePath, $pathEndingsToCreate, $mod = 0775)
+    {
         if (!is_array($pathEndingsToCreate)) {
             $pathEndingsToCreate = [$pathEndingsToCreate];
         }
@@ -98,7 +95,7 @@ class FileSystemHelper
         $contents = self::folderContents($path, true, true);
 
         foreach ($contents['f'] as $file) {
-            unlink($file);
+            @unlink($file);
         }
 
         foreach ($contents['d'] as $dir) {
@@ -106,7 +103,7 @@ class FileSystemHelper
                 continue;
             }
 
-            rmdir($dir);
+            @rmdir($dir);
         }
     }
 }
