@@ -13,6 +13,8 @@ class diMYSQLi extends diMYSQL
 {
     protected static $localDockerDumpCommand = 'docker exec -t mysql mysqldump';
 
+    protected $supportsJson = null;
+
     /** @var MySQLi */
     protected $link;
 
@@ -173,5 +175,53 @@ class diMYSQLi extends diMYSQL
     protected function __get_charset()
     {
         return $this->link->character_set_name();
+    }
+
+    public function doesSupportJson()
+    {
+        if ($this->supportsJson !== null) {
+            return $this->supportsJson;
+        }
+
+        $version = $this->link->server_info ?? null;
+
+        if ($version === null) {
+            $result = $this->link->query('SELECT VERSION() AS version');
+
+            if (!$result) {
+                return false;
+            }
+
+            $row = $result->fetch_assoc();
+            $version = $row['version'] ?? '';
+        }
+
+        $numericVersion = preg_replace('/[^0-9.].*$/', '', $version);
+
+        if (empty($numericVersion) || !is_string($numericVersion)) {
+            return $this->supportsJson = false;
+        }
+
+        $border = stripos($version, 'mariadb') !== false ? '10.2.0' : '5.7.8';
+
+        return $this->supportsJson = version_compare($numericVersion, $border, '>=');
+    }
+
+    protected function getJsonForStructure($value)
+    {
+        if (!$this->doesSupportJson()) {
+            if (is_null($value)) {
+                return 'NULL';
+            }
+
+            $jsonString = json_encode($value);
+            if ($jsonString === false) {
+                return "''";
+            }
+
+            return $this->escapeValue($jsonString);
+        }
+
+        return parent::getJsonForStructure($value);
     }
 }
