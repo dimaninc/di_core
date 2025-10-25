@@ -156,11 +156,11 @@ var diAdminForm = function (table, id, auto_save_timeout) {
       var $tagsGrid = $row.find('.tags-grid');
 
       $on.on('click', function () {
-        $checkboxes.prop('checked', true);
+        $checkboxes.filter(':visible').prop('checked', true);
       });
 
       $off.on('click', function () {
-        $checkboxes.prop('checked', false);
+        $checkboxes.filter(':visible').prop('checked', false);
       });
 
       $showAll.add($noneSelected).on('click', function () {
