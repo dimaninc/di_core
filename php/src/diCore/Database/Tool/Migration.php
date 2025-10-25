@@ -38,8 +38,9 @@ abstract class Migration
         $result = $state ? $this->upWrapper() : $this->downWrapper();
 
         if ($this->getDb()->getLog() || $result === false) {
+            $idx = static::$idx;
             throw new \Exception(
-                'Error(s) during migration: ' . $this->getDb()->getLogStr()
+                "Error during migration#$idx: {$this->getDb()->getLogStr()}"
             );
         }
 
