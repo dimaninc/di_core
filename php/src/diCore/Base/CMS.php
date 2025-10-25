@@ -157,6 +157,7 @@ abstract class CMS
         'yandex_ad_client_id',
         'test-tag',
         'banner-test-tags',
+        'etext',
         'ybaip',
 
         // google ad
