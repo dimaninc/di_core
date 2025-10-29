@@ -2017,11 +2017,11 @@ abstract class CMS
                 'possible_get_params'
             ));
 
-        if (in_array('*', $ar)) {
+        $params = array_merge(static::getAllSkipGetParams(), $ar);
+
+        if (in_array('*', $params)) {
             return $this;
         }
-
-        $params = array_merge(static::getAllSkipGetParams(), $ar);
 
         foreach ($_GET as $k => $v) {
             if (!in_array($k, $params)) {
