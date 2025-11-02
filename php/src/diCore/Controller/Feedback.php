@@ -10,6 +10,7 @@ namespace diCore\Controller;
 
 use diCore\Data\Config;
 use diCore\Data\Types;
+use diCore\Exception\SpamException;
 use diCore\Tool\Mail\Queue;
 use diCore\Entity\Feedback\Model;
 
@@ -37,6 +38,13 @@ class Feedback extends \diBaseController
             $this->gatherData();
 
             $this->getModel()->save();
+
+            if ($ar['ok'] && $this->sendEmail) {
+                $this->sendEmailNotification();
+            }
+        } catch (SpamException $e) {
+            // keep ok=true and status=200, let bot think it's ok
+            $ar['message'] = $e->getMessage();
         } catch (\Exception $e) {
             if (Config::isRestApiSupported()) {
                 return $this->badRequest([
@@ -46,10 +54,6 @@ class Feedback extends \diBaseController
 
             $ar['ok'] = false;
             $ar['message'] = $e->getMessage();
-        }
-
-        if ($ar['ok'] && $this->sendEmail) {
-            $this->sendEmailNotification();
         }
 
         return $ar;
