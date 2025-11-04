@@ -107,7 +107,7 @@ class Auth extends \diBaseController
             ? ''
             : static::L('sign_in.unsuccessful', $lang);
 
-        if (Config::isRestApiSupported()) {
+        if (static::isRestApiSupported()) {
             if (!$this->Auth->authorized()) {
                 return $this->unauthorized(['message' => $message]);
             }
@@ -134,7 +134,7 @@ class Auth extends \diBaseController
     {
         $this->Auth->logout();
 
-        if (!\diRequest::request('redirect') && Config::isRestApiSupported()) {
+        if (!\diRequest::request('redirect') && static::isRestApiSupported()) {
             return $this->unauthorized([
                 'ok' => true,
             ]);

@@ -39,7 +39,7 @@ class Cabinet extends \diBaseController
         return $this->okay($this->getMeResponseBody());
     }
 
-    protected function getMeResponseBody()
+    public static function getMeResponseBody()
     {
         /** @var User $user */
         $user = AuthTool::i()->getUserModel();

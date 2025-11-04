@@ -46,7 +46,7 @@ class Feedback extends \diBaseController
             // keep ok=true and status=200, let bot think it's ok
             $ar['message'] = $e->getMessage();
         } catch (\Exception $e) {
-            if (Config::isRestApiSupported()) {
+            if (static::isRestApiSupported()) {
                 return $this->badRequest([
                     'message' => $e->getMessage(),
                 ]);

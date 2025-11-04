@@ -154,7 +154,7 @@ class Comment extends \diBaseController
                 $result['ok'] = true;
                 $result['id'] = $comment->getId();
             } else {
-                if (Config::isRestApiSupported()) {
+                if (static::isRestApiSupported()) {
                     throw $e;
                 }
             }

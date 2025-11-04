@@ -20,6 +20,11 @@ class diBaseController
      */
     const TINY_ACTIONS = false;
 
+    /**
+     * Is REST API supported for the controller
+     */
+    const REST_API_SUPPORTED = false;
+
     const RESULT_KEY = 'ok';
     const MESSAGE_KEY = 'message';
 
@@ -76,7 +81,7 @@ class diBaseController
 
     protected static function isRestApiSupported()
     {
-        return Config::isRestApiSupported();
+        return Config::isRestApiSupported() || static::REST_API_SUPPORTED;
     }
 
     protected static function isHttpCodeErrorResponseSupported()
@@ -469,6 +474,8 @@ class diBaseController
                 HttpCode::header($data->getResponseCode());
             }
 
+            $data->headers();
+
             $data = $data->getReturnData();
         }
 
@@ -556,6 +563,11 @@ class diBaseController
     {
         if (!$this->response) {
             $this->response = new Response();
+
+            $sessionId = \diSession::id();
+            if ($sessionId) {
+                $this->response->addHeader(\diSession::HEADER_NAME, $sessionId);
+            }
         }
 
         return $this->response;

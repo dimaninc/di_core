@@ -12,6 +12,7 @@ class Response
 {
     protected $responseCode = HttpCode::OK;
     protected $returnData;
+    protected $headers = [];
 
     public function setReturnData($data)
     {
@@ -53,6 +54,50 @@ class Response
     public function setResponseCode($responseCode)
     {
         $this->responseCode = $responseCode;
+
+        return $this;
+    }
+
+    public function setHeaders($headers)
+    {
+        $this->headers = $headers;
+
+        return $this;
+    }
+
+    public function addHeader($name, $value)
+    {
+        $this->headers[$name] = $value;
+
+        return $this;
+    }
+
+    public function removeHeader($name)
+    {
+        unset($this->headers[$name]);
+
+        return $this;
+    }
+
+    public function getHeaders()
+    {
+        return $this->headers;
+    }
+
+    public function getHeader($name)
+    {
+        return $this->headers[$name] ?? null;
+    }
+
+    public function headers()
+    {
+        if (!$this->headers) {
+            return $this;
+        }
+
+        foreach ($this->headers as $name => $value) {
+            header("$name: $value");
+        }
 
         return $this;
     }

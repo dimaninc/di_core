@@ -16,6 +16,7 @@ class diSession
     const SHORT_ID_LENGTH = 12;
     const VALUES_SESSION_KEY = 'diSession';
     const COOKIE_LIFE_TIME = SECS_PER_DAY * 30;
+    const HEADER_NAME = 'X-Session';
 
     protected static function beforeCreate()
     {

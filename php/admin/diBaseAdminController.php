@@ -18,7 +18,7 @@ class diBaseAdminController extends diBaseController
 
     protected static function isRestApiSupported()
     {
-        return Config::isRestApiInAdminSupported();
+        return Config::isRestApiInAdminSupported() || static::REST_API_SUPPORTED;
     }
 
     protected function redirect()
