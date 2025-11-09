@@ -897,6 +897,7 @@ abstract class CMS
 
         if (!$this->getMeta('description')) {
             $this->setMeta(
+                $this->getContentModel()->localized('short_content') ?:
                 $this->getContentModel()->localized('description') ?:
                 $this->getMeta('title'),
                 'description'
@@ -2121,7 +2122,7 @@ abstract class CMS
 
     protected function processTextForMeta($text)
     {
-        return strip_tags($text ?: '');
+        return trim(strip_tags($text ?: ''));
     }
 
     /**
