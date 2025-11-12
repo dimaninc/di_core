@@ -27,6 +27,11 @@ class diSession
     {
     }
 
+    protected static function doCreate()
+    {
+        session_start();
+    }
+
     public static function start()
     {
         $class = static::getClass();
@@ -34,7 +39,7 @@ class diSession
         if (!$class::exists()) {
             $class::beforeCreate();
 
-            session_start();
+            $class::doCreate();
 
             $class::afterCreate();
         }
