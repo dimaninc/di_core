@@ -6,206 +6,308 @@
 @import 'parts/skin/entrine/variables.styl'
 @import 'parts/skin/entrine/fonts.styl'
 
-body
+html {
+  height 100%
+}
+
+body {
+  margin 0
+  height 100%
+  background white
+  font-family Tahoma, Verdana, Segoe, sans-serif
+  font-size 14px
+  color black
+
+  &[data-skin="entrine"] {
+    font-family $entrineFont
     background white
-    font-family Tahoma, Verdana, Segoe, sans-serif
-    font-size 14px
-    color black
-    &[data-skin="entrine"]
-        font-family $entrineFont
-        background white
-        color $entrineColorBgDark
+    color $entrineColorBgDark
+  }
+}
 
-form
-    margin 0
-    padding 0
+form {
+  margin 0
+  padding 0
+}
 
-a
-    color #9601DA
-    &:hover
-        text-decoration none
+a {
+  color #9601DA
 
-.login-form-wrapper
-    body[data-skin="entrine"] &
-        box-sizing border-box
-        margin 50px auto
-        padding 80px 20px
-        width 500px
-        box-shadow 0 2px 39px 6px rgba(0, 0, 0, .09)
-        @media $mqTablet
-            width auto
-            margin 0
-            padding 20px
-            box-shadow none
+  &:hover {
+    text-decoration none
+  }
+}
 
-/*
-.logo
-    font-size 50px
-    line-height 100px
-    text-align center
-    body[data-skin="entrine"] &
-        display none
-        font-size 16px
-        line-height 60px
-    @media $mqTablet
-        line-height 70px
-    i
-        font-style normal
-        color #7601AC
-        body[data-skin="entrine"] &
-            color inherit
-    b
-        font-weight 600
-        body[data-skin="entrine"] &
-            font-weight normal
-*/
-
-.site-logo
-    display flex
-    justify-content center
-    padding 36px 0
-    body[data-skin="entrine"] &
-        @media screen and (min-width: 768px)
-            padding-top 0
-    img
-        min-width 280px
-        max-width 340px
-        max-height 200px
-        object-fit contain
-        @media screen and (max-width: 450px)
-            min-width unset
-            width 75%
-            max-width 75%
-
-.site-title
-    text-align center
-    font-size 24px
-    line-height 1.5
-    padding 36px 0
-    body[data-skin="entrine"] &
-        line-height 30px
-        @media screen and (min-width: 768px)
-            padding-top 0
-
-.description
-    text-align center
-    font-size 16px
-    body[data-skin="entrine"] &
-        line-height 30px
-
-.login-form
-    position relative
+.login-form-wrapper {
+  body[data-skin="entrine"] & {
     box-sizing border-box
-    left 50%
-    width 380px
-    margin-top 50px
-    transform translateX(-50%)
-    background-color #E5E5E5
-    border-radius 20px
-    padding 20px
-    body[data-skin="entrine"] &
-        background-color transparent
-        border-radius 0
-        margin-top 30px
-        width var(--menu-width)
-        padding 0
-    @media $mqTablet
+    margin 50px auto
+    padding 80px 20px
+    width 500px
+    box-shadow 0 2px 39px 6px rgba(0, 0, 0, .09)
+
+    @media $mqTablet {
+      width auto
+      margin 0
+      padding 20px
+      box-shadow none
+    }
+  }
+}
+
+.site-logo {
+  display flex
+  justify-content center
+  padding 36px 0
+
+  body[data-skin="entrine"] & {
+    @media screen and (min-width: 768px) {
+      padding-top 0
+    }
+  }
+
+  img {
+    min-width 280px
+    max-width 340px
+    max-height 200px
+    object-fit contain
+    @media screen and (max-width: 450px) {
+      min-width unset
+      width 75%
+      max-width 75%
+    }
+  }
+}
+
+.site-title {
+  text-align center
+  font-size 24px
+  line-height 1.5
+  padding 36px 0
+
+  body[data-skin="entrine"] & {
+    line-height 30px
+    @media screen and (min-width: 768px) {
+      padding-top 0
+    }
+  }
+}
+
+.description {
+  text-align center
+  font-size 16px
+
+  body[data-skin="entrine"] & {
+    line-height 30px
+  }
+}
+
+.login-form {
+  position relative
+  box-sizing border-box
+  left 50%
+  width 380px
+  margin-top 50px
+  transform translateX(-50%)
+  background-color #E5E5E5
+  border-radius 20px
+  padding 20px
+
+  body[data-skin="entrine"] & {
+    background-color transparent
+    border-radius 0
+    margin-top 30px
+    width var(--menu-width)
+    padding 0
+  }
+  @media $mqTablet {
+    margin-top 20px
+    width 90%
+  }
+
+  & > div {
+    &:not(:first-child) {
+      margin-top 15px
+
+      body[data-skin="entrine"] & {
         margin-top 20px
-        width 90%
-    & > div {
-        &:not(:first-child) {
-            margin-top 15px
+      }
+    }
+  }
 
-            body[data-skin="entrine"] & {
-                margin-top 20px
-            }
-        }
+  .login-field-name {
+    display none
+  }
+
+  > .error {
+    color red
+    text-align center
+
+    body[data-skin="entrine"] & {
+      color #faa
     }
-    .login-field-name {
-        display none
+  }
+
+  label {
+    font-size 14px
+  }
+
+  button, input[type="text"], input[type="email"], input[type="password"] {
+    box-sizing border-box
+    border-radius 10px
+    width 100%
+    padding 0
+    border 0
+    font-family Tahoma, Verdana, Segoe, sans-serif
+    font-size 24px
+    height 42px
+    outline none
+
+    body[data-skin="entrine"] & {
+      font-family $entrineFont
+      border 1px solid $entrineColorGray
+      border-radius 3px
+      height $entrineBaseHeight
+      font-size 16px
     }
-    > .error
-        color red
-        text-align center
-        body[data-skin="entrine"] &
-            color #faa
-    label
-        font-size 14px
-    button
-    input[type="text"], input[type="email"], input[type="password"]
-        box-sizing border-box
-        border-radius 10px
-        width 100%
+    @media $mqTablet {
+      font-size 18px
+      height 28px
+    }
+  }
+
+  button {
+    color var(--button-text-color-primary)
+    background-color var(--button-background-primary)
+    transition background-color .3s ease
+    cursor pointer
+
+    &:hover {
+      background-color var(--button-background-hover-primary)
+    }
+
+    body[data-skin="entrine"] & {
+      background-image embedurl('../../../i/admin/skin/entrine/login.svg', 'utf8')
+      background-position right 18px center
+      background-repeat no-repeat
+      text-align left
+      padding-left 18px
+      border 0
+    }
+  }
+
+  input {
+    &[type="text"]
+    &[type="email"],
+    &[type="password"] {
+      padding 0 15px
+
+      body[data-skin="entrine"] & {
+        padding 0 18px
+      }
+    }
+  }
+}
+
+.forgotten {
+  margin 10px 0 0 0
+  text-align right
+
+  a {
+    text-decoration underline
+    font-size 11px
+    color black
+  }
+}
+
+.to-home {
+  text-align center
+  margin-top 50px
+  font-size 16px
+  @media $mqTablet {
+    margin-top 30px
+  }
+
+  body[data-skin="entrine"] & {
+    display none
+  }
+
+  a {
+    display inline-block
+    border-radius 10px
+    padding 10px 50px
+    text-decoration none
+    box-sizing border-box
+    background-color #E5E5E5
+    transition background-color .5s ease, color .5s ease
+
+    &:hover {
+      color #f00
+      background-color #ddd
+    }
+  }
+}
+
+.contacts {
+  text-align center
+  margin-top 50px
+  font-size 16px
+
+  body[data-skin="entrine"] & {
+    display none
+  }
+  @media $mqTablet {
+    margin-top 30px
+  }
+}
+
+body[data-login-layout="pic_on_right"] {
+  .login-outer-wrapper {
+    display flex
+    height 100%
+
+    .login-form-wrapper {
+      --menu-width 320px
+
+      flex-shrink 0
+      overflow-y auto
+      max-height 100%
+      box-shadow none
+      margin 32px auto
+      padding 0
+
+      @media (max-width: 768px) {
+        flex 1
+      }
+
+      @media (min-width: 769px) {
+        width 480px
+      }
+
+      .login-form {
+        margin-top 20px
+        background none
         padding 0
-        border 0
-        font-family Tahoma, Verdana, Segoe, sans-serif
-        font-size 24px
-        height 42px
-        outline none
-        body[data-skin="entrine"] &
-            font-family $entrineFont
-            border 1px solid $entrineColorGray
-            border-radius 3px
-            height $entrineBaseHeight
-            font-size 16px
-        @media $mqTablet
-            font-size 18px
-            height 28px
-    button
-        color var(--button-text-color-primary)
-        background-color var(--button-background-primary)
-        transition background-color .3s ease
-        cursor pointer
-        &:hover
-            background-color var(--button-background-hover-primary)
-        body[data-skin="entrine"] &
-            background-image embedurl('../../../i/admin/skin/entrine/login.svg', 'utf8')
-            background-position right 18px center
-            background-repeat no-repeat
-            text-align left
-            padding-left 18px
-            border 0
-    input
-        &[type="text"]
-        &[type="email"],
-        &[type="password"]
-            padding 0 15px
-            body[data-skin="entrine"] &
-                padding 0 18px
 
-.forgotten
-    margin 10px 0 0 0
-    text-align right
-    a
-        text-decoration underline
-        font-size 11px
-        color black
+        input {
+          background #eee
+        }
+      }
 
-.to-home
-    text-align center
-    margin-top 50px
-    font-size 16px
-    @media $mqTablet
-        margin-top 30px
-    body[data-skin="entrine"] &
+      .contacts {
+        margin 0
+        padding 25px 0
+      }
+    }
+
+    .picture {
+      flex 1
+      background url(/assets/images/admin/login-bg.jpg)
+      background-size cover
+
+      @media (max-width: 768px) {
         display none
-    a
-        display inline-block
-        border-radius 10px
-        padding 10px 50px
-        text-decoration none
-        box-sizing border-box
-        background-color #E5E5E5
-        transition background-color .5s ease, color .5s ease
-        &:hover
-            color #f00
-            background-color #ddd
-
-.contacts
-    text-align center
-    margin-top 50px
-    font-size 16px
-    body[data-skin="entrine"] &
-        display none
-    @media $mqTablet
-        margin-top 30px
+      }
+    }
+  }
+}

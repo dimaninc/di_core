@@ -2,6 +2,7 @@
 
 namespace diCore\Admin;
 
+use diCore\Admin\Data\LoginLayout;
 use diCore\Traits\BasicCreate;
 
 /**
@@ -12,6 +13,8 @@ class Config
     use BasicCreate;
 
     const GLOBAL__SHOW_HELP = false;
+
+    const LOGIN__LAYOUT = LoginLayout::classic;
 
     const FILTER__SHOW_COPY_LINK_TO_CLIPBOARD_BUTTON = false;
 
@@ -26,6 +29,16 @@ class Config
     public static function shouldShowHelp()
     {
         return static::basicCreate()::GLOBAL__SHOW_HELP;
+    }
+
+    public static function getLoginLayout()
+    {
+        return static::basicCreate()::LOGIN__LAYOUT;
+    }
+
+    public static function isCustomLoginLayout()
+    {
+        return static::basicCreate()::LOGIN__LAYOUT !== LoginLayout::classic;
     }
 
     public static function shouldFilterShowCopyLinkToClipboardButton()

@@ -115,7 +115,12 @@ body[data-skin="entrine"] {
   font-weight: 400;
   font-style: normal;
 }
+html {
+  height: 100%;
+}
 body {
+  margin: 0;
+  height: 100%;
   background: #fff;
   font-family: Tahoma, Verdana, Segoe, sans-serif;
   font-size: 14px;
@@ -155,27 +160,6 @@ body[data-skin="entrine"] .login-form-wrapper {
     box-shadow: none;
   }
 }
-/*
-.logo
-    font-size 50px
-    line-height 100px
-    text-align center
-    body[data-skin="entrine"] &
-        display none
-        font-size 16px
-        line-height 60px
-    @media $mqTablet
-        line-height 70px
-    i
-        font-style normal
-        color #7601AC
-        body[data-skin="entrine"] &
-            color inherit
-    b
-        font-weight 600
-        body[data-skin="entrine"] &
-            font-weight normal
-*/
 .site-logo {
   display: -webkit-box;
   display: -moz-box;
@@ -397,5 +381,69 @@ body[data-skin="entrine"] .contacts {
 @media screen and (max-width: 768px) {
   .contacts {
     margin-top: 30px;
+  }
+}
+body[data-login-layout="pic_on_right"] .login-outer-wrapper {
+  display: -webkit-box;
+  display: -moz-box;
+  display: -webkit-flex;
+  display: -ms-flexbox;
+  display: box;
+  display: flex;
+  height: 100%;
+}
+body[data-login-layout="pic_on_right"] .login-outer-wrapper .login-form-wrapper {
+  --menu-width: 320px;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+  overflow-y: auto;
+  max-height: 100%;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+  margin: 32px auto;
+  padding: 0;
+}
+@media (max-width: 768px) {
+  body[data-login-layout="pic_on_right"] .login-outer-wrapper .login-form-wrapper {
+    -webkit-box-flex: 1;
+    -moz-box-flex: 1;
+    -o-box-flex: 1;
+    box-flex: 1;
+    -webkit-flex: 1;
+    -ms-flex: 1;
+    flex: 1;
+  }
+}
+@media (min-width: 769px) {
+  body[data-login-layout="pic_on_right"] .login-outer-wrapper .login-form-wrapper {
+    width: 480px;
+  }
+}
+body[data-login-layout="pic_on_right"] .login-outer-wrapper .login-form-wrapper .login-form {
+  margin-top: 20px;
+  background: none;
+  padding: 0;
+}
+body[data-login-layout="pic_on_right"] .login-outer-wrapper .login-form-wrapper .login-form input {
+  background: #eee;
+}
+body[data-login-layout="pic_on_right"] .login-outer-wrapper .login-form-wrapper .contacts {
+  margin: 0;
+  padding: 25px 0;
+}
+body[data-login-layout="pic_on_right"] .login-outer-wrapper .picture {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  -o-box-flex: 1;
+  box-flex: 1;
+  -webkit-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
+  background: url("/assets/images/admin/login-bg.jpg");
+  background-size: cover;
+}
+@media (max-width: 768px) {
+  body[data-login-layout="pic_on_right"] .login-outer-wrapper .picture {
+    display: none;
   }
 }

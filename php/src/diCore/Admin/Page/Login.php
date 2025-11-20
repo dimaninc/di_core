@@ -8,6 +8,9 @@
 
 namespace diCore\Admin\Page;
 
+use diCore\Admin\Config;
+use diCore\Admin\Data\LoginLayout;
+
 class Login extends \diCore\Admin\BasePage
 {
     protected function initTable()
@@ -29,6 +32,12 @@ class Login extends \diCore\Admin\BasePage
 
     protected function getIndexTemplateName()
     {
+        if (Config::isCustomLoginLayout()) {
+            $layout = LoginLayout::name(Config::getLoginLayout());
+
+            return "admin/login/$layout/index";
+        }
+
         return 'admin/login/index';
     }
 
@@ -49,6 +58,7 @@ class Login extends \diCore\Admin\BasePage
                 'login_credentials' => [
                     'login' => \diRequest::post(\diAdminUser::POST_LOGIN_FIELD),
                 ],
+                'login_layout' => Config::getLoginLayout(),
             ])
             ->setTemplateForIndex($this->getIndexTemplateName());
     }

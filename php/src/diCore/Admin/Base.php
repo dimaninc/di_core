@@ -8,6 +8,7 @@
 
 namespace diCore\Admin;
 
+use diCore\Admin\Data\LoginLayout;
 use diCore\Admin\Data\Skin;
 use diCore\Base\CMS;
 use diCore\Base\Exception\HttpException;
@@ -364,6 +365,11 @@ class Base
         return $this->getAdminSkinId() == Skin::local;
     }
 
+    public function getAdminLoginLayoutId()
+    {
+        return \diCore\Admin\Config::getLoginLayout();
+    }
+
     private function getTemplateVariables()
     {
         return [
@@ -377,6 +383,9 @@ class Base
                 urlencode(\diRequest::requestUri()),
 
             'admin_skin' => Skin::name($this->getAdminSkinId()),
+            'admin_login_layout' => LoginLayout::name(
+                $this->getAdminLoginLayoutId()
+            ),
             'cms_name' => Config::getCmsName(),
             'cms_support_email' => Config::getCmsSupportEmail(),
 
