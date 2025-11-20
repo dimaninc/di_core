@@ -441,6 +441,7 @@ body[data-login-layout="pic_on_right"] .login-outer-wrapper .picture {
   flex: 1;
   background: url("/assets/images/admin/login-bg.jpg");
   background-size: cover;
+  background-position: center;
 }
 @media (max-width: 768px) {
   body[data-login-layout="pic_on_right"] .login-outer-wrapper .picture {
