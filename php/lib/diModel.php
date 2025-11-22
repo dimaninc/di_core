@@ -3235,6 +3235,7 @@ ENGINE = InnoDB;";
     public function tuneFieldValueByTypeForPublicData($field, $value)
     {
         switch (static::getFieldType($field)) {
+            case FieldType::bool:
             case FieldType::bool_int:
                 return (bool) $value;
 
@@ -3245,11 +3246,12 @@ ENGINE = InnoDB;";
             case FieldType::double:
                 return (float) $value;
 
-            case FieldType::bool:
-                return !!$value;
-
             case FieldType::json:
                 return $this->getJsonData($field);
+
+            case FieldType::timestamp:
+            case FieldType::datetime:
+                return $value ?: null;
 
             default:
                 return $value;
@@ -3301,9 +3303,6 @@ ENGINE = InnoDB;";
                 break;
 
             case FieldType::float:
-                $value = (float) $value;
-                break;
-
             case FieldType::double:
                 $value = (float) $value;
                 break;
