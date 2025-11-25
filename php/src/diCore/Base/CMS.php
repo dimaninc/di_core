@@ -121,7 +121,7 @@ abstract class CMS
      * @var array
      */
     public static $envDomains = [
-        // envId => [domains...]
+        // envId => ['domain', 'domain wildcard', ...]
     ];
 
     const ENV_DEV = 1;
@@ -516,12 +516,14 @@ abstract class CMS
     public static function getEnvironment()
     {
         $domain = \diRequest::domain() ?: Config::getMainDomain();
-        /** @var CMS $class */
+        /** @var self $class */
         $class = \diLib::getChildClass(static::class);
 
         foreach (static::$envDomains as $envId => $domains) {
-            if (in_array($domain, $domains)) {
-                return $envId;
+            foreach ($domains as $pattern) {
+                if ($domain === $pattern || fnmatch($pattern, $domain)) {
+                    return $envId;
+                }
             }
         }
 

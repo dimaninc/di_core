@@ -58,9 +58,7 @@ class diOAuth2Twitter extends diOAuth2
 
         $key = static::secret . '&';
         $hashReference = $prefix . $this->buildForSignature($ar);
-        $signature = base64_encode(
-            hash_hmac('sha1', $hashReference, $key, true)
-        );
+        $signature = base64_encode(hash_hmac('sha1', $hashReference, $key, true));
 
         $ar['oauth_signature'] = $signature;
         ksort($ar);
@@ -68,15 +66,19 @@ class diOAuth2Twitter extends diOAuth2
         $response = static::makeHttpRequest(static::requestTokenUrlBase, $ar);
         parse_str($response, $result);
 
+        if (!$response || !$result) {
+            throw \diCore\Base\Exception\HttpException::notFound(
+                'Twitter OAuth2 out of order'
+            );
+        }
+
         if (isset($result['oauth_token'])) {
             diSession::set('twitterToken', $result['oauth_token']);
             diSession::set('twitterTokenSecret', $result['oauth_token_secret']);
         } else {
             $result = json_decode($response, true);
             throw new \Exception(
-                $result['errors'][0]['code'] .
-                    ': ' .
-                    $result['errors'][0]['message']
+                $result['errors'][0]['code'] . ': ' . $result['errors'][0]['message']
             );
         }
 
@@ -87,8 +89,7 @@ class diOAuth2Twitter extends diOAuth2
 
     protected function isReturn()
     {
-        return diRequest::get('oauth_token') &&
-            diRequest::get('oauth_verifier');
+        return diRequest::get('oauth_token') && diRequest::get('oauth_verifier');
     }
 
     protected function getAuthUrlParams()
@@ -111,9 +112,7 @@ class diOAuth2Twitter extends diOAuth2
 
         $key = static::secret . '&' . $tokenSecret;
         $hashReference = $prefix . $this->buildForSignature($ar);
-        $signature = base64_encode(
-            hash_hmac('sha1', $hashReference, $key, true)
-        );
+        $signature = base64_encode(hash_hmac('sha1', $hashReference, $key, true));
 
         $ar['oauth_signature'] = $signature;
         ksort($ar);
