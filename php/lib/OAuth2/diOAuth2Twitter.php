@@ -1,4 +1,7 @@
 <?php
+
+use diCore\Helper\ArrayHelper;
+
 class diOAuth2Twitter extends diOAuth2
 {
     const loginUrlBase = 'https://api.twitter.com/oauth/authorize';
@@ -66,7 +69,7 @@ class diOAuth2Twitter extends diOAuth2
         $response = static::makeHttpRequest(static::requestTokenUrlBase, $ar);
         parse_str($response, $result);
 
-        if (!$response || !$result) {
+        if (!$response || !$result || ArrayHelper::get($result, 'errors')) {
             throw \diCore\Base\Exception\HttpException::notFound(
                 'Twitter OAuth2 out of order'
             );
