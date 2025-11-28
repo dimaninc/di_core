@@ -68,8 +68,9 @@ class diOAuth2Twitter extends diOAuth2
 
         $response = static::makeHttpRequest(static::requestTokenUrlBase, $ar);
         parse_str($response, $result);
+        $jsonResult = json_decode($response, true);
 
-        if (!$response || !$result || ArrayHelper::get($result, 'errors')) {
+        if (!$response || !$result || ArrayHelper::get($jsonResult, 'errors')) {
             throw \diCore\Base\Exception\HttpException::notFound(
                 'Twitter OAuth2 out of order'
             );
