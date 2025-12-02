@@ -134,16 +134,12 @@ class App
 
     public function getModeName()
     {
-        return isset(self::$outputModes[$this->getMode()])
-            ? self::$outputModes[$this->getMode()]
-            : null;
+        return self::$outputModes[$this->getMode()] ?? null;
     }
 
     public function getModeHelperClass()
     {
-        return isset(self::$classes[$this->mode])
-            ? self::$classes[$this->mode]
-            : null;
+        return self::$classes[$this->mode] ?? null;
     }
 
     public function getAllGetParams()

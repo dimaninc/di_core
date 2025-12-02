@@ -707,7 +707,7 @@ abstract class CMS
      */
     protected function printAuthStuff()
     {
-        if ($this->authUsed) {
+        if ($this->authUsed && $this->getAuth()) {
             $this->getAuth()->assignTemplateVariables($this->getTpl());
         }
 
