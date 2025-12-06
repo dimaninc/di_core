@@ -33,7 +33,7 @@ abstract class CMS
     const TEMPLATE_ENGINE_TWIG = 1;
     const TEMPLATE_ENGINE_FASTTEMPLATE = 2;
 
-    const MAIN_TEMPLATE_ENGINE = self::TEMPLATE_ENGINE_FASTTEMPLATE;
+    const MAIN_TEMPLATE_ENGINE = self::TEMPLATE_ENGINE_TWIG;
 
     const OG_IMAGE = null;
     const OG_IMAGE_W = 1200;
