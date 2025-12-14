@@ -319,8 +319,27 @@ class diRequest
 
     public static function enableCors(
         $whitelistDomains = [],
-        callable|null $onOptionsRequest = null
+        callable|null $onOptionsRequest = null,
+        array $options = []
     ) {
+        $methods = ['POST', 'GET', 'OPTIONS', 'PUT', 'DELETE', 'HEAD', 'PATCH'];
+        $allowHeaders = [
+            'Accept',
+            'Auth-Token',
+            'Authorization',
+            'Content-Type',
+            'Origin',
+            'X-Requested-With',
+            'X-Session',
+        ];
+        $exposeHeaders = ['Content-Length', 'Date', 'X-Request-Id'];
+        $options = extend(
+            [
+                'allowHeaders' => [],
+            ],
+            $options
+        );
+        $allAllowHeaders = array_merge($allowHeaders, $options['allowHeaders']);
         $origin = self::server('HTTP_ORIGIN');
 
         if ($whitelistDomains && in_array($origin, $whitelistDomains)) {
@@ -331,19 +350,13 @@ class diRequest
 
         if ($domain) {
             header("Access-Control-Allow-Origin: $domain");
-            header(
-                'Access-Control-Allow-Methods: POST, GET, OPTIONS, PUT, DELETE, HEAD, PATCH'
-            );
-            header(
-                'Access-Control-Allow-Headers: Origin, X-Requested-With, Content-Type, Accept, Authorization, Auth-Token'
-            );
-            header(
-                'Access-Control-Expose-Headers: Content-Length, Date, X-Request-Id'
-            );
+            header('Access-Control-Allow-Methods: ' . join(', ', $methods));
+            header('Access-Control-Allow-Headers: ' . join(', ', $allAllowHeaders));
+            header('Access-Control-Expose-Headers: ' . join(', ', $exposeHeaders));
         }
 
         if (self::isOptions()) {
-            header('Allow: POST, GET, OPTIONS, PUT, DELETE, HEAD, PATCH');
+            header('Allow: ' . join(', ', $methods));
 
             if (is_callable($onOptionsRequest)) {
                 $onOptionsRequest();
