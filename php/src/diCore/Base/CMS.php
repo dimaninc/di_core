@@ -159,6 +159,7 @@ abstract class CMS
         'banner-test-tags',
         'etext',
         'ybaip',
+        '_ym_debug',
 
         // google ad
         'gclid',
