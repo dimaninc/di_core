@@ -40,6 +40,8 @@ class Model extends \diBaseUserModel
 
     protected $instantSend = false;
 
+    const MAIL_BASE_TEMPLATE = 'emails/email_html_base';
+
     protected $mailBodyTemplates = [
         'sign_up' => 'emails/sign_up/customer',
         'password_forgotten' => 'emails/password_forgotten/customer',
@@ -304,7 +306,7 @@ class Model extends \diBaseUserModel
         }
         */
         return $twig->parse(
-            'emails/email_html_base',
+            static::MAIL_BASE_TEMPLATE,
             extend($this->getMailBodyData($reason), [
                 'body' => $this->getMailInnerBody($twig, $reason),
             ])
