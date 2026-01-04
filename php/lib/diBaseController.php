@@ -455,8 +455,9 @@ class diBaseController
             }
         }
 
-        throw new \Exception(
-            "There is not action method for '$action' in " . get_class($this)
+        throw new HttpException(
+            HttpCode::NOT_FOUND,
+            "There is no action method for '$action' in " . get_class($this)
         );
     }
 
