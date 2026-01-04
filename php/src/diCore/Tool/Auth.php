@@ -574,7 +574,7 @@ class Auth
     public static function getLogoutHref($back = null)
     {
         if (!$back) {
-            $back = \diRequest::requestUri();
+            $back = \diRequest::requestUri() ?? '';
         }
 
         $back = urlencode($back);

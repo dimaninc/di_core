@@ -73,7 +73,7 @@ class diRequest
 
     public static function requestUri()
     {
-        return static::server('REQUEST_URI');
+        return static::server('REQUEST_URI', '');
     }
 
     public static function requestPath()

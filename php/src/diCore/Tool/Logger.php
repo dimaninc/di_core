@@ -19,7 +19,7 @@ class Logger
 
     const SUB_FOLDER = 'log/debug/';
     const EXTENSION = '.txt';
-    // native php does not support "u", that's we use our own %мс3%
+    // native php does not support "u", that's why we use our own %мс3%
     const DATE_TIME_FORMAT = '[d.m.Y H:i:s.%мс3%]';
     const CHMOD = 0777;
 
@@ -32,6 +32,7 @@ class Logger
 
     protected $startTimestamp = null;
     protected $speedLines = [];
+    protected $isFirstLine = true;
 
     protected function init()
     {
@@ -81,6 +82,8 @@ class Logger
 
     protected function makeLine($line, $purpose)
     {
+        $this->isFirstLine = false;
+
         return "$this->uid> {$this->getDateTime($purpose)} $line\n";
     }
 
@@ -106,6 +109,8 @@ class Logger
         fclose($f);
 
         @chmod($fn, static::CHMOD);
+
+        $this->isFirstLine = false;
 
         return $this;
     }
@@ -139,13 +144,18 @@ class Logger
             $module = "[$module] ";
         }
 
+        $line = "$module$message";
+
+        if ($this->isFirstLine) {
+            $ip = \diRequest::getRemoteIp();
+            $domain = \diRequest::domain();
+            $line = "$ip->$domain $line";
+        }
+
         if (Environment::shouldLogOnlySlowSpeed()) {
-            $this->speedLines[] = $this->makeLine(
-                $module . $message,
-                self::PURPOSE_SIMPLE
-            );
+            $this->speedLines[] = $this->makeLine($line, self::PURPOSE_SIMPLE);
         } else {
-            $this->printLine($module . $message, self::PURPOSE_SIMPLE, '-speed');
+            $this->printLine($line, self::PURPOSE_SIMPLE, '-speed');
         }
 
         return $this;
