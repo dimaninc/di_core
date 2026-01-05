@@ -367,11 +367,11 @@ class ConnectionData
         return [
             [
                 'host' => '127.0.0.1',
-                'port' => 6379,
+                'port' => 16379,
             ],
             [
                 'host' => '127.0.0.1',
-                'port' => 16379,
+                'port' => 6379,
             ],
         ];
     }
