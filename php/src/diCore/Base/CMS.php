@@ -698,7 +698,7 @@ abstract class CMS
 
     protected function initAuth()
     {
-        $this->Auth = Auth::create();
+        $this->Auth = Auth::i();
 
         return $this;
     }
