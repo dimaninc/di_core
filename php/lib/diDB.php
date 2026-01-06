@@ -185,11 +185,11 @@ abstract class diDB
         $this->debug = true;
 
         $this->debugMessage([
-            'URL',
-            \diRequest::requestUri(),
-            '',
-            '',
-            self::utimeStr(),
+            'op',
+            'query (URL=' . \diRequest::requestUri() . ')',
+            'duration, sec',
+            'message (optional)',
+            'explain data...',
         ]);
 
         return $this;
@@ -414,7 +414,7 @@ abstract class diDB
 
         //$this->log[] = "$message: $duration sec";
 
-        $data = [$method, $query, $durationStr, $message ?: self::utimeStr()];
+        $data = [$method, $query, $durationStr, $message ?: ''];
 
         $explainData =
             $explain && $query
