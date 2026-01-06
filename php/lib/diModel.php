@@ -2442,7 +2442,7 @@ class diModel implements \ArrayAccess
                     $ar
                 );
 
-                if ($id === false) {
+                if (!$id) {
                     $e = new \diDatabaseException(
                         'Unable to insert ' .
                             get_class($this) .
@@ -2454,9 +2454,7 @@ class diModel implements \ArrayAccess
                     throw $e;
                 }
 
-                if ($id) {
-                    $this->setId($id);
-                }
+                $this->setId($id);
             }
         }
 

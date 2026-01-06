@@ -201,6 +201,10 @@ class diMYSQL extends diDB
             return $this;
         }
 
+        if (strtoupper($mode) === 'WRITE' && $this->ignoreWriteLock) {
+            return $this;
+        }
+
         $tables = static::extractTableNamesWithAliases($table);
         $quotedTables = array_map(
             fn($t) => $this->quoteTableNameWithAlias($t),
@@ -223,6 +227,10 @@ class diMYSQL extends diDB
     public function unlockTable($table = null, $mode = 'WRITE')
     {
         if (strtoupper($mode) === 'READ' && $this->ignoreReadLock) {
+            return $this;
+        }
+
+        if (strtoupper($mode) === 'WRITE' && $this->ignoreWriteLock) {
             return $this;
         }
 

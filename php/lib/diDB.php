@@ -99,6 +99,7 @@ abstract class diDB
     protected $lastInsertId;
 
     protected $ignoreReadLock = false;
+    protected $ignoreWriteLock = false;
 
     protected static $dumpCommand = null;
     protected static $localDockerDumpCommand = null;
@@ -202,6 +203,13 @@ abstract class diDB
     public function ignoreReadLock($state = true)
     {
         $this->ignoreReadLock = $state;
+
+        return $this;
+    }
+
+    public function ignoreWriteLock($state = true)
+    {
+        $this->ignoreWriteLock = $state;
 
         return $this;
     }
@@ -1014,9 +1022,9 @@ abstract class diDB
 
             return false;
         }
+        $this->lastInsertId = $this->__insert_id();
         $this->time_log('insert', utime() - $time1, $q);
 
-        $this->lastInsertId = $this->__insert_id();
         $this->unlockTable($t);
 
         return $this->lastInsertId;
@@ -1141,9 +1149,9 @@ abstract class diDB
 
             return false;
         }
+        $id = $this->__insert_id();
         $this->time_log('insert_or_update', utime() - $time1, $query);
 
-        $id = $this->__insert_id();
         $this->unlockTable($t);
 
         return $id;
@@ -1164,9 +1172,9 @@ abstract class diDB
 
             return false;
         }
+        $id = $this->__insert_id();
         $this->time_log('insert_ignore', utime() - $time1, $query);
 
-        $id = $this->__insert_id();
         $this->unlockTable($t);
 
         return $id;
