@@ -82,11 +82,16 @@ trait TargetInside
         return $this->target;
     }
 
+    public function setTargetModel(\diModel $target)
+    {
+        $this->setRelated('target_model', $target);
+
+        return $this;
+    }
+
     public function setTarget(\diModel $target)
     {
-        $this->setTargetType($target->modelType())->setTargetId(
-            $target->getId()
-        );
+        $this->setTargetType($target->modelType())->setTargetId($target->getId());
 
         return $this;
     }

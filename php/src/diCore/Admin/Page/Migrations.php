@@ -320,6 +320,12 @@ class Migrations extends \diCore\Admin\BasePage
                 )
                 : $allMigrations;
 
+            $idxList = array_map(
+                fn($m) => $this->getManager()::getIdxByFileName($m),
+                $migrations
+            );
+            $this->getManager()->cacheLastLogsForIdx($idxList);
+
             foreach ($migrations as $i => $fn) {
                 $idx = $this->getManager()::getIdxByFileName($fn);
 

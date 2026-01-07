@@ -28,6 +28,9 @@ class MigrationsManager
     public static $foldersIdsAr = [self::FOLDER_LOCAL, self::FOLDER_CORE_MIGRATIONS];
     public static $customFoldersIdsAr = [];
 
+    const useCache = true;
+    protected static $lastLogCache = [];
+
     public function __construct()
     {
         $this->initTables()->initFolder();
@@ -450,6 +453,14 @@ EOF;
      */
     protected function getLastLogByIdx($idx)
     {
+        if (isset(self::$lastLogCache[$idx])) {
+            return self::$lastLogCache[$idx];
+        }
+
+        if (static::useCache) {
+            return Model::create();
+        }
+
         $col = Collection::create();
 
         if (!$idx) {
@@ -460,6 +471,33 @@ EOF;
             ->filterByIdx($idx)
             ->orderById('desc')
             ->getFirstItem();
+    }
+
+    public function cacheLastLogsForIdx(array $idxAr)
+    {
+        if (!static::useCache) {
+            return $this;
+        }
+
+        $db = Collection::getConnection()->getDb();
+        $t = static::logTable;
+        $idx = $db::in($idxAr);
+        $lastRs = $db->q("SELECT t1.*
+FROM `$t` t1
+INNER JOIN (
+    SELECT idx, MAX(id) as max_id
+    FROM `$t`
+    WHERE idx $idx
+    GROUP BY idx
+) t2 ON t1.idx = t2.idx AND t1.id = t2.max_id;");
+
+        while ($lastRs && ($last = $db->fetch_ar($lastRs))) {
+            self::$lastLogCache[$last['idx']] = Model::create(Model::type, $last, [
+                'readOnly' => true,
+            ]);
+        }
+
+        return $this;
     }
 
     public function wasExecuted($idx)

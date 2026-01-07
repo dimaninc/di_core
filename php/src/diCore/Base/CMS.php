@@ -2776,9 +2776,7 @@ abstract class CMS
      */
     public function getModelById($id)
     {
-        return isset($this->tables['content'][$id])
-            ? $this->tables['content'][$id]
-            : $this->getEmptyModel();
+        return $this->tables['content'][$id] ?? $this->getEmptyModel();
     }
 
     /**
@@ -2794,6 +2792,26 @@ abstract class CMS
          */
         foreach ($this->getCachedContentCollection() as $m) {
             if ($m->getType() == $type) {
+                return $m;
+            }
+        }
+
+        return $this->getEmptyModel();
+    }
+
+    /**
+     * Returns content model by slug
+     *
+     * @param $slug
+     * @return Model
+     */
+    public function getModelBySlug($slug)
+    {
+        /**
+         * @var Model $m
+         */
+        foreach ($this->getCachedContentCollection() as $m) {
+            if ($m->getSlug() == $slug) {
                 return $m;
             }
         }
