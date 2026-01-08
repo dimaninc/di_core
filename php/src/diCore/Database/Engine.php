@@ -28,6 +28,12 @@ class Engine extends SimpleContainer
         self::REDIS => 'redis',
     ];
 
+    // used for Connection::openByDsn
+    public static $nameAliases = [
+        self::POSTGRESQL => ['psql'],
+        self::MONGO => ['mongodb'],
+    ];
+
     public static $titles = [
         self::MYSQL => 'MySQL',
         self::MYSQL_OLD => 'MySQL OLD',
@@ -56,5 +62,24 @@ class Engine extends SimpleContainer
     {
         return static::isMySql($engine) ||
             in_array($engine, [self::SQLITE, self::POSTGRESQL]);
+    }
+
+    public static function normalizeId($id)
+    {
+        if (is_numeric($id) && static::name($id) !== null) {
+            return $id;
+        }
+
+        if (!is_string($id)) {
+            throw new \InvalidArgumentException('Unsupported Engine type');
+        }
+
+        foreach (static::$nameAliases as $origId => $aliases) {
+            if (in_array($id, $aliases)) {
+                return $origId;
+            }
+        }
+
+        throw new \InvalidArgumentException('Unknown Engine type');
     }
 }

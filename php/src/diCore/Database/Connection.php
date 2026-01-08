@@ -75,14 +75,61 @@ abstract class Connection
 
     /**
      * @param string|array $connData
-     * @param int $engine
-     * @param string $name
+     * @param int|null $engine
+     * @param string|null $name
      */
-    public static function open(
-        $connData,
-        $engine = Engine::MYSQL,
-        $name = self::DEFAULT_NAME
-    ) {
+    public static function open($connData, $engine = null, $name = null)
+    {
+        $name = $name ?? static::DEFAULT_NAME;
+
+        // connection string support
+        if (is_string($connData)) {
+            return static::openByDsn($connData, $name);
+        }
+
+        $className = self::getChildClassName($engine ?? Engine::MYSQL);
+        /** @var Connection $conn */
+        $conn = new $className($connData, $name);
+
+        self::add($name, $conn);
+
+        return $conn;
+    }
+
+    public static function openByDsn(string $dsn, string $name)
+    {
+        if (empty($dsn)) {
+            throw new \InvalidArgumentException('DSN must be provided');
+        }
+
+        $connData = [
+            'host' => null,
+            'port' => null,
+            'login' => null,
+            'password' => null,
+            'database' => null,
+        ];
+
+        $parts = parse_url($dsn);
+        if ($parts === false) {
+            throw new \InvalidArgumentException('DSN can not be parsed');
+        }
+
+        $engine = $parts['scheme'] ?? null;
+        $connData['host'] = $parts['host'] ?? null;
+        $connData['port'] = isset($parts['port']) ? (int) $parts['port'] : null;
+        $connData['login'] = $parts['user'] ?? null;
+        $connData['password'] = $parts['pass'] ?? null;
+
+        if (isset($parts['path'])) {
+            $path = ltrim($parts['path'], '/');
+
+            if ($path) {
+                $dbParts = explode('?', $path, 2);
+                $connData['database'] = $dbParts[0] ?: null;
+            }
+        }
+
         $className = self::getChildClassName($engine);
         /** @var Connection $conn */
         $conn = new $className($connData, $name);
@@ -164,6 +211,8 @@ abstract class Connection
 
     public static function getChildClassName($engine)
     {
+        $engine = Engine::normalizeId($engine);
+
         if (!($name = Engine::name($engine))) {
             throw new \diRuntimeException("Unknown engine $engine");
         }
