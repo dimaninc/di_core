@@ -402,14 +402,23 @@ class diTwig
      * Parse template from file
      * @param $template
      * @param array $data
+     * @param array $options
      * @return string
      */
-    public function parse($template, $data = [])
+    public function parse($template, $data = [], $options = [])
     {
-        return $this->getEngine()->render(
-            static::wrapTemplateName($template),
-            extend($this->get(), $data)
+        $options = extend(
+            [
+                'skipExtension' => false,
+            ],
+            $options
         );
+
+        $fn = $options['skipExtension']
+            ? $template
+            : static::wrapTemplateName($template);
+
+        return $this->getEngine()->render($fn, extend($this->get(), $data));
     }
 
     /**

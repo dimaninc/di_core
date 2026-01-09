@@ -1552,6 +1552,10 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
             unset($this->cachedRecords);
         }
 
+        if ($this->getPageSize() == 1 && static::LITE_FIRST_ITEM_GETTER) {
+            $this->count = count($this->items);
+        }
+
         if (count($this->items) == $this->count()) {
             $this->loaded = true;
         }

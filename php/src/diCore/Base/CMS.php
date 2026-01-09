@@ -1741,7 +1741,7 @@ abstract class CMS
             if ($this->routes[$i] === '') {
                 $this->removeRoute($i);
                 $i--;
-            } else {
+            } elseif (isset($this->{'m' . $i})) {
                 $this->{'m' . $i} = $this->routes[$i];
             }
         }
