@@ -164,6 +164,11 @@ class Model extends \diModel
         }
     }
 
+    public function getAppearanceFeedForAdmin()
+    {
+        return ["#{$this->getId()}"];
+    }
+
     public function getCustomTemplateVars()
     {
         return extend(parent::getCustomTemplateVars(), [

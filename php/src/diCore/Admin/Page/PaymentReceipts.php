@@ -24,7 +24,6 @@ class PaymentReceipts extends PaymentDrafts
             ->addFilter([
                 'field' => 'draft_id',
                 'type' => 'int',
-                'title' => 'ID черновика',
             ])
             ->buildQuery();
     }
@@ -54,6 +53,16 @@ class PaymentReceipts extends PaymentDrafts
                 ],
             ])
             ->setColumnAttr('vendor', 'headAttrs', ['width' => '10%']);
+    }
+
+    public function renderForm()
+    {
+        parent::renderForm();
+
+        /** @var Model $m */
+        $m = $this->getForm()->getModel();
+
+        $this->getForm()->setInput('draft_id', $m->getDraft()->appearanceForAdmin());
     }
 
     public function getFormFields()

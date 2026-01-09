@@ -221,6 +221,10 @@ class PaymentDrafts extends BasePage
                     $target->getAdminHref()
                 )
             );
+
+        if ($draft->hasPaid()) {
+            $this->getForm()->setHiddenInput('pay_manual');
+        }
     }
 
     public function submitForm()

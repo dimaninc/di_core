@@ -66,6 +66,9 @@ class Model extends \diCore\Entity\PaymentDraft\Model
     /** @var \diCore\Entity\User\Model */
     protected $user;
 
+    /** @var \diCore\Entity\PaymentDraft\Model */
+    protected $draft;
+
     public function validate()
     {
         if (!$this->hasOuterNumber()) {
@@ -101,6 +104,19 @@ class Model extends \diCore\Entity\PaymentDraft\Model
         ]);
 
         return $userData;
+    }
+
+    public function getDraft()
+    {
+        if (!$this->draft) {
+            $this->draft = CollectionCache::getModel(
+                Types::payment_draft,
+                $this->getDraftId(),
+                true
+            );
+        }
+
+        return $this->draft;
     }
 
     public function getMainPositionTitle()
