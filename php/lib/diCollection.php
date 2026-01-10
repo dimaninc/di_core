@@ -1630,6 +1630,13 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
             $fieldQuery
         );
 
+        if (!$ar) {
+            $err = "diCollection->aggregateValues err: `{$this->getQueryTable()}`, `{$this->getQueryWhere()}`, `$fieldQuery`\n";
+            $err .= "DB log: {$this->getDb()->getLogStr()}\n";
+            $err .= \diRequest::getMethodStr() . ' ' . \diRequest::requestUri();
+            \diCore\Tool\Logger::getInstance()->log($err);
+        }
+
         return $ar ?: [];
     }
 
