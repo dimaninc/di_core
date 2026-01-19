@@ -505,7 +505,9 @@ class diLib
 
     public static function getAssetLocations()
     {
-        switch (self::getLocation()) {
+        $location = Config::getLocationForAssets() ?? self::getLocation();
+
+        switch ($location) {
             case self::LOCATION_VENDOR_BEYOND:
                 return [
                     'css' => '/assets/styles/_core/',
