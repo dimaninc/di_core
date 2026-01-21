@@ -25,6 +25,8 @@ class diBaseController
      */
     const REST_API_SUPPORTED = false;
 
+    const SEND_NOINDEX_HEADER = true;
+
     const RESULT_KEY = 'ok';
     const MESSAGE_KEY = 'message';
 
@@ -69,6 +71,8 @@ class diBaseController
 
     public function __construct($params = [])
     {
+        $this->sendNoIndexHeader();
+
         if (Environment::shouldLogSpeed()) {
             Logger::getInstance()->speed('constructor', static::class);
         }
@@ -77,6 +81,17 @@ class diBaseController
 
         $this->action = \diRequest::request('action');
         $this->paramsAr = $params;
+    }
+
+    protected function sendNoIndexHeader()
+    {
+        if (!static::SEND_NOINDEX_HEADER) {
+            return $this;
+        }
+
+        $this->getResponse()->addNoIndexHeader();
+
+        return $this;
     }
 
     protected static function isRestApiSupported()
@@ -129,7 +144,9 @@ class diBaseController
     protected function adminRightsHardCheck()
     {
         if (!$this->isAdminAuthorized()) {
-            throw new \Exception('You have no access to this controller/action');
+            throw HttpException::unauthorized(
+                'You have no access to this controller/action'
+            );
         }
 
         return $this;
@@ -338,14 +355,16 @@ class diBaseController
             $updateParams = true;
 
             if (!$classBaseName) {
-                throw new \Exception('Empty controller name passed');
+                throw HttpException::notFound('Empty controller name passed');
             }
         }
 
         $className = \diLib::getClassNameFor($classBaseName, \diLib::CONTROLLER);
 
         if (!\diLib::exists($className)) {
-            throw new \Exception("Controller class '$className' doesn't exist");
+            throw HttpException::notFound(
+                "Controller class '$className' doesn't exist"
+            );
         }
 
         /** @var diBaseController $c */
@@ -455,8 +474,7 @@ class diBaseController
             }
         }
 
-        throw new HttpException(
-            HttpCode::NOT_FOUND,
+        throw HttpException::notFound(
             "There is no action method for '$action' in " . get_class($this)
         );
     }
@@ -478,6 +496,8 @@ class diBaseController
             $data->headers();
 
             $data = $data->getReturnData();
+        } else {
+            Response::sendNoIndexHeader();
         }
 
         if ($data instanceof HttpException) {

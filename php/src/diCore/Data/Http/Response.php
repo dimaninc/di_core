@@ -65,6 +65,16 @@ class Response
         return $this;
     }
 
+    public function addNoIndexHeader()
+    {
+        return $this->addHeader('X-Robots-Tag', 'noindex, nofollow');
+    }
+
+    public static function sendNoIndexHeader()
+    {
+        header('X-Robots-Tag: noindex, nofollow');
+    }
+
     public function addHeader($name, $value)
     {
         $this->headers[$name] = $value;
