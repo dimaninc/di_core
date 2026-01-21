@@ -51,6 +51,11 @@ class Config
     const dbCollation = 'utf8_general_ci';
 
     protected static $location = \diLib::LOCATION_VENDOR_BEYOND;
+    /**
+     * If set, overrides $location in diLib::getAssetLocations
+     * Can be useful, if $location == beyond, but virtual hosting blocks /vendor/ folder
+     */
+    const locationForAssets = null;
     protected static $useModuleCache = false;
 
     private static $databaseDumpPaths = [
@@ -67,6 +72,9 @@ class Config
 
     private static $class;
 
+    /**
+     * @return string|self
+     */
     protected static function getClass()
     {
         if (!self::$class) {
@@ -83,7 +91,6 @@ class Config
 
     final public static function getLocation()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         if ($class == self::class) {
@@ -93,9 +100,15 @@ class Config
         return $class::$location;
     }
 
+    public static function getLocationForAssets()
+    {
+        $class = self::getClass();
+
+        return $class::locationForAssets;
+    }
+
     final public static function getSiteTitle()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::siteTitle;
@@ -103,7 +116,6 @@ class Config
 
     final public static function getSiteLogo()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::siteLogo;
@@ -111,7 +123,6 @@ class Config
 
     final public static function getSearchEngine()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::searchEngine;
@@ -119,7 +130,6 @@ class Config
 
     final public static function getAdminSkin()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::adminSkin;
@@ -127,7 +137,6 @@ class Config
 
     final public static function getCmsName()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::cmsName;
@@ -135,7 +144,6 @@ class Config
 
     final public static function getCmsSupportEmail()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::cmsSupportEmail;
@@ -143,7 +151,6 @@ class Config
 
     final public static function getMaxGdWidth()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return Environment::getMaxGdWidth() ?? $class::maxGdWidth;
@@ -151,7 +158,6 @@ class Config
 
     final public static function getMaxGdHeight()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return Environment::getMaxGdHeight() ?? $class::maxGdHeight;
@@ -159,7 +165,6 @@ class Config
 
     final public static function isInitiating()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return Environment::getInitiating() ?? $class::initiating;
@@ -167,7 +172,6 @@ class Config
 
     final public static function getApiQueryPrefix()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::apiQueryPrefix;
@@ -175,7 +179,6 @@ class Config
 
     final public static function isRestApiSupported()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::restApiSupported;
@@ -183,7 +186,6 @@ class Config
 
     final public static function isRestApiInAdminSupported()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::restApiInAdminSupported;
@@ -191,7 +193,6 @@ class Config
 
     final public static function isEqualHyphenAndUnderscoreInApiPath()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::equalHyphenAndUnderscoreInApiPath;
@@ -199,7 +200,6 @@ class Config
 
     final public static function shouldAddUrlBaseToPicFieldsInPublicData()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::addUrlBaseToPicFieldsInPublicData;
@@ -207,7 +207,6 @@ class Config
 
     final public static function isUserSessionUsed()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::useUserSession;
@@ -215,7 +214,6 @@ class Config
 
     final public static function getMainDomain()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return Environment::getMainDomain() ?? $class::mainDomain;
@@ -223,7 +221,6 @@ class Config
 
     final public static function getMainPort()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return Environment::getMainPort() ?? $class::mainPort;
@@ -242,7 +239,6 @@ class Config
 
     final public static function getMainLanguage()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::mainLanguage;
@@ -250,7 +246,6 @@ class Config
 
     final public static function getMainDatabase()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::mainDatabase;
@@ -258,7 +253,6 @@ class Config
 
     final public static function useModuleCache()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         $val = Environment::getUseModuleCache();
@@ -271,7 +265,6 @@ class Config
 
     final public static function getDbEncoding()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return Environment::getDbEncoding() ?? $class::dbEncoding;
@@ -279,7 +272,6 @@ class Config
 
     final public static function getDbCollation()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return Environment::getDbCollation() ?? $class::dbCollation;
@@ -287,7 +279,6 @@ class Config
 
     final public static function getSourcesFolder()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::__getPhpFolder();
@@ -295,7 +286,6 @@ class Config
 
     final public static function getConfigurationFolder()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::__getConfigurationFolder();
@@ -303,7 +293,6 @@ class Config
 
     final public static function getDatabaseDumpFolder()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::__getDatabaseDumpFolder();
@@ -323,7 +312,6 @@ class Config
 
     final public static function getOldTplFolder()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::__getOldTplFolder();
@@ -331,7 +319,6 @@ class Config
 
     final public static function getTemplateFolder()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::__getTemplateFolder();
@@ -339,7 +326,6 @@ class Config
 
     final public static function getCacheFolder()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::__getCacheFolder();
@@ -347,7 +333,6 @@ class Config
 
     final public static function getLogFolder()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::__getLogFolder();
@@ -355,7 +340,6 @@ class Config
 
     final public static function getAssetSourcesFolder()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::__getAssetSourcesFolder();
@@ -363,7 +347,6 @@ class Config
 
     final public static function getUserAssetsFolder()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::__getUserAssetsFolder();
@@ -371,7 +354,6 @@ class Config
 
     final public static function getTwigCorePath()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::__getTwigCorePath();
@@ -379,7 +361,6 @@ class Config
 
     final public static function getPublicFolder()
     {
-        /** @var Config $class */
         $class = self::getClass();
 
         return $class::__getPublicFolder();
