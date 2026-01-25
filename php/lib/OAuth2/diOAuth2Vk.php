@@ -60,7 +60,7 @@ class diOAuth2Vk extends diOAuth2
 
     function simple_retrieve_profile()
     {
-        // responsed ok, getting access_token
+        // responded ok, getting access_token
         if (isset($_GET['code'])) {
             $code = urlencode($_GET['code']);
 
@@ -107,21 +107,14 @@ class diOAuth2Vk extends diOAuth2
                 'email' => '',
                 'orig_login' => $user_profile->screen_name,
             ];
-        }
-        // responsed w/error
-        elseif (isset($_GET['error'])) {
-            diOAuth2::redirect_back();
-            //var_dump($_GET["error"], $_GET["error_desciption"]);
-            //die();
-        }
-        // 1st request
-        else {
-            die(
-                header(
-                    "Location: https://oauth.vk.com/authorize?client_id={$this->options->app_id}&scope=" .
-                        "&redirect_uri={$this->options->callback_uri}&response_type=code"
-                )
+        } else {
+            // 1st request
+            \diCore\Data\Http\Response::sendNoIndexHeader();
+            header(
+                "Location: https://oauth.vk.com/authorize?client_id={$this->options->app_id}&scope=" .
+                    "&redirect_uri={$this->options->callback_uri}&response_type=code"
             );
+            die();
         }
     }
 }

@@ -129,11 +129,7 @@ abstract class diOAuth2
 
             case self::REQUEST_POST:
                 curl_setopt($ch, CURLOPT_POST, 1);
-                curl_setopt(
-                    $ch,
-                    CURLOPT_POSTFIELDS,
-                    static::buildQuery($params)
-                );
+                curl_setopt($ch, CURLOPT_POSTFIELDS, static::buildQuery($params));
                 break;
 
             default:
@@ -193,10 +189,7 @@ abstract class diOAuth2
 
     public function getLoginUrl()
     {
-        return static::makeUrl(
-            static::loginUrlBase,
-            $this->getLoginUrlParams()
-        );
+        return static::makeUrl(static::loginUrlBase, $this->getLoginUrlParams());
     }
 
     public function getAuthUrl()
@@ -206,6 +199,7 @@ abstract class diOAuth2
 
     public function redirectToLogin()
     {
+        \diCore\Data\Http\Response::sendNoIndexHeader();
         header('Location: ' . $this->getLoginUrl());
 
         return $this;
