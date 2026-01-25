@@ -2,11 +2,14 @@ function diPopups() {
   var self = this;
   var states = {};
   var events = {};
+  var templateSources = {}; // tracks which popups came from templates
+  const DEFAULT_REMOVE_DELAY = 500;
 
   this.e = {
     $overlay: $('.dipopup-overlay')
   };
   this.$popups = {};
+  this.$templates = {};
   this.optsAr = {};
   this.id_prefix = '';
   this.id_suffix = '-dipopup';
@@ -137,7 +140,6 @@ function diPopups() {
       showBackground: true,
       content: null
     };
-    var $e = this.getPopupElement(name);
 
     if (typeof _opts === 'object') {
       opts = $.extend(opts, _opts);
@@ -145,7 +147,11 @@ function diPopups() {
       opts.showBackground = _opts;
     }
 
-    if (!this.exists(name)) {
+    // Prepare popup (find in DOM or instantiate from template)
+    var $e = this.prepare(name);
+
+    if (!$e.length) {
+      // Create dynamically if content provided
       if (opts.content) {
         this.create(
           $.extend(
@@ -155,6 +161,7 @@ function diPopups() {
             opts
           )
         );
+        $e = this.getPopupElement(name);
       }
     } else if (opts.content) {
       this.setContent({
@@ -260,17 +267,110 @@ function diPopups() {
   };
 
   this.exists = function (name) {
-    if (typeof this.$popups[name] === 'undefined') {
-      this.$popups[name] = $(
-        [
-          '#' + this.id_prefix + name + this.id_suffix,
-          '.dipopup[data-name="' + name + '"]',
-          '[data-type="dipopup"][data-name="' + name + '"]'
-        ].join(',')
-      );
+    // Check if already cached and in DOM
+    if (typeof this.$popups[name] !== 'undefined' && this.$popups[name].length) {
+      return true;
     }
 
-    return !!this.$popups[name].length;
+    // Search in DOM for existing popup
+    this.$popups[name] = $(
+      [
+        '#' + this.id_prefix + name + this.id_suffix,
+        '.dipopup[data-name="' + name + '"]',
+        '[data-type="dipopup"][data-name="' + name + '"]'
+      ].join(',')
+    );
+
+    if (this.$popups[name].length) {
+      return true;
+    }
+
+    // Check for template
+    return this.hasTemplate(name);
+  };
+
+  this.hasTemplate = function (name) {
+    return !!this.getTemplate(name).length;
+  };
+
+  this.getTemplate = function (name) {
+    if (typeof this.$templates[name] === 'undefined') {
+      this.$templates[name] = $('template[data-popup-name="' + name + '"]');
+    }
+
+    return this.$templates[name];
+  };
+
+  this.isFromTemplate = function (name) {
+    return !!templateSources[name];
+  };
+
+  this.instantiateFromTemplate = function (name) {
+    var $template = this.getTemplate(name);
+
+    if (!$template.length) {
+      return null;
+    }
+
+    // Clone template content and insert right after template
+    var templateContent = $template[0].content;
+    var $popup = $(templateContent.firstElementChild.cloneNode(true));
+
+    $popup.insertAfter($template);
+
+    // Cache the popup and mark as template-sourced
+    this.$popups[name] = $popup;
+    templateSources[name] = true;
+
+    return $popup;
+  };
+
+  /**
+   * Prepare popup for manipulation before showing.
+   * - If popup exists in DOM, returns it
+   * - If template exists, instantiates it and returns the element
+   * - Otherwise returns empty jQuery object
+   *
+   * @param {string} name - Popup name
+   * @returns {jQuery} - Popup element ready for manipulation
+   */
+  this.prepare = function (name) {
+    // Check if already in DOM (cached)
+    if (
+      typeof this.$popups[name] !== 'undefined' &&
+      this.$popups[name].length
+    ) {
+      return this.$popups[name];
+    }
+
+    // Search in DOM
+    this.$popups[name] = $(
+      [
+        '#' + this.id_prefix + name + this.id_suffix,
+        '.dipopup[data-name="' + name + '"]',
+        '[data-type="dipopup"][data-name="' + name + '"]'
+      ].join(',')
+    );
+
+    if (this.$popups[name].length) {
+      return this.$popups[name];
+    }
+
+    // Try to instantiate from template
+    if (this.hasTemplate(name)) {
+      return this.instantiateFromTemplate(name);
+    }
+
+    return $();
+  };
+
+  this.removeFromDom = function (name) {
+    if (this.$popups[name] && this.$popups[name].length) {
+      this.$popups[name].remove();
+      delete this.$popups[name];
+    }
+
+    return this;
   };
 
   this.setContent = function (options) {
@@ -311,6 +411,23 @@ function diPopups() {
 
     this.fireEvent(id, 'hide');
 
+    // Remove template-based popups from DOM after hide animation completes
+    if (this.isFromTemplate(id)) {
+      var popupToRemove = this.$popups[id];
+      var removeDelay = this.getRemoveDelay(id);
+
+      if (removeDelay > 0) {
+        setTimeout(function () {
+          popupToRemove.remove();
+        }, removeDelay);
+      } else {
+        popupToRemove.remove();
+      }
+
+      delete this.$popups[id];
+      delete templateSources[id];
+    }
+
     states[id] = false;
 
     var atLeastOneVisible = false;
@@ -330,6 +447,14 @@ function diPopups() {
     }
 
     return this;
+  };
+
+  this.getRemoveDelay = function (id) {
+    var $e = this.getPopupElement(id);
+    var delay = $e.data('remove-delay');
+
+    // Default delay to allow CSS transitions to complete
+    return typeof delay !== 'undefined' ? parseInt(delay, 10) : DEFAULT_REMOVE_DELAY;
   };
 
   this.hideAll = function () {
