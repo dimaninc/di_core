@@ -98,7 +98,8 @@ class Helper
         if ($font->hasStyle()) {
             $attrAr[] = "\tfont-style: " . $font->getStyle() . ";\n";
         }
-        //
+
+        $attrAr[] = "\tfont-display: swap;\n";
 
         return "@font-face {\n\tfont-family: '{$font->getToken()}';\n\tsrc: $lines;\n" .
             join('', $attrAr) .
