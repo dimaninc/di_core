@@ -899,7 +899,7 @@ class diModel implements \ArrayAccess
         return static::$picStoreSettings[$field] ?? null;
     }
 
-    public function rebuildPics($field)
+    public function rebuildPics($field, $picTypes = [])
     {
         $Submit = new Submit($this->getTable(), $this->getId());
         $Submit->setData($this->get());
@@ -913,6 +913,13 @@ class diModel implements \ArrayAccess
             $this->getPicStoreSettings($field),
             $this
         );
+
+        if ($picTypes) {
+            $fieldFileOptions = array_filter(
+                $fieldFileOptions,
+                fn($item) => in_array($item['type'], $picTypes)
+            );
+        }
 
         $F = [
             'name' => $this->get($field),
