@@ -12,8 +12,9 @@ CREATE TABLE IF NOT EXISTS payment_drafts(
 	paid TINYINT DEFAULT 0,
     ip BIGINT(11) DEFAULT '0',
     partner_code_id INT DEFAULT '0',
-    propeties json,
+    properties json,
     index idx (target_type, target_id, user_id, date_reserved, paid, ip),
+    INDEX idx_date_reserved (date_reserved),
 	PRIMARY KEY(id)
 )
 DEFAULT CHARSET='utf8'
