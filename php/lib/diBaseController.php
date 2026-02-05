@@ -584,11 +584,11 @@ class diBaseController
     {
         if (!$this->response) {
             $this->response = new Response();
+        }
 
-            $sessionId = \diSession::id();
-            if ($sessionId) {
-                $this->response->addHeader(\diSession::HEADER_NAME, $sessionId);
-            }
+        $sessionId = \diSession::id();
+        if ($sessionId) {
+            $this->response->addHeader(\diSession::HEADER_NAME, $sessionId);
         }
 
         return $this->response;
