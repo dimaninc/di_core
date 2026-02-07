@@ -2,6 +2,7 @@
 
 namespace diCore\Controller;
 
+use diCore\Base\Exception\HttpException;
 use diCore\Data\Config;
 use diCore\Database\Engine;
 use diCore\Helper\StringHelper;
@@ -54,7 +55,7 @@ class Db extends \diBaseAdminController
                 return static::getCoreSqlFolder();
 
             default:
-                throw new \Exception("Undefined folder id#$id");
+                throw HttpException::notFound("Undefined folder id#$id");
         }
     }
 
@@ -257,7 +258,9 @@ class Db extends \diBaseAdminController
 
         $fp = $compress ? gzopen($filename, 'w9') : fopen($filename, 'w');
         if (!$fp) {
-            throw new \Exception("Unable to create db dump $filename");
+            throw HttpException::internalServerError(
+                "Unable to create db dump $filename"
+            );
         }
 
         $sql = <<<EOF
@@ -495,7 +498,7 @@ EOF;
         $system = \diRequest::get('system', 0);
 
         if (!$fn) {
-            throw new \Exception('No file defined');
+            throw HttpException::badRequest('No file defined');
         }
 
         $ffn = $this->folder . $fn;
@@ -509,7 +512,7 @@ EOF;
 
         if ($system) {
             if ($is_gz) {
-                throw new \Exception(
+                throw HttpException::badRequest(
                     'System method can execute non-archived SQL only'
                 );
             }
@@ -662,7 +665,7 @@ EOF;
     public function migrateToMongoAction()
     {
         if (!\diRequest::isCli()) {
-            throw new \Exception('Run the script from CLI please');
+            throw HttpException::badRequest('Run the script from CLI please');
         }
 
         $table = $this->param(0);
@@ -670,11 +673,11 @@ EOF;
         $model = \diModel::createForTable($table);
 
         if (!$model->modelType()) {
-            throw new \Exception('Model for table "' . $table . '" not found');
+            throw HttpException::notFound("Model for table '$table' not found");
         }
 
         if ($model->getConnectionEngine() !== Engine::MONGO) {
-            throw new \Exception('Model should be mongo instance');
+            throw HttpException::badRequest('Model should be mongo instance');
         }
 
         $counter = 0;

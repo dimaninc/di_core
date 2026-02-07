@@ -3,6 +3,7 @@
 namespace diCore\Controller;
 
 use diCore\Admin\BasePage;
+use diCore\Base\Exception\HttpException;
 use diCore\Helper\FileSystemHelper;
 use diCore\Helper\ImageHelper;
 use diCore\Helper\StringHelper;
@@ -185,7 +186,7 @@ class Files extends \diBaseAdminController
                 break;
 
             default:
-                throw new \Exception('Undefined direction: ' . $direction);
+                throw HttpException::badRequest("Undefined direction: $direction");
         }
 
         $model = \diModel::createForTableNoStrict($table, $id, 'id');
@@ -247,7 +248,7 @@ class Files extends \diBaseAdminController
                 break;
 
             default:
-                throw new \Exception('Undefined watermark size: ' . $type);
+                throw HttpException::badRequest("Undefined watermark size: $type");
         }
 
         return $wm;
@@ -296,15 +297,15 @@ class Files extends \diBaseAdminController
         $tmpPath = get_tmp_folder() . $table . '/' . $field . '/';
 
         if (!$tmpFilename) {
-            throw new \Exception('No tmp filename defined');
+            throw HttpException::badRequest('No tmp filename defined');
         }
 
         if (!$table) {
-            throw new \Exception('No table defined');
+            throw HttpException::badRequest('No table defined');
         }
 
         if (!$field) {
-            throw new \Exception('No field name defined');
+            throw HttpException::badRequest('No field name defined');
         }
 
         FileSystemHelper::createTree(\diPaths::fileSystem(), $tmpPath, 0777);

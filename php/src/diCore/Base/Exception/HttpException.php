@@ -156,6 +156,11 @@ class HttpException extends \Exception
         return static::fastCreate(HttpCode::UNAUTHORIZED, $data);
     }
 
+    public static function conflict($data = null)
+    {
+        return static::fastCreate(HttpCode::CONFLICT, $data);
+    }
+
     /**
      * Returns the list of additional headers
      *

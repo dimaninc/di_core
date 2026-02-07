@@ -8,6 +8,7 @@
 
 namespace diCore\Controller;
 
+use diCore\Base\Exception\HttpException;
 use diCore\Data\Types;
 use diCore\Entity\PaymentReceipt\Collection;
 use diCore\Entity\PaymentReceipt\Model;
@@ -32,7 +33,7 @@ class Cash extends \diBaseController
     protected function checkSecret()
     {
         if (static::secret() !== static::getSecret()) {
-            throw new \Exception('Credentials not match');
+            throw HttpException::forbidden('Credentials not match');
         }
 
         return $this;
@@ -62,11 +63,7 @@ class Cash extends \diBaseController
 
     protected function processReceipts(Collection $receipts)
     {
-        CollectionCache::addManual(
-            Types::user,
-            'id',
-            $receipts->map('user_id')
-        );
+        CollectionCache::addManual(Types::user, 'id', $receipts->map('user_id'));
 
         $ar = $receipts->map(function (Model $r) {
             return $r->asArrayForCashDesk();
@@ -102,7 +99,7 @@ class Cash extends \diBaseController
         $receipt = Model::createById($receiptId);
 
         if (!$receipt->exists()) {
-            throw new \Exception('Receipt ID=' . $receipt . ' not found');
+            throw HttpException::notFound("Receipt ID=$receipt not found");
         }
 
         if (!empty($fiscal['docId'])) {

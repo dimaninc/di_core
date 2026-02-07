@@ -2,6 +2,7 @@
 
 namespace diCore\Controller;
 
+use diCore\Base\Exception\HttpException;
 use diCore\Entity\Cart\Model;
 
 class Cart extends \diBaseController
@@ -62,7 +63,7 @@ class Cart extends \diBaseController
         $this->action = 'delete';
 
         if (!$this->getCartItem()->hasId()) {
-            throw new \Exception(
+            throw HttpException::notFound(
                 'Cart item not loaded from DB ' .
                     print_r($this->getCartItem()->get(), true)
             );

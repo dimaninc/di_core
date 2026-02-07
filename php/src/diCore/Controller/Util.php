@@ -49,6 +49,6 @@ class Util extends \diBaseController
 
     public function _getCrashAction()
     {
-        throw new \Exception('App crashed');
+        throw HttpException::internalServerError('App crashed');
     }
 }

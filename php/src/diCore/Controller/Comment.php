@@ -8,6 +8,7 @@
 
 namespace diCore\Controller;
 
+use diCore\Base\Exception\HttpException;
 use diCore\Data\Config;
 use diCore\Entity\Comment\Model;
 use diCore\Entity\User\Model as User;
@@ -103,7 +104,7 @@ class Comment extends \diBaseController
 
         try {
             if (!$this->userId) {
-                throw new \Exception('Authorization required');
+                throw HttpException::forbidden('Authorization required');
             }
 
             $target = new \diModel(
@@ -112,7 +113,7 @@ class Comment extends \diBaseController
             );
 
             if (!$target->exists()) {
-                throw new \Exception(
+                throw HttpException::notFound(
                     "Target {$this->targetType}#{$this->targetId} doesn't exist"
                 );
             }
@@ -241,7 +242,7 @@ class Comment extends \diBaseController
                 $admin = \diAdminUser::create();
 
                 if (!$admin->authorized()) {
-                    throw new \Exception('Admin auth error');
+                    throw HttpException::forbidden('Admin auth error');
                 }
 
                 $this->userType = \diComments::utAdmin;
@@ -253,9 +254,8 @@ class Comment extends \diBaseController
                 $Auth = AuthTool::create();
 
                 /*
-				if (!$Auth->authorized())
-				{
-					throw new Exception('User auth error');
+				if (!$Auth->authorized()) {
+					throw HttpException::forbidden('User auth error');
 				}
 				*/
 
@@ -265,7 +265,7 @@ class Comment extends \diBaseController
                 break;
 
             default:
-                throw new \Exception(
+                throw HttpException::forbidden(
                     "Unknown template name '$this->template'. Can't authorize"
                 );
         }
@@ -287,7 +287,9 @@ class Comment extends \diBaseController
                 break;
 
             default:
-                throw new \Exception("Unknown template name '$this->template'");
+                throw HttpException::badRequest(
+                    "Unknown template name '$this->template'"
+                );
         }
 
         $this->getTpl()->define($folder, [
@@ -416,7 +418,7 @@ class Comment extends \diBaseController
     protected function getNewComment()
     {
         if (!$this->newComment) {
-            throw new \Exception('New comment not added');
+            throw HttpException::internalServerError('New comment not added');
         }
 
         return $this->newComment;
@@ -431,14 +433,13 @@ class Comment extends \diBaseController
 
     protected function getCommentModel($id)
     {
-        /** @var Model $comment */
-        $comment = \diModel::create(\diTypes::comment, $id);
+        $comment = Model::createById($id);
 
         if (
             $comment->exists() &&
-            $comment->isUserAllowed(AuthTool::i()->getUserModel())
+            !$comment->isUserAllowed(AuthTool::i()->getUserModel())
         ) {
-            throw new \Exception('You have no access to this comment');
+            throw HttpException::forbidden('You have no access to this comment');
         }
 
         return $comment;

@@ -167,7 +167,9 @@ class Auth extends \diBaseController
                 !$this->isAdminAuthorized() ||
                 $this->getAdminModel()->getLevel() !== Level::root
             ) {
-                throw new \Exception('This action is allowed only for root admins');
+                throw HttpException::forbidden(
+                    'This action is allowed only for root admins'
+                );
             }
 
             $userId = $this->param(0);
@@ -178,15 +180,15 @@ class Auth extends \diBaseController
             $user = \diModel::create(Types::user, $userId);
 
             if (!$user->exists()) {
-                throw new \Exception("User not found, ID=$userId");
+                throw HttpException::notFound("User not found, ID=$userId");
             }
 
             if (!$user->hasActive()) {
-                throw new \Exception('User is not active');
+                throw HttpException::conflict('User is not active');
             }
 
             if ($user->getActivationKey() != $key) {
-                throw new \Exception('User key not match');
+                throw HttpException::badRequest('User key not match');
             }
 
             $A = new AuthTool();
@@ -243,7 +245,15 @@ class Auth extends \diBaseController
 
         try {
             if (!AuthTool::i()->authorized()) {
-                throw new \Exception(
+                $pageSlug = CMS::ct('delete_account');
+
+                if ($pageSlug !== null) {
+                    $redirectUrl = "/$pageSlug/";
+                    $this->redirectTo($redirectUrl);
+                    return null;
+                }
+
+                throw HttpException::forbidden(
                     'Для удаления аккаунта необходимо войти в систему'
                 );
             }
@@ -283,22 +293,22 @@ class Auth extends \diBaseController
     {
         try {
             if (AuthTool::i()->authorized()) {
-                throw new \Exception('activate.sign_out_first');
+                throw HttpException::badRequest('activate.sign_out_first');
             }
 
             /** @var Model $user */
             $user = $this->getUserForActivate();
 
             if (!$user->exists()) {
-                throw new \Exception('activate.account_not_found');
+                throw HttpException::notFound('activate.account_not_found');
             }
 
             if ($user->active()) {
-                throw new \Exception('activate.account_already_activated');
+                throw HttpException::conflict('activate.account_already_activated');
             }
 
             if ($user->getActivationKey() != $this->getKeyForActivate()) {
-                throw new \Exception('activate.key_not_match');
+                throw HttpException::badRequest('activate.key_not_match');
             }
 
             if ($user->exists('activated')) {
@@ -374,8 +384,7 @@ class Auth extends \diBaseController
         }
 
         /*
-		if ($ar['ok'])
-		{
+		if ($ar['ok']) {
 			$this->redirectTo('/' . CMS::ct('registration') . '/thanks/');
 			return null;
 		}
@@ -394,7 +403,7 @@ class Auth extends \diBaseController
         $email = \diRequest::postExt('email');
 
         if (!$email) {
-            throw new \Exception($this->getEmptyUserUidErrorMessage());
+            throw HttpException::badRequest($this->getEmptyUserUidErrorMessage());
         }
 
         return $email;
@@ -410,7 +419,7 @@ class Auth extends \diBaseController
         $email = $this->param(0);
 
         if (!$email) {
-            throw new \Exception('common.enter_email');
+            throw HttpException::badRequest('common.enter_email');
         }
 
         return $email;
@@ -421,7 +430,7 @@ class Auth extends \diBaseController
         $key = $this->param(1);
 
         if (!$key) {
-            throw new \Exception(static::L('activate.key_is_empty'));
+            throw HttpException::badRequest(static::L('activate.key_is_empty'));
         }
 
         return $key;

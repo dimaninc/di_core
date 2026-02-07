@@ -19,6 +19,7 @@ class diContentTypesBasic
             'href' => 'Ссылка',
             'reset_password' => 'Сброс пароля',
             'enter_new_password' => 'Введение нового пароля',
+            'delete_account' => 'Удаление аккаунта',
             'user' => 'Текстовый раздел',
         ],
 
@@ -31,6 +32,7 @@ class diContentTypesBasic
             'href' => 'Link',
             'reset_password' => 'Reset password',
             'enter_new_password' => 'Enter new password',
+            'delete_account' => 'Account deletion',
             'user' => 'Text page',
         ],
     ];

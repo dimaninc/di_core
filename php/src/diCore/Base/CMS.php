@@ -1354,7 +1354,7 @@ abstract class CMS
     {
         $ct_ar = static::getCleanTitlesAr();
 
-        return isset($ct_ar[$type]) ? $ct_ar[$type] : null;
+        return $ct_ar[$type] ?? null;
     }
 
     /** @deprecated */
@@ -1373,11 +1373,7 @@ abstract class CMS
             $idx += count($this->routes);
         }
 
-        return $idx === null
-            ? $this->routes
-            : (isset($this->routes[$idx])
-                ? $this->routes[$idx]
-                : null);
+        return $idx === null ? $this->routes : $this->routes[$idx] ?? null;
     }
 
     /**
@@ -1432,11 +1428,7 @@ abstract class CMS
             $idx += count($this->origRoutes);
         }
 
-        return $idx === null
-            ? $this->origRoutes
-            : (isset($this->origRoutes[$idx])
-                ? $this->origRoutes[$idx]
-                : null);
+        return $idx === null ? $this->origRoutes : $this->origRoutes[$idx] ?? null;
     }
 
     public function initTwig()
@@ -2120,7 +2112,7 @@ abstract class CMS
 
     public function getMeta($field)
     {
-        return isset($this->metaFields[$field]) ? $this->metaFields[$field] : null;
+        return $this->metaFields[$field] ?? null;
     }
 
     protected function processTextForMeta($text)
@@ -2153,9 +2145,7 @@ abstract class CMS
 
     public function getOpenGraph($field)
     {
-        return isset($this->openGraphFields[$field])
-            ? $this->openGraphFields[$field]
-            : null;
+        return $this->openGraphFields[$field] ?? null;
     }
 
     public function setOpenGraph($text, $field = 'title')
