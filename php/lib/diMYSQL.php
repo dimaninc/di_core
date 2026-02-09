@@ -186,8 +186,15 @@ class diMYSQL extends diDB
         $options = $this->prepareDumpCliCommandOptions($options);
         $tables = join(' ', $options['tables']);
 
+        $host = $this->getHost();
+        $port = $this->getPort();
+
+        if (str_contains($host, ':')) {
+            [$host, $port] = explode(':', $host, 2);
+        }
+
         return static::$dumpCommand .
-            " --host={$this->getHost()} --user={$this->getUsername()} --password=\"{$this->getPassword()}\" --opt --skip-extended-insert {$this->getDatabase()} $tables{$options['commandSuffixWithFilename']}";
+            " --host=$host --port=$port --user={$this->getUsername()} --password=\"{$this->getPassword()}\" --opt --skip-extended-insert {$this->getDatabase()} $tables{$options['commandSuffixWithFilename']}";
     }
 
     public static function insertUpdateQueryEnding()
