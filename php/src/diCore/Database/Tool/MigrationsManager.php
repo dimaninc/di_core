@@ -30,10 +30,21 @@ class MigrationsManager
 
     const useCache = true;
     protected static $lastLogCache = [];
+    protected static $cacheAllowed = false;
 
     public function __construct()
     {
         $this->initTables()->initFolder();
+    }
+
+    public static function shouldUseCache()
+    {
+        return static::useCache && static::$cacheAllowed;
+    }
+
+    public static function setCacheAllowed($state)
+    {
+        self::$cacheAllowed = $state;
     }
 
     public static function getFolderIds()
@@ -457,7 +468,7 @@ EOF;
             return self::$lastLogCache[$idx];
         }
 
-        if (static::useCache) {
+        if (static::shouldUseCache()) {
             return Model::create();
         }
 
@@ -478,6 +489,8 @@ EOF;
         if (!static::useCache) {
             return $this;
         }
+
+        static::setCacheAllowed(true);
 
         $db = Collection::getConnection()->getDb();
         $t = static::logTable;

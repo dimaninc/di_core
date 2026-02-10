@@ -1,4 +1,4 @@
-CREATE TABLE videos(
+CREATE TABLE IF NOT EXISTS videos(
 	id int unsigned not null auto_increment,
 	album_id int unsigned default '0',
 	vendor tinyint default '0',

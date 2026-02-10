@@ -1,4 +1,4 @@
-CREATE TABLE photos(
+CREATE TABLE IF NOT EXISTS photos(
 	id int unsigned not null auto_increment,
 	album_id int unsigned default '0',
 	slug varchar(255),
