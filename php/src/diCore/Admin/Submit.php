@@ -610,6 +610,10 @@ class Submit
                         $this->setData($f, $v['default'] ?? null);
                     }
                     break;
+
+                case 'wysiwyg':
+                    $this->processData($f, [static::class, 'cleanWysiwygContent']);
+                    break;
             }
         }
 
@@ -1215,6 +1219,14 @@ class Submit
         }
 
         return $this;
+    }
+
+    public static function cleanWysiwygContent($value)
+    {
+        $value = preg_replace('/<p><span style="all: initial;"><\/span><\/p>/', '', $value);
+        $value = preg_replace('/(<p><\/p>\s*)+$/', '', $value);
+
+        return $value;
     }
 
     public static function cleanFilename($filename)
