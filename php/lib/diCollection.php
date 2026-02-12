@@ -911,6 +911,16 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         return $this->getNewEmptyItem();
     }
 
+    public static function seedRandomizer($number)
+    {
+        mt_srand($number);
+    }
+
+    public static function resetRandomizer()
+    {
+        mt_srand();
+    }
+
     public function getRandomItemsArray($count)
     {
         if (!$this->isLoaded()) {
