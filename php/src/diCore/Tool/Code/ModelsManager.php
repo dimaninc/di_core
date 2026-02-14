@@ -344,6 +344,13 @@ EOF;
             return true;
         }
 
+        if (
+            in_array($field, ['properties']) &&
+            in_array('JsonProperties', $this->usedModelTraits)
+        ) {
+            return true;
+        }
+
         return in_array($field, static::$skippedInModelAnnotationFields);
     }
 
@@ -724,6 +731,17 @@ EOF;
             $this->usedCollectionTraits[] = 'TargetInside';
             $this->usedCollectionNamespaces[] =
                 'diCore\Traits\Collection\TargetInside';
+        }
+
+        if (isset($fields['properties'])) {
+            if (in_array($fields['properties'], ['json', 'jsonb'])) {
+                $this->usedModelTraits[] = 'JsonProperties';
+                $this->usedModelNamespaces[] = 'diCore\Traits\Model\JsonProperties';
+
+                $this->usedCollectionTraits[] = 'JsonProperties';
+                $this->usedCollectionNamespaces[] =
+                    'diCore\Traits\Collection\JsonProperties';
+            }
         }
 
         return $this;
