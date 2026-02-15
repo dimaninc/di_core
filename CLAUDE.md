@@ -84,6 +84,7 @@ Files in `_cfg/migrations/` (in consuming project), format `{idx}_{name}.php`. E
 
 ## Conventions
 
+- **Use `Model::createById($id)` and `Model::createBySlug($slug)` instead of `Model::create($id)`**. The generic `create()` is ambiguous; always prefer the explicit factory methods.
 - DB columns are `snake_case`; magic accessors are `CamelCase` (e.g., `order_num` → `getOrderNum()`)
 - In old code image fields come in groups: `{name}`, `{name}_w`, `{name}_h`, `{name}_t` (filename, width, height, type), lately this changed to only `{name}` storing.
 - Entity `const type` must match `diTypes` integer constant
