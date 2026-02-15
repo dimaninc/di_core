@@ -47,6 +47,13 @@ abstract class Migration
         return $this;
     }
 
+    protected function executeSql(string $query)
+    {
+        $this->getDb()->q($query);
+
+        return $this;
+    }
+
     protected function executeSqlFile($files, $folder = null)
     {
         if (!is_array($files)) {
