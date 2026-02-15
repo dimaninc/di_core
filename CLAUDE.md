@@ -94,6 +94,27 @@ Files in `_cfg/migrations/` (in consuming project), format `{idx}_{name}.php`. E
 - Collections are lazy-loaded — query executes on first iteration/count
 - Admin pages are registered as modules in the admin menu system
 
+### Date/Time Formatting
+
+Use `\diDateTime::sqlFormat()` instead of `date('Y-m-d H:i:s')` for SQL datetime strings:
+
+```php
+\diDateTime::sqlFormat();              // current datetime → 'Y-m-d H:i:s'
+\diDateTime::sqlFormat('-1 hour');     // relative (strtotime-compatible)
+\diDateTime::sqlFormat('+10 minutes');
+```
+
+Also available: `\diDateTime::sqlDateFormat()` for date-only (`Y-m-d`).
+
+### Model/Collection Destroy Methods
+
+- `$model->destroy()` — **in-memory only**, clears model data, does NOT delete the DB record
+- `$model->hardDestroy()` — deletes DB record + related files and data
+- `$collection->softDestroy()` — **batch** deletes all DB records by IDs (single `DELETE ... WHERE id IN (...)` query), no related file cleanup
+- `$collection->hardDestroy()` — iterates models to kill related files, then batch deletes DB records
+
+**Rule:** Use `softDestroy()` on collections when entities have no related files — it's a single query instead of N individual deletes. Use `hardDestroy()` only when models have images or related data that need cleanup.
+
 ## Adding a New Entity to a Project
 
 Step-by-step guide for creating a new database entity in a project that uses `di_core`.

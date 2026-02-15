@@ -8,6 +8,7 @@
 
 namespace diCore\Payment;
 
+use diCore\Base\Exception\HttpException;
 use diCore\Payment\Mixplat\MobileVendors;
 use diCore\Payment\Paymaster\Vendor as PaymasterVendor;
 use diCore\Payment\Robokassa\Vendor as RobokassaVendor;
@@ -82,8 +83,8 @@ class System extends SimpleContainer
                 return PaymasterVendor::class;
 
             default:
-                throw new \Exception(
-                    'System ' . self::name($systemId) . ' not supported yet'
+                throw HttpException::notFound(
+                    'System ' . self::name($systemId) . ' not supported'
                 );
         }
     }
