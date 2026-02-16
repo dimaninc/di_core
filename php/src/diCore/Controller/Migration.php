@@ -32,6 +32,7 @@ class Migration extends \diBaseAdminController
 
     /**
      * Shows all new local project migrations
+     * php vendor/dimaninc/di_core/php/admin/workers/cli.php controller=migration action=show_new
      */
     public function showNewAction()
     {
@@ -50,6 +51,7 @@ class Migration extends \diBaseAdminController
 
     /**
      * Runs all new local project migrations
+     * php vendor/dimaninc/di_core/php/admin/workers/cli.php controller=migration action=up_new
      */
     public function upNewAction()
     {
