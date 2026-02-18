@@ -2608,10 +2608,26 @@ abstract class CMS
     }
 
     /**
-     * Such page does not exist
+     * Such page does not exist (quicker remove from search index)
      */
-    public function errorGone()
+    public function errorGone($options = [])
     {
+        $options = extend(
+            [
+                'headers' => [],
+                'phrase' => null,
+            ],
+            is_array($options) ? $options : ['headers' => $options]
+        );
+
+        if (!is_array($options['headers'])) {
+            $options[
+                'headers'
+            ] = FeatureToggle::basicCreate()::shouldSendErrorMessageInHeaderOnError()
+                ? ['Gone-Message' => $options['headers']]
+                : [];
+        }
+
         $this->setResponseCode(HttpCode::GONE);
 
         if ($this->notFoundBackTraceNeeded()) {
@@ -2620,7 +2636,11 @@ abstract class CMS
             echo '</pre>';
         }
 
-        throw new HttpException($this->getResponseCode());
+        throw new HttpException(
+            $this->getResponseCode(),
+            $options['phrase'],
+            $options['headers']
+        );
     }
 
     /**
@@ -2717,7 +2737,7 @@ abstract class CMS
         $headerDebugMessage = null,
         $headerDebugName = null
     ) {
-        header('Location: ' . $href);
+        header("Location: $href");
 
         if (
             is_string($die) &&
@@ -2734,7 +2754,7 @@ abstract class CMS
         ) {
             $headerDebugName = $headerDebugName ?: 'Redirect-message';
 
-            header($headerDebugName . ': ' . $headerDebugMessage);
+            header("$headerDebugName: $headerDebugMessage");
         }
 
         if ($die) {

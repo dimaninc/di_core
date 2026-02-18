@@ -276,6 +276,7 @@ abstract class diModule
         $headerDebugMessage = null,
         $headerDebugName = null
     ) {
+        $this->getZ()->setNoIndex();
         $this->getZ()->redirect($href, $die, $headerDebugMessage, $headerDebugName);
 
         return $this;
