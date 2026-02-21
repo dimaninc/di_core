@@ -15,6 +15,7 @@ Helper =
         coffee: '**/**/*.coffee'
         ts: '**/**/*.ts'
         react: '**/**/*.jsx'
+        reactTs: '**/**/*.tsx'
     folders:
         css: 'css/'
         stylus: 'css/admin/stylus/'
