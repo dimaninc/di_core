@@ -60,19 +60,33 @@ export function complexStr(ar: unknown[], glue = ', '): string {
   return ar.filter(Boolean).join(glue);
 }
 
-// todo add object {class => bool} support
-export const cn = (...args: unknown[]): string => {
-  const classes = [];
+type TCnArg = string | number | boolean | null | undefined | TCnArg[] | Record<string, unknown>;
 
-  for (const cssClass of args) {
-    if (Array.isArray(cssClass)) {
-      classes.push(cn(...cssClass));
-    } else {
-      classes.push(cssClass);
+export const cn = (...args: TCnArg[]): string => {
+  const classes: string[] = [];
+
+  for (const arg of args) {
+    if (!arg) {
+      continue;
+    }
+
+    if (typeof arg === 'string' || typeof arg === 'number') {
+      classes.push(String(arg));
+    } else if (Array.isArray(arg)) {
+      const inner = cn(...arg);
+      if (inner) {
+        classes.push(inner);
+      }
+    } else if (typeof arg === 'object') {
+      for (const [key, value] of Object.entries(arg)) {
+        if (value) {
+          classes.push(key);
+        }
+      }
     }
   }
 
-  return classes.filter(Boolean).join(' ');
+  return classes.join(' ');
 };
 
 export function slash(path: string, ending = true): string {
