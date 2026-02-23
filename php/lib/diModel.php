@@ -921,6 +921,16 @@ class diModel implements \ArrayAccess
             );
         }
 
+        $basePath = \diPaths::fileSystem($this, true, $field);
+        foreach ($fieldFileOptions as $fileOpts) {
+            $dir = $basePath . $fileOpts['folder'] . ($fileOpts['subfolder'] ?? '');
+            if (!is_dir($dir)) {
+                $oldUmask = umask(0);
+                mkdir($dir, 0775, true);
+                umask($oldUmask);
+            }
+        }
+
         $F = [
             'name' => $this->get($field),
             'type' => 'image/jpeg',
