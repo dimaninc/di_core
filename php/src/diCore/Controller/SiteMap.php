@@ -10,6 +10,9 @@ namespace diCore\Controller;
 
 class SiteMap extends \diBaseController
 {
+    /**
+     * php vendor/dimaninc/di_core/php/admin/workers/cli.php controller=site_map action=generate
+     */
     public function generateAction()
     {
         $this->adminRightsHardCheck();

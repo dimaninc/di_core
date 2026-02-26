@@ -42,7 +42,9 @@ CREATE TABLE IF NOT EXISTS content(
 	comments_count integer default '0',
 	comments_last_date datetime default null,
 	comments_enabled tinyint default '1',
-	ad_block_id integer default '0'
+	ad_block_id integer default '0',
+    created_at timestamp not null default current_timestamp,
+    updated_at timestamp not null default current_timestamp
 );
 
 CREATE UNIQUE INDEX idx_content_clean_title
