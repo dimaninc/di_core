@@ -105,6 +105,10 @@ class Response
             return $this;
         }
 
+        if (\diRequest::isCli()) {
+            return $this;
+        }
+
         foreach ($this->headers as $name => $value) {
             header("$name: $value");
         }
