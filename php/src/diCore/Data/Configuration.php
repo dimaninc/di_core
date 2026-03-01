@@ -86,6 +86,17 @@ class Configuration
         return $this;
     }
 
+    public function setInitialValue($key, $value)
+    {
+        if (!isset(self::$data[$key])) {
+            throw new \Exception("$key not found in configuration");
+        }
+
+        self::$data[$key]['value'] = $value;
+
+        return $this;
+    }
+
     public function setTabsAr($ar)
     {
         $this->tabsAr = $ar;
