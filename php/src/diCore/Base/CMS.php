@@ -198,6 +198,7 @@ abstract class CMS
     public $tables;
     public $ct_ar = []; // clean titles ar ['type' => 'clean_title']
     protected $defaultPageType = 'home';
+    const HOME_PAGE_ONLY_ON_ROOT = true;
     public $safe_swf_idx = 0;
     public $print_share_block = true;
     public $comments_form_prefix = '';

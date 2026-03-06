@@ -189,7 +189,19 @@ class diContentFamily
 
     protected function canModelBeRendered(Model $content)
     {
-        return $content->exists();
+        if (!$content->exists()) {
+            return false;
+        }
+
+        if (
+            $content->getType() === 'home' &&
+            $this->getZ()->getOrigRoute() &&
+            $this->getZ()::HOME_PAGE_ONLY_ON_ROOT
+        ) {
+            return false;
+        }
+
+        return true;
     }
 
     /** @deprecated */
