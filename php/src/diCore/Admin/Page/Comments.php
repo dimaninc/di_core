@@ -12,10 +12,13 @@ use diCore\Admin\Data\FormFlag;
 use diCore\Data\Types;
 use diCore\Entity\Comment\Model;
 use diCore\Helper\ArrayHelper;
+use diCore\Helper\StringHelper;
 use diCore\Tool\CollectionCache;
 
 class Comments extends \diCore\Admin\BasePage
 {
+    const MAX_CONTENT_LEN = null;
+
     protected $options = [
         'filters' => [
             'defaultSorter' => [
@@ -115,6 +118,16 @@ class Comments extends \diCore\Admin\BasePage
                 'bodyAttrs' => [
                     'class' => 'lite',
                 ],
+                'value' => function (Model $m) {
+                    $text = static::MAX_CONTENT_LEN
+                        ? StringHelper::cutEnd(
+                            $m->getContent(),
+                            static::MAX_CONTENT_LEN
+                        )
+                        : $m->getContent();
+
+                    return StringHelper::out($text);
+                },
             ],
             'created_at' => [
                 'title' => 'Дата',
