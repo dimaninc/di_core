@@ -183,6 +183,10 @@ class Model extends \diModel
 
     public function getLocationStr()
     {
+        if (!$this->hasIp()) {
+            return null;
+        }
+
         return GeoIpLocation::compactLocationStr($this->getIp());
     }
 
