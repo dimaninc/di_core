@@ -1357,7 +1357,6 @@ abstract class BasePage
 
     protected function prepareForEditLog()
     {
-        $twig = $this->getTwig()->getEngine();
         $version = (int) TwigEnvironment::VERSION;
         $name = 'insdel';
         $callable = function ($twig, $string, $charset) {
@@ -1387,13 +1386,13 @@ abstract class BasePage
                     return [$this->name => $this->callable];
                 }
             };
-            $twig->addExtension($extension);
+            $this->getTwig()->getEngine()->addExtension($extension);
         } elseif ($version === 3) {
-            $twig
+            $this->getTwig()->getEngine()
                 ->getExtension(EscaperExtension::class)
-                ->setEscaper($twig, $name, $callable);
+                ->setEscaper($this->getTwig()->getEngine(), $name, $callable);
         } else {
-            $twig
+            $this->getTwig()->getEngine()
                 ->getExtension(EscaperExtension::class)
                 ->setEscaper($name, $callable);
         }
