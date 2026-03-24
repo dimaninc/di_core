@@ -20,6 +20,7 @@ use diCore\Tool\Logger;
 use Twig\Environment as TwigEnvironment;
 use Twig\Extension\AbstractExtension;
 use Twig\Extension\EscaperExtension;
+use Twig\Runtime\EscaperRuntime;
 
 abstract class BasePage
 {
@@ -1371,22 +1372,12 @@ abstract class BasePage
         };
 
         if ($version === 4) {
-            $extension = new class ($name, $callable) extends AbstractExtension {
-                private $name;
-                private $callable;
-
-                public function __construct($name, $callable)
-                {
-                    $this->name = $name;
-                    $this->callable = $callable;
-                }
-
-                public function getEscapers(): array
-                {
-                    return [$this->name => $this->callable];
-                }
+            $runtimeCallable = function ($string, $charset) use ($callable) {
+                return $callable(null, $string, $charset);
             };
-            $this->getTwig()->getEngine()->addExtension($extension);
+            $this->getTwig()->getEngine()
+                ->getRuntime(EscaperRuntime::class)
+                ->setEscaper($name, $runtimeCallable);
         } elseif ($version === 3) {
             $this->getTwig()->getEngine()
                 ->getExtension(EscaperExtension::class)
