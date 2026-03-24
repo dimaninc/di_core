@@ -17,6 +17,8 @@ use diCore\Entity\AdminTableEditLog\Model as TableEditLog;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 use diCore\Tool\Logger;
+use Twig\Environment as TwigEnvironment;
+use Twig\Extension\AbstractExtension;
 use Twig\Extension\EscaperExtension;
 
 abstract class BasePage
@@ -1355,21 +1357,46 @@ abstract class BasePage
 
     protected function prepareForEditLog()
     {
-        $this->getTwig()
-            ->getEngine()
-            ->getExtension(EscaperExtension::class)
-            ->setEscaper('insdel', function ($twig, $string, $charset) {
-                $escaped = StringHelper::out($string);
-                $semiEscaped = str_replace(
-                    ['&lt;ins&gt;', '&lt;/ins&gt;', '&lt;del&gt;', '&lt;/del&gt;'],
-                    ['<ins>', '</ins>', '<del>', '</del>'],
-                    $escaped
-                );
+        $twig = $this->getTwig()->getEngine();
+        $version = (int) TwigEnvironment::VERSION;
+        $name = 'insdel';
+        $callable = function ($twig, $string, $charset) {
+            $escaped = StringHelper::out($string);
+            $semiEscaped = str_replace(
+                ['&lt;ins&gt;', '&lt;/ins&gt;', '&lt;del&gt;', '&lt;/del&gt;'],
+                ['<ins>', '</ins>', '<del>', '</del>'],
+                $escaped
+            );
 
-                return $semiEscaped;
+            return $semiEscaped;
+        };
 
-                // return '(' . $semiEscaped . ')';
-            });
+        if ($version === 4) {
+            $extension = new class ($name, $callable) extends AbstractExtension {
+                private $name;
+                private $callable;
+
+                public function __construct($name, $callable)
+                {
+                    $this->name = $name;
+                    $this->callable = $callable;
+                }
+
+                public function getEscapers(): array
+                {
+                    return [$this->name => $this->callable];
+                }
+            };
+            $twig->addExtension($extension);
+        } elseif ($version === 3) {
+            $twig
+                ->getExtension(EscaperExtension::class)
+                ->setEscaper($twig, $name, $callable);
+        } else {
+            $twig
+                ->getExtension(EscaperExtension::class)
+                ->setEscaper($name, $callable);
+        }
 
         return $this;
     }
