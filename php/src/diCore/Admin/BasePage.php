@@ -1371,19 +1371,17 @@ abstract class BasePage
             return $semiEscaped;
         };
 
-        if ($version === 4) {
+        if ($version >= 4) {
             $runtimeCallable = function ($string, $charset) use ($callable) {
                 return $callable(null, $string, $charset);
             };
-            $this->getTwig()->getEngine()
+            $this->getTwig()
+                ->getEngine()
                 ->getRuntime(EscaperRuntime::class)
                 ->setEscaper($name, $runtimeCallable);
-        } elseif ($version === 3) {
-            $this->getTwig()->getEngine()
-                ->getExtension(EscaperExtension::class)
-                ->setEscaper($this->getTwig()->getEngine(), $name, $callable);
         } else {
-            $this->getTwig()->getEngine()
+            $this->getTwig()
+                ->getEngine()
                 ->getExtension(EscaperExtension::class)
                 ->setEscaper($name, $callable);
         }
