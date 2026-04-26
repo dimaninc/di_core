@@ -129,10 +129,13 @@ class Logger
     public function variable(...$arguments)
     {
         foreach ($arguments as $arg) {
-            $this->printLine(
-                print_r($arg, true) ?: var_export($arg, true),
-                self::PURPOSE_VARIABLE
-            );
+            if ($arg instanceof \Throwable) {
+                $formatted = (string) $arg;
+            } else {
+                $formatted = print_r($arg, true) ?: var_export($arg, true);
+            }
+
+            $this->printLine($formatted, self::PURPOSE_VARIABLE);
         }
 
         return $this;
