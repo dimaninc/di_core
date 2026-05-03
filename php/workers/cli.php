@@ -12,5 +12,8 @@ if (\diRequest::get('controller') && \diRequest::get('action')) {
         );
     } catch (\Exception $e) {
         \diBaseController::autoError($e);
+        if (function_exists('Sentry\captureException')) {
+            \Sentry\captureException($e);
+        }
     }
 }
