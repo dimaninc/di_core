@@ -72,7 +72,6 @@ class diLib
     const pathCoreModules = 5;
     const pathCoreCollections = 6;
     const pathCoreVendor = 7;
-    const pathCoreTests = 8;
     const pathCoreSources = 9;
     const pathCoreLegacy = 10;
 
@@ -92,7 +91,6 @@ class diLib
     const pathProjectModules = 35;
     const pathProjectCollections = 36;
     const pathProjectVendor = 37;
-    const pathProjectTests = 38;
     const pathProjectSources = 39;
 
     const pathOldLib = 99;
@@ -120,7 +118,6 @@ class diLib
         self::pathProjectModules => '/_cfg/modules/',
         self::pathProjectCollections => '/_cfg/collections/',
         self::pathProjectVendor => '/_cfg/vendor/',
-        self::pathProjectTests => '/_cfg/tests/',
         self::pathProjectSources => '/src/',
 
         // then, core libs
@@ -131,7 +128,6 @@ class diLib
         self::pathCoreModules => '/_core/php/modules/',
         self::pathCoreCollections => '/_core/php/collections/',
         self::pathCoreVendor => '/_core/php/vendor/',
-        self::pathCoreTests => '/_core/php/tests/',
         self::pathCoreSources => '/_core/php/src/',
         self::pathCoreLegacy => '/_core/php/legacy/',
 
