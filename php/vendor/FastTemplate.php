@@ -80,15 +80,15 @@ class FastTemplate
     public function setupBasicAssignees()
     {
         $protocol = $_SERVER['SERVER_PORT'] == 443 ? 'https' : 'http';
-
-        $htmlBase = "{$protocol}://{$_SERVER['HTTP_HOST']}";
+        $host = $_SERVER['HTTP_HOST'] ?? null;
+        $htmlBase = "$protocol://$host";
 
         $this->assign([
             'HTML_BASE' => $htmlBase . '/',
             'HTML_BASE2' => $htmlBase,
-            'HTTP_HOST' => $_SERVER['HTTP_HOST'],
+            'HTTP_HOST' => $host,
             'HTTP_PROTOCOL' => $protocol,
-            'HTTP_LINK' => "<a href=\"{$htmlBase}\">{$htmlBase}</a>",
+            'HTTP_LINK' => "<a href=\"$htmlBase\">$htmlBase</a>",
         ]);
 
         return $this;
@@ -165,11 +165,7 @@ class FastTemplate
         }
 
         foreach ($core_files_ar['f'] as $f) {
-            $cache_file .= $this->get_cache_template_line(
-                $f,
-                $core_basedir,
-                '`'
-            );
+            $cache_file .= $this->get_cache_template_line($f, $core_basedir, '`');
         }
 
         file_put_contents($this->cache_filename, $cache_file);
@@ -598,10 +594,7 @@ class FastTemplate
 
     public function define($subFolderOrFileList, $realFileList = null)
     {
-        if (
-            gettype($subFolderOrFileList) == 'string' &&
-            is_array($realFileList)
-        ) {
+        if (gettype($subFolderOrFileList) == 'string' && is_array($realFileList)) {
             return $this->define2($subFolderOrFileList, $realFileList);
         }
 
@@ -894,9 +887,7 @@ class FastTemplate
     {
         $token = strtoupper($token);
 
-        return isset($this->PARSEVARS["$token"])
-            ? $this->PARSEVARS["$token"]
-            : null;
+        return isset($this->PARSEVARS["$token"]) ? $this->PARSEVARS["$token"] : null;
     }
 
     //************************************************************
