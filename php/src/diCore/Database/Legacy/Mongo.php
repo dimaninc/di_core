@@ -452,16 +452,13 @@ class Mongo extends \diDB
         );
 
         $result = $collection->aggregate($pipeline)->toArray();
-
-        if (empty($result)) {
-            return null;
-        }
+        $row = $result[0] ?? [];
 
         return [
-            'min' => $result[0]['minValue'] ?? null,
-            'max' => $result[0]['maxValue'] ?? null,
-            'sum' => $result[0]['sumValue'] ?? null,
-            'count' => $result[0]['countValue'] ?? null,
+            'min' => $row['minValue'] ?? null,
+            'max' => $row['maxValue'] ?? null,
+            'sum' => $row['sumValue'] ?? null,
+            'count' => $row['countValue'] ?? null,
         ];
     }
 
