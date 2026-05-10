@@ -1459,6 +1459,34 @@ abstract class CMS
             ],
         ]);
 
+        $this->registerContentTwigFunctions();
+
+        return $this;
+    }
+
+    /**
+     * Register Twig helpers that resolve content-model navigation through
+     * the CMS so templates honor getRealContentModel() / to_show_content
+     * routing instead of calling Model::getHref() directly.
+     */
+    protected function registerContentTwigFunctions()
+    {
+        $this->Twig
+            ->addFunction(
+                'content_href',
+                fn(Model $m) => $this->getRealContentModel($m)->getHref()
+            )
+            ->addFunction(
+                'content_selected',
+                fn(Model $m) => $this->isContentPageSelected($m)
+            )
+            ->addFunction(
+                'content_selected_class',
+                fn(Model $m) => $this->isContentPageSelected($m)
+                    ? $this->getSelectedMenuClassName()
+                    : ''
+            );
+
         return $this;
     }
 
@@ -3050,7 +3078,7 @@ abstract class CMS
 
     public function getFirstChildIfNotToShowContent(Model $model)
     {
-        if ($model->getLevelNum() == 0 && !$model->hasToShowContent()) {
+        if ($model->isTopLevelToShowContent() && !$model->hasToShowContent()) {
             $child = $this->getFirstVisibleChild($model);
 
             if ($child->exists()) {

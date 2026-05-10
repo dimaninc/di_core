@@ -234,4 +234,9 @@ class Model extends \diModel
 
         return parent::prepareForSave();
     }
+
+    public function isTopLevelToShowContent()
+    {
+        return $this->getLevelNum() == 0;
+    }
 }
