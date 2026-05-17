@@ -192,6 +192,31 @@ class diImage
         return $returnCode === 0;
     }
 
+    /**
+     * Returns [width, height, type] for an image file. Suppresses
+     * non-fatal getimagesize() warnings (e.g. "Corrupt JPEG data:
+     * N extraneous bytes before marker") that would otherwise be
+     * promoted to ErrorException by global error handlers.
+     * Returns [0, 0, 0] when the file is missing or unreadable.
+     */
+    public static function safeImageSize($fn): array
+    {
+        if (!is_string($fn) || $fn === '' || !is_file($fn)) {
+            return [0, 0, 0];
+        }
+
+        $info = @getimagesize($fn);
+        if (!is_array($info)) {
+            return [0, 0, 0];
+        }
+
+        return [
+            (int) ($info[0] ?? 0),
+            (int) ($info[1] ?? 0),
+            (int) ($info[2] ?? 0),
+        ];
+    }
+
     public static function isHeic(string $file): bool
     {
         if (!is_file($file)) {
@@ -234,9 +259,7 @@ class diImage
         $this->image = null;
         $this->orig_fn = $fn;
 
-        list($this->w, $this->h, $this->t) = is_file($fn)
-            ? getimagesize($fn)
-            : [0, 0, 0];
+        list($this->w, $this->h, $this->t) = self::safeImageSize($fn);
 
         if (!self::isImageType($this->t)) {
             return $this->image;
@@ -264,13 +287,13 @@ class diImage
 
                 unset($im);
 
-                list($this->w, $this->h, $this->t) = getimagesize($fn);
+                list($this->w, $this->h, $this->t) = self::safeImageSize($fn);
             } elseif (self::isImageMagickInstalled()) {
                 $dimensions = $maxSize . 'x' . $maxSize;
                 $command = "convert $fn -resize $dimensions $fn";
                 exec($command);
 
-                list($this->w, $this->h, $this->t) = getimagesize($fn);
+                list($this->w, $this->h, $this->t) = self::safeImageSize($fn);
             }
         }
 
@@ -725,9 +748,7 @@ class diImage
             $wm_h = imagesy($wm_fn);
             $wm_t = 3;
         } else {
-            list($wm_w, $wm_h, $wm_t) = is_file($wm_fn)
-                ? getimagesize($wm_fn)
-                : [0, 0, 0];
+            list($wm_w, $wm_h, $wm_t) = self::safeImageSize($wm_fn);
         }
 
         if (!$wm_w) {
