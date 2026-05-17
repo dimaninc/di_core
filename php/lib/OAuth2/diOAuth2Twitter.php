@@ -1,6 +1,7 @@
 <?php
 
 use diCore\Helper\ArrayHelper;
+use diCore\Tool\Logger;
 
 class diOAuth2Twitter extends diOAuth2
 {
@@ -71,6 +72,12 @@ class diOAuth2Twitter extends diOAuth2
         $jsonResult = json_decode($response, true);
 
         if (!$response || !$result || ArrayHelper::get($jsonResult, 'errors')) {
+            Logger::getInstance()->variable('Twitter OAuth2 request_token body', [
+                'response' => $response,
+                'parsed' => $result,
+                'json' => $jsonResult,
+            ]);
+
             throw \diCore\Base\Exception\HttpException::notFound(
                 'Twitter OAuth2 out of order'
             );
@@ -80,9 +87,24 @@ class diOAuth2Twitter extends diOAuth2
             diSession::set('twitterToken', $result['oauth_token']);
             diSession::set('twitterTokenSecret', $result['oauth_token_secret']);
         } else {
-            $result = json_decode($response, true);
+            $decoded = json_decode($response, true);
+            $code = ArrayHelper::get($decoded, 'errors.0.code');
+            $message = ArrayHelper::get($decoded, 'errors.0.message');
+
+            Logger::getInstance()->variable('Twitter OAuth2 request_token body', [
+                'response' => $response,
+                'parsed' => $result,
+                'decoded' => $decoded,
+            ]);
+
+            if ($code !== null || $message !== null) {
+                throw new \Exception(
+                    ($code ?? 'unknown') . ': ' . ($message ?? 'unknown')
+                );
+            }
+
             throw new \Exception(
-                $result['errors'][0]['code'] . ': ' . $result['errors'][0]['message']
+                'Twitter OAuth2 returned an unexpected response'
             );
         }
 
