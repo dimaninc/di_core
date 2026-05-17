@@ -947,12 +947,15 @@ abstract class diDB
     /*
      * enter $keyField if it differs from 'id'
      */
-    protected function insertUpdateQuery($fields_values, $keyField = null)
-    {
+    protected function insertUpdateQuery(
+        $fields_values,
+        $keyField = null,
+        $autoIncrementField = null
+    ) {
         $q1 = static::insertUpdateQueryBeginning($keyField);
         $q3 =
             $this->fieldsAndValuesToStringForUpdate($fields_values) .
-            static::insertUpdateQueryEnding();
+            static::insertUpdateQueryEnding($autoIncrementField);
 
         return " $q1 $q3";
     }
@@ -971,7 +974,7 @@ abstract class diDB
         return 'ON DUPLICATE KEY UPDATE';
     }
 
-    public static function insertUpdateQueryEnding()
+    public static function insertUpdateQueryEnding($autoIncrementField = null)
     {
         return '';
     }
@@ -1129,14 +1132,21 @@ abstract class diDB
 
     /*
      * enter $keyField if it differs from 'id'
+     * pass $autoIncrementField to make MySQL return the affected row's id on the UPDATE path
+     * via the LAST_INSERT_ID(<field>) trick. Without it MySQL returns 0 when the row was updated
+     * instead of inserted, leaving the model without an id.
      */
-    public function insert_or_update($table, $fields_values = [], $keyField = null)
-    {
+    public function insert_or_update(
+        $table,
+        $fields_values = [],
+        $keyField = null,
+        $autoIncrementField = null
+    ) {
         $t = $this->get_table_name($table);
 
         $q1 = '(' . $this->fieldsToStringForInsert($fields_values) . ')';
         $q2 = '(' . $this->valuesToStringForInsert($fields_values) . ')';
-        $q3 = $this->insertUpdateQuery($fields_values, $keyField);
+        $q3 = $this->insertUpdateQuery($fields_values, $keyField, $autoIncrementField);
 
         $this->lockTable($t);
         $query = "INSERT INTO $t$q1 VALUES$q2$q3;";

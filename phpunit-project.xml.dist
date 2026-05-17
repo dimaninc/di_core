@@ -5,6 +5,8 @@
     <testsuites>
         <testsuite name="Unit tests">
             <directory suffix="Test.php">tests/unit</directory>
+            <!-- di_core ships its own framework tests; run them under the project's bootstrap. -->
+            <directory suffix="Test.php">vendor/dimaninc/di_core/php/tests</directory>
             <!--<directory suffix="Test.php">tests/system</directory>-->
         </testsuite>
     </testsuites>

@@ -197,9 +197,11 @@ class diMYSQL extends diDB
             " --host=$host --port=$port --user={$this->getUsername()} --password=\"{$this->getPassword()}\" --opt --skip-extended-insert {$this->getDatabase()} $tables{$options['commandSuffixWithFilename']}";
     }
 
-    public static function insertUpdateQueryEnding()
+    public static function insertUpdateQueryEnding($autoIncrementField = null)
     {
-        return ',id = LAST_INSERT_ID(id)';
+        $field = $autoIncrementField ?: 'id';
+
+        return ",`$field` = LAST_INSERT_ID(`$field`)";
     }
 
     public function lockTable($table, $mode = 'WRITE')

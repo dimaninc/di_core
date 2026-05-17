@@ -17,6 +17,7 @@ use diCore\Entity\DynamicPic\Collection as DynamicPics;
 use diCore\Helper\Slug;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
+use diCore\Tool\Logger;
 use MongoDB\BSON\ObjectID;
 use MongoDB\BSON\UTCDatetime;
 
@@ -198,6 +199,12 @@ class diModel implements \ArrayAccess
     protected static $customFieldTypes = [];
 
     protected $upsertFields = [];
+    /**
+     * Unique-key columns used to look up the existing row's id after an
+     * INSERT IGNORE that did not insert anything (row already existed).
+     * Set via allowSkipConflictOnInsert([...]).
+     */
+    protected $skipConflictLookupFields = [];
 
     protected static $publicFields = [];
     protected static $customPublicFields = [];
@@ -2344,11 +2351,10 @@ class diModel implements \ArrayAccess
                     $ar
                 );
 
+                $lookupFields = $this->getSkipConflictLookupFields();
                 $this->disallowSkipConflictOnInsert();
 
-                if ($result) {
-                    $this->setId((int) $result);
-                } else {
+                if ($result === false) {
                     $e = new \diDatabaseException(
                         'Unable to insert ignore ' .
                             get_class($this) .
@@ -2358,6 +2364,12 @@ class diModel implements \ArrayAccess
                     $e->setErrors($this->getDb()->getLog());
 
                     throw $e;
+                }
+
+                if ($result) {
+                    $this->setId((int) $result);
+                } elseif ($lookupFields) {
+                    $this->populateIdFromLookup($ar, $lookupFields);
                 }
             }
         } elseif ($this->isInsertOrUpdateAllowed()) {
@@ -2385,14 +2397,14 @@ class diModel implements \ArrayAccess
             } else {
                 $result = $this->getDb()->insert_or_update(
                     $this->getDb()->escapeTable($this->getTable()),
-                    $ar
+                    $ar,
+                    null,
+                    $this->isIdAutoIncremented() ? $this->getIdFieldName() : null
                 );
 
                 $this->disallowInsertOrUpdate();
 
-                if ($result) {
-                    $this->setId((int) $result);
-                } else {
+                if ($result === false) {
                     $e = new \diDatabaseException(
                         'Unable to insert/update ' .
                             get_class($this) .
@@ -2402,6 +2414,10 @@ class diModel implements \ArrayAccess
                     $e->setErrors($this->getDb()->getLog());
 
                     throw $e;
+                }
+
+                if ($result) {
+                    $this->setId((int) $result);
                 }
             }
         } elseif (
@@ -2459,7 +2475,7 @@ class diModel implements \ArrayAccess
                     $ar
                 );
 
-                if (!$id) {
+                if ($id === false) {
                     $e = new \diDatabaseException(
                         'Unable to insert ' .
                             get_class($this) .
@@ -2471,11 +2487,60 @@ class diModel implements \ArrayAccess
                     throw $e;
                 }
 
-                $this->setId($id);
+                if ($id) {
+                    $this->setId($id);
+                }
             }
         }
 
         return $this;
+    }
+
+    /**
+     * Resolves the existing row's id after an INSERT IGNORE that hit a unique-key
+     * conflict (the row already exists, so MySQL's insert_id is 0). Uses the
+     * caller-supplied unique-key columns to look the row up.
+     */
+    protected function populateIdFromLookup(array $ar, array $lookupFields): void
+    {
+        $db = $this->getDb();
+        $idField = static::getIdFieldName();
+        $whereParts = [];
+
+        foreach ($lookupFields as $field) {
+            $value = array_key_exists($field, $ar)
+                ? $ar[$field]
+                : $this->get($field);
+            $whereParts[] = $db->escapeFieldValue($field, $value);
+        }
+
+        if (!$whereParts) {
+            return;
+        }
+
+        $where = join(' AND ', $whereParts);
+        $row = $db->r(
+            $db->escapeTable($this->getTable()),
+            'WHERE ' . $where,
+            $db->escapeField($idField)
+        );
+
+        if ($row && isset($row->$idField)) {
+            $this->setId($row->$idField);
+
+            return;
+        }
+
+        Logger::getInstance()->log(
+            sprintf(
+                '%s: lookup miss on %s (fields: %s, where: %s) — INSERT IGNORE skipped a row but no matching row was found. Check that lookupFields cover a unique key.',
+                get_class($this),
+                $this->getTable(),
+                join(',', $lookupFields),
+                $where
+            ),
+            'diModel/populateIdFromLookup'
+        );
     }
 
     protected function killFromDb()
@@ -3105,9 +3170,16 @@ ENGINE = InnoDB;";
         return $this->insertOrUpdateAllowed;
     }
 
-    public function allowSkipConflictOnInsert()
+    /**
+     * @param array $lookupFields Optional unique-key columns. When provided and the
+     *   INSERT IGNORE skips the row because it already exists, saveToDb() runs a
+     *   follow-up SELECT on these columns and populates the model's id from the
+     *   matching row. Without it, the model is left without an id on conflict.
+     */
+    public function allowSkipConflictOnInsert(array $lookupFields = [])
     {
         $this->skipConflictOnInsert = true;
+        $this->skipConflictLookupFields = $lookupFields;
 
         return $this;
     }
@@ -3115,6 +3187,7 @@ ENGINE = InnoDB;";
     public function disallowSkipConflictOnInsert()
     {
         $this->skipConflictOnInsert = false;
+        $this->skipConflictLookupFields = [];
 
         return $this;
     }
@@ -3122,6 +3195,11 @@ ENGINE = InnoDB;";
     public function isSkipConflictOnInsert()
     {
         return $this->skipConflictOnInsert;
+    }
+
+    public function getSkipConflictLookupFields(): array
+    {
+        return $this->skipConflictLookupFields;
     }
 
     /**
