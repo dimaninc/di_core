@@ -192,6 +192,56 @@ class diRequest
         }
     }
 
+    /**
+     * Loads KEY=VALUE pairs from a .env file into the environment so they are
+     * readable via self::env(). Full-line `#`/`;` comments and optional
+     * surrounding quotes are supported; inline comments are not stripped (so
+     * secrets may contain `#`). Existing values are overwritten.
+     *
+     * @param string $file absolute path to the .env file
+     * @return bool true if the file existed and was read
+     */
+    public static function loadEnv($file)
+    {
+        if (!is_file($file)) {
+            return false;
+        }
+
+        foreach (
+            file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES)
+            as $line
+        ) {
+            $line = trim($line);
+
+            if (
+                $line === '' ||
+                $line[0] === '#' ||
+                $line[0] === ';' ||
+                strpos($line, '=') === false
+            ) {
+                continue;
+            }
+
+            list($key, $value) = explode('=', $line, 2);
+            $key = trim($key);
+            $value = trim($value);
+
+            if (
+                strlen($value) >= 2 &&
+                ($value[0] === '"' || $value[0] === "'") &&
+                $value[-1] === $value[0]
+            ) {
+                $value = substr($value, 1, -1);
+            }
+
+            putenv("$key=$value");
+            $_ENV[$key] = $value;
+            $_SERVER[$key] = $value;
+        }
+
+        return true;
+    }
+
     private static function processRawPost()
     {
         if (self::$postRawData === null) {
