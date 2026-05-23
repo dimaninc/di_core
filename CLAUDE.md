@@ -82,8 +82,23 @@ Supports MySQL (primary), PostgreSQL, SQLite, MongoDB. Schema files in `sql/` wi
 
 Files in `_cfg/migrations/` (in consuming project), format `{idx}_{name}.php`. Extend `diCore\Database\Tool\Migration`. Must implement `up()` and `down()`. Tracked in `di_migrations_log` table. Managed via `MigrationsManager`.
 
+**Scaffold the migration file with the generator, then fill in `up()`/`down()`** — don't hand-write the file. Two ways:
+
+- Admin UI: **Admin → Migrations** (`/_admin/migrations/`) has a create form; `idx` defaults to the current `YmdHis`.
+- CLI (`MigrationsManager::createMigration($idx, $name, $folder = '')`):
+  ```bash
+  php -r "
+  require 'vendor/dimaninc/di_core/php/cliHelper.php';
+  (new \diCore\Database\Tool\MigrationsManager())->createMigration(date('YmdHis'), 'Added product table');
+  echo 'Done';
+  "
+  ```
+
+The generator writes the file with the correct class name (`diMigration_{idx}`), matching `$idx`/`$name`, a transliterated/slugified filename, and empty `up()`/`down()` stubs. The optional third arg is a subfolder (e.g. `'payments'` → `_cfg/migrations/payments/`). After scaffolding, fill `up()` (e.g. `$this->executeSqlFile([...], \diCore\Controller\Db::getDumpsFolder() . 'tables/')` for a new table, or `$this->getDb()->q("ALTER TABLE ...")` for alterations).
+
 ## Conventions
 
+- **ALWAYS scaffold entities and admin pages with the generators, then edit the result.** Never hand-write a `Model.php` / `Collection.php` / `Admin/Page/*.php` from scratch. The mandated flow for any new entity is: create the SQL schema + migration → run the migration so the table exists → run `ModelsManager` to generate Model + Collection → run `AdminPagesManager` to generate the admin page → only then manually adjust the generated files (extra fields, columns, custom logic). The generators introspect the live table, so the table must exist first. See "Adding a New Entity to a Project" below for the exact commands.
 - **Use `Model::createById($id)` and `Model::createBySlug($slug)` instead of `Model::create($id)`**. The generic `create()` is ambiguous; always prefer the explicit factory methods.
 - DB columns are `snake_case`; magic accessors are `CamelCase` (e.g., `order_num` → `getOrderNum()`)
 - In old code image fields come in groups: `{name}`, `{name}_w`, `{name}_h`, `{name}_t` (filename, width, height, type), lately this changed to only `{name}` storing.
@@ -180,36 +195,33 @@ Create `db/dump/tables/{table_name}.sql` with `CREATE TABLE IF NOT EXISTS`.
 
 ### Step 2: Create a migration
 
-Create `_cfg/migrations/{optional_subfolder}/{timestamp}_{name}.php`.
+**Scaffold the file with the generator, then fill in `up()`** (see "Migrations" above) — don't hand-write it:
 
-Generate a timestamp: `date +%Y%m%d%H%M%S` (e.g., `20260214120000`).
+```bash
+php -r "
+require 'vendor/dimaninc/di_core/php/cliHelper.php';
+(new \diCore\Database\Tool\MigrationsManager())->createMigration(date('YmdHis'), 'My entity');
+echo 'Done';
+"
+```
+
+This writes `_cfg/migrations/{idx}_My-entity.php` with the right class name and empty `up()`/`down()`. Then fill `up()` to create the table:
 
 ```php
-<?php
-class diMigration_20260214120000 extends \diCore\Database\Tool\Migration
+public function up()
 {
-    public static $idx = '20260214120000';
-    public static $name = 'My entity';
-
-    public function up()
-    {
-        $folder = \diCore\Controller\Db::getDumpsFolder() . 'tables/';
-        $this->executeSqlFile(['my_entity.sql'], $folder);
-    }
-
-    public function down()
-    {
-    }
+    $folder = \diCore\Controller\Db::getDumpsFolder() . 'tables/';
+    $this->executeSqlFile(['my_entity.sql'], $folder);
 }
 ```
 
 **Conventions:**
-- Class name: `diMigration_{timestamp}`
+- Class name: `diMigration_{idx}` (set by the generator)
 - `$idx` matches the timestamp in the filename
 - `$name` is a human-readable description
 - For new tables: use `$this->executeSqlFile()` pointing to the SQL file
 - For alterations: use `$this->getDb()->q("ALTER TABLE ...")`
-- Migrations can live in subdirectories for grouping (e.g., `_cfg/migrations/payments/`)
+- Migrations can live in subdirectories — pass the subfolder as the 3rd arg of `createMigration()` (e.g., `'payments'` → `_cfg/migrations/payments/`)
 
 Run the migration by its idx:
 ```bash
@@ -265,7 +277,9 @@ This generates:
 
 **Note:** The entity class name is derived from the table name by singularizing and camelizing it (e.g., `my_entities` → `MyEntity`, `discount_first_visit` → `DiscountFirstVisit`). The `const type` references `\diTypes::{name}` which must already exist from Step 3.
 
-### Step 5 (Optional): Generate an admin page
+### Step 5: Generate an admin page
+
+Whenever the entity needs an admin UI, **always generate the page with `AdminPagesManager` first, then edit it** — do not write `Admin/Page/*.php` by hand.
 
 Generate from CLI using `AdminPagesManager` (`diCore\Tool\Code\AdminPagesManager`):
 
