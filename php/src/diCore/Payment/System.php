@@ -28,6 +28,7 @@ class System extends SimpleContainer
     const sberbank = 8;
     const paymaster = 9;
     const crypto_cloud = 10;
+    const alfabank = 11;
     const alter = 99;
 
     public static $titles = [
@@ -41,6 +42,7 @@ class System extends SimpleContainer
         self::sberbank => 'Сбербанк',
         self::paymaster => 'Paymaster',
         self::crypto_cloud => 'CryptoCloud',
+        self::alfabank => 'Альфа-Банк',
         self::alter => 'Alt',
     ];
 
@@ -55,6 +57,7 @@ class System extends SimpleContainer
         self::sberbank => 'sberbank',
         self::paymaster => 'paymaster',
         self::crypto_cloud => 'crypto_cloud',
+        self::alfabank => 'alfabank',
         self::alter => 'alt',
     ];
 

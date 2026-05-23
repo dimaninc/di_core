@@ -12,6 +12,7 @@ use diCore\Base\CMS;
 use diCore\Data\Configuration;
 use diCore\Entity\PaymentDraft\Model as Draft;
 use diCore\Entity\PaymentReceipt\Model as Receipt;
+use diCore\Payment\AlfaBank\Helper as AlfaBank;
 use diCore\Payment\CryptoCloud\Helper as CryptoCloud;
 use diCore\Payment\Mixplat\Helper as Mixplat;
 use diCore\Payment\Paypal\Helper as Paypal;
@@ -237,6 +238,9 @@ class Payment
 
             case System::sberbank:
                 return $this->initSberbank($draft);
+
+            case System::alfabank:
+                return $this->initAlfaBank($draft);
 
             default:
                 throw new \Exception(
@@ -618,6 +622,18 @@ EOF;
             $sb->getFormUri($draft, [
                 'customerEmail' => $this->getCustomerEmail(),
                 'customerPhone' => $this->getCustomerPhone(),
+                'description' => static::ORDER_DESCRIPTION,
+            ])
+        );
+    }
+
+    public function initAlfaBank(Draft $draft)
+    {
+        $ab = AlfaBank::create();
+
+        return static::redirectTo(
+            $ab->getFormUri($draft, [
+                'customerEmail' => $this->getCustomerEmail(),
                 'description' => static::ORDER_DESCRIPTION,
             ])
         );
