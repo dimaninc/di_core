@@ -344,6 +344,10 @@ class diImage
                 return imagebmp($image, $dst_fn, $this->jpeg_quality < 100);
 
             case self::TYPE_WEBP:
+                if (!function_exists('imagewebp')) {
+                    error_log('diImage::store: GD WebP support not available');
+                    return false;
+                }
                 return imagewebp($image, $dst_fn, $this->jpeg_quality);
         }
 
@@ -485,6 +489,7 @@ class diImage
                 break;
 
             case self::TYPE_PNG:
+            case self::TYPE_WEBP:
                 $dst_img = imagecreatetruecolor($w, $h);
                 imagealphablending($dst_img, false);
                 imagesavealpha($dst_img, true);

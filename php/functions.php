@@ -1059,7 +1059,7 @@ function require_interface($interface_name, $path_prefix = '')
 function check_uploaded_file($full_fn, $orig_fn = '', $types_ar = [])
 {
     $typed_allowed_ext_ar = [
-        'pic' => ['jpeg', 'jpg', 'png', 'gif', 'swf'],
+        'pic' => ['jpeg', 'jpg', 'png', 'gif', 'webp', 'swf'],
         'audio' => ['mp3', 'ogg', 'ac3'],
         'video' => ['avi', 'flv', 'mp4'],
         'arc' => ['rar', 'zip', 'gz'],

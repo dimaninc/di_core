@@ -34,7 +34,7 @@ class AdminPhotos extends \diBaseAdminController
         FileSystemHelper::createTree(\diPaths::fileSystem(), get_tmp_folder());
 
         $upload_dir = \diPaths::fileSystem() . get_tmp_folder();
-        $valid_extensions = ['gif', 'png', 'jpeg', 'jpg'];
+        $valid_extensions = ['gif', 'png', 'jpeg', 'jpg', 'webp'];
 
         $Upload = new \FileUpload('pic');
         $origFileName = $Upload->getFileName();

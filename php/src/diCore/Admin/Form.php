@@ -2500,7 +2500,7 @@ EOF;
                 $this->hasInputAttribute($field, 'accept')
                     ? []
                     : [
-                        'accept' => '.jpg,.jpeg,.gif,.png,.svg',
+                        'accept' => '.jpg,.jpeg,.gif,.png,.webp,.svg',
                     ]
             );
 

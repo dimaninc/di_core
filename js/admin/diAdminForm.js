@@ -1,6 +1,6 @@
 var diAdminForm = function (table, id, auto_save_timeout) {
   var extensions = {
-    pic: ['jpeg', 'jpg', 'png', 'gif', 'svg']
+    pic: ['jpeg', 'jpg', 'png', 'gif', 'webp', 'svg']
   };
   var self = this,
     initiating = true,

@@ -627,7 +627,7 @@ class StringHelper
 
         if ($ext == 'jpeg' || $ext == 'jpg') {
             $contentType = 'image/jpeg';
-        } elseif ($ext == 'gif' || $ext == 'png') {
+        } elseif ($ext == 'gif' || $ext == 'png' || $ext == 'webp') {
             $contentType = 'image/' . $ext;
         } elseif ($ext == 'swf') {
             $contentType = 'application/x-shockwave-flash';
@@ -650,6 +650,7 @@ class StringHelper
 
             case 'image/gif':
             case 'image/png':
+            case 'image/webp':
                 return substr($mimeType, 6);
         }
 
@@ -660,7 +661,7 @@ class StringHelper
     {
         $ext = mb_strtolower(self::fileExtension($filename));
 
-        return in_array($ext, ['jpeg', 'jpg', 'gif', 'png']);
+        return in_array($ext, ['jpeg', 'jpg', 'gif', 'png', 'webp']);
     }
 
     public static function digitCase(
