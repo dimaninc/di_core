@@ -210,15 +210,34 @@ class MerchantApi
 
             $out = curl_exec($curl);
             $this->response = $out;
+
+            if ($out === false) {
+                $curlErr = curl_error($curl) ?: 'unknown transport error';
+                $this->error = 'cURL error: ' . $curlErr;
+                curl_close($curl);
+
+                return $out;
+            }
+
             $json = json_decode($out);
 
-            if ($json) {
-                if (@$json->ErrorCode !== '0') {
-                    $this->error = @$json->Details;
-                } else {
-                    $this->paymentUrl = @$json->PaymentURL;
-                    $this->paymentId = @$json->PaymentId;
-                    $this->status = @$json->Status;
+            if (!$json) {
+                $this->error = 'Invalid JSON response from Tinkoff: ' . $out;
+            } elseif (@$json->ErrorCode !== '0') {
+                $this->error =
+                    @$json->Details ?:
+                    ('Tinkoff error code ' . @$json->ErrorCode . ': ' . $out);
+            } else {
+                $this->paymentUrl = @$json->PaymentURL;
+                $this->paymentId = @$json->PaymentId;
+                $this->status = @$json->Status;
+
+                if (!is_string($this->paymentUrl) || $this->paymentUrl === '') {
+                    $this->error =
+                        'Tinkoff response missing PaymentURL (status ' .
+                        (string) $this->status .
+                        '): ' .
+                        $out;
                 }
             }
 

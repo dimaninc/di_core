@@ -84,7 +84,16 @@ class Helper extends BaseHelper
             );
         }
 
-        return $this->getApi()->getPaymentUrl();
+        $url = $this->getApi()->getPaymentUrl();
+
+        if (!is_string($url) || $url === '') {
+            throw new \Exception(
+                'Tinkoff init returned no PaymentURL. Response: ' .
+                    (is_string($response) ? $response : var_export($response, true))
+            );
+        }
+
+        return $url;
     }
 
     public function generateToken($params)
