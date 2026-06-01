@@ -50,6 +50,10 @@ padding: 0 0 12px 0;
 text-align: center;
 }
 
+.dicalendar--month-title b {
+cursor: pointer;
+}
+
 .dicalendar table.dimonth {
 border-collapse: collapse;
 }
@@ -59,6 +63,7 @@ border: 1px solid #E5E8EC;
 background: #fff;
 padding: 2px 7px;
 cursor: pointer;
+transition: background 0.15s ease, color 0.15s ease;
 }
 
 .dicalendar table.dimonth tr td.weekend {
@@ -101,6 +106,21 @@ background: #687583;
 .dicalendar table.dimonth tr td.selected_past_weekend {
 color: #fff;
 background: #EB9898;
+}
+
+.dicalendar table.dimonth tr td.month-hover {
+color: #37424d;
+background: #c9d4e0;
+}
+
+.dicalendar table.dimonth tr td.weekend.month-hover,
+.dicalendar table.dimonth tr td.selected_weekend.month-hover {
+color: #B40000;
+}
+
+.dicalendar table.dimonth tr td.past_weekend.month-hover,
+.dicalendar table.dimonth tr td.selected_past_weekend.month-hover {
+color: #EB9898;
 }
 
 .dicalendar table.dimonth tr td:hover {

@@ -484,6 +484,30 @@ function diCalendar(cfg) {
     if (typeof this.cfg.onsetdate == 'function') this.cfg.onsetdate(this);
   };
 
+  // highlights all the days of the month whose title is hovered
+  this.highlight_month = function (title_e, on) {
+    $(title_e)
+      .siblings('table.dimonth')
+      .find('td[id]')
+      .toggleClass('month-hover', !!on);
+  };
+
+  // selects the whole month (1st .. last day) and closes the calendar
+  this.select_month = function (m, y) {
+    var last_day = days_in_mon_ar[isleapyear(y)][m - 1];
+    var first = lead0(1) + '.' + lead0(m) + '.' + y;
+    var last = lead0(last_day) + '.' + lead0(m) + '.' + y;
+
+    if (this.range_select) {
+      this.set_date(first, 1);
+      this.set_date(last, 2);
+    } else {
+      this.set_date(first, 1);
+    }
+
+    this.hide();
+  };
+
   this.str_to_obj = function (str) {
     var date_ar = typeof str == 'string' && str ? str.split(/[\/\.:\x20]+/) : [];
 
@@ -624,7 +648,22 @@ function diCalendar(cfg) {
 
     var html = '';
 
-    html += '<b>' + this.get_month_title(m) + ' ' + y + '</b>';
+    html +=
+      '<b onmouseover="' +
+      this.instance_name +
+      '.highlight_month(this, true);" onmouseout="' +
+      this.instance_name +
+      '.highlight_month(this, false);" onclick="' +
+      this.instance_name +
+      '.select_month(' +
+      m +
+      ', ' +
+      y +
+      ');">' +
+      this.get_month_title(m) +
+      ' ' +
+      y +
+      '</b>';
     html += '<table class="dimonth">';
 
     if (this.cfg.show_weekday_titles) html += this.print_head_weekdays();
