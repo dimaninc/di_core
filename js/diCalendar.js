@@ -589,7 +589,7 @@ function diCalendar(cfg) {
       else class_name = 'center_month';
 
       html +=
-        '<div class="' +
+        '<div class="dicalendar--month-title ' +
         class_name +
         '">' +
         this.get_month_html(a.m, a.y) +

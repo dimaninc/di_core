@@ -1242,8 +1242,8 @@ class diAdminFilters
                             "MIN($field) as d1_min,MAX($field) as d1_max"
                         );
 
-                        $dMin = $r1->d1_min;
-                        $dMax = $r1->d1_max;
+                        $dMin = $r1 ? $r1->d1_min : null;
+                        $dMax = $r1 ? $r1->d1_max : null;
                     }
 
                     foreach (self::$dateRangeAr as $_f) {
