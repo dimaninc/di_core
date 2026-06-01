@@ -648,22 +648,27 @@ function diCalendar(cfg) {
 
     var html = '';
 
-    html +=
-      '<b onmouseover="' +
-      this.instance_name +
-      '.highlight_month(this, true);" onmouseout="' +
-      this.instance_name +
-      '.highlight_month(this, false);" onclick="' +
-      this.instance_name +
-      '.select_month(' +
-      m +
-      ', ' +
-      y +
-      ');">' +
-      this.get_month_title(m) +
-      ' ' +
-      y +
-      '</b>';
+    // month title is only clickable (selects the whole month) in range select mode
+    if (this.range_select) {
+      html +=
+        '<b class="dimonth-title-clickable" onmouseover="' +
+        this.instance_name +
+        '.highlight_month(this, true);" onmouseout="' +
+        this.instance_name +
+        '.highlight_month(this, false);" onclick="' +
+        this.instance_name +
+        '.select_month(' +
+        m +
+        ', ' +
+        y +
+        ');">' +
+        this.get_month_title(m) +
+        ' ' +
+        y +
+        '</b>';
+    } else {
+      html += '<b>' + this.get_month_title(m) + ' ' + y + '</b>';
+    }
     html += '<table class="dimonth">';
 
     if (this.cfg.show_weekday_titles) html += this.print_head_weekdays();

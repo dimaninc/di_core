@@ -27,7 +27,7 @@
   line-height: 100%;
 }
 
-.dicalendar--month-title b {
+.dicalendar--month-title b.dimonth-title-clickable {
   cursor: pointer;
 }
 

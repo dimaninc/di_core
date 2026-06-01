@@ -50,7 +50,7 @@ padding: 0 0 12px 0;
 text-align: center;
 }
 
-.dicalendar--month-title b {
+.dicalendar--month-title b.dimonth-title-clickable {
 cursor: pointer;
 }
 
