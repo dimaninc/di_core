@@ -22,8 +22,10 @@ class HttpCode extends SimpleContainer
     const NOT_FOUND = 404;
     const CONFLICT = 409;
     const GONE = 410;
+    const TOO_MANY_REQUESTS = 429;
 
     const INTERNAL_SERVER_ERROR = 500;
+    const SERVICE_UNAVAILABLE = 503;
 
     public static $titles = [
         self::OK => 'OK',
@@ -36,8 +38,10 @@ class HttpCode extends SimpleContainer
         self::NOT_FOUND => 'Not Found',
         self::CONFLICT => 'Conflict',
         self::GONE => 'Gone',
+        self::TOO_MANY_REQUESTS => 'Too Many Requests',
 
         self::INTERNAL_SERVER_ERROR => 'Internal Server Error',
+        self::SERVICE_UNAVAILABLE => 'Service Unavailable',
     ];
 
     public static $names = [
@@ -51,8 +55,10 @@ class HttpCode extends SimpleContainer
         self::NOT_FOUND => 'NOT_FOUND',
         self::CONFLICT => 'CONFLICT',
         self::GONE => 'GONE',
+        self::TOO_MANY_REQUESTS => 'TOO_MANY_REQUESTS',
 
         self::INTERNAL_SERVER_ERROR => 'INTERNAL_SERVER_ERROR',
+        self::SERVICE_UNAVAILABLE => 'SERVICE_UNAVAILABLE',
     ];
 
     public static function headerContent($code)
