@@ -1089,20 +1089,28 @@ abstract class diDB
     }
 
     /**
-     * Live affected-rows count of the LAST executed query on the connection
-     * (native mysqli_affected_rows). Use this after a raw `q('UPDATE …'|'DELETE …')`
-     * — e.g. to detect whether a guarded `UPDATE … WHERE id=? AND status=?` matched.
+     * Run a write (UPDATE/DELETE/INSERT) and return its affected-row count,
+     * captured IMMEDIATELY after execution — for guarded updates like
+     * `UPDATE … WHERE id=? AND status=?` where the affected count is the
+     * race/guard signal.
      *
-     * Difference from the `$affected_rows` PROPERTY: that property is a snapshot
-     * written ONLY by the built-in helpers `update()`/`delete()` (which build the
-     * query themselves) and stays STALE after a hand-written `q()`. This getter
-     * asks the driver directly, so it is correct for raw queries too.
+     * Why a dedicated method and not `q()` + a separate affected-rows read: `q()`
+     * calls `time_log()`, which under DB debug runs an `EXPLAIN <query>` — another
+     * query that overwrites the driver's native affected-row state. Reading
+     * affected rows after `q()` would then see the EXPLAIN's value, not the write's.
+     * This uses the raw `rq($sql, skipTimeLog: true)` path (no EXPLAIN) and reads
+     * affected rows before anything else can run.
      *
      * Returns CHANGED rows, not matched — a guard whose WHERE matches but whose SET
-     * changes nothing reports 0 (unless the link was opened with MYSQLI_CLIENT_FOUND_ROWS).
+     * changes nothing reports 0 (no MYSQLI_CLIENT_FOUND_ROWS). Returns -1 on query
+     * failure (the caller must treat -1 as a hard error, distinct from 0 == no match).
      */
-    public function getLastAffectedRows(): int
+    public function execWrite(string $sql): int
     {
+        if ($this->rq($sql, true) === false) {
+            return -1;
+        }
+
         return (int) $this->__affected_rows();
     }
 
