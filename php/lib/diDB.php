@@ -1088,6 +1088,24 @@ abstract class diDB
         return true;
     }
 
+    /**
+     * Live affected-rows count of the LAST executed query on the connection
+     * (native mysqli_affected_rows). Use this after a raw `q('UPDATE …'|'DELETE …')`
+     * — e.g. to detect whether a guarded `UPDATE … WHERE id=? AND status=?` matched.
+     *
+     * Difference from the `$affected_rows` PROPERTY: that property is a snapshot
+     * written ONLY by the built-in helpers `update()`/`delete()` (which build the
+     * query themselves) and stays STALE after a hand-written `q()`. This getter
+     * asks the driver directly, so it is correct for raw queries too.
+     *
+     * Returns CHANGED rows, not matched — a guard whose WHERE matches but whose SET
+     * changes nothing reports 0 (unless the link was opened with MYSQLI_CLIENT_FOUND_ROWS).
+     */
+    public function getLastAffectedRows(): int
+    {
+        return (int) $this->__affected_rows();
+    }
+
     public function getDeleteSingleLimit()
     {
         return $this->limitOffset(1);
