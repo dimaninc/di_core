@@ -1102,13 +1102,15 @@ abstract class diDB
      * affected rows before anything else can run.
      *
      * Returns CHANGED rows, not matched — a guard whose WHERE matches but whose SET
-     * changes nothing reports 0 (no MYSQLI_CLIENT_FOUND_ROWS). Returns -1 on query
-     * failure (the caller must treat -1 as a hard error, distinct from 0 == no match).
+     * changes nothing reports 0 (no MYSQLI_CLIENT_FOUND_ROWS). THROWS
+     * diDatabaseException on query failure (a hard error, distinct from a 0 ==
+     * no-match guard miss) — a throwing write path for new code; the legacy
+     * q()/insert()/update() keep their return-false-on-failure behaviour.
      */
     public function execWrite(string $sql): int
     {
         if ($this->rq($sql, true) === false) {
-            return -1;
+            throw new \diDatabaseException('execWrite: query execution failed');
         }
 
         return (int) $this->__affected_rows();

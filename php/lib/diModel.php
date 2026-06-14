@@ -2081,7 +2081,12 @@ class diModel implements \ArrayAccess
                 ->afterSave()
                 ->commitTransaction()
                 ->setOrigData();
-        } catch (\diRuntimeErrorsException $e) {
+        } catch (\Throwable $e) {
+            // Roll back on ANY failure, not only diRuntimeErrorsException: on PHP
+            // 8.1+ mysqli strict mode a raw mysqli_sql_exception (e.g. a duplicate-key
+            // INSERT) propagates straight out of real_query() and would otherwise
+            // leave this save()/hardDestroy() transaction dangling on the connection,
+            // corrupting later DB work in the same request.
             $this->rollbackTransaction();
 
             throw $e;
@@ -2149,7 +2154,12 @@ class diModel implements \ArrayAccess
                 ->afterKill()
                 ->commitTransaction()
                 ->killRelatedFilesAndData();
-        } catch (\diRuntimeErrorsException $e) {
+        } catch (\Throwable $e) {
+            // Roll back on ANY failure, not only diRuntimeErrorsException: on PHP
+            // 8.1+ mysqli strict mode a raw mysqli_sql_exception (e.g. a duplicate-key
+            // INSERT) propagates straight out of real_query() and would otherwise
+            // leave this save()/hardDestroy() transaction dangling on the connection,
+            // corrupting later DB work in the same request.
             $this->rollbackTransaction();
 
             throw $e;
