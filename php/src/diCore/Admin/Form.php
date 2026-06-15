@@ -2154,8 +2154,22 @@ EOF;
         return !!$this->getInputAttribute($field, $attribute);
     }
 
+    /**
+     * Whether the current admin may delete uploaded files/pics. Permissive by
+     * default (unchanged behavior); projects override to restrict the UI
+     * affordance (the real gate stays server-side in the Files controller).
+     */
+    protected function isFileDeletionAllowedForCurrentAdmin()
+    {
+        return true;
+    }
+
     private function getDelLinkCode($field, $opts = [])
     {
+        if (!$this->isFileDeletionAllowedForCurrentAdmin()) {
+            return '';
+        }
+
         $opts = extend(
             [
                 'suffix' => [],
