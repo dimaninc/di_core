@@ -33,6 +33,10 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
             'target_table.title' => 'Тип данных (таблица)',
             'target_table.all' => 'Все таблицы',
             'target_id.title' => 'Запись #',
+            'operation.title' => 'Операция',
+            'operation.all' => 'Все операции',
+            'operation.update' => 'Изменение',
+            'operation.delete' => 'Удаление',
             'created_at.title' => 'Дата',
             'edit_log.title' => 'Изменения',
         ],
@@ -45,6 +49,10 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
             'target_table.title' => 'Data type (table)',
             'target_table.all' => 'All tables',
             'target_id.title' => 'Record #',
+            'operation.title' => 'Operation',
+            'operation.all' => 'All operations',
+            'operation.update' => 'Update',
+            'operation.delete' => 'Deletion',
             'created_at.title' => 'When',
             'edit_log.title' => 'Edit log',
         ],
@@ -79,6 +87,12 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
                 'title' => $this->getVocabularyTerm('target_id.title'),
                 'rule' => FilterRule::equals,
             ])
+            ->addFilter([
+                'field' => 'operation',
+                'type' => 'string',
+                'title' => $this->getVocabularyTerm('operation.title'),
+                'rule' => FilterRule::equals,
+            ])
             ->buildQuery()
             ->setSelectFromCollectionInput(
                 'admin_id',
@@ -95,7 +109,19 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
             )
             ->setSelectFromArrayInput('target_table', $tables, [
                 '' => $this->getVocabularyTerm('target_table.all'),
-            ]);
+            ])
+            ->setSelectFromArrayInput(
+                'operation',
+                [
+                    Model::OPERATION_UPDATE => $this->getVocabularyTerm(
+                        'operation.update'
+                    ),
+                    Model::OPERATION_DELETE => $this->getVocabularyTerm(
+                        'operation.delete'
+                    ),
+                ],
+                ['' => $this->getVocabularyTerm('operation.all')]
+            );
     }
 
     protected function cacheDataForList()
@@ -137,9 +163,22 @@ class AdminTableEditLog extends \diCore\Admin\BasePage
                     'width' => '15%',
                 ],
             ],
+            'operation' => [
+                'title' => $this->getVocabularyTerm('operation.title'),
+                'headAttrs' => [
+                    'width' => '8%',
+                ],
+                'value' => function (Model $model) {
+                    return $model->isDeletion()
+                        ? '<span class="operation operation--delete">' .
+                            $this->getVocabularyTerm('operation.delete') .
+                            '</span>'
+                        : $this->getVocabularyTerm('operation.update');
+                },
+            ],
             'diff' => [
                 'headAttrs' => [
-                    'width' => '60%',
+                    'width' => '52%',
                 ],
                 'value' => function (Model $model) {
                     $model->parseData();

@@ -12,6 +12,9 @@ class diListController extends \diBaseAdminController
     private $orderDirections = ['up' => 'desc', 'down' => 'asc'];
     private $orderNumField = 'order_num';
 
+    // table => bool, whether its admin page enables useEditLog() (per-request memo)
+    private static $editLogEnabledCache = [];
+
     public function batchDeleteAction()
     {
         $c = $this->getTargetCollection();
@@ -217,9 +220,12 @@ class diListController extends \diBaseAdminController
             $ar['message'] = "Record #{$m->getId()} doesn't have field '$field'";
         } else {
             try {
+                $oldValue = $m->get($field);
+
                 $m->set($field, $m->get($field) ? 0 : 1)->save();
 
                 $this->afterToggle($m, $field)->postProcess($m);
+                $this->logAdminToggle($m, $field, $oldValue);
 
                 $ar['ok'] = true;
                 $ar['state'] = $m->get($field);
@@ -406,11 +412,114 @@ class diListController extends \diBaseAdminController
     {
         $copy = clone $m;
 
+        $this->logAdminDeletion($m);
+
         $m->hardDestroy();
 
         $this->postProcess($copy);
 
         return $this;
+    }
+
+    /**
+     * Records a list toggle (visible/active/top/…) as a regular edit-log entry.
+     * The single flipped field reads like any other field change, so operation
+     * stays 'update'.
+     */
+    protected function logAdminToggle(\diModel $m, $field, $oldValue)
+    {
+        if (!$this->shouldLogAdminEdit($m)) {
+            return $this;
+        }
+
+        try {
+            $old = $m->processFieldsOnSave([$field => $oldValue]);
+            $new = $m->processFieldsOnSave([$field => $m->get($field)]);
+
+            $log = \diCore\Entity\AdminTableEditLog\Model::create()
+                ->setTargetTable($m->getTable())
+                ->setTargetId($m->getId())
+                ->setAdminId($this->getEditLogAdminId())
+                ->setOldData(serialize($old))
+                ->setNewData(serialize($new));
+
+            if ($log->hasOldData() && $log->hasNewData()) {
+                $log->save();
+            }
+        } catch (\Throwable $e) {
+            // logging must never break the admin action
+        }
+
+        return $this;
+    }
+
+    /**
+     * Snapshots a record being deleted from a list (full row + related data) into
+     * the edit log before it is destroyed.
+     */
+    protected function logAdminDeletion(\diModel $m)
+    {
+        if (!$m->exists() || !$this->shouldLogAdminEdit($m)) {
+            return $this;
+        }
+
+        try {
+            \diCore\Entity\AdminTableEditLog\Model::createForDeletion(
+                $m,
+                $this->getEditLogAdminId()
+            )->save();
+        } catch (\Throwable $e) {
+            // logging must never break the admin action
+        }
+
+        return $this;
+    }
+
+    protected function getEditLogAdminId()
+    {
+        $admin = $this->getAdminModel();
+
+        return $admin ? $admin->getId() : 0;
+    }
+
+    /**
+     * Edit-log on a list toggle/delete is gated by the same useEditLog() flag the
+     * admin page already exposes — resolved from the table name (no table→page
+     * registry exists, so we map via the module naming convention).
+     *
+     * These actions are served over /api/ where the admin Base ($X) is NOT built,
+     * so we can't construct the page (its constructor needs Base and may have side
+     * effects). We instantiate it WITHOUT the constructor and call useEditLog() —
+     * the overrides are plain flag returns. Anything that needs page state throws
+     * and is treated as "no logging".
+     */
+    protected function shouldLogAdminEdit(\diModel $m)
+    {
+        $table = $m->getTable();
+
+        if (array_key_exists($table, self::$editLogEnabledCache)) {
+            return self::$editLogEnabledCache[$table];
+        }
+
+        $enabled = false;
+
+        try {
+            $pageClass = \diCore\Admin\Base::getModuleClassName($table);
+
+            if (
+                $pageClass &&
+                class_exists($pageClass) &&
+                is_subclass_of($pageClass, \diCore\Admin\BasePage::class)
+            ) {
+                /** @var \diCore\Admin\BasePage $page */
+                $page = (new \ReflectionClass($pageClass))->newInstanceWithoutConstructor();
+                $enabled = (bool) $page->useEditLog();
+            }
+        } catch (\Throwable $e) {
+            $enabled = false;
+        }
+
+        return self::$editLogEnabledCache[$table] = $enabled;
     }
 
     /**

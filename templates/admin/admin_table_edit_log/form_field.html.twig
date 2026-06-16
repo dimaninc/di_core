@@ -5,6 +5,7 @@
 		<li data-id="{{ rec.getId() }}">
 			<div class="author">
 				<b>{% if admins[rec['admin_id']].exists() %}<a href="{{ admins[rec['admin_id']]['admin_href'] }}">{% endif %}{{ admins[rec['admin_id']]['login'] ?: 'Robot' }}{% if admins[rec['admin_id']].exists() %}</a>{% endif %}</b>
+				{% if rec.isDeletion() %}<span class="operation operation--delete">{% if X.getLanguage() == 'ru' %}запись удалена{% else %}record deleted{% endif %}</span>{% endif %}
 				<i>{{ rec['created_at_date'] }} {{ rec['created_at_time'] }}</i>
 			</div>
 			<table>

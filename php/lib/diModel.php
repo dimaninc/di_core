@@ -3249,6 +3249,18 @@ ENGINE = InnoDB;";
         return $ar;
     }
 
+    /**
+     * Data captured into the admin edit log when the record is deleted from a list.
+     * Defaults to the whole row; override to also snapshot related rows stored in
+     * other tables (so the record can be restored together with them).
+     *
+     * @return array
+     */
+    public function getAdminEditLogSnapshot()
+    {
+        return $this->get();
+    }
+
     public static function getFieldTypes()
     {
         $ar = extend(static::$fieldTypes, static::$customFieldTypes);

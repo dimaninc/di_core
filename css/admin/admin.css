@@ -3960,6 +3960,19 @@ table.actions-log tbody td {
 table.actions-log tr:last-of-type td {
   background: #ffd;
 }
+.operation {
+  display: inline-block;
+  margin: 0 6px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  line-height: 16px;
+  vertical-align: middle;
+}
+.operation--delete {
+  background: #fdecea;
+  color: #c0392b;
+}
 .dynamic-add {
   --margin-v: 10px;
   cursor: pointer;

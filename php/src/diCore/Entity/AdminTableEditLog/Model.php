@@ -19,6 +19,7 @@ use diCore\Helper\ArrayHelper;
  * @method integer	getAdminId
  * @method string	getOldData
  * @method string	getNewData
+ * @method string	getOperation
  * @method string	getCreatedAt
  *
  * @method bool hasTargetTable
@@ -26,6 +27,7 @@ use diCore\Helper\ArrayHelper;
  * @method bool hasAdminId
  * @method bool hasOldData
  * @method bool hasNewData
+ * @method bool hasOperation
  * @method bool hasCreatedAt
  *
  * @method $this setTargetTable($value)
@@ -33,11 +35,16 @@ use diCore\Helper\ArrayHelper;
  * @method $this setAdminId($value)
  * @method $this setOldData($value)
  * @method $this setNewData($value)
+ * @method $this setOperation($value)
  * @method $this setCreatedAt($value)
  */
 class Model extends \diModel
 {
     const ADMIN_TAB_NAME = 'admin_edit_log';
+
+    // a regular field change (form submit or a list toggle) vs a record deletion
+    const OPERATION_UPDATE = 'update';
+    const OPERATION_DELETE = 'delete';
     protected static $lang = [
         'ru' => [
             'admin_tab_title' => 'История изменений',
@@ -73,6 +80,7 @@ class Model extends \diModel
         'admin_id' => FieldType::int,
         'old_data' => FieldType::string,
         'new_data' => FieldType::string,
+        'operation' => FieldType::string,
         'created_at' => FieldType::timestamp,
     ];
 
@@ -123,6 +131,43 @@ class Model extends \diModel
         }
 
         return $logs;
+    }
+
+    /**
+     * Snapshot a record about to be deleted: the whole row (plus any related data
+     * the model exposes via getAdminEditLogSnapshot()) is stored in old_data, with
+     * an empty new_data and operation = delete — enough to restore it later.
+     */
+    public static function createForDeletion(\diModel $m, $adminId = 0)
+    {
+        $log = static::create(static::type);
+
+        $data = $m->processFieldsOnSave($m->getAdminEditLogSnapshot());
+
+        $log->setOperation(static::OPERATION_DELETE)
+            ->setTargetTable($m->getTable())
+            ->setTargetId($m->getId())
+            ->setAdminId($adminId)
+            ->setOldData(serialize($data))
+            ->setNewData('');
+
+        return $log;
+    }
+
+    public function isDeletion()
+    {
+        return $this->getOperation() === static::OPERATION_DELETE;
+    }
+
+    // every log carries an explicit operation (deletions set it earlier); this also
+    // backfills the schemaless (Mongo) stores where there is no column default
+    public function beforeSave()
+    {
+        if (!$this->hasOperation()) {
+            $this->setOperation(static::OPERATION_UPDATE);
+        }
+
+        return parent::beforeSave();
     }
 
     public static function adminTabTitle($lang)
@@ -420,7 +465,8 @@ class Model extends \diModel
             $this->addValidationError('Old data required', 'old_data');
         }
 
-        if (!$this->hasNewData()) {
+        // a deletion keeps the whole row in old_data and intentionally has no new_data
+        if (!$this->isDeletion() && !$this->hasNewData()) {
             $this->addValidationError('New data required', 'new_data');
         }
 

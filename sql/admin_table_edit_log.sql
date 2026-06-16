@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS admin_table_edit_log(
   admin_id int,
   old_data MEDIUMTEXT,
   new_data MEDIUMTEXT,
+  operation varchar(16) not null default 'update',
   created_at timestamp default CURRENT_TIMESTAMP,
   index idx(`target_table`,`target_id`,`admin_id`,`created_at`),
   primary key(id)
