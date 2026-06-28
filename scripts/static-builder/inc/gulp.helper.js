@@ -101,7 +101,7 @@ Helper = {
   },
   replaceFolderInArray: function(ar, from, to) {
     return ar.map(function(s) {
-      return s.replace(new RegExp('^' + from), to);
+      return s.replace(new RegExp('^(!?)' + from), '$1' + to);
     });
   },
   tryDone: function(tasksDone, tasksTotal, done) {

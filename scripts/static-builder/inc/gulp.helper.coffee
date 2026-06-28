@@ -58,7 +58,8 @@ Helper =
             path = path.substr(1)
         neg + @getRootFolder() + path
 
-    replaceFolderInArray: (ar, from, to) -> ar.map (s) -> s.replace new RegExp('^' + from), to
+    # keep a leading "!" (negative glob) so exclusions survive the folder swap
+    replaceFolderInArray: (ar, from, to) -> ar.map (s) -> s.replace new RegExp('^(!?)' + from), '$1' + to
 
     tryDone: (tasksDone, tasksTotal, done) ->
         done() if tasksDone is tasksTotal
