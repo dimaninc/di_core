@@ -29,7 +29,6 @@ class System extends SimpleContainer
     const paymaster = 9;
     const crypto_cloud = 10;
     const alfabank = 11;
-    const alter = 99;
 
     public static $titles = [
         self::webmoney => 'Webmoney',
@@ -43,7 +42,6 @@ class System extends SimpleContainer
         self::paymaster => 'Paymaster',
         self::crypto_cloud => 'CryptoCloud',
         self::alfabank => 'Альфа-Банк',
-        self::alter => 'Alt',
     ];
 
     public static $names = [
@@ -58,7 +56,6 @@ class System extends SimpleContainer
         self::paymaster => 'paymaster',
         self::crypto_cloud => 'crypto_cloud',
         self::alfabank => 'alfabank',
-        self::alter => 'alt',
     ];
 
     public static function getSystemClass($systemId, $vendorId = null)
@@ -79,7 +76,6 @@ class System extends SimpleContainer
             case self::webmoney:
             case self::paypal:
             case self::crypto_cloud:
-            case self::alter:
                 return self::class;
 
             case self::paymaster:
