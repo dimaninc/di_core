@@ -1618,4 +1618,9 @@ abstract class diDB
     abstract public function getTableNames();
     abstract public function getFields($table);
     abstract public function getDumpCliCommand($options = []);
+
+    public function columnExists(string $table, string $column): bool
+    {
+        return array_key_exists($column, $this->getFields($table));
+    }
 }

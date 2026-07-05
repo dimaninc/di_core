@@ -94,4 +94,9 @@ abstract class Migration
     {
         return Connection::get(static::CONNECTION_NAME)->getDb();
     }
+
+    protected function columnExists(string $table, string $column): bool
+    {
+        return $this->getDb()->columnExists($table, $column);
+    }
 }
