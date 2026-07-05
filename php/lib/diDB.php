@@ -1291,10 +1291,57 @@ abstract class diDB
         return 'ROLLBACK;';
     }
 
+    protected function getSavepointQuery($name)
+    {
+        return "SAVEPOINT $name;";
+    }
+
+    protected function getReleaseSavepointQuery($name)
+    {
+        return "RELEASE SAVEPOINT $name;";
+    }
+
+    protected function getRollbackToSavepointQuery($name)
+    {
+        return "ROLLBACK TO SAVEPOINT $name;";
+    }
+
+    protected function getSavepointName($level)
+    {
+        return 'di_sp_' . $level;
+    }
+
     protected function startTransactionInner()
     {
         if ($this->getStartTransactionQuery()) {
             $this->rq($this->getStartTransactionQuery(), true);
+        }
+
+        return $this;
+    }
+
+    protected function savepointInner($name)
+    {
+        if ($this->getSavepointQuery($name)) {
+            $this->rq($this->getSavepointQuery($name), true);
+        }
+
+        return $this;
+    }
+
+    protected function releaseSavepointInner($name)
+    {
+        if ($this->getReleaseSavepointQuery($name)) {
+            $this->rq($this->getReleaseSavepointQuery($name), true);
+        }
+
+        return $this;
+    }
+
+    protected function rollbackToSavepointInner($name)
+    {
+        if ($this->getRollbackToSavepointQuery($name)) {
+            $this->rq($this->getRollbackToSavepointQuery($name), true);
         }
 
         return $this;
@@ -1318,11 +1365,32 @@ abstract class diDB
         return $this;
     }
 
+    /**
+     * Ref-counted / savepoint-based transaction nesting.
+     *
+     * MySQL/Postgres/SQLite have NO true nested transactions — a second
+     * `START TRANSACTION` implicitly commits the first. So the real
+     * BEGIN/COMMIT/ROLLBACK fire only at the OUTERMOST level; inner levels use
+     * SAVEPOINTs (standard SQL, supported by all three engines — and a genuine
+     * no-op on Mongo, which overrides the savepoint hooks). This lets a caller
+     * wrap several `save()`s (each of which opens its own transaction) in one
+     * outer transaction and have the whole thing commit or roll back atomically.
+     *
+     * WARNING: DDL (ALTER/CREATE/DROP/TRUNCATE) implicitly commits in MySQL and
+     * destroys all savepoints — never run schema changes inside a nested
+     * transaction, the "atomic" wrapper would silently become a lie.
+     */
     public function startTransaction()
     {
-        $this->transactionNestingLevel++;
+        if ($this->transactionNestingLevel == 0) {
+            $this->startTransactionInner();
+        } else {
+            $this->savepointInner(
+                $this->getSavepointName($this->transactionNestingLevel)
+            );
+        }
 
-        $this->startTransactionInner();
+        $this->transactionNestingLevel++;
 
         return $this;
     }
@@ -1332,7 +1400,17 @@ abstract class diDB
         if ($this->transactionNestingLevel) {
             $this->transactionNestingLevel--;
 
-            $this->commitTransactionInner();
+            if ($this->transactionNestingLevel == 0) {
+                $this->commitTransactionInner();
+            } else {
+                // releasing the savepoint keeps the inner work in the still-open
+                // outer transaction (nothing is durably committed until the
+                // outermost commit)
+                $this->unwindNestedSavepoint(
+                    $this->getSavepointName($this->transactionNestingLevel),
+                    false
+                );
+            }
         }
 
         return $this;
@@ -1343,7 +1421,57 @@ abstract class diDB
         if ($this->transactionNestingLevel) {
             $this->transactionNestingLevel--;
 
-            $this->rollbackTransactionInner();
+            if ($this->transactionNestingLevel == 0) {
+                $this->rollbackTransactionInner();
+            } else {
+                // partial rollback: undo only this nested level, the outer
+                // transaction stays alive and can still commit
+                $this->unwindNestedSavepoint(
+                    $this->getSavepointName($this->transactionNestingLevel),
+                    true
+                );
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * Release (commit path) or roll back to (rollback path) a nested savepoint,
+     * tolerating the case where the server already unwound the WHOLE transaction
+     * on its own — a deadlock (1213), or a lock-wait timeout under
+     * innodb_rollback_on_timeout, rolls the entire transaction back and destroys
+     * every savepoint. The SAVEPOINT op would then throw "SAVEPOINT … does not
+     * exist" (1305) straight out of real_query() under mysqli strict mode; and
+     * because rollbackTransaction() runs inside diModel::save()'s catch block,
+     * that new throw would MASK the original exception the caller must see.
+     *
+     * A missing savepoint means the work is already gone — exactly what a
+     * rollback wanted — so swallow the error and reset the nesting counter: the
+     * whole transaction is void, so no outer level has anything left to release
+     * or roll back, and the connection is safe to reuse (matters for long-lived
+     * CLI workers that share one connection across jobs).
+     */
+    private function unwindNestedSavepoint($name, $rollback)
+    {
+        try {
+            if ($rollback) {
+                $this->rollbackToSavepointInner($name);
+            } else {
+                $this->releaseSavepointInner($name);
+            }
+        } catch (\Throwable $e) {
+            // On the COMMIT path this is data loss the caller can't otherwise see
+            // (it was told the commit succeeded while its work is gone), so leave
+            // a trace. `false` = don't read the native error off a possibly-dead
+            // link — we already have the message, and this catch must not throw.
+            $this->_log(
+                ($rollback ? 'ROLLBACK TO' : 'RELEASE') .
+                    " SAVEPOINT $name failed, transaction presumed already rolled" .
+                    " back by the server: {$e->getMessage()}",
+                false
+            );
+            $this->transactionNestingLevel = 0;
         }
 
         return $this;

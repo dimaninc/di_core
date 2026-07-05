@@ -258,6 +258,25 @@ class Mongo extends \diDB
         return true;
     }
 
+    // Mongo has no SQL savepoints; make the nested-transaction hooks genuine
+    // no-ops rather than routing "SAVEPOINT …" through __rq() (which returns null
+    // → rq() logs an "Unable to exec RQ query" line per nested save on a
+    // Mongo-backed model, e.g. AdminTableEditLog).
+    protected function savepointInner($name)
+    {
+        return $this;
+    }
+
+    protected function releaseSavepointInner($name)
+    {
+        return $this;
+    }
+
+    protected function rollbackToSavepointInner($name)
+    {
+        return $this;
+    }
+
     protected function __reset(&$rs)
     {
     }
