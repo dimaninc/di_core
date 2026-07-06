@@ -99,4 +99,14 @@ abstract class Migration
     {
         return $this->getDb()->columnExists($table, $column);
     }
+
+    protected function indexExists(string $table, string $index): bool
+    {
+        return $this->getDb()->indexExists($table, $index);
+    }
+
+    protected function fkExists(string $table, string $foreignKey): bool
+    {
+        return $this->getDb()->fkExists($table, $foreignKey);
+    }
 }

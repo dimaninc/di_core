@@ -1751,4 +1751,35 @@ abstract class diDB
     {
         return array_key_exists($column, $this->getFields($table));
     }
+
+    public function indexExists(string $table, string $index): bool
+    {
+        return in_array($index, $this->getIndexNames($table), true);
+    }
+
+    public function fkExists(string $table, string $foreignKey): bool
+    {
+        return in_array($foreignKey, $this->getForeignKeyNames($table), true);
+    }
+
+    /**
+     * Names of the indexes defined on the table.
+     *
+     * Base fallback returns an empty list so indexExists() reports false on
+     * engines with no index metadata to introspect (e.g. Mongo) or any custom
+     * child that hasn't overridden this. SQL engines override it.
+     */
+    public function getIndexNames(string $table): array
+    {
+        return [];
+    }
+
+    /**
+     * Names of the foreign-key constraints on the table. Same fallback
+     * contract as getIndexNames().
+     */
+    public function getForeignKeyNames(string $table): array
+    {
+        return [];
+    }
 }

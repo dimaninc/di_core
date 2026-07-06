@@ -181,6 +181,41 @@ class diMYSQL extends diDB
         return $fields;
     }
 
+    public function getIndexNames(string $table): array
+    {
+        $names = [];
+        $tableEsc = $this->escapeValue($table);
+
+        // alias the column explicitly — bare information_schema columns come
+        // back upper-cased (INDEX_NAME), the alias preserves the case we read
+        $rs = $this->q(
+            "SELECT DISTINCT index_name AS name FROM information_schema.statistics
+                WHERE table_schema = DATABASE() AND table_name = $tableEsc"
+        );
+        while ($r = $this->fetch($rs)) {
+            $names[] = $r->name;
+        }
+
+        return $names;
+    }
+
+    public function getForeignKeyNames(string $table): array
+    {
+        $names = [];
+        $tableEsc = $this->escapeValue($table);
+
+        $rs = $this->q(
+            "SELECT constraint_name AS name FROM information_schema.table_constraints
+                WHERE table_schema = DATABASE() AND table_name = $tableEsc
+                    AND constraint_type = 'FOREIGN KEY'"
+        );
+        while ($r = $this->fetch($rs)) {
+            $names[] = $r->name;
+        }
+
+        return $names;
+    }
+
     public function getDumpCliCommand($options = [])
     {
         $options = $this->prepareDumpCliCommandOptions($options);

@@ -63,6 +63,20 @@ class Sqlite extends Pdo
         return $fields;
     }
 
+    // FK constraints are unnamed in SQLite, so getForeignKeyNames() keeps the
+    // base empty-list fallback (fkExists() always false here).
+    public function getIndexNames(string $table): array
+    {
+        $names = [];
+
+        $rs = $this->q('PRAGMA index_list(' . $this->escapeTable($table) . ')');
+        while ($rs && ($r = $this->fetch_array($rs))) {
+            $names[] = $r['name'];
+        }
+
+        return $names;
+    }
+
     public function getDumpCliCommand($options = [])
     {
         throw new \Exception('Implement getDumpCliCommand for sqlite');

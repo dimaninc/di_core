@@ -131,6 +131,37 @@ ORDER BY ordinal_position ASC");
         return $fields;
     }
 
+    public function getIndexNames(string $table): array
+    {
+        $names = [];
+        $tableEsc = $this->escapeValue($table);
+
+        // scope to the current schema (mirrors MySQL's DATABASE() filter) so a
+        // same-named table in another search_path schema can't false-positive
+        $rs = $this->q("SELECT indexname FROM pg_indexes
+WHERE tablename = $tableEsc AND schemaname = current_schema()");
+        while ($rs && ($r = $this->fetch_array($rs))) {
+            $names[] = $r['indexname'];
+        }
+
+        return $names;
+    }
+
+    public function getForeignKeyNames(string $table): array
+    {
+        $names = [];
+        $tableEsc = $this->escapeValue($table);
+
+        $rs = $this->q("SELECT constraint_name FROM information_schema.table_constraints
+WHERE table_name = $tableEsc AND table_schema = current_schema()
+    AND constraint_type = 'FOREIGN KEY'");
+        while ($rs && ($r = $this->fetch_array($rs))) {
+            $names[] = $r['constraint_name'];
+        }
+
+        return $names;
+    }
+
     public function getDumpCliCommand($options = [])
     {
         $options = $this->prepareDumpCliCommandOptions($options);
