@@ -330,6 +330,10 @@ class Payment extends \diBaseController
 
             case 'fail':
                 return $rk->fail(function (Robokassa $rk) {
+                    $this->onGatewayFailure(
+                        System::robokassa,
+                        array_merge($_GET, $_POST)
+                    );
                     $this->redirectTo($this->getTargetHref(self::STATUS_FAIL));
                 });
 
@@ -370,6 +374,8 @@ class Payment extends \diBaseController
                                 ArrayHelper::get($params, ['Data', 'Source'])
                             )
                         );
+                    } else {
+                        $this->onGatewayFailure(System::tinkoff, $params ?: []);
                     }
 
                     return 'OK';
@@ -405,6 +411,22 @@ class Payment extends \diBaseController
     }
 
     protected function beforeRoboAction()
+    {
+        return $this;
+    }
+
+    /**
+     * Neutral hook fired when a gateway reports a NON-successful outcome for the
+     * current draft (a non-CONFIRMED T-Bank notification, a Robokassa fail
+     * redirect, …). No-op by default — the happy path is untouched, so this
+     * cannot affect payment processing. Projects override it to record the
+     * failure reason for diagnostics. Implementations MUST stay best-effort
+     * (never throw into the callback), the draft is available via getDraft().
+     *
+     * @param int $system System id of the reporting gateway
+     * @param array $payload raw gateway payload (for forensics / reason mapping)
+     */
+    protected function onGatewayFailure($system, array $payload)
     {
         return $this;
     }
