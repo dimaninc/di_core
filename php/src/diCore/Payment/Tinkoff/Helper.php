@@ -93,7 +93,61 @@ class Helper extends BaseHelper
             );
         }
 
+        // Best-effort: remember T-Bank's PaymentId on the draft so an
+        // out-of-band reconciler can query GetState later — T-Bank does NOT push
+        // a notification for an on-form card decline. MUST never affect the
+        // redirect (mirrors the initMixplat save-at-init pattern).
+        try {
+            $paymentId = $this->getApi()->paymentId;
+
+            if ($paymentId && !$draft->hasOuterNumber()) {
+                $draft->setOuterNumber($paymentId)->save();
+            }
+        } catch (\Throwable $e) {
+            static::log('Failed to store PaymentId on draft: ' . $e->getMessage());
+        }
+
         return $url;
+    }
+
+    /**
+     * Query the current state of a payment via the GetState API.
+     *
+     * Parses the raw response directly (GetState returns the JSON body) instead
+     * of relying on MerchantApi's success/error flags — those key off the
+     * top-level ErrorCode, which conflates "GetState request failed" with "the
+     * payment was declined". Returns null on a transport / decode failure.
+     *
+     * @return array{Status:?string,ErrorCode:?string,Message:?string,Details:?string,Success:mixed,raw:array}|null
+     */
+    public function getPaymentState($paymentId): ?array
+    {
+        try {
+            $raw = $this->getApi()->getState(['PaymentId' => (string) $paymentId]);
+        } catch (\Throwable $e) {
+            static::log('GetState threw: ' . $e->getMessage());
+
+            return null;
+        }
+
+        if (!is_string($raw) || $raw === '') {
+            return null;
+        }
+
+        $json = json_decode($raw, true);
+
+        if (!is_array($json)) {
+            return null;
+        }
+
+        return [
+            'Status' => $json['Status'] ?? null,
+            'ErrorCode' => $json['ErrorCode'] ?? null,
+            'Message' => $json['Message'] ?? null,
+            'Details' => $json['Details'] ?? null,
+            'Success' => $json['Success'] ?? null,
+            'raw' => $json,
+        ];
     }
 
     public function generateToken($params)
