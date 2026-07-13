@@ -164,7 +164,15 @@ class diMYSQLi extends diMYSQL
 
     public function escape_string($s, $binary = false)
     {
-        return $s ? $this->link->escape_string($s) : $s;
+        // NB: a plain `$s ? … : $s` would let the string "0" (and int 0) through
+        // UNESCAPED — both are falsy in PHP. Harmless for those two values in
+        // isolation, but this is a generic public helper: only null/''/false may
+        // short-circuit, everything else gets escaped.
+        if ($s === null || $s === '' || $s === false) {
+            return $s;
+        }
+
+        return $this->link->escape_string($s);
     }
 
     protected function __set_charset($name)

@@ -93,21 +93,28 @@ class Helper extends BaseHelper
             );
         }
 
-        // Best-effort: remember T-Bank's PaymentId on the draft so an
-        // out-of-band reconciler can query GetState later — T-Bank does NOT push
-        // a notification for an on-form card decline. MUST never affect the
-        // redirect (mirrors the initMixplat save-at-init pattern).
+        // Neutral post-Init hook (projects may persist the PaymentId for an
+        // out-of-band GetState reconciler — T-Bank does NOT push a notification
+        // for an on-form card decline). MUST never affect the redirect.
         try {
-            $paymentId = $this->getApi()->paymentId;
-
-            if ($paymentId && !$draft->hasOuterNumber()) {
-                $draft->setOuterNumber($paymentId)->save();
-            }
+            $this->afterInit($draft, $this->getApi()->paymentId);
         } catch (\Throwable $e) {
-            static::log('Failed to store PaymentId on draft: ' . $e->getMessage());
+            static::log('afterInit failed: ' . $e->getMessage());
         }
 
         return $url;
+    }
+
+    /**
+     * Fired after a successful Init, with T-Bank's PaymentId. No-op by default —
+     * override in a project to persist it. Never throws into the payment flow
+     * (the caller swallows).
+     *
+     * @param string|int|null $paymentId
+     */
+    protected function afterInit(Draft $draft, $paymentId)
+    {
+        return $this;
     }
 
     /**
@@ -244,12 +251,4 @@ class Helper extends BaseHelper
         return $this;
     }
 
-    /*
-	public function getState(\diCore\Entity\PaymentDraft\Model $draft)
-    {
-        $this->getApi()->getState([
-            'PaymentId' => $draft->get
-        ]);
-    }
-	*/
 }

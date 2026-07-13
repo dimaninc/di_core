@@ -10,6 +10,10 @@ use HttpException;
  */
 class MerchantApi
 {
+    /** Bound every gateway call — a hang must not pin an FPM worker / CLI job. */
+    const CONNECT_TIMEOUT_SEC = 5;
+    const TIMEOUT_SEC = 20;
+
     private $api_url;
     private $terminalKey;
     private $secretKey;
@@ -204,6 +208,10 @@ class MerchantApi
             curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
             curl_setopt($curl, CURLOPT_POST, true);
             curl_setopt($curl, CURLOPT_POSTFIELDS, $args);
+            // Without these a hung gateway blocks forever — it would pin an FPM
+            // worker on Init and stall the CLI reconciler indefinitely.
+            curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, static::CONNECT_TIMEOUT_SEC);
+            curl_setopt($curl, CURLOPT_TIMEOUT, static::TIMEOUT_SEC);
             curl_setopt($curl, CURLOPT_HTTPHEADER, [
                 'Content-Type: application/json',
             ]);
