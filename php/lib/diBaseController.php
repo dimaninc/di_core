@@ -27,6 +27,14 @@ class diBaseController
 
     const SEND_NOINDEX_HEADER = true;
 
+    /**
+     * Whether to emit per-request speed logs (constructor / Action / afterAct) for
+     * this controller when Environment::shouldLogSpeed() is on. Turn off for
+     * long-running CLI workers whose bounded loop always exceeds the slow-speed
+     * threshold — otherwise every run flushes a useless slow-speed entry.
+     */
+    const LOG_SPEED = true;
+
     const RESULT_KEY = 'ok';
     const MESSAGE_KEY = 'message';
 
@@ -73,7 +81,7 @@ class diBaseController
     {
         $this->sendNoIndexHeader();
 
-        if (Environment::shouldLogSpeed()) {
+        if (Environment::shouldLogSpeed() && static::LOG_SPEED) {
             Logger::getInstance()->speed('constructor', static::class);
         }
 
@@ -373,7 +381,7 @@ class diBaseController
             $params = array_slice($paramsAr, $c::TINY_ACTIONS ? 1 : 2);
         }
 
-        if (Environment::shouldLogSpeed()) {
+        if (Environment::shouldLogSpeed() && $c::LOG_SPEED) {
             Logger::getInstance()->speed(
                 "Action=$action",
                 'BaseController/autoCreate'
@@ -382,7 +390,7 @@ class diBaseController
 
         $c->act($action, $params);
 
-        if (Environment::shouldLogSpeed()) {
+        if (Environment::shouldLogSpeed() && $c::LOG_SPEED) {
             Logger::getInstance()->speedFinish(
                 'afterAct',
                 'BaseController/autoCreate'
