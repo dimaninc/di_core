@@ -262,6 +262,11 @@ abstract class BasePage
 
             $o->getAdmin()->afterRender();
         } catch (\Exception $e) {
+            try {
+                Logger::getInstance()->variable($e);
+            } catch (\Throwable $ignored) {
+            }
+
             if (CMS::isDev()) {
                 throw $e;
             } else {

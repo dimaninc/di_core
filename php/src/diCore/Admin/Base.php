@@ -286,6 +286,11 @@ class Base
         try {
             $this->assignTplBase()->printContentPage();
         } catch (\Exception $e) {
+            try {
+                Logger::getInstance()->variable($e);
+            } catch (\Throwable $ignored) {
+            }
+
             $this->getTwig()->render(
                 'admin/_error/simple',
                 \diTwig::TOKEN_FOR_PAGE,
@@ -333,8 +338,13 @@ class Base
                 ->renderIndex()
                 ->getIndex();
         } catch (\Exception $e) {
+            try {
+                Logger::getInstance()->variable($e);
+            } catch (\Throwable $ignored) {
+            }
+
             echo 'fasttemplate fallback';
-            // var_dump($e);
+
             return $this->getTpl()->parse('index');
         }
     }

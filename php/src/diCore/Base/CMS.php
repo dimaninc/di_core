@@ -521,7 +521,7 @@ abstract class CMS
         /** @var self $class */
         $class = \diLib::getChildClass(static::class);
 
-        foreach (static::$envDomains as $envId => $domains) {
+        foreach ($class::$envDomains as $envId => $domains) {
             foreach ($domains as $pattern) {
                 if ($domain === $pattern || fnmatch($pattern, $domain)) {
                     return $envId;
