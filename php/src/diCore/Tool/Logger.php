@@ -65,6 +65,11 @@ class Logger
             $fnSuffix .= '-hard';
         }
 
+        // Keep test noise out of the log one debugs a live request from.
+        if (Environment::isTesting()) {
+            $fnSuffix .= '-test';
+        }
+
         return \diDateTime::format('Y_m_d') . $fnSuffix . static::EXTENSION;
     }
 

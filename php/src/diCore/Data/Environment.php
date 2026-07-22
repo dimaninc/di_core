@@ -39,6 +39,12 @@ class Environment
      */
     const logSpeed = null;
     /**
+     * Whether logSpeed also applies to CLI. Off by default: workers, crons and
+     * migrations are long-running by nature, so their timings are noise rather
+     * than a signal.
+     */
+    const logSpeedInCli = false;
+    /**
      * Slow speed value in seconds
      */
     const slowSpeedValue = 1;
@@ -118,10 +124,26 @@ class Environment
         return $class::initiating;
     }
 
+    /**
+     * True while a PHPUnit run is in progress, so no consumer has to declare
+     * anything. PHPUNIT_COMPOSER_INSTALL is defined by the phpunit binary before
+     * it loads the bootstrap file — TestCase alone is too late, it is autoloaded
+     * only once the first test runs.
+     */
+    public static function isTesting(): bool
+    {
+        return defined('PHPUNIT_COMPOSER_INSTALL') ||
+            class_exists(\PHPUnit\Framework\TestCase::class, false);
+    }
+
     final public static function shouldLogSpeed()
     {
         /** @var Environment $class */
         $class = self::getClass();
+
+        if (\diRequest::isCli() && !$class::logSpeedInCli) {
+            return false;
+        }
 
         return !!$class::logSpeed;
     }
