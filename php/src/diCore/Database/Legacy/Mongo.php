@@ -26,6 +26,12 @@ class Mongo extends \diDB
     const CHARSET_INIT_NEEDED = false;
     const DEFAULT_PORT = 27017;
 
+    // The driver's own defaults: retuning them library-wide would break consumers
+    // with a different topology. Override per connection — doc/mongo-timeouts.md
+    const SERVER_SELECTION_TIMEOUT_MS = 30000;
+    const CONNECT_TIMEOUT_MS = 10000;
+    const SOCKET_TIMEOUT_MS = 300000;
+
     /**
      * @var Client
      */
@@ -33,11 +39,71 @@ class Mongo extends \diDB
     /** @var string|null */
     protected $lastInsertId = null;
 
+    /** Per-connection overrides; null → the driver applies its own default. */
+    protected ?int $serverSelectionTimeoutMs = null;
+    protected ?int $connectTimeoutMs = null;
+    protected ?int $socketTimeoutMs = null;
+
+    protected function populateBasicSettings($settings)
+    {
+        $this->serverSelectionTimeoutMs = static::readTimeout(
+            $settings,
+            'serverSelectionTimeoutMS'
+        );
+        $this->connectTimeoutMs = static::readTimeout($settings, 'connectTimeoutMS');
+        $this->socketTimeoutMs = static::readTimeout($settings, 'socketTimeoutMS');
+
+        return parent::populateBasicSettings($settings);
+    }
+
+    public function getServerSelectionTimeoutMs(): int
+    {
+        return $this->serverSelectionTimeoutMs ??
+            static::SERVER_SELECTION_TIMEOUT_MS;
+    }
+
+    public function getConnectTimeoutMs(): int
+    {
+        return $this->connectTimeoutMs ?? static::CONNECT_TIMEOUT_MS;
+    }
+
+    public function getSocketTimeoutMs(): int
+    {
+        return $this->socketTimeoutMs ?? static::SOCKET_TIMEOUT_MS;
+    }
+
+    /** Numeric only — (int) would turn a typo into a real 0ms setting. */
+    protected static function readTimeout(array $settings, string $key): ?int
+    {
+        return isset($settings[$key]) && is_numeric($settings[$key])
+            ? (int) $settings[$key]
+            : null;
+    }
+
+    /**
+     * Only what was actually configured: passing the constants would pin today's
+     * driver defaults instead of letting the driver apply its own.
+     */
+    public function getClientOptions(): array
+    {
+        return array_filter(
+            [
+                'serverSelectionTimeoutMS' => $this->serverSelectionTimeoutMs,
+                'connectTimeoutMS' => $this->connectTimeoutMs,
+                'socketTimeoutMS' => $this->socketTimeoutMs,
+            ],
+            fn($v) => $v !== null
+        );
+    }
+
     protected function __connect()
     {
         $time1 = utime();
 
-        $this->mongo = new Client($this->getServerConnectionString());
+        $this->mongo = new Client(
+            $this->getServerConnectionString(),
+            $this->getClientOptions()
+        );
         $this->link = $this->mongo->selectDatabase($this->getDatabase());
 
         $this->time_log('connect', utime() - $time1);
@@ -50,7 +116,13 @@ class Mongo extends \diDB
         $s = 'mongodb://';
 
         if ($this->getUsername()) {
-            $s .= $this->getUsername() . ':' . $this->getPassword() . '@';
+            // Percent-encode, or a password with '@' makes the driver parse a
+            // different host. Cast: the password may be null (x.509 / Kerberos).
+            $s .=
+                rawurlencode((string) $this->getUsername()) .
+                ':' .
+                rawurlencode((string) $this->getPassword()) .
+                '@';
         }
 
         $s .= $this->getHost();

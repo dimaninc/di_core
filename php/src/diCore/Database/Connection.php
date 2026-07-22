@@ -11,6 +11,7 @@ namespace diCore\Database;
 use diCore\Base\CMS;
 use diCore\Data\Environment;
 use diCore\Helper\ArrayHelper;
+use diCore\Helper\StringHelper;
 
 abstract class Connection
 {
@@ -77,27 +78,42 @@ abstract class Connection
      * @param string|array $connData
      * @param int|null $engine
      * @param string|null $name
+     * @param array $extraOptions Extra engine settings, merged under $connData.
      */
-    public static function open($connData, $engine = null, $name = null)
-    {
+    public static function open(
+        $connData,
+        $engine = null,
+        $name = null,
+        array $extraOptions = []
+    ) {
         $name = $name ?? static::DEFAULT_NAME;
 
         // connection string support
         if (is_string($connData)) {
-            return static::openByDsn($connData, $name);
+            return static::openByDsn($connData, $name, $extraOptions);
         }
 
         $className = self::getChildClassName($engine ?? Engine::MYSQL);
         /** @var Connection $conn */
-        $conn = new $className($connData, $name);
+        $conn = new $className(
+            self::mergeExtraOptions($connData, $extraOptions),
+            $name
+        );
 
         self::add($name, $conn);
 
         return $conn;
     }
 
-    public static function openByDsn(string $dsn, string $name)
-    {
+    /**
+     * @param array $extraOptions Settings a DSN can't carry (its query string is
+     *                             not parsed), e.g. Mongo timeouts.
+     */
+    public static function openByDsn(
+        string $dsn,
+        string $name,
+        array $extraOptions = []
+    ) {
         if (empty($dsn)) {
             throw new \InvalidArgumentException('DSN must be provided');
         }
@@ -118,8 +134,13 @@ abstract class Connection
         $engine = $parts['scheme'] ?? null;
         $connData['host'] = $parts['host'] ?? null;
         $connData['port'] = isset($parts['port']) ? (int) $parts['port'] : null;
-        $connData['login'] = $parts['user'] ?? null;
-        $connData['password'] = $parts['pass'] ?? null;
+        // parse_url() does NOT decode, and the URI builder re-encodes — keep raw.
+        $connData['login'] = isset($parts['user'])
+            ? rawurldecode($parts['user'])
+            : null;
+        $connData['password'] = isset($parts['pass'])
+            ? rawurldecode($parts['pass'])
+            : null;
 
         if (isset($parts['path'])) {
             $path = ltrim($parts['path'], '/');
@@ -132,11 +153,54 @@ abstract class Connection
 
         $className = self::getChildClassName($engine);
         /** @var Connection $conn */
-        $conn = new $className($connData, $name);
+        $conn = new $className(
+            self::mergeExtraOptions($connData, $extraOptions),
+            $name
+        );
 
         self::add($name, $conn);
 
         return $conn;
+    }
+
+    /**
+     * $connData wins — $extraOptions can supply a missing value, never replace a
+     * provided one. $connData may be a LIST of fallback records: merging into the
+     * list itself would collapse it into one malformed record.
+     */
+    private static function mergeExtraOptions($connData, array $extraOptions)
+    {
+        if (!$extraOptions || !is_array($connData)) {
+            return $connData;
+        }
+
+        // An empty array is not a list of variants — treat it as a single record,
+        // otherwise the map below would silently drop $extraOptions entirely.
+        if (!$connData || ArrayHelper::isAssoc($connData)) {
+            return self::extendConnRecord($connData, $extraOptions);
+        }
+
+        return array_map(
+            fn($variant) => is_array($variant)
+                ? self::extendConnRecord($variant, $extraOptions)
+                : $variant,
+            $connData
+        );
+    }
+
+    private static function extendConnRecord(
+        array $record,
+        array $extraOptions
+    ): array {
+        // openByDsn() always seeds host/login/password/database, so null
+        // placeholders must not shadow an extra. Only the shadowed keys are dropped:
+        // filtering the whole record would change the key set parseConnData() sees.
+        $shadowedNulls = array_filter(
+            array_intersect_key($record, $extraOptions),
+            fn($v) => $v === null
+        );
+
+        return array_diff_key($record, $shadowedNulls) + $extraOptions;
     }
 
     /**
@@ -239,7 +303,9 @@ abstract class Connection
 
                 break;
             } catch (\Exception $e) {
-                $errors[] = $e->getMessage();
+                // Drivers echo the whole URI, credentials included, and this ends
+                // up in the exception below → error log and Sentry.
+                $errors[] = StringHelper::scrubUriCredentials($e->getMessage());
                 // do nothing, just go to the next connection data
             }
         }

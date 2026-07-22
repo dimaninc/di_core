@@ -78,6 +78,10 @@ Primary: Twig (`.html.twig` in `templates/`). Legacy: FastTemplate (`.html` in `
 
 Supports MySQL (primary), PostgreSQL, SQLite, MongoDB. Schema files in `sql/` with engine-specific variants in `sql/postgres/`, `sql/sqlite/`. Connection managed by `diCore\Database\Connection`.
 
+**Mongo connection options.** Timeouts keep the driver's own defaults — the library must not retune them for every consumer, since the safe value depends on topology (a replica set needs server selection to ride out a primary election). Set the three timeouts per connection in the settings array (other URI options are ignored); `Connection::open()`/`openByDsn()` also take them as a trailing `$extraOptions` argument, because a DSN's query string is not parsed. See [`doc/mongo-timeouts.md`](doc/mongo-timeouts.md).
+
+**Admin edit-log degradation.** `Admin\BasePage::printEditLog()` guards only its store read (against `\Exception`, so code bugs still surface) and fills the tab with a "temporarily unavailable" notice — the tab is registered unconditionally, so an empty one would read as "never edited". Failures go through the overridable `onEditLogUnavailable()` hook, which by default only writes to the file log. **Override it to report to your monitoring:** the same guard also turns a real breakage (e.g. a table missing after a bad migration) from a loud 500 into a quiet notice.
+
 ### Migrations
 
 Files in `_cfg/migrations/` (in consuming project), format `{idx}_{name}.php`. Extend `diCore\Database\Tool\Migration`. Must implement `up()` and `down()`. Tracked in `di_migrations_log` table. Managed via `MigrationsManager`.

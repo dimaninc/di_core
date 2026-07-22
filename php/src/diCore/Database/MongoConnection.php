@@ -22,14 +22,18 @@ class MongoConnection extends Connection
 
     protected function connect(ConnectionData $connData)
     {
-        $this->db = new Mongo([
-            'host' => $connData->getHost(),
-            'port' => $connData->getPort(),
-            'username' => $connData->getLogin(),
-            'password' => $connData->getPassword(),
-            'dbname' => $connData->getDatabase(),
-            'connection' => $this,
-        ]);
+        // Core keys win; everything else (timeouts, client options — see
+        // doc/mongo-timeouts.md) is passed through for Mongo to pick up.
+        $this->db = new Mongo(
+            [
+                'host' => $connData->getHost(),
+                'port' => $connData->getPort(),
+                'username' => $connData->getLogin(),
+                'password' => $connData->getPassword(),
+                'dbname' => $connData->getDatabase(),
+                'connection' => $this,
+            ] + $connData->getOtherOptions()
+        );
 
         return $this;
     }

@@ -393,9 +393,9 @@ abstract class BasePage
         return $this->getAdmin()->getLanguage();
     }
 
-    protected function localized($ar)
+    protected function localized($ar, $fallback = 'en')
     {
-        return $ar[$this->getLanguage()];
+        return $ar[$this->getLanguage()] ?? ($ar[$fallback] ?? null);
     }
 
     public function isColonNeededInFormTitles()
@@ -1395,12 +1395,34 @@ abstract class BasePage
             return $this;
         }
 
-        $records = TableEditLogs::create()
-            ->filterByTargetTable($this->getTable())
-            ->filterByTargetId([$this->getId(), (int) $this->getId()])
-            ->orderById('DESC');
+        // Guard the store access only, and only against \Exception — parseData()
+        // and the render stay outside so a code bug (\Error) isn't hidden as an outage.
+        $records = $this->createEditLogCollection();
 
-        $admins = Admins::create();
+        try {
+            $records->load();
+            // `records|length` in the template is a separate query on Mongo.
+            // Free today (loadChunk() already called count()), keeps it guarded.
+            $records->count();
+        } catch (\Exception $e) {
+            // Recovery must be best-effort itself: an unwritable log dir makes
+            // Logger raise a TypeError.
+            try {
+                $this->onEditLogUnavailable($e);
+            } catch (\Throwable $ignored) {
+            }
+
+            // Separate guard: a failed report must not cost the notice.
+            try {
+                $this->getForm()->setInput(
+                    TableEditLog::ADMIN_TAB_NAME,
+                    $this->getEditLogUnavailableText()
+                );
+            } catch (\Throwable $ignored) {
+            }
+
+            return $this;
+        }
 
         /** @var TableEditLog $rec */
         foreach ($records as $rec) {
@@ -1415,14 +1437,68 @@ abstract class BasePage
             (array) $this->useEditLog()
         );
 
-        $this->getForm()->setInput(
-            TableEditLog::ADMIN_TAB_NAME,
-            $this->getTwig()->parse('admin/admin_table_edit_log/form_field', [
-                'records' => $records,
-                'admins' => $admins,
-                'options' => $options,
-            ])
-        );
+        $content = $this->getTwig()->parse('admin/admin_table_edit_log/form_field', [
+            'records' => $records,
+            'admins' => Admins::create(),
+            'options' => $options,
+        ]);
+
+        $this->getForm()->setInput(TableEditLog::ADMIN_TAB_NAME, $content);
+
+        return $this;
+    }
+
+    /**
+     * Do not paginate an override: the guard below relies on load() fetching
+     * everything, or the chunk loading returns during the render, outside it.
+     *
+     * @return TableEditLogs
+     */
+    protected function createEditLogCollection()
+    {
+        return TableEditLogs::create()
+            ->filterByTargetTable($this->getTable())
+            ->filterByTargetId([$this->getId(), (int) $this->getId()])
+            ->orderById('DESC');
+    }
+
+    /**
+     * Shown in place of the log. The tab renders either way, and an empty one would
+     * read as "never edited". Override for your own wording.
+     */
+    protected function getEditLogUnavailableText()
+    {
+        return $this->localized([
+            'ru' => 'Журнал изменений временно недоступен',
+            'en' => 'Edit log is temporarily unavailable',
+        ]);
+    }
+
+    /**
+     * The edit-log store is unreachable. Override to report to your monitoring.
+     *
+     * @return $this
+     */
+    protected function onEditLogUnavailable(\Exception $e)
+    {
+        $text =
+            'Edit log unavailable for ' .
+            $this->getTable() .
+            '#' .
+            $this->getId() .
+            ': ' .
+            get_class($e) .
+            ': ' .
+            mb_substr(StringHelper::scrubUriCredentials($e->getMessage()), 0, 300);
+
+        Logger::getInstance()->log($text, 'admin_edit_log');
+
+        // A file log is write-only, and this used to be a loud 500. E_USER_WARNING
+        // reaches any SDK with an error handler; skipped only where PHP would print
+        // it into the half-rendered form.
+        if (\diRequest::isCli() || !ini_get('display_errors')) {
+            trigger_error($text, E_USER_WARNING);
+        }
 
         return $this;
     }

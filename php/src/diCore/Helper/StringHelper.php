@@ -805,4 +805,17 @@ class StringHelper
 
         echo $csv;
     }
+
+    /**
+     * Masks the userinfo of any URI in the text — driver messages embed connection
+     * strings with credentials. Userinfo is percent-encoded, so whitespace/quotes
+     * are safe terminators; greedy to the last '@' covers an encoded '@'.
+     *
+     * Being greedy also over-masks: `https://host/x?to=a@b.com` loses the host.
+     * Deliberate — a mangled log line beats a leaked password.
+     */
+    public static function scrubUriCredentials($text): string
+    {
+        return preg_replace('#://[^\s\'"]*@#', '://***@', (string) $text);
+    }
 }
