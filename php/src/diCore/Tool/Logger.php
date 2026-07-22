@@ -104,7 +104,15 @@ class Logger
             echo $line;
         }
 
-        $f = fopen($fn, 'a');
+        // Logging is called from error paths, so an unwritable folder must not
+        // turn the handler into the failure: fopen() returns false and fputs()
+        // would then raise a TypeError.
+        $f = @fopen($fn, 'a');
+
+        if (!$f) {
+            return $this;
+        }
+
         fputs($f, $line);
         fclose($f);
 

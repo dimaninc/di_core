@@ -12,6 +12,7 @@ use diCore\Base\CMS;
 use diCore\Data\Environment;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
+use diCore\Tool\Logger;
 
 abstract class Connection
 {
@@ -46,6 +47,12 @@ abstract class Connection
 
     /** @var \diDB */
     protected $db;
+
+    /**
+     * Whether the app cannot run without this connection. Databases are required;
+     * a cache-only store opts out via `required` in the connection settings.
+     */
+    protected ?bool $required = null;
 
     public function __construct($connData, $name = null)
     {
@@ -317,6 +324,15 @@ abstract class Connection
                 $message .= ', errors: ' . join('; ', $errors);
             }
 
+            if (!$this->isRequired()) {
+                try {
+                    Logger::getInstance()->log($message, 'database');
+                } catch (\Throwable $ignored) {
+                }
+
+                return $this;
+            }
+
             throw (new \diDatabaseException($message))->addMetadata([
                 'className' => static::class,
                 'connData' => $this->data,
@@ -331,10 +347,19 @@ abstract class Connection
         $allData = ArrayHelper::isAssoc($connData) ? [$connData] : $connData;
 
         foreach ($allData as $data) {
+            if ($this->required === null && isset($data['required'])) {
+                $this->required = (bool) $data['required'];
+            }
+
             $this->addConnData($data);
         }
 
         return $this;
+    }
+
+    public function isRequired(): bool
+    {
+        return $this->required ?? true;
     }
 
     protected function addConnData($connData): static
