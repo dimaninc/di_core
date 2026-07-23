@@ -404,7 +404,7 @@ class diBaseController
         return $c;
     }
 
-    public static function autoError(\Exception $e)
+    public static function autoError(\Throwable $e)
     {
         if ($e instanceof HttpException) {
             static::makeResponse($e, true);
