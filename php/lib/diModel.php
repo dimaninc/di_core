@@ -2709,9 +2709,12 @@ class diModel implements \ArrayAccess
 
         $fieldQuery = join(',', $fields);
 
+        // Follow the project's configured charset — a literal would silently
+        // create mb3 tables that truncate emoji.
+        $charsetClause = \diCore\Data\Config::getDbCharsetClause();
+
         return "CREATE TABLE IF NOT EXISTS {$tableName} ({$fieldQuery})
-DEFAULT CHARSET = 'utf8'
-COLLATE = 'utf8_general_ci'
+{$charsetClause}
 ENGINE = InnoDB;";
     }
 

@@ -292,9 +292,44 @@ abstract class diDB
         }
 
         $enc = Config::getDbEncoding() ?: 'UTF8';
+        $collation = Config::getDbCollation();
 
-        $this->q('SET NAMES ' . $enc . ' COLLATE ' . Config::getDbCollation());
-        $this->set_charset($enc);
+        // On mysql/mysqli set_charset() issues its own SET NAMES and resets the
+        // collation to the charset default, so it must come first or the
+        // configured collation is lost — harmless on utf8mb3 (same default), not
+        // on utf8mb4. (On the PDO driver it only records the name; the charset
+        // rides in the DSN. On Mongo it is a no-op.)
+        //
+        // An unknown charset THROWS on PHP >= 8.1 (mysqli defaults to
+        // MYSQLI_REPORT_ERROR|STRICT) and returns false below that, so both are
+        // caught: the connection is then still usable, just on the previous
+        // charset, and that must not pass silently.
+        try {
+            $ok = $this->set_charset($enc);
+        } catch (\Throwable $e) {
+            $ok = false;
+        }
+
+        if ($ok === false) {
+            // Also to the file log: diDB::$log is reset by the next resetLog()
+            // (Migration::run() does it first thing), so nothing would ever read
+            // this — and a connection silently left on the previous charset is
+            // exactly the data-loss case this whole ordering exists to prevent.
+            $message = "Unable to set connection charset to $enc";
+            $this->_log($message, false);
+
+            try {
+                \diCore\Tool\Logger::getInstance()->log($message, 'database');
+            } catch (\Throwable $e) {
+                // logging must never break connecting
+            }
+        }
+
+        // An empty collation would make this a syntax error; SET NAMES alone
+        // still leaves the connection usable on the charset default.
+        $this->q(
+            'SET NAMES ' . $enc . ($collation ? ' COLLATE ' . $collation : '')
+        );
 
         return $this;
     }

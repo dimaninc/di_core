@@ -39,7 +39,7 @@ class SchemaIntrospectionTest extends TestCase
                 '` (
                 id INT NOT NULL AUTO_INCREMENT,
                 PRIMARY KEY (id)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci'
+            ) ENGINE=InnoDB ' . \diCore\Data\Config::getDbCharsetClause()
         );
 
         $this->db->q(
@@ -60,7 +60,7 @@ class SchemaIntrospectionTest extends TestCase
                     REFERENCES `' .
                 self::PARENT_TABLE .
                 '`(id) ON DELETE SET NULL
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci'
+            ) ENGINE=InnoDB ' . \diCore\Data\Config::getDbCharsetClause()
         );
     }
 

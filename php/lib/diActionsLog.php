@@ -486,6 +486,10 @@ class diActionsLog
 
     private function initTable()
     {
+        // Follow the configured charset, else the table lands on mb3 and
+        // truncates emoji in `info`.
+        $charsetClause = \diCore\Data\Config::getDbCharsetClause();
+
         $res = $this->getDb()->q(
             'CREATE TABLE IF NOT EXISTS `' .
                 static::logTable .
@@ -501,7 +505,7 @@ class diActionsLog
 			INDEX target_idx(target_type,target_id),
 			INDEX user_idx(user_type,user_id),
 			PRIMARY KEY(id)
-		) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci"
+		) ENGINE=InnoDB $charsetClause"
         );
 
         if (!$res) {

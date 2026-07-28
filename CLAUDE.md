@@ -190,7 +190,7 @@ Step-by-step guide for creating a new database entity in a project that uses `di
 Create `db/dump/tables/{table_name}.sql` with `CREATE TABLE IF NOT EXISTS`.
 
 **Conventions:**
-- InnoDB engine, `DEFAULT CHARSET=utf8`, `COLLATE=utf8_general_ci`
+- InnoDB engine, `DEFAULT CHARSET=utf8mb4`, `COLLATE=utf8mb4_general_ci` — **always name the collation too**: a charset without one gets the server default (`utf8mb4_0900_ai_ci` on MySQL 8), which then collides with every other table on a join
 - `id` is `BIGINT AUTO_INCREMENT` primary key (or `INT` for small tables)
 - Columns use `snake_case`
 - `created_at` → `TIMESTAMP DEFAULT CURRENT_TIMESTAMP`

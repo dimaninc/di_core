@@ -13,7 +13,8 @@ use diCore\Helper\ArrayHelper;
 
 abstract class Pdo extends \diDB
 {
-    protected $charset = 'utf8';
+    /** null = follow Config::getDbEncoding(); see charset(). */
+    protected $charset = null;
 
     /** @var \PDO */
     protected $link;
@@ -81,7 +82,18 @@ abstract class Pdo extends \diDB
 
     protected function getDSN()
     {
-        return "$this->driver:host=$this->host;dbname=$this->dbname;charset=$this->charset";
+        return "$this->driver:host=$this->host;dbname=$this->dbname;charset=" .
+            $this->charset();
+    }
+
+    /**
+     * The DSN charset is what PDO escapes and quotes in, so a literal here left
+     * the client on mb3 while `SET NAMES` moved the server session to mb4 — the
+     * same split initCharset() exists to prevent.
+     */
+    protected function charset()
+    {
+        return $this->charset ?: (Config::getDbEncoding() ?: 'utf8');
     }
 
     protected function __close()
@@ -212,14 +224,20 @@ abstract class Pdo extends \diDB
         return $s;
     }
 
+    /**
+     * PDO fixes the charset in the DSN at connect time, so this only records the
+     * name — getDSN() is what actually applies it on the next connection.
+     */
     protected function __set_charset($name)
     {
+        $this->charset = $name;
+
         return true;
     }
 
     protected function __get_charset()
     {
-        return 'utf8';
+        return $this->charset();
     }
 
     protected function startTransactionInner()

@@ -14,4 +14,4 @@ CREATE TABLE IF NOT EXISTS admins(
   active tinyint default '1',
   index idx(login,email,active),
   primary key(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

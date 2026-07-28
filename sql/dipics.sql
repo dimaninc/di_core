@@ -25,4 +25,4 @@ CREATE TABLE IF NOT EXISTS dipics(
   index visible_idx(visible,order_num,date,_table,_field,_id),
   index idx2(_table,_id,_field,by_default),
   primary key(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

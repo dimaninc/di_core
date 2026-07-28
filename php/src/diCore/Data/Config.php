@@ -47,6 +47,11 @@ class Config
 
     const initiating = false; // if true, then DB is auto-created and admin works w/o password
 
+    // Deliberately still mb3: raising the default here would put an mb4
+    // connection over the mb3 schema of every existing consumer on a mere
+    // `composer update`, mixing collations on joins. NEW projects should set
+    // utf8mb4 in their own Data\Config (the shipped dumps are utf8mb4), old ones
+    // convert first — see the charset note in README.
     const dbEncoding = 'utf8';
     const dbCollation = 'utf8_general_ci';
 
@@ -275,6 +280,19 @@ class Config
         $class = self::getClass();
 
         return Environment::getDbCollation() ?? $class::dbCollation;
+    }
+
+    /**
+     * `DEFAULT CHARSET = … COLLATE = …` for generated DDL. Falls back to utf8mb3
+     * so a consumer that blanks either constant gets a valid statement rather
+     * than a syntax error, and quotes the names so both spellings are accepted.
+     */
+    final public static function getDbCharsetClause(): string
+    {
+        $charset = static::getDbEncoding() ?: 'utf8';
+        $collation = static::getDbCollation() ?: $charset . '_general_ci';
+
+        return "DEFAULT CHARSET = '$charset' COLLATE = '$collation'";
     }
 
     final public static function getSourcesFolder()

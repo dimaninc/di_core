@@ -18,4 +18,4 @@ CREATE TABLE IF NOT EXISTS ad_blocks(
   date timestamp default CURRENT_TIMESTAMP,
   key idx(purpose, target_type, target_id, visible, order_num),
   primary key(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

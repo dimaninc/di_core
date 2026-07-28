@@ -9,4 +9,4 @@ CREATE TABLE IF NOT EXISTS admin_table_edit_log(
   created_at timestamp default CURRENT_TIMESTAMP,
   index idx(`target_table`,`target_id`,`admin_id`,`created_at`),
   primary key(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

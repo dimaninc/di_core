@@ -10,6 +10,6 @@ CREATE TABLE order_status (
   KEY visible(visible, order_num)
 )
   ENGINE = InnoDB
-  DEFAULT CHARSET = utf8
-  COLLATE = utf8_general_ci;
+  DEFAULT CHARSET = utf8mb4
+  COLLATE = utf8mb4_general_ci;
 

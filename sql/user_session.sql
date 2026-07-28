@@ -12,6 +12,6 @@ CREATE TABLE IF NOT EXISTS user_session
     unique token_idx (token),
     primary key (id)
 )
-    DEFAULT CHARSET = 'utf8'
-    COLLATE = 'utf8_general_ci'
+    DEFAULT CHARSET = 'utf8mb4'
+    COLLATE = 'utf8mb4_general_ci'
     ENGINE = InnoDB;
