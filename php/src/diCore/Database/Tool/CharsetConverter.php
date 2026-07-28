@@ -70,10 +70,18 @@ class CharsetConverter
     }
 
     /**
-     * Everything that can make the run impossible, checked before the first
-     * ALTER. DDL does not roll back, so finding any of this halfway through
-     * leaves a half-converted schema — and a dropped trigger cannot be restored
-     * at all. Runs once; both entry points call it.
+     * Everything that can make the run impossible, in one go — call it FIRST.
+     *
+     * The entry points each check only what they need: convertTables() looks at
+     * columns, moveMyisamTablesToInnoDb() at nothing, and the DEFINER and
+     * stored-program-charset checks happen inside rebuildStoredPrograms(). Since
+     * that one is normally chained LAST, a schema whose triggers belong to
+     * another account would otherwise only find out once every table and the
+     * database default had already been converted — the half-converted, un-
+     * rollbackable state the checks exist to prevent.
+     *
+     * $tables scopes the COLUMN check only; the stored-program checks are always
+     * schema-wide, since a rebuild is too.
      *
      * @return self
      */
@@ -132,11 +140,15 @@ class CharsetConverter
      */
     private function assertStoredProgramCharsetsKnown(): void
     {
-        // `USING BTREE|HASH` is an index hint, not a charset — matching it
-        // would report a baffling "unknown charset BTREE".
-        $pattern =
-            '/(?:\b(?:CHARACTER SET|CHARSET|USING)\s+|(?<![A-Za-z0-9_])_)' .
-            '([A-Za-z0-9_]+)/i';
+        // Two patterns, not one alternation: the introducer form must require a
+        // following quote exactly as retarget() does, or every underscore-prefixed
+        // local variable (`DECLARE _count INT`) reads as a charset. `USING` is
+        // matched too, so BTREE/HASH are whitelisted below rather than reported
+        // as a baffling "unknown charset BTREE".
+        $patterns = [
+            '/\b(?:CHARACTER SET|CHARSET|USING)\s+([A-Za-z0-9_]+)/i',
+            '/(?<![A-Za-z0-9_])_([A-Za-z0-9_]+)(?=[\x27"])/i',
+        ];
         $known = array_merge(self::MB3_NAMES, [
             strtolower($this->charset),
             'binary',
@@ -146,8 +158,13 @@ class CharsetConverter
         $offenders = [];
 
         foreach ($this->storedProgramDefinitions() as $label => $ddl) {
-            preg_match_all($pattern, $ddl, $m);
-            foreach (array_unique($m[1]) as $name) {
+            $found = [];
+            foreach ($patterns as $pattern) {
+                preg_match_all($pattern, $ddl, $m);
+                $found = array_merge($found, $m[1]);
+            }
+
+            foreach (array_unique($found) as $name) {
                 if (!in_array(strtolower($name), $known, true)) {
                     $offenders[] = "$label ($name)";
                 }
@@ -502,8 +519,9 @@ class CharsetConverter
     private function convertTable(string $table): void
     {
         $parts = [];
+        $columns = $this->columnsToConvert($table);
 
-        foreach ($this->columnsToConvert($table) as $column) {
+        foreach ($columns as $column) {
             $parts[] = $this->modifyClause($column);
         }
 
@@ -516,7 +534,14 @@ class CharsetConverter
         // per character — the ALTER would abort. DYNAMIC lifts that to 3072, and
         // the table is being rebuilt anyway. COMPRESSED is left alone: it is a
         // deliberate choice and has the same 3072 limit.
-        if (in_array($this->rowFormat($table), ['COMPACT', 'REDUNDANT'], true)) {
+        // Only when columns are actually being widened. Without that guard a
+        // table whose default alone is wrong — the consuming project has one:
+        // cp1251 with no string columns at all — would turn a metadata-only
+        // ALTER into a full ALGORITHM=COPY rebuild under an exclusive lock.
+        if (
+            $columns &&
+            in_array($this->rowFormat($table), ['COMPACT', 'REDUNDANT'], true)
+        ) {
             $parts[] = 'ROW_FORMAT=DYNAMIC';
         }
 
@@ -713,6 +738,22 @@ class CharsetConverter
     }
 
     /**
+     * Does one GRANT line confer the right to recreate a program under someone
+     * else's DEFINER? Pure, so it is unit-testable.
+     *
+     * `ALL PRIVILEGES` only counts when granted globally: SUPER and SET_USER_ID
+     * have no database-level form, so the everyday `GRANT ALL ON mydb.* TO app`
+     * does NOT confer them. Reading that as a yes would pass the pre-flight and
+     * then fail after the first DROP TRIGGER — the unrecoverable state the
+     * pre-flight exists to prevent.
+     */
+    public static function grantAllowsForeignDefiner(string $grant): bool
+    {
+        return (bool) (preg_match('/\b(SUPER|SET_USER_ID)\b/i', $grant) ||
+            preg_match('/\bALL PRIVILEGES\b.*\bON\s+\*\.\*/i', $grant));
+    }
+
+    /**
      * SHOW GRANTS first: it lists privileges reaching the account through an
      * activated role, which information_schema.USER_PRIVILEGES does not, so
      * checking only the latter refuses a run that would have worked.
@@ -723,18 +764,7 @@ class CharsetConverter
 
         while ($rs && ($r = $this->db->fetch($rs))) {
             foreach (get_object_vars($r) as $grant) {
-                $grant = (string) $grant;
-
-                // ALL PRIVILEGES only counts when granted globally: SUPER and
-                // SET_USER_ID have no database-level form, so the usual
-                // `GRANT ALL ON mydb.* TO app` does NOT confer them — reading it
-                // as a yes would pass the pre-flight and then fail after the
-                // first DROP TRIGGER, in the unrecoverable state it exists to
-                // prevent.
-                if (
-                    preg_match('/\b(SUPER|SET_USER_ID)\b/i', $grant) ||
-                    preg_match('/\bALL PRIVILEGES\b.*\bON\s+\*\.\*/i', $grant)
-                ) {
+                if (self::grantAllowsForeignDefiner((string) $grant)) {
                     return true;
                 }
             }
@@ -852,8 +882,13 @@ class CharsetConverter
     private function withSqlMode(string $mode, callable $work): void
     {
         $previous = $this->sessionVar('sql_mode');
-        $this->db->q(
-            "SET SESSION sql_mode = '" . $this->quoted($mode) . "'"
+        // exec(), not q(): a mode the server rejects (a routine carrying the
+        // 5.7-era NO_AUTO_CREATE_USER, say) would otherwise fail silently and
+        // the program be recreated under the relaxed session mode — the very
+        // drift this method exists to prevent.
+        $this->exec(
+            "SET SESSION sql_mode = '" . $this->quoted($mode) . "'",
+            'sql_mode ' . $mode
         );
 
         try {

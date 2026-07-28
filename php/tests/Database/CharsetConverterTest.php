@@ -19,6 +19,9 @@ class CharsetConverterTest extends TestCase
     const MYISAM_TABLE = 'di_charset_probe_myisam';
     const COMPACT_TABLE = 'di_charset_probe_compact';
     const GENERATED_TABLE = 'di_charset_probe_generated';
+    const VIEW = 'di_charset_probe_view';
+    const ROUTINE = 'di_charset_probe_fn';
+    const ORDERED_TRIGGERS = ['zz_first', 'aa_second'];
 
     /** @var \diDB */
     private $db;
@@ -55,6 +58,11 @@ class CharsetConverterTest extends TestCase
     private function dropAll(): void
     {
         $this->db->q('DROP TRIGGER IF EXISTS `' . self::TRIGGER . '`');
+        foreach (self::ORDERED_TRIGGERS as $trigger) {
+            $this->db->q("DROP TRIGGER IF EXISTS `$trigger`");
+        }
+        $this->db->q('DROP VIEW IF EXISTS `' . self::VIEW . '`');
+        $this->db->q('DROP FUNCTION IF EXISTS `' . self::ROUTINE . '`');
         foreach (
             [self::TABLE, self::MYISAM_TABLE, self::COMPACT_TABLE, self::GENERATED_TABLE]
             as $table
@@ -438,7 +446,7 @@ class CharsetConverterTest extends TestCase
             if (strpos($e->getMessage(), 'di_charset_probe') !== false) {
                 throw $e;
             }
-            foreach (['zz_first', 'aa_second'] as $ours) {
+            foreach (self::ORDERED_TRIGGERS as $ours) {
                 if (strpos($e->getMessage(), $ours) !== false) {
                     throw $e;
                 }
@@ -491,7 +499,7 @@ class CharsetConverterTest extends TestCase
     {
         $this->db->q('DROP TRIGGER IF EXISTS `' . self::TRIGGER . '`');
         // Named so that alphabetical order is the REVERSE of the wanted one.
-        foreach (['zz_first', 'aa_second'] as $name) {
+        foreach (self::ORDERED_TRIGGERS as $name) {
             $this->db->q(
                 "CREATE TRIGGER `$name` BEFORE INSERT ON `" .
                     self::TABLE .
@@ -511,9 +519,6 @@ class CharsetConverterTest extends TestCase
             'zz_first' => (int) $this->triggerRow('zz_first')->ord,
             'aa_second' => (int) $this->triggerRow('aa_second')->ord,
         ];
-
-        $this->db->q('DROP TRIGGER IF EXISTS `zz_first`');
-        $this->db->q('DROP TRIGGER IF EXISTS `aa_second`');
 
         $this->assertSame($before, $after, 'firing order changed');
     }
@@ -539,6 +544,155 @@ class CharsetConverterTest extends TestCase
             $before,
             (string) $this->triggerRow(self::TRIGGER)->sql_mode
         );
+    }
+
+    /** A routine takes the extra probe/rename path; its sql_mode must survive it. */
+    public function testRoutineKeepsItsOwnSqlMode(): void
+    {
+        $this->db->q('DROP FUNCTION IF EXISTS `' . self::ROUTINE . '`');
+        $this->db->q(
+            'CREATE FUNCTION `' .
+                self::ROUTINE .
+                "` (a VARCHAR(10)) RETURNS VARCHAR(10) DETERMINISTIC RETURN a"
+        );
+
+        $rs = $this->db->q(
+            "SELECT SQL_MODE AS v FROM information_schema.ROUTINES
+             WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_NAME = '" .
+                self::ROUTINE .
+                "'"
+        );
+        $before = (string) $this->db->fetch($rs)->v;
+
+        if (strpos($before, 'NO_ZERO_DATE') === false) {
+            $this->markTestSkipped('session mode carries no NO_ZERO_DATE');
+        }
+
+        $this->rebuildPrograms();
+
+        $rs = $this->db->q(
+            "SELECT SQL_MODE AS v FROM information_schema.ROUTINES
+             WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_NAME = '" .
+                self::ROUTINE .
+                "'"
+        );
+
+        $this->assertSame($before, (string) $this->db->fetch($rs)->v);
+    }
+
+    public function testViewIsRebuiltAndRetargeted(): void
+    {
+        $mb3 = $this->mb3;
+        $this->db->q('DROP VIEW IF EXISTS `' . self::VIEW . '`');
+        $this->db->q(
+            'CREATE VIEW `' .
+                self::VIEW .
+                '` AS SELECT id, CONVERT(title USING ' .
+                $mb3 .
+                ') AS t FROM `' .
+                self::TABLE .
+                '`'
+        );
+
+        $this->convert();
+        $this->rebuildPrograms();
+
+        $rs = $this->db->q(
+            "SELECT VIEW_DEFINITION AS body FROM information_schema.VIEWS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '" .
+                self::VIEW .
+                "'"
+        );
+        $r = $this->db->fetch($rs);
+
+        $this->assertNotNull($r, 'view still exists');
+        $this->assertStringContainsString(self::TARGET, (string) $r->body);
+        $this->assertStringNotContainsString(
+            "using $mb3",
+            strtolower((string) $r->body)
+        );
+    }
+
+    /** COMPRESSED is a deliberate choice with the same 3072-byte limit. */
+    public function testCompressedRowFormatIsLeftAlone(): void
+    {
+        $mb3 = $this->mb3;
+        $this->db->q('DROP TABLE IF EXISTS `' . self::COMPACT_TABLE . '`');
+        $this->db->q(
+            'CREATE TABLE `' .
+                self::COMPACT_TABLE .
+                "` (id INT PRIMARY KEY, a VARCHAR(50))
+             ENGINE=InnoDB ROW_FORMAT=COMPRESSED
+             DEFAULT CHARSET=$mb3 COLLATE={$mb3}_general_ci"
+        );
+
+        (new CharsetConverter($this->db, self::TARGET, self::TARGET_COLLATION))
+            ->inPreparedSession(false, function ($c) {
+                $c->convertTables([self::COMPACT_TABLE]);
+            });
+
+        $rs = $this->db->q(
+            "SELECT ROW_FORMAT AS v FROM information_schema.TABLES
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '" .
+                self::COMPACT_TABLE .
+                "'"
+        );
+
+        $this->assertSame('Compressed', (string) $this->db->fetch($rs)->v);
+    }
+
+    /**
+     * `GRANT ALL ON mydb.*` confers neither SUPER nor SET_USER_ID, so reading it
+     * as permission would pass the pre-flight and fail after the first DROP.
+     */
+    public function testGrantPredicate(): void
+    {
+        $yes = [
+            "GRANT ALL PRIVILEGES ON *.* TO `root`@`%`",
+            "GRANT SUPER ON *.* TO `a`@`%`",
+            "GRANT SET_USER_ID ON *.* TO `a`@`%`",
+        ];
+        $no = [
+            "GRANT ALL PRIVILEGES ON `mydb`.* TO `app`@`%`",
+            "GRANT SELECT, INSERT ON *.* TO `app`@`%`",
+            "GRANT TRIGGER ON `mydb`.* TO `app`@`%`",
+        ];
+
+        foreach ($yes as $grant) {
+            $this->assertTrue(
+                CharsetConverter::grantAllowsForeignDefiner($grant),
+                $grant
+            );
+        }
+        foreach ($no as $grant) {
+            $this->assertFalse(
+                CharsetConverter::grantAllowsForeignDefiner($grant),
+                $grant
+            );
+        }
+    }
+
+    /** An underscore-prefixed local variable is not a charset introducer. */
+    public function testUnderscoreVariableIsNotTakenForACharset(): void
+    {
+        $this->db->q('DROP FUNCTION IF EXISTS `' . self::ROUTINE . '`');
+        $this->db->q(
+            'CREATE FUNCTION `' .
+                self::ROUTINE .
+                '` () RETURNS INT DETERMINISTIC BEGIN DECLARE _count INT; ' .
+                'SET _count = 0; RETURN _count; END'
+        );
+
+        $this->rebuildPrograms();
+
+        $rs = $this->db->q(
+            "SELECT COUNT(*) AS v FROM information_schema.ROUTINES
+             WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_NAME = '" .
+                self::ROUTINE .
+                "'"
+        );
+
+        $this->assertSame('1', (string) $this->db->fetch($rs)->v);
     }
 
     public function testUnknownCharsetIsRejected(): void

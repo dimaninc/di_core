@@ -311,26 +311,31 @@ abstract class diDB
         }
 
         if ($ok === false) {
-            // File log only, deliberately NOT _log(): a non-empty diDB::$log
-            // makes the next dierror() anywhere in the request escalate to
-            // _fatal() with an unrelated message. A connection left on the
-            // previous charset is worth recording, not worth turning into a
-            // fatal error somewhere else.
-            try {
-                \diCore\Tool\Logger::getInstance()->log(
-                    "Unable to set connection charset to $enc",
-                    'database'
-                );
-            } catch (\Throwable $e) {
-                // logging must never break connecting
-            }
+            // File log only, deliberately NOT _log(): see logConnectionProblem().
+            $this->logConnectionProblem(
+                "Unable to set connection charset to $enc"
+            );
         }
 
         // An empty collation would make this a syntax error; SET NAMES alone
         // still leaves the connection usable on the charset default.
+        //
+        // q() logs a failure into diDB::$log, and a non-empty log makes the next
+        // dierror() anywhere in the request escalate to _fatal() with an
+        // unrelated message — the same hazard the set_charset() branch above
+        // avoids. The log is empty at connect time, so anything this call adds
+        // is moved to the file log and cleared.
+        $logged = count($this->log);
         $this->q(
             'SET NAMES ' . $enc . ($collation ? ' COLLATE ' . $collation : '')
         );
+
+        if (count($this->log) > $logged) {
+            $this->logConnectionProblem(
+                'SET NAMES failed: ' . $this->getLogStr()
+            );
+            $this->resetLog();
+        }
 
         return $this;
     }
@@ -410,6 +415,22 @@ abstract class diDB
 
         if (count($this->log)) {
             $this->_fatal($message);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Charset problems go to the file log, never to diDB::$log: a non-empty log
+     * makes the next dierror() call anywhere escalate to _fatal() with someone
+     * else's message. Worth recording, not worth a fatal in an unrelated place.
+     */
+    protected function logConnectionProblem($message)
+    {
+        try {
+            \diCore\Tool\Logger::getInstance()->log($message, 'database');
+        } catch (\Throwable $e) {
+            // logging must never break connecting
         }
 
         return $this;

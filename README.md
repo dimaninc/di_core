@@ -37,6 +37,9 @@ one declares `ROW_FORMAT=DYNAMIC` explicitly, so they install even where
 `innodb_default_row_format` is still `COMPACT`; the converter likewise switches a
 `COMPACT`/`REDUNDANT` table to `DYNAMIC` as part of the widening `ALTER`, since
 that ALTER would otherwise abort. `COMPRESSED` tables are left as they are.
+Footnote for the truly ancient: on MySQL 5.5/5.6 with the Antelope file format,
+`ROW_FORMAT=DYNAMIC` silently falls back to `COMPACT` and the wide index fails
+anyway — both are long EOL, so **5.7.9+** remains the practical floor.
 
 #### Converting an existing schema
 
@@ -54,6 +57,10 @@ public function up()
     ))->inPreparedSession(
         false,
         fn($c) => $c
+            // First: everything that can make the run impossible. Without it a
+            // stored program owned by another account is only discovered after
+            // every table has been converted, and that cannot be rolled back.
+            ->preflight()
             ->moveMyisamTablesToInnoDb()
             ->convertTables()
             ->setDatabaseCharset()
