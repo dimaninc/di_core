@@ -17,9 +17,26 @@ class diMigration_20260728100000 extends \diCore\Database\Tool\Migration
 
     public function up()
     {
-        $this->convertTo(
-            \diCore\Data\Config::getDbEncoding(),
-            \diCore\Data\Config::getDbCollation()
+        $charset = \diCore\Data\Config::getDbEncoding();
+
+        // Never narrow. A project still configured as mb3 has mb3 tables and
+        // nothing to do — but its schema may already hold an mb4 table created
+        // from one of this package's (now mb4) dumps, and converting THAT down
+        // to mb3 would truncate every 4-byte character in it. Widening is an
+        // upgrade; narrowing is a decision only the project can make.
+        if (!$this->applicable() || $this->isMb3($charset)) {
+            return;
+        }
+
+        $this->convertTo($charset, \diCore\Data\Config::getDbCollation());
+    }
+
+    private function isMb3(string $charset): bool
+    {
+        return in_array(
+            strtolower($charset),
+            \diCore\Database\Tool\CharsetConverter::MB3_NAMES,
+            true
         );
     }
 
@@ -30,12 +47,26 @@ class diMigration_20260728100000 extends \diCore\Database\Tool\Migration
      */
     public function down()
     {
+        if (!$this->applicable()) {
+            return;
+        }
+
         $name = \diCore\Database\Tool\CharsetConverter::mb3NameFor($this->getDb());
         if ($name === null) {
             throw new \Exception('No utf8mb3 charset on this server');
         }
 
         $this->convertTo($name, $name . '_general_ci', true);
+    }
+
+    /**
+     * MySQL only. MigrationsManager also runs for SQLite and PostgreSQL
+     * consumers, where the converter's information_schema queries and ALTER
+     * syntax are meaningless — this migration is a no-op there, not a failure.
+     */
+    private function applicable(): bool
+    {
+        return \diCore\Database\Tool\CharsetConverter::supports($this->getDb());
     }
 
     private function convertTo(
@@ -77,7 +108,12 @@ class diMigration_20260728100000 extends \diCore\Database\Tool\Migration
     {
         $names = [];
 
-        foreach (glob(__DIR__ . '/../../sql/{,*/}*.sql', GLOB_BRACE) as $file) {
+        $files = array_merge(
+            glob(__DIR__ . '/../../sql/*.sql') ?: [],
+            glob(__DIR__ . '/../../sql/*/*.sql') ?: []
+        );
+
+        foreach ($files as $file) {
             if (preg_match('#/(postgres|sqlite)/#', $file)) {
                 continue; // engine-specific variants, not MySQL
             }

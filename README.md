@@ -15,6 +15,13 @@ anywhere.
 connection over the mb3 schema of every existing consumer on a mere
 `composer update`. So:
 
+> **The dumps and the default connection charset disagree on purpose, and that
+> is a temporary state.** A project that takes the mb4 dumps but leaves the
+> connection on mb3 gets tables able to hold emoji behind a connection that cuts
+> them first — silent loss, with nothing wrong-looking in the schema. Set the
+> connection charset, or convert, but do not sit in between. The migration below
+> refuses to narrow an mb4 table back to mb3 for the same reason.
+
 - **New project:** set `utf8mb4` right away in your own `Data\Config`:
   ```php
   const dbEncoding = 'utf8mb4';

@@ -5,4 +5,4 @@ CREATE TABLE `localization` (
   `en_value` TEXT,
   UNIQUE INDEX `name_idx` (`name`),
   PRIMARY KEY  (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

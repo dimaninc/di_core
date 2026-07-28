@@ -1,6 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.4.0
+
+Minor, not patch: the shipped dumps change charset, generated DDL and the
+connection init change behaviour, and a new migration runs on upgrade. Nothing
+here is breaking for a consumer that keeps its own `Data\Config`, but «install
+the update and carry on» is not the whole story — read the note below.
 
 ### utf8mb4 support
 
@@ -26,8 +31,9 @@ error anywhere.
   one of them is checked against the current account **before** the first
   `DROP`, since DDL does not roll back.
 - **New migration `charset/20260728100000`** converts the tables this package
-  ships to whatever charset the project configured. A no-op for a project that
-  stays on mb3.
+  ships to whatever charset the project configured. A genuine no-op for a
+  project that stays on mb3 or runs on SQLite/PostgreSQL: it never narrows a
+  charset, and it does not apply to non-MySQL connections.
 - **`diModel::getCreateTableQuery()` and `diActionsLog::initTable()`** follow the
   configured charset instead of a hardcoded `utf8`, via the new
   `Config::getDbCharsetClause()`.

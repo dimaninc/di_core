@@ -32,13 +32,22 @@ class CharsetConverter
     /** @var string */
     private $collation;
 
+    /** @var bool */
+    private $preflighted = false;
+
     public function __construct(\diDB $db, string $charset, string $collation)
     {
         $this->db = $db;
         $this->charset = $charset;
         $this->collation = $collation;
 
-        $this->assertTargetExists();
+        $this->resolveTarget();
+    }
+
+    /** MySQL-only: everything below speaks information_schema and MySQL DDL. */
+    public static function supports(\diDB $db): bool
+    {
+        return $db instanceof \diMYSQLi || $db instanceof \diMYSQL;
     }
 
     /**
@@ -47,11 +56,123 @@ class CharsetConverter
      */
     public function convertTables($tables = null)
     {
+        $this->preflight();
+
         foreach ($this->tablesToConvert($tables) as $table) {
             $this->convertTable($table);
         }
 
         return $this;
+    }
+
+    /**
+     * Everything that can make the run impossible, checked before the first
+     * ALTER. DDL does not roll back, so finding any of this halfway through
+     * leaves a half-converted schema — and a dropped trigger cannot be restored
+     * at all. Runs once; both entry points call it.
+     *
+     * @return self
+     */
+    public function preflight()
+    {
+        if ($this->preflighted) {
+            return $this;
+        }
+        $this->preflighted = true;
+
+        $this->assertColumnsConvertible();
+        $this->assertStoredProgramsRecreatable();
+        $this->assertStoredProgramCharsetsKnown();
+
+        return $this;
+    }
+
+    /**
+     * Columns the whitelist rebuild in modifyClause() cannot reproduce —
+     * generated columns, expression defaults, INVISIBLE — all of which show up
+     * as a non-empty EXTRA.
+     */
+    private function assertColumnsConvertible(): void
+    {
+        $bad = $this->column(
+            "SELECT CONCAT(TABLE_NAME, '.', COLUMN_NAME, ' (', EXTRA, ')') AS name
+             FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND COLLATION_NAME IS NOT NULL
+               AND EXTRA <> ''
+               AND " .
+                $this->wrongCollationCondition('COLLATION_NAME')
+        );
+
+        if ($bad) {
+            throw new \Exception(
+                'Cannot convert columns carrying EXTRA: ' .
+                    implode(', ', $bad) .
+                    ' — convert them by hand'
+            );
+        }
+    }
+
+    /**
+     * retarget() only knows how to rewrite the mb3 spellings, so a stored
+     * program declaring some other non-target charset (cp1251, latin1) would be
+     * left mangling text after its tables were converted. Refuse up front rather
+     * than rewrite a charset that may well be deliberate.
+     */
+    private function assertStoredProgramCharsetsKnown(): void
+    {
+        $pattern =
+            '/\b(?:CHARACTER SET|CHARSET|USING)\s+([A-Za-z0-9_]+)/i';
+        $known = array_merge(self::MB3_NAMES, [
+            strtolower($this->charset),
+            'binary',
+        ]);
+        $offenders = [];
+
+        foreach ($this->storedProgramDefinitions() as $label => $ddl) {
+            preg_match_all($pattern, $ddl, $m);
+            foreach (array_unique($m[1]) as $name) {
+                if (!in_array(strtolower($name), $known, true)) {
+                    $offenders[] = "$label ($name)";
+                }
+            }
+        }
+
+        if ($offenders) {
+            throw new \Exception(
+                'Stored programs declare a charset this converter will not ' .
+                    'rewrite: ' .
+                    implode(', ', array_unique($offenders)) .
+                    ' — convert them by hand'
+            );
+        }
+    }
+
+    /** label => DDL, for every routine, view and trigger in the schema. */
+    private function storedProgramDefinitions(): array
+    {
+        $out = [];
+
+        foreach ($this->routines() as $routine) {
+            $word = $routine['type'] === 'FUNCTION' ? 'FUNCTION' : 'PROCEDURE';
+            $out[strtolower($word) . ' ' . $routine['name']] = $this->showCreate(
+                "$word `{$routine['name']}`",
+                'Create ' . ucfirst(strtolower($word))
+            );
+        }
+
+        foreach ($this->viewNames() as $name) {
+            $out["view $name"] = $this->showCreate("VIEW `$name`", 'Create View');
+        }
+
+        foreach ($this->triggerNames() as $name) {
+            $out["trigger $name"] = $this->showCreate(
+                "TRIGGER `$name`",
+                'SQL Original Statement'
+            );
+        }
+
+        return $out;
     }
 
     /**
@@ -122,11 +243,7 @@ class CharsetConverter
      */
     public function rebuildStoredPrograms()
     {
-        // Recreating carries the original DEFINER, which needs SET_USER_ID (or
-        // SUPER) when it is not the current account. DDL is not transactional
-        // and a trigger has to be dropped before it can be recreated, so that is
-        // checked for every object up front rather than halfway through.
-        $this->assertStoredProgramsRecreatable();
+        $this->preflight();
 
         foreach ($this->routines() as $routine) {
             $this->rebuildRoutine($routine['name'], $routine['type']);
@@ -216,26 +333,65 @@ class CharsetConverter
     }
 
     /**
-     * A typo in the configured charset would otherwise surface as a syntax error
-     * from MySQL halfway through the conversion, with the schema already part
-     * converted.
+     * Rewrites the requested target to the spelling THIS server uses, then
+     * verifies it exists.
+     *
+     * Load-bearing for mb3: a project configured as `utf8` / `utf8_general_ci`
+     * finds neither in information_schema from MySQL 8.0.28 on, where they are
+     * `utf8mb3` / `utf8mb3_general_ci` — so an unresolved name both fails this
+     * check and, worse, makes every comparison below treat correctly-converted
+     * tables as wrong and rebuild the lot for nothing.
+     *
+     * A typo, on the other hand, must still fail here rather than as a syntax
+     * error halfway through, with the schema already part converted.
      */
-    private function assertTargetExists(): void
+    private function resolveTarget(): void
     {
-        $charset = $this->db->escape_string($this->charset);
-        $collation = $this->db->escape_string($this->collation);
+        foreach ($this->charsetSpellings($this->charset) as $charset) {
+            $collation = $this->collationFor($this->collation, $charset);
 
+            if ($this->collationExists($charset, $collation)) {
+                $this->charset = $charset;
+                $this->collation = $collation;
+
+                return;
+            }
+        }
+
+        throw new \Exception(
+            "Unknown charset/collation {$this->charset}/{$this->collation}"
+        );
+    }
+
+    /** Both names of the mb3 charset; anything else has only itself. */
+    private function charsetSpellings(string $charset): array
+    {
+        return in_array(strtolower($charset), self::MB3_NAMES, true)
+            ? self::MB3_NAMES
+            : [$charset];
+    }
+
+    /** utf8_general_ci + utf8mb3 -> utf8mb3_general_ci */
+    private function collationFor(string $collation, string $charset): string
+    {
+        foreach (self::MB3_NAMES as $name) {
+            if (stripos($collation, $name . '_') === 0) {
+                return $charset . '_' . substr($collation, strlen($name) + 1);
+            }
+        }
+
+        return $collation;
+    }
+
+    private function collationExists(string $charset, string $collation): bool
+    {
         $rs = $this->db->q(
             "SELECT 1 AS ok FROM information_schema.COLLATIONS
-             WHERE COLLATION_NAME = '$collation'
-               AND CHARACTER_SET_NAME = '$charset'"
+             WHERE COLLATION_NAME = '{$this->quoted($collation)}'
+               AND CHARACTER_SET_NAME = '{$this->quoted($charset)}'"
         );
 
-        if (!$rs || !$this->db->fetch($rs)) {
-            throw new \Exception(
-                "Unknown charset/collation {$this->charset}/{$this->collation}"
-            );
-        }
+        return (bool) ($rs && $this->db->fetch($rs));
     }
 
     private function sessionVar(string $name)
@@ -467,18 +623,29 @@ class CharsetConverter
         );
     }
 
+    /**
+     * SHOW GRANTS first: it lists privileges reaching the account through an
+     * activated role, which information_schema.USER_PRIVILEGES does not, so
+     * checking only the latter refuses a run that would have worked.
+     */
     private function canSetForeignDefiner(): bool
     {
-        $rs = $this->db->q(
-            "SELECT 1 AS ok FROM information_schema.USER_PRIVILEGES
-             WHERE PRIVILEGE_TYPE IN ('SUPER', 'SET_USER_ID')
-               AND GRANTEE = CONCAT(
-                     '''', SUBSTRING_INDEX(CURRENT_USER(), '@', 1),
-                     '''@''', SUBSTRING_INDEX(CURRENT_USER(), '@', -1), ''''
-                   )"
-        );
+        $rs = $this->db->q('SHOW GRANTS FOR CURRENT_USER()');
 
-        return (bool) ($rs && $this->db->fetch($rs));
+        while ($rs && ($r = $this->db->fetch($rs))) {
+            foreach (get_object_vars($r) as $grant) {
+                if (
+                    preg_match(
+                        '/\b(ALL PRIVILEGES|SUPER|SET_USER_ID)\b/i',
+                        (string) $grant
+                    )
+                ) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -489,15 +656,12 @@ class CharsetConverter
     private function rebuildRoutine(string $name, string $type): void
     {
         $word = $type === 'FUNCTION' ? 'FUNCTION' : 'PROCEDURE';
-        $ddl = $this->showCreate(
-            "$word `$name`",
-            'Create ' . ucfirst(strtolower($word))
+        $ddl = $this->retarget(
+            $this->showCreate(
+                "$word `$name`",
+                'Create ' . ucfirst(strtolower($word))
+            )
         );
-        if ($ddl === null) {
-            return;
-        }
-
-        $ddl = $this->retarget($ddl);
         $probe = substr('zz_probe_' . md5($name), 0, 60);
 
         $this->exec(
@@ -528,9 +692,6 @@ class CharsetConverter
     private function rebuildView(string $name): void
     {
         $ddl = $this->showCreate("VIEW `$name`", 'Create View');
-        if ($ddl === null) {
-            return;
-        }
 
         // retarget here too: a view body may carry its own CONVERT(… USING utf8)
         // or an explicit COLLATE.
@@ -548,9 +709,6 @@ class CharsetConverter
     private function rebuildTrigger(string $name): void
     {
         $ddl = $this->showCreate("TRIGGER `$name`", 'SQL Original Statement');
-        if ($ddl === null) {
-            return;
-        }
 
         // No probe pass: a second trigger for the same event would fire on any
         // write in between. The DEFINER pre-flight is what guards this path.
@@ -558,18 +716,34 @@ class CharsetConverter
         $this->exec($this->retarget($ddl), "trigger $name");
     }
 
-    private function showCreate(string $what, string $column)
+    /**
+     * Never returns null: MySQL answers with a row whose DDL column is NULL when
+     * the account may not see the definition, and silently skipping it would
+     * leave that program on the old charset, still mangling text — the exact
+     * failure this class exists to prevent.
+     */
+    private function showCreate(string $what, string $column): string
     {
         $rs = $this->db->q("SHOW CREATE $what");
         $r = $rs ? $this->db->fetch($rs) : null;
 
-        return $r && isset($r->$column) ? (string) $r->$column : null;
+        if (!$r || !isset($r->$column) || $r->$column === null) {
+            throw new \Exception(
+                "Cannot read the definition of $what (insufficient privileges?)"
+            );
+        }
+
+        return (string) $r->$column;
     }
 
     /**
-     * Rewrites charset/collation tokens in a stored program's definition. The
-     * negative lookahead keeps an already-converted utf8mb4 from becoming
-     * utf8mb4mb4.
+     * Rewrites the mb3 charset/collation tokens in a stored program's
+     * definition. `utf8mb4` is safe from the `utf8` alternative on its own — a
+     * word boundary cannot fall between "utf8" and "mb4".
+     *
+     * Only mb3 is rewritten; any other non-target charset is refused up front by
+     * assertStoredProgramCharsetsKnown(), since rewriting e.g. a deliberate
+     * cp1251 or ascii declaration would be a guess.
      */
     private function retarget(string $ddl): string
     {
@@ -577,7 +751,7 @@ class CharsetConverter
 
         return preg_replace(
             [
-                '/\b(CHARACTER SET|CHARSET|USING)\s+' . $old . '\b(?!mb4)/i',
+                '/\b(CHARACTER SET|CHARSET|USING)\s+' . $old . '\b/i',
                 '/\bCOLLATE\s+' . $old . '_(\w+)\b/i',
             ],
             ['$1 ' . $this->charset, 'COLLATE ' . $this->charset . '_$1'],
@@ -623,7 +797,11 @@ class CharsetConverter
      * diDB::q() logs failures instead of throwing, and a migration only inspects
      * that log once up() has returned — so each statement is checked on the spot,
      * else a failing table is stepped over and the schema left half converted.
+     *
      * The log is reset first, so an earlier failure isn't blamed on this one.
+     * Side effect: whatever the surrounding migration had accumulated in
+     * diDB::$log is discarded — acceptable, since q() only ever logs errors and
+     * any of those would already have thrown here.
      */
     private function exec(string $sql, string $context): void
     {

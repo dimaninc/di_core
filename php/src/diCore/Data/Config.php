@@ -283,16 +283,20 @@ class Config
     }
 
     /**
-     * `DEFAULT CHARSET = … COLLATE = …` for generated DDL. Falls back to utf8mb3
-     * so a consumer that blanks either constant gets a valid statement rather
-     * than a syntax error, and quotes the names so both spellings are accepted.
+     * `DEFAULT CHARSET = … COLLATE = …` for generated DDL.
+     *
+     * A blank charset falls back to utf8mb3, but a blank COLLATE is simply
+     * omitted rather than guessed at as "<charset>_general_ci" — that name need
+     * not exist for every charset, and inventing one only swaps a clear error
+     * for an obscure one.
      */
     final public static function getDbCharsetClause(): string
     {
         $charset = static::getDbEncoding() ?: 'utf8';
-        $collation = static::getDbCollation() ?: $charset . '_general_ci';
+        $collation = static::getDbCollation();
 
-        return "DEFAULT CHARSET = '$charset' COLLATE = '$collation'";
+        return "DEFAULT CHARSET = '$charset'" .
+            ($collation ? " COLLATE = '$collation'" : '');
     }
 
     final public static function getSourcesFolder()
