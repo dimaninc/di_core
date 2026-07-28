@@ -33,7 +33,7 @@ class CharsetConverter
     private $collation;
 
     /** @var bool */
-    private $preflighted = false;
+    private $programsPreflighted = false;
 
     public function __construct(\diDB $db, string $charset, string $collation)
     {
@@ -47,7 +47,8 @@ class CharsetConverter
     /** MySQL-only: everything below speaks information_schema and MySQL DDL. */
     public static function supports(\diDB $db): bool
     {
-        return $db instanceof \diMYSQLi || $db instanceof \diMYSQL;
+        // diMYSQLi extends diMYSQL, so the one check covers both drivers.
+        return $db instanceof \diMYSQL;
     }
 
     /**
@@ -56,7 +57,10 @@ class CharsetConverter
      */
     public function convertTables($tables = null)
     {
-        $this->preflight();
+        // Only the columns actually in scope: the bundled migration converts a
+        // fixed list, and a consumer's unrelated generated column elsewhere in
+        // the schema is none of its business.
+        $this->assertColumnsConvertible($tables);
 
         foreach ($this->tablesToConvert($tables) as $table) {
             $this->convertTable($table);
@@ -73,18 +77,24 @@ class CharsetConverter
      *
      * @return self
      */
-    public function preflight()
+    public function preflight($tables = null)
     {
-        if ($this->preflighted) {
-            return $this;
-        }
-        $this->preflighted = true;
-
-        $this->assertColumnsConvertible();
-        $this->assertStoredProgramsRecreatable();
-        $this->assertStoredProgramCharsetsKnown();
+        $this->assertColumnsConvertible($tables);
+        $this->assertStoredProgramsPreflight();
 
         return $this;
+    }
+
+    /** Only for the paths that actually rewrite stored programs. */
+    private function assertStoredProgramsPreflight(): void
+    {
+        if ($this->programsPreflighted) {
+            return;
+        }
+        $this->programsPreflighted = true;
+
+        $this->assertStoredProgramsRecreatable();
+        $this->assertStoredProgramCharsetsKnown();
     }
 
     /**
@@ -92,7 +102,7 @@ class CharsetConverter
      * generated columns, expression defaults, INVISIBLE — all of which show up
      * as a non-empty EXTRA.
      */
-    private function assertColumnsConvertible(): void
+    private function assertColumnsConvertible($tables = null): void
     {
         $bad = $this->column(
             "SELECT CONCAT(TABLE_NAME, '.', COLUMN_NAME, ' (', EXTRA, ')') AS name
@@ -101,7 +111,8 @@ class CharsetConverter
                AND COLLATION_NAME IS NOT NULL
                AND EXTRA <> ''
                AND " .
-                $this->wrongCollationCondition('COLLATION_NAME')
+                $this->wrongCollationCondition('COLLATION_NAME') .
+                $this->tableFilter('TABLE_NAME', $tables)
         );
 
         if ($bad) {
@@ -121,11 +132,16 @@ class CharsetConverter
      */
     private function assertStoredProgramCharsetsKnown(): void
     {
+        // `USING BTREE|HASH` is an index hint, not a charset — matching it
+        // would report a baffling "unknown charset BTREE".
         $pattern =
-            '/\b(?:CHARACTER SET|CHARSET|USING)\s+([A-Za-z0-9_]+)/i';
+            '/(?:\b(?:CHARACTER SET|CHARSET|USING)\s+|(?<![A-Za-z0-9_])_)' .
+            '([A-Za-z0-9_]+)/i';
         $known = array_merge(self::MB3_NAMES, [
             strtolower($this->charset),
             'binary',
+            'btree',
+            'hash',
         ]);
         $offenders = [];
 
@@ -243,18 +259,29 @@ class CharsetConverter
      */
     public function rebuildStoredPrograms()
     {
-        $this->preflight();
+        $this->assertStoredProgramsPreflight();
 
         foreach ($this->routines() as $routine) {
-            $this->rebuildRoutine($routine['name'], $routine['type']);
+            $this->rebuildRoutine(
+                $routine['name'],
+                $routine['type'],
+                $routine['sql_mode']
+            );
         }
 
         foreach ($this->viewNames() as $name) {
             $this->rebuildView($name);
         }
 
-        foreach ($this->triggerNames() as $name) {
-            $this->rebuildTrigger($name);
+        $previousInGroup = [];
+        foreach ($this->triggers() as $trigger) {
+            $group = $trigger['group'];
+            $follows = isset($previousInGroup[$group])
+                ? $previousInGroup[$group]
+                : null;
+
+            $this->rebuildTrigger($trigger, $follows);
+            $previousInGroup[$group] = $trigger['name'];
         }
 
         return $this;
@@ -484,7 +511,30 @@ class CharsetConverter
         $parts[] =
             "DEFAULT CHARACTER SET {$this->charset} COLLATE {$this->collation}";
 
+        // A COMPACT/REDUNDANT InnoDB table caps an index at 767 bytes, which an
+        // indexed varchar(255) blows past the moment it is widened to 4 bytes
+        // per character — the ALTER would abort. DYNAMIC lifts that to 3072, and
+        // the table is being rebuilt anyway. COMPRESSED is left alone: it is a
+        // deliberate choice and has the same 3072 limit.
+        if (in_array($this->rowFormat($table), ['COMPACT', 'REDUNDANT'], true)) {
+            $parts[] = 'ROW_FORMAT=DYNAMIC';
+        }
+
         $this->exec("ALTER TABLE `$table` " . implode(', ', $parts), $table);
+    }
+
+    private function rowFormat(string $table): string
+    {
+        $rs = $this->db->q(
+            "SELECT ROW_FORMAT AS v, ENGINE AS e FROM information_schema.TABLES
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND TABLE_NAME = '{$this->quoted($table)}'"
+        );
+        $r = $rs ? $this->db->fetch($rs) : null;
+
+        return $r && strcasecmp((string) $r->e, 'InnoDB') === 0
+            ? strtoupper((string) $r->v)
+            : '';
     }
 
     private function columnsToConvert(string $table): array
@@ -556,7 +606,8 @@ class CharsetConverter
     private function routines(): array
     {
         $rs = $this->db->q(
-            "SELECT ROUTINE_NAME AS name, ROUTINE_TYPE AS type
+            "SELECT ROUTINE_NAME AS name, ROUTINE_TYPE AS type,
+                    SQL_MODE AS sql_mode
              FROM information_schema.ROUTINES
              WHERE ROUTINE_SCHEMA = DATABASE()
                AND ROUTINE_TYPE IN ('PROCEDURE', 'FUNCTION')
@@ -565,7 +616,11 @@ class CharsetConverter
 
         $out = [];
         while ($r = $this->db->fetch($rs)) {
-            $out[] = ['name' => $r->name, 'type' => strtoupper($r->type)];
+            $out[] = [
+                'name' => $r->name,
+                'type' => strtoupper($r->type),
+                'sql_mode' => (string) $r->sql_mode,
+            ];
         }
 
         return $out;
@@ -579,12 +634,46 @@ class CharsetConverter
         );
     }
 
+    /**
+     * Ordered the way MySQL fires them, not alphabetically: several triggers may
+     * share a (table, timing, event) since 5.7, and their order is ACTION_ORDER.
+     * Recreating them in another order silently changes behaviour, and
+     * SHOW CREATE TRIGGER does not carry the FOLLOWS clause that would restore
+     * it — so it is rebuilt from ACTION_ORDER below.
+     */
+    private function triggers(): array
+    {
+        $rs = $this->db->q(
+            "SELECT TRIGGER_NAME AS name, EVENT_OBJECT_TABLE AS tbl,
+                    ACTION_TIMING AS timing, EVENT_MANIPULATION AS event,
+                    ACTION_ORDER AS ord, SQL_MODE AS sql_mode
+             FROM information_schema.TRIGGERS
+             WHERE TRIGGER_SCHEMA = DATABASE()
+             ORDER BY EVENT_OBJECT_TABLE, ACTION_TIMING, EVENT_MANIPULATION,
+                      ACTION_ORDER"
+        );
+
+        $out = [];
+        while ($rs && ($r = $this->db->fetch($rs))) {
+            $out[] = [
+                'name' => $r->name,
+                'group' => "{$r->tbl}/{$r->timing}/{$r->event}",
+                'order' => (int) $r->ord,
+                'sql_mode' => (string) $r->sql_mode,
+            ];
+        }
+
+        return $out;
+    }
+
     private function triggerNames(): array
     {
-        return $this->column(
-            "SELECT TRIGGER_NAME AS name FROM information_schema.TRIGGERS
-             WHERE TRIGGER_SCHEMA = DATABASE() ORDER BY TRIGGER_NAME"
-        );
+        $names = [];
+        foreach ($this->triggers() as $trigger) {
+            $names[] = $trigger['name'];
+        }
+
+        return $names;
     }
 
     /**
@@ -634,11 +723,17 @@ class CharsetConverter
 
         while ($rs && ($r = $this->db->fetch($rs))) {
             foreach (get_object_vars($r) as $grant) {
+                $grant = (string) $grant;
+
+                // ALL PRIVILEGES only counts when granted globally: SUPER and
+                // SET_USER_ID have no database-level form, so the usual
+                // `GRANT ALL ON mydb.* TO app` does NOT confer them — reading it
+                // as a yes would pass the pre-flight and then fail after the
+                // first DROP TRIGGER, in the unrecoverable state it exists to
+                // prevent.
                 if (
-                    preg_match(
-                        '/\b(ALL PRIVILEGES|SUPER|SET_USER_ID)\b/i',
-                        (string) $grant
-                    )
+                    preg_match('/\b(SUPER|SET_USER_ID)\b/i', $grant) ||
+                    preg_match('/\bALL PRIVILEGES\b.*\bON\s+\*\.\*/i', $grant)
                 ) {
                     return true;
                 }
@@ -653,8 +748,11 @@ class CharsetConverter
      * it can be recreated, and DDL does not roll back, so a definition that
      * fails to compile would otherwise leave the schema without it.
      */
-    private function rebuildRoutine(string $name, string $type): void
-    {
+    private function rebuildRoutine(
+        string $name,
+        string $type,
+        string $sqlMode
+    ): void {
         $word = $type === 'FUNCTION' ? 'FUNCTION' : 'PROCEDURE';
         $ddl = $this->retarget(
             $this->showCreate(
@@ -664,14 +762,21 @@ class CharsetConverter
         );
         $probe = substr('zz_probe_' . md5($name), 0, 60);
 
-        $this->exec(
-            $this->renameRoutineInDdl($ddl, $word, $name, $probe),
-            "$word $name (probe)"
-        );
-        $this->exec("DROP $word IF EXISTS `$probe`", "$word $name (probe)");
+        $this->withSqlMode($sqlMode, function () use (
+            $ddl,
+            $word,
+            $name,
+            $probe
+        ) {
+            $this->exec(
+                $this->renameRoutineInDdl($ddl, $word, $name, $probe),
+                "$word $name (probe)"
+            );
+            $this->exec("DROP $word IF EXISTS `$probe`", "$word $name (probe)");
 
-        $this->exec("DROP $word IF EXISTS `$name`", "$word $name");
-        $this->exec($ddl, "$word $name");
+            $this->exec("DROP $word IF EXISTS `$name`", "$word $name");
+            $this->exec($ddl, "$word $name");
+        });
     }
 
     private function renameRoutineInDdl(
@@ -706,14 +811,60 @@ class CharsetConverter
         );
     }
 
-    private function rebuildTrigger(string $name): void
+    /**
+     * $follows is the trigger that must fire before this one — MySQL keeps the
+     * order in ACTION_ORDER, but SHOW CREATE TRIGGER omits FOLLOWS, so it is
+     * appended here or the group silently ends up in creation order.
+     */
+    private function rebuildTrigger(array $trigger, $follows): void
     {
-        $ddl = $this->showCreate("TRIGGER `$name`", 'SQL Original Statement');
+        $name = $trigger['name'];
+        $ddl = $this->retarget(
+            $this->showCreate("TRIGGER `$name`", 'SQL Original Statement')
+        );
+
+        if ($follows !== null) {
+            // Syntax puts the ordering clause right after FOR EACH ROW and
+            // before the body — appending it at the end is a parse error.
+            $ddl = preg_replace(
+                '/\bFOR\s+EACH\s+ROW\b/i',
+                'FOR EACH ROW FOLLOWS `' . $follows . '`',
+                $ddl,
+                1
+            );
+        }
 
         // No probe pass: a second trigger for the same event would fire on any
         // write in between. The DEFINER pre-flight is what guards this path.
         $this->exec("DROP TRIGGER IF EXISTS `$name`", "trigger $name");
-        $this->exec($this->retarget($ddl), "trigger $name");
+        $this->withSqlMode($trigger['sql_mode'], function () use ($ddl, $name) {
+            $this->exec($ddl, "trigger $name");
+        });
+    }
+
+    /**
+     * A stored program remembers the sql_mode it was created under, and CREATE
+     * stamps the SESSION mode instead — which inPreparedSession() has
+     * deliberately altered. Without this every routine and trigger would come
+     * back with a different mode, and one written under ANSI_QUOTES would not
+     * even parse.
+     */
+    private function withSqlMode(string $mode, callable $work): void
+    {
+        $previous = $this->sessionVar('sql_mode');
+        $this->db->q(
+            "SET SESSION sql_mode = '" . $this->quoted($mode) . "'"
+        );
+
+        try {
+            $work();
+        } finally {
+            if ($previous !== null) {
+                $this->db->q(
+                    "SET SESSION sql_mode = '" . $this->quoted($previous) . "'"
+                );
+            }
+        }
     }
 
     /**
@@ -728,8 +879,15 @@ class CharsetConverter
         $r = $rs ? $this->db->fetch($rs) : null;
 
         if (!$r || !isset($r->$column) || $r->$column === null) {
+            // A row with a NULL definition means the account may not see it; no
+            // row at all means the object or its base table is gone.
             throw new \Exception(
-                "Cannot read the definition of $what (insufficient privileges?)"
+                'Cannot read the definition of ' .
+                    $what .
+                    ($r
+                        ? ' — not visible to this account'
+                        : ' — SHOW CREATE returned nothing') .
+                    ($this->db->getLogStr() ? ': ' . $this->db->getLogStr() : '')
             );
         }
 
@@ -753,8 +911,14 @@ class CharsetConverter
             [
                 '/\b(CHARACTER SET|CHARSET|USING)\s+' . $old . '\b/i',
                 '/\bCOLLATE\s+' . $old . '_(\w+)\b/i',
+                // introducer form: _utf8'…' before a literal
+                '/(?<![A-Za-z0-9_])_' . $old . '(?=[\x27"])/i',
             ],
-            ['$1 ' . $this->charset, 'COLLATE ' . $this->charset . '_$1'],
+            [
+                '$1 ' . $this->charset,
+                'COLLATE ' . $this->charset . '_$1',
+                '_' . $this->charset,
+            ],
             $ddl
         );
     }

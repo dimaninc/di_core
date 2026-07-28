@@ -311,15 +311,16 @@ abstract class diDB
         }
 
         if ($ok === false) {
-            // Also to the file log: diDB::$log is reset by the next resetLog()
-            // (Migration::run() does it first thing), so nothing would ever read
-            // this — and a connection silently left on the previous charset is
-            // exactly the data-loss case this whole ordering exists to prevent.
-            $message = "Unable to set connection charset to $enc";
-            $this->_log($message, false);
-
+            // File log only, deliberately NOT _log(): a non-empty diDB::$log
+            // makes the next dierror() anywhere in the request escalate to
+            // _fatal() with an unrelated message. A connection left on the
+            // previous charset is worth recording, not worth turning into a
+            // fatal error somewhere else.
             try {
-                \diCore\Tool\Logger::getInstance()->log($message, 'database');
+                \diCore\Tool\Logger::getInstance()->log(
+                    "Unable to set connection charset to $enc",
+                    'database'
+                );
             } catch (\Throwable $e) {
                 // logging must never break connecting
             }

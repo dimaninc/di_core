@@ -24,4 +24,4 @@ CREATE TABLE IF NOT EXISTS news(
   unique clean_title(clean_title),
   key visible_idx(visible,order_num,date),
   primary key(id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

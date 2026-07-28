@@ -16,4 +16,4 @@ CREATE TABLE IF NOT EXISTS fonts(
 	date TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
 	key idx(token,visible,order_num),
 	primary key(id)
-) ENGINE=InnoDB ROW_FORMAT=DYNAMIC DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

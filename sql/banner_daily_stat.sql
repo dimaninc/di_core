@@ -10,6 +10,6 @@ CREATE TABLE banner_daily_stat(
   unique `uri_idx` (banner_id,date,type,uri),
   primary key(id)
 )
-  ENGINE=InnoDB
+  ENGINE=InnoDB ROW_FORMAT=DYNAMIC
   DEFAULT CHARSET=utf8mb4
   COLLATE=utf8mb4_general_ci;

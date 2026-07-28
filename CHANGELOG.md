@@ -46,6 +46,12 @@ error anywhere.
   hardcoded `utf8`, which used to leave `PDO::quote()` on mb3 while the server
   session had moved to mb4.
 
-Requires **MySQL 5.7.9+** (or an InnoDB `DYNAMIC` row format): the shipped
-`slugs` and `localization` dumps index a `varchar(255)`, which needs 1020 bytes
-in mb4 — over the 767-byte limit of the older `COMPACT` format.
+- **`ROW_FORMAT=DYNAMIC`** is declared by every shipped dump that indexes a
+  `varchar(255)` — 1020 bytes in mb4, over the 767-byte limit of InnoDB's older
+  `COMPACT` format — and the converter switches a `COMPACT`/`REDUNDANT` table to
+  it as part of the widening `ALTER`, which would otherwise abort. So no minimum
+  MySQL version beyond what the rest of the library needs.
+- Stored programs keep their **own `sql_mode`** and, for triggers, their **firing
+  order**: `SHOW CREATE` carries neither, so recreating them naively stamped the
+  (deliberately relaxed) session mode on every one and reordered any group
+  sharing a table/timing/event.

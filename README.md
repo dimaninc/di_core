@@ -31,9 +31,12 @@ connection over the mb3 schema of every existing consumer on a mere
   convert the schema first, switch the connection second; an mb4 connection over
   mb3 columns keeps truncating.
 
-Requires **MySQL 5.7.9+** (InnoDB `DYNAMIC` row format). The `slugs` and
-`localization` dumps index a `varchar(255)`, which needs 1020 bytes in mb4 — over
-the 767-byte limit of the older `COMPACT` format.
+**Row format.** An indexed `varchar(255)` needs 1020 bytes in mb4, over the
+767-byte limit of InnoDB's older `COMPACT` format. Every shipped dump that has
+one declares `ROW_FORMAT=DYNAMIC` explicitly, so they install even where
+`innodb_default_row_format` is still `COMPACT`; the converter likewise switches a
+`COMPACT`/`REDUNDANT` table to `DYNAMIC` as part of the widening `ALTER`, since
+that ALTER would otherwise abort. `COMPRESSED` tables are left as they are.
 
 #### Converting an existing schema
 

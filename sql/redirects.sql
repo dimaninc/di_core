@@ -8,6 +8,6 @@ CREATE TABLE IF NOT EXISTS redirects (
   INDEX idx(old_url, status, active),
   PRIMARY KEY (id)
 )
-  ENGINE = InnoDB ROW_FORMAT=DYNAMIC
+  ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_general_ci;
