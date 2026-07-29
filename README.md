@@ -4,6 +4,11 @@ dimaninc Core library
 Upgrade notes
 -------------
 
+### Removed: `dbUpdater`
+
+`php/lib/dbUpdater.php` is gone. It was deprecated, but it was also global and
+autoloaded, so a consumer could be calling it directly — use migrations.
+
 ### utf8mb4
 
 The shipped `sql/*.sql` dumps are `utf8mb4` / `utf8mb4_general_ci`. utf8(mb3)
@@ -107,7 +112,15 @@ Three things it does NOT do for you:
 - **`di_migrations_log` is not in `sql/`**, so the bundled migration's table list
   does not include it even though this package creates it. Convert it with the
   rest of your schema.
-- **Plan for downtime.** Changing a charset is `ALGORITHM=COPY`: a full table
-  rebuild under an exclusive metadata lock, so writes to each table block for its
-  duration. Migrations usually run unattended via `up_last_not_executed` — size
-  the window against your largest table before that happens.
+- **Plan for downtime, and stop writes.** Changing a charset is
+  `ALGORITHM=COPY`: a full table rebuild under an exclusive metadata lock, so
+  writes to each table block for its duration. Worse for triggers — a rebuild is
+  `DROP` then `CREATE` with no lock in between, so a write landing in that window
+  runs WITHOUT the trigger. For a denormalising or cache-filling trigger that is
+  silent data divergence, not just downtime. Migrations usually run unattended
+  via `up_last_not_executed`; make sure that is not happening under traffic.
+
+The bundled migration picks its tables by dump filename, so a consumer table that
+merely shares a name with one of this package's (`order`, `content`, `news`,
+`tags`, `photos`, `comments`, `videos`, `feedback`, `searches`) is converted too.
+Usually what you want — converging on one charset — but worth knowing.

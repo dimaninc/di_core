@@ -50,7 +50,6 @@ error anywhere.
 - **PDO driver:** the DSN charset comes from the configuration instead of a
   hardcoded `utf8`, which used to leave `PDO::quote()` on mb3 while the server
   session had moved to mb4.
-
 - **`ROW_FORMAT=DYNAMIC`** is declared by every shipped dump that indexes a
   `varchar(255)` — 1020 bytes in mb4, over the 767-byte limit of InnoDB's older
   `COMPACT` format — and the converter switches a `COMPACT`/`REDUNDANT` table to

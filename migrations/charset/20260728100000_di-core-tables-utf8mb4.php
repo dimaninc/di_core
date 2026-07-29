@@ -42,7 +42,15 @@ class diMigration_20260728100000 extends \diCore\Database\Tool\Migration
      */
     public function down()
     {
-        if (!$this->applicable()) {
+        // Mirrors up()'s guard. Without it, a project left on the default mb3
+        // config — where up() did nothing — would have down() actively narrow
+        // these tables, and a fresh install is in exactly that state, since the
+        // shipped dumps are mb4. down() reverses up(); it does not convert a
+        // schema up() never touched.
+        if (
+            !$this->applicable() ||
+            CharsetConverter::isMb3Name(Config::getDbEncoding())
+        ) {
             return;
         }
 

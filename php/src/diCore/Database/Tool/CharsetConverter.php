@@ -85,22 +85,66 @@ class CharsetConverter
     public function preflight($tables = null)
     {
         $this->assertColumnsConvertible($tables);
+        $this->assertConvertibleEngines($tables);
         $this->assertStoredProgramsPreflight();
 
         return $this;
     }
 
+    /**
+     * A MyISAM table with a FULLTEXT index is deliberately left on MyISAM, whose
+     * key cap is 1000 bytes — so if it also carries an index over a varchar wide
+     * enough to exceed that once widened, its ALTER cannot succeed. Name it here
+     * rather than fail halfway through the run.
+     */
+    private function assertConvertibleEngines($tables = null): void
+    {
+        $bytes = strlen('x') * 4; // target is a 4-byte charset in practice
+        $bad = $this->column(
+            "SELECT DISTINCT CONCAT(s.TABLE_NAME, '.', s.INDEX_NAME) AS name
+             FROM information_schema.STATISTICS s
+             JOIN information_schema.TABLES t
+               ON t.TABLE_SCHEMA = s.TABLE_SCHEMA AND t.TABLE_NAME = s.TABLE_NAME
+             JOIN information_schema.COLUMNS c
+               ON c.TABLE_SCHEMA = s.TABLE_SCHEMA AND c.TABLE_NAME = s.TABLE_NAME
+              AND c.COLUMN_NAME = s.COLUMN_NAME
+             WHERE s.TABLE_SCHEMA = DATABASE()
+               AND t.ENGINE = 'MyISAM'
+               AND s.INDEX_TYPE <> 'FULLTEXT'
+               AND c.CHARACTER_SET_NAME IS NOT NULL
+               AND EXISTS (
+                 SELECT 1 FROM information_schema.STATISTICS f
+                 WHERE f.TABLE_SCHEMA = s.TABLE_SCHEMA
+                   AND f.TABLE_NAME = s.TABLE_NAME
+                   AND f.INDEX_TYPE = 'FULLTEXT'
+               )
+             GROUP BY s.TABLE_NAME, s.INDEX_NAME
+             HAVING SUM(
+               COALESCE(s.SUB_PART, c.CHARACTER_MAXIMUM_LENGTH) * $bytes
+             ) > 1000" . $this->tableFilter('s.TABLE_NAME', $tables)
+        );
+
+        if ($bad) {
+            throw new \Exception(
+                'MyISAM FULLTEXT tables whose key would exceed the 1000-byte ' .
+                    'cap once widened: ' .
+                    implode(', ', $bad) .
+                    ' — convert them by hand'
+            );
+        }
+    }
+
     /** Only for the paths that actually rewrite stored programs. */
-    private function assertStoredProgramsPreflight(): void
+    private function assertStoredProgramsPreflight($names = null): void
     {
         if ($this->programsPreflighted) {
             return;
         }
         $this->programsPreflighted = true;
 
-        $this->assertStoredProgramsRecreatable();
-        $this->assertStoredProgramCharsetsKnown();
-        $this->assertSqlModesSettable();
+        $this->assertStoredProgramsRecreatable($names);
+        $this->assertStoredProgramCharsetsKnown($names);
+        $this->assertSqlModesSettable($names);
     }
 
     /**
@@ -190,12 +234,12 @@ class CharsetConverter
      * rejects (a 5.7-era NO_AUTO_CREATE_USER, say) would otherwise be discovered
      * with the program already gone.
      */
-    private function assertSqlModesSettable(): void
+    private function assertSqlModesSettable($names = null): void
     {
         $modes = array_unique(
             array_merge(
-                array_column($this->routines(), 'sql_mode'),
-                array_column($this->triggers(), 'sql_mode')
+                array_column($this->routines($names), 'sql_mode'),
+                array_column($this->triggers($names), 'sql_mode')
             )
         );
 
@@ -312,7 +356,7 @@ class CharsetConverter
      */
     public function rebuildStoredPrograms($names = null)
     {
-        $this->assertStoredProgramsPreflight();
+        $this->assertStoredProgramsPreflight($names);
 
         // MySQL stamps a stored program with the SESSION charset context it was
         // created under. Rebuilding on the old connection charset — which is
@@ -377,18 +421,35 @@ class CharsetConverter
             $this->rebuildView($name);
         }
 
-        // FOLLOWS is rebuilt per (table, timing, event) group, so the group has
-        // to be walked whole — scoping applies to which programs are touched,
-        // not to how their order is reconstructed.
-        $previousInGroup = [];
-        foreach ($this->triggers($names) as $trigger) {
-            $group = $trigger['group'];
-            $follows = isset($previousInGroup[$group])
-                ? $previousInGroup[$group]
-                : null;
+        // Ordering is resolved against the FULL group, never the scoped subset:
+        // a trigger recreated without a position clause is appended last, so
+        // rebuilding just one of a group would silently move it. Walk every
+        // trigger in firing order, rebuild only those in scope, and give each
+        // its real neighbour — FOLLOWS the one before it, or PRECEDES the one
+        // after when it is first in its group.
+        $groups = [];
+        foreach ($this->triggers() as $trigger) {
+            $groups[$trigger['group']][] = $trigger;
+        }
 
-            $this->rebuildTrigger($trigger, $follows);
-            $previousInGroup[$group] = $trigger['name'];
+        $scoped = $names === null ? null : array_flip($names);
+
+        foreach ($groups as $group) {
+            foreach ($group as $i => $trigger) {
+                if ($scoped !== null && !isset($scoped[$trigger['name']])) {
+                    continue;
+                }
+
+                if ($i > 0) {
+                    $position = ['FOLLOWS', $group[$i - 1]['name']];
+                } elseif (isset($group[$i + 1])) {
+                    $position = ['PRECEDES', $group[$i + 1]['name']];
+                } else {
+                    $position = null;
+                }
+
+                $this->rebuildTrigger($trigger, $position);
+            }
         }
     }
 
@@ -796,7 +857,7 @@ class CharsetConverter
      * / SUPER. Checked before the first DROP, because there is no rolling a
      * dropped trigger back.
      */
-    private function assertStoredProgramsRecreatable(): void
+    private function assertStoredProgramsRecreatable($names = null): void
     {
         $rs = $this->db->q('SELECT CURRENT_USER() AS u');
         $r = $rs ? $this->db->fetch($rs) : null;
@@ -805,13 +866,19 @@ class CharsetConverter
         $foreign = $this->column(
             "SELECT DISTINCT DEFINER AS name FROM (
                 SELECT DEFINER FROM information_schema.ROUTINES
-                 WHERE ROUTINE_SCHEMA = DATABASE()
+                 WHERE ROUTINE_SCHEMA = DATABASE()" .
+                $this->tableFilter('ROUTINE_NAME', $names) .
+                "
                 UNION ALL
                 SELECT DEFINER FROM information_schema.TRIGGERS
-                 WHERE TRIGGER_SCHEMA = DATABASE()
+                 WHERE TRIGGER_SCHEMA = DATABASE()" .
+                $this->tableFilter('TRIGGER_NAME', $names) .
+                "
                 UNION ALL
                 SELECT DEFINER FROM information_schema.VIEWS
-                 WHERE TABLE_SCHEMA = DATABASE()
+                 WHERE TABLE_SCHEMA = DATABASE()" .
+                $this->tableFilter('TABLE_NAME', $names) .
+                "
              ) d WHERE DEFINER <> '{$this->quoted($current)}'"
         );
 
@@ -935,23 +1002,23 @@ class CharsetConverter
     }
 
     /**
-     * $follows is the trigger that must fire before this one — MySQL keeps the
-     * order in ACTION_ORDER, but SHOW CREATE TRIGGER omits FOLLOWS, so it is
-     * appended here or the group silently ends up in creation order.
+     * $position is [FOLLOWS|PRECEDES, other trigger] — MySQL keeps the order in
+     * ACTION_ORDER but SHOW CREATE TRIGGER omits the clause, so without it the
+     * recreated trigger is appended last in its group.
      */
-    private function rebuildTrigger(array $trigger, $follows): void
+    private function rebuildTrigger(array $trigger, $position): void
     {
         $name = $trigger['name'];
         $ddl = $this->retarget(
             $this->showCreate("TRIGGER `$name`", 'SQL Original Statement')
         );
 
-        if ($follows !== null) {
+        if ($position !== null) {
             // Syntax puts the ordering clause right after FOR EACH ROW and
             // before the body — appending it at the end is a parse error.
             $ddl = preg_replace(
                 '/\bFOR\s+EACH\s+ROW\b/i',
-                'FOR EACH ROW FOLLOWS `' . $follows . '`',
+                'FOR EACH ROW ' . $position[0] . ' `' . $position[1] . '`',
                 $ddl,
                 1
             );
@@ -1045,7 +1112,7 @@ class CharsetConverter
                 '|"(?:[^"\\\\]|\\\\.|"")*"' . // "…"
                 '|`(?:[^`]|``)*`' . // `…`
                 '|/\*.*?\*/' . // /* … */
-                '|--[^\n]*' . // -- …
+                '|--[ \t][^\n]*' . // -- … (MySQL needs the space)
                 '|#[^\n]*' .
                 ')~s',
             $ddl,
@@ -1165,20 +1232,21 @@ class CharsetConverter
      * that log once up() has returned — so each statement is checked on the spot,
      * else a failing table is stepped over and the schema left half converted.
      *
-     * The log is reset first, so an earlier failure isn't blamed on this one.
-     * Side effect: whatever the surrounding migration had accumulated in
-     * diDB::$log is discarded — acceptable, since q() only ever logs errors and
-     * any of those would already have thrown here.
+     * Only the entries THIS statement added are inspected — the log is left as
+     * it was rather than reset, because Migration::run() decides success by
+     * looking at it after up() returns, and a consumer migration that failed
+     * before calling the converter must not have that erased.
      */
     private function exec(string $sql, string $context): void
     {
-        $this->db->resetLog();
+        $before = count($this->db->getLog());
         $this->db->q($sql);
+        $log = $this->db->getLog();
 
-        if ($this->db->getLog()) {
+        if (count($log) > $before) {
             throw new \Exception(
                 "Charset conversion failed on [$context]: " .
-                    $this->db->getLogStr()
+                    implode('; ', array_slice($log, $before))
             );
         }
     }

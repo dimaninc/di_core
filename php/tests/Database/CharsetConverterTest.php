@@ -730,9 +730,14 @@ class CharsetConverterTest extends TestCase
 
         $this->assertNotNull($r, 'routine survived');
         $this->assertStringContainsString(
-            'CHARACTER SET utf8\'',
-            (string) $r->body . "'",
+            'CHARACTER SET utf8',
+            (string) $r->body,
             'the literal must still say utf8'
+        );
+        $this->assertStringNotContainsString(
+            'CHARACTER SET utf8mb4',
+            (string) $r->body,
+            'the literal must NOT have been rewritten'
         );
     }
 
@@ -744,6 +749,23 @@ class CharsetConverterTest extends TestCase
     public function testProgramsAreRebuiltOnTheTargetSessionCharset(): void
     {
         $mb3 = $this->mb3;
+
+        // The connection is a process singleton shared with every other test —
+        // restore what was actually there, not the target this test happens to
+        // use, or a consumer left on mb3 gets a polluted session (and, with
+        // stopOnFailure, a suite that stops on ConnectionCharsetTest).
+        $vars = [
+            'character_set_client',
+            'character_set_connection',
+            'character_set_results',
+            'collation_connection',
+        ];
+        $previous = [];
+        foreach ($vars as $var) {
+            $rs = $this->db->q("SELECT @@SESSION.$var AS v");
+            $previous[$var] = (string) $this->db->fetch($rs)->v;
+        }
+
         $this->db->q("SET NAMES $mb3");
 
         try {
@@ -761,10 +783,43 @@ class CharsetConverterTest extends TestCase
             $this->assertSame(self::TARGET, (string) $r->cs);
             $this->assertSame(self::TARGET_COLLATION, (string) $r->co);
         } finally {
+            $parts = [];
+            foreach ($previous as $var => $value) {
+                $parts[] = "$var = '" . $this->db->escape_string($value) . "'";
+            }
+            $this->db->q('SET SESSION ' . implode(', ', $parts));
+        }
+    }
+
+    /**
+     * Rebuilding ONE trigger of a group must not move it: recreated without a
+     * position clause, MySQL appends it after its untouched siblings.
+     */
+    public function testScopedRebuildKeepsFiringOrder(): void
+    {
+        $this->db->q('DROP TRIGGER IF EXISTS `' . self::TRIGGER . '`');
+        foreach (self::ORDERED_TRIGGERS as $name) {
             $this->db->q(
-                'SET NAMES ' . self::TARGET . ' COLLATE ' . self::TARGET_COLLATION
+                "CREATE TRIGGER `$name` BEFORE INSERT ON `" .
+                    self::TABLE .
+                    '` FOR EACH ROW SET NEW.touched = NEW.touched + 1'
             );
         }
+
+        $order = fn() => [
+            self::ORDERED_TRIGGERS[0] => (int) $this->triggerRow(
+                self::ORDERED_TRIGGERS[0]
+            )->ord,
+            self::ORDERED_TRIGGERS[1] => (int) $this->triggerRow(
+                self::ORDERED_TRIGGERS[1]
+            )->ord,
+        ];
+        $before = $order();
+
+        // Only the FIRST one — the case that silently reorders.
+        $this->rebuildPrograms([self::ORDERED_TRIGGERS[0]]);
+
+        $this->assertSame($before, $order(), 'scoped rebuild moved the trigger');
     }
 
     /** Scoped rebuild must leave everything it was not asked about alone. */
