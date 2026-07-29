@@ -87,9 +87,14 @@ abstract class Pdo extends \diDB
     }
 
     /**
-     * The DSN charset is what PDO escapes and quotes in, so a literal here left
-     * the client on mb3 while `SET NAMES` moved the server session to mb4 — the
-     * same split initCharset() exists to prevent.
+     * The DSN charset is what PDO would escape and quote in, so a literal here
+     * would split the client from the server session the way initCharset()
+     * exists to prevent.
+     *
+     * Not exercised by anything shipped: both concrete subclasses (Postgresql,
+     * Sqlite) override getDSN() and set CHARSET_INIT_NEEDED = false. It is here
+     * for a future MySQL-over-PDO driver. NB __get_charset() now answers with the
+     * configured charset instead of a constant 'utf8'.
      */
     protected function charset()
     {

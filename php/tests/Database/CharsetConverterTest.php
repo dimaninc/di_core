@@ -432,12 +432,21 @@ class CharsetConverterTest extends TestCase
         }
     }
 
-    private function rebuildPrograms(): void
+    private function rebuildPrograms($names = null): void
     {
+        // Scoped to this test's own objects by default: rebuildStoredPrograms()
+        // is otherwise schema-wide, and the connected database is the consumer's.
+        if ($names === null) {
+            $names = array_merge(
+                [self::TRIGGER, self::VIEW, self::ROUTINE],
+                self::ORDERED_TRIGGERS
+            );
+        }
+
         try {
             (new CharsetConverter($this->db, self::TARGET, self::TARGET_COLLATION))
-                ->inPreparedSession(false, function ($c) {
-                    $c->rebuildStoredPrograms();
+                ->inPreparedSession(false, function ($c) use ($names) {
+                    $c->rebuildStoredPrograms($names);
                 });
         } catch (\Exception $e) {
             // The schema may hold a consumer's own program this converter
@@ -693,6 +702,93 @@ class CharsetConverterTest extends TestCase
         );
 
         $this->assertSame('1', (string) $this->db->fetch($rs)->v);
+    }
+
+    /**
+     * A routine that BUILDS SQL as a string must not have that string rewritten,
+     * nor be refused for what it says. Only code is rewritten.
+     */
+    public function testCharsetTokensInsideLiteralsAreLeftAlone(): void
+    {
+        $this->db->q('DROP FUNCTION IF EXISTS `' . self::ROUTINE . '`');
+        $this->db->q(
+            'CREATE FUNCTION `' .
+                self::ROUTINE .
+                "` () RETURNS VARCHAR(80) DETERMINISTIC " .
+                "RETURN 'ALTER TABLE t CONVERT TO CHARACTER SET utf8'"
+        );
+
+        $this->rebuildPrograms([self::ROUTINE]);
+
+        $rs = $this->db->q(
+            "SELECT ROUTINE_DEFINITION AS body FROM information_schema.ROUTINES
+             WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_NAME = '" .
+                self::ROUTINE .
+                "'"
+        );
+        $r = $this->db->fetch($rs);
+
+        $this->assertNotNull($r, 'routine survived');
+        $this->assertStringContainsString(
+            'CHARACTER SET utf8\'',
+            (string) $r->body . "'",
+            'the literal must still say utf8'
+        );
+    }
+
+    /**
+     * MySQL stamps a program with the session charset it was created under, so a
+     * project still connected as mb3 (which the README tells it to be until it
+     * converts) would get every program put straight back on mb3.
+     */
+    public function testProgramsAreRebuiltOnTheTargetSessionCharset(): void
+    {
+        $mb3 = $this->mb3;
+        $this->db->q("SET NAMES $mb3");
+
+        try {
+            $this->rebuildPrograms([self::TRIGGER]);
+
+            $rs = $this->db->q(
+                "SELECT CHARACTER_SET_CLIENT AS cs, COLLATION_CONNECTION AS co
+                 FROM information_schema.TRIGGERS
+                 WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = '" .
+                    self::TRIGGER .
+                    "'"
+            );
+            $r = $this->db->fetch($rs);
+
+            $this->assertSame(self::TARGET, (string) $r->cs);
+            $this->assertSame(self::TARGET_COLLATION, (string) $r->co);
+        } finally {
+            $this->db->q(
+                'SET NAMES ' . self::TARGET . ' COLLATE ' . self::TARGET_COLLATION
+            );
+        }
+    }
+
+    /** Scoped rebuild must leave everything it was not asked about alone. */
+    public function testRebuildCanBeScopedByName(): void
+    {
+        $rs = $this->db->q(
+            "SELECT CREATED AS v FROM information_schema.TRIGGERS
+             WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = '" .
+                self::TRIGGER .
+                "'"
+        );
+        $before = (string) $this->db->fetch($rs)->v;
+
+        // Ask for a name that does not exist: nothing may be touched.
+        $this->rebuildPrograms(['di_charset_probe_absent']);
+
+        $rs = $this->db->q(
+            "SELECT CREATED AS v FROM information_schema.TRIGGERS
+             WHERE TRIGGER_SCHEMA = DATABASE() AND TRIGGER_NAME = '" .
+                self::TRIGGER .
+                "'"
+        );
+
+        $this->assertSame($before, (string) $this->db->fetch($rs)->v);
     }
 
     public function testUnknownCharsetIsRejected(): void

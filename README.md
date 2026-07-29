@@ -97,3 +97,17 @@ What it handles, each of which is a way this goes wrong quietly:
   because `ALTER` re-validates every column.
 - `STRICT_ALL_TABLES` when narrowing back to mb3, so a rollback fails instead of
   silently sweeping every emoji out of the database.
+
+Three things it does NOT do for you:
+
+- **Both sides of a foreign key must be converted in the same run.** The session
+  runs with `foreign_key_checks = 0` — without it a table could not be converted
+  at all — so a partial run can leave an FK whose two columns disagree on
+  collation, and that only surfaces later, on a DML or the next `ALTER`.
+- **`di_migrations_log` is not in `sql/`**, so the bundled migration's table list
+  does not include it even though this package creates it. Convert it with the
+  rest of your schema.
+- **Plan for downtime.** Changing a charset is `ALGORITHM=COPY`: a full table
+  rebuild under an exclusive metadata lock, so writes to each table block for its
+  duration. Migrations usually run unattended via `up_last_not_executed` — size
+  the window against your largest table before that happens.

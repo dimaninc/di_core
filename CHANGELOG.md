@@ -7,6 +7,11 @@ connection init change behaviour, and a new migration runs on upgrade. Nothing
 here is breaking for a consumer that keeps its own `Data\Config`, but «install
 the update and carry on» is not the whole story — read the note below.
 
+### Removed
+
+- **`dbUpdater`** (`php/lib/dbUpdater.php`) is gone. It was global, so the
+  autoloader picked it up and a consumer could call it directly — use migrations.
+
 ### utf8mb4 support
 
 utf8(mb3) cannot store 4-byte characters (emoji), and unless `sql_mode` is strict
@@ -51,6 +56,11 @@ error anywhere.
   `COMPACT` format — and the converter switches a `COMPACT`/`REDUNDANT` table to
   it as part of the widening `ALTER`, which would otherwise abort. So no minimum
   MySQL version beyond what the rest of the library needs.
+- Stored programs are recreated **on a session already switched to the target
+  charset** (MySQL stamps a program with the charset context it was created
+  under, so rebuilding on the old connection would put them straight back), and
+  charset tokens are rewritten **only outside string literals and comments** — a
+  routine that builds SQL as a string is left as it is.
 - Stored programs keep their **own `sql_mode`** and, for triggers, their **firing
   order**: `SHOW CREATE` carries neither, so recreating them naively stamped the
   (deliberately relaxed) session mode on every one and reordered any group

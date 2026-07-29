@@ -100,6 +100,7 @@ class CharsetConverter
 
         $this->assertStoredProgramsRecreatable();
         $this->assertStoredProgramCharsetsKnown();
+        $this->assertSqlModesSettable();
     }
 
     /**
@@ -135,7 +136,7 @@ class CharsetConverter
      * left mangling text after its tables were converted. Refuse up front rather
      * than rewrite a charset that may well be deliberate.
      */
-    private function assertStoredProgramCharsetsKnown(): void
+    private function assertStoredProgramCharsetsKnown($names = null): void
     {
         // Two patterns, not one alternation: the introducer form must require a
         // following quote exactly as retarget() does, or every underscore-prefixed
@@ -145,6 +146,8 @@ class CharsetConverter
         $patterns = [
             '/\b(?:CHARACTER SET|CHARSET|USING)\s+([A-Za-z0-9_]+)/i',
             '/(?<![A-Za-z0-9_])_([A-Za-z0-9_]+)(?=[\x27"])/i',
+            // a collation names its charset in its prefix
+            '/\bCOLLATE\s+([A-Za-z0-9]+?)_[A-Za-z0-9_]+\b/i',
         ];
         $known = array_merge(self::MB3_NAMES, [
             strtolower($this->charset),
@@ -154,10 +157,13 @@ class CharsetConverter
         ]);
         $offenders = [];
 
-        foreach ($this->storedProgramDefinitions() as $label => $ddl) {
+        foreach ($this->storedProgramDefinitions($names) as $label => $ddl) {
+            // Literals and comments are not code: a routine building dynamic SQL
+            // as a string must not be refused for what that string says.
+            $code = $this->codeOnly($ddl);
             $found = [];
             foreach ($patterns as $pattern) {
-                preg_match_all($pattern, $ddl, $m);
+                preg_match_all($pattern, $code, $m);
                 $found = array_merge($found, $m[1]);
             }
 
@@ -178,12 +184,45 @@ class CharsetConverter
         }
     }
 
+    /**
+     * Every sql_mode a stored program carries must be settable BEFORE the first
+     * DROP: withSqlMode() sets it right before recreating, and a mode the server
+     * rejects (a 5.7-era NO_AUTO_CREATE_USER, say) would otherwise be discovered
+     * with the program already gone.
+     */
+    private function assertSqlModesSettable(): void
+    {
+        $modes = array_unique(
+            array_merge(
+                array_column($this->routines(), 'sql_mode'),
+                array_column($this->triggers(), 'sql_mode')
+            )
+        );
+
+        $previous = $this->sessionVar('sql_mode');
+
+        try {
+            foreach (array_filter($modes) as $mode) {
+                $this->exec(
+                    "SET SESSION sql_mode = '" . $this->quoted($mode) . "'",
+                    'sql_mode ' . $mode
+                );
+            }
+        } finally {
+            if ($previous !== null) {
+                $this->db->q(
+                    "SET SESSION sql_mode = '" . $this->quoted($previous) . "'"
+                );
+            }
+        }
+    }
+
     /** label => DDL, for every routine, view and trigger in the schema. */
-    private function storedProgramDefinitions(): array
+    private function storedProgramDefinitions($names = null): array
     {
         $out = [];
 
-        foreach ($this->routines() as $routine) {
+        foreach ($this->routines($names) as $routine) {
             $word = $routine['type'] === 'FUNCTION' ? 'FUNCTION' : 'PROCEDURE';
             $out[strtolower($word) . ' ' . $routine['name']] = $this->showCreate(
                 "$word `{$routine['name']}`",
@@ -191,11 +230,11 @@ class CharsetConverter
             );
         }
 
-        foreach ($this->viewNames() as $name) {
+        foreach ($this->viewNames($names) as $name) {
             $out["view $name"] = $this->showCreate("VIEW `$name`", 'Create View');
         }
 
-        foreach ($this->triggerNames() as $name) {
+        foreach ($this->triggerNames($names) as $name) {
             $out["trigger $name"] = $this->showCreate(
                 "TRIGGER `$name`",
                 'SQL Original Statement'
@@ -271,11 +310,62 @@ class CharsetConverter
      *
      * @return self
      */
-    public function rebuildStoredPrograms()
+    public function rebuildStoredPrograms($names = null)
     {
         $this->assertStoredProgramsPreflight();
 
-        foreach ($this->routines() as $routine) {
+        // MySQL stamps a stored program with the SESSION charset context it was
+        // created under. Rebuilding on the old connection charset — which is
+        // exactly what an existing project has until it flips its config — would
+        // put every program straight back on mb3, converted tables or not.
+        return $this->withSessionCharset(function () use ($names) {
+            $this->rebuildStoredProgramsInner($names);
+
+            return $this;
+        });
+    }
+
+    /**
+     * SET NAMES for the duration, restoring the four session variables after.
+     * `SET NAMES` moves character_set_results too, so all four are captured.
+     */
+    private function withSessionCharset(callable $work)
+    {
+        $vars = [
+            'character_set_client',
+            'character_set_connection',
+            'character_set_results',
+            'collation_connection',
+        ];
+
+        $previous = [];
+        foreach ($vars as $var) {
+            $previous[$var] = $this->sessionVar($var);
+        }
+
+        $this->exec(
+            "SET NAMES {$this->charset} COLLATE {$this->collation}",
+            'session charset'
+        );
+
+        try {
+            return $work();
+        } finally {
+            $parts = [];
+            foreach ($previous as $var => $value) {
+                if ($value !== null) {
+                    $parts[] = "$var = '" . $this->quoted($value) . "'";
+                }
+            }
+            if ($parts) {
+                $this->db->q('SET SESSION ' . implode(', ', $parts));
+            }
+        }
+    }
+
+    private function rebuildStoredProgramsInner($names): void
+    {
+        foreach ($this->routines($names) as $routine) {
             $this->rebuildRoutine(
                 $routine['name'],
                 $routine['type'],
@@ -283,12 +373,15 @@ class CharsetConverter
             );
         }
 
-        foreach ($this->viewNames() as $name) {
+        foreach ($this->viewNames($names) as $name) {
             $this->rebuildView($name);
         }
 
+        // FOLLOWS is rebuilt per (table, timing, event) group, so the group has
+        // to be walked whole — scoping applies to which programs are touched,
+        // not to how their order is reconstructed.
         $previousInGroup = [];
-        foreach ($this->triggers() as $trigger) {
+        foreach ($this->triggers($names) as $trigger) {
             $group = $trigger['group'];
             $follows = isset($previousInGroup[$group])
                 ? $previousInGroup[$group]
@@ -297,8 +390,6 @@ class CharsetConverter
             $this->rebuildTrigger($trigger, $follows);
             $previousInGroup[$group] = $trigger['name'];
         }
-
-        return $this;
     }
 
     /**
@@ -341,6 +432,12 @@ class CharsetConverter
         return $this;
     }
 
+    /** Either spelling of the mb3 charset. */
+    public static function isMb3Name(string $charset): bool
+    {
+        return in_array(strtolower($charset), self::MB3_NAMES, true);
+    }
+
     /** Whichever of the two mb3 spellings this server knows, or null. */
     public static function mb3NameFor(\diDB $db)
     {
@@ -365,9 +462,7 @@ class CharsetConverter
     public static function sameCharset(string $a, string $b): bool
     {
         $normalise = function ($name) {
-            return in_array(strtolower($name), self::MB3_NAMES, true)
-                ? 'utf8mb3'
-                : strtolower($name);
+            return self::isMb3Name($name) ? 'utf8mb3' : strtolower($name);
         };
 
         return $normalise($a) === $normalise($b);
@@ -407,9 +502,7 @@ class CharsetConverter
     /** Both names of the mb3 charset; anything else has only itself. */
     private function charsetSpellings(string $charset): array
     {
-        return in_array(strtolower($charset), self::MB3_NAMES, true)
-            ? self::MB3_NAMES
-            : [$charset];
+        return self::isMb3Name($charset) ? self::MB3_NAMES : [$charset];
     }
 
     /** utf8_general_ci + utf8mb3 -> utf8mb3_general_ci */
@@ -625,15 +718,16 @@ class CharsetConverter
             : $this->collation;
     }
 
-    private function routines(): array
+    private function routines($names = null): array
     {
         $rs = $this->db->q(
             "SELECT ROUTINE_NAME AS name, ROUTINE_TYPE AS type,
                     SQL_MODE AS sql_mode
              FROM information_schema.ROUTINES
              WHERE ROUTINE_SCHEMA = DATABASE()
-               AND ROUTINE_TYPE IN ('PROCEDURE', 'FUNCTION')
-             ORDER BY ROUTINE_NAME"
+               AND ROUTINE_TYPE IN ('PROCEDURE', 'FUNCTION')" .
+                $this->tableFilter('ROUTINE_NAME', $names) .
+                ' ORDER BY ROUTINE_NAME'
         );
 
         $out = [];
@@ -648,11 +742,13 @@ class CharsetConverter
         return $out;
     }
 
-    private function viewNames(): array
+    private function viewNames($names = null): array
     {
         return $this->column(
             "SELECT TABLE_NAME AS name FROM information_schema.VIEWS
-             WHERE TABLE_SCHEMA = DATABASE() ORDER BY TABLE_NAME"
+             WHERE TABLE_SCHEMA = DATABASE()" .
+                $this->tableFilter('TABLE_NAME', $names) .
+                ' ORDER BY TABLE_NAME'
         );
     }
 
@@ -663,15 +759,16 @@ class CharsetConverter
      * SHOW CREATE TRIGGER does not carry the FOLLOWS clause that would restore
      * it — so it is rebuilt from ACTION_ORDER below.
      */
-    private function triggers(): array
+    private function triggers($names = null): array
     {
         $rs = $this->db->q(
             "SELECT TRIGGER_NAME AS name, EVENT_OBJECT_TABLE AS tbl,
                     ACTION_TIMING AS timing, EVENT_MANIPULATION AS event,
                     ACTION_ORDER AS ord, SQL_MODE AS sql_mode
              FROM information_schema.TRIGGERS
-             WHERE TRIGGER_SCHEMA = DATABASE()
-             ORDER BY EVENT_OBJECT_TABLE, ACTION_TIMING, EVENT_MANIPULATION,
+             WHERE TRIGGER_SCHEMA = DATABASE()" .
+                $this->tableFilter('TRIGGER_NAME', $names) .
+                " ORDER BY EVENT_OBJECT_TABLE, ACTION_TIMING, EVENT_MANIPULATION,
                       ACTION_ORDER"
         );
 
@@ -688,14 +785,9 @@ class CharsetConverter
         return $out;
     }
 
-    private function triggerNames(): array
+    private function triggerNames($names = null): array
     {
-        $names = [];
-        foreach ($this->triggers() as $trigger) {
-            $names[] = $trigger['name'];
-        }
-
-        return $names;
+        return array_column($this->triggers($names), 'name');
     }
 
     /**
@@ -795,11 +887,15 @@ class CharsetConverter
             $name,
             $probe
         ) {
-            $this->exec(
-                $this->renameRoutineInDdl($ddl, $word, $name, $probe),
-                "$word $name (probe)"
-            );
-            $this->exec("DROP $word IF EXISTS `$probe`", "$word $name (probe)");
+            try {
+                $this->exec(
+                    $this->renameRoutineInDdl($ddl, $word, $name, $probe),
+                    "$word $name (probe)"
+                );
+            } finally {
+                // Even on failure: a probe left behind is harmless but is litter.
+                $this->db->q("DROP $word IF EXISTS `$probe`");
+            }
 
             $this->exec("DROP $word IF EXISTS `$name`", "$word $name");
             $this->exec($ddl, "$word $name");
@@ -861,10 +957,12 @@ class CharsetConverter
             );
         }
 
-        // No probe pass: a second trigger for the same event would fire on any
-        // write in between. The DEFINER pre-flight is what guards this path.
-        $this->exec("DROP TRIGGER IF EXISTS `$name`", "trigger $name");
+        // The DROP goes INSIDE withSqlMode: setting the mode is the step that
+        // can fail, and failing after the drop loses the trigger for good. No
+        // probe pass here — a second trigger for the same event would fire on
+        // any write in between; the DEFINER and sql_mode pre-flights guard it.
         $this->withSqlMode($trigger['sql_mode'], function () use ($ddl, $name) {
+            $this->exec("DROP TRIGGER IF EXISTS `$name`", "trigger $name");
             $this->exec($ddl, "trigger $name");
         });
     }
@@ -910,7 +1008,9 @@ class CharsetConverter
         $rs = $this->db->q("SHOW CREATE $what");
         $r = $rs ? $this->db->fetch($rs) : null;
 
-        if (!$r || !isset($r->$column) || $r->$column === null) {
+        // isset() is already false for a NULL property, which is exactly how
+        // MySQL answers when the account may not see the definition.
+        if (!$r || !isset($r->$column)) {
             // A row with a NULL definition means the account may not see it; no
             // row at all means the object or its base table is gone.
             throw new \Exception(
@@ -927,6 +1027,60 @@ class CharsetConverter
     }
 
     /**
+     * Splits a definition into code and non-code (string literals, quoted
+     * identifiers, comments) and applies $fn to the code parts only.
+     *
+     * Without this a plain regex also rewrites — or, in the pre-flight, rejects
+     * — a `CHARACTER SET utf8` that merely appears inside dynamic SQL being
+     * built as a string, or in a comment. That silently changes what the routine
+     * does.
+     */
+    private function overCode(string $ddl, callable $fn): string
+    {
+        // NB the doubled backslashes: inside a single-quoted PHP string '\\'
+        // is one backslash, and the regex needs a real escaped one.
+        $parts = preg_split(
+            '~(' .
+                '\x27(?:[^\x27\\\\]|\\\\.|\x27\x27)*\x27' . // '…'
+                '|"(?:[^"\\\\]|\\\\.|"")*"' . // "…"
+                '|`(?:[^`]|``)*`' . // `…`
+                '|/\*.*?\*/' . // /* … */
+                '|--[^\n]*' . // -- …
+                '|#[^\n]*' .
+                ')~s',
+            $ddl,
+            -1,
+            PREG_SPLIT_DELIM_CAPTURE
+        );
+
+        if ($parts === false) {
+            throw new \Exception('Cannot tokenise a stored program definition');
+        }
+
+        // preg_split alternates code, delimiter, code, … — even indexes are code.
+        foreach ($parts as $i => $part) {
+            if ($i % 2 === 0) {
+                $parts[$i] = $fn($part);
+            }
+        }
+
+        return implode('', $parts);
+    }
+
+    /** Everything OUTSIDE literals and comments, for scanning. */
+    private function codeOnly(string $ddl): string
+    {
+        $code = '';
+        $this->overCode($ddl, function ($part) use (&$code) {
+            $code .= $part . "\n";
+
+            return $part;
+        });
+
+        return $code;
+    }
+
+    /**
      * Rewrites the mb3 charset/collation tokens in a stored program's
      * definition. `utf8mb4` is safe from the `utf8` alternative on its own — a
      * word boundary cannot fall between "utf8" and "mb4".
@@ -938,21 +1092,38 @@ class CharsetConverter
     private function retarget(string $ddl): string
     {
         $old = '(?:' . implode('|', self::MB3_NAMES) . ')';
+        // The TARGET collation, not the old family name carried over: with a
+        // target of utf8mb4_unicode_ci, keeping `_general_ci` would leave the
+        // program disagreeing with the columns just converted. _bin is the one
+        // family that must survive, since it is case sensitivity, not a locale.
+        $collation = $this->collation;
+        $charset = $this->charset;
 
-        return preg_replace(
-            [
-                '/\b(CHARACTER SET|CHARSET|USING)\s+' . $old . '\b/i',
-                '/\bCOLLATE\s+' . $old . '_(\w+)\b/i',
-                // introducer form: _utf8'…' before a literal
-                '/(?<![A-Za-z0-9_])_' . $old . '(?=[\x27"])/i',
-            ],
-            [
-                '$1 ' . $this->charset,
-                'COLLATE ' . $this->charset . '_$1',
-                '_' . $this->charset,
-            ],
-            $ddl
-        );
+        return $this->overCode($ddl, function ($code) use (
+            $old,
+            $charset,
+            $collation
+        ) {
+            return preg_replace(
+                [
+                    '/\b(CHARACTER SET|CHARSET|USING)\s+' . $old . '\b/i',
+                    '/\bCOLLATE\s+' . $old . '_bin\b/i',
+                    '/\bCOLLATE\s+' . $old . '_\w+\b/i',
+                    // Introducer form `_utf8'…'`. The quote sits in the NEXT
+                    // segment once literals are split out, so end-of-segment
+                    // counts as the lookahead too; the lookbehind still keeps
+                    // an identifier such as `col_utf8` out of it.
+                    '/(?<![A-Za-z0-9_])_' . $old . '(?=[\x27"]|$)/i',
+                ],
+                [
+                    '$1 ' . $charset,
+                    'COLLATE ' . $charset . '_bin',
+                    'COLLATE ' . $collation,
+                    '_' . $charset,
+                ],
+                $code
+            );
+        });
     }
 
     private function tableFilter(string $field, $tables): string

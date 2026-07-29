@@ -28,20 +28,11 @@ class diMigration_20260728100000 extends \diCore\Database\Tool\Migration
         // from one of this package's (now mb4) dumps, and converting THAT down
         // to mb3 would truncate every 4-byte character in it. Widening is an
         // upgrade; narrowing is a decision only the project can make.
-        if (!$this->applicable() || $this->isMb3($charset)) {
+        if (!$this->applicable() || CharsetConverter::isMb3Name($charset)) {
             return;
         }
 
         $this->convertTo($charset, Config::getDbCollation());
-    }
-
-    private function isMb3(string $charset): bool
-    {
-        return in_array(
-            strtolower($charset),
-            CharsetConverter::MB3_NAMES,
-            true
-        );
     }
 
     /**
@@ -60,6 +51,9 @@ class diMigration_20260728100000 extends \diCore\Database\Tool\Migration
             throw new \Exception('No utf8mb3 charset on this server');
         }
 
+        // _general_ci regardless of what the collation used to be: which one it
+        // was is not recorded anywhere. A project that ran on utf8_unicode_ci
+        // gets _general_ci back — one more reason down() is declared lossy.
         $this->convertTo($name, $name . '_general_ci', true);
     }
 
