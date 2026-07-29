@@ -1,4 +1,8 @@
 <?php
+
+use diCore\Data\Config;
+use diCore\Database\Tool\CharsetConverter;
+
 /**
  * Converts the tables di_core itself ships to the configured charset.
  *
@@ -17,7 +21,7 @@ class diMigration_20260728100000 extends \diCore\Database\Tool\Migration
 
     public function up()
     {
-        $charset = \diCore\Data\Config::getDbEncoding();
+        $charset = Config::getDbEncoding();
 
         // Never narrow. A project still configured as mb3 has mb3 tables and
         // nothing to do — but its schema may already hold an mb4 table created
@@ -28,14 +32,14 @@ class diMigration_20260728100000 extends \diCore\Database\Tool\Migration
             return;
         }
 
-        $this->convertTo($charset, \diCore\Data\Config::getDbCollation());
+        $this->convertTo($charset, Config::getDbCollation());
     }
 
     private function isMb3(string $charset): bool
     {
         return in_array(
             strtolower($charset),
-            \diCore\Database\Tool\CharsetConverter::MB3_NAMES,
+            CharsetConverter::MB3_NAMES,
             true
         );
     }
@@ -51,7 +55,7 @@ class diMigration_20260728100000 extends \diCore\Database\Tool\Migration
             return;
         }
 
-        $name = \diCore\Database\Tool\CharsetConverter::mb3NameFor($this->getDb());
+        $name = CharsetConverter::mb3NameFor($this->getDb());
         if ($name === null) {
             throw new \Exception('No utf8mb3 charset on this server');
         }
@@ -66,7 +70,7 @@ class diMigration_20260728100000 extends \diCore\Database\Tool\Migration
      */
     private function applicable(): bool
     {
-        return \diCore\Database\Tool\CharsetConverter::supports($this->getDb());
+        return CharsetConverter::supports($this->getDb());
     }
 
     private function convertTo(
@@ -79,7 +83,7 @@ class diMigration_20260728100000 extends \diCore\Database\Tool\Migration
             return;
         }
 
-        $converter = new \diCore\Database\Tool\CharsetConverter(
+        $converter = new CharsetConverter(
             $this->getDb(),
             $charset,
             $collation

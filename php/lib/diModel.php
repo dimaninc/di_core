@@ -2711,7 +2711,7 @@ class diModel implements \ArrayAccess
 
         // Follow the project's configured charset — a literal would silently
         // create mb3 tables that truncate emoji.
-        $charsetClause = \diCore\Data\Config::getDbCharsetClause();
+        $charsetClause = Config::getDbCharsetClause();
 
         return "CREATE TABLE IF NOT EXISTS {$tableName} ({$fieldQuery})
 {$charsetClause}

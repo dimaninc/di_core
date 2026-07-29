@@ -10,9 +10,6 @@ namespace diCore\Database\Tool;
  * force one collation on every column, flattening any _bin column to
  * case-insensitive — enough to collide values differing only in case under a
  * UNIQUE index.
- *
- * PHP 7.4 compatible on purpose: the package supports it, so no promotion,
- * no union types, no match().
  */
 class CharsetConverter
 {
@@ -527,7 +524,7 @@ class CharsetConverter
 
         // Table default too, so columns added later inherit the new charset.
         $parts[] =
-            "DEFAULT CHARACTER SET {$this->charset} COLLATE {$this->collation}";
+            "DEFAULT CHARACTER SET $this->charset COLLATE $this->collation";
 
         // A COMPACT/REDUNDANT InnoDB table caps an index at 767 bytes, which an
         // indexed varchar(255) blows past the moment it is widened to 4 bytes
