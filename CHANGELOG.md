@@ -36,7 +36,11 @@ error anywhere.
   one of them is checked against the current account **before** the first
   `DROP`, since DDL does not roll back.
 - **New migration `charset/20260728100000`** converts the tables this package
-  ships to whatever charset the project configured. A genuine no-op for a
+  ships to whatever charset the project configured. Run it **by idx** — the
+  list-based helpers only scan the consuming project's migration folder. On
+  SQLite/PostgreSQL it is a no-op; on a project still configured as mb3 it
+  **refuses to run**, rather than being recorded as done and never converting
+  anything once the config is flipped. It never narrows a charset. A genuine no-op for a
   project that stays on mb3 or runs on SQLite/PostgreSQL: it never narrows a
   charset, and it does not apply to non-MySQL connections.
 - **`diModel::getCreateTableQuery()` and `diActionsLog::initTable()`** follow the
@@ -46,7 +50,10 @@ error anywhere.
   `SET NAMES … COLLATE …`. It issues its own `SET NAMES` and resets the collation
   to the charset default, so running it last silently discarded the configured
   collation — invisible on mb3 (same default), not on mb4. It also tolerates an
-  empty collation and no longer swallows a failed `set_charset()`.
+  empty collation and no longer swallows a failed `set_charset()` — **a charset
+  the server rejects now fails the request outright** (same path as an
+  unreachable database), instead of leaving the client on the previous charset
+  and mangling 4-byte characters on every write.
 - **PDO driver:** the DSN charset comes from the configuration instead of a
   hardcoded `utf8`, which used to leave `PDO::quote()` on mb3 while the server
   session had moved to mb4.

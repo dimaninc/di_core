@@ -48,9 +48,22 @@ anyway — both are long EOL, so **5.7.9+** remains the practical floor.
 
 #### Converting an existing schema
 
-`charset/20260728100000` converts the tables this package ships. **The rest of
-your schema is yours to convert** — `diCore\Database\Tool\CharsetConverter` is
-the same engine:
+`charset/20260728100000` converts the tables this package ships. **Run it
+explicitly** — the list-based helpers (`upNew`, `upLastNotExecuted`) only ever
+scan the consuming project's own `_cfg/migrations/`, so a migration shipped with
+the package is not picked up by them:
+
+```bash
+php vendor/dimaninc/di_core/php/admin/workers/cli.php \
+    controller=migration action=up idx=20260728100000
+```
+
+It converts to the charset the project has **configured**, and refuses to run
+while that is still mb3 — otherwise a run made before the config flip would be
+recorded as done and the core tables would never be converted.
+
+**The rest of your schema is yours to convert** —
+`diCore\Database\Tool\CharsetConverter` is the same engine:
 
 ```php
 public function up()
@@ -109,9 +122,17 @@ Three things it does NOT do for you:
   runs with `foreign_key_checks = 0` — without it a table could not be converted
   at all — so a partial run can leave an FK whose two columns disagree on
   collation, and that only surfaces later, on a DML or the next `ALTER`.
-- **`di_migrations_log` is not in `sql/`**, so the bundled migration's table list
-  does not include it even though this package creates it. Convert it with the
-  rest of your schema.
+- **Three tables this package creates have no `sql/` dump**, so the bundled
+  migration's table list misses them: `di_migrations_log`, `configuration` and
+  `di_actions_log`. A fresh install builds them on the configured charset, but an
+  existing one keeps them where they were — convert them with the rest of your
+  schema.
+- **Collations other than `_bin` and `_cs` are normalised onto the target.** A
+  column deliberately on `utf8mb4_unicode_ci` becomes `utf8mb4_general_ci`, which
+  changes which values compare equal (accents, `ß`/`ss`). Case sensitivity is
+  preserved — `_bin` and a `_cs` collation already on the target charset are left
+  alone, since flattening those would collide values differing only in case under
+  a UNIQUE index.
 - **Plan for downtime, and stop writes.** Changing a charset is
   `ALGORITHM=COPY`: a full table rebuild under an exclusive metadata lock, so
   writes to each table block for its duration. Worse for triggers — a rebuild is

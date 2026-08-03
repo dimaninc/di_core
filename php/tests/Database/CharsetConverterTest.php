@@ -64,7 +64,12 @@ class CharsetConverterTest extends TestCase
         $this->db->q('DROP VIEW IF EXISTS `' . self::VIEW . '`');
         $this->db->q('DROP FUNCTION IF EXISTS `' . self::ROUTINE . '`');
         foreach (
-            [self::TABLE, self::MYISAM_TABLE, self::COMPACT_TABLE, self::GENERATED_TABLE]
+            [
+                self::TABLE,
+                self::MYISAM_TABLE,
+                self::COMPACT_TABLE,
+                self::GENERATED_TABLE,
+            ]
             as $table
         ) {
             $this->db->q("DROP TABLE IF EXISTS `$table`");
@@ -258,10 +263,13 @@ class CharsetConverterTest extends TestCase
     {
         $before = $this->columns();
 
-        (new CharsetConverter($this->db, 'utf8', 'utf8_general_ci'))
-            ->inPreparedSession(false, function ($c) {
-                $c->convertTables([self::TABLE]);
-            });
+        (new CharsetConverter(
+            $this->db,
+            'utf8',
+            'utf8_general_ci'
+        ))->inPreparedSession(false, function ($c) {
+            $c->convertTables([self::TABLE]);
+        });
 
         $this->assertEquals($before, $this->columns());
     }
@@ -286,10 +294,7 @@ class CharsetConverterTest extends TestCase
             'CHARACTER SET utf8mb4',
             $this->retarget('CHARACTER SET utf8mb3')
         );
-        $this->assertSame(
-            'CHARSET utf8mb4',
-            $this->retarget('CHARSET utf8')
-        );
+        $this->assertSame('CHARSET utf8mb4', $this->retarget('CHARSET utf8'));
         $this->assertSame(
             'COLLATE utf8mb4_bin',
             $this->retarget('COLLATE utf8_bin')
@@ -324,8 +329,11 @@ class CharsetConverterTest extends TestCase
                 '` (id INT PRIMARY KEY, a VARCHAR(10)) ENGINE=MyISAM'
         );
 
-        (new CharsetConverter($this->db, self::TARGET, self::TARGET_COLLATION))
-            ->moveMyisamTablesToInnoDb([self::MYISAM_TABLE]);
+        (new CharsetConverter(
+            $this->db,
+            self::TARGET,
+            self::TARGET_COLLATION
+        ))->moveMyisamTablesToInnoDb([self::MYISAM_TABLE]);
 
         $rs = $this->db->q(
             "SELECT ENGINE AS v FROM information_schema.TABLES
@@ -359,10 +367,13 @@ class CharsetConverterTest extends TestCase
               DEFAULT CHARSET=$mb3 COLLATE={$mb3}_general_ci"
         );
 
-        (new CharsetConverter($this->db, self::TARGET, self::TARGET_COLLATION))
-            ->inPreparedSession(false, function ($c) {
-                $c->convertTables([self::COMPACT_TABLE]);
-            });
+        (new CharsetConverter(
+            $this->db,
+            self::TARGET,
+            self::TARGET_COLLATION
+        ))->inPreparedSession(false, function ($c) {
+            $c->convertTables([self::COMPACT_TABLE]);
+        });
 
         $rs = $this->db->q(
             "SELECT ROW_FORMAT AS fmt, TABLE_COLLATION AS coll
@@ -395,10 +406,13 @@ class CharsetConverterTest extends TestCase
             ) ENGINE=InnoDB DEFAULT CHARSET=$mb3 COLLATE={$mb3}_general_ci"
         );
 
-        (new CharsetConverter($this->db, self::TARGET, self::TARGET_COLLATION))
-            ->inPreparedSession(false, function ($c) {
-                $c->convertTables([self::TABLE]);
-            });
+        (new CharsetConverter(
+            $this->db,
+            self::TARGET,
+            self::TARGET_COLLATION
+        ))->inPreparedSession(false, function ($c) {
+            $c->convertTables([self::TABLE]);
+        });
 
         $this->assertSame(
             self::TARGET_COLLATION,
@@ -421,15 +435,21 @@ class CharsetConverterTest extends TestCase
             ) ENGINE=InnoDB DEFAULT CHARSET=$mb3 COLLATE={$mb3}_general_ci"
         );
 
+        $message = null;
         try {
-            (new CharsetConverter($this->db, self::TARGET, self::TARGET_COLLATION))
-                ->convertTables([self::GENERATED_TABLE]);
-            $this->fail('expected the generated column to be refused');
+            (new CharsetConverter(
+                $this->db,
+                self::TARGET,
+                self::TARGET_COLLATION
+            ))->convertTables([self::GENERATED_TABLE]);
         } catch (\Exception $e) {
-            $this->assertStringContainsString('EXTRA', $e->getMessage());
+            $message = $e->getMessage();
         } finally {
             $this->db->q('DROP TABLE IF EXISTS `' . self::GENERATED_TABLE . '`');
         }
+
+        $this->assertNotNull($message, 'the generated column must be refused');
+        $this->assertStringContainsString('EXTRA', $message);
     }
 
     private function rebuildPrograms($names = null): void
@@ -444,10 +464,13 @@ class CharsetConverterTest extends TestCase
         }
 
         try {
-            (new CharsetConverter($this->db, self::TARGET, self::TARGET_COLLATION))
-                ->inPreparedSession(false, function ($c) use ($names) {
-                    $c->rebuildStoredPrograms($names);
-                });
+            (new CharsetConverter(
+                $this->db,
+                self::TARGET,
+                self::TARGET_COLLATION
+            ))->inPreparedSession(false, function ($c) use ($names) {
+                $c->rebuildStoredPrograms($names);
+            });
         } catch (\Exception $e) {
             // The schema may hold a consumer's own program this converter
             // refuses to touch; that is not what these tests are about. A
@@ -562,7 +585,7 @@ class CharsetConverterTest extends TestCase
         $this->db->q(
             'CREATE FUNCTION `' .
                 self::ROUTINE .
-                "` (a VARCHAR(10)) RETURNS VARCHAR(10) DETERMINISTIC RETURN a"
+                '` (a VARCHAR(10)) RETURNS VARCHAR(10) DETERMINISTIC RETURN a'
         );
 
         $rs = $this->db->q(
@@ -635,10 +658,13 @@ class CharsetConverterTest extends TestCase
              DEFAULT CHARSET=$mb3 COLLATE={$mb3}_general_ci"
         );
 
-        (new CharsetConverter($this->db, self::TARGET, self::TARGET_COLLATION))
-            ->inPreparedSession(false, function ($c) {
-                $c->convertTables([self::COMPACT_TABLE]);
-            });
+        (new CharsetConverter(
+            $this->db,
+            self::TARGET,
+            self::TARGET_COLLATION
+        ))->inPreparedSession(false, function ($c) {
+            $c->convertTables([self::COMPACT_TABLE]);
+        });
 
         $rs = $this->db->q(
             "SELECT ROW_FORMAT AS v FROM information_schema.TABLES
@@ -657,14 +683,14 @@ class CharsetConverterTest extends TestCase
     public function testGrantPredicate(): void
     {
         $yes = [
-            "GRANT ALL PRIVILEGES ON *.* TO `root`@`%`",
-            "GRANT SUPER ON *.* TO `a`@`%`",
-            "GRANT SET_USER_ID ON *.* TO `a`@`%`",
+            'GRANT ALL PRIVILEGES ON *.* TO `root`@`%`',
+            'GRANT SUPER ON *.* TO `a`@`%`',
+            'GRANT SET_USER_ID ON *.* TO `a`@`%`',
         ];
         $no = [
-            "GRANT ALL PRIVILEGES ON `mydb`.* TO `app`@`%`",
-            "GRANT SELECT, INSERT ON *.* TO `app`@`%`",
-            "GRANT TRIGGER ON `mydb`.* TO `app`@`%`",
+            'GRANT ALL PRIVILEGES ON `mydb`.* TO `app`@`%`',
+            'GRANT SELECT, INSERT ON *.* TO `app`@`%`',
+            'GRANT TRIGGER ON `mydb`.* TO `app`@`%`',
         ];
 
         foreach ($yes as $grant) {
@@ -714,7 +740,7 @@ class CharsetConverterTest extends TestCase
         $this->db->q(
             'CREATE FUNCTION `' .
                 self::ROUTINE .
-                "` () RETURNS VARCHAR(80) DETERMINISTIC " .
+                '` () RETURNS VARCHAR(80) DETERMINISTIC ' .
                 "RETURN 'ALTER TABLE t CONVERT TO CHARACTER SET utf8'"
         );
 
@@ -844,6 +870,161 @@ class CharsetConverterTest extends TestCase
         );
 
         $this->assertSame($before, (string) $this->db->fetch($rs)->v);
+    }
+
+    /**
+     * `_cp1251'x'` is a charset this converter will not rewrite, and it must be
+     * refused rather than left behind in the rebuilt program. The quote lives in
+     * the next token once literals are split out, so the scanner has to see it.
+     */
+    public function testForeignIntroducerIsRefused(): void
+    {
+        $this->db->q('DROP FUNCTION IF EXISTS `' . self::ROUTINE . '`');
+        $this->db->q(
+            'CREATE FUNCTION `' .
+                self::ROUTINE .
+                "` () RETURNS VARCHAR(10) DETERMINISTIC RETURN CONCAT(_latin1\x27x\x27)"
+        );
+
+        // NB no fail() inside the try: PHPUnit's AssertionFailedError extends
+        // Exception, so the catch would swallow it and then match its own
+        // message — the test would pass no matter what.
+        $message = null;
+        try {
+            (new CharsetConverter(
+                $this->db,
+                self::TARGET,
+                self::TARGET_COLLATION
+            ))->rebuildStoredPrograms([self::ROUTINE]);
+        } catch (\Exception $e) {
+            $message = $e->getMessage();
+        }
+
+        $this->assertNotNull($message, 'the latin1 introducer must be refused');
+        $this->assertStringContainsString('latin1', $message);
+    }
+
+    /**
+     * MyISAM keeps its 1000-byte key cap, and a FULLTEXT table is deliberately
+     * left on MyISAM — so an indexed varchar(255) there cannot be widened. It
+     * must be named up front, not blow up mid-run.
+     */
+    public function testMyisamFulltextWithWideKeyIsRefused(): void
+    {
+        $mb3 = $this->mb3;
+        $this->db->q('DROP TABLE IF EXISTS `' . self::MYISAM_TABLE . '`');
+        $this->db->q(
+            'CREATE TABLE `' .
+                self::MYISAM_TABLE .
+                "` (
+                id INT NOT NULL AUTO_INCREMENT,
+                slug VARCHAR(255) NOT NULL,
+                body TEXT,
+                PRIMARY KEY (id),
+                KEY slug_idx (slug),
+                FULLTEXT KEY body_idx (body)
+            ) ENGINE=MyISAM DEFAULT CHARSET=$mb3 COLLATE={$mb3}_general_ci"
+        );
+
+        $message = null;
+        try {
+            (new CharsetConverter(
+                $this->db,
+                self::TARGET,
+                self::TARGET_COLLATION
+            ))->convertTables([self::MYISAM_TABLE]);
+        } catch (\Exception $e) {
+            $message = $e->getMessage();
+        } finally {
+            $this->db->q('DROP TABLE IF EXISTS `' . self::MYISAM_TABLE . '`');
+        }
+
+        $this->assertNotNull($message, 'the oversized MyISAM key must be refused');
+        $this->assertStringContainsString(self::MYISAM_TABLE, $message);
+        // Specifically the pre-flight wording: a mid-run failure from exec()
+        // would also name the table, and that is the outcome being prevented.
+        $this->assertStringContainsString('1000-byte', $message);
+    }
+
+    /**
+     * A program already on the target charset but carrying MySQL 8's default
+     * collation still disagrees with the columns just normalised.
+     */
+    public function testForeignCollationOnTargetCharsetIsRewritten(): void
+    {
+        // The table must be on the target charset first: that collation is not
+        // valid for an mb3 column.
+        $this->convert();
+
+        $this->db->q('DROP VIEW IF EXISTS `' . self::VIEW . '`');
+        $this->db->q(
+            'CREATE VIEW `' .
+                self::VIEW .
+                '` AS SELECT id, title COLLATE utf8mb4_0900_ai_ci AS t FROM `' .
+                self::TABLE .
+                '`'
+        );
+
+        $this->rebuildPrograms([self::VIEW]);
+
+        $rs = $this->db->q(
+            "SELECT VIEW_DEFINITION AS body FROM information_schema.VIEWS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '" .
+                self::VIEW .
+                "'"
+        );
+        $body = (string) $this->db->fetch($rs)->body;
+
+        $this->assertStringNotContainsString('0900_ai_ci', $body);
+        $this->assertStringContainsString(self::TARGET_COLLATION, $body);
+    }
+
+    /**
+     * Case sensitivity is the same kind of property as _bin: flattening an
+     * _as_cs column to _general_ci makes values differing only in case equal.
+     */
+    public function testCaseSensitiveCollationIsPreserved(): void
+    {
+        $this->db->q('DROP TABLE IF EXISTS `' . self::COMPACT_TABLE . '`');
+        $this->db->q(
+            'CREATE TABLE `' .
+                self::COMPACT_TABLE .
+                '` (id INT PRIMARY KEY,
+                    cs VARCHAR(50) COLLATE utf8mb4_0900_as_cs,
+                    plain VARCHAR(50) COLLATE utf8mb4_0900_ai_ci)
+             ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci'
+        );
+
+        (new CharsetConverter(
+            $this->db,
+            self::TARGET,
+            self::TARGET_COLLATION
+        ))->inPreparedSession(false, function ($c) {
+            $c->convertTables([self::COMPACT_TABLE]);
+        });
+
+        $rs = $this->db->q(
+            "SELECT COLUMN_NAME, COLLATION_NAME FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '" .
+                self::COMPACT_TABLE .
+                "'"
+        );
+        $got = [];
+        while ($r = $this->db->fetch($rs)) {
+            $got[$r->COLUMN_NAME] = $r->COLLATION_NAME;
+        }
+        $this->db->q('DROP TABLE IF EXISTS `' . self::COMPACT_TABLE . '`');
+
+        $this->assertSame(
+            'utf8mb4_0900_as_cs',
+            $got['cs'],
+            'case-sensitive collation must survive'
+        );
+        $this->assertSame(
+            self::TARGET_COLLATION,
+            $got['plain'],
+            'the MySQL 8 default must still be normalised'
+        );
     }
 
     public function testUnknownCharsetIsRejected(): void

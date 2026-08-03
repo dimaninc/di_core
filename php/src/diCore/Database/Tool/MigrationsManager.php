@@ -292,8 +292,9 @@ EOF;
 
     private function getCreateTableSql()
     {
-        $charset = Config::getDbEncoding();
-        $collation = Config::getDbCollation();
+        // A blank collation must not become `COLLATE=` — this table is built
+        // before any migration runs, so invalid DDL here blocks everything.
+        $charsetClause = Config::getDbCharsetClause();
         $t = static::logTable;
 
         // CREATE TABLE di_migrations_log
@@ -335,7 +336,7 @@ EOF;
                         date timestamp not null default CURRENT_TIMESTAMP,
                         index main_idx(idx),
                         primary key(id)
-                    ) ENGINE=InnoDB DEFAULT CHARSET=$charset COLLATE=$collation",
+                    ) ENGINE=InnoDB $charsetClause",
                 ];
         }
     }
@@ -478,10 +479,7 @@ EOF;
             return $col->getNewEmptyItem();
         }
 
-        return $col
-            ->filterByIdx($idx)
-            ->orderById('desc')
-            ->getFirstItem();
+        return $col->filterByIdx($idx)->orderById('desc')->getFirstItem();
     }
 
     public function cacheLastLogsForIdx(array $idxAr)

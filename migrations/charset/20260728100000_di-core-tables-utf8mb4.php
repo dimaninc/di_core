@@ -23,13 +23,24 @@ class diMigration_20260728100000 extends \diCore\Database\Tool\Migration
     {
         $charset = Config::getDbEncoding();
 
-        // Never narrow. A project still configured as mb3 has mb3 tables and
-        // nothing to do — but its schema may already hold an mb4 table created
-        // from one of this package's (now mb4) dumps, and converting THAT down
-        // to mb3 would truncate every 4-byte character in it. Widening is an
-        // upgrade; narrowing is a decision only the project can make.
-        if (!$this->applicable() || CharsetConverter::isMb3Name($charset)) {
+        // Not applicable at all on SQLite/PostgreSQL — a genuine no-op, safe to
+        // record as executed since it will never have anything to do.
+        if (!$this->applicable()) {
             return;
+        }
+
+        // Configured as mb3: nothing to do YET. Throwing rather than returning
+        // is the point — Migration::run() treats a plain return as success and
+        // the manager logs it, so a run before the project flips its config
+        // would consume this migration and the core tables would never be
+        // converted. Never narrow, either: the schema may already hold an mb4
+        // table created from one of this package's dumps.
+        if (CharsetConverter::isMb3Name($charset)) {
+            throw new \Exception(
+                'Set dbEncoding to utf8mb4 in your Data\Config before running' .
+                    ' this migration — it converts to the CONFIGURED charset,' .
+                    ' and refuses to narrow an existing utf8mb4 table to mb3'
+            );
         }
 
         $this->convertTo($charset, Config::getDbCollation());
@@ -42,11 +53,11 @@ class diMigration_20260728100000 extends \diCore\Database\Tool\Migration
      */
     public function down()
     {
-        // Mirrors up()'s guard. Without it, a project left on the default mb3
-        // config — where up() did nothing — would have down() actively narrow
-        // these tables, and a fresh install is in exactly that state, since the
-        // shipped dumps are mb4. down() reverses up(); it does not convert a
-        // schema up() never touched.
+        // Mirrors up()'s guard: a project left on the default mb3 config never
+        // had up() do anything, and a fresh install is in exactly that state
+        // since the shipped dumps are mb4. down() reverses up(); it does not
+        // convert a schema up() never touched. A plain return here is right —
+        // there is nothing to undo.
         if (
             !$this->applicable() ||
             CharsetConverter::isMb3Name(Config::getDbEncoding())
@@ -85,16 +96,9 @@ class diMigration_20260728100000 extends \diCore\Database\Tool\Migration
             return;
         }
 
-        $converter = new CharsetConverter(
-            $this->getDb(),
-            $charset,
-            $collation
-        );
+        $converter = new CharsetConverter($this->getDb(), $charset, $collation);
 
-        $converter->inPreparedSession($strict, function ($c) use (
-            $tables,
-            $strict
-        ) {
+        $converter->inPreparedSession($strict, function ($c) use ($tables, $strict) {
             // Engines first: at the old charset an oversized index still fits.
             // Not on the way back — a rollback of the charset has no business
             // changing engines, and which ones were MyISAM is not recorded.

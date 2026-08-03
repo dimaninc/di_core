@@ -49,15 +49,22 @@ class CharsetConverter
     }
 
     /**
+     * The engine pre-check here assumes moveMyisamTablesToInnoDb() has already
+     * run: it only refuses a MyISAM table kept on MyISAM by its FULLTEXT index.
+     * A plain MyISAM table with a wide index, in a chain that skipped the move,
+     * still fails mid-run from exec().
+     *
      * @param array|null $tables Restrict to these; null = every base table.
      * @return self
      */
-    public function convertTables($tables = null)
+    public function convertTables(?array $tables = null)
     {
-        // Only the columns actually in scope: the bundled migration converts a
-        // fixed list, and a consumer's unrelated generated column elsewhere in
-        // the schema is none of its business.
+        // Scoped, and therefore safe to run here rather than only from
+        // preflight() — which the bundled migration deliberately does not call,
+        // since its stored-program checks are schema-wide. Without this the
+        // MyISAM/FULLTEXT case would only surface mid-run, from exec().
         $this->assertColumnsConvertible($tables);
+        $this->assertConvertibleEngines($tables);
 
         foreach ($this->tablesToConvert($tables) as $table) {
             $this->convertTable($table);
@@ -82,7 +89,7 @@ class CharsetConverter
      *
      * @return self
      */
-    public function preflight($tables = null)
+    public function preflight(?array $tables = null)
     {
         $this->assertColumnsConvertible($tables);
         $this->assertConvertibleEngines($tables);
@@ -99,7 +106,16 @@ class CharsetConverter
      */
     private function assertConvertibleEngines($tables = null): void
     {
-        $bytes = strlen('x') * 4; // target is a 4-byte charset in practice
+        // Bytes per character of the TARGET charset, from the server rather
+        // than assumed. Only string columns are summed, so a composite key's
+        // integer parts are not counted — the estimate is deliberately low, it
+        // only has to catch the case that certainly does not fit.
+        $bytes =
+            (int) $this->scalar(
+                "SELECT MAXLEN AS v FROM information_schema.CHARACTER_SETS
+             WHERE CHARACTER_SET_NAME = '{$this->quoted($this->charset)}'"
+            ) ?:
+            4;
         $bad = $this->column(
             "SELECT DISTINCT CONCAT(s.TABLE_NAME, '.', s.INDEX_NAME) AS name
              FROM information_schema.STATISTICS s
@@ -137,14 +153,22 @@ class CharsetConverter
     /** Only for the paths that actually rewrite stored programs. */
     private function assertStoredProgramsPreflight($names = null): void
     {
-        if ($this->programsPreflighted) {
+        // Memoised only for the unscoped call: a scoped one checked a different
+        // set, and treating it as "already done" would let the next scope reach
+        // DROP with its DEFINER, sql_mode and charsets unverified.
+        if ($names === null && $this->programsPreflighted) {
             return;
         }
-        $this->programsPreflighted = true;
 
         $this->assertStoredProgramsRecreatable($names);
         $this->assertStoredProgramCharsetsKnown($names);
         $this->assertSqlModesSettable($names);
+
+        // Only once they all passed: a caller that catches the exception and
+        // retries must not short-circuit into DROP with nothing verified.
+        if ($names === null) {
+            $this->programsPreflighted = true;
+        }
     }
 
     /**
@@ -254,7 +278,7 @@ class CharsetConverter
             }
         } finally {
             if ($previous !== null) {
-                $this->db->q(
+                $this->quiet(
                     "SET SESSION sql_mode = '" . $this->quoted($previous) . "'"
                 );
             }
@@ -299,7 +323,7 @@ class CharsetConverter
      * @param array|null $tables
      * @return self
      */
-    public function moveMyisamTablesToInnoDb($tables = null)
+    public function moveMyisamTablesToInnoDb(?array $tables = null)
     {
         $sql =
             "SELECT t.TABLE_NAME AS name
@@ -342,6 +366,11 @@ class CharsetConverter
     }
 
     /**
+     * Call AFTER setDatabaseCharset(): a routine parameter declared with no
+     * explicit charset inherits the DATABASE default at creation time, and
+     * withSessionCharset() moves the session variables, not the schema default.
+     * Rebuilding first puts those parameters straight back on the old charset.
+     *
      * Procedures, functions, views and triggers store the charset context they
      * were created under, and a routine's parameters keep the charset written
      * into their declaration — so a procedure called from a trigger goes on
@@ -354,7 +383,7 @@ class CharsetConverter
      *
      * @return self
      */
-    public function rebuildStoredPrograms($names = null)
+    public function rebuildStoredPrograms(?array $names = null)
     {
         $this->assertStoredProgramsPreflight($names);
 
@@ -387,6 +416,11 @@ class CharsetConverter
             $previous[$var] = $this->sessionVar($var);
         }
 
+        // SET NAMES only: no matching set_charset(), so for the duration of the
+        // block the client library still escapes in the connection's original
+        // charset. Safe here because everything escaped inside is ASCII
+        // (identifiers, collation and sql_mode names) — do not escape real data
+        // in this block without adding set_charset() to both sides.
         $this->exec(
             "SET NAMES {$this->charset} COLLATE {$this->collation}",
             'session charset'
@@ -402,7 +436,7 @@ class CharsetConverter
                 }
             }
             if ($parts) {
-                $this->db->q('SET SESSION ' . implode(', ', $parts));
+                $this->quiet('SET SESSION ' . implode(', ', $parts));
             }
         }
     }
@@ -483,9 +517,11 @@ class CharsetConverter
             // Restore what was there, not an assumed default — this process may
             // go on to run further migrations that rely on the original mode.
             if ($sqlMode !== null) {
-                $this->applySqlMode(explode(',', $sqlMode));
+                // quiet: a failed restore must not mark a successful conversion
+                // as a failed migration.
+                $this->applySqlMode(explode(',', $sqlMode), true);
             }
-            $this->db->q(
+            $this->quiet(
                 'SET FOREIGN_KEY_CHECKS = ' . ($fkChecks === '0' ? '0' : '1')
             );
         }
@@ -589,6 +625,14 @@ class CharsetConverter
         return (bool) ($rs && $this->db->fetch($rs));
     }
 
+    private function scalar(string $sql)
+    {
+        $rs = $this->db->q($sql);
+        $r = $rs ? $this->db->fetch($rs) : null;
+
+        return $r ? $r->v : null;
+    }
+
     private function sessionVar(string $name)
     {
         $rs = $this->db->q("SELECT @@SESSION.$name AS v");
@@ -602,10 +646,7 @@ class CharsetConverter
         // array_filter drops the empty element an empty mode explodes into —
         // otherwise appending a flag yields a leading comma and invalid SQL.
         $flags = array_filter(
-            array_diff(explode(',', $sqlMode), [
-                'NO_ZERO_DATE',
-                'NO_ZERO_IN_DATE',
-            ])
+            array_diff(explode(',', $sqlMode), ['NO_ZERO_DATE', 'NO_ZERO_IN_DATE'])
         );
 
         if ($strict) {
@@ -615,18 +656,24 @@ class CharsetConverter
         return $flags;
     }
 
-    private function applySqlMode(array $flags): void
+    private function applySqlMode(array $flags, bool $quiet = false): void
     {
-        $this->db->q(
+        $sql =
             "SET SESSION sql_mode = '" .
-                $this->db->escape_string(
-                    implode(',', array_unique(array_filter($flags)))
-                ) .
-                "'"
-        );
+            $this->db->escape_string(
+                implode(',', array_unique(array_filter($flags)))
+            ) .
+            "'";
+
+        $quiet ? $this->quiet($sql) : $this->db->q($sql);
     }
 
     /**
+     * NB the TABLE default is normalised to the target collation even if it was
+     * deliberately something else (a table defaulting to _bin becomes
+     * _general_ci); per-COLUMN _bin is preserved, which is where case
+     * sensitivity actually lives.
+     *
      * Anything whose table default or any column is not already on the TARGET
      * COLLATION — deliberately not "is one of the old charsets", which misses a
      * table on some third one (cp1251, latin1), and deliberately not charset
@@ -658,12 +705,24 @@ class CharsetConverter
         );
     }
 
-    /** A column is fine only on the target collation, or its _bin sibling. */
+    /**
+     * A column is fine on the target collation, on its _bin sibling, or on any
+     * case-SENSITIVE collation of the target charset (…_as_cs and friends).
+     *
+     * The last exemption matters for the same reason _bin does: flattening a
+     * _cs column to _general_ci makes values differing only in case equal, which
+     * collides them under a UNIQUE index. Accent- and locale-sensitive _ci
+     * variants are NOT exempt — normalising those onto one collation is the
+     * point of the exercise, and it is documented in the README.
+     */
     private function wrongCollationCondition(string $field): string
     {
-        return "$field NOT IN (" .
+        $charset = $this->quoted($this->charset);
+
+        return "($field NOT IN (" .
             "'{$this->quoted($this->collation)}', " .
-            "'{$this->quoted($this->charset . '_bin')}')";
+            "'{$charset}_bin')" .
+            " AND $field NOT LIKE '{$charset}\\_%\\_cs')";
     }
 
     /** One ALTER per table: each is a full rebuild, so batch the columns. */
@@ -677,8 +736,7 @@ class CharsetConverter
         }
 
         // Table default too, so columns added later inherit the new charset.
-        $parts[] =
-            "DEFAULT CHARACTER SET $this->charset COLLATE $this->collation";
+        $parts[] = "DEFAULT CHARACTER SET $this->charset COLLATE $this->collation";
 
         // A COMPACT/REDUNDANT InnoDB table caps an index at 767 bytes, which an
         // indexed varchar(255) blows past the moment it is widened to 4 bytes
@@ -759,24 +817,41 @@ class CharsetConverter
         $sql .= $column->IS_NULLABLE === 'NO' ? ' NOT NULL' : ' NULL';
 
         if ($column->COLUMN_DEFAULT !== null) {
-            $sql .=
-                " DEFAULT '" . $this->quoted($column->COLUMN_DEFAULT) . "'";
+            $sql .= " DEFAULT '" . $this->quoted($column->COLUMN_DEFAULT) . "'";
         }
 
         if ($column->COLUMN_COMMENT !== '') {
-            $sql .=
-                " COMMENT '" . $this->quoted($column->COLUMN_COMMENT) . "'";
+            $sql .= " COMMENT '" . $this->quoted($column->COLUMN_COMMENT) . "'";
         }
 
         return $sql;
     }
 
-    /** Keep the collation family: …_bin stays binary, everything else as given. */
+    /**
+     * Keeps a collation whose SENSITIVITY the target lacks: _bin, and a _cs
+     * collation already on the target charset. Everything else becomes the
+     * target collation.
+     *
+     * A _cs collation on the OLD charset has no mechanical equivalent here
+     * (utf8mb4 spells it _0900_as_cs, utf8mb3 does not spell it at all), so it
+     * is normalised — and that is a semantic change worth knowing about.
+     */
     private function targetCollation($current): string
     {
-        return substr((string) $current, -4) === '_bin'
-            ? $this->charset . '_bin'
-            : $this->collation;
+        $current = (string) $current;
+
+        if (substr($current, -4) === '_bin') {
+            return $this->charset . '_bin';
+        }
+
+        if (
+            substr($current, -3) === '_cs' &&
+            strpos($current, $this->charset . '_') === 0
+        ) {
+            return $current;
+        }
+
+        return $this->collation;
     }
 
     private function routines($names = null): array
@@ -948,12 +1023,7 @@ class CharsetConverter
         );
         $probe = substr('zz_probe_' . md5($name), 0, 60);
 
-        $this->withSqlMode($sqlMode, function () use (
-            $ddl,
-            $word,
-            $name,
-            $probe
-        ) {
+        $this->withSqlMode($sqlMode, function () use ($ddl, $word, $name, $probe) {
             try {
                 $this->exec(
                     $this->renameRoutineInDdl($ddl, $word, $name, $probe),
@@ -961,7 +1031,7 @@ class CharsetConverter
                 );
             } finally {
                 // Even on failure: a probe left behind is harmless but is litter.
-                $this->db->q("DROP $word IF EXISTS `$probe`");
+                $this->quiet("DROP $word IF EXISTS `$probe`");
             }
 
             $this->exec("DROP $word IF EXISTS `$name`", "$word $name");
@@ -1057,7 +1127,7 @@ class CharsetConverter
             $work();
         } finally {
             if ($previous !== null) {
-                $this->db->q(
+                $this->quiet(
                     "SET SESSION sql_mode = '" . $this->quoted($previous) . "'"
                 );
             }
@@ -1085,7 +1155,9 @@ class CharsetConverter
                     $what .
                     ($r
                         ? ' — not visible to this account'
-                        : ' — SHOW CREATE returned nothing') .
+                        : ' — SHOW CREATE failed, which for a VIEW usually means' .
+                            ' it references a table that no longer exists; drop' .
+                            ' the stale view or restore what it selects from') .
                     ($this->db->getLogStr() ? ': ' . $this->db->getLogStr() : '')
             );
         }
@@ -1103,6 +1175,21 @@ class CharsetConverter
      * does.
      */
     private function overCode(string $ddl, callable $fn): string
+    {
+        $parts = $this->tokenise($ddl);
+
+        // preg_split alternates code, delimiter, code, … — even indexes are code.
+        foreach ($parts as $i => $part) {
+            if ($i % 2 === 0) {
+                $parts[$i] = $fn($part);
+            }
+        }
+
+        return implode('', $parts);
+    }
+
+    /** [code, literal, code, …] — odd indexes are literals/comments. */
+    private function tokenise(string $ddl): array
     {
         // NB the doubled backslashes: inside a single-quoted PHP string '\\'
         // is one backslash, and the regex needs a real escaped one.
@@ -1124,25 +1211,35 @@ class CharsetConverter
             throw new \Exception('Cannot tokenise a stored program definition');
         }
 
-        // preg_split alternates code, delimiter, code, … — even indexes are code.
-        foreach ($parts as $i => $part) {
-            if ($i % 2 === 0) {
-                $parts[$i] = $fn($part);
-            }
-        }
-
-        return implode('', $parts);
+        return $parts;
     }
 
-    /** Everything OUTSIDE literals and comments, for scanning. */
+    /**
+     * Everything OUTSIDE literals and comments, for scanning.
+     *
+     * A code segment that is followed by a string literal keeps a sentinel quote
+     * so the introducer form (`_cp1251'x'`) still matches its lookahead — the
+     * real quote lives in the next segment. Without it a foreign introducer slips
+     * through the pre-flight while retarget() happily rewrites the mb3 one.
+     */
     private function codeOnly(string $ddl): string
     {
+        $parts = $this->tokenise($ddl);
         $code = '';
-        $this->overCode($ddl, function ($part) use (&$code) {
-            $code .= $part . "\n";
 
-            return $part;
-        });
+        foreach ($parts as $i => $part) {
+            if ($i % 2 !== 0) {
+                continue;
+            }
+
+            $next = isset($parts[$i + 1]) ? $parts[$i + 1] : '';
+            $sentinel =
+                $next !== '' && ($next[0] === "'" || $next[0] === '"')
+                    ? $next[0]
+                    : '';
+
+            $code .= $part . $sentinel . "\n";
+        }
 
         return $code;
     }
@@ -1181,12 +1278,19 @@ class CharsetConverter
                     // counts as the lookahead too; the lookbehind still keeps
                     // an identifier such as `col_utf8` out of it.
                     '/(?<![A-Za-z0-9_])_' . $old . '(?=[\x27"]|$)/i',
+                    // Already on the target charset but a foreign collation —
+                    // utf8mb4_0900_ai_ci is what MySQL 8 hands out by default,
+                    // so a program can carry it while the columns were just
+                    // normalised. Same "by collation, not charset" rule the
+                    // tables follow; _bin is exempt, it is case sensitivity.
+                    '/\bCOLLATE\s+' . preg_quote($charset, '/') . '_(?!bin\b)\w+/i',
                 ],
                 [
                     '$1 ' . $charset,
                     'COLLATE ' . $charset . '_bin',
                     'COLLATE ' . $collation,
                     '_' . $charset,
+                    'COLLATE ' . $collation,
                 ],
                 $code
             );
@@ -1228,14 +1332,25 @@ class CharsetConverter
     }
 
     /**
+     * For recovery statements in finally blocks: q() does not throw, it logs —
+     * and Migration::run() reads that log after up() returns, so a stray entry
+     * from a restore would mark a wholly successful conversion as a failure.
+     */
+    private function quiet(string $sql): void
+    {
+        $before = count($this->db->getLog());
+        $this->db->q($sql);
+        $this->db->truncateLog($before);
+    }
+
+    /**
      * diDB::q() logs failures instead of throwing, and a migration only inspects
      * that log once up() has returned — so each statement is checked on the spot,
      * else a failing table is stepped over and the schema left half converted.
      *
      * Only the entries THIS statement added are inspected — the log is left as
-     * it was rather than reset, because Migration::run() decides success by
-     * looking at it after up() returns, and a consumer migration that failed
-     * before calling the converter must not have that erased.
+     * it was rather than reset, because a consumer migration that failed before
+     * calling the converter must not have that erased.
      */
     private function exec(string $sql, string $context): void
     {

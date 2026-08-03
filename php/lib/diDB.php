@@ -280,9 +280,23 @@ abstract class diDB
     {
         $quote = static::QUOTE_TABLE;
 
-        return "CREATE DATABASE IF NOT EXISTS $quote$this->dbname$quote /*!40100 COLLATE '" .
-            Config::getDbCollation() .
-            "' */";
+        $charset = Config::getDbEncoding();
+        $collation = Config::getDbCollation();
+
+        // The CHARACTER SET matters as much as the collation: without it the
+        // database is created on the SERVER default while generated tables use
+        // the configured charset, which is how a schema ends up with mixed
+        // defaults. A blank collation is simply omitted, never `COLLATE ''`.
+        $options = '';
+        if ($charset) {
+            $options .= " CHARACTER SET '$charset'";
+        }
+        if ($collation) {
+            $options .= " COLLATE '$collation'";
+        }
+
+        return "CREATE DATABASE IF NOT EXISTS $quote$this->dbname$quote" .
+            ($options ? " /*!40100$options */" : '');
     }
 
     protected function initCharset()
@@ -311,10 +325,13 @@ abstract class diDB
         }
 
         if ($ok === false) {
-            // File log only, deliberately NOT _log(): see logConnectionProblem().
-            $this->logConnectionProblem(
-                "Unable to set connection charset to $enc"
-            );
+            // Fatal, not a note in a log nobody reads: carrying on leaves the
+            // CLIENT on the previous charset while the columns are on the
+            // configured one, and every 4-byte character written through it is
+            // silently mangled — the exact corruption this ordering exists to
+            // prevent. A misconfigured charset is a broken connection.
+            $this->logConnectionProblem("Unable to set connection charset to $enc");
+            $this->_fatal("Unable to set connection charset to $enc");
         }
 
         // An empty collation would make this a syntax error; SET NAMES alone
@@ -326,15 +343,15 @@ abstract class diDB
         // avoids. The log is empty at connect time, so anything this call adds
         // is moved to the file log and cleared.
         $logged = count($this->log);
-        $this->q(
-            'SET NAMES ' . $enc . ($collation ? ' COLLATE ' . $collation : '')
-        );
+        $this->q('SET NAMES ' . $enc . ($collation ? ' COLLATE ' . $collation : ''));
 
         if (count($this->log) > $logged) {
-            $this->logConnectionProblem(
-                'SET NAMES failed: ' . $this->getLogStr()
-            );
-            $this->resetLog();
+            $message = 'SET NAMES failed: ' . $this->getLogStr();
+            $this->logConnectionProblem($message);
+            // Trim what this call added before failing: a non-empty log makes
+            // the next dierror() escalate with someone else's message.
+            $this->truncateLog($logged);
+            $this->_fatal($message);
         }
 
         return $this;
@@ -400,6 +417,14 @@ abstract class diDB
         return join($lineBreak, $this->log);
     }
 
+    /** Drops everything logged after the first $count entries. */
+    public function truncateLog($count)
+    {
+        $this->log = array_slice($this->log, 0, max(0, (int) $count));
+
+        return $this;
+    }
+
     public function resetLog()
     {
         $this->log = [];
@@ -423,7 +448,8 @@ abstract class diDB
     /**
      * Charset problems go to the file log, never to diDB::$log: a non-empty log
      * makes the next dierror() call anywhere escalate to _fatal() with someone
-     * else's message. Worth recording, not worth a fatal in an unrelated place.
+     * else's message. Both callers fail the connection themselves, right after —
+     * this only decides WHERE the reason is recorded.
      */
     protected function logConnectionProblem($message)
     {
@@ -1231,7 +1257,11 @@ abstract class diDB
 
         $q1 = '(' . $this->fieldsToStringForInsert($fields_values) . ')';
         $q2 = '(' . $this->valuesToStringForInsert($fields_values) . ')';
-        $q3 = $this->insertUpdateQuery($fields_values, $keyField, $autoIncrementField);
+        $q3 = $this->insertUpdateQuery(
+            $fields_values,
+            $keyField,
+            $autoIncrementField
+        );
 
         $this->lockTable($t);
         $query = "INSERT INTO $t$q1 VALUES$q2$q3;";
