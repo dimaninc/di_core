@@ -292,9 +292,6 @@ EOF;
 
     private function getCreateTableSql()
     {
-        // A blank collation must not become `COLLATE=` — this table is built
-        // before any migration runs, so invalid DDL here blocks everything.
-        $charsetClause = Config::getDbCharsetClause();
         $t = static::logTable;
 
         // CREATE TABLE di_migrations_log
@@ -326,6 +323,11 @@ EOF;
                 ];
 
             default:
+                // A blank collation must not become `COLLATE=` — this table is
+                // built before any migration runs, so invalid DDL here blocks
+                // everything. MySQL-only: the branches above take no charset.
+                $charsetClause = Config::getDbCharsetClause();
+
                 return [
                     "CREATE TABLE IF NOT EXISTS `$t`(
                         id bigint not null auto_increment,

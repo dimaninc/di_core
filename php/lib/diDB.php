@@ -336,25 +336,61 @@ abstract class diDB
 
         // An empty collation would make this a syntax error; SET NAMES alone
         // still leaves the connection usable on the charset default.
-        //
-        // q() logs a failure into diDB::$log, and a non-empty log makes the next
-        // dierror() anywhere in the request escalate to _fatal() with an
-        // unrelated message — the same hazard the set_charset() branch above
-        // avoids. The log is empty at connect time, so anything this call adds
-        // is moved to the file log and cleared.
-        $logged = count($this->log);
-        $this->q('SET NAMES ' . $enc . ($collation ? ' COLLATE ' . $collation : ''));
+        if ($collation && $this->trySetNames("SET NAMES $enc COLLATE $collation")) {
+            return $this;
+        }
 
-        if (count($this->log) > $logged) {
-            $message = 'SET NAMES failed: ' . $this->getLogStr();
-            $this->logConnectionProblem($message);
-            // Trim what this call added before failing: a non-empty log makes
-            // the next dierror() escalate with someone else's message.
-            $this->truncateLog($logged);
-            $this->_fatal($message);
+        // The collation does not belong to the charset — the state a project
+        // lands in when it raises dbEncoding to utf8mb4 and forgets
+        // dbCollation. NOT fatal: set_charset() above already put the
+        // connection on the configured CHARSET, so nothing can be truncated;
+        // only the collation falls back to that charset's default. Failing the
+        // request here would take the whole site down over a typo, and via
+        // _fatal() it would do so with HTTP 200 and the error text in the
+        // body — cacheable, so the outage would outlive the fix.
+        //
+        // The plain SET NAMES is still issued: set_charset() moved
+        // character_set_* but a driver is free not to touch collation_connection,
+        // and it must not be left over from whatever ran before.
+        if ($collation) {
+            $this->logConnectionProblem(
+                "Connection collation $collation is not valid for charset $enc" .
+                    ' — falling back to the charset default.' .
+                    ' Fix dbCollation in Data\Config.'
+            );
+        }
+
+        if (!$this->trySetNames("SET NAMES $enc")) {
+            // The charset alone is refused too: this really is a broken
+            // connection, and writing through it corrupts data.
+            $this->logConnectionProblem("SET NAMES $enc failed");
+            $this->_fatal("Unable to set connection charset to $enc");
         }
 
         return $this;
+    }
+
+    /**
+     * q() logs a failure into diDB::$log, and a non-empty log makes the next
+     * dierror() anywhere in the request escalate to _fatal() with an unrelated
+     * message. Connection setup must leave no such trace behind, so whatever
+     * this statement added is moved out of the way and the outcome returned
+     * instead.
+     */
+    private function trySetNames($query)
+    {
+        $logged = count($this->log);
+        $result = $this->q($query);
+        $failed = $result === false || count($this->log) > $logged;
+
+        if ($failed) {
+            $this->logConnectionProblem(
+                "$query failed: " . join('; ', array_slice($this->log, $logged))
+            );
+            $this->truncateLog($logged);
+        }
+
+        return !$failed;
     }
 
     /**

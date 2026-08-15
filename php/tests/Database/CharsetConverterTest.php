@@ -214,25 +214,100 @@ class CharsetConverterTest extends TestCase
         $this->assertSame('1', (string) $r->v, 'trigger still fires');
     }
 
-    /** The point of the whole exercise. */
+    /**
+     * The point of the whole exercise.
+     *
+     * The write goes through a connection raised to the target charset for the
+     * duration. That is not cheating, it is the missing half of the story: the
+     * converter only widens the COLUMNS, and until the connection follows, an
+     * mb3 session drops every 4-byte character on the way in — silently on a
+     * lax sql_mode, with an error on a strict one. Asserting on the connection
+     * this suite happens to run under would test the consumer's Data\Config
+     * (still mb3 by design — see the README) instead of the conversion.
+     */
     public function testFourByteCharactersSurvive(): void
     {
         $this->convert();
 
         $emoji = '🎂 юбилей';
-        $this->db->q(
-            'INSERT INTO `' .
-                self::TABLE .
-                "` (slug, body) VALUES ('e', '" .
-                $this->db->escape_string($emoji) .
-                "')"
-        );
 
+        $this->withConnectionCharset(self::TARGET, function () use ($emoji) {
+            $this->db->q(
+                'INSERT INTO `' .
+                    self::TABLE .
+                    "` (slug, body) VALUES ('e', '" .
+                    $this->db->escape_string($emoji) .
+                    "')"
+            );
+
+            $rs = $this->db->q(
+                'SELECT body AS v FROM `' . self::TABLE . "` WHERE slug = 'e'"
+            );
+            $r = $this->db->fetch($rs);
+
+            $this->assertNotNull($r, 'the row was inserted');
+            $this->assertSame($emoji, (string) $r->v);
+        });
+    }
+
+    /**
+     * Runs $work with BOTH sides on $charset — the client library (which is
+     * what escape_string and result decoding use, moved by set_charset) and the
+     * server session — then puts back exactly what was there.
+     *
+     * The connection is a process singleton shared with every other test, so
+     * the restore has to be the real previous values: set_charset() also resets
+     * collation_connection to the charset default, which is not necessarily the
+     * one the consumer configured.
+     */
+    /**
+     * The `utf8mb4_0900_*` family arrived with MySQL 8 and does not exist on
+     * 5.7 or MariaDB — which README still names as supported, so a test that
+     * needs one has to skip there rather than fail on CREATE TABLE.
+     */
+    private function requireCollation(string $collation): void
+    {
         $rs = $this->db->q(
-            'SELECT body AS v FROM `' . self::TABLE . "` WHERE slug = 'e'"
+            "SELECT COUNT(*) AS v FROM information_schema.COLLATIONS
+             WHERE COLLATION_NAME = '" .
+                $this->db->escape_string($collation) .
+                "'"
         );
 
-        $this->assertSame($emoji, (string) $this->db->fetch($rs)->v);
+        if (!(int) $this->db->fetch($rs)->v) {
+            $this->markTestSkipped("server has no $collation");
+        }
+    }
+
+    private function withConnectionCharset(string $charset, callable $work): void
+    {
+        $vars = [
+            'character_set_client',
+            'character_set_connection',
+            'character_set_results',
+            'collation_connection',
+        ];
+
+        $previousClient = $this->db->get_charset();
+        $previous = [];
+        foreach ($vars as $var) {
+            $rs = $this->db->q("SELECT @@SESSION.$var AS v");
+            $previous[$var] = (string) $this->db->fetch($rs)->v;
+        }
+
+        $this->db->set_charset($charset);
+
+        try {
+            $work();
+        } finally {
+            $this->db->set_charset($previousClient);
+
+            $parts = [];
+            foreach ($previous as $var => $value) {
+                $parts[] = "$var = '" . $this->db->escape_string($value) . "'";
+            }
+            $this->db->q('SET SESSION ' . implode(', ', $parts));
+        }
     }
 
     public function testSecondRunIsANoop(): void
@@ -952,6 +1027,8 @@ class CharsetConverterTest extends TestCase
      */
     public function testForeignCollationOnTargetCharsetIsRewritten(): void
     {
+        $this->requireCollation('utf8mb4_0900_ai_ci');
+
         // The table must be on the target charset first: that collation is not
         // valid for an mb3 column.
         $this->convert();
@@ -985,6 +1062,9 @@ class CharsetConverterTest extends TestCase
      */
     public function testCaseSensitiveCollationIsPreserved(): void
     {
+        $this->requireCollation('utf8mb4_0900_as_cs');
+        $this->requireCollation('utf8mb4_0900_ai_ci');
+
         $this->db->q('DROP TABLE IF EXISTS `' . self::COMPACT_TABLE . '`');
         $this->db->q(
             'CREATE TABLE `' .

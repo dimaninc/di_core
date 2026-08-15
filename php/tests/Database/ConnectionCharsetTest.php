@@ -54,7 +54,14 @@ class ConnectionCharsetTest extends TestCase
         );
     }
 
-    /** The assertion that fails if set_charset() is moved back after SET NAMES. */
+    /**
+     * The assertion that fails if set_charset() is moved back after SET NAMES.
+     *
+     * It only has teeth for a consumer whose configured collation is NOT the
+     * default of its charset: set_charset() resets the collation to that
+     * default, so on the shipped `utf8` / `utf8_general_ci` pair the broken
+     * order produces the right answer by coincidence.
+     */
     public function testConnectionUsesConfiguredCollation(): void
     {
         $expected = Config::getDbCollation();

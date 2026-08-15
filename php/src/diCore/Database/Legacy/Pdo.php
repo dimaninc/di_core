@@ -91,14 +91,24 @@ abstract class Pdo extends \diDB
      * would split the client from the server session the way initCharset()
      * exists to prevent.
      *
-     * Not exercised by anything shipped: both concrete subclasses (Postgresql,
-     * Sqlite) override getDSN() and set CHARSET_INIT_NEEDED = false. It is here
-     * for a future MySQL-over-PDO driver. NB __get_charset() now answers with the
-     * configured charset instead of a constant 'utf8'.
+     * Config is consulted only by a driver that opted INTO charset init. The
+     * two concrete subclasses shipped (Postgresql, Sqlite) opt out, and
+     * dbEncoding/dbCollation are MySQL charset names — answering 'utf8mb4' for
+     * a Postgres connection would be stating something that is not true of it.
+     * So they keep the neutral default, and this whole path stays reserved for
+     * a future MySQL-over-PDO driver.
      */
     protected function charset()
     {
-        return $this->charset ?: (Config::getDbEncoding() ?: 'utf8');
+        if ($this->charset) {
+            return $this->charset;
+        }
+
+        if (!static::CHARSET_INIT_NEEDED) {
+            return 'utf8';
+        }
+
+        return Config::getDbEncoding() ?: 'utf8';
     }
 
     protected function __close()

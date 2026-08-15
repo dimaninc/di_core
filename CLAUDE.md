@@ -82,6 +82,10 @@ Supports MySQL (primary), PostgreSQL, SQLite, MongoDB. Schema files in `sql/` wi
 
 **Admin edit-log degradation.** `Admin\BasePage::printEditLog()` guards only its store read (against `\Exception`, so code bugs still surface) and fills the tab with a "temporarily unavailable" notice — the tab is registered unconditionally, so an empty one would read as "never edited". Failures go through the overridable `onEditLogUnavailable()` hook, which by default only writes to the file log. **Override it to report to your monitoring:** the same guard also turns a real breakage (e.g. a table missing after a bad migration) from a loud 500 into a quiet notice.
 
+**Charset: the shipped `sql/*.sql` dumps are `utf8mb4`, `Config::dbEncoding` still is not.** The default connection charset stays mb3 on purpose — raising it would put an mb4 connection over the mb3 schema of every existing consumer on a `composer update`. New projects set `utf8mb4`/`utf8mb4_general_ci` in their own `Data\Config`; existing ones convert first, then switch. **Never name a charset without its collation** in generated DDL — use `Config::getDbCharsetClause()` (it also omits `COLLATE` rather than emitting a blank one), never a literal `utf8`. `diCore\Database\Tool\CharsetConverter` is the conversion engine (per-column `MODIFY`, MyISAM→InnoDB, `ROW_FORMAT=DYNAMIC`, database default, stored programs, DEFINER/sql_mode pre-flights) and `migrations/charset/20260728100000` converts this package's own tables — run it **by idx**, the list-based helpers only scan the consuming project's folder. Full upgrade notes, invariants and the consumer-migration recipe: [`README.md`](README.md) and [`CHANGELOG.md`](CHANGELOG.md).
+
+**Removed: `dbUpdater`** (`php/lib/dbUpdater.php`). It was deprecated but global and autoloaded, so a consumer could still be calling it — use migrations.
+
 ### Migrations
 
 Files in `_cfg/migrations/` (in consuming project), format `{idx}_{name}.php`. Extend `diCore\Database\Tool\Migration`. Must implement `up()` and `down()`. Tracked in `di_migrations_log` table. Managed via `MigrationsManager`.

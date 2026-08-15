@@ -293,18 +293,21 @@ class CharsetConverter
         foreach ($this->routines($names) as $routine) {
             $word = $routine['type'] === 'FUNCTION' ? 'FUNCTION' : 'PROCEDURE';
             $out[strtolower($word) . ' ' . $routine['name']] = $this->showCreate(
-                "$word `{$routine['name']}`",
+                $word . ' ' . $this->name($routine['name']),
                 'Create ' . ucfirst(strtolower($word))
             );
         }
 
         foreach ($this->viewNames($names) as $name) {
-            $out["view $name"] = $this->showCreate("VIEW `$name`", 'Create View');
+            $out["view $name"] = $this->showCreate(
+                'VIEW ' . $this->name($name),
+                'Create View'
+            );
         }
 
         foreach ($this->triggerNames($names) as $name) {
             $out["trigger $name"] = $this->showCreate(
-                "TRIGGER `$name`",
+                'TRIGGER ' . $this->name($name),
                 'SQL Original Statement'
             );
         }
@@ -319,6 +322,13 @@ class CharsetConverter
      * not subject to the cap anyway.
      *
      * Call BEFORE converting: at the old charset the oversized index still fits.
+     *
+     * ROW_FORMAT=DYNAMIC is set in the same ALTER, not left to
+     * innodb_default_row_format: where that is still COMPACT, an index wider
+     * than 767 bytes AT THE OLD CHARSET (an mb3 varchar(300) is 900) cannot be
+     * created at all, so the engine move itself aborts — mid-run, with part of
+     * the list already on InnoDB and no way back. The table is being rebuilt
+     * either way, so the format costs nothing here.
      *
      * @param array|null $tables
      * @return self
@@ -340,7 +350,12 @@ class CharsetConverter
             ' ORDER BY t.TABLE_NAME';
 
         foreach ($this->column($sql) as $table) {
-            $this->exec("ALTER TABLE `$table` ENGINE = InnoDB", $table);
+            $this->exec(
+                'ALTER TABLE ' .
+                    $this->name($table) .
+                    ' ENGINE = InnoDB, ROW_FORMAT = DYNAMIC',
+                $table
+            );
         }
 
         return $this;
@@ -352,12 +367,27 @@ class CharsetConverter
      * the server default utf8mb4_0900_ai_ci, which then collides with the
      * columns on a join.
      *
+     * The name comes from DATABASE(), not from the connection settings: `USE
+     * other_db` moves the session without touching diDB::$dbname, and every
+     * other query in this class is scoped by DATABASE() — so taking the name
+     * from the settings is how the columns of one database get converted while
+     * the default of ANOTHER one is altered.
+     *
      * @return self
      */
     public function setDatabaseCharset()
     {
+        $database = $this->scalar('SELECT DATABASE() AS v');
+
+        if (!$database) {
+            throw new \Exception(
+                'No database selected — cannot set the database default charset'
+            );
+        }
+
         $this->exec(
-            "ALTER DATABASE `{$this->db->getDatabase()}`" .
+            'ALTER DATABASE ' .
+                $this->name($database) .
                 " CHARACTER SET {$this->charset} COLLATE {$this->collation}",
             'database default'
         );
@@ -754,7 +784,10 @@ class CharsetConverter
             $parts[] = 'ROW_FORMAT=DYNAMIC';
         }
 
-        $this->exec("ALTER TABLE `$table` " . implode(', ', $parts), $table);
+        $this->exec(
+            'ALTER TABLE ' . $this->name($table) . ' ' . implode(', ', $parts),
+            $table
+        );
     }
 
     private function rowFormat(string $table): string
@@ -810,7 +843,9 @@ class CharsetConverter
         }
 
         $sql =
-            "MODIFY `{$column->COLUMN_NAME}` {$column->COLUMN_TYPE}" .
+            'MODIFY ' .
+            $this->name($column->COLUMN_NAME) .
+            " {$column->COLUMN_TYPE}" .
             " CHARACTER SET {$this->charset} COLLATE " .
             $this->targetCollation($column->COLLATION_NAME);
 
@@ -1017,7 +1052,7 @@ class CharsetConverter
         $word = $type === 'FUNCTION' ? 'FUNCTION' : 'PROCEDURE';
         $ddl = $this->retarget(
             $this->showCreate(
-                "$word `$name`",
+                $word . ' ' . $this->name($name),
                 'Create ' . ucfirst(strtolower($word))
             )
         );
@@ -1031,10 +1066,10 @@ class CharsetConverter
                 );
             } finally {
                 // Even on failure: a probe left behind is harmless but is litter.
-                $this->quiet("DROP $word IF EXISTS `$probe`");
+                $this->quiet("DROP $word IF EXISTS " . $this->name($probe));
             }
 
-            $this->exec("DROP $word IF EXISTS `$name`", "$word $name");
+            $this->exec("DROP $word IF EXISTS " . $this->name($name), "$word $name");
             $this->exec($ddl, "$word $name");
         });
     }
@@ -1056,7 +1091,7 @@ class CharsetConverter
     /** CREATE OR REPLACE — no window where the view is missing. */
     private function rebuildView(string $name): void
     {
-        $ddl = $this->showCreate("VIEW `$name`", 'Create View');
+        $ddl = $this->showCreate('VIEW ' . $this->name($name), 'Create View');
 
         // retarget here too: a view body may carry its own CONVERT(… USING utf8)
         // or an explicit COLLATE.
@@ -1079,29 +1114,112 @@ class CharsetConverter
     private function rebuildTrigger(array $trigger, $position): void
     {
         $name = $trigger['name'];
-        $ddl = $this->retarget(
-            $this->showCreate("TRIGGER `$name`", 'SQL Original Statement')
+        $original = $this->showCreate(
+            'TRIGGER ' . $this->name($name),
+            'SQL Original Statement'
         );
-
-        if ($position !== null) {
-            // Syntax puts the ordering clause right after FOR EACH ROW and
-            // before the body — appending it at the end is a parse error.
-            $ddl = preg_replace(
-                '/\bFOR\s+EACH\s+ROW\b/i',
-                'FOR EACH ROW ' . $position[0] . ' `' . $position[1] . '`',
-                $ddl,
-                1
-            );
-        }
+        $ddl = $this->atPosition($this->retarget($original), $position);
 
         // The DROP goes INSIDE withSqlMode: setting the mode is the step that
         // can fail, and failing after the drop loses the trigger for good. No
         // probe pass here — a second trigger for the same event would fire on
         // any write in between; the DEFINER and sql_mode pre-flights guard it.
-        $this->withSqlMode($trigger['sql_mode'], function () use ($ddl, $name) {
-            $this->exec("DROP TRIGGER IF EXISTS `$name`", "trigger $name");
-            $this->exec($ddl, "trigger $name");
+        //
+        // What no pre-flight can guard is the CREATE itself: it may fail
+        // because this class rewrote the definition (the charset tokens or the
+        // ordering clause), or because the server accepted the trigger once and
+        // refuses it now — one left pointing at a column a later migration
+        // dropped is the everyday case. Either way DROP has already succeeded
+        // and DDL does not roll back, so the trigger is simply gone. A failed
+        // rebuild therefore puts the ORIGINAL definition back: the run still
+        // fails, but it fails without taking the trigger with it.
+        $this->withSqlMode($trigger['sql_mode'], function () use (
+            $ddl,
+            $original,
+            $position,
+            $name
+        ) {
+            $this->exec(
+                'DROP TRIGGER IF EXISTS ' . $this->name($name),
+                "trigger $name"
+            );
+
+            try {
+                $this->exec($ddl, "trigger $name");
+            } catch (\Exception $e) {
+                throw new \Exception(
+                    $e->getMessage() .
+                        $this->restoreTrigger($name, $original, $position),
+                    0,
+                    $e
+                );
+            }
         });
+    }
+
+    /**
+     * $position is [FOLLOWS|PRECEDES, other trigger]. The syntax puts the
+     * clause right after FOR EACH ROW and before the body — appending it at the
+     * end is a parse error.
+     */
+    private function atPosition(string $ddl, $position): string
+    {
+        if ($position === null) {
+            return $ddl;
+        }
+
+        return preg_replace(
+            '/\bFOR\s+EACH\s+ROW\b/i',
+            'FOR EACH ROW ' . $position[0] . ' ' . $this->name($position[1]),
+            $ddl,
+            1
+        );
+    }
+
+    /**
+     * Two attempts, because the two things that can have broken the CREATE call
+     * for different fallbacks: the original WITH its ordering clause (right when
+     * the retargeting is at fault — the trigger comes back exactly as it was),
+     * then the bare original (right when the ordering clause itself is at fault
+     * — the trigger comes back, but last in its group).
+     *
+     * Best effort throughout, and it says which outcome it got: the caller is
+     * already failing and must keep reporting the real reason, but "restored",
+     * "restored, order may have shifted" and "gone" are very different things to
+     * learn while reading it.
+     */
+    private function restoreTrigger(
+        string $name,
+        string $original,
+        $position
+    ): string {
+        $attempts = [
+            [
+                $this->atPosition($original, $position),
+                ' — the original trigger was restored, nothing was lost',
+            ],
+            [
+                $original,
+                ' — the original trigger was restored, but WITHOUT its ordering' .
+                ' clause: check its position within its group',
+            ],
+        ];
+        $last = 'no attempt was made';
+
+        foreach ($attempts as [$ddl, $outcome]) {
+            try {
+                $this->exec($ddl, "trigger $name (restore)");
+
+                return $outcome;
+            } catch (\Exception $e) {
+                $last = $e->getMessage();
+            }
+        }
+
+        return ' — AND THE ORIGINAL COULD NOT BE RESTORED (' .
+            $last .
+            '), recreate it by hand from: ' .
+            $original;
     }
 
     /**
@@ -1319,6 +1437,18 @@ class CharsetConverter
         return $this->db->escape_string((string) $value);
     }
 
+    /**
+     * A backtick-quoted identifier. MySQL allows a backtick INSIDE a name (it
+     * is written doubled), and every name here is interpolated straight into
+     * DDL — so one such object would produce a syntactically broken statement,
+     * which for rebuildTrigger() means a DROP that works followed by a CREATE
+     * that cannot.
+     */
+    private function name(string $identifier): string
+    {
+        return '`' . str_replace('`', '``', $identifier) . '`';
+    }
+
     private function column(string $sql): array
     {
         $rs = $this->db->q($sql);
@@ -1335,12 +1465,38 @@ class CharsetConverter
      * For recovery statements in finally blocks: q() does not throw, it logs —
      * and Migration::run() reads that log after up() returns, so a stray entry
      * from a restore would mark a wholly successful conversion as a failure.
+     *
+     * Quiet towards the migration, not towards the operator: a restore that
+     * fails leaves the session on a foreign sql_mode (or with foreign keys
+     * still off) for everything that runs after, and swallowing that outright
+     * would make the next, unrelated failure unexplainable. It goes to the file
+     * log instead.
      */
     private function quiet(string $sql): void
     {
         $before = count($this->db->getLog());
-        $this->db->q($sql);
+        $result = $this->db->q($sql);
+        $log = $this->db->getLog();
+
+        if ($result === false || count($log) > $before) {
+            $this->logQuietly(
+                'CharsetConverter: session restore failed [' .
+                    $sql .
+                    ']: ' .
+                    implode('; ', array_slice($log, $before))
+            );
+        }
+
         $this->db->truncateLog($before);
+    }
+
+    /** Logging must never be the reason a conversion or its cleanup dies. */
+    private function logQuietly(string $message): void
+    {
+        try {
+            \diCore\Tool\Logger::getInstance()->log($message, 'database');
+        } catch (\Throwable $e) {
+        }
     }
 
     /**
@@ -1351,17 +1507,24 @@ class CharsetConverter
      * Only the entries THIS statement added are inspected — the log is left as
      * it was rather than reset, because a consumer migration that failed before
      * calling the converter must not have that erased.
+     *
+     * The return value is checked as well as the log: q() only logs when the
+     * driver ALSO reports an error string, so a statement that fails without
+     * one (a connection dropped mid-run is the realistic case) would otherwise
+     * be stepped over silently — and every guarantee this class makes rests on
+     * this one check.
      */
     private function exec(string $sql, string $context): void
     {
         $before = count($this->db->getLog());
-        $this->db->q($sql);
+        $result = $this->db->q($sql);
         $log = $this->db->getLog();
+        $added = array_slice($log, $before);
 
-        if (count($log) > $before) {
+        if ($result === false || $added) {
             throw new \Exception(
                 "Charset conversion failed on [$context]: " .
-                    implode('; ', array_slice($log, $before))
+                    ($added ? implode('; ', $added) : 'the query was rejected')
             );
         }
     }

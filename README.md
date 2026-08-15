@@ -116,7 +116,7 @@ What it handles, each of which is a way this goes wrong quietly:
 - `STRICT_ALL_TABLES` when narrowing back to mb3, so a rollback fails instead of
   silently sweeping every emoji out of the database.
 
-Three things it does NOT do for you:
+Four things it does NOT do for you:
 
 - **Both sides of a foreign key must be converted in the same run.** The session
   runs with `foreign_key_checks = 0` — without it a table could not be converted
@@ -140,8 +140,22 @@ Three things it does NOT do for you:
   runs WITHOUT the trigger. For a denormalising or cache-filling trigger that is
   silent data divergence, not just downtime. Migrations usually run unattended
   via `up_last_not_executed`; make sure that is not happening under traffic.
+  If the `CREATE` half fails, the original definition is put back before the
+  error is reported, so a failed run does not also cost you the trigger; when
+  even that fails — a trigger the server accepted once and refuses now, e.g. one
+  still naming a column a later migration dropped — the error says so outright
+  and carries the full DDL to recreate by hand.
 
 The bundled migration picks its tables by dump filename, so a consumer table that
 merely shares a name with one of this package's (`order`, `content`, `news`,
 `tags`, `photos`, `comments`, `videos`, `feedback`, `searches`) is converted too.
 Usually what you want — converging on one charset — but worth knowing.
+
+**And it converts those tables ONLY — not the stored programs attached to them.**
+`rebuildStoredPrograms()` is schema-wide by nature, so the bundled migration
+deliberately leaves it to you. The consequence is easy to miss: a trigger of
+yours on, say, `content` keeps the charset context it was created under, so it
+goes on truncating 4-byte characters written *through it* long after the column
+underneath became mb4. If you have triggers, views or routines touching any of
+the tables above, convert them in your own migration — the example earlier in
+this section does exactly that.

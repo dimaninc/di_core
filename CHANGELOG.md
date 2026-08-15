@@ -40,9 +40,10 @@ error anywhere.
   list-based helpers only scan the consuming project's migration folder. On
   SQLite/PostgreSQL it is a no-op; on a project still configured as mb3 it
   **refuses to run**, rather than being recorded as done and never converting
-  anything once the config is flipped. It never narrows a charset. A genuine no-op for a
-  project that stays on mb3 or runs on SQLite/PostgreSQL: it never narrows a
-  charset, and it does not apply to non-MySQL connections.
+  anything once the config is flipped. A genuine no-op for a project that stays
+  on mb3 or runs on SQLite/PostgreSQL: it never narrows a charset, and it does
+  not apply to non-MySQL connections. It converts the tables only — stored
+  programs attached to them stay on their old charset context, see README.
 - **`diModel::getCreateTableQuery()` and `diActionsLog::initTable()`** follow the
   configured charset instead of a hardcoded `utf8`, via the new
   `Config::getDbCharsetClause()`.
@@ -54,6 +55,15 @@ error anywhere.
   the server rejects now fails the request outright** (same path as an
   unreachable database), instead of leaving the client on the previous charset
   and mangling 4-byte characters on every write.
+
+  A **collation** the server rejects is treated differently, on purpose: raising
+  `dbEncoding` to `utf8mb4` and forgetting `dbCollation` leaves a pair MySQL
+  refuses (`ERROR 1253`), and failing there would take a whole site down over a
+  typo — via `_fatal()`, which answers **HTTP 200** with the error in the body,
+  so an nginx cache in front would keep serving it after the fix. The charset is
+  already applied by that point, so nothing can be truncated: the connection
+  falls back to that charset's default collation and the reason goes to the file
+  log. Only if the plain `SET NAMES` is refused too is it fatal.
 - **PDO driver:** the DSN charset comes from the configuration instead of a
   hardcoded `utf8`, which used to leave `PDO::quote()` on mb3 while the server
   session had moved to mb4.
@@ -61,7 +71,9 @@ error anywhere.
   `varchar(255)` — 1020 bytes in mb4, over the 767-byte limit of InnoDB's older
   `COMPACT` format — and the converter switches a `COMPACT`/`REDUNDANT` table to
   it as part of the widening `ALTER`, which would otherwise abort. So no minimum
-  MySQL version beyond what the rest of the library needs.
+  MySQL version beyond what the rest of the library needs. The MyISAM→InnoDB
+  move sets it too: MyISAM allows a 1000-byte key, so an index already over 767
+  bytes AT THE OLD CHARSET could not even reach InnoDB's `COMPACT` format.
 - Stored programs are recreated **on a session already switched to the target
   charset** (MySQL stamps a program with the charset context it was created
   under, so rebuilding on the old connection would put them straight back), and

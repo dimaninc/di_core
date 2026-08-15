@@ -21,13 +21,13 @@ class diMigration_20260728100000 extends \diCore\Database\Tool\Migration
 
     public function up()
     {
-        $charset = Config::getDbEncoding();
-
         // Not applicable at all on SQLite/PostgreSQL — a genuine no-op, safe to
         // record as executed since it will never have anything to do.
         if (!$this->applicable()) {
             return;
         }
+
+        $charset = Config::getDbEncoding();
 
         // Configured as mb3: nothing to do YET. Throwing rather than returning
         // is the point — Migration::run() treats a plain return as success and
