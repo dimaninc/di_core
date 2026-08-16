@@ -19,6 +19,7 @@ class CharsetConverterTest extends TestCase
     const MYISAM_TABLE = 'di_charset_probe_myisam';
     const COMPACT_TABLE = 'di_charset_probe_compact';
     const GENERATED_TABLE = 'di_charset_probe_generated';
+    const WIDE_KEY_TABLE = 'di_charset_probe_wide';
     const VIEW = 'di_charset_probe_view';
     const ROUTINE = 'di_charset_probe_fn';
     const ORDERED_TRIGGERS = ['zz_first', 'aa_second'];
@@ -69,6 +70,7 @@ class CharsetConverterTest extends TestCase
                 self::MYISAM_TABLE,
                 self::COMPACT_TABLE,
                 self::GENERATED_TABLE,
+                self::WIDE_KEY_TABLE,
             ]
             as $table
         ) {
@@ -547,16 +549,12 @@ class CharsetConverterTest extends TestCase
                 $c->rebuildStoredPrograms($names);
             });
         } catch (\Exception $e) {
-            // The schema may hold a consumer's own program this converter
-            // refuses to touch; that is not what these tests are about. A
-            // failure on one of OUR objects is, so it must not be skipped away.
-            if (strpos($e->getMessage(), 'di_charset_probe') !== false) {
+            // The rebuild is always scoped to this test's own objects, so a
+            // failure is normally ours and must not be skipped away. The one
+            // exception is environmental: an account that may not recreate a
+            // program under its original DEFINER cannot run these tests at all.
+            if (strpos($e->getMessage(), 'SET_USER_ID or SUPER') === false) {
                 throw $e;
-            }
-            foreach (self::ORDERED_TRIGGERS as $ours) {
-                if (strpos($e->getMessage(), $ours) !== false) {
-                    throw $e;
-                }
             }
 
             $this->markTestSkipped($e->getMessage());
@@ -631,18 +629,56 @@ class CharsetConverterTest extends TestCase
     }
 
     /**
+     * The program is created under a mode of this test's own choosing, NOT
+     * whatever the server happens to default to.
+     *
+     * inPreparedSession() strips exactly these two flags, so a rebuild that
+     * stamps the session mode instead of the program's own shows up. Reading
+     * the mode off the server and skipping when it lacks NO_ZERO_DATE — which
+     * is what this used to do — meant the check never ran anywhere sql_mode is
+     * empty (the maintainer's own machine included), and there the two strings
+     * are equal whatever the code does, so it could not have failed anyway.
+     */
+    const PROBE_SQL_MODE = 'NO_ZERO_DATE,NO_ZERO_IN_DATE';
+
+    private function underSqlMode(string $mode, callable $work): void
+    {
+        $rs = $this->db->q('SELECT @@SESSION.sql_mode AS v');
+        $previous = (string) $this->db->fetch($rs)->v;
+
+        $this->db->q("SET SESSION sql_mode = '$mode'");
+
+        try {
+            $work();
+        } finally {
+            $this->db->q(
+                "SET SESSION sql_mode = '" .
+                    $this->db->escape_string($previous) .
+                    "'"
+            );
+        }
+    }
+
+    /**
      * A stored program remembers its own sql_mode, and CREATE stamps the session
-     * one — which inPreparedSession() deliberately alters (it drops
-     * NO_ZERO_DATE). Without restoring it, every rebuild quietly changes the
-     * mode of every program in the schema.
+     * one — which inPreparedSession() deliberately alters. Without restoring it,
+     * every rebuild quietly changes the mode of every program in the schema.
      */
     public function testTriggerKeepsItsOwnSqlMode(): void
     {
-        $before = (string) $this->triggerRow(self::TRIGGER)->sql_mode;
+        $this->db->q('DROP TRIGGER IF EXISTS `' . self::TRIGGER . '`');
+        $this->underSqlMode(self::PROBE_SQL_MODE, function () {
+            $this->db->q(
+                'CREATE TRIGGER `' .
+                    self::TRIGGER .
+                    '` BEFORE INSERT ON `' .
+                    self::TABLE .
+                    '` FOR EACH ROW SET NEW.touched = 1'
+            );
+        });
 
-        if (strpos($before, 'NO_ZERO_DATE') === false) {
-            $this->markTestSkipped('session mode carries no NO_ZERO_DATE');
-        }
+        $before = (string) $this->triggerRow(self::TRIGGER)->sql_mode;
+        $this->assertStringContainsString('NO_ZERO_DATE', $before, 'probe mode');
 
         $this->convert();
         $this->rebuildPrograms();
@@ -657,34 +693,33 @@ class CharsetConverterTest extends TestCase
     public function testRoutineKeepsItsOwnSqlMode(): void
     {
         $this->db->q('DROP FUNCTION IF EXISTS `' . self::ROUTINE . '`');
-        $this->db->q(
-            'CREATE FUNCTION `' .
-                self::ROUTINE .
-                '` (a VARCHAR(10)) RETURNS VARCHAR(10) DETERMINISTIC RETURN a'
-        );
+        $this->underSqlMode(self::PROBE_SQL_MODE, function () {
+            $this->db->q(
+                'CREATE FUNCTION `' .
+                    self::ROUTINE .
+                    '` (a VARCHAR(10)) RETURNS VARCHAR(10) DETERMINISTIC RETURN a'
+            );
+        });
 
-        $rs = $this->db->q(
-            "SELECT SQL_MODE AS v FROM information_schema.ROUTINES
-             WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_NAME = '" .
-                self::ROUTINE .
-                "'"
-        );
-        $before = (string) $this->db->fetch($rs)->v;
-
-        if (strpos($before, 'NO_ZERO_DATE') === false) {
-            $this->markTestSkipped('session mode carries no NO_ZERO_DATE');
-        }
+        $before = $this->routineSqlMode();
+        $this->assertStringContainsString('NO_ZERO_DATE', $before, 'probe mode');
 
         $this->rebuildPrograms();
 
+        $this->assertSame($before, $this->routineSqlMode());
+    }
+
+    private function routineSqlMode(): string
+    {
         $rs = $this->db->q(
             "SELECT SQL_MODE AS v FROM information_schema.ROUTINES
              WHERE ROUTINE_SCHEMA = DATABASE() AND ROUTINE_NAME = '" .
                 self::ROUTINE .
                 "'"
         );
+        $r = $rs ? $this->db->fetch($rs) : null;
 
-        $this->assertSame($before, (string) $this->db->fetch($rs)->v);
+        return $r ? (string) $r->v : '';
     }
 
     public function testViewIsRebuiltAndRetargeted(): void
@@ -1112,5 +1147,252 @@ class CharsetConverterTest extends TestCase
         $this->expectException(\Exception::class);
 
         new CharsetConverter($this->db, 'utf8mb9', 'utf8mb9_general_ci');
+    }
+
+    /**
+     * A DEFAULT holding a 4-byte character, on the table this converter is most
+     * often pointed at: already utf8mb4, but on a collation that is not the
+     * target, so every column is rebuilt.
+     *
+     * information_schema.COLUMN_DEFAULT answers with the emoji replaced by '?'
+     * (HEX() confirms it: the value really ends 3F), and so does SHOW COLUMNS —
+     * so rebuilding the column from either writes the mangled text back and
+     * reports success. Only SHOW CREATE TABLE keeps it, as a 0x… literal.
+     */
+    public function testFourByteColumnDefaultSurvives(): void
+    {
+        $this->requireCollation('utf8mb4_unicode_ci');
+
+        $emoji = '🎂 юбилей';
+
+        // The CREATE itself has to go over an mb4 connection — an mb3 one
+        // cannot even carry the literal to the server.
+        $this->withConnectionCharset(self::TARGET, function () use ($emoji) {
+            $this->db->q('DROP TABLE IF EXISTS `' . self::WIDE_KEY_TABLE . '`');
+            $this->db->q(
+                'CREATE TABLE `' .
+                    self::WIDE_KEY_TABLE .
+                    "` (
+                    id INT NOT NULL AUTO_INCREMENT,
+                    t VARCHAR(50) NOT NULL DEFAULT '" .
+                    $this->db->escape_string($emoji) .
+                    "',
+                    PRIMARY KEY (id)
+                ) ENGINE=InnoDB
+                  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+            );
+        });
+
+        // …but the conversion runs on the connection the suite has, which for a
+        // consumer mid-upgrade is still mb3. That must not cost the default.
+        (new CharsetConverter(
+            $this->db,
+            self::TARGET,
+            self::TARGET_COLLATION
+        ))->inPreparedSession(false, function ($c) {
+            $c->convertTables([self::WIDE_KEY_TABLE]);
+        });
+
+        $this->withConnectionCharset(self::TARGET, function () use ($emoji) {
+            $this->db->q(
+                'INSERT INTO `' . self::WIDE_KEY_TABLE . '` (id) VALUES (1)'
+            );
+            $rs = $this->db->q(
+                'SELECT t AS v FROM `' . self::WIDE_KEY_TABLE . '` WHERE id = 1'
+            );
+            $r = $this->db->fetch($rs);
+
+            $this->assertNotNull($r, 'the row was inserted');
+            $this->assertSame($emoji, (string) $r->v, 'the DEFAULT was rebuilt');
+        });
+
+        $this->db->q('DROP TABLE IF EXISTS `' . self::WIDE_KEY_TABLE . '`');
+    }
+
+    /**
+     * The DEFAULT is looked for in code only, so neither an enum value nor a
+     * comment saying "DEFAULT " can be taken for one, and a doubled quote or a
+     * newline inside the value has to survive the round trip untouched.
+     */
+    public function testAwkwardDefaultsSurvive(): void
+    {
+        $this->requireCollation('utf8mb4_unicode_ci');
+
+        $this->db->q('DROP TABLE IF EXISTS `' . self::WIDE_KEY_TABLE . '`');
+        $this->db->q(
+            'CREATE TABLE `' .
+                self::WIDE_KEY_TABLE .
+                "` (
+                id INT NOT NULL AUTO_INCREMENT,
+                quoted VARCHAR(50) NOT NULL DEFAULT 'it''s a \"test\"',
+                blank VARCHAR(50) NOT NULL DEFAULT '',
+                wrapped VARCHAR(50) NOT NULL DEFAULT 'one\ntwo',
+                enm ENUM('DEFAULT 5','b') NOT NULL DEFAULT 'b',
+                noted VARCHAR(50) NOT NULL DEFAULT 'x' COMMENT 'says DEFAULT 9',
+                PRIMARY KEY (id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+        );
+
+        $before = $this->defaults(self::WIDE_KEY_TABLE);
+        // Or a CREATE that silently failed would compare two empty sets and pass.
+        $this->assertCount(5, $before, 'the probe table was created');
+
+        (new CharsetConverter(
+            $this->db,
+            self::TARGET,
+            self::TARGET_COLLATION
+        ))->inPreparedSession(false, function ($c) {
+            $c->convertTables([self::WIDE_KEY_TABLE]);
+        });
+
+        $after = $this->defaults(self::WIDE_KEY_TABLE);
+        $this->db->q('DROP TABLE IF EXISTS `' . self::WIDE_KEY_TABLE . '`');
+
+        $this->assertSame($before, $after);
+        $this->assertSame("it's a \"test\"", $before['quoted']);
+        $this->assertSame('b', $before['enm']);
+    }
+
+    private function defaults(string $table): array
+    {
+        $rs = $this->db->q(
+            "SELECT COLUMN_NAME n, COLUMN_DEFAULT d FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '$table'
+               AND COLUMN_DEFAULT IS NOT NULL
+             ORDER BY ORDINAL_POSITION"
+        );
+
+        $out = [];
+        while ($r = $this->db->fetch($rs)) {
+            $out[$r->n] = (string) $r->d;
+        }
+
+        return $out;
+    }
+
+    /**
+     * An index that no longer fits InnoDB's 3072-byte cap once widened must be
+     * named before anything is altered. Found from the ALTER instead, it stops
+     * the run partway down the table list — with the connection already on the
+     * new charset, so whatever is left unconverted starts truncating.
+     */
+    public function testWideInnodbKeyIsRefused(): void
+    {
+        $mb3 = $this->mb3;
+        $this->db->q('DROP TABLE IF EXISTS `' . self::WIDE_KEY_TABLE . '`');
+        // 2700 bytes in mb3, 3600 in mb4.
+        $this->db->q(
+            'CREATE TABLE `' .
+                self::WIDE_KEY_TABLE .
+                "` (
+                id INT NOT NULL AUTO_INCREMENT,
+                a VARCHAR(500) NOT NULL,
+                b VARCHAR(400) NOT NULL,
+                PRIMARY KEY (id),
+                KEY wide_idx (a, b)
+            ) ENGINE=InnoDB ROW_FORMAT=DYNAMIC
+              DEFAULT CHARSET=$mb3 COLLATE={$mb3}_general_ci"
+        );
+
+        $message = null;
+        try {
+            (new CharsetConverter(
+                $this->db,
+                self::TARGET,
+                self::TARGET_COLLATION
+            ))->convertTables([self::WIDE_KEY_TABLE]);
+        } catch (\Exception $e) {
+            $message = $e->getMessage();
+        }
+
+        $collation = $this->collationOf(self::WIDE_KEY_TABLE);
+        $this->db->q('DROP TABLE IF EXISTS `' . self::WIDE_KEY_TABLE . '`');
+
+        $this->assertNotNull($message, 'the oversized key must be refused');
+        $this->assertStringContainsString('3072-byte', $message);
+        $this->assertStringContainsString(self::WIDE_KEY_TABLE, $message);
+        // Pre-flight, not a failed ALTER: nothing may have been touched.
+        $this->assertSame($mb3 . '_general_ci', $collation);
+    }
+
+    /**
+     * A MyISAM table without FULLTEXT is measured against InnoDB's cap, not its
+     * own 1000: moveMyisamTablesToInnoDb() has made it InnoDB by the time its
+     * columns are widened. An indexed latin1 varchar(1000) is exactly 1000
+     * bytes today — legal on MyISAM — and 4000 in mb4.
+     */
+    public function testPlainMyisamWideKeyIsRefusedAgainstTheInnodbCap(): void
+    {
+        $this->db->q('DROP TABLE IF EXISTS `' . self::MYISAM_TABLE . '`');
+        $this->db->q(
+            'CREATE TABLE `' .
+                self::MYISAM_TABLE .
+                '` (
+                id INT NOT NULL AUTO_INCREMENT,
+                a VARCHAR(1000) NOT NULL,
+                PRIMARY KEY (id),
+                KEY wide_idx (a)
+            ) ENGINE=MyISAM DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci'
+        );
+
+        $message = null;
+        try {
+            (new CharsetConverter(
+                $this->db,
+                self::TARGET,
+                self::TARGET_COLLATION
+            ))->convertTables([self::MYISAM_TABLE]);
+        } catch (\Exception $e) {
+            $message = $e->getMessage();
+        } finally {
+            $this->db->q('DROP TABLE IF EXISTS `' . self::MYISAM_TABLE . '`');
+        }
+
+        $this->assertNotNull($message, 'the oversized key must be refused');
+        $this->assertStringContainsString('3072-byte', $message);
+    }
+
+    /**
+     * The other side of it: a prefix index over the same wide column fits, and
+     * refusing it would block a conversion that would have worked.
+     */
+    public function testPrefixIndexOnAWideColumnIsAccepted(): void
+    {
+        $this->db->q('DROP TABLE IF EXISTS `' . self::WIDE_KEY_TABLE . '`');
+        $this->db->q(
+            'CREATE TABLE `' .
+                self::WIDE_KEY_TABLE .
+                '` (
+                id INT NOT NULL AUTO_INCREMENT,
+                a VARCHAR(1000) NOT NULL,
+                PRIMARY KEY (id),
+                KEY prefix_idx (a(100))
+            ) ENGINE=InnoDB ROW_FORMAT=DYNAMIC
+              DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci'
+        );
+
+        (new CharsetConverter(
+            $this->db,
+            self::TARGET,
+            self::TARGET_COLLATION
+        ))->inPreparedSession(false, function ($c) {
+            $c->convertTables([self::WIDE_KEY_TABLE]);
+        });
+
+        $collation = $this->collationOf(self::WIDE_KEY_TABLE);
+        $this->db->q('DROP TABLE IF EXISTS `' . self::WIDE_KEY_TABLE . '`');
+
+        $this->assertSame(self::TARGET_COLLATION, $collation);
+    }
+
+    private function collationOf(string $table): string
+    {
+        $rs = $this->db->q(
+            "SELECT TABLE_COLLATION AS v FROM information_schema.TABLES
+             WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '$table'"
+        );
+        $r = $rs ? $this->db->fetch($rs) : null;
+
+        return $r ? (string) $r->v : '';
     }
 }

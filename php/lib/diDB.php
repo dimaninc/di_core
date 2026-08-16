@@ -329,9 +329,9 @@ abstract class diDB
             // CLIENT on the previous charset while the columns are on the
             // configured one, and every 4-byte character written through it is
             // silently mangled — the exact corruption this ordering exists to
-            // prevent. A misconfigured charset is a broken connection.
-            $this->logConnectionProblem("Unable to set connection charset to $enc");
-            $this->_fatal("Unable to set connection charset to $enc");
+            // prevent. A misconfigured charset is a broken connection, so it is
+            // reported the same way an unreachable one is.
+            $this->failConnectionCharset($enc);
         }
 
         // An empty collation would make this a syntax error; SET NAMES alone
@@ -345,9 +345,7 @@ abstract class diDB
         // dbCollation. NOT fatal: set_charset() above already put the
         // connection on the configured CHARSET, so nothing can be truncated;
         // only the collation falls back to that charset's default. Failing the
-        // request here would take the whole site down over a typo, and via
-        // _fatal() it would do so with HTTP 200 and the error text in the
-        // body — cacheable, so the outage would outlive the fix.
+        // request here would take the whole site down over a typo.
         //
         // The plain SET NAMES is still issued: set_charset() moved
         // character_set_* but a driver is free not to touch collation_connection,
@@ -363,11 +361,33 @@ abstract class diDB
         if (!$this->trySetNames("SET NAMES $enc")) {
             // The charset alone is refused too: this really is a broken
             // connection, and writing through it corrupts data.
-            $this->logConnectionProblem("SET NAMES $enc failed");
-            $this->_fatal("Unable to set connection charset to $enc");
+            $this->failConnectionCharset($enc);
         }
 
         return $this;
+    }
+
+    /**
+     * A connection whose charset could not be applied is a broken connection,
+     * and it is reported exactly like an unreachable one — by throwing.
+     *
+     * Deliberately NOT _fatal(): that ends in die() with no status code, so the
+     * browser gets HTTP 200 with the error in the body, which an nginx cache in
+     * front will happily keep serving long after the fix. die() is not a
+     * \Throwable either, so it walks straight past the entry-point handler a
+     * consumer uses to serve its own 503 page. And this is reachable by
+     * configuration alone: mysqlnd rejects the name `utf8mb3` (verified —
+     * set_charset() returns false), which is the very spelling MySQL 8.0.28+
+     * and CharsetConverter::MB3_NAMES call canonical, so a plausible
+     * `dbEncoding` would otherwise take a whole site down uncatchably.
+     */
+    protected function failConnectionCharset($enc)
+    {
+        $message = "Unable to set connection charset to $enc";
+
+        $this->logConnectionProblem($message);
+
+        throw new \diDatabaseException($message);
     }
 
     /**

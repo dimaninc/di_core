@@ -32,9 +32,21 @@ connection over the mb3 schema of every existing consumer on a mere
   const dbEncoding = 'utf8mb4';
   const dbCollation = 'utf8mb4_general_ci';
   ```
-- **Existing project:** leave it on mb3 until you convert. Order matters —
-  convert the schema first, switch the connection second; an mb4 connection over
-  mb3 columns keeps truncating.
+- **Existing project:** leave it on mb3 until you are ready to convert, then do
+  the conversion and the config flip as ONE deploy, with writes stopped. Either
+  half on its own truncates: an mb3 connection cuts 4-byte characters before
+  they reach an mb4 column, an mb4 connection cannot write them into an mb3 one.
+
+  Which half goes first depends on whose migration you run, and the two are not
+  interchangeable:
+
+  | | order | why |
+  |---|---|---|
+  | your own migration | schema, then config | it names `'utf8mb4'` itself (see the example below), so it does not care what is configured |
+  | the bundled `charset/20260728100000` | config, then schema | it converts to the **configured** charset and refuses to run while that is still mb3 |
+
+  Two migrations, one deploy: run the bundled one for the tables this package
+  ships and your own for the rest.
 
 **Row format.** An indexed `varchar(255)` needs 1020 bytes in mb4, over the
 767-byte limit of InnoDB's older `COMPACT` format. Every shipped dump that has
@@ -106,6 +118,14 @@ What it handles, each of which is a way this goes wrong quietly:
   reports success.
 - MyISAM → InnoDB first (MyISAM caps a key at 1000 bytes against InnoDB's 3072,
   and an indexed `varchar(255)` needs 1020), leaving FULLTEXT tables alone.
+- Index keys that will not fit once widened, named **before** anything is
+  altered rather than found from a failed `ALTER` halfway down the list: an
+  indexed `latin1 varchar(1000)` fits in 1000 bytes today and needs 4000 in mb4.
+  Both caps are checked, MyISAM's 1000 for the FULLTEXT tables that stay there
+  and InnoDB's 3072 for everything else.
+- Column `DEFAULT`s are read from `SHOW CREATE TABLE`, not from
+  `information_schema`, which renders a 4-byte character in a default as `?` —
+  re-quoting that value destroys the default while reporting success.
 - `ALTER DATABASE`, or a later `CREATE TABLE` with no explicit charset inherits
   the old default.
 - Stored programs. A procedure's parameters keep the charset written into their
@@ -122,11 +142,11 @@ Four things it does NOT do for you:
   runs with `foreign_key_checks = 0` — without it a table could not be converted
   at all — so a partial run can leave an FK whose two columns disagree on
   collation, and that only surfaces later, on a DML or the next `ALTER`.
-- **Three tables this package creates have no `sql/` dump**, so the bundled
-  migration's table list misses them: `di_migrations_log`, `configuration` and
-  `di_actions_log`. A fresh install builds them on the configured charset, but an
-  existing one keeps them where they were — convert them with the rest of your
-  schema.
+- **The tables this package creates in code have no `sql/` dump**, so the bundled
+  migration's table list misses them: `di_migrations_log`, `configuration`,
+  `di_actions_log` and every `search_index_*`. A fresh install builds them on the
+  configured charset, but an existing one keeps them where they were — convert
+  them with the rest of your schema.
 - **Collations other than `_bin` and `_cs` are normalised onto the target.** A
   column deliberately on `utf8mb4_unicode_ci` becomes `utf8mb4_general_ci`, which
   changes which values compare equal (accents, `ß`/`ss`). Case sensitivity is

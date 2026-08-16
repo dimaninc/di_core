@@ -264,15 +264,15 @@ class Db extends \diBaseAdminController
         }
 
         $sql = <<<EOF
-# [diCMS] database backup
-# http://www.cadr25.ru
-#
-# Database: {$this->getDb()->getDatabase()}
-# Database Server: {$this->getDb()->getHost()}
-#
-# Backup Date: {$dt}
+        # [diCMS] database backup
+        # http://www.cadr25.ru
+        #
+        # Database: {$this->getDb()->getDatabase()}
+        # Database Server: {$this->getDb()->getHost()}
+        #
+        # Backup Date: {$dt}
 
-EOF;
+        EOF;
 
         foreach ($tablesAr as $table) {
             if (!in_array($table, $allTablesAr)) {
@@ -290,7 +290,12 @@ EOF;
 
                 $createFieldsAr = [];
 
-                $rs = $this->getDb()->q("SHOW FIELDS FROM `$table`");
+                $tableCharset = $this->getTableCharsetInfo($table);
+
+                // FULL, so the per-column Collation comes with it: a `_bin`
+                // column dumped without one comes back case-insensitive, which
+                // collides values differing only in case under a UNIQUE index.
+                $rs = $this->getDb()->q("SHOW FULL COLUMNS FROM `$table`");
                 while ($r = $this->getDb()->fetch($rs)) {
                     if ($r->Default != null) {
                         if (!in_array($r->Default, ['CURRENT_TIMESTAMP'])) {
@@ -303,6 +308,7 @@ EOF;
                     $null = $r->Null == 'YES' ? ' NULL' : ' NOT NULL';
                     $def = $r->Default != null ? ' DEFAULT ' . $r->Default . '' : '';
                     $extra = $r->Extra ? ' ' . $r->Extra : '';
+                    $collate = $this->getColumnCollateClause($r, $tableCharset);
 
                     if (!$this->keepDefaultGenerated()) {
                         $extra = trim(str_replace('DEFAULT_GENERATED', '', $extra));
@@ -313,7 +319,14 @@ EOF;
 
                     $fieldsAr[$r->Field] = $r->Type;
                     $createFieldsAr[] =
-                        "\t`" . $name . '` ' . $type . $null . $def . $extra;
+                        "\t`" .
+                        $name .
+                        '` ' .
+                        $type .
+                        $collate .
+                        $null .
+                        $def .
+                        $extra;
                 }
 
                 $sql .= join(",\n", $createFieldsAr);
@@ -367,19 +380,33 @@ EOF;
                     if ($key_name == 'PRIMARY') {
                         $sql .= "\tPRIMARY KEY ($colNames)";
                     } else {
+                        $unique = '';
+
                         if (substr($key_name, 0, 6) == 'UNIQUE') {
                             $key_name = substr($key_name, 7);
+                            // The marker was being stripped and then dropped, so
+                            // every unique index came back as a plain one and the
+                            // restored table accepted duplicates. FULLTEXT wins if
+                            // both are set — it cannot be unique anyway.
+                            $unique = $prefix ? '' : 'UNIQUE ';
                         }
 
-                        $sql .= "\t" . $prefix . "KEY `$key_name`($colNames)";
+                        $sql .=
+                            "\t" . $prefix . $unique . "KEY `$key_name`($colNames)";
                     }
                 }
 
+                // The TABLE's own charset, not the configured one. Since the
+                // shipped dumps went utf8mb4 while Config::dbEncoding stayed
+                // mb3, the two legitimately differ — and writing the config
+                // value here would describe an mb4 table as mb3, so restoring
+                // the dump would silently narrow it and truncate every 4-byte
+                // character written afterwards.
                 $sql .=
-                    "\n)\nENGINE=$engine\nDEFAULT CHARSET=" .
-                    Config::getDbEncoding() .
-                    "\nCOLLATE=" .
-                    Config::getDbCollation() .
+                    "\n)\nENGINE=$engine" .
+                    $this->getRowFormatClause($engine, $tableCharset) .
+                    "\n" .
+                    $this->getTableCharsetClause($tableCharset) .
                     ";\n\n";
             }
 
@@ -476,6 +503,88 @@ EOF;
             'format' => StringHelper::fileExtension($filename),
             'file' => basename($filename),
         ];
+    }
+
+    /**
+     * Charset, collation and row format of a real table, or nulls when they
+     * cannot be read (a non-MySQL connection, an account without access to
+     * information_schema) — in which case the callers fall back to the
+     * configured values, i.e. to the behaviour this used to have.
+     */
+    private function getTableCharsetInfo($table)
+    {
+        $empty = ['charset' => null, 'collation' => null, 'rowFormat' => null];
+
+        try {
+            $rs = $this->getDb()->q(
+                "SELECT t.TABLE_COLLATION AS collation, t.ROW_FORMAT AS rowFormat,
+                        c.CHARACTER_SET_NAME AS charset
+                 FROM information_schema.TABLES t
+                 LEFT JOIN information_schema.COLLATIONS c
+                        ON c.COLLATION_NAME = t.TABLE_COLLATION
+                 WHERE t.TABLE_SCHEMA = DATABASE()
+                   AND t.TABLE_NAME = '" .
+                    $this->getDb()->escape_string($table) .
+                    "'"
+            );
+            $r = $rs ? $this->getDb()->fetch($rs) : null;
+        } catch (\Exception $e) {
+            $r = null;
+        }
+
+        return $r
+            ? [
+                'charset' => $r->charset ?: null,
+                'collation' => $r->collation ?: null,
+                'rowFormat' => $r->rowFormat ?: null,
+            ]
+            : $empty;
+    }
+
+    private function getTableCharsetClause(array $info)
+    {
+        if (!$info['charset']) {
+            return Config::getDbCharsetClause();
+        }
+
+        return "DEFAULT CHARSET={$info['charset']}" .
+            ($info['collation'] ? "\nCOLLATE={$info['collation']}" : '');
+    }
+
+    /**
+     * An indexed varchar(255) is 1020 bytes in mb4, over the 767-byte cap of
+     * InnoDB's older COMPACT format — so a dump that does not carry the row
+     * format cannot be restored where innodb_default_row_format is still
+     * COMPACT. Only stated for InnoDB, and only as the table actually has it.
+     */
+    private function getRowFormatClause($engine, array $info)
+    {
+        $format = strtoupper((string) $info['rowFormat']);
+
+        return $engine === 'InnoDB' &&
+            in_array($format, ['DYNAMIC', 'COMPRESSED'], true)
+            ? "\nROW_FORMAT=$format"
+            : '';
+    }
+
+    /**
+     * `CHARACTER SET … COLLATE …` for a column whose collation differs from the
+     * table default — most importantly a `_bin` one, whose case sensitivity is
+     * lost the moment the column inherits the table's `_ci` default instead.
+     */
+    private function getColumnCollateClause($column, array $info)
+    {
+        $collation = $column->Collation ?? null;
+        $underscore = $collation ? strpos($collation, '_') : false;
+
+        if (!$collation || $collation === $info['collation'] || !$underscore) {
+            return '';
+        }
+
+        // A collation always names its charset in its prefix.
+        $charset = substr($collation, 0, $underscore);
+
+        return " CHARACTER SET $charset COLLATE $collation";
     }
 
     private function checkTimeout($time, $timeout)

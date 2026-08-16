@@ -49,11 +49,6 @@ class CharsetConverter
     }
 
     /**
-     * The engine pre-check here assumes moveMyisamTablesToInnoDb() has already
-     * run: it only refuses a MyISAM table kept on MyISAM by its FULLTEXT index.
-     * A plain MyISAM table with a wide index, in a chain that skipped the move,
-     * still fails mid-run from exec().
-     *
      * @param array|null $tables Restrict to these; null = every base table.
      * @return self
      */
@@ -61,8 +56,9 @@ class CharsetConverter
     {
         // Scoped, and therefore safe to run here rather than only from
         // preflight() — which the bundled migration deliberately does not call,
-        // since its stored-program checks are schema-wide. Without this the
-        // MyISAM/FULLTEXT case would only surface mid-run, from exec().
+        // since its stored-program checks are schema-wide. Without this an
+        // unconvertible column or an oversized key would only surface mid-run,
+        // from exec(), with part of the list already converted.
         $this->assertColumnsConvertible($tables);
         $this->assertConvertibleEngines($tables);
 
@@ -99,10 +95,18 @@ class CharsetConverter
     }
 
     /**
-     * A MyISAM table with a FULLTEXT index is deliberately left on MyISAM, whose
-     * key cap is 1000 bytes — so if it also carries an index over a varchar wide
-     * enough to exceed that once widened, its ALTER cannot succeed. Name it here
-     * rather than fail halfway through the run.
+     * An index that no longer fits its engine's key cap once its columns are
+     * widened. Both engines are checked, because either one aborts the ALTER
+     * mid-run and leaves the schema half converted:
+     *
+     * - MyISAM caps a key at 1000 bytes, and a MyISAM table with a FULLTEXT
+     *   index is deliberately left on MyISAM by moveMyisamTablesToInnoDb(), so
+     *   it never gains InnoDB's roomier cap.
+     * - InnoDB caps a key at 3072 bytes (DYNAMIC/COMPRESSED, which convertTable()
+     *   guarantees). An indexed latin1 varchar(1000) is 1000 bytes today and
+     *   4000 in mb4 — the ALTER simply cannot succeed. A MyISAM table without a
+     *   FULLTEXT index is measured against THIS cap, not its own: by the time
+     *   its columns are widened moveMyisamTablesToInnoDb() has made it InnoDB.
      */
     private function assertConvertibleEngines($tables = null): void
     {
@@ -116,7 +120,61 @@ class CharsetConverter
              WHERE CHARACTER_SET_NAME = '{$this->quoted($this->charset)}'"
             ) ?:
             4;
-        $bad = $this->column(
+
+        $hasFulltext = "EXISTS (
+                 SELECT 1 FROM information_schema.STATISTICS f
+                 WHERE f.TABLE_SCHEMA = s.TABLE_SCHEMA
+                   AND f.TABLE_NAME = s.TABLE_NAME
+                   AND f.INDEX_TYPE = 'FULLTEXT'
+               )";
+
+        $myisam = $this->oversizedIndexes(
+            $tables,
+            $bytes,
+            "t.ENGINE = 'MyISAM' AND $hasFulltext",
+            1000
+        );
+        if ($myisam) {
+            throw new \Exception(
+                'MyISAM FULLTEXT tables whose key would exceed the 1000-byte ' .
+                    'cap once widened: ' .
+                    implode(', ', $myisam) .
+                    ' — convert them by hand'
+            );
+        }
+
+        $innodb = $this->oversizedIndexes(
+            $tables,
+            $bytes,
+            "(t.ENGINE = 'InnoDB' OR (t.ENGINE = 'MyISAM' AND NOT $hasFulltext))",
+            3072
+        );
+        if ($innodb) {
+            throw new \Exception(
+                'Indexes that would exceed the 3072-byte InnoDB key cap once ' .
+                    'widened: ' .
+                    implode(', ', $innodb) .
+                    ' — shorten them (a prefix index) or convert them by hand'
+            );
+        }
+    }
+
+    /**
+     * Indexes whose string parts, measured at the TARGET charset, come to more
+     * than $limit bytes. $enginePredicate picks the tables the cap applies to.
+     *
+     * No false positives are possible: for an index already entirely on the
+     * target charset the sum IS its current width, which the server accepted
+     * when the index was created — so anything over the cap necessarily has a
+     * column still to be widened.
+     */
+    private function oversizedIndexes(
+        $tables,
+        int $bytes,
+        string $enginePredicate,
+        int $limit
+    ): array {
+        return $this->column(
             "SELECT DISTINCT CONCAT(s.TABLE_NAME, '.', s.INDEX_NAME) AS name
              FROM information_schema.STATISTICS s
              JOIN information_schema.TABLES t
@@ -125,29 +183,14 @@ class CharsetConverter
                ON c.TABLE_SCHEMA = s.TABLE_SCHEMA AND c.TABLE_NAME = s.TABLE_NAME
               AND c.COLUMN_NAME = s.COLUMN_NAME
              WHERE s.TABLE_SCHEMA = DATABASE()
-               AND t.ENGINE = 'MyISAM'
+               AND $enginePredicate
                AND s.INDEX_TYPE <> 'FULLTEXT'
                AND c.CHARACTER_SET_NAME IS NOT NULL
-               AND EXISTS (
-                 SELECT 1 FROM information_schema.STATISTICS f
-                 WHERE f.TABLE_SCHEMA = s.TABLE_SCHEMA
-                   AND f.TABLE_NAME = s.TABLE_NAME
-                   AND f.INDEX_TYPE = 'FULLTEXT'
-               )
              GROUP BY s.TABLE_NAME, s.INDEX_NAME
              HAVING SUM(
                COALESCE(s.SUB_PART, c.CHARACTER_MAXIMUM_LENGTH) * $bytes
-             ) > 1000" . $this->tableFilter('s.TABLE_NAME', $tables)
+             ) > $limit" . $this->tableFilter('s.TABLE_NAME', $tables)
         );
-
-        if ($bad) {
-            throw new \Exception(
-                'MyISAM FULLTEXT tables whose key would exceed the 1000-byte ' .
-                    'cap once widened: ' .
-                    implode(', ', $bad) .
-                    ' — convert them by hand'
-            );
-        }
     }
 
     /** Only for the paths that actually rewrite stored programs. */
@@ -161,6 +204,7 @@ class CharsetConverter
         }
 
         $this->assertStoredProgramsRecreatable($names);
+        $this->assertStandardEscapesInPrograms($names);
         $this->assertStoredProgramCharsetsKnown($names);
         $this->assertSqlModesSettable($names);
 
@@ -193,6 +237,41 @@ class CharsetConverter
             throw new \Exception(
                 'Cannot convert columns carrying EXTRA: ' .
                     implode(', ', $bad) .
+                    ' — convert them by hand'
+            );
+        }
+    }
+
+    /**
+     * tokenise() splits code from literals on the assumption that a backslash
+     * escapes the next character. Under NO_BACKSLASH_ESCAPES it does not, so a
+     * literal ending in a backslash is read as running on into the code after
+     * it — and then retarget() rewrites, or the pre-flight refuses, something
+     * inside a string. Rare enough not to be worth a second tokeniser, common
+     * enough to be worth refusing by name.
+     *
+     * Views are exempt: MySQL regenerates their body itself, always with
+     * standard escaping, and information_schema.VIEWS carries no SQL_MODE.
+     */
+    private function assertStandardEscapesInPrograms($names = null): void
+    {
+        $offenders = [];
+
+        foreach (
+            array_merge($this->routines($names), $this->triggers($names))
+            as $program
+        ) {
+            if (stripos($program['sql_mode'], 'NO_BACKSLASH_ESCAPES') !== false) {
+                $offenders[] = $program['name'];
+            }
+        }
+
+        if ($offenders) {
+            throw new \Exception(
+                'Stored programs created under NO_BACKSLASH_ESCAPES, whose ' .
+                    'string literals this converter cannot safely tell apart ' .
+                    'from code: ' .
+                    implode(', ', array_unique($offenders)) .
                     ' — convert them by hand'
             );
         }
@@ -536,12 +615,17 @@ class CharsetConverter
         $fkChecks = $this->sessionVar('foreign_key_checks');
         $sqlMode = $this->sessionVar('sql_mode');
 
-        $this->db->q('SET FOREIGN_KEY_CHECKS = 0');
-        if ($sqlMode !== null) {
-            $this->applySqlMode($this->relaxedFlags($sqlMode, $strict));
-        }
-
         try {
+            // Inside the try, and through exec(): preparing the session is
+            // itself a step that can fail, and it must fail here — with its own
+            // message and nothing altered yet — rather than leave the run going
+            // with foreign keys still on. Inside, so the finally restores
+            // whatever half of it did take effect.
+            $this->exec('SET FOREIGN_KEY_CHECKS = 0', 'foreign_key_checks');
+            if ($sqlMode !== null) {
+                $this->applySqlMode($this->relaxedFlags($sqlMode, $strict));
+            }
+
             $work($this);
         } finally {
             // Restore what was there, not an assumed default — this process may
@@ -695,7 +779,9 @@ class CharsetConverter
             ) .
             "'";
 
-        $quiet ? $this->quiet($sql) : $this->db->q($sql);
+        // exec() when it matters: a mode the server refuses must not leave the
+        // run going under whatever mode was there before.
+        $quiet ? $this->quiet($sql) : $this->exec($sql, 'session sql_mode');
     }
 
     /**
@@ -760,9 +846,14 @@ class CharsetConverter
     {
         $parts = [];
         $columns = $this->columnsToConvert($table);
+        // Read once per table, and only when a column is actually rebuilt —
+        // see defaultLiteral() for why information_schema is not enough.
+        $ddl = $columns
+            ? $this->showCreate('TABLE ' . $this->name($table), 'Create Table')
+            : '';
 
         foreach ($columns as $column) {
-            $parts[] = $this->modifyClause($column);
+            $parts[] = $this->modifyClause($column, $ddl);
         }
 
         // Table default too, so columns added later inherit the new charset.
@@ -831,7 +922,7 @@ class CharsetConverter
      * charset, nullability, default, comment). Anything outside it — INVISIBLE,
      * SRID, inline CHECK — would be dropped, hence the EXTRA guard.
      */
-    private function modifyClause($column): string
+    private function modifyClause($column, string $ddl): string
     {
         // COLUMN_DEFAULT doesn't round-trip expression defaults; bail loudly
         // rather than silently rewrite one wrong.
@@ -852,14 +943,100 @@ class CharsetConverter
         $sql .= $column->IS_NULLABLE === 'NO' ? ' NOT NULL' : ' NULL';
 
         if ($column->COLUMN_DEFAULT !== null) {
-            $sql .= " DEFAULT '" . $this->quoted($column->COLUMN_DEFAULT) . "'";
+            $sql .= ' DEFAULT ' . $this->defaultLiteral($ddl, $column);
         }
 
+        // COLUMN_COMMENT is safe to re-quote: MySQL stores comments in the data
+        // dictionary as mb3 and has already replaced anything wider with '?' by
+        // the time the column exists, so there is nothing left here to lose.
         if ($column->COLUMN_COMMENT !== '') {
             $sql .= " COMMENT '" . $this->quoted($column->COLUMN_COMMENT) . "'";
         }
 
         return $sql;
+    }
+
+    /**
+     * The DEFAULT exactly as SHOW CREATE TABLE spells it — a quoted string, or a
+     * `0x…` hex literal when the value cannot be rendered as text.
+     *
+     * NOT from information_schema.COLUMN_DEFAULT, which is lossy: a default
+     * holding a 4-byte character comes back with it replaced by '?' (verified:
+     * `HEX(COLUMN_DEFAULT)` ends `…3F`, and SHOW COLUMNS answers the same), so
+     * re-quoting that value writes the mangled text back and reports success.
+     * The column keeps its type and its data — only the default is quietly
+     * destroyed, on exactly the table this class is most often pointed at: one
+     * already on utf8mb4 but carrying MySQL 8's default collation.
+     */
+    private function defaultLiteral(string $ddl, $column): string
+    {
+        $definition = $this->columnDefinition($ddl, $column->COLUMN_NAME);
+        $literal =
+            $definition === null ? null : $this->defaultFromDefinition($definition);
+
+        if ($literal === null) {
+            // Falling back to the information_schema value is what silently
+            // corrupts it, so refuse instead: a named column to fix by hand
+            // beats a default nobody notices changed.
+            throw new \Exception(
+                "Cannot read the DEFAULT of column {$column->COLUMN_NAME} from" .
+                    ' SHOW CREATE TABLE; convert this column by hand'
+            );
+        }
+
+        return $literal;
+    }
+
+    /** Everything after the name on a column's line of SHOW CREATE TABLE. */
+    private function columnDefinition(string $ddl, string $column)
+    {
+        // A string literal may hold a newline, so it is matched whole rather
+        // than stopped at; everything else runs to the end of the line. Index
+        // and constraint lines never begin with a backtick, so requiring one
+        // right after the indentation keeps them out.
+        $literal = "'(?:[^'\\\\]|\\\\.|'')*'";
+        $pattern =
+            '/^[ \t]*' .
+            preg_quote($this->name($column), '/') .
+            "[ \\t]+((?:$literal|[^\\n'])*)/m";
+
+        return preg_match($pattern, $ddl, $m) ? $m[1] : null;
+    }
+
+    /**
+     * The DEFAULT token of a column definition, looked for in code only — an
+     * enum whose values or a comment whose text says "DEFAULT " must not be
+     * mistaken for one.
+     */
+    private function defaultFromDefinition(string $definition)
+    {
+        $parts = $this->tokenise($definition);
+
+        // preg_split alternates code, literal, code, … — even indexes are code.
+        foreach ($parts as $i => $part) {
+            if ($i % 2 !== 0) {
+                continue;
+            }
+
+            // A quoted default lives in the NEXT part, the code half having
+            // ended on the keyword.
+            if (isset($parts[$i + 1]) && preg_match('/\bDEFAULT\s*\z/i', $part)) {
+                return $parts[$i + 1];
+            }
+
+            // Everything else is spelled in code: 0x…, a number, NULL.
+            if (
+                preg_match(
+                    '/\bDEFAULT\s+(0x[0-9A-Fa-f]+|NULL|-?\d+(?:\.\d+)?)(?![\w.])/i',
+                    $part,
+                    $m
+                )
+            ) {
+                return $m[1];
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -1161,6 +1338,11 @@ class CharsetConverter
      * $position is [FOLLOWS|PRECEDES, other trigger]. The syntax puts the
      * clause right after FOR EACH ROW and before the body — appending it at the
      * end is a parse error.
+     *
+     * The one place besides renameRoutineInDdl() that regexes the DDL without
+     * going through overCode(), and it is safe for the same reason: the limit of
+     * 1 makes it the FIRST occurrence, and the header always precedes the body,
+     * so it cannot reach into a literal.
      */
     private function atPosition(string $ddl, $position): string
     {

@@ -283,20 +283,89 @@ class Config
     }
 
     /**
-     * `DEFAULT CHARSET = … COLLATE = …` for generated DDL.
+     * `DEFAULT CHARSET = … COLLATE = …` for a generated CREATE TABLE.
      *
      * A blank charset falls back to utf8mb3, but a blank COLLATE is simply
      * omitted rather than guessed at as "<charset>_general_ci" — that name need
      * not exist for every charset, and inventing one only swaps a clear error
-     * for an obscure one.
+     * for an obscure one. Omitting it is not silent, though: see
+     * warnAboutBlankCollation().
      */
     final public static function getDbCharsetClause(): string
     {
+        return self::configuredCharsetClause('DEFAULT CHARSET = ', ' COLLATE = ');
+    }
+
+    /**
+     * `CHARACTER SET … COLLATE …` for a single column of a generated CREATE
+     * TABLE. Same rules as getDbCharsetClause().
+     */
+    final public static function getDbColumnCharsetClause(): string
+    {
+        return self::configuredCharsetClause('CHARACTER SET ', ' COLLATE ');
+    }
+
+    /** Pure, so the blank-collation case is testable without swapping Config. */
+    public static function buildCharsetClause(
+        string $prefix,
+        string $collateKeyword,
+        string $charset,
+        string $collation
+    ): string {
+        return $prefix .
+            "'" .
+            ($charset ?: 'utf8') .
+            "'" .
+            ($collation ? $collateKeyword . "'$collation'" : '');
+    }
+
+    private static function configuredCharsetClause(
+        string $prefix,
+        string $collateKeyword
+    ): string {
         $charset = static::getDbEncoding() ?: 'utf8';
         $collation = static::getDbCollation();
 
-        return "DEFAULT CHARSET = '$charset'" .
-            ($collation ? " COLLATE = '$collation'" : '');
+        if (!$collation) {
+            self::warnAboutBlankCollation($charset);
+        }
+
+        return self::buildCharsetClause(
+            $prefix,
+            $collateKeyword,
+            $charset,
+            (string) $collation
+        );
+    }
+
+    /**
+     * A charset with no collation is not an error the DDL can express, but it is
+     * a misconfiguration: MySQL 8 then hands the table its own default
+     * (utf8mb4_0900_ai_ci), which collides with every table that named one on a
+     * join. Failing here would be worse — this runs while the migrations log
+     * table is being created, before any migration can fix anything — so it is
+     * logged instead, once per process.
+     */
+    private static function warnAboutBlankCollation(string $charset): void
+    {
+        static $warned = false;
+
+        if ($warned) {
+            return;
+        }
+
+        $warned = true;
+
+        try {
+            \diCore\Tool\Logger::getInstance()->log(
+                "dbCollation is empty while dbEncoding is '$charset':" .
+                    ' generated tables will take the SERVER default collation.' .
+                    ' Set dbCollation in Data\Config.',
+                'database'
+            );
+        } catch (\Throwable $e) {
+            // a warning must never be the reason a table is not created
+        }
     }
 
     final public static function getSourcesFolder()
