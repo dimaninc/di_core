@@ -116,6 +116,14 @@ error anywhere.
   back and reported success. Hit exactly the tables this converter is most often
   pointed at — already utf8mb4, but on MySQL 8's default collation. A default
   that cannot be read back is now refused by name instead of guessed at.
+- **`ENUM`/`SET` members holding a 4-byte character are refused**, for the same
+  reason one level worse: the member's text lives inside `COLUMN_TYPE`, which the
+  rebuild copies verbatim, and here `SHOW CREATE TABLE` renders it as `?` TOO —
+  the real values sit in a data dictionary table SQL may not read, so there is no
+  lossless source at all. Converting anyway redefined the member as the literal
+  `?` and every stored row holding the original collapsed to the enum error value
+  `''`, silently. A member legitimately containing `?` is refused as well: the
+  false positive costs one table converted by hand, the false negative a column.
 - The **pre-flight names any index that will not fit once widened**, for both
   key caps: MySQL's 1000 bytes on the FULLTEXT tables left on MyISAM, and
   InnoDB's 3072 for everything else (a MyISAM table without FULLTEXT is measured

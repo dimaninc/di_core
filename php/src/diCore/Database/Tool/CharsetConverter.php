@@ -240,6 +240,53 @@ class CharsetConverter
                     ' — convert them by hand'
             );
         }
+
+        $this->assertEnumsReadable($tables);
+    }
+
+    /**
+     * ENUM/SET members carrying a 4-byte character, which cannot be rebuilt.
+     *
+     * The same lossiness as COLUMN_DEFAULT, one level worse: a member's text
+     * lives inside COLUMN_TYPE, which modifyClause() copies verbatim, and
+     * information_schema renders it as '?' — but here SHOW CREATE TABLE renders
+     * it as '?' TOO, so defaultLiteral()'s escape hatch does not exist. The real
+     * values sit in mysql.column_type_elements, a data dictionary table SQL may
+     * not read (ERROR 3554), so there is no lossless source at all.
+     *
+     * Left alone this destroys data in silence: MODIFY would redefine the member
+     * as the literal '?', every stored row holding the original stops matching
+     * any member and collapses to the enum error value '' — with no warning, no
+     * log line, and a migration reporting success.
+     *
+     * A member legitimately containing '?' is refused too. That is the right way
+     * round: the false positive costs one table converted by hand, the false
+     * negative costs a column.
+     */
+    private function assertEnumsReadable($tables = null): void
+    {
+        $bad = $this->column(
+            "SELECT CONCAT(TABLE_NAME, '.', COLUMN_NAME) AS name
+             FROM information_schema.COLUMNS
+             WHERE TABLE_SCHEMA = DATABASE()
+               AND DATA_TYPE IN ('enum', 'set')
+               AND COLLATION_NAME IS NOT NULL
+               AND COLUMN_TYPE LIKE '%?%'
+               AND " .
+                $this->wrongCollationCondition('COLLATION_NAME') .
+                $this->tableFilter('TABLE_NAME', $tables)
+        );
+
+        if ($bad) {
+            throw new \Exception(
+                'Cannot convert ENUM/SET columns whose members MySQL will not ' .
+                    'report losslessly (a 4-byte character reads back as "?", ' .
+                    'and rebuilding from that would replace the member and ' .
+                    'blank every row holding it): ' .
+                    implode(', ', $bad) .
+                    ' — convert them by hand'
+            );
+        }
     }
 
     /**
@@ -538,14 +585,23 @@ class CharsetConverter
         try {
             return $work();
         } finally {
-            $parts = [];
+            // One statement per variable, not one combined SET: a value the
+            // server refuses aborts the WHOLE statement, so a single bad one
+            // would leave all four on the target charset — the opposite of
+            // restoring. Ordering still matters, and the array preserves it:
+            // character_set_connection resets collation_connection, which comes
+            // after it.
             foreach ($previous as $var => $value) {
-                if ($value !== null) {
-                    $parts[] = "$var = '" . $this->quoted($value) . "'";
-                }
-            }
-            if ($parts) {
-                $this->quiet('SET SESSION ' . implode(', ', $parts));
+                // NULL is a legitimate value for character_set_results (it
+                // switches result conversion off) and is restored as the
+                // keyword, not as '' — `SET character_set_results = ''` is
+                // ERROR 1115.
+                $this->quiet(
+                    "SET SESSION $var = " .
+                        ($value === null
+                            ? 'NULL'
+                            : "'" . $this->quoted($value) . "'")
+                );
             }
         }
     }
@@ -747,12 +803,18 @@ class CharsetConverter
         return $r ? $r->v : null;
     }
 
+    /**
+     * null means "no value", and it means it for both reasons: the variable
+     * could not be read, or it really is SQL NULL. Casting a NULL to '' instead
+     * is how a restore ends up writing `character_set_results = ''` — ERROR
+     * 1115, since NULL is a legitimate value for that one and '' is not.
+     */
     private function sessionVar(string $name)
     {
         $rs = $this->db->q("SELECT @@SESSION.$name AS v");
         $r = $rs ? $this->db->fetch($rs) : null;
 
-        return $r ? (string) $r->v : null;
+        return $r && $r->v !== null ? (string) $r->v : null;
     }
 
     private function relaxedFlags(string $sqlMode, bool $strict): array

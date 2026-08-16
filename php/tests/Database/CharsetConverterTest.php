@@ -1385,6 +1385,181 @@ class CharsetConverterTest extends TestCase
         $this->assertSame(self::TARGET_COLLATION, $collation);
     }
 
+    /**
+     * An ENUM member holding a 4-byte character must stop the run, not be
+     * rebuilt from what information_schema reports.
+     *
+     * The member's text lives inside COLUMN_TYPE, which modifyClause() copies
+     * verbatim — and MySQL renders it as '?' in information_schema AND in
+     * SHOW CREATE TABLE, so unlike a DEFAULT there is no lossless source to
+     * fall back to. Converting anyway redefines the member as the literal '?',
+     * and every stored row holding the original silently collapses to the enum
+     * error value ''. Refusing costs one table converted by hand; not refusing
+     * costs the column, with the migration reporting success.
+     */
+    public function testEnumWithAFourByteMemberIsRefused(): void
+    {
+        $this->requireCollation('utf8mb4_0900_ai_ci');
+
+        // The CREATE has to go over an mb4 connection or the literal never
+        // reaches the server intact — the suite's own connection may be mb3.
+        $this->withConnectionCharset(self::TARGET, function () {
+            $this->db->q('DROP TABLE IF EXISTS `' . self::WIDE_KEY_TABLE . '`');
+            $this->db->q(
+                'CREATE TABLE `' .
+                    self::WIDE_KEY_TABLE .
+                    "` (
+                    id INT NOT NULL AUTO_INCREMENT,
+                    e ENUM('a', 'x\u{1F600}') NOT NULL DEFAULT 'a',
+                    PRIMARY KEY (id)
+                ) ENGINE=InnoDB ROW_FORMAT=DYNAMIC
+                  DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci"
+            );
+            $this->db->q(
+                'INSERT INTO `' .
+                    self::WIDE_KEY_TABLE .
+                    "` (e) VALUES ('x\u{1F600}')"
+            );
+        });
+
+        // Guard the guard: if the member did not survive the CREATE, the
+        // refusal below would pass for the wrong reason.
+        $rs = $this->db->q(
+            'SELECT HEX(e) AS v FROM `' . self::WIDE_KEY_TABLE . '` WHERE id = 1'
+        );
+        $this->assertSame(
+            '78F09F9880',
+            (string) $this->db->fetch($rs)->v,
+            'the 4-byte member was not stored, so this test proves nothing'
+        );
+
+        $message = null;
+        try {
+            (new CharsetConverter(
+                $this->db,
+                self::TARGET,
+                self::TARGET_COLLATION
+            ))->inPreparedSession(false, function ($c) {
+                $c->convertTables([self::WIDE_KEY_TABLE]);
+            });
+        } catch (\Exception $e) {
+            $message = $e->getMessage();
+        }
+
+        // Nothing may have been touched: the refusal is a pre-flight, so the
+        // row and the column definition are exactly as they were.
+        $rs = $this->db->q(
+            'SELECT HEX(e) AS v FROM `' . self::WIDE_KEY_TABLE . '` WHERE id = 1'
+        );
+        $value = (string) $this->db->fetch($rs)->v;
+        $collation = $this->collationOf(self::WIDE_KEY_TABLE);
+
+        $this->db->q('DROP TABLE IF EXISTS `' . self::WIDE_KEY_TABLE . '`');
+
+        $this->assertNotNull($message, 'the conversion was not refused');
+        $this->assertStringContainsString('ENUM/SET', (string) $message);
+        $this->assertStringContainsString(
+            self::WIDE_KEY_TABLE . '.e',
+            (string) $message
+        );
+        $this->assertSame('78F09F9880', $value, 'the stored member was destroyed');
+        $this->assertSame('utf8mb4_0900_ai_ci', $collation, 'the table was altered');
+    }
+
+    /**
+     * An ENUM of plain ASCII members is not collateral damage of the guard
+     * above — it still converts.
+     */
+    public function testPlainEnumStillConverts(): void
+    {
+        $this->db->q('DROP TABLE IF EXISTS `' . self::WIDE_KEY_TABLE . '`');
+        $this->db->q(
+            'CREATE TABLE `' .
+                self::WIDE_KEY_TABLE .
+                "` (
+                id INT NOT NULL AUTO_INCREMENT,
+                e ENUM('a', 'b') NOT NULL DEFAULT 'a',
+                PRIMARY KEY (id)
+            ) ENGINE=InnoDB ROW_FORMAT=DYNAMIC
+              DEFAULT CHARSET=$this->mb3 COLLATE={$this->mb3}_general_ci"
+        );
+        $this->db->q('INSERT INTO `' . self::WIDE_KEY_TABLE . "` (e) VALUES ('b')");
+
+        (new CharsetConverter(
+            $this->db,
+            self::TARGET,
+            self::TARGET_COLLATION
+        ))->inPreparedSession(false, function ($c) {
+            $c->convertTables([self::WIDE_KEY_TABLE]);
+        });
+
+        $rs = $this->db->q(
+            'SELECT e AS v FROM `' . self::WIDE_KEY_TABLE . '` WHERE id = 1'
+        );
+        $value = (string) $this->db->fetch($rs)->v;
+        $collation = $this->collationOf(self::WIDE_KEY_TABLE);
+
+        $this->db->q('DROP TABLE IF EXISTS `' . self::WIDE_KEY_TABLE . '`');
+
+        $this->assertSame('b', $value);
+        $this->assertSame(self::TARGET_COLLATION, $collation);
+    }
+
+    /**
+     * `character_set_results = NULL` (result conversion off) has to come back as
+     * NULL after a stored-program rebuild.
+     *
+     * It used to be read as '' and written back as `SET SESSION … = ''`, which
+     * is ERROR 1115 — and since all four variables were restored by ONE
+     * statement, that error took the other three down with it and left the
+     * connection on the target charset for everything that ran afterwards.
+     */
+    public function testSessionIsRestoredWhenResultsCharsetWasNull(): void
+    {
+        // The configured pair, whatever the consumer running this suite uses —
+        // not an assumed mb3.
+        $rs = $this->db->q(
+            'SELECT @@SESSION.character_set_client AS c,
+                    @@SESSION.collation_connection AS n'
+        );
+        $before = $this->db->fetch($rs);
+        $client = (string) $before->c;
+        $collation = (string) $before->n;
+
+        $this->db->q('SET SESSION character_set_results = NULL');
+
+        try {
+            // An empty scope: no program is touched, so what this exercises is
+            // withSessionCharset()'s SET NAMES and its restore, nothing else.
+            (new CharsetConverter(
+                $this->db,
+                self::TARGET,
+                self::TARGET_COLLATION
+            ))->rebuildStoredPrograms([]);
+
+            $rs = $this->db->q(
+                'SELECT @@SESSION.character_set_results AS r,
+                        @@SESSION.character_set_client AS c,
+                        @@SESSION.collation_connection AS n'
+            );
+            $after = $this->db->fetch($rs);
+
+            $this->assertNull($after->r, 'character_set_results was not restored');
+            $this->assertSame(
+                $client,
+                (string) $after->c,
+                'character_set_client was collateral damage'
+            );
+            $this->assertSame(
+                $collation,
+                (string) $after->n,
+                'collation_connection was collateral damage'
+            );
+        } finally {
+            $this->db->q("SET NAMES $client COLLATE $collation");
+        }
+    }
+
     private function collationOf(string $table): string
     {
         $rs = $this->db->q(
