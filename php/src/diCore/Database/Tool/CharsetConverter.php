@@ -20,6 +20,18 @@ class CharsetConverter
      */
     const MB3_NAMES = ['utf8mb3', 'utf8'];
 
+    /**
+     * The charset names retarget() will rewrite inside a stored program, in
+     * EITHER direction. mb3 alone is not enough: after an mb3 -> mb4 run every
+     * program declares mb4, so a rollback would be refused by
+     * assertStoredProgramCharsetsKnown() before it altered anything — the
+     * documented down() path could never run. Anything outside the utf8 family
+     * (a deliberate cp1251 or ascii) is still refused rather than guessed at.
+     *
+     * Longest spelling first: `utf8` must not claim the `utf8` of `utf8mb4`.
+     */
+    const REWRITABLE_NAMES = ['utf8mb4', 'utf8mb3', 'utf8'];
+
     /** @var \diDB */
     private $db;
 
@@ -343,7 +355,7 @@ class CharsetConverter
             // a collation names its charset in its prefix
             '/\bCOLLATE\s+([A-Za-z0-9]+?)_[A-Za-z0-9_]+\b/i',
         ];
-        $known = array_merge(self::MB3_NAMES, [
+        $known = array_merge(self::REWRITABLE_NAMES, [
             strtolower($this->charset),
             'binary',
             'btree',
@@ -1607,17 +1619,18 @@ class CharsetConverter
     }
 
     /**
-     * Rewrites the mb3 charset/collation tokens in a stored program's
-     * definition. `utf8mb4` is safe from the `utf8` alternative on its own — a
-     * word boundary cannot fall between "utf8" and "mb4".
+     * Rewrites the utf8-family charset/collation tokens in a stored program's
+     * definition onto the target. Both directions, so a converted schema can be
+     * rolled back: a token already on the target rewrites to itself, which is
+     * why the pass is idempotent rather than doubling into `utf8mb4mb4`.
      *
-     * Only mb3 is rewritten; any other non-target charset is refused up front by
-     * assertStoredProgramCharsetsKnown(), since rewriting e.g. a deliberate
-     * cp1251 or ascii declaration would be a guess.
+     * Only that family is rewritten; any other non-target charset is refused up
+     * front by assertStoredProgramCharsetsKnown(), since rewriting e.g. a
+     * deliberate cp1251 or ascii declaration would be a guess.
      */
     private function retarget(string $ddl): string
     {
-        $old = '(?:' . implode('|', self::MB3_NAMES) . ')';
+        $old = '(?:' . implode('|', self::REWRITABLE_NAMES) . ')';
         // The TARGET collation, not the old family name carried over: with a
         // target of utf8mb4_unicode_ci, keeping `_general_ci` would leave the
         // program disagreeing with the columns just converted. _bin is the one
@@ -1634,7 +1647,12 @@ class CharsetConverter
                 [
                     '/\b(CHARACTER SET|CHARSET|USING)\s+' . $old . '\b/i',
                     '/\bCOLLATE\s+' . $old . '_bin\b/i',
-                    '/\bCOLLATE\s+' . $old . '_\w+\b/i',
+                    // _bin excluded HERE too, not only in the rule below: the
+                    // previous pattern has already rewritten `utf8_bin` into
+                    // `<target>_bin`, and the target charset is itself in $old
+                    // now — without the guard this rule would immediately
+                    // flatten what that one just preserved.
+                    '/\bCOLLATE\s+' . $old . '_(?!bin\b)\w+\b/i',
                     // Introducer form `_utf8'…'`. The quote sits in the NEXT
                     // segment once literals are split out, so end-of-segment
                     // counts as the lookahead too; the lookbehind still keeps

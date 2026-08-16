@@ -397,6 +397,65 @@ class CharsetConverterTest extends TestCase
         $this->assertSame('USING BTREE', $this->retarget('USING BTREE'));
     }
 
+    /** Same, with an arbitrary target — the rollback direction needs mb3. */
+    private function retargetTo(string $charset, string $ddl): string
+    {
+        $converter = new CharsetConverter(
+            $this->db,
+            $charset,
+            $charset . '_general_ci'
+        );
+        $method = new \ReflectionMethod($converter, 'retarget');
+        $method->setAccessible(true);
+
+        return $method->invoke($converter, $ddl);
+    }
+
+    /**
+     * mb4 -> mb3. Rewriting only the mb3 spellings would make every consumer's
+     * down() a no-op for stored programs: after an mb3 -> mb4 run they all
+     * declare mb4, so there is no mb3 token left to rewrite.
+     */
+    public function testRetargetRewritesTheTargetBackToMb3(): void
+    {
+        $mb3 = $this->mb3;
+
+        $this->assertSame(
+            "CHARACTER SET $mb3",
+            $this->retargetTo($mb3, 'CHARACTER SET utf8mb4')
+        );
+        $this->assertSame(
+            "COLLATE {$mb3}_general_ci",
+            $this->retargetTo($mb3, 'COLLATE utf8mb4_general_ci')
+        );
+        $this->assertSame(
+            "SET x = _$mb3'y'",
+            $this->retargetTo($mb3, "SET x = _utf8mb4'y'"),
+            'introducer form'
+        );
+    }
+
+    /**
+     * _bin is case sensitivity, not a locale, so it survives either way. The
+     * target charset is itself rewritable now, which puts an already-correct
+     * `<target>_bin` within reach of the generic collation rule.
+     */
+    public function testRetargetKeepsBinaryCollationBothWays(): void
+    {
+        $mb3 = $this->mb3;
+
+        $this->assertSame(
+            'COLLATE utf8mb4_bin',
+            $this->retarget('COLLATE utf8mb4_bin'),
+            'already on the target'
+        );
+        $this->assertSame(
+            "COLLATE {$mb3}_bin",
+            $this->retargetTo($mb3, 'COLLATE utf8mb4_bin'),
+            'rolled back'
+        );
+    }
+
     public function testMovesMyisamToInnoDb(): void
     {
         $this->db->q('DROP TABLE IF EXISTS `' . self::MYISAM_TABLE . '`');
@@ -593,6 +652,52 @@ class CharsetConverterTest extends TestCase
 
         $this->assertStringContainsString(self::TARGET, $body);
         $this->assertStringNotContainsString("USING $mb3", $body);
+    }
+
+    /**
+     * The whole rollback, end to end. This is what the charset check used to
+     * make impossible: it whitelisted mb3 plus the target, so a converter
+     * pointed back at mb3 refused every program the previous run had put on
+     * mb4 — and refused it in preflight, before altering anything, so a
+     * consumer's down() could never start.
+     */
+    public function testConversionCanBeRolledBack(): void
+    {
+        $mb3 = $this->mb3;
+
+        $this->db->q('DROP TRIGGER IF EXISTS `' . self::TRIGGER . '`');
+        $this->db->q(
+            'CREATE TRIGGER `' .
+                self::TRIGGER .
+                '` BEFORE INSERT ON `' .
+                self::TABLE .
+                "` FOR EACH ROW SET NEW.title = CONVERT(NEW.title USING $mb3)"
+        );
+
+        $this->convert();
+        $this->rebuildPrograms([self::TRIGGER]);
+
+        // Narrowing, so strict: a 4-byte character that no longer fits must
+        // error rather than be swept out silently.
+        (new CharsetConverter(
+            $this->db,
+            $mb3,
+            $mb3 . '_general_ci'
+        ))->inPreparedSession(true, function ($c) {
+            $c->convertTables([self::TABLE]);
+            $c->rebuildStoredPrograms([self::TRIGGER]);
+        });
+
+        $this->assertSame($mb3 . '_general_ci', $this->tableCollation());
+        $this->assertSame(
+            $mb3 . '_bin',
+            $this->columns()['slug']->COLLATION_NAME,
+            'BINARY survives the way back too'
+        );
+
+        $body = (string) $this->triggerRow(self::TRIGGER)->body;
+        $this->assertStringContainsString("USING $mb3", $body);
+        $this->assertStringNotContainsString(self::TARGET, $body);
     }
 
     /**
