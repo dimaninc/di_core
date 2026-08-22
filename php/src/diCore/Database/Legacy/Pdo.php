@@ -13,7 +13,8 @@ use diCore\Helper\ArrayHelper;
 
 abstract class Pdo extends \diDB
 {
-    protected $charset = 'utf8';
+    /** null = follow Config::getDbEncoding(); see charset(). */
+    protected $charset = null;
 
     /** @var \PDO */
     protected $link;
@@ -81,7 +82,33 @@ abstract class Pdo extends \diDB
 
     protected function getDSN()
     {
-        return "$this->driver:host=$this->host;dbname=$this->dbname;charset=$this->charset";
+        return "$this->driver:host=$this->host;dbname=$this->dbname;charset=" .
+            $this->charset();
+    }
+
+    /**
+     * The DSN charset is what PDO would escape and quote in, so a literal here
+     * would split the client from the server session the way initCharset()
+     * exists to prevent.
+     *
+     * Config is consulted only by a driver that opted INTO charset init. The
+     * two concrete subclasses shipped (Postgresql, Sqlite) opt out, and
+     * dbEncoding/dbCollation are MySQL charset names — answering 'utf8mb4' for
+     * a Postgres connection would be stating something that is not true of it.
+     * So they keep the neutral default, and this whole path stays reserved for
+     * a future MySQL-over-PDO driver.
+     */
+    protected function charset()
+    {
+        if ($this->charset) {
+            return $this->charset;
+        }
+
+        if (!static::CHARSET_INIT_NEEDED) {
+            return 'utf8';
+        }
+
+        return Config::getDbEncoding() ?: 'utf8';
     }
 
     protected function __close()
@@ -212,14 +239,20 @@ abstract class Pdo extends \diDB
         return $s;
     }
 
+    /**
+     * PDO fixes the charset in the DSN at connect time, so this only records the
+     * name — getDSN() is what actually applies it on the next connection.
+     */
     protected function __set_charset($name)
     {
+        $this->charset = $name;
+
         return true;
     }
 
     protected function __get_charset()
     {
-        return 'utf8';
+        return $this->charset();
     }
 
     protected function startTransactionInner()

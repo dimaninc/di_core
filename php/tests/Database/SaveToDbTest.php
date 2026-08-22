@@ -37,7 +37,7 @@ class SaveToDbTest extends TestCase
                 amount INT DEFAULT 0,
                 UNIQUE KEY slug_idx (slug),
                 PRIMARY KEY (id)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci'
+            ) ENGINE=InnoDB ' . \diCore\Data\Config::getDbCharsetClause()
         );
     }
 

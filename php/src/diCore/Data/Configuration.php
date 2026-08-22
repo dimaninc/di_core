@@ -504,9 +504,6 @@ class Configuration
 
     private function getCreateTableSql()
     {
-        $charset = Config::getDbEncoding();
-        $collation = Config::getDbCollation();
-
         switch (Connection::get()::getEngine()) {
             case Engine::SQLITE:
                 return [
@@ -529,6 +526,10 @@ class Configuration
                 ];
 
             case Engine::MYSQL:
+                // A blank collation must not become `COLLATE=`. MySQL-only:
+                // the branches above take no charset.
+                $charsetClause = Config::getDbCharsetClause();
+
                 return [
                     "CREATE TABLE IF NOT EXISTS `$this->tableName`(
                         `id` int not null auto_increment,
@@ -536,7 +537,7 @@ class Configuration
                         `$this->valueField` text,
                         unique key `idx`(`{$this->nameField}`),
                         primary key(`id`)
-		            ) ENGINE=InnoDB DEFAULT CHARSET=$charset COLLATE=$collation;",
+		            ) ENGINE=InnoDB $charsetClause;",
                 ];
 
             default:
@@ -600,7 +601,7 @@ class Configuration
                     \diPaths::fileSystem() .
                     self::getFolder() .
                     $r->{$this->valueField};
-                list($w, $h, $t) = is_file($ff) ? getimagesize($ff) : [0, 0, 0];
+                [$w, $h, $t] = is_file($ff) ? getimagesize($ff) : [0, 0, 0];
 
                 if ($w && $h) {
                     $cache_file .= "self::\$data[\"{$name}\"][\"img_width\"] = $w;\n";

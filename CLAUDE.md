@@ -82,6 +82,10 @@ Supports MySQL (primary), PostgreSQL, SQLite, MongoDB. Schema files in `sql/` wi
 
 **Admin edit-log degradation.** `Admin\BasePage::printEditLog()` guards only its store read (against `\Exception`, so code bugs still surface) and fills the tab with a "temporarily unavailable" notice — the tab is registered unconditionally, so an empty one would read as "never edited". Failures go through the overridable `onEditLogUnavailable()` hook, which by default only writes to the file log. **Override it to report to your monitoring:** the same guard also turns a real breakage (e.g. a table missing after a bad migration) from a loud 500 into a quiet notice.
 
+**Charset: the shipped `sql/*.sql` dumps are `utf8mb4`, `Config::dbEncoding` still is not.** The default connection charset stays mb3 on purpose — raising it would put an mb4 connection over the mb3 schema of every existing consumer on a `composer update`. New projects set `utf8mb4`/`utf8mb4_general_ci` in their own `Data\Config`; existing ones convert the schema and flip the config in ONE deploy (order depends on whose migration runs — see README). **Never spell `dbEncoding` as `utf8mb3`:** mysqlnd rejects that name, and `initCharset()` treats a refused charset as a broken connection (throws `\diDatabaseException`, same as an unreachable host). **Never name a charset without its collation** in generated DDL — use `Config::getDbCharsetClause()` / `getDbColumnCharsetClause()` (they omit `COLLATE` rather than emitting a blank one, and log the misconfiguration), never a literal `utf8`. **Anything reading a column DEFAULT for DDL must use `SHOW CREATE TABLE`** — `information_schema.COLUMN_DEFAULT` and `SHOW COLUMNS` render a 4-byte character as `?`. `diCore\Database\Tool\CharsetConverter` is the conversion engine (per-column `MODIFY`, MyISAM→InnoDB, `ROW_FORMAT=DYNAMIC`, database default, stored programs, DEFINER/sql_mode/key-cap pre-flights) and `migrations/charset/20260728100000` converts this package's own tables — run it **by idx**, the list-based helpers only scan the consuming project's folder. Tables built in code (`di_migrations_log`, `configuration`, `di_actions_log`, `search_index_*`) have no dump and are not in its list. Full upgrade notes, invariants and the consumer-migration recipe: [`README.md`](README.md) and [`CHANGELOG.md`](CHANGELOG.md).
+
+**Removed: `dbUpdater`** (`php/lib/dbUpdater.php`). It was deprecated but global and autoloaded, so a consumer could still be calling it — use migrations.
+
 ### Migrations
 
 Files in `_cfg/migrations/` (in consuming project), format `{idx}_{name}.php`. Extend `diCore\Database\Tool\Migration`. Must implement `up()` and `down()`. Tracked in `di_migrations_log` table. Managed via `MigrationsManager`.
@@ -191,7 +195,7 @@ Step-by-step guide for creating a new database entity in a project that uses `di
 Create `db/dump/tables/{table_name}.sql` with `CREATE TABLE IF NOT EXISTS`.
 
 **Conventions:**
-- InnoDB engine, `DEFAULT CHARSET=utf8`, `COLLATE=utf8_general_ci`
+- InnoDB engine, `DEFAULT CHARSET=utf8mb4`, `COLLATE=utf8mb4_general_ci` — **always name the collation too**: a charset without one gets the server default (`utf8mb4_0900_ai_ci` on MySQL 8), which then collides with every other table on a join
 - `id` is `BIGINT AUTO_INCREMENT` primary key (or `INT` for small tables)
 - Columns use `snake_case`
 - `created_at` → `TIMESTAMP DEFAULT CURRENT_TIMESTAMP`

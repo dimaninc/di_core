@@ -19,6 +19,6 @@ CREATE TABLE IF NOT EXISTS `comments`(
 	INDEX `user`(user_type, user_id),
 	PRIMARY KEY (`id`)
 )
-DEFAULT CHARSET='utf8'
-COLLATE='utf8_general_ci'
+DEFAULT CHARSET='utf8mb4'
+COLLATE='utf8mb4_general_ci'
 ENGINE=InnoDB;

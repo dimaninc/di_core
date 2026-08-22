@@ -4,4 +4,4 @@ CREATE TABLE IF NOT EXISTS tag_links(
   tag_id bigint,
   key idx(target_type,target_id,tag_id)
 )
-ENGINE=InnoDB;
+ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

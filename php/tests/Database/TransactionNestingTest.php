@@ -36,7 +36,7 @@ class TransactionNestingTest extends TestCase
                 id INT NOT NULL AUTO_INCREMENT,
                 title VARCHAR(255) DEFAULT NULL,
                 PRIMARY KEY (id)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_general_ci'
+            ) ENGINE=InnoDB ' . \diCore\Data\Config::getDbCharsetClause()
         );
     }
 

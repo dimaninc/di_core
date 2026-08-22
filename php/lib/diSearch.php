@@ -514,7 +514,7 @@ class diTextfileSearch extends diSearch
                         continue;
                     }
 
-                    list($id, $contents) = explode('|', $index[$i]);
+                    [$id, $contents] = explode('|', $index[$i]);
 
                     if ($save_index_ar) {
                         $this->index_ar[$id] = $contents;
@@ -627,17 +627,20 @@ class diDBSearch extends diSearch
         $rs = $this->getDb()->rs($this->index_table, 'LIMIT 1', '1');
 
         if (!$rs || !$this->getDb()->count($rs)) {
-            $charset = Config::getDbEncoding();
-            $collation = Config::getDbCollation();
+            // Via Config, not interpolated by hand: a blank dbCollation used to
+            // make this `collate ;` — a syntax error that leaves the site with
+            // no search index and nothing but a db-log line to say why.
+            $columnCharset = Config::getDbColumnCharsetClause();
+            $charsetClause = Config::getDbCharsetClause();
 
             $this->getDb()->q("CREATE TABLE IF NOT EXISTS $this->index_table(
                id bigint not null,
-               primary_content text character set $charset collate {$collation},
-               content text character set $charset collate {$collation},
+               primary_content text $columnCharset,
+               content text $columnCharset,
                fulltext(primary_content),
                fulltext(content),
                primary key(id)
-              ) ENGINE=MyISAM CHARSET={$charset} COLLATE={$collation};");
+              ) ENGINE=MyISAM $charsetClause;");
         }
     }
 

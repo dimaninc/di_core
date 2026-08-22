@@ -280,9 +280,23 @@ abstract class diDB
     {
         $quote = static::QUOTE_TABLE;
 
-        return "CREATE DATABASE IF NOT EXISTS $quote$this->dbname$quote /*!40100 COLLATE '" .
-            Config::getDbCollation() .
-            "' */";
+        $charset = Config::getDbEncoding();
+        $collation = Config::getDbCollation();
+
+        // The CHARACTER SET matters as much as the collation: without it the
+        // database is created on the SERVER default while generated tables use
+        // the configured charset, which is how a schema ends up with mixed
+        // defaults. A blank collation is simply omitted, never `COLLATE ''`.
+        $options = '';
+        if ($charset) {
+            $options .= " CHARACTER SET '$charset'";
+        }
+        if ($collation) {
+            $options .= " COLLATE '$collation'";
+        }
+
+        return "CREATE DATABASE IF NOT EXISTS $quote$this->dbname$quote" .
+            ($options ? " /*!40100$options */" : '');
     }
 
     protected function initCharset()
@@ -292,11 +306,111 @@ abstract class diDB
         }
 
         $enc = Config::getDbEncoding() ?: 'UTF8';
+        $collation = Config::getDbCollation();
 
-        $this->q('SET NAMES ' . $enc . ' COLLATE ' . Config::getDbCollation());
-        $this->set_charset($enc);
+        // On mysql/mysqli set_charset() issues its own SET NAMES and resets the
+        // collation to the charset default, so it must come first or the
+        // configured collation is lost — harmless on utf8mb3 (same default), not
+        // on utf8mb4. (On the PDO driver it only records the name; the charset
+        // rides in the DSN. On Mongo it is a no-op.)
+        //
+        // An unknown charset THROWS on PHP >= 8.1 (mysqli defaults to
+        // MYSQLI_REPORT_ERROR|STRICT) and returns false below that, so both are
+        // caught: the connection is then still usable, just on the previous
+        // charset, and that must not pass silently.
+        try {
+            $ok = $this->set_charset($enc);
+        } catch (\Throwable $e) {
+            $ok = false;
+        }
+
+        if ($ok === false) {
+            // Fatal, not a note in a log nobody reads: carrying on leaves the
+            // CLIENT on the previous charset while the columns are on the
+            // configured one, and every 4-byte character written through it is
+            // silently mangled — the exact corruption this ordering exists to
+            // prevent. A misconfigured charset is a broken connection, so it is
+            // reported the same way an unreachable one is.
+            $this->failConnectionCharset($enc);
+        }
+
+        // An empty collation would make this a syntax error; SET NAMES alone
+        // still leaves the connection usable on the charset default.
+        if ($collation && $this->trySetNames("SET NAMES $enc COLLATE $collation")) {
+            return $this;
+        }
+
+        // The collation does not belong to the charset — the state a project
+        // lands in when it raises dbEncoding to utf8mb4 and forgets
+        // dbCollation. NOT fatal: set_charset() above already put the
+        // connection on the configured CHARSET, so nothing can be truncated;
+        // only the collation falls back to that charset's default. Failing the
+        // request here would take the whole site down over a typo.
+        //
+        // The plain SET NAMES is still issued: set_charset() moved
+        // character_set_* but a driver is free not to touch collation_connection,
+        // and it must not be left over from whatever ran before.
+        if ($collation) {
+            $this->logConnectionProblem(
+                "Connection collation $collation is not valid for charset $enc" .
+                    ' — falling back to the charset default.' .
+                    ' Fix dbCollation in Data\Config.'
+            );
+        }
+
+        if (!$this->trySetNames("SET NAMES $enc")) {
+            // The charset alone is refused too: this really is a broken
+            // connection, and writing through it corrupts data.
+            $this->failConnectionCharset($enc);
+        }
 
         return $this;
+    }
+
+    /**
+     * A connection whose charset could not be applied is a broken connection,
+     * and it is reported exactly like an unreachable one — by throwing.
+     *
+     * Deliberately NOT _fatal(): that ends in die() with no status code, so the
+     * browser gets HTTP 200 with the error in the body, which an nginx cache in
+     * front will happily keep serving long after the fix. die() is not a
+     * \Throwable either, so it walks straight past the entry-point handler a
+     * consumer uses to serve its own 503 page. And this is reachable by
+     * configuration alone: mysqlnd rejects the name `utf8mb3` (verified —
+     * set_charset() returns false), which is the very spelling MySQL 8.0.28+
+     * and CharsetConverter::MB3_NAMES call canonical, so a plausible
+     * `dbEncoding` would otherwise take a whole site down uncatchably.
+     */
+    protected function failConnectionCharset($enc)
+    {
+        $message = "Unable to set connection charset to $enc";
+
+        $this->logConnectionProblem($message);
+
+        throw new \diDatabaseException($message);
+    }
+
+    /**
+     * q() logs a failure into diDB::$log, and a non-empty log makes the next
+     * dierror() anywhere in the request escalate to _fatal() with an unrelated
+     * message. Connection setup must leave no such trace behind, so whatever
+     * this statement added is moved out of the way and the outcome returned
+     * instead.
+     */
+    private function trySetNames($query)
+    {
+        $logged = count($this->log);
+        $result = $this->q($query);
+        $failed = $result === false || count($this->log) > $logged;
+
+        if ($failed) {
+            $this->logConnectionProblem(
+                "$query failed: " . join('; ', array_slice($this->log, $logged))
+            );
+            $this->truncateLog($logged);
+        }
+
+        return !$failed;
     }
 
     /**
@@ -359,6 +473,14 @@ abstract class diDB
         return join($lineBreak, $this->log);
     }
 
+    /** Drops everything logged after the first $count entries. */
+    public function truncateLog($count)
+    {
+        $this->log = array_slice($this->log, 0, max(0, (int) $count));
+
+        return $this;
+    }
+
     public function resetLog()
     {
         $this->log = [];
@@ -374,6 +496,23 @@ abstract class diDB
 
         if (count($this->log)) {
             $this->_fatal($message);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Charset problems go to the file log, never to diDB::$log: a non-empty log
+     * makes the next dierror() call anywhere escalate to _fatal() with someone
+     * else's message. Both callers fail the connection themselves, right after —
+     * this only decides WHERE the reason is recorded.
+     */
+    protected function logConnectionProblem($message)
+    {
+        try {
+            \diCore\Tool\Logger::getInstance()->log($message, 'database');
+        } catch (\Throwable $e) {
+            // logging must never break connecting
         }
 
         return $this;
@@ -1173,7 +1312,11 @@ abstract class diDB
 
         $q1 = '(' . $this->fieldsToStringForInsert($fields_values) . ')';
         $q2 = '(' . $this->valuesToStringForInsert($fields_values) . ')';
-        $q3 = $this->insertUpdateQuery($fields_values, $keyField, $autoIncrementField);
+        $q3 = $this->insertUpdateQuery(
+            $fields_values,
+            $keyField,
+            $autoIncrementField
+        );
 
         $this->lockTable($t);
         $query = "INSERT INTO $t$q1 VALUES$q2$q3;";

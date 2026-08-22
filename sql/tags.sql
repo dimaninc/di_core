@@ -15,6 +15,6 @@ CREATE TABLE IF NOT EXISTS tags(
   unique slug(slug),
   primary key(id)
 )
-DEFAULT CHARSET='utf8'
-COLLATE='utf8_general_ci'
-ENGINE=InnoDB;
+DEFAULT CHARSET='utf8mb4'
+COLLATE='utf8mb4_general_ci'
+ENGINE=InnoDB ROW_FORMAT=DYNAMIC;
