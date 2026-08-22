@@ -112,6 +112,7 @@ The generator writes the file with the correct class name (`diMigration_{idx}`),
 - Model `$picStoreSettings` configures image upload/resize behavior
 - Collections are lazy-loaded — query executes on first iteration/count
 - Admin pages are registered as modules in the admin menu system
+- Nothing guessable (tokens, keys, file names) comes from `rand()`/`mt_rand()` — use `get_unique_id()` or `StringHelper::random()`; never seed the global generator except through `diCollection::seedRandomizer()`
 
 ### Date/Time Formatting
 

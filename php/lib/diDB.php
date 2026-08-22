@@ -761,7 +761,6 @@ abstract class diDB
 		if ($count <= $limit)
 			return $this->rs($table, $q_ending, $q_fields);
 
-		srand((double)microtime() * 1000000);
 		$start = rand(0, $count - $limit);
 
 		$q = "SELECT $q_fields FROM $t $q_ending " . $this->limitOffset($limit, $start);

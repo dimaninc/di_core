@@ -34,6 +34,8 @@ class Model extends \diBaseUserModel
     protected $table = 'users';
 
     const MIN_PASSWORD_LENGTH = 6;
+    /** a human minimum is not a generator's measure */
+    const GENERATED_PASSWORD_LENGTH = 10;
 
     const TOKEN_FIELD_NAME = 'activation_key';
     const TOKEN_LENGTH = 32;
@@ -122,7 +124,7 @@ class Model extends \diBaseUserModel
 
     public static function generatePassword()
     {
-        return get_unique_id(static::MIN_PASSWORD_LENGTH);
+        return get_unique_id(static::GENERATED_PASSWORD_LENGTH);
     }
 
     public static function isPasswordValid($rawPassword)

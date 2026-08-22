@@ -49,8 +49,6 @@ class diForm
         $this->table = $table;
         $this->errors = new diFormErrors();
         $this->method = strtoupper($method);
-
-        srand((float) microtime() * 1000000);
     }
 
     function set_submit_params_str($s, $sep = ',')
@@ -576,7 +574,6 @@ class diForm
         if (!empty($tpl->FILELIST['captcha_row'])) {
             $idx_ar = array_rand($di_captchas_ar, 4);
 
-            srand((float) microtime() * 1000000);
             $captcha_idx = $idx_ar[rand(0, 3)];
 
             $captcha_id = $di_captchas_ar[$captcha_idx]['id'];
