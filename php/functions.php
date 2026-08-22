@@ -1,8 +1,7 @@
 <?php
 // (q) dimaninc
-// this file should be compatible with 5.6
 
-require dirname(__FILE__) . '/lib/diLib.php';
+require_once dirname(__FILE__) . '/lib/diLib.php';
 
 use diCore\Helper\FileSystemHelper;
 use diCore\Helper\StringHelper;
@@ -708,10 +707,10 @@ function imageflipvertical($image)
     return $flipped;
 }
 
+/** CSPRNG-backed, 32 hex chars. Must not touch the mt_rand state. */
 function get_unique_id($length = 32)
 {
-    srand(intval((float) microtime() * 1000000));
-    $hash = md5(rand(0, 9999999));
+    $hash = bin2hex(random_bytes(16));
 
     return $length > 0 && $length < 32 ? substr($hash, 0, $length) : $hash;
 }

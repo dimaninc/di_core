@@ -12,6 +12,7 @@ use diCore\Data\Http\Charset;
 
 class StringHelper
 {
+    /** random_int, not rand: session tokens are minted from this. */
     public static function random($length = 8)
     {
         $characters =
@@ -20,7 +21,7 @@ class StringHelper
         $randomString = '';
 
         for ($i = 0; $i < $length; $i++) {
-            $randomString .= $characters[rand(0, $charactersLength - 1)];
+            $randomString .= $characters[random_int(0, $charactersLength - 1)];
         }
 
         return $randomString;
