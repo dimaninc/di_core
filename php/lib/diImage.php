@@ -241,13 +241,18 @@ class diImage
         $command = Config::isMac()
             ? "magick convert $src $dst"
             : "heif-convert $src $dst";
-        exec($command, $output, $return_var);
 
-        // var_debug($command, $output, $return_var);
+        // 2>&1 обязателен: heif-convert пишет причину в stderr, а exec()
+        // забирает только stdout — без этого сообщение об ошибке пустое
+        exec("$command 2>&1", $output, $return_var);
 
         if ($return_var !== 0) {
             throw new Exception(
-                'Error converting HEIC to JPEG: ' . implode("\n", $output)
+                sprintf(
+                    'Error converting HEIC to JPEG (exit %d): %s',
+                    $return_var,
+                    implode(' | ', $output) ?: 'no output'
+                )
             );
         }
 
