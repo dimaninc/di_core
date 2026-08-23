@@ -62,6 +62,8 @@ Entity types are registered in `diTypes` (integer constants). Model declares `co
 
 Extend `diBaseController`. Located in `php/src/diCore/Controller/`. Action methods named `action{Name}()`. REST controllers use `_postAction()`, `_putAction()`, `_deleteAction()`. Bilingual `$language` arrays (en/ru) for error messages. Routes resolve via PSR-4: `/api/auth/login` → `Controller\Auth::actionLogin()`.
 
+**Speed log: `LOG_SPEED` gates the controller, `SKIP_SPEED_LOG_ACTIONS` the action.** In `slow` mode the per-request lines only buffer — it is `speedFinish()` that flushes them, so silencing one action removes its whole block, not just its last line. Use it for an action whose duration is inherently large and understood (upload, image processing): otherwise every such request writes a slow-speed entry and drowns the real slow ones. The action name is not known inside `__construct()`, so `autoCreate()` stores it in `static::$routedAction` before instantiating; the pure check is `isSpeedLogSkippedAction()`. Covered by `php/tests/Controller/SpeedLogActionsTest.php`.
+
 ### Admin panel
 
 - **`Admin\Base`** — Admin shell, menu, routing. URL pattern: `/_admin/{module}/{method}/{id}`
@@ -73,6 +75,12 @@ Extend `diBaseController`. Located in `php/src/diCore/Controller/`. Action metho
 ### Templating
 
 Primary: Twig (`.html.twig` in `templates/`). Legacy: FastTemplate (`.html` in `tpl/`). Core templates use `@core` namespace. Twig cache: `_cfg/cache/twig/`.
+
+### Images
+
+`diImage` (global, `php/lib/`) — GD-based thumbnails, watermarks, format detection.
+
+**HEIC → JPEG converts through a fallback chain, not one binary.** `diImage::convertHeicToJpeg()` walks `getHeicConverterOrder()` — the platform's CLI (`heif-convert` on Linux, `magick convert` on mac), then **ext-imagick** (no `exec()`, so it does not fork an FPM worker; needs a libheif delegate), then the other CLI — and throws only when every one failed, with each attempt's reason in the message and in the log. Two invariants: a zero exit code is not success (`heicOutputIsUsable()` re-reads the file, since `safeImageSize()` would otherwise hand a 0×0 image downstream), and a failed attempt's leftover file is deleted before the next converter runs. iPhone photos are the most common upload there is — a single failing converter must not mean nobody can upload anything. Covered by `php/tests/Image/HeicConversionTest.php`.
 
 ### Database
 

@@ -35,6 +35,20 @@ class diBaseController
      */
     const LOG_SPEED = true;
 
+    /**
+     * Экшены, исключённые из speed-лога даже при включённом LOG_SPEED. Для
+     * экшена, чья длительность заведомо велика и понятна (загрузка файла,
+     * обработка картинки), slow-speed запись — не сигнал, а шум: она сбрасывает
+     * в лог весь буфер запроса каждый раз.
+     */
+    const SKIP_SPEED_LOG_ACTIONS = [];
+
+    /**
+     * Экшен, вычисленный autoCreate() до создания контроллера: конструктор
+     * пишет свою speed-строку раньше, чем узнаёт имя экшена сам.
+     */
+    protected static $routedAction = null;
+
     const RESULT_KEY = 'ok';
     const MESSAGE_KEY = 'message';
 
@@ -81,7 +95,7 @@ class diBaseController
     {
         $this->sendNoIndexHeader();
 
-        if (Environment::shouldLogSpeed() && static::LOG_SPEED) {
+        if (static::shouldLogSpeedForAction()) {
             Logger::getInstance()->speed('constructor', static::class);
         }
 
@@ -100,6 +114,34 @@ class diBaseController
         $this->getResponse()->addNoIndexHeader();
 
         return $this;
+    }
+
+    /** Пишется ли speed-лог для этого контроллера и экшена */
+    protected static function shouldLogSpeedForAction($action = null): bool
+    {
+        return Environment::shouldLogSpeed() &&
+            static::LOG_SPEED &&
+            !static::isSpeedLogSkippedAction($action);
+    }
+
+    /**
+     * Попадает ли экшен в SKIP_SPEED_LOG_ACTIONS. $action не передаётся из
+     * конструктора — там имя экшена ещё не известно, поэтому берётся то, что
+     * вычислил autoCreate() перед созданием объекта.
+     *
+     * @param string|null $action
+     */
+    public static function isSpeedLogSkippedAction($action = null): bool
+    {
+        if (!static::SKIP_SPEED_LOG_ACTIONS) {
+            return false;
+        }
+
+        return in_array(
+            (string) ($action ?? (static::$routedAction ?? '')),
+            static::SKIP_SPEED_LOG_ACTIONS,
+            true
+        );
     }
 
     protected static function isRestApiSupported()
@@ -375,13 +417,15 @@ class diBaseController
             );
         }
 
+        static::$routedAction = $action;
+
         /** @var diBaseController $c */
         $c = new $className($params);
         if ($updateParams) {
             $params = array_slice($paramsAr, $c::TINY_ACTIONS ? 1 : 2);
         }
 
-        if (Environment::shouldLogSpeed() && $c::LOG_SPEED) {
+        if ($c::shouldLogSpeedForAction($action)) {
             Logger::getInstance()->speed(
                 "Action=$action",
                 'BaseController/autoCreate'
@@ -390,7 +434,7 @@ class diBaseController
 
         $c->act($action, $params);
 
-        if (Environment::shouldLogSpeed() && $c::LOG_SPEED) {
+        if ($c::shouldLogSpeedForAction($action)) {
             Logger::getInstance()->speedFinish(
                 'afterAct',
                 'BaseController/autoCreate'

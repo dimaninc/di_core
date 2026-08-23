@@ -22,6 +22,7 @@
 
 use diCore\Data\Config;
 use diCore\Data\Configuration;
+use diCore\Tool\Logger;
 
 /** @deprecated  */
 define('IMG_TYPE_GIF', 1);
@@ -121,6 +122,13 @@ class diImage
     const MAX_GD_HEIGHT = 3500;
 
     const EXT_WEBP = '.webp';
+
+    const HEIC_CONVERTER_HEIF = 'heif-convert';
+    const HEIC_CONVERTER_IMAGICK = 'ext-imagick';
+    const HEIC_CONVERTER_MAGICK = 'imagemagick-cli';
+
+    const HEIC_JPEG_QUALITY = 92;
+    const HEIC_LOG_MODULE = 'diImage/convertHeicToJpeg';
 
     public $image;
     public $w, $h, $t;
@@ -230,33 +238,188 @@ class diImage
         return $mime_type === 'image/heic' || $mime_type === 'image/heif';
     }
 
-    /*
+    /**
+     * Порядок, в котором пробуются конвертеры HEIC. На маке heif-convert обычно
+     * не установлен, зато ImageMagick есть всегда, на линуксе — наоборот.
+     *
+     * @return string[]
+     */
+    public static function getHeicConverterOrder(): array
+    {
+        return Config::isMac()
+            ? [
+                self::HEIC_CONVERTER_MAGICK,
+                self::HEIC_CONVERTER_IMAGICK,
+                self::HEIC_CONVERTER_HEIF,
+            ]
+            : [
+                self::HEIC_CONVERTER_HEIF,
+                self::HEIC_CONVERTER_IMAGICK,
+                self::HEIC_CONVERTER_MAGICK,
+            ];
+    }
+
+    /**
+     * Конвертирует HEIC/HEIF в JPEG, перебирая конвертеры по очереди: падение
+     * или отсутствие одного больше не означает, что человек не может загрузить
+     * фото с айфона. Каждая неудачная попытка пишется в лог отдельной строкой,
+     * исключение бросается, только если не сработало ничего.
+     *
      * don't forget to set jpeg extension in destination filename
+     *
+     * @throws Exception
      */
     public static function convertHeicToJpeg(string $heicFile, string $jpegFile)
     {
+        $errors = [];
+
+        foreach (static::getHeicConverterOrder() as $converter) {
+            try {
+                if (static::runHeicConverter($converter, $heicFile, $jpegFile)) {
+                    if ($errors) {
+                        static::logHeic(
+                            "converted by $converter after: " .
+                                join(' | ', $errors)
+                        );
+                    }
+
+                    return $jpegFile;
+                }
+
+                $errors[] = "$converter: no readable jpeg produced";
+            } catch (\Throwable $e) {
+                $errors[] = "$converter: {$e->getMessage()}";
+            }
+
+            // конвертер мог оставить обрезанный файл — иначе следующий в очереди
+            // отработает вхолостую, а safeImageSize() увидит битую картинку
+            if (is_file($jpegFile)) {
+                @unlink($jpegFile);
+            }
+        }
+
+        $message =
+            'Error converting HEIC to JPEG. Tried: ' .
+            (join(' | ', $errors) ?: 'nothing');
+
+        static::logHeic($message);
+
+        throw new Exception($message);
+    }
+
+    protected static function logHeic(string $message): void
+    {
+        Logger::getInstance()->log($message, self::HEIC_LOG_MODULE);
+    }
+
+    /**
+     * @return bool сконвертировалось ли в читаемый jpeg
+     * @throws Exception с причиной, по которой конкретный конвертер не сработал
+     */
+    protected static function runHeicConverter(
+        string $converter,
+        string $heicFile,
+        string $jpegFile
+    ): bool {
+        switch ($converter) {
+            case self::HEIC_CONVERTER_IMAGICK:
+                return static::convertHeicByImagick($heicFile, $jpegFile);
+
+            case self::HEIC_CONVERTER_MAGICK:
+                return static::convertHeicByCli(
+                    // IM7 отзывается на `magick convert`, IM6 — только на `convert`
+                    Config::isMac() ? 'magick convert' : 'convert',
+                    $heicFile,
+                    $jpegFile
+                );
+
+            case self::HEIC_CONVERTER_HEIF:
+                return static::convertHeicByCli(
+                    'heif-convert',
+                    $heicFile,
+                    $jpegFile
+                );
+        }
+
+        throw new Exception('unknown converter');
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected static function convertHeicByCli(
+        string $binary,
+        string $heicFile,
+        string $jpegFile
+    ): bool {
+        if (!function_exists('exec')) {
+            throw new Exception('exec() disabled');
+        }
+
         $src = escapeshellarg($heicFile);
         $dst = escapeshellarg($jpegFile);
-
-        $command = Config::isMac()
-            ? "magick convert $src $dst"
-            : "heif-convert $src $dst";
+        $output = [];
 
         // 2>&1 обязателен: heif-convert пишет причину в stderr, а exec()
         // забирает только stdout — без этого сообщение об ошибке пустое
-        exec("$command 2>&1", $output, $return_var);
+        exec("$binary $src $dst 2>&1", $output, $returnCode);
 
-        if ($return_var !== 0) {
+        if ($returnCode !== 0) {
             throw new Exception(
                 sprintf(
-                    'Error converting HEIC to JPEG (exit %d): %s',
-                    $return_var,
-                    implode(' | ', $output) ?: 'no output'
+                    'exit %d: %s',
+                    $returnCode,
+                    join(' | ', $output) ?: 'no output'
                 )
             );
         }
 
-        return $jpegFile;
+        return static::heicOutputIsUsable($jpegFile);
+    }
+
+    /**
+     * Не форкает процесс, в отличие от CLI-конвертеров: на FPM это то же самое
+     * без занятого воркера. Требует делегата HEIC (libheif) в самом ImageMagick.
+     *
+     * @throws Exception
+     */
+    protected static function convertHeicByImagick(
+        string $heicFile,
+        string $jpegFile
+    ): bool {
+        if (!class_exists('Imagick')) {
+            throw new Exception('ext-imagick not installed');
+        }
+
+        $im = new \Imagick();
+
+        try {
+            // без делегата HEIC readImage() бросит своё исключение
+            $im->readImage($heicFile);
+            // HEIC от live photo / burst распаковывается в несколько кадров,
+            // нужен только первый
+            $im->setIteratorIndex(0);
+            $im->setImageFormat('jpeg');
+            $im->setImageCompressionQuality(self::HEIC_JPEG_QUALITY);
+            $im->writeImage($jpegFile);
+        } finally {
+            $im->clear();
+            $im->destroy();
+        }
+
+        return static::heicOutputIsUsable($jpegFile);
+    }
+
+    /**
+     * Нулевой exit ещё не значит успех: конвертер может записать пустой или
+     * обрезанный файл, а safeImageSize() отдаст на нём 0x0 — и дальше по коду
+     * поедет картинка нулевого размера.
+     */
+    protected static function heicOutputIsUsable(string $jpegFile): bool
+    {
+        [$w, $h] = self::safeImageSize($jpegFile);
+
+        return $w > 0 && $h > 0;
     }
 
     public function open($fn)
