@@ -5,93 +5,98 @@ namespace diCore\Tests\Controller;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Пер-экшенный опт-аут из speed-лога: у контроллера бывает один заведомо
- * долгий экшен (загрузка файла), из-за которого slow-speed запись пишется на
- * каждый запрос и глушит собой настоящие тормоза.
+ * Собственный slow-speed порог экшена. У загрузки файла несколько секунд —
+ * норма, и с общим порогом она пишет slow-запись на каждый запрос; заглушить
+ * её целиком нельзя, иначе невидимым станет и настоящее зависание, а это ровно
+ * тот класс запросов, который исчерпывает pm.max_children.
  */
 class SpeedLogActionsTest extends TestCase
 {
     protected function setUp(): void
     {
-        SkippingController::setRoutedAction(null);
+        SlowUploadController::setRoutedAction(null);
     }
 
-    public function testNothingIsSkippedByDefault(): void
+    /** null = общий Environment::slowSpeedValue, ничего не переопределяем */
+    public function testControllerWithoutOverridesAnswersNull(): void
     {
-        $this->assertFalse(PlainController::isSpeedLogSkippedAction('upload'));
-        $this->assertFalse(PlainController::isSpeedLogSkippedAction(''));
-        $this->assertFalse(PlainController::isSpeedLogSkippedAction(null));
+        $this->assertNull(PlainController::slowSpeedValueForAction('upload'));
+        $this->assertNull(PlainController::slowSpeedValueForAction(''));
+        $this->assertNull(PlainController::slowSpeedValueForAction(null));
     }
 
-    public function testListedActionIsSkipped(): void
+    public function testListedActionGetsItsOwnThreshold(): void
     {
-        $this->assertTrue(SkippingController::isSpeedLogSkippedAction('upload'));
+        $this->assertSame(
+            25.0,
+            SlowUploadController::slowSpeedValueForAction('upload')
+        );
     }
 
-    public function testOtherActionsOfTheSameControllerAreKept(): void
+    /** Целое в константе не должно приезжать в Logger как int */
+    public function testThresholdIsAlwaysFloat(): void
     {
-        $this->assertFalse(SkippingController::isSpeedLogSkippedAction('create'));
-        $this->assertFalse(SkippingController::isSpeedLogSkippedAction(''));
+        $this->assertSame(
+            30.0,
+            SlowUploadController::slowSpeedValueForAction('export')
+        );
     }
 
-    public function testMatchIsExactSoNoActionIsSilencedByAccident(): void
+    public function testOtherActionsOfTheSameControllerKeepTheGlobalThreshold(): void
     {
-        $this->assertFalse(SkippingController::isSpeedLogSkippedAction('uploads'));
-        $this->assertFalse(SkippingController::isSpeedLogSkippedAction('Upload'));
-        // '0' == '' при нестрогом сравнении — из-за этого пропал бы чужой экшен
-        $this->assertFalse(SkippingController::isSpeedLogSkippedAction('0'));
+        $this->assertNull(SlowUploadController::slowSpeedValueForAction('create'));
+        $this->assertNull(SlowUploadController::slowSpeedValueForAction(''));
     }
 
-    public function testConstructorGateFallsBackToTheRoutedAction(): void
+    public function testMatchIsExactSoNoActionIsRetunedByAccident(): void
     {
-        // конструктор вызывается без аргумента: имя экшена туда не доезжает
-        $this->assertFalse(SkippingController::isSpeedLogSkippedAction());
-
-        SkippingController::setRoutedAction('upload');
-        $this->assertTrue(SkippingController::isSpeedLogSkippedAction());
-
-        SkippingController::setRoutedAction('create');
-        $this->assertFalse(SkippingController::isSpeedLogSkippedAction());
+        $this->assertNull(SlowUploadController::slowSpeedValueForAction('uploads'));
+        $this->assertNull(SlowUploadController::slowSpeedValueForAction('Upload'));
+        // '0' == '' при нестрогом сравнении — так чужой экшен получил бы порог
+        $this->assertNull(SlowUploadController::slowSpeedValueForAction('0'));
     }
 
     /**
-     * $routedAction физически один на всю иерархию (объявлен только в базе), а
-     * autoCreate() выставляет его перед созданием КАЖДОГО контроллера. Проверяем
-     * то, что из этого следует: свой список решает, чужой маршрут — нет.
+     * createAttempt() закрывает запрос, не зная имени экшена, и берёт его из
+     * $routedAction, который autoCreate() выставил перед созданием контроллера.
      */
-    public function testRoutedActionDoesNotLeakBetweenControllersWithOwnSkipLists(): void
+    public function testFallsBackToTheRoutedActionWhenNoneIsPassed(): void
     {
-        // как будто autoCreate() отроутил Card::upload
-        SkippingController::setRoutedAction('upload');
+        $this->assertNull(SlowUploadController::slowSpeedValueForAction());
 
-        // у другого контроллера свой список, и 'upload' в него не входит
-        $this->assertFalse(OtherSkippingController::isSpeedLogSkippedAction());
+        SlowUploadController::setRoutedAction('upload');
+        $this->assertSame(25.0, SlowUploadController::slowSpeedValueForAction());
 
-        // а его собственный экшен глушится
-        SkippingController::setRoutedAction('export');
-        $this->assertTrue(OtherSkippingController::isSpeedLogSkippedAction());
-        $this->assertFalse(SkippingController::isSpeedLogSkippedAction());
+        SlowUploadController::setRoutedAction('create');
+        $this->assertNull(SlowUploadController::slowSpeedValueForAction());
     }
 
-    public function testControllerWithoutASkipListIsNeverSilenced(): void
+    /**
+     * $routedAction физически один на всю иерархию (объявлен только в базе).
+     * Проверяем то, что из этого следует: свой список решает, чужой маршрут нет.
+     */
+    public function testRoutedActionDoesNotLeakBetweenControllers(): void
     {
-        SkippingController::setRoutedAction('upload');
+        SlowUploadController::setRoutedAction('upload');
 
-        $this->assertFalse(PlainController::isSpeedLogSkippedAction());
-        $this->assertFalse(PlainController::isSpeedLogSkippedAction('upload'));
+        $this->assertNull(OtherSlowController::slowSpeedValueForAction());
+        $this->assertNull(PlainController::slowSpeedValueForAction());
+
+        SlowUploadController::setRoutedAction('render');
+        $this->assertSame(12.0, OtherSlowController::slowSpeedValueForAction());
     }
 }
 
 class PlainController extends \diBaseController {}
 
-class OtherSkippingController extends \diBaseController
+class OtherSlowController extends \diBaseController
 {
-    const SKIP_SPEED_LOG_ACTIONS = ['export'];
+    const SLOW_SPEED_ACTIONS = ['render' => 12.0];
 }
 
-class SkippingController extends \diBaseController
+class SlowUploadController extends \diBaseController
 {
-    const SKIP_SPEED_LOG_ACTIONS = ['upload'];
+    const SLOW_SPEED_ACTIONS = ['upload' => 25.0, 'export' => 30];
 
     /** @param string|null $action */
     public static function setRoutedAction($action): void

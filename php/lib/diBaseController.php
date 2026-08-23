@@ -36,16 +36,18 @@ class diBaseController
     const LOG_SPEED = true;
 
     /**
-     * Экшены, исключённые из speed-лога даже при включённом LOG_SPEED. Для
-     * экшена, чья длительность заведомо велика и понятна (загрузка файла,
-     * обработка картинки), slow-speed запись — не сигнал, а шум: она сбрасывает
-     * в лог весь буфер запроса каждый раз.
+     * Собственный slow-speed порог отдельных экшенов, секунды: ['upload' => 25].
+     * Для экшена, чья длительность заведомо велика и понятна (загрузка файла,
+     * обработка картинки), общий порог означает slow-запись на КАЖДЫЙ запрос —
+     * шум, в котором тонут настоящие тормоза. Глушить такой экшен целиком
+     * нельзя: тогда невидимым станет и зависание, а это ровно тот класс
+     * запросов, который исчерпывает pm.max_children.
      */
-    const SKIP_SPEED_LOG_ACTIONS = [];
+    const SLOW_SPEED_ACTIONS = [];
 
     /**
-     * Экшен, вычисленный autoCreate() до создания контроллера: конструктор
-     * пишет свою speed-строку раньше, чем узнаёт имя экшена сам.
+     * Экшен, вычисленный autoCreate() до создания контроллера: createAttempt()
+     * закрывает запрос, не зная имени экшена сам.
      */
     protected static $routedAction = null;
 
@@ -95,7 +97,7 @@ class diBaseController
     {
         $this->sendNoIndexHeader();
 
-        if (static::shouldLogSpeedForAction()) {
+        if (Environment::shouldLogSpeed() && static::LOG_SPEED) {
             Logger::getInstance()->speed('constructor', static::class);
         }
 
@@ -116,32 +118,24 @@ class diBaseController
         return $this;
     }
 
-    /** Пишется ли speed-лог для этого контроллера и экшена */
-    protected static function shouldLogSpeedForAction($action = null): bool
-    {
-        return Environment::shouldLogSpeed() &&
-            static::LOG_SPEED &&
-            !static::isSpeedLogSkippedAction($action);
-    }
-
     /**
-     * Попадает ли экшен в SKIP_SPEED_LOG_ACTIONS. $action не передаётся из
-     * конструктора — там имя экшена ещё не известно, поэтому берётся то, что
-     * вычислил autoCreate() перед созданием объекта.
+     * Порог slow-speed для экшена, секунды, или null — значит общий
+     * Environment::slowSpeedValue. $action не передаётся из createAttempt() —
+     * там имя экшена не известно, берётся вычисленное autoCreate().
      *
      * @param string|null $action
+     * @return float|null
      */
-    public static function isSpeedLogSkippedAction($action = null): bool
+    public static function slowSpeedValueForAction($action = null)
     {
-        if (!static::SKIP_SPEED_LOG_ACTIONS) {
-            return false;
+        if (!static::SLOW_SPEED_ACTIONS) {
+            return null;
         }
 
-        return in_array(
-            (string) ($action ?? (static::$routedAction ?? '')),
-            static::SKIP_SPEED_LOG_ACTIONS,
-            true
-        );
+        $action = (string) ($action ?? (static::$routedAction ?? ''));
+        $value = static::SLOW_SPEED_ACTIONS[$action] ?? null;
+
+        return $value === null ? null : (float) $value;
     }
 
     protected static function isRestApiSupported()
@@ -291,14 +285,16 @@ class diBaseController
 
             if ($die) {
                 // Через класс созданного контроллера, а не static::, иначе этот
-                // speedFinish() сольёт буфер запроса мимо SKIP_SPEED_LOG_ACTIONS
-                // — опт-аут в autoCreate() оказался бы бесполезным
+                // speedFinish() слил бы буфер запроса по общему порогу мимо
+                // SLOW_SPEED_ACTIONS — переопределение в autoCreate() оказалось
+                // бы бесполезным
                 $class = $c ? get_class($c) : static::class;
 
-                if ($class::shouldLogSpeedForAction()) {
+                if (Environment::shouldLogSpeed() && $class::LOG_SPEED) {
                     Logger::getInstance()->speedFinish(
                         'createAttempt/die',
-                        static::class
+                        static::class,
+                        $class::slowSpeedValueForAction()
                     );
                 }
 
@@ -432,7 +428,7 @@ class diBaseController
             $params = array_slice($paramsAr, $c::TINY_ACTIONS ? 1 : 2);
         }
 
-        if ($c::shouldLogSpeedForAction($action)) {
+        if (Environment::shouldLogSpeed() && $c::LOG_SPEED) {
             Logger::getInstance()->speed(
                 "Action=$action",
                 'BaseController/autoCreate'
@@ -441,10 +437,11 @@ class diBaseController
 
         $c->act($action, $params);
 
-        if ($c::shouldLogSpeedForAction($action)) {
+        if (Environment::shouldLogSpeed() && $c::LOG_SPEED) {
             Logger::getInstance()->speedFinish(
                 'afterAct',
-                'BaseController/autoCreate'
+                'BaseController/autoCreate',
+                $c::slowSpeedValueForAction($action)
             );
         }
 

@@ -177,7 +177,14 @@ class Logger
         return $this;
     }
 
-    public function speedFinish($message, $module = '')
+    /**
+     * @param float|null $slowValue Порог для ЭТОГО запроса, секунды. null –
+     *   глобальный Environment::slowSpeedValue. Экшену, у которого несколько
+     *   секунд заведомо норма (загрузка файла), нужен свой порог: с общим он
+     *   пишет slow-запись всегда, а заглушить его целиком нельзя – тогда
+     *   невидимым станет и настоящее зависание.
+     */
+    public function speedFinish($message, $module = '', $slowValue = null)
     {
         $timeDifference = utime() - ($this->startTimestamp ?? 0);
 
@@ -187,7 +194,7 @@ class Logger
 
         if (
             Environment::shouldLogOnlySlowSpeed() &&
-            $timeDifference >= Environment::getSlowSpeedValue()
+            $timeDifference >= ($slowValue ?? Environment::getSlowSpeedValue())
         ) {
             foreach ($this->speedLines as $l) {
                 $this->storeLine($l, self::PURPOSE_SIMPLE, '-speed');

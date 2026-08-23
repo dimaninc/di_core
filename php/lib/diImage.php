@@ -124,6 +124,26 @@ class diImage
 
     const EXT_WEBP = '.webp';
 
+    /**
+     * Бренды ISO-BMFF, которые несут HEIF-картинку. `hev…`/`msf1` — серии
+     * (live photo, бёрст, depth): конвертеру нужен их первый кадр, а не отказ.
+     */
+    const HEIF_BRANDS = [
+        'heic',
+        'heix',
+        'heim',
+        'heis',
+        'hevc',
+        'hevx',
+        'hevm',
+        'hevs',
+        'mif1',
+        'msf1',
+    ];
+
+    /** ftyp редко длиннее — дальше начинается meta/mdat */
+    const FTYP_HEAD_BYTES = 64;
+
     const HEIC_CONVERTER_HEIF = 'heif-convert';
     const HEIC_CONVERTER_IMAGICK = 'ext-imagick';
     const HEIC_CONVERTER_MAGICK = 'imagemagick-cli';
@@ -227,24 +247,67 @@ class diImage
             return [0, 0, 0];
         }
 
-        return [
-            (int) ($info[0] ?? 0),
-            (int) ($info[1] ?? 0),
-            (int) ($info[2] ?? 0),
-        ];
+        return [(int) ($info[0] ?? 0), (int) ($info[1] ?? 0), (int) ($info[2] ?? 0)];
     }
 
+    /**
+     * Определяется по ftyp-бренду из первых байт, а не по finfo.
+     *
+     * Полагаться на finfo здесь нельзя по двум причинам. База magic разная на
+     * разных системах и разных её версиях: тот же файл на маке и на focal
+     * получает разные ответы, а бренд `heif` где-то отдаётся как
+     * `application/octet-stream`. И даже там, где ответ есть, серии
+     * (`image/heic-sequence` от live photo и бёрста) — отдельные mime, которых
+     * в прежнем сравнении с двумя строками не было.
+     *
+     * Цена ошибки несимметрична: не опознанный HEIC не конвертируется, дальше
+     * getimagesize() отдаёт 0x0, и в базу уезжает картинка нулевого размера —
+     * без исключения и без строки в логе, разбирать нечего.
+     */
     public static function isHeic(string $file): bool
     {
+        return (bool) array_intersect(
+            static::readFtypBrands($file),
+            self::HEIF_BRANDS
+        );
+    }
+
+    /**
+     * Бренды из ISO-BMFF бокса `ftyp`: size(4) + 'ftyp'(4) + major(4) +
+     * minor_version(4) + compatible_brands(4*N). Проверяются и major, и
+     * совместимые — камеры пишут в major что угодно, а `heic`/`mif1` держат в
+     * списке совместимых.
+     *
+     * @return string[] пусто, если файл не читается или это не ISO-BMFF
+     */
+    protected static function readFtypBrands(string $file): array
+    {
         if (!is_file($file)) {
-            return false;
+            return [];
         }
 
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $mime_type = finfo_file($finfo, $file);
-        finfo_close($finfo);
+        $head = @file_get_contents($file, false, null, 0, self::FTYP_HEAD_BYTES);
 
-        return $mime_type === 'image/heic' || $mime_type === 'image/heif';
+        if ($head === false || strlen($head) < 12) {
+            return [];
+        }
+
+        if (substr($head, 4, 4) !== 'ftyp') {
+            return [];
+        }
+
+        // размер бокса объявлен в первых 4 байтах, но верить ему на слово
+        // нельзя — читаем не дальше того, что реально прочитали
+        $declared = unpack('N', substr($head, 0, 4))[1] ?? 0;
+        $limit = min(max((int) $declared, 12), strlen($head));
+        $brands = [substr($head, 8, 4)];
+
+        // minor_version (offset 12) пропускаем, дальше идут compatible_brands
+        for ($offset = 16; $offset + 4 <= $limit; $offset += 4) {
+            $brands[] = substr($head, $offset, 4);
+        }
+
+        return $brands;
     }
 
     /**
