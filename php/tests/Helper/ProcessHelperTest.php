@@ -29,6 +29,18 @@ class ProcessHelperTest extends TestCase
         $this->assertSame(['oops'], $r['output']);
     }
 
+    /**
+     * stderr сливается в stdout ядром, а не склеивается после чтения двух труб:
+     * иначе порядок строк не совпадал бы с тем, что написала утилита, и режим
+     * с proc_open расходился бы с деградацией через `2>&1`.
+     */
+    public function testStreamsKeepTheirChronologicalOrder(): void
+    {
+        $r = ProcessHelper::run('echo one; echo two 1>&2; echo three', 5.0);
+
+        $this->assertSame(['one', 'two', 'three'], $r['output']);
+    }
+
     public function testNonZeroExitIsReported(): void
     {
         $r = ProcessHelper::run(['false'], 5.0);

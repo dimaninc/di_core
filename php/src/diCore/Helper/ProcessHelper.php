@@ -35,6 +35,9 @@ class ProcessHelper
      * @param string|string[] $command Массив – это execvp без шелла: ни
      *   экранирования, ни разбора кавычек, и SIGTERM приходит самому бинарю.
      *   Строка идёт через `sh -c` – см. shellForm() и оговорку в шапке класса.
+     * @param float $timeoutSec Дедлайн на ЗАПУЩЕННЫЙ процесс. Реальное время
+     *   возврата – до `$timeoutSec + TERM_GRACE_SEC`: убитому процессу даётся
+     *   пауза между SIGTERM и SIGKILL. Закладывайте её в свой бюджет.
      * @return array{code:int, output:string[], timedOut:bool}
      */
     public static function run($command, float $timeoutSec): array
@@ -43,10 +46,13 @@ class ProcessHelper
             return static::runWithoutTimeout($command);
         }
 
+        // stderr сливается в stdout ядром, а не склеивается нами после: иначе
+        // строки шли бы не в том порядке, в каком их написала утилита, и режим
+        // с proc_open расходился бы с деградацией через `2>&1`
         $descriptors = [
             0 => ['pipe', 'r'],
             1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
+            2 => ['redirect', 1],
         ];
         $pipes = [];
         $process = @proc_open(
@@ -67,7 +73,6 @@ class ProcessHelper
         // без этого чтение блокируется до конца процесса, и весь дедлайн
         // оказывается декорацией
         stream_set_blocking($pipes[1], false);
-        stream_set_blocking($pipes[2], false);
 
         $deadline = microtime(true) + max(0.0, $timeoutSec);
         $buffer = '';
@@ -102,7 +107,6 @@ class ProcessHelper
         $buffer = static::clamp($buffer . static::drain($pipes));
 
         fclose($pipes[1]);
-        fclose($pipes[2]);
         proc_close($process);
 
         return [
@@ -174,8 +178,7 @@ class ProcessHelper
     /** @param resource[] $pipes */
     protected static function drain(array $pipes): string
     {
-        return (string) stream_get_contents($pipes[1]) .
-            (string) stream_get_contents($pipes[2]);
+        return (string) stream_get_contents($pipes[1]);
     }
 
     /**

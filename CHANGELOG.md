@@ -1,5 +1,89 @@
 # Changelog
 
+## 0.5.0
+
+Minor, not patch: `diImage::isHeic()` answers differently for the same file, so
+a consumer's upload pipeline can take a branch it did not take before. Everything
+else is additive.
+
+### `diImage::isHeic()` no longer asks finfo
+
+It reads the ISO-BMFF `ftyp` brands out of the first bytes instead — major and
+compatible both — and rejects `avif`/`avis` before consulting the HEIF list.
+
+Why the change: finfo's magic database differs between systems and versions (the
+same file answers differently on macOS and on Ubuntu focal, and the bare `heif`
+brand comes back as `application/octet-stream` in places), and the old two-string
+comparison against `image/heic` / `image/heif` never covered the **sequence**
+brands at all — `hevc`, `msf1` and friends, i.e. exactly the live photos and
+bursts a phone produces. An unrecognised HEIF is simply not converted, after
+which `getimagesize()` answers 0×0 and a zero-size picture travels on with no
+exception and no log line, so the failure was silent.
+
+**What changes for you:** more files are recognised (sequences, and files that
+keep `heic`/`mif1` only among the compatible brands), and AVIF is now explicitly
+NOT one of them — it is MIAF too and declares `mif1` compatible, so by that brand
+alone the two are indistinguishable. If your pipeline relied on AVIF reaching the
+HEIC branch, it no longer does.
+
+### `diImage::convertHeicToJpeg()` — a converter chain with a deadline
+
+Was: one `exec()` of one binary, an exception on a non-zero exit. Now:
+
+- **A fallback chain** — the platform CLI (`heif-convert` on Linux, `magick
+  convert` on mac), then **ext-imagick** (no `exec()`, so it does not tie up an
+  FPM worker; needs a libheif delegate), then the other CLI. It throws only when
+  every one has failed, carrying each attempt's reason.
+- **A zero exit code is no longer taken as success.** With several top-level
+  images in a HEIC (live photo, burst, depth map) both `heif-convert` and
+  ImageMagick write `out-1.jpg` instead of `out.jpg` **and still exit 0** — which
+  read as a successful conversion with no output. The result is re-read
+  (`safeImageSize`, not `filesize`) and the first numbered frame adopted;
+  leftovers are cleared between attempts.
+- **A hard time budget**, `HEIC_TOTAL_TIMEOUT_SEC` (20 s), shared by the whole
+  chain rather than granted per converter. `set_time_limit()` on Unix does not
+  count time spent in system calls, so nothing bounded that `exec()` before. The
+  in-process ext-imagick step is bounded by its share as
+  `Imagick::RESOURCETYPE_TIME` (process-global, restored afterwards).
+
+### New: `diCore\Helper\ProcessHelper`
+
+`ProcessHelper::run($command, $seconds)` → `['code', 'output', 'timedOut']`. Runs
+the command through `proc_open`, drains the pipe non-blockingly (a full pipe
+buffer would deadlock the child), and sends SIGTERM then SIGKILL at the deadline.
+Degrades to plain `exec()` where `proc_open` is disabled.
+
+Three things worth knowing before using it:
+
+- **Pass the command as an ARRAY when the kill has to reach the binary.** A
+  string goes through `sh -c`, and only a single command can be `exec`-prefixed
+  to replace the shell; a compound one leaves the shell's children behind (the
+  call still returns on time).
+- **The real ceiling is `$seconds + TERM_GRACE_SEC`** — the pause between SIGTERM
+  and SIGKILL is on top of your timeout.
+- **Output is one stream, capped at `MAX_OUTPUT_BYTES` (16 KB), tail kept.**
+  stderr is merged into stdout by the kernel, so the order is the one the utility
+  wrote; how much a foreign binary prints is nobody's decision, hence the cap.
+
+### Speed log: a per-action threshold
+
+`diBaseController::SLOW_SPEED_ACTIONS` (default `[]`) raises the slow-speed bar
+for one action — `const SLOW_SPEED_ACTIONS = ['upload' => 25.0]` — and
+`Logger::speedFinish()` takes it as a third, optional `$slowValue` argument
+(`null` keeps the global `Environment::slowSpeedValue`). Existing call sites are
+unaffected.
+
+**Do not mute such an action instead.** In `slow` mode the per-request lines only
+buffer and `speedFinish()` is what flushes them, so muting drops the request's
+whole block — and a stuck `exec()` in exactly this kind of action is what
+exhausts an FPM pool. Raise the bar, keep the stall visible.
+
+Also fixed there: `speedFinish()` now clears its buffer, so a request that calls
+it twice (`autoCreate()` then `createAttempt()`) no longer writes the same block
+to the log twice.
+
+---
+
 ## 0.4.0
 
 Minor, not patch: the shipped dumps change charset, generated DDL and the
