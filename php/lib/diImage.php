@@ -22,6 +22,7 @@
 
 use diCore\Data\Config;
 use diCore\Data\Configuration;
+use diCore\Helper\ProcessHelper;
 use diCore\Tool\Logger;
 
 /** @deprecated  */
@@ -126,6 +127,14 @@ class diImage
     const HEIC_CONVERTER_HEIF = 'heif-convert';
     const HEIC_CONVERTER_IMAGICK = 'ext-imagick';
     const HEIC_CONVERTER_MAGICK = 'imagemagick-cli';
+
+    /**
+     * Бюджет на ВСЮ цепочку, а не на каждый конвертер: три таймаута подряд
+     * дали бы утроенный худший случай, ради устранения которого всё и
+     * затевалось. Держать заметно ниже per-file лимита вызывающего
+     * (в 1romantic это set_time_limit(30) на файл).
+     */
+    const HEIC_TOTAL_TIMEOUT_SEC = 20.0;
 
     const HEIC_JPEG_QUALITY = 92;
     const HEIC_LOG_MODULE = 'diImage/convertHeicToJpeg';
@@ -272,14 +281,21 @@ class diImage
     public static function convertHeicToJpeg(string $heicFile, string $jpegFile)
     {
         $errors = [];
+        $deadline = microtime(true) + static::HEIC_TOTAL_TIMEOUT_SEC;
 
         foreach (static::getHeicConverterOrder() as $converter) {
             try {
-                if (static::runHeicConverter($converter, $heicFile, $jpegFile)) {
+                if (
+                    static::runHeicConverter(
+                        $converter,
+                        $heicFile,
+                        $jpegFile,
+                        $deadline - microtime(true)
+                    )
+                ) {
                     if ($errors) {
                         static::logHeic(
-                            "converted by $converter after: " .
-                                join(' | ', $errors)
+                            "converted by $converter after: " . join(' | ', $errors)
                         );
                     }
 
@@ -318,25 +334,30 @@ class diImage
     protected static function runHeicConverter(
         string $converter,
         string $heicFile,
-        string $jpegFile
+        string $jpegFile,
+        float $timeoutSec
     ): bool {
         switch ($converter) {
             case self::HEIC_CONVERTER_IMAGICK:
+                // Внутрипроцессный декод, снаружи его не прервать: ограничивают
+                // его собственные resource limits ImageMagick, не этот бюджет
                 return static::convertHeicByImagick($heicFile, $jpegFile);
 
             case self::HEIC_CONVERTER_MAGICK:
                 return static::convertHeicByCli(
                     // IM7 отзывается на `magick convert`, IM6 — только на `convert`
-                    Config::isMac() ? 'magick convert' : 'convert',
+                    Config::isMac() ? ['magick', 'convert'] : ['convert'],
                     $heicFile,
-                    $jpegFile
+                    $jpegFile,
+                    $timeoutSec
                 );
 
             case self::HEIC_CONVERTER_HEIF:
                 return static::convertHeicByCli(
-                    'heif-convert',
+                    ['heif-convert'],
                     $heicFile,
-                    $jpegFile
+                    $jpegFile,
+                    $timeoutSec
                 );
         }
 
@@ -346,29 +367,38 @@ class diImage
     /**
      * @throws Exception
      */
+    /**
+     * @param string[] $argv бинарь и его флаги; файлы дописываются здесь
+     */
     protected static function convertHeicByCli(
-        string $binary,
+        array $argv,
         string $heicFile,
-        string $jpegFile
+        string $jpegFile,
+        float $timeoutSec
     ): bool {
-        if (!function_exists('exec')) {
-            throw new Exception('exec() disabled');
+        if ($timeoutSec <= 0) {
+            throw new Exception('no time left in the conversion budget');
         }
 
-        $src = escapeshellarg($heicFile);
-        $dst = escapeshellarg($jpegFile);
-        $output = [];
+        // Массивом, не строкой: без шелла не нужно экранирование, и убивается
+        // сам конвертер, а не обёртка sh
+        $result = ProcessHelper::run(
+            array_merge($argv, [$heicFile, $jpegFile]),
+            $timeoutSec
+        );
 
-        // 2>&1 обязателен: heif-convert пишет причину в stderr, а exec()
-        // забирает только stdout — без этого сообщение об ошибке пустое
-        exec("$binary $src $dst 2>&1", $output, $returnCode);
+        if ($result['timedOut']) {
+            throw new Exception(
+                sprintf('killed after %.1fs', round($timeoutSec, 1))
+            );
+        }
 
-        if ($returnCode !== 0) {
+        if ($result['code'] !== 0) {
             throw new Exception(
                 sprintf(
                     'exit %d: %s',
-                    $returnCode,
-                    join(' | ', $output) ?: 'no output'
+                    $result['code'],
+                    join(' | ', $result['output']) ?: 'no output'
                 )
             );
         }
@@ -434,11 +464,7 @@ class diImage
         // scandir, а не glob(): имя временного файла может содержать [ и *,
         // экранирования для glob() в php нет
         $pattern =
-            '/^' .
-            preg_quote($base, '/') .
-            '-(\\d+)' .
-            preg_quote($ext, '/') .
-            '$/';
+            '/^' . preg_quote($base, '/') . '-(\\d+)' . preg_quote($ext, '/') . '$/';
         $produced = [];
 
         foreach (scandir($dir) ?: [] as $entry) {

@@ -297,6 +297,51 @@ class HeicConversionTest extends TestCase
         $this->assertFileDoesNotExist("$base-1.jpg");
     }
 
+    /**
+     * Бюджет один на всю цепочку: отдельный таймаут на каждый конвертер дал бы
+     * утроенный худший случай — ровно то, ради чего таймаут и вводился.
+     */
+    public function testTimeoutBudgetIsSharedAndShrinks(): void
+    {
+        HeicConverterSpy::$order = ['first', 'second'];
+        HeicConverterSpy::$handlers = [
+            'first' => function () {
+                usleep(30000);
+
+                return false;
+            },
+            'second' => function () {
+                return true;
+            },
+        ];
+
+        HeicConverterSpy::convertHeicToJpeg('/tmp/whatever.heic', $this->dst);
+
+        $this->assertCount(2, HeicConverterSpy::$budgets);
+        $this->assertLessThanOrEqual(
+            \diImage::HEIC_TOTAL_TIMEOUT_SEC,
+            HeicConverterSpy::$budgets[0]
+        );
+        $this->assertLessThan(
+            HeicConverterSpy::$budgets[0],
+            HeicConverterSpy::$budgets[1],
+            'второму конвертеру достаётся остаток, а не полный бюджет'
+        );
+    }
+
+    public function testExhaustedBudgetIsRefusedRatherThanRunUnbounded(): void
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('no time left');
+
+        HeicConverterSpy::runRealConverterWithBudget(
+            \diImage::HEIC_CONVERTER_HEIF,
+            '/tmp/x.heic',
+            $this->dst,
+            0.0
+        );
+    }
+
     public function testUnknownConverterNameDoesNotFallThroughSilently(): void
     {
         $this->expectException(\Exception::class);
@@ -324,12 +369,16 @@ class HeicConverterSpy extends \diImage
     /** @var string[] */
     public static $logged = [];
 
+    /** @var float[] остаток общего бюджета, с которым звали каждый конвертер */
+    public static $budgets = [];
+
     public static function reset(): void
     {
         static::$order = [];
         static::$handlers = [];
         static::$tried = [];
         static::$logged = [];
+        static::$budgets = [];
     }
 
     public static function getHeicConverterOrder(): array
@@ -343,7 +392,7 @@ class HeicConverterSpy extends \diImage
         string $heicFile,
         string $jpegFile
     ): bool {
-        return parent::runHeicConverter($converter, $heicFile, $jpegFile);
+        return parent::runHeicConverter($converter, $heicFile, $jpegFile, 5.0);
     }
 
     public static function adoptNumbered(string $jpegFile): void
@@ -356,6 +405,20 @@ class HeicConverterSpy extends \diImage
         static::removeHeicLeftovers($jpegFile);
     }
 
+    public static function runRealConverterWithBudget(
+        string $converter,
+        string $heicFile,
+        string $jpegFile,
+        float $timeoutSec
+    ): bool {
+        return parent::runHeicConverter(
+            $converter,
+            $heicFile,
+            $jpegFile,
+            $timeoutSec
+        );
+    }
+
     public static function outputIsUsable(string $jpegFile): bool
     {
         return static::heicOutputIsUsable($jpegFile);
@@ -364,9 +427,11 @@ class HeicConverterSpy extends \diImage
     protected static function runHeicConverter(
         string $converter,
         string $heicFile,
-        string $jpegFile
+        string $jpegFile,
+        float $timeoutSec
     ): bool {
         static::$tried[] = $converter;
+        static::$budgets[] = $timeoutSec;
 
         $handler = static::$handlers[$converter] ?? null;
 
