@@ -279,8 +279,10 @@ class diBaseController
         $route = static::getFullQueryRoute();
 
         if (strpos($route, $pathBeginning) === 0) {
+            $c = null;
+
             try {
-                static::autoCreate([
+                $c = static::autoCreate([
                     'pathBeginning' => $pathBeginning,
                 ]);
             } catch (\Exception $e) {
@@ -288,7 +290,12 @@ class diBaseController
             }
 
             if ($die) {
-                if (Environment::shouldLogSpeed()) {
+                // Через класс созданного контроллера, а не static::, иначе этот
+                // speedFinish() сольёт буфер запроса мимо SKIP_SPEED_LOG_ACTIONS
+                // — опт-аут в autoCreate() оказался бы бесполезным
+                $class = $c ? get_class($c) : static::class;
+
+                if ($class::shouldLogSpeedForAction()) {
                     Logger::getInstance()->speedFinish(
                         'createAttempt/die',
                         static::class

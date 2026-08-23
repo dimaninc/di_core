@@ -54,15 +54,40 @@ class SpeedLogActionsTest extends TestCase
         $this->assertFalse(SkippingController::isSpeedLogSkippedAction());
     }
 
-    public function testSkipListIsNotInheritedByUnrelatedControllers(): void
+    /**
+     * $routedAction физически один на всю иерархию (объявлен только в базе), а
+     * autoCreate() выставляет его перед созданием КАЖДОГО контроллера. Проверяем
+     * то, что из этого следует: свой список решает, чужой маршрут — нет.
+     */
+    public function testRoutedActionDoesNotLeakBetweenControllersWithOwnSkipLists(): void
+    {
+        // как будто autoCreate() отроутил Card::upload
+        SkippingController::setRoutedAction('upload');
+
+        // у другого контроллера свой список, и 'upload' в него не входит
+        $this->assertFalse(OtherSkippingController::isSpeedLogSkippedAction());
+
+        // а его собственный экшен глушится
+        SkippingController::setRoutedAction('export');
+        $this->assertTrue(OtherSkippingController::isSpeedLogSkippedAction());
+        $this->assertFalse(SkippingController::isSpeedLogSkippedAction());
+    }
+
+    public function testControllerWithoutASkipListIsNeverSilenced(): void
     {
         SkippingController::setRoutedAction('upload');
 
         $this->assertFalse(PlainController::isSpeedLogSkippedAction());
+        $this->assertFalse(PlainController::isSpeedLogSkippedAction('upload'));
     }
 }
 
 class PlainController extends \diBaseController {}
+
+class OtherSkippingController extends \diBaseController
+{
+    const SKIP_SPEED_LOG_ACTIONS = ['export'];
+}
 
 class SkippingController extends \diBaseController
 {
