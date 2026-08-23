@@ -3,4 +3,6 @@
 /static-builder/node_modules
 composer.lock
 .DS_Store
-.idea.phpunit.result.cache
+.idea
+.phpunit.result.cache
+
