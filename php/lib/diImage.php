@@ -291,11 +291,10 @@ class diImage
                 $errors[] = "$converter: {$e->getMessage()}";
             }
 
-            // конвертер мог оставить обрезанный файл — иначе следующий в очереди
-            // отработает вхолостую, а safeImageSize() увидит битую картинку
-            if (is_file($jpegFile)) {
-                @unlink($jpegFile);
-            }
+            // конвертер мог оставить обрезанный файл (или пачку `-N`) — иначе
+            // следующий в очереди отработает вхолостую, а safeImageSize()
+            // увидит битую картинку
+            static::removeHeicLeftovers($jpegFile);
         }
 
         $message =
@@ -374,7 +373,84 @@ class diImage
             );
         }
 
+        if (!is_file($jpegFile)) {
+            static::adoptNumberedCliOutput($jpegFile);
+        }
+
         return static::heicOutputIsUsable($jpegFile);
+    }
+
+    /**
+     * Когда в HEIC несколько top-level изображений (live photo, серия,
+     * depth-карта), и heif-convert, и ImageMagick пишут не `out.jpg`, а
+     * `out-1.jpg`, `out-2.jpg` — И ВЫХОДЯТ С НУЛЁМ. Раньше это выглядело как
+     * успешная конвертация без файла, и дальше по коду ехала картинка 0x0.
+     * Забираем первый кадр (он же primary), остальные — вспомогательные.
+     */
+    protected static function adoptNumberedCliOutput(string $jpegFile): void
+    {
+        $produced = static::numberedCliOutputs($jpegFile);
+
+        if (!$produced) {
+            return;
+        }
+
+        $first = array_shift($produced);
+
+        foreach ($produced as $extra) {
+            @unlink($extra);
+        }
+
+        if (!@rename($first, $jpegFile)) {
+            @unlink($first);
+        }
+    }
+
+    /** Файл назначения и все `-N`-варианты, которые мог оставить конвертер */
+    protected static function removeHeicLeftovers(string $jpegFile): void
+    {
+        if (is_file($jpegFile)) {
+            @unlink($jpegFile);
+        }
+
+        foreach (static::numberedCliOutputs($jpegFile) as $leftover) {
+            @unlink($leftover);
+        }
+    }
+
+    /**
+     * `<base>-N<ext>` рядом с файлом назначения, по возрастанию N.
+     *
+     * @return string[]
+     */
+    protected static function numberedCliOutputs(string $jpegFile): array
+    {
+        $dir = dirname($jpegFile);
+        $name = basename($jpegFile);
+        $dot = strrpos($name, '.');
+        $base = $dot === false ? $name : substr($name, 0, $dot);
+        $ext = $dot === false ? '' : substr($name, $dot);
+
+        // scandir, а не glob(): имя временного файла может содержать [ и *,
+        // экранирования для glob() в php нет
+        $pattern =
+            '/^' .
+            preg_quote($base, '/') .
+            '-(\\d+)' .
+            preg_quote($ext, '/') .
+            '$/';
+        $produced = [];
+
+        foreach (scandir($dir) ?: [] as $entry) {
+            if (preg_match($pattern, $entry, $m)) {
+                // ImageMagick нумерует с нуля, heif-convert с единицы
+                $produced[(int) $m[1]] = $dir . '/' . $entry;
+            }
+        }
+
+        ksort($produced);
+
+        return array_values($produced);
     }
 
     /**

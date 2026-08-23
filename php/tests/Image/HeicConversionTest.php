@@ -213,6 +213,90 @@ class HeicConversionTest extends TestCase
         $this->assertTrue(HeicConverterSpy::outputIsUsable($this->dst));
     }
 
+    /**
+     * heif-convert и ImageMagick на HEIC с несколькими top-level кадрами пишут
+     * `out-1.jpg` вместо `out.jpg` и выходят с нулём — раньше это выглядело как
+     * успех без файла.
+     */
+    public function testNumberedOutputIsAdoptedAsTheResult(): void
+    {
+        $base = substr($this->dst, 0, -4);
+
+        file_put_contents("$base-1.jpg", 'primary');
+        file_put_contents("$base-2.jpg", 'depth map');
+
+        HeicConverterSpy::adoptNumbered($this->dst);
+
+        $this->assertSame('primary', file_get_contents($this->dst));
+        $this->assertFileDoesNotExist("$base-2.jpg");
+        $this->assertFileDoesNotExist("$base-1.jpg");
+    }
+
+    /** ImageMagick нумерует с нуля, heif-convert с единицы */
+    public function testLowestNumberWinsRegardlessOfTheFirstIndex(): void
+    {
+        $base = substr($this->dst, 0, -4);
+
+        file_put_contents("$base-0.jpg", 'zero based');
+        file_put_contents("$base-1.jpg", 'second frame');
+
+        HeicConverterSpy::adoptNumbered($this->dst);
+
+        $this->assertSame('zero based', file_get_contents($this->dst));
+    }
+
+    /** Сортировка числовая, а не строковая: -10 не должен обгонять -2 */
+    public function testFramesAreOrderedNumerically(): void
+    {
+        $base = substr($this->dst, 0, -4);
+
+        file_put_contents("$base-10.jpg", 'tenth');
+        file_put_contents("$base-2.jpg", 'second');
+
+        HeicConverterSpy::adoptNumbered($this->dst);
+
+        $this->assertSame('second', file_get_contents($this->dst));
+    }
+
+    public function testNothingHappensWithoutNumberedOutput(): void
+    {
+        HeicConverterSpy::adoptNumbered($this->dst);
+
+        $this->assertFileDoesNotExist($this->dst);
+    }
+
+    /** Соседние файлы с похожим именем не должны попадать под раздачу */
+    public function testUnrelatedNeighboursAreLeftAlone(): void
+    {
+        $base = substr($this->dst, 0, -4);
+
+        file_put_contents("$base-1.jpg", 'primary');
+        file_put_contents("$base-x.jpg", 'not a frame');
+        file_put_contents("$base-1.png", 'other format');
+
+        HeicConverterSpy::adoptNumbered($this->dst);
+
+        $this->assertSame('primary', file_get_contents($this->dst));
+        $this->assertFileExists("$base-x.jpg");
+        $this->assertFileExists("$base-1.png");
+
+        unlink("$base-x.jpg");
+        unlink("$base-1.png");
+    }
+
+    public function testLeftoversAreRemovedBetweenAttempts(): void
+    {
+        $base = substr($this->dst, 0, -4);
+
+        file_put_contents($this->dst, 'broken');
+        file_put_contents("$base-1.jpg", 'stray');
+
+        HeicConverterSpy::removeLeftovers($this->dst);
+
+        $this->assertFileDoesNotExist($this->dst);
+        $this->assertFileDoesNotExist("$base-1.jpg");
+    }
+
     public function testUnknownConverterNameDoesNotFallThroughSilently(): void
     {
         $this->expectException(\Exception::class);
@@ -260,6 +344,16 @@ class HeicConverterSpy extends \diImage
         string $jpegFile
     ): bool {
         return parent::runHeicConverter($converter, $heicFile, $jpegFile);
+    }
+
+    public static function adoptNumbered(string $jpegFile): void
+    {
+        static::adoptNumberedCliOutput($jpegFile);
+    }
+
+    public static function removeLeftovers(string $jpegFile): void
+    {
+        static::removeHeicLeftovers($jpegFile);
     }
 
     public static function outputIsUsable(string $jpegFile): bool
