@@ -18,6 +18,13 @@ class ProcessHelper
     /** пауза цикла опроса, микросекунды */
     const POLL_INTERVAL_USEC = 20000;
 
+    /**
+     * Потолок на собранный вывод. Это чужой бинарь: сколько он напишет в
+     * stderr, не решает никто, а строка целиком уезжает в сообщение исключения
+     * и оттуда в лог. Обрезаем, а не копим.
+     */
+    const MAX_OUTPUT_BYTES = 16384;
+
     /** тот же код, что отдаёт coreutils timeout */
     const EXIT_TIMED_OUT = 124;
 
@@ -69,8 +76,9 @@ class ProcessHelper
 
         while (true) {
             // вычитываем на каждом обороте: полный буфер трубы остановил бы
-            // процесс намертво, и он бы не завершился никогда
-            $buffer .= static::drain($pipes);
+            // процесс намертво, и он бы не завершился никогда — читать надо
+            // всегда, даже когда собранное уже не нужно
+            $buffer = static::clamp($buffer . static::drain($pipes));
 
             $status = proc_get_status($process);
 
@@ -91,7 +99,7 @@ class ProcessHelper
             usleep(static::POLL_INTERVAL_USEC);
         }
 
-        $buffer .= static::drain($pipes);
+        $buffer = static::clamp($buffer . static::drain($pipes));
 
         fclose($pipes[1]);
         fclose($pipes[2]);
@@ -132,7 +140,7 @@ class ProcessHelper
 
         return [
             'code' => (int) $code,
-            'output' => $output,
+            'output' => static::splitOutput(static::clamp(join("\n", $output))),
             'timedOut' => false,
         ];
     }
@@ -148,6 +156,19 @@ class ProcessHelper
         return preg_match('/[;&|<>()`\n]/', $command)
             ? $command
             : 'exec ' . $command;
+    }
+
+    /**
+     * Хвост важнее начала: причина отказа у консольных утилит идёт последней
+     * строкой, а первые — обычно баннер и предупреждения.
+     */
+    protected static function clamp(string $buffer): string
+    {
+        if (strlen($buffer) <= static::MAX_OUTPUT_BYTES) {
+            return $buffer;
+        }
+
+        return '…' . substr($buffer, -static::MAX_OUTPUT_BYTES);
     }
 
     /** @param resource[] $pipes */

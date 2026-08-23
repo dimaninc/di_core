@@ -144,6 +144,13 @@ class diImage
     /** ftyp редко длиннее — дальше начинается meta/mdat */
     const FTYP_HEAD_BYTES = 64;
 
+    /**
+     * AVIF — тоже MIAF и тоже объявляет `mif1` совместимым, так что по одному
+     * `mif1` от HEIF его не отличить. Свой major brand у него есть всегда, и
+     * он же попадает в совместимые, поэтому проверяется отдельно и раньше.
+     */
+    const AVIF_BRANDS = ['avif', 'avis'];
+
     const HEIC_CONVERTER_HEIF = 'heif-convert';
     const HEIC_CONVERTER_IMAGICK = 'ext-imagick';
     const HEIC_CONVERTER_MAGICK = 'imagemagick-cli';
@@ -266,10 +273,15 @@ class diImage
      */
     public static function isHeic(string $file): bool
     {
-        return (bool) array_intersect(
-            static::readFtypBrands($file),
-            self::HEIF_BRANDS
-        );
+        $brands = static::readFtypBrands($file);
+
+        // AVIF раньше HEIF: `mif1` есть у обоих, и без этой проверки avif
+        // уезжал бы в HEIC-конвертер, где на проде падают все три шага
+        if (array_intersect($brands, self::AVIF_BRANDS)) {
+            return false;
+        }
+
+        return (bool) array_intersect($brands, self::HEIF_BRANDS);
     }
 
     /**
@@ -296,14 +308,24 @@ class diImage
             return [];
         }
 
-        // размер бокса объявлен в первых 4 байтах, но верить ему на слово
-        // нельзя — читаем не дальше того, что реально прочитали
+        // Размер бокса объявлен в первых 4 байтах, но верить ему на слово
+        // нельзя — читаем не дальше того, что реально прочитали.
+        // size == 1: дальше 8-байтный largesize, и major brand сдвинут;
+        // size == 0: бокс до конца файла, ограничения нет
         $declared = unpack('N', substr($head, 0, 4))[1] ?? 0;
-        $limit = min(max((int) $declared, 12), strlen($head));
-        $brands = [substr($head, 8, 4)];
+        $read = strlen($head);
+        $major = $declared === 1 ? 16 : 8;
+        $limit =
+            $declared > 1 ? min(max((int) $declared, $major + 4), $read) : $read;
 
-        // minor_version (offset 12) пропускаем, дальше идут compatible_brands
-        for ($offset = 16; $offset + 4 <= $limit; $offset += 4) {
+        if ($major + 4 > $read) {
+            return [];
+        }
+
+        $brands = [substr($head, $major, 4)];
+
+        // minor_version идёт сразу за major, дальше compatible_brands
+        for ($offset = $major + 8; $offset + 4 <= $limit; $offset += 4) {
             $brands[] = substr($head, $offset, 4);
         }
 
@@ -370,10 +392,15 @@ class diImage
                 $errors[] = "$converter: {$e->getMessage()}";
             }
 
-            // конвертер мог оставить обрезанный файл (или пачку `-N`) — иначе
+            // Конвертер мог оставить обрезанный файл (или пачку `-N`) — иначе
             // следующий в очереди отработает вхолостую, а safeImageSize()
-            // увидит битую картинку
-            static::removeHeicLeftovers($jpegFile);
+            // увидит битую картинку. Листинг каталога делаем только после CLI:
+            // нумерованные файлы больше писать некому, а каталог аплоада (то
+            // есть обычно /tmp) бывает большим.
+            static::removeHeicLeftovers(
+                $jpegFile,
+                $converter !== self::HEIC_CONVERTER_IMAGICK
+            );
         }
 
         $message =
@@ -402,9 +429,11 @@ class diImage
     ): bool {
         switch ($converter) {
             case self::HEIC_CONVERTER_IMAGICK:
-                // Внутрипроцессный декод, снаружи его не прервать: ограничивают
-                // его собственные resource limits ImageMagick, не этот бюджет
-                return static::convertHeicByImagick($heicFile, $jpegFile);
+                return static::convertHeicByImagick(
+                    $heicFile,
+                    $jpegFile,
+                    $timeoutSec
+                );
 
             case self::HEIC_CONVERTER_MAGICK:
                 return static::convertHeicByCli(
@@ -500,10 +529,16 @@ class diImage
     }
 
     /** Файл назначения и все `-N`-варианты, которые мог оставить конвертер */
-    protected static function removeHeicLeftovers(string $jpegFile): void
-    {
+    protected static function removeHeicLeftovers(
+        string $jpegFile,
+        bool $numbered = true
+    ): void {
         if (is_file($jpegFile)) {
             @unlink($jpegFile);
+        }
+
+        if (!$numbered) {
+            return;
         }
 
         foreach (static::numberedCliOutputs($jpegFile) as $leftover) {
@@ -550,12 +585,18 @@ class diImage
      */
     protected static function convertHeicByImagick(
         string $heicFile,
-        string $jpegFile
+        string $jpegFile,
+        float $timeoutSec
     ): bool {
         if (!class_exists('Imagick')) {
             throw new Exception('ext-imagick not installed');
         }
 
+        if ($timeoutSec <= 0) {
+            throw new Exception('no time left in the conversion budget');
+        }
+
+        $restoreTimeLimit = static::limitImagickTime($timeoutSec);
         $im = new \Imagick();
 
         try {
@@ -570,9 +611,49 @@ class diImage
         } finally {
             $im->clear();
             $im->destroy();
+            $restoreTimeLimit();
         }
 
         return static::heicOutputIsUsable($jpegFile);
+    }
+
+    /**
+     * Декод внутри процесса не прервать снаружи — а на линуксе ext-imagick идёт
+     * ВТОРЫМ, то есть уже после того, как зависший heif-convert съел бюджет.
+     * Единственный тормоз здесь — собственный лимит ImageMagick; он глобальный
+     * на процесс, поэтому возвращаем прежнее значение.
+     *
+     * Замечание на будущее: в проде делегата HEIC сейчас нет и readImage()
+     * падает мгновенно — но именно его установка и рекомендуется как способ
+     * вернуть избыточность, и вот тогда этот лимит начинает работать.
+     *
+     * @return callable вернуть как было
+     */
+    protected static function limitImagickTime(float $timeoutSec): callable
+    {
+        if (!defined('Imagick::RESOURCETYPE_TIME')) {
+            return function () {
+            };
+        }
+
+        try {
+            $was = \Imagick::getResourceLimit(\Imagick::RESOURCETYPE_TIME);
+            \Imagick::setResourceLimit(
+                \Imagick::RESOURCETYPE_TIME,
+                max(1, (int) ceil($timeoutSec))
+            );
+        } catch (\Throwable $e) {
+            return function () {
+            };
+        }
+
+        return function () use ($was) {
+            try {
+                \Imagick::setResourceLimit(\Imagick::RESOURCETYPE_TIME, $was);
+            } catch (\Throwable $e) {
+                // вернуть не вышло — не повод ронять конвертацию
+            }
+        };
     }
 
     /**

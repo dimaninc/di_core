@@ -200,6 +200,10 @@ class Logger
                 $this->storeLine($l, self::PURPOSE_SIMPLE, '-speed');
             }
 
+            // Иначе следующий speedFinish() того же запроса (autoCreate() и
+            // createAttempt() зовут его оба) выложит те же строки второй раз
+            $this->speedLines = [];
+
             $message = "{$timeDifference}s: $message";
             $this->printLine($module . $message, self::PURPOSE_SIMPLE, '-speed');
         }

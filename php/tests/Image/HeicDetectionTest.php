@@ -93,12 +93,34 @@ class HeicDetectionTest extends TestCase
                 pack('N', 24) . 'ftyp' . 'isom' . "\x00\x00\x02\x00" . 'isomiso2',
             ],
             'quicktime' => [pack('N', 20) . 'ftyp' . 'qt  ' . "\x00\x00\x02\x00"],
-            'avif' => [pack('N', 20) . 'ftyp' . 'avif' . "\x00\x00\x00\x00"],
+
             'jpeg' => ["\xff\xd8\xff\xe0" . str_repeat("\x00", 32)],
             'png' => ["\x89PNG\r\n\x1a\n" . str_repeat("\x00", 32)],
             'мусор' => [str_repeat('x', 40)],
             'обрезано до заголовка' => ['ftyp'],
             'пустой' => [''],
+        ];
+    }
+
+    /**
+     * AVIF — тоже MIAF и объявляет `mif1` совместимым, то есть по одному
+     * `mif1` от HEIF неотличим. Раскладка ровно как у avifenc: первая версия
+     * этого теста подсовывала 16-байтный ftyp без совместимых брендов, он был
+     * зелёным — и пропускал настоящий AVIF в HEIC-конвертер.
+     */
+    #[DataProvider('avifProvider')]
+    public function testRealAvifIsNotMistakenForHeif(string $major): void
+    {
+        $file = $this->write($this->ftyp($major, ['mif1', 'miaf', 'MA1B']));
+
+        $this->assertFalse(\diImage::isHeic($file));
+    }
+
+    public static function avifProvider(): array
+    {
+        return [
+            'кадр' => ['avif'],
+            'последовательность' => ['avis'],
         ];
     }
 
@@ -114,6 +136,28 @@ class HeicDetectionTest extends TestCase
     public function testDishonestBoxSizeDoesNotOverrun(): void
     {
         $bytes = pack('N', 0xffffff) . 'ftyp' . 'heic' . "\x00\x00\x00\x00";
+
+        $this->assertTrue(\diImage::isHeic($this->write($bytes)));
+    }
+
+    /** size == 1 — дальше 8-байтный largesize, major brand сдвинут на 16 */
+    public function testSixtyFourBitBoxSizeIsUnderstood(): void
+    {
+        $bytes =
+            pack('N', 1) .
+            'ftyp' .
+            pack('J', 32) .
+            'heic' .
+            "\x00\x00\x00\x00" .
+            'mif1';
+
+        $this->assertTrue(\diImage::isHeic($this->write($bytes)));
+    }
+
+    /** size == 0 — бокс до конца файла, ограничения сверху нет */
+    public function testZeroBoxSizeReadsToTheEnd(): void
+    {
+        $bytes = pack('N', 0) . 'ftyp' . 'mp42' . "\x00\x00\x00\x00" . 'isomheic';
 
         $this->assertTrue(\diImage::isHeic($this->write($bytes)));
     }

@@ -106,17 +106,41 @@ class ProcessHelperTest extends TestCase
         $this->assertSame(['early'], $r['output']);
     }
 
-    /** Труба на 64кб+ вывода не должна вешать процесс насмерть */
+    /**
+     * Труба на 64кб+ вывода не должна вешать процесс насмерть: читать надо на
+     * каждом обороте, даже когда собранное уже обрезано.
+     */
     public function testLargeOutputDoesNotDeadlock(): void
     {
         $r = ProcessHelper::run(
-            'for i in $(seq 1 20000); do echo 0123456789012345678901234567890123456789; done',
+            'for i in $(seq 1 20000); do echo "line $i"; done',
             10.0
         );
 
         $this->assertFalse($r['timedOut']);
         $this->assertSame(0, $r['code']);
-        $this->assertCount(20000, $r['output']);
+    }
+
+    /**
+     * Сколько чужой бинарь напишет в stderr, не решает никто, а строка целиком
+     * уезжает в сообщение исключения и оттуда в лог.
+     */
+    public function testUnboundedOutputIsClamped(): void
+    {
+        $r = ProcessHelper::run(
+            'for i in $(seq 1 20000); do echo "line $i"; done',
+            10.0
+        );
+
+        $collected = join("\n", $r['output']);
+
+        $this->assertLessThanOrEqual(
+            ProcessHelper::MAX_OUTPUT_BYTES + 8,
+            strlen($collected)
+        );
+        // хвост важнее начала: причина отказа у утилит идёт последней строкой
+        $this->assertStringEndsWith('line 20000', $collected);
+        $this->assertStringNotContainsString('line 1' . "\n", $collected);
     }
 
     public function testExhaustedBudgetTimesOutImmediately(): void
