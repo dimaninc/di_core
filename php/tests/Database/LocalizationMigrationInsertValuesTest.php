@@ -260,6 +260,32 @@ class LocalizationMigrationInsertValuesTest extends TestCase
         $this->assertNull($row->de_value, 'untouched columns keep their default');
     }
 
+    /**
+     * getValueFields() overrides get written as array_filter()/unset() results,
+     * which keep their original keys — those must not become value indexes.
+     */
+    public function testValueFieldsOverrideWithGappyKeysStaysPositional(): void
+    {
+        // keys 0, 2, 5 — what array_filter() on the default list leaves behind
+        $fields = array_filter(
+            ['value', 'en_value', 'de_value', 'it_value', 'es_value', 'fr_value'],
+            function ($f) {
+                return in_array($f, ['value', 'de_value', 'fr_value'], true);
+            }
+        );
+
+        $this->makeMigration($fields)->insert([
+            'gappy' => ['Привет', 'Hallo', 'Salut'],
+        ]);
+
+        $row = $this->row('gappy');
+
+        $this->assertSame('Привет', $row->value);
+        $this->assertSame('Hallo', $row->de_value);
+        $this->assertSame('Salut', $row->fr_value);
+        $this->assertNull($row->en_value, 'untouched columns keep their default');
+    }
+
     /** down() deletes exactly the tokens the migration declared, and no others. */
     public function testDownRemovesOnlyTheDeclaredTokens(): void
     {
@@ -274,5 +300,39 @@ class LocalizationMigrationInsertValuesTest extends TestCase
 
         $this->assertSame(1, $this->rowCount());
         $this->assertNotFalse($this->row('two'));
+    }
+
+    /**
+     * insertValues() accepts a quoted token name, so down() has to be able to
+     * delete one: diDB::in() quotes its items but does not escape them.
+     */
+    public function testDownRemovesAQuotedTokenName(): void
+    {
+        $quoted = "it's.a\\token";
+        $m = $this->makeMigration();
+
+        $m->insert([
+            $quoted => ['Один', 'One', '', '', '', ''],
+            'plain' => ['Два', 'Two', '', '', '', ''],
+        ]);
+        $this->assertSame(2, $this->rowCount());
+
+        $m->remove([$quoted]);
+
+        $this->assertSame(1, $this->rowCount());
+        $this->assertFalse($this->row($quoted));
+        $this->assertNotFalse($this->row('plain'));
+    }
+
+    /** A single quoted name goes down the `= 'x'` branch of diDB::in(). */
+    public function testDownRemovesASingleQuotedTokenName(): void
+    {
+        $quoted = "l'unico";
+        $m = $this->makeMigration();
+
+        $m->insert([$quoted => ["Единственный", 'The only one', '', '', '', '']]);
+        $m->remove([$quoted]);
+
+        $this->assertSame(0, $this->rowCount());
     }
 }

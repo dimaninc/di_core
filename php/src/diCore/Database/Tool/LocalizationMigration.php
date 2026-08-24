@@ -40,6 +40,13 @@ abstract class LocalizationMigration extends Migration
         return $res;
     }
 
+    /**
+     * Table the tokens are written to and deleted from.
+     *
+     * Overriding this does NOT redirect updateCache(): the cache is built from
+     * the Localization entity, which is bound to the `localization` table — a
+     * project pointing this somewhere else has to override updateCache() too.
+     */
     protected function getLocalizationTable(): string
     {
         return 'localization';
@@ -69,12 +76,19 @@ abstract class LocalizationMigration extends Migration
      * has already translated must not be reset to the migration's default: these
      * migrations get re-run on databases that are ahead of them.
      *
+     * This does NOT fill $names: rollback runs in its own process, on a fresh
+     * instance whose up() was never called, so anything collected here would be
+     * gone by then. List the same tokens in $names by hand — that property is
+     * what down() deletes by, and an empty one makes the rollback a silent no-op.
+     *
      * @param array $values
      */
     protected function insertValues(array $values): void
     {
         $db = $this->getDb();
-        $fields = $this->getValueFields();
+        // positional: an override returning a filtered array keeps its original
+        // keys, which would otherwise be used as indexes into the value list
+        $fields = array_values($this->getValueFields());
 
         foreach ($values as $name => $localizedValues) {
             // Values reach diDB::insertIgnore() already escaped — it quotes them
@@ -94,10 +108,16 @@ abstract class LocalizationMigration extends Migration
 
     public function down()
     {
-        $this->getDb()->delete(
+        $db = $this->getDb();
+        // diDB::in() quotes its items but does not escape them, and a token name
+        // is prose too — "it's" would otherwise break the rollback query
+        $names = array_map(function ($name) use ($db) {
+            return $db->escape_string((string) $name);
+        }, array_values($this->names));
+
+        $db->delete(
             $this->getLocalizationTable(),
-            "WHERE {$this->getDb()->escapeField('name')}" .
-                $this->getDb()::in($this->names)
+            "WHERE {$db->escapeField('name')}" . $db::in($names)
         );
     }
 }
