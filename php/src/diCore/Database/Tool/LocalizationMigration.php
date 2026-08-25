@@ -8,7 +8,10 @@
 
 namespace diCore\Database\Tool;
 
+use diCore\Data\Config;
+use diCore\Entity\Localization\Model;
 use diCore\Tool\Localization;
+use diCore\Tool\Logger;
 
 abstract class LocalizationMigration extends Migration
 {
@@ -41,68 +44,158 @@ abstract class LocalizationMigration extends Migration
     }
 
     /**
-     * Table the tokens are written to and deleted from.
-     *
-     * Overriding this does NOT redirect updateCache(): the cache is built from
-     * the Localization entity, which is bound to the `localization` table — a
-     * project pointing this somewhere else has to override updateCache() too.
+     * The project's localization entity — source of the table and the languages.
+     * Overriding it does NOT redirect updateCache(), which goes through the
+     * entity's Collection.
      */
+    protected function getLocalizationModel(): Model
+    {
+        return Model::create();
+    }
+
     protected function getLocalizationTable(): string
     {
-        return 'localization';
+        return $this->getLocalizationModel()->getTable();
     }
 
     /**
-     * Value columns in the order the per-token list is given in.
-     *
-     * Override in a project whose localization table carries a different set of
-     * languages — this package's own dump only has `value` and `en_value`.
+     * Value columns to fill. Every project has its own set of languages, so the
+     * list can only come from its model.
      *
      * @return string[]
      */
     protected function getValueFields(): array
     {
-        return ['value', 'en_value', 'de_value', 'it_value', 'es_value', 'fr_value'];
+        return $this->getLocalizationModel()::getValueFields();
     }
 
     /**
-     * Adds localization tokens, keeping whatever is already in the table.
+     * Adds tokens, keeping what is already in the table.
      *
-     * Input is `token => [ru, en, de, it, es, fr]` — the list is positional and
-     * lines up with getValueFields(); a short list leaves the remaining columns
-     * empty, a longer one has its tail ignored.
+     * Keyed BY LANGUAGE, never positional: a positional list has to agree with
+     * a column order defined in another repository, and one language inserted
+     * in the middle silently shifts every translation into its neighbour.
      *
-     * INSERT IGNORE (not INSERT) because `name` is unique and a token an editor
-     * has already translated must not be reset to the migration's default: these
-     * migrations get re-run on databases that are ahead of them.
+     * `$strict` demands every language of the model; without it the missing
+     * ones stay empty and are logged. An empty list is an error either way.
      *
-     * This does NOT fill $names: rollback runs in its own process, on a fresh
-     * instance whose up() was never called, so anything collected here would be
-     * gone by then. List the same tokens in $names by hand — that property is
-     * what down() deletes by, and an empty one makes the rollback a silent no-op.
+     * INSERT IGNORE: these migrations get re-run on databases ahead of them,
+     * and an editor's translation must survive.
      *
-     * @param array $values
+     * Does NOT fill $names — down() runs on an instance whose up() never did.
+     *
+     * @param array $values token => [language => value]
+     * @throws \InvalidArgumentException
      */
-    protected function insertValues(array $values): void
+    protected function insertValues(array $values, bool $strict = true): void
     {
         $db = $this->getDb();
-        // positional: an override returning a filtered array keeps its original
-        // keys, which would otherwise be used as indexes into the value list
-        $fields = array_values($this->getValueFields());
+        $table = $this->getLocalizationTable();
 
-        foreach ($values as $name => $localizedValues) {
-            // Values reach diDB::insertIgnore() already escaped — it quotes them
-            // but does not escape, same contract as \diModel::saveToDb().
-            $record = ['name' => $db->escape_string((string) $name)];
-            $localizedValues = array_values((array) $localizedValues);
+        // all validated before the first write: a bad token in the middle
+        // would otherwise leave the migration half-applied
+        $records = [];
 
-            foreach ($fields as $i => $field) {
-                $record[$field] = $db->escape_string(
-                    (string) ($localizedValues[$i] ?? '')
+        foreach ($values as $name => $byLanguage) {
+            $records[] = $this->buildValueRecord(
+                (string) $name,
+                $byLanguage,
+                $strict
+            );
+        }
+
+        foreach ($records as $record) {
+            $db->insertIgnore($table, $record);
+        }
+    }
+
+    /**
+     * One row with every value column present: an omitted one is written as '',
+     * so a re-run cannot depend on column defaults.
+     *
+     * @param string|int|array $byLanguage a bare scalar counts as the main language
+     * @throws \InvalidArgumentException
+     */
+    private function buildValueRecord(string $name, $byLanguage, bool $strict): array
+    {
+        $db = $this->getDb();
+        $model = $this->getLocalizationModel();
+
+        if (is_scalar($byLanguage)) {
+            $byLanguage = [Config::getMainLanguage() => $byLanguage];
+        }
+
+        if (!is_array($byLanguage) || !$byLanguage) {
+            throw new \InvalidArgumentException(
+                "Localization token '$name' has no values at all"
+            );
+        }
+
+        $record = array_fill_keys($this->getValueFields(), '');
+        $filled = [];
+
+        foreach ($byLanguage as $language => $value) {
+            // a numeric key is the old positional call — caught before it
+            // reaches an invented `0_value` column
+            if (!is_string($language) || $language === '') {
+                throw new \InvalidArgumentException(
+                    "Localization token '$name' must be keyed by language, " .
+                        "e.g. ['ru' => …, 'en' => …]"
                 );
             }
 
-            $db->insertIgnore($this->getLocalizationTable(), $record);
+            $field = $model::getLocalizedFieldName('value', $language);
+
+            if (!array_key_exists($field, $record)) {
+                if ($strict) {
+                    throw new \InvalidArgumentException(
+                        "Localization token '$name': language '$language' has " .
+                            "no column '$field' in " .
+                            $this->getLocalizationTable()
+                    );
+                }
+
+                $this->logLocalizationIssue(
+                    "token '$name': skipped language '$language', no column '$field'"
+                );
+
+                continue;
+            }
+
+            // insertIgnore() quotes but does not escape, same as saveToDb()
+            $record[$field] = $db->escape_string((string) $value);
+            $filled[] = $field;
+        }
+
+        if (!$filled) {
+            throw new \InvalidArgumentException(
+                "Localization token '$name' has no values for any known language"
+            );
+        }
+
+        $missing = array_diff(array_keys($record), $filled);
+
+        if ($missing) {
+            $message = "token '$name': no value for " . join(', ', $missing);
+
+            if ($strict) {
+                throw new \InvalidArgumentException(
+                    "Localization $message. Pass strict = false to allow a subset."
+                );
+            }
+
+            $this->logLocalizationIssue($message);
+        }
+
+        return ['name' => $db->escape_string($name)] + $record;
+    }
+
+    /** A skipped translation is a log line, not a failed deploy. */
+    protected function logLocalizationIssue(string $message): void
+    {
+        try {
+            Logger::getInstance()->log($message, 'localization');
+        } catch (\Throwable $e) {
         }
     }
 
