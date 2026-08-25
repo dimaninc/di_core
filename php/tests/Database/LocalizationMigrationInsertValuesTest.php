@@ -2,6 +2,7 @@
 
 namespace diCore\Tests\Database;
 
+use diCore\Data\Config;
 use diCore\Database\Tool\LocalizationMigration;
 use PHPUnit\Framework\TestCase;
 
@@ -13,33 +14,59 @@ use PHPUnit\Framework\TestCase;
  * $strict catches an incomplete or unknown one before the first write, and prose
  * values ("L'amour") go through the DB API.
  *
- * Self-contained: throwaway table, and the columns are declared per migration so
- * the suite behaves the same in a two-language project and in a six-language one.
+ * Self-contained: throwaway table, columns declared per migration, and the
+ * language map is built off Config::getMainLanguage() — only the main language
+ * maps to a bare `value`, so a suite hard-coding 'ru' would pass here and fail
+ * in a consumer whose main language is another one.
  */
 class LocalizationMigrationInsertValuesTest extends TestCase
 {
     private const TABLE = '_di_core_test_localization';
 
-    /** The order means nothing — the input is keyed. */
-    private const FIELDS = [
-        'value',
-        'en_value',
-        'de_value',
-        'it_value',
-        'es_value',
-        'fr_value',
-    ];
+    private const CANDIDATES = ['ru', 'en', 'de', 'it', 'es', 'fr', 'pt'];
 
-    private const ALL_SIX = [
-        'ru' => 'Привет',
-        'en' => 'Hello',
-        'de' => 'Hallo',
-        'it' => 'Ciao',
-        'es' => 'Hola',
-        'fr' => 'Salut',
-    ];
+    private const GREETINGS = ['Привет', 'Hello', 'Hallo', 'Ciao', 'Hola', 'Salut'];
 
     private \diDB $db;
+
+    /** @return string[] six languages, the project's main one first */
+    private static function languages(): array
+    {
+        $main = Config::getMainLanguage();
+        $rest = array_values(array_diff(self::CANDIDATES, [$main]));
+
+        return array_merge([$main], array_slice($rest, 0, 5));
+    }
+
+    /** @return string[] value columns, in the same order as languages() */
+    private static function fields(): array
+    {
+        return array_map(function ($language) {
+            return \diModel::getLocalizedFieldName('value', $language);
+        }, self::languages());
+    }
+
+    private static function field(int $index): string
+    {
+        return self::fields()[$index];
+    }
+
+    private static function language(int $index): string
+    {
+        return self::languages()[$index];
+    }
+
+    /** A language the throwaway table has no column for. */
+    private static function unknownLanguage(): string
+    {
+        return (string) current(array_diff(self::CANDIDATES, self::languages()));
+    }
+
+    /** @return array<string, string> language => greeting */
+    private static function allSix(): array
+    {
+        return array_combine(self::languages(), self::GREETINGS);
+    }
 
     protected function setUp(): void
     {
@@ -47,23 +74,23 @@ class LocalizationMigrationInsertValuesTest extends TestCase
 
         $this->db = \diCore\Database\Connection::get()->getDb();
 
+        $columns = array_map(function ($field) {
+            return "`$field` TEXT";
+        }, self::fields());
+
         $this->db->q('DROP TABLE IF EXISTS `' . self::TABLE . '`');
         $this->db->q(
             'CREATE TABLE `' .
                 self::TABLE .
                 '` (
                 id BIGINT NOT NULL AUTO_INCREMENT,
-                name VARCHAR(191) NOT NULL,
-                value TEXT,
-                en_value TEXT,
-                de_value TEXT,
-                it_value TEXT,
-                es_value TEXT,
-                fr_value TEXT,
+                name VARCHAR(191) NOT NULL, ' .
+                join(', ', $columns) .
+                ',
                 UNIQUE KEY name_idx (name),
                 PRIMARY KEY (id)
             ) ENGINE=InnoDB ROW_FORMAT=DYNAMIC ' .
-                \diCore\Data\Config::getDbCharsetClause()
+                Config::getDbCharsetClause()
         );
     }
 
@@ -77,9 +104,11 @@ class LocalizationMigrationInsertValuesTest extends TestCase
     /**
      * @param string[]|null $valueFields null keeps whatever the model says
      */
-    private function makeMigration(?array $valueFields = self::FIELDS): object
+    private function makeMigration(?array $valueFields = null): object
     {
-        return new class (self::TABLE, $valueFields) extends LocalizationMigration {
+        return new class (self::TABLE, $valueFields ?? self::fields()) extends
+            LocalizationMigration
+        {
             private string $table;
             private ?array $valueFields;
             public array $logged = [];
@@ -127,6 +156,33 @@ class LocalizationMigrationInsertValuesTest extends TestCase
         };
     }
 
+    /** The migration whose value fields come from the model, not from the test. */
+    private function makeModelDrivenMigration(): object
+    {
+        return new class (self::TABLE) extends LocalizationMigration {
+            private string $table;
+
+            public function __construct(string $table)
+            {
+                $this->table = $table;
+            }
+
+            public function up()
+            {
+            }
+
+            protected function getLocalizationTable(): string
+            {
+                return $this->table;
+            }
+
+            public function valueFields(): array
+            {
+                return $this->getValueFields();
+            }
+        };
+    }
+
     private function row(string $name)
     {
         // escapeValue() = escape_string() + quoteValue()
@@ -136,6 +192,12 @@ class LocalizationMigrationInsertValuesTest extends TestCase
         );
     }
 
+    /** Value of the i-th language of the row. */
+    private function value(string $name, int $index)
+    {
+        return $this->row($name)->{self::field($index)};
+    }
+
     private function rowCount(): int
     {
         return (int) $this->db->r(self::TABLE, '', 'COUNT(*) AS n')->n;
@@ -143,62 +205,48 @@ class LocalizationMigrationInsertValuesTest extends TestCase
 
     public function testEachLanguageLandsInItsOwnColumn(): void
     {
-        $this->makeMigration()->insert(['greeting' => self::ALL_SIX]);
+        $this->makeMigration()->insert(['greeting' => self::allSix()]);
 
-        $row = $this->row('greeting');
-
-        $this->assertSame('Привет', $row->value);
-        $this->assertSame('Hello', $row->en_value);
-        $this->assertSame('Hallo', $row->de_value);
-        $this->assertSame('Ciao', $row->it_value);
-        $this->assertSame('Hola', $row->es_value);
-        $this->assertSame('Salut', $row->fr_value);
+        foreach (array_values(self::GREETINGS) as $i => $greeting) {
+            $this->assertSame($greeting, $this->value('greeting', $i));
+        }
     }
 
     public function testTheOrderOfTheInputDoesNotMatter(): void
     {
         $this->makeMigration()->insert([
-            'greeting' => [
-                'fr' => 'Salut',
-                'ru' => 'Привет',
-                'es' => 'Hola',
-                'en' => 'Hello',
-                'it' => 'Ciao',
-                'de' => 'Hallo',
-            ],
+            'greeting' => array_reverse(self::allSix(), true),
         ]);
 
-        $row = $this->row('greeting');
-
-        $this->assertSame('Привет', $row->value);
-        $this->assertSame('Ciao', $row->it_value);
-        $this->assertSame('Hola', $row->es_value);
+        foreach (array_values(self::GREETINGS) as $i => $greeting) {
+            $this->assertSame($greeting, $this->value('greeting', $i));
+        }
     }
 
     public function testSeveralTokensAtOnce(): void
     {
-        $this->makeMigration()->insert([
-            'one' => [
-                'ru' => 'Один',
-                'en' => 'One',
-                'de' => 'Eins',
-                'it' => 'Uno',
-                'es' => 'Uno',
-                'fr' => 'Un',
-            ],
-            'two' => [
-                'ru' => 'Два',
-                'en' => 'Two',
-                'de' => 'Zwei',
-                'it' => 'Due',
-                'es' => 'Dos',
-                'fr' => 'Deux',
-            ],
+        $one = array_combine(self::languages(), [
+            'Один',
+            'One',
+            'Eins',
+            'Uno',
+            'Uno',
+            'Un',
+        ]);
+        $two = array_combine(self::languages(), [
+            'Два',
+            'Two',
+            'Zwei',
+            'Due',
+            'Dos',
+            'Deux',
         ]);
 
+        $this->makeMigration()->insert(['one' => $one, 'two' => $two]);
+
         $this->assertSame(2, $this->rowCount());
-        $this->assertSame('One', $this->row('one')->en_value);
-        $this->assertSame('Deux', $this->row('two')->fr_value);
+        $this->assertSame('One', $this->value('one', 1));
+        $this->assertSame('Deux', $this->value('two', 5));
     }
 
     /** INSERT IGNORE: an editor's translation survives a re-run. */
@@ -206,21 +254,21 @@ class LocalizationMigrationInsertValuesTest extends TestCase
     {
         $m = $this->makeMigration();
 
-        $m->insert(['greeting' => self::ALL_SIX]);
-        $m->insert(['greeting' => array_fill_keys(array_keys(self::ALL_SIX), 'x')]);
+        $m->insert(['greeting' => self::allSix()]);
+        $m->insert(['greeting' => array_fill_keys(self::languages(), 'x')]);
 
         $this->assertSame(1, $this->rowCount());
-        $this->assertSame('Привет', $this->row('greeting')->value);
-        $this->assertSame('Hello', $this->row('greeting')->en_value);
+        $this->assertSame(self::GREETINGS[0], $this->value('greeting', 0));
+        $this->assertSame(self::GREETINGS[1], $this->value('greeting', 1));
     }
 
     public function testMissingLanguageIsRefusedInStrictMode(): void
     {
-        $values = self::ALL_SIX;
-        unset($values['es']);
+        $values = self::allSix();
+        unset($values[self::language(4)]);
 
         $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('es_value');
+        $this->expectExceptionMessage(self::field(4));
 
         $this->makeMigration()->insert(['partial' => $values]);
     }
@@ -230,42 +278,50 @@ class LocalizationMigrationInsertValuesTest extends TestCase
         $m = $this->makeMigration();
 
         $m->insert(
-            ['partial' => ['ru' => 'Только русский', 'en' => 'English only']],
+            [
+                'partial' => [
+                    self::language(0) => 'Только главный',
+                    self::language(1) => 'And the second',
+                ],
+            ],
             false
         );
 
-        $row = $this->row('partial');
-
-        $this->assertSame('Только русский', $row->value);
-        $this->assertSame('English only', $row->en_value);
+        $this->assertSame('Только главный', $this->value('partial', 0));
+        $this->assertSame('And the second', $this->value('partial', 1));
         // written as '', not left to the column default
-        $this->assertSame('', $row->de_value);
-        $this->assertSame('', $row->it_value);
-        $this->assertSame('', $row->es_value);
-        $this->assertSame('', $row->fr_value);
+        $this->assertSame('', $this->value('partial', 2));
+        $this->assertSame('', $this->value('partial', 5));
         $this->assertNotEmpty($m->logged, 'the shortfall must not be silent');
     }
 
     public function testUnknownLanguageIsRefusedInStrictMode(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        $this->expectExceptionMessage('pt');
+        $unknown = self::unknownLanguage();
 
-        $this->makeMigration()->insert(['token' => self::ALL_SIX + ['pt' => 'Olá']]);
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage($unknown);
+
+        $this->makeMigration()->insert([
+            'token' => self::allSix() + [$unknown => 'Olá'],
+        ]);
     }
 
     /** A six-language migration must still install on a two-language database. */
     public function testUnknownLanguageIsSkippedWhenNotStrict(): void
     {
-        $m = $this->makeMigration(['value', 'en_value']);
+        $m = $this->makeMigration([self::field(0), self::field(1)]);
 
-        $m->insert(['token' => self::ALL_SIX], false);
+        $m->insert(['token' => self::allSix()], false);
 
         $row = $this->row('token');
 
-        $this->assertSame('Привет', $row->value);
-        $this->assertSame('Hello', $row->en_value);
-        $this->assertNull($row->de_value, 'a column outside the list is untouched');
+        $this->assertSame(self::GREETINGS[0], $row->{self::field(0)});
+        $this->assertSame(self::GREETINGS[1], $row->{self::field(1)});
+        $this->assertNull(
+            $row->{self::field(2)},
+            'a column outside the list is untouched'
+        );
         $this->assertNotEmpty($m->logged, 'a skipped language must be logged');
     }
 
@@ -274,9 +330,7 @@ class LocalizationMigrationInsertValuesTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage('keyed by language');
 
-        $this->makeMigration()->insert([
-            'greeting' => ['Привет', 'Hello', 'Hallo', 'Ciao', 'Hola', 'Salut'],
-        ]);
+        $this->makeMigration()->insert(['greeting' => self::GREETINGS]);
     }
 
     public function testPositionalListIsRefusedInLenientModeToo(): void
@@ -294,21 +348,44 @@ class LocalizationMigrationInsertValuesTest extends TestCase
         $this->makeMigration()->insert(['empty' => []], false);
     }
 
-    public function testScalarBecomesTheMainLanguage(): void
+    /**
+     * A bare string used to be accepted as the main language, but that only ever
+     * worked in the lenient mode — on any table with two columns it fails the
+     * completeness check anyway. Explicit is what the whole API is about.
+     */
+    public function testAScalarInsteadOfALanguageMapIsRefused(): void
     {
-        $m = $this->makeMigration();
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('keyed by');
 
-        $m->insert(['scalar' => 'Одно значение'], false);
+        $this->makeMigration()->insert(['scalar' => 'Одно значение'], false);
+    }
 
-        $this->assertSame('Одно значение', $this->row('scalar')->value);
-        $this->assertSame('', $this->row('scalar')->en_value);
+    /** (string) of an array is the literal "Array" — it must not be stored. */
+    public function testANonScalarValueIsRefused(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage(self::language(1));
+
+        $this->makeMigration()->insert([
+            'token' => [self::language(1) => ['Hello', 'Hi']] + self::allSix(),
+        ]);
+    }
+
+    /** down() with an empty $names degenerates into `name in ('')`. */
+    public function testANamelessTokenIsRefused(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('no name');
+
+        $this->makeMigration()->insert(['' => self::allSix()]);
     }
 
     public function testNothingIsWrittenWhenOneTokenOfTheBatchIsInvalid(): void
     {
         try {
             $this->makeMigration()->insert([
-                'good' => self::ALL_SIX,
+                'good' => self::allSix(),
                 'bad' => [],
             ]);
         } catch (\InvalidArgumentException $e) {
@@ -320,26 +397,25 @@ class LocalizationMigrationInsertValuesTest extends TestCase
     /** Apostrophes are ordinary in en/fr/it prose; unescaped they break the SQL. */
     public function testQuotesAndBackslashesSurviveVerbatim(): void
     {
-        $values = [
-            'ru' => "Кавычка ' и \\обратный слэш",
-            'en' => "don't",
-            'de' => 'Anführungszeichen "so"',
-            'it' => "L'italiano",
-            'es' => '¿Qué\\?',
-            'fr' => "L'amour",
-        ];
+        $values = array_combine(self::languages(), [
+            "Кавычка ' и \\обратный слэш",
+            "don't",
+            'Anführungszeichen "so"',
+            "L'italiano",
+            '¿Qué\\?',
+            "L'amour",
+        ]);
 
         $this->makeMigration()->insert(["it's.a\\token" => $values]);
 
-        $row = $this->row("it's.a\\token");
+        $this->assertNotFalse(
+            $this->row("it's.a\\token"),
+            'the token key itself must be escaped too'
+        );
 
-        $this->assertNotFalse($row, 'the token key itself must be escaped too');
-        $this->assertSame($values['ru'], $row->value);
-        $this->assertSame($values['en'], $row->en_value);
-        $this->assertSame($values['de'], $row->de_value);
-        $this->assertSame($values['it'], $row->it_value);
-        $this->assertSame($values['es'], $row->es_value);
-        $this->assertSame($values['fr'], $row->fr_value);
+        foreach (array_values($values) as $i => $value) {
+            $this->assertSame($value, $this->value("it's.a\\token", $i));
+        }
     }
 
     public function testInjectionAttemptIsStoredAsPlainText(): void
@@ -347,11 +423,11 @@ class LocalizationMigrationInsertValuesTest extends TestCase
         $payload = "', 'x'); DROP TABLE `" . self::TABLE . '`; --';
 
         $this->makeMigration()->insert([
-            'evil' => array_fill_keys(array_keys(self::ALL_SIX), $payload),
+            'evil' => array_fill_keys(self::languages(), $payload),
         ]);
 
         $this->assertSame(1, $this->rowCount(), 'the table must still be there');
-        $this->assertSame($payload, $this->row('evil')->value);
+        $this->assertSame($payload, $this->value('evil', 0));
     }
 
     public function testEmptyInputInsertsNothing(): void
@@ -366,7 +442,10 @@ class LocalizationMigrationInsertValuesTest extends TestCase
     {
         $expected = \diCore\Entity\Localization\Model::create()::getValueFields();
 
-        $this->assertSame($expected, $this->makeMigration(null)->valueFields());
+        $this->assertSame(
+            $expected,
+            $this->makeModelDrivenMigration()->valueFields()
+        );
         $this->assertContains('value', $expected);
     }
 
@@ -375,9 +454,9 @@ class LocalizationMigrationInsertValuesTest extends TestCase
         $m = $this->makeMigration();
         $m->insert(
             [
-                'one' => ['ru' => 'Один', 'en' => 'One'],
-                'two' => ['ru' => 'Два', 'en' => 'Two'],
-                'three' => ['ru' => 'Три', 'en' => 'Three'],
+                'one' => [self::language(0) => 'Один'],
+                'two' => [self::language(0) => 'Два'],
+                'three' => [self::language(0) => 'Три'],
             ],
             false
         );
@@ -396,8 +475,8 @@ class LocalizationMigrationInsertValuesTest extends TestCase
 
         $m->insert(
             [
-                $quoted => ['ru' => 'Один', 'en' => 'One'],
-                'plain' => ['ru' => 'Два', 'en' => 'Two'],
+                $quoted => [self::language(0) => 'Один'],
+                'plain' => [self::language(0) => 'Два'],
             ],
             false
         );
@@ -416,10 +495,7 @@ class LocalizationMigrationInsertValuesTest extends TestCase
         $quoted = "l'unico";
         $m = $this->makeMigration();
 
-        $m->insert(
-            [$quoted => ['ru' => 'Единственный', 'en' => 'The only one']],
-            false
-        );
+        $m->insert([$quoted => [self::language(0) => 'Единственный']], false);
         $m->remove([$quoted]);
 
         $this->assertSame(0, $this->rowCount());

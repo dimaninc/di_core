@@ -8,7 +8,6 @@
 
 namespace diCore\Database\Tool;
 
-use diCore\Data\Config;
 use diCore\Entity\Localization\Model;
 use diCore\Tool\Localization;
 use diCore\Tool\Logger;
@@ -16,6 +15,9 @@ use diCore\Tool\Logger;
 abstract class LocalizationMigration extends Migration
 {
     protected $names = [];
+
+    /** @var Model|null */
+    private $localizationModel;
 
     protected function updateCache()
     {
@@ -50,7 +52,13 @@ abstract class LocalizationMigration extends Migration
      */
     protected function getLocalizationModel(): Model
     {
-        return Model::create();
+        // memoized: Model::create() walks every registered namespace with
+        // class_exists(), and this is asked for once per token otherwise
+        if ($this->localizationModel === null) {
+            $this->localizationModel = Model::create();
+        }
+
+        return $this->localizationModel;
     }
 
     protected function getLocalizationTable(): string
@@ -77,7 +85,8 @@ abstract class LocalizationMigration extends Migration
      * in the middle silently shifts every translation into its neighbour.
      *
      * `$strict` demands every language of the model; without it the missing
-     * ones stay empty and are logged. An empty list is an error either way.
+     * ones stay empty and are logged. Refused in both modes: an empty list, a
+     * nameless token, a positional list and a non-scalar value.
      *
      * INSERT IGNORE: these migrations get re-run on databases ahead of them,
      * and an editor's translation must survive.
@@ -91,6 +100,7 @@ abstract class LocalizationMigration extends Migration
     {
         $db = $this->getDb();
         $table = $this->getLocalizationTable();
+        $fields = $this->getValueFields();
 
         // all validated before the first write: a bad token in the middle
         // would otherwise leave the migration half-applied
@@ -100,7 +110,8 @@ abstract class LocalizationMigration extends Migration
             $records[] = $this->buildValueRecord(
                 (string) $name,
                 $byLanguage,
-                $strict
+                $strict,
+                $fields
             );
         }
 
@@ -113,25 +124,32 @@ abstract class LocalizationMigration extends Migration
      * One row with every value column present: an omitted one is written as '',
      * so a re-run cannot depend on column defaults.
      *
-     * @param string|int|array $byLanguage a bare scalar counts as the main language
+     * @param string[] $fields value columns of the table
      * @throws \InvalidArgumentException
      */
-    private function buildValueRecord(string $name, $byLanguage, bool $strict): array
-    {
+    private function buildValueRecord(
+        string $name,
+        $byLanguage,
+        bool $strict,
+        array $fields
+    ): array {
         $db = $this->getDb();
         $model = $this->getLocalizationModel();
 
-        if (is_scalar($byLanguage)) {
-            $byLanguage = [Config::getMainLanguage() => $byLanguage];
+        // down() deletes by $names, and diDB::in([]) degenerates into `in ('')`
+        // — a nameless token is exactly what an empty rollback would delete
+        if ($name === '') {
+            throw new \InvalidArgumentException('Localization token has no name');
         }
 
         if (!is_array($byLanguage) || !$byLanguage) {
             throw new \InvalidArgumentException(
-                "Localization token '$name' has no values at all"
+                "Localization token '$name' must be a non-empty array keyed by " .
+                    "language, e.g. ['ru' => …, 'en' => …]"
             );
         }
 
-        $record = array_fill_keys($this->getValueFields(), '');
+        $record = array_fill_keys($fields, '');
         $filled = [];
 
         foreach ($byLanguage as $language => $value) {
@@ -141,6 +159,16 @@ abstract class LocalizationMigration extends Migration
                 throw new \InvalidArgumentException(
                     "Localization token '$name' must be keyed by language, " .
                         "e.g. ['ru' => …, 'en' => …]"
+                );
+            }
+
+            // (string) of an array is the literal "Array" plus a warning, which
+            // would be stored as the translation
+            if (!is_scalar($value)) {
+                throw new \InvalidArgumentException(
+                    "Localization token '$name': the '$language' value is " .
+                        gettype($value) .
+                        ', expected a string'
                 );
             }
 
@@ -196,6 +224,9 @@ abstract class LocalizationMigration extends Migration
         try {
             Logger::getInstance()->log($message, 'localization');
         } catch (\Throwable $e) {
+            // the log folder is not always writable from CLI, and swallowing
+            // this would make the promise of "logged, never silent" a lie
+            error_log("Localization migration: $message ({$e->getMessage()})");
         }
     }
 
