@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.5.1
+
+### `LocalizationMigration::insertValues()` — keyed by language, not positional
+
+**Breaking for anyone already calling it** (the helper is new in this cycle, so
+most consumers are not): the per-token list is now `['ru' => …, 'en' => …]`. A
+positional list is refused with an exception rather than silently mapped.
+
+Why: a positional list has to agree with a column order defined in the consumer's
+model, in another repository. The day a project inserted a language in the middle
+of that list, every later migration wrote each translation into its neighbour's
+column — silently, and nothing about the data looked wrong until a visitor read
+Spanish where Italian should be.
+
+- **`$strict` (second argument, on by default)** — every language the model has a
+  column for must be present, and an unknown one is an error. `false` ships a
+  deliberate subset: the remaining columns are written as `''` and the shortfall
+  is logged. Refused in both modes: an empty translation list, a nameless token,
+  a positional list and a non-scalar value. The whole batch is validated before
+  the first row is written, so a bad token cannot leave the migration half-applied.
+- **The table and the language set now come from the consumer's model**
+  (`getLocalizationModel()` → `Model::create()`, project namespaces first) instead
+  of literals. `down()` therefore deletes from that same table, and it escapes the
+  token names it deletes by — `diDB::in()` quotes but does not escape, and a token
+  name is prose too ("it's").
+- **`Entity\Localization\Model::getValueFields()`** derives the value columns
+  from `$fieldTypes`, matching `value` and `xx_value` with a two-letter code (an
+  unrelated `default_value` is left alone). A consumer with extra languages
+  declares them in its own model's `$fieldTypes` and needs no override here.
+- The scaffolding template for `_cfg/migrations/localization/` now shows this API.
+
+Covered by `php/tests/Database/LocalizationMigrationInsertValuesTest.php` and
+`php/tests/Entity/LocalizationValueFieldsTest.php`.
+
 ## 0.5.0
 
 Minor, not patch: `diImage::isHeic()` answers differently for the same file, so

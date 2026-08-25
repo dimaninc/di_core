@@ -186,13 +186,19 @@ class %s extends \diCore\Database\Tool\LocalizationMigration
 	public static \$name = "%s";
 
 	protected \$names = [
-		'',
-		'',
+		'token',
+	];
+
+	private const VALUES = [
+		'token' => [
+			'ru' => '',
+			'en' => '',
+		],
 	];
 
 	public function up()
 	{
-		// migration code here
+		\$this->insertValues(self::VALUES);
 	}
 }
 EOF;

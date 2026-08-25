@@ -48,4 +48,23 @@ class Model extends \diModel
 
         return $this->get($field);
     }
+
+    /**
+     * Value columns of the table — not $possibleLanguages, which says what the
+     * site is routed in, not what the table has. Derived from $fieldTypes, so a
+     * language cannot be declared half-way.
+     *
+     * The prefix must be a two-letter code: plain `_value` would also match an
+     * unrelated `default_value`.
+     *
+     * @return string[]
+     */
+    public static function getValueFields(): array
+    {
+        return array_values(
+            array_filter(array_keys(static::getFieldTypes()), function ($field) {
+                return (bool) preg_match('/^([a-z]{2}_)?value$/', (string) $field);
+            })
+        );
+    }
 }
