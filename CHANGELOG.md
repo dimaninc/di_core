@@ -2,6 +2,55 @@
 
 ## 0.5.2
 
+### Tinkoff: SBP payload (`GetQr`)
+
+- **`Payment\Tinkoff\MerchantApi::getQr($args)`** – the missing `GetQr` call,
+  next to the other API methods.
+- **`Payment\Tinkoff\Helper::getSbpPayload($paymentId): ?string`** – the SBP
+  string (`https://qr.nspk.ru/…`) of an already inited payment, from which both
+  the QR picture and the bank-app deep link are built. Asks for
+  `DataType=PAYLOAD` (`IMAGE` would return an SVG).
+
+It parses the raw JSON body itself instead of reading MerchantApi's
+success/error flags, exactly like `getPaymentState()`: those flags key off the
+top-level `ErrorCode` and conflate "the request failed" with "this payment has
+no QR". And it **never throws** – a transport failure, an empty body,
+undecodable JSON, a missing or false `Success`, a `Data` that is not an SBP
+payload all return `null` and are logged. SBP is an extra payment option, so the
+caller has to be able to fall back to the web form; an exception here would take
+the whole checkout down with it.
+
+**What counts as a payload is checked, not assumed** (`Helper::isSbpPayload()`):
+that string becomes the QR the payer scans and the link they tap, i.e. it *is*
+the payment destination, so "some `https://` string the gateway sent back" is
+not a good enough test. It must be printable ASCII (no control characters — they
+would also forge log lines), parse as `https://` with no userinfo, and point at
+`nspk.ru` or a subdomain of it — override `getSbpPayloadDomains()` to widen.
+Anything else switches SBP off for that payment rather than pointing the payer
+elsewhere. Bodies and exception messages are run through `sanitizeForLog()`
+before being logged: `Token`/`Password` redacted, control characters flattened,
+length capped.
+
+#### Behaviour changes in `MerchantApi` (not additive)
+
+- **TLS certificates are verified** (`VERIFY_TLS`, `CURLOPT_SSL_VERIFYPEER` /
+  `VERIFYHOST`). The channel carries the request `Token` and brings back the
+  URLs the payer is then sent to — `PaymentURL`, the SBP payload — so accepting
+  any certificate meant anyone on the path could redirect a payment. If a host
+  has no usable CA bundle, payments now fail loudly instead of silently
+  accepting an unverified peer; subclass and set `const VERIFY_TLS = false` only
+  as a stop-gap.
+- **The response parsing knows which method it answers** (`buildQuery()` passes
+  the path down; the parsing moved to the overridable `handleResponse()`).
+  `PaymentURL` is only read for methods that return one (`PAYMENT_URL_METHODS`,
+  i.e. `Init`), and `PaymentId`/`Status` only when actually present. Before
+  this, a *successful* `GetState`/`GetQr` on the cached api instance nulled the
+  previous `Init`'s `paymentUrl` and left a bogus
+  `Tinkoff response missing PaymentURL` in `getError()`. A missing `PaymentURL`
+  on `Init` is still an error, unchanged.
+
+Covered by `php/tests/Payment/TinkoffSbpPayloadTest.php`.
+
 ### `Controller\Feedback::afterModelSaved()` – hook between the save and the email
 
 `sendAction()` used to go straight from `$this->getModel()->save()` to

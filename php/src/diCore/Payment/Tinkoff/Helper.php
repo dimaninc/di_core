@@ -157,6 +157,165 @@ class Helper extends BaseHelper
         ];
     }
 
+    /**
+     * SBP payload string of an already inited payment, via the GetQr API.
+     *
+     * That single string is both the QR picture's content and the bank-app deep
+     * link, so it is what a caller needs to offer SBP at all.
+     *
+     * Parses the raw response directly (GetQr returns the JSON body) instead of
+     * relying on MerchantApi's success/error flags – those key off the top-level
+     * ErrorCode and conflate "the request failed" with "this payment has no QR".
+     *
+     * The string is returned only if it really is an SBP payload — see
+     * isSbpPayload(): it is the payment destination, not a diagnostic.
+     *
+     * NEVER throws: a transport failure, an empty body, undecodable JSON,
+     * Success missing or false all come back as null (and are logged). The
+     * caller must be able to work without SBP.
+     */
+    public function getSbpPayload($paymentId): ?string
+    {
+        try {
+            $raw = $this->getApi()->getQr([
+                'PaymentId' => (string) $paymentId,
+                'DataType' => 'PAYLOAD',
+            ]);
+        } catch (\Throwable $e) {
+            static::log(
+                'GetQr threw ' .
+                    get_class($e) .
+                    ': ' .
+                    static::sanitizeForLog($e->getMessage())
+            );
+
+            return null;
+        }
+
+        if (!is_string($raw) || $raw === '') {
+            // curl_exec() returns false on a transport failure and puts the
+            // reason into the api's error — without it a timeout, a DNS and a
+            // TLS failure are one indistinguishable line in the log.
+            $reason = $raw === false ? $this->getApi()->getError() : '';
+
+            static::log(
+                'GetQr returned ' .
+                    ($raw === false ? 'no response' : 'an empty response') .
+                    ($reason ? ': ' . static::sanitizeForLog($reason) : '')
+            );
+
+            return null;
+        }
+
+        $json = json_decode($raw, true);
+
+        if (!is_array($json)) {
+            static::log(
+                'GetQr returned undecodable JSON: ' . static::sanitizeForLog($raw)
+            );
+
+            return null;
+        }
+
+        // No Success is not a success: an intermediate proxy / WAF answering
+        // with its own JSON must not be able to pass off a Data of its own.
+        if (!in_array($json['Success'] ?? null, [true, 'true', 1, '1'], true)) {
+            static::log(
+                'GetQr was not successful: ' . static::sanitizeForLog($raw)
+            );
+
+            return null;
+        }
+
+        $payload = $json['Data'] ?? null;
+
+        if (!static::isSbpPayload($payload)) {
+            static::log(
+                'GetQr returned no usable SBP payload: ' .
+                    static::sanitizeForLog($raw)
+            );
+
+            return null;
+        }
+
+        return $payload;
+    }
+
+    /**
+     * The payload becomes the QR the payer scans and the deep link they tap,
+     * i.e. it IS the payment destination — so "any https:// string the gateway
+     * sent back" is not enough of a check. NSPK serves them all from nspk.ru;
+     * a WAF interstitial, a tampered response or a stray SVG is not a payment
+     * link and SBP is better switched off (the caller falls back to the web
+     * form) than pointed somewhere else.
+     *
+     * @param mixed $payload
+     */
+    protected static function isSbpPayload($payload): bool
+    {
+        // printable ASCII only: no control chars, no whitespace, no empty string
+        if (!is_string($payload) || !preg_match('/^[\x21-\x7e]+$/', $payload)) {
+            return false;
+        }
+
+        $parts = parse_url($payload);
+
+        if (!is_array($parts) || ($parts['scheme'] ?? '') !== 'https') {
+            return false;
+        }
+
+        // https://qr.nspk.ru@evil.tld/ parses with host=evil.tld, so the host
+        // check below covers it — but userinfo has no business here at all
+        if (isset($parts['user']) || isset($parts['pass'])) {
+            return false;
+        }
+
+        $host = strtolower(rtrim($parts['host'] ?? '', '.'));
+
+        foreach (static::getSbpPayloadDomains() as $domain) {
+            $domain = strtolower($domain);
+
+            if (
+                $host === $domain ||
+                substr($host, -strlen($domain) - 1) === '.' . $domain
+            ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Domains an SBP payload may point at, itself and its subdomains. Override
+     * in a project if its acquirer ever serves them from elsewhere.
+     */
+    protected static function getSbpPayloadDomains(): array
+    {
+        return ['nspk.ru'];
+    }
+
+    /**
+     * A response body we did not authenticate goes into the payment log — it
+     * must not be able to forge log lines with newlines, to grow the file
+     * without bound, or to carry a request Token into it.
+     */
+    protected static function sanitizeForLog($text, $limit = 1000): string
+    {
+        $text = preg_replace(
+            '/("(?:Token|Password)"\s*:\s*")[^"]*"/i',
+            '$1***"',
+            (string) $text
+        );
+        $text = preg_replace('/[\x00-\x1f\x7f]+/', ' ', $text);
+
+        if (mb_strlen($text) > $limit) {
+            $text = mb_substr($text, 0, $limit) . '… [truncated]';
+        }
+
+        return $text;
+    }
+
     public function generateToken($params)
     {
         foreach ($params as $key => &$param) {
