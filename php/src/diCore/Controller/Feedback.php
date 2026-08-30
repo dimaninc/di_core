@@ -39,6 +39,8 @@ class Feedback extends \diBaseController
 
             $this->getModel()->save();
 
+            $this->afterModelSaved();
+
             if ($ar['ok'] && $this->sendEmail) {
                 $this->sendEmailNotification();
             }
@@ -86,6 +88,25 @@ class Feedback extends \diBaseController
             $this->getModel()->setUserId(\diCore\Tool\Auth::i()->getUserId());
         }
 
+        return $this;
+    }
+
+    /**
+     * Hook called right after the feedback model has been saved
+     * and before the email notification is sent.
+     * Override in your project to attach related data to the fresh row,
+     * model is available via $this->getModel().
+     * Signature must stay as is: no params, no return type.
+     *
+     * The row is already committed when this runs: \diModel::save() opens and
+     * commits its own transaction, and this call is outside it. So an exception
+     * thrown here does NOT undo the saved feedback row - it only turns the
+     * response into an error (and a SpamException even keeps ok=true, just
+     * skipping the email). The client will usually resend and store a duplicate,
+     * so an override is responsible for its own cleanup or idempotency.
+     */
+    protected function afterModelSaved()
+    {
         return $this;
     }
 
