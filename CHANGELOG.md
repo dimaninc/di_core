@@ -43,11 +43,16 @@ length capped.
 - **The response parsing knows which method it answers** (`buildQuery()` passes
   the path down; the parsing moved to the overridable `handleResponse()`).
   `PaymentURL` is only read for methods that return one (`PAYMENT_URL_METHODS`,
-  i.e. `Init`), and `PaymentId`/`Status` only when actually present. Before
-  this, a *successful* `GetState`/`GetQr` on the cached api instance nulled the
-  previous `Init`'s `paymentUrl` and left a bogus
+  i.e. `Init`). Before this, a *successful* `GetState`/`GetQr` on the cached api
+  instance nulled the previous `Init`'s `paymentUrl` and left a bogus
   `Tinkoff response missing PaymentURL` in `getError()`. A missing `PaymentURL`
   on `Init` is still an error, unchanged.
+- **`PaymentId` and `Status` now describe the response in hand, and are reset
+  when it does not carry them.** They used to be left at their previous value —
+  and one api instance serves a whole reconciler run, so after a
+  `GetState`(payment A) a `GetQr`(payment B) left `$api->status` reporting A's
+  status as if it were B's. A stale value read as the current one is worse than
+  an obviously absent `null`.
 
 Covered by `php/tests/Payment/TinkoffSbpPayloadTest.php`.
 

@@ -265,11 +265,17 @@ class MerchantApi
     /**
      * Parses a gateway response body into the instance state.
      *
-     * Only the fields the called method actually returns are touched: a GetState
-     * or GetQr reply has no PaymentURL, and blindly assigning it would null the
-     * previous Init's url and then raise a "missing PaymentURL" error for a
-     * perfectly successful call — on the very same (cached) instance the caller
-     * reads getError() from.
+     * PaymentURL is read only for the methods that return one: a GetState or
+     * GetQr reply has none, and blindly assigning it would null the previous
+     * Init's url and then raise a "missing PaymentURL" error for a perfectly
+     * successful call — on the very same (cached) instance the caller reads
+     * getError() from.
+     *
+     * PaymentId and Status, on the contrary, describe THIS response and are
+     * reset when it does not carry them. One instance serves a whole reconciler
+     * run, so a value kept from an earlier call would quietly belong to another
+     * payment — and a stale status read as the current one is worse than an
+     * obviously absent null.
      *
      * @param string $out raw response body
      * @param string|null $path API method name
@@ -293,14 +299,32 @@ class MerchantApi
             return $this;
         }
 
-        if (isset($json->PaymentId)) {
-            $this->paymentId = $json->PaymentId;
-        }
+        $this->paymentId = $json->PaymentId ?? null;
+        $this->status = $json->Status ?? null;
 
-        if (isset($json->Status)) {
-            $this->status = $json->Status;
-        }
-
+        // TODO(BOTCARD-10): PaymentURL проверяется только на «непустая строка» —
+        // хоста не проверяет никто, хотя ровно по этому адресу уходит плательщик
+        // (Helper::getFormUri() -> Payment::redirectTo()). Это та же дыра, ради
+        // которой в Helper написан isSbpPayload(), но на поверхности в разы
+        // большей: через PaymentURL идут ВСЕ карточные платежи, СБП — вторичная
+        // и пока никем не включённая ветка. Тело ответа при этом может прийти не
+        // с того хоста, куда стучались: CURLOPT_FOLLOWLOCATION включён, а
+        // редирект https -> http curl по умолчанию разрешает.
+        //
+        // Что сделать, когда вернёмся:
+        //  1) симметрично isSbpPayload() — переопределяемый белый список
+        //     (securepay.tinkoff.ru и поддомены), схема https, без userinfo,
+        //     печатный ASCII с якорем \z (в isSbpPayload() `$` пропускал
+        //     завершающий \n — та же ошибка тут будет стоить дороже);
+        //  2) невалидный URL — это ошибка запроса, а не пустой результат: писать
+        //     в $this->error, чтобы getFormUri() бросил, а не редиректил;
+        //  3) заодно решить судьбу FOLLOWLOCATION — выключить либо ограничить
+        //     CURLOPT_REDIR_PROTOCOLS одним https;
+        //  4) тесты по образцу testForeignHostGivesNull.
+        //
+        // Не сделано в BOTCARD-10-UP осознанно: правка меняет боевой платёжный
+        // путь всех потребителей di_core и должна ехать отдельно от добавления
+        // GetQr, вместе с включением проверки TLS.
         if (in_array($path, static::PAYMENT_URL_METHODS, true)) {
             $this->paymentUrl = @$json->PaymentURL;
 

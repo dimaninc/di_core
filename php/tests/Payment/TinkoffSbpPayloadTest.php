@@ -156,11 +156,22 @@ class TinkoffSbpPayloadTest extends TestCase
         }
     }
 
-    /** Управляющие символы и пробелы в «ссылке» – это не ссылка */
+    /**
+     * Управляющие символы и пробелы в «ссылке» – это не ссылка. Завершающий
+     * перевод строки — отдельный случай: PCRE-шный `$` пропускает его перед
+     * концом строки, поэтому якорь обязан быть `\z`. Иначе payload с "\n" на
+     * хвосте признаётся годным и подделывает строку в логе.
+     */
     public function testPayloadWithControlCharsGivesNull(): void
     {
         foreach (
-            ["https://qr.nspk.ru/A1\nX", "https://qr.nspk.ru/A1 X", "https://qr.nspk.ru/\x00A1"]
+            [
+                "https://qr.nspk.ru/A1\nX",
+                "https://qr.nspk.ru/A1\n",
+                "https://qr.nspk.ru/A1\r\n",
+                "https://qr.nspk.ru/A1 X",
+                "https://qr.nspk.ru/\x00A1",
+            ]
             as $data
         ) {
             $h = $this->helper(json_encode(['Success' => true, 'Data' => $data]));
@@ -209,9 +220,10 @@ class TinkoffSbpPayloadTest extends TestCase
      */
     public function testTokenIsNotLoggedFromException(): void
     {
-        // подпись для этого теста берётся из окружения (DI_TEST_TINKOFF_TOKEN),
-        // в репозитории лежит только заведомо не секретная заглушка
-        $token = getenv('DI_TEST_TINKOFF_TOKEN') ?: 'sample-token-placeholder';
+        // Фикстура фиксированная и заведомо не секрет: редакт идёт по КЛЮЧУ
+        // ("Token": "…"), значение ему безразлично, поэтому брать сюда что-то
+        // похожее на настоящую подпись — тем более из окружения — незачем.
+        $token = str_repeat('0', 64);
 
         $h = $this->helper(
             new \RuntimeException(
@@ -291,7 +303,40 @@ class TinkoffSbpPayloadTest extends TestCase
 
         $this->assertSame('', $api->getError());
         $this->assertSame('https://securepay.tinkoff.ru/A1B2', $api->getPaymentUrl());
-        $this->assertSame('NEW', $api->status);
+
+        // Status в ответе GetQr нет — значит его нет и в состоянии. Оставленный
+        // от Init 'NEW' читался бы как текущий статус платежа, см. следующий
+        // тест: экземпляр один на весь прогон, и платёж в нём уже другой.
+        $this->assertNull($api->status);
+    }
+
+    /**
+     * Экземпляр MerchantApi кэшируется в Helper::getApi() и обслуживает весь
+     * прогон сверщика. Значит поля, описывающие ответ, обязаны обнуляться:
+     * иначе после GetState(платёж A) и GetQr(платёж B) $api->status тихо
+     * отдаёт статус ЧУЖОГО платежа — хуже, чем видимое отсутствие данных.
+     */
+    public function testStateDoesNotLeakBetweenPayments(): void
+    {
+        $api = new ExposedMerchantApi('terminal', 'secret');
+
+        $api->handle(
+            '{"Success":true,"ErrorCode":"0","PaymentId":"1000",' .
+                '"Status":"CONFIRMED"}',
+            'GetState'
+        );
+
+        $this->assertSame('CONFIRMED', $api->status);
+        $this->assertSame('1000', $api->paymentId);
+
+        $api->handle(
+            '{"Success":true,"ErrorCode":"0","PaymentId":"2000",' .
+                '"Data":"https://qr.nspk.ru/A1"}',
+            'GetQr'
+        );
+
+        $this->assertSame('2000', $api->paymentId);
+        $this->assertNull($api->status);
     }
 
     /** Но для Init отсутствие PaymentURL — по-прежнему ошибка */

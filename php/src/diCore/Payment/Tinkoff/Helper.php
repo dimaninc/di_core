@@ -253,8 +253,11 @@ class Helper extends BaseHelper
      */
     protected static function isSbpPayload($payload): bool
     {
-        // printable ASCII only: no control chars, no whitespace, no empty string
-        if (!is_string($payload) || !preg_match('/^[\x21-\x7e]+$/', $payload)) {
+        // printable ASCII only: no control chars, no whitespace, no empty string.
+        // \z, not $: PCRE's $ also matches BEFORE a trailing newline, so with it
+        // a payload ending in "\n" passed the check and went on to forge a line
+        // in the very log this rule exists to protect.
+        if (!is_string($payload) || !preg_match('/^[\x21-\x7e]+\z/', $payload)) {
             return false;
         }
 
