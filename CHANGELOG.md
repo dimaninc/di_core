@@ -1,6 +1,117 @@
 # Changelog
 
-## 0.5.2
+## 0.6.0
+
+Minor, not patch: `MerchantApi` now verifies the gateway's TLS certificate, and
+on a host whose store lacks the root that is the difference between "payments
+work" and "no payment works at all". Nothing about the PHP API breaks, but
+`composer update` alone can change whether the gateway is reachable — see the
+warning below before taking it.
+
+### Tinkoff: SBP payload (`GetQr`)
+
+- **`Payment\Tinkoff\MerchantApi::getQr($args)`** – the missing `GetQr` call,
+  next to the other API methods.
+- **`Payment\Tinkoff\Helper::getSbpPayload($paymentId): ?string`** – the SBP
+  string (`https://qr.nspk.ru/…`) of an already inited payment, from which both
+  the QR picture and the bank-app deep link are built. Asks for
+  `DataType=PAYLOAD` (`IMAGE` would return an SVG).
+
+It parses the raw JSON body itself instead of reading MerchantApi's
+success/error flags, exactly like `getPaymentState()`: those flags key off the
+top-level `ErrorCode` and conflate "the request failed" with "this payment has
+no QR". And it **never throws** – a transport failure, an empty body,
+undecodable JSON, a missing or false `Success`, a `Data` that is not an SBP
+payload all return `null` and are logged. SBP is an extra payment option, so the
+caller has to be able to fall back to the web form; an exception here would take
+the whole checkout down with it.
+
+**What counts as a payload is checked, not assumed** (`Helper::isSbpPayload()`):
+that string becomes the QR the payer scans and the link they tap, i.e. it *is*
+the payment destination, so "some `https://` string the gateway sent back" is
+not a good enough test. It must be printable ASCII within
+`SBP_PAYLOAD_MAX_LEN` (no control characters — they would also forge log lines),
+parse as `https://` with no userinfo, and point at `nspk.ru` or a subdomain of it
+— override `getSbpPayloadDomains()` to widen. Scheme and host are compared
+case-insensitively (RFC 3986 makes both so, and `parse_url()` normalises
+neither); the path is not — it carries the QR id.
+Anything else switches SBP off for that payment rather than pointing the payer
+elsewhere. Bodies and exception messages are run through `sanitizeForLog()`
+before being logged: `Token`/`Password` redacted, control characters flattened,
+length capped.
+
+#### Behaviour changes in `MerchantApi` (BREAKING for a host without the anchor)
+
+- **TLS certificates are verified** (`VERIFY_TLS`, `CURLOPT_SSL_VERIFYPEER` /
+  `VERIFYHOST`). The channel carries the request `Token` and brings back the
+  URLs the payer is then sent to — `PaymentURL`, the SBP payload — so accepting
+  any certificate meant anyone on the path could redirect a payment.
+
+  ⚠️ **On a RF host this breaks every payment until a CA bundle is configured,
+  and upgrading `ca-certificates` does NOT help.** Measured on production:
+  `securepay.tinkoff.ru` is signed by the Минцифры root (`Russian Trusted Root
+  CA` → `Russian Trusted Sub CA`), which no standard trust store carries and
+  none will. The symptom is cURL error 60, `verifyresult=19` (self signed
+  certificate in certificate chain) — indistinguishable at a glance from the
+  ordinary "your ca-certificates package is stale" failure, and cured the
+  opposite way. Probe the host BEFORE deploying:
+
+  ```bash
+  sudo -u www-data php -r '$c=curl_init("https://securepay.tinkoff.ru/v2/GetState");
+  curl_setopt_array($c,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_SSL_VERIFYPEER=>true,
+  CURLOPT_SSL_VERIFYHOST=>2,CURLOPT_TIMEOUT=>10]); curl_exec($c);
+  printf("errno=%d %s\n", curl_errno($c), curl_error($c));'
+  ```
+
+- **New: `MerchantApi::setCaBundle($path)` and the `Helper::getCaBundlePath()`
+  seam** — that is the supported answer to the above. `Helper::getApi()` feeds
+  the path in, so a project supplies its anchor by overriding one static method
+  in its own `Settings` and never has to replace `getApi()`. `null` (the
+  default) leaves the host's store untouched, so nothing changes for a consumer
+  whose gateway verifies already.
+
+  The bundle is deliberately **not** installed system-wide: a state root may
+  issue a certificate for ANY domain, so adding it to the machine's store would
+  weaken every other outbound connection the host makes in order to fix one
+  gateway. And the path is not checked for existence — an unreadable file makes
+  cURL fail with error 77 naming that file, which beats quietly verifying
+  against something else. Note that `CAINFO` replaces the default CA *file*
+  while a build with a default `CAPATH` (Debian: `/etc/ssl/certs`) keeps reading
+  the system directory too, so make the bundle self-sufficient for the hosts you
+  call rather than relying on that.
+
+  `const VERIFY_TLS = false` remains only as a stop-gap for a genuinely broken
+  host — it removes the protection for every method and every host, whereas the
+  bundle adds exactly one anchor. It lives on `MerchantApi`, so reaching it means
+  a subclass plus a `Helper::createApi()` override (see below); before that seam
+  existed the constant was documented but unreachable.
+- **Every parsed field now describes the response in hand** — `PaymentId`,
+  `Status` and `PaymentURL` are cleared before a new body is read, including on
+  the error branches and on a transport failure. They used to be left at their
+  previous value, and one api instance serves a whole reconciler run: after a
+  `GetState`(payment A), an error reply for payment B left `$api->status` still
+  reporting A's `CONFIRMED` as if it were B's. A stale value read as the current
+  one is worse than an obviously absent `null`.
+- **A missing `PaymentURL` is an error only for the methods that return one**
+  (`PAYMENT_URL_METHODS`, i.e. `Init`; `buildQuery()` passes the path down and
+  the parsing moved to the overridable `handleResponse()`). That is the whole
+  method-dependent part. Before it, a *successful* `GetState`/`GetQr` on the
+  cached instance left a bogus `Tinkoff response missing PaymentURL` in
+  `getError()` — which is what the caller reads to decide the call failed.
+  **The comparison is case-insensitive**: `buildQuery()` is public and its
+  docblock invites custom calls, so the method name comes from the consumer, and
+  a strict match silently skipped the check for `buildQuery('init', …)`.
+- **New: the `Helper::createApi()` seam.** `getApi()` used to hard-code
+  `new MerchantApi(...)`, which made the documented `VERIFY_TLS = false` escape
+  hatch unreachable — a subclass declaring it had nowhere to be plugged in.
+  Override `createApi()` to substitute one.
+- **`Helper::isSbpPayload()` caps the payload at `SBP_PAYLOAD_MAX_LEN` (512).**
+  A real SBP string is 50-120 characters; without a ceiling an arbitrarily long
+  one passed every other check, went on to a QR encoder, and — if the caller
+  stored it — into a column a non-strict `sql_mode` truncates silently.
+
+Covered by `php/tests/Payment/TinkoffSbpPayloadTest.php` and
+`php/tests/Payment/TinkoffCaBundleTest.php`.
 
 ### `Controller\Feedback::afterModelSaved()` – hook between the save and the email
 
