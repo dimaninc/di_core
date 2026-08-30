@@ -19,6 +19,14 @@ an override declares it the same way, and adding a return type in the parent
 later would make every existing override incompatible (fatal error on class
 load). The model is reached through `$this->getModel()`.
 
+What the hook does **not** get is a transaction around the row. `save()` opens
+and commits its own (`\diModel::save()`), and the hook runs after that commit
+while still inside `sendAction()`'s `try`. An exception from an override
+therefore only changes the answer — `ok=false`/400, or, for a `SpamException`,
+`ok=true` with the email skipped — and leaves the feedback row stored. The
+client normally resends, which stores it a second time, so an override that can
+fail owns its own cleanup or idempotency.
+
 ## 0.5.1
 
 ### `LocalizationMigration::insertValues()` — keyed by language, not positional

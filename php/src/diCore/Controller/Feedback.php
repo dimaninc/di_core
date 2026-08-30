@@ -97,6 +97,13 @@ class Feedback extends \diBaseController
      * Override in your project to attach related data to the fresh row,
      * model is available via $this->getModel().
      * Signature must stay as is: no params, no return type.
+     *
+     * The row is already committed when this runs: \diModel::save() opens and
+     * commits its own transaction, and this call is outside it. So an exception
+     * thrown here does NOT undo the saved feedback row - it only turns the
+     * response into an error (and a SpamException even keeps ok=true, just
+     * skipping the email). The client will usually resend and store a duplicate,
+     * so an override is responsible for its own cleanup or idempotency.
      */
     protected function afterModelSaved()
     {
