@@ -29,9 +29,12 @@ the whole checkout down with it.
 **What counts as a payload is checked, not assumed** (`Helper::isSbpPayload()`):
 that string becomes the QR the payer scans and the link they tap, i.e. it *is*
 the payment destination, so "some `https://` string the gateway sent back" is
-not a good enough test. It must be printable ASCII (no control characters — they
-would also forge log lines), parse as `https://` with no userinfo, and point at
-`nspk.ru` or a subdomain of it — override `getSbpPayloadDomains()` to widen.
+not a good enough test. It must be printable ASCII within
+`SBP_PAYLOAD_MAX_LEN` (no control characters — they would also forge log lines),
+parse as `https://` with no userinfo, and point at `nspk.ru` or a subdomain of it
+— override `getSbpPayloadDomains()` to widen. Scheme and host are compared
+case-insensitively (RFC 3986 makes both so, and `parse_url()` normalises
+neither); the path is not — it carries the QR id.
 Anything else switches SBP off for that payment rather than pointing the payer
 elsewhere. Bodies and exception messages are run through `sanitizeForLog()`
 before being logged: `Token`/`Password` redacted, control characters flattened,

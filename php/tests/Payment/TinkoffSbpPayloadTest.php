@@ -157,6 +157,30 @@ class TinkoffSbpPayloadTest extends TestCase
     }
 
     /**
+     * Схема и хост по RFC 3986 регистронезависимы, а parse_url() не приводит ни
+     * то, ни другое. Отказ здесь безопасен по направлению, но это всё равно
+     * авария: «HTTPS://…» выключил бы СБП на всех платежах, а в логе было бы
+     * «no usable SBP payload» — про регистр ни слова. Путь не трогаем: он как
+     * раз регистрозависим, в нём идентификатор QR.
+     */
+    public function testSchemeAndHostAreCaseInsensitive(): void
+    {
+        foreach (
+            [
+                'HTTPS://qr.nspk.ru/A1',
+                'Https://qr.nspk.ru/A1',
+                'https://QR.NSPK.RU/A1',
+                'HtTpS://Qr.NsPk.Ru/AbC',
+            ]
+            as $data
+        ) {
+            $h = $this->helper(json_encode(['Success' => true, 'Data' => $data]));
+
+            $this->assertSame($data, $h->getSbpPayload(1), $data);
+        }
+    }
+
+    /**
      * Управляющие символы и пробелы в «ссылке» – это не ссылка. Завершающий
      * перевод строки — отдельный случай: PCRE-шный `$` пропускает его перед
      * концом строки, поэтому якорь обязан быть `\z`. Иначе payload с "\n" на

@@ -303,7 +303,17 @@ class Helper extends BaseHelper
 
         $parts = parse_url($payload);
 
-        if (!is_array($parts) || ($parts['scheme'] ?? '') !== 'https') {
+        // Scheme and host are case-insensitive per RFC 3986, and parse_url()
+        // normalises NEITHER — so both are lowered here. Getting this wrong
+        // fails open in the safe direction but is still a real outage: an
+        // "HTTPS://…" payload switches SBP off for every payment, and the log
+        // says "no usable SBP payload" without hinting at the letter case.
+        // The path is left alone — that part IS case-sensitive, it carries the
+        // QR id.
+        if (
+            !is_array($parts) ||
+            strtolower($parts['scheme'] ?? '') !== 'https'
+        ) {
             return false;
         }
 
