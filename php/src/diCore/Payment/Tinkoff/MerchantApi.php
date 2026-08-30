@@ -296,6 +296,10 @@ class MerchantApi
             if ($out === false) {
                 $curlErr = curl_error($curl) ?: 'unknown transport error';
                 $this->error = 'cURL error: ' . $curlErr;
+                // Nothing was parsed, so nothing here describes this call — and
+                // handleResponse(), which would have cleared it, is never
+                // reached on this branch.
+                $this->resetResponseState();
                 curl_close($curl);
 
                 return $out;
@@ -317,17 +321,18 @@ class MerchantApi
     /**
      * Parses a gateway response body into the instance state.
      *
-     * PaymentURL is read only for the methods that return one: a GetState or
-     * GetQr reply has none, and blindly assigning it would null the previous
-     * Init's url and then raise a "missing PaymentURL" error for a perfectly
-     * successful call — on the very same (cached) instance the caller reads
-     * getError() from.
-     *
-     * PaymentId and Status, on the contrary, describe THIS response and are
-     * reset when it does not carry them. One instance serves a whole reconciler
-     * run, so a value kept from an earlier call would quietly belong to another
-     * payment — and a stale status read as the current one is worse than an
+     * Every field it sets describes THIS response and nothing else — they are
+     * cleared up front, before any early return. One api instance is cached in
+     * Helper::getApi() and serves a whole reconciler run, so a value carried
+     * over from an earlier call would quietly belong to another payment: after
+     * GetState(A) an error reply for B used to leave $api->status reporting A's
+     * CONFIRMED as B's. A stale value read as the current one is worse than an
      * obviously absent null.
+     *
+     * The only method-dependent part is whether a MISSING PaymentURL is an
+     * error: a GetState or GetQr reply has none, and treating that as a failure
+     * put a bogus "missing PaymentURL" into getError() after a perfectly
+     * successful call. The URL itself is read whenever the response carries it.
      *
      * @param string $out raw response body
      * @param string|null $path API method name
@@ -335,6 +340,8 @@ class MerchantApi
     protected function handleResponse($out, $path = null)
     {
         $this->error = '';
+        $this->resetResponseState();
+
         $json = json_decode($out);
 
         if (!$json) {
@@ -343,10 +350,10 @@ class MerchantApi
             return $this;
         }
 
-        if (@$json->ErrorCode !== '0') {
+        if (($json->ErrorCode ?? null) !== '0') {
             $this->error =
-                @$json->Details ?:
-                ('Tinkoff error code ' . @$json->ErrorCode . ': ' . $out);
+                ($json->Details ?? null) ?:
+                ('Tinkoff error code ' . ($json->ErrorCode ?? null) . ': ' . $out);
 
             return $this;
         }
@@ -354,41 +361,75 @@ class MerchantApi
         $this->paymentId = $json->PaymentId ?? null;
         $this->status = $json->Status ?? null;
 
-        // TODO(BOTCARD-10): PaymentURL проверяется только на «непустая строка» —
-        // хоста не проверяет никто, хотя ровно по этому адресу уходит плательщик
-        // (Helper::getFormUri() -> Payment::redirectTo()). Это та же дыра, ради
-        // которой в Helper написан isSbpPayload(), но на поверхности в разы
-        // большей: через PaymentURL идут ВСЕ карточные платежи, СБП — вторичная
-        // и пока никем не включённая ветка. Тело ответа при этом может прийти не
-        // с того хоста, куда стучались: CURLOPT_FOLLOWLOCATION включён, а
-        // редирект https -> http curl по умолчанию разрешает.
+        // TODO(BOTCARD-10): PaymentURL is checked for "non-empty string" and
+        // nothing else — no host check — even though this is the address the
+        // payer is sent to (Helper::getFormUri() -> Payment::redirectTo()).
+        // Same hole isSbpPayload() was written for, on a far larger surface:
+        // every card payment goes through PaymentURL, SBP is the secondary
+        // branch. And the body may not even come from the host we called —
+        // CURLOPT_FOLLOWLOCATION is on and curl allows an https -> http
+        // redirect by default.
         //
-        // Что сделать, когда вернёмся:
-        //  1) симметрично isSbpPayload() — переопределяемый белый список
-        //     (securepay.tinkoff.ru и поддомены), схема https, без userinfo,
-        //     печатный ASCII с якорем \z (в isSbpPayload() `$` пропускал
-        //     завершающий \n — та же ошибка тут будет стоить дороже);
-        //  2) невалидный URL — это ошибка запроса, а не пустой результат: писать
-        //     в $this->error, чтобы getFormUri() бросил, а не редиректил;
-        //  3) заодно решить судьбу FOLLOWLOCATION — выключить либо ограничить
-        //     CURLOPT_REDIR_PROTOCOLS одним https;
-        //  4) тесты по образцу testForeignHostGivesNull.
+        // When we come back:
+        //  1) mirror isSbpPayload() — an overridable whitelist
+        //     (securepay.tinkoff.ru and subdomains), https scheme, no userinfo,
+        //     printable ASCII anchored with \z, a length cap;
+        //  2) an invalid URL is a failed request, not an empty result: write to
+        //     $this->error so getFormUri() throws instead of redirecting;
+        //  3) settle FOLLOWLOCATION too — drop it, or confine
+        //     CURLOPT_REDIR_PROTOCOLS to https;
+        //  4) tests along the lines of testForeignHostGivesNull.
         //
-        // Не сделано в BOTCARD-10-UP осознанно: правка меняет боевой платёжный
-        // путь всех потребителей di_core и должна ехать отдельно от добавления
-        // GetQr, вместе с включением проверки TLS.
-        if (in_array($path, static::PAYMENT_URL_METHODS, true)) {
-            $this->paymentUrl = @$json->PaymentURL;
+        // Deliberately not done here: it changes the live payment path of every
+        // di_core consumer, and that belongs in its own release rather than
+        // riding along with a new API method.
+        $this->paymentUrl = $json->PaymentURL ?? null;
 
-            if (!is_string($this->paymentUrl) || $this->paymentUrl === '') {
-                $this->error =
-                    'Tinkoff response missing PaymentURL (status ' .
-                    (string) $this->status .
-                    '): ' .
-                    $out;
-            }
+        if (
+            static::methodReturnsPaymentUrl($path) &&
+            (!is_string($this->paymentUrl) || $this->paymentUrl === '')
+        ) {
+            $this->error =
+                'Tinkoff response missing PaymentURL (status ' .
+                (string) $this->status .
+                '): ' .
+                $out;
         }
 
         return $this;
     }
+
+    /**
+     * Case-insensitive on purpose. buildQuery() is public and its docblock
+     * invites custom calls, so a consumer may well spell the method 'init';
+     * a strict comparison would then skip the check silently, and the caller
+     * would get an empty error alongside no URL to send the payer to.
+     *
+     * @param string|null $path
+     */
+    protected static function methodReturnsPaymentUrl($path): bool
+    {
+        if (!is_string($path)) {
+            return false;
+        }
+
+        foreach (static::PAYMENT_URL_METHODS as $method) {
+            if (strcasecmp($path, $method) === 0) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** Fields describing the last response, cleared before a new one is read. */
+    private function resetResponseState()
+    {
+        $this->paymentId = null;
+        $this->status = null;
+        $this->paymentUrl = null;
+
+        return $this;
+    }
+
 }

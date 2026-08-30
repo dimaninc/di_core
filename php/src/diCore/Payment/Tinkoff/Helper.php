@@ -19,6 +19,9 @@ class Helper extends BaseHelper
 {
     const system = System::tinkoff;
 
+    /** Generous ceiling for an SBP payload; the real ones are 50-120 chars. */
+    const SBP_PAYLOAD_MAX_LEN = 512;
+
     /** @var MerchantApi */
     protected $api;
 
@@ -38,11 +41,26 @@ class Helper extends BaseHelper
     protected function getApi()
     {
         if (!$this->api) {
-            $this->api = new MerchantApi(static::getLogin(), static::getPassword());
-            $this->api->setCaBundle(static::getCaBundlePath());
+            $this->api = $this->createApi();
         }
 
         return $this->api;
+    }
+
+    /**
+     * The single place a MerchantApi is built — override to substitute a
+     * subclass. Without this seam the documented `VERIFY_TLS = false` escape
+     * hatch was unreachable: a subclass declaring it had nowhere to be plugged
+     * in, and the consumer had to override getApi() itself, which nothing said.
+     *
+     * @return MerchantApi
+     */
+    protected function createApi()
+    {
+        $api = new MerchantApi(static::getLogin(), static::getPassword());
+        $api->setCaBundle(static::getCaBundlePath());
+
+        return $api;
     }
 
     /**
@@ -268,11 +286,18 @@ class Helper extends BaseHelper
      */
     protected static function isSbpPayload($payload): bool
     {
+        // A real SBP payload is 50-120 characters. The cap is not cosmetic: the
+        // string goes on to a QR encoder and, if the caller stores it, into a
+        // column where a non-strict sql_mode truncates it silently.
+        if (!is_string($payload) || strlen($payload) > static::SBP_PAYLOAD_MAX_LEN) {
+            return false;
+        }
+
         // printable ASCII only: no control chars, no whitespace, no empty string.
         // \z, not $: PCRE's $ also matches BEFORE a trailing newline, so with it
         // a payload ending in "\n" passed the check and went on to forge a line
         // in the very log this rule exists to protect.
-        if (!is_string($payload) || !preg_match('/^[\x21-\x7e]+\z/', $payload)) {
+        if (!preg_match('/^[\x21-\x7e]+\z/', $payload)) {
             return false;
         }
 
@@ -320,6 +345,13 @@ class Helper extends BaseHelper
      */
     protected static function sanitizeForLog($text, $limit = 1000): string
     {
+        // Redact BEFORE truncating, never the other way round. Cutting first
+        // would be cheaper — it bounds the work the regex does — but a cut
+        // landing inside a Token value leaves `"Token":"aaaa…` with no closing
+        // quote, the pattern below then does not match, and the surviving
+        // prefix of the signature goes into the log verbatim. Both patterns are
+        // linear ([^"]* with no nested quantifier), and the input is a payment
+        // gateway response, so the extra pass is bounded and cheap.
         $text = preg_replace(
             '/("(?:Token|Password)"\s*:\s*")[^"]*"/i',
             '$1***"',

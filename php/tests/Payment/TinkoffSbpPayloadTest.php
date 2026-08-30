@@ -180,6 +180,47 @@ class TinkoffSbpPayloadTest extends TestCase
         }
     }
 
+    /**
+     * Реальный payload — 50-120 символов. Без потолка «ссылка» на сто тысяч
+     * символов проходит все остальные проверки, уходит в QR-кодер и, если
+     * вызывающий её сохранит, в колонку БД, где при sql_mode без STRICT молча
+     * обрежется.
+     */
+    public function testOverlongPayloadGivesNull(): void
+    {
+        $long = 'https://qr.nspk.ru/' . str_repeat('A', 100000);
+        $h = $this->helper(json_encode(['Success' => true, 'Data' => $long]));
+
+        $this->assertNull($h->getSbpPayload(1));
+
+        // граница: 512 включительно — ещё годно
+        $atLimit = 'https://qr.nspk.ru/' . str_repeat('A', 512 - 19);
+        $h = $this->helper(json_encode(['Success' => true, 'Data' => $atLimit]));
+
+        $this->assertSame($atLimit, $h->getSbpPayload(1));
+    }
+
+    /**
+     * Редакт обязан идти ДО обрезки. Обрезать первым дешевле, но разрез внутри
+     * значения Token оставляет `"Token":"aaaa…` без закрывающей кавычки, регулярка
+     * такое не ловит, и кусок подписи уезжает в лог как есть. Тест держит порядок.
+     */
+    public function testTokenIsRedactedEvenWhenTheBodyGetsTruncated(): void
+    {
+        $token = str_repeat('a', 64);
+        $h = $this->helper(
+            '{"Token":"' . $token . '","Junk":"' . str_repeat('x', 5000) . '"}'
+        );
+
+        $this->assertNull($h->getSbpPayload(1));
+
+        $log = $this->logs();
+
+        $this->assertStringContainsString('truncated', $log);
+        $this->assertStringNotContainsString($token, $log);
+        $this->assertStringNotContainsString(str_repeat('a', 10), $log);
+    }
+
     public function testUndecodableJsonGivesNull(): void
     {
         $h = $this->helper('<html>502 Bad Gateway</html>');
@@ -301,13 +342,86 @@ class TinkoffSbpPayloadTest extends TestCase
             'GetQr'
         );
 
+        // Испорченным было именно это: getError() отдавал «missing PaymentURL»
+        // после совершенно успешного GetQr, и вызывающий, который проверяет
+        // только ошибку, считал платёж непроинициализированным.
         $this->assertSame('', $api->getError());
-        $this->assertSame('https://securepay.tinkoff.ru/A1B2', $api->getPaymentUrl());
 
-        // Status в ответе GetQr нет — значит его нет и в состоянии. Оставленный
-        // от Init 'NEW' читался бы как текущий статус платежа, см. следующий
-        // тест: экземпляр один на весь прогон, и платёж в нём уже другой.
+        // А сами поля описывают последний ответ. В ответе GetQr нет ни Status,
+        // ни PaymentURL — значит их нет и в состоянии. Оставленные от Init, они
+        // читались бы как результат ЭТОГО вызова; getFormUri() берёт URL сразу
+        // после init(), так что переживать чужой вызов ему незачем.
         $this->assertNull($api->status);
+        $this->assertNull($api->getPaymentUrl());
+    }
+
+    /**
+     * buildQuery() публичен, и его докблок прямо зовёт делать свои вызовы —
+     * значит имя метода приходит от потребителя. Строгое сравнение с ['Init']
+     * молча пропускало $api->buildQuery('init', …): ошибки нет, URL'а нет,
+     * редиректить плательщика некуда.
+     */
+    public function testPaymentUrlCheckIsCaseInsensitive(): void
+    {
+        $body =
+            '{"Success":true,"ErrorCode":"0","PaymentId":"1",' .
+            '"PaymentURL":"https://securepay.tinkoff.ru/A1B2"}';
+
+        foreach (['Init', 'init', 'INIT'] as $path) {
+            $api = new ExposedMerchantApi('terminal', 'secret');
+            $api->handle($body, $path);
+
+            $this->assertSame('', $api->getError(), $path);
+            $this->assertSame(
+                'https://securepay.tinkoff.ru/A1B2',
+                $api->getPaymentUrl(),
+                $path
+            );
+        }
+
+        // И отсутствие URL остаётся ошибкой при любом регистре
+        foreach (['Init', 'init', 'INIT'] as $path) {
+            $api = new ExposedMerchantApi('terminal', 'secret');
+            $api->handle('{"Success":true,"ErrorCode":"0","PaymentId":"1"}', $path);
+
+            $this->assertStringContainsString(
+                'missing PaymentURL',
+                $api->getError(),
+                $path
+            );
+        }
+    }
+
+    /**
+     * Ветки ошибки — то же самое требование, что и к успеху, и именно их легко
+     * забыть: ранний return стоит ДО присваивания полей. Сверщик держит один
+     * экземпляр на весь прогон, и «платежа B не существует» не должно читаться
+     * как «платёж B подтверждён».
+     */
+    public function testErrorBranchesAlsoClearThePreviousResponse(): void
+    {
+        $bad = [
+            'gateway error' => '{"Success":false,"ErrorCode":"9999",' .
+                '"Details":"нет платежа"}',
+            'not a json' => '<html>502 Bad Gateway</html>',
+        ];
+
+        foreach ($bad as $label => $body) {
+            $api = new ExposedMerchantApi('terminal', 'secret');
+            $api->handle(
+                '{"Success":true,"ErrorCode":"0","PaymentId":"1000",' .
+                    '"Status":"CONFIRMED"}',
+                'GetState'
+            );
+            $this->assertSame('CONFIRMED', $api->status, $label);
+
+            $api->handle($body, 'GetState');
+
+            $this->assertNotSame('', $api->getError(), $label);
+            $this->assertNull($api->status, $label);
+            $this->assertNull($api->paymentId, $label);
+            $this->assertNull($api->getPaymentUrl(), $label);
+        }
     }
 
     /**

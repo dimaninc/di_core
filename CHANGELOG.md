@@ -1,6 +1,12 @@
 # Changelog
 
-## 0.5.2
+## 0.6.0
+
+Minor, not patch: `MerchantApi` now verifies the gateway's TLS certificate, and
+on a host whose store lacks the root that is the difference between "payments
+work" and "no payment works at all". Nothing about the PHP API breaks, but
+`composer update` alone can change whether the gateway is reachable — see the
+warning below before taking it.
 
 ### Tinkoff: SBP payload (`GetQr`)
 
@@ -31,7 +37,7 @@ elsewhere. Bodies and exception messages are run through `sanitizeForLog()`
 before being logged: `Token`/`Password` redacted, control characters flattened,
 length capped.
 
-#### Behaviour changes in `MerchantApi` (not additive)
+#### Behaviour changes in `MerchantApi` (BREAKING for a host without the anchor)
 
 - **TLS certificates are verified** (`VERIFY_TLS`, `CURLOPT_SSL_VERIFYPEER` /
   `VERIFYHOST`). The channel carries the request `Token` and brings back the
@@ -73,22 +79,36 @@ length capped.
 
   `const VERIFY_TLS = false` remains only as a stop-gap for a genuinely broken
   host — it removes the protection for every method and every host, whereas the
-  bundle adds exactly one anchor.
-- **The response parsing knows which method it answers** (`buildQuery()` passes
-  the path down; the parsing moved to the overridable `handleResponse()`).
-  `PaymentURL` is only read for methods that return one (`PAYMENT_URL_METHODS`,
-  i.e. `Init`). Before this, a *successful* `GetState`/`GetQr` on the cached api
-  instance nulled the previous `Init`'s `paymentUrl` and left a bogus
-  `Tinkoff response missing PaymentURL` in `getError()`. A missing `PaymentURL`
-  on `Init` is still an error, unchanged.
-- **`PaymentId` and `Status` now describe the response in hand, and are reset
-  when it does not carry them.** They used to be left at their previous value —
-  and one api instance serves a whole reconciler run, so after a
-  `GetState`(payment A) a `GetQr`(payment B) left `$api->status` reporting A's
-  status as if it were B's. A stale value read as the current one is worse than
-  an obviously absent `null`.
+  bundle adds exactly one anchor. It lives on `MerchantApi`, so reaching it means
+  a subclass plus a `Helper::createApi()` override (see below); before that seam
+  existed the constant was documented but unreachable.
+- **Every parsed field now describes the response in hand** — `PaymentId`,
+  `Status` and `PaymentURL` are cleared before a new body is read, including on
+  the error branches and on a transport failure. They used to be left at their
+  previous value, and one api instance serves a whole reconciler run: after a
+  `GetState`(payment A), an error reply for payment B left `$api->status` still
+  reporting A's `CONFIRMED` as if it were B's. A stale value read as the current
+  one is worse than an obviously absent `null`.
+- **A missing `PaymentURL` is an error only for the methods that return one**
+  (`PAYMENT_URL_METHODS`, i.e. `Init`; `buildQuery()` passes the path down and
+  the parsing moved to the overridable `handleResponse()`). That is the whole
+  method-dependent part. Before it, a *successful* `GetState`/`GetQr` on the
+  cached instance left a bogus `Tinkoff response missing PaymentURL` in
+  `getError()` — which is what the caller reads to decide the call failed.
+  **The comparison is case-insensitive**: `buildQuery()` is public and its
+  docblock invites custom calls, so the method name comes from the consumer, and
+  a strict match silently skipped the check for `buildQuery('init', …)`.
+- **New: the `Helper::createApi()` seam.** `getApi()` used to hard-code
+  `new MerchantApi(...)`, which made the documented `VERIFY_TLS = false` escape
+  hatch unreachable — a subclass declaring it had nowhere to be plugged in.
+  Override `createApi()` to substitute one.
+- **`Helper::isSbpPayload()` caps the payload at `SBP_PAYLOAD_MAX_LEN` (512).**
+  A real SBP string is 50-120 characters; without a ceiling an arbitrarily long
+  one passed every other check, went on to a QR encoder, and — if the caller
+  stored it — into a column a non-strict `sql_mode` truncates silently.
 
-Covered by `php/tests/Payment/TinkoffSbpPayloadTest.php`.
+Covered by `php/tests/Payment/TinkoffSbpPayloadTest.php` and
+`php/tests/Payment/TinkoffCaBundleTest.php`.
 
 ### `Controller\Feedback::afterModelSaved()` – hook between the save and the email
 
