@@ -138,6 +138,50 @@ therefore only changes the answer — `ok=false`/400, or, for a `SpamException`,
 client normally resends, which stores it a second time, so an override that can
 fail owns its own cleanup or idempotency.
 
+### Settings page: an edit log, off by default
+
+The settings were the last admin page without a history: one checkbox there
+changes the behaviour of the whole site (record lifetimes, feature toggles,
+prices), and there was nothing to roll back to and no way to tell who switched
+it off, or when. A project turns it on the same way as anywhere else – by
+overriding `useEditLog()` on its `Admin\Page\Configuration`. The default stays
+`false`, so nothing changes for existing consumers, and no migration is needed:
+the `admin_table_edit_log` table already exists.
+
+- **`Controller\Configuration`** takes a snapshot of the settings before the
+  action and after it, and stores the difference as ONE `AdminTableEditLog`
+  record per save (`storeAction()`) or per deleted picture (`delPicAction()`).
+  Nothing changed means no record. The setting keys take the place of field
+  names, so the existing diff rendering works unchanged.
+- **`Admin\Page\Configuration::EDIT_LOG_TARGET_ID`** – settings are not a row,
+  and `Model::validate()` demands a non-empty `target_id` (`0` counts as empty),
+  so the whole table is logged as one logical record. `target_table` comes from
+  the new `Data\Configuration::getTableName()`, never from a literal.
+- **The log tab** is appended after the settings groups, so the first tab is
+  still a settings one.
+
+Only settings the page actually shows are logged (they have a `title` and no
+`hidden` flag) – what is not editable there cannot have been edited. The
+snapshot always re-reads the database: `store()` refreshes the in-memory data
+for unchecked checkboxes only, so reading `Cfg::getData()` alone would compare
+the new state against itself for everything else.
+
+The whole write is best-effort (`catch (\Throwable)`): a journal has no right to
+break saving the settings. Note that this also covers the CLI case, where there
+is no admin – `admin_id` is then `0`, `validate()` refuses the record and it is
+dropped, exactly like a list toggle made from a worker.
+
+`BasePage::printEditLog()` is split into `shouldPrintEditLog()` (the condition),
+`renderEditLog()` (the content, including the degradation notice) and
+`printEditLog()` (condition + `getForm()->setInput()`) so a page with no id and
+no form can reuse the middle one. Behaviour for every existing page is
+unchanged. The `useEditLog()` gate used by writers outside the form now lives in
+`Admin\Base::isEditLogEnabledForTable()`, shared by `diListController` and the
+settings controller instead of being copied.
+
+Covered by `php/tests/Controller/ConfigurationEditLogTest.php` and
+`php/tests/Admin/EditLogGateTest.php`.
+
 ## 0.5.1
 
 ### `LocalizationMigration::insertValues()` — keyed by language, not positional

@@ -1394,12 +1394,27 @@ abstract class BasePage
         return $this;
     }
 
-    protected function printEditLog()
+    /**
+     * Whether the log tab gets any content at all. A page whose history is not
+     * bound to a single record (Admin\Page\Configuration) overrides this to drop
+     * the getId() part.
+     *
+     * @return bool
+     */
+    protected function shouldPrintEditLog()
     {
-        if (!$this->useEditLog() || $this->hideEditLog() || !$this->getId()) {
-            return $this;
-        }
+        return $this->useEditLog() && !$this->hideEditLog() && $this->getId();
+    }
 
+    /**
+     * The tab content: the rendered log, or the "temporarily unavailable" notice.
+     * Separate from printEditLog() because a page without a form has nowhere to
+     * setInput() it and places the same string itself.
+     *
+     * @return string
+     */
+    protected function renderEditLog()
+    {
         // Guard the store access only, and only against \Exception — parseData()
         // and the render stay outside so a code bug (\Error) isn't hidden as an outage.
         $records = $this->createEditLogCollection();
@@ -1419,14 +1434,10 @@ abstract class BasePage
 
             // Separate guard: a failed report must not cost the notice.
             try {
-                $this->getForm()->setInput(
-                    TableEditLog::ADMIN_TAB_NAME,
-                    $this->getEditLogUnavailableText()
-                );
+                return $this->getEditLogUnavailableText();
             } catch (\Throwable $ignored) {
+                return '';
             }
-
-            return $this;
         }
 
         /** @var TableEditLog $rec */
@@ -1442,20 +1453,36 @@ abstract class BasePage
             (array) $this->useEditLog()
         );
 
-        $content = $this->getTwig()->parse('admin/admin_table_edit_log/form_field', [
+        return $this->getTwig()->parse('admin/admin_table_edit_log/form_field', [
             'records' => $records,
             'admins' => Admins::create(),
             'options' => $options,
         ]);
+    }
 
-        $this->getForm()->setInput(TableEditLog::ADMIN_TAB_NAME, $content);
+    protected function printEditLog()
+    {
+        if (!$this->shouldPrintEditLog()) {
+            return $this;
+        }
+
+        $this->getForm()->setInput(
+            TableEditLog::ADMIN_TAB_NAME,
+            $this->renderEditLog()
+        );
 
         return $this;
     }
 
     /**
-     * Do not paginate an override: the guard below relies on load() fetching
-     * everything, or the chunk loading returns during the render, outside it.
+     * An override must not load chunks during the render: the guard in
+     * renderEditLog() covers load()/count() only, and the iterator's lazy chunk
+     * loading would then happen inside the template, outside it.
+     *
+     * setPageSize() is not that, and is the right answer for a log nothing else
+     * bounds: count() clamps its own result to pageSize, so after the single
+     * loadChunk() count($items) == count() and `loaded` becomes true – the iterator
+     * never asks for a second chunk.
      *
      * @return TableEditLogs
      */

@@ -63,6 +63,9 @@ class Base
         'di_lib_admin_pages/form',
     ];
 
+    // table => bool, whether its admin page enables useEditLog() (per-request memo)
+    private static $editLogEnabledCache = [];
+
     protected $siteTitle = 'diCMS based';
     protected $language = 'ru';
     protected static $_language;
@@ -1296,6 +1299,54 @@ class Base
     public static function getModuleClassName($module)
     {
         return \diLib::getClassNameFor($module, \diLib::ADMIN_PAGE);
+    }
+
+    /**
+     * Edit-log writes made outside the admin form (a list toggle/delete, the
+     * settings controller) are gated by the same useEditLog() flag the admin page
+     * already exposes – resolved from the table name, since there is no table→page
+     * registry and modules follow the table naming convention.
+     *
+     * Those writers run where the admin Base ($X) is NOT built (over /api/, or from
+     * a worker), so the page can't be constructed: its constructor needs Base and
+     * may have side effects. We instantiate it WITHOUT the constructor and call
+     * useEditLog() – the overrides are plain flag returns. Anything that needs page
+     * state throws and is treated as "no logging".
+     *
+     * Lives here, and not next to a caller, on purpose: a second copy of this rule
+     * would drift from the first one, and the two writers would then disagree about
+     * whether the same table is logged.
+     *
+     * @param string $table
+     * @return bool
+     */
+    public static function isEditLogEnabledForTable($table)
+    {
+        if (array_key_exists($table, self::$editLogEnabledCache)) {
+            return self::$editLogEnabledCache[$table];
+        }
+
+        $enabled = false;
+
+        try {
+            $pageClass = self::getModuleClassName($table);
+
+            if (
+                $pageClass &&
+                class_exists($pageClass) &&
+                is_subclass_of($pageClass, BasePage::class)
+            ) {
+                /** @var BasePage $page */
+                $page = (new \ReflectionClass(
+                    $pageClass
+                ))->newInstanceWithoutConstructor();
+                $enabled = (bool) $page->useEditLog();
+            }
+        } catch (\Throwable $e) {
+            $enabled = false;
+        }
+
+        return self::$editLogEnabledCache[$table] = $enabled;
     }
 
     public function moduleExists($module)
