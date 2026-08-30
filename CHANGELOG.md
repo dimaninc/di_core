@@ -36,10 +36,44 @@ length capped.
 - **TLS certificates are verified** (`VERIFY_TLS`, `CURLOPT_SSL_VERIFYPEER` /
   `VERIFYHOST`). The channel carries the request `Token` and brings back the
   URLs the payer is then sent to — `PaymentURL`, the SBP payload — so accepting
-  any certificate meant anyone on the path could redirect a payment. If a host
-  has no usable CA bundle, payments now fail loudly instead of silently
-  accepting an unverified peer; subclass and set `const VERIFY_TLS = false` only
-  as a stop-gap.
+  any certificate meant anyone on the path could redirect a payment.
+
+  ⚠️ **On a RF host this breaks every payment until a CA bundle is configured,
+  and upgrading `ca-certificates` does NOT help.** Measured on production:
+  `securepay.tinkoff.ru` is signed by the Минцифры root (`Russian Trusted Root
+  CA` → `Russian Trusted Sub CA`), which no standard trust store carries and
+  none will. The symptom is cURL error 60, `verifyresult=19` (self signed
+  certificate in certificate chain) — indistinguishable at a glance from the
+  ordinary "your ca-certificates package is stale" failure, and cured the
+  opposite way. Probe the host BEFORE deploying:
+
+  ```bash
+  sudo -u www-data php -r '$c=curl_init("https://securepay.tinkoff.ru/v2/GetState");
+  curl_setopt_array($c,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_SSL_VERIFYPEER=>true,
+  CURLOPT_SSL_VERIFYHOST=>2,CURLOPT_TIMEOUT=>10]); curl_exec($c);
+  printf("errno=%d %s\n", curl_errno($c), curl_error($c));'
+  ```
+
+- **New: `MerchantApi::setCaBundle($path)` and the `Helper::getCaBundlePath()`
+  seam** — that is the supported answer to the above. `Helper::getApi()` feeds
+  the path in, so a project supplies its anchor by overriding one static method
+  in its own `Settings` and never has to replace `getApi()`. `null` (the
+  default) leaves the host's store untouched, so nothing changes for a consumer
+  whose gateway verifies already.
+
+  The bundle is deliberately **not** installed system-wide: a state root may
+  issue a certificate for ANY domain, so adding it to the machine's store would
+  weaken every other outbound connection the host makes in order to fix one
+  gateway. And the path is not checked for existence — an unreadable file makes
+  cURL fail with error 77 naming that file, which beats quietly verifying
+  against something else. Note that `CAINFO` replaces the default CA *file*
+  while a build with a default `CAPATH` (Debian: `/etc/ssl/certs`) keeps reading
+  the system directory too, so make the bundle self-sufficient for the hosts you
+  call rather than relying on that.
+
+  `const VERIFY_TLS = false` remains only as a stop-gap for a genuinely broken
+  host — it removes the protection for every method and every host, whereas the
+  bundle adds exactly one anchor.
 - **The response parsing knows which method it answers** (`buildQuery()` passes
   the path down; the parsing moved to the overridable `handleResponse()`).
   `PaymentURL` is only read for methods that return one (`PAYMENT_URL_METHODS`,

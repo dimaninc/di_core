@@ -39,9 +39,24 @@ class Helper extends BaseHelper
     {
         if (!$this->api) {
             $this->api = new MerchantApi(static::getLogin(), static::getPassword());
+            $this->api->setCaBundle(static::getCaBundlePath());
         }
 
         return $this->api;
+    }
+
+    /**
+     * Path of an extra CA bundle anchoring the gateway, or null for the host's
+     * own store. Override in the project's Settings — see
+     * MerchantApi::setCaBundle() for why this is not installed system-wide.
+     *
+     * On a RF host it is not optional: securepay.tinkoff.ru is signed by the
+     * Минцифры root, which no ca-certificates package carries, so with the
+     * default null every call fails TLS verification (cURL error 60).
+     */
+    protected static function getCaBundlePath(): ?string
+    {
+        return null;
     }
 
     /**

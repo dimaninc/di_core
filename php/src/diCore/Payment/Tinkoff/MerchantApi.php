@@ -17,13 +17,23 @@ class MerchantApi
     /**
      * The channel carries the request Token and brings back the URLs the payer
      * is then sent to (PaymentURL, the SBP payload), so an unverified peer means
-     * anyone on the path can redirect a payment. Overridable in a subclass only
-     * as an escape hatch for a host with a broken CA bundle.
+     * anyone on the path can redirect a payment.
+     *
+     * If the gateway's root is missing from the host's store, the answer is a
+     * bundle via setCaBundle() — NOT this constant. Turning verification off
+     * removes the protection for every method and every host; the bundle adds
+     * one anchor. Measured on production: securepay.tinkoff.ru is signed by the
+     * Минцифры root ("Russian Trusted Root CA"), which no standard
+     * ca-certificates package carries, so on a RF host the bundle is mandatory
+     * and upgrading the package does not help.
      */
     const VERIFY_TLS = true;
 
     /** API methods whose response carries a PaymentURL. */
     const PAYMENT_URL_METHODS = ['Init'];
+
+    /** @var string|null extra CA bundle, null = the host's own store */
+    private $caBundlePath = null;
 
     private $api_url;
     private $terminalKey;
@@ -44,6 +54,43 @@ class MerchantApi
     public function getError()
     {
         return $this->error;
+    }
+
+    /**
+     * Anchor the gateway's certificate with an extra CA bundle (CURLOPT_CAINFO)
+     * instead of the host's store. For a root that ca-certificates does not and
+     * will not carry — a state CA, a private one — this is the correct fix; the
+     * wrong one is `VERIFY_TLS = false`.
+     *
+     * Not installed system-wide on purpose: such a root may issue a certificate
+     * for ANY domain, so adding it to the machine's store would weaken every
+     * other outbound connection the host makes to fix one gateway.
+     *
+     * `null` (the default) keeps the host's store untouched. The path is NOT
+     * validated here — an unreadable file makes cURL fail with error 77 naming
+     * that file, which is a far better diagnosis than quietly verifying against
+     * something else. Callers that prefer a fallback resolve the path first.
+     *
+     * NB: CAINFO replaces the default CA *file*, but a libcurl built with a
+     * default CAPATH (Debian: /etc/ssl/certs) keeps consulting the system
+     * directory as well — so whether the bundle must also carry the public
+     * roots depends on the build. Make it self-sufficient for the hosts you
+     * actually call and the question does not arise.
+     *
+     * @param string|null $path
+     * @return $this
+     */
+    public function setCaBundle($path)
+    {
+        $this->caBundlePath = $path !== null && $path !== '' ? (string) $path : null;
+
+        return $this;
+    }
+
+    /** @return string|null */
+    public function getCaBundle()
+    {
+        return $this->caBundlePath;
     }
 
     public function getPaymentUrl()
@@ -228,6 +275,11 @@ class MerchantApi
             curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, static::VERIFY_TLS);
             curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, static::VERIFY_TLS ? 2 : 0);
+
+            if ($this->caBundlePath !== null) {
+                curl_setopt($curl, CURLOPT_CAINFO, $this->caBundlePath);
+            }
+
             curl_setopt($curl, CURLOPT_POST, true);
             curl_setopt($curl, CURLOPT_POSTFIELDS, $args);
             // Without these a hung gateway blocks forever — it would pin an FPM
