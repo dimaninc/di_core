@@ -39,6 +39,8 @@ class Feedback extends \diBaseController
 
             $this->getModel()->save();
 
+            $this->afterModelSaved();
+
             if ($ar['ok'] && $this->sendEmail) {
                 $this->sendEmailNotification();
             }
@@ -86,6 +88,18 @@ class Feedback extends \diBaseController
             $this->getModel()->setUserId(\diCore\Tool\Auth::i()->getUserId());
         }
 
+        return $this;
+    }
+
+    /**
+     * Hook called right after the feedback model has been saved
+     * and before the email notification is sent.
+     * Override in your project to attach related data to the fresh row,
+     * model is available via $this->getModel().
+     * Signature must stay as is: no params, no return type.
+     */
+    protected function afterModelSaved()
+    {
         return $this;
     }
 

@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.5.2
+
+### `Controller\Feedback::afterModelSaved()` – hook between the save and the email
+
+`sendAction()` used to go straight from `$this->getModel()->save()` to
+`sendEmailNotification()`, so a project extending the controller had no point at
+which to touch the row it had just stored. It now calls `afterModelSaved()` in
+between; the return value is ignored.
+
+The default implementation is empty (`return $this;`), so nothing changes for
+existing projects. The order is the point: an override can create a neighbouring
+record and link the feedback row to it, and the notification then goes out about
+the already-linked message. If `save()` throws, the hook is not called at all.
+
+The signature – no parameters, no declared return type – is part of the contract:
+an override declares it the same way, and adding a return type in the parent
+later would make every existing override incompatible (fatal error on class
+load). The model is reached through `$this->getModel()`.
+
 ## 0.5.1
 
 ### `LocalizationMigration::insertValues()` — keyed by language, not positional
