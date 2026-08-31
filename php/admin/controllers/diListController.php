@@ -12,9 +12,6 @@ class diListController extends \diBaseAdminController
     private $orderDirections = ['up' => 'desc', 'down' => 'asc'];
     private $orderNumField = 'order_num';
 
-    // table => bool, whether its admin page enables useEditLog() (per-request memo)
-    private static $editLogEnabledCache = [];
-
     public function batchDeleteAction()
     {
         $c = $this->getTargetCollection();
@@ -483,43 +480,14 @@ class diListController extends \diBaseAdminController
     }
 
     /**
-     * Edit-log on a list toggle/delete is gated by the same useEditLog() flag the
-     * admin page already exposes — resolved from the table name (no table→page
-     * registry exists, so we map via the module naming convention).
-     *
-     * These actions are served over /api/ where the admin Base ($X) is NOT built,
-     * so we can't construct the page (its constructor needs Base and may have side
-     * effects). We instantiate it WITHOUT the constructor and call useEditLog() —
-     * the overrides are plain flag returns. Anything that needs page state throws
-     * and is treated as "no logging".
+     * Edit-log on a list toggle/delete is gated by the admin page's useEditLog(),
+     * resolved from the table name – see Base::isEditLogEnabledForTable() for why
+     * the page is instantiated the way it is. Shared with the settings controller,
+     * so the rule stays in one place.
      */
     protected function shouldLogAdminEdit(\diModel $m)
     {
-        $table = $m->getTable();
-
-        if (array_key_exists($table, self::$editLogEnabledCache)) {
-            return self::$editLogEnabledCache[$table];
-        }
-
-        $enabled = false;
-
-        try {
-            $pageClass = \diCore\Admin\Base::getModuleClassName($table);
-
-            if (
-                $pageClass &&
-                class_exists($pageClass) &&
-                is_subclass_of($pageClass, \diCore\Admin\BasePage::class)
-            ) {
-                /** @var \diCore\Admin\BasePage $page */
-                $page = (new \ReflectionClass($pageClass))->newInstanceWithoutConstructor();
-                $enabled = (bool) $page->useEditLog();
-            }
-        } catch (\Throwable $e) {
-            $enabled = false;
-        }
-
-        return self::$editLogEnabledCache[$table] = $enabled;
+        return \diCore\Admin\Base::isEditLogEnabledForTable($m->getTable());
     }
 
     /**

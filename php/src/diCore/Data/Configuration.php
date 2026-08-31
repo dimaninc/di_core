@@ -282,6 +282,11 @@ class Configuration
         return Connection::get()->getDb();
     }
 
+    public function getTableName()
+    {
+        return $this->tableName;
+    }
+
     public function setTableName($table)
     {
         $this->tableName = $table;

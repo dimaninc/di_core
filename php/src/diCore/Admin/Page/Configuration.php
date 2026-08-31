@@ -3,11 +3,36 @@
 namespace diCore\Admin\Page;
 
 use diCore\Data\Configuration as Cfg;
+use diCore\Entity\AdminTableEditLog\Collection as TableEditLogs;
+use diCore\Entity\AdminTableEditLog\Model as TableEditLog;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
 
 class Configuration extends \diCore\Admin\BasePage
 {
+    /**
+     * The admin module this page is reached as – /_admin/configuration/, its
+     * workers, and the edit-log gate. It is NOT the same question as the table
+     * name: Data\Configuration::setTableName() lets a project rename the table
+     * under the page, and the module stays.
+     */
+    const ADMIN_MODULE = 'configuration';
+
+    /**
+     * Settings have no row to hang their history on, and the log needs one:
+     * Model::validate() requires a non-empty target_id and diModel::has() counts 0
+     * as empty. The whole settings table is a single logical record, so it gets a
+     * single synthetic id – nothing else writes target_table = 'configuration'.
+     */
+    const EDIT_LOG_TARGET_ID = 1;
+
+    /**
+     * Nothing else bounds this log: it is filtered by table only and grows with
+     * every save, forever. See BasePage::createEditLogCollection() for why a page
+     * size (unlike lazy chunks) is safe here.
+     */
+    const EDIT_LOG_PAGE_SIZE = 50;
+
     protected $vocabulary = [
         'ru' => [
             'delete' => 'Удалить',
@@ -25,7 +50,7 @@ class Configuration extends \diCore\Admin\BasePage
 
     protected function initTable()
     {
-        $this->setTable('configuration');
+        $this->setTable(static::ADMIN_MODULE);
     }
 
     public function printList()
@@ -243,9 +268,16 @@ class Configuration extends \diCore\Admin\BasePage
             $tabPagesAr[$tab] .= $this->getTpl()->parse('property_row');
         }
 
+        $tabNames = array_keys(Cfg::getInstance()->getTabsAr());
+
+        if ($this->shouldPrintEditLog()) {
+            // appended, so the first tab stays a settings one
+            $tabNames[] = TableEditLog::ADMIN_TAB_NAME;
+        }
+
         $this->getTpl()->assign([
-            'TABS_LIST' => join(',', array_keys(Cfg::getInstance()->getTabsAr())),
-            'FIRST_TAB' => current(array_keys(Cfg::getInstance()->getTabsAr())),
+            'TABS_LIST' => join(',', $tabNames),
+            'FIRST_TAB' => current($tabNames),
             'WORKER_URI' => \diLib::getAdminWorkerPath('configuration', 'store'),
         ]);
 
@@ -266,6 +298,87 @@ class Configuration extends \diCore\Admin\BasePage
                 ->process('HEAD_TAB_ROWS', '.head_tab_row')
                 ->process('TAB_PAGES', '.tab_page');
         }
+
+        $this->printEditLogTab();
+    }
+
+    /**
+     * The log tab, after the settings groups. Its own block template: tab_page.htm
+     * wraps the content into <table class="grid">, while the log is a <ul>. The div
+     * has to end up inside {TAB_PAGES} – diConfiguration.js hands diTabs the
+     * `form [data-purpose="tab-pages"]` container. There are no inputs in it, so
+     * sitting inside the settings <form> is harmless.
+     *
+     * @return $this
+     */
+    protected function printEditLogTab()
+    {
+        if (!$this->shouldPrintEditLog()) {
+            return $this;
+        }
+
+        $this->getTpl()
+            ->define('`configuration', ['edit_log_tab_page'])
+            ->assign(
+                [
+                    'NAME' => TableEditLog::ADMIN_TAB_NAME,
+                    'TITLE' => TableEditLog::adminTabTitle($this->getLanguage()),
+                    'CONTENT' => $this->renderEditLogSafely(),
+                ],
+                'T_'
+            )
+            ->process('HEAD_TAB_ROWS', '.head_tab_row')
+            ->process('TAB_PAGES', '.edit_log_tab_page');
+
+        return $this;
+    }
+
+    /**
+     * renderEditLog() deliberately leaves everything but the store read unguarded,
+     * so a code bug surfaces instead of hiding as an outage. On a record form that
+     * costs the form; here it costs the ONLY way into the settings – BasePage::create()
+     * turns the exception into die($message) on prod, and the settings can then be
+     * changed by editing the database. So this page trades the loud failure for the
+     * same notice the outage path shows, and reports it.
+     *
+     * @return string
+     */
+    protected function renderEditLogSafely()
+    {
+        try {
+            return $this->renderEditLog();
+        } catch (\Throwable $e) {
+            // Recovery is best-effort itself, and the hook only takes \Exception.
+            try {
+                if ($e instanceof \Exception) {
+                    $this->onEditLogUnavailable($e);
+                }
+            } catch (\Throwable $ignored) {
+            }
+
+            try {
+                return $this->getEditLogUnavailableText();
+            } catch (\Throwable $ignored) {
+                return '';
+            }
+        }
+    }
+
+    /**
+     * No getId() part: the settings are one logical record (EDIT_LOG_TARGET_ID),
+     * and this page never has an id.
+     */
+    protected function shouldPrintEditLog()
+    {
+        return $this->useEditLog() && !$this->hideEditLog();
+    }
+
+    protected function createEditLogCollection()
+    {
+        return TableEditLogs::create()
+            ->filterByTargetTable(Cfg::getInstance()->getTableName())
+            ->orderById('DESC')
+            ->setPageSize(static::EDIT_LOG_PAGE_SIZE);
     }
 
     public function getModuleCaption()

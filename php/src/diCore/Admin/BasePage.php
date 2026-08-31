@@ -1363,6 +1363,22 @@ abstract class BasePage
 
     protected function prepareForEditLog()
     {
+        static::registerEditLogEscaper($this->getTwig());
+
+        return $this;
+    }
+
+    /**
+     * The log template escapes every diff with escape('insdel'), and an escaping
+     * strategy Twig does not know is a RuntimeError, not a fallback — so this must
+     * run on EVERY path that renders that template, not only on the form one.
+     * Registering it from beforeRenderForm() alone is what made the settings page
+     * (no form, rendered as a list) die on its own log tab.
+     *
+     * @param \diTwig $twig
+     */
+    public static function registerEditLogEscaper($twig)
+    {
         $version = (int) TwigEnvironment::VERSION;
         $name = 'insdel';
         $callable = function ($twig, $string, $charset) {
@@ -1380,25 +1396,43 @@ abstract class BasePage
             $runtimeCallable = function ($string, $charset) use ($callable) {
                 return $callable(null, $string, $charset);
             };
-            $this->getTwig()
+            $twig
                 ->getEngine()
                 ->getRuntime(EscaperRuntime::class)
                 ->setEscaper($name, $runtimeCallable);
         } else {
-            $this->getTwig()
+            $twig
                 ->getEngine()
                 ->getExtension(EscaperExtension::class)
                 ->setEscaper($name, $callable);
         }
-
-        return $this;
     }
 
-    protected function printEditLog()
+    /**
+     * Whether the log tab gets any content at all. A page whose history is not
+     * bound to a single record (Admin\Page\Configuration) overrides this to drop
+     * the getId() part.
+     *
+     * @return bool
+     */
+    protected function shouldPrintEditLog()
     {
-        if (!$this->useEditLog() || $this->hideEditLog() || !$this->getId()) {
-            return $this;
-        }
+        return $this->useEditLog() && !$this->hideEditLog() && $this->getId();
+    }
+
+    /**
+     * The tab content: the rendered log, or the "temporarily unavailable" notice.
+     * Separate from printEditLog() because a page without a form has nowhere to
+     * setInput() it and places the same string itself.
+     *
+     * @return string
+     */
+    protected function renderEditLog()
+    {
+        // The template's escape('insdel') has no default: an unregistered strategy
+        // throws. Registered here, at the render, so every caller is covered and not
+        // only the form one — see registerEditLogEscaper().
+        $this->prepareForEditLog();
 
         // Guard the store access only, and only against \Exception — parseData()
         // and the render stay outside so a code bug (\Error) isn't hidden as an outage.
@@ -1419,14 +1453,10 @@ abstract class BasePage
 
             // Separate guard: a failed report must not cost the notice.
             try {
-                $this->getForm()->setInput(
-                    TableEditLog::ADMIN_TAB_NAME,
-                    $this->getEditLogUnavailableText()
-                );
+                return $this->getEditLogUnavailableText();
             } catch (\Throwable $ignored) {
+                return '';
             }
-
-            return $this;
         }
 
         /** @var TableEditLog $rec */
@@ -1442,20 +1472,36 @@ abstract class BasePage
             (array) $this->useEditLog()
         );
 
-        $content = $this->getTwig()->parse('admin/admin_table_edit_log/form_field', [
+        return $this->getTwig()->parse('admin/admin_table_edit_log/form_field', [
             'records' => $records,
             'admins' => Admins::create(),
             'options' => $options,
         ]);
+    }
 
-        $this->getForm()->setInput(TableEditLog::ADMIN_TAB_NAME, $content);
+    protected function printEditLog()
+    {
+        if (!$this->shouldPrintEditLog()) {
+            return $this;
+        }
+
+        $this->getForm()->setInput(
+            TableEditLog::ADMIN_TAB_NAME,
+            $this->renderEditLog()
+        );
 
         return $this;
     }
 
     /**
-     * Do not paginate an override: the guard below relies on load() fetching
-     * everything, or the chunk loading returns during the render, outside it.
+     * An override must not load chunks during the render: the guard in
+     * renderEditLog() covers load()/count() only, and the iterator's lazy chunk
+     * loading would then happen inside the template, outside it.
+     *
+     * setPageSize() is not that, and is the right answer for a log nothing else
+     * bounds: count() clamps its own result to pageSize, so after the single
+     * loadChunk() count($items) == count() and `loaded` becomes true – the iterator
+     * never asks for a second chunk.
      *
      * @return TableEditLogs
      */
