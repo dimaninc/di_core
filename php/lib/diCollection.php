@@ -1292,8 +1292,10 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
                     } elseif ($val['operator'] == 'between') {
                         if (is_array($val['value']) && count($val['value']) == 2) {
                             $newFilter = [
-                                '$gte' => ArrayHelper::get($val['value'], 0),
-                                '$lte' => ArrayHelper::get($val['value'], 1),
+                                // Values were already tuned to the field type.
+                                // ArrayHelper unwraps BSON objects into arrays.
+                                '$gte' => $val['value'][0],
+                                '$lte' => $val['value'][1],
                             ];
                         } else {
                             throw new \Exception(

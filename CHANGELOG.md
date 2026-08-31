@@ -7,6 +7,20 @@ changes for a consumer that does not turn it on – no migration, no new default
 behaviour – but the admin edit-log machinery grew two public entry points on the
 way, and one of them fixes a latent trap for any future caller.
 
+### Admin date-range defaults
+
+`diAdminFilters` now keeps `date_range` and `date_str_range` values as arrays
+when their boundaries come from `default_value` / `default_value2`. Previously
+the first default string became the entire filter value and PHP 8 raised
+`Cannot access offset of type string on string` while building the range. Scalar
+request input is normalized to the configured boundaries as well. Covered by
+`php/tests/Admin/FiltersDateRangeTest.php`. Rendering Mongo-backed ranges also
+keeps BSON `UTCDateTime` min/max values intact: the generic array helper used to
+coerce a selected date string to the object's type (`stdClass`), after which
+`strtotime()` crashed. The Mongo `between` query builder likewise keeps the
+already typed BSON boundaries intact instead of unwrapping them into
+`['milliseconds' => …]`, which matched no BSON dates.
+
 ### Settings page: an edit log, off by default
 
 The settings were the last admin page without a history: one checkbox there

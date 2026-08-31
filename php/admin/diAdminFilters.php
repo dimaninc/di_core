@@ -1050,11 +1050,16 @@ class diAdminFilters
                         $dt1 = \diDateTime::simpleDateFormat($t1);
                         $dt2 = \diDateTime::simpleDateFormat($t2);
 
+                        // A range is always an array; its defaults are boundary
+                        // values, not the whole filter value.
+                        $value = is_array($value) ? $value : [];
+                        $value[0] = ArrayHelper::get($value, 0, $dt1);
+                        $value[1] = ArrayHelper::get($value, 1, $dt2);
                         $value['timestamp1'] = \diDateTime::timestamp(
-                            ArrayHelper::get($value, 0, $dt1) . ' 00:00:00'
+                            $value[0] . ' 00:00:00'
                         );
                         $value['timestamp2'] = \diDateTime::timestamp(
-                            ArrayHelper::get($value, 1, $dt2) . ' 23:59:59'
+                            $value[1] . ' 23:59:59'
                         );
 
                         break;
@@ -1254,13 +1259,14 @@ class diAdminFilters
                         }
                         $_idx = $_f[1];
                         $default = $_idx == 1 ? $dMin : $dMax;
+                        // ArrayHelper::get() coerces a scalar result to the
+                        // default's type; a BSON UTCDateTime default therefore
+                        // turned a selected date string into stdClass.
+                        $dateValue = $ar['value'][$_idx - 1] ?? $default;
 
                         $sel[$_f] = new \diSelect(
                             "admin_filter[{$field}][{$_idx}][{$_ff}]",
-                            \diDateTime::format(
-                                $tpl,
-                                ArrayHelper::get($ar, ['value', $_idx - 1], $default)
-                            )
+                            \diDateTime::format($tpl, $dateValue)
                         );
                     }
 
@@ -1275,8 +1281,8 @@ class diAdminFilters
                     }
 
                     if ($ar['type'] == 'date_str_range' && ($dMin || $dMax)) {
-                        $dMin = strtotime($dMin ?: '');
-                        $dMax = strtotime($dMax ?: '');
+                        $dMin = $dMin ? \diDateTime::timestamp($dMin) : null;
+                        $dMax = $dMax ? \diDateTime::timestamp($dMax) : null;
                     }
 
                     $y1 = min(
