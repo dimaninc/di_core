@@ -43,7 +43,7 @@ class Configuration extends \diBaseAdminController
     protected function redirectBack()
     {
         return $this->redirectTo(
-            Base::getPageUri('configuration', '', ['saved' => 1])
+            Base::getPageUri(ConfigurationPage::ADMIN_MODULE, '', ['saved' => 1])
         );
     }
 
@@ -190,9 +190,16 @@ class Configuration extends \diBaseAdminController
             : json_encode($value);
     }
 
+    /**
+     * By MODULE, not by table. The gate resolves an admin page from the name it is
+     * given, and this page's table is not fixed: Data\Configuration::setTableName()
+     * renames it under the page, and 'my_settings' then resolves to no page at all –
+     * so the gate would answer "not logged" while the page still shows the tab, and
+     * the journal would stay empty forever without a single error.
+     */
     protected function isEditLogEnabled()
     {
-        return Base::isEditLogEnabledForTable(Cfg::getInstance()->getTableName());
+        return Base::isEditLogEnabledForModule(ConfigurationPage::ADMIN_MODULE);
     }
 
     /**

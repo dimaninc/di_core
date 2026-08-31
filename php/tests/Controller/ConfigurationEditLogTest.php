@@ -7,6 +7,8 @@ use diCore\Controller\Configuration as ConfigurationController;
 use diCore\Data\Configuration as Cfg;
 use PHPUnit\Framework\TestCase;
 
+require_once __DIR__ . '/../Admin/EditLogGatePages.php';
+
 /**
  * Настройки меняют поведение всего сайта одной галкой, и до сих пор были
  * единственной админской страницей без истории правок: откатить нечем, «кто и
@@ -34,7 +36,8 @@ class ConfigurationEditLogTest extends TestCase
             ['site_title' => 'New', 'per_page' => 20, 'show_banners' => 0]
         );
 
-        $probe->runStore(function () {});
+        $probe->runStore(function () {
+        });
 
         $this->assertCount(
             1,
@@ -62,7 +65,8 @@ class ConfigurationEditLogTest extends TestCase
             ['site_title' => 'New']
         );
 
-        $probe->runStore(function () {});
+        $probe->runStore(function () {
+        });
 
         $log = $probe->savedRecords()[0];
 
@@ -86,7 +90,8 @@ class ConfigurationEditLogTest extends TestCase
             ['site_title' => 'Same', 'per_page' => 20]
         );
 
-        $probe->runStore(function () {});
+        $probe->runStore(function () {
+        });
 
         $this->assertSame([], $probe->records);
     }
@@ -102,7 +107,8 @@ class ConfigurationEditLogTest extends TestCase
             ['show_banners' => '0', 'per_page' => 20]
         );
 
-        $probe->runStore(function () {});
+        $probe->runStore(function () {
+        });
 
         $this->assertSame([], $probe->records);
     }
@@ -115,7 +121,8 @@ class ConfigurationEditLogTest extends TestCase
         );
         $probe->editLogEnabled = false;
 
-        $probe->runStore(function () {});
+        $probe->runStore(function () {
+        });
 
         $this->assertSame([], $probe->records);
         $this->assertSame(
@@ -181,6 +188,43 @@ class ConfigurationEditLogTest extends TestCase
         $this->assertSame('unable to store', $caught->getMessage());
         $this->assertSame([], $probe->records);
         $this->assertSame(1, $probe->reads);
+    }
+
+    /**
+     * Гейт спрашивается по МОДУЛЮ, а не по имени таблицы. Проверяется наизнанку:
+     * таблица тут переименована в ту, чьё имя резолвится в страницу с включённым
+     * журналом, – значит вопрос «по таблице» ответил бы true. Настоящий вопрос –
+     * про модуль configuration, у которого useEditLog() по умолчанию false.
+     *
+     * Расхождение не гипотетическое: Data\Configuration::setTableName() публичен,
+     * а обычное переименование резолвится в никуда, то есть журнал молча
+     * выключался бы при живой вкладке.
+     */
+    public function testGateIsAskedByModuleNotByTableName(): void
+    {
+        $cfg = Cfg::getInstance();
+        $originalTable = $cfg->getTableName();
+
+        try {
+            $cfg->setTableName('edit_log_gate_probe_on');
+
+            $probe = (new \ReflectionClass(
+                ConfigurationController::class
+            ))->newInstanceWithoutConstructor();
+
+            $method = new \ReflectionMethod(
+                ConfigurationController::class,
+                'isEditLogEnabled'
+            );
+            $method->setAccessible(true);
+
+            $this->assertFalse(
+                $method->invoke($probe),
+                'ответ обязан прийти от страницы модуля configuration, а не от таблицы'
+            );
+        } finally {
+            $cfg->setTableName($originalTable);
+        }
     }
 
     /**

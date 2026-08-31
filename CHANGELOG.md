@@ -176,11 +176,36 @@ dropped, exactly like a list toggle made from a worker.
 `printEditLog()` (condition + `getForm()->setInput()`) so a page with no id and
 no form can reuse the middle one. Behaviour for every existing page is
 unchanged. The `useEditLog()` gate used by writers outside the form now lives in
-`Admin\Base::isEditLogEnabledForTable()`, shared by `diListController` and the
-settings controller instead of being copied.
+`Admin\Base::isEditLogEnabledForModule()`, shared by `diListController` (through
+the `…ForTable()` wrapper) and the settings controller instead of being copied.
 
-Covered by `php/tests/Controller/ConfigurationEditLogTest.php` and
-`php/tests/Admin/EditLogGateTest.php`.
+Two things the second render path forced out into the open:
+
+- **`BasePage::registerEditLogEscaper()`** — the log template pipes every diff
+  through `escape('insdel')`, and an escaping strategy Twig does not know is a
+  `RuntimeError`, not a fallback. That registration used to happen in
+  `beforeRenderForm()`, i.e. only on the form path; `renderEditLog()` now does it
+  itself. A template with a hard dependency on a runtime registration has to
+  acquire it where it is rendered — the second caller arrives years later, and
+  the failure is a 500 rather than a missing feature.
+- **The gate is asked by MODULE, not by table name.** For an ordinary entity the
+  two coincide, which is why `…ForTable()` still exists. The settings page is the
+  exception: `Data\Configuration::setTableName()` renames its table while the page
+  stays at `/_admin/configuration/`, so a table-name gate resolves to no page,
+  answers "not logged", and leaves the tab rendering an empty journal forever with
+  nothing in any log. Hence `Admin\Page\Configuration::ADMIN_MODULE`.
+
+The settings page renders its tab through `renderEditLogSafely()`. The base
+deliberately guards only the store read so a code bug stays loud, which on a
+record form costs the form — but the settings form lives on the very page the log
+tab is on, and `BasePage::create()` turns the exception into `die($message)` on
+prod. A loud failure there removes the only tool for fixing it, so this page
+degrades to the same notice the outage path shows, and reports through
+`onEditLogUnavailable()`.
+
+Covered by `php/tests/Controller/ConfigurationEditLogTest.php`,
+`php/tests/Admin/EditLogGateTest.php` and
+`php/tests/Admin/EditLogEscaperTest.php`.
 
 ## 0.5.1
 

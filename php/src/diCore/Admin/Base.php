@@ -1304,8 +1304,8 @@ class Base
     /**
      * Edit-log writes made outside the admin form (a list toggle/delete, the
      * settings controller) are gated by the same useEditLog() flag the admin page
-     * already exposes – resolved from the table name, since there is no table→page
-     * registry and modules follow the table naming convention.
+     * already exposes – resolved from the admin MODULE name, since there is no
+     * page registry.
      *
      * Those writers run where the admin Base ($X) is NOT built (over /api/, or from
      * a worker), so the page can't be constructed: its constructor needs Base and
@@ -1317,19 +1317,19 @@ class Base
      * would drift from the first one, and the two writers would then disagree about
      * whether the same table is logged.
      *
-     * @param string $table
+     * @param string $module
      * @return bool
      */
-    public static function isEditLogEnabledForTable($table)
+    public static function isEditLogEnabledForModule($module)
     {
-        if (array_key_exists($table, self::$editLogEnabledCache)) {
-            return self::$editLogEnabledCache[$table];
+        if (array_key_exists($module, self::$editLogEnabledCache)) {
+            return self::$editLogEnabledCache[$module];
         }
 
         $enabled = false;
 
         try {
-            $pageClass = self::getModuleClassName($table);
+            $pageClass = self::getModuleClassName($module);
 
             if (
                 $pageClass &&
@@ -1346,7 +1346,22 @@ class Base
             $enabled = false;
         }
 
-        return self::$editLogEnabledCache[$table] = $enabled;
+        return self::$editLogEnabledCache[$module] = $enabled;
+    }
+
+    /**
+     * A writer that only knows the table asks by it: an ordinary entity's admin
+     * module is named after its table, so the two coincide. A page whose table can
+     * be renamed under it must ask by module instead – see
+     * Controller\Configuration::isEditLogEnabled(), where the table name comes from
+     * Data\Configuration::setTableName() and resolves to no page at all.
+     *
+     * @param string $table
+     * @return bool
+     */
+    public static function isEditLogEnabledForTable($table)
+    {
+        return static::isEditLogEnabledForModule($table);
     }
 
     public function moduleExists($module)

@@ -306,11 +306,27 @@ class EditLogProbeTwig
 {
     public ?array $lastArgs = null;
 
+    private ?\Twig\Environment $engine = null;
+
     public function parse($template, $args = [])
     {
         $this->lastArgs = $args;
 
         return 'rendered:' . $template;
+    }
+
+    /**
+     * renderEditLog() поднимает escaper 'insdel' сам – шаблон без него не
+     * отрисовывается вовсе. Дублю приходится отдавать настоящий Environment: если
+     * заглушить и это, тест перестанет проверять, что зависимость выполнима.
+     */
+    public function getEngine()
+    {
+        if ($this->engine === null) {
+            $this->engine = new \Twig\Environment(new \Twig\Loader\ArrayLoader([]));
+        }
+
+        return $this->engine;
     }
 }
 
