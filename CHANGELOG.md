@@ -1,5 +1,81 @@
 # Changelog
 
+## 0.7.0
+
+Minor: the settings page gets an edit log of its own, off by default. Nothing
+changes for a consumer that does not turn it on – no migration, no new default
+behaviour – but the admin edit-log machinery grew two public entry points on the
+way, and one of them fixes a latent trap for any future caller.
+
+### Settings page: an edit log, off by default
+
+The settings were the last admin page without a history: one checkbox there
+changes the behaviour of the whole site (record lifetimes, feature toggles,
+prices), and there was nothing to roll back to and no way to tell who switched
+it off, or when. A project turns it on the same way as anywhere else – by
+overriding `useEditLog()` on its `Admin\Page\Configuration`. The default stays
+`false`, so nothing changes for existing consumers, and no migration is needed:
+the `admin_table_edit_log` table already exists.
+
+- **`Controller\Configuration`** takes a snapshot of the settings before the
+  action and after it, and stores the difference as ONE `AdminTableEditLog`
+  record per save (`storeAction()`) or per deleted picture (`delPicAction()`).
+  Nothing changed means no record. The setting keys take the place of field
+  names, so the existing diff rendering works unchanged.
+- **`Admin\Page\Configuration::EDIT_LOG_TARGET_ID`** – settings are not a row,
+  and `Model::validate()` demands a non-empty `target_id` (`0` counts as empty),
+  so the whole table is logged as one logical record. `target_table` comes from
+  the new `Data\Configuration::getTableName()`, never from a literal.
+- **The log tab** is appended after the settings groups, so the first tab is
+  still a settings one.
+
+Only settings the page actually shows are logged (they have a `title` and no
+`hidden` flag) – what is not editable there cannot have been edited. The
+snapshot always re-reads the database: `store()` refreshes the in-memory data
+for unchecked checkboxes only, so reading `Cfg::getData()` alone would compare
+the new state against itself for everything else.
+
+The whole write is best-effort (`catch (\Throwable)`): a journal has no right to
+break saving the settings. Note that this also covers the CLI case, where there
+is no admin – `admin_id` is then `0`, `validate()` refuses the record and it is
+dropped, exactly like a list toggle made from a worker.
+
+`BasePage::printEditLog()` is split into `shouldPrintEditLog()` (the condition),
+`renderEditLog()` (the content, including the degradation notice) and
+`printEditLog()` (condition + `getForm()->setInput()`) so a page with no id and
+no form can reuse the middle one. Behaviour for every existing page is
+unchanged. The `useEditLog()` gate used by writers outside the form now lives in
+`Admin\Base::isEditLogEnabledForModule()`, shared by `diListController` (through
+the `…ForTable()` wrapper) and the settings controller instead of being copied.
+
+Two things the second render path forced out into the open:
+
+- **`BasePage::registerEditLogEscaper()`** — the log template pipes every diff
+  through `escape('insdel')`, and an escaping strategy Twig does not know is a
+  `RuntimeError`, not a fallback. That registration used to happen in
+  `beforeRenderForm()`, i.e. only on the form path; `renderEditLog()` now does it
+  itself. A template with a hard dependency on a runtime registration has to
+  acquire it where it is rendered — the second caller arrives years later, and
+  the failure is a 500 rather than a missing feature.
+- **The gate is asked by MODULE, not by table name.** For an ordinary entity the
+  two coincide, which is why `…ForTable()` still exists. The settings page is the
+  exception: `Data\Configuration::setTableName()` renames its table while the page
+  stays at `/_admin/configuration/`, so a table-name gate resolves to no page,
+  answers "not logged", and leaves the tab rendering an empty journal forever with
+  nothing in any log. Hence `Admin\Page\Configuration::ADMIN_MODULE`.
+
+The settings page renders its tab through `renderEditLogSafely()`. The base
+deliberately guards only the store read so a code bug stays loud, which on a
+record form costs the form — but the settings form lives on the very page the log
+tab is on, and `BasePage::create()` turns the exception into `die($message)` on
+prod. A loud failure there removes the only tool for fixing it, so this page
+degrades to the same notice the outage path shows, and reports through
+`onEditLogUnavailable()`.
+
+Covered by `php/tests/Controller/ConfigurationEditLogTest.php`,
+`php/tests/Admin/EditLogGateTest.php` and
+`php/tests/Admin/EditLogEscaperTest.php`.
+
 ## 0.6.0
 
 Minor, not patch: `MerchantApi` now verifies the gateway's TLS certificate, and
@@ -137,75 +213,6 @@ therefore only changes the answer — `ok=false`/400, or, for a `SpamException`,
 `ok=true` with the email skipped — and leaves the feedback row stored. The
 client normally resends, which stores it a second time, so an override that can
 fail owns its own cleanup or idempotency.
-
-### Settings page: an edit log, off by default
-
-The settings were the last admin page without a history: one checkbox there
-changes the behaviour of the whole site (record lifetimes, feature toggles,
-prices), and there was nothing to roll back to and no way to tell who switched
-it off, or when. A project turns it on the same way as anywhere else – by
-overriding `useEditLog()` on its `Admin\Page\Configuration`. The default stays
-`false`, so nothing changes for existing consumers, and no migration is needed:
-the `admin_table_edit_log` table already exists.
-
-- **`Controller\Configuration`** takes a snapshot of the settings before the
-  action and after it, and stores the difference as ONE `AdminTableEditLog`
-  record per save (`storeAction()`) or per deleted picture (`delPicAction()`).
-  Nothing changed means no record. The setting keys take the place of field
-  names, so the existing diff rendering works unchanged.
-- **`Admin\Page\Configuration::EDIT_LOG_TARGET_ID`** – settings are not a row,
-  and `Model::validate()` demands a non-empty `target_id` (`0` counts as empty),
-  so the whole table is logged as one logical record. `target_table` comes from
-  the new `Data\Configuration::getTableName()`, never from a literal.
-- **The log tab** is appended after the settings groups, so the first tab is
-  still a settings one.
-
-Only settings the page actually shows are logged (they have a `title` and no
-`hidden` flag) – what is not editable there cannot have been edited. The
-snapshot always re-reads the database: `store()` refreshes the in-memory data
-for unchecked checkboxes only, so reading `Cfg::getData()` alone would compare
-the new state against itself for everything else.
-
-The whole write is best-effort (`catch (\Throwable)`): a journal has no right to
-break saving the settings. Note that this also covers the CLI case, where there
-is no admin – `admin_id` is then `0`, `validate()` refuses the record and it is
-dropped, exactly like a list toggle made from a worker.
-
-`BasePage::printEditLog()` is split into `shouldPrintEditLog()` (the condition),
-`renderEditLog()` (the content, including the degradation notice) and
-`printEditLog()` (condition + `getForm()->setInput()`) so a page with no id and
-no form can reuse the middle one. Behaviour for every existing page is
-unchanged. The `useEditLog()` gate used by writers outside the form now lives in
-`Admin\Base::isEditLogEnabledForModule()`, shared by `diListController` (through
-the `…ForTable()` wrapper) and the settings controller instead of being copied.
-
-Two things the second render path forced out into the open:
-
-- **`BasePage::registerEditLogEscaper()`** — the log template pipes every diff
-  through `escape('insdel')`, and an escaping strategy Twig does not know is a
-  `RuntimeError`, not a fallback. That registration used to happen in
-  `beforeRenderForm()`, i.e. only on the form path; `renderEditLog()` now does it
-  itself. A template with a hard dependency on a runtime registration has to
-  acquire it where it is rendered — the second caller arrives years later, and
-  the failure is a 500 rather than a missing feature.
-- **The gate is asked by MODULE, not by table name.** For an ordinary entity the
-  two coincide, which is why `…ForTable()` still exists. The settings page is the
-  exception: `Data\Configuration::setTableName()` renames its table while the page
-  stays at `/_admin/configuration/`, so a table-name gate resolves to no page,
-  answers "not logged", and leaves the tab rendering an empty journal forever with
-  nothing in any log. Hence `Admin\Page\Configuration::ADMIN_MODULE`.
-
-The settings page renders its tab through `renderEditLogSafely()`. The base
-deliberately guards only the store read so a code bug stays loud, which on a
-record form costs the form — but the settings form lives on the very page the log
-tab is on, and `BasePage::create()` turns the exception into `die($message)` on
-prod. A loud failure there removes the only tool for fixing it, so this page
-degrades to the same notice the outage path shows, and reports through
-`onEditLogUnavailable()`.
-
-Covered by `php/tests/Controller/ConfigurationEditLogTest.php`,
-`php/tests/Admin/EditLogGateTest.php` and
-`php/tests/Admin/EditLogEscaperTest.php`.
 
 ## 0.5.1
 
