@@ -6,6 +6,8 @@ use diCore\Admin\Base;
 use diCore\Admin\Page\Configuration as ConfigurationPage;
 use diCore\Data\Configuration as Cfg;
 use diCore\Entity\AdminTableEditLog\Model as EditLog;
+use diCore\Helper\StringHelper;
+use diCore\Tool\Logger;
 
 class Configuration extends \diBaseAdminController
 {
@@ -82,6 +84,8 @@ class Configuration extends \diBaseAdminController
         try {
             return $this->readConfigurationValues();
         } catch (\Throwable $e) {
+            $this->onEditLogFailure($e);
+
             return null;
         }
     }
@@ -173,7 +177,43 @@ class Configuration extends \diBaseAdminController
                 ->setNewData(serialize($new))
                 ->save();
         } catch (\Throwable $e) {
-            // the log must never break the settings being saved
+            // the log must never break the settings being saved — but it must not
+            // fail silently either: an unreachable store looks exactly like
+            // "nobody changed anything", which is the one answer this log exists
+            // to disprove.
+            $this->onEditLogFailure($e);
+        }
+
+        return $this;
+    }
+
+    /**
+     * The settings log could not be written. Reported the same way
+     * BasePage::onEditLogUnavailable() reports the reading side, so a project wires
+     * its monitoring in one place. Best-effort itself: an unwritable log dir makes
+     * Logger raise, and that must not reach the settings being saved.
+     *
+     * @return $this
+     */
+    protected function onEditLogFailure(\Throwable $e)
+    {
+        try {
+            $text =
+                'Settings edit log failed: ' .
+                get_class($e) .
+                ': ' .
+                mb_substr(
+                    StringHelper::scrubUriCredentials($e->getMessage()),
+                    0,
+                    300
+                );
+
+            Logger::getInstance()->log($text, 'admin_edit_log');
+
+            if (\diRequest::isCli() || !ini_get('display_errors')) {
+                trigger_error($text, E_USER_WARNING);
+            }
+        } catch (\Throwable $ignored) {
         }
 
         return $this;

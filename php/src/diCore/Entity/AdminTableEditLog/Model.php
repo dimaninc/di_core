@@ -175,9 +175,30 @@ class Model extends \diModel
         return static::$lang[$lang]['admin_tab_title'];
     }
 
+    /**
+     * Whether target_table/target_id really point at a row. A record written for a
+     * whole table at once (the settings log — Admin\Page\Configuration writes a
+     * synthetic EDIT_LOG_TARGET_ID) has no row, and a table with no model class
+     * cannot be resolved into one either. Same question createForTable() answers by
+     * throwing, asked before the throw.
+     *
+     * @return bool
+     */
+    public function hasTargetModel()
+    {
+        $type = \diTypes::getNameByTable($this->getTargetTable());
+
+        return $type && \diModel::existsFor($type);
+    }
+
     public function getTargetAdminHref()
     {
-        return "/_admin/{$this->getTargetTable()}/form/{$this->getTargetId()}/";
+        // No row means no form to open: for the settings log /_admin/configuration/form/1/
+        // is a page that dies (Admin\Page\Configuration::renderForm() throws), so the
+        // link goes to the module itself.
+        return $this->hasTargetModel()
+            ? "/_admin/{$this->getTargetTable()}/form/{$this->getTargetId()}/"
+            : "/_admin/{$this->getTargetTable()}/";
     }
 
     public function setUseAllFields($state)
@@ -481,11 +502,17 @@ class Model extends \diModel
     public function getTarget()
     {
         if (!$this->target) {
-            $this->target = \diModel::createForTable(
-                $this->getTargetTable(),
-                $this->getTargetId(),
-                'id'
-            );
+            // An empty model bound to the table, NOT createForTableNoStrict(): the
+            // no-strict branch would load the row by id, and a synthetic id (the
+            // settings log) then resolves to whatever real row happens to carry it.
+            // appearanceForAdmin() prints '---' for the empty one.
+            $this->target = $this->hasTargetModel()
+                ? \diModel::createForTable(
+                    $this->getTargetTable(),
+                    $this->getTargetId(),
+                    'id'
+                )
+                : new \diModel(null, $this->getTargetTable());
         }
 
         return $this->target;

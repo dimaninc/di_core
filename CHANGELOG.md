@@ -1,11 +1,9 @@
 # Changelog
 
-## 0.7.0
+## 0.7.1
 
-Minor: the settings page gets an edit log of its own, off by default. Nothing
-changes for a consumer that does not turn it on – no migration, no new default
-behaviour – but the admin edit-log machinery grew two public entry points on the
-way, and one of them fixes a latent trap for any future caller.
+Patch: fixes on top of 0.7.0, plus the admin date-range work that landed after
+the tag. Nothing to migrate, nothing to turn on.
 
 ### Admin date-range defaults
 
@@ -20,6 +18,56 @@ coerce a selected date string to the object's type (`stdClass`), after which
 `strtotime()` crashed. The Mongo `between` query builder likewise keeps the
 already typed BSON boundaries intact instead of unwrapping them into
 `['milliseconds' => …]`, which matched no BSON dates.
+
+### Settings edit log: a record that points at a table, not a row
+
+The settings record is the first one whose `target_id` is synthetic, and
+everything resolving a target assumed a row. `Model::getTarget()` went through
+`createForTable()`, which throws for a table with no model class, and
+`Admin\Page\AdminTableEditLog::renderForm()` calls it unguarded – so opening a
+settings record in the log module killed the page. The new
+`Model::hasTargetModel()` asks that question before the throw; `getTarget()` then
+returns an empty `\diModel` bound to the table (rendered as `---`), and
+`getTargetAdminHref()` points at the module instead of a `/form/<id>/` that does
+not exist. Deliberately NOT `createForTableNoStrict()`: that branch loads the row
+by id, and a synthetic id resolves to whatever real row happens to carry it – a
+wrong target reads far worse than none.
+
+**Consumers rendering the log themselves must ask the same question.** A project
+template that prints `target_table#target_id` has to gate the id part on
+`hasTargetModel()`, and it must be deployed together with this version: on an
+older library the call falls into `diModel::__call` (`has('target_model')`) and
+silently answers `false` for every record.
+
+### Settings edit log: a broken journal now says so
+
+Both `catch (\Throwable)` blocks in `Controller\Configuration` were empty. The
+journal still has no right to break saving the settings, but best-effort is not
+the same as silent: an unreachable store looked exactly like "nobody changed
+anything", which is the one answer this log exists to disprove. Both now report
+through the new overridable `onEditLogFailure()` – file channel `admin_edit_log`
+plus `E_USER_WARNING`, the same way `BasePage::onEditLogUnavailable()` reports the
+reading side, and itself wrapped so an unwritable log directory cannot reach the
+save.
+
+### A library test must not assert what a consumer decides
+
+`ConfigurationEditLogTest::testGateIsAskedByModuleNotByTableName` compared the
+gate's answer for the `configuration` module against a literal `false`. That
+holds only while no project has turned the settings log on – and consumers run
+`php/tests` under their own bootstrap, so the first project that accepts the
+invitation turns this suite red. It now asserts the answer equals the module's
+own, with the renamed table pointing at a probe page that answers the opposite.
+
+Covered by `php/tests/Entity/AdminTableEditLog/SyntheticTargetTest.php` and
+`php/tests/Controller/ConfigurationEditLogTest.php`.
+
+## 0.7.0
+
+Minor: the settings page gets an edit log of its own, off by default. Nothing
+changes for a consumer that does not turn it on – no migration, no new default
+behaviour – but the admin edit-log machinery grew two public entry points on the
+way, and one of them fixes a latent trap for any future caller.
 
 ### Settings page: an edit log, off by default
 

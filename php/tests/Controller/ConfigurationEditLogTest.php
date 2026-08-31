@@ -2,6 +2,7 @@
 
 namespace diCore\Tests\Controller;
 
+use diCore\Admin\Base;
 use diCore\Admin\Page\Configuration as ConfigurationPage;
 use diCore\Controller\Configuration as ConfigurationController;
 use diCore\Data\Configuration as Cfg;
@@ -149,7 +150,12 @@ class ConfigurationEditLogTest extends TestCase
         $this->assertSame(2, $probe->reads);
     }
 
-    public function testBrokenLogDoesNotBreakSavingTheSettings(): void
+    /**
+     * Сломанный журнал не ломает сохранение настроек – но и не молчит: пустой
+     * catch превратил бы недоступное хранилище в «никто ничего не менял», то есть
+     * ровно в тот ответ, который этот журнал и заведён опровергать.
+     */
+    public function testBrokenLogDoesNotBreakSavingTheSettingsButIsReported(): void
     {
         $probe = ConfigurationControllerProbe::make(
             ['site_title' => 'Old'],
@@ -164,6 +170,20 @@ class ConfigurationEditLogTest extends TestCase
 
         $this->assertTrue($stored);
         $this->assertFalse($probe->records[0]->saved);
+        $this->assertCount(1, $probe->failures, 'отказ записи обязан быть заявлен');
+    }
+
+    /** Снимок «до» ходит в базу, и его отказ – такой же заявляемый отказ журнала */
+    public function testAFailingSnapshotIsReportedToo(): void
+    {
+        $probe = ConfigurationControllerProbe::make([], []);
+        $probe->readThrows = true;
+
+        $probe->runStore(function () {
+        });
+
+        $this->assertSame([], $probe->records, 'без снимка «до» писать нечего');
+        $this->assertCount(1, $probe->failures);
     }
 
     /** А вот упавшее сохранение настроек глушить нельзя – и логировать нечего */
@@ -192,9 +212,14 @@ class ConfigurationEditLogTest extends TestCase
 
     /**
      * Гейт спрашивается по МОДУЛЮ, а не по имени таблицы. Проверяется наизнанку:
-     * таблица тут переименована в ту, чьё имя резолвится в страницу с включённым
-     * журналом, – значит вопрос «по таблице» ответил бы true. Настоящий вопрос –
-     * про модуль configuration, у которого useEditLog() по умолчанию false.
+     * таблица переименовывается в ту, чья страница-стенд отвечает ПРОТИВОПОЛОЖНОЕ
+     * модулю configuration, – значит вопрос «по таблице» дал бы другой ответ.
+     *
+     * Ответ модуля не зашит литералом намеренно: `useEditLog()` у страницы
+     * настроек в библиотеке false, а проект-хозяин её наследует и включает журнал
+     * себе (1romantic так и делает). Тест библиотеки, знающий этот ответ наизусть,
+     * краснеет у первого же такого проекта, хотя проверяет он не значение флага, а
+     * то, откуда флаг взяли.
      *
      * Расхождение не гипотетическое: Data\Configuration::setTableName() публичен,
      * а обычное переименование резолвится в никуда, то есть журнал молча
@@ -204,9 +229,14 @@ class ConfigurationEditLogTest extends TestCase
     {
         $cfg = Cfg::getInstance();
         $originalTable = $cfg->getTableName();
+        $moduleAnswer = Base::isEditLogEnabledForModule(
+            ConfigurationPage::ADMIN_MODULE
+        );
 
         try {
-            $cfg->setTableName('edit_log_gate_probe_on');
+            $cfg->setTableName(
+                $moduleAnswer ? 'edit_log_gate_probe_off' : 'edit_log_gate_probe_on'
+            );
 
             $probe = (new \ReflectionClass(
                 ConfigurationController::class
@@ -218,7 +248,8 @@ class ConfigurationEditLogTest extends TestCase
             );
             $method->setAccessible(true);
 
-            $this->assertFalse(
+            $this->assertSame(
+                $moduleAnswer,
                 $method->invoke($probe),
                 'ответ обязан прийти от страницы модуля configuration, а не от таблицы'
             );
@@ -266,7 +297,10 @@ class ConfigurationControllerProbe extends ConfigurationController
     public $records = [];
     public $editLogEnabled = true;
     public $saveThrows = false;
+    public $readThrows = false;
     public $adminId = 7;
+    /** @var \Throwable[] */
+    public $failures = [];
 
     public static function make(array $before, array $after): self
     {
@@ -304,7 +338,19 @@ class ConfigurationControllerProbe extends ConfigurationController
     {
         $this->reads++;
 
+        if ($this->readThrows) {
+            throw new \Exception('unable to read the settings');
+        }
+
         return array_shift($this->snapshots);
+    }
+
+    // сам отчёт пишет в файловый лог и дёргает trigger_error – в тесте перехватываем
+    protected function onEditLogFailure(\Throwable $e)
+    {
+        $this->failures[] = $e;
+
+        return $this;
     }
 
     protected function isEditLogEnabled()
