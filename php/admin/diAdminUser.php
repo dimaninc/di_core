@@ -16,18 +16,9 @@ class diAdminUser extends diAuth
 
     const SESSION_USER_ID_FIELD = 'admin_id';
 
-    /** @var $this */
-    protected static $instance2;
-    // todo: investigate why this was happening
-
-    public static function i()
-    {
-        if (!static::$instance2) {
-            static::$instance2 = static::create();
-        }
-
-        return static::$instance2;
-    }
+    // Отдельного хранилища экземпляра здесь больше нет: базовый Auth держит
+    // их по классу авторизации, поэтому админская и сайтовая не подменяют
+    // друг друга и diAdminUser::i() отдаёт объект, созданный initAdmin().
 
     /**
      * @return \diCore\Entity\Admin\Model

@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.7.2
+
+Patch: the auth singleton stops being shared between the site and the admin
+panel. Nothing to migrate, nothing to turn on.
+
+### One auth instance per auth class, not one per process
+
+`diCore\Tool\Auth` kept its instance in a single `protected static $instance`.
+A static property is one storage for the whole hierarchy, and the hierarchy
+holds two authentications at once: the site one (this class and its project
+child) and the admin one (`diAdminUser`, whose `USER_MODEL_TYPE` is `admin`).
+Whichever was constructed last won, so every admin entry point —
+`diBaseController::initAdmin()`, `diCore\Admin\Base`, `MigrationsManager` —
+replaced `Auth::i()` for the rest of the request, and `Auth::i()->getUserModel()`
+started answering with an `Admin` model. Any user-only getter on it then died in
+`diModel::__call`; the consuming project hit this in an admin CLI worker, where
+the crash is unconditional (`… invalid method Entity\Admin\Model::is/…`).
+
+Instances now live in a private map keyed by the resolved child class, so
+`diCore\Tool\Auth::i()`, `diAuth::i()` and a project `Auth::i()` still share one
+object while `diAdminUser::i()` keeps its own. That also explains and removes
+`diAdminUser::$instance2` (`// todo: investigate why this was happening`): it was
+a workaround for the same collision, and with the map `diAdminUser::i()` returns
+the object `initAdmin()` already built instead of running a second full
+authentication.
+
+**Consequences for consumers.** `Auth::i()` inside an admin request now returns
+the *site* user's auth, which is what its type says — code that (knowingly or
+not) relied on it answering with the admin, e.g. an `isSuper()` check reached
+from an admin page, has to ask `diAdminUser::i()` explicitly. And the
+`protected static $instance` field is gone: a project subclass that reads or
+writes it (typically its own `i()` override, or a redeclaration added to work
+around this very collision) must drop that code and use the base `i()`.
+
 ## 0.7.1
 
 Patch: fixes on top of 0.7.0, plus the admin date-range work that landed after

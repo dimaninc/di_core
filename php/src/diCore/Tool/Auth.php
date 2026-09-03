@@ -70,8 +70,31 @@ class Auth
      */
     const LOOK_FOR_HEADERS_IN_GET_PARAMS = true;
 
-    /** @var Auth */
-    protected static $instance;
+    /**
+     * Экземпляры по конкретному классу авторизации.
+     *
+     * Static-свойство одно на всю иерархию, а классов авторизации в одном
+     * процессе два: сайтовая (наследник этого класса) и админская
+     * (diAdminUser с USER_MODEL_TYPE = admin). С общим полем побеждал тот,
+     * кого создали последним, — админский воркер из initAdmin() подменял
+     * собой Auth::i(), и getUserModel() отдавал модель админа вместо модели
+     * пользователя. Ключ — разрешённый дочерний класс, поэтому
+     * diCore\Tool\Auth::i() и Auth::i() проекта остаются одним объектом.
+     *
+     * @var static[]
+     */
+    private static $instances = [];
+
+    /**
+     * static::class => разрешённый дочерний класс. getChildClass() перебирает
+     * пространства имён с class_exists на каждый вызов i(), а вызывают его
+     * часто. BasicCreate::getClass() для этого не годится: его кэш общий на
+     * всю иерархию и первый же вызов зафиксировал бы один класс для обеих
+     * авторизаций.
+     *
+     * @var string[]
+     */
+    private static $resolvedClasses = [];
 
     /** @var User */
     private $user;
@@ -106,7 +129,7 @@ class Auth
             ->storeCookies()
             ->redirectIfNeeded();
 
-        static::$instance = $this;
+        self::$instances[self::instanceKey(static::class)] = $this;
     }
 
     public static function getSuperUserIds()
@@ -127,11 +150,32 @@ class Auth
      */
     public static function i()
     {
-        if (!static::$instance) {
-            static::$instance = static::create();
+        $key = self::instanceKey(static::class);
+
+        if (empty(self::$instances[$key])) {
+            // Конструктор регистрируется сам, но по классу созданного
+            // объекта — присваиваем и здесь, чтобы ключ вызова тоже вёл
+            // на него, даже если разрешение класса разойдётся с ним.
+            self::$instances[$key] = static::create();
         }
 
-        return static::$instance;
+        return self::$instances[$key];
+    }
+
+    /**
+     * Ключ экземпляра: разрешённый дочерний класс в нижнем регистре
+     * (getChildClass() собирает имя через camelize и может вернуть его в
+     * другом регистре, а ключи массива регистрозависимы).
+     */
+    private static function instanceKey(string $class): string
+    {
+        if (!isset(self::$resolvedClasses[$class])) {
+            self::$resolvedClasses[$class] = strtolower(
+                \diLib::getChildClass($class)
+            );
+        }
+
+        return self::$resolvedClasses[$class];
     }
 
     public static function isFirstVisit()
