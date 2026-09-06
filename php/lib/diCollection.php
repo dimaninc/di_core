@@ -804,7 +804,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         $value = isset($arguments[0]) ? $arguments[0] : null;
         $operator = isset($arguments[1]) ? $arguments[1] : null;
 
-        list($method, $field) = $this->detectMethod($fullMethod);
+        [$method, $field] = $this->detectMethod($fullMethod);
         /** @var \diModel $modelClass */
         $modelClass = static::getModelClass();
         $field = $modelClass::normalizeFieldName($field);
@@ -888,10 +888,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
     public function getFirstItem()
     {
         if (static::LITE_FIRST_ITEM_GETTER) {
-            $this->setPageSize(1)
-                ->setPageNumber(1)
-                ->rewind()
-                ->valid();
+            $this->setPageSize(1)->setPageNumber(1)->rewind()->valid();
 
             $model = $this->current();
             $this->count = $model->exists() ? 1 : 0;
@@ -900,10 +897,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
         }
 
         if ($this->count()) {
-            $this->setPageSize(1)
-                ->setPageNumber(1)
-                ->rewind()
-                ->valid();
+            $this->setPageSize(1)->setPageNumber(1)->rewind()->valid();
 
             return $this->current();
         }
@@ -924,9 +918,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
     public function getRandomItemsArray($count)
     {
         if (!$this->isLoaded()) {
-            $this->setPageSize($this->count())
-                ->setPageNumber(1)
-                ->loadChunk();
+            $this->setPageSize($this->count())->setPageNumber(1)->loadChunk();
         }
 
         if ($count >= $this->count()) {
@@ -1082,7 +1074,7 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
 
     public function addItem($item)
     {
-        if (!$item instanceof \diModel) {
+        if (!($item instanceof \diModel)) {
             $item = $this->getNewItem($item);
         }
 
@@ -2265,7 +2257,10 @@ abstract class diCollection implements \Iterator, \Countable, \ArrayAccess
 
         foreach ($expressionsAr as $k => $v) {
             if ($options['escapeField']) {
-                $ar[] = $this->getDb()->escapeFieldValue($k, $v);
+                $ar[] = $this->getDb()->escapeFieldValue(
+                    $this->addAliasToField($k),
+                    $v
+                );
             } else {
                 $ar[] = "$k = {$this->getDb()->escapeValue($v)}";
             }
