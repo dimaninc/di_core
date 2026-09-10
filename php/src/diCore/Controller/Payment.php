@@ -555,6 +555,19 @@ class Payment extends \diBaseController
             return CloudPayments::okResponse();
         }
 
+        // Холд — третий исход, а не разновидность двух остальных. Пометив его
+        // оплатой, мы отдадим товар за деньги, которые разблокируются через
+        // неделю; пометив отказом — запишем мёртвой ещё живую попытку.
+        if (CloudPayments::isHoldStatus(ArrayHelper::get($params, 'Status'))) {
+            CloudPayments::log(
+                'Payment is held, not captured (draft #' .
+                    (string) $this->getDraft()->getId() .
+                    '); nothing to do until it is confirmed'
+            );
+
+            return CloudPayments::okResponse();
+        }
+
         if ($this->isCloudPaymentsSuccessNotification($params, $type)) {
             $this->checkCloudPaymentsAmount($params);
 
@@ -566,9 +579,18 @@ class Payment extends \diBaseController
             // is actually applicable. createReceipt() swallows a failed save()
             // and returns ok=false, so answering 0 here would drop the
             // notification for good: draft unpaid, goods undelivered, nothing
-            // to replay. A retry is safe because createReceipt() is idempotent
-            // — it reuses the receipt found by draft_id, and postProcess() runs
-            // only for a newly created one.
+            // to replay.
+            //
+            // A retry cannot double-charge: createReceipt() reuses the receipt
+            // it finds by draft_id, and postProcess() runs only for a newly
+            // created one. But it does NOT finish an interrupted job either —
+            // and that is the important half. postProcess() sits inside the
+            // same try as save(), so if IT throws, the receipt already exists:
+            // the retry finds it, skips postProcess() and answers ok, leaving
+            // the card unmarked and the partner unpaid with no further
+            // attempts. The reason is in the payment log ("Error while creating
+            // receipt"), and fixing it properly means changing that shared
+            // method for all five gateways — its own change, not this one.
             return empty($result['ok'])
                 ? CloudPayments::retryResponse()
                 : CloudPayments::okResponse();

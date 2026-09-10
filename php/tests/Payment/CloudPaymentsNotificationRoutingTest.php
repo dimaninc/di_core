@@ -30,7 +30,25 @@ class CloudPaymentsNotificationRoutingTest extends TestCase
     public function testPayAddressWithMatchingStatusIsAPayment(): void
     {
         $this->assertTrue($this->decide(['Status' => 'Completed'], 'pay'));
-        $this->assertTrue($this->decide(['Status' => 'Authorized'], 'pay'));
+    }
+
+    /**
+     * `Authorized` — это ХОЛД двухстадийной схемы: сумма заблокирована на карте
+     * на срок до недели и списывается отдельным подтверждением, которого мы не
+     * отправляем. Оплатой это считать нельзя (отдадим товар за деньги, которые
+     * вернутся плательщику), отказом тоже (попытка ещё жива). Схема задаётся в
+     * кабинете на весь сайт, так что прийти такое уведомление может без единой
+     * правки кода.
+     */
+    public function testHoldIsNeitherPaymentNorFailure(): void
+    {
+        $this->assertTrue(Helper::isHoldStatus('Authorized'));
+        $this->assertFalse(Helper::isPaidStatus('Authorized'));
+
+        $this->assertFalse(
+            $this->decide(['Status' => 'Authorized'], 'pay'),
+            'холд не должен доходить до создания квитанции'
+        );
     }
 
     /**
@@ -74,7 +92,7 @@ class CloudPaymentsNotificationRoutingTest extends TestCase
     {
         return [
             'оплачено' => ['Completed', true],
-            'заблокировано' => ['Authorized', true],
+            'только заблокировано' => ['Authorized', false],
             'отказ' => ['Declined', false],
             'неизвестный статус' => ['Whatever', false],
             'пустой статус' => ['', false],

@@ -112,7 +112,6 @@ class CloudPaymentsHelperTest extends TestCase
     public function testPaidStatuses(): void
     {
         $this->assertTrue(Helper::isPaidStatus('Completed'));
-        $this->assertTrue(Helper::isPaidStatus('Authorized'));
         $this->assertFalse(Helper::isPaidStatus('Declined'));
         $this->assertFalse(Helper::isPaidStatus(''));
         $this->assertFalse(Helper::isPaidStatus(null));

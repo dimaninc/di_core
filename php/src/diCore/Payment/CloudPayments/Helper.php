@@ -25,8 +25,26 @@ class Helper extends BaseHelper
     /** Generous ceiling for the invoice URL; the real ones are ~45 chars. */
     const ORDER_URL_MAX_LEN = 512;
 
-    /** Notification `Status` values that mean the money was taken. */
-    const PAID_STATUSES = ['Completed', 'Authorized'];
+    /**
+     * Notification `Status` values that mean the money was actually TAKEN.
+     *
+     * `Completed` only. `Authorized` is deliberately absent: it is the hold of
+     * the two-stage scheme — the sum is blocked on the card for up to seven
+     * days and captured by a separate confirmation, which nothing here sends.
+     * Treating it as payment would issue a receipt, punch a fiscal cheque,
+     * deliver the goods and pay the partner for money that unblocks a week
+     * later. The scheme is a setting of the SITE in the gateway's cabinet, so
+     * this is the same class of risk as TestMode. Same call the T-Bank branch
+     * of this controller makes (`CONFIRMED` only, never `AUTHORIZED`).
+     */
+    const PAID_STATUSES = ['Completed'];
+
+    /**
+     * Statuses that are neither a payment nor a refusal: the money is held,
+     * the attempt is still alive. Recording a failure for these would be as
+     * wrong as recording a payment — it would label a live payment dead.
+     */
+    const HOLD_STATUSES = ['Authorized'];
 
     /** @var MerchantApi */
     protected $api;
@@ -337,6 +355,12 @@ class Helper extends BaseHelper
         return in_array((string) $status, static::PAID_STATUSES, true);
     }
 
+    /** Whether the sum is merely held, awaiting a capture we never send. */
+    public static function isHoldStatus($status)
+    {
+        return in_array((string) $status, static::HOLD_STATUSES, true);
+    }
+
     public static function isTestMode(array $params)
     {
         return in_array($params['TestMode'] ?? null, [1, '1', true], true);
@@ -362,16 +386,29 @@ class Helper extends BaseHelper
 
     public function success(callable $successCallback)
     {
-        static::log('Success redirect: ' . print_r($_GET, true));
+        static::logRedirect('Success');
 
         return $successCallback($this);
     }
 
     public function fail(callable $failCallback)
     {
-        static::log('Fail redirect: ' . print_r($_GET, true));
+        static::logRedirect('Fail');
 
         return $failCallback($this);
+    }
+
+    /**
+     * Оба адреса возврата неаутентифицированы, и query-строку в них выбирает
+     * тот, кто открыл ссылку. То есть это ровно тот же недоверенный ввод, ради
+     * которого в этом классе живёт `sanitizeForLog()`, — просто он до сих пор
+     * применялся к телу уведомления, которое как раз подписано.
+     */
+    protected static function logRedirect(string $what)
+    {
+        static::log(
+            $what . ' redirect: ' . static::sanitizeForLog(print_r($_GET, true))
+        );
     }
 
     /**

@@ -41,6 +41,44 @@ class SystemRegistryTest extends TestCase
         System::cloud_payments,
     ];
 
+    /**
+     * Четвёртое место — обработчик колбэков, и связи с именем системы у него
+     * нет НИКАКОЙ: `robokassa` обслуживает `roboAction`, `yandex_kassa` —
+     * `yandexAction`, `crypto_cloud` — `cryptoCloudAction`. Поэтому карта
+     * выписана руками: она и есть та связь, которой в коде не существует.
+     */
+    private const HANDLERS = [
+        System::robokassa => 'roboAction',
+        System::yandex_kassa => 'yandexAction',
+        System::tinkoff => 'tinkoffAction',
+        System::mixplat => 'mixplatAction',
+        System::paypal => 'paypalAction',
+        System::crypto_cloud => 'cryptoCloudAction',
+        System::cloud_payments => 'cloudPaymentsAction',
+    ];
+
+    public function testEveryWiredSystemHasACallbackHandler(): void
+    {
+        foreach (self::WIRED as $systemId) {
+            $this->assertArrayHasKey(
+                $systemId,
+                self::HANDLERS,
+                'Не назван обработчик колбэков для ' . System::name($systemId)
+            );
+
+            $this->assertTrue(
+                method_exists(
+                    \diCore\Controller\Payment::class,
+                    self::HANDLERS[$systemId]
+                ),
+                'Нет метода ' .
+                    self::HANDLERS[$systemId] .
+                    ' для ' .
+                    System::name($systemId)
+            );
+        }
+    }
+
     public function testNamesAndTitlesDescribeTheSameSet(): void
     {
         $this->assertSame(
