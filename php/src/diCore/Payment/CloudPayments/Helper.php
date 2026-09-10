@@ -327,19 +327,35 @@ class Helper extends BaseHelper
     }
 
     /**
-     * Resolves the draft this request is about. Reads the notification payload
-     * when one was parsed, and the query string otherwise — the success and
-     * fail redirects are addresses WE built, so they carry the same parameter
-     * names.
+     * Черновик уведомления — ТОЛЬКО из разобранного тела.
+     *
+     * Раньше здесь был общий вход с падением на query-строку, и практически он
+     * был недостижим: подписанное уведомление без `InvoiceId` неоткуда взять.
+     * Но подпись накрывает тело и не накрывает query, то есть безопасность
+     * держалась на рассуждении «сюда не дойдёт». Развести два входа дешевле,
+     * чем доказывать это заново при каждой правке.
      */
-    public function initDraft(callable $getDraftCallback)
+    public function initDraftFromNotification(callable $getDraftCallback)
     {
         $params = $this->getNotificationParams();
 
-        $draftId = $params['InvoiceId'] ?? \diRequest::request('InvoiceId', 0);
-        $amount = $params['Amount'] ?? \diRequest::request('Amount', 0);
+        $this->draft = $getDraftCallback(
+            $params['InvoiceId'] ?? 0,
+            $params['Amount'] ?? 0
+        );
 
-        $this->draft = $getDraftCallback($draftId, $amount);
+        return $this;
+    }
+
+    /**
+     * Черновик возврата плательщика — из query-строки: адрес построили мы сами
+     * (`Payment::gatewayCallbackUri()`), и ничего, кроме номера черновика, в
+     * нём нет. Подписи здесь нет вовсе, поэтому вызывающий и не доверяет этому
+     * пути ни сумму, ни причину отказа.
+     */
+    public function initDraftFromRedirect(callable $getDraftCallback)
+    {
+        $this->draft = $getDraftCallback(\diRequest::request('InvoiceId', 0), 0);
 
         return $this;
     }
@@ -361,9 +377,63 @@ class Helper extends BaseHelper
         return in_array((string) $status, static::HOLD_STATUSES, true);
     }
 
+    /**
+     * Тестовый ли платёж: `true`, `false` или `null` — «не разобрали».
+     *
+     * Белого списка «это тест» тут мало, и цена ошибки несимметрична в ОБЕ
+     * стороны, а не в одну. Принять тест за боевой платёж — фискальный чек на
+     * деньги, которых не было. Принять боевой за тест — мы ответим «принято» и
+     * не сделаем ничего: человек заплатил, товара нет, повтора нет, в логе
+     * строчка. Второе хуже, потому что бьёт по живым покупателям, а тесты мы
+     * запускаем сами и результат видим.
+     *
+     * Поэтому решение принимается только по РАСПОЗНАННЫМ значениям, с обеих
+     * сторон и без учёта регистра: формат уведомлений выставляется руками в
+     * кабинете, и form-encoded тело вполне может принести `True`/`False`
+     * вместо `1`/`0`. Незнакомое значение — не повод угадывать: вызывающий
+     * ответит «повторите», уведомление останется живым, а расхождение станет
+     * видно.
+     *
+     * Отсутствие поля — боевой платёж, и это осознанно: иначе шлюз, почему-то
+     * его не приславший, остановил бы приём денег целиком.
+     */
+    public static function testModeFlag(array $params): ?bool
+    {
+        if (!array_key_exists('TestMode', $params)) {
+            return false;
+        }
+
+        $value = $params['TestMode'];
+
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_int($value)) {
+            return $value === 1 ? true : ($value === 0 ? false : null);
+        }
+
+        if (!is_string($value)) {
+            return null;
+        }
+
+        $value = strtolower(trim($value));
+
+        if ($value === '' || $value === '0' || $value === 'false') {
+            return false;
+        }
+
+        if ($value === '1' || $value === 'true') {
+            return true;
+        }
+
+        return null;
+    }
+
+    /** Распознанный тестовый платёж. Неразобранное значение сюда не попадает. */
     public static function isTestMode(array $params)
     {
-        return in_array($params['TestMode'] ?? null, [1, '1', true], true);
+        return static::testModeFlag($params) === true;
     }
 
     /** The body the gateway expects for an accepted notification. */

@@ -125,6 +125,60 @@ class CloudPaymentsNotificationRoutingTest extends TestCase
             'поля нет' => [null, false],
         ];
     }
+
+    /**
+     * Признак читается с ОБЕИХ сторон и без учёта регистра.
+     *
+     * Формат уведомлений выставляется руками в кабинете, и form-encoded тело
+     * вполне приносит `True`/`False` вместо `1`/`0`. Белый список «это тест»
+     * из одних единиц пропустил бы такое тестовое уведомление живым путём — до
+     * фискального чека на деньги, которых не было.
+     */
+    #[DataProvider('wordedFlagProvider')]
+    public function testWordedFlagIsRecognised($value, ?bool $expected): void
+    {
+        $this->assertSame($expected, Helper::testModeFlag(['TestMode' => $value]));
+    }
+
+    public static function wordedFlagProvider(): array
+    {
+        return [
+            'True как у .NET' => ['True', true],
+            'true строчными' => ['true', true],
+            'TRUE прописными' => ['TRUE', true],
+            'False как у .NET' => ['False', false],
+            'false строчными' => ['false', false],
+            'пустая строка' => ['', false],
+            'пробелы вокруг' => [' True ', true],
+        ];
+    }
+
+    /**
+     * Незнакомое значение — «не разобрали», а не «боевой».
+     *
+     * Угадывать здесь нельзя в обе стороны: принять тест за боевой платёж это
+     * ложный фискальный чек, принять боевой за тест — тихо потерянная оплата
+     * живого человека. Поэтому решение откладывается, а вызывающий просит шлюз
+     * повторить.
+     */
+    #[DataProvider('unclearFlagProvider')]
+    public function testUnrecognisedFlagIsNotAGuess($value): void
+    {
+        $this->assertNull(Helper::testModeFlag(['TestMode' => $value]));
+        $this->assertFalse(
+            Helper::isTestMode(['TestMode' => $value]),
+            'нераспознанное значение не должно читаться как подтверждённый тест'
+        );
+    }
+
+    public static function unclearFlagProvider(): array
+    {
+        return [
+            'слово' => ['maybe'],
+            'другое число' => [2],
+            'массив' => [['1']],
+        ];
+    }
 }
 
 class NotificationRoutingProbe extends \diCore\Controller\Payment

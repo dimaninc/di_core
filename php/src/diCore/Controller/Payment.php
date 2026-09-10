@@ -504,7 +504,24 @@ class Payment extends \diBaseController
         // payment system. That last one is a fiscal receipt for money that never
         // moved. Refusing here is not an inconvenience: the receipt path is
         // shared with five other gateways and is exercised by them.
-        if (CloudPayments::isTestMode($params) && !$this->acceptsTestPayments()) {
+        $testMode = CloudPayments::testModeFlag($params);
+
+        // Не разобрали признак — не угадываем. Ответ «повторите» оставляет
+        // уведомление живым и делает расхождение видимым, а любое из двух
+        // решений вслепую стоит либо ложного фискального чека, либо тихо
+        // потерянной оплаты живого человека.
+        if ($testMode === null) {
+            CloudPayments::log(
+                'Unrecognised TestMode value: ' .
+                    CloudPayments::sanitizeForLog(
+                        var_export(ArrayHelper::get($params, 'TestMode'), true)
+                    )
+            );
+
+            return CloudPayments::retryResponse();
+        }
+
+        if ($testMode && !$this->acceptsTestPayments()) {
             CloudPayments::log(
                 'Test-mode notification refused (draft ' .
                     (string) ArrayHelper::get($params, 'InvoiceId') .
@@ -520,7 +537,7 @@ class Payment extends \diBaseController
         // small amount with die($message), and a webhook that replies with
         // anything but the protocol's JSON is retried a hundred times while its
         // content is lost. A notification is answered IN the protocol, always.
-        $cp->initDraft(function ($draftId, $amount) {
+        $cp->initDraftFromNotification(function ($draftId, $amount) {
             $this->initDraftOnly($draftId);
 
             return $this->getDraft();
@@ -696,7 +713,7 @@ class Payment extends \diBaseController
      */
     private function initDraftForRedirect(CloudPayments $cp)
     {
-        $cp->initDraft(function ($draftId, $amount) {
+        $cp->initDraftFromRedirect(function ($draftId, $amount) {
             $this->initDraftOnly($draftId);
 
             return $this->getDraft();
