@@ -537,13 +537,89 @@ class Payment extends \diBaseController
             return CloudPayments::okResponse();
         }
 
-        if ($this->isCloudPaymentsSuccessNotification($params, $type)) {
-            $this->createReceipt(ArrayHelper::get($params, 'TransactionId') ?: 0);
-        } else {
-            $this->onGatewayFailure(System::cloud_payments, $params ?: []);
+        // A signed notification proves WHO sent it, not WHICH draft it may act
+        // on. Without this, an `InvoiceId` belonging to another gateway would
+        // mark that gateway's draft paid and issue a receipt against it — and
+        // the way to get there is not necessarily an attack: one CloudPayments
+        // account shared by two sites, or two gateways whose id sequences
+        // overlap, do it with no ill will at all. The project's own
+        // onGatewayFailure() already states this invariant for the failure
+        // branch; the paid branch needs it more.
+        if ((int) $this->getDraft()->getPaySystem() !== System::cloud_payments) {
+            CloudPayments::log(
+                'Draft #' .
+                    (string) $this->getDraft()->getId() .
+                    ' belongs to another payment system'
+            );
+
+            return CloudPayments::okResponse();
         }
 
+        if ($this->isCloudPaymentsSuccessNotification($params, $type)) {
+            $this->checkCloudPaymentsAmount($params);
+
+            $result = $this->createReceipt(
+                ArrayHelper::get($params, 'TransactionId') ?: 0
+            );
+
+            // The one branch where "any non-zero code makes the gateway retry"
+            // is actually applicable. createReceipt() swallows a failed save()
+            // and returns ok=false, so answering 0 here would drop the
+            // notification for good: draft unpaid, goods undelivered, nothing
+            // to replay. A retry is safe because createReceipt() is idempotent
+            // — it reuses the receipt found by draft_id, and postProcess() runs
+            // only for a newly created one.
+            return empty($result['ok'])
+                ? CloudPayments::retryResponse()
+                : CloudPayments::okResponse();
+        }
+
+        $this->onGatewayFailure(System::cloud_payments, $params ?: []);
+
         return CloudPayments::okResponse();
+    }
+
+    /**
+     * Compares the amount the gateway reports with the one we asked it to
+     * charge, and only logs a mismatch.
+     *
+     * This is NOT an anti-forgery check — the signature already settled who
+     * sent this — but a trap for OUR OWN mistake: an invoice issued for the
+     * wrong sum, an `InvoiceId` wired to the wrong draft. Hence a log line and
+     * not a refusal: the money is already gone by the time this arrives, and
+     * rejecting the notification would lose the purchase rather than fix it.
+     * Override in a project to raise it to whatever monitoring it has.
+     */
+    protected function checkCloudPaymentsAmount(array $params)
+    {
+        $currency = ArrayHelper::get($params, 'Currency');
+
+        // Only like with like. Every invoice we issue today is in roubles;
+        // the day a currency one ships, this needs the draft's own currency
+        // rather than a literal — until then a foreign-currency notification
+        // is skipped instead of alarming on every single payment.
+        if ($currency !== null && strtoupper((string) $currency) !== 'RUB') {
+            return $this;
+        }
+
+        $reported = (float) ArrayHelper::get($params, 'Amount');
+        $expected = (float) $this->getDraft()->getAmount();
+
+        // Below a kopeck is float noise, not a discrepancy.
+        if ($reported <= 0 || abs($reported - $expected) < 0.01) {
+            return $this;
+        }
+
+        CloudPayments::log(
+            'Amount mismatch on draft #' .
+                (string) $this->getDraft()->getId() .
+                ': asked ' .
+                (string) $expected .
+                ', notified ' .
+                (string) $reported
+        );
+
+        return $this;
     }
 
     /**
@@ -615,9 +691,7 @@ class Payment extends \diBaseController
 
     protected function getTargetHref($status)
     {
-        return $this->getDraft()
-            ->getTargetModel()
-            ->getHref();
+        return $this->getDraft()->getTargetModel()->getHref();
     }
 
     protected function beforeRoboAction()
@@ -710,9 +784,7 @@ class Payment extends \diBaseController
 
             $this->log('Receipt: ' . print_r($this->getReceipt()->get(), true));
 
-            $this->getDraft()
-                ->setPaid(1)
-                ->save();
+            $this->getDraft()->setPaid(1)->save();
 
             if (!$existingReceipt) {
                 $class = \diCore\Payment\Payment::getClass();

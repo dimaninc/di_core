@@ -95,18 +95,7 @@ class Helper extends BaseHelper
             $opts
         );
 
-        $params = array_filter([
-            // Two decimals, as the gateway requires. Rounding here rather than
-            // hoping the float prints well: a stray 543.2000000001 is refused.
-            'Amount' => round((float) $opts['amount'], 2),
-            'Currency' => $opts['currency'],
-            'Description' => $opts['description'],
-            'InvoiceId' => (string) $opts['draftId'],
-            'Email' => $opts['customerEmail'],
-            'CultureName' => $opts['cultureName'],
-            'SuccessRedirectUrl' => $opts['successUrl'],
-            'FailRedirectUrl' => $opts['failUrl'],
-        ]);
+        $params = static::orderParams($opts);
 
         // The draft is minted per attempt, so its id is unique per invoice and
         // makes a natural idempotency key: a retried Init cannot leave a second
@@ -141,6 +130,40 @@ class Helper extends BaseHelper
         }
 
         return $url;
+    }
+
+    /**
+     * Body of the `orders/create` request.
+     *
+     * Split out of getFormUri() so the filtering rule below can be pinned by a
+     * test without a live gateway — it is the kind of rule that looks obviously
+     * right and is obviously wrong once.
+     *
+     * The filter takes a callback on purpose: a bare `array_filter()` drops
+     * every falsy value, so a zero `Amount` would silently vanish from the
+     * request and come back as the gateway complaining about a missing
+     * mandatory field — the same failure, diagnosed one step further from its
+     * cause. Empty optional fields are still dropped, because the gateway
+     * refuses an empty `Email` outright.
+     */
+    protected static function orderParams(array $opts)
+    {
+        return array_filter(
+            [
+                // Two decimals, as the gateway requires. Rounding here rather
+                // than hoping the float prints well: a stray 543.2000000001 is
+                // refused.
+                'Amount' => round((float) $opts['amount'], 2),
+                'Currency' => $opts['currency'],
+                'Description' => $opts['description'],
+                'InvoiceId' => (string) $opts['draftId'],
+                'Email' => $opts['customerEmail'],
+                'CultureName' => $opts['cultureName'],
+                'SuccessRedirectUrl' => $opts['successUrl'],
+                'FailRedirectUrl' => $opts['failUrl'],
+            ],
+            fn($value) => $value !== '' && $value !== null
+        );
     }
 
     /**

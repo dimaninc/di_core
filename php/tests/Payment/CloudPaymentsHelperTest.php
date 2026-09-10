@@ -178,6 +178,34 @@ class CloudPaymentsHelperTest extends TestCase
         $this->assertTrue(Helper::isOrderUrl('HTTPS://Orders.CloudPayments.RU/d/x'));
     }
 
+    /**
+     * Пустые необязательные поля выбрасываются, а нулевые числа — нет.
+     *
+     * Разница не теоретическая: голый `array_filter()` считает `0.0` пустым,
+     * и нулевая сумма молча исчезла бы из запроса. Шлюз ответил бы «нет
+     * обязательного поля Amount», то есть диагностика уехала бы на шаг дальше
+     * от причины — от «сумма нулевая» к «мы что-то не отправили».
+     */
+    public function testOrderParamsKeepZeroAndDropEmptyStrings(): void
+    {
+        $params = CloudPaymentsSecretStub::params([
+            'amount' => 0,
+            'currency' => 'RUB',
+            'draftId' => 42,
+            'description' => 'Оплата',
+            'customerEmail' => '',
+            'cultureName' => 'ru-RU',
+            'successUrl' => 'https://1romantic.com/api/payment/x/success/',
+            'failUrl' => '',
+        ]);
+
+        $this->assertArrayHasKey('Amount', $params, 'нулевая сумма не исчезает');
+        $this->assertSame(0.0, $params['Amount']);
+        $this->assertSame('42', $params['InvoiceId']);
+        $this->assertArrayNotHasKey('Email', $params, 'пустой адрес не отправляем');
+        $this->assertArrayNotHasKey('FailRedirectUrl', $params);
+    }
+
     public function testResponsesDifferInMeaning(): void
     {
         $this->assertSame(['code' => 0], Helper::okResponse());
@@ -195,6 +223,12 @@ class CloudPaymentsSecretStub extends Helper
     public static function getPassword()
     {
         return 'api-secret-value';
+    }
+
+    /** Открывает защищённую сборку тела запроса. */
+    public static function params(array $opts)
+    {
+        return static::orderParams($opts);
     }
 }
 
