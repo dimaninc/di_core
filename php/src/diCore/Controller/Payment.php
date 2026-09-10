@@ -484,17 +484,61 @@ class Payment extends \diBaseController
         }
 
         $params = $cp->getNotificationParams();
+        $type = (string) $this->param(1);
 
+        // A type we do not handle must not fall through to either branch: the
+        // success one would mark a draft paid, the failure one would stamp a
+        // reason on it while answering `code: 0` — and for a `check`
+        // notification `code: 0` means "go ahead and charge".
+        if (!in_array($type, ['', 'pay', 'fail'], true)) {
+            CloudPayments::log('Unhandled notification type: ' . $type);
+
+            return CloudPayments::retryResponse();
+        }
+
+        // The test mode is a state of the SITE in the gateway's cabinet, and the
+        // credentials are the same either way — so a test notification carries a
+        // VALID signature and, left alone, would run the whole live path:
+        // receipt, postProcess, partner payout, income stat, and the cash desk,
+        // which pulls every receipt with an empty date_uploaded and no filter by
+        // payment system. That last one is a fiscal receipt for money that never
+        // moved. Refusing here is not an inconvenience: the receipt path is
+        // shared with five other gateways and is exercised by them.
+        if (CloudPayments::isTestMode($params) && !$this->acceptsTestPayments()) {
+            CloudPayments::log(
+                'Test-mode notification refused (draft ' .
+                    (string) ArrayHelper::get($params, 'InvoiceId') .
+                    ')'
+            );
+
+            // `code: 0`, not a retry: nothing failed, we simply will not act on
+            // it. A retry would repeat the refusal a hundred times.
+            return CloudPayments::okResponse();
+        }
+
+        // initDraftOnly, not initDraft: the latter answers a bad draft or a
+        // small amount with die($message), and a webhook that replies with
+        // anything but the protocol's JSON is retried a hundred times while its
+        // content is lost. A notification is answered IN the protocol, always.
         $cp->initDraft(function ($draftId, $amount) {
-            $this->initDraft($draftId, $amount);
+            $this->initDraftOnly($draftId);
 
             return $this->getDraft();
         });
 
-        if ($this->isCloudPaymentsSuccessNotification($params)) {
-            $this->createReceipt(
-                ArrayHelper::get($params, 'TransactionId') ?: 0
+        if (!$this->getDraft()->exists()) {
+            CloudPayments::log(
+                'No such payment draft: ' .
+                    (string) ArrayHelper::get($params, 'InvoiceId')
             );
+
+            // Retrying cannot conjure a draft that does not exist, so this is
+            // accepted-and-dropped rather than repeated for an hour.
+            return CloudPayments::okResponse();
+        }
+
+        if ($this->isCloudPaymentsSuccessNotification($params, $type)) {
+            $this->createReceipt(ArrayHelper::get($params, 'TransactionId') ?: 0);
         } else {
             $this->onGatewayFailure(System::cloud_payments, $params ?: []);
         }
@@ -503,27 +547,48 @@ class Payment extends \diBaseController
     }
 
     /**
-     * A notification is a payment when the URL says so, or — for an address
-     * configured without the type suffix — when the status says the money was
-     * taken. Never by absence of a failure marker: an unrecognised payload must
-     * fall to the failure branch, which only records diagnostics, rather than
-     * to the branch that marks a draft paid.
+     * Whether a notification flagged as a test may run the live path.
+     *
+     * `false` by default — see the call site for why that is the safe answer.
+     * A project overrides it to allow test payments outside production.
      */
-    protected function isCloudPaymentsSuccessNotification(array $params)
+    protected function acceptsTestPayments()
     {
-        $type = (string) $this->param(1);
+        return false;
+    }
 
-        if ($type === 'pay') {
-            return true;
-        }
+    /**
+     * A notification is a payment when the URL says so AND the payload does not
+     * contradict it.
+     *
+     * The address alone is not enough: the two notification URLs are typed into
+     * the cabinet by hand, and the same one pasted into both fields would turn
+     * every `Declined` into a paid receipt — with a fiscal receipt and delivered
+     * goods, and nothing in the log but "Draft #N set as paid". The status is
+     * only consulted, never required: a payload without one still goes by the
+     * address it arrived at.
+     *
+     * For an address configured without the type suffix the status is all there
+     * is. Never decide by ABSENCE of a failure marker: an unrecognised payload
+     * must fall to the failure branch, which only records diagnostics, rather
+     * than to the branch that marks a draft paid.
+     */
+    protected function isCloudPaymentsSuccessNotification(
+        array $params,
+        $type = null
+    ) {
+        $type = $type === null ? (string) $this->param(1) : (string) $type;
+        $status = ArrayHelper::get($params, 'Status');
 
         if ($type === 'fail') {
             return false;
         }
 
-        return CloudPayments::isPaidStatus(
-            ArrayHelper::get($params, 'Status')
-        );
+        if ($type === 'pay') {
+            return $status === null || CloudPayments::isPaidStatus($status);
+        }
+
+        return CloudPayments::isPaidStatus($status);
     }
 
     /**

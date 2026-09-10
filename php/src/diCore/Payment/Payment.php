@@ -636,12 +636,14 @@ EOF;
                 'successUrl' => static::gatewayCallbackUri(
                     'cloud_payments',
                     'success',
-                    $draft
+                    $draft,
+                    'InvoiceId'
                 ),
                 'failUrl' => static::gatewayCallbackUri(
                     'cloud_payments',
                     'fail',
-                    $draft
+                    $draft,
+                    'InvoiceId'
                 ),
             ])
         );
@@ -659,18 +661,31 @@ EOF;
     /**
      * Absolute address of one of this controller's own gateway callbacks.
      *
+     * The name of the draft-id parameter is an argument, not a constant: every
+     * gateway spells it in its own dialect (`InvoiceId` here, `OrderId` at
+     * T-Bank, `InvId` at Robokassa), and a hardcoded one would make the next
+     * caller either inherit a foreign word or write a second copy of this
+     * method.
+     *
      * @param string $system system name as the payment controller routes it
      * @param string $subAction 'success' or 'fail'
+     * @param string $draftParam query parameter carrying the draft id
      */
-    protected static function gatewayCallbackUri($system, $subAction, Draft $draft)
-    {
+    protected static function gatewayCallbackUri(
+        $system,
+        $subAction,
+        Draft $draft,
+        $draftParam
+    ) {
         return \diPaths::defaultHttp() .
             \diCore\Data\Config::getApiQueryPrefix() .
             'payment/' .
             $system .
             '/' .
             $subAction .
-            '/?InvoiceId=' .
+            '/?' .
+            urlencode($draftParam) .
+            '=' .
             urlencode((string) $draft->getId());
     }
 
