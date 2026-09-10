@@ -13,6 +13,7 @@ use diCore\Entity\PaymentReceipt\Collection as Receipts;
 use diCore\Entity\PaymentReceipt\Model as Receipt;
 use diCore\Helper\ArrayHelper;
 use diCore\Helper\StringHelper;
+use diCore\Payment\CloudPayments\Helper as CloudPayments;
 use diCore\Payment\CryptoCloud\Helper as CryptoCloud;
 use diCore\Payment\Mixplat\Helper as Mixplat;
 use diCore\Payment\Paypal\Helper as Paypal;
@@ -401,6 +402,150 @@ class Payment extends \diBaseController
                     'message' => 'Unknown action: ' . $this->subAction,
                 ];
         }
+    }
+
+    /**
+     * Routes:
+     *   /api/payment/cloud_payments/notification/pay
+     *   /api/payment/cloud_payments/notification/fail
+     *   /api/payment/cloud_payments/success   (browser redirect, ?InvoiceId=…)
+     *   /api/payment/cloud_payments/fail      (browser redirect, ?InvoiceId=…)
+     *
+     * The notification type comes from the URL because the cabinet configures a
+     * separate address per type; `Status` is only the fallback for an address
+     * set up without the suffix.
+     */
+    public function cloudPaymentsAction()
+    {
+        $this->system = System::cloud_payments;
+        $this->subAction = $this->param(0);
+
+        $cp = CloudPayments::create();
+
+        switch ($this->subAction) {
+            case 'notification':
+                return $this->cloudPaymentsNotification($cp);
+
+            case 'success':
+                $this->initDraftForRedirect($cp);
+
+                return $cp->success(function (CloudPayments $cp) {
+                    $this->redirectTo($this->getTargetHref(self::STATUS_SUCCESS));
+                });
+
+            case 'fail':
+                $this->initDraftForRedirect($cp);
+
+                return $cp->fail(function (CloudPayments $cp) {
+                    // Пустой payload намеренно. Это НЕподписанный браузерный
+                    // возврат: всё, что в нём есть, выбрал тот, кто открыл
+                    // адрес, а сказать он может только «не дошёл». Передав сюда
+                    // $_GET, мы дали бы кому угодно записать свою «причину
+                    // отказа» поверх настоящей, приехавшей уведомлением.
+                    $this->onGatewayFailure(System::cloud_payments, []);
+                    $this->redirectTo($this->getTargetHref(self::STATUS_FAIL));
+                });
+
+            default:
+                return [
+                    'ok' => false,
+                    'message' => 'Unknown action: ' . $this->subAction,
+                ];
+        }
+    }
+
+    private function cloudPaymentsNotification(CloudPayments $cp)
+    {
+        // Read the body before anything else: the signature covers the RAW
+        // bytes, so they must be captured before any re-encoding.
+        $cp->readNotification();
+
+        CloudPayments::log(
+            $this->subAction .
+                '/' .
+                (string) $this->param(1) .
+                "\n" .
+                CloudPayments::sanitizeForLog($cp->getRawNotification())
+        );
+
+        // Verified BEFORE the draft is touched. CloudPayments publishes no IP
+        // allowlist, so this signature is the only thing between a real
+        // notification and anyone who can guess a draft id — and an unsigned
+        // request has no business loading, let alone saving, a payment row.
+        if (!$cp->checkSignature()) {
+            CloudPayments::log('Signature does not match');
+
+            // Any non-zero code makes the gateway retry (100 attempts over
+            // ~45 minutes). That is the outcome we want even when the fault is
+            // ours — a wrong secret in env is then recoverable without losing
+            // the notification. The numbered code table in their docs applies
+            // to `check`, which we do not enable.
+            return CloudPayments::retryResponse();
+        }
+
+        $params = $cp->getNotificationParams();
+
+        $cp->initDraft(function ($draftId, $amount) {
+            $this->initDraft($draftId, $amount);
+
+            return $this->getDraft();
+        });
+
+        if ($this->isCloudPaymentsSuccessNotification($params)) {
+            $this->createReceipt(
+                ArrayHelper::get($params, 'TransactionId') ?: 0
+            );
+        } else {
+            $this->onGatewayFailure(System::cloud_payments, $params ?: []);
+        }
+
+        return CloudPayments::okResponse();
+    }
+
+    /**
+     * A notification is a payment when the URL says so, or — for an address
+     * configured without the type suffix — when the status says the money was
+     * taken. Never by absence of a failure marker: an unrecognised payload must
+     * fall to the failure branch, which only records diagnostics, rather than
+     * to the branch that marks a draft paid.
+     */
+    protected function isCloudPaymentsSuccessNotification(array $params)
+    {
+        $type = (string) $this->param(1);
+
+        if ($type === 'pay') {
+            return true;
+        }
+
+        if ($type === 'fail') {
+            return false;
+        }
+
+        return CloudPayments::isPaidStatus(
+            ArrayHelper::get($params, 'Status')
+        );
+    }
+
+    /**
+     * The browser redirects carry only the draft id: they are addresses we
+     * built ourselves, they are not signed, and they must not be trusted to
+     * report an amount. Resolution only — no amount check, no save.
+     */
+    private function initDraftForRedirect(CloudPayments $cp)
+    {
+        $cp->initDraft(function ($draftId, $amount) {
+            $this->initDraftOnly($draftId);
+
+            return $this->getDraft();
+        });
+
+        if (!$this->getDraft()->exists()) {
+            // Without this the redirect would go on to ask an empty model for
+            // its target's href.
+            $this->returnErrorResponse('No such payment draft');
+        }
+
+        return $this;
     }
 
     protected function getTargetHref($status)

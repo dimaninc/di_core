@@ -9,6 +9,7 @@
 namespace diCore\Payment;
 
 use diCore\Base\Exception\HttpException;
+use diCore\Payment\CloudPayments\Vendor as CloudPaymentsVendor;
 use diCore\Payment\Mixplat\MobileVendors;
 use diCore\Payment\Paymaster\Vendor as PaymasterVendor;
 use diCore\Payment\Robokassa\Vendor as RobokassaVendor;
@@ -29,6 +30,7 @@ class System extends SimpleContainer
     const paymaster = 9;
     const crypto_cloud = 10;
     const alfabank = 11;
+    const cloud_payments = 12;
 
     public static $titles = [
         self::webmoney => 'Webmoney',
@@ -42,6 +44,7 @@ class System extends SimpleContainer
         self::paymaster => 'Paymaster',
         self::crypto_cloud => 'CryptoCloud',
         self::alfabank => 'Альфа-Банк',
+        self::cloud_payments => 'CloudPayments',
     ];
 
     public static $names = [
@@ -56,6 +59,7 @@ class System extends SimpleContainer
         self::paymaster => 'paymaster',
         self::crypto_cloud => 'crypto_cloud',
         self::alfabank => 'alfabank',
+        self::cloud_payments => 'cloud_payments',
     ];
 
     public static function getSystemClass($systemId, $vendorId = null)
@@ -69,6 +73,9 @@ class System extends SimpleContainer
 
             case self::tinkoff:
                 return TinkoffVendor::class;
+
+            case self::cloud_payments:
+                return CloudPaymentsVendor::class;
 
             case self::mixplat:
                 return $vendorId ? MobileVendors::class : self::class;
