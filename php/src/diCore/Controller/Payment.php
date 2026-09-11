@@ -585,6 +585,30 @@ class Payment extends \diBaseController
             return CloudPayments::okResponse();
         }
 
+        // Зеркальный случай к тому, что разбирает isCloudPaymentsSuccessNotification():
+        // адрес говорит «отказ», а поле — «оплачено». Приходит он от той же
+        // ошибки — адреса вписывает человек руками, — но стоит дороже: записав
+        // здесь отказ и ответив `code: 0`, мы потеряли бы НАСТОЯЩУЮ оплату
+        // молча, без квитанции, без товара, без повтора и без тревоги.
+        //
+        // Поэтому решение не принимается вовсе: «повторите» плюс сигнал. Обратная
+        // асимметрия намеренна — «оплата» на адресе оплаты при `Declined` уходит
+        // в отказ, и это верно: платёж действительно не прошёл, терять нечего.
+        if (
+            $type === 'fail' &&
+            CloudPayments::isPaidStatus(ArrayHelper::get($params, 'Status'))
+        ) {
+            CloudPayments::log(
+                'Paid status on the failure address (draft #' .
+                    (string) $this->getDraft()->getId() .
+                    '): the cabinet most likely has one URL in both fields'
+            );
+
+            $this->onCloudPaymentsMisroutedNotification($params);
+
+            return CloudPayments::retryResponse();
+        }
+
         if ($this->isCloudPaymentsSuccessNotification($params, $type)) {
             $this->checkCloudPaymentsAmount($params);
 
@@ -658,6 +682,17 @@ class Payment extends \diBaseController
                 (string) $reported
         );
 
+        return $this;
+    }
+
+    /**
+     * Fired when a notification arrived at an address that contradicts its own
+     * status — i.e. the gateway's cabinet is misconfigured and a real payment
+     * is at risk of being dropped. Logged by the caller already; override in a
+     * project to raise it to monitoring. Must never throw.
+     */
+    protected function onCloudPaymentsMisroutedNotification(array $params)
+    {
         return $this;
     }
 
