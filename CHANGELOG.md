@@ -1,5 +1,79 @@
 # Changelog
 
+## 0.8.0
+
+Minor: a new payment gateway, CloudPayments. Additive — no schema change, no
+migration, nothing to turn on for a project that does not use it.
+
+### CloudPayments, the redirect way
+
+`Payment\CloudPayments\{Helper, MerchantApi, Vendor}` plus the usual four
+registrations a gateway needs: a `Payment\System` constant, a branch in
+`System::getSystemClass()`, a `case` in `Payment::initiateProcess()` (with
+`initCloudPayments()`) and `Controller\Payment::cloudPaymentsAction()`. A fifth
+place, `Entity\PaymentDraft\Model::getVendorStr()`, gets its branch too —
+without it the admin prints `Vendor #10` and nothing errors.
+
+The scheme is the redirect one every other gateway here uses: `orders/create`
+returns the payment page URL, the browser goes there, the outcome arrives by a
+signed server notification. No widget, no card data on the merchant side.
+
+### What a consumer inherits, and what it must decide
+
+Three new hooks on `Controller\Payment`, all no-ops or safe defaults:
+
+- `acceptsTestPayments()` — **`false` by default, deliberately.** At CloudPayments
+  the test mode is a state of the SITE in the cabinet and the credentials are the
+  same either way, so a test notification carries a valid signature and would
+  otherwise run the entire live path: receipt, `postProcess()`, and whatever the
+  project does with a paid receipt afterwards. Override it to allow test payments
+  outside production.
+- `onCloudPaymentsMisroutedNotification()` — a notification arrived at an address
+  contradicting its own status, i.e. the cabinet is misconfigured and a real
+  payment is at risk. Override to raise it to monitoring.
+- `checkCloudPaymentsAmount()` — logs a mismatch between the sum asked for and
+  the sum reported. Override to raise it.
+
+`Payment::gatewayCallbackUri()` is new and generic: it builds the absolute
+address of one of this controller's own callbacks, taking the draft-id parameter
+name as an argument, because every gateway spells it differently (`InvoiceId`
+here, `OrderId` at T-Bank, `InvId` at Robokassa).
+
+### Four rules this gateway is built on
+
+**`Authorized` is not a payment.** Only `Completed` is. `Authorized` is the hold
+of the two-stage scheme — the sum is blocked for up to seven days and captured
+by a confirmation this code never sends. Treating it as paid would deliver goods
+for money that unblocks a week later. Same call `Tinkoff` makes with `CONFIRMED`
+versus `AUTHORIZED`. A hold is a third outcome: recording a failure for it would
+bury a live attempt.
+
+**The signature is the only door.** CloudPayments publishes no IP allowlist, so
+the HMAC over the RAW body is all that separates a real notification from anyone
+who can guess a draft id. It is verified before the draft is loaded, let alone
+saved; the body is read before anything can re-encode it; and the draft is
+resolved from the parsed body only — never from the query string, which the
+signature does not cover.
+
+**A signature says WHO, not WHICH.** A signed notification carrying a foreign
+`InvoiceId` would otherwise mark another gateway's draft paid, and getting there
+needs no attacker: one account shared by two sites, or overlapping id sequences.
+Hence the `pay_system` check on the paid branch.
+
+**A webhook answers in the protocol, always.** Every branch returns either
+`{"code":0}` (accepted, nothing more expected) or a non-zero code, which makes
+the gateway retry for ~45 minutes. `die($message)` from the draft loader is gone
+from this path: a reply that is not the protocol's JSON is retried a hundred
+times while its content is lost. Notifications are POSTed, so the branch demands
+POST and answers 404 otherwise.
+
+Covered by `php/tests/Payment/CloudPaymentsHelperTest.php`,
+`CloudPaymentsNotificationRoutingTest.php` and `SystemRegistryTest.php` — the
+last one walks every wired system and requires it to resolve in all four places,
+naming the library's existing gaps (webmoney and paymaster have no launch
+branch, sberbank and alfabank no vendor container, sms_online is unimplemented)
+rather than failing on them.
+
 ## 0.7.2
 
 Patch: the auth singleton stops being shared between the site and the admin
