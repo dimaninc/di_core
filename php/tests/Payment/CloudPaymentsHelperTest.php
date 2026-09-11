@@ -194,7 +194,8 @@ class CloudPaymentsHelperTest extends TestCase
             'description' => 'Оплата',
             'customerEmail' => '',
             'cultureName' => 'ru-RU',
-            'successUrl' => 'https://1romantic.com/api/payment/x/success/',
+            'successUrl' =>
+                'https://example.com/api/payment/cloud_payments/success/',
             'failUrl' => '',
         ]);
 

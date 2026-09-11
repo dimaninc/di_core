@@ -327,13 +327,12 @@ class Helper extends BaseHelper
     }
 
     /**
-     * Черновик уведомления — ТОЛЬКО из разобранного тела.
+     * The notification's draft, from the parsed body ONLY.
      *
-     * Раньше здесь был общий вход с падением на query-строку, и практически он
-     * был недостижим: подписанное уведомление без `InvoiceId` неоткуда взять.
-     * Но подпись накрывает тело и не накрывает query, то есть безопасность
-     * держалась на рассуждении «сюда не дойдёт». Развести два входа дешевле,
-     * чем доказывать это заново при каждой правке.
+     * A shared entrance falling back to the query string was practically
+     * unreachable — but the signature covers the body and not the query, so
+     * safety rested on "it never gets there". Two entrances are cheaper than
+     * proving that again at every edit.
      */
     public function initDraftFromNotification(callable $getDraftCallback)
     {
@@ -348,10 +347,10 @@ class Helper extends BaseHelper
     }
 
     /**
-     * Черновик возврата плательщика — из query-строки: адрес построили мы сами
-     * (`Payment::gatewayCallbackUri()`), и ничего, кроме номера черновика, в
-     * нём нет. Подписи здесь нет вовсе, поэтому вызывающий и не доверяет этому
-     * пути ни сумму, ни причину отказа.
+     * The redirect's draft, from the query string: we built that address
+     * ourselves and it carries nothing but the draft id. Nothing here is
+     * signed, which is why the caller trusts this path with neither an amount
+     * nor a failure reason.
      */
     public function initDraftFromRedirect(callable $getDraftCallback)
     {
@@ -378,24 +377,21 @@ class Helper extends BaseHelper
     }
 
     /**
-     * Тестовый ли платёж: `true`, `false` или `null` — «не разобрали».
+     * Is this a test payment: `true`, `false` or `null` for "cannot tell".
      *
-     * Белого списка «это тест» тут мало, и цена ошибки несимметрична в ОБЕ
-     * стороны, а не в одну. Принять тест за боевой платёж — фискальный чек на
-     * деньги, которых не было. Принять боевой за тест — мы ответим «принято» и
-     * не сделаем ничего: человек заплатил, товара нет, повтора нет, в логе
-     * строчка. Второе хуже, потому что бьёт по живым покупателям, а тесты мы
-     * запускаем сами и результат видим.
+     * A whitelist of "this is a test" is not enough, because the error is
+     * costly BOTH ways. Taking a test for a live payment is a fiscal cheque for
+     * money that never moved. Taking a live one for a test answers "accepted"
+     * and does nothing: the customer paid, got no goods, and there is no retry.
+     * The second is worse — it hits real buyers, while tests are ours to watch.
      *
-     * Поэтому решение принимается только по РАСПОЗНАННЫМ значениям, с обеих
-     * сторон и без учёта регистра: формат уведомлений выставляется руками в
-     * кабинете, и form-encoded тело вполне может принести `True`/`False`
-     * вместо `1`/`0`. Незнакомое значение — не повод угадывать: вызывающий
-     * ответит «повторите», уведомление останется живым, а расхождение станет
-     * видно.
+     * So only RECOGNISED values decide, on both sides and case-insensitively:
+     * the notification format is set by hand in the cabinet, and a form-encoded
+     * body may well carry `True`/`False` instead of `1`/`0`. Anything else is
+     * not guessed — the caller answers "retry" and the mismatch becomes visible.
      *
-     * Отсутствие поля — боевой платёж, и это осознанно: иначе шлюз, почему-то
-     * его не приславший, остановил бы приём денег целиком.
+     * A missing field means live, deliberately: otherwise a gateway that stops
+     * sending it would stop payments altogether.
      */
     public static function testModeFlag(array $params): ?bool
     {
@@ -430,7 +426,7 @@ class Helper extends BaseHelper
         return null;
     }
 
-    /** Распознанный тестовый платёж. Неразобранное значение сюда не попадает. */
+    /** A recognised test payment; an unparsed value never reaches this. */
     public static function isTestMode(array $params)
     {
         return static::testModeFlag($params) === true;
@@ -469,10 +465,10 @@ class Helper extends BaseHelper
     }
 
     /**
-     * Оба адреса возврата неаутентифицированы, и query-строку в них выбирает
-     * тот, кто открыл ссылку. То есть это ровно тот же недоверенный ввод, ради
-     * которого в этом классе живёт `sanitizeForLog()`, — просто он до сих пор
-     * применялся к телу уведомления, которое как раз подписано.
+     * Both return addresses are unauthenticated and their query string is
+     * chosen by whoever opened the link — the same untrusted input
+     * `sanitizeForLog()` exists for, which until now was only applied to the
+     * notification body, the one thing that IS signed.
      */
     protected static function logRedirect(string $what)
     {
