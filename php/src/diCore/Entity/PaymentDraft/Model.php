@@ -111,6 +111,11 @@ class Model extends \diModel
             case System::tinkoff:
                 return \diCore\Payment\Tinkoff\Vendor::title($this->getVendor());
 
+            case System::cloud_payments:
+                return \diCore\Payment\CloudPayments\Vendor::title(
+                    $this->getVendor()
+                );
+
             case System::mixplat:
                 return \diCore\Payment\Mixplat\MobileVendors::title(
                     $this->getVendor()

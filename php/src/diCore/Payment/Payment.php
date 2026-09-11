@@ -13,6 +13,7 @@ use diCore\Data\Configuration;
 use diCore\Entity\PaymentDraft\Model as Draft;
 use diCore\Entity\PaymentReceipt\Model as Receipt;
 use diCore\Payment\AlfaBank\Helper as AlfaBank;
+use diCore\Payment\CloudPayments\Helper as CloudPayments;
 use diCore\Payment\CryptoCloud\Helper as CryptoCloud;
 use diCore\Payment\Mixplat\Helper as Mixplat;
 use diCore\Payment\Paypal\Helper as Paypal;
@@ -241,6 +242,9 @@ class Payment
 
             case System::alfabank:
                 return $this->initAlfaBank($draft);
+
+            case System::cloud_payments:
+                return $this->initCloudPayments($draft);
 
             default:
                 throw new \Exception(
@@ -612,6 +616,77 @@ EOF;
                 'description' => static::ORDER_DESCRIPTION,
             ])
         );
+    }
+
+    public function initCloudPayments(Draft $draft)
+    {
+        $cp = CloudPayments::create();
+
+        return static::redirectTo(
+            $cp->getFormUri($draft, [
+                'customerEmail' => $this->getCustomerEmail(),
+                'description' => static::ORDER_DESCRIPTION,
+                'currency' => $this->getCloudPaymentsCurrency($draft),
+                // Built here, not left to the cabinet: the invoice must send the
+                // payer back through OUR callback actions, the same way every
+                // other gateway returns, or the project hooks hanging off them
+                // (the parody request's payment status, the funnel step) never
+                // run. They carry the draft id because the gateway does not add
+                // one to a redirect it was handed verbatim.
+                'successUrl' => static::gatewayCallbackUri(
+                    'cloud_payments',
+                    'success',
+                    $draft,
+                    'InvoiceId'
+                ),
+                'failUrl' => static::gatewayCallbackUri(
+                    'cloud_payments',
+                    'fail',
+                    $draft,
+                    'InvoiceId'
+                ),
+            ])
+        );
+    }
+
+    /**
+     * Currency an invoice is issued in. RUB by default; override in a project
+     * whose contract does not allow it.
+     */
+    protected function getCloudPaymentsCurrency(Draft $draft)
+    {
+        return 'RUB';
+    }
+
+    /**
+     * Absolute address of one of this controller's own gateway callbacks.
+     *
+     * The name of the draft-id parameter is an argument, not a constant: every
+     * gateway spells it in its own dialect (`InvoiceId` here, `OrderId` at
+     * T-Bank, `InvId` at Robokassa), and a hardcoded one would make the next
+     * caller either inherit a foreign word or write a second copy of this
+     * method.
+     *
+     * @param string $system system name as the payment controller routes it
+     * @param string $subAction 'success' or 'fail'
+     * @param string $draftParam query parameter carrying the draft id
+     */
+    protected static function gatewayCallbackUri(
+        $system,
+        $subAction,
+        Draft $draft,
+        $draftParam
+    ) {
+        return \diPaths::defaultHttp() .
+            \diCore\Data\Config::getApiQueryPrefix() .
+            'payment/' .
+            $system .
+            '/' .
+            $subAction .
+            '/?' .
+            urlencode($draftParam) .
+            '=' .
+            urlencode((string) $draft->getId());
     }
 
     public function initSberbank(Draft $draft)
