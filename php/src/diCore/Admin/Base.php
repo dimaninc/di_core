@@ -304,13 +304,11 @@ class Base
 
             $this->caption->setForceValue(static::getVocabulary('error.caption'));
 
-            if ($this->isResponseCode(HttpCode::OK)) {
-                $code =
-                    $e instanceof HttpException
-                        ? $e->getCode()
-                        : HttpCode::INTERNAL_SERVER_ERROR;
-
-                $this->setResponseCode($code);
+            if ($e instanceof HttpException) {
+                // Same rule as `CMS::work()`, kept in one place.
+                $this->setResponseCode($e->pageStatus($this->getResponseCode()));
+            } elseif ($this->isResponseCode(HttpCode::OK)) {
+                $this->setResponseCode(HttpCode::INTERNAL_SERVER_ERROR);
             }
         }
 
