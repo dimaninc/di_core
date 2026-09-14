@@ -109,6 +109,19 @@ class HttpException extends \Exception
         $this->addHeader($header)->addHeaders($headers);
     }
 
+    /**
+     * The status a page answering with this exception goes out with.
+     *
+     * `CMS::work()` sends the CMS response code, and a module that threw without
+     * `setResponseCode()` left it at 200 – the `errors/404` page was served as
+     * 200 OK. A code the CMS already holds is kept: `errorNotFound()` and its
+     * siblings set it before throwing, and that choice is not ours to override.
+     */
+    public function pageStatus(int $cmsStatus): int
+    {
+        return $cmsStatus === HttpCode::OK ? (int) $this->getCode() : $cmsStatus;
+    }
+
     public static function fastCreate($code, $data = null)
     {
         $e = new static($code);

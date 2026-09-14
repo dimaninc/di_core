@@ -396,6 +396,8 @@ abstract class CMS
         try {
             $this->go();
         } catch (HttpException $e) {
+            // Before rendering: renderBeforeError() branches on the code as well.
+            $this->setResponseCode($e->pageStatus($this->getResponseCode()));
             $e->sendHeaders();
 
             $this->renderBeforeError();

@@ -84,6 +84,8 @@ Extend `diBaseController`. Located in `php/src/diCore/Controller/`. Action metho
 
 Primary: Twig (`.html.twig` in `templates/`). Legacy: FastTemplate (`.html` in `tpl/`). Core templates use `@core` namespace. Twig cache: `_cfg/cache/twig/`.
 
+**A page answering with `HttpException` goes out with the exception's code unless the CMS already holds one.** `CMS::work()` renders `errors/{code}` from the exception but sends the CMS response code, so a module that threw `HttpException::notFound()` without `setResponseCode()` served its 404 page as 200 OK. `work()` now sets the status from `HttpException::pageStatus()` first — BEFORE `renderBeforeError()`, which branches on the code too. A code set before the throw (`errorNotFound()` and its siblings) is kept. Covered by `php/tests/Base/HttpExceptionPageStatusTest.php`.
+
 ### Images
 
 `diImage` (global, `php/lib/`) — GD-based thumbnails, watermarks, format detection.
