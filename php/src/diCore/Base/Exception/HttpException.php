@@ -114,12 +114,26 @@ class HttpException extends \Exception
      *
      * `CMS::work()` sends the CMS response code, and a module that threw without
      * `setResponseCode()` left it at 200 – the `errors/404` page was served as
-     * 200 OK. A code the CMS already holds is kept: `errorNotFound()` and its
-     * siblings set it before throwing, and that choice is not ours to override.
+     * 200 OK. A non-200 CMS code is kept for compatibility: the `error*()` helpers
+     * throw the very code they set, so only a consumer that set one code and
+     * threw another reaches that branch, and it keeps its old status.
+     *
+     * A code outside 4xx/5xx is not an error status (`new HttpException(null)`
+     * carries 0, and `HTTP/1.1 0` breaks the response), so the CMS code stays.
      */
     public function pageStatus(int $cmsStatus): int
     {
-        return $cmsStatus === HttpCode::OK ? (int) $this->getCode() : $cmsStatus;
+        $code = (int) $this->getCode();
+
+        if (
+            $cmsStatus !== HttpCode::OK ||
+            $code < HttpCode::BAD_REQUEST ||
+            $code > 599
+        ) {
+            return $cmsStatus;
+        }
+
+        return $code;
     }
 
     public static function fastCreate($code, $data = null)

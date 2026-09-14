@@ -25,12 +25,30 @@ class HttpExceptionPageStatusTest extends TestCase
         );
     }
 
-    /** `errorNotFound()` и соседи ставят код до броска – это решение не перетирается. */
+    /** Консьюмер, поставивший один код и бросивший другой, сохраняет прежний статус. */
     public function testCodeAlreadySetByCmsIsKept(): void
     {
         $this->assertSame(
             HttpCode::GONE,
             HttpException::notFound()->pageStatus(HttpCode::GONE)
+        );
+    }
+
+    /** Код вне 4xx/5xx – не статус ошибки: `HTTP/1.1 0` ломает ответ целиком. */
+    public function testNonErrorCodeKeepsCmsStatus(): void
+    {
+        // Фраза явно: для кода вне таблицы конструктор передал бы в Exception null.
+        $this->assertSame(
+            HttpCode::OK,
+            (new HttpException(0, 'Zero'))->pageStatus(HttpCode::OK)
+        );
+        $this->assertSame(
+            HttpCode::OK,
+            (new HttpException(HttpCode::OK, 'OK'))->pageStatus(HttpCode::OK)
+        );
+        $this->assertSame(
+            HttpCode::OK,
+            (new HttpException(600, 'Out of range'))->pageStatus(HttpCode::OK)
         );
     }
 
