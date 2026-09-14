@@ -98,6 +98,12 @@ class HttpException extends \Exception
         $statusPhrase = null,
         array $headers = []
     ) {
+        // The docblock always promised 500 for null; the code used to become 0,
+        // and the status line `HTTP/1.1 0` broke the response.
+        if ($statusCode === null) {
+            $statusCode = HttpCode::INTERNAL_SERVER_ERROR;
+        }
+
         if ($statusPhrase === null && isset($this->status[$statusCode])) {
             $statusPhrase = $this->status[$statusCode];
         }
@@ -110,30 +116,21 @@ class HttpException extends \Exception
     }
 
     /**
-     * The status a page answering with this exception goes out with.
-     *
-     * `CMS::work()` sends the CMS response code, and a module that threw without
-     * `setResponseCode()` left it at 200 – the `errors/404` page was served as
-     * 200 OK. A non-200 CMS code is kept for compatibility: the `error*()` helpers
-     * throw the very code they set, so only a consumer that set one code and
-     * threw another reaches that branch, and it keeps its old status.
-     *
-     * A code outside 4xx/5xx is not an error status (`new HttpException(null)`
-     * carries 0, and `HTTP/1.1 0` breaks the response), so the CMS code stays.
+     * Status for an error page rendered from this exception: its own code while the
+     * CMS still holds 200, or 500 if that code is not 4xx/5xx (a bug at the throw).
+     * A non-200 CMS code is kept: a consumer may have set it on purpose.
      */
     public function pageStatus(int $cmsStatus): int
     {
-        $code = (int) $this->getCode();
-
-        if (
-            $cmsStatus !== HttpCode::OK ||
-            $code < HttpCode::BAD_REQUEST ||
-            $code > 599
-        ) {
+        if ($cmsStatus !== HttpCode::OK) {
             return $cmsStatus;
         }
 
-        return $code;
+        $code = (int) $this->getCode();
+
+        return $code >= HttpCode::BAD_REQUEST && $code <= 599
+            ? $code
+            : HttpCode::INTERNAL_SERVER_ERROR;
     }
 
     public static function fastCreate($code, $data = null)

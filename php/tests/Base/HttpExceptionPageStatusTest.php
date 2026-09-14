@@ -34,22 +34,33 @@ class HttpExceptionPageStatusTest extends TestCase
         );
     }
 
-    /** Код вне 4xx/5xx – не статус ошибки: `HTTP/1.1 0` ломает ответ целиком. */
-    public function testNonErrorCodeKeepsCmsStatus(): void
+    /** Код вне 4xx/5xx – баг в месте броска, а страница всё равно ошибки: 500, не 200. */
+    public function testNonErrorCodeIsServerError(): void
     {
         // Фраза явно: для кода вне таблицы конструктор передал бы в Exception null.
+        $cases = [0 => 'Zero', HttpCode::OK => 'OK', 600 => 'Out of range'];
+
+        foreach ($cases as $code => $phrase) {
+            $this->assertSame(
+                HttpCode::INTERNAL_SERVER_ERROR,
+                (new HttpException($code, $phrase))->pageStatus(HttpCode::OK),
+                "code $code"
+            );
+        }
+
         $this->assertSame(
-            HttpCode::OK,
-            (new HttpException(0, 'Zero'))->pageStatus(HttpCode::OK)
+            HttpCode::GONE,
+            (new HttpException(600, 'Out of range'))->pageStatus(HttpCode::GONE)
         );
-        $this->assertSame(
-            HttpCode::OK,
-            (new HttpException(HttpCode::OK, 'OK'))->pageStatus(HttpCode::OK)
-        );
-        $this->assertSame(
-            HttpCode::OK,
-            (new HttpException(600, 'Out of range'))->pageStatus(HttpCode::OK)
-        );
+    }
+
+    /** Докблок конструктора обещал 500 для null, а выходили код 0 и `HTTP/1.1 0`. */
+    public function testNullCodeMeansInternalServerError(): void
+    {
+        $e = new HttpException(null);
+
+        $this->assertSame(HttpCode::INTERNAL_SERVER_ERROR, $e->getCode());
+        $this->assertSame(['HTTP/1.1 500 Internal Server Error'], $e->getHeaders());
     }
 
     /**
