@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.8.1
+
+Patch: an error page rendered from `HttpException` goes out with a matching HTTP
+status. Nothing to migrate, nothing to turn on.
+
+### The status follows the exception
+
+`CMS::work()` rendered `errors/{code}` from a caught `HttpException` but finished
+with `HttpCode::header()` of the CMS response code, which defaults to 200. A module
+that threw `HttpException::notFound()` (or any other) without `setResponseCode()`
+served its error page as `200 OK`, and `renderBeforeError()`, which branches on
+the same code, missed its per-code setup.
+
+`HttpException::pageStatus(int $cmsStatus)` now decides the status. `CMS::work()`
+sets it before `sendHeaders()` and `renderBeforeError()`; `Admin\Base::work()`,
+which had its own copy of the rule, uses the same method:
+
+- while the CMS still holds 200 – the exception's code;
+- if that code is not a 4xx/5xx – 500: the page is an error page either way, and
+  such a code is a bug at the throw;
+- a non-200 CMS code is kept. The `error*()` helpers throw the code they set, so
+  this only matters to a consumer that set one code and threw another.
+
+### `new HttpException(null)` means 500
+
+The constructor's docblock always promised 500 for a null code, but the code came
+out as 0 and the status line as `HTTP/1.1 0`, which breaks the response. It is 500
+now.
+
+**Consequences for consumers.** A page that threw an `HttpException` without
+setting the code now gets the matching status instead of 200, so a proxy cache that
+stores only successful responses stops caching it. The admin panel no longer sends
+a non-error exception code as the status. No code changes needed.
+
 ## 0.8.0
 
 Minor: a new payment gateway, CloudPayments. Additive — no schema change, no
