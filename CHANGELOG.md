@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.2
 
 Patch: the admin panel can be zoomed on a phone. Nothing to migrate, nothing to
 turn on.
