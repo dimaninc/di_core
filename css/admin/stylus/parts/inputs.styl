@@ -45,3 +45,18 @@ textarea
     padding 15px
     @media $mqTablet
       padding 5px
+
+// iOS Safari zooms the page into a focused field whose font is below 16px, and
+// the viewport no longer forbids zoom. iOS WebKit only; !important because any
+// smaller field styled elsewhere would bring the jump back
+@supports (-webkit-touch-callout: none)
+  input[type="text"]
+  input[type="email"]
+  input[type="tel"]
+  input[type="number"]
+  input[type="password"]
+  input[type="url"]
+  input[type="search"]
+  select
+  textarea
+    font-size 16px !important

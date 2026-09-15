@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.8.2
+
+Patch: the admin panel can be zoomed on a phone. Nothing to migrate, nothing to
+turn on.
+
+### Pinch zoom is no longer blocked
+
+`templates/admin/_index/_parts/head_basic_tags.html.twig` declared
+`maximum-scale=1.0, user-scalable=0, minimum-scale=1.0` (plus a meaningless
+`height=device-height`), so on a phone a dense admin table or an inline SVG chart
+could not be enlarged at all. The viewport is now `width=device-width,
+initial-scale=1`: the page loads at the same scale as before, only zoom is allowed.
+
+### iOS fields stay at 16px
+
+`maximum-scale=1` was also what stopped iOS Safari from zooming the page into a
+focused field with a font smaller than 16px; without it every tap into a 14px admin
+input would enlarge the page. `parts/inputs.styl` therefore sets text inputs,
+`select` and `textarea` to 16px under `@supports (-webkit-touch-callout: none)` –
+iOS WebKit only, so desktop and Android keep 14px. `!important` on purpose: a field
+a project styles smaller would otherwise bring the jump back.
+
+`css/admin/admin.css` is rebuilt with `stylus -u nib -p css/admin/stylus/admin.styl`.
+
 ## 0.8.1
 
 Patch: an error page rendered from `HttpException` goes out with a matching HTTP
