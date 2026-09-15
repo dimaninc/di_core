@@ -712,6 +712,19 @@ body[data-skin="entrine"] textarea {
     padding: 5px;
   }
 }
+@supports (-webkit-touch-callout: none) {
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="password"],
+  input[type="url"],
+  input[type="search"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
 body {
   margin: 0;
   padding: 0;
