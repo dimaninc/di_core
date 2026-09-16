@@ -1,8 +1,6 @@
 <?php
 namespace diCore\Payment\Tinkoff;
 
-use HttpException;
-
 /**
  * https://oplata.tinkoff.ru/landing/develop/documentation/schema
  * Class MerchantApi
@@ -129,7 +127,6 @@ class MerchantApi
     /**
      * @param $args mixed You could use associative array or url params string
      * @return bool
-     * @throws HttpException
      */
     public function init($args)
     {
@@ -193,7 +190,6 @@ class MerchantApi
      * @param mixed $args query params
      *
      * @return mixed
-     * @throws HttpException
      */
     public function buildQuery($path, $args)
     {
@@ -260,7 +256,6 @@ class MerchantApi
      * @param $args
      * @param string|null $path API method name, drives the response parsing
      * @return bool|string
-     * @throws HttpException
      */
     private function _sendRequest($api_url, $args, $path = null)
     {
@@ -269,53 +264,69 @@ class MerchantApi
             $args = json_encode($args);
         }
 
-        if ($curl = curl_init()) {
-            curl_setopt($curl, CURLOPT_URL, $api_url);
-            curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, static::VERIFY_TLS);
-            curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, static::VERIFY_TLS ? 2 : 0);
+        $curl = $this->openCurl();
 
-            if ($this->caBundlePath !== null) {
-                curl_setopt($curl, CURLOPT_CAINFO, $this->caBundlePath);
-            }
+        if (!$curl) {
+            // Same shape as the curl_exec() failure below — read via
+            // getError(), not thrown — and without $args, which carries the
+            // request Token and a checkout Receipt (email/phone).
+            $this->error = 'cURL error: unable to create a connection to ' . $api_url;
+            $this->resetResponseState();
 
-            curl_setopt($curl, CURLOPT_POST, true);
-            curl_setopt($curl, CURLOPT_POSTFIELDS, $args);
-            // Without these a hung gateway blocks forever — it would pin an FPM
-            // worker on Init and stall the CLI reconciler indefinitely.
-            curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, static::CONNECT_TIMEOUT_SEC);
-            curl_setopt($curl, CURLOPT_TIMEOUT, static::TIMEOUT_SEC);
-            curl_setopt($curl, CURLOPT_HTTPHEADER, [
-                'Content-Type: application/json',
-            ]);
+            return false;
+        }
 
-            $out = curl_exec($curl);
-            $this->response = $out;
+        curl_setopt($curl, CURLOPT_URL, $api_url);
+        curl_setopt($curl, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, static::VERIFY_TLS);
+        curl_setopt($curl, CURLOPT_SSL_VERIFYHOST, static::VERIFY_TLS ? 2 : 0);
 
-            if ($out === false) {
-                $curlErr = curl_error($curl) ?: 'unknown transport error';
-                $this->error = 'cURL error: ' . $curlErr;
-                // Nothing was parsed, so nothing here describes this call — and
-                // handleResponse(), which would have cleared it, is never
-                // reached on this branch.
-                $this->resetResponseState();
-                curl_close($curl);
+        if ($this->caBundlePath !== null) {
+            curl_setopt($curl, CURLOPT_CAINFO, $this->caBundlePath);
+        }
 
-                return $out;
-            }
+        curl_setopt($curl, CURLOPT_POST, true);
+        curl_setopt($curl, CURLOPT_POSTFIELDS, $args);
+        // Without these a hung gateway blocks forever — it would pin an FPM
+        // worker on Init and stall the CLI reconciler indefinitely.
+        curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, static::CONNECT_TIMEOUT_SEC);
+        curl_setopt($curl, CURLOPT_TIMEOUT, static::TIMEOUT_SEC);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+        ]);
 
-            $this->handleResponse($out, $path);
+        $out = curl_exec($curl);
+        $this->response = $out;
 
+        if ($out === false) {
+            $curlErr = curl_error($curl) ?: 'unknown transport error';
+            $this->error = 'cURL error: ' . $curlErr;
+            // Nothing was parsed, so nothing here describes this call — and
+            // handleResponse(), which would have cleared it, is never
+            // reached on this branch.
+            $this->resetResponseState();
             curl_close($curl);
 
             return $out;
-        } else {
-            throw new HttpException(
-                "Can not create connection to $api_url with args $args",
-                404
-            );
         }
+
+        $this->handleResponse($out, $path);
+
+        curl_close($curl);
+
+        return $out;
+    }
+
+    /**
+     * Seam for tests: a real curl_init() handle cannot be forced to fail, so
+     * a test subclass overrides this to return false instead.
+     *
+     * @return resource|\CurlHandle|false
+     */
+    protected function openCurl()
+    {
+        return curl_init();
     }
 
     /**
