@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.8.3
+
+Patch: the DB-IP spelling of Zaporizhzhia counts as a new region. Nothing to
+migrate, nothing to turn on.
+
+### «Zaporizhia» is recognised
+
+`GeoIpLocation::$novorossiaRegions` listed `Zaporizhzhia` and `Zaporizhzhya
+Oblast` – the spellings GeoLite2 uses. A project reading DB-IP City Lite instead
+therefore lost the addresses DB-IP labels `Zaporizhia`: `isNovorossia()` said no,
+and the region fell back to its country, Ukraine. Measured on dbip-city-lite
+2026-09: 4 of 79 sampled Zaporizhzhia addresses carry that spelling, while every
+other Crimea and new-region name DB-IP uses was already in the lists.
+
+The lists are matched by region NAME, and that is not a shortcut to tidy up
+later: DB-IP publishes no `iso_code` for subdivisions at all, so a code-based
+check would recognise nothing there.
+
 ## 0.8.2
 
 Patch: the admin panel can be zoomed on a phone. Nothing to migrate, nothing to
