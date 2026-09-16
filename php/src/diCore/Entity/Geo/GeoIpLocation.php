@@ -74,6 +74,8 @@ class GeoIpLocation
         'Luhansk',
         'Zaporizhzhia',
         'Zaporizhzhya Oblast',
+        // DB-IP spelling
+        'Zaporizhia',
     ];
 
     public function __construct($ip = null)
