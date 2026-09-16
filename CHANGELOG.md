@@ -2,8 +2,8 @@
 
 ## 0.8.4
 
-Patch: a failed cURL handshake in the T-Bank gateway client no longer crashes
-with a fatal error. Nothing to migrate, nothing to turn on.
+Patch: a failed cURL handle initialization in the T-Bank gateway client no
+longer crashes with a fatal error. Nothing to migrate, nothing to turn on.
 
 ### Tinkoff `MerchantApi` no longer throws a class that does not exist
 

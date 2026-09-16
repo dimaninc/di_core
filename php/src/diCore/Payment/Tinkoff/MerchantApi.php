@@ -270,6 +270,7 @@ class MerchantApi
             // Same shape as the curl_exec() failure below — read via
             // getError(), not thrown — and without $args, which carries the
             // request Token and a checkout Receipt (email/phone).
+            $this->response = false;
             $this->error = 'cURL error: unable to create a connection to ' . $api_url;
             $this->resetResponseState();
 
