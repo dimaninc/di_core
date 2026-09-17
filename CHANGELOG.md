@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.8.4
+
+Patch: a failed cURL handle initialization in the T-Bank gateway client no
+longer crashes with a fatal error. Nothing to migrate, nothing to turn on.
+
+### Tinkoff `MerchantApi` no longer throws a class that does not exist
+
+`MerchantApi.php` imported `HttpException` unqualified – a global class from
+pecl_http v1, left over from the original T-Bank SDK (2017). PHP 8 has no such
+class, but `use` is not checked at load time, so the file loaded fine and only
+broke when `curl_init()` failed: `Error: Class "HttpException" not found`
+instead of a catchable failure. `_sendRequest()` now reports a failed
+`curl_init()` the same way it already reports a failed `curl_exec()` – through
+`getError()`, prefixed `cURL error:`, with the request args left out of the
+message – they carry the Token, and `buildQuery()` is public, so a consumer's
+own call may put anything else there, up to a Receipt with the payer's email
+and phone. Covered by `php/tests/Payment/TinkoffCurlInitFailureTest.php`.
+
 ## 0.8.3
 
 Patch: the DB-IP spelling of Zaporizhzhia counts as a new region. Nothing to
