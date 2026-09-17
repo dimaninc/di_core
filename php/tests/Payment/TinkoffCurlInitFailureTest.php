@@ -17,30 +17,46 @@ use PHPUnit\Framework\TestCase;
  */
 class TinkoffCurlInitFailureTest extends TestCase
 {
+    /**
+     * Ловит удаление шва ДО запроса: счётчик в assertSeamWasUsed() отчитается
+     * уже после того, как настоящий curl_init() сходит на боевой шлюз.
+     */
+    protected function setUp(): void
+    {
+        $this->assertTrue(
+            method_exists(MerchantApi::class, 'openCurl'),
+            'MerchantApi::openCurl() is gone – the transport seam must be restored'
+        );
+    }
+
     public function testInitReturnsFalseInsteadOfThrowing(): void
     {
-        $api = new CurlInitFailureApiStub('terminal', 'secret');
+        $api = $this->newApi();
 
         $this->assertFalse($api->init($this->buildArgs()));
+        $this->assertSeamWasUsed($api);
     }
 
     public function testErrorMatchesTheCurlExecPrefix(): void
     {
-        $api = new CurlInitFailureApiStub('terminal', 'secret');
+        $api = $this->newApi();
         $api->init($this->buildArgs());
 
+        $this->assertSeamWasUsed($api);
         $this->assertStringStartsWith('cURL error:', $api->getError());
     }
 
     /**
-     * $args несёт Token и чек с email/телефоном покупателя – это уходит в
-     * логи и Sentry через getError(), так нельзя. Token не равен $secretKey
-     * буквально (это sha256 от отсортированных args + Password), поэтому
-     * проверяется отдельно, вычисленный тем же алгоритмом, что и сам класс.
+     * $args несёт Token, а через публичный buildQuery() потребитель может
+     * положить туда что угодно вплоть до чека с email/телефоном покупателя –
+     * это уходит в логи и Sentry через getError(), так нельзя. Token не равен
+     * $secretKey буквально (это sha256 от отсортированных args + Password),
+     * поэтому проверяется отдельно, вычисленный тем же алгоритмом, что и сам
+     * класс.
      */
     public function testErrorDoesNotLeakTokenOrReceipt(): void
     {
-        $api = new CurlInitFailureApiStub('terminal', 'secret');
+        $api = $this->newApi();
         $args = $this->buildArgs();
         // Mirror buildQuery(): TerminalKey is merged in before Token is
         // derived, so the token must be computed the same way to match what
@@ -51,6 +67,7 @@ class TinkoffCurlInitFailureTest extends TestCase
 
         $error = $api->getError();
 
+        $this->assertSeamWasUsed($api);
         $this->assertStringNotContainsString('secret', $error);
         $this->assertStringNotContainsString($token, $error);
         $this->assertStringNotContainsString('buyer@example.com', $error);
@@ -66,15 +83,36 @@ class TinkoffCurlInitFailureTest extends TestCase
      */
     public function testResponseStateIsResetAfterFailure(): void
     {
-        $api = new CurlInitFailureApiStub('terminal', 'secret');
+        $api = $this->newApi();
         $this->primeWithPriorSuccessfulResponse($api);
 
         $api->init($this->buildArgs());
 
+        $this->assertSeamWasUsed($api);
         $this->assertNull($api->paymentId);
         $this->assertNull($api->status);
         $this->assertNull($api->getPaymentUrl());
         $this->assertFalse($this->getRawResponse($api));
+    }
+
+    private function newApi(): CurlInitFailureApiStub
+    {
+        return new CurlInitFailureApiStub('terminal', 'secret');
+    }
+
+    /**
+     * Если openCurl() останется на месте, но перестанет вызываться из
+     * _sendRequest(), тест дойдёт до настоящего curl_init() и уйдёт живым
+     * POST'ом на боевой securepay.tinkoff.ru – проверено: 2.8 с и ответ шлюза
+     * «Терминал не найден» вместо ассерта.
+     */
+    private function assertSeamWasUsed(CurlInitFailureApiStub $api): void
+    {
+        $this->assertSame(
+            1,
+            $api->openCurlCalls,
+            'openCurl() override was not used – the call went to the live gateway'
+        );
     }
 
     private function buildArgs(): array
@@ -135,8 +173,13 @@ class TinkoffCurlInitFailureTest extends TestCase
 
 class CurlInitFailureApiStub extends MerchantApi
 {
+    /** @var int доказательство, что шов сработал – см. assertSeamWasUsed() */
+    public $openCurlCalls = 0;
+
     protected function openCurl()
     {
+        $this->openCurlCalls++;
+
         return false;
     }
 }

@@ -14,8 +14,9 @@ broke when `curl_init()` failed: `Error: Class "HttpException" not found`
 instead of a catchable failure. `_sendRequest()` now reports a failed
 `curl_init()` the same way it already reports a failed `curl_exec()` – through
 `getError()`, prefixed `cURL error:`, with the request args left out of the
-message (they carry the Token and a checkout Receipt with the payer's email
-and phone). Covered by `php/tests/Payment/TinkoffCurlInitFailureTest.php`.
+message – they carry the Token, and `buildQuery()` is public, so a consumer's
+own call may put anything else there, up to a Receipt with the payer's email
+and phone. Covered by `php/tests/Payment/TinkoffCurlInitFailureTest.php`.
 
 ## 0.8.3
 

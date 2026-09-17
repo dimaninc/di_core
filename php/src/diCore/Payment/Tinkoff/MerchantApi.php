@@ -268,10 +268,12 @@ class MerchantApi
 
         if (!$curl) {
             // Same shape as the curl_exec() failure below — read via
-            // getError(), not thrown — and without $args, which carries the
-            // request Token and a checkout Receipt (email/phone).
+            // getError(), not thrown — and without $args: they carry the
+            // request Token, and buildQuery() is public, so a consumer's own
+            // call may put anything else there, up to a Receipt with the
+            // payer's email and phone.
             $this->response = false;
-            $this->error = 'cURL error: unable to create a connection to ' . $api_url;
+            $this->error = "cURL error: unable to create a connection to $api_url";
             $this->resetResponseState();
 
             return false;
@@ -293,9 +295,7 @@ class MerchantApi
         // worker on Init and stall the CLI reconciler indefinitely.
         curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, static::CONNECT_TIMEOUT_SEC);
         curl_setopt($curl, CURLOPT_TIMEOUT, static::TIMEOUT_SEC);
-        curl_setopt($curl, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-        ]);
+        curl_setopt($curl, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
 
         $out = curl_exec($curl);
         $this->response = $out;
