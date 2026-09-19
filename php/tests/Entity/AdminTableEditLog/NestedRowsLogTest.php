@@ -108,6 +108,56 @@ class NestedRowsLogTest extends TestCase
         $this->assertSame(['items[5].note' => ''], $this->new($log));
     }
 
+    // raw DB on both sides: a whitespace-only edit is a stored change, not noise
+    public function testWhitespaceOnlyEditIsAChange(): void
+    {
+        $log = $this->log()->addNestedRowsData(
+            'items',
+            self::TABLE,
+            [5 => ['id' => '5', 'title' => 'Hi']],
+            [5 => ['id' => '5', 'title' => 'Hi ']]
+        );
+
+        $this->assertSame(['items[5].title' => 'Hi '], $this->new($log));
+    }
+
+    public static function jsonPairs(): array
+    {
+        return [
+            'null vs empty string' => ['{"a":null}', '{"a":""}', true],
+            'float vs int' => ['{"a":1.0}', '{"a":1}', true],
+            'zero vs false' => ['{"a":0}', '{"a":false}', true],
+            'true vs one' => ['{"a":true}', '{"a":1}', true],
+            'list order' => ['{"a":[1,2]}', '{"a":[2,1]}', true],
+            'key order only' => [
+                '{"a":1,"b":{"x":1,"y":2}}',
+                '{"b":{"y":2,"x":1},"a":1}',
+                false,
+            ],
+            're-encoded slashes' => ['{"u":"a\/b"}', '{"u":"a/b"}', false],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('jsonPairs')]
+    public function testJsonColumnIsComparedStrictlyButKeyOrderIgnored(
+        string $old,
+        string $new,
+        bool $logged
+    ): void {
+        $log = (new NestedRowsJsonProbeLog())
+            ->setTargetTable('_di_core_test_parent')
+            ->setTargetId(7)
+            ->setAdminId(42)
+            ->addNestedRowsData(
+                'items',
+                self::TABLE,
+                [5 => ['id' => '5', 'props' => $old]],
+                [5 => ['id' => '5', 'props' => $new]]
+            );
+
+        $this->assertSame($logged, $log->hasNewData());
+    }
+
     public function testNestedRowsJoinTheParentsOwnChanges(): void
     {
         $log = $this->log()
@@ -149,4 +199,20 @@ class NestedRowsLogTest extends TestCase
         $this->assertSame('', (string) $log->getOldValues('items[9]'));
         $this->assertSame('{"title":"Added"}', $log->getNewValues('items[9]'));
     }
+}
+
+// the child table's model decides which columns are JSON
+class NestedRowsJsonProbeLog extends TableEditLog
+{
+    protected static function createNestedRowModel($table)
+    {
+        return new NestedRowsJsonProbeRow();
+    }
+}
+
+class NestedRowsJsonProbeRow extends \diModel
+{
+    protected static $fieldTypes = [
+        'props' => \diCore\Database\FieldType::json,
+    ];
 }

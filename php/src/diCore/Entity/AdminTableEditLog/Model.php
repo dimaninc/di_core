@@ -437,7 +437,8 @@ class Model extends \diModel
      * Folds rows of one 'dynamic' form field (child table) into this parent record,
      * so they show in the parent form's log tab. Keys: "field[id].column" for an
      * edited column, "field[id]" with the whole row as JSON for an added (old is
-     * null) or removed (new is null) row – the latter is enough to restore it.
+     * null) or removed (new is null) row. A removed row can be restored from it,
+     * except its pic/file columns: submit() deletes those files from disk.
      *
      * @param array $before id => row before the submit
      * @param array $after id => row after the submit
@@ -445,7 +446,7 @@ class Model extends \diModel
      */
     public function addNestedRowsData($field, $table, array $before, array $after)
     {
-        $model = \diModel::createForTableNoStrict($table);
+        $model = static::createNestedRowModel($table);
         $old = static::unserializeData($this->getOldData());
         $new = static::unserializeData($this->getNewData());
         $changed = false;
@@ -509,8 +510,18 @@ class Model extends \diModel
             static::isGlobalFieldSkipped($model, $field);
     }
 
-    // both sides are raw DB reads, so an unchanged value is byte-identical, except
-    // JSON a save may re-encode; NULL and '' stay different
+    // model of the child table: its field types and skip rules apply to the diff
+    protected static function createNestedRowModel($table)
+    {
+        return \diModel::createForTableNoStrict($table);
+    }
+
+    /**
+     * Both sides are raw DB reads, so an unchanged value is byte-identical: any
+     * difference, whitespace included, is a stored change. Unlike hasRealChanges(),
+     * which trims because it compares posted input with the DB. JSON a save may
+     * re-encode is compared in a canonical form; NULL and '' stay different.
+     */
     protected static function nestedValuesDiffer(\diModel $model, $field, $old, $new)
     {
         if ($old === null || $new === null) {
@@ -518,15 +529,46 @@ class Model extends \diModel
         }
 
         if ($model::isJsonField($field)) {
-            $oldDecoded = json_decode((string) $old, true);
-            $newDecoded = json_decode((string) $new, true);
+            $oldJson = static::canonicalJson($old);
+            $newJson = static::canonicalJson($new);
 
-            if ($oldDecoded !== null && $newDecoded !== null) {
-                return $oldDecoded != $newDecoded;
+            if ($oldJson !== null && $newJson !== null) {
+                return $oldJson !== $newJson;
             }
         }
 
         return (string) $old !== (string) $new;
+    }
+
+    /**
+     * Key order doesn't matter, types do: null vs "", 1.0 vs 1, 0 vs false differ.
+     *
+     * @return string|null null when the value is not JSON
+     */
+    protected static function canonicalJson($value)
+    {
+        $decoded = json_decode((string) $value, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return null;
+        }
+
+        $sort = function ($v) use (&$sort) {
+            if (!is_array($v)) {
+                return $v;
+            }
+
+            ksort($v);
+
+            return array_map($sort, $v);
+        };
+
+        return json_encode(
+            $sort($decoded),
+            JSON_UNESCAPED_UNICODE |
+                JSON_UNESCAPED_SLASHES |
+                JSON_PRESERVE_ZERO_FRACTION
+        );
     }
 
     protected static function unserializeData($data)

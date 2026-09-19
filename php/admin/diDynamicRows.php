@@ -1993,8 +1993,16 @@ EOF;
         $rows = [];
         $rs = $this->getDb()->rs($this->getDataTable(), "WHERE $this->subquery");
 
-        while ($rs && ($r = $this->getDb()->fetch($rs))) {
-            $rows[$r->id] = (array) $r;
+        // rs() answers a failed query with false: read as "no rows", it would log
+        // every row as added or removed
+        if (!$rs) {
+            throw new \RuntimeException(
+                "Unable to read '{$this->getDataTable()}' rows of '$this->field'"
+            );
+        }
+
+        while ($r = $this->getDb()->fetch_array($rs)) {
+            $rows[$r['id']] = $r;
         }
 
         return $rows;

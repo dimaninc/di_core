@@ -158,6 +158,35 @@ class NestedEditLogTest extends TestCase
         $page->editLog = ['show_only_diff' => true];
         $this->assertTrue($page->useEditLogForNestedEntities());
     }
+
+    // read as "no rows", a failed read would log every row as added or removed
+    public function testAFailedSnapshotReadIsReportedAndLogsNothing(): void
+    {
+        $page = NestedEditLogProbePage::make();
+        $page->nested = true;
+        $page->dropTableAfterSave = true;
+
+        [$log] = $this->submit($page);
+
+        $this->assertNull($log, 'no rows reported as removed');
+        $this->assertCount(1, $page->reported);
+        $this->assertInstanceOf(\RuntimeException::class, $page->reported[0]);
+    }
+
+    public function testAFailedRecordSaveIsReported(): void
+    {
+        $page = NestedEditLogProbePage::make();
+        $page->recordToSave = new class {
+            public function save()
+            {
+                throw new \Exception('store down');
+            }
+        };
+
+        $page->runAddEditLogRecord();
+
+        $this->assertSame('store down', $page->saveFailure->getMessage());
+    }
 }
 
 class NestedEditLogProbePage extends BasePage
@@ -172,6 +201,14 @@ class NestedEditLogProbePage extends BasePage
 
     public $reported = [];
 
+    public $dropTableAfterSave = false;
+
+    /** @var object|null stands in for the built record when set */
+    public $recordToSave = null;
+
+    /** @var \Exception|null */
+    public $saveFailure = null;
+
     public static function make(): self
     {
         return (new \ReflectionClass(self::class))->newInstanceWithoutConstructor();
@@ -180,6 +217,23 @@ class NestedEditLogProbePage extends BasePage
     public function runBuildEditLogRecord()
     {
         return $this->buildEditLogRecord();
+    }
+
+    public function runAddEditLogRecord()
+    {
+        return $this->addEditLogRecord();
+    }
+
+    protected function buildEditLogRecord()
+    {
+        return $this->recordToSave ?? parent::buildEditLogRecord();
+    }
+
+    protected function onEditLogSaveFailure(\Exception $e)
+    {
+        $this->saveFailure = $e;
+
+        return $this;
     }
 
     // diDynamicRows opens its connection through the parent's model, so the parent
@@ -213,6 +267,14 @@ class NestedEditLogProbePage extends BasePage
                 'fields' => [
                     'title' => 'string',
                 ],
+                // makes the "after" read fail, the "before" one has already run
+                'afterAllSaved' => function () {
+                    if ($this->dropTableAfterSave) {
+                        \diCore\Database\Connection::get()
+                            ->getDb()
+                            ->q('DROP TABLE `' . NestedEditLogTest::TABLE . '`');
+                    }
+                },
             ],
         ];
     }

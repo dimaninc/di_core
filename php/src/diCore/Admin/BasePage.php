@@ -1536,8 +1536,19 @@ abstract class BasePage
      */
     protected function onEditLogUnavailable(\Exception $e)
     {
+        return $this->reportEditLogProblem('Edit log unavailable', $e);
+    }
+
+    /**
+     * The one reporter behind every edit-log hook: file log plus E_USER_WARNING.
+     *
+     * @return $this
+     */
+    private function reportEditLogProblem($what, \Throwable $e)
+    {
         $text =
-            'Edit log unavailable for ' .
+            $what .
+            ' for ' .
             $this->getTable() .
             '#' .
             $this->getId() .
@@ -1639,8 +1650,25 @@ abstract class BasePage
                 $log->save();
             }
         } catch (\Exception $e) {
-            // validation failed -> no changes
-            //throw $e;
+            // "no changes" never gets here (the record is null then): this is a
+            // store outage or a failed validation, and the submit is already saved
+            $this->onEditLogSaveFailure($e);
+        }
+
+        return $this;
+    }
+
+    /**
+     * The submit is saved, its record is not. Override to report to your
+     * monitoring.
+     *
+     * @return $this
+     */
+    protected function onEditLogSaveFailure(\Exception $e)
+    {
+        try {
+            $this->reportEditLogProblem('Edit log record not saved', $e);
+        } catch (\Throwable $ignored) {
         }
 
         return $this;
@@ -1698,7 +1726,9 @@ abstract class BasePage
      * Whether rows of the form's table-backed 'dynamic' fields (child tables edited
      * inside this form) go into this record's edit log. diDynamicRows saves and
      * deletes them by itself, so nothing else logs them. Follows useEditLog();
-     * override to switch nested logging off (or on) for one page.
+     * override to switch nested logging off for one page. Switching it on without
+     * useEditLog() writes records the form's tab doesn't show (the tab follows
+     * useEditLog() only): they are visible in the common log alone.
      *
      * @return bool
      */
@@ -1739,25 +1769,7 @@ abstract class BasePage
     public function onNestedEditLogFailure(\Throwable $e)
     {
         try {
-            $text =
-                'Nested edit log failed for ' .
-                $this->getTable() .
-                '#' .
-                $this->getId() .
-                ': ' .
-                get_class($e) .
-                ': ' .
-                mb_substr(
-                    StringHelper::scrubUriCredentials($e->getMessage()),
-                    0,
-                    300
-                );
-
-            Logger::getInstance()->log($text, 'admin_edit_log');
-
-            if (\diRequest::isCli() || !ini_get('display_errors')) {
-                trigger_error($text, E_USER_WARNING);
-            }
+            $this->reportEditLogProblem('Nested edit log failed', $e);
         } catch (\Throwable $ignored) {
         }
 
