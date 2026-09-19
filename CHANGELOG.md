@@ -1,5 +1,48 @@
 # Changelog
 
+## 0.8.5
+
+Nothing to migrate, but **the admin edit log grows on its own after the update**:
+every page whose `useEditLog()` is on starts logging the rows of its dynamic
+fields too. To keep a page as it was, override
+`BasePage::useEditLogForNestedEntities()` to return `false`.
+
+### Rows of `'dynamic'` fields reach the edit log
+
+`diDynamicRows::submit()` saves a table-backed dynamic field's rows with a bare
+`save()` and removes them with a raw `DELETE`, so no edit-log record ever saw
+them: `addEditLogRecord()` compared only the parent's own columns, and `Submit`
+cuts dynamic fields out of those. `submit()` now reads the rows by the field's own
+`subquery` before and after and hands both to the page, and the rows are folded
+into the parent's record – the one the form's history tab reads:
+
+- `field[id].column` – an edited column;
+- `field[id]` – an added row (the whole row as JSON in "new") or a removed one
+  (the whole row in "old", enough to restore it except its pic/file columns,
+  whose files `submit()` deletes).
+
+After a deletion `submit()` renumbers `order_num`, so the record also lists each
+shifted row. Values are compared as stored: whitespace counts, `NULL` differs
+from `''`, JSON columns are compared canonically (key order ignored, types
+not). Not covered: lite `int[]`/`string[]` fields and
+`dynamic_pics`/`dynamic_files`.
+
+Logging never costs the save. A failed snapshot read is reported instead of being
+read as "no rows" (which would log every row as removed); failures go through the
+new `BasePage::onNestedEditLogFailure()`.
+
+### A record that fails to save is reported
+
+`addEditLogRecord()` used to swallow any exception from `save()` under a
+"validation failed -> no changes" comment. "No changes" never reaches that
+`catch` any more (`buildEditLogRecord()` returns `null` for it), so what does
+is a store outage or a failed validation after the submit itself was saved. It
+now goes to `onEditLogSaveFailure()`: file log plus `E_USER_WARNING`, the same
+reporter as `onEditLogUnavailable()`. Override it to report to your monitoring.
+
+Covered by `php/tests/Admin/NestedEditLogTest.php` and
+`php/tests/Entity/AdminTableEditLog/NestedRowsLogTest.php`.
+
 ## 0.8.4
 
 Patch: a failed cURL handle initialization in the T-Bank gateway client no
