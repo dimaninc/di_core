@@ -433,6 +433,129 @@ class Model extends \diModel
         return $this;
     }
 
+    /**
+     * Folds rows of one 'dynamic' form field (child table) into this parent record,
+     * so they show in the parent form's log tab. Keys: "field[id].column" for an
+     * edited column, "field[id]" with the whole row as JSON for an added (old is
+     * null) or removed (new is null) row – the latter is enough to restore it.
+     *
+     * @param array $before id => row before the submit
+     * @param array $after id => row after the submit
+     * @return $this
+     */
+    public function addNestedRowsData($field, $table, array $before, array $after)
+    {
+        $model = \diModel::createForTableNoStrict($table);
+        $old = static::unserializeData($this->getOldData());
+        $new = static::unserializeData($this->getNewData());
+        $changed = false;
+
+        foreach ($after as $id => $row) {
+            if (!isset($before[$id])) {
+                $old["{$field}[$id]"] = null;
+                $new["{$field}[$id]"] = $this->nestedRowToString(
+                    $model,
+                    $table,
+                    $row
+                );
+                $changed = true;
+
+                continue;
+            }
+
+            foreach ($row as $column => $value) {
+                $oldValue = $before[$id][$column] ?? null;
+
+                if (
+                    $column === 'id' ||
+                    static::isNestedFieldSkipped($model, $table, $column) ||
+                    !static::nestedValuesDiffer($model, $column, $oldValue, $value)
+                ) {
+                    continue;
+                }
+
+                $old["{$field}[$id].$column"] = $oldValue;
+                $new["{$field}[$id].$column"] = $value;
+                $changed = true;
+            }
+        }
+
+        foreach ($before as $id => $row) {
+            if (!isset($after[$id])) {
+                $old["{$field}[$id]"] = $this->nestedRowToString(
+                    $model,
+                    $table,
+                    $row
+                );
+                $new["{$field}[$id]"] = null;
+                $changed = true;
+            }
+        }
+
+        if ($changed) {
+            $this->setOldData(serialize($old))->setNewData(serialize($new));
+        }
+
+        return $this;
+    }
+
+    public static function isNestedFieldSkipped(\diModel $model, $table, $field)
+    {
+        $skipFields = static::$skipFields[$table] ?? [];
+
+        return in_array($field, $skipFields) ||
+            in_array('*', $skipFields) ||
+            static::isModelFieldSkipped($model, $field) ||
+            static::isGlobalFieldSkipped($model, $field);
+    }
+
+    // both sides are raw DB reads, so an unchanged value is byte-identical, except
+    // JSON a save may re-encode; NULL and '' stay different
+    protected static function nestedValuesDiffer(\diModel $model, $field, $old, $new)
+    {
+        if ($old === null || $new === null) {
+            return $old !== $new;
+        }
+
+        if ($model::isJsonField($field)) {
+            $oldDecoded = json_decode((string) $old, true);
+            $newDecoded = json_decode((string) $new, true);
+
+            if ($oldDecoded !== null && $newDecoded !== null) {
+                return $oldDecoded != $newDecoded;
+            }
+        }
+
+        return (string) $old !== (string) $new;
+    }
+
+    protected static function unserializeData($data)
+    {
+        $ar = $data ? unserialize($data) : [];
+
+        return is_array($ar) ? $ar : [];
+    }
+
+    // a string, not an array: the log template prints old values as they are
+    protected function nestedRowToString(\diModel $model, $table, array $row)
+    {
+        unset($row['id']);
+
+        foreach (array_keys($row) as $column) {
+            if (static::isNestedFieldSkipped($model, $table, $column)) {
+                unset($row[$column]);
+            }
+        }
+
+        // one broken byte must not turn the whole row into false
+        return json_encode(
+            $row,
+            JSON_UNESCAPED_UNICODE |
+                JSON_UNESCAPED_SLASHES |
+                JSON_INVALID_UTF8_SUBSTITUTE
+        );
+    }
+
     protected function hasRealChanges($field, $model, $old, $new)
     {
         if (

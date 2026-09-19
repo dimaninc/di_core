@@ -68,6 +68,10 @@ abstract class BasePage
 
     private $redirectSent = false;
 
+    // rows of table-backed 'dynamic' fields before/after the submit, filled by
+    // diDynamicRows::submit() and folded into the record by addEditLogRecord()
+    private $nestedEditLogSnapshots = [];
+
     const LIST_LIST = 1;
     const LIST_GRID = 2;
 
@@ -1628,26 +1632,133 @@ abstract class BasePage
 
     protected function addEditLogRecord()
     {
-        if ($this->useEditLog()) {
-            try {
-                $log = TableEditLog::create()
-                    ->setFormFields($this->getFormFieldsFiltered())
-                    ->setTargetTable($this->getTable())
-                    ->setTargetId($this->getId())
-                    ->setAdminId(
-                        $this->getAdmin()
-                            ->getAdminModel()
-                            ->getId()
-                    )
-                    ->setBothData($this->getSubmit()->getModel());
+        try {
+            $log = $this->buildEditLogRecord();
 
-                if ($log->hasOldData() && $log->hasNewData()) {
-                    $log->save();
-                }
-            } catch (\Exception $e) {
-                // validation failed -> no changes
-                //throw $e;
+            if ($log) {
+                $log->save();
             }
+        } catch (\Exception $e) {
+            // validation failed -> no changes
+            //throw $e;
+        }
+
+        return $this;
+    }
+
+    /**
+     * The submit's record: the parent's own fields plus the rows of its dynamic
+     * fields. Not saved here.
+     *
+     * @return TableEditLog|null null when there is nothing to log
+     */
+    protected function buildEditLogRecord()
+    {
+        $useEditLog = $this->useEditLog();
+        $snapshots = $this->nestedEditLogSnapshots;
+        $this->nestedEditLogSnapshots = [];
+
+        if (!$useEditLog && !$snapshots) {
+            return null;
+        }
+
+        $log = TableEditLog::create()
+            ->setTargetTable($this->getTable())
+            ->setTargetId($this->getId())
+            ->setAdminId(
+                $this->getAdmin()
+                    ->getAdminModel()
+                    ->getId()
+            );
+
+        if ($useEditLog) {
+            $log->setFormFields($this->getFormFieldsFiltered())->setBothData(
+                $this->getSubmit()->getModel()
+            );
+        }
+
+        foreach ($snapshots as $s) {
+            try {
+                $log->addNestedRowsData(
+                    $s['field'],
+                    $s['table'],
+                    $s['before'],
+                    $s['after']
+                );
+            } catch (\Throwable $e) {
+                // the rest of the record is still worth saving
+                $this->onNestedEditLogFailure($e);
+            }
+        }
+
+        return $log->hasOldData() && $log->hasNewData() ? $log : null;
+    }
+
+    /**
+     * Whether rows of the form's table-backed 'dynamic' fields (child tables edited
+     * inside this form) go into this record's edit log. diDynamicRows saves and
+     * deletes them by itself, so nothing else logs them. Follows useEditLog();
+     * override to switch nested logging off (or on) for one page.
+     *
+     * @return bool
+     */
+    public function useEditLogForNestedEntities()
+    {
+        return (bool) $this->useEditLog();
+    }
+
+    /**
+     * Rows of one dynamic field (id => row) before and after the submit. Called by
+     * diDynamicRows::submit(); addEditLogRecord() folds them into the parent record.
+     *
+     * @return $this
+     */
+    public function addNestedEditLogSnapshot(
+        $field,
+        $table,
+        array $before,
+        array $after
+    ) {
+        $this->nestedEditLogSnapshots[] = compact(
+            'field',
+            'table',
+            'before',
+            'after'
+        );
+
+        return $this;
+    }
+
+    /**
+     * Nested logging is best-effort and must never cost the save, but a silent
+     * failure would read as "nobody touched the rows". Override to report to your
+     * monitoring.
+     *
+     * @return $this
+     */
+    public function onNestedEditLogFailure(\Throwable $e)
+    {
+        try {
+            $text =
+                'Nested edit log failed for ' .
+                $this->getTable() .
+                '#' .
+                $this->getId() .
+                ': ' .
+                get_class($e) .
+                ': ' .
+                mb_substr(
+                    StringHelper::scrubUriCredentials($e->getMessage()),
+                    0,
+                    300
+                );
+
+            Logger::getInstance()->log($text, 'admin_edit_log');
+
+            if (\diRequest::isCli() || !ini_get('display_errors')) {
+                trigger_error($text, E_USER_WARNING);
+            }
+        } catch (\Throwable $ignored) {
         }
 
         return $this;

@@ -1733,6 +1733,9 @@ EOF;
         // in lite mode here to store values
         $liteValues = [];
 
+        // taken before any row is saved or deleted below
+        $editLogBefore = $this->readRowsForEditLog();
+
         foreach ($fields as $k => $v) {
             if (!is_array($v)) {
                 $v = ['type' => $v];
@@ -1926,11 +1929,75 @@ EOF;
             $afterAllSavedCallback($this);
         }
 
+        if ($editLogBefore !== null) {
+            $this->passRowsToEditLog($editLogBefore);
+        }
+
         if ($this->isLite) {
             return $liteValues;
         }
 
         return null;
+    }
+
+    /**
+     * Rows are saved with a bare save() and removed with a raw DELETE here, so the
+     * parent page's edit log never sees them unless they are handed over. Lite
+     * fields have no rows of their own: their values live in the parent row.
+     */
+    protected function shouldLogRowsEdits()
+    {
+        return !$this->isLite &&
+            $this->getDataTable() &&
+            $this->doesParentExist() &&
+            $this->AdminPage instanceof \diCore\Admin\BasePage &&
+            $this->AdminPage->useEditLogForNestedEntities();
+    }
+
+    /**
+     * @return array|null id => row, null when the rows are not logged
+     */
+    protected function readRowsForEditLog()
+    {
+        if (!$this->shouldLogRowsEdits()) {
+            return null;
+        }
+
+        try {
+            return $this->fetchRowsForEditLog();
+        } catch (\Throwable $e) {
+            $this->AdminPage->onNestedEditLogFailure($e);
+
+            return null;
+        }
+    }
+
+    protected function passRowsToEditLog(array $before)
+    {
+        try {
+            $this->AdminPage->addNestedEditLogSnapshot(
+                $this->field,
+                $this->getDataTable(),
+                $before,
+                $this->fetchRowsForEditLog()
+            );
+        } catch (\Throwable $e) {
+            $this->AdminPage->onNestedEditLogFailure($e);
+        }
+
+        return $this;
+    }
+
+    private function fetchRowsForEditLog()
+    {
+        $rows = [];
+        $rs = $this->getDb()->rs($this->getDataTable(), "WHERE $this->subquery");
+
+        while ($rs && ($r = $this->getDb()->fetch($rs))) {
+            $rows[$r->id] = (array) $r;
+        }
+
+        return $rows;
     }
 
     protected function submitMultipleFiles()
