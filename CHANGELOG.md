@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.8.6
+
+Nothing to migrate.
+
+### Payment draft: pay system and vendor on two lines
+
+`PaymentDraft\Model::getPaySystemWithVendorShortStr()` takes an optional
+separator (default `/`, as before) and declares a `string` return type. The
+template data gains `pay_system_with_vendor_double_str` – the same pair split by
+`<br />`, for narrow admin columns.
+
+### Prettier config names the PHP plugin
+
+`.prettierrc` lists `@prettier/plugin-php`, so PHP files are formatted without
+passing the plugin on the command line. Prettier 3 resolves it from the config's
+directory: a checkout needs `node_modules` with the plugin next to it (in a
+consuming project – a symlink to the project's own `node_modules`).
+
 ## 0.8.5
 
 Nothing to migrate, but **the admin edit log grows on its own after the update**:
