@@ -135,7 +135,7 @@ class Model extends \diModel
         }
     }
 
-    public function getPaySystemWithVendorShortStr()
+    public function getPaySystemWithVendorShortStr($sep = '/'): string
     {
         $ar = [$this->getPaySystemStr()];
 
@@ -145,7 +145,7 @@ class Model extends \diModel
             $ar[] = $this->getVendorStr() ?: 'Unknown?';
         }
 
-        return join('/', $ar);
+        return join($sep, $ar);
     }
 
     public function getCurrencyStr()
@@ -183,6 +183,9 @@ class Model extends \diModel
             'currency_str' => $this->getCurrencyStr(),
             'status_str' => $this->getStatusStr(),
             'pay_system_with_vendor_short_str' => $this->getPaySystemWithVendorShortStr(),
+            'pay_system_with_vendor_double_str' => $this->getPaySystemWithVendorShortStr(
+                '<br />'
+            ),
         ]);
     }
 

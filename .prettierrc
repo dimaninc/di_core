@@ -1,4 +1,5 @@
 {
+  "plugins": ["@prettier/plugin-php"],
   "endOfLine": "lf",
   "semi": true,
   "singleQuote": true,
