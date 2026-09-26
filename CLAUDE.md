@@ -23,6 +23,9 @@ php vendor/dimaninc/di_core/php/admin/workers/cli.php controller=migration actio
 # Run tests (consuming project uses phpunit-project.xml.dist as template)
 ./vendor/bin/phpunit -c phpunit.xml
 
+# Release: changelog, version in composer.json, commit, tag, push (asks before writing)
+bash scripts/release.sh [--dry-run]
+
 # Post-install setup scripts (from consuming project root)
 sh vendor/dimaninc/di_core/scripts/copy_core_static.sh
 sh vendor/dimaninc/di_core/scripts/create_work_folders.sh

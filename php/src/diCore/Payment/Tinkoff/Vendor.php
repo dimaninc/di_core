@@ -38,7 +38,7 @@ class Vendor extends VendorContainer
         self::CARD => 'Банковская карта',
         self::WEBMONEY => 'Webmoney',
         self::BANKING => 'Tinkoff',
-        self::SBP => 'Система быстрых платежей',
+        self::SBP => 'СБП',
         self::SBERPAY => 'SberPay',
         self::TPAY => 'T-Pay',
         self::YANDEX_PAY => 'Яндекс Pay',
