@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.8
+
+- updated release.sh script: release if gh installed and authenticated
+
 ## 0.8.7
 
 - renamed SBP in tinkoff to short version, added release.sh script
