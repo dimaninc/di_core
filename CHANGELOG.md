@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.9
+
+- fixed json treatment in diModel
+
 ## 0.8.8
 
 - updated release.sh script: release if gh installed and authenticated
