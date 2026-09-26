@@ -2278,6 +2278,12 @@ class diModel implements \ArrayAccess
 
     protected function prepareValuesForDb($data, $key = null)
     {
+        // Any array in a field goes out as is: the driver serialises and escapes it
+        // (SQL: diDB::getJsonForStructure()), a second pass would store the escaping
+        if ($key !== null && is_array($data)) {
+            return $data;
+        }
+
         if (ArrayHelper::isSequential($data)) {
             return array_map(fn($value) => $this->prepareValuesForDb($value), $data);
         }
@@ -2685,9 +2691,7 @@ class diModel implements \ArrayAccess
 
     public static function createTableInDatabase()
     {
-        static::getConnection()
-            ->getDb()
-            ->q(static::getCreateTableQuery());
+        static::getConnection()->getDb()->q(static::getCreateTableQuery());
     }
 
     // todo: implement this function to create table from model structure
@@ -3405,7 +3409,7 @@ ENGINE = InnoDB;";
             static::getConnection()::isMongo() &&
             $field == static::getIdFieldName()
         ) {
-            if (!$value instanceof ObjectID) {
+            if (!($value instanceof ObjectID)) {
                 return new ObjectID($value);
             }
         }
@@ -3433,7 +3437,7 @@ ENGINE = InnoDB;";
             case FieldType::datetime:
                 if (
                     static::getConnection()::isMongo() &&
-                    !$value instanceof UTCDatetime
+                    !($value instanceof UTCDatetime)
                 ) {
                     $value = new UTCDatetime(
                         (new \DateTime($value))->getTimestamp() * 1000

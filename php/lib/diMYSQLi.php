@@ -222,12 +222,7 @@ class diMYSQLi extends diMYSQL
                 return 'NULL';
             }
 
-            $jsonString = json_encode($value);
-            if ($jsonString === false) {
-                return "''";
-            }
-
-            return $this->escapeValue($jsonString);
+            return $this->escapeValue($this->encodeJsonStructure($value));
         }
 
         return parent::getJsonForStructure($value);

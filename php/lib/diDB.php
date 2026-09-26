@@ -995,6 +995,34 @@ abstract class diDB
         return $this->quoteValue($value);
     }
 
+    /**
+     * JSON text for drivers that send a structure as one literal. INF/NAN become
+     * strings, as getJsonForStructure() stores them; anything else unencodable
+     * throws – an empty literal would silently replace the data.
+     */
+    protected function encodeJsonStructure($value): string
+    {
+        if (is_array($value)) {
+            array_walk_recursive($value, function (&$leaf) {
+                if (is_float($leaf) && !is_finite($leaf)) {
+                    $leaf = (string) $leaf;
+                }
+            });
+        } elseif (is_float($value) && !is_finite($value)) {
+            $value = (string) $value;
+        }
+
+        try {
+            return json_encode($value, JSON_THROW_ON_ERROR);
+        } catch (\JsonException $e) {
+            throw new \InvalidArgumentException(
+                "Unable to encode a JSON field value: {$e->getMessage()}",
+                0,
+                $e
+            );
+        }
+    }
+
     /*
      * Default for Mysql
      */
@@ -1006,7 +1034,8 @@ abstract class diDB
             }
 
             if (isNumber($s)) {
-                return $s;
+                // INF/NAN have no JSON form, a bare INF in SQL is an unknown column
+                return is_finite($s) ? $s : $this->escapeValue((string) $s);
             }
 
             if (is_bool($s)) {

@@ -201,8 +201,7 @@ WHERE table_name = $tableEsc AND table_schema = current_schema()
 
     protected function getJsonForStructure($value)
     {
-        $s = json_encode($value);
-
-        return "'$s'::jsonb";
+        // Escaped here like in every driver: diModel doesn't pre-escape nested values
+        return $this->escapeValue($this->encodeJsonStructure($value)) . '::jsonb';
     }
 }
