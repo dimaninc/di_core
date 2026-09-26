@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.7
+
+- renamed SBP in tinkoff to short version, added release.sh script
+
 ## 0.8.6
 
 Nothing to migrate.
