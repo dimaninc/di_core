@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Releases a new di_core version: changelog, version in composer.json, commit, tag, push.
-# Writes nothing before the final confirmation; --dry-run shows everything and exits.
+# Releases a new di_core version: changelog, version in composer.json, commit, tag,
+# push, GitHub release. Writes nothing before the final confirmation;
+# --dry-run shows everything and exits.
 #
 #   bash scripts/release.sh [--dry-run]
 
@@ -8,6 +9,8 @@ set -euo pipefail
 
 REMOTE=origin
 BRANCH=master
+# Named explicitly: with two remotes on the same repo gh would ask which one to use
+GITHUB_REPO=dimaninc/di_core
 # Service commits of previous releases stay out of the changelog
 SKIP_SUBJECTS='^(Changelog for|Release) '
 
@@ -32,6 +35,16 @@ ask() {
     die "must be on branch $BRANCH"
 [[ -z "$(git status --porcelain)" ]] ||
     die "working tree has uncommitted changes"
+
+# Without gh the release still goes out, only the GitHub release step is skipped
+GH_SKIP_REASON=''
+if ! command -v gh >/dev/null 2>&1; then
+    GH_SKIP_REASON='gh is not installed'
+elif ! gh auth status >/dev/null 2>&1; then
+    GH_SKIP_REASON='gh is not logged in (gh auth login)'
+fi
+[[ -z "$GH_SKIP_REASON" ]] ||
+    echo "Warning: no GitHub release will be created: $GH_SKIP_REASON"
 
 git fetch --quiet --tags "$REMOTE" "$BRANCH"
 # Being ahead is fine (unpushed commits go out with the release); behind or diverged is not
@@ -84,6 +97,11 @@ print_summary() {
     echo "Commit:  Release $NEW (CHANGELOG.md, composer.json)"
     echo "Tag:     $NEW"
     echo "Push:    $REMOTE $BRANCH + tag $NEW"
+    if [[ -z "$GH_SKIP_REASON" ]]; then
+        echo "GitHub:  release $NEW in $GITHUB_REPO"
+    else
+        echo "GitHub:  skipped, $GH_SKIP_REASON"
+    fi
 }
 
 print_summary
@@ -146,6 +164,22 @@ if ! git push --atomic "$REMOTE" "$BRANCH" "refs/tags/$NEW"; then
     echo "Push failed. The commit and the tag stay local."
     echo "Retry:     git push --atomic $REMOTE $BRANCH refs/tags/$NEW"
     echo "Roll back: git tag -d $NEW && git reset --hard HEAD~1"
+    exit 1
+fi
+
+if [[ -n "$GH_SKIP_REASON" ]]; then
+    echo
+    echo "Done: $NEW tagged and pushed. No GitHub release: $GH_SKIP_REASON."
+    exit 0
+fi
+
+# The tag is already public here, so a failure only prints how to finish by hand
+echo "$CHANGES" >"$TMP"
+if ! gh release create "$NEW" -R "$GITHUB_REPO" --verify-tag --title "$NEW" \
+    --notes-file "$TMP"; then
+    echo
+    echo "The tag $NEW is pushed, but the GitHub release was not created."
+    echo "Create it: gh release create $NEW -R $GITHUB_REPO --verify-tag --title $NEW --notes-file <changelog>"
     exit 1
 fi
 
