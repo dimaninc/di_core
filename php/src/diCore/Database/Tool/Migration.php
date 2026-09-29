@@ -79,7 +79,11 @@ abstract class Migration
             if ($folderId !== null) {
                 $_GET['file'] = $folder . $file;
                 $_GET['folderId'] = $folderId;
-                \diBaseController::autoCreate('db', 'restore', [], true);
+                $controller = \diBaseController::autoCreate('db', 'restore', [], true);
+                static::assertRestored(
+                    $file,
+                    $controller->getResponse()->getReturnData()
+                );
             } else {
                 $this->getDb()->q(
                     file_get_contents(StringHelper::slash($folder) . $file)
@@ -88,6 +92,25 @@ abstract class Migration
         }
 
         return $this;
+    }
+
+    /**
+     * Db::restoreAction сбрасывает лог перед каждым оператором и копит ошибки в своём
+     * результате, поэтому Migration::run по логу видит в лучшем случае ошибку последнего
+     * оператора. Без этой проверки упавший файл давал «успешную» миграцию, которую
+     * штатно уже не перезапустить.
+     *
+     * @param string $file
+     * @param mixed $result результат restoreAction: ['ok' => bool, 'errors' => string[]]
+     */
+    public static function assertRestored($file, $result)
+    {
+        if (is_array($result) && array_key_exists('ok', $result) && !$result['ok']) {
+            throw new \Exception(
+                "SQL file '$file' failed: " .
+                    join('; ', (array) ($result['errors'] ?? []))
+            );
+        }
     }
 
     protected function getDb()
