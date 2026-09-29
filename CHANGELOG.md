@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.10
+
+- Map Postgres timestamptz and timetz to model temporal types
+
 ## 0.8.9
 
 - fixed json treatment in diModel
