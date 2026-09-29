@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.11
+
+- Migration: fail when executeSqlFile restore reports errors (#20)
+
 ## 0.8.10
 
 - Map Postgres timestamptz and timetz to model temporal types
