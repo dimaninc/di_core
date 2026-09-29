@@ -17,7 +17,10 @@ cat > $FILENAME
 class diEmail
 {
     public static $childClassName = 'diCustomEmail';
-    public static $headersNL = "\n";
+    /**
+     * Разделитель заголовков для mail(); null – выбрать по версии PHP, см. getHeadersNL()
+     */
+    public static $headersNL = null;
 
     protected $options = [
         'quotedPrintable' => false,
@@ -30,6 +33,16 @@ class diEmail
     public function __construct()
     {
         $this->options = extend($this->options, $this->customOptions);
+    }
+
+    /**
+     * PHP 8+ сам пишет To и Subject через CRLF. Если наши заголовки склеены голым LF,
+     * exim видит смесь окончаний и превращает всё после первого заголовка в продолжение
+     * From: письмо теряет MIME-заголовки и отбивается как спам
+     */
+    public static function getHeadersNL(): string
+    {
+        return static::$headersNL ?? (PHP_VERSION_ID >= 80000 ? "\r\n" : "\n");
     }
 
     public static function isValid($email)
@@ -277,7 +290,7 @@ class diEmail
             $to,
             $subject,
             $message,
-            join($m::$headersNL, $headers),
+            join($m::getHeadersNL(), $headers),
             $additionalParams
         );
 
