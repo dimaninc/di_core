@@ -580,8 +580,17 @@ EOF;
             case 'float':
                 return $type;
 
+            // Postgres отдаёт через information_schema полные имена типов; timestamptz
+            // без этих веток уходил в string, и поле теряло обработку как дата.
             case 'timestamp without time zone':
+            case 'timestamp with time zone':
+            case 'timestamptz':
                 return 'timestamp';
+
+            case 'time without time zone':
+            case 'time with time zone':
+            case 'timetz':
+                return 'time';
 
             case 'double':
             case 'double precision':
