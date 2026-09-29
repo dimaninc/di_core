@@ -79,7 +79,11 @@ abstract class Migration
             if ($folderId !== null) {
                 $_GET['file'] = $folder . $file;
                 $_GET['folderId'] = $folderId;
-                \diBaseController::autoCreate('db', 'restore', [], true);
+                $controller = \diBaseController::autoCreate('db', 'restore', [], true);
+                static::assertRestored(
+                    $file,
+                    $controller->getResponse()->getReturnData()
+                );
             } else {
                 $this->getDb()->q(
                     file_get_contents(StringHelper::slash($folder) . $file)
@@ -88,6 +92,41 @@ abstract class Migration
         }
 
         return $this;
+    }
+
+    /**
+     * Db::restoreAction сбрасывает лог перед каждым оператором и копит ошибки в своём
+     * результате, поэтому Migration::run по логу видит в лучшем случае ошибку последнего
+     * оператора. Без этой проверки упавший файл давал «успешную» миграцию, которую
+     * штатно уже не перезапустить.
+     *
+     * Недочитанный файл – тоже провал: в веб-запросе restoreAction останавливается по
+     * таймауту с ok = true и позицией в startFrom (в CLI таймаута нет).
+     *
+     * @param string $file
+     * @param mixed $result результат restoreAction:
+     *   ['ok' => bool, 'errors' => string[], 'startFrom' => int|false]
+     */
+    public static function assertRestored($file, $result)
+    {
+        if (!is_array($result)) {
+            return;
+        }
+
+        if (array_key_exists('ok', $result) && !$result['ok']) {
+            throw new \Exception(
+                "SQL file '$file' failed: " .
+                    join('; ', (array) ($result['errors'] ?? []))
+            );
+        }
+
+        if (!empty($result['startFrom'])) {
+            throw new \Exception(
+                "SQL file '$file' was not executed to the end: stopped at byte " .
+                    $result['startFrom'] .
+                    ' by the restore time limit'
+            );
+        }
     }
 
     protected function getDb()

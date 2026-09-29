@@ -728,12 +728,24 @@ class Db extends \diBaseAdminController
                     if ($query && !$this->getDb()->q($query)) {
                         $errorsAr[] =
                             'Line: ' .
-                            $line_counter .
+                            ($line_counter + 1) .
                             "\n" .
                             "Unable to execute query \"$query\"\n" .
                             'Error: ' .
                             join('', $this->getDb()->getLog()) .
                             '';
+
+                        // В CLI (миграции) дальше не идём: следующие операторы опираются на
+                        // упавший, и файл оказался бы применён вразнобой. Всё до этой строки
+                        // уже применено – это и сказано в ошибке.
+                        if (static::isCli()) {
+                            $errorsAr[] =
+                                'Restore stopped at line ' .
+                                ($line_counter + 1) .
+                                '; statements before it are already applied';
+
+                            break;
+                        }
                     }
 
                     simple_debug("line executed: $line_counter", 'db-restore');
@@ -743,7 +755,12 @@ class Db extends \diBaseAdminController
 
                 $line_counter++;
 
-                if ($this->checkTimeout($startTime, static::MAX_TIMEOUT)) {
+                // Лимит – для страницы «Дампы базы данных»: браузер продолжает с startFrom
+                // следующим запросом. В CLI (миграции) продолжать некому – файл дочитывается.
+                if (
+                    !static::isCli() &&
+                    $this->checkTimeout($startTime, static::MAX_TIMEOUT)
+                ) {
                     $startFrom = $ftell_func($file);
 
                     break;
