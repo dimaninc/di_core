@@ -30,7 +30,29 @@ class MigrationRestoreResultTest extends TestCase
     public function testSuccessfulRestorePasses(): void
     {
         Migration::assertRestored('admins.sql', ['ok' => true, 'errors' => []]);
+        // startFrom = false – файл дочитан (так restoreAction отвечает без таймаута).
+        Migration::assertRestored('admins.sql', [
+            'ok' => true,
+            'errors' => [],
+            'startFrom' => false,
+        ]);
         $this->addToAssertionCount(1);
+    }
+
+    public function testRestoreStoppedByTimeoutThrows(): void
+    {
+        // Веб-запрос: restoreAction прервался по MAX_TIMEOUT без ошибок, но с позицией.
+        try {
+            Migration::assertRestored('seed.sql', [
+                'ok' => true,
+                'errors' => [],
+                'startFrom' => 123456,
+            ]);
+            $this->fail('Partially executed file did not throw');
+        } catch (\Exception $e) {
+            $this->assertStringContainsString('seed.sql', $e->getMessage());
+            $this->assertStringContainsString('123456', $e->getMessage());
+        }
     }
 
     public function testResultWithoutOkFlagIsNotJudged(): void

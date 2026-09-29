@@ -743,7 +743,12 @@ class Db extends \diBaseAdminController
 
                 $line_counter++;
 
-                if ($this->checkTimeout($startTime, static::MAX_TIMEOUT)) {
+                // Лимит – для страницы «Дампы базы данных»: браузер продолжает с startFrom
+                // следующим запросом. В CLI (миграции) продолжать некому – файл дочитывается.
+                if (
+                    !static::isCli() &&
+                    $this->checkTimeout($startTime, static::MAX_TIMEOUT)
+                ) {
                     $startFrom = $ftell_func($file);
 
                     break;
