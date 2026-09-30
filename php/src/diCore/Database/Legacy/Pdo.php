@@ -25,6 +25,11 @@ abstract class Pdo extends \diDB
     /** @var  \PDOStatement */
     protected $lastResult;
 
+    // exec() returns the affected count and no statement: without keeping it, affected
+    // rows after rq()/execWrite()/update() read rowCount() of the previous query.
+    /** @var int|null */
+    protected $lastExecAffected = null;
+
     /** @var bool  */
     protected $ssl = false;
     /** @var string  */
@@ -130,6 +135,7 @@ abstract class Pdo extends \diDB
     protected function __q($q)
     {
         try {
+            $this->lastExecAffected = null;
             $this->lastResult = $this->link->query($q);
 
             try {
@@ -149,12 +155,15 @@ abstract class Pdo extends \diDB
     protected function __rq($q)
     {
         try {
+            $this->lastExecAffected = null;
             $res = $this->link->exec($q);
 
             // it returns number of affected rows or false
             if (is_bool($res)) {
                 return $res;
             }
+
+            $this->lastExecAffected = $res;
 
             return true;
         } catch (\PDOException $e) {
@@ -223,6 +232,10 @@ abstract class Pdo extends \diDB
 
     protected function __affected_rows()
     {
+        if ($this->lastExecAffected !== null) {
+            return $this->lastExecAffected;
+        }
+
         return $this->lastResult ? $this->lastResult->rowCount() : 0;
     }
 
