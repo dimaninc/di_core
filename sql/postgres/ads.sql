@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS ads
 (
     id                 SERIAL PRIMARY KEY,
     block_id           INT,
-    category_id        INT          DEFAULT '0',
+    category_id        bigint       DEFAULT '0',
     title              VARCHAR(255),
     content            TEXT,
     href               VARCHAR(255),

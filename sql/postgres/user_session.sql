@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS user_session
 (
     id         SERIAL PRIMARY KEY,
     token      varchar(32),
-    user_id    int,
+    user_id    bigint,
     user_agent varchar(255) default '',
     ip         cidr,
     created_at timestamp    default CURRENT_TIMESTAMP,

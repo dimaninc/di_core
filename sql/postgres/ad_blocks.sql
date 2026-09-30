@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS ad_blocks
     id                    SERIAL PRIMARY KEY,
     purpose               int,
     target_type           int,
-    target_id             int,
+    target_id             bigint,
     title                 varchar(255),
     default_slide_title   varchar(255) default '',
     default_slide_content text,
