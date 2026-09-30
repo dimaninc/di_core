@@ -223,6 +223,14 @@ There is **no** `getCount()`, `getRecordsCount()`, or `getRecordsCountByQuery()`
 
 **Upsert id-recovery on `Model::save()`.** When `allowInsertOrUpdate()` hits the UPDATE path on MySQL, the model's id is auto-populated via the `LAST_INSERT_ID(<idField>)` trick — wired through `diDB::insert_or_update($..., $autoIncrementField)` from `saveToDb()`. When `allowSkipConflictOnInsert([...lookupFields])` is called with the unique-key columns and the row already exists, `saveToDb()` runs a follow-up `SELECT` on those columns to populate the id. Without lookup fields, the model is left without an id on conflict (the INSERT IGNORE silently skips). Covered by `php/tests/Database/SaveToDbTest.php`.
 
+**`exists()` ignores the id.** It checks the data fields only, so a model loaded with `select(['id'])` reads as missing; test `getId()` there.
+
+**PDO drivers keep the `exec()` count.** `rq()`, `execWrite()` and `update()` go through `PDO::exec()`, whose affected count used to be dropped – affected rows then came from `rowCount()` of the previous query, and a guarded `UPDATE … WHERE id=? AND status=?` passed or failed by what a SELECT before it returned. Covered by `php/tests/Database/PdoAffectedRowsTest.php`.
+
+### Authorization pins (`Entity\AuthorizationPin`)
+
+One-time codes (typed by a person) and tokens (links, bot deep links) for login, confirmations, account actions. Tables: `sql/authorization_pin.sql`, `sql/postgres/authorization_pin.sql`. The core stores, issues, verifies and rate-limits; delivery is the project's: `issueCode()`/`issueToken()` return the plain value once, only its sha256 is stored. `Purpose` values belong to the project (extend the empty container), `Channel` lists email/sms/call/telegram/max. Invariants: a new code never invalidates earlier ones (anyone could cancel a victim's code), a wrong guess burns an attempt on every live code of the target and the attempt is claimed by a guarded UPDATE before comparing (parallel guesses can't exceed `MAX_ATTEMPTS`), failures return `null` without a reason, `Collection::purge()` deletes only past `RATE_WINDOW` (limits count rows by `created_at`). The target is compared as is – the project normalizes it. Covered by `php/tests/Entity/AuthorizationPinTest.php` (live part: `DI_CORE_TEST_DB=postgresql://…` or `mysql://…`).
+
 ## Testing
 
 di_core ships its own framework tests under `php/tests/`. They are self-contained (create their own throwaway tables in `setUp`) and are intended to be picked up by the consumer project's PHPUnit by adding a second `<directory>` entry next to `tests/unit`:
