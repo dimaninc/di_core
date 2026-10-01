@@ -53,6 +53,7 @@ class Types
     const mail_plan = 2033;
     const tagged = 2034;
     const user_session = 2035;
+    const authorization_pin = 2036;
 
     const admin_task = 1000;
     const admin_wiki = 1001;
@@ -99,6 +100,7 @@ class Types
         self::mail_plan => 'mail_plans',
         self::tagged => 'tagged',
         self::user_session => 'user_session',
+        self::authorization_pin => 'authorization_pin',
 
         self::admin_task => 'admin_tasks',
         self::admin_wiki => 'admin_wiki',
@@ -146,6 +148,7 @@ class Types
         self::mail_plan => 'mail_plan',
         self::tagged => 'tagged',
         self::user_session => 'user_session',
+        self::authorization_pin => 'authorization_pin',
 
         self::admin_task => 'admin_task',
         self::admin_wiki => 'admin_wiki',
@@ -193,6 +196,7 @@ class Types
         self::mail_plan => 'План рассылки',
         self::tagged => 'Запись с тегами',
         self::user_session => 'Сессия пользователя',
+        self::authorization_pin => 'Код подтверждения',
 
         self::admin_task => 'Задача',
         self::admin_wiki => 'Wiki',

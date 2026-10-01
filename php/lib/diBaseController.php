@@ -733,22 +733,31 @@ class diBaseController
         return [];
     }
 
+    /**
+     * A subclass adds or overrides single strings through `$customLanguage` or
+     * `localLanguageStrings()`; redeclaring `$language` replaces the parent's whole set.
+     */
     public static function allLanguageStrings($lang)
     {
         return extend(
-            static::$baseLanguage[$lang],
-            static::$language[$lang],
-            static::$customLanguage[$lang],
+            static::$baseLanguage[$lang] ?? [],
+            static::$language[$lang] ?? [],
+            static::$customLanguage[$lang] ?? [],
             static::localLanguageStrings($lang)
         );
     }
 
+    /**
+     * A key missing in $lang (or a language with no strings at all) falls back to
+     * English, then to the key itself.
+     */
     public static function L($key, $lang = null)
     {
         if ($lang === null) {
             $lang = Config::getMainLanguage();
         }
 
-        return self::allLanguageStrings($lang)[$key] ?? $key;
+        return self::allLanguageStrings($lang)[$key] ??
+            ($lang !== 'en' ? self::allLanguageStrings('en')[$key] ?? $key : $key);
     }
 }

@@ -1,5 +1,84 @@
 # Changelog
 
+## Unreleased
+
+To migrate:
+
+- run the core migration **by idx**: `20261001120000` (`migrations/auth/`) creates
+  `authorization_pin` and `authorization_pin_failure` for the current engine. It is
+  `CREATE TABLE IF NOT EXISTS`: a project with its own older `authorization_pin`
+  keeps it and converts it with its own migration (columns of `sql/authorization_pin.sql`);
+- `AuthorizationPin\Model::verifyCode()` returns a `CheckResult`, and
+  `consumeToken()` an empty model instead of `null` – replace `=== null` checks with
+  `->isOk()` / `->exists()`;
+- set `AUTH_PIN_SECRET` (env) – the HMAC key of short codes; without it they are
+  hashed with plain sha256 and a line is logged once per request. Changing it only
+  invalidates codes alive at that moment; tokens are unaffected;
+- `sql/authorization_pin.sql`: `updated_at` is now `NOT NULL DEFAULT CURRENT_TIMESTAMP
+  ON UPDATE CURRENT_TIMESTAMP` (Postgres: `NOT NULL DEFAULT CURRENT_TIMESTAMP`);
+- a project model/collection registered for `authorization_pin` must now extend the
+  core ones: `PinCode`, `Collection::purge()` and the limits read their constants
+  through it.
+
+### Authorization pins: codes and tokens out of the box
+
+`Entity\AuthorizationPin` stores one-time codes and tokens hashed (see below), keyed
+by a normalized target. A new code never cancels earlier ones, a wrong guess burns
+an attempt on every live code of the target, and the attempt is claimed by a
+guarded UPDATE before comparing. Issue limits: per ip and per target per hour,
+plus a daily per-target cap (`MAX_PER_TARGET_DAY`); `exceededRateLimit()` names the
+limit hit, `RateLimitedException::getLimit()` carries it. `verifyCode()` answers
+with a verdict (`Verdict`: ok, missing, expired, exhausted, mismatch, plus
+malformed and blocked from the service) – for logs and logic, not for the
+response. `findToken()` looks a link token up without consuming it.
+`Purpose::authentication = 1` is reserved by the core.
+
+Codes are HMAC-ed (`hashCode()`, `AUTH_PIN_SECRET`), tokens stay plain sha256
+(`hashToken()`; `hashValue()` is a deprecated alias of it). `issueCode()` takes
+named locks around the limit check and the insert (ip, then purpose+target): a
+synchronized burst of 20 requests used to issue 20 codes against a limit of 5; a
+lock not taken within `LOCK_TIMEOUT` (3 s) refuses with `LIMIT_BUSY` (`'busy'`). A
+verified code invalidates the other pending codes of its purpose and target. Codes
+and tokens share the issue counter of a purpose – use different purposes. MySQL and
+PostgreSQL only.
+
+`Entity\AuthorizationPin\FailureLog` – failed checks per (ip, target) across
+purposes, `MAX_FAILURES` per `FAILURE_WINDOW`; never throws (a read failure counts
+as 0, a write failure is logged, `purge()` returns `null`).
+
+`Tool\Auth\PinCode` – the service: `send()` normalizes, issues and delivers through
+a per-channel `PinDeliverer` (email by default: `PinEmailDeliverer`, template
+`emails/authorization_pin/<purpose>` with a core `default`), logs a hit limit by
+target hash; `check()` refuses malformed codes and spent budgets before any
+lookup and records every other refusal. `Tool\Auth\LoginMethod` reads
+`auth.primary_method` and falls back to `DEFAULT_METHOD` (`password_only`) when
+the key is absent or broken. `Tool\Http\SameOrigin` – the CSRF rule.
+
+`Controller\Auth` gains `POST /api/auth/pin_send/` and `/api/auth/pin_login/`:
+`{ok, message, reason}`, one answer for unknown, not allowed and rate-limited
+addresses, one refusal text for every code reason (only the failure limit has its
+own). Off unless `LoginMethod` allows codes; hooks for the user lookup, the
+sign-in rule and the steps around the session.
+
+### Named locks in the DB layer
+
+`diDB::acquireNamedLock(string $name, int $timeoutSeconds): bool` and
+`releaseNamedLock(string $name): void` – MySQL `GET_LOCK`/`RELEASE_LOCK`,
+PostgreSQL `pg_try_advisory_lock` (polled until the timeout)/`pg_advisory_unlock`;
+the key is a hash of database and name. Other engines throw `diDatabaseException`.
+
+### Controller strings fall back to English
+
+`diBaseController::L()` returns the English string for a key missing in the
+requested language (before: the key itself), and a language with no strings no
+longer raises a warning. Override single strings through `$customLanguage` or
+`localLanguageStrings()`; redeclaring `$language` replaces the parent's set.
+
+### `User\Model::saveSkippingValidation()`
+
+Saves a state change without the sign-up validation and restores the validation
+mode even when `save()` throws.
+
 ## 0.8.11
 
 - Migration: fail when executeSqlFile restore reports errors (#20)
