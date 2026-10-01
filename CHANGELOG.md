@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.0
+
+- diEmail: join headers with CRLF on PHP 8+
+- AuthorizationPin: one-time codes and tokens; Pdo affected rows fix (#23)
+
 To migrate:
 
 - run the core migration **by idx**: `20261001120000` (`migrations/auth/`) creates
