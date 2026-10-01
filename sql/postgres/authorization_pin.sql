@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS authorization_pin
     ip         varchar(45),
     expired_at timestamp    NOT NULL,
     created_at timestamp    DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp    DEFAULT CURRENT_TIMESTAMP
+    updated_at timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx__authorization_pin__target

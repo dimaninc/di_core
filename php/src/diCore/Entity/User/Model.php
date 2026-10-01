@@ -384,9 +384,34 @@ class Model extends \diBaseUserModel
         return $this;
     }
 
+    /**
+     * The core deletes the account. A project that deactivates instead (a flag plus a
+     * date) saves through saveSkippingValidation().
+     */
     public function deactivate()
     {
         $this->hardDestroy();
+
+        return $this;
+    }
+
+    /**
+     * Saves a state change (active, activated, deactivated_at…) without the sign-up
+     * validation: it checks input, and a flag flip must not fail on, say, an account
+     * without a password. The previous validation mode is restored even if save() throws.
+     *
+     * @return $this
+     */
+    public function saveSkippingValidation()
+    {
+        $validationNeeded = $this->isValidationNeeded();
+        $this->setValidationNeeded(false);
+
+        try {
+            $this->save();
+        } finally {
+            $this->setValidationNeeded($validationNeeded);
+        }
 
         return $this;
     }

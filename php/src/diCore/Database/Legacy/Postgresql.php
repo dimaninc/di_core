@@ -56,6 +56,50 @@ class Postgresql extends Pdo
         return $dsn;
     }
 
+    /**
+     * pg_try_advisory_lock polled until the deadline: pg_advisory_lock would wait
+     * forever, and lock_timeout would abort it with an error instead of a false.
+     */
+    public function acquireNamedLock(string $name, int $timeoutSeconds): bool
+    {
+        $deadline = microtime(true) + max(0, $timeoutSeconds);
+        $key = $this->postgresLockKey($name);
+
+        do {
+            $rs = $this->q("SELECT pg_try_advisory_lock($key) AS l");
+            $row = $rs ? $this->fetch_array($rs) : null;
+
+            if (!$row) {
+                return false;
+            }
+
+            if (in_array($row['l'], [true, 't', 1, '1'], true)) {
+                return true;
+            }
+
+            usleep(50000);
+        } while (microtime(true) < $deadline);
+
+        return false;
+    }
+
+    public function releaseNamedLock(string $name): void
+    {
+        $this->q('SELECT pg_advisory_unlock(' . $this->postgresLockKey($name) . ')');
+    }
+
+    /**
+     * A positive bigint: big-endian with the sign bit cleared, so every platform
+     * derives the same key.
+     */
+    private function postgresLockKey(string $name): int
+    {
+        $bytes = substr($this->namedLockHash($name), 0, 8);
+        $bytes[0] = chr(ord($bytes[0]) & 0x7f);
+
+        return unpack('J', $bytes)[1];
+    }
+
     protected function databaseCreationAllowed()
     {
         return false;

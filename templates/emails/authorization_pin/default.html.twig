@@ -1,0 +1,11 @@
+{% if lang == 'ru' %}
+<p>Ваш код{% if purpose_name == 'authentication' %} для входа{% endif %}:</p>
+<p style="font-size: 24px; font-weight: bold; letter-spacing: 4px;">{{ code }}</p>
+{% if ttl_minutes %}<p>Код действует {{ ttl_minutes }} мин. и подходит один раз.</p>{% endif %}
+<p>Если вы его не запрашивали, просто проигнорируйте это письмо.</p>
+{% else %}
+<p>Your {% if purpose_name == 'authentication' %}sign-in {% endif %}code:</p>
+<p style="font-size: 24px; font-weight: bold; letter-spacing: 4px;">{{ code }}</p>
+{% if ttl_minutes %}<p>The code is valid for {{ ttl_minutes }} min and can be used once.</p>{% endif %}
+<p>If you did not request it, just ignore this email.</p>
+{% endif %}

@@ -14,13 +14,36 @@ use diCore\Data\Config;
 use diCore\Data\Http\HttpCode;
 use diCore\Data\Types;
 use diCore\Entity\Admin\Level;
+use diCore\Entity\AuthorizationPin\Channel;
+use diCore\Entity\AuthorizationPin\Purpose;
+use diCore\Entity\AuthorizationPin\Verdict;
 use diCore\Entity\User\Model;
 use diCore\Tool\Auth as AuthTool;
+use diCore\Tool\Auth\LoginMethod;
+use diCore\Tool\Auth\PinCode;
+use diCore\Tool\Http\SameOrigin;
+use diCore\Tool\Logger;
 
 class Auth extends \diBaseController
 {
     const BACK_KEY = 'oAuth2Back';
     const REDIRECT_AFTER_LOGIN = true;
+
+    const PIN_PURPOSE = Purpose::authentication;
+
+    /*
+     * Refusal reason of the pin actions, by message key. Clients branch on these
+     * names – don't rename. They don't reveal whether an address exists: every
+     * refusal sharing a text shares its reason.
+     */
+    const PIN_REASONS = [
+        'pin.refused' => 'code',
+        'pin.too_many' => 'limit',
+        'pin.session_failed' => 'session',
+        'pin.unavailable' => 'unavailable',
+        'pin.rejected' => 'rejected',
+        'pin.invalid_email' => 'email',
+    ];
 
     protected static $language = [
         'en' => [
@@ -54,6 +77,17 @@ class Auth extends \diBaseController
             'activate.key_is_empty' => 'Activation key is empty',
             'activate.unknown_error' => 'Unknown error',
             'activate.success' => 'Account successfully activated',
+
+            'pin.sent' => 'The code has been sent to your email',
+            'pin.invalid_email' => 'Invalid email address',
+            'pin.unavailable' => 'Sign-in with a code is currently unavailable',
+            'pin.rejected' =>
+                'The request was rejected. Reload the page and try again',
+            'pin.refused' => 'The code is wrong or expired. Request a new one',
+            'pin.too_many' => 'Too many attempts. Please try again in an hour',
+            'pin.signed_in' => 'You are signed in',
+            'pin.session_failed' =>
+                'The code is accepted, but signing in failed. Reload the page and sign in again',
         ],
         'ru' => [
             'common.enter_email' => 'Введите E-mail',
@@ -85,6 +119,17 @@ class Auth extends \diBaseController
             'activate.key_is_empty' => 'Код активации пуст',
             'activate.unknown_error' => 'Неизвестная ошибка',
             'activate.success' => 'Активация прошла успешно',
+
+            'pin.sent' => 'Код отправлен на почту',
+            'pin.invalid_email' => 'Некорректный email',
+            'pin.unavailable' => 'Вход по коду сейчас недоступен',
+            'pin.rejected' =>
+                'Не удалось выполнить запрос. Обновите страницу и попробуйте ещё раз',
+            'pin.refused' => 'Код не подошёл или устарел. Запросите новый',
+            'pin.too_many' => 'Слишком много попыток. Попробуйте через час',
+            'pin.signed_in' => 'Вы вошли в аккаунт',
+            'pin.session_failed' =>
+                'Код принят, но войти не удалось. Обновите страницу и войдите ещё раз',
         ],
     ];
 
@@ -608,5 +653,239 @@ class Auth extends \diBaseController
         }
 
         return $ar;
+    }
+
+    /**
+     * POST /api/auth/pin_send/ – a sign-in code to the email.
+     *
+     * The answer is the same for a registered, unknown or not allowed address and
+     * for a hit rate limit: otherwise the endpoint would tell who is registered.
+     * POST-only on purpose: no `pinSendAction` alias, the router would open it on GET.
+     */
+    public function _postPinSendAction()
+    {
+        $refusal = $this->pinRequestRefusal();
+
+        if ($refusal !== null) {
+            return $refusal;
+        }
+
+        $email = PinCode::normalizeTarget(
+            Channel::email,
+            $this->pinPostString('email')
+        );
+
+        if (!$this->isPinEmailValid($email)) {
+            return $this->pinFailure('pin.invalid_email');
+        }
+
+        $user = $this->findUserForPinLogin($email);
+
+        if ($this->canSignInByCode($user)) {
+            try {
+                $this->pinService()->send(
+                    static::PIN_PURPOSE,
+                    Channel::email,
+                    $email,
+                    $this->getPinSendOptions($user)
+                );
+            } catch (\Exception $e) {
+                // Same answer: a failure only registered addresses can produce is an oracle.
+                $this->onPinDeliveryFailure($e);
+            }
+        }
+
+        return [
+            'ok' => true,
+            'message' => static::L('pin.sent'),
+        ];
+    }
+
+    /**
+     * POST /api/auth/pin_login/ – sign in by the code from the email.
+     *
+     * One refusal for every code reason: different texts would tell whether the
+     * address exists and has a live code. Only the failure limit has its own text –
+     * it doesn't depend on the address.
+     */
+    public function _postPinLoginAction()
+    {
+        $refusal = $this->pinRequestRefusal();
+
+        if ($refusal !== null) {
+            return $refusal;
+        }
+
+        $service = $this->pinService();
+        $email = PinCode::normalizeTarget(
+            Channel::email,
+            $this->pinPostString('email')
+        );
+        $code = trim($this->pinPostString('pin'));
+
+        // Junk is not recorded: a dozen such requests would lock the owner out.
+        if (!$this->isPinEmailValid($email) || !$service->isWellFormedCode($code)) {
+            return $this->pinFailure('pin.refused');
+        }
+
+        // Before the user lookup: known and unknown addresses must not differ in answer or record.
+        if ($service->isBlocked($email, ['purpose' => static::PIN_PURPOSE])) {
+            return $this->pinFailure('pin.too_many');
+        }
+
+        $user = $this->findUserForPinLogin($email);
+        $options = ['user_id' => (int) $user->getId()];
+
+        if (!$this->canSignInByCode($user)) {
+            $service->recordFailure(static::PIN_PURPOSE, $email, $options);
+
+            return $this->pinFailure('pin.refused');
+        }
+
+        // The code is consumed BEFORE the session is issued: the guarded consume is the
+        // only thing stopping two parallel requests with one code. The price is a burnt
+        // code when the session fails; the person requests a new one.
+        $result = $service->check(static::PIN_PURPOSE, $email, $code, $options);
+
+        if (!$result->isOk()) {
+            return $this->pinFailure(
+                $result->getVerdict() === Verdict::blocked
+                    ? 'pin.too_many'
+                    : 'pin.refused'
+            );
+        }
+
+        $this->beforePinAuthorize($user);
+
+        // Not "code refused": the code is right and already consumed.
+        if (!$this->authorizeByPin($user)) {
+            return $this->pinFailure('pin.session_failed');
+        }
+
+        // No session id or profile here: a web cookie is HttpOnly, JSON is readable by any XSS.
+        $response = [
+            'ok' => true,
+            'message' => static::L('pin.signed_in'),
+        ];
+
+        $this->afterPinAuthorize($user, $response);
+
+        return $response;
+    }
+
+    protected function isPinLoginEnabled(): bool
+    {
+        return LoginMethod::isCodeEnabled();
+    }
+
+    /**
+     * Sign-in by code issues a session, so a foreign origin is refused: an
+     * auto-submitting form with the attacker's code would sign the victim into the
+     * attacker's account.
+     */
+    protected function isPinRequestSafe(): bool
+    {
+        return SameOrigin::isCsrfSafe();
+    }
+
+    protected function pinService(): PinCode
+    {
+        return PinCode::create();
+    }
+
+    /**
+     * @return Model|\diModel empty model when there's no such user
+     */
+    protected function findUserForPinLogin(string $email): \diModel
+    {
+        return Model::createBySlug($email);
+    }
+
+    protected function canSignInByCode(\diModel $user): bool
+    {
+        return $user->exists() && (int) $user->get('active') === 1;
+    }
+
+    protected function isPinEmailValid(string $email): bool
+    {
+        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+    }
+
+    /**
+     * Options of PinCode::send() for the code letter (user_id, context, …).
+     */
+    protected function getPinSendOptions(\diModel $user): array
+    {
+        return [
+            'user_id' => (int) $user->getId(),
+            'context' => [
+                'user' => $user,
+            ],
+        ];
+    }
+
+    /**
+     * After the code is consumed, before the session: e.g. restore a self-deleted
+     * account (authorized() requires an active one) or confirm the address.
+     */
+    protected function beforePinAuthorize(\diModel $user): void {}
+
+    /**
+     * Issues the session. false – the user is still not authorized.
+     */
+    protected function authorizeByPin(\diModel $user): bool
+    {
+        AuthTool::i()->forceAuthorize($user, true);
+
+        return (bool) AuthTool::i()->authorized();
+    }
+
+    /**
+     * Extra fields or another message for the success response.
+     */
+    protected function afterPinAuthorize(\diModel $user, array &$response): void {}
+
+    /**
+     * Delivery broke; the answer stays the same. Override to report to monitoring.
+     */
+    protected function onPinDeliveryFailure(\Exception $e): void
+    {
+        Logger::getInstance()->log(
+            'pin delivery failed: ' . get_class($e) . ': ' . $e->getMessage(),
+            PinCode::LOG_MODULE,
+            PinCode::LOG_SUFFIX
+        );
+    }
+
+    /**
+     * @return array|null the refusal, or null when the request may proceed
+     */
+    protected function pinRequestRefusal(): ?array
+    {
+        if (!$this->isPinLoginEnabled()) {
+            return $this->pinFailure('pin.unavailable');
+        }
+
+        if (!$this->isPinRequestSafe()) {
+            return $this->pinFailure('pin.rejected');
+        }
+
+        return null;
+    }
+
+    protected function pinFailure(string $messageKey): array
+    {
+        return [
+            'ok' => false,
+            'message' => static::L($messageKey),
+            'reason' => static::PIN_REASONS[$messageKey],
+        ];
+    }
+
+    private function pinPostString(string $name): string
+    {
+        $value = \diRequest::postExt($name, '');
+
+        return is_scalar($value) ? (string) $value : '';
     }
 }

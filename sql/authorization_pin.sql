@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS authorization_pin
     ip         varchar(45)  default null,
     expired_at datetime     not null,
     created_at timestamp    default CURRENT_TIMESTAMP,
-    updated_at timestamp    default CURRENT_TIMESTAMP,
+    updated_at timestamp    not null default CURRENT_TIMESTAMP on update CURRENT_TIMESTAMP,
     key idx_target (purpose, target, created_at),
     key idx_hash (code_hash),
     key idx_ip (ip, purpose, created_at),

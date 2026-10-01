@@ -1156,6 +1156,38 @@ abstract class diDB
         return array_filter([$table]);
     }
 
+    /**
+     * Session-level named lock (MySQL GET_LOCK, PostgreSQL advisory lock) for
+     * serializing a check-then-write across processes. Held until
+     * releaseNamedLock() or disconnect – always release it in `finally`.
+     * The name is scoped to the database (MySQL lock names are server-wide).
+     *
+     * @return bool false – not acquired within $timeoutSeconds (or the server refused)
+     * @throws \diDatabaseException the engine has no named locks
+     */
+    public function acquireNamedLock(string $name, int $timeoutSeconds): bool
+    {
+        throw new \diDatabaseException(
+            'Named locks are not supported by ' . static::class
+        );
+    }
+
+    public function releaseNamedLock(string $name): void
+    {
+        throw new \diDatabaseException(
+            'Named locks are not supported by ' . static::class
+        );
+    }
+
+    /**
+     * Engine-independent lock key: database + name, hashed so any name fits the
+     * engine's limit (64 chars in MySQL).
+     */
+    protected function namedLockHash(string $name): string
+    {
+        return hash('sha256', $this->getDatabase() . "\0" . $name, true);
+    }
+
     public function getFullQueryForInsert($table, $records = [])
     {
         $t = $this->get_table_name($table);

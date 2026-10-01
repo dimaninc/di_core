@@ -239,6 +239,32 @@ class diMYSQL extends diDB
         return ",`$field` = LAST_INSERT_ID(`$field`)";
     }
 
+    public function acquireNamedLock(string $name, int $timeoutSeconds): bool
+    {
+        $rs = $this->q(
+            "SELECT GET_LOCK('" .
+                $this->mysqlLockName($name) .
+                "', " .
+                max(0, $timeoutSeconds) .
+                ') AS l'
+        );
+        $row = $rs ? $this->fetch_array($rs) : null;
+
+        // 1 – acquired, 0 – timed out, NULL – error.
+        return $row && (string) $row['l'] === '1';
+    }
+
+    public function releaseNamedLock(string $name): void
+    {
+        $this->q("SELECT RELEASE_LOCK('" . $this->mysqlLockName($name) . "')");
+    }
+
+    private function mysqlLockName(string $name): string
+    {
+        // Hex keeps it within the 64-char limit and free of quotes.
+        return 'di:' . bin2hex(substr($this->namedLockHash($name), 0, 24));
+    }
+
     public function lockTable($table, $mode = 'WRITE')
     {
         if (strtoupper($mode) === 'READ' && $this->ignoreReadLock) {
