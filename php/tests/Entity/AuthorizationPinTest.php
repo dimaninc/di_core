@@ -431,6 +431,32 @@ class AuthorizationPinTest extends TestCase
         );
     }
 
+    public function testLiveCodeWithoutUserStoresNullUserId(): void
+    {
+        $this->needServer();
+
+        [$none] = Model::issueCode(self::PURPOSE, Channel::email, 'none@example.com');
+        [$zero] = Model::issueCode(self::PURPOSE, Channel::email, 'zero@example.com', [
+            'user_id' => 0,
+        ]);
+        [$user] = Model::issueToken(self::PURPOSE, Channel::email, 'user@example.com', 60, [
+            'user_id' => 7,
+        ]);
+
+        // Not 0: a project's foreign key to its users table would reject it.
+        $this->assertSame(
+            2,
+            AuthorizationPinTestDb::count(
+                'authorization_pin',
+                "user_id IS NULL AND id IN ({$none->getId()}, {$zero->getId()})"
+            )
+        );
+        $this->assertSame(
+            1,
+            AuthorizationPinTestDb::count('authorization_pin', "user_id = 7 AND id = {$user->getId()}")
+        );
+    }
+
     public function testLiveExpiredCodeFails(): void
     {
         $this->needServer();
