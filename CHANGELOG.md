@@ -1,7 +1,5 @@
 # Changelog
 
-## Unreleased
-
 To migrate:
 
 - run the core migration **by idx**: `20261001120000` (`migrations/auth/`) creates
