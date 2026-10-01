@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.10.0
+
+- Postgres: dumps follow Don't Do This, session time zone follows PHP, admin generator reads text and time types (#25)
+
+To migrate (PostgreSQL projects only; MySQL, SQLite and Mongo are unaffected):
+
+- the Postgres session now runs in PHP's time zone (`Postgresql::__connect()` sets
+  it from `date_default_timezone_get()`). `DEFAULT CURRENT_TIMESTAMP` on a `timestamp`
+  column (without zone) now writes PHP's wall-clock time, not the DB server's; if the
+  two zones differed, rows written before and after the upgrade differ by that offset.
+  A zone Postgres refuses fails the connection. A project that ran `SET TIME ZONE`
+  itself can drop it;
+- `sql/postgres/*.sql`: keys are `bigint GENERATED ALWAYS AS IDENTITY`, strings are
+  `text`, time is `timestamptz`, pin hashes have a sha256-hex `CHECK`. The dumps are for
+  new tables only – there is no migration, existing tables keep their schema. An
+  explicit-id `INSERT` into the new tables needs `OVERRIDING SYSTEM VALUE` and a
+  `setval` after it;
+- `AdminPagesManager` on Postgres generates a one-line field for `text` (WYSIWYG only
+  for `content`, `short_content`, `links_content`) and recognizes time columns by type.
+
 ## 0.9.1
 
 - AuthorizationPin: store NULL user_id when there is no user
