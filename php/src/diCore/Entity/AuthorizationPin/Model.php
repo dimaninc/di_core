@@ -412,7 +412,6 @@ class Model extends \diModel
         array $options
     ) {
         $pin = static::create()
-            ->setUserId($options['user_id'] ?? null)
             ->setPurpose($purpose)
             ->setChannel($channel)
             ->setTarget($target)
@@ -421,6 +420,12 @@ class Model extends \diModel
             ->setAttempts(0)
             ->setIp($options['ip'] ?? null)
             ->setExpiredAt(\diDateTime::sqlFormat(time() + $ttl));
+
+        // Not set without a user: an int field turns null into 0 on save, and 0 would
+        // break a project's foreign key to its users table.
+        if ((int) ($options['user_id'] ?? 0) > 0) {
+            $pin->setUserId((int) $options['user_id']);
+        }
 
         if (isset($options['payload'])) {
             $pin->setJsonData('payload', $options['payload']);
