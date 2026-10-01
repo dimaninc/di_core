@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.1
+
+- AuthorizationPin: store NULL user_id when there is no user
+
 ## 0.9.0
 
 - diEmail: join headers with CRLF on PHP 8+
