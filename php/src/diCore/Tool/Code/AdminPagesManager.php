@@ -25,6 +25,17 @@ class AdminPagesManager
 
     private $namespace;
 
+    /**
+     * MySQL keeps short strings in varchar and long content in text, so text means a
+     * WYSIWYG field. Postgres has text for every string (sql/postgres follows "Don't Do
+     * This"), so there it means nothing: a field becomes WYSIWYG only by its name
+     * ($wysiwygFieldNames), the rest – a one-line input. Set by createPage() from the
+     * connection's engine.
+     */
+    protected $textIsLongContent = true;
+
+    protected $wysiwygFieldNames = ['content', 'short_content', 'links_content'];
+
     protected $skipInColumnsFields = [
         'id',
         '_id',
@@ -136,6 +147,7 @@ class AdminPagesManager
         }
 
         $this->setNamespace($namespace);
+        $this->textIsLongContent = !Connection::get($connName)::isPostgres();
 
         $contents =
             '<?php' .
@@ -424,7 +436,12 @@ EOF;
         $type = preg_replace(ModelsManager::typeTuneRegex, '', mb_strtolower($type));
 
         switch ($type) {
+            // Postgres gives full type names through information_schema; without these
+            // branches a time column fell through to string (as in ModelsManager).
             case 'timestamp':
+            case 'timestamp without time zone':
+            case 'timestamp with time zone':
+            case 'timestamptz':
             case 'datetime':
                 return 'datetime_str';
 
@@ -432,6 +449,9 @@ EOF;
                 return 'date_str';
 
             case 'time':
+            case 'time without time zone':
+            case 'time with time zone':
+            case 'timetz':
                 return 'time_str';
 
             case 'double':
@@ -454,7 +474,9 @@ EOF;
                 return 'json';
 
             case 'text':
-                return 'wysiwyg';
+                return $this->textIsLongContent || in_array($field, $this->wysiwygFieldNames)
+                    ? 'wysiwyg'
+                    : 'string';
 
             case 'bool':
             case 'boolean':
@@ -494,9 +516,11 @@ EOF;
                 continue;
             }
 
+            // By the name or by the type: expired_at, processed_at… are not in the names list.
             if (
                 in_array($field, $this->dateTimeFieldNames) ||
-                in_array($fieldAlt, $this->dateTimeFieldNames)
+                in_array($fieldAlt, $this->dateTimeFieldNames) ||
+                $this->tuneType($field, $type) === 'datetime_str'
             ) {
                 $methodName = $this->getDb($connName)->getFieldMethodForModel(
                     $field,
