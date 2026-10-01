@@ -115,7 +115,36 @@ class Postgresql extends Pdo
             $this->_log($e->getMessage(), false);
         }
 
+        $this->setSessionTimeZone();
+
         return $res;
+    }
+
+    /**
+     * The session zone is PHP's. PHP writes time as a string without an offset
+     * (\diDateTime::sqlFormat()), which a timestamptz column reads in the session
+     * zone, and hands it back with the session offset. Under the server's zone that
+     * read is off by the difference between the two – silently, on every row. The
+     * shipped sql/postgres dumps use timestamptz, so this is not optional.
+     *
+     * A zone Postgres refuses is a broken connection, not a warning: carrying on
+     * would write wrong times instead.
+     */
+    protected function setSessionTimeZone()
+    {
+        $zone = date_default_timezone_get();
+
+        try {
+            $this->link->exec('SET TIME ZONE ' . $this->link->quote($zone));
+        } catch (\PDOException $e) {
+            $message = "Postgresql: unable to set session time zone '$zone': {$e->getMessage()}";
+
+            $this->_log($message);
+
+            throw new \diDatabaseException($message);
+        }
+
+        return $this;
     }
 
     public function getTablesInfo()
