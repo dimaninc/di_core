@@ -2,17 +2,17 @@ CREATE TABLE IF NOT EXISTS authorization_pin
 (
     id         bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id    bigint,
-    purpose    smallint     NOT NULL,
-    channel    smallint     NOT NULL,
-    target     varchar(255) NOT NULL,
-    code_hash  char(64)     NOT NULL,
-    status     smallint     NOT NULL DEFAULT 0,
-    attempts   smallint     NOT NULL DEFAULT 0,
+    purpose    smallint    NOT NULL,
+    channel    smallint    NOT NULL,
+    target     text        NOT NULL,
+    code_hash  text        NOT NULL CHECK (code_hash ~ '^[0-9a-f]{64}$'),
+    status     smallint    NOT NULL DEFAULT 0,
+    attempts   smallint    NOT NULL DEFAULT 0,
     payload    jsonb,
-    ip         varchar(45),
-    expired_at timestamp    NOT NULL,
-    created_at timestamp    DEFAULT CURRENT_TIMESTAMP,
-    updated_at timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ip         text,
+    expired_at timestamptz NOT NULL,
+    created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
+    updated_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx__authorization_pin__target

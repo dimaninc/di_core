@@ -1,11 +1,11 @@
 CREATE TABLE IF NOT EXISTS authorization_pin_failure
 (
     id          bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    ip          varchar(45) NOT NULL,
+    ip          text        NOT NULL,
     purpose     smallint    NOT NULL,
-    target_hash char(64)    NOT NULL,
+    target_hash text        NOT NULL CHECK (target_hash ~ '^[0-9a-f]{64}$'),
     user_id     bigint,
-    created_at  timestamp   DEFAULT CURRENT_TIMESTAMP
+    created_at  timestamptz DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx__authorization_pin_failure__pair
