@@ -6,7 +6,8 @@ var diTabs = function(_opts)
 			$pagesContainer: null,
 			selectedTab: null,
 			useHashOnClick: true,
-            useHashOnInit: true
+            useHashOnInit: true,
+            onSelect: null
 		}, _opts || {}),
 		e = {
 			$allTabs: null,
@@ -74,6 +75,10 @@ var diTabs = function(_opts)
 
         if (opts.useHashOnClick && tab) {
             window.location.hash = tab;
+        }
+
+        if (opts.onSelect) {
+            opts.onSelect(tab);
         }
 
 		return this;

@@ -1491,10 +1491,115 @@ abstract class BasePage
 
         $this->getForm()->setInput(
             TableEditLog::ADMIN_TAB_NAME,
-            $this->renderEditLog()
+            $this->shouldLazyLoadEditLog()
+                ? $this->renderEditLogLazyContainer()
+                : $this->renderEditLog()
         );
 
         return $this;
+    }
+
+    /**
+     * The lazy variant of renderEditLog(): no store access at all on the initial
+     * form render. createEditLogCollection() is otherwise unbounded (see its own
+     * docblock), so every form view used to pay for load()+count() over the WHOLE
+     * history whether the admin ever opened the tab or not. diAdminForm.js fetches
+     * the first page itself once the tab is actually selected (diTabs' onSelect),
+     * and further pages as it's scrolled, both through loadEditLogPage().
+     *
+     * @return string
+     */
+    protected function renderEditLogLazyContainer()
+    {
+        return $this->getTwig()->parse('admin/admin_table_edit_log/lazy', [
+            'table' => $this->getTable(),
+            'id' => $this->getId(),
+            'page_size' => $this->getEditLogPageSize(),
+        ]);
+    }
+
+    /**
+     * One page of the lazy-loaded log: the same degradation behaviour as
+     * renderEditLog() (an outage reports through onEditLogUnavailable() and
+     * answers with getEditLogUnavailableText() instead of a 500), bounded by
+     * setPageSize()/setPageNumber() instead of loading the whole history. Public
+     * – Controller\AdminTableEditLog drives it from a
+     * BasePage::liteCreate()'d instance, outside the normal admin Base lifecycle,
+     * the same way Controller\Files::_postRenameAction() and
+     * Submit::rebuildDynamicPics() already reuse a lite page.
+     *
+     * Doesn't call $records->count(): on a store where that's a separate query
+     * (Mongo – see createEditLogCollection()) it would cost one per page for no
+     * reason here. "More to load" is answered by whether this chunk came back
+     * full, the usual infinite-scroll trick.
+     *
+     * @param int $pageNumber 1-based
+     * @return array ['html' => string, 'has_more' => bool]
+     */
+    public function loadEditLogPage($pageNumber)
+    {
+        if (!$this->useEditLog() || $this->hideEditLog()) {
+            return [
+                'html' => '',
+                'has_more' => false,
+            ];
+        }
+
+        $this->prepareForEditLog();
+
+        $pageSize = $this->getEditLogPageSize();
+
+        $records = $this->createEditLogCollection()
+            ->setPageSize($pageSize)
+            ->setPageNumber(max(1, (int) $pageNumber));
+
+        try {
+            $records->load();
+        } catch (\Exception $e) {
+            try {
+                $this->onEditLogUnavailable($e);
+            } catch (\Throwable $ignored) {
+            }
+
+            try {
+                return [
+                    'html' => $this->getEditLogUnavailableText(),
+                    'has_more' => false,
+                ];
+            } catch (\Throwable $ignored) {
+                return [
+                    'html' => '',
+                    'has_more' => false,
+                ];
+            }
+        }
+
+        $items = [];
+
+        /** @var TableEditLog $rec */
+        foreach ($records as $rec) {
+            $rec->parseData();
+            $items[] = $rec;
+        }
+
+        $options = extend(
+            [
+                'show_only_diff' => false,
+                'strip_tags' => false,
+            ],
+            (array) $this->useEditLog()
+        );
+
+        return [
+            'html' => $items
+                ? $this->getTwig()->parse('admin/admin_table_edit_log/_items', [
+                    'records' => $items,
+                    'admins' => Admins::create(),
+                    'options' => $options,
+                ])
+                : '',
+            'has_more' => count($items) >= $pageSize,
+        ];
     }
 
     /**
@@ -1515,6 +1620,17 @@ abstract class BasePage
             ->filterByTargetTable($this->getTable())
             ->filterByTargetId([$this->getId(), (int) $this->getId()])
             ->orderById('DESC');
+    }
+
+    /**
+     * Records per lazy-loaded chunk: both the AJAX page size and, via
+     * setPageSize(), the LIMIT the query actually runs with.
+     *
+     * @return int
+     */
+    protected function getEditLogPageSize()
+    {
+        return 20;
     }
 
     /**
@@ -2198,6 +2314,20 @@ abstract class BasePage
     public function hideEditLog()
     {
         return false;
+    }
+
+    /**
+     * Whether the log tab's content is fetched lazily (AJAX, on first tab select,
+     * paged further on scroll – see diAdminForm.js / renderEditLogLazyContainer())
+     * instead of being loaded in full on every form render. On by default:
+     * createEditLogCollection() is otherwise unbounded, so a record with a long
+     * history paid for its whole log on every single form view, tab opened or
+     * not. Override to return false for a project that depends on the log being
+     * present in the initial HTML (printed, grepped, read without JS).
+     */
+    public function shouldLazyLoadEditLog()
+    {
+        return true;
     }
 
     protected function reallySubmit()

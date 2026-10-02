@@ -1,0 +1,361 @@
+<?php
+
+namespace diCore\Tests\Admin;
+
+use diCore\Admin\BasePage;
+use diCore\Entity\AdminTableEditLog\Model as TableEditLog;
+use PHPUnit\Framework\TestCase;
+
+/**
+ * BasePage::shouldLazyLoadEditLog(): on by default, so printEditLog() must stop
+ * touching the store on every form render (createEditLogCollection() is
+ * otherwise unbounded) and instead render an empty container that
+ * loadEditLogPage() – the AJAX endpoint's entry point – fills page by page, with
+ * the same degradation and gating renderEditLog() already has.
+ */
+class EditLogLazyLoadTest extends TestCase
+{
+    public function testLazyLoadIsOnByDefault(): void
+    {
+        $page = EditLogLazyProbePage::make();
+
+        $this->assertTrue($page->shouldLazyLoadEditLog());
+    }
+
+    public function testInitialFormRenderNeverTouchesTheStore(): void
+    {
+        $page = EditLogLazyProbePage::make();
+        $page->collection = new StoreTouchExplodesCollection();
+
+        $page->runPrintEditLog();
+
+        $this->assertSame(
+            'rendered:admin/admin_table_edit_log/lazy',
+            $page->probeForm->inputs[TableEditLog::ADMIN_TAB_NAME] ?? null
+        );
+    }
+
+    public function testLazyContainerCarriesTableIdAndPageSize(): void
+    {
+        $page = EditLogLazyProbePage::make();
+        $page->collection = new StoreTouchExplodesCollection();
+
+        $page->runPrintEditLog();
+
+        $args = $page->probeTwig->lastArgs;
+        $this->assertSame('probe_table', $args['table']);
+        $this->assertSame(42, $args['id']);
+        $this->assertSame(20, $args['page_size']);
+    }
+
+    public function testOverridingToFalseKeepsTheEagerRender(): void
+    {
+        $page = EditLogLazyProbePage::make();
+        $page->lazyLoadEnabled = false;
+        $page->collection = new WorkingLazyEditLogCollection([
+            new EditLogLazyProbeRecord(),
+        ]);
+
+        $page->runPrintEditLog();
+
+        $this->assertSame(
+            'rendered:admin/admin_table_edit_log/form_field',
+            $page->probeForm->inputs[TableEditLog::ADMIN_TAB_NAME] ?? null
+        );
+    }
+
+    public function testLoadEditLogPageAppliesPaginationAndParsesRecords(): void
+    {
+        $page = EditLogLazyProbePage::make();
+        $record = new EditLogLazyProbeRecord();
+        $page->collection = new WorkingLazyEditLogCollection([$record]);
+
+        $result = $page->loadEditLogPage(2);
+
+        $this->assertSame(20, $page->collection->pageSize);
+        $this->assertSame(2, $page->collection->pageNumber);
+        $this->assertTrue($record->parsed);
+        $this->assertSame(
+            'rendered:admin/admin_table_edit_log/_items',
+            $result['html']
+        );
+        $this->assertFalse(
+            $result['has_more'],
+            'a chunk smaller than the page size is the last one'
+        );
+    }
+
+    public function testLoadEditLogPageTreatsAFullChunkAsPossiblyNotLast(): void
+    {
+        $page = EditLogLazyProbePage::make();
+        $records = [];
+        for ($i = 0; $i < 20; $i++) {
+            $records[] = new EditLogLazyProbeRecord();
+        }
+        $page->collection = new WorkingLazyEditLogCollection($records);
+
+        $result = $page->loadEditLogPage(1);
+
+        $this->assertTrue($result['has_more']);
+    }
+
+    public function testLoadEditLogPageTreatsPageNumberBelowOneAsOne(): void
+    {
+        $page = EditLogLazyProbePage::make();
+        $page->collection = new WorkingLazyEditLogCollection([]);
+
+        $page->loadEditLogPage(0);
+
+        $this->assertSame(1, $page->collection->pageNumber);
+    }
+
+    public function testLoadEditLogPageReturnsEmptyHtmlWhenNothingMatched(): void
+    {
+        $page = EditLogLazyProbePage::make();
+        $page->collection = new WorkingLazyEditLogCollection([]);
+
+        $result = $page->loadEditLogPage(1);
+
+        $this->assertSame('', $result['html']);
+        $this->assertFalse($result['has_more']);
+    }
+
+    public function testLoadEditLogPageDegradesLikeRenderEditLogDoes(): void
+    {
+        $page = EditLogLazyProbePage::make();
+        $page->collection = new ThrowingLazyEditLogCollection();
+
+        $result = $page->loadEditLogPage(1);
+
+        $this->assertSame(
+            'Журнал изменений временно недоступен',
+            $result['html']
+        );
+        $this->assertFalse($result['has_more']);
+        $this->assertInstanceOf(\Exception::class, $page->reported);
+        $this->assertSame('store down', $page->reported->getMessage());
+    }
+
+    public function testLoadEditLogPageIsGatedByUseEditLog(): void
+    {
+        $page = EditLogLazyProbePage::make();
+        $page->editLogEnabled = false;
+        $page->collection = new StoreTouchExplodesCollection();
+
+        $result = $page->loadEditLogPage(1);
+
+        $this->assertSame(['html' => '', 'has_more' => false], $result);
+    }
+
+    public function testLoadEditLogPageIsGatedByHideEditLog(): void
+    {
+        $page = EditLogLazyProbePage::make();
+        $page->editLogHidden = true;
+        $page->collection = new StoreTouchExplodesCollection();
+
+        $result = $page->loadEditLogPage(1);
+
+        $this->assertSame(['html' => '', 'has_more' => false], $result);
+    }
+}
+
+class EditLogLazyProbePage extends BasePage
+{
+    public $probeForm;
+    public $probeTwig;
+    public $collection;
+    public ?\Exception $reported = null;
+    public bool $editLogEnabled = true;
+    public bool $editLogHidden = false;
+    public bool $lazyLoadEnabled = true;
+
+    public static function make(): self
+    {
+        /** @var self $page */
+        $page = (new \ReflectionClass(self::class))->newInstanceWithoutConstructor();
+        $page->probeForm = new EditLogLazyProbeForm();
+        $page->probeTwig = new EditLogLazyProbeTwig();
+
+        return $page;
+    }
+
+    public function getTwig()
+    {
+        return $this->probeTwig;
+    }
+
+    public function runPrintEditLog()
+    {
+        return $this->printEditLog();
+    }
+
+    public function useEditLog()
+    {
+        return $this->editLogEnabled;
+    }
+
+    public function hideEditLog()
+    {
+        return $this->editLogHidden;
+    }
+
+    public function shouldLazyLoadEditLog()
+    {
+        return $this->lazyLoadEnabled;
+    }
+
+    public function getTable()
+    {
+        return 'probe_table';
+    }
+
+    public function getId()
+    {
+        return 42;
+    }
+
+    public function getForm()
+    {
+        return $this->probeForm;
+    }
+
+    public function getLanguage()
+    {
+        return 'ru';
+    }
+
+    protected function createEditLogCollection()
+    {
+        return $this->collection;
+    }
+
+    // Keep the assertion on the contract, not on the file logger.
+    protected function onEditLogUnavailable(\Exception $e)
+    {
+        $this->reported = $e;
+
+        return $this;
+    }
+}
+
+/** Any method call proves a code path reached the store when it must not have. */
+class StoreTouchExplodesCollection
+{
+    public function __call($name, $args)
+    {
+        throw new \Exception("unexpected store access via {$name}()");
+    }
+}
+
+/** Loads fine and is iterable, so the happy path runs end to end. */
+class WorkingLazyEditLogCollection implements \IteratorAggregate, \Countable
+{
+    public $pageSize;
+    public $pageNumber;
+    public array $items;
+
+    public function __construct(array $items)
+    {
+        $this->items = $items;
+    }
+
+    public function setPageSize($size)
+    {
+        $this->pageSize = $size;
+
+        return $this;
+    }
+
+    public function setPageNumber($number)
+    {
+        $this->pageNumber = $number;
+
+        return $this;
+    }
+
+    public function load()
+    {
+        return $this;
+    }
+
+    public function count(): int
+    {
+        return count($this->items);
+    }
+
+    public function getIterator(): \Iterator
+    {
+        return new \ArrayIterator($this->items);
+    }
+}
+
+/** Accepts pagination calls, but load() hits a down store. */
+class ThrowingLazyEditLogCollection
+{
+    public function setPageSize($size)
+    {
+        return $this;
+    }
+
+    public function setPageNumber($number)
+    {
+        return $this;
+    }
+
+    public function load()
+    {
+        throw new \Exception('store down');
+    }
+}
+
+class EditLogLazyProbeRecord
+{
+    public bool $parsed = false;
+
+    public function parseData()
+    {
+        $this->parsed = true;
+
+        return $this;
+    }
+}
+
+class EditLogLazyProbeTwig
+{
+    public ?array $lastArgs = null;
+
+    private ?\Twig\Environment $engine = null;
+
+    public function parse($template, $args = [])
+    {
+        $this->lastArgs = $args;
+
+        return 'rendered:' . $template;
+    }
+
+    /**
+     * loadEditLogPage() registers the 'insdel' escaper itself (same reason
+     * renderEditLog() does) – the double must hand back a real Environment or
+     * the test would stop proving that dependency is satisfiable.
+     */
+    public function getEngine()
+    {
+        if ($this->engine === null) {
+            $this->engine = new \Twig\Environment(new \Twig\Loader\ArrayLoader([]));
+        }
+
+        return $this->engine;
+    }
+}
+
+class EditLogLazyProbeForm
+{
+    public array $inputs = [];
+
+    public function setInput($field, $input, $static_input = '')
+    {
+        $this->inputs[$field] = $input;
+
+        return $this;
+    }
+}

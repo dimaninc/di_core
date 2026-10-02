@@ -6,6 +6,19 @@ var diAdminForm = function (table, id, auto_save_timeout) {
     initiating = true,
     Tabs;
 
+  var EDIT_LOG_TAB = 'admin_edit_log';
+  var EDIT_LOG_SCROLL_THRESHOLD = 200;
+
+  var editLog = {
+    $container: null,
+    $list: null,
+    $status: null,
+    page: 0,
+    loading: false,
+    hasMore: true,
+    started: false
+  };
+
   this.table = table;
   this.id = ~~id;
   this.auto_save_timeout = ~~auto_save_timeout;
@@ -19,14 +32,20 @@ var diAdminForm = function (table, id, auto_save_timeout) {
       field_href: 'Ссылка',
       field_slug_source: 'Название для URL',
       renamedTo:
-        'Файл &laquo;{{ oldFn }}&raquo; переименован в &laquo;{{ newFn }}&raquo;'
+        'Файл &laquo;{{ oldFn }}&raquo; переименован в &laquo;{{ newFn }}&raquo;',
+      edit_log_loading: 'Загрузка...',
+      edit_log_empty: 'История изменений пуста',
+      edit_log_error: 'Не удалось загрузить историю изменений'
     },
 
     en: {
       field_href: 'Href',
       field_slug_source: 'Slug source',
       renamedTo:
-        'File &laquo;{{ oldFn }}&raquo; renamed to &laquo;{{ newFn }}&raquo;'
+        'File &laquo;{{ oldFn }}&raquo; renamed to &laquo;{{ newFn }}&raquo;',
+      edit_log_loading: 'Loading...',
+      edit_log_empty: 'Changes log is empty',
+      edit_log_error: 'Failed to load changes log'
     }
   };
 
@@ -72,6 +91,7 @@ var diAdminForm = function (table, id, auto_save_timeout) {
     self.clear_busy();
 
     initTabs();
+    initEditLogLazyLoad();
     self.initColorPickers();
     initTypeChange();
     initDelLinks();
@@ -556,13 +576,121 @@ var diAdminForm = function (table, id, auto_save_timeout) {
   function initTabs() {
     Tabs = new diTabs({
       $tabsContainer: $('.diadminform_tabs ul'),
-      $pagesContainer: $('form [data-purpose="tab-pages"]')
+      $pagesContainer: $('form [data-purpose="tab-pages"]'),
+      onSelect: function (tab) {
+        if (tab === EDIT_LOG_TAB) {
+          self.startEditLogLazyLoad();
+        }
+      }
     });
   }
 
   this.getTabs = function () {
     return Tabs;
   };
+
+  // BasePage::shouldLazyLoadEditLog(): the history tab starts empty and fetches
+  // its first page only once actually selected, then further pages on scroll.
+  function initEditLogLazyLoad() {
+    editLog.$container = $('[data-purpose="edit-log-lazy"]');
+
+    if (!editLog.$container.length) {
+      return;
+    }
+
+    editLog.$list = editLog.$container.find('.table-edit-log');
+    editLog.$status = editLog.$container.find('[data-purpose="edit-log-status"]');
+
+    self.e.$window.on('scroll', onEditLogScroll);
+
+    // Tabs selects its initial tab (possibly this one, via the URL hash) before
+    // this runs, so its onSelect call found editLog.$container still empty.
+    if (Tabs && Tabs.isTabSelected(EDIT_LOG_TAB)) {
+      self.startEditLogLazyLoad();
+    }
+  }
+
+  this.startEditLogLazyLoad = function () {
+    if (editLog.started || !editLog.$container || !editLog.$container.length) {
+      return;
+    }
+
+    editLog.started = true;
+
+    loadEditLogPage();
+  };
+
+  function onEditLogScroll() {
+    if (
+      !editLog.started ||
+      editLog.loading ||
+      !editLog.hasMore ||
+      !Tabs ||
+      !Tabs.isTabSelected(EDIT_LOG_TAB)
+    ) {
+      return;
+    }
+
+    var scrollBottom = self.e.$window.scrollTop() + self.e.$window.height();
+    var containerBottom =
+      editLog.$container.offset().top + editLog.$container.outerHeight();
+
+    if (scrollBottom >= containerBottom - EDIT_LOG_SCROLL_THRESHOLD) {
+      loadEditLogPage();
+    }
+  }
+
+  function setEditLogStatus(text) {
+    if (!editLog.$status) {
+      return;
+    }
+
+    editLog.$status.text(text || '').toggle(!!text);
+  }
+
+  function loadEditLogPage() {
+    if (editLog.loading || !editLog.hasMore) {
+      return;
+    }
+
+    editLog.loading = true;
+    editLog.page++;
+
+    setEditLogStatus(self.L('edit_log_loading'));
+
+    $.get(
+      di.getWorkerPath('admin_table_edit_log', 'page'),
+      {
+        table: self.table,
+        id: self.id,
+        page: editLog.page
+      },
+      function (res) {
+        editLog.loading = false;
+
+        if (!res || !res.ok) {
+          setEditLogStatus((res && res.message) || self.L('edit_log_error'));
+          return;
+        }
+
+        editLog.hasMore = !!res.has_more;
+
+        if (res.html) {
+          editLog.$list.append(res.html);
+        }
+
+        setEditLogStatus(
+          editLog.page === 1 && !editLog.$list.children().length
+            ? self.L('edit_log_empty')
+            : ''
+        );
+      }
+    ).fail(function (err) {
+      editLog.loading = false;
+      setEditLogStatus(self.L('edit_log_error'));
+      ajaxErrorHandler(err, self.L('edit_log_error'));
+    });
+  }
 
   function initDelLinks() {
     $('a.del-file').click(function () {
