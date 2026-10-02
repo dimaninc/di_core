@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.1
+
+- Admin edit log: lazy-loaded tab with cursor paging (#26)
+
 ## 0.10.0
 
 - Postgres: dumps follow Don't Do This, session time zone follows PHP, admin generator reads text and time types (#25)
