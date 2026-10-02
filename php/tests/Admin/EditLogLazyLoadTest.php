@@ -37,18 +37,48 @@ class EditLogLazyLoadTest extends TestCase
         );
     }
 
-    public function testLazyContainerCarriesTableModuleIdAndPageSize(): void
+    /**
+     * Only what diEditLogLazyLoad() reads: the module and id it sends back.
+     */
+    public function testLazyContainerCarriesModuleAndId(): void
     {
         $page = EditLogLazyProbePage::make();
         $page->collection = new StoreTouchExplodesCollection();
 
         $page->runPrintEditLog();
 
-        $args = $page->probeTwig->lastArgs;
-        $this->assertSame('probe_table', $args['table']);
-        $this->assertSame('probe_module', $args['module']);
-        $this->assertSame(42, $args['id']);
-        $this->assertSame(20, $args['page_size']);
+        $this->assertSame(
+            ['module' => 'probe_module', 'id' => 42],
+            $page->probeTwig->lastArgs
+        );
+    }
+
+    /**
+     * SQL ids are decimal: MySQL reads `id < 'abc'` as `id < 0` and PostgreSQL
+     * fails the bigint cast, so hex must not pass for an SQL store.
+     */
+    public function testSqlCursorMustBeDecimal(): void
+    {
+        $page = EditLogLazyProbePage::make();
+
+        $this->assertTrue($page->isValidEditLogCursor('42'));
+        $this->assertTrue($page->isValidEditLogCursor(42));
+        $this->assertFalse($page->isValidEditLogCursor('abc'));
+        $this->assertFalse($page->isValidEditLogCursor('65a1f0c2e4b0a1b2c3d4e5f6'));
+        $this->assertFalse($page->isValidEditLogCursor('-1'));
+        $this->assertFalse($page->isValidEditLogCursor('1 OR 1=1'));
+        $this->assertFalse($page->isValidEditLogCursor(str_repeat('9', 20)));
+        $this->assertFalse($page->isValidEditLogCursor(['42']));
+    }
+
+    public function testMongoCursorMustBeAnObjectId(): void
+    {
+        $page = EditLogLazyProbePage::make();
+        $page->mongo = true;
+
+        $this->assertTrue($page->isValidEditLogCursor('65a1f0c2e4b0a1b2c3d4e5f6'));
+        $this->assertFalse($page->isValidEditLogCursor('42'));
+        $this->assertFalse($page->isValidEditLogCursor('65a1f0c2e4b0a1b2c3d4e5fz'));
     }
 
     public function testOverridingToFalseKeepsTheEagerRender(): void
@@ -87,6 +117,7 @@ class EditLogLazyLoadTest extends TestCase
             'a chunk smaller than the page size is the last one'
         );
         $this->assertSame(41, $result['last_id']);
+        $this->assertFalse($result['error'], '@return promises the key on every answer');
     }
 
     /**
@@ -198,7 +229,7 @@ class EditLogLazyLoadTest extends TestCase
 
         $result = $page->loadEditLogPage(1);
 
-        $this->assertSame(['html' => '', 'has_more' => false, 'last_id' => null], $result);
+        $this->assertSame(['html' => '', 'has_more' => false, 'last_id' => null, 'error' => false], $result);
     }
 
     public function testLoadEditLogPageIsGatedByHideEditLog(): void
@@ -209,7 +240,7 @@ class EditLogLazyLoadTest extends TestCase
 
         $result = $page->loadEditLogPage(1);
 
-        $this->assertSame(['html' => '', 'has_more' => false, 'last_id' => null], $result);
+        $this->assertSame(['html' => '', 'has_more' => false, 'last_id' => null, 'error' => false], $result);
     }
 }
 
@@ -292,6 +323,13 @@ class EditLogLazyProbePage extends BasePage
     protected function createEditLogCollection()
     {
         return $this->collection;
+    }
+
+    public bool $mongo = false;
+
+    protected function isEditLogStoredInMongo()
+    {
+        return $this->mongo;
     }
 
     // Keep the assertion on the contract, not on the file logger.

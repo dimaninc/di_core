@@ -68,12 +68,16 @@ class AdminTableEditLogTest extends TestCase
 
     public function testMalformedCursorIsABadRequest(): void
     {
-        $_GET = ['module' => 'configuration', 'id' => 1, 'last_id' => '1 OR 1=1'];
+        $_GET = ['module' => 'configuration', 'id' => 1, 'last_id' => 'abc'];
+        $controller = $this->runProbe(true);
+        $controller->page->cursorValid = false;
 
-        $result = $this->runProbe(true)->pageAction();
+        $result = $controller->pageAction();
 
         $this->assertFalse($result['ok']);
         $this->assertSame('Malformed last_id', $result['message']);
+        $this->assertSame('abc', $controller->page->checkedCursor);
+        $this->assertSame('not called', $controller->page->lastId);
     }
 
     /**
@@ -187,6 +191,15 @@ class AdminTableEditLogProbePage
 {
     public $id;
     public $lastId = 'not called';
+    public bool $cursorValid = true;
+    public $checkedCursor = null;
+
+    public function isValidEditLogCursor($cursor)
+    {
+        $this->checkedCursor = $cursor;
+
+        return $this->cursorValid;
+    }
 
     public function setId($id, $setOriginal = false)
     {

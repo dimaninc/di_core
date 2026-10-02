@@ -37,7 +37,8 @@ var editLogLocal = {
  * lookup already reflects the new tab; the setTimeout(…, 0) fallback only
  * guards against that ordering ever changing.
  *
- * Bound directly on the tab element(s) themselves (`[data-tab="tabName"]`),
+ * Bound directly on the tab header element(s) – `[data-tab="tabName"]` inside
+ * `.diadminform_tabs`, since the tab PAGES carry the same data-tab attribute –
  * NOT delegated to document: diTabs' own click handler ends with `return
  * false`, which jQuery turns into preventDefault() *and* stopPropagation() –
  * the click never bubbles up to a document-level delegated listener at all.
@@ -197,9 +198,17 @@ function diEditLogLazyLoad(Tabs, tabName) {
     });
   }
 
+  // Re-selecting the tab also re-checks the viewport: a chunk that landed while
+  // another tab was shown skipped its maybeLoadMore() (the tab was inactive),
+  // and with a short list there is nothing to scroll that would load the next.
   function start() {
     if (state.started) {
-      retry();
+      if (state.failed) {
+        retry();
+      } else {
+        maybeLoadMore();
+      }
+
       return;
     }
 
@@ -208,10 +217,10 @@ function diEditLogLazyLoad(Tabs, tabName) {
     loadPage();
   }
 
-  $window.on('scroll', maybeLoadMore);
+  $window.on('scroll resize', maybeLoadMore);
   $status.on('click', retry);
 
-  $('[data-tab="' + tabName + '"]').on('click', function () {
+  $('.diadminform_tabs [data-tab="' + tabName + '"]').on('click', function () {
     if (isTabActive()) {
       start();
     } else {

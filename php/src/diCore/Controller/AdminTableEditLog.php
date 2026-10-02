@@ -23,13 +23,6 @@ use diCore\Admin\BasePage;
  */
 class AdminTableEditLog extends \diBaseAdminController
 {
-    /**
-     * Cursor shape: a decimal SQL id or a hex Mongo ObjectId (24 chars). The value
-     * is escaped by the collection anyway; this only turns garbage into a 400
-     * instead of an "unavailable" notice (an invalid ObjectId throws inside load()).
-     */
-    const CURSOR_PATTERN = '/^[0-9a-f]{1,24}$/i';
-
     const MAX_ID_LENGTH = 64;
 
     public function pageAction()
@@ -52,15 +45,6 @@ class AdminTableEditLog extends \diBaseAdminController
 
         if ($lastId === '') {
             $lastId = null;
-        }
-
-        if (
-            $lastId !== null &&
-            (!is_scalar($lastId) || !preg_match(static::CURSOR_PATTERN, (string) $lastId))
-        ) {
-            return $this->badRequest([
-                'message' => 'Malformed last_id',
-            ]);
         }
 
         $className = Base::getModuleClassName($module);
@@ -87,6 +71,15 @@ class AdminTableEditLog extends \diBaseAdminController
         }
 
         $adminPage = $this->createPage($module, $admin);
+
+        // The cursor's valid shape depends on the log's store (decimal for SQL, an
+        // ObjectId for Mongo), which only the page knows. Garbage gets a 400 here,
+        // not an "unavailable" notice reported to monitoring from inside load().
+        if ($lastId !== null && !$adminPage->isValidEditLogCursor($lastId)) {
+            return $this->badRequest([
+                'message' => 'Malformed last_id',
+            ]);
+        }
 
         // Neither id is cast to int: a Mongo-backed entity or log has ObjectId
         // strings there, and (int) turns them into a wrong number. SQL compares a

@@ -1521,11 +1521,47 @@ abstract class BasePage
     protected function renderEditLogLazyContainer()
     {
         return $this->getTwig()->parse('admin/admin_table_edit_log/lazy', [
-            'table' => $this->getTable(),
             'module' => $this->getModule(),
             'id' => $this->getEditLogTargetId(),
-            'page_size' => $this->getEditLogPageSize(),
         ]);
+    }
+
+    /**
+     * Whether $cursor can be an id of this page's log store: decimal digits for
+     * SQL, a 24-char hex ObjectId for Mongo. Hex is not accepted for SQL – MySQL
+     * reads `id < 'abc'` as `id < 0` (an empty chunk that ends the history), and
+     * PostgreSQL fails the bigint cast, which would report an outage to monitoring.
+     *
+     * @param mixed $cursor
+     * @return bool
+     */
+    public function isValidEditLogCursor($cursor)
+    {
+        if (!is_scalar($cursor)) {
+            return false;
+        }
+
+        $cursor = (string) $cursor;
+
+        if ($this->isEditLogStoredInMongo()) {
+            return (bool) preg_match('/^[0-9a-f]{24}$/i', $cursor);
+        }
+
+        // 19 digits: bigint's range
+        return ctype_digit($cursor) && strlen($cursor) <= 19;
+    }
+
+    /**
+     * Asks the log collection itself: a project may keep the log in another store
+     * than its entities.
+     *
+     * @return bool
+     */
+    protected function isEditLogStoredInMongo()
+    {
+        $records = $this->createEditLogCollection();
+
+        return $records::getConnection()::isMongo();
     }
 
     /**
@@ -1565,8 +1601,9 @@ abstract class BasePage
      * store the ids are ObjectId strings, which the collection converts itself
      * (diModel::tuneFieldValueByTypeBeforeDb()), and (int) would turn them into a
      * number that compares below every ObjectId. SQL compares the quoted decimal
-     * numerically. The cursor only works while createEditLogCollection() orders by
-     * id DESC – see its docblock.
+     * numerically. The shape is the caller's to check (isValidEditLogCursor()),
+     * as Controller\AdminTableEditLog does. The cursor only works while
+     * createEditLogCollection() orders by id DESC – see its docblock.
      *
      * "More to load" is answered by whether this chunk came back full: the
      * collection's own count() (which loadChunk() runs on every load) is clamped
@@ -1584,6 +1621,7 @@ abstract class BasePage
                 'html' => '',
                 'has_more' => false,
                 'last_id' => null,
+                'error' => false,
             ];
         }
 
@@ -1642,6 +1680,7 @@ abstract class BasePage
             // Collection is ordered by id DESC, so the last item of the chunk
             // carries the lowest id – the next chunk's cursor.
             'last_id' => $items ? end($items)->getId() : null,
+            'error' => false,
         ];
     }
 
