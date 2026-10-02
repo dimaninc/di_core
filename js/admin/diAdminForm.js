@@ -31,10 +31,18 @@ var editLogLocal = {
  * scroll-triggered loads, and the first load is triggered by listening on the
  * SAME click diTabs itself reacts to (rather than requiring every Tabs instance
  * to also pass an onSelect option) – diTabs applies the tab switch synchronously
- * (before the 10ms CSS-class setTimeout), so by the time this delegated handler
- * runs (document-level, so after the tab element's own direct handler) the
+ * (before the 10ms CSS-class setTimeout), so by the time our handler runs the
  * lookup already reflects the new tab; the setTimeout(…, 0) fallback only
  * guards against that ordering ever changing.
+ *
+ * Bound directly on the tab element(s) themselves (`[data-tab="tabName"]`),
+ * NOT delegated to document: diTabs' own click handler ends with `return
+ * false`, which jQuery turns into preventDefault() *and* stopPropagation() –
+ * the click never bubbles up to a document-level delegated listener at all.
+ * A handler attached directly to the same element isn't affected: jQuery only
+ * stops a click from reaching handlers on ANCESTOR elements, not sibling
+ * handlers already bound to that same element (that needs
+ * stopImmediatePropagation(), which diTabs doesn't call).
  *
  * @param {diTabs} Tabs
  * @param {string} tabName
@@ -124,6 +132,16 @@ function diEditLogLazyLoad(Tabs, tabName) {
           state.lastId = res.last_id;
         }
 
+        // res.error's 'html' is a plain status message (BasePage::
+        // loadEditLogPage()'s degraded branch), not a rendered chunk of <li>s –
+        // it belongs in the status line, not appended into the list, or it
+        // would read as a (broken) log entry AND get silently relabelled
+        // "empty" below by the children().length check.
+        if (res.error) {
+          setStatus(res.html || L('error'));
+          return;
+        }
+
         if (res.html) {
           $list.append(res.html);
         }
@@ -156,7 +174,7 @@ function diEditLogLazyLoad(Tabs, tabName) {
 
   $window.on('scroll', maybeLoadMore);
 
-  $(document).on('click', '[data-tab="' + tabName + '"]', function () {
+  $('[data-tab="' + tabName + '"]').on('click', function () {
     if (isTabActive()) {
       start();
     } else {

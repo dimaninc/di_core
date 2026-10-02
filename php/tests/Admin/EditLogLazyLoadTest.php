@@ -145,6 +145,13 @@ class EditLogLazyLoadTest extends TestCase
         $this->assertNull($result['last_id']);
         $this->assertInstanceOf(\Exception::class, $page->reported);
         $this->assertSame('store down', $page->reported->getMessage());
+        $this->assertTrue(
+            $result['error'],
+            "diAdminForm.js's diEditLogLazyLoad() needs this to tell a status " .
+            "message apart from zero records - without it, the degraded text " .
+            "gets appended into the list (no <li>, so children().length stays " .
+            "0) and is then relabelled as the empty-log message"
+        );
     }
 
     public function testLoadEditLogPageIsGatedByUseEditLog(): void

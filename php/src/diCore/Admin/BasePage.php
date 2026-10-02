@@ -1559,7 +1559,7 @@ abstract class BasePage
      * full, the usual infinite-scroll trick.
      *
      * @param int|null $lastId Lowest id seen so far, or null for the first chunk
-     * @return array ['html' => string, 'has_more' => bool, 'last_id' => int|null]
+     * @return array ['html' => string, 'has_more' => bool, 'last_id' => int|null, 'error' => bool]
      */
     public function loadEditLogPage($lastId = null)
     {
@@ -1589,17 +1589,25 @@ abstract class BasePage
             } catch (\Throwable $ignored) {
             }
 
+            // 'error' => true tells diAdminForm.js's diEditLogLazyLoad() this
+            // 'html' is a plain status message, not a rendered chunk – without
+            // it, the client can't tell this apart from "zero records" (it
+            // only has children().length to go on, and a bare string appended
+            // to the <ul> adds no <li>), and silently relabels a store outage
+            // as "Changes log is empty".
             try {
                 return [
                     'html' => $this->getEditLogUnavailableText(),
                     'has_more' => false,
                     'last_id' => null,
+                    'error' => true,
                 ];
             } catch (\Throwable $ignored) {
                 return [
                     'html' => '',
                     'has_more' => false,
                     'last_id' => null,
+                    'error' => true,
                 ];
             }
         }
