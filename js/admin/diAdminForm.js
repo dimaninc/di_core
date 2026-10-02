@@ -1,3 +1,244 @@
+var EDIT_LOG_TAB = 'admin_edit_log';
+var EDIT_LOG_SCROLL_THRESHOLD = 200;
+
+var editLogLocal = {
+  ru: {
+    loading: 'Загрузка...',
+    empty: 'История изменений пуста',
+    error: 'Не удалось загрузить историю изменений',
+    retry: 'Нажмите, чтобы повторить'
+  },
+  en: {
+    loading: 'Loading...',
+    empty: 'Changes log is empty',
+    error: 'Failed to load changes log',
+    retry: 'Click to retry'
+  }
+};
+
+/**
+ * Wires up BasePage::shouldLazyLoadEditLog()'s container
+ * (admin/admin_table_edit_log/lazy.html.twig): the first chunk is fetched once
+ * the tab is actually selected, further chunks as it's scrolled, both through
+ * Controller\AdminTableEditLog::pageAction(). module/id come from the
+ * container's own data attributes – set by the admin page that rendered it, via
+ * its own getModule() – never from the caller, so this one function serves both
+ * a record's form (diAdminForm, below) and the settings page's own log tab,
+ * which has no diAdminForm instance at all (Admin\Page\Configuration's tab has
+ * no record id, no form – see diConfiguration.coffee).
+ *
+ * Takes the caller's own Tabs (diTabs) instance rather than building one: a page
+ * has exactly one tab strip, already owned by whichever admin JS constructed it.
+ * "Is the log tab selected right now" rides diTabs.isTabSelected() for the
+ * scroll-triggered loads, and the first load is triggered by listening on the
+ * SAME click diTabs itself reacts to (rather than requiring every Tabs instance
+ * to also pass an onSelect option) – diTabs applies the tab switch synchronously
+ * (before the 10ms CSS-class setTimeout), so by the time our handler runs the
+ * lookup already reflects the new tab; the setTimeout(…, 0) fallback only
+ * guards against that ordering ever changing.
+ *
+ * Bound directly on the tab header element(s) – `[data-tab="tabName"]` inside
+ * `.diadminform_tabs`, since the tab PAGES carry the same data-tab attribute –
+ * NOT delegated to document: diTabs' own click handler ends with `return
+ * false`, which jQuery turns into preventDefault() *and* stopPropagation() –
+ * the click never bubbles up to a document-level delegated listener at all.
+ * A handler attached directly to the same element isn't affected: jQuery only
+ * stops a click from reaching handlers on ANCESTOR elements, not sibling
+ * handlers already bound to that same element (that needs
+ * stopImmediatePropagation(), which diTabs doesn't call).
+ *
+ * @param {diTabs} Tabs
+ * @param {string} tabName
+ */
+function diEditLogLazyLoad(Tabs, tabName) {
+  var $container = $('[data-purpose="edit-log-lazy"]');
+
+  if (!$container.length) {
+    return;
+  }
+
+  var $window = $(window);
+  var $list = $container.find('.table-edit-log');
+  var $status = $container.find('[data-purpose="edit-log-status"]');
+  // attr(), not data(): data() converts number-looking strings, and ids may be
+  // Mongo ObjectIds
+  var module = $container.attr('data-module');
+  var id = $container.attr('data-id');
+  var language = $('body').data('language') === 'en' ? 'en' : 'ru';
+
+  var state = {
+    lastId: null,
+    loading: false,
+    hasMore: true,
+    started: false,
+    loadedOnce: false,
+    // A failed request stops automatic loading (scroll would otherwise re-send
+    // it on every scroll event while the store is down, and each one is reported
+    // to monitoring by onEditLogUnavailable()). Retried only on an explicit
+    // action: a click on the status line or on the tab.
+    failed: false
+  };
+
+  function L(key) {
+    return editLogLocal[language][key] || key;
+  }
+
+  function setStatus(text) {
+    $status
+      .text(text || '')
+      .toggle(!!text)
+      .css('cursor', '');
+  }
+
+  function fail(message) {
+    state.loading = false;
+    state.failed = true;
+    $status
+      .text((message || L('error')) + '. ' + L('retry'))
+      .show()
+      .css('cursor', 'pointer');
+  }
+
+  function retry() {
+    if (!state.failed) {
+      return;
+    }
+
+    state.failed = false;
+    loadPage();
+  }
+
+  function isTabActive() {
+    return !!Tabs && Tabs.isTabSelected(tabName);
+  }
+
+  function shouldLoadMore() {
+    if (
+      !state.started ||
+      state.loading ||
+      state.failed ||
+      !state.hasMore ||
+      !isTabActive()
+    ) {
+      return false;
+    }
+
+    var scrollBottom = $window.scrollTop() + $window.height();
+    var containerBottom = $container.offset().top + $container.outerHeight();
+
+    return scrollBottom >= containerBottom - EDIT_LOG_SCROLL_THRESHOLD;
+  }
+
+  function maybeLoadMore() {
+    if (shouldLoadMore()) {
+      loadPage();
+    }
+  }
+
+  // Doesn't commit a cursor move until a good response lands: a failed request
+  // leaves state.lastId and state.hasMore as they were, so the retry asks for
+  // the same chunk instead of skipping it.
+  function loadPage() {
+    if (state.loading || state.failed || !state.hasMore) {
+      return;
+    }
+
+    state.loading = true;
+
+    setStatus(L('loading'));
+
+    $.get(
+      di.getWorkerPath('admin_table_edit_log', 'page'),
+      {
+        module: module,
+        id: id,
+        last_id: state.lastId || ''
+      },
+      function (res) {
+        if (!res || !res.ok) {
+          fail(res && res.message);
+          return;
+        }
+
+        // res.error's 'html' is a plain status message (BasePage::
+        // loadEditLogPage()'s degraded branch), not a rendered chunk of <li>s –
+        // it belongs in the status line, not appended into the list, or it
+        // would read as a (broken) log entry AND get silently relabelled
+        // "empty" below by the children().length check. Checked before
+        // has_more: the degraded answer says has_more=false, which would end
+        // the loading for good after a transient outage.
+        if (res.error) {
+          fail(res.html);
+          return;
+        }
+
+        state.loading = false;
+        state.hasMore = !!res.has_more;
+
+        if (res.last_id) {
+          state.lastId = res.last_id;
+        }
+
+        if (res.html) {
+          $list.append(res.html);
+        }
+
+        var wasEmpty = !state.loadedOnce && !$list.children().length;
+        state.loadedOnce = true;
+
+        setStatus(wasEmpty ? L('empty') : '');
+
+        // A chunk that doesn't fill the viewport leaves nothing for the admin to
+        // scroll on, so hasMore would never be revisited without this check.
+        maybeLoadMore();
+      }
+    ).fail(function (err) {
+      fail();
+      ajaxErrorHandler(err, L('error'));
+    });
+  }
+
+  // Re-selecting the tab also re-checks the viewport: a chunk that landed while
+  // another tab was shown skipped its maybeLoadMore() (the tab was inactive),
+  // and with a short list there is nothing to scroll that would load the next.
+  function start() {
+    if (state.started) {
+      if (state.failed) {
+        retry();
+      } else {
+        maybeLoadMore();
+      }
+
+      return;
+    }
+
+    state.started = true;
+
+    loadPage();
+  }
+
+  $window.on('scroll resize', maybeLoadMore);
+  $status.on('click', retry);
+
+  $('.diadminform_tabs [data-tab="' + tabName + '"]').on('click', function () {
+    if (isTabActive()) {
+      start();
+    } else {
+      setTimeout(function () {
+        if (isTabActive()) {
+          start();
+        }
+      }, 0);
+    }
+  });
+
+  // The tab can already be the selected one on load (URL hash, or it being the
+  // only/first tab) – diTabs selects before this runs, so no click will follow.
+  if (isTabActive()) {
+    start();
+  }
+}
+
 var diAdminForm = function (table, id, auto_save_timeout) {
   var extensions = {
     pic: ['jpeg', 'jpg', 'png', 'gif', 'webp', 'svg']
@@ -558,6 +799,8 @@ var diAdminForm = function (table, id, auto_save_timeout) {
       $tabsContainer: $('.diadminform_tabs ul'),
       $pagesContainer: $('form [data-purpose="tab-pages"]')
     });
+
+    diEditLogLazyLoad(Tabs, EDIT_LOG_TAB);
   }
 
   this.getTabs = function () {

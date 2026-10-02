@@ -193,6 +193,14 @@ class EditLogProbePage extends BasePage
         return false;
     }
 
+    // This file targets renderEditLog()'s own degradation behaviour; lazy
+    // loading (default since BasePage::shouldLazyLoadEditLog()) is covered
+    // separately by EditLogLazyLoadTest.
+    public function shouldLazyLoadEditLog()
+    {
+        return false;
+    }
+
     public function getTable()
     {
         return 'probe_table';

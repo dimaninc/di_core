@@ -3,9 +3,14 @@ class diConfiguration
         @initTabs().initUploadedPics()
 
     initTabs: ->
-        new diTabs
+        tabs = new diTabs
             $tabsContainer: $ '.diadminform_tabs ul'
             $pagesContainer: $ 'form [data-purpose="tab-pages"]'
+
+        # Admin\Page\Configuration::printEditLogTab(): present only when
+        # shouldLazyLoadEditLog() is true, same container/endpoint diAdminForm.js
+        # uses for a record's own log tab.
+        diEditLogLazyLoad tabs, 'admin_edit_log'
 
         $ 'form button[data-purpose="cancel"]'
         .click ->

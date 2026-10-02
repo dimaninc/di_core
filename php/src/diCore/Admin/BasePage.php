@@ -318,13 +318,21 @@ abstract class BasePage
         return $o;
     }
 
-    public static function liteCreate($module)
+    /**
+     * @param string $module
+     * @param Base|null $X An already built lite Base (e.g. one the caller checked
+     *                     rights with), or null to build a new one
+     * @return static
+     */
+    public static function liteCreate($module, ?Base $X = null)
     {
         $className = Base::getModuleClassName($module);
-        $adminBaseClassName = \diLib::getChildClass(Base::class);
 
-        /** @var Base $X */
-        $X = new $adminBaseClassName(Base::INIT_MODE_LITE);
+        if (!$X) {
+            $adminBaseClassName = \diLib::getChildClass(Base::class);
+            $X = new $adminBaseClassName(Base::INIT_MODE_LITE);
+        }
+
         /** @var self $Page */
         $Page = new $className($X);
         $Page->tryToInitTable();
@@ -1491,13 +1499,223 @@ abstract class BasePage
 
         $this->getForm()->setInput(
             TableEditLog::ADMIN_TAB_NAME,
-            $this->renderEditLog()
+            $this->shouldLazyLoadEditLog()
+                ? $this->renderEditLogLazyContainer()
+                : $this->renderEditLog()
         );
 
         return $this;
     }
 
     /**
+     * The lazy variant of renderEditLog(): no store access at all on the initial
+     * form render. createEditLogCollection() is otherwise unbounded (see its own
+     * docblock), so every form view used to pay for load()+count() over the WHOLE
+     * history whether the admin ever opened the tab or not. diAdminForm.js/
+     * diConfiguration.coffee fetch the first chunk once the tab is actually
+     * selected, and further chunks as it's scrolled, both through
+     * loadEditLogPage() via diEditLogLazyLoad() (js/admin/diAdminForm.js).
+     *
+     * @return string
+     */
+    protected function renderEditLogLazyContainer()
+    {
+        return $this->getTwig()->parse('admin/admin_table_edit_log/lazy', [
+            'module' => $this->getModule(),
+            'id' => $this->getEditLogTargetId(),
+        ]);
+    }
+
+    /**
+     * Whether $cursor can be an id of this page's log store: decimal digits for
+     * SQL, a 24-char hex ObjectId for Mongo. Hex is not accepted for SQL – MySQL
+     * reads `id < 'abc'` as `id < 0` (an empty chunk that ends the history), and
+     * PostgreSQL fails the bigint cast, which would report an outage to monitoring.
+     *
+     * @param mixed $cursor
+     * @return bool
+     */
+    public function isValidEditLogCursor($cursor)
+    {
+        if (!is_scalar($cursor)) {
+            return false;
+        }
+
+        $cursor = (string) $cursor;
+
+        if ($this->isEditLogStoredInMongo()) {
+            return (bool) preg_match('/^[0-9a-f]{24}$/i', $cursor);
+        }
+
+        // 19 digits: bigint's range
+        return ctype_digit($cursor) && strlen($cursor) <= 19;
+    }
+
+    /**
+     * Asks the log collection itself: a project may keep the log in another store
+     * than its entities.
+     *
+     * @return bool
+     */
+    protected function isEditLogStoredInMongo()
+    {
+        $records = $this->createEditLogCollection();
+
+        return $records::getConnection()::isMongo();
+    }
+
+    /**
+     * The id reported to the lazy container / AJAX endpoint for this page's log –
+     * defaults to the page's own id. Admin\Page\Configuration overrides this to
+     * its synthetic EDIT_LOG_TARGET_ID: the settings page never has a real id
+     * (Model::validate() needs a non-empty target_id, see its own docblock), and
+     * Controller\AdminTableEditLog::pageAction() requires a non-empty one.
+     *
+     * @return int
+     */
+    protected function getEditLogTargetId()
+    {
+        return $this->getId();
+    }
+
+    /**
+     * One page of the lazy-loaded log: the same degradation behaviour as
+     * renderEditLog() (an outage reports through onEditLogUnavailable() and
+     * answers with getEditLogUnavailableText() instead of a 500), bounded by
+     * setPageSize() + an id cursor instead of loading the whole history. Public
+     * – Controller\AdminTableEditLog drives it from a
+     * BasePage::liteCreate()'d instance, outside the normal admin Base lifecycle,
+     * the same way Controller\Files::_postRenameAction() and
+     * Submit::rebuildDynamicPics() already reuse a lite page.
+     *
+     * Paged by "id < $lastId" rather than setPageNumber()'s OFFSET on purpose: an
+     * OFFSET window shifts under concurrent writes (a new record raises every id
+     * below it by one position), silently duplicating or dropping a boundary
+     * record on the next chunk. A cursor on the previous chunk's lowest id has no
+     * such window: a row already seen keeps its id, so it can only ever be re-read
+     * (never skipped), and it can't even be re-read because every predicate is a
+     * strict "<". It also leaves no page-number parameter for a client to inflate
+     * into an expensive OFFSET scan – the next chunk is always a bounded id range.
+     *
+     * The cursor is passed to filterById() as is, never cast to int: in a Mongo
+     * store the ids are ObjectId strings, which the collection converts itself
+     * (diModel::tuneFieldValueByTypeBeforeDb()), and (int) would turn them into a
+     * number that compares below every ObjectId. SQL compares the quoted decimal
+     * numerically. The shape is the caller's to check (isValidEditLogCursor()),
+     * as Controller\AdminTableEditLog does. The cursor only works while
+     * createEditLogCollection() orders by id DESC – see its docblock.
+     *
+     * "More to load" is answered by whether this chunk came back full: the
+     * collection's own count() (which loadChunk() runs on every load) is clamped
+     * to the page size, so it can't tell the last full chunk from a middle one.
+     * The price is one extra, empty request when the history size is a multiple
+     * of the page size.
+     *
+     * @param int|string|null $lastId Lowest id seen so far, or null for the first chunk
+     * @return array ['html' => string, 'has_more' => bool, 'last_id' => int|string|null, 'error' => bool]
+     */
+    public function loadEditLogPage($lastId = null)
+    {
+        if (!$this->useEditLog() || $this->hideEditLog()) {
+            return [
+                'html' => '',
+                'has_more' => false,
+                'last_id' => null,
+                'error' => false,
+            ];
+        }
+
+        $this->prepareForEditLog();
+
+        $pageSize = $this->getEditLogPageSize();
+
+        $records = $this->createEditLogCollection()->setPageSize($pageSize);
+
+        if ($lastId !== null) {
+            $records->filterById($lastId, '<');
+        }
+
+        try {
+            $records->load();
+        } catch (\Exception $e) {
+            try {
+                $this->onEditLogUnavailable($e);
+            } catch (\Throwable $ignored) {
+            }
+
+            // 'error' => true tells diAdminForm.js's diEditLogLazyLoad() this
+            // 'html' is a plain status message, not a rendered chunk – without
+            // it, the client can't tell this apart from "zero records" (it
+            // only has children().length to go on, and a bare string appended
+            // to the <ul> adds no <li>), and silently relabels a store outage
+            // as "Changes log is empty".
+            try {
+                return [
+                    'html' => $this->getEditLogUnavailableText(),
+                    'has_more' => false,
+                    'last_id' => null,
+                    'error' => true,
+                ];
+            } catch (\Throwable $ignored) {
+                return [
+                    'html' => '',
+                    'has_more' => false,
+                    'last_id' => null,
+                    'error' => true,
+                ];
+            }
+        }
+
+        $items = [];
+
+        /** @var TableEditLog $rec */
+        foreach ($records as $rec) {
+            $rec->parseData();
+            $items[] = $rec;
+        }
+
+        return [
+            'html' => $items ? $this->renderEditLogItems($items) : '',
+            'has_more' => count($items) >= $pageSize,
+            // Collection is ordered by id DESC, so the last item of the chunk
+            // carries the lowest id – the next chunk's cursor.
+            'last_id' => $items ? end($items)->getId() : null,
+            'error' => false,
+        ];
+    }
+
+    /**
+     * One lazy chunk's <li>s. In lazy mode this, not renderEditLog() and not the
+     * form_field template, is what draws the records: a project that customised
+     * either of those overrides this method or the
+     * admin/admin_table_edit_log/_items template instead (form_field includes
+     * _items too, so overriding _items covers both modes).
+     *
+     * @param TableEditLog[] $records Already parsed (parseData())
+     * @return string
+     */
+    protected function renderEditLogItems(array $records)
+    {
+        $options = extend(
+            [
+                'show_only_diff' => false,
+                'strip_tags' => false,
+            ],
+            (array) $this->useEditLog()
+        );
+
+        return $this->getTwig()->parse('admin/admin_table_edit_log/_items', [
+            'records' => $records,
+            'admins' => Admins::create(),
+            'options' => $options,
+        ]);
+    }
+
+    /**
+     * Must order by id DESC: the lazy loader pages with an "id < last_id" cursor
+     * taken from the last record of the previous chunk (loadEditLogPage()). Any
+     * other order makes that cursor skip or repeat records, silently.
+     *
      * An override must not load chunks during the render: the guard in
      * renderEditLog() covers load()/count() only, and the iterator's lazy chunk
      * loading would then happen inside the template, outside it.
@@ -1515,6 +1733,17 @@ abstract class BasePage
             ->filterByTargetTable($this->getTable())
             ->filterByTargetId([$this->getId(), (int) $this->getId()])
             ->orderById('DESC');
+    }
+
+    /**
+     * Records per lazy-loaded chunk: both the AJAX page size and, via
+     * setPageSize(), the LIMIT the query actually runs with.
+     *
+     * @return int
+     */
+    protected function getEditLogPageSize()
+    {
+        return 20;
     }
 
     /**
@@ -2198,6 +2427,24 @@ abstract class BasePage
     public function hideEditLog()
     {
         return false;
+    }
+
+    /**
+     * Whether the log tab's content is fetched lazily (AJAX, on first tab select,
+     * paged further on scroll – see diAdminForm.js / renderEditLogLazyContainer())
+     * instead of being loaded in full on every form render. On by default:
+     * createEditLogCollection() is otherwise unbounded, so a record with a long
+     * history paid for its whole log on every single form view, tab opened or
+     * not. Override to return false for a project that depends on the log being
+     * present in the initial HTML (printed, grepped, read without JS).
+     *
+     * Lazy mode bypasses renderEditLog() and the form_field template: an override
+     * of either stops being used, with no error. Move it to renderEditLogItems()
+     * or the _items template, or turn this off.
+     */
+    public function shouldLazyLoadEditLog()
+    {
+        return true;
     }
 
     protected function reallySubmit()

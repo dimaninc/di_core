@@ -871,37 +871,12 @@ class Base
     // use snowsh system may be
     private function checkRights()
     {
-        if ($this->adminUser->reallyAuthorized()) {
-            $accessGranted = false;
-
-            // old school style
-            $pathForCheck = $this->module;
-
-            if ($this->method != 'list') {
-                $m = in_array($this->method, ['form', 'submit'])
-                    ? 'form'
-                    : $this->method;
-
-                $pathForCheck .= '_' . $m;
-            }
-
-            foreach ($this->getAdminMenuFullTree() as $groupTitle => $groupOpts) {
-                if (
-                    !empty($groupOpts['paths']) &&
-                    is_array($groupOpts['paths']) &&
-                    in_array($pathForCheck, $groupOpts['paths']) &&
-                    $this->hasAccess($groupOpts)
-                ) {
-                    $accessGranted = true;
-
-                    break;
-                }
-            }
-
-            if (!$accessGranted) {
-                $this->module = $this->path = $this->getStartPath();
-                $this->filename = 'content.php';
-            }
+        if (
+            $this->adminUser->reallyAuthorized() &&
+            !$this->canAccessModule($this->module, $this->method)
+        ) {
+            $this->module = $this->path = $this->getStartPath();
+            $this->filename = 'content.php';
         }
 
         if (!$this->module || !$this->adminUser->authorized()) {
@@ -910,6 +885,53 @@ class Base
         }
 
         return $this;
+    }
+
+    /**
+     * Whether the current admin may use $module/$method – the same per-module gate
+     * checkRights() applies to a normally routed request's $this->module/$this->method,
+     * exposed so code that builds a page outside normal routing (a liteCreate()
+     * caller, e.g. Controller\AdminTableEditLog) can apply it too. Without this, a
+     * restricted admin could read another module's data just because its slug is
+     * guessable: liteCreate() itself performs no rights check, it only constructs
+     * the page.
+     *
+     * Not isModuleAccessible() – that name is already taken, by the unrelated
+     * super/local-user module check used in printMainMenu().
+     *
+     * @param string $module
+     * @param string $method Same shape as a routed request's method ('list' by
+     *                        default, 'form'/'submit' collapse to the same path
+     *                        suffix as checkRights() uses)
+     * @return bool
+     */
+    public function canAccessModule($module, $method = self::DEFAULT_METHOD)
+    {
+        if (!$this->adminUser->reallyAuthorized()) {
+            return false;
+        }
+
+        // old school style
+        $pathForCheck = $module;
+
+        if ($method != self::DEFAULT_METHOD) {
+            $m = in_array($method, ['form', 'submit']) ? 'form' : $method;
+
+            $pathForCheck .= '_' . $m;
+        }
+
+        foreach ($this->getAdminMenuFullTree() as $groupTitle => $groupOpts) {
+            if (
+                !empty($groupOpts['paths']) &&
+                is_array($groupOpts['paths']) &&
+                in_array($pathForCheck, $groupOpts['paths']) &&
+                $this->hasAccess($groupOpts)
+            ) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**

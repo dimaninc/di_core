@@ -1,30 +1,6 @@
 {% if records|length > 0 %}
 	<ul class="table-edit-log">
-	{% set colspan = options['show_only_diff'] ? 1 : 4 %}
-	{% for rec in records %}
-		<li data-id="{{ rec.getId() }}">
-			<div class="author">
-				<b>{% if admins[rec['admin_id']].exists() %}<a href="{{ admins[rec['admin_id']]['admin_href'] }}">{% endif %}{{ admins[rec['admin_id']]['login'] ?: 'Robot' }}{% if admins[rec['admin_id']].exists() %}</a>{% endif %}</b>
-				{% if rec.isDeletion() %}<span class="operation operation--delete">{% if X.getLanguage() == 'ru' %}запись удалена{% else %}record deleted{% endif %}</span>{% endif %}
-				<i>{{ rec['created_at_date'] }} {{ rec['created_at_time'] }}</i>
-			</div>
-			<table>
-				{% for field, value in rec.getOldValues() %}
-					<tr>
-						<th colspan="{{ colspan }}">{{ field }}</th>
-					</tr>
-					<tr>
-						{% if not options['show_only_diff'] %}
-						<td>{{ options['strip_tags'] ? value|striptags('<ins><del>') : value }}</td>
-						<td>&raquo;</td>
-						<td>{{ options['strip_tags'] ? rec.getNewValues(field)|striptags('<ins><del>') : rec.getNewValues(field) }}</td>
-						{% endif %}
-						<td>{{ options['strip_tags'] ? rec.getDataDiff(field)|striptags('<ins><del>')|escape('insdel')|raw : rec.getDataDiff(field)|escape('insdel')|raw }}</td>
-					</tr>
-				{% endfor %}
-			</table>
-		</li>
-	{% endfor %}
+	{% include 'admin/admin_table_edit_log/_items.html.twig' %}
 	</ul>
 {% else %}
 	<div>
