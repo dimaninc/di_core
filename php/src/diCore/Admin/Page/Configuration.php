@@ -323,7 +323,9 @@ class Configuration extends \diCore\Admin\BasePage
                 [
                     'NAME' => TableEditLog::ADMIN_TAB_NAME,
                     'TITLE' => TableEditLog::adminTabTitle($this->getLanguage()),
-                    'CONTENT' => $this->renderEditLogSafely(),
+                    'CONTENT' => $this->shouldLazyLoadEditLog()
+                        ? $this->renderEditLogLazyContainer()
+                        : $this->renderEditLogSafely(),
                 ],
                 'T_'
             )
@@ -379,6 +381,24 @@ class Configuration extends \diCore\Admin\BasePage
             ->filterByTargetTable(Cfg::getInstance()->getTableName())
             ->orderById('DESC')
             ->setPageSize(static::EDIT_LOG_PAGE_SIZE);
+    }
+
+    /**
+     * Keeps the lazy chunk size equal to the eager page's own bound (above) –
+     * otherwise loadEditLogPage() would silently shrink it to BasePage's default
+     * of 20.
+     */
+    protected function getEditLogPageSize()
+    {
+        return static::EDIT_LOG_PAGE_SIZE;
+    }
+
+    /**
+     * @see BasePage::getEditLogTargetId()
+     */
+    protected function getEditLogTargetId()
+    {
+        return static::EDIT_LOG_TARGET_ID;
     }
 
     public function getModuleCaption()

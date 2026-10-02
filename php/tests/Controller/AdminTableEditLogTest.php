@@ -11,8 +11,9 @@ use PHPUnit\Framework\TestCase;
  * real diBaseAdminController needs both, and the real work (pagination,
  * degradation, the useEditLog()/hideEditLog() gate) belongs to
  * BasePage::loadEditLogPage(), already covered end to end by
- * EditLogLazyLoadTest. Not covered here: the happy path, which needs an actual
- * registered admin page and a live diAdminUser session.
+ * EditLogLazyLoadTest. Not covered here: the happy path and the
+ * canAccessModule() rights check, both of which need an actual registered
+ * admin page and a live diAdminUser session.
  */
 class AdminTableEditLogTest extends TestCase
 {
@@ -28,30 +29,30 @@ class AdminTableEditLogTest extends TestCase
         $_GET = $this->originalGet;
     }
 
-    public function testMissingTableIsABadRequest(): void
+    public function testMissingModuleIsABadRequest(): void
     {
         $_GET = ['id' => 1];
 
         $result = $this->runPageAction();
 
         $this->assertFalse($result['ok']);
-        $this->assertSame('table and id are required', $result['message']);
+        $this->assertSame('module and id are required', $result['message']);
     }
 
     public function testMissingIdIsABadRequest(): void
     {
-        $_GET = ['table' => 'probe_table'];
+        $_GET = ['module' => 'probe_module'];
 
         $result = $this->runPageAction();
 
         $this->assertFalse($result['ok']);
-        $this->assertSame('table and id are required', $result['message']);
+        $this->assertSame('module and id are required', $result['message']);
     }
 
-    public function testUnknownTableIsNotFound(): void
+    public function testUnknownModuleIsNotFound(): void
     {
         $_GET = [
-            'table' => 'di_core_tests_no_such_table_at_all',
+            'module' => 'di_core_tests_no_such_module_at_all',
             'id' => 1,
         ];
 
@@ -59,7 +60,7 @@ class AdminTableEditLogTest extends TestCase
 
         $this->assertFalse($result['ok']);
         $this->assertSame(
-            "Unknown table 'di_core_tests_no_such_table_at_all'",
+            "Unknown module 'di_core_tests_no_such_module_at_all'",
             $result['message']
         );
     }

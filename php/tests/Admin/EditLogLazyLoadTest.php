@@ -10,8 +10,10 @@ use PHPUnit\Framework\TestCase;
  * BasePage::shouldLazyLoadEditLog(): on by default, so printEditLog() must stop
  * touching the store on every form render (createEditLogCollection() is
  * otherwise unbounded) and instead render an empty container that
- * loadEditLogPage() – the AJAX endpoint's entry point – fills page by page, with
- * the same degradation and gating renderEditLog() already has.
+ * loadEditLogPage() – the AJAX endpoint's entry point – fills chunk by chunk,
+ * with the same degradation and gating renderEditLog() already has. Paged by an
+ * id cursor (filterById($lastId, '<')) rather than setPageNumber()'s OFFSET –
+ * see loadEditLogPage()'s own docblock for why an OFFSET window is unsafe here.
  */
 class EditLogLazyLoadTest extends TestCase
 {
@@ -35,7 +37,7 @@ class EditLogLazyLoadTest extends TestCase
         );
     }
 
-    public function testLazyContainerCarriesTableIdAndPageSize(): void
+    public function testLazyContainerCarriesTableModuleIdAndPageSize(): void
     {
         $page = EditLogLazyProbePage::make();
         $page->collection = new StoreTouchExplodesCollection();
@@ -44,6 +46,7 @@ class EditLogLazyLoadTest extends TestCase
 
         $args = $page->probeTwig->lastArgs;
         $this->assertSame('probe_table', $args['table']);
+        $this->assertSame('probe_module', $args['module']);
         $this->assertSame(42, $args['id']);
         $this->assertSame(20, $args['page_size']);
     }
@@ -53,7 +56,7 @@ class EditLogLazyLoadTest extends TestCase
         $page = EditLogLazyProbePage::make();
         $page->lazyLoadEnabled = false;
         $page->collection = new WorkingLazyEditLogCollection([
-            new EditLogLazyProbeRecord(),
+            new EditLogLazyProbeRecord(100),
         ]);
 
         $page->runPrintEditLog();
@@ -64,16 +67,16 @@ class EditLogLazyLoadTest extends TestCase
         );
     }
 
-    public function testLoadEditLogPageAppliesPaginationAndParsesRecords(): void
+    public function testLoadEditLogPageAppliesCursorAndParsesRecords(): void
     {
         $page = EditLogLazyProbePage::make();
-        $record = new EditLogLazyProbeRecord();
+        $record = new EditLogLazyProbeRecord(41);
         $page->collection = new WorkingLazyEditLogCollection([$record]);
 
-        $result = $page->loadEditLogPage(2);
+        $result = $page->loadEditLogPage(42);
 
         $this->assertSame(20, $page->collection->pageSize);
-        $this->assertSame(2, $page->collection->pageNumber);
+        $this->assertSame([42, '<'], $page->collection->idFilter);
         $this->assertTrue($record->parsed);
         $this->assertSame(
             'rendered:admin/admin_table_edit_log/_items',
@@ -83,6 +86,19 @@ class EditLogLazyLoadTest extends TestCase
             $result['has_more'],
             'a chunk smaller than the page size is the last one'
         );
+        $this->assertSame(41, $result['last_id']);
+    }
+
+    public function testLoadEditLogPageWithNoCursorFetchesFirstChunkUnfiltered(): void
+    {
+        $page = EditLogLazyProbePage::make();
+        $page->collection = new WorkingLazyEditLogCollection([
+            new EditLogLazyProbeRecord(10),
+        ]);
+
+        $page->loadEditLogPage(null);
+
+        $this->assertNull($page->collection->idFilter);
     }
 
     public function testLoadEditLogPageTreatsAFullChunkAsPossiblyNotLast(): void
@@ -90,23 +106,16 @@ class EditLogLazyLoadTest extends TestCase
         $page = EditLogLazyProbePage::make();
         $records = [];
         for ($i = 0; $i < 20; $i++) {
-            $records[] = new EditLogLazyProbeRecord();
+            $records[] = new EditLogLazyProbeRecord(20 - $i);
         }
         $page->collection = new WorkingLazyEditLogCollection($records);
 
-        $result = $page->loadEditLogPage(1);
+        $result = $page->loadEditLogPage(null);
 
         $this->assertTrue($result['has_more']);
-    }
-
-    public function testLoadEditLogPageTreatsPageNumberBelowOneAsOne(): void
-    {
-        $page = EditLogLazyProbePage::make();
-        $page->collection = new WorkingLazyEditLogCollection([]);
-
-        $page->loadEditLogPage(0);
-
-        $this->assertSame(1, $page->collection->pageNumber);
+        // Ordered id DESC, so the chunk's last item carries the lowest id – the
+        // next chunk's cursor.
+        $this->assertSame(1, $result['last_id']);
     }
 
     public function testLoadEditLogPageReturnsEmptyHtmlWhenNothingMatched(): void
@@ -114,10 +123,11 @@ class EditLogLazyLoadTest extends TestCase
         $page = EditLogLazyProbePage::make();
         $page->collection = new WorkingLazyEditLogCollection([]);
 
-        $result = $page->loadEditLogPage(1);
+        $result = $page->loadEditLogPage(null);
 
         $this->assertSame('', $result['html']);
         $this->assertFalse($result['has_more']);
+        $this->assertNull($result['last_id']);
     }
 
     public function testLoadEditLogPageDegradesLikeRenderEditLogDoes(): void
@@ -132,6 +142,7 @@ class EditLogLazyLoadTest extends TestCase
             $result['html']
         );
         $this->assertFalse($result['has_more']);
+        $this->assertNull($result['last_id']);
         $this->assertInstanceOf(\Exception::class, $page->reported);
         $this->assertSame('store down', $page->reported->getMessage());
     }
@@ -144,7 +155,7 @@ class EditLogLazyLoadTest extends TestCase
 
         $result = $page->loadEditLogPage(1);
 
-        $this->assertSame(['html' => '', 'has_more' => false], $result);
+        $this->assertSame(['html' => '', 'has_more' => false, 'last_id' => null], $result);
     }
 
     public function testLoadEditLogPageIsGatedByHideEditLog(): void
@@ -155,7 +166,7 @@ class EditLogLazyLoadTest extends TestCase
 
         $result = $page->loadEditLogPage(1);
 
-        $this->assertSame(['html' => '', 'has_more' => false], $result);
+        $this->assertSame(['html' => '', 'has_more' => false, 'last_id' => null], $result);
     }
 }
 
@@ -209,6 +220,11 @@ class EditLogLazyProbePage extends BasePage
         return 'probe_table';
     }
 
+    public function getModule()
+    {
+        return 'probe_module';
+    }
+
     public function getId()
     {
         return 42;
@@ -251,7 +267,7 @@ class StoreTouchExplodesCollection
 class WorkingLazyEditLogCollection implements \IteratorAggregate, \Countable
 {
     public $pageSize;
-    public $pageNumber;
+    public $idFilter = null;
     public array $items;
 
     public function __construct(array $items)
@@ -266,9 +282,9 @@ class WorkingLazyEditLogCollection implements \IteratorAggregate, \Countable
         return $this;
     }
 
-    public function setPageNumber($number)
+    public function filterById($value, $operator)
     {
-        $this->pageNumber = $number;
+        $this->idFilter = [$value, $operator];
 
         return $this;
     }
@@ -297,7 +313,7 @@ class ThrowingLazyEditLogCollection
         return $this;
     }
 
-    public function setPageNumber($number)
+    public function filterById($value, $operator)
     {
         return $this;
     }
@@ -311,6 +327,17 @@ class ThrowingLazyEditLogCollection
 class EditLogLazyProbeRecord
 {
     public bool $parsed = false;
+    private $id;
+
+    public function __construct($id = 1)
+    {
+        $this->id = $id;
+    }
+
+    public function getId()
+    {
+        return $this->id;
+    }
 
     public function parseData()
     {

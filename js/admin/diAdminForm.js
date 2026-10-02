@@ -1,3 +1,180 @@
+var EDIT_LOG_TAB = 'admin_edit_log';
+var EDIT_LOG_SCROLL_THRESHOLD = 200;
+
+var editLogLocal = {
+  ru: {
+    loading: 'Загрузка...',
+    empty: 'История изменений пуста',
+    error: 'Не удалось загрузить историю изменений'
+  },
+  en: {
+    loading: 'Loading...',
+    empty: 'Changes log is empty',
+    error: 'Failed to load changes log'
+  }
+};
+
+/**
+ * Wires up BasePage::shouldLazyLoadEditLog()'s container
+ * (admin/admin_table_edit_log/lazy.html.twig): the first chunk is fetched once
+ * the tab is actually selected, further chunks as it's scrolled, both through
+ * Controller\AdminTableEditLog::pageAction(). module/id come from the
+ * container's own data attributes – set by the admin page that rendered it, via
+ * its own getModule() – never from the caller, so this one function serves both
+ * a record's form (diAdminForm, below) and the settings page's own log tab,
+ * which has no diAdminForm instance at all (Admin\Page\Configuration's tab has
+ * no record id, no form – see diConfiguration.coffee).
+ *
+ * Takes the caller's own Tabs (diTabs) instance rather than building one: a page
+ * has exactly one tab strip, already owned by whichever admin JS constructed it.
+ * "Is the log tab selected right now" rides diTabs.isTabSelected() for the
+ * scroll-triggered loads, and the first load is triggered by listening on the
+ * SAME click diTabs itself reacts to (rather than requiring every Tabs instance
+ * to also pass an onSelect option) – diTabs applies the tab switch synchronously
+ * (before the 10ms CSS-class setTimeout), so by the time this delegated handler
+ * runs (document-level, so after the tab element's own direct handler) the
+ * lookup already reflects the new tab; the setTimeout(…, 0) fallback only
+ * guards against that ordering ever changing.
+ *
+ * @param {diTabs} Tabs
+ * @param {string} tabName
+ */
+function diEditLogLazyLoad(Tabs, tabName) {
+  var $container = $('[data-purpose="edit-log-lazy"]');
+
+  if (!$container.length) {
+    return;
+  }
+
+  var $window = $(window);
+  var $list = $container.find('.table-edit-log');
+  var $status = $container.find('[data-purpose="edit-log-status"]');
+  var module = $container.data('module');
+  var id = $container.data('id');
+  var language = $('body').data('language') === 'en' ? 'en' : 'ru';
+
+  var state = {
+    lastId: null,
+    loading: false,
+    hasMore: true,
+    started: false,
+    loadedOnce: false
+  };
+
+  function L(key) {
+    return editLogLocal[language][key] || key;
+  }
+
+  function setStatus(text) {
+    $status.text(text || '').toggle(!!text);
+  }
+
+  function isTabActive() {
+    return !!Tabs && Tabs.isTabSelected(tabName);
+  }
+
+  function shouldLoadMore() {
+    if (!state.started || state.loading || !state.hasMore || !isTabActive()) {
+      return false;
+    }
+
+    var scrollBottom = $window.scrollTop() + $window.height();
+    var containerBottom = $container.offset().top + $container.outerHeight();
+
+    return scrollBottom >= containerBottom - EDIT_LOG_SCROLL_THRESHOLD;
+  }
+
+  function maybeLoadMore() {
+    if (shouldLoadMore()) {
+      loadPage();
+    }
+  }
+
+  // Doesn't commit a cursor move until the response lands: a request made while
+  // state.lastId still points at the previous chunk can be retried for that same
+  // chunk (on the next scroll/visibility check) instead of silently skipping it
+  // on failure.
+  function loadPage() {
+    if (state.loading || !state.hasMore) {
+      return;
+    }
+
+    state.loading = true;
+
+    setStatus(L('loading'));
+
+    $.get(
+      di.getWorkerPath('admin_table_edit_log', 'page'),
+      {
+        module: module,
+        id: id,
+        last_id: state.lastId || ''
+      },
+      function (res) {
+        state.loading = false;
+
+        if (!res || !res.ok) {
+          setStatus((res && res.message) || L('error'));
+          return;
+        }
+
+        state.hasMore = !!res.has_more;
+
+        if (res.last_id) {
+          state.lastId = res.last_id;
+        }
+
+        if (res.html) {
+          $list.append(res.html);
+        }
+
+        var wasEmpty = !state.loadedOnce && !$list.children().length;
+        state.loadedOnce = true;
+
+        setStatus(wasEmpty ? L('empty') : '');
+
+        // A chunk that doesn't fill the viewport leaves nothing for the admin to
+        // scroll on, so hasMore would never be revisited without this check.
+        maybeLoadMore();
+      }
+    ).fail(function (err) {
+      state.loading = false;
+      setStatus(L('error'));
+      ajaxErrorHandler(err, L('error'));
+    });
+  }
+
+  function start() {
+    if (state.started) {
+      return;
+    }
+
+    state.started = true;
+
+    loadPage();
+  }
+
+  $window.on('scroll', maybeLoadMore);
+
+  $(document).on('click', '[data-tab="' + tabName + '"]', function () {
+    if (isTabActive()) {
+      start();
+    } else {
+      setTimeout(function () {
+        if (isTabActive()) {
+          start();
+        }
+      }, 0);
+    }
+  });
+
+  // The tab can already be the selected one on load (URL hash, or it being the
+  // only/first tab) – diTabs selects before this runs, so no click will follow.
+  if (isTabActive()) {
+    start();
+  }
+}
+
 var diAdminForm = function (table, id, auto_save_timeout) {
   var extensions = {
     pic: ['jpeg', 'jpg', 'png', 'gif', 'webp', 'svg']
@@ -5,19 +182,6 @@ var diAdminForm = function (table, id, auto_save_timeout) {
   var self = this,
     initiating = true,
     Tabs;
-
-  var EDIT_LOG_TAB = 'admin_edit_log';
-  var EDIT_LOG_SCROLL_THRESHOLD = 200;
-
-  var editLog = {
-    $container: null,
-    $list: null,
-    $status: null,
-    page: 0,
-    loading: false,
-    hasMore: true,
-    started: false
-  };
 
   this.table = table;
   this.id = ~~id;
@@ -32,20 +196,14 @@ var diAdminForm = function (table, id, auto_save_timeout) {
       field_href: 'Ссылка',
       field_slug_source: 'Название для URL',
       renamedTo:
-        'Файл &laquo;{{ oldFn }}&raquo; переименован в &laquo;{{ newFn }}&raquo;',
-      edit_log_loading: 'Загрузка...',
-      edit_log_empty: 'История изменений пуста',
-      edit_log_error: 'Не удалось загрузить историю изменений'
+        'Файл &laquo;{{ oldFn }}&raquo; переименован в &laquo;{{ newFn }}&raquo;'
     },
 
     en: {
       field_href: 'Href',
       field_slug_source: 'Slug source',
       renamedTo:
-        'File &laquo;{{ oldFn }}&raquo; renamed to &laquo;{{ newFn }}&raquo;',
-      edit_log_loading: 'Loading...',
-      edit_log_empty: 'Changes log is empty',
-      edit_log_error: 'Failed to load changes log'
+        'File &laquo;{{ oldFn }}&raquo; renamed to &laquo;{{ newFn }}&raquo;'
     }
   };
 
@@ -91,7 +249,6 @@ var diAdminForm = function (table, id, auto_save_timeout) {
     self.clear_busy();
 
     initTabs();
-    initEditLogLazyLoad();
     self.initColorPickers();
     initTypeChange();
     initDelLinks();
@@ -576,121 +733,15 @@ var diAdminForm = function (table, id, auto_save_timeout) {
   function initTabs() {
     Tabs = new diTabs({
       $tabsContainer: $('.diadminform_tabs ul'),
-      $pagesContainer: $('form [data-purpose="tab-pages"]'),
-      onSelect: function (tab) {
-        if (tab === EDIT_LOG_TAB) {
-          self.startEditLogLazyLoad();
-        }
-      }
+      $pagesContainer: $('form [data-purpose="tab-pages"]')
     });
+
+    diEditLogLazyLoad(Tabs, EDIT_LOG_TAB);
   }
 
   this.getTabs = function () {
     return Tabs;
   };
-
-  // BasePage::shouldLazyLoadEditLog(): the history tab starts empty and fetches
-  // its first page only once actually selected, then further pages on scroll.
-  function initEditLogLazyLoad() {
-    editLog.$container = $('[data-purpose="edit-log-lazy"]');
-
-    if (!editLog.$container.length) {
-      return;
-    }
-
-    editLog.$list = editLog.$container.find('.table-edit-log');
-    editLog.$status = editLog.$container.find('[data-purpose="edit-log-status"]');
-
-    self.e.$window.on('scroll', onEditLogScroll);
-
-    // Tabs selects its initial tab (possibly this one, via the URL hash) before
-    // this runs, so its onSelect call found editLog.$container still empty.
-    if (Tabs && Tabs.isTabSelected(EDIT_LOG_TAB)) {
-      self.startEditLogLazyLoad();
-    }
-  }
-
-  this.startEditLogLazyLoad = function () {
-    if (editLog.started || !editLog.$container || !editLog.$container.length) {
-      return;
-    }
-
-    editLog.started = true;
-
-    loadEditLogPage();
-  };
-
-  function onEditLogScroll() {
-    if (
-      !editLog.started ||
-      editLog.loading ||
-      !editLog.hasMore ||
-      !Tabs ||
-      !Tabs.isTabSelected(EDIT_LOG_TAB)
-    ) {
-      return;
-    }
-
-    var scrollBottom = self.e.$window.scrollTop() + self.e.$window.height();
-    var containerBottom =
-      editLog.$container.offset().top + editLog.$container.outerHeight();
-
-    if (scrollBottom >= containerBottom - EDIT_LOG_SCROLL_THRESHOLD) {
-      loadEditLogPage();
-    }
-  }
-
-  function setEditLogStatus(text) {
-    if (!editLog.$status) {
-      return;
-    }
-
-    editLog.$status.text(text || '').toggle(!!text);
-  }
-
-  function loadEditLogPage() {
-    if (editLog.loading || !editLog.hasMore) {
-      return;
-    }
-
-    editLog.loading = true;
-    editLog.page++;
-
-    setEditLogStatus(self.L('edit_log_loading'));
-
-    $.get(
-      di.getWorkerPath('admin_table_edit_log', 'page'),
-      {
-        table: self.table,
-        id: self.id,
-        page: editLog.page
-      },
-      function (res) {
-        editLog.loading = false;
-
-        if (!res || !res.ok) {
-          setEditLogStatus((res && res.message) || self.L('edit_log_error'));
-          return;
-        }
-
-        editLog.hasMore = !!res.has_more;
-
-        if (res.html) {
-          editLog.$list.append(res.html);
-        }
-
-        setEditLogStatus(
-          editLog.page === 1 && !editLog.$list.children().length
-            ? self.L('edit_log_empty')
-            : ''
-        );
-      }
-    ).fail(function (err) {
-      editLog.loading = false;
-      setEditLogStatus(self.L('edit_log_error'));
-      ajaxErrorHandler(err, self.L('edit_log_error'));
-    });
-  }
 
   function initDelLinks() {
     $('a.del-file').click(function () {

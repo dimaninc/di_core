@@ -1503,9 +1503,10 @@ abstract class BasePage
      * The lazy variant of renderEditLog(): no store access at all on the initial
      * form render. createEditLogCollection() is otherwise unbounded (see its own
      * docblock), so every form view used to pay for load()+count() over the WHOLE
-     * history whether the admin ever opened the tab or not. diAdminForm.js fetches
-     * the first page itself once the tab is actually selected (diTabs' onSelect),
-     * and further pages as it's scrolled, both through loadEditLogPage().
+     * history whether the admin ever opened the tab or not. diAdminForm.js/
+     * diConfiguration.coffee fetch the first chunk once the tab is actually
+     * selected, and further chunks as it's scrolled, both through
+     * loadEditLogPage() via diEditLogLazyLoad() (js/admin/diAdminForm.js).
      *
      * @return string
      */
@@ -1513,35 +1514,60 @@ abstract class BasePage
     {
         return $this->getTwig()->parse('admin/admin_table_edit_log/lazy', [
             'table' => $this->getTable(),
-            'id' => $this->getId(),
+            'module' => $this->getModule(),
+            'id' => $this->getEditLogTargetId(),
             'page_size' => $this->getEditLogPageSize(),
         ]);
+    }
+
+    /**
+     * The id reported to the lazy container / AJAX endpoint for this page's log –
+     * defaults to the page's own id. Admin\Page\Configuration overrides this to
+     * its synthetic EDIT_LOG_TARGET_ID: the settings page never has a real id
+     * (Model::validate() needs a non-empty target_id, see its own docblock), and
+     * Controller\AdminTableEditLog::pageAction() requires a non-empty one.
+     *
+     * @return int
+     */
+    protected function getEditLogTargetId()
+    {
+        return $this->getId();
     }
 
     /**
      * One page of the lazy-loaded log: the same degradation behaviour as
      * renderEditLog() (an outage reports through onEditLogUnavailable() and
      * answers with getEditLogUnavailableText() instead of a 500), bounded by
-     * setPageSize()/setPageNumber() instead of loading the whole history. Public
+     * setPageSize() + an id cursor instead of loading the whole history. Public
      * – Controller\AdminTableEditLog drives it from a
      * BasePage::liteCreate()'d instance, outside the normal admin Base lifecycle,
      * the same way Controller\Files::_postRenameAction() and
      * Submit::rebuildDynamicPics() already reuse a lite page.
+     *
+     * Paged by "id < $lastId" rather than setPageNumber()'s OFFSET on purpose: an
+     * OFFSET window shifts under concurrent writes (a new record raises every id
+     * below it by one position), silently duplicating or dropping a boundary
+     * record on the next chunk. A cursor on the previous chunk's lowest id has no
+     * such window: a row already seen keeps its id, so it can only ever be re-read
+     * (never skipped), and it can't even be re-read because every predicate is a
+     * strict "<". It also leaves no page-number parameter for a client to inflate
+     * into an expensive OFFSET scan – the next chunk is always a bounded id range.
      *
      * Doesn't call $records->count(): on a store where that's a separate query
      * (Mongo – see createEditLogCollection()) it would cost one per page for no
      * reason here. "More to load" is answered by whether this chunk came back
      * full, the usual infinite-scroll trick.
      *
-     * @param int $pageNumber 1-based
-     * @return array ['html' => string, 'has_more' => bool]
+     * @param int|null $lastId Lowest id seen so far, or null for the first chunk
+     * @return array ['html' => string, 'has_more' => bool, 'last_id' => int|null]
      */
-    public function loadEditLogPage($pageNumber)
+    public function loadEditLogPage($lastId = null)
     {
         if (!$this->useEditLog() || $this->hideEditLog()) {
             return [
                 'html' => '',
                 'has_more' => false,
+                'last_id' => null,
             ];
         }
 
@@ -1549,9 +1575,11 @@ abstract class BasePage
 
         $pageSize = $this->getEditLogPageSize();
 
-        $records = $this->createEditLogCollection()
-            ->setPageSize($pageSize)
-            ->setPageNumber(max(1, (int) $pageNumber));
+        $records = $this->createEditLogCollection()->setPageSize($pageSize);
+
+        if ($lastId !== null) {
+            $records->filterById((int) $lastId, '<');
+        }
 
         try {
             $records->load();
@@ -1565,11 +1593,13 @@ abstract class BasePage
                 return [
                     'html' => $this->getEditLogUnavailableText(),
                     'has_more' => false,
+                    'last_id' => null,
                 ];
             } catch (\Throwable $ignored) {
                 return [
                     'html' => '',
                     'has_more' => false,
+                    'last_id' => null,
                 ];
             }
         }
@@ -1599,6 +1629,9 @@ abstract class BasePage
                 ])
                 : '',
             'has_more' => count($items) >= $pageSize,
+            // Collection is ordered by id DESC, so the last item of the chunk
+            // carries the lowest id – the next chunk's cursor.
+            'last_id' => $items ? end($items)->getId() : null,
         ];
     }
 

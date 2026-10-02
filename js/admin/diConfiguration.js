@@ -7,10 +7,12 @@ diConfiguration = (function() {
   }
 
   diConfiguration.prototype.initTabs = function() {
-    new diTabs({
+    var tabs;
+    tabs = new diTabs({
       $tabsContainer: $('.diadminform_tabs ul'),
       $pagesContainer: $('form [data-purpose="tab-pages"]')
     });
+    diEditLogLazyLoad(tabs, 'admin_edit_log');
     $('form button[data-purpose="cancel"]').click(function() {
       if (confirm('All unsaved data will be lost. Are you sure?')) {
         window.location.reload();
