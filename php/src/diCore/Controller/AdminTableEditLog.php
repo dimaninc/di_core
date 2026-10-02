@@ -23,15 +23,43 @@ use diCore\Admin\BasePage;
  */
 class AdminTableEditLog extends \diBaseAdminController
 {
+    /**
+     * Cursor shape: a decimal SQL id or a hex Mongo ObjectId (24 chars). The value
+     * is escaped by the collection anyway; this only turns garbage into a 400
+     * instead of an "unavailable" notice (an invalid ObjectId throws inside load()).
+     */
+    const CURSOR_PATTERN = '/^[0-9a-f]{1,24}$/i';
+
+    const MAX_ID_LENGTH = 64;
+
     public function pageAction()
     {
         $module = \diRequest::get('module');
         $id = \diRequest::get('id');
         $lastId = \diRequest::get('last_id');
 
-        if (!$module || !$id) {
+        if (
+            !$module ||
+            !$id ||
+            !is_scalar($module) ||
+            !is_scalar($id) ||
+            strlen((string) $id) > static::MAX_ID_LENGTH
+        ) {
             return $this->badRequest([
                 'message' => 'module and id are required',
+            ]);
+        }
+
+        if ($lastId === '') {
+            $lastId = null;
+        }
+
+        if (
+            $lastId !== null &&
+            (!is_scalar($lastId) || !preg_match(static::CURSOR_PATTERN, (string) $lastId))
+        ) {
+            return $this->badRequest([
+                'message' => 'Malformed last_id',
             ]);
         }
 
@@ -43,25 +71,48 @@ class AdminTableEditLog extends \diBaseAdminController
             ]);
         }
 
-        $adminPage = BasePage::liteCreate($module);
+        // Rights first, the page second: liteCreate() runs the page's constructor,
+        // which may have side effects (see Admin\Base::isEditLogEnabledForModule()),
+        // and an admin without access to the module must not trigger them.
+        // Checked by the module's plain (list) path: every registered module grants
+        // that one, including a page like Configuration that has no separate
+        // "_form" path of its own – and a group's permissions don't differ by path,
+        // only their presence in $groupOpts['paths'] does (see Admin\Base::getAdminMenuRow()).
+        $admin = $this->createLiteAdmin();
 
-        // liteCreate() only constructs the page – it runs none of the routing
-        // checks Admin\Base::work() normally would, so a restricted admin could
-        // otherwise read any module's history just by knowing its slug. Checked
-        // by the module's plain (list) path: every registered module grants that
-        // one, including a page like Configuration that has no separate "_form"
-        // path of its own – and a group's permissions don't differ by path, only
-        // their presence in $groupOpts['paths'] does (see Admin\Base::getAdminMenuRow()).
-        if (!$adminPage->getAdmin()->canAccessModule($module)) {
+        if (!$admin->canAccessModule($module)) {
             return $this->forbidden([
                 'message' => "No access to module '$module'",
             ]);
         }
 
-        $adminPage->setId((int) $id, true);
+        $adminPage = $this->createPage($module, $admin);
+
+        // Neither id is cast to int: a Mongo-backed entity or log has ObjectId
+        // strings there, and (int) turns them into a wrong number. SQL compares a
+        // quoted decimal against a bigint column numerically.
+        $adminPage->setId((string) $id, true);
 
         return $this->okay(
-            $adminPage->loadEditLogPage($lastId !== null && $lastId !== '' ? (int) $lastId : null)
+            $adminPage->loadEditLogPage($lastId !== null ? (string) $lastId : null)
         );
+    }
+
+    /**
+     * @return Base
+     */
+    protected function createLiteAdmin()
+    {
+        $adminBaseClassName = \diLib::getChildClass(Base::class);
+
+        return new $adminBaseClassName(Base::INIT_MODE_LITE);
+    }
+
+    /**
+     * @return BasePage
+     */
+    protected function createPage($module, Base $admin)
+    {
+        return BasePage::liteCreate($module, $admin);
     }
 }

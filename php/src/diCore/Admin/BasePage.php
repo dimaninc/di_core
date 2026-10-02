@@ -318,13 +318,21 @@ abstract class BasePage
         return $o;
     }
 
-    public static function liteCreate($module)
+    /**
+     * @param string $module
+     * @param Base|null $X An already built lite Base (e.g. one the caller checked
+     *                     rights with), or null to build a new one
+     * @return static
+     */
+    public static function liteCreate($module, ?Base $X = null)
     {
         $className = Base::getModuleClassName($module);
-        $adminBaseClassName = \diLib::getChildClass(Base::class);
 
-        /** @var Base $X */
-        $X = new $adminBaseClassName(Base::INIT_MODE_LITE);
+        if (!$X) {
+            $adminBaseClassName = \diLib::getChildClass(Base::class);
+            $X = new $adminBaseClassName(Base::INIT_MODE_LITE);
+        }
+
         /** @var self $Page */
         $Page = new $className($X);
         $Page->tryToInitTable();
@@ -1553,13 +1561,21 @@ abstract class BasePage
      * strict "<". It also leaves no page-number parameter for a client to inflate
      * into an expensive OFFSET scan – the next chunk is always a bounded id range.
      *
-     * Doesn't call $records->count(): on a store where that's a separate query
-     * (Mongo – see createEditLogCollection()) it would cost one per page for no
-     * reason here. "More to load" is answered by whether this chunk came back
-     * full, the usual infinite-scroll trick.
+     * The cursor is passed to filterById() as is, never cast to int: in a Mongo
+     * store the ids are ObjectId strings, which the collection converts itself
+     * (diModel::tuneFieldValueByTypeBeforeDb()), and (int) would turn them into a
+     * number that compares below every ObjectId. SQL compares the quoted decimal
+     * numerically. The cursor only works while createEditLogCollection() orders by
+     * id DESC – see its docblock.
      *
-     * @param int|null $lastId Lowest id seen so far, or null for the first chunk
-     * @return array ['html' => string, 'has_more' => bool, 'last_id' => int|null, 'error' => bool]
+     * "More to load" is answered by whether this chunk came back full: the
+     * collection's own count() (which loadChunk() runs on every load) is clamped
+     * to the page size, so it can't tell the last full chunk from a middle one.
+     * The price is one extra, empty request when the history size is a multiple
+     * of the page size.
+     *
+     * @param int|string|null $lastId Lowest id seen so far, or null for the first chunk
+     * @return array ['html' => string, 'has_more' => bool, 'last_id' => int|string|null, 'error' => bool]
      */
     public function loadEditLogPage($lastId = null)
     {
@@ -1578,7 +1594,7 @@ abstract class BasePage
         $records = $this->createEditLogCollection()->setPageSize($pageSize);
 
         if ($lastId !== null) {
-            $records->filterById((int) $lastId, '<');
+            $records->filterById($lastId, '<');
         }
 
         try {
@@ -1620,22 +1636,8 @@ abstract class BasePage
             $items[] = $rec;
         }
 
-        $options = extend(
-            [
-                'show_only_diff' => false,
-                'strip_tags' => false,
-            ],
-            (array) $this->useEditLog()
-        );
-
         return [
-            'html' => $items
-                ? $this->getTwig()->parse('admin/admin_table_edit_log/_items', [
-                    'records' => $items,
-                    'admins' => Admins::create(),
-                    'options' => $options,
-                ])
-                : '',
+            'html' => $items ? $this->renderEditLogItems($items) : '',
             'has_more' => count($items) >= $pageSize,
             // Collection is ordered by id DESC, so the last item of the chunk
             // carries the lowest id – the next chunk's cursor.
@@ -1644,6 +1646,37 @@ abstract class BasePage
     }
 
     /**
+     * One lazy chunk's <li>s. In lazy mode this, not renderEditLog() and not the
+     * form_field template, is what draws the records: a project that customised
+     * either of those overrides this method or the
+     * admin/admin_table_edit_log/_items template instead (form_field includes
+     * _items too, so overriding _items covers both modes).
+     *
+     * @param TableEditLog[] $records Already parsed (parseData())
+     * @return string
+     */
+    protected function renderEditLogItems(array $records)
+    {
+        $options = extend(
+            [
+                'show_only_diff' => false,
+                'strip_tags' => false,
+            ],
+            (array) $this->useEditLog()
+        );
+
+        return $this->getTwig()->parse('admin/admin_table_edit_log/_items', [
+            'records' => $records,
+            'admins' => Admins::create(),
+            'options' => $options,
+        ]);
+    }
+
+    /**
+     * Must order by id DESC: the lazy loader pages with an "id < last_id" cursor
+     * taken from the last record of the previous chunk (loadEditLogPage()). Any
+     * other order makes that cursor skip or repeat records, silently.
+     *
      * An override must not load chunks during the render: the guard in
      * renderEditLog() covers load()/count() only, and the iterator's lazy chunk
      * loading would then happen inside the template, outside it.
@@ -2365,6 +2398,10 @@ abstract class BasePage
      * history paid for its whole log on every single form view, tab opened or
      * not. Override to return false for a project that depends on the log being
      * present in the initial HTML (printed, grepped, read without JS).
+     *
+     * Lazy mode bypasses renderEditLog() and the form_field template: an override
+     * of either stops being used, with no error. Move it to renderEditLogItems()
+     * or the _items template, or turn this off.
      */
     public function shouldLazyLoadEditLog()
     {

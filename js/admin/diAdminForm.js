@@ -5,12 +5,14 @@ var editLogLocal = {
   ru: {
     loading: 'Загрузка...',
     empty: 'История изменений пуста',
-    error: 'Не удалось загрузить историю изменений'
+    error: 'Не удалось загрузить историю изменений',
+    retry: 'Нажмите, чтобы повторить'
   },
   en: {
     loading: 'Loading...',
     empty: 'Changes log is empty',
-    error: 'Failed to load changes log'
+    error: 'Failed to load changes log',
+    retry: 'Click to retry'
   }
 };
 
@@ -57,8 +59,10 @@ function diEditLogLazyLoad(Tabs, tabName) {
   var $window = $(window);
   var $list = $container.find('.table-edit-log');
   var $status = $container.find('[data-purpose="edit-log-status"]');
-  var module = $container.data('module');
-  var id = $container.data('id');
+  // attr(), not data(): data() converts number-looking strings, and ids may be
+  // Mongo ObjectIds
+  var module = $container.attr('data-module');
+  var id = $container.attr('data-id');
   var language = $('body').data('language') === 'en' ? 'en' : 'ru';
 
   var state = {
@@ -66,7 +70,12 @@ function diEditLogLazyLoad(Tabs, tabName) {
     loading: false,
     hasMore: true,
     started: false,
-    loadedOnce: false
+    loadedOnce: false,
+    // A failed request stops automatic loading (scroll would otherwise re-send
+    // it on every scroll event while the store is down, and each one is reported
+    // to monitoring by onEditLogUnavailable()). Retried only on an explicit
+    // action: a click on the status line or on the tab.
+    failed: false
   };
 
   function L(key) {
@@ -74,7 +83,28 @@ function diEditLogLazyLoad(Tabs, tabName) {
   }
 
   function setStatus(text) {
-    $status.text(text || '').toggle(!!text);
+    $status
+      .text(text || '')
+      .toggle(!!text)
+      .css('cursor', '');
+  }
+
+  function fail(message) {
+    state.loading = false;
+    state.failed = true;
+    $status
+      .text((message || L('error')) + '. ' + L('retry'))
+      .show()
+      .css('cursor', 'pointer');
+  }
+
+  function retry() {
+    if (!state.failed) {
+      return;
+    }
+
+    state.failed = false;
+    loadPage();
   }
 
   function isTabActive() {
@@ -82,7 +112,13 @@ function diEditLogLazyLoad(Tabs, tabName) {
   }
 
   function shouldLoadMore() {
-    if (!state.started || state.loading || !state.hasMore || !isTabActive()) {
+    if (
+      !state.started ||
+      state.loading ||
+      state.failed ||
+      !state.hasMore ||
+      !isTabActive()
+    ) {
       return false;
     }
 
@@ -98,12 +134,11 @@ function diEditLogLazyLoad(Tabs, tabName) {
     }
   }
 
-  // Doesn't commit a cursor move until the response lands: a request made while
-  // state.lastId still points at the previous chunk can be retried for that same
-  // chunk (on the next scroll/visibility check) instead of silently skipping it
-  // on failure.
+  // Doesn't commit a cursor move until a good response lands: a failed request
+  // leaves state.lastId and state.hasMore as they were, so the retry asks for
+  // the same chunk instead of skipping it.
   function loadPage() {
-    if (state.loading || !state.hasMore) {
+    if (state.loading || state.failed || !state.hasMore) {
       return;
     }
 
@@ -119,27 +154,28 @@ function diEditLogLazyLoad(Tabs, tabName) {
         last_id: state.lastId || ''
       },
       function (res) {
-        state.loading = false;
-
         if (!res || !res.ok) {
-          setStatus((res && res.message) || L('error'));
+          fail(res && res.message);
           return;
-        }
-
-        state.hasMore = !!res.has_more;
-
-        if (res.last_id) {
-          state.lastId = res.last_id;
         }
 
         // res.error's 'html' is a plain status message (BasePage::
         // loadEditLogPage()'s degraded branch), not a rendered chunk of <li>s –
         // it belongs in the status line, not appended into the list, or it
         // would read as a (broken) log entry AND get silently relabelled
-        // "empty" below by the children().length check.
+        // "empty" below by the children().length check. Checked before
+        // has_more: the degraded answer says has_more=false, which would end
+        // the loading for good after a transient outage.
         if (res.error) {
-          setStatus(res.html || L('error'));
+          fail(res.html);
           return;
+        }
+
+        state.loading = false;
+        state.hasMore = !!res.has_more;
+
+        if (res.last_id) {
+          state.lastId = res.last_id;
         }
 
         if (res.html) {
@@ -156,14 +192,14 @@ function diEditLogLazyLoad(Tabs, tabName) {
         maybeLoadMore();
       }
     ).fail(function (err) {
-      state.loading = false;
-      setStatus(L('error'));
+      fail();
       ajaxErrorHandler(err, L('error'));
     });
   }
 
   function start() {
     if (state.started) {
+      retry();
       return;
     }
 
@@ -173,6 +209,7 @@ function diEditLogLazyLoad(Tabs, tabName) {
   }
 
   $window.on('scroll', maybeLoadMore);
+  $status.on('click', retry);
 
   $('[data-tab="' + tabName + '"]').on('click', function () {
     if (isTabActive()) {

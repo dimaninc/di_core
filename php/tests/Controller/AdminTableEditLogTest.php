@@ -2,6 +2,7 @@
 
 namespace diCore\Tests\Controller;
 
+use diCore\Admin\Base;
 use diCore\Controller\AdminTableEditLog as AdminTableEditLogController;
 use PHPUnit\Framework\TestCase;
 
@@ -11,9 +12,9 @@ use PHPUnit\Framework\TestCase;
  * real diBaseAdminController needs both, and the real work (pagination,
  * degradation, the useEditLog()/hideEditLog() gate) belongs to
  * BasePage::loadEditLogPage(), already covered end to end by
- * EditLogLazyLoadTest. Not covered here: the happy path and the
- * canAccessModule() rights check, both of which need an actual registered
- * admin page and a live diAdminUser session.
+ * EditLogLazyLoadTest. The rights check and the hand-over to the page run
+ * through the controller's createLiteAdmin()/createPage() seams, with a probe
+ * Base and page instead of a live diAdminUser session.
  */
 class AdminTableEditLogTest extends TestCase
 {
@@ -65,6 +66,83 @@ class AdminTableEditLogTest extends TestCase
         );
     }
 
+    public function testMalformedCursorIsABadRequest(): void
+    {
+        $_GET = ['module' => 'configuration', 'id' => 1, 'last_id' => '1 OR 1=1'];
+
+        $result = $this->runProbe(true)->pageAction();
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame('Malformed last_id', $result['message']);
+    }
+
+    /**
+     * liteCreate() runs the page constructor, which may have side effects: an
+     * admin without access to the module must be turned away before it.
+     */
+    public function testNoAccessIsForbiddenBeforeThePageIsCreated(): void
+    {
+        $_GET = ['module' => 'configuration', 'id' => 1];
+        $controller = $this->runProbe(false);
+
+        $result = $controller->pageAction();
+
+        $this->assertFalse($result['ok']);
+        $this->assertSame("No access to module 'configuration'", $result['message']);
+        $this->assertFalse($controller->pageCreated);
+    }
+
+    /**
+     * Mongo ids are ObjectId strings: (int) turned both the record id and the
+     * cursor into wrong numbers.
+     */
+    public function testIdAndCursorReachThePageUncast(): void
+    {
+        $_GET = [
+            'module' => 'configuration',
+            'id' => '65a1f0c2e4b0a1b2c3d4e5f6',
+            'last_id' => '65a1f0c2e4b0a1b2c3d4e5f0',
+        ];
+        $controller = $this->runProbe(true);
+
+        $result = $controller->pageAction();
+
+        $this->assertTrue($result['ok']);
+        $this->assertTrue($controller->pageCreated);
+        $this->assertSame('65a1f0c2e4b0a1b2c3d4e5f6', $controller->page->id);
+        $this->assertSame('65a1f0c2e4b0a1b2c3d4e5f0', $controller->page->lastId);
+    }
+
+    public function testEmptyCursorMeansTheFirstChunk(): void
+    {
+        $_GET = ['module' => 'configuration', 'id' => 7, 'last_id' => ''];
+        $controller = $this->runProbe(true);
+
+        $controller->pageAction();
+
+        $this->assertSame('7', $controller->page->id);
+        $this->assertNull($controller->page->lastId);
+    }
+
+    private function runProbe(bool $allowed): AdminTableEditLogProbeController
+    {
+        /** @var AdminTableEditLogProbeController $controller */
+        $controller = (new \ReflectionClass(
+            AdminTableEditLogProbeController::class
+        ))->newInstanceWithoutConstructor();
+
+        /** @var AdminTableEditLogProbeBase $admin */
+        $admin = (new \ReflectionClass(
+            AdminTableEditLogProbeBase::class
+        ))->newInstanceWithoutConstructor();
+        $admin->allowed = $allowed;
+
+        $controller->admin = $admin;
+        $controller->page = new AdminTableEditLogProbePage();
+
+        return $controller;
+    }
+
     private function runPageAction(): array
     {
         /** @var AdminTableEditLogController $controller */
@@ -73,5 +151,54 @@ class AdminTableEditLogTest extends TestCase
         ))->newInstanceWithoutConstructor();
 
         return $controller->pageAction();
+    }
+}
+
+class AdminTableEditLogProbeController extends AdminTableEditLogController
+{
+    public $admin;
+    public $page;
+    public bool $pageCreated = false;
+
+    protected function createLiteAdmin()
+    {
+        return $this->admin;
+    }
+
+    protected function createPage($module, Base $admin)
+    {
+        $this->pageCreated = true;
+
+        return $this->page;
+    }
+}
+
+class AdminTableEditLogProbeBase extends Base
+{
+    public bool $allowed = false;
+
+    public function canAccessModule($module, $method = self::DEFAULT_METHOD)
+    {
+        return $this->allowed;
+    }
+}
+
+class AdminTableEditLogProbePage
+{
+    public $id;
+    public $lastId = 'not called';
+
+    public function setId($id, $setOriginal = false)
+    {
+        $this->id = $id;
+
+        return $this;
+    }
+
+    public function loadEditLogPage($lastId = null)
+    {
+        $this->lastId = $lastId;
+
+        return ['html' => '', 'has_more' => false, 'last_id' => null];
     }
 }

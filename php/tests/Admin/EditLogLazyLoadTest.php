@@ -89,6 +89,42 @@ class EditLogLazyLoadTest extends TestCase
         $this->assertSame(41, $result['last_id']);
     }
 
+    /**
+     * A Mongo-backed log has ObjectId strings for ids: (int) used to turn the
+     * cursor into a number that compares below every ObjectId (or throws when
+     * the collection converts it back), and the history ended after one chunk.
+     */
+    public function testLoadEditLogPagePassesAStringCursorThroughUncast(): void
+    {
+        $page = EditLogLazyProbePage::make();
+        $page->collection = new WorkingLazyEditLogCollection([
+            new EditLogLazyProbeRecord('65a1f0c2e4b0a1b2c3d4e5f5'),
+        ]);
+
+        $result = $page->loadEditLogPage('65a1f0c2e4b0a1b2c3d4e5f6');
+
+        $this->assertSame(['65a1f0c2e4b0a1b2c3d4e5f6', '<'], $page->collection->idFilter);
+        $this->assertSame('65a1f0c2e4b0a1b2c3d4e5f5', $result['last_id']);
+    }
+
+    /**
+     * Lazy mode bypasses renderEditLog() and the form_field template, so a
+     * project's customisation lives in renderEditLogItems() – it must be the one
+     * that draws the chunk.
+     */
+    public function testLoadEditLogPageRendersThroughRenderEditLogItems(): void
+    {
+        $page = EditLogLazyProbePage::make();
+        $page->customItemsHtml = '<li>custom</li>';
+        $page->collection = new WorkingLazyEditLogCollection([
+            new EditLogLazyProbeRecord(5),
+        ]);
+
+        $result = $page->loadEditLogPage(null);
+
+        $this->assertSame('<li>custom</li>', $result['html']);
+    }
+
     public function testLoadEditLogPageWithNoCursorFetchesFirstChunkUnfiltered(): void
     {
         $page = EditLogLazyProbePage::make();
@@ -186,6 +222,12 @@ class EditLogLazyProbePage extends BasePage
     public bool $editLogEnabled = true;
     public bool $editLogHidden = false;
     public bool $lazyLoadEnabled = true;
+    public ?string $customItemsHtml = null;
+
+    protected function renderEditLogItems(array $records)
+    {
+        return $this->customItemsHtml ?? parent::renderEditLogItems($records);
+    }
 
     public static function make(): self
     {
