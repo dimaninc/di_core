@@ -59,6 +59,9 @@ class Payment extends \diBaseController
 
     public function payDraftManualAction()
     {
+        // marks a draft paid without any money: the admin panel's button only
+        $this->initAdmin()->adminRightsHardCheck();
+
         $draftId = $this->param(0, 0);
 
         $res = [
