@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.2
+
+- Payment: `payment/pay_draft_manual` requires a logged-in admin (#27)
+
 ## 0.10.1
 
 - Admin edit log: lazy-loaded tab with cursor paging (#26)
