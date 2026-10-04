@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.3
+
+- Admin list: render 0 and "0" instead of an empty cell
+
 ## 0.10.2
 
 - Payment: `payment/pay_draft_manual` requires a logged-in admin (#27)
