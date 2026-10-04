@@ -279,8 +279,11 @@ class diAdminList
         $this->replaceAr = [];
 
         foreach ($this->getCurRec() as $k => $v) {
-            if (is_scalar($v) || !$v) {
-                $this->replaceAr['%' . $k . '%'] = $v ?: '';
+            // Only null and false render empty: 0 and "0" are values, and `?:` dropped them.
+            if ($v === null || $v === false) {
+                $this->replaceAr['%' . $k . '%'] = '';
+            } elseif (is_scalar($v)) {
+                $this->replaceAr['%' . $k . '%'] = (string) $v;
             } else {
                 $this->replaceAr['%' . $k . '%'] = json_encode($v);
             }
@@ -291,7 +294,7 @@ class diAdminList
 
     private function replaceValues($s)
     {
-        return $s
+        return $s !== null && $s !== ''
             ? str_replace(
                 array_keys($this->replaceAr),
                 array_values($this->replaceAr),
