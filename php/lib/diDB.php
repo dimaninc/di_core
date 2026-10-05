@@ -1380,22 +1380,32 @@ abstract class diDB
         );
 
         $this->lockTable($t);
-        $query = "INSERT INTO $t$q1 VALUES$q2$q3;";
+        $query = "INSERT INTO $t$q1 VALUES$q2$q3";
 
         $time1 = utime();
-        if (!$this->__rq($query)) {
+        $id = $this->executeInsertOrUpdate($query, $autoIncrementField);
+
+        if ($id === false) {
             $this->_log("unable to insert/update into table $t", false);
 
             $this->unlockTable($t);
 
             return false;
         }
-        $id = $this->__insert_id();
         $this->time_log('insert_or_update', utime() - $time1, $query);
 
         $this->unlockTable($t);
 
         return $id;
+    }
+
+    /**
+     * Runs the upsert built by insert_or_update(): the id of the touched row, or false. An
+     * engine whose insert id is not the touched row's on the UPDATE path overrides it.
+     */
+    protected function executeInsertOrUpdate($query, $autoIncrementField = null)
+    {
+        return $this->__rq($query) ? $this->__insert_id() : false;
     }
 
     public function insertIgnore($table, $fieldsValues = [])
@@ -1413,7 +1423,9 @@ abstract class diDB
 
             return false;
         }
-        $id = $this->__insert_id();
+        // Nothing written (a conflict) – no id: the caller looks the row up by its fields. On
+        // Postgres LASTVAL would be the nextval() the skipped row burned, an id no row has.
+        $id = $this->__affected_rows() ? $this->__insert_id() : 0;
         $this->time_log('insert_ignore', utime() - $time1, $query);
 
         $this->unlockTable($t);

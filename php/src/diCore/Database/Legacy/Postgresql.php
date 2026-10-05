@@ -304,6 +304,23 @@ WHERE table_name = $tableEsc AND table_schema = current_schema()
         return "ON CONFLICT ($keyField) DO UPDATE SET";
     }
 
+    /**
+     * The id comes from RETURNING, not LASTVAL: ON CONFLICT spends nextval() before the
+     * conflict check, so on the UPDATE path LASTVAL is a burned value, not the updated row's id.
+     * Without an auto-increment field there is no id to report – 0 through rq(), which doesn't
+     * ask LASTVAL at all (no savepoint, getLastInsertId() untouched).
+     */
+    protected function executeInsertOrUpdate($query, $autoIncrementField = null)
+    {
+        if (!$autoIncrementField) {
+            return $this->__rq($query) ? 0 : false;
+        }
+
+        $rs = $this->__q($query . ' RETURNING ' . $this->escapeField($autoIncrementField));
+
+        return $rs ? $this->fetch_array($rs)[$autoIncrementField] ?? 0 : false;
+    }
+
     protected function insertIgnoreQuery($table, $fieldsValues)
     {
         $t = $this->get_table_name($table);
