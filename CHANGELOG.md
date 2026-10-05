@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.5
+
+- Postgres: insertIgnore() and insert_or_update() report the id of the row they touched
+
 ## 0.10.4
 
 - Postgres: LASTVAL no longer aborts transactions; after statements returning rows getLastInsertId() keeps the previous id
