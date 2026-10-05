@@ -2382,7 +2382,9 @@ class diModel implements \ArrayAccess
                     throw $e;
                 }
 
-                if ($result) {
+                // An insert id means this row only for an auto-increment key: on Postgres a table
+                // without a sequence reports a stale LASTVAL of another table.
+                if ($result && $this->isIdAutoIncremented()) {
                     $this->setId((int) $result);
                 } elseif ($lookupFields) {
                     $this->populateIdFromLookup($ar, $lookupFields);
