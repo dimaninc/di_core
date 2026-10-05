@@ -100,6 +100,57 @@ class Postgresql extends Pdo
         return unpack('J', $bytes)[1];
     }
 
+    /**
+     * lastInsertId() is LASTVAL() here. It fails when the session has no nextval() yet (a
+     * fresh connection, a table without a sequence) – harmless outside a transaction, but
+     * inside one the failure aborts it (25P02): every later query returns nothing, and a
+     * COMMIT of the aborted transaction silently rolls back. Hence: inside a transaction only
+     * under a savepoint (__insert_id), and after q() only for a statement without a result
+     * set – asking after every read would add the savepoint round trips to each of them. So a
+     * statement that returns rows never updates getLastInsertId(): after … RETURNING (take
+     * the id from its result), SELECT nextval() or SELECT f() that inserts it still returns
+     * the previous id – not null.
+     */
+    protected function rememberInsertId()
+    {
+        if ($this->lastResult && $this->lastResult->columnCount() === 0) {
+            parent::rememberInsertId();
+        }
+    }
+
+    /**
+     * Inside a transaction costs two extra round trips on every call (SAVEPOINT plus RELEASE,
+     * or plus ROLLBACK TO + RELEASE when LASTVAL fails) – every insert, including each one
+     * through save(), which always opens a transaction.
+     */
+    protected function __insert_id()
+    {
+        if (!$this->link->inTransaction()) {
+            return parent::__insert_id();
+        }
+
+        try {
+            $this->link->exec('SAVEPOINT di_lastval');
+            $id = $this->link->lastInsertId();
+            $this->link->exec('RELEASE SAVEPOINT di_lastval');
+
+            return $id;
+        } catch (\PDOException $e) {
+            try {
+                // One round trip: pdo_pgsql runs several statements in an unprepared exec().
+                $this->link->exec('ROLLBACK TO SAVEPOINT di_lastval; RELEASE SAVEPOINT di_lastval');
+            } catch (\PDOException $ignored) {
+                // The connection itself is gone: nothing left to keep alive.
+            }
+
+            if ($this->debug) {
+                $this->debugMessage($e->getMessage());
+            }
+
+            return null;
+        }
+    }
+
     protected function databaseCreationAllowed()
     {
         return false;
