@@ -132,17 +132,27 @@ abstract class Pdo extends \diDB
         return $info;
     }
 
+    /**
+     * After q(): getLastInsertId() becomes the session's last generated id – the INSERT just
+     * run through q(), or, after UPDATE/DELETE/DDL, an earlier insert (maybe into another
+     * table). __insert_id() returning null keeps the previous id; one that throws (a
+     * consumer's override) resets it to null – the query itself has succeeded either way.
+     */
+    protected function rememberInsertId()
+    {
+        try {
+            $this->lastInsertId = $this->__insert_id() ?: $this->lastInsertId;
+        } catch (\PDOException $e) {
+            $this->lastInsertId = null;
+        }
+    }
+
     protected function __q($q)
     {
         try {
             $this->lastExecAffected = null;
             $this->lastResult = $this->link->query($q);
-
-            try {
-                $this->lastInsertId = $this->__insert_id() ?: $this->lastInsertId;
-            } catch (\PDOException $e) {
-                $this->lastInsertId = null;
-            }
+            $this->rememberInsertId();
 
             return $this->lastResult;
         } catch (\PDOException $e) {
