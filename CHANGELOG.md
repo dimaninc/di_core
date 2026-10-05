@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.4
+
+- Postgres: LASTVAL no longer aborts transactions; after statements returning rows getLastInsertId() keeps the previous id
+
 ## 0.10.3
 
 - Admin list: render 0 and "0" instead of an empty cell
