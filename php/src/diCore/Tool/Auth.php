@@ -344,11 +344,16 @@ class Auth
             );
 
             $id = $this->getUserId();
-            $secret = \diBaseUserModel::hash(
-                $this->getUserModel()->getPassword(),
-                'cookie',
-                'db'
-            );
+            // the user model's class, not the base one: it decides md5 or bcrypt, and the
+            // check in isPasswordOk() goes through it too
+            $model = $this->getUserModel();
+            $secret = $model::hash($model->getPassword(), 'cookie', 'db');
+
+            // no password, or a bcrypt model without the cookie key – such a cookie
+            // wouldn't be accepted anyway
+            if (!$secret) {
+                return $this;
+            }
 
             $this->setCookie(static::COOKIE_USER_ID, $id, $cookieTime)->setCookie(
                 static::COOKIE_SECRET,
@@ -413,6 +418,10 @@ class Auth
             $this->getUserModel()->active() &&
             $passwordOk
         ) {
+            if ($source === self::SOURCE_POST) {
+                $this->getUserModel()->upgradePasswordHash($passwordHash);
+            }
+
             $this->storeSession();
 
             return true;

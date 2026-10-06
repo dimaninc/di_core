@@ -48,6 +48,17 @@ class diModel implements \ArrayAccess
     const validation_error_prefix_needed = false;
     const use_insecure_password_hash = true;
     /**
+     * bcrypt only. null – PHP's default cost (10 in 8.3, 12 in 8.4), which then
+     * changes with a PHP upgrade (and upgradePasswordHash() rehashes everyone).
+     */
+    const password_hash_cost = null;
+    /**
+     * bcrypt only: a stored md5 (from before the switch) still verifies, and
+     * upgradePasswordHash() replaces it at the next sign-in.
+     */
+    const legacy_md5_password_hash_allowed = true;
+    const password_cookie_secret_env = 'AUTH_COOKIE_SECRET';
+    /**
      * null - inherit from Config
      */
     const add_url_base_to_pic_fields_in_public_data = null;
@@ -3495,7 +3506,8 @@ ENGINE = InnoDB;";
     {
         $storedPassword = $this->get($field);
 
-        if (!$password || !$storedPassword) {
+        // a cookie or POST may arrive as an array (auth_secret[]=x)
+        if (!is_scalar($password) || !$password || !$storedPassword) {
             return false;
         }
 
@@ -3505,11 +3517,16 @@ ENGINE = InnoDB;";
                 return $this->verifyPasswordToDb($password, $field);
 
             case 'db':
-                return $password == $storedPassword;
+                return hash_equals((string) $storedPassword, (string) $password);
 
             case 'cookie':
-                return $password ==
-                    static::hashPasswordFromDbToCookie($storedPassword, $field);
+                $expected = (string) static::hashPasswordFromDbToCookie(
+                    $storedPassword,
+                    $field
+                );
+
+                return $expected !== '' &&
+                    hash_equals($expected, (string) $password);
         }
     }
 
@@ -3519,21 +3536,167 @@ ENGINE = InnoDB;";
             return md5($rawPassword ?? '');
         }
 
-        return password_hash($rawPassword, PASSWORD_BCRYPT);
+        return password_hash(
+            (string) $rawPassword,
+            PASSWORD_BCRYPT,
+            static::passwordHashOptions()
+        );
     }
 
     public function verifyPasswordToDb($rawPassword, $field = null)
     {
-        $hash = $this->get($field ?: 'password');
+        $hash = (string) $this->get($field ?: 'password');
 
+        // through the method: a project may override it (salted md5)
         if (static::use_insecure_password_hash) {
-            return static::hashPasswordFromRawToDb($rawPassword) === $hash;
+            return hash_equals(
+                $hash,
+                (string) static::hashPasswordFromRawToDb($rawPassword)
+            );
         }
 
-        return password_verify($rawPassword, $hash);
+        if (
+            static::legacy_md5_password_hash_allowed &&
+            static::isLegacyMd5Hash($hash)
+        ) {
+            return hash_equals($hash, static::legacyPasswordHash($rawPassword));
+        }
+
+        return password_verify((string) $rawPassword, $hash);
     }
 
     /**
+     * Stored hash is md5 or bcrypt of another cost – upgradePasswordHash() replaces it.
+     */
+    public static function passwordNeedsRehash(string $hash): bool
+    {
+        if (static::use_insecure_password_hash || $hash === '') {
+            return false;
+        }
+
+        return password_needs_rehash(
+            $hash,
+            PASSWORD_BCRYPT,
+            static::passwordHashOptions()
+        );
+    }
+
+    /**
+     * Call only after the raw password was verified: rewrites the stored hash in the
+     * current format. A failed write is logged and doesn't cost the sign-in.
+     */
+    public function upgradePasswordHash($rawPassword, $field = 'password')
+    {
+        $oldHash = (string) $this->get($field);
+
+        if (!$rawPassword || !static::passwordNeedsRehash($oldHash)) {
+            return $this;
+        }
+
+        $validationNeeded = $this->isValidationNeeded();
+        $error = null;
+
+        try {
+            $newHash = static::hashPasswordFromRawToDb($rawPassword, $field);
+
+            // a project's own hasher (another cost, argon2) never matches what
+            // passwordNeedsRehash() expects – without this the hash, and with it every
+            // "remember me" cookie, would be replaced at each sign-in
+            if (static::sameHashFormat($oldHash, $newHash)) {
+                return $this;
+            }
+
+            if (!$this->columnFits($field, $newHash)) {
+                $error = "column `$field` is narrower than the hash, not upgraded – widen it to 60+";
+            } else {
+                $this->setValidationNeeded(false);
+                $this->set($field, $newHash)->save();
+            }
+        } catch (\Throwable $e) {
+            $this->set($field, $oldHash);
+            $error = $e->getMessage();
+        } finally {
+            $this->setValidationNeeded($validationNeeded);
+        }
+
+        if ($error) {
+            \diCore\Tool\Logger::getInstance()->log(
+                'Password hash upgrade failed for ' .
+                    $this->getTable() .
+                    '#' .
+                    $this->getId() .
+                    ': ' .
+                    $error
+            );
+        }
+
+        return $this;
+    }
+
+    /**
+     * MySQL outside strict mode silently cuts a value to the column width
+     * (admins.password was varchar(32) before 08.2023), and a cut bcrypt never
+     * verifies. Checked before writing: write-then-read-then-restore leaves the cut
+     * value visible (and stuck, if the process dies) – no transaction on MyISAM.
+     * Other engines refuse an over-long value or have no width.
+     */
+    protected function columnFits(string $field, string $value): bool
+    {
+        $db = $this->getDb();
+
+        if (!$db instanceof \diMYSQL) {
+            return true;
+        }
+
+        $rs = $db->q(
+            'SELECT CHARACTER_MAXIMUM_LENGTH AS len FROM information_schema.COLUMNS' .
+                ' WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ' .
+                $db->quoteValue($db->get_table_name($this->getTable())) .
+                ' AND COLUMN_NAME = ' .
+                $db->quoteValue($field)
+        );
+        $row = $rs ? $db->fetch($rs) : null;
+
+        // width unknown – don't risk a cut, the old hash keeps working
+        return $row && ($row->len === null || (int) $row->len >= strlen($value));
+    }
+
+    protected static function passwordHashOptions(): array
+    {
+        return static::password_hash_cost
+            ? ['cost' => static::password_hash_cost]
+            : [];
+    }
+
+    protected static function sameHashFormat(string $a, string $b): bool
+    {
+        $infoA = password_get_info($a);
+        $infoB = password_get_info($b);
+
+        return $infoA['algo'] !== null &&
+            $infoA['algo'] === $infoB['algo'] &&
+            $infoA['options'] == $infoB['options'];
+    }
+
+    protected static function isLegacyMd5Hash(string $hash): bool
+    {
+        return (bool) preg_match('/^[0-9a-f]{32}\z/', $hash);
+    }
+
+    /**
+     * The hash a project stored before switching to bcrypt; override for a salted md5.
+     */
+    protected static function legacyPasswordHash($rawPassword): string
+    {
+        return md5($rawPassword ?? '');
+    }
+
+    /**
+     * Cookie secret of the legacy "remember me". bcrypt: HMAC of the stored hash – the
+     * hash itself never goes to a cookie (it can be brute-forced offline), and the key
+     * keeps a leaked DB dump from forging cookies; no key – '', no cookie is issued or
+     * accepted. md5: kept as is, issued cookies stay valid.
+     *
      * @deprecated
      * @todo: create sessions table and keep session id in cookies
      * @param $password
@@ -3542,11 +3705,45 @@ ENGINE = InnoDB;";
      */
     public static function hashPasswordFromDbToCookie($password, $field = null)
     {
-        if (static::use_insecure_password_hash && $password) {
-            return md5($password ?? '');
+        if (!$password) {
+            return '';
         }
 
-        return $password;
+        if (static::use_insecure_password_hash) {
+            return md5($password);
+        }
+
+        $key = static::passwordCookieSecret();
+
+        // an unkeyed HMAC is computable from a dump – fail closed instead
+        return $key === '' ? '' : hash_hmac('sha256', $password, $key);
+    }
+
+    /**
+     * Override to take the key from elsewhere; '' – cookies are off for bcrypt models
+     * (logged once per request).
+     */
+    protected static function passwordCookieSecret(): string
+    {
+        $secret = \diRequest::env(static::password_cookie_secret_env) ?: getenv(
+            static::password_cookie_secret_env
+        );
+
+        if (is_string($secret) && $secret !== '') {
+            return $secret;
+        }
+
+        static $logged = false;
+
+        if (!$logged) {
+            $logged = true;
+            \diCore\Tool\Logger::getInstance()->log(
+                static::password_cookie_secret_env .
+                    ' is not set: "remember me" cookies are off for bcrypt models'
+            );
+        }
+
+        return '';
     }
 
     /**
