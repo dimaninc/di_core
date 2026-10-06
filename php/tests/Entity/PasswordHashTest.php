@@ -120,6 +120,59 @@ class PasswordHashTest extends TestCase
         $this->assertSame(md5('secret'), $m->getPassword());
     }
 
+    /** cost 12 by the project's own hasher, password_hash_cost left null (10 on 8.3). */
+    public function testOwnHasherIsNotRehashedAtEverySignIn(): void
+    {
+        $hash = OwnHasherPasswordModel::hashPasswordFromRawToDb('secret');
+        $m = new OwnHasherPasswordModel(['id' => 7, 'password' => $hash]);
+        $m->upgradePasswordHash('secret');
+        $m->upgradePasswordHash('secret');
+
+        $this->assertSame([], $m->saved);
+        $this->assertSame($hash, $m->getPassword());
+    }
+
+    public function testSaltedLegacyMd5VerifiesThroughItsHook(): void
+    {
+        $m = new SaltedLegacyBcryptPasswordModel(['id' => 7, 'password' => md5('salt' . 'secret')]);
+
+        $this->assertTrue($m->isPasswordOk('secret'));
+        $this->assertFalse($m->isPasswordOk('wrong'));
+
+        $m->upgradePasswordHash('secret');
+        $this->assertStringStartsWith('$2y$04$', $m->getPassword());
+    }
+
+    public function testMd5WithTrailingNewlineIsNotLegacy(): void
+    {
+        $this->assertTrue(BcryptPasswordModel::isLegacy(md5('x')));
+        $this->assertFalse(BcryptPasswordModel::isLegacy(md5('x') . "\n"));
+    }
+
+    /** \Error from a project's beforeSave()/afterSave() must not turn a sign-in into a 500. */
+    public function testUpgradeSurvivesErrorAndRestoresValidationMode(): void
+    {
+        $m = new BcryptPasswordModel(['id' => 7, 'password' => md5('secret')]);
+        $m->failSave = true;
+        $m->saveError = \Error::class;
+        $m->setValidationNeeded(false);
+        $m->upgradePasswordHash('secret');
+
+        $this->assertSame(md5('secret'), $m->getPassword());
+        $this->assertFalse($m->isValidationNeeded());
+    }
+
+    public function testCutHashAndFailedRestoreDoNotThrow(): void
+    {
+        $m = new BcryptPasswordModel(['id' => 7, 'password' => md5('secret')]);
+        $m->storedIntact = false;
+        $m->failSaveFrom = 2;
+        $m->upgradePasswordHash('secret');
+
+        $this->assertSame(md5('secret'), $m->getPassword());
+        $this->assertTrue($m->isValidationNeeded());
+    }
+
     public function testMd5CookieSecretIsUnchanged(): void
     {
         $db = md5('secret');
@@ -141,6 +194,31 @@ class PasswordHashTest extends TestCase
         $this->assertFalse($m->isPasswordOk(hash('sha256', $hash), 'cookie'));
     }
 
+    public function testCookieKeyIsReadFromEnv(): void
+    {
+        putenv(EnvKeyBcryptPasswordModel::password_cookie_secret_env . '=env-key');
+
+        try {
+            $hash = EnvKeyBcryptPasswordModel::hashPasswordFromRawToDb('secret');
+            $this->assertSame(
+                hash_hmac('sha256', $hash, 'env-key'),
+                EnvKeyBcryptPasswordModel::hashPasswordFromDbToCookie($hash)
+            );
+        } finally {
+            putenv(EnvKeyBcryptPasswordModel::password_cookie_secret_env);
+        }
+    }
+
+    /** An unkeyed HMAC is computable from a dump: no key – no cookie, either way. */
+    public function testWithoutCookieKeyBcryptCookieIsOff(): void
+    {
+        $hash = EnvKeyBcryptPasswordModel::hashPasswordFromRawToDb('secret');
+        $m = new EnvKeyBcryptPasswordModel(['password' => $hash]);
+
+        $this->assertSame('', EnvKeyBcryptPasswordModel::hashPasswordFromDbToCookie($hash));
+        $this->assertFalse($m->isPasswordOk(hash_hmac('sha256', $hash, ''), 'cookie'));
+    }
+
     public function testEmptyStoredPasswordNeverMatches(): void
     {
         $m = new BcryptPasswordModel(['password' => '']);
@@ -157,11 +235,20 @@ trait StubbedPasswordSave
     public $saved = [];
     public $storedIntact = true;
     public $failSave = false;
+    /** @var int|null fail from this save() call on (1-based) */
+    public $failSaveFrom = null;
+    public $saveError = \Exception::class;
+    private $saveCalls = 0;
 
     public function save()
     {
-        if ($this->failSave) {
-            throw new \Exception('save failed');
+        $this->saveCalls++;
+
+        if (
+            $this->failSave ||
+            ($this->failSaveFrom && $this->saveCalls >= $this->failSaveFrom)
+        ) {
+            throw new $this->saveError('save failed');
         }
 
         $this->saved[] = $this->get('password');
@@ -203,9 +290,41 @@ class BcryptPasswordModel extends \diModel
     {
         return 'test-key';
     }
+
+    public static function isLegacy(string $hash): bool
+    {
+        return static::isLegacyMd5Hash($hash);
+    }
 }
 
 class StrictBcryptPasswordModel extends BcryptPasswordModel
 {
     const legacy_md5_password_hash_allowed = false;
+}
+
+class SaltedLegacyBcryptPasswordModel extends BcryptPasswordModel
+{
+    protected static function legacyPasswordHash($rawPassword): string
+    {
+        return md5('salt' . $rawPassword);
+    }
+}
+
+class OwnHasherPasswordModel extends BcryptPasswordModel
+{
+    const password_hash_cost = null;
+
+    public static function hashPasswordFromRawToDb($rawPassword, $field = null)
+    {
+        return password_hash((string) $rawPassword, PASSWORD_BCRYPT, ['cost' => 5]);
+    }
+}
+
+/** Reads the cookie key from env like a real model, under a name no environment has. */
+class EnvKeyBcryptPasswordModel extends \diModel
+{
+    const table = '_di_core_test_password';
+    const use_insecure_password_hash = false;
+    const password_hash_cost = 4;
+    const password_cookie_secret_env = 'DI_CORE_TEST_AUTH_COOKIE_SECRET';
 }

@@ -349,6 +349,12 @@ class Auth
             $model = $this->getUserModel();
             $secret = $model::hash($model->getPassword(), 'cookie', 'db');
 
+            // no password, or a bcrypt model without the cookie key – such a cookie
+            // wouldn't be accepted anyway
+            if (!$secret) {
+                return $this;
+            }
+
             $this->setCookie(static::COOKIE_USER_ID, $id, $cookieTime)->setCookie(
                 static::COOKIE_SECRET,
                 $secret,

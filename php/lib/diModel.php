@@ -48,8 +48,8 @@ class diModel implements \ArrayAccess
     const validation_error_prefix_needed = false;
     const use_insecure_password_hash = true;
     /**
-     * bcrypt only. null – PHP's default cost (10 in 8.3, 12 in 8.4); a project
-     * that times its sign-in against a dummy hash pins it here.
+     * bcrypt only. null – PHP's default cost (10 in 8.3, 12 in 8.4), which then
+     * changes with a PHP upgrade (and upgradePasswordHash() rehashes everyone).
      */
     const password_hash_cost = null;
     /**
@@ -3519,13 +3519,13 @@ ENGINE = InnoDB;";
                 return hash_equals((string) $storedPassword, (string) $password);
 
             case 'cookie':
-                return hash_equals(
-                    (string) static::hashPasswordFromDbToCookie(
-                        $storedPassword,
-                        $field
-                    ),
-                    (string) $password
+                $expected = (string) static::hashPasswordFromDbToCookie(
+                    $storedPassword,
+                    $field
                 );
+
+                return $expected !== '' &&
+                    hash_equals($expected, (string) $password);
         }
     }
 
@@ -3558,7 +3558,7 @@ ENGINE = InnoDB;";
             static::legacy_md5_password_hash_allowed &&
             static::isLegacyMd5Hash($hash)
         ) {
-            return hash_equals($hash, md5($rawPassword ?? ''));
+            return hash_equals($hash, static::legacyPasswordHash($rawPassword));
         }
 
         return password_verify((string) $rawPassword, $hash);
@@ -3592,21 +3592,36 @@ ENGINE = InnoDB;";
             return $this;
         }
 
-        $newHash = static::hashPasswordFromRawToDb($rawPassword, $field);
+        $validationNeeded = $this->isValidationNeeded();
         $error = null;
+        $cut = false;
 
         try {
-            $this->set($field, $newHash)->setValidationNeeded(false)->save();
+            $newHash = static::hashPasswordFromRawToDb($rawPassword, $field);
+
+            // a project's own hasher (another cost, argon2) never matches what
+            // passwordNeedsRehash() expects – without this the hash, and with it every
+            // "remember me" cookie, would be replaced at each sign-in
+            if (static::sameHashFormat($oldHash, $newHash)) {
+                return $this;
+            }
+
+            $this->setValidationNeeded(false);
+            $this->set($field, $newHash)->save();
 
             if (!$this->isStoredValueIntact($field, $newHash)) {
+                $cut = true;
                 $this->set($field, $oldHash)->save();
-                $error = "column `$field` didn't store the hash intact, is it narrower than 60?";
+                $error = "column `$field` cut the hash, old hash restored – widen it to 60+";
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             $this->set($field, $oldHash);
-            $error = $e->getMessage();
+            $error = $cut
+                ? "column `$field` cut the hash AND restoring the old one failed, the stored hash is broken: " .
+                    $e->getMessage()
+                : $e->getMessage();
         } finally {
-            $this->setValidationNeeded(true);
+            $this->setValidationNeeded($validationNeeded);
         }
 
         if ($error) {
@@ -3655,15 +3670,34 @@ ENGINE = InnoDB;";
             : [];
     }
 
+    protected static function sameHashFormat(string $a, string $b): bool
+    {
+        $infoA = password_get_info($a);
+        $infoB = password_get_info($b);
+
+        return $infoA['algo'] !== null &&
+            $infoA['algo'] === $infoB['algo'] &&
+            $infoA['options'] == $infoB['options'];
+    }
+
     protected static function isLegacyMd5Hash(string $hash): bool
     {
-        return (bool) preg_match('/^[0-9a-f]{32}$/', $hash);
+        return (bool) preg_match('/^[0-9a-f]{32}\z/', $hash);
+    }
+
+    /**
+     * The hash a project stored before switching to bcrypt; override for a salted md5.
+     */
+    protected static function legacyPasswordHash($rawPassword): string
+    {
+        return md5($rawPassword ?? '');
     }
 
     /**
      * Cookie secret of the legacy "remember me". bcrypt: HMAC of the stored hash – the
      * hash itself never goes to a cookie (it can be brute-forced offline), and the key
-     * keeps a leaked DB dump from forging cookies. md5: kept as is, issued cookies stay valid.
+     * keeps a leaked DB dump from forging cookies; no key – '', no cookie is issued or
+     * accepted. md5: kept as is, issued cookies stay valid.
      *
      * @deprecated
      * @todo: create sessions table and keep session id in cookies
@@ -3681,11 +3715,15 @@ ENGINE = InnoDB;";
             return md5($password);
         }
 
-        return hash_hmac('sha256', $password, static::passwordCookieSecret());
+        $key = static::passwordCookieSecret();
+
+        // an unkeyed HMAC is computable from a dump – fail closed instead
+        return $key === '' ? '' : hash_hmac('sha256', $password, $key);
     }
 
     /**
-     * Override to take the key from elsewhere; '' – HMAC without a key (logged once).
+     * Override to take the key from elsewhere; '' – cookies are off for bcrypt models
+     * (logged once per request).
      */
     protected static function passwordCookieSecret(): string
     {
@@ -3703,7 +3741,7 @@ ENGINE = InnoDB;";
             $logged = true;
             \diCore\Tool\Logger::getInstance()->log(
                 static::password_cookie_secret_env .
-                    ' is not set: auth cookies are an unkeyed HMAC of the password hash'
+                    ' is not set: "remember me" cookies are off for bcrypt models'
             );
         }
 
