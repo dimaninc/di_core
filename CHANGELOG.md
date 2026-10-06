@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.6
+
+- Passwords: bcrypt models accept and upgrade legacy md5, keyed cookie secret (#31)
+
 ## 0.10.5
 
 - Postgres: insertIgnore() and insert_or_update() report the id of the row they touched
