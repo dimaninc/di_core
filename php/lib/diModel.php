@@ -3506,7 +3506,8 @@ ENGINE = InnoDB;";
     {
         $storedPassword = $this->get($field);
 
-        if (!$password || !$storedPassword) {
+        // a cookie or POST may arrive as an array (auth_secret[]=x)
+        if (!is_scalar($password) || !$password || !$storedPassword) {
             return false;
         }
 
@@ -3594,7 +3595,6 @@ ENGINE = InnoDB;";
 
         $validationNeeded = $this->isValidationNeeded();
         $error = null;
-        $cut = false;
 
         try {
             $newHash = static::hashPasswordFromRawToDb($rawPassword, $field);
@@ -3606,20 +3606,15 @@ ENGINE = InnoDB;";
                 return $this;
             }
 
-            $this->setValidationNeeded(false);
-            $this->set($field, $newHash)->save();
-
-            if (!$this->isStoredValueIntact($field, $newHash)) {
-                $cut = true;
-                $this->set($field, $oldHash)->save();
-                $error = "column `$field` cut the hash, old hash restored – widen it to 60+";
+            if (!$this->columnFits($field, $newHash)) {
+                $error = "column `$field` is narrower than the hash, not upgraded – widen it to 60+";
+            } else {
+                $this->setValidationNeeded(false);
+                $this->set($field, $newHash)->save();
             }
         } catch (\Throwable $e) {
             $this->set($field, $oldHash);
-            $error = $cut
-                ? "column `$field` cut the hash AND restoring the old one failed, the stored hash is broken: " .
-                    $e->getMessage()
-                : $e->getMessage();
+            $error = $e->getMessage();
         } finally {
             $this->setValidationNeeded($validationNeeded);
         }
@@ -3641,9 +3636,11 @@ ENGINE = InnoDB;";
     /**
      * MySQL outside strict mode silently cuts a value to the column width
      * (admins.password was varchar(32) before 08.2023), and a cut bcrypt never
-     * verifies. Other engines refuse an over-long value or have no width.
+     * verifies. Checked before writing: write-then-read-then-restore leaves the cut
+     * value visible (and stuck, if the process dies) – no transaction on MyISAM.
+     * Other engines refuse an over-long value or have no width.
      */
-    protected function isStoredValueIntact(string $field, string $value): bool
+    protected function columnFits(string $field, string $value): bool
     {
         $db = $this->getDb();
 
@@ -3651,16 +3648,17 @@ ENGINE = InnoDB;";
             return true;
         }
 
-        $row = $db->r(
-            $this->getTable(),
-            'WHERE ' .
-                $db->quoteField(static::getIdFieldName()) .
-                ' = ' .
-                $db->quoteValue($this->getId()),
-            $db->quoteField($field)
+        $rs = $db->q(
+            'SELECT CHARACTER_MAXIMUM_LENGTH AS len FROM information_schema.COLUMNS' .
+                ' WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ' .
+                $db->quoteValue($db->get_table_name($this->getTable())) .
+                ' AND COLUMN_NAME = ' .
+                $db->quoteValue($field)
         );
+        $row = $rs ? $db->fetch($rs) : null;
 
-        return $row && (string) $row->$field === $value;
+        // width unknown – don't risk a cut, the old hash keeps working
+        return $row && ($row->len === null || (int) $row->len >= strlen($value));
     }
 
     protected static function passwordHashOptions(): array

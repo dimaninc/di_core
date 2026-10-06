@@ -99,14 +99,14 @@ class PasswordHashTest extends TestCase
         $this->assertSame([], $m->saved);
     }
 
-    /** A column too narrow for bcrypt: the old hash is written back, sign-in keeps working. */
-    public function testUpgradeRestoresOldHashWhenColumnCutTheNewOne(): void
+    /** A column too narrow for bcrypt: nothing is written, sign-in keeps working on md5. */
+    public function testUpgradeWritesNothingToNarrowColumn(): void
     {
         $m = new BcryptPasswordModel(['id' => 7, 'password' => md5('secret')]);
-        $m->storedIntact = false;
+        $m->columnFits = false;
         $m->upgradePasswordHash('secret');
 
-        $this->assertSame(md5('secret'), end($m->saved));
+        $this->assertSame([], $m->saved);
         $this->assertSame(md5('secret'), $m->getPassword());
         $this->assertTrue($m->isPasswordOk('secret'));
     }
@@ -120,7 +120,7 @@ class PasswordHashTest extends TestCase
         $this->assertSame(md5('secret'), $m->getPassword());
     }
 
-    /** cost 12 by the project's own hasher, password_hash_cost left null (10 on 8.3). */
+    /** cost 5 by the project's own hasher, password_hash_cost left null (PHP's 10 or 12). */
     public function testOwnHasherIsNotRehashedAtEverySignIn(): void
     {
         $hash = OwnHasherPasswordModel::hashPasswordFromRawToDb('secret');
@@ -162,15 +162,16 @@ class PasswordHashTest extends TestCase
         $this->assertFalse($m->isValidationNeeded());
     }
 
-    public function testCutHashAndFailedRestoreDoNotThrow(): void
+    /** auth_secret[]=x in a cookie: a refusal, not "Array to string conversion". */
+    public function testArrayPasswordIsRefusedWithoutWarning(): void
     {
-        $m = new BcryptPasswordModel(['id' => 7, 'password' => md5('secret')]);
-        $m->storedIntact = false;
-        $m->failSaveFrom = 2;
-        $m->upgradePasswordHash('secret');
+        $bcrypt = new BcryptPasswordModel(['password' => BcryptPasswordModel::hashPasswordFromRawToDb('secret')]);
+        $md5 = new Md5PasswordModel(['password' => md5('secret')]);
 
-        $this->assertSame(md5('secret'), $m->getPassword());
-        $this->assertTrue($m->isValidationNeeded());
+        foreach (['raw', 'db', 'cookie'] as $source) {
+            $this->assertFalse($bcrypt->isPasswordOk(['x'], $source), $source);
+            $this->assertFalse($md5->isPasswordOk(['x'], $source), $source);
+        }
     }
 
     public function testMd5CookieSecretIsUnchanged(): void
@@ -233,21 +234,13 @@ trait StubbedPasswordSave
 {
     /** @var string[] password values passed to save() */
     public $saved = [];
-    public $storedIntact = true;
+    public $columnFits = true;
     public $failSave = false;
-    /** @var int|null fail from this save() call on (1-based) */
-    public $failSaveFrom = null;
     public $saveError = \Exception::class;
-    private $saveCalls = 0;
 
     public function save()
     {
-        $this->saveCalls++;
-
-        if (
-            $this->failSave ||
-            ($this->failSaveFrom && $this->saveCalls >= $this->failSaveFrom)
-        ) {
+        if ($this->failSave) {
             throw new $this->saveError('save failed');
         }
 
@@ -256,9 +249,9 @@ trait StubbedPasswordSave
         return $this;
     }
 
-    protected function isStoredValueIntact(string $field, string $value): bool
+    protected function columnFits(string $field, string $value): bool
     {
-        return $this->storedIntact;
+        return $this->columnFits;
     }
 }
 
