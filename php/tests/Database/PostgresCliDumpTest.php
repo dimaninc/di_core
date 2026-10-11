@@ -62,9 +62,25 @@ class PostgresCliDumpTest extends TestCase
         $this->assertStringNotContainsString('p@ss', join(' ', $argv));
     }
 
+    public function testDataOnlyDumpDropsNoCleanFlags(): void
+    {
+        // pg_dump отвергает --clean вместе с --data-only
+        $argv = $this->makeDb()->getDumpArgv([
+            'filename' => '/tmp/x.sql',
+            'drops' => 1,
+            'dataOnly' => true,
+        ]);
+
+        $this->assertContains('--data-only', $argv);
+        $this->assertNotContains('--clean', $argv);
+        $this->assertNotContains('--if-exists', $argv);
+    }
+
     public function testRestoreArgvStopsOnFirstError(): void
     {
         $argv = $this->makeDb()->getRestoreArgv('/tmp/x.sql');
+
+        $this->assertContains('--single-transaction', $argv);
 
         $this->assertSame('psql', $argv[0]);
         $this->assertContains('--set=ON_ERROR_STOP=1', $argv);

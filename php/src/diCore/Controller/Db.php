@@ -597,6 +597,12 @@ class Db extends \diBaseAdminController
         return " CHARACTER SET $charset COLLATE $collation";
     }
 
+    /** Переопределяется в контроллере проекта, если дампу нужно больше времени */
+    protected function getPostgresCliTimeout()
+    {
+        return static::POSTGRES_CLI_TIMEOUT;
+    }
+
     /**
      * Дамп PostgreSQL штатным pg_dump: массив аргументов без шелла, пароль в PGPASSWORD.
      */
@@ -617,7 +623,7 @@ class Db extends \diBaseAdminController
                 'dataOnly' => $data && !$creates,
                 'columnInserts' => \diRequest::get('fields', 0),
             ]),
-            static::POSTGRES_CLI_TIMEOUT,
+            $this->getPostgresCliTimeout(),
             $db->getCliEnv()
         );
 
@@ -653,6 +659,77 @@ class Db extends \diBaseAdminController
         return extend($ar, $this->getDumpInfo($filename));
     }
 
+    /**
+     * @return array|null Результат restoreAction; null – psql на хосте нет, нужен запасной путь.
+     *   Сбой psql – ошибка, а не повтор парсером: single-transaction ничего не применил бы
+     *   наполовину, но повтор дал бы дубли, если psql упал уже после применения.
+     */
+    protected function restorePostgres($ffn, $fn, $isGz)
+    {
+        /** @var Postgresql $db */
+        $db = $this->getDb();
+        $file = $ffn;
+
+        if ($isGz) {
+            // psql gz не читает
+            $file = tempnam(sys_get_temp_dir(), 'dbrestore');
+            $in = gzopen($ffn, 'rb');
+            $out = fopen($file, 'wb');
+
+            while ($in && !gzeof($in)) {
+                fwrite($out, gzread($in, 1 << 20));
+            }
+
+            $in && gzclose($in);
+            fclose($out);
+        }
+
+        try {
+            $res = ProcessHelper::run(
+                $db->getRestoreArgv($file),
+                $this->getPostgresCliTimeout(),
+                $db->getCliEnv()
+            );
+        } finally {
+            if ($isGz) {
+                @unlink($file);
+            }
+        }
+
+        // 127 – «не найдено» при запуске через шелл
+        if (in_array($res['code'], [ProcessHelper::EXIT_NOT_STARTED, 127], true)) {
+            Logger::getInstance()->log('psql is not available, using the line parser', 'Db');
+
+            return null;
+        }
+
+        $ok = $res['code'] === 0;
+
+        if (!$ok) {
+            Logger::getInstance()->log(
+                'psql failed (' . $res['code'] . '): ' . join("\n", $res['output']),
+                'Db'
+            );
+        }
+
+        return array_merge(
+            [
+                'ok' => $ok,
+                'errors' => $ok
+                    ? []
+                    : [
+                        $res['timedOut']
+                            ? 'psql timed out'
+                            : 'psql failed: ' . join("\n", $res['output']),
+                    ],
+                'file' => $fn,
+                'startFrom' => false,
+                'system' => true,
+            ],
+            static::getTablesList($db)
+        );
+    }
+
     private function checkTimeout($time, $timeout)
     {
         return utime() - $time >= $timeout;
@@ -686,59 +763,45 @@ class Db extends \diBaseAdminController
         $ftell_func = $is_gz ? 'gztell' : 'ftell';
         $fseek_func = $is_gz ? 'gzseek' : 'fseek';
 
-        if ($system) {
+        $isPostgres = $this->getDb() instanceof Postgresql;
+
+        // На PostgreSQL построчный разбор ненадёжен ($$-тела, строки с обратным слэшем),
+        // поэтому всегда psql; парсер – только если psql на хосте нет
+        if ($isPostgres && ($result = $this->restorePostgres($ffn, $fn, $is_gz))) {
+            return $result;
+        }
+
+        if ($system && !$isPostgres) {
             if ($is_gz) {
                 throw HttpException::badRequest(
                     'System method can execute non-archived SQL only'
                 );
             }
 
-            if ($this->getDb() instanceof Postgresql) {
-                // psql вместо mysql
-                $res = ProcessHelper::run(
-                    $this->getDb()->getRestoreArgv($ffn),
-                    static::POSTGRES_CLI_TIMEOUT,
-                    $this->getDb()->getCliEnv()
-                );
+            $params = [
+                '--user=' . $this->getDb()->getUsername(),
+                '--password=' . $this->getDb()->getPassword(),
+            ];
 
-                if ($res['code'] === 0) {
-                    return [
-                        'ok' => true,
-                        'system' => true,
-                    ];
-                }
+            if (static::MYSQL_SYSTEM_HOST) {
+                $params[] = '--host=' . static::MYSQL_SYSTEM_HOST;
+            }
 
-                // как и у mysql: при сбое дальше идёт построчное восстановление
-                Logger::getInstance()->log(
-                    'psql failed (' . $res['code'] . '): ' . join("\n", $res['output']),
-                    'Db'
-                );
-            } else {
-                $params = [
-                    '--user=' . $this->getDb()->getUsername(),
-                    '--password=' . $this->getDb()->getPassword(),
+            // todo: add other engines support
+            $command =
+                'mysql ' .
+                join(' ', $params) .
+                ' ' .
+                $this->getDb()->getDatabase() .
+                ' < ' .
+                $ffn;
+            system($command, $a);
+
+            if (!$a) {
+                return [
+                    'ok' => true,
+                    'system' => true,
                 ];
-
-                if (static::MYSQL_SYSTEM_HOST) {
-                    $params[] = '--host=' . static::MYSQL_SYSTEM_HOST;
-                }
-
-                // todo: add other engines support
-                $command =
-                    'mysql ' .
-                    join(' ', $params) .
-                    ' ' .
-                    $this->getDb()->getDatabase() .
-                    ' < ' .
-                    $ffn;
-                system($command, $a);
-
-                if (!$a) {
-                    return [
-                        'ok' => true,
-                        'system' => true,
-                    ];
-                }
             }
         }
 
@@ -780,11 +843,16 @@ class Db extends \diBaseAdminController
                     }
                 }
 
-                $line_deslashed = str_replace('\\\\', '', $line);
+                if ($isPostgres) {
+                    // standard_conforming_strings: обратный слэш в строке обычный символ
+                    $quotes_cc = substr_count($line, "'");
+                } else {
+                    $line_deslashed = str_replace('\\\\', '', $line);
 
-                $quotes_cc =
-                    substr_count($line_deslashed, "'") -
-                    substr_count($line_deslashed, "\\'");
+                    $quotes_cc =
+                        substr_count($line_deslashed, "'") -
+                        substr_count($line_deslashed, "\\'");
+                }
                 if ($quotes_cc % 2 != 0) {
                     $in_quotes = !$in_quotes;
                 }
@@ -854,6 +922,13 @@ class Db extends \diBaseAdminController
 
                     break;
                 }
+            }
+
+            // Файл дочитан, а оператор не закрыт: хвост иначе пропал бы молча при ok=true
+            if ($startFrom === false && trim($query) !== '') {
+                $errorsAr[] =
+                    'Unparsed tail at the end of file (unterminated statement or quote): ' .
+                    mb_substr(trim($query), 0, 200);
             }
 
             $fclose_func($file);

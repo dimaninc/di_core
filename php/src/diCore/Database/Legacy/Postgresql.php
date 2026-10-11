@@ -314,6 +314,11 @@ WHERE table_name = $tableEsc AND table_schema = current_schema()
             ['--no-owner', '--inserts', '--file=' . $options['filename']]
         );
 
+        // pg_dump отвергает --clean вместе с --data-only
+        if (!empty($options['dataOnly'])) {
+            $options['drops'] = false;
+        }
+
         foreach (['drops' => ['--clean', '--if-exists'], 'schemaOnly' => ['--schema-only'], 'dataOnly' => ['--data-only'], 'columnInserts' => ['--column-inserts']] as $key => $flags) {
             if (!empty($options[$key])) {
                 $argv = array_merge($argv, $flags);
@@ -328,14 +333,19 @@ WHERE table_name = $tableEsc AND table_schema = current_schema()
     }
 
     /**
-     * @return string[] psql, который выполняет SQL-файл и останавливается на первой ошибке
+     * @return string[] psql, который выполняет SQL-файл одной транзакцией: при первой ошибке откат
      */
+    public static function setRestoreCommand(string $command)
+    {
+        static::$restoreCommand = $command;
+    }
+
     public function getRestoreArgv($filename)
     {
         return array_merge(
             preg_split('/\s+/', trim(static::$restoreCommand)),
             $this->getCliConnectionArgv(),
-            ['--quiet', '--set=ON_ERROR_STOP=1', '--file=' . $filename]
+            ['--quiet', '--single-transaction', '--set=ON_ERROR_STOP=1', '--file=' . $filename]
         );
     }
 
