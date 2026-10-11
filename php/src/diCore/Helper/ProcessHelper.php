@@ -103,7 +103,11 @@ class ProcessHelper
             if (!$status['running']) {
                 // exitcode достоверен только при первом переходе в
                 // «не running»; дальше proc_get_status отдаёт -1
-                $code = (int) $status['exitcode'];
+                // убитый сигналом процесс даёт exitcode -1, как и «не запустился»:
+                // различаем по signaled, код как у шелла – 128 + сигнал
+                $code = !empty($status['signaled'])
+                    ? 128 + (int) $status['termsig']
+                    : (int) $status['exitcode'];
                 break;
             }
 

@@ -847,6 +847,29 @@ class Db extends \diBaseAdminController
         );
     }
 
+    /**
+     * Строка целиком вместе с переводом строки, любой длины: fgets($max) режет длинную
+     * строку на куски, и склейка добавляла бы лишний "\n".
+     *
+     * @return string|false
+     */
+    private function readFullLine($file, $fgets_func, $feof_func, $chunk)
+    {
+        $line = $fgets_func($file, $chunk);
+
+        while ($line !== false && substr($line, -1) !== "\n" && !$feof_func($file)) {
+            $more = $fgets_func($file, $chunk);
+
+            if ($more === false) {
+                break;
+            }
+
+            $line .= $more;
+        }
+
+        return $line;
+    }
+
     private function checkTimeout($time, $timeout)
     {
         return utime() - $time >= $timeout;
@@ -879,6 +902,7 @@ class Db extends \diBaseAdminController
         $fclose_func = $is_gz ? 'gzclose' : 'fclose';
         $ftell_func = $is_gz ? 'gztell' : 'ftell';
         $fseek_func = $is_gz ? 'gzseek' : 'fseek';
+        $feof_func = $is_gz ? 'gzeof' : 'feof';
 
         $isPostgres = $this->getDb() instanceof Postgresql;
 
@@ -935,13 +959,16 @@ class Db extends \diBaseAdminController
 
             $in_quotes = false;
             $query = '';
+            // Что вставить между предыдущей строкой и следующей: внутри кавычек – её собственный
+            // перевод строки (данные не меняем), снаружи – "\n"
+            $glue = "\n";
 
-            while ($line = $fgets_func($file, $max_line_length)) {
-                $line = str_replace("\r\n", "\n", $line);
-                $line = str_replace("\r", "\n", $line);
-                $line = trim($line);
+            while (($raw = $this->readFullLine($file, $fgets_func, $feof_func, $max_line_length)) !== false) {
+                $startInQuotes = $in_quotes;
+                // Снаружи кавычек – прежняя нормализация (trim, CR → LF)
+                $line = trim(str_replace(["\r\n", "\r"], "\n", $raw));
 
-                if (!$in_quotes) {
+                if (!$startInQuotes) {
                     $to_skip_line = false;
 
                     reset($sql_comments);
@@ -960,11 +987,13 @@ class Db extends \diBaseAdminController
                     }
                 }
 
+                $body = preg_replace('/\r?\n\z/', '', $raw);
+
                 if ($isPostgres) {
                     // standard_conforming_strings: обратный слэш в строке обычный символ
-                    $quotes_cc = substr_count($line, "'");
+                    $quotes_cc = substr_count($body, "'");
                 } else {
-                    $line_deslashed = str_replace('\\\\', '', $line);
+                    $line_deslashed = str_replace('\\\\', '', $body);
 
                     $quotes_cc =
                         substr_count($line_deslashed, "'") -
@@ -974,9 +1003,21 @@ class Db extends \diBaseAdminController
                     $in_quotes = !$in_quotes;
                 }
 
-                if ($query) {
-                    $query .= "\n";
+                // Пробелы и перевод строки внутри строкового литерала – это данные
+                if ($in_quotes) {
+                    $line = $startInQuotes ? $raw : ltrim($raw);
+                    $nextGlue = '';
+                } elseif ($startInQuotes) {
+                    $line = rtrim($body);
+                    $nextGlue = "\n";
+                } else {
+                    $nextGlue = "\n";
                 }
+
+                if ($query !== '') {
+                    $query .= $glue;
+                }
+                $glue = $nextGlue;
                 $query .= $line;
 
                 /*
@@ -1031,8 +1072,11 @@ class Db extends \diBaseAdminController
 
                 // Лимит – для страницы «Дампы базы данных»: браузер продолжает с startFrom
                 // следующим запросом. В CLI (миграции) продолжать некому – файл дочитывается.
+                // Только на границе оператора: возобновление начинается с пустого $query и
+                // без кавычек, посреди оператора оно разорвало бы его.
                 if (
                     !static::isCli() &&
+                    $query === '' &&
                     $this->checkTimeout($startTime, static::MAX_TIMEOUT)
                 ) {
                     $startFrom = $ftell_func($file);
@@ -1042,13 +1086,18 @@ class Db extends \diBaseAdminController
             }
 
             // Файл дочитан, а оператор не закрыт: хвост иначе пропал бы молча при ok=true
-            if ($startFrom === false && trim($query) !== '') {
+            if ($startFrom === false && !$errorsAr && trim($query) !== '') {
                 $errorsAr[] =
                     'Unparsed tail at the end of file (unterminated statement or quote): ' .
                     mb_substr(trim($query), 0, 200);
             }
 
             $fclose_func($file);
+
+            if ($isPostgres) {
+                // Заголовок pg_dump оставил search_path='' и др. на соединении приложения
+                $this->getDb()->resetSession();
+            }
         } else {
             $errorsAr[] = 'Unable to open file ' . $this->folder . $fn;
         }

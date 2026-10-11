@@ -195,4 +195,13 @@ class ProcessHelperTest extends TestCase
         unlink($in);
         unlink($out);
     }
+
+    /** Убитый сигналом процесс – не «не запустился» (оба давали -1) */
+    public function testSignalledProcessHasItsOwnCode(): void
+    {
+        $r = ProcessHelper::run(['sh', '-c', 'kill -9 $$'], 5.0);
+
+        $this->assertSame(128 + 9, $r['code']);
+        $this->assertNotSame(ProcessHelper::EXIT_NOT_STARTED, $r['code']);
+    }
 }

@@ -194,11 +194,11 @@ class PostgresRestoreActionTest extends TestCase
     }
 
     /** $system – запрос с system=1 (psql); без него страница и миграции идут парсером */
-    private function restoreFile(string $name, bool $system = false): array
+    private function restoreFile(string $name, bool $system = false, string $class = Db::class): array
     {
         $_GET['system'] = $system ? 1 : 0;
 
-        $c = (new \ReflectionClass(Db::class))->newInstanceWithoutConstructor();
+        $c = (new \ReflectionClass($class))->newInstanceWithoutConstructor();
 
         foreach (['file' => $name, 'folder' => $this->folder] as $prop => $value) {
             $p = new \ReflectionProperty(Db::class, $prop);
@@ -395,5 +395,118 @@ class PostgresRestoreActionTest extends TestCase
         $this->assertTrue($res['ok'], $res['text']);
         $this->assertFileDoesNotExist($this->folder . 'x.sql');
         $this->assertSame("-- dump\n", gzdecode(file_get_contents($this->folder . 'x.sql.gz')));
+    }
+
+    private function realPgDump(): string
+    {
+        $bin = rtrim((string) getenv('DI_CORE_PG_BIN'), '/');
+        $pgDump = ($bin ? "$bin/" : '') . 'pg_dump';
+
+        if (ProcessHelper::run([$pgDump, '--version'], 5.0)['code'] !== 0) {
+            $this->markTestSkipped('pg_dump is not available');
+        }
+
+        return $pgDump;
+    }
+
+    private function awkwardValues(): array
+    {
+        return [
+            1 => "line1  \n    indented\n\ttab\n",
+            2 => "it's\r\nCRLF \\ backslash\n  ",
+            // длиннее max_line_length (65536) и без переводов строки
+            3 => str_repeat("x'y", 23337),
+        ];
+    }
+
+    /** pg_dump → парсер: данные приходят байт в байт, search_path сессии не портится */
+    public function testParserRoundTripKeepsDataAndTheSession(): void
+    {
+        Postgresql::setDumpCommand($this->realPgDump());
+        $db = AuthorizationPinTestDb::db();
+        $values = $this->awkwardValues();
+
+        foreach ($values as $id => $v) {
+            $db->q("INSERT INTO di_core_restore_t VALUES ($id, " . $db->escapeValue($v) . ')');
+        }
+
+        $path = $this->searchPath();
+        $_GET['data'] = 1;
+        $_GET['creates'] = 0;
+
+        try {
+            $res = $this->dump([$this->folder . 'rt.sql', ['di_core_restore_t'], 0]);
+        } finally {
+            unset($_GET['data'], $_GET['creates']);
+        }
+
+        $this->assertTrue($res['ok'], $res['text']);
+
+        $db->q('DELETE FROM di_core_restore_t');
+        $res = $this->restoreFile('rt.sql');
+
+        $this->assertTrue($res['ok'], join("\n", $res['errors']));
+        $this->assertSame($values, $this->rows());
+        $this->assertSame($path, $this->searchPath(), 'the dump header must not leak into the session');
+        // без схемы: при search_path='' запрос упал бы
+        $this->assertNotFalse($db->q('SELECT COUNT(*) FROM di_core_restore_t'));
+    }
+
+    private function searchPath(): string
+    {
+        $db = AuthorizationPinTestDb::db();
+
+        return $db->fetch_array($db->q('SHOW search_path'))['search_path'];
+    }
+
+    /** Возобновление (start_from) начинается только на границе оператора */
+    public function testTimeoutBreakNeverFallsInsideAStatement(): void
+    {
+        $sql = '';
+
+        foreach ([1 => "a\n  b\n", 2 => "c;d\n", 3 => 'e'] as $id => $v) {
+            $sql .= "INSERT INTO di_core_restore_t VALUES ($id, '" . $v . "');\n";
+        }
+
+        file_put_contents($this->folder . 'r.sql', $sql);
+        $_GET['start_from'] = 0;
+        $parts = 0;
+
+        try {
+            do {
+                $res = $this->restoreFile('r.sql', false, TimedOutDb::class);
+                $this->assertTrue($res['ok'], join("\n", $res['errors']));
+                $_GET['start_from'] = $res['startFrom'];
+                $parts++;
+            } while ($res['startFrom'] !== false && $parts < 10);
+        } finally {
+            unset($_GET['start_from']);
+        }
+
+        $this->assertSame([1 => "a\n  b\n", 2 => "c;d\n", 3 => 'e'], $this->rows());
+        $this->assertGreaterThan(1, $parts, 'the timeout did stop the run');
+    }
+
+    public function testKilledPsqlIsAnErrorNotAMissingPsql(): void
+    {
+        $script = $this->folder . 'killed_psql.sh';
+        file_put_contents($script, "#!/bin/sh\nkill -9 \$\$\n");
+        chmod($script, 0755);
+        Postgresql::setRestoreCommand($script);
+
+        $res = $this->restore("INSERT INTO di_core_restore_t VALUES (1, 'a');\n", 'd.sql', true);
+
+        $this->assertFalse($res['ok']);
+        $this->assertSame([], $this->rows(), 'no parser fallback after a signal');
+    }
+}
+
+class TimedOutDb extends Db
+{
+    const MAX_TIMEOUT = -1;
+
+    public static function isCli()
+    {
+        return false;
     }
 }

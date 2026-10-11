@@ -189,6 +189,18 @@ class Postgresql extends Pdo
      * A zone Postgres refuses is a broken connection, not a warning: carrying on
      * would write wrong times instead.
      */
+    /**
+     * После выполнения чужого SQL (заголовок pg_dump ставит search_path='', row_security=off,
+     * statement_timeout=0): сессия возвращается к настройкам соединения, иначе следующие
+     * запросы без схемы падают.
+     */
+    public function resetSession()
+    {
+        $this->link->exec('RESET ALL');
+
+        return $this->setSessionTimeZone();
+    }
+
     protected function setSessionTimeZone()
     {
         $zone = date_default_timezone_get();

@@ -303,7 +303,8 @@ function diDbManager(_opts) {
 
     worker('restore', {
       file: file,
-      folderId: folderId
+      folderId: folderId,
+      system: getCheckboxParam('#system')
     });
   };
 
