@@ -350,13 +350,18 @@ WHERE table_name = $tableEsc AND table_schema = current_schema()
     }
 
     /**
-     * Секреты соединения для pg_dump/psql: в argv их видно в `ps` и в логах.
+     * Окружение pg_dump/psql: секреты (в argv их видно в `ps` и в логах) и зона PHP.
      *
      * @return array<string,string>
      */
     public function getCliEnv()
     {
-        $env = ['PGPASSWORD' => (string) $this->getPassword()];
+        // Зона PHP, как у сессии (setSessionTimeZone()): время без смещения из дампа иначе
+        // читалось бы в зоне сервера
+        $env = [
+            'PGPASSWORD' => (string) $this->getPassword(),
+            'PGTZ' => date_default_timezone_get(),
+        ];
 
         if ($this->ssl) {
             $env['PGSSLMODE'] = 'require';

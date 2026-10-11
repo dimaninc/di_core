@@ -96,6 +96,18 @@ class PostgresCliDumpTest extends TestCase
         );
     }
 
+    public function testCliSessionRunsInPhpTimeZone(): void
+    {
+        $zone = date_default_timezone_get();
+        date_default_timezone_set('Europe/Moscow');
+
+        try {
+            $this->assertSame('Europe/Moscow', $this->makeDb()->getCliEnv()['PGTZ']);
+        } finally {
+            date_default_timezone_set($zone);
+        }
+    }
+
     public function testFailureAndTimeoutAreVisibleToTheCaller(): void
     {
         $failed = ProcessHelper::run(['sh', '-c', 'echo "no such db" 1>&2; exit 1'], 5.0);

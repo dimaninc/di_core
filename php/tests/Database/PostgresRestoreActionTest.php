@@ -170,6 +170,42 @@ class PostgresRestoreActionTest extends TestCase
         return $c->restoreAction();
     }
 
+    /** Время без смещения читается одинаково через psql и через парсер (зона PHP) */
+    public function testPsqlAndParserReadTimeWithoutOffsetAlike(): void
+    {
+        $db = AuthorizationPinTestDb::db();
+        $zone = date_default_timezone_get();
+        $db->q('DROP TABLE IF EXISTS di_core_restore_tz');
+        $db->q('CREATE TABLE di_core_restore_tz (id integer PRIMARY KEY, t timestamptz)');
+
+        try {
+            // Сессия PHP и PGTZ – одна зона, не равная зоне сервера
+            date_default_timezone_set('Asia/Tokyo');
+            $db->q("SET TIME ZONE 'Asia/Tokyo'");
+            $sql = "INSERT INTO di_core_restore_tz VALUES (%d, '2026-01-01 10:00:00');\n";
+
+            Postgresql::setRestoreCommand('/nonexistent/psql');
+            $this->assertTrue($this->restore(sprintf($sql, 1))['ok']);
+
+            $this->useLocalPsql();
+            $this->assertTrue($this->restore(sprintf($sql, 2), 'd2.sql')['ok']);
+
+            $rs = $db->q('SELECT t FROM di_core_restore_tz ORDER BY id');
+            $times = [];
+
+            while ($r = $db->fetch_array($rs)) {
+                $times[] = $r['t'];
+            }
+
+            $this->assertCount(2, $times);
+            $this->assertSame($times[0], $times[1], 'psql and the parser disagree on the zone');
+        } finally {
+            date_default_timezone_set($zone);
+            $db->q("SET TIME ZONE '$zone'");
+            $db->q('DROP TABLE IF EXISTS di_core_restore_tz');
+        }
+    }
+
     public function testGzipDumpGoesThroughPsqlToo(): void
     {
         $this->useLocalPsql();
