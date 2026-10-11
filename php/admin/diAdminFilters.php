@@ -571,8 +571,9 @@ class diAdminFilters
             $userTable
         ) {
             $field = self::getDb()->escapeField($field);
-            $value = self::getDb()->escapeValue($value);
+            // Целое берётся из исходного значения: из экранированного (в кавычках) всегда 0
             $intValue = self::getDb()->escapeValue((int) $value);
+            $value = self::getDb()->escapeValue($value);
             $condition = join(
                 ' or ',
                 array_map(function ($field) use ($value) {
