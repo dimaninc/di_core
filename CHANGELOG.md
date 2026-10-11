@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.7
+
+- Fix Tinkoff card source mapped by a Cyrillic key
+
 ## 0.10.6
 
 - Passwords: bcrypt models accept and upgrade legacy md5, keyed cookie secret (#31)
