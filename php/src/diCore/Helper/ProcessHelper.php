@@ -38,12 +38,14 @@ class ProcessHelper
      * @param float $timeoutSec Дедлайн на ЗАПУЩЕННЫЙ процесс. Реальное время
      *   возврата – до `$timeoutSec + TERM_GRACE_SEC`: убитому процессу даётся
      *   пауза между SIGTERM и SIGKILL. Закладывайте её в свой бюджет.
+     * @param array<string,string>|null $env Добавка к окружению процесса (секреты –
+     *   сюда, а не в argv: аргументы видны в `ps`). Остальное окружение наследуется.
      * @return array{code:int, output:string[], timedOut:bool}
      */
-    public static function run($command, float $timeoutSec): array
+    public static function run($command, float $timeoutSec, ?array $env = null): array
     {
         if (!function_exists('proc_open')) {
-            return static::runWithoutTimeout($command);
+            return static::runWithoutTimeout($command, $env);
         }
 
         // stderr сливается в stdout ядром, а не склеивается нами после: иначе
@@ -58,7 +60,9 @@ class ProcessHelper
         $process = @proc_open(
             is_array($command) ? $command : static::shellForm($command),
             $descriptors,
-            $pipes
+            $pipes,
+            null,
+            $env === null ? null : array_merge(static::currentEnv(), $env)
         );
 
         if (!is_resource($process)) {
@@ -121,9 +125,10 @@ class ProcessHelper
      * без таймаута, но с конвертацией. Отказ конвертировать вообще хуже.
      *
      * @param string|string[] $command
+     * @param array<string,string>|null $env
      * @return array{code:int, output:string[], timedOut:bool}
      */
-    protected static function runWithoutTimeout($command): array
+    protected static function runWithoutTimeout($command, ?array $env = null): array
     {
         if (!function_exists('exec')) {
             return [
@@ -140,13 +145,30 @@ class ProcessHelper
 
         // 2>&1 обязателен: причину отказа утилиты пишут в stderr, а exec()
         // забирает только stdout
+        // exec наследует окружение процесса: добавку ставим на время вызова
+        $saved = [];
+
+        foreach ($env ?? [] as $name => $value) {
+            $saved[$name] = getenv($name);
+            putenv("$name=$value");
+        }
+
         exec("$line 2>&1", $output, $code);
+
+        foreach ($saved as $name => $value) {
+            putenv($value === false ? $name : "$name=$value");
+        }
 
         return [
             'code' => (int) $code,
             'output' => static::splitOutput(static::clamp(join("\n", $output))),
             'timedOut' => false,
         ];
+    }
+
+    protected static function currentEnv(): array
+    {
+        return getenv() ?: [];
     }
 
     /**

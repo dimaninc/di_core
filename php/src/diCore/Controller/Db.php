@@ -5,6 +5,8 @@ namespace diCore\Controller;
 use diCore\Base\Exception\HttpException;
 use diCore\Data\Config;
 use diCore\Database\Engine;
+use diCore\Database\Legacy\Postgresql;
+use diCore\Helper\ProcessHelper;
 use diCore\Helper\StringHelper;
 use diCore\Tool\Logger;
 use diCore\Traits\Admin\DumpActions;
@@ -19,6 +21,9 @@ class Db extends \diBaseAdminController
     const MYSQL_SYSTEM_HOST = null;
 
     const CHMOD_FILE = 0664;
+
+    /** лимит pg_dump/psql, секунды (дамп идёт одним запросом, без докачки) */
+    const POSTGRES_CLI_TIMEOUT = 120;
 
     const FOLDER_LOCAL = 1;
     const FOLDER_CORE_SQL = 2;
@@ -228,6 +233,11 @@ class Db extends \diBaseAdminController
             'name' => $fn,
             'size' => null,
         ];
+
+        // Построчный дампер ниже знает только MySQL (SHOW ... FROM `t`)
+        if ($this->getDb() instanceof Postgresql) {
+            return $this->createPostgresDump($ar, $filename, $tablesAr, $compress);
+        }
 
         // trying to exec system command
         if ($system) {
@@ -587,6 +597,62 @@ class Db extends \diBaseAdminController
         return " CHARACTER SET $charset COLLATE $collation";
     }
 
+    /**
+     * Дамп PostgreSQL штатным pg_dump: массив аргументов без шелла, пароль в PGPASSWORD.
+     */
+    protected function createPostgresDump(array $ar, $filename, array $tablesAr, $compress)
+    {
+        /** @var Postgresql $db */
+        $db = $this->getDb();
+        $plain = $compress ? substr($filename, 0, -3) : $filename;
+        $creates = \diRequest::get('creates', 0);
+        $data = \diRequest::get('data', 0);
+
+        $res = ProcessHelper::run(
+            $db->getDumpArgv([
+                'filename' => $plain,
+                'tables' => array_values(array_filter($tablesAr)),
+                'drops' => \diRequest::get('drops', 0),
+                'schemaOnly' => $creates && !$data,
+                'dataOnly' => $data && !$creates,
+                'columnInserts' => \diRequest::get('fields', 0),
+            ]),
+            static::POSTGRES_CLI_TIMEOUT,
+            $db->getCliEnv()
+        );
+
+        if ($res['code'] !== 0) {
+            @unlink($plain);
+            Logger::getInstance()->log(
+                'pg_dump failed (' . $res['code'] . '): ' . join("\n", $res['output']),
+                'Db'
+            );
+            $ar['text'] = $res['timedOut']
+                ? 'pg_dump timed out'
+                : 'pg_dump failed: ' . join("\n", $res['output']);
+
+            return $ar;
+        }
+
+        if ($compress) {
+            $in = fopen($plain, 'rb');
+            $out = gzopen($filename, 'w9');
+
+            while (!feof($in)) {
+                gzwrite($out, fread($in, 1 << 20));
+            }
+
+            fclose($in);
+            gzclose($out);
+            unlink($plain);
+        }
+
+        $ar['ok'] = true;
+        $ar['system'] = true;
+
+        return extend($ar, $this->getDumpInfo($filename));
+    }
+
     private function checkTimeout($time, $timeout)
     {
         return utime() - $time >= $timeout;
@@ -598,7 +664,8 @@ class Db extends \diBaseAdminController
         $startFrom = false;
 
         // comments
-        $sql_comments = ['#', '--'];
+        // обратный слэш в начале строки – метакоманды psql (\restrict в дампах pg_dump), не SQL
+        $sql_comments = ['#', '--', '\\'];
         $max_line_length = 65536;
         $ending = ';';
 
@@ -626,30 +693,52 @@ class Db extends \diBaseAdminController
                 );
             }
 
-            $params = [
-                '--user=' . $this->getDb()->getUsername(),
-                '--password=' . $this->getDb()->getPassword(),
-            ];
+            if ($this->getDb() instanceof Postgresql) {
+                // psql вместо mysql
+                $res = ProcessHelper::run(
+                    $this->getDb()->getRestoreArgv($ffn),
+                    static::POSTGRES_CLI_TIMEOUT,
+                    $this->getDb()->getCliEnv()
+                );
 
-            if (static::MYSQL_SYSTEM_HOST) {
-                $params[] = '--host=' . static::MYSQL_SYSTEM_HOST;
-            }
+                if ($res['code'] === 0) {
+                    return [
+                        'ok' => true,
+                        'system' => true,
+                    ];
+                }
 
-            // todo: add other engines support
-            $command =
-                'mysql ' .
-                join(' ', $params) .
-                ' ' .
-                $this->getDb()->getDatabase() .
-                ' < ' .
-                $ffn;
-            system($command, $a);
-
-            if (!$a) {
-                return [
-                    'ok' => true,
-                    'system' => true,
+                // как и у mysql: при сбое дальше идёт построчное восстановление
+                Logger::getInstance()->log(
+                    'psql failed (' . $res['code'] . '): ' . join("\n", $res['output']),
+                    'Db'
+                );
+            } else {
+                $params = [
+                    '--user=' . $this->getDb()->getUsername(),
+                    '--password=' . $this->getDb()->getPassword(),
                 ];
+
+                if (static::MYSQL_SYSTEM_HOST) {
+                    $params[] = '--host=' . static::MYSQL_SYSTEM_HOST;
+                }
+
+                // todo: add other engines support
+                $command =
+                    'mysql ' .
+                    join(' ', $params) .
+                    ' ' .
+                    $this->getDb()->getDatabase() .
+                    ' < ' .
+                    $ffn;
+                system($command, $a);
+
+                if (!$a) {
+                    return [
+                        'ok' => true,
+                        'system' => true,
+                    ];
+                }
             }
         }
 

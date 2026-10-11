@@ -161,4 +161,17 @@ class ProcessHelperTest extends TestCase
 
         $this->assertTrue($r['timedOut']);
     }
+
+    /** Секрет уходит в окружение процесса, а не в argv; остальное окружение сохраняется */
+    public function testEnvIsAddedToInheritedEnvironment(): void
+    {
+        $r = ProcessHelper::run(
+            ['sh', '-c', 'echo "$DI_CORE_SECRET:$PATH"'],
+            5.0,
+            ['DI_CORE_SECRET' => 's3']
+        );
+
+        $this->assertSame(0, $r['code']);
+        $this->assertStringStartsWith('s3:/', $r['output'][0]);
+    }
 }

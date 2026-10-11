@@ -24,6 +24,7 @@ class Postgresql extends Pdo
 
     protected static $dumpCommand = 'pg_dump';
     protected static $localDockerDumpCommand = 'docker exec -t postgres pg_dump';
+    protected static $restoreCommand = 'psql';
 
     protected function getDSN()
     {
@@ -295,6 +296,82 @@ WHERE table_name = $tableEsc AND table_schema = current_schema()
 
         return static::$dumpCommand .
             " --host {$this->getHost()} --port {$this->getPort()} --no-owner -d {$this->getDatabase()} -U {$this->getUsername()} $tables{$options['commandSuffixWithFilename']}";
+    }
+
+    /**
+     * Аргументы pg_dump для запуска без шелла (ProcessHelper::run); пароль – только в
+     * getCliEnv(). Вывод пишет сам pg_dump (--file). --inserts: дамп читается и
+     * restoreAction() построчно, а COPY ... FROM stdin он не осилит.
+     *
+     * @param array $options tables, filename, drops, schemaOnly, dataOnly, columnInserts
+     * @return string[]
+     */
+    public function getDumpArgv($options = [])
+    {
+        $argv = array_merge(
+            preg_split('/\s+/', trim(static::$dumpCommand)),
+            $this->getCliConnectionArgv(),
+            ['--no-owner', '--inserts', '--file=' . $options['filename']]
+        );
+
+        foreach (['drops' => ['--clean', '--if-exists'], 'schemaOnly' => ['--schema-only'], 'dataOnly' => ['--data-only'], 'columnInserts' => ['--column-inserts']] as $key => $flags) {
+            if (!empty($options[$key])) {
+                $argv = array_merge($argv, $flags);
+            }
+        }
+
+        foreach ($options['tables'] ?? [] as $table) {
+            $argv[] = '--table=' . $table;
+        }
+
+        return $argv;
+    }
+
+    /**
+     * @return string[] psql, который выполняет SQL-файл и останавливается на первой ошибке
+     */
+    public function getRestoreArgv($filename)
+    {
+        return array_merge(
+            preg_split('/\s+/', trim(static::$restoreCommand)),
+            $this->getCliConnectionArgv(),
+            ['--quiet', '--set=ON_ERROR_STOP=1', '--file=' . $filename]
+        );
+    }
+
+    /**
+     * Секреты соединения для pg_dump/psql: в argv их видно в `ps` и в логах.
+     *
+     * @return array<string,string>
+     */
+    public function getCliEnv()
+    {
+        $env = ['PGPASSWORD' => (string) $this->getPassword()];
+
+        if ($this->ssl) {
+            $env['PGSSLMODE'] = 'require';
+
+            if ($this->sslCert) {
+                $env['PGSSLCERT'] = $this->sslCert;
+            }
+
+            if ($this->sslKey) {
+                $env['PGSSLKEY'] = $this->sslKey;
+            }
+        }
+
+        return $env;
+    }
+
+    private function getCliConnectionArgv()
+    {
+        return [
+            '--host=' . $this->getHost(),
+            '--port=' . $this->getPort(),
+            '--username=' . $this->getUsername(),
+            '--dbname=' . $this->getDatabase(),
+            '--no-password',
+        ];
     }
 
     public static function insertUpdateQueryBeginning($keyField = null)
