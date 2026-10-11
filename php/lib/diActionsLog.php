@@ -546,8 +546,15 @@ class diActionsLog
         }
     }
 
+    /** @var bool[] таблицы, уже проверенные в этом процессе (CREATE INDEX берёт ShareLock) */
+    private static $tableReady = [];
+
     private function initTable()
     {
+        if (!empty(self::$tableReady[static::logTable])) {
+            return $this;
+        }
+
         // Follow the configured charset, else the table lands on mb3 and
         // truncates emoji in `info`.
         $sqlAr = static::getCreateTableSql(
@@ -564,6 +571,8 @@ class diActionsLog
                 );
             }
         }
+
+        self::$tableReady[static::logTable] = true;
 
         return $this;
     }

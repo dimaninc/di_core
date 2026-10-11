@@ -40,7 +40,10 @@ class MigrationsLastLogCacheTest extends TestCase
 
         $manager = new MigrationsManager();
         $db = AuthorizationPinTestDb::db();
-        $db->q('DELETE FROM ' . MigrationsManager::logTable);
+        // Только свои idx: в журнале могут быть записи самой базы
+        $own = 'DELETE FROM ' . MigrationsManager::logTable .
+            " WHERE idx IN ('990001', '990002', '990003', '990004')";
+        $db->q($own);
 
         $log = function (string $idx, int $direction) {
             Model::create()
@@ -67,7 +70,7 @@ class MigrationsLastLogCacheTest extends TestCase
         $this->assertFalse($manager->wasExecuted('990004'), 'no log at all');
         $this->assertNotNull($manager->whenExecuted('990001'));
 
-        $db->q('DELETE FROM ' . MigrationsManager::logTable);
+        $db->q($own);
     }
 
     public function testFailedQueryDoesNotEnableCacheAndIsReported(): void
