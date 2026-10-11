@@ -9,6 +9,7 @@ use diCore\Entity\DiMigrationsLog\Model;
 use diCore\Entity\DiMigrationsLog\Collection;
 use diCore\Helper\FileSystemHelper;
 use diCore\Helper\StringHelper;
+use diCore\Tool\Logger;
 use diCore\Traits\BasicCreate;
 
 class MigrationsManager
@@ -496,27 +497,64 @@ EOF;
             return $this;
         }
 
+        $lastRs = $this->queryLastLogs($idxAr);
+
+        if (!$lastRs) {
+            // Кеш без данных отвечал бы «не применена» на каждую миграцию:
+            // без него getLastLogByIdx() читает записи по одной.
+            static::setCacheAllowed(false);
+            $this->reportCacheFailure();
+
+            return $this;
+        }
+
         static::setCacheAllowed(true);
 
         $db = Collection::getConnection()->getDb();
-        $t = static::logTable;
-        $idx = $db::in($idxAr);
-        $lastRs = $db->q("SELECT t1.*
-FROM `$t` t1
-INNER JOIN (
-    SELECT idx, MAX(id) as max_id
-    FROM `$t`
-    WHERE idx $idx
-    GROUP BY idx
-) t2 ON t1.idx = t2.idx AND t1.id = t2.max_id;");
 
-        while ($lastRs && ($last = $db->fetch_ar($lastRs))) {
+        while ($last = $db->fetch_ar($lastRs)) {
             self::$lastLogCache[$last['idx']] = Model::create(Model::type, $last, [
                 'readOnly' => true,
             ]);
         }
 
         return $this;
+    }
+
+    /**
+     * Последняя запись журнала по каждому idx; false при сбое запроса.
+     *
+     * @return mixed
+     */
+    protected function queryLastLogs(array $idxAr)
+    {
+        $db = Collection::getConnection()->getDb();
+        // Кавычки таблицы зависят от движка: обратные в PostgreSQL невалидны
+        $t = $db->escapeTable(static::logTable);
+        $idx = $db::in($idxAr);
+
+        return $db->q("SELECT t1.*
+FROM $t t1
+INNER JOIN (
+    SELECT idx, MAX(id) as max_id
+    FROM $t
+    WHERE idx $idx
+    GROUP BY idx
+) t2 ON t1.idx = t2.idx AND t1.id = t2.max_id;");
+    }
+
+    private function reportCacheFailure()
+    {
+        // Причину пишет сам запрос в журнал БД
+        $text = 'Unable to cache last migration logs, reading one by one';
+
+        Logger::getInstance()->log($text, 'migrations');
+
+        // Файловый лог никто не читает: E_USER_WARNING уходит в мониторинг,
+        // кроме веба с display_errors, где он испортил бы страницу
+        if (\diRequest::isCli() || !ini_get('display_errors')) {
+            trigger_error($text, E_USER_WARNING);
+        }
     }
 
     public function wasExecuted($idx)

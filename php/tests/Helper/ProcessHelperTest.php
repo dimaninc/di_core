@@ -161,4 +161,47 @@ class ProcessHelperTest extends TestCase
 
         $this->assertTrue($r['timedOut']);
     }
+
+    /** Секрет уходит в окружение процесса, а не в argv; остальное окружение сохраняется */
+    public function testEnvIsAddedToInheritedEnvironment(): void
+    {
+        $r = ProcessHelper::run(
+            ['sh', '-c', 'echo "$DI_CORE_SECRET:$PATH"'],
+            5.0,
+            ['DI_CORE_SECRET' => 's3']
+        );
+
+        $this->assertSame(0, $r['code']);
+        $this->assertStringStartsWith('s3:/', $r['output'][0]);
+    }
+
+    /** stdin из файла, stdout в файл; в output остаётся только stderr */
+    public function testStdinAndStdoutCanBeFiles(): void
+    {
+        $in = tempnam(sys_get_temp_dir(), 'ph');
+        $out = tempnam(sys_get_temp_dir(), 'ph');
+        file_put_contents($in, "hello\n");
+
+        $r = ProcessHelper::run(
+            ['sh', '-c', 'cat; echo oops 1>&2'],
+            5.0,
+            null,
+            ['stdin' => $in, 'stdout' => $out]
+        );
+
+        $this->assertSame(0, $r['code']);
+        $this->assertSame("hello\n", file_get_contents($out));
+        $this->assertSame(['oops'], $r['output']);
+        unlink($in);
+        unlink($out);
+    }
+
+    /** Убитый сигналом процесс – не «не запустился» (оба давали -1) */
+    public function testSignalledProcessHasItsOwnCode(): void
+    {
+        $r = ProcessHelper::run(['sh', '-c', 'kill -9 $$'], 5.0);
+
+        $this->assertSame(128 + 9, $r['code']);
+        $this->assertNotSame(ProcessHelper::EXIT_NOT_STARTED, $r['code']);
+    }
 }

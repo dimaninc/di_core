@@ -156,13 +156,14 @@ class diActionsLog
             ' ORDER BY ' . $filtersAr['_sortby'] . ' ' . $filtersAr['_dir'];
 
         if (isset($filtersAr['_start']) && isset($filtersAr['_per_page'])) {
+            // LIMIT a,b есть только в MySQL; OFFSET понимают все движки
             $limit =
                 ' LIMIT ' .
-                $filtersAr['_start'] .
-                ',' .
-                $filtersAr['_per_page'];
+                (int) $filtersAr['_per_page'] .
+                ' OFFSET ' .
+                (int) $filtersAr['_start'];
         } elseif (isset($filtersAr['_per_page'])) {
-            $limit = ' LIMIT ' . $filtersAr['_per_page'];
+            $limit = ' LIMIT ' . (int) $filtersAr['_per_page'];
         } else {
             $limit = '';
         }
@@ -484,35 +485,104 @@ class diActionsLog
         return $this->db;
     }
 
+    /**
+     * DDL по движку; MySQL-синтаксис на PostgreSQL и SQLite невалиден.
+     *
+     * @return string[]
+     */
+    public static function getCreateTableSql($engine, $charsetClause = '')
+    {
+        $t = static::logTable;
+
+        switch ($engine) {
+            case \diCore\Database\Engine::POSTGRESQL:
+                return [
+                    "CREATE TABLE IF NOT EXISTS $t(
+                        id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                        target_type int,
+                        target_id bigint,
+                        user_type smallint,
+                        user_id bigint,
+                        action smallint,
+                        info text DEFAULT '',
+                        date timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
+                    );",
+                    "CREATE INDEX IF NOT EXISTS target_idx__$t ON $t (target_type, target_id);",
+                    "CREATE INDEX IF NOT EXISTS user_idx__$t ON $t (user_type, user_id);",
+                ];
+
+            case \diCore\Database\Engine::SQLITE:
+                return [
+                    "CREATE TABLE IF NOT EXISTS $t(
+                        id integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+                        target_type integer,
+                        target_id integer,
+                        user_type integer,
+                        user_id integer,
+                        action integer,
+                        info varchar(250) DEFAULT '',
+                        date timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
+                    );",
+                    "CREATE INDEX IF NOT EXISTS target_idx__$t ON $t (target_type, target_id);",
+                    "CREATE INDEX IF NOT EXISTS user_idx__$t ON $t (user_type, user_id);",
+                ];
+
+            default:
+                return [
+                    "CREATE TABLE IF NOT EXISTS `$t`(
+                        id BIGINT NOT NULL AUTO_INCREMENT,
+                        target_type INT UNSIGNED,
+                        target_id BIGINT,
+                        user_type TINYINT,
+                        user_id BIGINT,
+                        action TINYINT UNSIGNED,
+                        info VARCHAR(250) DEFAULT '',
+                        date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                        INDEX target_idx(target_type,target_id),
+                        INDEX user_idx(user_type,user_id),
+                        PRIMARY KEY(id)
+                    ) ENGINE=InnoDB $charsetClause",
+                ];
+        }
+    }
+
+    /**
+     * Соединение => [таблица => true]: уже проверено в этом процессе (CREATE INDEX берёт
+     * ShareLock). Ключ включает соединение: во второй базе таблицу тоже надо создать.
+     *
+     * @var \SplObjectStorage|null
+     */
+    private static $tableReady;
+
     private function initTable()
     {
+        self::$tableReady = self::$tableReady ?: new \SplObjectStorage();
+        $ready = self::$tableReady[$this->getDb()] ?? [];
+
+        if (!empty($ready[static::logTable])) {
+            return $this;
+        }
+
         // Follow the configured charset, else the table lands on mb3 and
         // truncates emoji in `info`.
-        $charsetClause = \diCore\Data\Config::getDbCharsetClause();
-
-        $res = $this->getDb()->q(
-            'CREATE TABLE IF NOT EXISTS `' .
-                static::logTable .
-                "`(
-			id BIGINT NOT NULL AUTO_INCREMENT,
-			target_type INT UNSIGNED,
-			target_id BIGINT,
-			user_type TINYINT,
-			user_id BIGINT,
-			action TINYINT UNSIGNED,
-			info VARCHAR(250) DEFAULT '',
-			date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-			INDEX target_idx(target_type,target_id),
-			INDEX user_idx(user_type,user_id),
-			PRIMARY KEY(id)
-		) ENGINE=InnoDB $charsetClause"
+        $sqlAr = static::getCreateTableSql(
+            // Движок того соединения, на котором выполняется DDL
+            ($conn = $this->getDb()->getConnection()) ? $conn::getEngine() : null,
+            \diCore\Data\Config::getDbCharsetClause()
         );
 
-        if (!$res) {
-            throw new Exception(
-                'Unable to init Table: ' . $this->getDb()->getLogStr()
-            );
+        foreach ($sqlAr as $sql) {
+            $res = $this->getDb()->q($sql);
+
+            if (!$res) {
+                throw new Exception(
+                    'Unable to init Table: ' . $this->getDb()->getLogStr()
+                );
+            }
         }
+
+        $ready[static::logTable] = true;
+        self::$tableReady[$this->getDb()] = $ready;
 
         return $this;
     }

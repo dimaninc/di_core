@@ -5,6 +5,8 @@ namespace diCore\Controller;
 use diCore\Base\Exception\HttpException;
 use diCore\Data\Config;
 use diCore\Database\Engine;
+use diCore\Database\Legacy\Postgresql;
+use diCore\Helper\ProcessHelper;
 use diCore\Helper\StringHelper;
 use diCore\Tool\Logger;
 use diCore\Traits\Admin\DumpActions;
@@ -19,6 +21,9 @@ class Db extends \diBaseAdminController
     const MYSQL_SYSTEM_HOST = null;
 
     const CHMOD_FILE = 0664;
+
+    /** лимит pg_dump/psql, секунды (дамп идёт одним запросом, без докачки) */
+    const POSTGRES_CLI_TIMEOUT = 120;
 
     const FOLDER_LOCAL = 1;
     const FOLDER_CORE_SQL = 2;
@@ -57,6 +62,11 @@ class Db extends \diBaseAdminController
             default:
                 throw HttpException::notFound("Undefined folder id#$id");
         }
+    }
+
+    public static function getMainEngine()
+    {
+        return \diCore\Database\Connection::get(Config::getMainDatabase())::getEngine();
     }
 
     public static function getDumpsFolder()
@@ -228,6 +238,16 @@ class Db extends \diBaseAdminController
             'name' => $fn,
             'size' => null,
         ];
+
+        // Построчный дампер ниже знает только MySQL (SHOW ... FROM `t`)
+        if ($this->getDb() instanceof Postgresql) {
+            return $this->createPostgresDump(
+                $ar,
+                $filename,
+                array_values(array_intersect($tablesAr, $allTablesAr)),
+                $compress
+            );
+        }
 
         // trying to exec system command
         if ($system) {
@@ -587,6 +607,274 @@ class Db extends \diBaseAdminController
         return " CHARACTER SET $charset COLLATE $collation";
     }
 
+    /** Переопределяется в контроллере проекта, если дампу нужно больше времени */
+    protected function getPostgresCliTimeout()
+    {
+        return static::POSTGRES_CLI_TIMEOUT;
+    }
+
+    /**
+     * Дамп PostgreSQL штатным pg_dump: массив аргументов без шелла, пароль в PGPASSWORD.
+     */
+    protected function createPostgresDump(array $ar, $filename, array $tablesAr, $compress)
+    {
+        /** @var Postgresql $db */
+        $db = $this->getDb();
+        $plain = $compress ? substr($filename, 0, -3) : $filename;
+        $creates = \diRequest::get('creates', 0);
+        $data = \diRequest::get('data', 0);
+
+        $res = ProcessHelper::run(
+            $db->getDumpArgv([
+                'tables' => $tablesAr,
+                'drops' => \diRequest::get('drops', 0),
+                'schemaOnly' => $creates && !$data,
+                'dataOnly' => $data && !$creates,
+                'columnInserts' => \diRequest::get('fields', 0),
+            ]),
+            $this->getPostgresCliTimeout(),
+            $db->getCliEnv(),
+            ['stdout' => $plain]
+        );
+
+        if ($res['code'] !== 0) {
+            @unlink($plain);
+            Logger::getInstance()->log(
+                'pg_dump failed (' . $res['code'] . '): ' . join("\n", $res['output']),
+                'Db'
+            );
+            $ar['text'] = $res['timedOut']
+                ? 'pg_dump timed out'
+                : 'pg_dump failed: ' . join("\n", $res['output']);
+
+            return $ar;
+        }
+
+        // Нулевой код без файла – не дамп (например, docker-команда пишет внутрь контейнера)
+        if (!is_file($plain) || !filesize($plain)) {
+            @unlink($plain);
+            $ar['text'] = 'pg_dump finished but produced no dump file';
+            Logger::getInstance()->log($ar['text'], 'Db');
+
+            return $ar;
+        }
+
+        if ($compress) {
+            try {
+                static::gzipFile($plain, $filename);
+            } catch (\Throwable $e) {
+                // Несжатый дамп остаётся: он целый, а сломан только архив
+                @unlink($filename);
+                $ar['text'] = 'Unable to compress the dump: ' . $e->getMessage();
+                Logger::getInstance()->log($ar['text'], 'Db');
+
+                return $ar;
+            }
+
+            unlink($plain);
+        }
+
+        chmod($filename, self::CHMOD_FILE);
+
+        $ar['ok'] = true;
+        $ar['system'] = true;
+
+        return extend($ar, $this->getDumpInfo($filename));
+    }
+
+    /**
+     * @throws \RuntimeException
+     */
+    protected static function gzipFile($src, $dst)
+    {
+        $in = is_file($src) ? @fopen($src, 'rb') : false;
+        $out = $in ? @gzopen($dst, 'w9') : false;
+
+        if (!$in || !$out) {
+            $in && fclose($in);
+
+            throw new \RuntimeException("Unable to open $src or $dst");
+        }
+
+        while (!feof($in)) {
+            $chunk = fread($in, 1 << 20);
+
+            if ($chunk === false || ($chunk !== '' && !gzwrite($out, $chunk))) {
+                fclose($in);
+                gzclose($out);
+
+                throw new \RuntimeException("Unable to write $dst");
+            }
+        }
+
+        fclose($in);
+
+        if (!gzclose($out)) {
+            throw new \RuntimeException("Unable to close $dst");
+        }
+    }
+
+    /**
+     * Потоково, без чтения файла в память. Обрезанный и битый архив ловятся тем, что поток
+     * не дошёл до конца (CRC zlib проверяет в конце потока).
+     *
+     * @throws \RuntimeException
+     */
+    protected static function gunzipFile($src, $dst)
+    {
+        $in = is_file($src) ? @fopen($src, 'rb') : false;
+
+        if (!$in) {
+            throw new \RuntimeException("Unable to read $src");
+        }
+
+        $out = @fopen($dst, 'wb');
+        $ctx = inflate_init(ZLIB_ENCODING_GZIP);
+
+        try {
+            if (!$out) {
+                throw new \RuntimeException("Unable to write $dst");
+            }
+
+            while (!feof($in)) {
+                $chunk = fread($in, 1 << 20);
+
+                if ($chunk === false) {
+                    throw new \RuntimeException("Unable to read $src");
+                }
+
+                $data = $chunk === '' ? '' : @inflate_add($ctx, $chunk);
+
+                if ($data === false) {
+                    throw new \RuntimeException("$src is not a valid gzip archive");
+                }
+
+                if ($data !== '' && fwrite($out, $data) !== strlen($data)) {
+                    throw new \RuntimeException("Unable to write $dst");
+                }
+            }
+
+            if (inflate_get_status($ctx) !== ZLIB_STREAM_END) {
+                throw new \RuntimeException("$src is truncated");
+            }
+
+            if (!fclose($out)) {
+                $out = null;
+
+                throw new \RuntimeException("Unable to write $dst");
+            }
+
+            $out = null;
+        } finally {
+            fclose($in);
+            $out && fclose($out);
+        }
+    }
+
+    /**
+     * @return array|null Результат restoreAction; null – psql на хосте нет, нужен запасной путь.
+     *   Сбой psql – ошибка, а не повтор парсером: single-transaction ничего не применил бы
+     *   наполовину, но повтор дал бы дубли, если psql упал уже после применения.
+     */
+    protected function restorePostgres($ffn, $fn, $isGz)
+    {
+        /** @var Postgresql $db */
+        $db = $this->getDb();
+        $file = $ffn;
+
+        if ($isGz) {
+            // psql gz не читает; битый архив – ошибка, а не «успешно применённый» огрызок
+            $file = tempnam(sys_get_temp_dir(), 'dbrestore');
+
+            try {
+                static::gunzipFile($ffn, $file);
+            } catch (\Throwable $e) {
+                @unlink($file);
+                Logger::getInstance()->log($e->getMessage(), 'Db');
+
+                return array_merge(
+                    [
+                        'ok' => false,
+                        'errors' => [$e->getMessage()],
+                        'file' => $fn,
+                        'startFrom' => false,
+                        'system' => true,
+                    ],
+                    static::getTablesList($db)
+                );
+            }
+        }
+
+        try {
+            $res = ProcessHelper::run(
+                $db->getRestoreArgv(),
+                $this->getPostgresCliTimeout(),
+                $db->getCliEnv(),
+                ['stdin' => $file]
+            );
+        } finally {
+            if ($isGz) {
+                @unlink($file);
+            }
+        }
+
+        // 127 – «не найдено» при запуске через шелл
+        if (in_array($res['code'], [ProcessHelper::EXIT_NOT_STARTED, 127], true)) {
+            Logger::getInstance()->log('psql is not available, using the line parser', 'Db');
+
+            return null;
+        }
+
+        $ok = $res['code'] === 0;
+
+        if (!$ok) {
+            Logger::getInstance()->log(
+                'psql failed (' . $res['code'] . '): ' . join("\n", $res['output']),
+                'Db'
+            );
+        }
+
+        return array_merge(
+            [
+                'ok' => $ok,
+                'errors' => $ok
+                    ? []
+                    : [
+                        $res['timedOut']
+                            ? 'psql timed out'
+                            : 'psql failed: ' . join("\n", $res['output']),
+                    ],
+                'file' => $fn,
+                'startFrom' => false,
+                'system' => true,
+            ],
+            static::getTablesList($db)
+        );
+    }
+
+    /**
+     * Строка целиком вместе с переводом строки, любой длины: fgets($max) режет длинную
+     * строку на куски, и склейка добавляла бы лишний "\n".
+     *
+     * @return string|false
+     */
+    private function readFullLine($file, $fgets_func, $feof_func, $chunk)
+    {
+        $line = $fgets_func($file, $chunk);
+
+        while ($line !== false && substr($line, -1) !== "\n" && !$feof_func($file)) {
+            $more = $fgets_func($file, $chunk);
+
+            if ($more === false) {
+                break;
+            }
+
+            $line .= $more;
+        }
+
+        return $line;
+    }
+
     private function checkTimeout($time, $timeout)
     {
         return utime() - $time >= $timeout;
@@ -598,7 +886,8 @@ class Db extends \diBaseAdminController
         $startFrom = false;
 
         // comments
-        $sql_comments = ['#', '--'];
+        // обратный слэш в начале строки – метакоманды psql (\restrict в дампах pg_dump), не SQL
+        $sql_comments = ['#', '--', '\\'];
         $max_line_length = 65536;
         $ending = ';';
 
@@ -618,8 +907,17 @@ class Db extends \diBaseAdminController
         $fclose_func = $is_gz ? 'gzclose' : 'fclose';
         $ftell_func = $is_gz ? 'gztell' : 'ftell';
         $fseek_func = $is_gz ? 'gzseek' : 'fseek';
+        $feof_func = $is_gz ? 'gzeof' : 'feof';
 
-        if ($system) {
+        $isPostgres = $this->getDb() instanceof Postgresql;
+
+        // psql – только по явному system=1 (как mysql); без него и там, где psql на хосте нет,
+        // работает построчный парсер (он не понимает $$-тела функций и триггеров)
+        if ($system && $isPostgres && ($result = $this->restorePostgres($ffn, $fn, $is_gz))) {
+            return $result;
+        }
+
+        if ($system && !$isPostgres) {
             if ($is_gz) {
                 throw HttpException::badRequest(
                     'System method can execute non-archived SQL only'
@@ -666,13 +964,16 @@ class Db extends \diBaseAdminController
 
             $in_quotes = false;
             $query = '';
+            // Что вставить между предыдущей строкой и следующей: внутри кавычек – её собственный
+            // перевод строки (данные не меняем), снаружи – "\n"
+            $glue = "\n";
 
-            while ($line = $fgets_func($file, $max_line_length)) {
-                $line = str_replace("\r\n", "\n", $line);
-                $line = str_replace("\r", "\n", $line);
-                $line = trim($line);
+            while (($raw = $this->readFullLine($file, $fgets_func, $feof_func, $max_line_length)) !== false) {
+                $startInQuotes = $in_quotes;
+                // Снаружи кавычек – прежняя нормализация (trim, CR → LF)
+                $line = trim(str_replace(["\r\n", "\r"], "\n", $raw));
 
-                if (!$in_quotes) {
+                if (!$startInQuotes) {
                     $to_skip_line = false;
 
                     reset($sql_comments);
@@ -691,18 +992,37 @@ class Db extends \diBaseAdminController
                     }
                 }
 
-                $line_deslashed = str_replace('\\\\', '', $line);
+                $body = preg_replace('/\r?\n\z/', '', $raw);
 
-                $quotes_cc =
-                    substr_count($line_deslashed, "'") -
-                    substr_count($line_deslashed, "\\'");
+                if ($isPostgres) {
+                    // standard_conforming_strings: обратный слэш в строке обычный символ
+                    $quotes_cc = substr_count($body, "'");
+                } else {
+                    $line_deslashed = str_replace('\\\\', '', $body);
+
+                    $quotes_cc =
+                        substr_count($line_deslashed, "'") -
+                        substr_count($line_deslashed, "\\'");
+                }
                 if ($quotes_cc % 2 != 0) {
                     $in_quotes = !$in_quotes;
                 }
 
-                if ($query) {
-                    $query .= "\n";
+                // Пробелы и перевод строки внутри строкового литерала – это данные
+                if ($in_quotes) {
+                    $line = $startInQuotes ? $raw : ltrim($raw);
+                    $nextGlue = '';
+                } elseif ($startInQuotes) {
+                    $line = rtrim($body);
+                    $nextGlue = "\n";
+                } else {
+                    $nextGlue = "\n";
                 }
+
+                if ($query !== '') {
+                    $query .= $glue;
+                }
+                $glue = $nextGlue;
                 $query .= $line;
 
                 /*
@@ -757,8 +1077,11 @@ class Db extends \diBaseAdminController
 
                 // Лимит – для страницы «Дампы базы данных»: браузер продолжает с startFrom
                 // следующим запросом. В CLI (миграции) продолжать некому – файл дочитывается.
+                // Только на границе оператора: возобновление начинается с пустого $query и
+                // без кавычек, посреди оператора оно разорвало бы его.
                 if (
                     !static::isCli() &&
+                    $query === '' &&
                     $this->checkTimeout($startTime, static::MAX_TIMEOUT)
                 ) {
                     $startFrom = $ftell_func($file);
@@ -767,7 +1090,19 @@ class Db extends \diBaseAdminController
                 }
             }
 
+            // Файл дочитан, а оператор не закрыт: хвост иначе пропал бы молча при ok=true
+            if ($startFrom === false && !$errorsAr && trim($query) !== '') {
+                $errorsAr[] =
+                    'Unparsed tail at the end of file (unterminated statement or quote): ' .
+                    mb_substr(trim($query), 0, 200);
+            }
+
             $fclose_func($file);
+
+            if ($isPostgres) {
+                // Заголовок pg_dump оставил search_path='' и др. на соединении приложения
+                $this->getDb()->resetSession();
+            }
         } else {
             $errorsAr[] = 'Unable to open file ' . $this->folder . $fn;
         }

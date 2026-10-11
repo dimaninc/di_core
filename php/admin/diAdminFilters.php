@@ -570,28 +570,39 @@ class diAdminFilters
             $userFields,
             $userTable
         ) {
-            $field = self::getDb()->escapeField($field);
-            $value = self::getDb()->escapeValue($value);
-            $intValue = self::getDb()->escapeValue((int) $value);
+            $db = self::getDb();
+            $field = $db->escapeField($field);
+            // Контракт where_tpl: значение уже экранировано соединением фильтров (buildQuery()),
+            // здесь только кавычки
+            $raw = trim($value);
+            $value = $db->quoteValue($value);
+            $conn = $db->getConnection();
+            $engine = $conn ? $conn::getEngine() : null;
+
             $condition = join(
                 ' or ',
-                array_map(function ($field) use ($value) {
-                    $conn = self::getDb()->getConnection();
-                    $op =
-                        $conn && Engine::isMySql($conn::getEngine())
-                            ? 'INSTR'
-                            : 'STRPOS';
+                array_map(function ($userField) use ($db, $value, $engine) {
+                    $userField = $db->escapeField($userField);
 
-                    return "$op($field, $value) > 0";
+                    // Поиск без учёта регистра на всех движках: на MySQL его даёт collation
+                    if (Engine::isMySql($engine)) {
+                        return "INSTR($userField, $value) > 0";
+                    }
+
+                    $op = $engine === Engine::POSTGRESQL ? 'STRPOS' : 'INSTR';
+
+                    return "$op(LOWER($userField), LOWER($value)) > 0";
                 }, $userFields)
             );
 
-            $idField = self::getDb()->escapeField('id');
-            $userTable = self::getDb()->escapeTable(
-                $userTable ?? User::create()::table
-            );
+            // По id – только значение целиком из цифр ("12abc" – не пользователь №12)
+            $byId =
+                ctype_digit($raw) && strlen($raw) <= 18 ? "$field = $raw or " : '';
 
-            return "($field > 0 AND ($field = $intValue or $field in (SELECT $idField FROM $userTable WHERE $condition)))";
+            $idField = $db->escapeField('id');
+            $userTable = $db->escapeTable($userTable ?? User::create()::table);
+
+            return "($field > 0 AND ({$byId}$field in (SELECT $idField FROM $userTable WHERE $condition)))";
         };
     }
 
@@ -1067,7 +1078,8 @@ class diAdminFilters
                     default:
                     case 'str':
                     case 'string':
-                        $value = StringHelper::in($value);
+                        // Соединением самих фильтров: global $db / addslashes не знают движок
+                        $value = self::getDb()->escape_string($value);
                         break;
                 }
 

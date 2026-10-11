@@ -38,27 +38,40 @@ class ProcessHelper
      * @param float $timeoutSec Дедлайн на ЗАПУЩЕННЫЙ процесс. Реальное время
      *   возврата – до `$timeoutSec + TERM_GRACE_SEC`: убитому процессу даётся
      *   пауза между SIGTERM и SIGKILL. Закладывайте её в свой бюджет.
+     * @param array<string,string>|null $env Добавка к окружению процесса (секреты –
+     *   сюда, а не в argv: аргументы видны в `ps`). Остальное окружение наследуется.
+     * @param array{stdin?:string,stdout?:string}|null $files Файлы вместо труб: stdin читается
+     *   из файла, stdout пишется в файл (тогда в `output` попадает только stderr). Так
+     *   бинарь вроде `docker exec -i … pg_dump` пишет дамп на хост, а не внутрь контейнера.
      * @return array{code:int, output:string[], timedOut:bool}
      */
-    public static function run($command, float $timeoutSec): array
-    {
+    public static function run(
+        $command,
+        float $timeoutSec,
+        ?array $env = null,
+        ?array $files = null
+    ): array {
         if (!function_exists('proc_open')) {
-            return static::runWithoutTimeout($command);
+            return static::runWithoutTimeout($command, $env, $files);
         }
 
         // stderr сливается в stdout ядром, а не склеивается нами после: иначе
         // строки шли бы не в том порядке, в каком их написала утилита, и режим
         // с proc_open расходился бы с деградацией через `2>&1`
         $descriptors = [
-            0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['redirect', 1],
+            0 => isset($files['stdin']) ? ['file', $files['stdin'], 'r'] : ['pipe', 'r'],
+            1 => isset($files['stdout']) ? ['file', $files['stdout'], 'w'] : ['pipe', 'w'],
+            2 => isset($files['stdout']) ? ['pipe', 'w'] : ['redirect', 1],
         ];
+        // труба, из которой собирается вывод
+        $outIdx = isset($files['stdout']) ? 2 : 1;
         $pipes = [];
         $process = @proc_open(
             is_array($command) ? $command : static::shellForm($command),
             $descriptors,
-            $pipes
+            $pipes,
+            null,
+            $env === null ? null : array_merge(static::currentEnv(), $env)
         );
 
         if (!is_resource($process)) {
@@ -69,10 +82,10 @@ class ProcessHelper
             ];
         }
 
-        fclose($pipes[0]);
+        isset($pipes[0]) && fclose($pipes[0]);
         // без этого чтение блокируется до конца процесса, и весь дедлайн
         // оказывается декорацией
-        stream_set_blocking($pipes[1], false);
+        stream_set_blocking($pipes[$outIdx], false);
 
         $deadline = microtime(true) + max(0.0, $timeoutSec);
         $buffer = '';
@@ -83,14 +96,18 @@ class ProcessHelper
             // вычитываем на каждом обороте: полный буфер трубы остановил бы
             // процесс намертво, и он бы не завершился никогда — читать надо
             // всегда, даже когда собранное уже не нужно
-            $buffer = static::clamp($buffer . static::drain($pipes));
+            $buffer = static::clamp($buffer . static::drain([1 => $pipes[$outIdx]]));
 
             $status = proc_get_status($process);
 
             if (!$status['running']) {
                 // exitcode достоверен только при первом переходе в
                 // «не running»; дальше proc_get_status отдаёт -1
-                $code = (int) $status['exitcode'];
+                // убитый сигналом процесс даёт exitcode -1, как и «не запустился»:
+                // различаем по signaled, код как у шелла – 128 + сигнал
+                $code = !empty($status['signaled'])
+                    ? 128 + (int) $status['termsig']
+                    : (int) $status['exitcode'];
                 break;
             }
 
@@ -104,9 +121,9 @@ class ProcessHelper
             usleep(static::POLL_INTERVAL_USEC);
         }
 
-        $buffer = static::clamp($buffer . static::drain($pipes));
+        $buffer = static::clamp($buffer . static::drain([1 => $pipes[$outIdx]]));
 
-        fclose($pipes[1]);
+        fclose($pipes[$outIdx]);
         proc_close($process);
 
         return [
@@ -121,9 +138,11 @@ class ProcessHelper
      * без таймаута, но с конвертацией. Отказ конвертировать вообще хуже.
      *
      * @param string|string[] $command
+     * @param array<string,string>|null $env
+     * @param array|null $files см. run()
      * @return array{code:int, output:string[], timedOut:bool}
      */
-    protected static function runWithoutTimeout($command): array
+    protected static function runWithoutTimeout($command, ?array $env = null, ?array $files = null): array
     {
         if (!function_exists('exec')) {
             return [
@@ -140,13 +159,42 @@ class ProcessHelper
 
         // 2>&1 обязателен: причину отказа утилиты пишут в stderr, а exec()
         // забирает только stdout
-        exec("$line 2>&1", $output, $code);
+        // exec наследует окружение процесса: добавку ставим на время вызова
+        $saved = [];
+
+        foreach ($env ?? [] as $name => $value) {
+            $saved[$name] = getenv($name);
+            putenv("$name=$value");
+        }
+
+        if (isset($files['stdin'])) {
+            $line .= ' < ' . escapeshellarg($files['stdin']);
+        }
+
+        if (isset($files['stdout'])) {
+            // stderr – во временный файл, чтобы не смешаться с содержимым stdout-файла
+            $errFile = tempnam(sys_get_temp_dir(), 'proc');
+            exec($line . ' > ' . escapeshellarg($files['stdout']) . ' 2>' . escapeshellarg($errFile), $unused, $code);
+            $output = file($errFile, FILE_IGNORE_NEW_LINES) ?: [];
+            unlink($errFile);
+        } else {
+            exec("$line 2>&1", $output, $code);
+        }
+
+        foreach ($saved as $name => $value) {
+            putenv($value === false ? $name : "$name=$value");
+        }
 
         return [
             'code' => (int) $code,
             'output' => static::splitOutput(static::clamp(join("\n", $output))),
             'timedOut' => false,
         ];
+    }
+
+    protected static function currentEnv(): array
+    {
+        return getenv() ?: [];
     }
 
     /**

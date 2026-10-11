@@ -23,7 +23,16 @@ class Postgresql extends Pdo
     const DSN_DELIMITER = ';';
 
     protected static $dumpCommand = 'pg_dump';
-    protected static $localDockerDumpCommand = 'docker exec -t postgres pg_dump';
+    // -i, не -t: tty портит вывод в трубе; -e VAR берёт значение из окружения клиента
+    protected static $localDockerDumpCommand = 'docker exec -i -e PGPASSWORD -e PGTZ postgres pg_dump';
+    protected static $restoreCommand = 'psql';
+    protected static $localDockerRestoreCommand = 'docker exec -i -e PGPASSWORD -e PGTZ postgres psql';
+    /**
+     * Команда бежит там, где сервер доступен по своему сокету (docker exec): host/port,
+     * как их видит PHP (localhost:15432), внутри контейнера неверны и не передаются.
+     */
+    protected static $dumpLocalConnection = false;
+    protected static $restoreLocalConnection = false;
 
     protected function getDSN()
     {
@@ -181,6 +190,18 @@ class Postgresql extends Pdo
      * A zone Postgres refuses is a broken connection, not a warning: carrying on
      * would write wrong times instead.
      */
+    /**
+     * После выполнения чужого SQL (заголовок pg_dump ставит search_path='', row_security=off,
+     * statement_timeout=0): сессия возвращается к настройкам соединения, иначе следующие
+     * запросы без схемы падают.
+     */
+    public function resetSession()
+    {
+        $this->link->exec('RESET ALL');
+
+        return $this->setSessionTimeZone();
+    }
+
     protected function setSessionTimeZone()
     {
         $zone = date_default_timezone_get();
@@ -295,6 +316,123 @@ WHERE table_name = $tableEsc AND table_schema = current_schema()
 
         return static::$dumpCommand .
             " --host {$this->getHost()} --port {$this->getPort()} --no-owner -d {$this->getDatabase()} -U {$this->getUsername()} $tables{$options['commandSuffixWithFilename']}";
+    }
+
+    /**
+     * Аргументы pg_dump для запуска без шелла (ProcessHelper::run); пароль – только в
+     * getCliEnv(). Дамп идёт в stdout (ProcessHelper ... ['stdout' => файл]): так он
+     * оказывается на хосте и при `docker exec`. --inserts: дамп читается и
+     * restoreAction() построчно, а COPY ... FROM stdin он не осилит.
+     *
+     * @param array $options tables, drops, schemaOnly, dataOnly, columnInserts
+     * @return string[]
+     */
+    public function getDumpArgv($options = [])
+    {
+        $argv = array_merge(
+            preg_split('/\s+/', trim(static::$dumpCommand)),
+            $this->getCliConnectionArgv(static::$dumpLocalConnection),
+            ['--no-owner', '--inserts']
+        );
+
+        // pg_dump отвергает --clean вместе с --data-only
+        if (!empty($options['dataOnly'])) {
+            $options['drops'] = false;
+        }
+
+        foreach (['drops' => ['--clean', '--if-exists'], 'schemaOnly' => ['--schema-only'], 'dataOnly' => ['--data-only'], 'columnInserts' => ['--column-inserts']] as $key => $flags) {
+            if (!empty($options[$key])) {
+                $argv = array_merge($argv, $flags);
+            }
+        }
+
+        foreach ($options['tables'] ?? [] as $table) {
+            // pg_dump читает имя как шаблон: без кавычек оно приводится к нижнему регистру,
+            // а * ? . становятся подстановкой
+            $argv[] = '--table="' . str_replace('"', '""', $table) . '"';
+        }
+
+        return $argv;
+    }
+
+    /**
+     * @return string[] psql, который читает SQL из stdin (ProcessHelper ... ['stdin' => файл])
+     *   одной транзакцией: при первой ошибке откат
+     */
+    public function getRestoreArgv()
+    {
+        return array_merge(
+            preg_split('/\s+/', trim(static::$restoreCommand)),
+            $this->getCliConnectionArgv(static::$restoreLocalConnection),
+            ['--quiet', '--single-transaction', '--set=ON_ERROR_STOP=1']
+        );
+    }
+
+    /**
+     * Окружение pg_dump/psql: секреты (в argv их видно в `ps` и в логах) и зона PHP.
+     *
+     * @return array<string,string>
+     */
+    public function getCliEnv()
+    {
+        // Зона PHP, как у сессии (setSessionTimeZone()): время без смещения из дампа иначе
+        // читалось бы в зоне сервера
+        $env = [
+            'PGPASSWORD' => (string) $this->getPassword(),
+            'PGTZ' => date_default_timezone_get(),
+        ];
+
+        if ($this->ssl) {
+            $env['PGSSLMODE'] = 'require';
+
+            if ($this->sslCert) {
+                $env['PGSSLCERT'] = $this->sslCert;
+            }
+
+            if ($this->sslKey) {
+                $env['PGSSLKEY'] = $this->sslKey;
+            }
+        }
+
+        return $env;
+    }
+
+    /** Своя команда – обычное подключение по host/port, пока не выбран docker-вариант */
+    public static function setRestoreCommand(string $command)
+    {
+        static::$restoreCommand = $command;
+        static::$restoreLocalConnection = false;
+    }
+
+    public static function setDumpCommand(string $command)
+    {
+        parent::setDumpCommand($command);
+        static::$dumpLocalConnection = false;
+    }
+
+    /** docker-вариант psql по образцу setLocalDockerDumpCommand(); только сторона восстановления */
+    public static function setLocalDockerRestoreCommand()
+    {
+        static::setRestoreCommand(static::$localDockerRestoreCommand);
+        static::$restoreLocalConnection = true;
+    }
+
+    public static function setLocalDockerDumpCommand()
+    {
+        parent::setLocalDockerDumpCommand();
+        static::$dumpLocalConnection = true;
+    }
+
+    private function getCliConnectionArgv($local)
+    {
+        return [
+            ...($local
+                ? []
+                : ['--host=' . $this->getHost(), '--port=' . $this->getPort()]),
+            '--username=' . $this->getUsername(),
+            '--dbname=' . $this->getDatabase(),
+            '--no-password',
+        ];
     }
 
     public static function insertUpdateQueryBeginning($keyField = null)

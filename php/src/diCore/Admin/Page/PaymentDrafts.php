@@ -52,9 +52,8 @@ class PaymentDrafts extends BasePage
                 'field' => 'user_id',
                 'type' => 'string',
                 'title' => 'Пользователь',
-                'where_tpl' => function ($field, $value) {
-                    return "(`$field` = '$value' OR `$field` in (SELECT id FROM users WHERE INSTR(email, '$value') > 0))";
-                },
+                // Переносимый фильтр: id или часть email (без INSTR и backticks)
+                'where_tpl' => \diAdminFilters::getUserWhere(['email']),
             ])
             ->addFilter([
                 'field' => 'pay_system',
