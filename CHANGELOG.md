@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.8
+
+- PostgreSQL: migrations list cache, actions log, payment drafts filter, database dumps (#33)
+
 ## 0.10.7
 
 - Fix Tinkoff card source mapped by a Cyrillic key
