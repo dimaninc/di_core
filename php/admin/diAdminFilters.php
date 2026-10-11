@@ -573,7 +573,8 @@ class diAdminFilters
             $field = self::getDb()->escapeField($field);
             // Целое берётся из исходного значения: из экранированного (в кавычках) всегда 0
             $intValue = self::getDb()->escapeValue((int) $value);
-            $value = self::getDb()->escapeValue($value);
+            // Значение уже экранировано в buildQuery() (StringHelper::in): только кавычки
+            $value = self::getDb()->quoteValue($value);
             $condition = join(
                 ' or ',
                 array_map(function ($field) use ($value) {

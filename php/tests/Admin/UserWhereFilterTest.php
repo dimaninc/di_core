@@ -37,16 +37,28 @@ class UserWhereFilterTest extends TestCase
         $db->q('DROP TABLE IF EXISTS di_core_fp');
         $db->q('CREATE TABLE di_core_fu (id integer PRIMARY KEY, email varchar(100))');
         $db->q('CREATE TABLE di_core_fp (id integer PRIMARY KEY, user_id integer)');
-        $db->q("INSERT INTO di_core_fu VALUES (1, 'anna@example.com'), (2, 'bob@test.org')");
-        $db->q('INSERT INTO di_core_fp VALUES (10, 1), (11, 2), (12, 0)');
+        $db->q("INSERT INTO di_core_fu VALUES (1, 'anna@example.com'), (2, 'bob@test.org'), (3, 'o''brien@x.org')");
+        $db->q('INSERT INTO di_core_fp VALUES (10, 1), (11, 2), (12, 3)');
+
+        $GLOBALS['db'] = $db;
+        $_GET['admin_filter'] = [];
 
         try {
-            $where = \diAdminFilters::getUserWhere(['email'], 'di_core_fu');
-            $ids = function ($value) use ($db, $where) {
+            // Через buildQuery(), как на странице: он экранирует значение сам (StringHelper::in),
+            // и повторное экранирование ломало бы поиск по кавычке
+            $ids = function ($value) use ($db) {
+                $_GET['admin_filter']['user_id'] = $value;
+
+                $filters = new \diAdminFilters('admins');
+                $filters->addFilter([
+                    'field' => 'user_id',
+                    'type' => 'string',
+                    'where_tpl' => \diAdminFilters::getUserWhere(['email'], 'di_core_fu'),
+                ]);
+                $filters->buildQuery();
+
                 $rs = $db->q(
-                    'SELECT id FROM di_core_fp WHERE ' .
-                        $where('user_id', $value) .
-                        ' ORDER BY id'
+                    'SELECT id FROM di_core_fp ' . $filters->getQuery() . ' ORDER BY id'
                 );
                 $res = [];
 
@@ -59,9 +71,11 @@ class UserWhereFilterTest extends TestCase
 
             $this->assertSame([11], $ids('2'), 'by user id');
             $this->assertSame([10], $ids('anna'), 'by part of email');
-            $this->assertSame([11], $ids("test.org"));
-            $this->assertSame([], $ids("x'y"), 'quote is escaped');
+            $this->assertSame([11], $ids('test.org'));
+            $this->assertSame([12], $ids("o'brien"), 'a quote is escaped once');
+            $this->assertSame([], $ids("x' OR '1'='1"), 'injection finds nothing');
         } finally {
+            unset($_GET['admin_filter']);
             $db->q('DROP TABLE IF EXISTS di_core_fu');
             $db->q('DROP TABLE IF EXISTS di_core_fp');
         }
