@@ -63,30 +63,42 @@ class ActionsLogEnginesTest extends TestCase
         $this->assertStringContainsString('ENGINE=InnoDB CHARSET x', $sql);
     }
 
-    public function testLiveDdlCreatesAnIsolatedTableOnceAndNotAgain(): void
+    public function testLiveDdlRunsOncePerConnectionAndTable(): void
     {
         AuthorizationPinTestDb::need($this);
 
-        $db = AuthorizationPinTestDb::db();
-        $GLOBALS['db'] = $db;
-        $db->q('DROP TABLE IF EXISTS di_core_al_flag');
+        $db1 = AuthorizationPinTestDb::db();
+        $db2 = AuthorizationPinTestDb::secondConnection()->getDb();
+        $exists = function () use ($db1) {
+            $rs = @$db1->q('SELECT COUNT(*) FROM di_core_al_flag');
+            $db1->resetLog();
+
+            return (bool) $rs;
+        };
+        $db1->q('DROP TABLE IF EXISTS di_core_al_flag');
 
         try {
             // Своя таблица: общий журнал тест не трогает
+            $GLOBALS['db'] = $db1;
             new FlagActionsLog(\diTypes::content, 1);
-            $this->assertNotFalse($db->q('SELECT COUNT(*) FROM di_core_al_flag'));
+            $this->assertTrue($exists(), 'DDL of the isolated table');
 
-            // Второй create() в процессе таблицу не проверяет: CREATE INDEX берёт ShareLock
-            $db->q('DROP TABLE di_core_al_flag');
-            $db->resetLog();
+            // Второе соединение – своя проверка: таблица создаётся и на нём
+            $db1->q('DROP TABLE di_core_al_flag');
+            $GLOBALS['db'] = $db2;
             new FlagActionsLog(\diTypes::content, 2);
-            $this->assertFalse(
-                @$db->q('SELECT COUNT(*) FROM di_core_al_flag'),
-                'initTable() ran twice'
-            );
+            $this->assertTrue($exists(), 'a second connection checks the table too');
+
+            // Повторный create() на том же соединении таблицу не проверяет:
+            // CREATE INDEX берёт ShareLock
+            $db1->q('DROP TABLE di_core_al_flag');
+            new FlagActionsLog(\diTypes::content, 3);
+            $GLOBALS['db'] = $db1;
+            new FlagActionsLog(\diTypes::content, 4);
+            $this->assertFalse($exists(), 'initTable() ran again');
         } finally {
-            $db->q('DROP TABLE IF EXISTS di_core_al_flag');
-            $db->resetLog();
+            $db1->q('DROP TABLE IF EXISTS di_core_al_flag');
+            $db1->resetLog();
         }
     }
 

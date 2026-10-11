@@ -546,19 +546,28 @@ class diActionsLog
         }
     }
 
-    /** @var bool[] таблицы, уже проверенные в этом процессе (CREATE INDEX берёт ShareLock) */
-    private static $tableReady = [];
+    /**
+     * Соединение => [таблица => true]: уже проверено в этом процессе (CREATE INDEX берёт
+     * ShareLock). Ключ включает соединение: во второй базе таблицу тоже надо создать.
+     *
+     * @var \SplObjectStorage|null
+     */
+    private static $tableReady;
 
     private function initTable()
     {
-        if (!empty(self::$tableReady[static::logTable])) {
+        self::$tableReady = self::$tableReady ?: new \SplObjectStorage();
+        $ready = self::$tableReady[$this->getDb()] ?? [];
+
+        if (!empty($ready[static::logTable])) {
             return $this;
         }
 
         // Follow the configured charset, else the table lands on mb3 and
         // truncates emoji in `info`.
         $sqlAr = static::getCreateTableSql(
-            \diCore\Database\Connection::get()::getEngine(),
+            // Движок того соединения, на котором выполняется DDL
+            ($conn = $this->getDb()->getConnection()) ? $conn::getEngine() : null,
             \diCore\Data\Config::getDbCharsetClause()
         );
 
@@ -572,7 +581,8 @@ class diActionsLog
             }
         }
 
-        self::$tableReady[static::logTable] = true;
+        $ready[static::logTable] = true;
+        self::$tableReady[$this->getDb()] = $ready;
 
         return $this;
     }
