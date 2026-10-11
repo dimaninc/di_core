@@ -22,6 +22,20 @@ class Helper extends BaseHelper
     /** Generous ceiling for an SBP payload; the real ones are 50-120 chars. */
     const SBP_PAYLOAD_MAX_LEN = 512;
 
+    /**
+     * Notification `Data.Source`, lowercased → vendor. Keys must be plain ASCII:
+     * `сards` with a Cyrillic «с» left every card payment on the draft's vendor.
+     */
+    const SOURCE_VENDORS = [
+        'cards' => Vendor::CARD,
+        'sberpay' => Vendor::SBERPAY,
+        'sbp' => Vendor::SBP,
+        'qrsbp' => Vendor::SBP,
+        'mirpay' => Vendor::MIR_PAY,
+        'tinkoffpay' => Vendor::TPAY,
+        'yandexpay' => Vendor::YANDEX_PAY,
+    ];
+
     /** @var MerchantApi */
     protected $api;
 
@@ -449,17 +463,7 @@ class Helper extends BaseHelper
             return $this;
         }
 
-        $s = strtolower($sourceStr);
-        $map = [
-            'сards' => Vendor::CARD,
-            'sberpay' => Vendor::SBERPAY,
-            'sbp' => Vendor::SBP,
-            'qrsbp' => Vendor::SBP,
-            'mirpay' => Vendor::MIR_PAY,
-            'tinkoffpay' => Vendor::TPAY,
-            'yandexpay' => Vendor::YANDEX_PAY,
-        ];
-        $vendor = $map[$s] ?? null;
+        $vendor = static::SOURCE_VENDORS[strtolower($sourceStr)] ?? null;
 
         if (!$vendor) {
             return $this;
