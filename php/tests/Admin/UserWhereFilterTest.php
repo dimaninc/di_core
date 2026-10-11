@@ -40,7 +40,9 @@ class UserWhereFilterTest extends TestCase
         $db->q("INSERT INTO di_core_fu VALUES (1, 'anna@example.com'), (2, 'bob@test.org'), (3, 'o''brien@x.org')");
         $db->q('INSERT INTO di_core_fp VALUES (10, 1), (11, 2), (12, 3)');
 
-        $GLOBALS['db'] = $db;
+        // Без global $db: экранировать должно соединение самих фильтров
+        $savedGlobalDb = $GLOBALS['db'] ?? null;
+        $GLOBALS['db'] = null;
         $_GET['admin_filter'] = [];
 
         try {
@@ -74,8 +76,13 @@ class UserWhereFilterTest extends TestCase
             $this->assertSame([11], $ids('test.org'));
             $this->assertSame([12], $ids("o'brien"), 'a quote is escaped once');
             $this->assertSame([], $ids("x' OR '1'='1"), 'injection finds nothing');
+            // На PostgreSQL без escape соединения это закрыло бы литерал (\' + standard_conforming_strings)
+            $this->assertSame([], $ids("' OR 1=1 --"), 'a backslash-quote injection finds nothing');
+            $this->assertSame([], $ids('2abc'), '"2abc" is not user #2');
+            $this->assertSame([10], $ids('ANNA@'), 'email search ignores case');
         } finally {
             unset($_GET['admin_filter']);
+            $GLOBALS['db'] = $savedGlobalDb;
             $db->q('DROP TABLE IF EXISTS di_core_fu');
             $db->q('DROP TABLE IF EXISTS di_core_fp');
         }
