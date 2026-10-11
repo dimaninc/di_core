@@ -11,8 +11,9 @@ use PHPUnit\Framework\TestCase;
 require_once __DIR__ . '/../Entity/AuthorizationPinTestDb.php';
 
 /**
- * Восстановление дампа PostgreSQL со страницы: всегда psql одной транзакцией, при его сбое
- * ошибка (не повтор парсером), парсер – запасной путь, если psql нет. Живой тест:
+ * Восстановление дампа PostgreSQL со страницы: по умолчанию построчный парсер; psql (одной
+ * транзакцией) только при system=1, его сбой – ошибка (не повтор парсером), а если psql нет –
+ * парсер. Живой тест:
  * DI_CORE_TEST_DB=postgresql://…; для ветки psql нужен он сам (DI_CORE_PG_BIN – каталог).
  */
 class PostgresRestoreActionTest extends TestCase
@@ -69,11 +70,11 @@ class PostgresRestoreActionTest extends TestCase
         $this->folder = null;
     }
 
-    private function restore(string $sql, string $name = 'd.sql'): array
+    private function restore(string $sql, string $name = 'd.sql', bool $system = false): array
     {
         file_put_contents($this->folder . $name, $sql);
 
-        return $this->restoreFile($name);
+        return $this->restoreFile($name, $system);
     }
 
     private function rows(): array
@@ -135,11 +136,44 @@ class PostgresRestoreActionTest extends TestCase
 
         $res = $this->restore(
             "INSERT INTO di_core_restore_t VALUES (1, 'C:\\');\n" .
-                "INSERT INTO di_core_restore_t VALUES (2, \$\$a;\nb\$\$);\n"
+                "INSERT INTO di_core_restore_t VALUES (2, \$\$a;\nb\$\$);\n",
+            'd.sql',
+            true
         );
 
         $this->assertTrue($res['ok'], join("\n", $res['errors']));
         $this->assertSame([1 => 'C:\\', 2 => "a;\nb"], $this->rows());
+    }
+
+    public function testDefaultRestoreDoesNotUsePsql(): void
+    {
+        // psql, который всегда падает: без system=1 он не должен вызываться
+        Postgresql::setRestoreCommand('/usr/bin/false');
+
+        $res = $this->restore("INSERT INTO di_core_restore_t VALUES (1, 'a');\n");
+
+        $this->assertTrue($res['ok'], join("\n", $res['errors']));
+        $this->assertSame([1 => 'a'], $this->rows());
+    }
+
+    public function testSystemRestoreWithBrokenPsqlIsAnErrorNotAParserRetry(): void
+    {
+        Postgresql::setRestoreCommand('/usr/bin/false');
+
+        $res = $this->restore("INSERT INTO di_core_restore_t VALUES (1, 'a');\n", 'd.sql', true);
+
+        $this->assertFalse($res['ok']);
+        $this->assertSame([], $this->rows());
+    }
+
+    public function testSystemRestoreWithoutPsqlFallsBackToTheParser(): void
+    {
+        Postgresql::setRestoreCommand('/nonexistent/psql');
+
+        $res = $this->restore("INSERT INTO di_core_restore_t VALUES (1, 'a');\n", 'd.sql', true);
+
+        $this->assertTrue($res['ok'], join("\n", $res['errors']));
+        $this->assertSame([1 => 'a'], $this->rows());
     }
 
     public function testPsqlFailureIsAnErrorAndTheParserDoesNotRepeatTheFile(): void
@@ -148,7 +182,9 @@ class PostgresRestoreActionTest extends TestCase
 
         $res = $this->restore(
             "INSERT INTO di_core_restore_t VALUES (1, 'a');\n" .
-                "INSERT INTO no_such_table VALUES (1);\n"
+                "INSERT INTO no_such_table VALUES (1);\n",
+            'd.sql',
+            true
         );
 
         $this->assertFalse($res['ok']);
@@ -157,8 +193,11 @@ class PostgresRestoreActionTest extends TestCase
         $this->assertSame([], $this->rows());
     }
 
-    private function restoreFile(string $name): array
+    /** $system – запрос с system=1 (psql); без него страница и миграции идут парсером */
+    private function restoreFile(string $name, bool $system = false): array
     {
+        $_GET['system'] = $system ? 1 : 0;
+
         $c = (new \ReflectionClass(Db::class))->newInstanceWithoutConstructor();
 
         foreach (['file' => $name, 'folder' => $this->folder] as $prop => $value) {
@@ -188,7 +227,7 @@ class PostgresRestoreActionTest extends TestCase
             $this->assertTrue($this->restore(sprintf($sql, 1))['ok']);
 
             $this->useLocalPsql();
-            $this->assertTrue($this->restore(sprintf($sql, 2), 'd2.sql')['ok']);
+            $this->assertTrue($this->restore(sprintf($sql, 2), 'd2.sql', true)['ok']);
 
             $rs = $db->q('SELECT t FROM di_core_restore_tz ORDER BY id');
             $times = [];
@@ -215,7 +254,7 @@ class PostgresRestoreActionTest extends TestCase
             gzencode("INSERT INTO di_core_restore_t VALUES (1, 'z');\n")
         );
 
-        $res = $this->restoreFile('d.sql.gz');
+        $res = $this->restoreFile('d.sql.gz', true);
         $this->assertTrue($res['ok'], join("\n", $res['errors']));
         $this->assertSame([1 => 'z'], $this->rows());
     }
@@ -248,7 +287,7 @@ class PostgresRestoreActionTest extends TestCase
                 file_put_contents($this->folder . $name, $content);
             }
 
-            $res = $this->restoreFile($name);
+            $res = $this->restoreFile($name, true);
             $this->assertFalse($res['ok'], $name);
             $this->assertNotEmpty($res['errors'], $name);
             $this->assertSame([], $this->rows(), $name);
@@ -268,12 +307,10 @@ class PostgresRestoreActionTest extends TestCase
     private function fakePgDump(bool $writes): void
     {
         $script = $this->folder . 'fake_pg_dump.sh';
+        // pg_dump пишет дамп в stdout; пустой stdout – «ничего не написал»
         file_put_contents(
             $script,
-            "#!/bin/sh\n" .
-                ($writes
-                    ? 'for a in "$@"; do case "$a" in --file=*) echo "-- dump" > "${a#--file=}";; esac; done' . "\n"
-                    : "exit 0\n")
+            "#!/bin/sh\n" . ($writes ? "echo '-- dump'\n" : "exit 0\n")
         );
         chmod($script, 0755);
         Postgresql::setDumpCommand($script);
@@ -301,6 +338,52 @@ class PostgresRestoreActionTest extends TestCase
         $this->assertFalse($res['ok']);
         $this->assertStringContainsString('Unable to compress', $res['text']);
         $this->assertFileExists($this->folder . 'x.sql', 'the intact plain dump stays');
+    }
+
+    public function testDumpFilesGetTheStandardMode(): void
+    {
+        $this->fakePgDump(true);
+
+        foreach (['p.sql' => 0, 'z.sql.gz' => 1] as $name => $compress) {
+            $res = $this->dump([$this->folder . $name, [], $compress]);
+
+            $this->assertTrue($res['ok'], $res['text']);
+            $this->assertSame(Db::CHMOD_FILE, fileperms($this->folder . $name) & 0777, $name);
+        }
+    }
+
+    public function testRealPgDumpTakesTableNamesExactly(): void
+    {
+        $bin = rtrim((string) getenv('DI_CORE_PG_BIN'), '/');
+        $pgDump = ($bin ? "$bin/" : '') . 'pg_dump';
+
+        if (ProcessHelper::run([$pgDump, '--version'], 5.0)['code'] !== 0) {
+            $this->markTestSkipped('pg_dump is not available');
+        }
+
+        $db = AuthorizationPinTestDb::db();
+        $names = ['DiCoreMixedCase', 'di.core*dot'];
+
+        try {
+            foreach ($names as $name) {
+                $db->q('CREATE TABLE "' . $name . '" (id integer)');
+            }
+
+            Postgresql::setDumpCommand($pgDump);
+            $res = $this->dump([$this->folder . 'x.sql', $names, 0]);
+
+            $this->assertTrue($res['ok'], $res['text']);
+
+            $dump = file_get_contents($this->folder . 'x.sql');
+
+            foreach ($names as $name) {
+                $this->assertStringContainsString('CREATE TABLE public."' . $name . '"', $dump);
+            }
+        } finally {
+            foreach ($names as $name) {
+                $db->q('DROP TABLE IF EXISTS "' . $name . '"');
+            }
+        }
     }
 
     public function testCompressedDumpReplacesThePlainOne(): void

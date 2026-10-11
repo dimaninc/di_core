@@ -41,7 +41,6 @@ class PostgresCliDumpTest extends TestCase
     public function testDumpArgvHasNoPasswordAndTakesOptions(): void
     {
         $argv = $this->makeDb()->getDumpArgv([
-            'filename' => '/tmp/x.sql',
             'tables' => ['a', 'b'],
             'drops' => 1,
             'schemaOnly' => true,
@@ -53,9 +52,9 @@ class PostgresCliDumpTest extends TestCase
         $this->assertContains('--username=app', $argv);
         $this->assertContains('--dbname=shop', $argv);
         $this->assertContains('--no-password', $argv);
-        $this->assertContains('--file=/tmp/x.sql', $argv);
-        $this->assertContains('--table=a', $argv);
-        $this->assertContains('--table=b', $argv);
+        $this->assertSame([], preg_grep('/^--file/', $argv), 'the dump goes to stdout');
+        $this->assertContains('--table="a"', $argv);
+        $this->assertContains('--table="b"', $argv);
         $this->assertContains('--clean', $argv);
         $this->assertContains('--schema-only', $argv);
         $this->assertNotContains('--data-only', $argv);
@@ -66,7 +65,6 @@ class PostgresCliDumpTest extends TestCase
     {
         // pg_dump отвергает --clean вместе с --data-only
         $argv = $this->makeDb()->getDumpArgv([
-            'filename' => '/tmp/x.sql',
             'drops' => 1,
             'dataOnly' => true,
         ]);
@@ -78,14 +76,36 @@ class PostgresCliDumpTest extends TestCase
 
     public function testRestoreArgvStopsOnFirstError(): void
     {
-        $argv = $this->makeDb()->getRestoreArgv('/tmp/x.sql');
+        $argv = $this->makeDb()->getRestoreArgv();
 
         $this->assertContains('--single-transaction', $argv);
 
         $this->assertSame('psql', $argv[0]);
         $this->assertContains('--set=ON_ERROR_STOP=1', $argv);
-        $this->assertContains('--file=/tmp/x.sql', $argv);
         $this->assertStringNotContainsString('p@ss', join(' ', $argv));
+    }
+
+    public function testTableNamesArePassedQuotedAsExactNames(): void
+    {
+        $argv = $this->makeDb()->getDumpArgv(['tables' => ['Users', 'a.b', 'x*', 'we"ird']]);
+
+        foreach (['--table="Users"', '--table="a.b"', '--table="x*"', '--table="we""ird"'] as $arg) {
+            $this->assertContains($arg, $argv);
+        }
+    }
+
+    public function testLocalConnectionOmitsHostAndPort(): void
+    {
+        Postgresql::setCliLocalConnection(true);
+
+        try {
+            $argv = $this->makeDb()->getRestoreArgv();
+        } finally {
+            Postgresql::setCliLocalConnection(false);
+        }
+
+        $this->assertSame([], preg_grep('/^--(host|port)/', $argv));
+        $this->assertContains('--username=app', $argv);
     }
 
     public function testPasswordTravelsInEnvironmentOnly(): void
@@ -146,28 +166,24 @@ class PostgresCliDumpTest extends TestCase
 
             $file = sys_get_temp_dir() . '/di_core_dump_' . getmypid() . '.sql';
             $env = $db->getCliEnv();
-            $argv = $db->getDumpArgv([
-                'filename' => $file,
-                'tables' => ['di_core_dump_t'],
-                'drops' => 1,
-            ]);
+            $argv = $db->getDumpArgv(['tables' => ['di_core_dump_t'], 'drops' => 1]);
             $argv[0] = $bin . $argv[0];
 
-            $res = ProcessHelper::run($argv, 60.0, $env);
+            $res = ProcessHelper::run($argv, 60.0, $env, ['stdout' => $file]);
             $this->assertSame(0, $res['code'], join("\n", $res['output']));
             $this->assertStringContainsString('INSERT INTO public.di_core_dump_t', file_get_contents($file));
 
             $db->q('DELETE FROM di_core_dump_t');
-            $argv = $db->getRestoreArgv($file);
+            $argv = $db->getRestoreArgv();
             $argv[0] = $bin . $argv[0];
-            $res = ProcessHelper::run($argv, 60.0, $env);
+            $res = ProcessHelper::run($argv, 60.0, $env, ['stdin' => $file]);
             $this->assertSame(0, $res['code'], join("\n", $res['output']));
 
             $rs = $db->q('SELECT v FROM di_core_dump_t ORDER BY id');
             $this->assertSame("it's", $db->fetch_array($rs)['v']);
 
             // Неверный пароль: сбой виден по коду, а не по пустому файлу
-            $bad = ProcessHelper::run($argv, 60.0, ['PGPASSWORD' => 'definitely-wrong']);
+            $bad = ProcessHelper::run($argv, 60.0, ['PGPASSWORD' => 'definitely-wrong'], ['stdin' => $file]);
             $this->assertNotSame(0, $bad['code']);
 
             $db->q('DROP TABLE di_core_dump_t');

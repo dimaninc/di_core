@@ -236,7 +236,12 @@ class Db extends \diBaseAdminController
 
         // Построчный дампер ниже знает только MySQL (SHOW ... FROM `t`)
         if ($this->getDb() instanceof Postgresql) {
-            return $this->createPostgresDump($ar, $filename, $tablesAr, $compress);
+            return $this->createPostgresDump(
+                $ar,
+                $filename,
+                array_values(array_intersect($tablesAr, $allTablesAr)),
+                $compress
+            );
         }
 
         // trying to exec system command
@@ -616,15 +621,15 @@ class Db extends \diBaseAdminController
 
         $res = ProcessHelper::run(
             $db->getDumpArgv([
-                'filename' => $plain,
-                'tables' => array_values(array_filter($tablesAr)),
+                'tables' => $tablesAr,
                 'drops' => \diRequest::get('drops', 0),
                 'schemaOnly' => $creates && !$data,
                 'dataOnly' => $data && !$creates,
                 'columnInserts' => \diRequest::get('fields', 0),
             ]),
             $this->getPostgresCliTimeout(),
-            $db->getCliEnv()
+            $db->getCliEnv(),
+            ['stdout' => $plain]
         );
 
         if ($res['code'] !== 0) {
@@ -663,6 +668,8 @@ class Db extends \diBaseAdminController
 
             unlink($plain);
         }
+
+        chmod($filename, self::CHMOD_FILE);
 
         $ar['ok'] = true;
         $ar['system'] = true;
@@ -795,9 +802,10 @@ class Db extends \diBaseAdminController
 
         try {
             $res = ProcessHelper::run(
-                $db->getRestoreArgv($file),
+                $db->getRestoreArgv(),
                 $this->getPostgresCliTimeout(),
-                $db->getCliEnv()
+                $db->getCliEnv(),
+                ['stdin' => $file]
             );
         } finally {
             if ($isGz) {
@@ -874,9 +882,9 @@ class Db extends \diBaseAdminController
 
         $isPostgres = $this->getDb() instanceof Postgresql;
 
-        // На PostgreSQL построчный разбор ненадёжен ($$-тела, строки с обратным слэшем),
-        // поэтому всегда psql; парсер – только если psql на хосте нет
-        if ($isPostgres && ($result = $this->restorePostgres($ffn, $fn, $is_gz))) {
+        // psql – только по явному system=1 (как mysql); без него и там, где psql на хосте нет,
+        // работает построчный парсер (он не понимает $$-тела функций и триггеров)
+        if ($system && $isPostgres && ($result = $this->restorePostgres($ffn, $fn, $is_gz))) {
             return $result;
         }
 

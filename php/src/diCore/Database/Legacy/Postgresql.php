@@ -23,8 +23,15 @@ class Postgresql extends Pdo
     const DSN_DELIMITER = ';';
 
     protected static $dumpCommand = 'pg_dump';
-    protected static $localDockerDumpCommand = 'docker exec -t postgres pg_dump';
+    // -i, не -t: tty портит вывод в трубе; -e VAR берёт значение из окружения клиента
+    protected static $localDockerDumpCommand = 'docker exec -i -e PGPASSWORD -e PGTZ postgres pg_dump';
     protected static $restoreCommand = 'psql';
+    protected static $localDockerRestoreCommand = 'docker exec -i -e PGPASSWORD -e PGTZ postgres psql';
+    /**
+     * Команда бежит там, где сервер доступен по своему сокету (docker exec): host/port,
+     * как их видит PHP (localhost:15432), внутри контейнера неверны и не передаются.
+     */
+    protected static $cliLocalConnection = false;
 
     protected function getDSN()
     {
@@ -300,10 +307,11 @@ WHERE table_name = $tableEsc AND table_schema = current_schema()
 
     /**
      * Аргументы pg_dump для запуска без шелла (ProcessHelper::run); пароль – только в
-     * getCliEnv(). Вывод пишет сам pg_dump (--file). --inserts: дамп читается и
+     * getCliEnv(). Дамп идёт в stdout (ProcessHelper ... ['stdout' => файл]): так он
+     * оказывается на хосте и при `docker exec`. --inserts: дамп читается и
      * restoreAction() построчно, а COPY ... FROM stdin он не осилит.
      *
-     * @param array $options tables, filename, drops, schemaOnly, dataOnly, columnInserts
+     * @param array $options tables, drops, schemaOnly, dataOnly, columnInserts
      * @return string[]
      */
     public function getDumpArgv($options = [])
@@ -311,7 +319,7 @@ WHERE table_name = $tableEsc AND table_schema = current_schema()
         $argv = array_merge(
             preg_split('/\s+/', trim(static::$dumpCommand)),
             $this->getCliConnectionArgv(),
-            ['--no-owner', '--inserts', '--file=' . $options['filename']]
+            ['--no-owner', '--inserts']
         );
 
         // pg_dump отвергает --clean вместе с --data-only
@@ -326,26 +334,24 @@ WHERE table_name = $tableEsc AND table_schema = current_schema()
         }
 
         foreach ($options['tables'] ?? [] as $table) {
-            $argv[] = '--table=' . $table;
+            // pg_dump читает имя как шаблон: без кавычек оно приводится к нижнему регистру,
+            // а * ? . становятся подстановкой
+            $argv[] = '--table="' . str_replace('"', '""', $table) . '"';
         }
 
         return $argv;
     }
 
     /**
-     * @return string[] psql, который выполняет SQL-файл одной транзакцией: при первой ошибке откат
+     * @return string[] psql, который читает SQL из stdin (ProcessHelper ... ['stdin' => файл])
+     *   одной транзакцией: при первой ошибке откат
      */
-    public static function setRestoreCommand(string $command)
-    {
-        static::$restoreCommand = $command;
-    }
-
-    public function getRestoreArgv($filename)
+    public function getRestoreArgv()
     {
         return array_merge(
             preg_split('/\s+/', trim(static::$restoreCommand)),
             $this->getCliConnectionArgv(),
-            ['--quiet', '--single-transaction', '--set=ON_ERROR_STOP=1', '--file=' . $filename]
+            ['--quiet', '--single-transaction', '--set=ON_ERROR_STOP=1']
         );
     }
 
@@ -378,11 +384,36 @@ WHERE table_name = $tableEsc AND table_schema = current_schema()
         return $env;
     }
 
+    public static function setRestoreCommand(string $command)
+    {
+        static::$restoreCommand = $command;
+    }
+
+    /** docker-вариант psql по образцу setLocalDockerDumpCommand() */
+    public static function setLocalDockerRestoreCommand()
+    {
+        static::setRestoreCommand(static::$localDockerRestoreCommand);
+        static::$cliLocalConnection = true;
+    }
+
+    public static function setLocalDockerDumpCommand()
+    {
+        parent::setLocalDockerDumpCommand();
+        static::$cliLocalConnection = true;
+    }
+
+    /** Для своей обёртки (ssh, kubectl exec): host/port не передавать */
+    public static function setCliLocalConnection(bool $state)
+    {
+        static::$cliLocalConnection = $state;
+    }
+
     private function getCliConnectionArgv()
     {
         return [
-            '--host=' . $this->getHost(),
-            '--port=' . $this->getPort(),
+            ...(static::$cliLocalConnection
+                ? []
+                : ['--host=' . $this->getHost(), '--port=' . $this->getPort()]),
             '--username=' . $this->getUsername(),
             '--dbname=' . $this->getDatabase(),
             '--no-password',
