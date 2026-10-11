@@ -17,10 +17,18 @@ require_once __DIR__ . '/../Entity/AuthorizationPinTestDb.php';
  */
 class PostgresRestoreActionTest extends TestCase
 {
-    private $folder;
+    /** @var string|null Свой временный каталог; null – setUp() ничего не создал */
+    private $folder = null;
 
     public static function setUpBeforeClass(): void
     {
+        // Пропуск до создания чего-либо: tearDown() после него не должен ничего трогать
+        $dsn = getenv('DI_CORE_TEST_DB');
+
+        if (!$dsn || parse_url($dsn, PHP_URL_SCHEME) !== 'postgresql') {
+            self::markTestSkipped('Needs DI_CORE_TEST_DB=postgresql://…');
+        }
+
         AuthorizationPinTestDb::open();
     }
 
@@ -31,13 +39,7 @@ class PostgresRestoreActionTest extends TestCase
 
     protected function setUp(): void
     {
-        $dsn = getenv('DI_CORE_TEST_DB');
-
-        if (!$dsn || parse_url($dsn, PHP_URL_SCHEME) !== 'postgresql') {
-            $this->markTestSkipped('Needs DI_CORE_TEST_DB=postgresql://…');
-        }
-
-        $this->folder = sys_get_temp_dir() . '/di_core_restore_' . getmypid() . '/';
+        $this->folder = sys_get_temp_dir() . '/di_core_restore_' . getmypid() . '_' . uniqid() . '/';
         mkdir($this->folder);
         $db = AuthorizationPinTestDb::db();
         $db->q('DROP TABLE IF EXISTS di_core_restore_t');
@@ -47,28 +49,31 @@ class PostgresRestoreActionTest extends TestCase
     protected function tearDown(): void
     {
         Postgresql::setRestoreCommand('psql');
-        AuthorizationPinTestDb::db()->q('DROP TABLE IF EXISTS di_core_restore_t');
+        Postgresql::setDumpCommand('pg_dump');
 
-        foreach (glob($this->folder . '*') as $f) {
-            unlink($f);
+        if ($this->folder === null) {
+            return;
         }
 
-        rmdir($this->folder);
+        AuthorizationPinTestDb::db()->q('DROP TABLE IF EXISTS di_core_restore_t');
+
+        // Только внутри собственного каталога
+        if (strpos($this->folder, sys_get_temp_dir() . '/di_core_restore_') === 0) {
+            foreach (glob($this->folder . '*') as $f) {
+                is_dir($f) ? rmdir($f) : unlink($f);
+            }
+
+            rmdir($this->folder);
+        }
+
+        $this->folder = null;
     }
 
     private function restore(string $sql, string $name = 'd.sql'): array
     {
         file_put_contents($this->folder . $name, $sql);
 
-        $c = (new \ReflectionClass(Db::class))->newInstanceWithoutConstructor();
-
-        foreach (['file' => $name, 'folder' => $this->folder] as $prop => $value) {
-            $p = new \ReflectionProperty(Db::class, $prop);
-            $p->setAccessible(true);
-            $p->setValue($c, $value);
-        }
-
-        return $c->restoreAction();
+        return $this->restoreFile($name);
     }
 
     private function rows(): array
@@ -152,15 +157,8 @@ class PostgresRestoreActionTest extends TestCase
         $this->assertSame([], $this->rows());
     }
 
-    public function testGzipDumpGoesThroughPsqlToo(): void
+    private function restoreFile(string $name): array
     {
-        $this->useLocalPsql();
-
-        $name = 'd.sql.gz';
-        file_put_contents(
-            $this->folder . $name,
-            gzencode("INSERT INTO di_core_restore_t VALUES (1, 'z');\n")
-        );
         $c = (new \ReflectionClass(Db::class))->newInstanceWithoutConstructor();
 
         foreach (['file' => $name, 'folder' => $this->folder] as $prop => $value) {
@@ -169,8 +167,114 @@ class PostgresRestoreActionTest extends TestCase
             $p->setValue($c, $value);
         }
 
-        $res = $c->restoreAction();
+        return $c->restoreAction();
+    }
+
+    public function testGzipDumpGoesThroughPsqlToo(): void
+    {
+        $this->useLocalPsql();
+
+        file_put_contents(
+            $this->folder . 'd.sql.gz',
+            gzencode("INSERT INTO di_core_restore_t VALUES (1, 'z');\n")
+        );
+
+        $res = $this->restoreFile('d.sql.gz');
         $this->assertTrue($res['ok'], join("\n", $res['errors']));
         $this->assertSame([1 => 'z'], $this->rows());
+    }
+
+    /**
+     * Любой дефект архива – ok=false и ничего не применено: иначе миграция записалась бы
+     * применённой (Migration::assertRestored).
+     */
+    public function testBadGzipArchivesAreErrors(): void
+    {
+        $this->useLocalPsql();
+
+        $good = gzencode(
+            "INSERT INTO di_core_restore_t VALUES (1, 'z');\n" .
+                str_repeat("-- padding line\n", 5000)
+        );
+        $corrupt = $good;
+        $corrupt[strlen($good) - 6] = chr(ord($good[strlen($good) - 6]) ^ 0xff); // CRC
+
+        $cases = [
+            'missing.sql.gz' => null,
+            'empty.sql.gz' => '',
+            'truncated.sql.gz' => substr($good, 0, (int) (strlen($good) / 2)),
+            'corrupt.sql.gz' => $corrupt,
+            'notgz.sql.gz' => "INSERT INTO di_core_restore_t VALUES (1, 'z');\n",
+        ];
+
+        foreach ($cases as $name => $content) {
+            if ($content !== null) {
+                file_put_contents($this->folder . $name, $content);
+            }
+
+            $res = $this->restoreFile($name);
+            $this->assertFalse($res['ok'], $name);
+            $this->assertNotEmpty($res['errors'], $name);
+            $this->assertSame([], $this->rows(), $name);
+        }
+    }
+
+    private function dump(array $args): array
+    {
+        $c = (new \ReflectionClass(Db::class))->newInstanceWithoutConstructor();
+        $m = new \ReflectionMethod($c, 'createPostgresDump');
+        $m->setAccessible(true);
+
+        return $m->invoke($c, ['ok' => false, 'text' => ''], ...$args);
+    }
+
+    /** Подменный pg_dump: пишет --file= и ничего больше */
+    private function fakePgDump(bool $writes): void
+    {
+        $script = $this->folder . 'fake_pg_dump.sh';
+        file_put_contents(
+            $script,
+            "#!/bin/sh\n" .
+                ($writes
+                    ? 'for a in "$@"; do case "$a" in --file=*) echo "-- dump" > "${a#--file=}";; esac; done' . "\n"
+                    : "exit 0\n")
+        );
+        chmod($script, 0755);
+        Postgresql::setDumpCommand($script);
+    }
+
+    public function testDumpWithoutAFileAfterZeroExitIsAnError(): void
+    {
+        $this->fakePgDump(false);
+
+        $res = $this->dump([$this->folder . 'x.sql.gz', [], 1]);
+
+        $this->assertFalse($res['ok']);
+        $this->assertStringContainsString('no dump file', $res['text']);
+        $this->assertSame([], glob($this->folder . 'x.sql*'));
+    }
+
+    public function testFailedCompressionKeepsThePlainDumpAndLeavesNoArchive(): void
+    {
+        $this->fakePgDump(true);
+        // Каталог на месте архива: gzopen() не откроет
+        mkdir($this->folder . 'x.sql.gz');
+
+        $res = $this->dump([$this->folder . 'x.sql.gz', [], 1]);
+
+        $this->assertFalse($res['ok']);
+        $this->assertStringContainsString('Unable to compress', $res['text']);
+        $this->assertFileExists($this->folder . 'x.sql', 'the intact plain dump stays');
+    }
+
+    public function testCompressedDumpReplacesThePlainOne(): void
+    {
+        $this->fakePgDump(true);
+
+        $res = $this->dump([$this->folder . 'x.sql.gz', [], 1]);
+
+        $this->assertTrue($res['ok'], $res['text']);
+        $this->assertFileDoesNotExist($this->folder . 'x.sql');
+        $this->assertSame("-- dump\n", gzdecode(file_get_contents($this->folder . 'x.sql.gz')));
     }
 }

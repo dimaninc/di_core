@@ -640,16 +640,27 @@ class Db extends \diBaseAdminController
             return $ar;
         }
 
-        if ($compress) {
-            $in = fopen($plain, 'rb');
-            $out = gzopen($filename, 'w9');
+        // Нулевой код без файла – не дамп (например, docker-команда пишет внутрь контейнера)
+        if (!is_file($plain) || !filesize($plain)) {
+            @unlink($plain);
+            $ar['text'] = 'pg_dump finished but produced no dump file';
+            Logger::getInstance()->log($ar['text'], 'Db');
 
-            while (!feof($in)) {
-                gzwrite($out, fread($in, 1 << 20));
+            return $ar;
+        }
+
+        if ($compress) {
+            try {
+                static::gzipFile($plain, $filename);
+            } catch (\Throwable $e) {
+                // Несжатый дамп остаётся: он целый, а сломан только архив
+                @unlink($filename);
+                $ar['text'] = 'Unable to compress the dump: ' . $e->getMessage();
+                Logger::getInstance()->log($ar['text'], 'Db');
+
+                return $ar;
             }
 
-            fclose($in);
-            gzclose($out);
             unlink($plain);
         }
 
@@ -657,6 +668,95 @@ class Db extends \diBaseAdminController
         $ar['system'] = true;
 
         return extend($ar, $this->getDumpInfo($filename));
+    }
+
+    /**
+     * @throws \RuntimeException
+     */
+    protected static function gzipFile($src, $dst)
+    {
+        $in = is_file($src) ? @fopen($src, 'rb') : false;
+        $out = $in ? @gzopen($dst, 'w9') : false;
+
+        if (!$in || !$out) {
+            $in && fclose($in);
+
+            throw new \RuntimeException("Unable to open $src or $dst");
+        }
+
+        while (!feof($in)) {
+            $chunk = fread($in, 1 << 20);
+
+            if ($chunk === false || ($chunk !== '' && !gzwrite($out, $chunk))) {
+                fclose($in);
+                gzclose($out);
+
+                throw new \RuntimeException("Unable to write $dst");
+            }
+        }
+
+        fclose($in);
+
+        if (!gzclose($out)) {
+            throw new \RuntimeException("Unable to close $dst");
+        }
+    }
+
+    /**
+     * Потоково, без чтения файла в память. Обрезанный и битый архив ловятся тем, что поток
+     * не дошёл до конца (CRC zlib проверяет в конце потока).
+     *
+     * @throws \RuntimeException
+     */
+    protected static function gunzipFile($src, $dst)
+    {
+        $in = is_file($src) ? @fopen($src, 'rb') : false;
+
+        if (!$in) {
+            throw new \RuntimeException("Unable to read $src");
+        }
+
+        $out = @fopen($dst, 'wb');
+        $ctx = inflate_init(ZLIB_ENCODING_GZIP);
+
+        try {
+            if (!$out) {
+                throw new \RuntimeException("Unable to write $dst");
+            }
+
+            while (!feof($in)) {
+                $chunk = fread($in, 1 << 20);
+
+                if ($chunk === false) {
+                    throw new \RuntimeException("Unable to read $src");
+                }
+
+                $data = $chunk === '' ? '' : @inflate_add($ctx, $chunk);
+
+                if ($data === false) {
+                    throw new \RuntimeException("$src is not a valid gzip archive");
+                }
+
+                if ($data !== '' && fwrite($out, $data) !== strlen($data)) {
+                    throw new \RuntimeException("Unable to write $dst");
+                }
+            }
+
+            if (inflate_get_status($ctx) !== ZLIB_STREAM_END) {
+                throw new \RuntimeException("$src is truncated");
+            }
+
+            if (!fclose($out)) {
+                $out = null;
+
+                throw new \RuntimeException("Unable to write $dst");
+            }
+
+            $out = null;
+        } finally {
+            fclose($in);
+            $out && fclose($out);
+        }
     }
 
     /**
@@ -671,17 +771,26 @@ class Db extends \diBaseAdminController
         $file = $ffn;
 
         if ($isGz) {
-            // psql gz не читает
+            // psql gz не читает; битый архив – ошибка, а не «успешно применённый» огрызок
             $file = tempnam(sys_get_temp_dir(), 'dbrestore');
-            $in = gzopen($ffn, 'rb');
-            $out = fopen($file, 'wb');
 
-            while ($in && !gzeof($in)) {
-                fwrite($out, gzread($in, 1 << 20));
+            try {
+                static::gunzipFile($ffn, $file);
+            } catch (\Throwable $e) {
+                @unlink($file);
+                Logger::getInstance()->log($e->getMessage(), 'Db');
+
+                return array_merge(
+                    [
+                        'ok' => false,
+                        'errors' => [$e->getMessage()],
+                        'file' => $fn,
+                        'startFrom' => false,
+                        'system' => true,
+                    ],
+                    static::getTablesList($db)
+                );
             }
-
-            $in && gzclose($in);
-            fclose($out);
         }
 
         try {
