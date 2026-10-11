@@ -64,6 +64,11 @@ class Db extends \diBaseAdminController
         }
     }
 
+    public static function getMainEngine()
+    {
+        return \diCore\Database\Connection::get(Config::getMainDatabase())::getEngine();
+    }
+
     public static function getDumpsFolder()
     {
         return Config::getDatabaseDumpPath();

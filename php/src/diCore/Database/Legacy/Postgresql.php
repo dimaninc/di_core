@@ -31,7 +31,8 @@ class Postgresql extends Pdo
      * Команда бежит там, где сервер доступен по своему сокету (docker exec): host/port,
      * как их видит PHP (localhost:15432), внутри контейнера неверны и не передаются.
      */
-    protected static $cliLocalConnection = false;
+    protected static $dumpLocalConnection = false;
+    protected static $restoreLocalConnection = false;
 
     protected function getDSN()
     {
@@ -330,7 +331,7 @@ WHERE table_name = $tableEsc AND table_schema = current_schema()
     {
         $argv = array_merge(
             preg_split('/\s+/', trim(static::$dumpCommand)),
-            $this->getCliConnectionArgv(),
+            $this->getCliConnectionArgv(static::$dumpLocalConnection),
             ['--no-owner', '--inserts']
         );
 
@@ -362,7 +363,7 @@ WHERE table_name = $tableEsc AND table_schema = current_schema()
     {
         return array_merge(
             preg_split('/\s+/', trim(static::$restoreCommand)),
-            $this->getCliConnectionArgv(),
+            $this->getCliConnectionArgv(static::$restoreLocalConnection),
             ['--quiet', '--single-transaction', '--set=ON_ERROR_STOP=1']
         );
     }
@@ -396,34 +397,36 @@ WHERE table_name = $tableEsc AND table_schema = current_schema()
         return $env;
     }
 
+    /** Своя команда – обычное подключение по host/port, пока не выбран docker-вариант */
     public static function setRestoreCommand(string $command)
     {
         static::$restoreCommand = $command;
+        static::$restoreLocalConnection = false;
     }
 
-    /** docker-вариант psql по образцу setLocalDockerDumpCommand() */
+    public static function setDumpCommand(string $command)
+    {
+        parent::setDumpCommand($command);
+        static::$dumpLocalConnection = false;
+    }
+
+    /** docker-вариант psql по образцу setLocalDockerDumpCommand(); только сторона восстановления */
     public static function setLocalDockerRestoreCommand()
     {
         static::setRestoreCommand(static::$localDockerRestoreCommand);
-        static::$cliLocalConnection = true;
+        static::$restoreLocalConnection = true;
     }
 
     public static function setLocalDockerDumpCommand()
     {
         parent::setLocalDockerDumpCommand();
-        static::$cliLocalConnection = true;
+        static::$dumpLocalConnection = true;
     }
 
-    /** Для своей обёртки (ssh, kubectl exec): host/port не передавать */
-    public static function setCliLocalConnection(bool $state)
-    {
-        static::$cliLocalConnection = $state;
-    }
-
-    private function getCliConnectionArgv()
+    private function getCliConnectionArgv($local)
     {
         return [
-            ...(static::$cliLocalConnection
+            ...($local
                 ? []
                 : ['--host=' . $this->getHost(), '--port=' . $this->getPort()]),
             '--username=' . $this->getUsername(),

@@ -1,4 +1,4 @@
-<center class="dump-wrapper" data-vocabulary="{{ page_lang|json_encode }}">
+<center class="dump-wrapper" data-vocabulary="{{ page_lang|json_encode }}" data-restore-with-system="{{ restore_with_system_routine ? 1 : 0 }}">
     <ul class="disk-stat">
         {% for disk in disks %}
         <li>

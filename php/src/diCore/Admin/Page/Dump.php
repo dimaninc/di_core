@@ -4,6 +4,7 @@ namespace diCore\Admin\Page;
 
 use diCore\Controller\Db as dbController;
 use diCore\Controller\Dump as dumpController;
+use diCore\Database\Engine;
 use diCore\Helper\FileSystemHelper;
 use diCore\Helper\StringHelper;
 
@@ -61,6 +62,10 @@ class Dump extends \diCore\Admin\BasePage
                 'dump' => \diLib::getAdminWorkerPath('dump'),
                 'dump_upload' => \diLib::getAdminWorkerPath('dump', 'upload'),
             ],
+            // На PostgreSQL восстановление идёт через psql по галке «system»; на MySQL страница
+            // system при восстановлении не шлёт (иначе .gz упирается в ошибку, а пароль идёт в argv)
+            'restore_with_system_routine' =>
+                dbController::getMainEngine() === Engine::POSTGRESQL,
             'tables' => $this->getTablesData(),
             'db_folders' => $this->getDbFolders(),
             'file_folders' => $this->getFileFolders(),

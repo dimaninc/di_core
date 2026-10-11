@@ -94,18 +94,30 @@ class PostgresCliDumpTest extends TestCase
         }
     }
 
-    public function testLocalConnectionOmitsHostAndPort(): void
+    public function testDockerSideOmitsHostAndPortOnlyOnItsOwnSide(): void
     {
-        Postgresql::setCliLocalConnection(true);
+        $db = $this->makeDb();
+        $hasHost = function (array $argv) {
+            return (bool) preg_grep('/^--(host|port)/', $argv);
+        };
 
         try {
-            $argv = $this->makeDb()->getRestoreArgv();
+            Postgresql::setLocalDockerDumpCommand();
+            $this->assertFalse($hasHost($db->getDumpArgv()), 'dockerised dump');
+            $this->assertTrue($hasHost($db->getRestoreArgv()), 'host psql keeps host/port');
+
+            Postgresql::setDumpCommand('pg_dump');
+            Postgresql::setLocalDockerRestoreCommand();
+            $this->assertTrue($hasHost($db->getDumpArgv()), 'host pg_dump keeps host/port');
+            $this->assertFalse($hasHost($db->getRestoreArgv()), 'dockerised psql');
+            $this->assertContains('--username=app', $db->getRestoreArgv());
         } finally {
-            Postgresql::setCliLocalConnection(false);
+            Postgresql::setDumpCommand('pg_dump');
+            Postgresql::setRestoreCommand('psql');
         }
 
-        $this->assertSame([], preg_grep('/^--(host|port)/', $argv));
-        $this->assertContains('--username=app', $argv);
+        $this->assertTrue($hasHost($db->getDumpArgv()));
+        $this->assertTrue($hasHost($db->getRestoreArgv()));
     }
 
     public function testPasswordTravelsInEnvironmentOnly(): void

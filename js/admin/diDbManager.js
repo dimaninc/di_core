@@ -301,11 +301,18 @@ function diDbManager(_opts) {
 
     this.status('Restoring database dump ' + file + '...');
 
-    worker('restore', {
+    const params = {
       file: file,
-      folderId: folderId,
-      system: getCheckboxParam('#system')
-    });
+      folderId: folderId
+    };
+
+    // Только PostgreSQL (psql): на MySQL галка «system» относится к дампу, а при восстановлении
+    // дала бы mysql с паролем в argv и ошибку для .gz
+    if ($('.dump-wrapper').data('restore-with-system')) {
+      params.system = getCheckboxParam('#system');
+    }
+
+    worker('restore', params);
   };
 
   this.downloadDump = function (file, folderId) {
