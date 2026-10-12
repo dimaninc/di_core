@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.9
+
+- Admin form: opt-out of content type autofill via data-core-type-change
+
 ## 0.10.8
 
 - PostgreSQL: migrations list cache, actions log, payment drafts filter, database dumps (#33)
