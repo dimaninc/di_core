@@ -963,7 +963,9 @@ var diAdminForm = function (table, id, auto_save_timeout) {
       }
     }
 
-    if (in_array(self.table, ['content'])) {
+    // Name/slug autofill and the menu_title label serve core content types; a project with its own
+    // types opts out with data-core-type-change="off" on the type select.
+    if (in_array(self.table, ['content']) && $type.data('core-type-change') !== 'off') {
       $type.change(typeOnChange);
 
       typeOnChange();
