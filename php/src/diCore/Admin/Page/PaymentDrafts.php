@@ -61,7 +61,20 @@ class PaymentDrafts extends BasePage
             ])
             ->addFilter([
                 'field' => 'vendor',
-                'type' => 'int',
+                'type' => 'string',
+                // Значение – пара «система-способ» (`Payment::vendorFilterKey()`)
+                'where_tpl' => function ($field, $value) use ($paymentClass) {
+                    $pair = $paymentClass::parseVendorFilterKey((string) $value);
+
+                    // Старое значение из сохранённого фильтра – голый id способа
+                    if (!$pair) {
+                        return "$field = " . (int) $value;
+                    }
+
+                    [$systemId, $vendorId] = $pair;
+
+                    return "(pay_system = $systemId AND $field = $vendorId)";
+                },
             ])
             ->addFilter([
                 'field' => 'date_reserved',
@@ -74,7 +87,7 @@ class PaymentDrafts extends BasePage
                 $paymentClass::getCurrentSystems(),
                 ['' => 'Все провайдеры']
             )
-            ->setSelectFromArrayInput('vendor', $paymentClass::getCurrentVendors(), [
+            ->setSelectFromArrayInput('vendor', $paymentClass::getAllVendors(), [
                 '' => 'Все способы',
             ]);
     }

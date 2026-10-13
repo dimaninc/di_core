@@ -197,6 +197,53 @@ class Payment
         return $vendors;
     }
 
+    /**
+     * Все способы всех систем из `getCurrentSystems()`, включённые и нет, с ключом
+     * `vendorFilterKey()`: id способов разных систем пересекаются (карта Т-Банка,
+     * Робокассы и CloudPayments – все 10), так что один id способа ничего не выбирает.
+     */
+    public static function getAllVendors(): array
+    {
+        $vendors = [];
+
+        foreach (static::getCurrentSystems() as $systemId => $systemTitle) {
+            try {
+                $class = System::getSystemClass($systemId);
+            } catch (\diCore\Base\Exception\HttpException $e) {
+                // Система без поддержки в `getSystemClass()` (sberbank, alfabank)
+                continue;
+            }
+
+            // Система без контейнера способов: её целиком выбирает фильтр по системе
+            if ($class === System::class) {
+                continue;
+            }
+
+            /** @var VendorContainer $class */
+            foreach ($class::titles() as $vendorId => $vendorTitle) {
+                $vendors[static::vendorFilterKey($systemId, $vendorId)] =
+                    $systemTitle . ': ' . $vendorTitle;
+            }
+        }
+
+        return $vendors;
+    }
+
+    public static function vendorFilterKey(int $systemId, int $vendorId): string
+    {
+        return $systemId . '-' . $vendorId;
+    }
+
+    /**
+     * @return array{0: int, 1: int}|null [systemId, vendorId]; null – не ключ `vendorFilterKey()`
+     */
+    public static function parseVendorFilterKey(string $key): ?array
+    {
+        return preg_match('/^(\d+)-(\d+)$/', $key, $m)
+            ? [(int) $m[1], (int) $m[2]]
+            : null;
+    }
+
     public static function currencyTitle($currencyId)
     {
         return isset(static::$currencies[$currencyId])
