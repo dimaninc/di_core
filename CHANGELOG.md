@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.10
+
+- Admin payment filters: vendor filter depends on the selected system (#36)
+
 ## 0.10.9
 
 - Admin form: opt-out of content type autofill via data-core-type-change
