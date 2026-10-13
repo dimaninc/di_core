@@ -208,7 +208,8 @@ class Payment
 
         foreach (static::getCurrentSystems() as $systemId => $systemTitle) {
             try {
-                $class = System::getSystemClass($systemId);
+                // Непустой vendorId: без него Mixplat отвечает `System::class`, а не своими операторами
+                $class = System::getSystemClass($systemId, true);
             } catch (\diCore\Base\Exception\HttpException $e) {
                 // Система без поддержки в `getSystemClass()` (sberbank, alfabank)
                 continue;
@@ -222,7 +223,7 @@ class Payment
             /** @var VendorContainer $class */
             foreach ($class::titles() as $vendorId => $vendorTitle) {
                 $vendors[static::vendorFilterKey($systemId, $vendorId)] =
-                    $systemTitle . ': ' . $vendorTitle;
+                    "$systemTitle: $vendorTitle";
             }
         }
 
@@ -231,7 +232,28 @@ class Payment
 
     public static function vendorFilterKey(int $systemId, int $vendorId): string
     {
-        return $systemId . '-' . $vendorId;
+        return "$systemId-$vendorId";
+    }
+
+    /**
+     * Условие фильтра админки по ключу `vendorFilterKey()`. Любое другое значение – без
+     * фильтра: его нет среди пунктов списка, и отбор по нему был бы невидим для админа
+     * (голый id из cookie прежних версий, `!…`, мусор из URL).
+     */
+    public static function vendorFilterWhere(
+        string $field,
+        $value,
+        string $tablePrefix = ''
+    ): string {
+        $pair = static::parseVendorFilterKey((string) $value);
+
+        if (!$pair) {
+            return '1=1';
+        }
+
+        [$systemId, $vendorId] = $pair;
+
+        return "({$tablePrefix}pay_system = $systemId AND $tablePrefix$field = $vendorId)";
     }
 
     /**
