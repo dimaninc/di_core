@@ -685,7 +685,7 @@ class diAdminFilters
 
         if ($opts['resetOnChange']) {
             $this->set_input_params($opts['field'], [
-                'data-reset-on-change' => join(',', (array) $opts['resetOnChange']),
+                'data-reset-on-change' => self::resetOnChangeAttr($opts),
             ]);
         }
 
@@ -775,6 +775,12 @@ class diAdminFilters
         );
 
         return $this;
+    }
+
+    /** `data-reset-on-change`: поля через запятую для `diAdminFilters.js` */
+    private static function resetOnChangeAttr(array $filter): string
+    {
+        return join(',', (array) $filter['resetOnChange']);
     }
 
     public function removeFilter($field)
@@ -1226,9 +1232,8 @@ class diAdminFilters
 
                         if ($ar['resetOnChange']) {
                             $input->setAttr([
-                                'data-reset-on-change' => join(
-                                    ',',
-                                    (array) $ar['resetOnChange']
+                                'data-reset-on-change' => self::resetOnChangeAttr(
+                                    $ar
                                 ),
                             ]);
                         }
@@ -1244,6 +1249,11 @@ class diAdminFilters
 
                         if ($ar['submitOnChange']) {
                             $attrs['data-submit-on-change'] = $ar['submitOnChange'];
+                        }
+
+                        if ($ar['resetOnChange']) {
+                            $attrs['data-reset-on-change'] =
+                                self::resetOnChangeAttr($ar);
                         }
 
                         $input = sprintf(

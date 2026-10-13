@@ -120,6 +120,8 @@ var diAdminFilters = function (_opts) {
 
       if ($input.val() && $input.val() !== '0') {
         $input.val('');
+        // `val()` не шлёт change – сбросить зависимые поля, как при выборе в списке
+        self.resetDependentFields($input);
 
         self.apply();
       } else if ($row.find('.admin-filter-date-wrapper').length) {
