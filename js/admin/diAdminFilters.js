@@ -35,6 +35,8 @@ var diAdminFilters = function (_opts) {
     e.$form
       .find('[data-submit-on-change="true"],[data-submit-on-change="1"]')
       .on('change', function () {
+        self.resetDependentFields($(this));
+
         return self.apply();
       });
 
@@ -182,6 +184,27 @@ var diAdminFilters = function (_opts) {
       location.href = baseUri;
     } else {
       this.reloadPageInCookiesMode();
+    }
+
+    return this;
+  };
+
+  // Поля, чьи варианты зависят от изменённого (`resetOnChange` фильтра): прежнее
+  // значение может совпасть по id с чужим вариантом нового списка
+  this.resetDependentFields = function ($input) {
+    var fields = String($input.data('reset-on-change') || '').split(/[\s,]+/);
+
+    for (var i = 0; i < fields.length; i++) {
+      if (!fields[i]) {
+        continue;
+      }
+
+      $(
+        ('#admin_filter[' + fields[i] + ']')
+          .replace(/\[/g, '\\[')
+          .replace(/]/g, '\\]'),
+        e.$form
+      ).val('');
     }
 
     return this;

@@ -661,6 +661,7 @@ class diAdminFilters
             'title' => $title,
             'placeholder' => '',
             'submitOnChange' => false, // submit filter form on change
+            'resetOnChange' => [], // fields cleared on submitOnChange: options depend on this one
             'default_value' => $default_value,
             'default_value2' => $default_value2,
             'strict' => false,
@@ -679,6 +680,12 @@ class diAdminFilters
         if ($opts['submitOnChange']) {
             $this->set_input_params($opts['field'], [
                 'data-submit-on-change' => $opts['submitOnChange'],
+            ]);
+        }
+
+        if ($opts['resetOnChange']) {
+            $this->set_input_params($opts['field'], [
+                'data-reset-on-change' => join(',', (array) $opts['resetOnChange']),
             ]);
         }
 
@@ -1214,6 +1221,15 @@ class diAdminFilters
                         if ($ar['submitOnChange']) {
                             $input->setAttr([
                                 'data-submit-on-change' => $ar['submitOnChange'],
+                            ]);
+                        }
+
+                        if ($ar['resetOnChange']) {
+                            $input->setAttr([
+                                'data-reset-on-change' => join(
+                                    ',',
+                                    (array) $ar['resetOnChange']
+                                ),
                             ]);
                         }
                     } else {
