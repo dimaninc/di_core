@@ -198,72 +198,29 @@ class Payment
     }
 
     /**
-     * Все способы всех систем из `getCurrentSystems()`, включённые и нет, с ключом
-     * `vendorFilterKey()`: id способов разных систем пересекаются (карта Т-Банка,
-     * Робокассы и CloudPayments – все 10), так что один id способа ничего не выбирает.
+     * Все способы системы, включённые и нет; пусто для системы не из `getCurrentSystems()`
+     * и для системы без своих способов (paypal, crypto_cloud).
      */
-    public static function getAllVendors(): array
+    public static function getSystemVendors(int $systemId): array
     {
-        $vendors = [];
-
-        foreach (static::getCurrentSystems() as $systemId => $systemTitle) {
-            try {
-                // Непустой vendorId: без него Mixplat отвечает `System::class`, а не своими операторами
-                $class = System::getSystemClass($systemId, true);
-            } catch (\diCore\Base\Exception\HttpException $e) {
-                // Система без поддержки в `getSystemClass()` (sberbank, alfabank)
-                continue;
-            }
-
-            // Система без контейнера способов: её целиком выбирает фильтр по системе
-            if ($class === System::class) {
-                continue;
-            }
-
-            /** @var VendorContainer $class */
-            foreach ($class::titles() as $vendorId => $vendorTitle) {
-                $vendors[static::vendorFilterKey($systemId, $vendorId)] =
-                    "$systemTitle: $vendorTitle";
-            }
+        if (!isset(static::getCurrentSystems()[$systemId])) {
+            return [];
         }
 
-        return $vendors;
-    }
-
-    public static function vendorFilterKey(int $systemId, int $vendorId): string
-    {
-        return "$systemId-$vendorId";
-    }
-
-    /**
-     * Условие фильтра админки по ключу `vendorFilterKey()`. Любое другое значение – без
-     * фильтра: его нет среди пунктов списка, и отбор по нему был бы невидим для админа
-     * (голый id из cookie прежних версий, `!…`, мусор из URL).
-     */
-    public static function vendorFilterWhere(
-        string $field,
-        $value,
-        string $tablePrefix = ''
-    ): string {
-        $pair = static::parseVendorFilterKey((string) $value);
-
-        if (!$pair) {
-            return '1=1';
+        try {
+            // Непустой vendorId: без него Mixplat отвечает `System::class`, а не своими операторами
+            $class = System::getSystemClass($systemId, true);
+        } catch (\diCore\Base\Exception\HttpException $e) {
+            // Система без поддержки в `getSystemClass()` (sberbank, alfabank)
+            return [];
         }
 
-        [$systemId, $vendorId] = $pair;
+        if ($class === System::class) {
+            return [];
+        }
 
-        return "({$tablePrefix}pay_system = $systemId AND $tablePrefix$field = $vendorId)";
-    }
-
-    /**
-     * @return array{0: int, 1: int}|null [systemId, vendorId]; null – не ключ `vendorFilterKey()`
-     */
-    public static function parseVendorFilterKey(string $key): ?array
-    {
-        return preg_match('/^(\d+)-(\d+)$/', $key, $m)
-            ? [(int) $m[1], (int) $m[2]]
-            : null;
+        /** @var VendorContainer $class */
+        return $class::titles();
     }
 
     public static function currencyTitle($currencyId)
