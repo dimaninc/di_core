@@ -398,7 +398,7 @@ class diActionsLog
                     $r->info
                 );
 
-                $dataSource = 'self::getUserAppearance';
+                $dataSource = [self::class, 'getUserAppearance'];
 
                 return self::getSimpleInfoFromDataSource(
                     $dataSource,
