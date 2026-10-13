@@ -197,6 +197,32 @@ class Payment
         return $vendors;
     }
 
+    /**
+     * Все способы системы, включённые и нет; пусто для системы не из `getCurrentSystems()`
+     * и для системы без своих способов (paypal, crypto_cloud).
+     */
+    public static function getSystemVendors(int $systemId): array
+    {
+        if (!isset(static::getCurrentSystems()[$systemId])) {
+            return [];
+        }
+
+        try {
+            // Непустой vendorId: без него Mixplat отвечает `System::class`, а не своими операторами
+            $class = System::getSystemClass($systemId, true);
+        } catch (\diCore\Base\Exception\HttpException $e) {
+            // Система без поддержки в `getSystemClass()` (sberbank, alfabank)
+            return [];
+        }
+
+        if ($class === System::class) {
+            return [];
+        }
+
+        /** @var VendorContainer $class */
+        return $class::titles();
+    }
+
     public static function currencyTitle($currencyId)
     {
         return isset(static::$currencies[$currencyId])

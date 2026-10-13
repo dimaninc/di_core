@@ -661,6 +661,7 @@ class diAdminFilters
             'title' => $title,
             'placeholder' => '',
             'submitOnChange' => false, // submit filter form on change
+            'resetOnChange' => [], // fields cleared on submitOnChange: options depend on this one
             'default_value' => $default_value,
             'default_value2' => $default_value2,
             'strict' => false,
@@ -679,6 +680,12 @@ class diAdminFilters
         if ($opts['submitOnChange']) {
             $this->set_input_params($opts['field'], [
                 'data-submit-on-change' => $opts['submitOnChange'],
+            ]);
+        }
+
+        if ($opts['resetOnChange']) {
+            $this->set_input_params($opts['field'], [
+                'data-reset-on-change' => self::resetOnChangeAttr($opts),
             ]);
         }
 
@@ -768,6 +775,12 @@ class diAdminFilters
         );
 
         return $this;
+    }
+
+    /** `data-reset-on-change`: поля через запятую для `diAdminFilters.js` */
+    private static function resetOnChangeAttr(array $filter): string
+    {
+        return join(',', (array) $filter['resetOnChange']);
     }
 
     public function removeFilter($field)
@@ -1216,6 +1229,14 @@ class diAdminFilters
                                 'data-submit-on-change' => $ar['submitOnChange'],
                             ]);
                         }
+
+                        if ($ar['resetOnChange']) {
+                            $input->setAttr([
+                                'data-reset-on-change' => self::resetOnChangeAttr(
+                                    $ar
+                                ),
+                            ]);
+                        }
                     } else {
                         $attrs = [
                             'id' => $fieldName,
@@ -1228,6 +1249,11 @@ class diAdminFilters
 
                         if ($ar['submitOnChange']) {
                             $attrs['data-submit-on-change'] = $ar['submitOnChange'];
+                        }
+
+                        if ($ar['resetOnChange']) {
+                            $attrs['data-reset-on-change'] =
+                                self::resetOnChangeAttr($ar);
                         }
 
                         $input = sprintf(

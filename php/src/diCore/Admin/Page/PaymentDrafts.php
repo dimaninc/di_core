@@ -46,8 +46,9 @@ class PaymentDrafts extends BasePage
     protected function setupFilters()
     {
         $paymentClass = Payment::getClass();
+        $filters = $this->getFilters();
 
-        $this->getFilters()
+        $filters
             ->addFilter([
                 'field' => 'user_id',
                 'type' => 'string',
@@ -58,11 +59,37 @@ class PaymentDrafts extends BasePage
             ->addFilter([
                 'field' => 'pay_system',
                 'type' => 'int',
-            ])
-            ->addFilter([
+                // Список способов зависит от системы – перерисовать фильтры сразу и
+                // сбросить способ: его id может совпасть с чужим способом новой системы
+                'submitOnChange' => true,
+                'resetOnChange' => ['vendor'],
+            ]);
+
+        // Id способов разных систем пересекаются, поэтому способ выбирается только внутри системы
+        $vendors = $paymentClass::getSystemVendors(
+            static::filterSystemId($filters->gatherData('pay_system'))
+        );
+
+        if ($vendors) {
+            $filters->addFilter([
                 'field' => 'vendor',
                 'type' => 'int',
-            ])
+                'where_tpl' => fn(
+                    $field,
+                    $value,
+                    $not = false,
+                    $tablePrefix = ''
+                ) => static::vendorFilterWhere(
+                    $field,
+                    (int) $value,
+                    $vendors,
+                    (bool) $not,
+                    (string) $tablePrefix
+                ),
+            ]);
+        }
+
+        $filters
             ->addFilter([
                 'field' => 'date_reserved',
                 'type' => 'date_str_range',
@@ -73,10 +100,42 @@ class PaymentDrafts extends BasePage
                 'pay_system',
                 $paymentClass::getCurrentSystems(),
                 ['' => 'Все провайдеры']
-            )
-            ->setSelectFromArrayInput('vendor', $paymentClass::getCurrentVendors(), [
+            );
+
+        if ($vendors) {
+            $filters->setSelectFromArrayInput('vendor', $vendors, [
                 '' => 'Все способы',
             ]);
+        }
+    }
+
+    /**
+     * Id системы из значения фильтра; 0 – система не выбрана или выбрано отрицание (`!7`),
+     * при котором способы разных систем снова смешиваются.
+     */
+    public static function filterSystemId($value): int
+    {
+        return is_scalar($value) && ctype_digit((string) $value) ? (int) $value : 0;
+    }
+
+    /**
+     * Способ не из списка выбранной системы (остался в cookie после смены системы) не
+     * фильтрует: пункта для него в селекте нет, и отбор был бы невидим.
+     */
+    public static function vendorFilterWhere(
+        string $field,
+        int $vendorId,
+        array $vendors,
+        bool $not,
+        string $tablePrefix = ''
+    ): string {
+        if (!isset($vendors[$vendorId])) {
+            return '1=1';
+        }
+
+        $operator = $not ? '!=' : '=';
+
+        return "$tablePrefix$field $operator $vendorId";
     }
 
     public function renderList()
