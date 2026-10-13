@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.11
+
+- Replace deprecated 'self::' string callable in diActionsLog
+
 ## 0.10.10
 
 - Admin payment filters: vendor filter depends on the selected system (#36)
