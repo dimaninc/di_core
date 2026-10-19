@@ -161,16 +161,44 @@ class diImage
      * затевалось.
      *
      * Реальный потолок выше на ProcessHelper::TERM_GRACE_SEC — паузу между
-     * SIGTERM и SIGKILL, — то есть 22 с, а не 20. Grace прибавляется РОВНО
-     * ОДИН раз: после убийства бюджет уже исчерпан, и следующий конвертер
-     * получает отрицательный остаток и отклоняется, не запускаясь. Держать
+     * SIGTERM и SIGKILL, — то есть 22 с, а не 20. Обычно grace прибавляется
+     * один раз: после убийства бюджет исчерпан, и следующий конвертер
+     * отклоняется, не запускаясь. Для файла с альфой ImageMagick убивают раньше
+     * (HEIF_ALPHA_RESERVE_SEC), и grace может случиться дважды – но второй раз
+     * уже внутри резерва, потолок те же 22 с. Держать
      * заметно ниже per-file лимита вызывающего (в 1romantic это
      * set_time_limit(30) на файл).
      */
     const HEIC_TOTAL_TIMEOUT_SEC = 20.0;
 
+    /**
+     * Сколько бюджета ImageMagick оставляет heif-convert, когда для файла с
+     * альфой тот идёт последним: прямой JPEG 15 Мп – 0,5 с (замер), а раньше
+     * он шёл первым и успевал всегда. Фактически ему достаётся резерв за
+     * вычетом паузы на убийство ImageMagick (ProcessHelper::TERM_GRACE_SEC), около 3 с.
+     * Резерв берётся и там, где heif-convert нет вовсе: ImageMagick тогда
+     * получает 15 с вместо 20 – сознательная цена, проверять бинарь на
+     * каждой загрузке ради декодирования дольше 15 с не стоит.
+     */
+    const HEIF_ALPHA_RESERVE_SEC = 5.0;
+
     const HEIC_JPEG_QUALITY = 92;
     const HEIC_LOG_MODULE = 'diImage/convertHeicToJpeg';
+
+    /**
+     * Тип вспомогательного изображения-альфы в `auxC` (AVIF и HEIC), с
+     * завершающим нулём: `auxid:1` иначе совпал бы с префиксом `auxid:10`
+     */
+    const HEIF_ALPHA_URNS = [
+        "urn:mpeg:mpegB:cicp:systems:auxiliary:alpha\0",
+        "urn:mpeg:hevc:2015:auxid:1\0",
+    ];
+
+    /** `meta` с `auxC` пишут в начало файла; дальше лежат пиксели */
+    const HEIF_META_HEAD_BYTES = 65536;
+
+    /** Фон, на который ложится альфа: тот же, что у GD-миниатюр (set_bg_color) */
+    const HEIF_ALPHA_BACKGROUND = 'white';
 
     public $image;
     public $w, $h, $t;
@@ -281,13 +309,50 @@ class diImage
     {
         $brands = static::readFtypBrands($file);
 
-        // AVIF раньше HEIF: `mif1` есть у обоих, и без этой проверки avif
-        // уезжал бы в HEIC-конвертер, где на проде падают все три шага
+        // AVIF раньше HEIF: `mif1` есть у обоих. Потребители ветвятся по
+        // isHeic() (HEIC – массовый путь с айфона, AVIF они включают отдельно),
+        // поэтому AVIF отвечает здесь false и опознаётся только isAvif()
         if (array_intersect($brands, self::AVIF_BRANDS)) {
             return false;
         }
 
         return (bool) array_intersect($brands, self::HEIF_BRANDS);
+    }
+
+    /**
+     * AVIF (кадр или последовательность) — по тем же ftyp-брендам, что и
+     * isHeic(); оба метода никогда не отвечают true на один и тот же файл.
+     */
+    public static function isAvif(string $file): bool
+    {
+        return (bool) array_intersect(
+            static::readFtypBrands($file),
+            self::AVIF_BRANDS
+        );
+    }
+
+    /**
+     * Есть ли в HEIF/AVIF альфа-канал. Поиск по началу файла, а не процесс
+     * heif-info: проверка стоит на каждой загрузке. `meta` в конце файла сюда
+     * не попадёт – тогда порядок конвертеров обычный.
+     */
+    public static function hasHeifAlpha(string $file): bool
+    {
+        $head = is_file($file)
+            ? @file_get_contents($file, false, null, 0, self::HEIF_META_HEAD_BYTES)
+            : false;
+
+        if (!$head) {
+            return false;
+        }
+
+        foreach (self::HEIF_ALPHA_URNS as $urn) {
+            if (strpos($head, $urn) !== false) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -360,33 +425,79 @@ class diImage
     }
 
     /**
-     * Конвертирует HEIC/HEIF в JPEG, перебирая конвертеры по очереди: падение
-     * или отсутствие одного больше не означает, что человек не может загрузить
-     * фото с айфона. Каждая неудачная попытка пишется в лог отдельной строкой,
-     * исключение бросается, только если не сработало ничего.
+     * JPEG без альфы, и прозрачное без наложения на фон становится чёрным.
+     * ImageMagick кладёт альфу на белый сам, у heif-convert такого флага нет
+     * (а запись PNG ради наложения у него в ~50 раз медленнее JPEG и не влезает
+     * в бюджет), поэтому для файла с альфой он идёт последним: если ImageMagick
+     * на хосте его не читает, будет чёрный фон, но не отказ.
+     *
+     * @return string[]
+     */
+    protected static function getHeifConverterOrderFor(string $srcFile): array
+    {
+        $order = static::getHeicConverterOrder();
+
+        if (
+            !in_array(self::HEIC_CONVERTER_HEIF, $order, true) ||
+            !static::hasHeifAlpha($srcFile)
+        ) {
+            return $order;
+        }
+
+        $order = array_values(
+            array_diff($order, [self::HEIC_CONVERTER_HEIF])
+        );
+        $order[] = self::HEIC_CONVERTER_HEIF;
+
+        return $order;
+    }
+
+    /**
+     * Конвертирует HEIC/HEIF или AVIF в JPEG, перебирая конвертеры по очереди:
+     * падение или отсутствие одного больше не означает, что человек не может
+     * загрузить фото с айфона. Каждая неудачная попытка пишется в лог отдельной
+     * строкой, исключение бросается, только если не сработало ничего.
+     *
+     * Цепочка для AVIF та же: какой из конвертеров его читает (libheif с
+     * AV1-декодером, делегат ImageMagick), зависит от хоста, а конвертер без
+     * поддержки отказывает сразу.
      *
      * don't forget to set jpeg extension in destination filename
      *
      * @throws Exception
      */
-    public static function convertHeicToJpeg(string $heicFile, string $jpegFile)
-    {
+    public static function convertHeifToJpeg(
+        string $srcFile,
+        string $jpegFile
+    ): string {
+        $avif = static::isAvif($srcFile);
         $errors = [];
         $deadline = microtime(true) + static::HEIC_TOTAL_TIMEOUT_SEC;
 
-        foreach (static::getHeicConverterOrder() as $converter) {
+        $order = static::getHeifConverterOrderFor($srcFile);
+        $heifMovedLast = $order !== static::getHeicConverterOrder();
+
+        foreach ($order as $converter) {
+            $reserve =
+                $heifMovedLast && $converter !== self::HEIC_CONVERTER_HEIF
+                    ? static::HEIF_ALPHA_RESERVE_SEC
+                    : 0.0;
+
             try {
                 if (
                     static::runHeicConverter(
                         $converter,
-                        $heicFile,
+                        $srcFile,
                         $jpegFile,
-                        $deadline - microtime(true)
+                        $deadline - microtime(true) - $reserve
                     )
                 ) {
                     if ($errors) {
+                        // строка для HEIC оставлена прежней — по ней ищут в логах
+                        $prefix = $avif ? 'AVIF ' : '';
                         static::logHeic(
-                            "converted by $converter after: " . join(' | ', $errors)
+                            "{$prefix}converted by $converter after: " .
+                                join(' | ', $errors)
                         );
                     }
 
@@ -409,13 +520,28 @@ class diImage
             );
         }
 
+        $kind = $avif ? 'AVIF' : 'HEIC';
         $message =
-            'Error converting HEIC to JPEG. Tried: ' .
+            "Error converting $kind to JPEG. Tried: " .
             (join(' | ', $errors) ?: 'nothing');
 
         static::logHeic($message);
 
         throw new Exception($message);
+    }
+
+    /**
+     * Без return type: наследник, переопределивший метод без него, иначе
+     * упадёт фаталом при загрузке класса.
+     *
+     * @deprecated use convertHeifToJpeg(), который понимает и AVIF. Наследник,
+     *   переопределивший этот метод, должен переопределить convertHeifToJpeg():
+     *   вызовы по новому имени его переопределения не видят
+     * @throws Exception
+     */
+    public static function convertHeicToJpeg(string $heicFile, string $jpegFile)
+    {
+        return static::convertHeifToJpeg($heicFile, $jpegFile);
     }
 
     protected static function logHeic(string $message): void
@@ -447,7 +573,9 @@ class diImage
                     Config::isMac() ? ['magick', 'convert'] : ['convert'],
                     $heicFile,
                     $jpegFile,
-                    $timeoutSec
+                    $timeoutSec,
+                    // без альфы это no-op
+                    ['-background', static::HEIF_ALPHA_BACKGROUND, '-alpha', 'remove']
                 );
 
             case self::HEIC_CONVERTER_HEIF:
@@ -463,16 +591,17 @@ class diImage
     }
 
     /**
-     * @throws Exception
-     */
-    /**
      * @param string[] $argv бинарь и его флаги; файлы дописываются здесь
+     * @param string[] $outputArgs флаги между входом и выходом – операторы
+     *   ImageMagick применяются к уже прочитанной картинке
+     * @throws Exception
      */
     protected static function convertHeicByCli(
         array $argv,
         string $heicFile,
         string $jpegFile,
-        float $timeoutSec
+        float $timeoutSec,
+        array $outputArgs = []
     ): bool {
         if ($timeoutSec <= 0) {
             throw new Exception('no time left in the conversion budget');
@@ -481,7 +610,7 @@ class diImage
         // Массивом, не строкой: без шелла не нужно экранирование, и убивается
         // сам конвертер, а не обёртка sh
         $result = ProcessHelper::run(
-            array_merge($argv, [$heicFile, $jpegFile]),
+            array_merge($argv, [$heicFile], $outputArgs, [$jpegFile]),
             $timeoutSec
         );
 
@@ -611,6 +740,12 @@ class diImage
             // HEIC от live photo / burst распаковывается в несколько кадров,
             // нужен только первый
             $im->setIteratorIndex(0);
+
+            if ($im->getImageAlphaChannel()) {
+                $im->setImageBackgroundColor(static::HEIF_ALPHA_BACKGROUND);
+                $im->setImageAlphaChannel(\Imagick::ALPHACHANNEL_REMOVE);
+            }
+
             $im->setImageFormat('jpeg');
             $im->setImageCompressionQuality(self::HEIC_JPEG_QUALITY);
             $im->writeImage($jpegFile);
