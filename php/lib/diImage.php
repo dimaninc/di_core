@@ -172,6 +172,21 @@ class diImage
     const HEIC_JPEG_QUALITY = 92;
     const HEIC_LOG_MODULE = 'diImage/convertHeicToJpeg';
 
+    /**
+     * Тип вспомогательного изображения-альфы в `auxC` (AVIF и HEIC), с
+     * завершающим нулём: `auxid:1` иначе совпал бы с префиксом `auxid:10`
+     */
+    const HEIF_ALPHA_URNS = [
+        "urn:mpeg:mpegB:cicp:systems:auxiliary:alpha\0",
+        "urn:mpeg:hevc:2015:auxid:1\0",
+    ];
+
+    /** `meta` с `auxC` пишут в начало файла; дальше лежат пиксели */
+    const HEIF_META_HEAD_BYTES = 65536;
+
+    /** Фон, на который ложится альфа: тот же, что у GD-миниатюр (set_bg_color) */
+    const HEIF_ALPHA_BACKGROUND = 'white';
+
     public $image;
     public $w, $h, $t;
     public $orig_fn;
@@ -281,8 +296,9 @@ class diImage
     {
         $brands = static::readFtypBrands($file);
 
-        // AVIF раньше HEIF: `mif1` есть у обоих, и без этой проверки avif
-        // уезжал бы в HEIC-конвертер, где на проде падают все три шага
+        // AVIF раньше HEIF: `mif1` есть у обоих. Потребители ветвятся по
+        // isHeic() (HEIC – массовый путь с айфона, AVIF они включают отдельно),
+        // поэтому AVIF отвечает здесь false и опознаётся только isAvif()
         if (array_intersect($brands, self::AVIF_BRANDS)) {
             return false;
         }
@@ -300,6 +316,32 @@ class diImage
             static::readFtypBrands($file),
             self::AVIF_BRANDS
         );
+    }
+
+    /**
+     * Есть ли в HEIF/AVIF альфа-канал. Ни один конвертер сам не кладёт её на
+     * фон: JPEG без альфы, и прозрачное становилось чёрным – без ошибки.
+     * Поиск по началу файла, а не процесс heif-info: проверка стоит на каждой
+     * загрузке. `meta` в конце файла сюда не попадёт – тогда фон будет как
+     * раньше, чёрным.
+     */
+    public static function hasHeifAlpha(string $file): bool
+    {
+        $head = is_file($file)
+            ? @file_get_contents($file, false, null, 0, self::HEIF_META_HEAD_BYTES)
+            : false;
+
+        if (!$head) {
+            return false;
+        }
+
+        foreach (self::HEIF_ALPHA_URNS as $urn) {
+            if (strpos($head, $urn) !== false) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -482,10 +524,20 @@ class diImage
                     Config::isMac() ? ['magick', 'convert'] : ['convert'],
                     $heicFile,
                     $jpegFile,
-                    $timeoutSec
+                    $timeoutSec,
+                    // без альфы это no-op
+                    ['-background', self::HEIF_ALPHA_BACKGROUND, '-alpha', 'remove']
                 );
 
             case self::HEIC_CONVERTER_HEIF:
+                if (static::hasHeifAlpha($heicFile)) {
+                    return static::convertHeifWithAlphaByCli(
+                        $heicFile,
+                        $jpegFile,
+                        $timeoutSec
+                    );
+                }
+
                 return static::convertHeicByCli(
                     ['heif-convert'],
                     $heicFile,
@@ -498,16 +550,90 @@ class diImage
     }
 
     /**
+     * У heif-convert нет флага фона, а в JPEG альфа просто отбрасывается.
+     * Поэтому через PNG, который сохраняет альфу, и GD кладёт его на фон.
+     * Только для файлов с альфой: PNG 12-мегапиксельного снимка – секунды.
+     *
+     * @throws Exception
+     */
+    protected static function convertHeifWithAlphaByCli(
+        string $heifFile,
+        string $jpegFile,
+        float $timeoutSec
+    ): bool {
+        $png = "$jpegFile.alpha.png";
+
+        try {
+            if (
+                !static::convertHeicByCli(
+                    ['heif-convert'],
+                    $heifFile,
+                    $png,
+                    $timeoutSec
+                )
+            ) {
+                return false;
+            }
+
+            return static::flattenPngToJpeg($png, $jpegFile);
+        } finally {
+            static::removeHeicLeftovers($png);
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    protected static function flattenPngToJpeg(string $png, string $jpegFile): bool
+    {
+        [$w, $h] = self::safeImageSize($png);
+        $maxWidth = Config::getMaxGdWidth() ?: self::MAX_GD_WIDTH;
+        $maxHeight = Config::getMaxGdHeight() ?: self::MAX_GD_HEIGHT;
+
+        // Тот же потолок, что и у open(): два холста такого размера – уже
+        // сотни мегабайт
+        if (!$w || !$h || $w > $maxWidth || $h > $maxHeight) {
+            throw new Exception("alpha flatten: {$w}x{$h} exceeds the GD limit");
+        }
+
+        $src = @imagecreatefrompng($png);
+
+        if (!$src) {
+            throw new Exception('alpha flatten: unreadable png');
+        }
+
+        $dst = imagecreatetruecolor($w, $h);
+
+        try {
+            imagefill($dst, 0, 0, imagecolorallocate($dst, 255, 255, 255));
+            imagealphablending($dst, true);
+            imagecopy($dst, $src, 0, 0, 0, 0, $w, $h);
+
+            if (!imagejpeg($dst, $jpegFile, self::HEIC_JPEG_QUALITY)) {
+                throw new Exception('alpha flatten: jpeg not written');
+            }
+        } finally {
+            imagedestroy($src);
+            imagedestroy($dst);
+        }
+
+        return static::heicOutputIsUsable($jpegFile);
+    }
+
+    /**
      * @throws Exception
      */
     /**
      * @param string[] $argv бинарь и его флаги; файлы дописываются здесь
+     * @param string[] $outputArgs флаги между входом и выходом – операторы
+     *   ImageMagick применяются к уже прочитанной картинке
      */
     protected static function convertHeicByCli(
         array $argv,
         string $heicFile,
         string $jpegFile,
-        float $timeoutSec
+        float $timeoutSec,
+        array $outputArgs = []
     ): bool {
         if ($timeoutSec <= 0) {
             throw new Exception('no time left in the conversion budget');
@@ -516,7 +642,7 @@ class diImage
         // Массивом, не строкой: без шелла не нужно экранирование, и убивается
         // сам конвертер, а не обёртка sh
         $result = ProcessHelper::run(
-            array_merge($argv, [$heicFile, $jpegFile]),
+            array_merge($argv, [$heicFile], $outputArgs, [$jpegFile]),
             $timeoutSec
         );
 
@@ -646,6 +772,12 @@ class diImage
             // HEIC от live photo / burst распаковывается в несколько кадров,
             // нужен только первый
             $im->setIteratorIndex(0);
+
+            if ($im->getImageAlphaChannel()) {
+                $im->setImageBackgroundColor(self::HEIF_ALPHA_BACKGROUND);
+                $im->setImageAlphaChannel(\Imagick::ALPHACHANNEL_REMOVE);
+            }
+
             $im->setImageFormat('jpeg');
             $im->setImageCompressionQuality(self::HEIC_JPEG_QUALITY);
             $im->writeImage($jpegFile);
