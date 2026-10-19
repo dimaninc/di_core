@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.12
+
+- diImage: AVIF detection and conversion through the HEIF converter chain (#38)
+
 ## 0.10.11
 
 - Replace deprecated 'self::' string callable in diActionsLog
