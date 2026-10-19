@@ -435,6 +435,44 @@ class HeicConversionTest extends TestCase
         );
     }
 
+    /**
+     * Для файла с альфой heif-convert перенесён в конец, и ImageMagick не должен
+     * съесть его время: раньше он шёл первым и успевал всегда
+     */
+    public function testAlphaSourceKeepsAReserveForHeifConvert(): void
+    {
+        HeicConverterSpy::$order = [
+            \diImage::HEIC_CONVERTER_HEIF,
+            \diImage::HEIC_CONVERTER_IMAGICK,
+        ];
+        HeicConverterSpy::$handlers = [
+            \diImage::HEIC_CONVERTER_IMAGICK => function () {
+                throw new \Exception('no decode delegate');
+            },
+            \diImage::HEIC_CONVERTER_HEIF => function () {
+                return true;
+            },
+        ];
+
+        HeicConverterSpy::convertHeifToJpeg(
+            __DIR__ . '/fixtures/alpha.avif',
+            $this->dst
+        );
+
+        $this->assertSame(
+            [\diImage::HEIC_CONVERTER_IMAGICK, \diImage::HEIC_CONVERTER_HEIF],
+            HeicConverterSpy::$tried
+        );
+        $this->assertLessThanOrEqual(
+            \diImage::HEIC_TOTAL_TIMEOUT_SEC - \diImage::HEIF_ALPHA_RESERVE_SEC,
+            HeicConverterSpy::$budgets[0]
+        );
+        $this->assertGreaterThan(
+            \diImage::HEIC_TOTAL_TIMEOUT_SEC - \diImage::HEIF_ALPHA_RESERVE_SEC,
+            HeicConverterSpy::$budgets[1]
+        );
+    }
+
     public function testUnknownConverterNameDoesNotFallThroughSilently(): void
     {
         $this->expectException(\Exception::class);

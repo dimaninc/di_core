@@ -169,6 +169,13 @@ class diImage
      */
     const HEIC_TOTAL_TIMEOUT_SEC = 20.0;
 
+    /**
+     * Сколько бюджета ImageMagick оставляет heif-convert, когда для файла с
+     * альфой тот идёт последним: прямой JPEG 15 Мп – 0,5 с (замер), а раньше
+     * он шёл первым и успевал всегда
+     */
+    const HEIF_ALPHA_RESERVE_SEC = 5.0;
+
     const HEIC_JPEG_QUALITY = 92;
     const HEIC_LOG_MODULE = 'diImage/convertHeicToJpeg';
 
@@ -461,14 +468,22 @@ class diImage
         $errors = [];
         $deadline = microtime(true) + static::HEIC_TOTAL_TIMEOUT_SEC;
 
-        foreach (static::getHeifConverterOrderFor($srcFile) as $converter) {
+        $order = static::getHeifConverterOrderFor($srcFile);
+        $heifMovedLast = $order !== static::getHeicConverterOrder();
+
+        foreach ($order as $converter) {
+            $reserve =
+                $heifMovedLast && $converter !== self::HEIC_CONVERTER_HEIF
+                    ? static::HEIF_ALPHA_RESERVE_SEC
+                    : 0.0;
+
             try {
                 if (
                     static::runHeicConverter(
                         $converter,
                         $srcFile,
                         $jpegFile,
-                        $deadline - microtime(true)
+                        $deadline - microtime(true) - $reserve
                     )
                 ) {
                     if ($errors) {
