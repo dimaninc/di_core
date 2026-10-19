@@ -291,6 +291,18 @@ class diImage
     }
 
     /**
+     * AVIF (кадр или последовательность) — по тем же ftyp-брендам, что и
+     * isHeic(); оба метода никогда не отвечают true на один и тот же файл.
+     */
+    public static function isAvif(string $file): bool
+    {
+        return (bool) array_intersect(
+            static::readFtypBrands($file),
+            self::AVIF_BRANDS
+        );
+    }
+
+    /**
      * Бренды из ISO-BMFF бокса `ftyp`: size(4) + 'ftyp'(4) + major(4) +
      * minor_version(4) + compatible_brands(4*N). Проверяются и major, и
      * совместимые — камеры пишут в major что угодно, а `heic`/`mif1` держат в
@@ -360,33 +372,51 @@ class diImage
     }
 
     /**
-     * Конвертирует HEIC/HEIF в JPEG, перебирая конвертеры по очереди: падение
-     * или отсутствие одного больше не означает, что человек не может загрузить
-     * фото с айфона. Каждая неудачная попытка пишется в лог отдельной строкой,
-     * исключение бросается, только если не сработало ничего.
+     * AVIF на проде декодирует только heif-convert (libheif с AOM): ни
+     * ImageMagick 6, ни ext-imagick его не читают, и их попытки лишь съели бы
+     * бюджет и замусорили сообщение об ошибке.
+     *
+     * @return string[]
+     */
+    public static function getHeifConverterOrder(bool $avif): array
+    {
+        return $avif ? [self::HEIC_CONVERTER_HEIF] : static::getHeicConverterOrder();
+    }
+
+    /**
+     * Конвертирует HEIC/HEIF или AVIF в JPEG, перебирая конвертеры по очереди:
+     * падение или отсутствие одного больше не означает, что человек не может
+     * загрузить фото с айфона. Каждая неудачная попытка пишется в лог отдельной
+     * строкой, исключение бросается, только если не сработало ничего.
      *
      * don't forget to set jpeg extension in destination filename
      *
      * @throws Exception
      */
-    public static function convertHeicToJpeg(string $heicFile, string $jpegFile)
-    {
+    public static function convertHeifToJpeg(
+        string $srcFile,
+        string $jpegFile
+    ): string {
+        $avif = static::isAvif($srcFile);
         $errors = [];
         $deadline = microtime(true) + static::HEIC_TOTAL_TIMEOUT_SEC;
 
-        foreach (static::getHeicConverterOrder() as $converter) {
+        foreach (static::getHeifConverterOrder($avif) as $converter) {
             try {
                 if (
                     static::runHeicConverter(
                         $converter,
-                        $heicFile,
+                        $srcFile,
                         $jpegFile,
                         $deadline - microtime(true)
                     )
                 ) {
                     if ($errors) {
+                        // строка для HEIC оставлена прежней — по ней ищут в логах
+                        $prefix = $avif ? 'AVIF ' : '';
                         static::logHeic(
-                            "converted by $converter after: " . join(' | ', $errors)
+                            "{$prefix}converted by $converter after: " .
+                                join(' | ', $errors)
                         );
                     }
 
@@ -409,13 +439,26 @@ class diImage
             );
         }
 
+        $kind = $avif ? 'AVIF' : 'HEIC';
         $message =
-            'Error converting HEIC to JPEG. Tried: ' .
+            "Error converting $kind to JPEG. Tried: " .
             (join(' | ', $errors) ?: 'nothing');
 
         static::logHeic($message);
 
         throw new Exception($message);
+    }
+
+    /**
+     * Без return type: наследник, переопределивший метод без него, иначе
+     * упадёт фаталом при загрузке класса.
+     *
+     * @deprecated use convertHeifToJpeg(), который понимает и AVIF
+     * @throws Exception
+     */
+    public static function convertHeicToJpeg(string $heicFile, string $jpegFile)
+    {
+        return static::convertHeifToJpeg($heicFile, $jpegFile);
     }
 
     protected static function logHeic(string $message): void

@@ -124,6 +124,53 @@ class HeicDetectionTest extends TestCase
         ];
     }
 
+    #[DataProvider('avifDetectionProvider')]
+    public function testAvifIsRecognised(string $major, array $compatible): void
+    {
+        $this->assertTrue(
+            \diImage::isAvif($this->write($this->ftyp($major, $compatible)))
+        );
+    }
+
+    public static function avifDetectionProvider(): array
+    {
+        return [
+            'кадр, как у avifenc' => ['avif', ['mif1', 'miaf', 'MA1B']],
+            'последовательность' => ['avis', ['msf1', 'miaf', 'MA1B']],
+            // major чужой, avif только в совместимых
+            'avif в совместимых' => ['mif1', ['avif', 'miaf']],
+        ];
+    }
+
+    #[DataProvider('notAvifProvider')]
+    public function testNonAvifIsNotAvif(string $bytes): void
+    {
+        $this->assertFalse(\diImage::isAvif($this->write($bytes)));
+    }
+
+    public static function notAvifProvider(): array
+    {
+        $ftyp = function (string $major, array $compatible): string {
+            $payload = $major . "\x00\x00\x00\x00" . join('', $compatible);
+
+            return pack('N', 8 + strlen($payload)) . 'ftyp' . $payload;
+        };
+
+        return [
+            // mif1 общий у HEIF и AVIF — сам по себе AVIF не означает
+            'heic с mif1' => [$ftyp('heic', ['mif1', 'heic'])],
+            'mif1 без avif' => [$ftyp('mif1', ['miaf'])],
+            'mp4' => [$ftyp('isom', ['isom', 'iso2'])],
+            'jpeg' => ["\xff\xd8\xff\xe0" . str_repeat("\x00", 32)],
+            'пустой' => [''],
+        ];
+    }
+
+    public function testMissingFileIsNotAvif(): void
+    {
+        $this->assertFalse(\diImage::isAvif('/tmp/definitely-missing-4f2a.avif'));
+    }
+
     public function testMissingFileIsNotHeic(): void
     {
         $this->assertFalse(\diImage::isHeic('/tmp/definitely-missing-4f2a.heic'));

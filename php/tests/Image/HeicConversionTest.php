@@ -45,6 +45,77 @@ class HeicConversionTest extends TestCase
         $this->assertContains(\diImage::HEIC_CONVERTER_MAGICK, $order);
     }
 
+    /**
+     * AVIF на проде читает только heif-convert: ImageMagick 6 и ext-imagick
+     * лишь съели бы бюджет и спрятали настоящую причину в хвосте сообщения.
+     */
+    public function testAvifIsHandedToHeifConvertOnly(): void
+    {
+        $this->assertSame(
+            [\diImage::HEIC_CONVERTER_HEIF],
+            \diImage::getHeifConverterOrder(true)
+        );
+    }
+
+    public function testHeicOrderIsUnchanged(): void
+    {
+        $this->assertSame(
+            \diImage::getHeicConverterOrder(),
+            \diImage::getHeifConverterOrder(false)
+        );
+    }
+
+    public function testAvifSourceTriesOnlyHeifConvertAndSaysAvif(): void
+    {
+        $avif = sys_get_temp_dir() . '/avif-test-' . uniqid() . '.avif';
+        $payload = 'avif' . "\x00\x00\x00\x00" . 'mif1miafMA1B';
+        file_put_contents(
+            $avif,
+            pack('N', 8 + strlen($payload)) . 'ftyp' . $payload
+        );
+
+        HeicConverterSpy::$order = ['first', 'second'];
+        HeicConverterSpy::$handlers = [
+            \diImage::HEIC_CONVERTER_HEIF => function () {
+                throw new \Exception('exit 1: no AV1 decoder');
+            },
+        ];
+
+        $e = null;
+
+        try {
+            HeicConverterSpy::convertHeifToJpeg($avif, $this->dst);
+        } catch (\Exception $caught) {
+            $e = $caught;
+        } finally {
+            unlink($avif);
+        }
+
+        $this->assertNotNull($e, 'ожидалось исключение');
+        $this->assertSame([\diImage::HEIC_CONVERTER_HEIF], HeicConverterSpy::$tried);
+        $this->assertSame(
+            'Error converting AVIF to JPEG. Tried: heif-convert: exit 1: no AV1 decoder',
+            $e->getMessage()
+        );
+    }
+
+    /** Старое имя осталось псевдонимом: его зовут проекты */
+    public function testDeprecatedAliasKeepsHeicMessage(): void
+    {
+        HeicConverterSpy::$order = ['first'];
+        HeicConverterSpy::$handlers = [
+            'first' => function () {
+                return false;
+            },
+        ];
+
+        $this->expectExceptionMessage(
+            'Error converting HEIC to JPEG. Tried: first: no readable jpeg produced'
+        );
+
+        HeicConverterSpy::convertHeicToJpeg('/tmp/whatever.heic', $this->dst);
+    }
+
     public function testPlatformConverterGoesFirst(): void
     {
         $expected = \diCore\Data\Config::isMac()
