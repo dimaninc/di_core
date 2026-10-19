@@ -7,7 +7,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * JPEG без альфы: конвертер, который её просто отбрасывает, делает прозрачное
  * чёрным – логотип или вырезанный товар портится без ошибки и строки в логе.
- * Каждый конвертер обязан класть альфу на белый фон.
+ * ImageMagick-конвертеры обязаны класть альфу на белый фон.
  */
 class HeifAlphaTest extends TestCase
 {
@@ -82,8 +82,7 @@ class HeifAlphaTest extends TestCase
     }
 
     /**
-     * Пропуск решается ДО запуска: отказ уже запущенного конвертера (порядок
-     * аргументов, нечитаемый PNG) – провал, а не «недоступен»
+     * Пропуск решается ДО запуска: отказ уже запущенного конвертера (порядок     * аргументов, сломанный делегат) – провал, а не «недоступен»
      */
     private function requireConverter(string $converter, bool $avif): void
     {
@@ -99,11 +98,6 @@ class HeifAlphaTest extends TestCase
                 ? 'нет ImageMagick CLI'
                 : ($avif && !$this->cliMagickReadsAvif()
                     ? 'у ImageMagick CLI нет делегата AVIF'
-                    : null),
-            \diImage::HEIC_CONVERTER_HEIF => !$this->hasBinary('heif-convert')
-                ? 'нет heif-convert'
-                : ($avif && !$this->heifConvertReadsAvif()
-                    ? 'у heif-convert нет AV1-декодера'
                     : null),
         };
 
@@ -125,22 +119,6 @@ class HeifAlphaTest extends TestCase
         exec("$bin -list format 2>/dev/null", $out);
 
         return (bool) preg_grep('/^\s*AVIF\*?\s+\S+\s+r/', $out);
-    }
-
-    private function heifConvertReadsAvif(): bool
-    {
-        exec('heif-convert --list-decoders 2>/dev/null', $out);
-        $section = false;
-
-        foreach ($out as $line) {
-            if (str_ends_with($line, 'decoders:')) {
-                $section = str_starts_with($line, 'AVIF');
-            } elseif ($section && str_starts_with($line, '- ')) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private function convert(string $converter, string $src, bool $avif): string
@@ -171,14 +149,6 @@ class HeifAlphaTest extends TestCase
         $this->assertTrue(\diImage::hasHeifAlpha($hevcAlpha));
 
         $this->assertFalse(\diImage::hasHeifAlpha('/nonexistent/file.avif'));
-    }
-
-    public function testGdFlattenPutsAlphaOnWhite(): void
-    {
-        $jpeg = $this->tmp('jpg');
-
-        $this->assertTrue(HeifAlphaSpy::flatten($this->alphaPng(), $jpeg));
-        $this->assertWhiteCornerRedCentre($jpeg, 20);
     }
 
     public function testImagickPutsAlphaOnWhite(): void
@@ -221,87 +191,55 @@ class HeifAlphaTest extends TestCase
         $this->assertWhiteCornerRedCentre($jpeg, 100);
     }
 
-    /** Настоящий AVIF 200×200: прозрачный фон, красный круг в центре */
-    public function testHeifConvertPutsAvifAlphaOnWhite(): void
-    {
-        $jpeg = $this->convert(
-            \diImage::HEIC_CONVERTER_HEIF,
-            self::AVIF_WITH_ALPHA,
-            true
-        );
-        $this->assertWhiteCornerRedCentre($jpeg, 100);
-        $this->assertSame(
-            [],
-            glob("$jpeg.alpha*") ?: [],
-            'промежуточный PNG остался'
-        );
-    }
-
     /**
-     * Сверх лимита GD файл не отказывается: он конвертируется, как до наложения
-     * на фон (прозрачное – чёрное), и это видно в логе
+     * heif-convert альфу не кладёт на фон, поэтому для файла с ней идёт
+     * последним: ImageMagick сначала, чёрный фон – только если он не смог
      */
-    public function testOverTheGdAreaHeifConvertFallsBackToPlainJpeg(): void
+    public function testAlphaSourceTriesHeifConvertLast(): void
     {
-        HeifAlphaSpy::$maxArea = 100;
-        HeifAlphaSpy::$logged = [];
-
-        try {
-            $jpeg = $this->convert(
-                \diImage::HEIC_CONVERTER_HEIF,
-                self::AVIF_WITH_ALPHA,
-                true
-            );
-        } finally {
-            HeifAlphaSpy::$maxArea = null;
-        }
-
-        [$w, $h] = getimagesize($jpeg);
-        $this->assertSame([200, 200], [$w, $h]);
-        $this->assertLessThan(15, max($this->pixel($jpeg, 1, 1)));
         $this->assertSame(
             [
-                'alpha flatten skipped: 200x200 is over the GD area limit, ' .
-                'transparent areas stay black',
+                \diImage::HEIC_CONVERTER_IMAGICK,
+                \diImage::HEIC_CONVERTER_MAGICK,
+                \diImage::HEIC_CONVERTER_HEIF,
             ],
-            HeifAlphaSpy::$logged
+            HeifAlphaSpy::orderFor(self::AVIF_WITH_ALPHA)
         );
-        $this->assertSame([], glob("$jpeg.alpha*") ?: []);
     }
 
-    public function testUnreadablePngIsNamedSo(): void
+    public function testOpaqueSourceKeepsTheHostOrder(): void
     {
-        $png = $this->tmp('png');
-        file_put_contents($png, 'not a png');
+        $opaque = $this->tmp('avif');
+        file_put_contents($opaque, "....ftypavif\0\0\0\0mif1");
 
-        $this->expectExceptionMessage('alpha flatten: unreadable png');
-        HeifAlphaSpy::flatten($png, $this->tmp('jpg'));
+        $this->assertSame(
+            HeifAlphaSpy::LINUX_ORDER,
+            HeifAlphaSpy::orderFor($opaque)
+        );
     }
 }
 
 class HeifAlphaSpy extends \diImage
 {
-    public static ?int $maxArea = null;
-    /** @var string[] */
-    public static array $logged = [];
+    const LINUX_ORDER = [
+        self::HEIC_CONVERTER_HEIF,
+        self::HEIC_CONVERTER_IMAGICK,
+        self::HEIC_CONVERTER_MAGICK,
+    ];
 
-    protected static function alphaFlattenMaxArea(): int
+    public static function getHeicConverterOrder(): array
     {
-        return self::$maxArea ?? parent::alphaFlattenMaxArea();
+        return self::LINUX_ORDER;
     }
 
-    protected static function logHeic(string $message): void
+    /** @return string[] */
+    public static function orderFor(string $src): array
     {
-        self::$logged[] = $message;
+        return static::getHeifConverterOrderFor($src);
     }
 
     public static function runReal(string $converter, string $src, string $dst): bool
     {
         return static::runHeicConverter($converter, $src, $dst, 10.0);
-    }
-
-    public static function flatten(string $png, string $jpeg): bool
-    {
-        return static::flattenPngToJpeg($png, $jpeg);
     }
 }

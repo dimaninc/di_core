@@ -319,11 +319,9 @@ class diImage
     }
 
     /**
-     * Есть ли в HEIF/AVIF альфа-канал. Ни один конвертер сам не кладёт её на
-     * фон: JPEG без альфы, и прозрачное становилось чёрным – без ошибки.
-     * Поиск по началу файла, а не процесс heif-info: проверка стоит на каждой
-     * загрузке. `meta` в конце файла сюда не попадёт – тогда фон будет как
-     * раньше, чёрным.
+     * Есть ли в HEIF/AVIF альфа-канал. Поиск по началу файла, а не процесс
+     * heif-info: проверка стоит на каждой загрузке. `meta` в конце файла сюда
+     * не попадёт – тогда порядок конвертеров обычный.
      */
     public static function hasHeifAlpha(string $file): bool
     {
@@ -414,6 +412,34 @@ class diImage
     }
 
     /**
+     * JPEG без альфы, и прозрачное без наложения на фон становится чёрным.
+     * ImageMagick кладёт альфу на белый сам, у heif-convert такого флага нет
+     * (а запись PNG ради наложения у него в ~50 раз медленнее JPEG и не влезает
+     * в бюджет), поэтому для файла с альфой он идёт последним: если ImageMagick
+     * на хосте его не читает, будет чёрный фон, но не отказ.
+     *
+     * @return string[]
+     */
+    protected static function getHeifConverterOrderFor(string $srcFile): array
+    {
+        $order = static::getHeicConverterOrder();
+
+        if (
+            !in_array(self::HEIC_CONVERTER_HEIF, $order, true) ||
+            !static::hasHeifAlpha($srcFile)
+        ) {
+            return $order;
+        }
+
+        $order = array_values(
+            array_diff($order, [self::HEIC_CONVERTER_HEIF])
+        );
+        $order[] = self::HEIC_CONVERTER_HEIF;
+
+        return $order;
+    }
+
+    /**
      * Конвертирует HEIC/HEIF или AVIF в JPEG, перебирая конвертеры по очереди:
      * падение или отсутствие одного больше не означает, что человек не может
      * загрузить фото с айфона. Каждая неудачная попытка пишется в лог отдельной
@@ -435,7 +461,7 @@ class diImage
         $errors = [];
         $deadline = microtime(true) + static::HEIC_TOTAL_TIMEOUT_SEC;
 
-        foreach (static::getHeicConverterOrder() as $converter) {
+        foreach (static::getHeifConverterOrderFor($srcFile) as $converter) {
             try {
                 if (
                     static::runHeicConverter(
@@ -528,18 +554,10 @@ class diImage
                     $jpegFile,
                     $timeoutSec,
                     // без альфы это no-op
-                    ['-background', self::HEIF_ALPHA_BACKGROUND, '-alpha', 'remove']
+                    ['-background', static::HEIF_ALPHA_BACKGROUND, '-alpha', 'remove']
                 );
 
             case self::HEIC_CONVERTER_HEIF:
-                if (static::hasHeifAlpha($heicFile)) {
-                    return static::convertHeifWithAlphaByCli(
-                        $heicFile,
-                        $jpegFile,
-                        $timeoutSec
-                    );
-                }
-
                 return static::convertHeicByCli(
                     ['heif-convert'],
                     $heicFile,
@@ -549,93 +567,6 @@ class diImage
         }
 
         throw new Exception('unknown converter');
-    }
-
-    /**
-     * У heif-convert нет флага фона, а в JPEG альфа просто отбрасывается.
-     * Поэтому через PNG, который сохраняет альфу, и GD кладёт его на фон.
-     * Только для файлов с альфой: PNG 12-мегапиксельного снимка – секунды.
-     *
-     * @throws Exception
-     */
-    protected static function convertHeifWithAlphaByCli(
-        string $heifFile,
-        string $jpegFile,
-        float $timeoutSec
-    ): bool {
-        $deadline = microtime(true) + $timeoutSec;
-        $png = "$jpegFile.alpha.png";
-
-        try {
-            if (
-                !static::convertHeicByCli(
-                    ['heif-convert'],
-                    $heifFile,
-                    $png,
-                    $timeoutSec
-                )
-            ) {
-                return false;
-            }
-
-            [$w, $h] = self::safeImageSize($png);
-
-            if ($w * $h <= static::alphaFlattenMaxArea()) {
-                return static::flattenPngToJpeg($png, $jpegFile);
-            }
-        } finally {
-            static::removeHeicLeftovers($png);
-        }
-
-        // Не хуже, чем до наложения на фон: прямой JPEG, прозрачное – чёрное
-        static::logHeic(
-            "alpha flatten skipped: {$w}x{$h} is over the GD area limit, " .
-                'transparent areas stay black'
-        );
-
-        return static::convertHeicByCli(
-            ['heif-convert'],
-            $heifFile,
-            $jpegFile,
-            $deadline - microtime(true)
-        );
-    }
-
-    /** Площадь, как в open(): два холста GD такого размера – уже ~130 МБ */
-    protected static function alphaFlattenMaxArea(): int
-    {
-        return (Config::getMaxGdWidth() ?: self::MAX_GD_WIDTH) *
-            (Config::getMaxGdHeight() ?: self::MAX_GD_HEIGHT);
-    }
-
-    /**
-     * @throws Exception
-     */
-    protected static function flattenPngToJpeg(string $png, string $jpegFile): bool
-    {
-        [$w, $h] = self::safeImageSize($png);
-        $src = $w && $h ? @imagecreatefrompng($png) : false;
-
-        if (!$src) {
-            throw new Exception('alpha flatten: unreadable png');
-        }
-
-        $dst = imagecreatetruecolor($w, $h);
-
-        try {
-            imagefill($dst, 0, 0, imagecolorallocate($dst, 255, 255, 255));
-            imagealphablending($dst, true);
-            imagecopy($dst, $src, 0, 0, 0, 0, $w, $h);
-
-            if (!imagejpeg($dst, $jpegFile, self::HEIC_JPEG_QUALITY)) {
-                throw new Exception('alpha flatten: jpeg not written');
-            }
-        } finally {
-            imagedestroy($src);
-            imagedestroy($dst);
-        }
-
-        return static::heicOutputIsUsable($jpegFile);
     }
 
     /**
@@ -790,7 +721,7 @@ class diImage
             $im->setIteratorIndex(0);
 
             if ($im->getImageAlphaChannel()) {
-                $im->setImageBackgroundColor(self::HEIF_ALPHA_BACKGROUND);
+                $im->setImageBackgroundColor(static::HEIF_ALPHA_BACKGROUND);
                 $im->setImageAlphaChannel(\Imagick::ALPHACHANNEL_REMOVE);
             }
 
