@@ -45,27 +45,7 @@ class HeicConversionTest extends TestCase
         $this->assertContains(\diImage::HEIC_CONVERTER_MAGICK, $order);
     }
 
-    /**
-     * AVIF на проде читает только heif-convert: ImageMagick 6 и ext-imagick
-     * лишь съели бы бюджет и спрятали настоящую причину в хвосте сообщения.
-     */
-    public function testAvifIsHandedToHeifConvertOnly(): void
-    {
-        $this->assertSame(
-            [\diImage::HEIC_CONVERTER_HEIF],
-            \diImage::getHeifConverterOrder(true)
-        );
-    }
-
-    public function testHeicOrderIsUnchanged(): void
-    {
-        $this->assertSame(
-            \diImage::getHeicConverterOrder(),
-            \diImage::getHeifConverterOrder(false)
-        );
-    }
-
-    public function testAvifSourceTriesOnlyHeifConvertAndSaysAvif(): void
+    private function avifFile(): string
     {
         $avif = sys_get_temp_dir() . '/avif-test-' . uniqid() . '.avif';
         $payload = 'avif' . "\x00\x00\x00\x00" . 'mif1miafMA1B';
@@ -74,10 +54,24 @@ class HeicConversionTest extends TestCase
             pack('N', 8 + strlen($payload)) . 'ftyp' . $payload
         );
 
+        return $avif;
+    }
+
+    /**
+     * Какой конвертер читает AVIF, зависит от хоста: цепочка у него та же, что
+     * у HEIC, а не один heif-convert.
+     */
+    public function testAvifWalksTheWholeChainAndSaysAvif(): void
+    {
+        $avif = $this->avifFile();
+
         HeicConverterSpy::$order = ['first', 'second'];
         HeicConverterSpy::$handlers = [
-            \diImage::HEIC_CONVERTER_HEIF => function () {
+            'first' => function () {
                 throw new \Exception('exit 1: no AV1 decoder');
+            },
+            'second' => function () {
+                throw new \Exception('no decode delegate');
             },
         ];
 
@@ -92,10 +86,38 @@ class HeicConversionTest extends TestCase
         }
 
         $this->assertNotNull($e, 'ожидалось исключение');
-        $this->assertSame([\diImage::HEIC_CONVERTER_HEIF], HeicConverterSpy::$tried);
+        $this->assertSame(['first', 'second'], HeicConverterSpy::$tried);
         $this->assertSame(
-            'Error converting AVIF to JPEG. Tried: heif-convert: exit 1: no AV1 decoder',
+            'Error converting AVIF to JPEG. Tried: first: exit 1: no AV1 decoder | ' .
+                'second: no decode delegate',
             $e->getMessage()
+        );
+    }
+
+    public function testAvifFallbackSuccessIsLoggedAsAvif(): void
+    {
+        $avif = $this->avifFile();
+
+        HeicConverterSpy::$order = ['first', 'second'];
+        HeicConverterSpy::$handlers = [
+            'first' => function () {
+                throw new \Exception('unable to start process');
+            },
+            'second' => function () {
+                return true;
+            },
+        ];
+
+        try {
+            HeicConverterSpy::convertHeifToJpeg($avif, $this->dst);
+        } finally {
+            unlink($avif);
+        }
+
+        $this->assertCount(1, HeicConverterSpy::$logged);
+        $this->assertStringStartsWith(
+            'AVIF converted by second after:',
+            HeicConverterSpy::$logged[0]
         );
     }
 
@@ -139,7 +161,7 @@ class HeicConversionTest extends TestCase
 
         $this->assertSame(
             $this->dst,
-            HeicConverterSpy::convertHeicToJpeg('/tmp/whatever.heic', $this->dst)
+            HeicConverterSpy::convertHeifToJpeg('/tmp/whatever.heic', $this->dst)
         );
         $this->assertSame(['first', 'second'], HeicConverterSpy::$tried);
     }
@@ -158,7 +180,7 @@ class HeicConversionTest extends TestCase
 
         $this->assertSame(
             $this->dst,
-            HeicConverterSpy::convertHeicToJpeg('/tmp/whatever.heic', $this->dst)
+            HeicConverterSpy::convertHeifToJpeg('/tmp/whatever.heic', $this->dst)
         );
     }
 
@@ -174,7 +196,7 @@ class HeicConversionTest extends TestCase
             },
         ];
 
-        HeicConverterSpy::convertHeicToJpeg('/tmp/whatever.heic', $this->dst);
+        HeicConverterSpy::convertHeifToJpeg('/tmp/whatever.heic', $this->dst);
 
         $this->assertCount(1, HeicConverterSpy::$logged);
         $this->assertStringContainsString(
@@ -196,7 +218,7 @@ class HeicConversionTest extends TestCase
             },
         ];
 
-        HeicConverterSpy::convertHeicToJpeg('/tmp/whatever.heic', $this->dst);
+        HeicConverterSpy::convertHeifToJpeg('/tmp/whatever.heic', $this->dst);
 
         $this->assertSame(['first'], HeicConverterSpy::$tried);
         $this->assertSame([], HeicConverterSpy::$logged);
@@ -220,7 +242,7 @@ class HeicConversionTest extends TestCase
         $e = null;
 
         try {
-            HeicConverterSpy::convertHeicToJpeg('/tmp/whatever.heic', $this->dst);
+            HeicConverterSpy::convertHeifToJpeg('/tmp/whatever.heic', $this->dst);
         } catch (\Exception $caught) {
             $e = $caught;
         }
@@ -256,7 +278,7 @@ class HeicConversionTest extends TestCase
         ];
 
         try {
-            HeicConverterSpy::convertHeicToJpeg('/tmp/whatever.heic', $dst);
+            HeicConverterSpy::convertHeifToJpeg('/tmp/whatever.heic', $dst);
         } catch (\Exception $e) {
             // ожидаемо: не сработал ни один
         }
@@ -386,7 +408,7 @@ class HeicConversionTest extends TestCase
             },
         ];
 
-        HeicConverterSpy::convertHeicToJpeg('/tmp/whatever.heic', $this->dst);
+        HeicConverterSpy::convertHeifToJpeg('/tmp/whatever.heic', $this->dst);
 
         $this->assertCount(2, HeicConverterSpy::$budgets);
         $this->assertLessThanOrEqual(

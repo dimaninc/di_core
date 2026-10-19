@@ -372,22 +372,14 @@ class diImage
     }
 
     /**
-     * AVIF на проде декодирует только heif-convert (libheif с AOM): ни
-     * ImageMagick 6, ни ext-imagick его не читают, и их попытки лишь съели бы
-     * бюджет и замусорили сообщение об ошибке.
-     *
-     * @return string[]
-     */
-    public static function getHeifConverterOrder(bool $avif): array
-    {
-        return $avif ? [self::HEIC_CONVERTER_HEIF] : static::getHeicConverterOrder();
-    }
-
-    /**
      * Конвертирует HEIC/HEIF или AVIF в JPEG, перебирая конвертеры по очереди:
      * падение или отсутствие одного больше не означает, что человек не может
      * загрузить фото с айфона. Каждая неудачная попытка пишется в лог отдельной
      * строкой, исключение бросается, только если не сработало ничего.
+     *
+     * Цепочка для AVIF та же: какой из конвертеров его читает (libheif с
+     * AV1-декодером, делегат ImageMagick), зависит от хоста, а конвертер без
+     * поддержки отказывает сразу.
      *
      * don't forget to set jpeg extension in destination filename
      *
@@ -401,7 +393,7 @@ class diImage
         $errors = [];
         $deadline = microtime(true) + static::HEIC_TOTAL_TIMEOUT_SEC;
 
-        foreach (static::getHeifConverterOrder($avif) as $converter) {
+        foreach (static::getHeicConverterOrder() as $converter) {
             try {
                 if (
                     static::runHeicConverter(
