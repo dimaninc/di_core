@@ -81,16 +81,75 @@ class HeifAlphaTest extends TestCase
         $this->assertLessThan(60, max($g, $b));
     }
 
-    /** Конвертер, которого на машине нет, – повод пропустить, а не упасть */
-    private function runOrSkip(string $converter, string $src, string $dst): void
+    /**
+     * Пропуск решается ДО запуска: отказ уже запущенного конвертера (порядок
+     * аргументов, нечитаемый PNG) – провал, а не «недоступен»
+     */
+    private function requireConverter(string $converter, bool $avif): void
     {
-        try {
-            $ok = HeifAlphaSpy::runReal($converter, $src, $dst);
-        } catch (\Exception $e) {
-            $this->markTestSkipped("$converter недоступен: {$e->getMessage()}");
+        $missing = match ($converter) {
+            \diImage::HEIC_CONVERTER_IMAGICK => !class_exists('Imagick')
+                ? 'ext-imagick не установлен'
+                : ($avif && !\Imagick::queryFormats('AVIF')
+                    ? 'у ext-imagick нет делегата AVIF'
+                    : null),
+            \diImage::HEIC_CONVERTER_MAGICK => !$this->hasBinary(
+                \diCore\Data\Config::isMac() ? 'magick' : 'convert'
+            )
+                ? 'нет ImageMagick CLI'
+                : ($avif && !$this->cliMagickReadsAvif()
+                    ? 'у ImageMagick CLI нет делегата AVIF'
+                    : null),
+            \diImage::HEIC_CONVERTER_HEIF => !$this->hasBinary('heif-convert')
+                ? 'нет heif-convert'
+                : ($avif && !$this->heifConvertReadsAvif()
+                    ? 'у heif-convert нет AV1-декодера'
+                    : null),
+        };
+
+        if ($missing) {
+            $this->markTestSkipped($missing);
+        }
+    }
+
+    private function hasBinary(string $name): bool
+    {
+        exec('command -v ' . escapeshellarg($name), $out, $code);
+
+        return $code === 0;
+    }
+
+    private function cliMagickReadsAvif(): bool
+    {
+        $bin = \diCore\Data\Config::isMac() ? 'magick' : 'convert';
+        exec("$bin -list format 2>/dev/null", $out);
+
+        return (bool) preg_grep('/^\s*AVIF\*?\s+\S+\s+r/', $out);
+    }
+
+    private function heifConvertReadsAvif(): bool
+    {
+        exec('heif-convert --list-decoders 2>/dev/null', $out);
+        $section = false;
+
+        foreach ($out as $line) {
+            if (str_ends_with($line, 'decoders:')) {
+                $section = str_starts_with($line, 'AVIF');
+            } elseif ($section && str_starts_with($line, '- ')) {
+                return true;
+            }
         }
 
-        $this->assertTrue($ok);
+        return false;
+    }
+
+    private function convert(string $converter, string $src, bool $avif): string
+    {
+        $this->requireConverter($converter, $avif);
+        $jpeg = $this->tmp('jpg');
+        $this->assertTrue(HeifAlphaSpy::runReal($converter, $src, $jpeg));
+
+        return $jpeg;
     }
 
     public function testAlphaIsFoundByItsAuxUrn(): void
@@ -124,30 +183,51 @@ class HeifAlphaTest extends TestCase
 
     public function testImagickPutsAlphaOnWhite(): void
     {
-        if (!class_exists('Imagick')) {
-            $this->markTestSkipped('ext-imagick не установлен');
-        }
-
-        $jpeg = $this->tmp('jpg');
-        $this->runOrSkip(\diImage::HEIC_CONVERTER_IMAGICK, $this->alphaPng(), $jpeg);
+        $jpeg = $this->convert(
+            \diImage::HEIC_CONVERTER_IMAGICK,
+            $this->alphaPng(),
+            false
+        );
         $this->assertWhiteCornerRedCentre($jpeg, 20);
+    }
+
+    public function testImagickPutsAvifAlphaOnWhite(): void
+    {
+        $jpeg = $this->convert(
+            \diImage::HEIC_CONVERTER_IMAGICK,
+            self::AVIF_WITH_ALPHA,
+            true
+        );
+        $this->assertWhiteCornerRedCentre($jpeg, 100);
     }
 
     public function testImageMagickCliPutsAlphaOnWhite(): void
     {
-        $jpeg = $this->tmp('jpg');
-        $this->runOrSkip(\diImage::HEIC_CONVERTER_MAGICK, $this->alphaPng(), $jpeg);
+        $jpeg = $this->convert(
+            \diImage::HEIC_CONVERTER_MAGICK,
+            $this->alphaPng(),
+            false
+        );
         $this->assertWhiteCornerRedCentre($jpeg, 20);
+    }
+
+    public function testImageMagickCliPutsAvifAlphaOnWhite(): void
+    {
+        $jpeg = $this->convert(
+            \diImage::HEIC_CONVERTER_MAGICK,
+            self::AVIF_WITH_ALPHA,
+            true
+        );
+        $this->assertWhiteCornerRedCentre($jpeg, 100);
     }
 
     /** Настоящий AVIF 200×200: прозрачный фон, красный круг в центре */
     public function testHeifConvertPutsAvifAlphaOnWhite(): void
     {
-        $jpeg = $this->tmp('jpg');
-        $this->runOrSkip(
+        $jpeg = $this->convert(
             \diImage::HEIC_CONVERTER_HEIF,
             self::AVIF_WITH_ALPHA,
-            $jpeg
+            true
         );
         $this->assertWhiteCornerRedCentre($jpeg, 100);
         $this->assertSame(
@@ -156,10 +236,65 @@ class HeifAlphaTest extends TestCase
             'промежуточный PNG остался'
         );
     }
+
+    /**
+     * Сверх лимита GD файл не отказывается: он конвертируется, как до наложения
+     * на фон (прозрачное – чёрное), и это видно в логе
+     */
+    public function testOverTheGdAreaHeifConvertFallsBackToPlainJpeg(): void
+    {
+        HeifAlphaSpy::$maxArea = 100;
+        HeifAlphaSpy::$logged = [];
+
+        try {
+            $jpeg = $this->convert(
+                \diImage::HEIC_CONVERTER_HEIF,
+                self::AVIF_WITH_ALPHA,
+                true
+            );
+        } finally {
+            HeifAlphaSpy::$maxArea = null;
+        }
+
+        [$w, $h] = getimagesize($jpeg);
+        $this->assertSame([200, 200], [$w, $h]);
+        $this->assertLessThan(15, max($this->pixel($jpeg, 1, 1)));
+        $this->assertSame(
+            [
+                'alpha flatten skipped: 200x200 is over the GD area limit, ' .
+                'transparent areas stay black',
+            ],
+            HeifAlphaSpy::$logged
+        );
+        $this->assertSame([], glob("$jpeg.alpha*") ?: []);
+    }
+
+    public function testUnreadablePngIsNamedSo(): void
+    {
+        $png = $this->tmp('png');
+        file_put_contents($png, 'not a png');
+
+        $this->expectExceptionMessage('alpha flatten: unreadable png');
+        HeifAlphaSpy::flatten($png, $this->tmp('jpg'));
+    }
 }
 
 class HeifAlphaSpy extends \diImage
 {
+    public static ?int $maxArea = null;
+    /** @var string[] */
+    public static array $logged = [];
+
+    protected static function alphaFlattenMaxArea(): int
+    {
+        return self::$maxArea ?? parent::alphaFlattenMaxArea();
+    }
+
+    protected static function logHeic(string $message): void
+    {
+        self::$logged[] = $message;
+    }
+
     public static function runReal(string $converter, string $src, string $dst): bool
     {
         return static::runHeicConverter($converter, $src, $dst, 10.0);

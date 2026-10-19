@@ -487,7 +487,9 @@ class diImage
      * Без return type: наследник, переопределивший метод без него, иначе
      * упадёт фаталом при загрузке класса.
      *
-     * @deprecated use convertHeifToJpeg(), который понимает и AVIF
+     * @deprecated use convertHeifToJpeg(), который понимает и AVIF. Наследник,
+     *   переопределивший этот метод, должен переопределить convertHeifToJpeg():
+     *   вызовы по новому имени его переопределения не видят
      * @throws Exception
      */
     public static function convertHeicToJpeg(string $heicFile, string $jpegFile)
@@ -561,6 +563,7 @@ class diImage
         string $jpegFile,
         float $timeoutSec
     ): bool {
+        $deadline = microtime(true) + $timeoutSec;
         $png = "$jpegFile.alpha.png";
 
         try {
@@ -575,10 +578,34 @@ class diImage
                 return false;
             }
 
-            return static::flattenPngToJpeg($png, $jpegFile);
+            [$w, $h] = self::safeImageSize($png);
+
+            if ($w * $h <= static::alphaFlattenMaxArea()) {
+                return static::flattenPngToJpeg($png, $jpegFile);
+            }
         } finally {
             static::removeHeicLeftovers($png);
         }
+
+        // Не хуже, чем до наложения на фон: прямой JPEG, прозрачное – чёрное
+        static::logHeic(
+            "alpha flatten skipped: {$w}x{$h} is over the GD area limit, " .
+                'transparent areas stay black'
+        );
+
+        return static::convertHeicByCli(
+            ['heif-convert'],
+            $heifFile,
+            $jpegFile,
+            $deadline - microtime(true)
+        );
+    }
+
+    /** Площадь, как в open(): два холста GD такого размера – уже ~130 МБ */
+    protected static function alphaFlattenMaxArea(): int
+    {
+        return (Config::getMaxGdWidth() ?: self::MAX_GD_WIDTH) *
+            (Config::getMaxGdHeight() ?: self::MAX_GD_HEIGHT);
     }
 
     /**
@@ -587,16 +614,7 @@ class diImage
     protected static function flattenPngToJpeg(string $png, string $jpegFile): bool
     {
         [$w, $h] = self::safeImageSize($png);
-        $maxWidth = Config::getMaxGdWidth() ?: self::MAX_GD_WIDTH;
-        $maxHeight = Config::getMaxGdHeight() ?: self::MAX_GD_HEIGHT;
-
-        // Тот же потолок, что и у open(): два холста такого размера – уже
-        // сотни мегабайт
-        if (!$w || !$h || $w > $maxWidth || $h > $maxHeight) {
-            throw new Exception("alpha flatten: {$w}x{$h} exceeds the GD limit");
-        }
-
-        $src = @imagecreatefrompng($png);
+        $src = $w && $h ? @imagecreatefrompng($png) : false;
 
         if (!$src) {
             throw new Exception('alpha flatten: unreadable png');
@@ -621,12 +639,10 @@ class diImage
     }
 
     /**
-     * @throws Exception
-     */
-    /**
      * @param string[] $argv бинарь и его флаги; файлы дописываются здесь
      * @param string[] $outputArgs флаги между входом и выходом – операторы
      *   ImageMagick применяются к уже прочитанной картинке
+     * @throws Exception
      */
     protected static function convertHeicByCli(
         array $argv,
