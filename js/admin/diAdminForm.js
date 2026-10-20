@@ -385,7 +385,7 @@ var diAdminForm = function (table, id, auto_save_timeout) {
 
       $i.data('maxLenCounter', $counter);
 
-      // .length on purpose: UTF-16 code units, as the maxlength attribute counts
+      // .length on purpose: UTF-16 code units, an emoji counts as 2
       $i.on('input', function () {
         var left = max - ($i.val() || '').length;
         $counter.html(left).toggleClass('over', left <= 2);
