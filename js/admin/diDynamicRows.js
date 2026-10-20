@@ -470,6 +470,10 @@ var diDynamicRows = function (opts) {
       $e.find('[data-purpose="color-picker"]').each(function () {
         admin_form.setupColorPicker($(this));
       });
+
+      // the row template is a <script type="text/template">, so the form's
+      // page-load init never saw this row's inputs
+      admin_form.initFieldMaxLength($e.find('[data-max-length]'));
     }
 
     if (options.scrollToRow) {

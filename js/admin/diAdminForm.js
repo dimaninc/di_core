@@ -366,13 +366,26 @@ var diAdminForm = function (table, id, auto_save_timeout) {
 
     $inputs.each(function () {
       var $i = $(this);
+
+      // diDynamicRows.add() calls this again for a new row: one counter per input
+      if ($i.data('maxLenCounter')) {
+        return;
+      }
+
       var max = $i.data('max-length');
-      var $row = $i.closest('.diadminform-row');
-      var $title = $row.find('label');
-
       var $counter = $('<span class="max-len-counter" />');
-      $counter.appendTo($title);
 
+      // a dynamic field's rows share one outer label, so each row's counter
+      // goes right after its own input
+      if ($i.closest('.dynamic-row').length) {
+        $counter.addClass('max-len-counter--inline').insertAfter($i);
+      } else {
+        $counter.appendTo($i.closest('.diadminform-row').find('label'));
+      }
+
+      $i.data('maxLenCounter', $counter);
+
+      // .length on purpose: UTF-16 code units, an emoji counts as 2
       $i.on('input', function () {
         var left = max - ($i.val() || '').length;
         $counter.html(left).toggleClass('over', left <= 2);
