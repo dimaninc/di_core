@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.10.13
+
+- Admin form: max-length counter inside dynamic rows (#39)
+
 ## 0.10.12
 
 - diImage: AVIF detection and conversion through the HEIF converter chain (#38)
