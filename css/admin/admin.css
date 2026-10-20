@@ -4013,6 +4013,18 @@ body[data-skin="entrine"] .dynamic-add {
 .dynamic-row .close {
   margin: 0 10px 10px 10px;
 }
+.dynamic-row .max-len-counter--inline {
+  background: #7601ac;
+  color: #fff;
+  border-radius: 3px;
+  padding: 3px;
+  margin-left: 5px;
+  -webkit-flex-shrink: 0;
+  flex-shrink: 0;
+}
+.dynamic-row .max-len-counter--inline.over {
+  background: #f00;
+}
 body[data-skin="classic"] .dynamic-row {
   border: 1px solid #aaa;
   border-radius: 10px;

@@ -1,3 +1,15 @@
+// also used by .dynamic-row (dynamic.styl)
+max-len-counter()
+    background $classicColorLink
+    color white
+    border-radius 3px
+    padding 3px
+    margin-left 5px
+
+    &.over {
+        background red
+    }
+
 .diadminform-row
     position relative
     display flex
@@ -78,15 +90,7 @@
             font-weight bolder
         }
         .max-len-counter {
-            background $classicColorLink
-            color white
-            border-radius 3px
-            padding 3px
-            margin-left 5px
-
-            &.over {
-                background red
-            }
+            max-len-counter()
         }
     .value
         flex 1
