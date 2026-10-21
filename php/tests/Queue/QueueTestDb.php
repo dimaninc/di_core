@@ -4,6 +4,7 @@ namespace diCore\Tests\Queue;
 
 use diCore\Database\Connection;
 use diCore\Database\Engine;
+use diCore\Queue\OpenTransaction;
 use diCore\Queue\PgQueue;
 use diCore\Queue\Policy;
 use PHPUnit\Framework\TestCase;
@@ -31,6 +32,13 @@ trait QueueTestDb
             $this->markTestSkipped('Set DI_CORE_TEST_DB to a postgresql:// DSN');
         }
 
+        // A consumer's host may lack them; a skip, not a fatal "undefined function".
+        foreach (static::REQUIRED_FUNCTIONS as $function) {
+            if (!function_exists($function)) {
+                $this->markTestSkipped("Needs $function() (ext-pcntl / ext-posix)");
+            }
+        }
+
         self::$queueConn ??= self::openQueueDb('di_core_queue_test', true);
         $this->db = self::$queueConn->getDb();
         $this->pdo = $this->db->getLink();
@@ -42,10 +50,9 @@ trait QueueTestDb
     protected function tearDown(): void
     {
         if (isset($this->pdo)) {
-            if ($this->pdo->inTransaction()) {
-                $this->pdo->exec('ROLLBACK');
-            }
-
+            // Through the core: the connection is shared by the class, and a counter left at 1
+            // by a failed test would turn the next tests' transactions into savepoints.
+            OpenTransaction::rollBack($this->pdo, $this->db);
             $this->pdo->exec('DELETE FROM ' . TestSetup::TABLE);
         }
     }

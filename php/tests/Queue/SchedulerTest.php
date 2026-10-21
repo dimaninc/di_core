@@ -16,6 +16,8 @@ final class SchedulerTest extends TestCase
 {
     use QueueTestDb;
 
+    const REQUIRED_FUNCTIONS = ['pcntl_signal', 'pcntl_async_signals'];
+
     /** @var string[] */
     private array $log = [];
 
@@ -46,6 +48,61 @@ final class SchedulerTest extends TestCase
         $this->assertContains('broken: RuntimeException: disk is gone', $this->log);
         $this->assertSame(['disk is gone'], $this->setup->reportedMessages());
         $this->assertSame(['scheduler_task' => 'broken'], $this->setup->reports[0]['context']);
+    }
+
+    public function testATransactionLeftByATaskIsRolledBack(): void
+    {
+        $t = TestSetup::TABLE;
+        $other = self::openQueueDb('di_core_queue_scheduler_reader')->getDb()->getLink();
+        $ran = [];
+
+        $code = $this->scheduler([
+            // Aborted: the probe SELECT 1 inside it would fail with 25P02 and stop the process.
+            'aborted' => [60, function () {
+                $this->db->startTransaction();
+                $this->pdo->query('SELECT 1/0');
+            }],
+            // Left open without an error: every later write would stay invisible until exit.
+            'open' => [60, function () {
+                $this->db->startTransaction();
+            }],
+            'next' => [60, function () use (&$ran, $t) {
+                $ran[] = 'next';
+                $this->pdo->exec("INSERT INTO $t (queue, payload) VALUES ('" . TestSetup::FAST . "', '{}')");
+            }],
+        ])->run();
+
+        $this->assertSame(0, $code, implode("\n", $this->log));
+        $this->assertSame(['next'], $ran);
+        $this->assertSame(0, (int) $this->db->getTransactionNestingLevel());
+        $this->assertSame(1, (int) $other->query("SELECT count(*) FROM $t")->fetchColumn(), 'the write of next is committed');
+        $this->assertSame([
+            'aborted: the task left a transaction open',
+            'open: the task left a transaction open',
+        ], array_values(array_filter($this->setup->reportedMessages(), fn($m) => str_contains($m, 'left'))));
+    }
+
+    public function testAFailingReportDoesNotStopTheSchedule(): void
+    {
+        $setup = new class extends TestSetup {
+            public function report(\Throwable|string $error, ?\diCore\Queue\Task $task = null, array $context = []): void
+            {
+                throw new \RuntimeException('sentry is down');
+            }
+        };
+        $ran = [];
+        $scheduler = new Scheduler($this->db, [
+            'broken' => [60, fn() => throw new \LogicException('bug')],
+            'next' => [60, function () use (&$ran) {
+                $ran[] = 'next';
+            }],
+        ], function ($m) {
+            $this->log[] = $m;
+        }, true, $setup);
+
+        $this->assertSame(0, $scheduler->run());
+        $this->assertSame(['next'], $ran);
+        $this->assertContains('report failed: RuntimeException: sentry is down', $this->log);
     }
 
     public function testSecondSchedulerExits(): void

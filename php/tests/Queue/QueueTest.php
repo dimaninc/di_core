@@ -19,6 +19,7 @@ final class QueueTest extends TestCase
     use QueueTestDb;
 
     private const Q = TestSetup::FAST;
+    const REQUIRED_FUNCTIONS = [];
 
     public function testPushReserveComplete(): void
     {

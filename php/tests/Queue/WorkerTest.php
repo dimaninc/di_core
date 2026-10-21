@@ -22,6 +22,7 @@ final class WorkerTest extends TestCase
     use QueueTestDb;
 
     private const Q = TestSetup::FAST;
+    const REQUIRED_FUNCTIONS = ['pcntl_alarm', 'pcntl_signal', 'pcntl_async_signals', 'posix_kill'];
 
     /** @var string[] */
     private array $log = [];
@@ -190,6 +191,41 @@ final class WorkerTest extends TestCase
         $this->queue->push(self::Q, ['after' => 1]);
         $this->db->rollbackTransaction();
         $this->assertSame(0, $count('after'));
+    }
+
+    public function testCoreTransactionClosedPastTheCoreDoesNotKillTheWorker(): void
+    {
+        // Opened through the core, committed past it: PDO::rollBack() then throws "no active
+        // transaction"; the outcome must still be written and the counter reset.
+        $id = $this->queue->push(self::Q, []);
+
+        $this->work([self::Q], function () {
+            $this->db->startTransaction();
+            $this->pdo->exec('COMMIT');
+        });
+
+        $this->assertSame('done', $this->jobField($id, 'status'));
+        $this->assertSame(0, (int) $this->db->getTransactionNestingLevel());
+    }
+
+    public function testAFailingReportDoesNotLoseTheOutcome(): void
+    {
+        $setup = new class extends TestSetup {
+            public function report(\Throwable|string $error, ?Task $task = null, array $context = []): void
+            {
+                throw new \RuntimeException('sentry is down');
+            }
+        };
+        $this->queue = new \diCore\Queue\PgQueue($this->pdo, $setup->policy(), $this->db, $setup);
+        $id = $this->queue->push(TestSetup::SINGLE, []);
+
+        $this->work([TestSetup::SINGLE], function () {
+            $this->pdo->exec('BEGIN');
+            throw new \RuntimeException('getMe failed');
+        });
+
+        $this->assertSame('failed', $this->jobField($id, 'status'));
+        $this->assertCount(2, array_filter($this->log, fn($m) => $m === 'report failed: RuntimeException: sentry is down'));
     }
 
     public function testWorkerSleepsThroughForeignNotifications(): void

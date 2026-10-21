@@ -82,12 +82,25 @@ class Scheduler
                         continue;
                     }
 
+                    $e = null;
+
                     try {
                         $result = $task();
                         ($this->log)("$name: " . json_encode($result, JSON_UNESCAPED_UNICODE));
                     } catch (\Throwable $e) {
                         ($this->log)("$name: " . get_class($e) . ': ' . $e->getMessage());
-                        $this->setup->report($e, null, ['scheduler_task' => $name]);
+                    }
+
+                    // Before the probe: inside an aborted transaction SELECT 1 fails too (25P02)
+                    // and a live connection would read as dead; an open one would swallow the
+                    // writes of every later task until the process exits.
+                    if (OpenTransaction::rollBack($this->db->getLink(), $this->db)) {
+                        ($this->log)("$name: the task left a transaction open, rolled back");
+                        $this->report("$name: the task left a transaction open", $name);
+                    }
+
+                    if ($e) {
+                        $this->report($e, $name);
 
                         // A query error (SQL, a constraint, lock_timeout) belongs to one task: it
                         // must not stop the others or loop the process through restarts. Exit
@@ -128,5 +141,15 @@ class Scheduler
         ($this->log)('stop');
 
         return 0;
+    }
+
+    /** A failing monitoring hook must not stop the schedule. */
+    private function report(\Throwable|string $error, string $name): void
+    {
+        try {
+            $this->setup->report($error, null, ['scheduler_task' => $name]);
+        } catch (\Throwable $e) {
+            ($this->log)('report failed: ' . get_class($e) . ': ' . $e->getMessage());
+        }
     }
 }

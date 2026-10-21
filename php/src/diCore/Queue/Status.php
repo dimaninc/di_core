@@ -5,7 +5,9 @@ namespace diCore\Queue;
 use diCore\Tool\SimpleContainer;
 
 /**
- * Values of job.status – the CHECK in sql/postgres/job.sql holds the same set.
+ * Values of job.status – the CHECK in sql/postgres/job.sql holds the same set. The queue
+ * writes them as literals in its SQL; this container is for projects: an admin page of tasks
+ * (titles, filters) and the test comparing a container with the CHECK.
  */
 class Status extends SimpleContainer
 {

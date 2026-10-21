@@ -13,10 +13,23 @@ require_once __DIR__ . '/TestSetup.php';
  */
 final class CliTest extends TestCase
 {
+    private function worker(array $options): array
+    {
+        $err = fopen('php://memory', 'w+');
+        $code = Cli::worker($options, new TestSetup(), $err);
+        rewind($err);
+
+        return [$code, stream_get_contents($err)];
+    }
+
     public function testUnknownQueueIsRefused(): void
     {
-        $this->assertSame(1, Cli::worker(['queues' => 'fast_q,fats_q'], new TestSetup()));
-        $this->assertSame(1, Cli::worker(['queues' => ' , '], new TestSetup()), 'an empty list');
-        $this->assertSame(1, Cli::worker([], new TestSetup()), 'no --queues');
+        [$code, $err] = $this->worker(['queues' => 'fast_q,fats_q']);
+        $this->assertSame(1, $code);
+        $this->assertStringStartsWith('Unknown queue: fats_q', $err);
+        $this->assertStringContainsString('fast – fast_q, single_q', $err, 'the groups are listed');
+
+        $this->assertSame([1, true], [($r = $this->worker(['queues' => ' , ']))[0], str_contains($r[1], '(empty)')], 'an empty list');
+        $this->assertSame(1, $this->worker([])[0], 'no --queues');
     }
 }

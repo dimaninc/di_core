@@ -53,7 +53,8 @@ class Setup
     /**
      * Named lists of queues for `worker.php --queues=<group>`, e.g. 'fast' (someone waits for
      * the answer) and 'slow' (renders, uploads). Worker::MAIL in a group makes that worker send
-     * the core's mail_queue.
+     * the core's mail_queue – between tasks, one letter possibly taking the whole SMTP timeout
+     * (MailPump).
      *
      * @return array<string, string[]>
      */

@@ -1,5 +1,7 @@
 -- Task queue (diCore\Queue\PgQueue). The list of queues is the project's: it adds
 -- CHECK (queue IN (...)) matching Setup::queues() and the notify trigger (job_notify.sql).
+-- The name job is Setup::TABLE's default; a project whose job is taken (a job board) sets its
+-- own TABLE and renames the table and the idx__job__* indexes in its copy of this DDL.
 CREATE TABLE IF NOT EXISTS job
 (
     id           bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

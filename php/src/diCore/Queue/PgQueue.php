@@ -117,21 +117,7 @@ class PgQueue implements Queue
      */
     public function endTask(): bool
     {
-        $open = false;
-
-        // Through the core first, down to zero: a raw ROLLBACK would leave its nesting counter
-        // as it was, and the next startTransaction() in this process would make a SAVEPOINT
-        // outside a transaction – every query committing by itself, a rollback rolling back nothing.
-        while ($this->db && $this->db->getTransactionNestingLevel() > 0) {
-            $this->db->rollbackTransaction();
-            $open = true;
-        }
-
-        // The rest is a BEGIN past the core: pdo_pgsql asks libpq for inTransaction and sees it.
-        if ($this->pdo->inTransaction()) {
-            $this->pdo->exec('ROLLBACK');
-            $open = true;
-        }
+        $open = OpenTransaction::rollBack($this->pdo, $this->db);
 
         $this->pdo->exec('RESET statement_timeout');
         $this->pdo->exec('RESET lock_timeout');
@@ -211,8 +197,13 @@ WHERE u.queue = ANY(?::text[]) AND u.status IN ('queued', 'running')
         $queues = [];
         $timeout = max(0, $milliseconds);
 
-        // PDO::pgsqlGetNotify – PHP 8.3; 8.4 has Pdo\Pgsql::getNotify and deprecates the old name.
-        while (($n = $this->pdo->pgsqlGetNotify(\PDO::FETCH_ASSOC, $timeout)) !== false) {
+        // Pdo\Pgsql::getNotify() (PHP 8.4+) where the connection is one; a plain PDO has only the
+        // driver method pgsqlGetNotify(), which the driver-specific subclasses are meant to replace.
+        $getNotify = $this->pdo instanceof \Pdo\Pgsql
+            ? fn(int $ms) => $this->pdo->getNotify(\PDO::FETCH_ASSOC, $ms)
+            : fn(int $ms) => $this->pdo->pgsqlGetNotify(\PDO::FETCH_ASSOC, $ms);
+
+        while (($n = $getNotify($timeout)) !== false) {
             $queues[] = (string) ($n['payload'] ?? '');
             // The rest that piled up – without waiting.
             $timeout = 0;
@@ -286,7 +277,11 @@ WHERE u.queue = ANY(?::text[]) AND u.status IN ('queued', 'running')
 
             return $result;
         } catch (\Throwable $e) {
-            $this->pdo->exec('ROLLBACK');
+            // On a broken link ROLLBACK throws too – and would mask the cause.
+            try {
+                $this->pdo->exec('ROLLBACK');
+            } catch (\Throwable $ignored) {
+            }
 
             throw $e;
         }

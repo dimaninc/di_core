@@ -15,9 +15,11 @@ class Cli
      * worker.php --queues=<group>|<queue,queue> [--until-idle]
      *
      * @param array|null $options parsed options (tests); null – getopt()
+     * @param resource|null $stderr where usage errors go (tests); null – STDERR
      */
-    public static function worker(?array $options = null, ?Setup $setup = null): int
+    public static function worker(?array $options = null, ?Setup $setup = null, $stderr = null): int
     {
+        $stderr ??= STDERR;
         $setup ??= Setup::basicCreate();
         $groups = $setup->groups();
         $log = static::logger('worker');
@@ -30,7 +32,7 @@ class Cli
         $help .= "  --until-idle – exit when there is nothing to do\n";
 
         if (isset($options['help']) || !isset($options['queues']) || !is_string($options['queues'])) {
-            fwrite(isset($options['help']) ? STDOUT : STDERR, $help);
+            fwrite(isset($options['help']) ? STDOUT : $stderr, $help);
 
             return isset($options['help']) ? 0 : 1;
         }
@@ -40,7 +42,7 @@ class Cli
         $unknown = array_diff($queues, $setup->queues(), [Worker::MAIL]);
 
         if (!$queues || $unknown) {
-            fwrite(STDERR, 'Unknown queue: ' . implode(', ', $unknown ?: ['(empty)']) . "\n" . $help);
+            fwrite($stderr, 'Unknown queue: ' . implode(', ', $unknown ?: ['(empty)']) . "\n" . $help);
 
             return 1;
         }
@@ -64,7 +66,7 @@ class Cli
         } catch (\Throwable $e) {
             // A DB or code error outside a task: the process exits, systemd starts a new one.
             $log('fatal: ' . get_class($e) . ': ' . $e->getMessage());
-            $setup->report($e, null, ['queue' => $options['queues']]);
+            static::report($setup, $log, $e, ['queue' => $options['queues']]);
 
             return 1;
         }
@@ -95,9 +97,19 @@ class Cli
             ))->run();
         } catch (\Throwable $e) {
             $log('fatal: ' . get_class($e) . ': ' . $e->getMessage());
-            $setup->report($e);
+            static::report($setup, $log, $e);
 
             return 1;
+        }
+    }
+
+    /** The journal line is already written: a failing monitoring hook only adds its own. */
+    protected static function report(Setup $setup, \Closure $log, \Throwable $e, array $context = []): void
+    {
+        try {
+            $setup->report($e, null, $context);
+        } catch (\Throwable $failed) {
+            $log('report failed: ' . get_class($failed) . ': ' . $failed->getMessage());
         }
     }
 

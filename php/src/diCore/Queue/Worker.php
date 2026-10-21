@@ -128,7 +128,6 @@ class Worker
     private function process(Task $task): void
     {
         $policy = $this->queue->getPolicy();
-        $setup = $this->queue->getSetup();
         $max = $policy->attempts($task->queue);
         $name = "{$task->queue}#{$task->id} (attempt {$task->attempts}" . ($task->interrupted ? ', interrupted' : '') . ')';
 
@@ -136,7 +135,7 @@ class Worker
         if ($task->attempts > $max) {
             $this->queue->fail($task, 'Attempts exhausted' . ($task->interrupted ? ': last run was interrupted' : ''));
             $this->log("$name: failed, attempts exhausted");
-            $setup->report("{$task->queue}: attempts exhausted" . ($task->interrupted ? ', last run was interrupted' : ''), $task);
+            $this->report("{$task->queue}: attempts exhausted" . ($task->interrupted ? ', last run was interrupted' : ''), $task);
 
             return;
         }
@@ -157,10 +156,10 @@ class Worker
             $this->current = null;
         }
 
-        if ($this->queue->endTask()) {
+        $leftOpen = $this->queue->endTask();
+
+        if ($leftOpen) {
             $this->log("$name: the handler left a transaction open, rolled back");
-            // A code bug, reported at once – not only after the last attempt.
-            $setup->report("{$task->queue}: the handler left a transaction open", $task);
         }
 
         if (!$e) {
@@ -178,12 +177,30 @@ class Worker
             if ($task->attempts >= $max) {
                 $this->queue->fail($task, $error);
                 $this->log("$name: failed after $max attempts: $error");
-                $setup->report($e, $task);
+                $this->report($e, $task);
             } else {
                 $delay = $policy->delay($task->queue, $task->attempts, $e instanceof RetryLater ? $e->atLeast : 0);
                 $this->queue->retry($task, $delay, $error);
                 $this->log("$name: retry in {$delay}s: $error");
             }
+        }
+
+        if ($leftOpen) {
+            // A code bug, reported at once – not only after the last attempt.
+            $this->report("{$task->queue}: the handler left a transaction open", $task);
+        }
+    }
+
+    /**
+     * After the outcome is written, never instead of it: a slow monitoring endpoint must not
+     * delay the record, a failing one must not lose it or kill the worker.
+     */
+    private function report(\Throwable|string $error, Task $task): void
+    {
+        try {
+            $this->queue->getSetup()->report($error, $task);
+        } catch (\Throwable $e) {
+            $this->log('report failed: ' . get_class($e) . ': ' . $e->getMessage());
         }
     }
 

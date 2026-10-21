@@ -19,6 +19,12 @@ use diCore\Tool\Mail\Queue as MailQueue;
  *   or every letter would wait for the SMTP timeout and the other queues for all of them.
  *   A quick failure (address refused) does not stop the pass.
  *
+ * Neither bound interrupts a letter in flight: one send can hold the worker for the SMTP
+ * client's own timeout (PHPMailer's default is 300 s). Keep the project's Sender timeout at
+ * a few seconds, or put Worker::MAIL into a group whose queues can wait that long. Not an
+ * alarm: killing the process mid-session may send the letter without marking it sent – and
+ * it goes again after the restart.
+ *
  * The core does not retry: a letter that did not go stays in mail_queue hidden (visible = 0)
  * and is seen on the mail page of the admin.
  */
