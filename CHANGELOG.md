@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.0
+
+- Queue: Postgres task queue, worker, scheduler and mail pump (#40)
+
 ## 0.10.13
 
 - Admin form: max-length counter inside dynamic rows (#39)
