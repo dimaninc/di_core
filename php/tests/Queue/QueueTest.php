@@ -243,4 +243,26 @@ final class QueueTest extends TestCase
     {
         $this->assertInstanceOf(Queue::class, PgQueue::forPdo($this->pdo, $this->setup));
     }
+
+    public function testPurgeRefusesAnEmptyBatch(): void
+    {
+        // LIMIT 0 would delete nothing forever.
+        $this->expectException(\InvalidArgumentException::class);
+        $this->queue->purgeFinished(7, 30, 0);
+    }
+
+    public function testQueueNamesAreQuotedInTheArray(): void
+    {
+        $queue = new class ($this->pdo, $this->setup->policy(), $this->db, $this->setup) extends PgQueue {
+            public function arrayOf(array $values): string
+            {
+                return $this->pgArray($values);
+            }
+        };
+        $names = ['a,b', 'NULL', 'o"q', 'back\\slash', "it's"];
+        $st = $this->pdo->prepare('SELECT array_to_json(?::text[])');
+        $st->execute([$queue->arrayOf($names)]);
+
+        $this->assertSame($names, json_decode($st->fetchColumn(), true));
+    }
 }

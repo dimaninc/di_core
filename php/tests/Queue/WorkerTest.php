@@ -263,6 +263,25 @@ final class WorkerTest extends TestCase
         }
     }
 
+    public function testATakenOverRowGetsNoOutcomeAndNoReport(): void
+    {
+        $t = TestSetup::TABLE;
+        $id = $this->queue->push(TestSetup::SINGLE, []);
+
+        // Another run took the row (its lock expired): the attempt counter moved on.
+        $this->work([TestSetup::SINGLE], function () use ($t, $id) {
+            $this->pdo->exec("UPDATE $t SET attempts = attempts + 1 WHERE id = $id");
+            throw new \RuntimeException('late');
+        });
+
+        $this->assertSame('running', $this->jobField($id, 'status'), 'the other run owns the outcome');
+        $this->assertSame([], $this->setup->reports);
+        $this->assertTrue(
+            (bool) array_filter($this->log, fn($m) => str_contains($m, 'taken over by another run')),
+            implode("\n", $this->log)
+        );
+    }
+
     public function testWorkerSleepsThroughForeignNotifications(): void
     {
         // The channel is shared: a slow worker must not wake for every fast task.

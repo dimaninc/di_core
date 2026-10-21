@@ -22,8 +22,9 @@ use diCore\Tool\Mail\Queue as MailQueue;
  * Neither bound interrupts a letter in flight: one send can hold the worker for the SMTP
  * client's own timeout (PHPMailer's default is 300 s). Keep the project's Sender timeout at
  * a few seconds, or put Worker::MAIL into a group whose queues can wait that long. Not an
- * alarm: killing the process mid-session may send the letter without marking it sent – and
- * it goes again after the restart.
+ * alarm: the core hides a letter (visible = 0) before sending it, so a process killed
+ * mid-session leaves it hidden and not marked sent – nobody knows whether it went, and it
+ * is not retried.
  *
  * The core does not retry: a letter that did not go stays in mail_queue hidden (visible = 0)
  * and is seen on the mail page of the admin.

@@ -200,8 +200,8 @@ WHERE u.queue = ANY(?::text[]) AND u.status IN ('queued', 'running')
         $queues = [];
         $timeout = max(0, $milliseconds);
 
-        // Pdo\Pgsql::getNotify() (PHP 8.4+) where the connection is one; a plain PDO has only the
-        // driver method pgsqlGetNotify(), which the driver-specific subclasses are meant to replace.
+        // Pdo\Pgsql::getNotify() (PHP 8.4+) only for a forPdo() connection made by PDO::connect():
+        // the core's driver makes a plain \PDO, which has only the driver method pgsqlGetNotify().
         $getNotify = $this->pdo instanceof \Pdo\Pgsql
             ? fn(int $ms) => $this->pdo->getNotify(\PDO::FETCH_ASSOC, $ms)
             : fn(int $ms) => $this->pdo->pgsqlGetNotify(\PDO::FETCH_ASSOC, $ms);
@@ -226,6 +226,11 @@ WHERE u.queue = ANY(?::text[]) AND u.status IN ('queued', 'running')
      */
     public function purgeFinished(int $doneDays = 7, int $failedDays = 30, int $batch = 1000): int
     {
+        // LIMIT 0 deletes nothing and the loop below would never end.
+        if ($batch < 1) {
+            throw new \InvalidArgumentException("batch must be >= 1, got $batch");
+        }
+
         $queues = $this->setup->queues();
 
         if (!$queues) {
@@ -299,10 +304,10 @@ WHERE u.queue = ANY(?::text[]) AND u.status IN ('queued', 'running')
 
     protected function reserveJob(array $jobQueues): ?Task
     {
-        // The lock depends on the queue: a CASE from the policy, names are known ones only.
+        // The lock depends on the queue: a CASE from the policy.
         $lock = 'CASE job.queue';
         foreach ($jobQueues as $queue) {
-            $lock .= " WHEN '$queue' THEN " . $this->policy->lockSeconds($queue);
+            $lock .= ' WHEN ' . $this->pdo->quote($queue) . ' THEN ' . $this->policy->lockSeconds($queue);
         }
         $lock .= ' END';
 
@@ -366,8 +371,8 @@ RETURNING job.id, job.queue, job.order_key, job.payload, job.attempts, c.interru
 
     protected function pgArray(array $values): string
     {
-        // Only queue names from Setup::queues(): nothing to escape.
-        return '{' . implode(',', $values) . '}';
+        // Every element quoted: unquoted, a comma splits a name and NULL becomes a null.
+        return '{' . implode(',', array_map(fn($v) => '"' . addcslashes($v, '"\\') . '"', $values)) . '}';
     }
 
     protected function decode($payload): array

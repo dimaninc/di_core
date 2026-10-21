@@ -154,6 +154,13 @@ final class SchedulerTest extends TestCase
         }
     }
 
+    public function testZeroIntervalIsRefused(): void
+    {
+        // The loop would never sleep: the task and its probe back to back.
+        $this->expectExceptionMessage("Task 'busy': interval must be an int >= 1 s");
+        $this->scheduler(['busy' => [0, fn() => null]]);
+    }
+
     public function testIntervalLongerThanTheLifetimeIsRefused(): void
     {
         $this->expectException(\InvalidArgumentException::class);

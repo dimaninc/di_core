@@ -13,7 +13,8 @@ class Policy
     {
         // A wrong shape fails late and badly: timeout 0 disables the alarm and makes the lock
         // zero (a second worker re-issues the running task at once), empty delays make
-        // delay() a TypeError after the run – the worker dies with the task left running.
+        // delay() a TypeError after the run – the worker dies with the task left running;
+        // delays are read by position, so keys other than 0..n-1 do the same.
         foreach ($rules as $queue => $rule) {
             $int = fn($v, int $min) => is_int($v) && $v >= $min;
             $delays = $rule['delays'] ?? null;
@@ -23,6 +24,7 @@ class Policy
                 !$int($rule['timeout'] ?? null, 1) ||
                 !is_array($delays) ||
                 !$delays ||
+                !array_is_list($delays) ||
                 array_filter($delays, fn($d) => !$int($d, 0))
             ) {
                 throw new \InvalidArgumentException(

@@ -17,6 +17,8 @@ interface Queue
      * @param string|null $orderKey tasks of one key run strictly in push order (e.g.
      *   'order:<id>'). One key – one queue: a worker does not see a holder in another queue
      *   and sleeps until its idle poll (PgQueue::secondsUntilDue()).
+     * @param array $payload stored as jsonb, which refuses "\u0000": a NUL byte in a string
+     *   fails the push (22P05) and aborts the caller's transaction – strip it from user text
      * @return int task id
      */
     public function push(string $queue, array $payload, ?string $orderKey = null, int $delaySeconds = 0): int;

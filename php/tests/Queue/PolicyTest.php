@@ -21,6 +21,8 @@ final class PolicyTest extends TestCase
             'no delays' => [['delays' => []] + $ok],
             'a delay is not an int' => [['delays' => [5, '30']] + $ok],
             'a negative delay' => [['delays' => [-1]] + $ok],
+            'delays with string keys' => [['delays' => ['a' => 5]] + $ok],
+            'delays not from 0' => [['delays' => [1 => 5, 2 => 30]] + $ok],
             'attempts 0' => [['attempts' => 0] + $ok],
             'attempts missing' => [array_diff_key($ok, ['attempts' => 1])],
         ];

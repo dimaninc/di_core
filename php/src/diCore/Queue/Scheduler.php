@@ -40,6 +40,11 @@ class Scheduler
         private ?Setup $setup = null
     ) {
         foreach ($tasks as $name => [$interval]) {
+            // 0 or less: the loop never sleeps, the task and its probe run back to back.
+            if (!is_int($interval) || $interval < 1) {
+                throw new \InvalidArgumentException("Task '$name': interval must be an int >= 1 s");
+            }
+
             if ($interval > self::MAX_SECONDS) {
                 throw new \InvalidArgumentException(
                     "Task '$name': interval $interval s is longer than the process lifetime (" . self::MAX_SECONDS . ' s)'

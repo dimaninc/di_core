@@ -11,8 +11,9 @@ namespace diCore\Queue;
  * - The run timeout is SIGALRM: the whole process exits, the task stays running until its
  *   lock expires (twice the timeout) and is issued again as interrupted. The signal fires
  *   only between opcodes and does not interrupt a blocking C call, so there is no parallel
- *   second run while every such call has its own bound: DB queries – statement_timeout and
- *   lock_timeout for the run (PgQueue::limitStatements()), network – the client's timeout;
+ *   second run while every such call has its own bound: queries on the queue's connection –
+ *   statement_timeout and lock_timeout for the run (PgQueue::limitStatements()); another
+ *   connection the handler opens needs its own limits; network – the client's timeout;
  *   the handler's network timeouts must add up to less than the queue's timeout (Setup::rules()).
  * - SIGTERM / SIGINT – finish the current task and exit.
  * - Exits by itself after MAX_TASKS tasks, MAX_SECONDS of work or MAX_MEMORY of memory:
@@ -133,9 +134,12 @@ class Worker
 
         // Abandoned on its last attempt: the reserve has already counted a new one.
         if ($task->attempts > $max) {
-            $this->queue->fail($task, 'Attempts exhausted' . ($task->interrupted ? ': last run was interrupted' : ''));
-            $this->log("$name: failed, attempts exhausted");
-            $this->report("{$task->queue}: attempts exhausted" . ($task->interrupted ? ', last run was interrupted' : ''), $task);
+            if (!$this->queue->fail($task, 'Attempts exhausted' . ($task->interrupted ? ': last run was interrupted' : ''))) {
+                $this->log("$name: attempts exhausted, but the row was taken over by another run");
+            } else {
+                $this->log("$name: failed, attempts exhausted");
+                $this->report("{$task->queue}: attempts exhausted" . ($task->interrupted ? ', last run was interrupted' : ''), $task);
+            }
 
             return;
         }
@@ -172,26 +176,40 @@ class Worker
             $this->log("$name: the handler left a transaction open, rolled back");
         }
 
+        // The guarded UPDATE found no row of this attempt: its outcome belongs to the other run,
+        // so neither a log line claiming one nor a report.
+        $takenOver = fn(string $outcome) => $this->log("$name: $outcome, but the row was taken over by another run");
+
         if (!$e) {
             if (!$this->queue->complete($task)) {
-                $this->log("$name: done, but the row was taken over by another run");
+                $takenOver('done');
             }
         } elseif ($e instanceof PermanentFailure) {
             // Not reported: the handler decided this is an outcome, not a fault; the text is in job.error.
-            $this->queue->fail($task, $e->getMessage());
-            $this->log("$name: failed: {$e->getMessage()}");
+            if ($this->queue->fail($task, $e->getMessage())) {
+                $this->log("$name: failed: {$e->getMessage()}");
+            } else {
+                $takenOver('failed');
+            }
         } else {
             $error = get_class($e) . ': ' . $e->getMessage();
 
             // Retries by the policy are normal (network, limits): only the final failure is reported.
             if ($task->attempts >= $max) {
-                $this->queue->fail($task, $error);
-                $this->log("$name: failed after $max attempts: $error");
-                $this->report($e, $task);
+                if ($this->queue->fail($task, $error)) {
+                    $this->log("$name: failed after $max attempts: $error");
+                    $this->report($e, $task);
+                } else {
+                    $takenOver("failed ($error)");
+                }
             } else {
                 $delay = $policy->delay($task->queue, $task->attempts, $e instanceof RetryLater ? $e->atLeast : 0);
-                $this->queue->retry($task, $delay, $error);
-                $this->log("$name: retry in {$delay}s: $error");
+
+                if ($this->queue->retry($task, $delay, $error)) {
+                    $this->log("$name: retry in {$delay}s: $error");
+                } else {
+                    $takenOver("retry ($error)");
+                }
             }
         }
 
