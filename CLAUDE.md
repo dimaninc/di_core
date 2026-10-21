@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 `dimaninc/di_core` is a PHP CMS core library (Composer package) used as a dependency in web projects. It provides a full MVC stack: ORM, admin panel, routing, templating, authentication, and database migrations.
 
-**PHP >= 7.4**, **Twig >= 2.11**, **PHPUnit ^11**
+**PHP >= 8.1**, **Twig >= 2.11**, **PHPUnit ^11**
 
 ## Key Commands
 
@@ -160,6 +160,14 @@ The generator writes the file with the correct class name (`diMigration_{idx}`),
 `insertValues()` does **not** fill `$names`, and it can't: `down()` runs in its own process on an instance whose `up()` never ran, so list the tokens there by hand or the rollback is a silent no-op (`diDB::in([])` compares against `''`). Covered by `php/tests/Database/LocalizationMigrationInsertValuesTest.php` and `php/tests/Entity/LocalizationValueFieldsTest.php`.
 
 **The last-log cache must never answer from an empty cache.** `MigrationsManager::cacheLastLogsForIdx()` (the migrations list page) preloads the last log row per idx in one query; with the cache on, `getLastLogByIdx()` answers an idx it does not hold as "not executed" without asking the DB. The query used MySQL backticks, so on PostgreSQL it failed, the cache was already switched on and EVERY migration read as not applied while the log held them as `direction = 1` – failure turned into a plausible answer. Now the table is quoted by the engine (`$db->escapeTable()`), and the cache is switched on only after the query succeeded; a failed one leaves it off (reads go one by one) and is reported by `reportCacheFailure()` (file log + `E_USER_WARNING`), not swallowed. Covered by `php/tests/Database/MigrationsLastLogCacheTest.php` (live part: `DI_CORE_TEST_DB=postgresql://…`).
+
+### Task queue (`diCore\Queue`, PostgreSQL)
+
+A job table with `FOR UPDATE SKIP LOCKED` reserving, LISTEN/NOTIFY wake-up, a long-lived `Worker` and `Scheduler` under systemd, the core's `mail_queue` sent from a worker (`MailPump`, pseudo-queue `Worker::MAIL`). **A project configures it by subclassing `Setup` as `<Namespace>\Queue\Setup`** (found by `basicCreate()`): queues, rules, worker groups, handlers, schedule, `report()` for monitoring, and the constants naming server-side objects (table, channel, order-lock class, lock names) – a project already running a queue keeps its own values, or old and new processes disagree during a restart. Its scripts are thin wrappers over `Cli::worker()` / `Cli::scheduler()`; business code pushes through `QueueFactory::create()` (the `Queue` interface), which picks up a `<Namespace>\Queue\PgQueue` subclass for a project with a source of its own.
+
+DDL: `sql/postgres/job.sql` (no queue list – the project adds `CHECK (queue IN (...))` matching `Setup::queues()`) and `sql/postgres/job_notify.sql` (`di_queue_notify(channel[, payload])`; it has a `$$` body, so it is run whole, never through `executeSqlFile()`). There is no core migration: the project's migration loads both and creates its trigger.
+
+Invariants, each covered by `php/tests/Queue/` (live: `DI_CORE_TEST_DB=postgresql://…`, own table `di_test_job` and channel): a claim is one guarded `UPDATE`, an outcome is written only `WHERE status = 'running' AND attempts = ?` (an abandoned run never overwrites its re-issue); a push with an order key locks the key until commit (order = commit order); `endTask()` rolls back what a handler left open **through the core first**, down to nesting level 0 – a raw `ROLLBACK` leaves `diDB`'s counter behind and every later "transaction" of the process autocommits; the scheduler does the same after every task (`OpenTransaction::rollBack()`), before probing the connection – inside an aborted transaction the probe fails too; the run timeout is SIGALRM plus `statement_timeout`/`lock_timeout` at 4/5 of it, and the lock is twice the timeout; rule shapes are checked when `Policy` is built (timeout 0 would zero the lock, empty delays a `TypeError` after the run). `report()` gets a task's final failure, an exhausted interrupted run, a transaction left open (by a handler or a scheduler task), a failed scheduler task and a fatal process error – not a retry, not `PermanentFailure`; it runs after the outcome is written and a failure of it is only a journal line. A mail pass is not interrupted mid-letter: one send may take the whole SMTP timeout, so a project keeps it short. One order key – one queue: a worker does not see a holder in another queue and sleeps until its idle poll.
 
 ## Conventions
 
