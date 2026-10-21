@@ -13,15 +13,20 @@ class QueueFactory
         return static::pgQueueClass()::create();
     }
 
-    /** A queue on its own connection – for an entry point without the CMS (webhook intake). */
-    public static function forPdo(\PDO $pdo): Queue
+    /**
+     * A queue on its own connection – for an entry point without the CMS (webhook intake). There
+     * diLib is not loaded, so pass the project's Setup: Setup::basicCreate() can't find it, and a
+     * project's PgQueue subclass isn't found either (a project with one builds it itself).
+     */
+    public static function forPdo(\PDO $pdo, ?Setup $setup = null): Queue
     {
-        return static::pgQueueClass()::forPdo($pdo);
+        return static::pgQueueClass()::forPdo($pdo, $setup);
     }
 
     /** @return class-string<PgQueue> */
     public static function pgQueueClass(): string
     {
-        return \diLib::getChildClass(PgQueue::class);
+        // diLib lives outside the psr-4 autoload and is loaded by the CMS bootstrap only.
+        return class_exists(\diLib::class, false) ? \diLib::getChildClass(PgQueue::class) : PgQueue::class;
     }
 }
