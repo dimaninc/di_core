@@ -101,7 +101,8 @@ class PgQueue implements Queue
      * Bound the handler's queries for the run: SIGALRM does not interrupt a blocking C call
      * (a query, a lock wait), and without these limits a hung query would outlive the timeout
      * and the task lock – a second worker would then issue the task again while the first one
-     * still runs. The limit is 4/5 of the queue's timeout.
+     * still runs. The limit is 4/5 of the queue's timeout. endTask() RESETs both – to the role's
+     * or database's value, not to a SET the project made on connect.
      */
     public function limitStatements(int $timeoutSeconds): void
     {
@@ -185,7 +186,9 @@ WHERE u.queue = ANY(?::text[]) AND u.status IN ('queued', 'running')
 
     public function listen(): void
     {
-        $this->pdo->exec('LISTEN ' . $this->setup::CHANNEL);
+        // Quoted: an unquoted name is folded to lower case, while pg_notify() in the trigger takes
+        // it as is – a CHANNEL with a capital would never wake anyone.
+        $this->pdo->exec('LISTEN "' . str_replace('"', '""', $this->setup::CHANNEL) . '"');
     }
 
     /**

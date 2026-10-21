@@ -156,7 +156,17 @@ class Worker
             $this->current = null;
         }
 
-        $leftOpen = $this->queue->endTask();
+        try {
+            $leftOpen = $this->queue->endTask();
+        } catch (\Throwable $endFailed) {
+            // A dead link: the process exits with this, and the handler's own error – likely
+            // the cause – would be lost; the task comes back as interrupted.
+            if ($e) {
+                $this->log("$name: " . get_class($e) . ': ' . $e->getMessage());
+            }
+
+            throw $endFailed;
+        }
 
         if ($leftOpen) {
             $this->log("$name: the handler left a transaction open, rolled back");

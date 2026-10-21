@@ -10,8 +10,9 @@ namespace diCore\Queue;
  * A lost DB connection is an exit with an error, not a journal line: there is no reconnect
  * here or in the core, and after a Postgres restart the process would live on doing nothing
  * while its lock on the server is already gone – a second scheduler would start beside it.
- * The sign is not the exception class but a SELECT 1 probe after a task's PDOException:
- * pdo_pgsql reports a broken link now with SQLSTATE 08xxx, now with HY000 and a text.
+ * The sign is a SELECT 1 probe after every task, not the task's exception: diDB::q() swallows
+ * PDOException and returns false, and pdo_pgsql reports a broken link now with SQLSTATE 08xxx,
+ * now with HY000 and a text. A probe per task is cheap – tasks are minutes apart.
  * Plus an exit by age (MAX_SECONDS), as the worker: systemd starts a new one.
  *
  * Run times live in the process's memory and the tasks run at once after a start, so an
@@ -91,24 +92,23 @@ class Scheduler
                         ($this->log)("$name: " . get_class($e) . ': ' . $e->getMessage());
                     }
 
+                    if ($e) {
+                        $this->report($e, $name);
+                    }
+
                     // Before the probe: inside an aborted transaction SELECT 1 fails too (25P02)
                     // and a live connection would read as dead; an open one would swallow the
-                    // writes of every later task until the process exits.
+                    // writes of every later task until the process exits. On a dead link the
+                    // rollback throws itself (pdo_pgsql reports a lost link as in a transaction).
                     if (OpenTransaction::rollBack($this->db->getLink(), $this->db)) {
                         ($this->log)("$name: the task left a transaction open, rolled back");
                         $this->report("$name: the task left a transaction open", $name);
                     }
 
-                    if ($e) {
-                        $this->report($e, $name);
-
-                        // A query error (SQL, a constraint, lock_timeout) belongs to one task: it
-                        // must not stop the others or loop the process through restarts. Exit
-                        // only if the connection itself is dead.
-                        if ($e instanceof \PDOException) {
-                            $this->db->getLink()->query('SELECT 1');
-                        }
-                    }
+                    // A query error (SQL, a constraint, lock_timeout) belongs to one task: it must
+                    // not stop the others or loop the process through restarts. Exit only if the
+                    // connection itself is dead.
+                    $this->db->getLink()->query('SELECT 1');
 
                     $next[$name] = time() + $interval;
                 }

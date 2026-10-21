@@ -82,6 +82,38 @@ final class SchedulerTest extends TestCase
         ], array_values(array_filter($this->setup->reportedMessages(), fn($m) => str_contains($m, 'left'))));
     }
 
+    public function testDeadConnectionStopsTheScheduler(): void
+    {
+        // The task's own queries go through diDB::q(), which swallows the error: the probe
+        // after the task, not the task's exception, must notice the link is gone.
+        $db = self::openQueueDb('di_core_queue_scheduler_dead')->getDb();
+        $pid = (int) $db->getLink()->query('SELECT pg_backend_pid()')->fetchColumn();
+        $killer = $this->pdo;
+        $ran = [];
+
+        $scheduler = new Scheduler($db, [
+            'killed' => [60, function () use ($db, $killer, $pid) {
+                $killer->query("SELECT pg_terminate_backend($pid)");
+                usleep(100000);
+
+                return $db->q('SELECT 1') === false ? 'q() returned false' : 'alive';
+            }],
+            'next' => [60, function () use (&$ran) {
+                $ran[] = 'next';
+            }],
+        ], function ($m) {
+            $this->log[] = $m;
+        }, true, $this->setup);
+
+        try {
+            $scheduler->run();
+            $this->fail('a dead connection must end the process');
+        } catch (\PDOException $e) {
+            $this->assertSame([], $ran, 'nothing runs on a dead connection');
+            $this->assertContains('killed: "q() returned false"', $this->log);
+        }
+    }
+
     public function testAFailingReportDoesNotStopTheSchedule(): void
     {
         $setup = new class extends TestSetup {

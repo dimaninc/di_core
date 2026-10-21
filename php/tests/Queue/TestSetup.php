@@ -12,7 +12,10 @@ use diCore\Queue\Task;
 class TestSetup extends Setup
 {
     const TABLE = 'di_test_job';
-    const CHANNEL = 'di_test_queue';
+    // With a capital: LISTEN must quote it (an unquoted name is folded to lower case).
+    const CHANNEL = 'di_Test_queue';
+    // The test copy of di_queue_notify() (QueueTestDb).
+    const NOTIFY_FUNCTION = 'di_test_queue_notify';
     const SCHEDULER_LOCK = 'di_test_queue_scheduler';
     const MAIL_LOCK = 'di_test_queue_mail';
 

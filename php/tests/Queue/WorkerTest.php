@@ -228,6 +228,41 @@ final class WorkerTest extends TestCase
         $this->assertCount(2, array_filter($this->log, fn($m) => $m === 'report failed: RuntimeException: sentry is down'));
     }
 
+    public function testDeadConnectionKeepsTheHandlerErrorInTheLog(): void
+    {
+        $id = $this->queue->push(self::Q, []);
+        $db = self::openQueueDb('di_core_queue_worker_dead')->getDb();
+        $pdo = $db->getLink();
+        $pid = (int) $pdo->query('SELECT pg_backend_pid()')->fetchColumn();
+        $queue = new \diCore\Queue\PgQueue($pdo, $this->setup->policy(), $db, $this->setup);
+        $handler = new class ($this->pdo, $pid) implements Handler {
+            public function __construct(private \PDO $killer, private int $pid)
+            {
+            }
+
+            public function handle(Task $task): void
+            {
+                $this->killer->query("SELECT pg_terminate_backend($this->pid)");
+                usleep(100000);
+                throw new \RuntimeException('upstream refused');
+            }
+        };
+        $worker = new Worker($queue, [self::Q], [self::Q => $handler], null, function ($m) {
+            $this->log[] = $m;
+        }, true);
+
+        try {
+            $worker->run();
+            $this->fail('a dead connection must end the process');
+        } catch (\PDOException $e) {
+            $this->assertTrue(
+                (bool) array_filter($this->log, fn($m) => str_contains($m, 'RuntimeException: upstream refused')),
+                implode("\n", $this->log)
+            );
+            $this->assertSame('running', $this->jobField($id, 'status'), 'it comes back as interrupted');
+        }
+    }
+
     public function testWorkerSleepsThroughForeignNotifications(): void
     {
         // The channel is shared: a slow worker must not wake for every fast task.

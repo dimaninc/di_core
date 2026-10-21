@@ -9,6 +9,9 @@ use diCore\Traits\BasicCreate;
  * and the schedule. A project subclasses it as `<Namespace>\Queue\Setup`; `basicCreate()`
  * finds the subclass, so the worker, the scheduler and `QueueFactory` need no wiring.
  *
+ * PostgreSQL only, on the 'default' connection (Connection::get()): a project whose main
+ * database is MySQL can't use it as is – a queue connection of its own is not supported yet.
+ *
  * The constants name shared server-side objects. A project that already runs the queue keeps
  * its own values: a channel renamed between the migration and the restart leaves old workers
  * deaf until their idle poll, a lock renamed lets an old and a new process run side by side.
@@ -89,8 +92,10 @@ class Setup
 
     /**
      * Monitoring hook (Sentry and the like); the journal line is written anyway. Called for
-     * a task's final failure (not for a retry, not for PermanentFailure), a transaction a
-     * handler left open, a failed scheduler task and a fatal error of a process.
+     * a task's final failure (not for a retry, not for PermanentFailure), a run interrupted on
+     * its last attempt, a transaction left open by a handler or a scheduler task, a failed
+     * scheduler task and a fatal error of a process. Called after the outcome is written; an
+     * exception from it becomes a journal line.
      *
      * @param array<string, scalar> $context
      */

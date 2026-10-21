@@ -203,7 +203,7 @@ final class QueueTest extends TestCase
         $this->pdo->exec('DROP TABLE IF EXISTS di_test_letter');
         $this->pdo->exec('CREATE TABLE di_test_letter (id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY)');
         $this->pdo->exec("CREATE TRIGGER trg__di_test_letter__notify AFTER INSERT ON di_test_letter
-            FOR EACH ROW EXECUTE FUNCTION di_queue_notify('" . TestSetup::CHANNEL . "', 'mail')");
+            FOR EACH ROW EXECUTE FUNCTION " . TestSetup::NOTIFY_FUNCTION . "('" . TestSetup::CHANNEL . "', 'mail')");
         $listener = $this->otherQueue();
         $listener->listen();
 

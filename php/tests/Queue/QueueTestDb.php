@@ -126,8 +126,10 @@ trait QueueTestDb
         $pdo->exec($ddl);
         $pdo->exec("ALTER TABLE $t ADD CONSTRAINT {$t}_queue_check CHECK (queue IN ('" .
             implode("', '", (new TestSetup())->queues()) . "'))");
-        $pdo->exec(file_get_contents($folder . 'job_notify.sql'));
+        // Under a test name: DI_CORE_TEST_DB may point at a database whose di_queue_notify() is
+        // live, and CREATE OR REPLACE would swap it silently.
+        $pdo->exec(str_replace('di_queue_notify', TestSetup::NOTIFY_FUNCTION, file_get_contents($folder . 'job_notify.sql')));
         $pdo->exec("CREATE TRIGGER trg__{$t}__notify AFTER INSERT ON $t
-            FOR EACH ROW EXECUTE FUNCTION di_queue_notify('" . TestSetup::CHANNEL . "')");
+            FOR EACH ROW EXECUTE FUNCTION " . TestSetup::NOTIFY_FUNCTION . "('" . TestSetup::CHANNEL . "')");
     }
 }
