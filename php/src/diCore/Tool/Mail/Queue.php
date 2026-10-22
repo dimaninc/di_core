@@ -330,9 +330,10 @@ class Queue
         $bodyPlain = $message->hasPlainBody() ? $message->getBody() : '';
         $bodyHtml = $message->hasPlainBody() ? '' : $message->getBody();
 
-        $options = [
-            'replyTo' => $message->getReplyTo(),
-        ];
+        $options = static::sendOptions(
+            $message->getReplyTo(),
+            $message->getSettings()
+        );
 
         $result = $this->sendWorker(
             $message->getSender(),
@@ -349,6 +350,24 @@ class Queue
         }
 
         return $result;
+    }
+
+    /**
+     * Options for Sender from a queued letter. Of the settings stored by add() only `headers`
+     * reaches the sender (name => value, e.g. List-Unsubscribe); the rest stays as before.
+     * A broken or foreign settings value means no headers, not a lost letter.
+     */
+    public static function sendOptions(?string $replyTo, ?string $settings): array
+    {
+        $options = ['replyTo' => (string) $replyTo];
+
+        $stored = $settings ? @unserialize($settings, ['allowed_classes' => false]) : [];
+
+        if (is_array($stored) && !empty($stored['headers']) && is_array($stored['headers'])) {
+            $options['headers'] = $stored['headers'];
+        }
+
+        return $options;
     }
 
     private function setMessageSent(Model $message)
