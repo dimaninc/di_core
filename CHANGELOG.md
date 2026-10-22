@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.11.1
+
+- Queue: forPdo() without the CMS takes the project's Setup
+
 ## 0.11.0
 
 - Queue: Postgres task queue, worker, scheduler and mail pump (#40)
