@@ -194,6 +194,8 @@ class Sender
         $mail->Subject = $subject;
         $mail->Body = $bodyPlain ?: $bodyHtml;
 
+        static::addCustomHeaders($mail, $options['headers'] ?? []);
+
         if (!empty($options['replyTo'])) {
             $options['replyTo'] = \diEmail::parseNameAndEmail($options['replyTo']);
 
@@ -253,6 +255,24 @@ class Sender
         }
 
         return $res;
+    }
+
+    /**
+     * Extra headers (name => value), SMTP only. PHPMailer refuses a name or value with a line
+     * break (header injection) – such a header is dropped and logged, the letter still goes.
+     */
+    public static function addCustomHeaders(PHPMailer $mail, array $headers): void
+    {
+        foreach ($headers as $name => $value) {
+            if (
+                !is_string($name) ||
+                !is_scalar($value) ||
+                !preg_match('/^[A-Za-z0-9-]+$/D', $name) ||
+                !$mail->addCustomHeader($name, (string) $value)
+            ) {
+                static::logError('custom header refused: ' . var_export($name, true));
+            }
+        }
     }
 
     protected static function logError($message)
