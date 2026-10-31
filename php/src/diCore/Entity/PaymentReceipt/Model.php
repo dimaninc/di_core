@@ -11,6 +11,7 @@ use chillerlan\QRCode\QRCode;
 use chillerlan\QRCode\QROptions;
 use diCore\Data\Types;
 use diCore\Helper\ArrayHelper;
+use diCore\Helper\Phone;
 use diCore\Tool\CollectionCache;
 
 /**
@@ -26,6 +27,10 @@ use diCore\Tool\CollectionCache;
  * @method string	getFiscalDate
  * @method integer	getFiscalSession
  * @method integer	getFiscalNumber
+ * @method string	getFiscalMarkKkt
+ * @method string	getFiscalFnNumber
+ * @method string	getFiscalKktRegNumber
+ * @method integer	getFiscalTotal
  *
  * @method bool hasRnd
  * @method bool hasDatePayed
@@ -36,6 +41,10 @@ use diCore\Tool\CollectionCache;
  * @method bool hasFiscalDate
  * @method bool hasFiscalSession
  * @method bool hasFiscalNumber
+ * @method bool hasFiscalMarkKkt
+ * @method bool hasFiscalFnNumber
+ * @method bool hasFiscalKktRegNumber
+ * @method bool hasFiscalTotal
  *
  * @method $this setRnd($value)
  * @method $this setDatePayed($value)
@@ -46,6 +55,10 @@ use diCore\Tool\CollectionCache;
  * @method $this setFiscalDate($value)
  * @method $this setFiscalSession($value)
  * @method $this setFiscalNumber($value)
+ * @method $this setFiscalMarkKkt($value)
+ * @method $this setFiscalFnNumber($value)
+ * @method $this setFiscalKktRegNumber($value)
+ * @method $this setFiscalTotal($value)
  */
 class Model extends \diCore\Entity\PaymentDraft\Model
 {
@@ -136,6 +149,166 @@ class Model extends \diCore\Entity\PaymentDraft\Model
                     'amount' => 1,
                     'price' => $this->getAmount(),
                 ],
+            ],
+        ];
+    }
+
+    /**
+     * Receipt for the cash desk, contract v2: money in integer kopecks, contact
+     * already chosen. Everything a project may change goes through the
+     * protected cashDesk*() methods below.
+     */
+    public function asArrayForCashDeskV2(string $paymentsPlace): array
+    {
+        $total = $this->cashDeskTotal();
+
+        return [
+            'id' => (int) $this->getId(),
+            'type' => $this->cashDeskReceiptType(),
+            'originalId' => $this->cashDeskOriginalId(),
+            'paidAt' => $this->cashDeskPaidAt(),
+            'total' => $total,
+            'contact' => $this->cashDeskContact(),
+            'paymentsPlace' => $paymentsPlace,
+            'items' => $this->cashDeskItems($total),
+            'payments' => $this->cashDeskPayments($total),
+        ];
+    }
+
+    /**
+     * `amount` is a float in roubles (a FLOAT column in MySQL): 0.29 * 100 is
+     * 28.999…, so a cast without round() would lose a kopeck.
+     */
+    public static function toKopecks($amount): int
+    {
+        return (int) round((float) $amount * 100);
+    }
+
+    public function cashDeskTotal(): int
+    {
+        return static::toKopecks($this->getAmount());
+    }
+
+    /**
+     * `sell` or `sellReturn`; a return also needs cashDeskOriginalId().
+     */
+    protected function cashDeskReceiptType(): string
+    {
+        return 'sell';
+    }
+
+    protected function cashDeskOriginalId(): ?int
+    {
+        return null;
+    }
+
+    protected function cashDeskPaidAt(): ?string
+    {
+        $date = (string) $this->getDatePayed();
+
+        if ($date === '') {
+            return null;
+        }
+
+        try {
+            return (new \DateTime($date))->format(DATE_ATOM);
+        } catch (\Exception $e) {
+            return null;
+        }
+    }
+
+    /**
+     * A usable email, else a phone, else null (the cash desk then puts in the
+     * shop's own address, as the law requires a contact for an online receipt).
+     */
+    public function cashDeskContact(): ?string
+    {
+        $email = trim($this->cashDeskBuyerEmail());
+
+        if ($email !== '' && $this->isCashDeskEmailUsable($email)) {
+            return $email;
+        }
+
+        $phone = $this->normalizeCashDeskPhone($this->cashDeskBuyerPhone());
+
+        return $phone !== '' ? $phone : null;
+    }
+
+    /**
+     * The buyer's own address only: not getUserData(), which a project may pad
+     * with a fallback, and a fallback here would hide the phone behind it.
+     */
+    protected function cashDeskBuyerEmail(): string
+    {
+        return (string) ($this->getUser()->get('email') ?? '');
+    }
+
+    protected function cashDeskBuyerPhone(): string
+    {
+        return (string) ($this->getUser()->get('phone') ?? '');
+    }
+
+    protected function isCashDeskEmailUsable(string $email): bool
+    {
+        return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+    }
+
+    /**
+     * E.164 or '' when ambiguous (the receipt then goes to the fallback contact):
+     * a Russian number in any common spelling, a foreign one only with an explicit
+     * `+`/`00` – a receipt sent to a wrong number is worse than none.
+     */
+    protected function normalizeCashDeskPhone(string $phone): string
+    {
+        // 8XXXXXXXXXX and 9XXXXXXXXX become 7XXXXXXXXXX
+        $digits = Phone::clean($phone);
+
+        if (strlen($digits) === 11 && $digits[0] === '7') {
+            return "+$digits";
+        }
+
+        $international = (bool) preg_match('/^\s*(\+|00)/', $phone);
+
+        return $international && preg_match('/^[1-9]\d{10,14}$/', $digits)
+            ? "+$digits"
+            : '';
+    }
+
+    protected function cashDeskItems(int $total): array
+    {
+        return [
+            [
+                'name' => $this->cashDeskItemName(),
+                'price' => $total,
+                'quantity' => 1,
+                'sum' => $total,
+                'paymentObject' => $this->cashDeskPaymentObject(),
+                'paymentMethod' => $this->cashDeskPaymentMethod(),
+            ],
+        ];
+    }
+
+    protected function cashDeskItemName(): string
+    {
+        return (string) $this->getMainPositionTitle();
+    }
+
+    protected function cashDeskPaymentObject(): string
+    {
+        return 'service';
+    }
+
+    protected function cashDeskPaymentMethod(): string
+    {
+        return 'fullPayment';
+    }
+
+    protected function cashDeskPayments(int $total): array
+    {
+        return [
+            [
+                'type' => 'electronically',
+                'sum' => $total,
             ],
         ];
     }

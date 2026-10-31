@@ -17,11 +17,16 @@ CREATE TABLE IF NOT EXISTS payment_receipts(
     fiscal_date datetime default null,
     fiscal_session int default 0,
     fiscal_number int default 0,
+    fiscal_mark_kkt varchar(16) default '',
+    fiscal_fn_number varchar(20) default '',
+    fiscal_kkt_reg_number varchar(20) default '',
+    fiscal_total int default null,
 	draft_id bigint,
     ip bigINT(11) DEFAULT '0',
     partner_code_id INT DEFAULT '0',
     index idx (target_type, target_id, user_id, date_reserved, date_payed, date_uploaded, ip),
     index idx_fiscal(fiscal_doc_id, fiscal_mark, fiscal_date, fiscal_session, fiscal_number),
+    index pending_idx(date_uploaded, date_payed),
 	unique draft_idx(draft_id),
 	PRIMARY KEY(id)
 )

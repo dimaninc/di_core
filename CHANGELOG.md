@@ -1,5 +1,39 @@
 # Changelog
 
+## Unreleased
+
+- Cash desk contract v2: `pending_receipts`, `receipt_fiscalized`, `heartbeat` in
+  `Controller\Cash` (Bearer token, kopecks, idempotent reporting), cash desk journal
+  copy and watchdog queries
+
+To migrate:
+
+- run the core migrations **by idx** (or from a project migration, `up_new` does not
+  see them): `20261031150000` (`migrations/payments/`) adds `fiscal_mark_kkt`,
+  `fiscal_fn_number`, `fiscal_kkt_reg_number`, `fiscal_total` and the queue index to
+  `payment_receipts` (creates the table from the dump of the engine if it is missing);
+  `20261031150100` (`migrations/cashdesk/`) creates `cashdesk_heartbeat` and
+  `cashdesk_journal`. Both are idempotent;
+- set `CASHDESK_TOKEN` (env) before pointing a cash desk at v2: without it every v2
+  request is refused with 401 and logged; override `cashDeskPaymentsPlace()` (tag
+  1187) – the default is `Config` main protocol + domain, which differs per
+  environment;
+- v1 `get_new_receipts` no longer serves a receipt that already has a `fiscal_doc_id`
+  (the same condition as v2), otherwise a rollback to the old app prints again what
+  v2 fiscalized; `set_receipt_uploaded` is unchanged;
+- a heartbeat must carry a UUID `journalId` (root and every journal entry), 400
+  without it; journal rows are unique by (`journal_id`, `seq`).
+  `onJournalConflict()` takes `string $journalId` first – update an override;
+- `receipt_fiscalized`: the same document = the same number and, when stored, the same
+  fiscal drive number; a repeat over a recorded but unreported document sets
+  `date_uploaded`;
+- `PaymentReceipt\Model::normalizeCashDeskPhone()` returns E.164 (`+7…` for Russian
+  spellings, a foreign number only with an explicit `+`/`00`) or nothing;
+- a project that pads `getUserData()` with its own address should override
+  `cashDeskBuyerEmail()` / `cashDeskBuyerPhone()` / `isCashDeskEmailUsable()` on its
+  receipt model, otherwise the default reads the user's own email and phone;
+- new: `sql/postgres/payment_receipts.sql` (for new tables; there was no Postgres dump).
+
 ## 0.11.1
 
 - Queue: forPdo() without the CMS takes the project's Setup
