@@ -41,6 +41,8 @@ class Cash extends \diBaseController
     // quarantined ids a cash desk may ask to skip
     const PENDING_EXCLUDE_MAX = 500;
     const BODY_MAX_BYTES = 1048576;
+    // the heartbeat status without the journal is a few KB
+    const STATUS_MAX_BYTES = 65536;
     // fiscal_total, fiscal_session, fiscal_number are signed INT in MySQL
     const INT_COLUMN_MAX = 2147483647;
     // a fiscal document number is uint32
@@ -66,9 +68,17 @@ class Cash extends \diBaseController
         return \diRequest::post('secret');
     }
 
+    /** Fail closed: no secret configured refuses everyone, `null === null` included. */
     protected function checkSecret()
     {
-        if (static::secret() !== static::getSecret()) {
+        $expected = (string) static::secret();
+        $given = static::getSecret();
+
+        if (
+            $expected === '' ||
+            !is_scalar($given) ||
+            !hash_equals($expected, (string) $given)
+        ) {
             throw HttpException::forbidden('Credentials not match');
         }
 
@@ -327,16 +337,33 @@ class Cash extends \diBaseController
             throw static::badCashDeskRequest('journalId must be a UUID');
         }
 
-        $entries = $this->parseJournal($body['journal'] ?? [], $journalId);
-        $now = \diDateTime::sqlFormat();
-
-        // The status first: the watchdog judges the cash desk by it
         $status = $body;
         unset($status['journal']);
+
+        if (strlen((string) json_encode($status)) > static::STATUS_MAX_BYTES) {
+            throw static::tooLargeCashDeskRequest();
+        }
+
+        $now = \diDateTime::sqlFormat();
+
+        // The status first and whatever the journal holds: the watchdog judges the cash desk by it
         $this->storeHeartbeat($status, $now);
 
+        $journal = $this->parseJournal($body['journal'] ?? [], $journalId);
+
+        if ($journal['skipped'] && $this->claimHourlyReport('journal-skipped')) {
+            $this->reportCashDeskProblem(
+                "Cash desk journal $journalId: skipped " .
+                    count($journal['skipped']) .
+                    ' malformed entries (' .
+                    implode('; ', array_slice($journal['skipped'], 0, 5)) .
+                    ')'
+            );
+        }
+
         try {
-            $ack = $this->storeJournal($journalId, $entries, $now);
+            $this->storeJournal($journalId, $journal['entries'], $now);
+            $ack = $journal['ackSeq'];
         } catch (\Throwable $e) {
             $this->onJournalStoreFailure($journalId, $e);
 
@@ -424,9 +451,6 @@ class Cash extends \diBaseController
 
     /* --- overridable settings ------------------------------------------------ */
 
-    /**
-     * Empty means "not configured" and refuses every request.
-     */
     /**
      * Why the configured token refuses everything, null when it is usable. A token
      * with whitespace inside can never match `Bearer <token>`.
@@ -604,6 +628,12 @@ class Cash extends \diBaseController
                 CollectionCache::addManual($type, 'id', array_values($ids));
             } catch (\Throwable $e) {
                 // not preloaded is only slower: each receipt then loads its own model
+                static::logCashDesk(
+                    "Cash desk preload of type $type failed: " .
+                        get_class($e) .
+                        ': ' .
+                        $e->getMessage()
+                );
             }
         }
 
@@ -863,8 +893,12 @@ class Cash extends \diBaseController
 
         $exclude = $body['exclude'];
 
-        if (is_array($exclude) && count($exclude) > static::PENDING_EXCLUDE_MAX) {
-            // the client stops a source itself past the cap: this is its failure
+        if (
+            is_array($exclude) &&
+            count($exclude) > static::PENDING_EXCLUDE_MAX &&
+            $this->claimHourlyReport('exclude-cap')
+        ) {
+            // the client stops a source itself past the cap: this is its failure; every poll repeats it
             $this->reportCashDeskProblem(
                 'Cash desk sent ' .
                     count($exclude) .
@@ -1187,39 +1221,60 @@ class Cash extends \diBaseController
     }
 
     /**
+     * Entries one by one: a bad one is skipped, not a reason to refuse the batch.
+     * Skipped with a seq is acked (the cash desk would resend it forever), without
+     * one it can't be.
+     *
      * @param mixed $journal
-     * @return array[] valid entries ordered by seq, at most JOURNAL_MAX_ENTRIES
+     * @return array{entries: array[], ackSeq: int|null, skipped: string[]} entries ordered by seq,
+     *         at most JOURNAL_MAX_ENTRIES together with the acked skipped ones
      */
     protected function parseJournal($journal, string $journalId): array
     {
         if (!is_array($journal) || !array_is_list($journal)) {
-            throw static::badCashDeskRequest('journal must be an array');
+            return [
+                'entries' => [],
+                'ackSeq' => null,
+                'skipped' => ['journal is not a list'],
+            ];
         }
 
-        foreach ($journal as $entry) {
-            if (
-                !is_array($entry) ||
-                static::positiveInt($entry['seq'] ?? null) === null
-            ) {
-                throw static::badCashDeskRequest(
-                    'every journal entry needs a positive seq'
-                );
+        $items = [];
+        $skipped = [];
+
+        foreach ($journal as $i => $entry) {
+            $seq = is_array($entry)
+                ? static::positiveInt($entry['seq'] ?? null)
+                : null;
+
+            if ($seq === null) {
+                $skipped[] = "entry #$i has no positive seq";
+
+                continue;
             }
 
-            // The ack covers one journal: an entry of another would be resent forever
+            // The ack covers one journal: an entry of another is skipped, but acked
             if (static::journalId($entry['journalId'] ?? null) !== $journalId) {
-                throw static::badCashDeskRequest(
-                    'every journal entry needs the journalId of the heartbeat'
-                );
+                $skipped[] = "seq $seq has another journalId";
+                $entry = null;
             }
+
+            $items[] = [$seq, $entry];
         }
 
-        usort($journal, function (array $a, array $b) {
-            return (int) $a['seq'] <=> (int) $b['seq'];
+        usort($items, function (array $a, array $b) {
+            return $a[0] <=> $b[0];
         });
 
-        // The rest comes in the next heartbeat: the answer acks only what was stored
-        return array_slice($journal, 0, static::JOURNAL_MAX_ENTRIES);
+        // The rest comes in the next heartbeat: the ack covers only this slice
+        $items = array_slice($items, 0, static::JOURNAL_MAX_ENTRIES);
+        $last = end($items);
+
+        return [
+            'entries' => array_values(array_filter(array_column($items, 1))),
+            'ackSeq' => $last ? $last[0] : null,
+            'skipped' => $skipped,
+        ];
     }
 
     /**

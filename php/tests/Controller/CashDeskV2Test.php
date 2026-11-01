@@ -260,6 +260,31 @@ class TempFolderCash extends Cash
     }
 }
 
+class V1Cash extends Cash
+{
+    public static $expected;
+    public static $given;
+
+    public function __construct()
+    {
+    }
+
+    public static function secret()
+    {
+        return self::$expected;
+    }
+
+    public static function getSecret()
+    {
+        return self::$given;
+    }
+
+    public function check()
+    {
+        return $this->checkSecret();
+    }
+}
+
 /** The default reporter, untouched: only the tables and the request are replaced. */
 class ReportingCash extends TestableCash
 {
@@ -437,7 +462,10 @@ echo "code=$code";
                 "127.0.0.1:$port",
                 $router,
             ],
-            [1 => ['file', '/dev/null', 'w'], 2 => ['file', TestableCash::$markerFolder . 'server.log', 'w']],
+            [
+                1 => ['file', '/dev/null', 'w'],
+                2 => ['file', TestableCash::$markerFolder . 'server.log', 'w'],
+            ],
             $pipes
         );
 
@@ -478,6 +506,34 @@ echo "code=$code";
             proc_close($server);
             unlink($router);
         }
+    }
+
+    /** v1 is fail closed too: no secret configured refuses everyone. */
+    public function testV1WithoutSecretRefusesEveryone(): void
+    {
+        $cases = [
+            'null expected, null given' => [null, null],
+            'empty expected, empty given' => ['', ''],
+            'array given' => ['s3cret', ['s3cret']],
+            'wrong given' => ['s3cret', 's3cre'],
+        ];
+
+        foreach ($cases as $case => [$expected, $given]) {
+            V1Cash::$expected = $expected;
+            V1Cash::$given = $given;
+
+            $this->assertSame(
+                403,
+                $this->httpError(function () {
+                    (new V1Cash())->check();
+                })->getCode(),
+                $case
+            );
+        }
+
+        V1Cash::$expected = V1Cash::$given = 's3cret';
+        $c = new V1Cash();
+        $this->assertSame($c, $c->check());
     }
 
     /* --- authorization --------------------------------------------------------- */
@@ -975,6 +1031,14 @@ echo "code=$code";
         $this->assertSame(400, $e->getCode());
         $this->assertSame('report', $c->calls[0][0] ?? null);
         $this->assertStringContainsString('exclude', $c->calls[0][1]);
+
+        // every poll sends it again: the report is hourly
+        $this->httpError(function () use ($c) {
+            $c->call('pending_receipts', [
+                'exclude' => range(1, Cash::PENDING_EXCLUDE_MAX + 1),
+            ]);
+        });
+        $this->assertCount(1, $c->calls);
     }
 
     public function testExcludeAtTheCapIsAccepted(): void
@@ -1193,6 +1257,29 @@ echo "code=$code";
      * The real factory and preload: the consumer's receipt class through
      * `Model::create`, its related ids into `CollectionCache` one collection per type.
      */
+    /** A failed preload is only slower, but it must leave a trace. */
+    public function testPreloadFailureIsLogged(): void
+    {
+        $c = new class extends TestableCash {
+            public function preload(array $receipts): array
+            {
+                return Cash::preloadCashDeskRelations($receipts);
+            }
+        };
+        $receipt = new class (['id' => 1]) extends CashDeskTestReceipt {
+            public function cashDeskRelatedIds(): array
+            {
+                return [[987654, 1]];
+            }
+        };
+
+        $this->assertSame([], $c->preload([$receipt]));
+        $this->assertStringContainsString(
+            'preload',
+            implode("\n", TestableCash::$logged)
+        );
+    }
+
     public function testRealFactoryAndPreload(): void
     {
         $c = new class extends Cash {
@@ -2002,36 +2089,14 @@ echo "code=$code";
         );
     }
 
-    public function testMalformedJournalIsBadRequestAndStoresNothing(): void
+    /** Without a journal id there is nothing to ack against: 400, nothing stored. */
+    public function testMissingJournalIdIsBadRequestAndStoresNothing(): void
     {
         $id = self::JOURNAL_ID;
         $cases = [
             'no journalId' => ['kkt' => ['online' => true]],
             'journalId not a UUID' => ['journalId' => 'sd-card-1', 'journal' => []],
             'journalId with a newline' => ['journalId' => "$id\n", 'journal' => []],
-            'object' => ['journalId' => $id, 'journal' => ['seq' => 1]],
-            // valid entries under keys: only the list check refuses it
-            'object of entries' => [
-                'journalId' => $id,
-                'journal' => ['a' => $this->entry(1)],
-            ],
-            'no seq' => [
-                'journalId' => $id,
-                'journal' => [['journalId' => $id, 'source' => 'x']],
-            ],
-            'zero seq' => [
-                'journalId' => $id,
-                'journal' => [['journalId' => $id, 'seq' => 0]],
-            ],
-            'scalar entry' => ['journalId' => $id, 'journal' => [1]],
-            'entry without journalId' => [
-                'journalId' => $id,
-                'journal' => [['seq' => 1]],
-            ],
-            'entry of another journal' => [
-                'journalId' => $id,
-                'journal' => [['journalId' => self::NEW_JOURNAL_ID, 'seq' => 1]],
-            ],
         ];
 
         foreach ($cases as $case => $body) {
@@ -2044,6 +2109,90 @@ echo "code=$code";
 
         $this->assertSame(0, $this->rowCount(TestableCash::HEARTBEATS));
         $this->assertSame(0, $this->rowCount(TestableCash::JOURNAL));
+    }
+
+    /**
+     * One bad journal entry must not cost the status (the watchdog would read the
+     * cash desk as offline): the status is stored, the entry skipped – acked when
+     * it has a seq, so the ack moves on – and reported once an hour.
+     */
+    public function testMalformedJournalEntriesAreSkippedAndTheStatusStored(): void
+    {
+        $id = self::JOURNAL_ID;
+        $body = $this->heartbeat([
+            $this->entry(1),
+            ['journalId' => $id, 'source' => 'no seq'],
+            ['journalId' => $id, 'seq' => 0],
+            1,
+            ['seq' => 4],
+            ['journalId' => self::NEW_JOURNAL_ID, 'seq' => 5],
+            $this->entry(2),
+        ]);
+        $c = new TestableCash();
+
+        $this->assertSame(5, $c->call('heartbeat', $body)['journalAckSeq']);
+        $this->assertSame(1, $this->rowCount(TestableCash::HEARTBEATS));
+        $this->assertSame(
+            ['1', '2'],
+            array_map(
+                'strval',
+                array_column(
+                    $this->rows(TestableCash::JOURNAL, 'ORDER BY seq'),
+                    'seq'
+                )
+            )
+        );
+        $this->assertCount(1, $c->calls);
+        $this->assertSame('report', $c->calls[0][0]);
+        $this->assertStringContainsString('skipped 5', $c->calls[0][1]);
+
+        // hourly: the same bad entries resent next minute are not reported again
+        $c->call('heartbeat', $body);
+        $this->assertCount(1, $c->calls);
+    }
+
+    /** Not a list at all: the status is still stored, nothing acked. */
+    public function testJournalThatIsNotAListIsSkipped(): void
+    {
+        foreach ([['seq' => 1], ['a' => $this->entry(1)], 'x'] as $journal) {
+            $body = $this->heartbeat([]);
+            $body['journal'] = $journal;
+
+            $this->assertNull(
+                (new TestableCash())->call('heartbeat', $body)['journalAckSeq']
+            );
+        }
+
+        $this->assertSame(3, $this->rowCount(TestableCash::HEARTBEATS));
+        $this->assertSame(0, $this->rowCount(TestableCash::JOURNAL));
+    }
+
+    /** The status is a few KB; a huge one is a client bug, not a status. */
+    public function testOversizedStatusIsRefused(): void
+    {
+        $body = $this->heartbeat([$this->entry(1)]);
+        $body['kkt']['lastError'] = str_repeat('x', Cash::STATUS_MAX_BYTES);
+
+        $this->assertSame(
+            413,
+            $this->httpError(function () use ($body) {
+                (new TestableCash())->call('heartbeat', $body);
+            })->getCode()
+        );
+        $this->assertSame(0, $this->rowCount(TestableCash::HEARTBEATS));
+        $this->assertSame(0, $this->rowCount(TestableCash::JOURNAL));
+
+        // the journal itself does not count: it is capped on its own
+        $body = $this->heartbeat([]);
+        $body['journal'] = array_fill(0, 3, [
+            'journalId' => self::JOURNAL_ID,
+            'seq' => 1,
+            'note' => str_repeat('y', Cash::STATUS_MAX_BYTES),
+        ]);
+        $this->assertSame(
+            1,
+            (new TestableCash())->call('heartbeat', $body)['journalAckSeq']
+        );
     }
 
     public function testJournalBatchIsCappedAndAcksOnlyWhatWasStored(): void

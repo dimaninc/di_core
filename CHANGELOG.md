@@ -20,6 +20,9 @@ To migrate (from 0.11.1):
 - v1 `get_new_receipts` no longer serves a receipt that already has a `fiscal_doc_id`
   (the same condition as v2), otherwise a rollback to the old app prints again what
   v2 fiscalized; `set_receipt_uploaded` is unchanged;
+- v1 is fail closed: an empty `secret()` (null or '') refuses every request, the
+  comparison is `hash_equals`, a non-scalar `secret` is refused. A project whose v1
+  worked without a secret must set one;
 - **Apache with mod_php does not pass `Authorization` to PHP** without a rewrite rule
   (`RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]`) or
   `CGIPassAuth On`: every v2 request is then 401. The controller falls back to
@@ -44,13 +47,19 @@ New API (`Controller\Cash`, all protected, override as needed):
 - `pending_receipts` takes an optional `exclude: [ids]` (the cash desk's quarantine,
   at most 500 positive integers, 400 otherwise): those receipts are not served and
   do not take the batch. A broken receipt is skipped; the queue is read on by keyset
-  (`date_payed`, `id`) past a run of them, at most `PENDING_SCAN_MAX` rows a poll;
+  (`date_payed`, `id`) past a run of them, at most `PENDING_SCAN_MAX` rows a poll –
+  up to that many broken receipts in a row don't stall the good ones; more is the
+  project's bug, and `onBrokenReceipt()` reports it;
 - `receipt_fiscalized`: the same document = the same number and, when stored, the
   same fiscal drive number; a repeat over a recorded but unreported document sets
   `date_uploaded` and fills only the EMPTY fiscal columns from the cash desk's data,
   with the same total check as a first write;
-- a heartbeat carries a UUID `journalId` (root and every journal entry), 400
-  without it; journal rows are unique by (`journal_id`, `seq`);
+- a heartbeat carries a UUID root `journalId`, 400 without it (nothing stored);
+  the status (without the journal) is at most `STATUS_MAX_BYTES` (64 KB, 413) and is
+  stored even when journal entries are bad. Entries are taken one by one: one
+  without a positive seq is skipped, one of another journal is skipped and acked
+  (the ack moves on); skipped entries are reported once an hour. Journal rows are
+  unique by (`journal_id`, `seq`);
 - validation, 400 otherwise: requests at most 1 MB (413), the body a JSON object;
   `documentNumber` and `sign` (FPD) fit uint32, `total`/`shiftNumber`/
   `receiptNumber` a signed INT column; `sign`, `fnNumber`, `registrationNumber` are
@@ -64,7 +73,8 @@ New API (`Controller\Cash`, all protected, override as needed):
   resends it; `onMissingCashDeskToken(string $reason)` also covers a token with
   whitespace inside (`cashDeskTokenProblem()`);
 - `exclude` over 500 ids is still 400 and is reported through
-  `reportCashDeskProblem()` (the client stops a source itself before that);
+  `reportCashDeskProblem()` once an hour (the client stops a source itself before
+  that); a failed preload is logged (`logCashDesk()`);
   NUL bytes are stripped from heartbeat strings and keys (Postgres refuses them in
   jsonb and text); a failed queue query logs its SQL and throws a message without it;
   a stored document number with leading zeros is the same document;
