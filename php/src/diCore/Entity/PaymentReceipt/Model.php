@@ -260,18 +260,23 @@ class Model extends \diCore\Entity\PaymentDraft\Model
      */
     protected function normalizeCashDeskPhone(string $phone): string
     {
+        // An explicit country code is taken as written: Phone::clean() would read
+        // +81 3… (11 digits on 8) or +961 1… (10 on 9) as Russian numbers
+        if (preg_match('/^\s*(\+|00)([\d\s().-]+)\z/', $phone, $m)) {
+            $digits = preg_replace('/\D+/', '', $m[2]);
+
+            return preg_match('/^[1-9]\d{7,14}\z/', $digits) ? "+$digits" : '';
+        }
+
+        if (preg_match('/^\s*(\+|00)/', $phone)) {
+            // a prefix plus letters (an extension, a note): not a number we can dial
+            return '';
+        }
+
         // 8XXXXXXXXXX and 9XXXXXXXXX become 7XXXXXXXXXX
         $digits = Phone::clean($phone);
 
-        if (strlen($digits) === 11 && $digits[0] === '7') {
-            return "+$digits";
-        }
-
-        $international = (bool) preg_match('/^\s*(\+|00)/', $phone);
-
-        return $international && preg_match('/^[1-9]\d{10,14}$/', $digits)
-            ? "+$digits"
-            : '';
+        return strlen($digits) === 11 && $digits[0] === '7' ? "+$digits" : '';
     }
 
     protected function cashDeskItems(int $total): array

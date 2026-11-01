@@ -61,10 +61,14 @@ class TestableCash extends Cash
     const JOURNAL = '_di_core_test_cash_journal';
 
     public static $useFiscalMark = false;
+    /** @var string a throwaway folder: the default marker lives in the consumer's cache */
+    public static $markerFolder = '';
 
     public $token = 'secret-token';
     public $body = '';
     public $authorization = 'Bearer secret-token';
+    /** @var int|null declared Content-Length */
+    public $length;
     public $calls = [];
     /** @var string|null a document another request writes between our read and our UPDATE */
     public $competingDocumentNumber;
@@ -107,6 +111,16 @@ class TestableCash extends Cash
     protected function cashDeskAuthorizationHeader(): string
     {
         return $this->authorization;
+    }
+
+    protected function cashDeskRequestLength(): ?int
+    {
+        return $this->length;
+    }
+
+    protected static function brokenReceiptMarkerFolder(): string
+    {
+        return self::$markerFolder;
     }
 
     protected function cashDeskPaymentsPlace(): string
@@ -298,6 +312,19 @@ class CashDeskV2Test extends TestCase
         CashDeskTestReceipt::$contacts = [];
         CashDeskTestReceipt::$items = [];
         TestableCash::$useFiscalMark = false;
+        TestableCash::$markerFolder =
+            sys_get_temp_dir() . '/di-core-cashdesk-' . getmypid() . '/';
+    }
+
+    protected function tearDown(): void
+    {
+        foreach (glob(TestableCash::$markerFolder . '*') ?: [] as $file) {
+            unlink($file);
+        }
+
+        if (is_dir(TestableCash::$markerFolder)) {
+            rmdir(TestableCash::$markerFolder);
+        }
     }
 
     /**
@@ -396,6 +423,59 @@ class CashDeskV2Test extends TestCase
                 $c->_postPendingReceiptsAction();
             })->getCode()
         );
+    }
+
+    /**
+     * A JSON list decodes to an array too, and every field read from it is then
+     * "missing" instead of the request being refused for its shape.
+     */
+    public function testJsonListIsNotAnObject(): void
+    {
+        foreach (['[1, 2]', '[]', '[{"limit": 1}]'] as $body) {
+            $c = new TestableCash();
+            $c->body = $body;
+
+            $e = $this->httpError(function () use ($c) {
+                $c->_postPendingReceiptsAction();
+            });
+
+            $this->assertSame(400, $e->getCode(), $body);
+            $this->assertSame('body must be a JSON object', $e->getBody()['message']);
+        }
+    }
+
+    public function testOversizedBodyIsRefusedBeforeParsing(): void
+    {
+        $c = new TestableCash();
+        $c->length = Cash::BODY_MAX_BYTES + 1;
+        $c->body = '{}';
+
+        $this->assertSame(
+            413,
+            $this->httpError(function () use ($c) {
+                $c->_postHeartbeatAction();
+            })->getCode(),
+            'declared length'
+        );
+
+        // no Content-Length (chunked) or a false one: the body itself is measured
+        $c = new TestableCash();
+        $c->body =
+            '{"journalId": "' .
+            self::JOURNAL_ID .
+            '", "pad": "' .
+            str_repeat('x', Cash::BODY_MAX_BYTES) .
+            '"}';
+        $c->length = 10;
+
+        $this->assertSame(
+            413,
+            $this->httpError(function () use ($c) {
+                $c->_postHeartbeatAction();
+            })->getCode(),
+            'actual length'
+        );
+        $this->assertSame(0, $this->rowCount(TestableCash::HEARTBEATS));
     }
 
     /* --- kopecks --------------------------------------------------------------- */
@@ -518,6 +598,14 @@ class CashDeskV2Test extends TestCase
             '00 prefix' => ['0079161234567', '+79161234567'],
             'explicit foreign' => ['+44 20 7946 0958', '+442079460958'],
             'foreign via 00' => ['00380 44 123 4567', '+380441234567'],
+            // 11 digits on 8 and 10 on 9 look Russian to Phone::clean()
+            'Japan, 11 digits on 8' => ['+81 3 1234 5678', '+81312345678'],
+            'Lebanon, 10 digits on 9' => ['+961 1 234 567', '+9611234567'],
+            'Japan via 00' => ['0081 3 1234 5678', '+81312345678'],
+            '+ eight digits' => ['+372 5123 456', '+3725123456'],
+            '+ sixteen digits' => ['+1 234 567 890 123 456', ''],
+            '+ leading zero' => ['+0 916 123 45 67', ''],
+            '+ with extension' => ['+7 916 123-45-67 доб. 12', ''],
             'ten digits not on 9' => ['4951234567', ''],
             'foreign without +' => ['442079460958', ''],
             'extension' => ['8 916 123-45-67 доб. 12', ''],
@@ -546,8 +634,8 @@ class CashDeskV2Test extends TestCase
     }
 
     /**
-     * A project pads getUserData() with its own address (1romantic: receipt@); the
-     * contact must not see it, or a buyer's phone would never be used.
+     * A project may pad getUserData() with its own fallback address; the contact
+     * must not see it, or a buyer's phone would never be used.
      */
     public function testDefaultContactReadsTheUserNotGetUserData(): void
     {
@@ -608,6 +696,82 @@ class CashDeskV2Test extends TestCase
                 (new TestableCash())->call('pending_receipts', ['limit' => 1])[
                     'receipts'
                 ],
+                'id'
+            )
+        );
+    }
+
+    /**
+     * Quarantined receipts are skipped by the server, so they don't take the batch
+     * the cash desk asked for: the ones after them are served within the limit.
+     */
+    public function testExcludedReceiptsAreSkippedAndTheNextOnesServed(): void
+    {
+        $first = $this->addReceipt(['date_payed' => \diDateTime::sqlFormat('-4 hours')]);
+        $second = $this->addReceipt([
+            'date_payed' => \diDateTime::sqlFormat('-3 hours'),
+        ]);
+        $third = $this->addReceipt(['date_payed' => \diDateTime::sqlFormat('-2 hours')]);
+        $fourth = $this->addReceipt([
+            'date_payed' => \diDateTime::sqlFormat('-1 hour'),
+        ]);
+        $ids = function (array $body) {
+            return array_column(
+                (new TestableCash())->call('pending_receipts', $body)['receipts'],
+                'id'
+            );
+        };
+
+        $this->assertSame(
+            [$second, $fourth],
+            $ids(['limit' => 2, 'exclude' => [$first, $third]])
+        );
+        $this->assertSame(
+            [$third],
+            $ids(['limit' => 1, 'exclude' => [$first, (string) $second, $first]])
+        );
+        $this->assertSame([$first, $second], $ids(['limit' => 2, 'exclude' => []]));
+    }
+
+    public static function malformedExcludes(): array
+    {
+        return [
+            'not a list' => [['a' => 1]],
+            'a number' => [5],
+            'a string' => ['1,2'],
+            'zero' => [[0]],
+            'negative' => [[-3]],
+            'a float' => [[1.5]],
+            'a numeric junk' => [['12abc']],
+            'a nested list' => [[[1]]],
+            'over the cap' => [range(1, Cash::PENDING_EXCLUDE_MAX + 1)],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('malformedExcludes')]
+    public function testMalformedExcludeIsBadRequest($exclude): void
+    {
+        $this->addReceipt([]);
+        $c = new TestableCash();
+
+        $e = $this->httpError(function () use ($c, $exclude) {
+            $c->call('pending_receipts', ['exclude' => $exclude]);
+        });
+
+        $this->assertSame(400, $e->getCode());
+        $this->assertSame([], $c->calls);
+    }
+
+    public function testExcludeAtTheCapIsAccepted(): void
+    {
+        $id = $this->addReceipt([]);
+
+        $this->assertSame(
+            [$id],
+            array_column(
+                (new TestableCash())->call('pending_receipts', [
+                    'exclude' => range($id + 1, $id + Cash::PENDING_EXCLUDE_MAX),
+                ])['receipts'],
                 'id'
             )
         );
@@ -921,6 +1085,53 @@ class CashDeskV2Test extends TestCase
     }
 
     /**
+     * The OFD mail parser may have filled part of the record: the cash desk's data
+     * goes only into what is still empty, and the total is checked as on first write.
+     */
+    public function testRepeatOfARecordedDocumentFillsOnlyEmptyFields(): void
+    {
+        $id = $this->addReceipt([
+            'amount' => 290,
+            'fiscal_doc_id' => '71',
+            'fiscal_mark_kkt' => '777',
+            'fiscal_session' => 5,
+        ]);
+        $c = new TestableCash();
+
+        $this->assertSame(
+            ['ok' => true],
+            $c->call('receipt_fiscalized', [
+                'id' => $id,
+                'fiscal' => array_merge(self::FISCAL, ['total' => 28900]),
+            ])
+        );
+
+        $row = $this->row($id);
+        $this->assertNotEmpty($row['date_uploaded']);
+        $this->assertSame('777', $row['fiscal_mark_kkt'], 'filled by OFD mail');
+        $this->assertSame(5, (int) $row['fiscal_session'], 'filled by OFD mail');
+        $this->assertSame('9961440300243452', $row['fiscal_fn_number']);
+        $this->assertSame('0000000001002292', $row['fiscal_kkt_reg_number']);
+        $this->assertSame(28900, (int) $row['fiscal_total']);
+        $this->assertSame(1, (int) $row['fiscal_number']);
+        $this->assertSame(
+            (new \DateTime(self::FISCAL['dateTime']))->getTimestamp(),
+            strtotime($row['fiscal_date'])
+        );
+        $this->assertSame('', (string) $row['fiscal_mark'], 'stays with IMAP');
+        $this->assertSame([['mismatch', $id, 29000, 28900]], $c->calls);
+
+        // a further repeat changes nothing and reports nothing
+        $c->calls = [];
+        $c->call('receipt_fiscalized', [
+            'id' => $id,
+            'fiscal' => array_merge(self::FISCAL, ['total' => 28900]),
+        ]);
+        $this->assertSame($row, $this->row($id));
+        $this->assertSame([], $c->calls);
+    }
+
+    /**
      * Numbering restarts on a new fiscal drive: document 71 of another drive is
      * another document.
      */
@@ -1052,6 +1263,47 @@ class CashDeskV2Test extends TestCase
                 'id' => $id,
                 'fiscal' => array_merge(self::FISCAL, ['total' => -1]),
             ],
+            // `$` would let a trailing newline through, `\z` does not
+            'document with a newline' => [
+                'id' => $id,
+                'fiscal' => array_merge(self::FISCAL, ['documentNumber' => "71\n"]),
+            ],
+            'time with a newline' => [
+                'id' => $id,
+                'fiscal' => array_merge(self::FISCAL, [
+                    'dateTime' => "2026-10-31T12:00:05+03:00\n",
+                ]),
+            ],
+            'document over uint32' => [
+                'id' => $id,
+                'fiscal' => array_merge(self::FISCAL, [
+                    'documentNumber' => Cash::DOCUMENT_NUMBER_MAX + 1,
+                ]),
+            ],
+            'document of 11 digits as a string' => [
+                'id' => $id,
+                'fiscal' => array_merge(self::FISCAL, [
+                    'documentNumber' => '10000000000',
+                ]),
+            ],
+            'total over the INT column' => [
+                'id' => $id,
+                'fiscal' => array_merge(self::FISCAL, [
+                    'total' => Cash::INT_COLUMN_MAX + 1,
+                ]),
+            ],
+            'shift over the INT column' => [
+                'id' => $id,
+                'fiscal' => array_merge(self::FISCAL, [
+                    'shiftNumber' => Cash::INT_COLUMN_MAX + 1,
+                ]),
+            ],
+            'receipt number over the INT column' => [
+                'id' => $id,
+                'fiscal' => array_merge(self::FISCAL, [
+                    'receiptNumber' => '99999999999',
+                ]),
+            ],
         ];
 
         foreach ($cases as $case => $body) {
@@ -1063,6 +1315,28 @@ class CashDeskV2Test extends TestCase
         }
 
         $this->assertSame('', (string) $this->row($id)['fiscal_doc_id']);
+    }
+
+    public function testLargestValuesThatFitAreAccepted(): void
+    {
+        $id = $this->addReceipt(['amount' => 290]);
+        $c = new TestableCash();
+
+        $c->call('receipt_fiscalized', [
+            'id' => $id,
+            'fiscal' => array_merge(self::FISCAL, [
+                'documentNumber' => Cash::DOCUMENT_NUMBER_MAX,
+                'total' => Cash::INT_COLUMN_MAX,
+                'shiftNumber' => Cash::INT_COLUMN_MAX,
+                'receiptNumber' => Cash::INT_COLUMN_MAX,
+            ]),
+        ]);
+
+        $row = $this->row($id);
+        $this->assertSame('4294967295', $row['fiscal_doc_id']);
+        $this->assertSame(Cash::INT_COLUMN_MAX, (int) $row['fiscal_total']);
+        $this->assertSame(Cash::INT_COLUMN_MAX, (int) $row['fiscal_session']);
+        $this->assertSame(Cash::INT_COLUMN_MAX, (int) $row['fiscal_number']);
     }
 
     public function testZuluTimeIsAccepted(): void
@@ -1107,7 +1381,7 @@ class CashDeskV2Test extends TestCase
             array_map('strval', array_column($journal, 'seq'))
         );
         $this->assertSame(self::JOURNAL_ID, $journal[0]['journal_id']);
-        $this->assertSame('1romantic', $journal[0]['source']);
+        $this->assertSame('shop', $journal[0]['source']);
         $this->assertSame(91887, (int) $journal[0]['receipt_id']);
         $this->assertSame(71, (int) $journal[0]['document_number']);
         $this->assertSame('reported', $journal[0]['state']);
@@ -1318,6 +1592,17 @@ class CashDeskV2Test extends TestCase
         $this->assertSame([$older], TestableCash::overdueReceiptIds(15, 1));
     }
 
+    /**
+     * "--5 minutes" is a date in the future to strtotime(): a negative threshold
+     * would call a receipt paid a moment ago overdue.
+     */
+    public function testNegativeThresholdMeansNow(): void
+    {
+        $this->addReceipt(['date_payed' => \diDateTime::sqlFormat('+3 minutes')]);
+
+        $this->assertSame([], TestableCash::overdueReceiptIds(-5));
+    }
+
     /* --- default hooks ------------------------------------------------------------ */
 
     public function testDefaultHooksWarnNotSilently(): void
@@ -1342,6 +1627,69 @@ class CashDeskV2Test extends TestCase
             'not served to the cash desk',
             $warnings[0][1]
         );
+    }
+
+    /**
+     * The cash desk polls every minute: a default hook reporting each poll is a
+     * warning a minute per broken receipt.
+     */
+    public function testDefaultBrokenReceiptReportIsHourly(): void
+    {
+        $broken = $this->addReceipt(['amount' => 0]);
+        $other = $this->addReceipt(['amount' => 0]);
+        $warnings = [];
+        set_error_handler(function ($no, $text) use (&$warnings) {
+            if ($no === E_USER_WARNING) {
+                $warnings[] = $text;
+            }
+
+            return true;
+        });
+
+        try {
+            (new ReportingCash())->call('pending_receipts');
+            (new ReportingCash())->call('pending_receipts');
+            $this->assertCount(2, $warnings, 'once per receipt');
+
+            // an hour later it is reported again
+            touch(
+                TestableCash::$markerFolder . $broken,
+                time() - Cash::BROKEN_RECEIPT_REPORT_INTERVAL_SEC - 1
+            );
+            (new ReportingCash())->call('pending_receipts');
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertCount(3, $warnings);
+        $this->assertStringContainsString("#$broken ", $warnings[2]);
+        $this->assertStringContainsString("#$other ", implode("\n", $warnings));
+    }
+
+    /** A marker that can't be written must not silence the report. */
+    public function testUnwritableMarkerStillReports(): void
+    {
+        $this->addReceipt(['amount' => 0]);
+        $file = tempnam(sys_get_temp_dir(), 'di-core-cashdesk-');
+        // a file where the folder should be: neither mkdir nor touch can succeed
+        TestableCash::$markerFolder = "$file/";
+        $warnings = 0;
+        set_error_handler(function ($no) use (&$warnings) {
+            // @-suppressed mkdir/touch failures reach the handler too
+            $warnings += $no === E_USER_WARNING ? 1 : 0;
+
+            return true;
+        });
+
+        try {
+            (new ReportingCash())->call('pending_receipts');
+            (new ReportingCash())->call('pending_receipts');
+        } finally {
+            restore_error_handler();
+            unlink($file);
+        }
+
+        $this->assertSame(2, $warnings);
     }
 
     /* --- helpers ------------------------------------------------------------------ */
@@ -1422,7 +1770,7 @@ class CashDeskV2Test extends TestCase
                 'paperPresent' => true,
                 'ofd' => ['notSentCount' => 0, 'notSentFirstDocDateTime' => null],
             ],
-            'queue' => ['1romantic' => ['pending' => 0, 'stoppedReason' => null]],
+            'queue' => ['shop' => ['pending' => 0, 'stoppedReason' => null]],
             'journal' => $journal,
         ];
     }
@@ -1432,7 +1780,7 @@ class CashDeskV2Test extends TestCase
         return [
             'journalId' => $journalId,
             'seq' => $seq,
-            'source' => '1romantic',
+            'source' => 'shop',
             'receiptId' => 91887,
             'state' => 'reported',
             'fnDocumentBefore' => 70,

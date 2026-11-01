@@ -36,6 +36,14 @@ class Cash extends \diBaseController
     // a broken receipt is skipped, not served: this many extra rows keep a run of them from stalling the queue
     const PENDING_SCAN_EXTRA = 50;
     const JOURNAL_MAX_ENTRIES = 500;
+    // quarantined ids a cash desk may ask to skip
+    const PENDING_EXCLUDE_MAX = 500;
+    const BODY_MAX_BYTES = 1048576;
+    // fiscal_total, fiscal_session, fiscal_number are signed INT in MySQL
+    const INT_COLUMN_MAX = 2147483647;
+    // a fiscal document number is uint32
+    const DOCUMENT_NUMBER_MAX = 4294967295;
+    const BROKEN_RECEIPT_REPORT_INTERVAL_SEC = 3600;
     const HEARTBEAT_RETENTION_DAYS = 7;
     const HEARTBEAT_TABLE = 'cashdesk_heartbeat';
     const JOURNAL_TABLE = 'cashdesk_journal';
@@ -165,11 +173,15 @@ class Cash extends \diBaseController
     {
         $body = $this->authorizedCashDeskBody();
         $limit = $this->pendingLimit($body);
+        $exclude = $this->pendingExclude($body);
         $paymentsPlace = $this->cashDeskPaymentsPlace();
 
         $models = array_map(
             [$this, 'createCashDeskReceipt'],
-            static::fetchPendingReceiptRows($limit + static::PENDING_SCAN_EXTRA)
+            static::fetchPendingReceiptRows(
+                $limit + static::PENDING_SCAN_EXTRA,
+                $exclude
+            )
         );
         $this->preloadCashDeskRelations($models);
 
@@ -233,7 +245,7 @@ class Cash extends \diBaseController
 
             if (static::isSameFiscalDocument($row, $fiscal)) {
                 if (empty($row['date_uploaded'])) {
-                    $this->markSameDocumentReported($receiptId, $row);
+                    $this->markSameDocumentReported($receiptId, $row, $fiscal);
                 }
 
                 return ['ok' => true];
@@ -341,7 +353,7 @@ class Cash extends \diBaseController
                 $db->escapeTable(static::receiptsTable()),
                 static::pendingReceiptsCondition(),
                 $db->escapeValue(
-                    \diDateTime::sqlFormat("-$olderThanMinutes minutes")
+                    \diDateTime::sqlFormat('-' . max(0, $olderThanMinutes) . ' minutes')
                 ),
                 $db->limitOffset(max(1, $limit))
             )
@@ -406,11 +418,45 @@ class Cash extends \diBaseController
         return (string) \diRequest::rawPost();
     }
 
+    /**
+     * Declared size, checked before the body is read; null when not sent.
+     */
+    protected function cashDeskRequestLength(): ?int
+    {
+        $length = \diRequest::server('CONTENT_LENGTH');
+
+        return is_numeric($length) ? (int) $length : null;
+    }
+
+    /**
+     * Apache with mod_php drops `Authorization` from `$_SERVER` unless a rewrite
+     * rule or `CGIPassAuth On` passes it: getallheaders() still sees it there.
+     */
     protected function cashDeskAuthorizationHeader(): string
     {
-        return (string) (\diRequest::server('HTTP_AUTHORIZATION') ?:
-        \diRequest::server('REDIRECT_HTTP_AUTHORIZATION') ?:
-        '');
+        $header =
+            \diRequest::server('HTTP_AUTHORIZATION') ?:
+            \diRequest::server('REDIRECT_HTTP_AUTHORIZATION');
+
+        if (!$header && function_exists('getallheaders')) {
+            foreach ((array) getallheaders() as $name => $value) {
+                if (strcasecmp((string) $name, 'Authorization') === 0) {
+                    $header = $value;
+
+                    break;
+                }
+            }
+        }
+
+        return is_string($header) ? $header : '';
+    }
+
+    /**
+     * Where the default onBrokenReceipt() keeps a marker per receipt.
+     */
+    protected static function brokenReceiptMarkerFolder(): string
+    {
+        return Config::getCacheFolder() . 'cashdesk/broken-receipts/';
     }
 
     protected function createCashDeskReceipt(array $row): Model
@@ -476,12 +522,31 @@ class Cash extends \diBaseController
     }
 
     /**
-     * Called on every poll while the receipt stays broken – throttle in the override.
+     * Called on every poll while the receipt stays broken. The default reports a
+     * receipt at most once per BROKEN_RECEIPT_REPORT_INTERVAL_SEC (a file marker),
+     * or a poll a minute floods the log; an override decides on its own.
      */
     protected function onBrokenReceipt(Model $receipt, string $problem): void
     {
+        $id = (int) $receipt->getId();
+        $folder = static::brokenReceiptMarkerFolder();
+        $marker = $folder . $id;
+        $mtime = is_file($marker) ? filemtime($marker) : false;
+
+        if (
+            $mtime !== false &&
+            time() - $mtime < static::BROKEN_RECEIPT_REPORT_INTERVAL_SEC
+        ) {
+            return;
+        }
+
+        // a marker that can't be written means reporting every poll, never silence
+        if (is_dir($folder) || @mkdir($folder, 0775, true)) {
+            @touch($marker);
+        }
+
         $this->reportCashDeskProblem(
-            "Receipt #{$receipt->getId()} not served to the cash desk: $problem"
+            "Receipt #$id not served to the cash desk: $problem"
         );
     }
 
@@ -523,7 +588,20 @@ class Cash extends \diBaseController
     {
         $this->assertCashDeskAuthorized();
 
-        $raw = trim($this->cashDeskRequestBody());
+        $length = $this->cashDeskRequestLength();
+
+        if ($length !== null && $length > static::BODY_MAX_BYTES) {
+            throw static::tooLargeCashDeskRequest();
+        }
+
+        $raw = $this->cashDeskRequestBody();
+
+        // Content-Length may be absent (chunked) or lie
+        if (strlen($raw) > static::BODY_MAX_BYTES) {
+            throw static::tooLargeCashDeskRequest();
+        }
+
+        $raw = trim($raw);
 
         if ($raw === '') {
             return [];
@@ -531,7 +609,8 @@ class Cash extends \diBaseController
 
         $body = json_decode($raw, true);
 
-        if (!is_array($body)) {
+        // a JSON list decodes to an array too, but it is not the object the contract asks for
+        if (!is_array($body) || $raw[0] !== '{') {
             throw static::badCashDeskRequest('body must be a JSON object');
         }
 
@@ -580,6 +659,49 @@ class Cash extends \diBaseController
     }
 
     /**
+     * Ids the cash desk holds in quarantine: serving them again only fills its
+     * batch with receipts it won't print.
+     *
+     * @return int[]
+     */
+    protected function pendingExclude(array $body): array
+    {
+        if (!isset($body['exclude'])) {
+            return [];
+        }
+
+        $exclude = $body['exclude'];
+
+        if (
+            !is_array($exclude) ||
+            !array_is_list($exclude) ||
+            count($exclude) > static::PENDING_EXCLUDE_MAX
+        ) {
+            throw static::badCashDeskRequest(
+                'exclude must be a list of at most ' .
+                    static::PENDING_EXCLUDE_MAX .
+                    ' positive integers'
+            );
+        }
+
+        $ids = [];
+
+        foreach ($exclude as $value) {
+            $id = static::positiveInt($value);
+
+            if ($id === null) {
+                throw static::badCashDeskRequest(
+                    'exclude must be a list of positive integers'
+                );
+            }
+
+            $ids[$id] = $id;
+        }
+
+        return array_values($ids);
+    }
+
+    /**
      * Unreported (`date_uploaded`) and without a fiscal document within the queue
      * window. A recorded document excludes a receipt even without `date_uploaded`:
      * serving it again would print it twice.
@@ -599,15 +721,24 @@ class Cash extends \diBaseController
         return "(fiscal_doc_id IS NULL OR fiscal_doc_id = '')";
     }
 
-    protected static function fetchPendingReceiptRows(int $limit): array
-    {
+    /**
+     * @param int[] $exclude validated positive ints
+     */
+    protected static function fetchPendingReceiptRows(
+        int $limit,
+        array $exclude = []
+    ): array {
         $db = static::cashDeskDb();
+        $notIn = $exclude
+            ? ' AND id NOT IN (' . implode(', ', array_map('intval', $exclude)) . ')'
+            : '';
 
         return static::fetchRows(
             sprintf(
-                'SELECT * FROM %s WHERE %s ORDER BY date_payed ASC, id ASC%s',
+                'SELECT * FROM %s WHERE %s%s ORDER BY date_payed ASC, id ASC%s',
                 $db->escapeTable(static::receiptsTable()),
                 static::pendingReceiptsCondition(),
+                $notIn,
                 $db->limitOffset($limit)
             )
         );
@@ -707,21 +838,65 @@ class Cash extends \diBaseController
 
     /**
      * The same document recorded without a report (by hand, OFD mail): mark it
-     * reported, or it stays overdue forever. Guarded by that document.
+     * reported, or it stays overdue forever, and fill in what the record lacks.
+     * A filled column is kept – the OFD mail parser may have written it. Guarded by
+     * that document, so a lost race reports nothing.
      */
-    protected function markSameDocumentReported(int $receiptId, array $row): void
-    {
+    protected function markSameDocumentReported(
+        int $receiptId,
+        array $row,
+        array $fiscal
+    ): void {
         $db = static::cashDeskDb();
+        $string = "(%1\$s IS NULL OR %1\$s = '')";
+        $number = '(%1$s IS NULL OR %1$s = 0)';
+        $null = '%1$s IS NULL';
 
-        $db->execWrite(
+        $fill = [
+            'fiscal_fn_number' => [$fiscal['fnNumber'], $string],
+            'fiscal_kkt_reg_number' => [$fiscal['registrationNumber'], $string],
+            'fiscal_mark_kkt' => [$fiscal['sign'], $string],
+            'fiscal_total' => [$fiscal['total'], $null],
+            'fiscal_date' => [$fiscal['dateTimeSql'], $null],
+            'fiscal_session' => [$fiscal['shiftNumber'], $number],
+            'fiscal_number' => [$fiscal['receiptNumber'], $number],
+        ];
+
+        if (static::useFiscalMarkFromCashDesk()) {
+            $fill['fiscal_mark'] = [$fiscal['sign'], $string];
+        }
+
+        $set = ['date_uploaded = ' . $db->escapeValue(\diDateTime::sqlFormat())];
+
+        foreach ($fill as $field => [$value, $empty]) {
+            $set[] = sprintf(
+                '%1$s = CASE WHEN %2$s THEN %3$s ELSE %1$s END',
+                $field,
+                sprintf($empty, $field),
+                is_int($value) ? $value : $db->escapeValue($value)
+            );
+        }
+
+        $changed = $db->execWrite(
             sprintf(
-                'UPDATE %s SET date_uploaded = %s WHERE id = %d AND fiscal_doc_id = %s AND date_uploaded IS NULL',
+                'UPDATE %s SET %s WHERE id = %d AND fiscal_doc_id = %s AND date_uploaded IS NULL',
                 $db->escapeTable(static::receiptsTable()),
-                $db->escapeValue(\diDateTime::sqlFormat()),
+                implode(', ', $set),
                 $receiptId,
                 $db->escapeValue((string) $row['fiscal_doc_id'])
             )
         );
+
+        $expected = Model::toKopecks($row['amount'] ?? 0);
+
+        if ($changed > 0 && $expected !== $fiscal['total']) {
+            $this->onFiscalTotalMismatch(
+                $receiptId,
+                $expected,
+                $fiscal['total'],
+                $fiscal
+            );
+        }
     }
 
     /**
@@ -734,20 +909,34 @@ class Cash extends \diBaseController
         }
 
         $parsed = [
-            'documentNumber' => static::positiveInt(
-                $fiscal['documentNumber'] ?? null
+            'documentNumber' => static::boundedInt(
+                $fiscal['documentNumber'] ?? null,
+                1,
+                static::DOCUMENT_NUMBER_MAX
             ),
             // FPD is a 32-bit number
             'sign' => static::digits($fiscal['sign'] ?? null, 10),
             'dateTimeSql' => static::isoToSql($fiscal['dateTime'] ?? null),
-            'shiftNumber' => static::positiveInt($fiscal['shiftNumber'] ?? null),
-            'receiptNumber' => static::positiveInt($fiscal['receiptNumber'] ?? null),
+            'shiftNumber' => static::boundedInt(
+                $fiscal['shiftNumber'] ?? null,
+                1,
+                static::INT_COLUMN_MAX
+            ),
+            'receiptNumber' => static::boundedInt(
+                $fiscal['receiptNumber'] ?? null,
+                1,
+                static::INT_COLUMN_MAX
+            ),
             'fnNumber' => static::digits($fiscal['fnNumber'] ?? null, 20),
             'registrationNumber' => static::digits(
                 $fiscal['registrationNumber'] ?? null,
                 20
             ),
-            'total' => static::nonNegativeInt($fiscal['total'] ?? null),
+            'total' => static::boundedInt(
+                $fiscal['total'] ?? null,
+                0,
+                static::INT_COLUMN_MAX
+            ),
         ];
 
         foreach ($parsed as $field => $value) {
@@ -1027,6 +1216,14 @@ class Cash extends \diBaseController
         return null;
     }
 
+    protected static function tooLargeCashDeskRequest(): HttpException
+    {
+        return HttpException::fastCreate(413, [
+            'error' => 'too_large',
+            'message' => 'body must not exceed ' . static::BODY_MAX_BYTES . ' bytes',
+        ]);
+    }
+
     protected static function badCashDeskRequest(string $message): HttpException
     {
         return HttpException::badRequest([
@@ -1056,11 +1253,21 @@ class Cash extends \diBaseController
             return $value >= 0 ? $value : null;
         }
 
-        if (is_string($value) && preg_match('/^\d{1,18}$/', $value)) {
+        if (is_string($value) && preg_match('/^\d{1,18}\z/', $value)) {
             return (int) $value;
         }
 
         return null;
+    }
+
+    /**
+     * @param mixed $value
+     */
+    protected static function boundedInt($value, int $min, int $max): ?int
+    {
+        $int = static::nonNegativeInt($value);
+
+        return $int !== null && $int >= $min && $int <= $max ? $int : null;
     }
 
     /**
@@ -1107,7 +1314,7 @@ class Cash extends \diBaseController
         if (
             !is_string($value) ||
             !preg_match(
-                '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:?\d{2})$/',
+                '/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:?\d{2})\z/',
                 $value
             )
         ) {

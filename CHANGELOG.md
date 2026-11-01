@@ -26,9 +26,25 @@ To migrate:
   `onJournalConflict()` takes `string $journalId` first – update an override;
 - `receipt_fiscalized`: the same document = the same number and, when stored, the same
   fiscal drive number; a repeat over a recorded but unreported document sets
-  `date_uploaded`;
-- `PaymentReceipt\Model::normalizeCashDeskPhone()` returns E.164 (`+7…` for Russian
-  spellings, a foreign number only with an explicit `+`/`00`) or nothing;
+  `date_uploaded` and fills only the EMPTY fiscal columns from the cash desk's data
+  (what an OFD mail parser wrote is kept), with the same total check as a first write;
+- `pending_receipts` takes an optional `exclude: [ids]` (the cash desk's quarantine,
+  at most 500 positive integers, 400 otherwise): those receipts are not served and
+  do not take the batch;
+- requests are capped at 1 MB (413), a body that is not a JSON object (a list
+  included) is 400; `documentNumber` must fit uint32, `total`/`shiftNumber`/
+  `receiptNumber` a signed INT column, otherwise 400;
+- the default `onBrokenReceipt()` reports a receipt at most once an hour (a marker
+  file under `Config::getCacheFolder()`, `brokenReceiptMarkerFolder()`); an override
+  decides on its own;
+- **Apache with mod_php does not pass `Authorization` to PHP** without a rewrite rule
+  (`RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]`) or
+  `CGIPassAuth On`: every v2 request is then 401. The controller falls back to
+  `getallheaders()` where it exists, but configure the server rather than rely on it;
+- `PaymentReceipt\Model::normalizeCashDeskPhone()` returns E.164 or nothing: with an
+  explicit `+`/`00` the digits are taken as written (8–15, no leading 0, nothing but
+  digits and separators), Russian rules (`8…`, ten digits on 9) apply only to numbers
+  without a prefix – `+81 3…` and `+961 1…` are not Russian;
 - a project that pads `getUserData()` with its own address should override
   `cashDeskBuyerEmail()` / `cashDeskBuyerPhone()` / `isCashDeskEmailUsable()` on its
   receipt model, otherwise the default reads the user's own email and phone;
