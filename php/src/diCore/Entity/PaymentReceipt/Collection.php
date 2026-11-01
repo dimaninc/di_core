@@ -20,6 +20,10 @@ namespace diCore\Entity\PaymentReceipt;
  * @method $this filterByFiscalDate($value, $operator = null)
  * @method $this filterByFiscalSession($value, $operator = null)
  * @method $this filterByFiscalNumber($value, $operator = null)
+ * @method $this filterByFiscalMarkKkt($value, $operator = null)
+ * @method $this filterByFiscalFnNumber($value, $operator = null)
+ * @method $this filterByFiscalKktRegNumber($value, $operator = null)
+ * @method $this filterByFiscalTotal($value, $operator = null)
  *
  * @method $this orderByRnd($direction = null)
  * @method $this orderByDatePayed($direction = null)
@@ -30,6 +34,10 @@ namespace diCore\Entity\PaymentReceipt;
  * @method $this orderByFiscalDate($direction = null)
  * @method $this orderByFiscalSession($direction = null)
  * @method $this orderByFiscalNumber($direction = null)
+ * @method $this orderByFiscalMarkKkt($direction = null)
+ * @method $this orderByFiscalFnNumber($direction = null)
+ * @method $this orderByFiscalKktRegNumber($direction = null)
+ * @method $this orderByFiscalTotal($direction = null)
  *
  * @method $this selectRnd()
  * @method $this selectDatePayed()
@@ -40,6 +48,10 @@ namespace diCore\Entity\PaymentReceipt;
  * @method $this selectFiscalDate()
  * @method $this selectFiscalSession()
  * @method $this selectFiscalNumber()
+ * @method $this selectFiscalMarkKkt()
+ * @method $this selectFiscalFnNumber()
+ * @method $this selectFiscalKktRegNumber()
+ * @method $this selectFiscalTotal()
  */
 class Collection extends \diCore\Entity\PaymentDraft\Collection
 {
