@@ -228,6 +228,14 @@ class TestableCash extends Cash
     }
 }
 
+class TempFolderCash extends Cash
+{
+    public static function reportFolder(string $cacheFolder, string $temp): string
+    {
+        return static::reportMarkerFolderIn($cacheFolder, $temp);
+    }
+}
+
 /** The default reporter, untouched: only the tables and the request are replaced. */
 class ReportingCash extends TestableCash
 {
@@ -1849,6 +1857,59 @@ class CashDeskV2Test extends TestCase
 
         $this->assertCount(2, $warnings);
         $this->assertStringContainsString('CASHDESK_TOKEN', $warnings[1]);
+    }
+
+    /**
+     * No cache folder configured: the marker must not land in the cwd (under cron
+     * that is home or /), it goes to the temp folder and still throttles.
+     */
+    public function testWithoutCacheFolderMarkersGoToTheTempFolder(): void
+    {
+        $base = TestableCash::$markerFolder;
+        $cwd = $base . 'cwd/';
+        $temp = $base . 'temp/';
+        mkdir($cwd, 0775, true);
+        mkdir($temp, 0775, true);
+        $this->addReceipt(['amount' => 0]);
+        $warnings = 0;
+        set_error_handler(function ($no) use (&$warnings) {
+            $warnings += $no === E_USER_WARNING ? 1 : 0;
+
+            return true;
+        });
+        $oldCwd = getcwd();
+        chdir($cwd);
+
+        try {
+            $folder = TempFolderCash::reportFolder('', $temp);
+            TestableCash::$markerFolder = $folder;
+            (new ReportingCash())->call('pending_receipts');
+            (new ReportingCash())->call('pending_receipts');
+        } finally {
+            chdir($oldCwd);
+            restore_error_handler();
+            TestableCash::$markerFolder = $base;
+        }
+
+        $this->assertStringStartsWith($temp . 'di_core-cashdesk-', $folder);
+        $this->assertSame([], glob($cwd . '*'));
+        $this->assertCount(1, glob($folder . '*'));
+        $this->assertSame(1, $warnings);
+
+        // an unusable cache folder is the same as none; a usable one is used
+        $this->assertSame(
+            $folder,
+            TempFolderCash::reportFolder($base . 'missing/', $temp)
+        );
+        $this->assertSame(
+            $cwd . 'cashdesk/broken-receipts/',
+            TempFolderCash::reportFolder($cwd, $temp)
+        );
+
+        foreach ([$folder, dirname($folder) . '/', $temp, $cwd] as $dir) {
+            array_map('unlink', glob($dir . '*') ?: []);
+            rmdir($dir);
+        }
     }
 
     /** A marker that can't be written must not silence the report. */

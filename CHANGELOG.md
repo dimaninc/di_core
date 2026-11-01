@@ -38,8 +38,9 @@ New API (`Controller\Cash`, all protected, override as needed):
   `reportCashDeskProblem()` (log + `E_USER_WARNING`) by default. The defaults of
   `onBrokenReceipt()` (per receipt) and `onMissingCashDeskToken()` report at most
   once an hour through marker files in `brokenReceiptMarkerFolder()` (under
-  `Config::getCacheFolder()`); markers not renewed for the queue window (`dates`)
-  are removed. An override decides on its own;
+  `Config::getCacheFolder()`, or the system temp folder when that is empty or not
+  writable; a marker that can't be written means a report every time); markers not
+  renewed for the queue window (`dates`) are removed. An override decides on its own;
 - `pending_receipts` takes an optional `exclude: [ids]` (the cash desk's quarantine,
   at most 500 positive integers, 400 otherwise): those receipts are not served and
   do not take the batch. A broken receipt is skipped; the queue is read on by keyset

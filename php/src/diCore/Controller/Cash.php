@@ -474,7 +474,32 @@ class Cash extends \diBaseController
      */
     protected static function brokenReceiptMarkerFolder(): string
     {
-        return Config::getCacheFolder() . 'cashdesk/broken-receipts/';
+        return static::reportMarkerFolderIn(
+            (string) Config::getCacheFolder(),
+            sys_get_temp_dir()
+        );
+    }
+
+    /**
+     * An empty cache folder would put markers into the cwd (under cron – home or /),
+     * so without a usable one they go to the temp folder, one per installation.
+     */
+    protected static function reportMarkerFolderIn(
+        string $cacheFolder,
+        string $tempFolder
+    ): string {
+        if (
+            $cacheFolder !== '' &&
+            is_dir($cacheFolder) &&
+            is_writable($cacheFolder)
+        ) {
+            return rtrim($cacheFolder, '/') . '/cashdesk/broken-receipts/';
+        }
+
+        return rtrim($tempFolder, '/') .
+            '/di_core-cashdesk-' .
+            substr(md5(__DIR__), 0, 12) .
+            '/broken-receipts/';
     }
 
     protected function createCashDeskReceipt(array $row): Model
