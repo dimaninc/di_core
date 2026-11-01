@@ -1,7 +1,5 @@
 # Changelog
 
-## Unreleased
-
 - Cash desk contract v2: `pending_receipts`, `receipt_fiscalized`, `heartbeat` in
   `Controller\Cash` (Bearer token, kopecks, idempotent reporting), cash desk journal
   copy and watchdog queries
