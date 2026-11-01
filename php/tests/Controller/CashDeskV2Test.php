@@ -440,7 +440,10 @@ class CashDeskV2Test extends TestCase
             });
 
             $this->assertSame(400, $e->getCode(), $body);
-            $this->assertSame('body must be a JSON object', $e->getBody()['message']);
+            $this->assertSame(
+                'body must be a JSON object',
+                $e->getBody()['message']
+            );
         }
     }
 
@@ -602,6 +605,10 @@ class CashDeskV2Test extends TestCase
             'Japan, 11 digits on 8' => ['+81 3 1234 5678', '+81312345678'],
             'Lebanon, 10 digits on 9' => ['+961 1 234 567', '+9611234567'],
             'Japan via 00' => ['0081 3 1234 5678', '+81312345678'],
+            // no country code starts with 89: a Russian 8 with a stray plus
+            '+8 and a Russian mobile' => ['+8 999 123-45-67', '+79991234567'],
+            '008 and a Russian mobile' => ['008 916 123 45 67', '+79161234567'],
+            'Vietnam is not touched' => ['+84 95 123 4567', '+84951234567'],
             '+ eight digits' => ['+372 5123 456', '+3725123456'],
             '+ sixteen digits' => ['+1 234 567 890 123 456', ''],
             '+ leading zero' => ['+0 916 123 45 67', ''],
@@ -619,8 +626,10 @@ class CashDeskV2Test extends TestCase
      * A wrong number sends the receipt to a stranger: ambiguous means no phone.
      */
     #[\PHPUnit\Framework\Attributes\DataProvider('phones')]
-    public function testPhoneBecomesE164OrNothing(string $raw, string $expected): void
-    {
+    public function testPhoneBecomesE164OrNothing(
+        string $raw,
+        string $expected
+    ): void {
         $receipt = new class (['id' => 5, 'amount' => 10]) extends
             CashDeskTestReceipt
         {
@@ -707,11 +716,15 @@ class CashDeskV2Test extends TestCase
      */
     public function testExcludedReceiptsAreSkippedAndTheNextOnesServed(): void
     {
-        $first = $this->addReceipt(['date_payed' => \diDateTime::sqlFormat('-4 hours')]);
+        $first = $this->addReceipt([
+            'date_payed' => \diDateTime::sqlFormat('-4 hours'),
+        ]);
         $second = $this->addReceipt([
             'date_payed' => \diDateTime::sqlFormat('-3 hours'),
         ]);
-        $third = $this->addReceipt(['date_payed' => \diDateTime::sqlFormat('-2 hours')]);
+        $third = $this->addReceipt([
+            'date_payed' => \diDateTime::sqlFormat('-2 hours'),
+        ]);
         $fourth = $this->addReceipt([
             'date_payed' => \diDateTime::sqlFormat('-1 hour'),
         ]);
@@ -873,6 +886,69 @@ class CashDeskV2Test extends TestCase
             ],
             $c->calls
         );
+    }
+
+    /**
+     * More broken receipts at the head than one page: the queue is read on by
+     * keyset, otherwise the good ones behind them are never served.
+     */
+    public function testLongRunOfBrokenReceiptsDoesNotStallTheQueue(): void
+    {
+        $broken = Cash::PENDING_LIMIT_DEFAULT + Cash::PENDING_SCAN_EXTRA + 15;
+        $this->addReceipts($broken, [
+            'amount' => 0,
+            'date_payed' => \diDateTime::sqlFormat('-5 hours'),
+        ]);
+        $good = [
+            $this->addReceipt(['date_payed' => \diDateTime::sqlFormat('-2 hours')]),
+            $this->addReceipt(['date_payed' => \diDateTime::sqlFormat('-1 hours')]),
+        ];
+
+        $c = new TestableCash();
+
+        $this->assertSame(
+            $good,
+            array_column($c->call('pending_receipts')['receipts'], 'id')
+        );
+        $this->assertCount($broken, $c->calls);
+    }
+
+    /** A page boundary inside one date_payed must neither skip nor repeat a row. */
+    public function testKeysetPagingWithinOneTimestamp(): void
+    {
+        $at = \diDateTime::sqlFormat('-3 hours');
+        $this->addReceipts(
+            Cash::PENDING_LIMIT_DEFAULT + Cash::PENDING_SCAN_EXTRA + 3,
+            [
+                'amount' => 0,
+                'date_payed' => $at,
+            ]
+        );
+        $good = $this->addReceipt(['date_payed' => $at]);
+
+        $c = new TestableCash();
+
+        $this->assertSame(
+            [$good],
+            array_column($c->call('pending_receipts')['receipts'], 'id')
+        );
+        $ids = array_column($c->calls, 1);
+        $this->assertSame(count($ids), count(array_unique($ids)));
+    }
+
+    /** One poll reads at most PENDING_SCAN_MAX rows, however long the broken run. */
+    public function testScanIsCapped(): void
+    {
+        $this->addReceipts(Cash::PENDING_SCAN_MAX + 5, [
+            'amount' => 0,
+            'date_payed' => \diDateTime::sqlFormat('-5 hours'),
+        ]);
+        $this->addReceipt([]);
+
+        $c = new TestableCash();
+
+        $this->assertSame([], $c->call('pending_receipts')['receipts']);
+        $this->assertCount(Cash::PENDING_SCAN_MAX, $c->calls);
     }
 
     public function testReceiptProblems(): void
@@ -1304,6 +1380,41 @@ class CashDeskV2Test extends TestCase
                     'receiptNumber' => '99999999999',
                 ]),
             ],
+            // a JSON number loses leading zeros, and a 16-digit FN is past 2^53 in JS
+            'FN number as a JSON number' => [
+                'id' => $id,
+                'fiscal' => array_merge(self::FISCAL, [
+                    'fnNumber' => (int) self::FISCAL['fnNumber'],
+                ]),
+            ],
+            'registration number as a JSON number' => [
+                'id' => $id,
+                'fiscal' => array_merge(self::FISCAL, [
+                    'registrationNumber' => (int) self::FISCAL['registrationNumber'],
+                ]),
+            ],
+            'sign as a JSON number' => [
+                'id' => $id,
+                'fiscal' => array_merge(self::FISCAL, [
+                    'sign' => (int) self::FISCAL['sign'],
+                ]),
+            ],
+            'sign over uint32' => [
+                'id' => $id,
+                'fiscal' => array_merge(self::FISCAL, ['sign' => '4294967296']),
+            ],
+            'nonexistent date' => [
+                'id' => $id,
+                'fiscal' => array_merge(self::FISCAL, [
+                    'dateTime' => '2026-02-30T12:00:05+03:00',
+                ]),
+            ],
+            'nonexistent time' => [
+                'id' => $id,
+                'fiscal' => array_merge(self::FISCAL, [
+                    'dateTime' => '2026-10-31T24:00:05+03:00',
+                ]),
+            ],
         ];
 
         foreach ($cases as $case => $body) {
@@ -1326,6 +1437,7 @@ class CashDeskV2Test extends TestCase
             'id' => $id,
             'fiscal' => array_merge(self::FISCAL, [
                 'documentNumber' => Cash::DOCUMENT_NUMBER_MAX,
+                'sign' => '4294967295',
                 'total' => Cash::INT_COLUMN_MAX,
                 'shiftNumber' => Cash::INT_COLUMN_MAX,
                 'receiptNumber' => Cash::INT_COLUMN_MAX,
@@ -1334,6 +1446,7 @@ class CashDeskV2Test extends TestCase
 
         $row = $this->row($id);
         $this->assertSame('4294967295', $row['fiscal_doc_id']);
+        $this->assertSame('4294967295', $row['fiscal_mark_kkt']);
         $this->assertSame(Cash::INT_COLUMN_MAX, (int) $row['fiscal_total']);
         $this->assertSame(Cash::INT_COLUMN_MAX, (int) $row['fiscal_session']);
         $this->assertSame(Cash::INT_COLUMN_MAX, (int) $row['fiscal_number']);
@@ -1498,6 +1611,11 @@ class CashDeskV2Test extends TestCase
             'journalId not a UUID' => ['journalId' => 'sd-card-1', 'journal' => []],
             'journalId with a newline' => ['journalId' => "$id\n", 'journal' => []],
             'object' => ['journalId' => $id, 'journal' => ['seq' => 1]],
+            // valid entries under keys: only the list check refuses it
+            'object of entries' => [
+                'journalId' => $id,
+                'journal' => ['a' => $this->entry(1)],
+            ],
             'no seq' => [
                 'journalId' => $id,
                 'journal' => [['journalId' => $id, 'source' => 'x']],
@@ -1666,6 +1784,73 @@ class CashDeskV2Test extends TestCase
         $this->assertStringContainsString("#$other ", implode("\n", $warnings));
     }
 
+    /** A receipt out of the queue window is never served again: its marker goes. */
+    public function testStaleMarkersAreRemovedWhenANewOneIsWritten(): void
+    {
+        mkdir(TestableCash::$markerFolder, 0775, true);
+        $stale = TestableCash::$markerFolder . '999999';
+        $recent = TestableCash::$markerFolder . '999998';
+        touch($stale, strtotime(Cash::dates) - 60);
+        touch($recent, time() - 2 * Cash::BROKEN_RECEIPT_REPORT_INTERVAL_SEC);
+        $this->addReceipt(['amount' => 0]);
+
+        set_error_handler(function () {
+            return true;
+        });
+
+        try {
+            (new ReportingCash())->call('pending_receipts');
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertFileDoesNotExist($stale);
+        $this->assertFileExists($recent);
+    }
+
+    /** No token configured: every poll is refused, the report is hourly. */
+    public function testMissingTokenIsReportedHourly(): void
+    {
+        $warnings = [];
+        set_error_handler(function ($no, $text) use (&$warnings) {
+            if ($no === E_USER_WARNING) {
+                $warnings[] = $text;
+            }
+
+            return true;
+        });
+
+        $poll = function () {
+            $c = new ReportingCash();
+            $c->token = '';
+            $this->assertSame(
+                401,
+                $this->httpError(function () use ($c) {
+                    $c->call('pending_receipts');
+                })->getCode()
+            );
+        };
+
+        try {
+            $poll();
+            $poll();
+            $this->assertCount(1, $warnings);
+
+            foreach (glob(TestableCash::$markerFolder . '*') as $marker) {
+                touch(
+                    $marker,
+                    time() - Cash::BROKEN_RECEIPT_REPORT_INTERVAL_SEC - 1
+                );
+            }
+            $poll();
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertCount(2, $warnings);
+        $this->assertStringContainsString('CASHDESK_TOKEN', $warnings[1]);
+    }
+
     /** A marker that can't be written must not silence the report. */
     public function testUnwritableMarkerStillReports(): void
     {
@@ -1728,6 +1913,42 @@ class CashDeskV2Test extends TestCase
             TestableCash::RECEIPTS,
             'ORDER BY id DESC'
         )[0]['id'];
+    }
+
+    private function addReceipts(int $count, array $values): void
+    {
+        $values = array_merge(
+            [
+                'target_type' => 1,
+                'target_id' => 1,
+                'user_id' => 0,
+                'pay_system' => 1,
+                'currency' => 1,
+                'amount' => 100,
+                'outer_number' => 'test',
+            ],
+            $values
+        );
+        $tuple =
+            '(' .
+            implode(
+                ', ',
+                array_map(function ($v) {
+                    return self::$db->escapeValue((string) $v);
+                }, $values)
+            ) .
+            ')';
+
+        $this->assertNotFalse(
+            self::$db->q(
+                'INSERT INTO ' .
+                    TestableCash::RECEIPTS .
+                    ' (' .
+                    implode(', ', array_keys($values)) .
+                    ') VALUES ' .
+                    implode(', ', array_fill(0, $count, $tuple))
+            )
+        );
     }
 
     private function row(int $id): array

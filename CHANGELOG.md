@@ -6,7 +6,7 @@
   `Controller\Cash` (Bearer token, kopecks, idempotent reporting), cash desk journal
   copy and watchdog queries
 
-To migrate:
+To migrate (from 0.11.1):
 
 - run the core migrations **by idx** (or from a project migration, `up_new` does not
   see them): `20261031150000` (`migrations/payments/`) adds `fiscal_mark_kkt`,
@@ -15,39 +15,51 @@ To migrate:
   `20261031150100` (`migrations/cashdesk/`) creates `cashdesk_heartbeat` and
   `cashdesk_journal`. Both are idempotent;
 - set `CASHDESK_TOKEN` (env) before pointing a cash desk at v2: without it every v2
-  request is refused with 401 and logged; override `cashDeskPaymentsPlace()` (tag
-  1187) – the default is `Config` main protocol + domain, which differs per
-  environment;
+  request is refused with 401; override `cashDeskPaymentsPlace()` (tag 1187) – the
+  default is `Config` main protocol + domain, which differs per environment;
 - v1 `get_new_receipts` no longer serves a receipt that already has a `fiscal_doc_id`
   (the same condition as v2), otherwise a rollback to the old app prints again what
   v2 fiscalized; `set_receipt_uploaded` is unchanged;
-- a heartbeat must carry a UUID `journalId` (root and every journal entry), 400
-  without it; journal rows are unique by (`journal_id`, `seq`).
-  `onJournalConflict()` takes `string $journalId` first – update an override;
-- `receipt_fiscalized`: the same document = the same number and, when stored, the same
-  fiscal drive number; a repeat over a recorded but unreported document sets
-  `date_uploaded` and fills only the EMPTY fiscal columns from the cash desk's data
-  (what an OFD mail parser wrote is kept), with the same total check as a first write;
-- `pending_receipts` takes an optional `exclude: [ids]` (the cash desk's quarantine,
-  at most 500 positive integers, 400 otherwise): those receipts are not served and
-  do not take the batch;
-- requests are capped at 1 MB (413), a body that is not a JSON object (a list
-  included) is 400; `documentNumber` must fit uint32, `total`/`shiftNumber`/
-  `receiptNumber` a signed INT column, otherwise 400;
-- the default `onBrokenReceipt()` reports a receipt at most once an hour (a marker
-  file under `Config::getCacheFolder()`, `brokenReceiptMarkerFolder()`); an override
-  decides on its own;
 - **Apache with mod_php does not pass `Authorization` to PHP** without a rewrite rule
   (`RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]`) or
   `CGIPassAuth On`: every v2 request is then 401. The controller falls back to
   `getallheaders()` where it exists, but configure the server rather than rely on it;
-- `PaymentReceipt\Model::normalizeCashDeskPhone()` returns E.164 or nothing: with an
-  explicit `+`/`00` the digits are taken as written (8–15, no leading 0, nothing but
-  digits and separators), Russian rules (`8…`, ten digits on 9) apply only to numbers
-  without a prefix – `+81 3…` and `+961 1…` are not Russian;
 - a project that pads `getUserData()` with its own address should override
   `cashDeskBuyerEmail()` / `cashDeskBuyerPhone()` / `isCashDeskEmailUsable()` on its
   receipt model, otherwise the default reads the user's own email and phone;
+- a receipt model reading more related models than the user and the target (a
+  draft, say) lists them in `cashDeskRelatedIds()`: the queue preloads them per type
+  for the whole batch, anything else is one query per receipt.
+
+New API (`Controller\Cash`, all protected, override as needed):
+
+- hooks: `onDoubleFiscalization()`, `onFiscalTotalMismatch()`, `onBrokenReceipt()`,
+  `onJournalConflict()`, `onMissingCashDeskToken()`, all ending in
+  `reportCashDeskProblem()` (log + `E_USER_WARNING`) by default. The defaults of
+  `onBrokenReceipt()` (per receipt) and `onMissingCashDeskToken()` report at most
+  once an hour through marker files in `brokenReceiptMarkerFolder()` (under
+  `Config::getCacheFolder()`); markers not renewed for the queue window (`dates`)
+  are removed. An override decides on its own;
+- `pending_receipts` takes an optional `exclude: [ids]` (the cash desk's quarantine,
+  at most 500 positive integers, 400 otherwise): those receipts are not served and
+  do not take the batch. A broken receipt is skipped; the queue is read on by keyset
+  (`date_payed`, `id`) past a run of them, at most `PENDING_SCAN_MAX` rows a poll;
+- `receipt_fiscalized`: the same document = the same number and, when stored, the
+  same fiscal drive number; a repeat over a recorded but unreported document sets
+  `date_uploaded` and fills only the EMPTY fiscal columns from the cash desk's data,
+  with the same total check as a first write;
+- a heartbeat carries a UUID `journalId` (root and every journal entry), 400
+  without it; journal rows are unique by (`journal_id`, `seq`);
+- validation, 400 otherwise: requests at most 1 MB (413), the body a JSON object;
+  `documentNumber` and `sign` (FPD) fit uint32, `total`/`shiftNumber`/
+  `receiptNumber` a signed INT column; `sign`, `fnNumber`, `registrationNumber` are
+  digit STRINGS (a JSON number loses leading zeros); `dateTime` is ISO 8601 with a
+  zone and an existing date and time (`2026-02-30` is refused, not rolled over);
+- `PaymentReceipt\Model::asArrayForCashDeskV2()` and its `cashDesk*()` methods;
+  `normalizeCashDeskPhone()` returns E.164 or nothing: with an explicit `+`/`00` the
+  digits are taken as written (8–15, no leading 0), except `+8 9XX…` (no country
+  code starts with 89), which is a Russian number; Russian rules (`8…`, ten digits
+  on 9) apply to numbers without a prefix – `+81 3…` and `+961 1…` are not Russian;
 - new: `sql/postgres/payment_receipts.sql` (for new tables; there was no Postgres dump).
 
 ## 0.11.1

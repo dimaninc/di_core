@@ -176,6 +176,22 @@ class Model extends \diCore\Entity\PaymentDraft\Model
     }
 
     /**
+     * Models asArrayForCashDeskV2() reads through CollectionCache, as
+     * `[type, id]` pairs: the controller loads them per type for the whole batch.
+     * A project reading more (a draft) adds it here.
+     *
+     * @return array<int, array{0: int, 1: int}>
+     */
+    public function cashDeskRelatedIds(): array
+    {
+        return [
+            [Types::user, (int) $this->getUserId()],
+            // the item name is the target's type title (getMainPositionTitle())
+            [(int) $this->getTunedTargetType(), (int) $this->getTargetId()],
+        ];
+    }
+
+    /**
      * `amount` is a float in roubles (a FLOAT column in MySQL): 0.29 * 100 is
      * 28.999…, so a cast without round() would lose a kopeck.
      */
@@ -264,6 +280,11 @@ class Model extends \diCore\Entity\PaymentDraft\Model
         // +81 3… (11 digits on 8) or +961 1… (10 on 9) as Russian numbers
         if (preg_match('/^\s*(\+|00)([\d\s().-]+)\z/', $phone, $m)) {
             $digits = preg_replace('/\D+/', '', $m[2]);
+
+            // no country code starts with 89: +8 9XX… is a Russian 8 with a stray plus
+            if (preg_match('/^8(9\d{9})\z/', $digits, $ru)) {
+                return '+7' . $ru[1];
+            }
 
             return preg_match('/^[1-9]\d{7,14}\z/', $digits) ? "+$digits" : '';
         }

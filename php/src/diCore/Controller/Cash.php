@@ -33,8 +33,10 @@ class Cash extends \diBaseController
     const CASHDESK_TOKEN_ENV = 'CASHDESK_TOKEN';
     const PENDING_LIMIT_DEFAULT = 10;
     const PENDING_LIMIT_MAX = 50;
-    // a broken receipt is skipped, not served: this many extra rows keep a run of them from stalling the queue
+    // a broken receipt is skipped, not served: a page reads this many rows over the limit
     const PENDING_SCAN_EXTRA = 50;
+    // pages go on past a run of broken receipts, but one poll reads at most this many rows
+    const PENDING_SCAN_MAX = 500;
     const JOURNAL_MAX_ENTRIES = 500;
     // quarantined ids a cash desk may ask to skip
     const PENDING_EXCLUDE_MAX = 500;
@@ -43,6 +45,8 @@ class Cash extends \diBaseController
     const INT_COLUMN_MAX = 2147483647;
     // a fiscal document number is uint32
     const DOCUMENT_NUMBER_MAX = 4294967295;
+    // FPD (tag 1077) is uint32 too
+    const FISCAL_SIGN_MAX = 4294967295;
     const BROKEN_RECEIPT_REPORT_INTERVAL_SEC = 3600;
     const HEARTBEAT_RETENTION_DAYS = 7;
     const HEARTBEAT_TABLE = 'cashdesk_heartbeat';
@@ -176,36 +180,47 @@ class Cash extends \diBaseController
         $exclude = $this->pendingExclude($body);
         $paymentsPlace = $this->cashDeskPaymentsPlace();
 
-        $models = array_map(
-            [$this, 'createCashDeskReceipt'],
-            static::fetchPendingReceiptRows(
-                $limit + static::PENDING_SCAN_EXTRA,
-                $exclude
-            )
-        );
-        $this->preloadCashDeskRelations($models);
-
         $receipts = [];
+        $scanned = 0;
+        $after = null;
 
-        foreach ($models as $receipt) {
-            try {
-                $data = $receipt->asArrayForCashDeskV2($paymentsPlace);
-                $problem = $this->cashDeskReceiptProblem($data);
-            } catch (\Throwable $e) {
-                $problem = get_class($e) . ': ' . $e->getMessage();
+        while (count($receipts) < $limit && $scanned < static::PENDING_SCAN_MAX) {
+            $pageSize = min(
+                $limit + static::PENDING_SCAN_EXTRA,
+                static::PENDING_SCAN_MAX - $scanned
+            );
+            $rows = static::fetchPendingReceiptRows($pageSize, $exclude, $after);
+            $scanned += count($rows);
+            $models = array_map([$this, 'createCashDeskReceipt'], $rows);
+            $this->preloadCashDeskRelations($models);
+
+            foreach ($models as $receipt) {
+                try {
+                    $data = $receipt->asArrayForCashDeskV2($paymentsPlace);
+                    $problem = $this->cashDeskReceiptProblem($data);
+                } catch (\Throwable $e) {
+                    $problem = get_class($e) . ': ' . $e->getMessage();
+                }
+
+                if ($problem !== null) {
+                    $this->onBrokenReceipt($receipt, $problem);
+
+                    continue;
+                }
+
+                $receipts[] = $data;
+
+                if (count($receipts) >= $limit) {
+                    break 2;
+                }
             }
 
-            if ($problem !== null) {
-                $this->onBrokenReceipt($receipt, $problem);
-
-                continue;
-            }
-
-            $receipts[] = $data;
-
-            if (count($receipts) >= $limit) {
+            if (count($rows) < $pageSize) {
                 break;
             }
+
+            $last = end($rows);
+            $after = [(string) $last['date_payed'], (int) $last['id']];
         }
 
         return [
@@ -353,7 +368,9 @@ class Cash extends \diBaseController
                 $db->escapeTable(static::receiptsTable()),
                 static::pendingReceiptsCondition(),
                 $db->escapeValue(
-                    \diDateTime::sqlFormat('-' . max(0, $olderThanMinutes) . ' minutes')
+                    \diDateTime::sqlFormat(
+                        '-' . max(0, $olderThanMinutes) . ' minutes'
+                    )
                 ),
                 $db->limitOffset(max(1, $limit))
             )
@@ -452,7 +469,8 @@ class Cash extends \diBaseController
     }
 
     /**
-     * Where the default onBrokenReceipt() keeps a marker per receipt.
+     * Where the default onBrokenReceipt() and onMissingCashDeskToken() keep their
+     * hourly markers (one per receipt id, one for the token).
      */
     protected static function brokenReceiptMarkerFolder(): string
     {
@@ -465,28 +483,28 @@ class Cash extends \diBaseController
     }
 
     /**
+     * One query per related type instead of one per receipt: the cash desk polls
+     * every few seconds. What to load is the receipt's `cashDeskRelatedIds()`.
+     *
      * @param Model[] $receipts
      */
     protected function preloadCashDeskRelations(array $receipts): void
     {
-        $preload = [
-            Types::user => 'getUserId',
-            Types::payment_draft => 'getDraftId',
-        ];
+        $byType = [];
 
-        foreach ($preload as $type => $getter) {
-            $ids = array_values(
-                array_unique(
-                    array_filter(
-                        array_map(function (Model $r) use ($getter) {
-                            return (int) $r->$getter();
-                        }, $receipts)
-                    )
-                )
-            );
+        foreach ($receipts as $receipt) {
+            foreach ($receipt->cashDeskRelatedIds() as [$type, $id]) {
+                if ($type && $id) {
+                    $byType[$type][$id] = $id;
+                }
+            }
+        }
 
-            if ($ids) {
-                CollectionCache::addManual($type, 'id', $ids);
+        foreach ($byType as $type => $ids) {
+            try {
+                CollectionCache::addManual($type, 'id', array_values($ids));
+            } catch (\Throwable $e) {
+                // not preloaded is only slower: each receipt then loads its own model
             }
         }
     }
@@ -529,25 +547,68 @@ class Cash extends \diBaseController
     protected function onBrokenReceipt(Model $receipt, string $problem): void
     {
         $id = (int) $receipt->getId();
+
+        if ($this->claimHourlyReport((string) $id)) {
+            $this->reportCashDeskProblem(
+                "Receipt #$id not served to the cash desk: $problem"
+            );
+        }
+    }
+
+    /**
+     * No token configured: every cash desk request is refused. The default reports
+     * at most once an hour, like onBrokenReceipt(); an override decides on its own.
+     */
+    protected function onMissingCashDeskToken(): void
+    {
+        if ($this->claimHourlyReport('missing-token')) {
+            $this->reportCashDeskProblem(
+                static::CASHDESK_TOKEN_ENV .
+                    ' is not set: cash desk requests are refused'
+            );
+        }
+    }
+
+    /**
+     * True when the marker is missing or older than an hour (and is renewed now).
+     * A marker that can't be written means reporting every time, never silence.
+     */
+    protected function claimHourlyReport(string $name): bool
+    {
         $folder = static::brokenReceiptMarkerFolder();
-        $marker = $folder . $id;
+        $marker = $folder . $name;
         $mtime = is_file($marker) ? filemtime($marker) : false;
 
         if (
             $mtime !== false &&
             time() - $mtime < static::BROKEN_RECEIPT_REPORT_INTERVAL_SEC
         ) {
-            return;
+            return false;
         }
 
-        // a marker that can't be written means reporting every poll, never silence
         if (is_dir($folder) || @mkdir($folder, 0775, true)) {
             @touch($marker);
+            $this->removeStaleReportMarkers($folder);
         }
 
-        $this->reportCashDeskProblem(
-            "Receipt #$id not served to the cash desk: $problem"
-        );
+        return true;
+    }
+
+    /**
+     * A marker not renewed for the whole queue window belongs to a receipt that is
+     * never served again (or was fixed): without this the folder only grows.
+     */
+    protected function removeStaleReportMarkers(string $folder): void
+    {
+        $staleBefore = strtotime(static::dates);
+
+        foreach (glob($folder . '*') ?: [] as $file) {
+            $mtime = @filemtime($file);
+
+            if ($mtime !== false && $mtime < $staleBefore) {
+                @unlink($file);
+            }
+        }
     }
 
     /**
@@ -622,10 +683,7 @@ class Cash extends \diBaseController
         $expected = $this->cashDeskToken();
 
         if ($expected === '') {
-            $this->reportCashDeskProblem(
-                static::CASHDESK_TOKEN_ENV .
-                    ' is not set: cash desk requests are refused'
-            );
+            $this->onMissingCashDeskToken();
 
             throw HttpException::unauthorized(['error' => 'unauthorized']);
         }
@@ -723,15 +781,27 @@ class Cash extends \diBaseController
 
     /**
      * @param int[] $exclude validated positive ints
+     * @param array{0: string, 1: int}|null $after keyset of the previous page's last row: (date_payed, id)
      */
     protected static function fetchPendingReceiptRows(
         int $limit,
-        array $exclude = []
+        array $exclude = [],
+        ?array $after = null
     ): array {
         $db = static::cashDeskDb();
         $notIn = $exclude
             ? ' AND id NOT IN (' . implode(', ', array_map('intval', $exclude)) . ')'
             : '';
+
+        if ($after !== null) {
+            $date = $db->escapeValue($after[0]);
+            $notIn .= sprintf(
+                ' AND (date_payed > %s OR (date_payed = %s AND id > %d))',
+                $date,
+                $date,
+                $after[1]
+            );
+        }
 
         return static::fetchRows(
             sprintf(
@@ -827,7 +897,10 @@ class Cash extends \diBaseController
      */
     protected static function isSameFiscalDocument(array $row, array $fiscal): bool
     {
-        if ((string) ($row['fiscal_doc_id'] ?? '') !== (string) $fiscal['documentNumber']) {
+        if (
+            (string) ($row['fiscal_doc_id'] ?? '') !==
+            (string) $fiscal['documentNumber']
+        ) {
             return false;
         }
 
@@ -914,8 +987,11 @@ class Cash extends \diBaseController
                 1,
                 static::DOCUMENT_NUMBER_MAX
             ),
-            // FPD is a 32-bit number
-            'sign' => static::digits($fiscal['sign'] ?? null, 10),
+            'sign' => static::digitsUpTo(
+                $fiscal['sign'] ?? null,
+                10,
+                static::FISCAL_SIGN_MAX
+            ),
             'dateTimeSql' => static::isoToSql($fiscal['dateTime'] ?? null),
             'shiftNumber' => static::boundedInt(
                 $fiscal['shiftNumber'] ?? null,
@@ -958,10 +1034,7 @@ class Cash extends \diBaseController
      */
     protected function parseJournal($journal, string $journalId): array
     {
-        if (
-            !is_array($journal) ||
-            ($journal && array_keys($journal) !== range(0, count($journal) - 1))
-        ) {
+        if (!is_array($journal) || !array_is_list($journal)) {
             throw static::badCashDeskRequest('journal must be an array');
         }
 
@@ -1271,21 +1344,30 @@ class Cash extends \diBaseController
     }
 
     /**
+     * A string of digits, never a JSON number: a number loses leading zeros, and a
+     * 16-digit FN number is past 2^53 in JavaScript.
+     *
      * @param mixed $value
      */
     protected static function digits($value, int $maxLength): ?string
     {
-        if (is_int($value) && $value >= 0) {
-            $value = (string) $value;
-        }
-
         if (!is_string($value)) {
             return null;
         }
 
         $value = trim($value);
 
-        return preg_match('/^\d{1,' . $maxLength . '}$/', $value) ? $value : null;
+        return preg_match('/^\d{1,' . $maxLength . '}\z/', $value) ? $value : null;
+    }
+
+    /**
+     * @param mixed $value
+     */
+    protected static function digitsUpTo($value, int $maxLength, int $max): ?string
+    {
+        $digits = static::digits($value, $maxLength);
+
+        return $digits !== null && (int) $digits <= $max ? $digits : null;
     }
 
     /**
@@ -1322,12 +1404,19 @@ class Cash extends \diBaseController
         }
 
         try {
-            return (new \DateTime($value))
-                ->setTimezone(new \DateTimeZone(date_default_timezone_get()))
-                ->format('Y-m-d H:i:s');
+            $date = new \DateTime($value);
         } catch (\Exception $e) {
             return null;
         }
+
+        // DateTime rolls 02-30 over to 03-02 and 24:00 to the next day
+        if ($date->format('Y-m-d\TH:i:s') !== substr($value, 0, 19)) {
+            return null;
+        }
+
+        return $date
+            ->setTimezone(new \DateTimeZone(date_default_timezone_get()))
+            ->format('Y-m-d H:i:s');
     }
 
     /**
