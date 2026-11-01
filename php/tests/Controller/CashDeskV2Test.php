@@ -19,6 +19,8 @@ class CashDeskTestReceipt extends Model
     public static $items = [];
     /** @var \diModel|null */
     public $fakeUser;
+    /** @var int|null */
+    public static $failingId;
 
     public function getUser()
     {
@@ -133,8 +135,30 @@ class TestableCash extends Cash
         return new CashDeskTestReceipt($row);
     }
 
-    protected function preloadCashDeskRelations(array $receipts): void
+    protected function preloadCashDeskRelations(array $receipts): array
     {
+        return [];
+    }
+
+    /** @var string[] what the default code would have logged */
+    public static $logged = [];
+
+    protected static function logCashDesk(string $text): void
+    {
+        self::$logged[] = $text;
+    }
+
+    protected function onUnexpectedReceiptReport(
+        int $receiptId,
+        string $reason,
+        array $fiscal
+    ): void {
+        $this->calls[] = ['unexpected', $receiptId, $reason];
+    }
+
+    protected function onJournalStoreFailure(string $journalId, \Throwable $e): void
+    {
+        $this->calls[] = ['journal_store', $journalId, get_class($e)];
     }
 
     protected function writeFiscalData(int $receiptId, array $fiscal): bool
@@ -319,6 +343,8 @@ class CashDeskV2Test extends TestCase
 
         CashDeskTestReceipt::$contacts = [];
         CashDeskTestReceipt::$items = [];
+        CashDeskTestReceipt::$failingId = null;
+        TestableCash::$logged = [];
         TestableCash::$useFiscalMark = false;
         TestableCash::$markerFolder =
             sys_get_temp_dir() . '/di-core-cashdesk-' . getmypid() . '/';
@@ -349,6 +375,111 @@ class CashDeskV2Test extends TestCase
         }
     }
 
+    /**
+     * Through the real dispatcher (`act()`) of a built-in web server: under CLI it
+     * picks `_cli…` methods, so only a real request shows what GET reaches.
+     */
+    public function testGetIsRefusedByTheRealDispatcher(): void
+    {
+        $core = realpath(__DIR__ . '/../../..');
+        $router = TestableCash::$markerFolder . 'router.php';
+        @mkdir(TestableCash::$markerFolder, 0775, true);
+        file_put_contents(
+            $router,
+            '<?php
+foreach (' .
+                var_export(
+                    [
+                        dirname($core, 2) . '/autoload.php',
+                        "$core/vendor/autoload.php",
+                    ],
+                    true
+                ) .
+                ' as $a) {
+    if (is_file($a)) { require_once $a; break; }
+}
+require_once ' .
+                var_export("$core/php/lib/diLib.php", true) .
+                ';
+require_once ' .
+                var_export("$core/php/functions.php", true) .
+                ';
+$c = new class extends \\diCore\\Controller\\Cash {
+    public function __construct() {}
+    protected function cashDeskToken(): string { return "secret-token"; }
+};
+try {
+    $c->act("pending_receipts");
+    $code = 200;
+} catch (\\diCore\\Base\\Exception\\HttpException $e) {
+    $code = $e->getCode();
+}
+echo "code=$code";
+'
+        );
+
+        $socket = stream_socket_server('tcp://127.0.0.1:0');
+        $port = (int) substr(
+            strrchr(stream_socket_get_name($socket, false), ':'),
+            1
+        );
+        fclose($socket);
+        $server = proc_open(
+            [
+                PHP_BINARY,
+                '-d',
+                'display_errors=stderr',
+                '-d',
+                'error_reporting=-1',
+                '-d',
+                'html_errors=0',
+                '-S',
+                "127.0.0.1:$port",
+                $router,
+            ],
+            [1 => ['file', '/dev/null', 'w'], 2 => ['file', TestableCash::$markerFolder . 'server.log', 'w']],
+            $pipes
+        );
+
+        try {
+            $request = function (string $method, string $auth) use ($port): string {
+                for ($i = 0; $i < 50; $i++) {
+                    $answer = @file_get_contents(
+                        "http://127.0.0.1:$port/",
+                        false,
+                        stream_context_create([
+                            'http' => [
+                                'method' => $method,
+                                'header' => $auth,
+                                'ignore_errors' => true,
+                            ],
+                        ])
+                    );
+
+                    if ($answer !== false) {
+                        return $answer;
+                    }
+
+                    usleep(100000);
+                }
+
+                return 'no answer';
+            };
+
+            // the right token over GET finds no action
+            $this->assertSame(
+                'code=404',
+                $request('GET', 'Authorization: Bearer secret-token')
+            );
+            // POST reaches the action: refused by the token check, not by routing
+            $this->assertSame('code=401', $request('POST', ''));
+        } finally {
+            proc_terminate($server);
+            proc_close($server);
+            unlink($router);
+        }
+    }
+
     /* --- authorization --------------------------------------------------------- */
 
     public static function refusedAuthorizations(): array
@@ -361,6 +492,7 @@ class CashDeskV2Test extends TestCase
             'bare token' => ['secret-token', 'secret-token'],
             'empty expected, empty given' => ['', 'Bearer '],
             'empty expected, any given' => ['', 'Bearer anything'],
+            'expected with a space inside' => ['secret token', 'Bearer secret'],
         ];
     }
 
@@ -410,6 +542,22 @@ class CashDeskV2Test extends TestCase
 
         $this->assertSame('report', $c->calls[0][0]);
         $this->assertStringContainsString('CASHDESK_TOKEN', $c->calls[0][1]);
+    }
+
+    /** A token with a space can never match `Bearer \\S+`: refused and reported like an empty one. */
+    public function testTokenWithWhitespaceIsReportedAsMisconfigured(): void
+    {
+        $c = new TestableCash();
+        $c->token = "secret\ttoken";
+
+        $this->assertSame(
+            401,
+            $this->httpError(function () use ($c) {
+                $c->call('pending_receipts');
+            })->getCode()
+        );
+        $this->assertSame('report', $c->calls[0][0] ?? null);
+        $this->assertStringContainsString('whitespace', $c->calls[0][1]);
     }
 
     public function testRightTokenPassesAndSchemeIsCaseInsensitive(): void
@@ -599,6 +747,34 @@ class CashDeskV2Test extends TestCase
         );
     }
 
+    /** Tag 1008 holds 64 characters: a longer address goes to the phone, else none. */
+    public function testContactLongerThanTheTagIsNotUsed(): void
+    {
+        $email = str_repeat('a', 53) . '@example.com';
+        $this->assertSame(65, strlen($email));
+        $withPhone = $this->addReceipt(['amount' => 10]);
+        $withoutPhone = $this->addReceipt(['amount' => 10]);
+        $fits = $this->addReceipt(['amount' => 10]);
+        CashDeskTestReceipt::$contacts = [
+            $withPhone => ['email' => $email, 'phone' => '8 916 123-45-67'],
+            $withoutPhone => ['email' => $email, 'phone' => ''],
+            $fits => ['email' => substr($email, 1), 'phone' => '8 916 123-45-67'],
+        ];
+
+        $this->assertSame(
+            [
+                $withPhone => '+79161234567',
+                $withoutPhone => null,
+                $fits => substr($email, 1),
+            ],
+            array_column(
+                (new TestableCash())->call('pending_receipts')['receipts'],
+                'contact',
+                'id'
+            )
+        );
+    }
+
     public static function phones(): array
     {
         return [
@@ -617,6 +793,9 @@ class CashDeskV2Test extends TestCase
             '+8 and a Russian mobile' => ['+8 999 123-45-67', '+79991234567'],
             '008 and a Russian mobile' => ['008 916 123 45 67', '+79161234567'],
             'Vietnam is not touched' => ['+84 95 123 4567', '+84951234567'],
+            // a toll-free number is the shop's, never the buyer's
+            '8-800' => ['8 800 555-35-35', ''],
+            '+7 800' => ['+7 800 555 35 35', ''],
             '+ eight digits' => ['+372 5123 456', '+3725123456'],
             '+ sixteen digits' => ['+1 234 567 890 123 456', ''],
             '+ leading zero' => ['+0 916 123 45 67', ''],
@@ -765,7 +944,6 @@ class CashDeskV2Test extends TestCase
             'a float' => [[1.5]],
             'a numeric junk' => [['12abc']],
             'a nested list' => [[[1]]],
-            'over the cap' => [range(1, Cash::PENDING_EXCLUDE_MAX + 1)],
         ];
     }
 
@@ -781,6 +959,22 @@ class CashDeskV2Test extends TestCase
 
         $this->assertSame(400, $e->getCode());
         $this->assertSame([], $c->calls);
+    }
+
+    /** The client stops a source itself past the cap: a longer list is its failure. */
+    public function testExcludeOverTheCapIsBadRequestAndReported(): void
+    {
+        $c = new TestableCash();
+
+        $e = $this->httpError(function () use ($c) {
+            $c->call('pending_receipts', [
+                'exclude' => range(1, Cash::PENDING_EXCLUDE_MAX + 1),
+            ]);
+        });
+
+        $this->assertSame(400, $e->getCode());
+        $this->assertSame('report', $c->calls[0][0] ?? null);
+        $this->assertStringContainsString('exclude', $c->calls[0][1]);
     }
 
     public function testExcludeAtTheCapIsAccepted(): void
@@ -959,6 +1153,96 @@ class CashDeskV2Test extends TestCase
         $this->assertCount(Cash::PENDING_SCAN_MAX, $c->calls);
     }
 
+    /** One receipt failing to name its related models is broken; the rest go out. */
+    public function testRelatedIdsFailureBreaksOnlyThatReceipt(): void
+    {
+        $bad = $this->addReceipt([]);
+        $good = $this->addReceipt([]);
+        $c = new class extends TestableCash {
+            protected function createCashDeskReceipt(array $row): Model
+            {
+                return new class ($row) extends CashDeskTestReceipt {
+                    public function cashDeskRelatedIds(): array
+                    {
+                        if ((int) $this->getId() === (int) self::$failingId) {
+                            throw new \RuntimeException('no target');
+                        }
+
+                        return [];
+                    }
+                };
+            }
+
+            protected function preloadCashDeskRelations(array $receipts): array
+            {
+                return Cash::preloadCashDeskRelations($receipts);
+            }
+        };
+        CashDeskTestReceipt::$failingId = $bad;
+
+        $this->assertSame(
+            [$good],
+            array_column($c->call('pending_receipts')['receipts'], 'id')
+        );
+        $this->assertSame('broken', $c->calls[0][0]);
+        $this->assertSame($bad, $c->calls[0][1]);
+        $this->assertStringContainsString('no target', $c->calls[0][2]);
+    }
+
+    /**
+     * The real factory and preload: the consumer's receipt class through
+     * `Model::create`, its related ids into `CollectionCache` one collection per type.
+     */
+    public function testRealFactoryAndPreload(): void
+    {
+        $c = new class extends Cash {
+            public function __construct()
+            {
+            }
+
+            public function make(array $row): Model
+            {
+                return $this->createCashDeskReceipt($row);
+            }
+
+            public function preload(array $receipts): array
+            {
+                return $this->preloadCashDeskRelations($receipts);
+            }
+        };
+        $receipts = [
+            $c->make([
+                'id' => 1,
+                'user_id' => 501,
+                'target_type' => 0,
+                'target_id' => 0,
+            ]),
+            $c->make([
+                'id' => 2,
+                'user_id' => 502,
+                'target_type' => 0,
+                'target_id' => 0,
+            ]),
+        ];
+        $class = \diModel::existsFor(\diTypes::payment_receipt);
+        $userType = \diTypes::getId('user');
+
+        $this->assertInstanceOf($class, $receipts[0]);
+        \diCore\Tool\CollectionCache::remove([$userType]);
+
+        try {
+            $this->assertSame([], $c->preload($receipts));
+            $users = \diCore\Tool\CollectionCache::get($userType);
+            $this->assertNotNull($users, 'users preloaded as one collection');
+            $this->assertMatchesRegularExpression(
+                "/IN \\('?501'?, ?'?502'?\\)/i",
+                $users->getFullQuery()
+            );
+        } finally {
+            \diCore\Tool\CollectionCache::remove([$userType]);
+        }
+    }
+
     public function testReceiptProblems(): void
     {
         $c = new class extends TestableCash {
@@ -982,6 +1266,9 @@ class CashDeskV2Test extends TestCase
             'unknown type' => ['type' => 'refund'],
             'return without original' => ['type' => 'sellReturn'],
             'empty place' => ['paymentsPlace' => ''],
+            'contact over tag 1008' => [
+                'contact' => str_repeat('a', 53) . '@example.com',
+            ],
             'float total' => ['total' => 290.0],
             'long name' => [
                 'items' => [
@@ -1273,6 +1560,59 @@ class CashDeskV2Test extends TestCase
         $this->assertSame([['mismatch', $id, 29000, 28900]], $c->calls);
     }
 
+    /** No payment, no receipt: the cash desk blocks this one, the operator looks. */
+    public function testUnpaidReceiptIsNotFoundAndReported(): void
+    {
+        $id = $this->addReceipt(['amount' => 290, 'date_payed' => null]);
+        $c = new TestableCash();
+
+        $e = $this->httpError(function () use ($c, $id) {
+            $c->call('receipt_fiscalized', ['id' => $id, 'fiscal' => self::FISCAL]);
+        });
+
+        $this->assertSame(404, $e->getCode());
+        $this->assertSame(['error' => 'not_found'], $e->getBody());
+        $this->assertSame('unexpected', $c->calls[0][0] ?? null);
+        $this->assertSame($id, $c->calls[0][1]);
+        $this->assertSame('', (string) $this->row($id)['fiscal_doc_id']);
+    }
+
+    /** A late report is legitimate: written, but the operator hears of it. */
+    public function testReportOutsideTheWindowIsAcceptedAndReported(): void
+    {
+        $id = $this->addReceipt([
+            'amount' => 290,
+            'date_payed' => \diDateTime::sqlFormat('-40 days'),
+        ]);
+        $c = new TestableCash();
+
+        $this->assertSame(
+            ['ok' => true],
+            $c->call('receipt_fiscalized', ['id' => $id, 'fiscal' => self::FISCAL])
+        );
+        $this->assertSame('71', $this->row($id)['fiscal_doc_id']);
+        $this->assertSame('unexpected', $c->calls[0][0] ?? null);
+    }
+
+    /** OFD mail may store the number with leading zeros. */
+    public function testStoredNumberWithLeadingZerosIsTheSameDocument(): void
+    {
+        $id = $this->addReceipt([
+            'amount' => 290,
+            'fiscal_doc_id' => '071',
+            'fiscal_fn_number' => self::FISCAL['fnNumber'],
+        ]);
+
+        $this->assertSame(
+            ['ok' => true],
+            (new TestableCash())->call('receipt_fiscalized', [
+                'id' => $id,
+                'fiscal' => self::FISCAL,
+            ])
+        );
+        $this->assertNotEmpty($this->row($id)['date_uploaded']);
+    }
+
     public function testUnknownReceiptIsNotFound(): void
     {
         $e = $this->httpError(function () {
@@ -1513,6 +1853,57 @@ class CashDeskV2Test extends TestCase
         $this->assertSame([], $c->calls);
     }
 
+    /** Postgres refuses NUL in jsonb and text: one such byte must not stall heartbeats. */
+    public function testNulBytesAreStrippedBeforeStoring(): void
+    {
+        $body = $this->heartbeat([
+            array_merge($this->entry(1), [
+                'source' => "sh\u{0}op",
+                'state' => "re\u{0}ported",
+                "no\u{0}te" => "a\u{0}b",
+            ]),
+        ]);
+        $body['kkt']['lastError'] = "bad\u{0}byte";
+
+        $answer = (new TestableCash())->call('heartbeat', $body);
+
+        $this->assertSame(1, $answer['journalAckSeq']);
+        $this->assertSame(
+            'badbyte',
+            TestableCash::lastHeartbeat()['payload']['kkt']['lastError']
+        );
+        $journal = $this->rows(TestableCash::JOURNAL)[0];
+        $this->assertSame('shop', $journal['source']);
+        $this->assertSame('reported', $journal['state']);
+        $this->assertSame('ab', json_decode($journal['payload'], true)['note']);
+    }
+
+    /** The status matters more to the watchdog; the journal is resent without an ack. */
+    public function testJournalFailureKeepsTheStatusAndAnswers500(): void
+    {
+        $c = new class extends TestableCash {
+            protected function storeJournal(
+                string $journalId,
+                array $entries,
+                string $now
+            ): ?int {
+                throw new \diDatabaseException('journal down');
+            }
+        };
+
+        $e = $this->httpError(function () use ($c) {
+            $c->call('heartbeat', $this->heartbeat([$this->entry(1)]));
+        });
+
+        $this->assertSame(500, $e->getCode());
+        $this->assertArrayNotHasKey('journalAckSeq', (array) $e->getBody());
+        $this->assertSame(1, $this->rowCount(TestableCash::HEARTBEATS));
+        $this->assertSame(
+            [['journal_store', self::JOURNAL_ID, 'diDatabaseException']],
+            $c->calls
+        );
+    }
+
     public function testRepeatedSeqIsIgnoredAndAcked(): void
     {
         $c = new TestableCash();
@@ -1716,6 +2107,11 @@ class CashDeskV2Test extends TestCase
 
         $this->assertSame([$older, $overdue], TestableCash::overdueReceiptIds(15));
         $this->assertSame([$older], TestableCash::overdueReceiptIds(15, 1));
+        // excluded in SQL, so the limit is not spent on them
+        $this->assertSame(
+            [$overdue],
+            TestableCash::overdueReceiptIds(15, 1, [$older])
+        );
     }
 
     /**
@@ -1727,6 +2123,41 @@ class CashDeskV2Test extends TestCase
         $this->addReceipt(['date_payed' => \diDateTime::sqlFormat('+3 minutes')]);
 
         $this->assertSame([], TestableCash::overdueReceiptIds(-5));
+    }
+
+    /** SQL goes to the log; the exception (and so Sentry, the answer) gets none of it. */
+    public function testFailedQueryKeepsTheSqlOutOfTheException(): void
+    {
+        $c = new class extends TestableCash {
+            protected static function receiptsTable(): string
+            {
+                return '_di_core_test_no_such_table';
+            }
+        };
+        TestableCash::$logged = [];
+
+        try {
+            $c->call('pending_receipts');
+            $this->fail('an exception expected');
+        } catch (\diDatabaseException $e) {
+            $this->assertStringNotContainsString('SELECT', $e->getMessage());
+            $this->assertStringNotContainsString('_di_core_test', $e->getMessage());
+        }
+
+        $this->assertStringContainsString(
+            '_di_core_test_no_such_table',
+            implode("\n", TestableCash::$logged)
+        );
+    }
+
+    /** The queue, v1 and the models must read one database. */
+    public function testCashDeskReadsTheReceiptModelsConnection(): void
+    {
+        $model = \diModel::create(\diTypes::payment_receipt);
+        $modelDb = (new \ReflectionMethod($model, 'getDb'))->invoke($model);
+        $cashDb = (new \ReflectionMethod(Cash::class, 'cashDeskDb'))->invoke(null);
+
+        $this->assertSame($modelDb, $cashDb);
     }
 
     /* --- default hooks ------------------------------------------------------------ */
@@ -1960,7 +2391,7 @@ class CashDeskV2Test extends TestCase
         $sql = implode(
             ', ',
             array_map(function ($v) {
-                return self::$db->escapeValue((string) $v);
+                return $v === null ? 'NULL' : self::$db->escapeValue((string) $v);
             }, $values)
         );
 

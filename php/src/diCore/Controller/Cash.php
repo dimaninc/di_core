@@ -192,9 +192,15 @@ class Cash extends \diBaseController
             $rows = static::fetchPendingReceiptRows($pageSize, $exclude, $after);
             $scanned += count($rows);
             $models = array_map([$this, 'createCashDeskReceipt'], $rows);
-            $this->preloadCashDeskRelations($models);
+            $unrelated = $this->preloadCashDeskRelations($models);
 
-            foreach ($models as $receipt) {
+            foreach ($models as $i => $receipt) {
+                if (isset($unrelated[$i])) {
+                    $this->onBrokenReceipt($receipt, $unrelated[$i]);
+
+                    continue;
+                }
+
                 try {
                     $data = $receipt->asArrayForCashDeskV2($paymentsPlace);
                     $problem = $this->cashDeskReceiptProblem($data);
@@ -248,6 +254,20 @@ class Cash extends \diBaseController
             throw HttpException::notFound(['error' => 'not_found']);
         }
 
+        // never served: the cash desk blocks only this receipt, the operator looks
+        $paidAt = (string) ($row['date_payed'] ?? '');
+
+        // MySQL without strict mode stores a missing date as zeros
+        if ($paidAt === '' || str_starts_with($paidAt, '0000-00-00')) {
+            $this->onUnexpectedReceiptReport(
+                $receiptId,
+                'the receipt is not paid',
+                $fiscal
+            );
+
+            throw HttpException::notFound(['error' => 'not_found']);
+        }
+
         if (!$this->writeFiscalData($receiptId, $fiscal)) {
             // Lost to an earlier write: read what it stored
             $row = static::readReceiptRow($receiptId);
@@ -285,12 +305,22 @@ class Cash extends \diBaseController
             );
         }
 
+        // a late report is legitimate (written), but the queue never served it
+        if ($paidAt < static::pendingReceiptsNotBefore()) {
+            $this->onUnexpectedReceiptReport(
+                $receiptId,
+                'paid before the queue window (' . $row['date_payed'] . ')',
+                $fiscal
+            );
+        }
+
         return ['ok' => true];
     }
 
     public function _postHeartbeatAction(): array
     {
-        $body = $this->authorizedCashDeskBody();
+        // Postgres refuses NUL in jsonb and text: one such byte would fail every heartbeat
+        $body = static::withoutNul($this->authorizedCashDeskBody());
         $journalId = static::journalId($body['journalId'] ?? null);
 
         if ($journalId === null) {
@@ -300,12 +330,19 @@ class Cash extends \diBaseController
         $entries = $this->parseJournal($body['journal'] ?? [], $journalId);
         $now = \diDateTime::sqlFormat();
 
-        // The journal first: it is the copy worth keeping, the status is overwritten next minute
-        $ack = $this->storeJournal($journalId, $entries, $now);
-
+        // The status first: the watchdog judges the cash desk by it
         $status = $body;
         unset($status['journal']);
         $this->storeHeartbeat($status, $now);
+
+        try {
+            $ack = $this->storeJournal($journalId, $entries, $now);
+        } catch (\Throwable $e) {
+            $this->onJournalStoreFailure($journalId, $e);
+
+            // no ack: the cash desk sends the journal again
+            throw HttpException::fastCreate(500, ['error' => 'journal_not_stored']);
+        }
 
         return [
             'ok' => true,
@@ -353,20 +390,24 @@ class Cash extends \diBaseController
 
     /**
      * Receipts the cash desk should have taken but hasn't reported for this long,
-     * within the same window the queue serves – oldest first.
+     * within the same window the queue serves – oldest first. `$exclude` (those
+     * with an alert of their own) is cut in SQL, so it does not eat the limit.
      *
+     * @param int[] $exclude
      * @return int[]
      */
     public static function overdueReceiptIds(
         int $olderThanMinutes,
-        int $limit = 100
+        int $limit = 100,
+        array $exclude = []
     ): array {
         $db = static::cashDeskDb();
         $rows = static::fetchRows(
             sprintf(
-                'SELECT id FROM %s WHERE %s AND date_payed <= %s ORDER BY date_payed ASC, id ASC%s',
+                'SELECT id FROM %s WHERE %s%s AND date_payed <= %s ORDER BY date_payed ASC, id ASC%s',
                 $db->escapeTable(static::receiptsTable()),
                 static::pendingReceiptsCondition(),
+                static::notInCondition($exclude),
                 $db->escapeValue(
                     \diDateTime::sqlFormat(
                         '-' . max(0, $olderThanMinutes) . ' minutes'
@@ -386,6 +427,23 @@ class Cash extends \diBaseController
     /**
      * Empty means "not configured" and refuses every request.
      */
+    /**
+     * Why the configured token refuses everything, null when it is usable. A token
+     * with whitespace inside can never match `Bearer <token>`.
+     */
+    public function cashDeskTokenProblem(): ?string
+    {
+        $token = $this->cashDeskToken();
+
+        if ($token === '') {
+            return static::CASHDESK_TOKEN_ENV . ' is not set';
+        }
+
+        return preg_match('/\s/', $token)
+            ? static::CASHDESK_TOKEN_ENV . ' contains whitespace'
+            : null;
+    }
+
     protected function cashDeskToken(): string
     {
         $token = \diRequest::env(static::CASHDESK_TOKEN_ENV);
@@ -425,9 +483,15 @@ class Cash extends \diBaseController
         return \diDateTime::sqlFormat(static::dates);
     }
 
+    /** The receipt model's own connection: the queue, v1 and the models read one database. */
     protected static function cashDeskDb(): \diDB
     {
-        return Connection::get()->getDb();
+        /** @var Model $class */
+        $class = \diModel::existsFor(\diTypes::payment_receipt) ?: Model::class;
+
+        return Connection::get(
+            $class::connection_name ?: Connection::DEFAULT_NAME
+        )->getDb();
     }
 
     protected function cashDeskRequestBody(): string
@@ -512,13 +576,23 @@ class Cash extends \diBaseController
      * every few seconds. What to load is the receipt's `cashDeskRelatedIds()`.
      *
      * @param Model[] $receipts
+     * @return array<int, string> problems of the receipts that failed, by their key in $receipts
      */
-    protected function preloadCashDeskRelations(array $receipts): void
+    protected function preloadCashDeskRelations(array $receipts): array
     {
         $byType = [];
+        $problems = [];
 
-        foreach ($receipts as $receipt) {
-            foreach ($receipt->cashDeskRelatedIds() as [$type, $id]) {
+        foreach ($receipts as $key => $receipt) {
+            try {
+                $related = $receipt->cashDeskRelatedIds();
+            } catch (\Throwable $e) {
+                $problems[$key] = get_class($e) . ': ' . $e->getMessage();
+
+                continue;
+            }
+
+            foreach ($related as [$type, $id]) {
                 if ($type && $id) {
                     $byType[$type][$id] = $id;
                 }
@@ -532,6 +606,8 @@ class Cash extends \diBaseController
                 // not preloaded is only slower: each receipt then loads its own model
             }
         }
+
+        return $problems;
     }
 
     /* --- hooks: a project sends these to its monitoring ----------------------- */
@@ -581,17 +657,42 @@ class Cash extends \diBaseController
     }
 
     /**
-     * No token configured: every cash desk request is refused. The default reports
-     * at most once an hour, like onBrokenReceipt(); an override decides on its own.
+     * No usable token (`cashDeskTokenProblem()`): every cash desk request is
+     * refused. The default reports at most once an hour, like onBrokenReceipt();
+     * an override decides on its own.
      */
-    protected function onMissingCashDeskToken(): void
+    protected function onMissingCashDeskToken(string $reason): void
     {
         if ($this->claimHourlyReport('missing-token')) {
-            $this->reportCashDeskProblem(
-                static::CASHDESK_TOKEN_ENV .
-                    ' is not set: cash desk requests are refused'
-            );
+            $this->reportCashDeskProblem("$reason: cash desk requests are refused");
         }
+    }
+
+    /**
+     * A report the queue could not have caused: an unpaid receipt (answered 404,
+     * nothing written) or one paid before the queue window (written).
+     */
+    protected function onUnexpectedReceiptReport(
+        int $receiptId,
+        string $reason,
+        array $fiscal
+    ): void {
+        $this->reportCashDeskProblem(
+            "Receipt #$receiptId reported by the cash desk (document " .
+                $fiscal['documentNumber'] .
+                "): $reason"
+        );
+    }
+
+    /** The status is stored; the journal is not and the cash desk resends it. */
+    protected function onJournalStoreFailure(string $journalId, \Throwable $e): void
+    {
+        $this->reportCashDeskProblem(
+            "Cash desk journal $journalId not stored: " .
+                get_class($e) .
+                ': ' .
+                $e->getMessage()
+        );
     }
 
     /**
@@ -656,12 +757,17 @@ class Cash extends \diBaseController
 
     protected function reportCashDeskProblem(string $text): void
     {
-        Logger::getInstance()->log($text, static::LOG_MODULE);
+        static::logCashDesk($text);
 
         // Skipped only where PHP would print it into the JSON answer
         if (\diRequest::isCli() || !ini_get('display_errors')) {
             trigger_error($text, E_USER_WARNING);
         }
+    }
+
+    protected static function logCashDesk(string $text): void
+    {
+        Logger::getInstance()->log($text, static::LOG_MODULE);
     }
 
     /* --- internals ------------------------------------------------------------ */
@@ -705,13 +811,15 @@ class Cash extends \diBaseController
 
     protected function assertCashDeskAuthorized(): void
     {
-        $expected = $this->cashDeskToken();
+        $problem = $this->cashDeskTokenProblem();
 
-        if ($expected === '') {
-            $this->onMissingCashDeskToken();
+        if ($problem !== null) {
+            $this->onMissingCashDeskToken($problem);
 
             throw HttpException::unauthorized(['error' => 'unauthorized']);
         }
+
+        $expected = $this->cashDeskToken();
 
         $given = preg_match(
             '/^Bearer\s+(\S+)\s*$/i',
@@ -754,6 +862,16 @@ class Cash extends \diBaseController
         }
 
         $exclude = $body['exclude'];
+
+        if (is_array($exclude) && count($exclude) > static::PENDING_EXCLUDE_MAX) {
+            // the client stops a source itself past the cap: this is its failure
+            $this->reportCashDeskProblem(
+                'Cash desk sent ' .
+                    count($exclude) .
+                    ' ids in exclude, over ' .
+                    static::PENDING_EXCLUDE_MAX
+            );
+        }
 
         if (
             !is_array($exclude) ||
@@ -814,9 +932,7 @@ class Cash extends \diBaseController
         ?array $after = null
     ): array {
         $db = static::cashDeskDb();
-        $notIn = $exclude
-            ? ' AND id NOT IN (' . implode(', ', array_map('intval', $exclude)) . ')'
-            : '';
+        $notIn = static::notInCondition($exclude);
 
         if ($after !== null) {
             $date = $db->escapeValue($after[0]);
@@ -839,13 +955,21 @@ class Cash extends \diBaseController
         );
     }
 
+    /** @param int[] $ids */
+    protected static function notInCondition(array $ids): string
+    {
+        return $ids
+            ? ' AND id NOT IN (' . implode(', ', array_map('intval', $ids)) . ')'
+            : '';
+    }
+
     protected static function readReceiptRow(int $receiptId): ?array
     {
         $db = static::cashDeskDb();
 
         return static::fetchRows(
             sprintf(
-                'SELECT id, amount, fiscal_doc_id, fiscal_fn_number, date_uploaded FROM %s WHERE id = %d',
+                'SELECT id, amount, date_payed, fiscal_doc_id, fiscal_fn_number, date_uploaded FROM %s WHERE id = %d',
                 $db->escapeTable(static::receiptsTable()),
                 $receiptId
             )
@@ -854,6 +978,7 @@ class Cash extends \diBaseController
 
     /**
      * A failed read throws: "couldn't read" must not look like "nothing there".
+     * The SQL goes to the log only: the message reaches Sentry and the answer.
      */
     protected static function fetchRows(string $sql): array
     {
@@ -861,7 +986,9 @@ class Cash extends \diBaseController
         $rs = $db->q($sql);
 
         if ($rs === false) {
-            throw new \diDatabaseException("Cash desk query failed: $sql");
+            static::logCashDesk("Cash desk query failed: $sql");
+
+            throw new \diDatabaseException('Cash desk query failed');
         }
 
         $rows = [];
@@ -922,10 +1049,16 @@ class Cash extends \diBaseController
      */
     protected static function isSameFiscalDocument(array $row, array $fiscal): bool
     {
-        if (
-            (string) ($row['fiscal_doc_id'] ?? '') !==
-            (string) $fiscal['documentNumber']
-        ) {
+        $stored = trim((string) ($row['fiscal_doc_id'] ?? ''));
+        $reported = (string) $fiscal['documentNumber'];
+
+        // OFD mail may store `071`: digits on both sides compare as numbers
+        $same =
+            ctype_digit($stored) && ctype_digit($reported)
+                ? (int) $stored === (int) $reported
+                : $stored === $reported;
+
+        if (!$same) {
             return false;
         }
 
@@ -1235,6 +1368,13 @@ class Cash extends \diBaseController
             return 'contact is neither a string nor null';
         }
 
+        if (
+            isset($r['contact']) &&
+            mb_strlen($r['contact']) > Model::CASH_DESK_CONTACT_MAX_LENGTH
+        ) {
+            return 'contact is longer than ' . Model::CASH_DESK_CONTACT_MAX_LENGTH;
+        }
+
         $items = $r['items'] ?? null;
 
         if (!is_array($items) || !$items) {
@@ -1442,6 +1582,33 @@ class Cash extends \diBaseController
         return $date
             ->setTimezone(new \DateTimeZone(date_default_timezone_get()))
             ->format('Y-m-d H:i:s');
+    }
+
+    /**
+     * NUL bytes removed from every string and key, recursively.
+     *
+     * @param mixed $value
+     * @return mixed
+     */
+    protected static function withoutNul($value)
+    {
+        if (is_string($value)) {
+            return str_replace("\0", '', $value);
+        }
+
+        if (!is_array($value)) {
+            return $value;
+        }
+
+        $out = [];
+
+        foreach ($value as $key => $item) {
+            $out[
+                is_string($key) ? str_replace("\0", '', $key) : $key
+            ] = static::withoutNul($item);
+        }
+
+        return $out;
     }
 
     /**

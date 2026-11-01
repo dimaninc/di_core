@@ -56,10 +56,27 @@ New API (`Controller\Cash`, all protected, override as needed):
   `receiptNumber` a signed INT column; `sign`, `fnNumber`, `registrationNumber` are
   digit STRINGS (a JSON number loses leading zeros); `dateTime` is ISO 8601 with a
   zone and an existing date and time (`2026-02-30` is refused, not rolled over);
+- more hooks: `onUnexpectedReceiptReport()` – `receipt_fiscalized` for an unpaid
+  receipt is 404 `{"error":"not_found"}` and nothing is written; one paid before the
+  queue window is written (a late report is legitimate) and reported too;
+  `onJournalStoreFailure()` – a heartbeat stores the status first, and a journal
+  that fails to store is reported and answered 500 without an ack, so the cash desk
+  resends it; `onMissingCashDeskToken(string $reason)` also covers a token with
+  whitespace inside (`cashDeskTokenProblem()`);
+- `exclude` over 500 ids is still 400 and is reported through
+  `reportCashDeskProblem()` (the client stops a source itself before that);
+  NUL bytes are stripped from heartbeat strings and keys (Postgres refuses them in
+  jsonb and text); a failed queue query logs its SQL and throws a message without it;
+  a stored document number with leading zeros is the same document;
+  `overdueReceiptIds()` takes `$exclude` (cut in SQL, not from the limit);
+  `preloadCashDeskRelations()` returns the receipts whose `cashDeskRelatedIds()`
+  failed (they go to `onBrokenReceipt()`, the rest are served);
 - `PaymentReceipt\Model::asArrayForCashDeskV2()` and its `cashDesk*()` methods;
   `normalizeCashDeskPhone()` returns E.164 or nothing: with an explicit `+`/`00` the
   digits are taken as written (8–15, no leading 0), except `+8 9XX…` (no country
-  code starts with 89), which is a Russian number; Russian rules (`8…`, ten digits
+  code starts with 89), which is a Russian number; an email longer than tag 1008
+  (64 characters, `CASH_DESK_CONTACT_MAX_LENGTH`) falls back to the phone, and
+  `+7800…` (toll-free, the shop's) is never a buyer's phone; Russian rules (`8…`, ten digits
   on 9) apply to numbers without a prefix – `+81 3…` and `+961 1…` are not Russian;
 - new: `sql/postgres/payment_receipts.sql` (for new tables; there was no Postgres dump).
 

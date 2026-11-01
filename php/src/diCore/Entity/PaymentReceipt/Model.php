@@ -68,6 +68,8 @@ class Model extends \diCore\Entity\PaymentDraft\Model
 
     const TIMESTAMP_FORMAT = 'Ymd\THi';
     const FISCAL_STORAGE_NUMBER = null;
+    // tag 1008 (buyer's email or phone) of FFD holds 64 characters
+    const CASH_DESK_CONTACT_MAX_LENGTH = 64;
 
     protected $customDateFields = [
         'date_reserved',
@@ -234,14 +236,18 @@ class Model extends \diCore\Entity\PaymentDraft\Model
     }
 
     /**
-     * A usable email, else a phone, else null (the cash desk then puts in the
+     * A usable email that fits tag 1008, else a phone, else null (the cash desk then puts in the
      * shop's own address, as the law requires a contact for an online receipt).
      */
     public function cashDeskContact(): ?string
     {
         $email = trim($this->cashDeskBuyerEmail());
 
-        if ($email !== '' && $this->isCashDeskEmailUsable($email)) {
+        if (
+            $email !== '' &&
+            mb_strlen($email) <= static::CASH_DESK_CONTACT_MAX_LENGTH &&
+            $this->isCashDeskEmailUsable($email)
+        ) {
             return $email;
         }
 
@@ -275,6 +281,14 @@ class Model extends \diCore\Entity\PaymentDraft\Model
      * `+`/`00` – a receipt sent to a wrong number is worse than none.
      */
     protected function normalizeCashDeskPhone(string $phone): string
+    {
+        $e164 = $this->e164CashDeskPhone($phone);
+
+        // 8-800 is the shop's toll-free line, never the buyer's own
+        return str_starts_with($e164, '+7800') ? '' : $e164;
+    }
+
+    private function e164CashDeskPhone(string $phone): string
     {
         // An explicit country code is taken as written: Phone::clean() would read
         // +81 3… (11 digits on 8) or +961 1… (10 on 9) as Russian numbers
