@@ -14,7 +14,10 @@ final class Message
     /**
      * @param array<string, scalar> $data значения уходят строками – так требует FCM
      * @param string|null $link куда ведёт нажатие: deep link RuStore, поле link в payload web push
-     * @param int|null $ttl секунды, сколько сервис хранит push для выключенного устройства; null – срок сервиса
+     * @param int|null $ttl секунды, сколько сервис хранит push для выключенного устройства (Android, iPhone
+     *   через FCM, браузер); null – срок сервиса
+     * @throws \InvalidArgumentException не скаляр в data, отрицательный ttl, текст не в UTF-8 – ошибка вызова,
+     *   а не сбой доставки: повтор не поможет
      */
     public function __construct(
         public readonly string $title,
@@ -23,7 +26,19 @@ final class Message
         public readonly ?string $link = null,
         public readonly ?int $ttl = null,
     ) {
+        foreach ($data as $key => $value) {
+            if (!is_string($key) || !is_scalar($value)) {
+                throw new \InvalidArgumentException('Push data must be a map of scalars');
+            }
+        }
         $this->data = array_map(static fn($value) => (string) $value, $data);
+        if ($ttl !== null && $ttl < 0) {
+            throw new \InvalidArgumentException('Push ttl must not be negative');
+        }
+        // Проверка здесь: иначе битый UTF-8 всплыл бы JsonException посреди отправки.
+        if (json_encode([$title, $body, $this->data, $link]) === false) {
+            throw new \InvalidArgumentException('Push text must be valid UTF-8');
+        }
     }
 
     /** Сообщение в формате FCM HTTP v1, его же принимает RuStore. */

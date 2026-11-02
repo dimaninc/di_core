@@ -20,6 +20,9 @@ final class Http
         }
 
         $curl = curl_init($url);
+        if ($curl === false) {
+            throw new TransportError('Push transport unavailable (curl init)');
+        }
         curl_setopt_array($curl, [
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => $body,
@@ -31,9 +34,9 @@ final class Http
         ]);
         $raw = curl_exec($curl);
         $status = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
-        curl_close($curl);
         if ($raw === false) {
-            throw new TransportError('Push transport unavailable');
+            // Номер ошибки curl (таймаут, DNS, TLS) – без адреса и тела запроса.
+            throw new TransportError('Push transport unavailable (curl ' . curl_errno($curl) . ')');
         }
         $json = json_decode($raw, true);
 

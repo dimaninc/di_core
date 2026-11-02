@@ -68,6 +68,7 @@ class FcmRuStoreTest extends TestCase
                 'notification' => ['title' => 'Заголовок', 'body' => 'Текст'],
                 'data' => ['project_id' => '1', 'thread_id' => '2'],
                 'android' => ['ttl' => '86400s'],
+                'apns' => ['headers' => ['apns-expiration' => (string) ($this->time + 86400)]],
             ],
             $request[1]['message'],
         );
@@ -155,6 +156,55 @@ class FcmRuStoreTest extends TestCase
         $this->assertContains('Authorization: Bearer oauth-2', $sent[2]);
     }
 
+    public function testFcmTtlAlsoLimitsApns(): void
+    {
+        $request = null;
+        $fcm = $this->fcm(function ($url, $body) use (&$request) {
+            if (str_contains($url, 'oauth2.googleapis.com')) {
+                return [200, ['access_token' => 'oauth', 'expires_in' => 3600]];
+            }
+            $request = json_decode($body, true);
+
+            return [200, []];
+        });
+        $fcm->send('device', self::message(600));
+        $this->assertSame((string) ($this->time + 600), $request['message']['apns']['headers']['apns-expiration']);
+        $fcm->send('device', self::message(0));
+        $this->assertSame('0', $request['message']['apns']['headers']['apns-expiration']);
+        $fcm->send('device', self::message());
+        $this->assertArrayNotHasKey('apns', $request['message']);
+    }
+
+    public function testMessageRejectsWrongInput(): void
+    {
+        foreach (
+            [
+                fn() => new Message('T', 'B', ['list' => ['a', 'b']]),
+                fn() => new Message('T', 'B', ['a', 'b']),
+                fn() => new Message('T', 'B', ['n' => null]),
+                fn() => new Message('T', 'B', [], null, -5),
+                fn() => new Message("\xff", 'B'),
+                fn() => new Message('T', 'B', [], "\xff"),
+            ]
+            as $i => $make
+        ) {
+            try {
+                $make();
+                $this->fail("case $i must be refused");
+            } catch (\InvalidArgumentException) {
+                $this->addToAssertionCount(1);
+            }
+        }
+    }
+
+    public function testTokenThatCannotBeEncodedIsGone(): void
+    {
+        $send = fn() => $this->fail('must not send');
+        $this->assertSame(Delivery::Gone, (new RuStore('p', 't', $send))->send("\xff", self::message()));
+        $fcm = $this->fcm(fn($url) => str_contains($url, 'oauth2') ? [200, ['access_token' => 'o', 'expires_in' => 3600]] : $this->fail('must not send'));
+        $this->assertSame(Delivery::Gone, $fcm->send("\xff", self::message()));
+    }
+
     public function testFcm401DropsCachedToken(): void
     {
         $oauth = 0;
@@ -222,7 +272,6 @@ class FcmRuStoreTest extends TestCase
     {
         $gone = [
             [404, ['error' => ['status' => 'NOT_FOUND']]],
-            [404, []],
             [400, ['error' => ['status' => 'UNREGISTERED']]],
             [400, ['error' => ['details' => [['errorCode' => 'UNREGISTERED']]]]],
             [400, ['error' => ['message' => 'The registration token is not a valid FCM registration token']]],
@@ -230,7 +279,8 @@ class FcmRuStoreTest extends TestCase
         foreach ($gone as $reply) {
             $this->assertSame(Delivery::Gone, (new RuStore('p', 't', fn() => $reply))->send('device', self::message()));
         }
-        foreach ([[400, ['error' => ['message' => 'bad payload']]], [500, []], [401, []]] as [$status, $body]) {
+        // Голый 404 – прокси или сменённый путь, а не токен: удалять устройства нельзя.
+        foreach ([[400, ['error' => ['message' => 'bad payload']]], [404, []], [404, ['error' => ['status' => 'PERMISSION_DENIED']]], [500, []], [401, []]] as [$status, $body]) {
             try {
                 (new RuStore('p', 't', fn() => [$status, $body]))->send('device', self::message());
                 $this->fail('expected failure');

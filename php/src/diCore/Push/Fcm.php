@@ -31,9 +31,19 @@ final class Fcm
     public function send(string $token, Message $message): Delivery
     {
         [$project, $authorization] = $this->authorization();
+        $payload = ['token' => $token] + $message->toFcm();
+        if ($message->ttl !== null) {
+            // APNs (iPhone через FCM) берёт срок не из android.ttl, а абсолютным временем в заголовке.
+            $payload['apns']['headers']['apns-expiration'] = (string) ($message->ttl ? $this->now() + $message->ttl : 0);
+        }
+        $json = json_encode(['message' => $payload]);
+        if ($json === false) {
+            // Токен не в UTF-8 не отправится никогда.
+            return Delivery::Gone;
+        }
         [$status, $body] = $this->http->post(
             'https://fcm.googleapis.com/v1/projects/' . rawurlencode($project) . '/messages:send',
-            json_encode(['message' => ['token' => $token] + $message->toFcm()], JSON_THROW_ON_ERROR),
+            $json,
             ['Content-Type: application/json', "Authorization: Bearer $authorization"],
         );
         if ($status >= 200 && $status < 300) {

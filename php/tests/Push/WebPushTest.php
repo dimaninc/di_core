@@ -159,6 +159,8 @@ class WebPushTest extends TestCase
                 'https://127.0.0.1/x',
                 "https://fcm.googleapis.com/x\n",
                 'https://fcm.googleapis.com/' . str_repeat('a', 1024),
+                'https://127.0.0.1%2f.fcm.googleapis.com/x',
+                'https://127.0.0.1\\.fcm.googleapis.com/x',
             ]
             as $endpoint
         ) {
@@ -168,5 +170,28 @@ class WebPushTest extends TestCase
         $this->assertTrue(WebPushSubscription::hasValidKeys($p256dh, $auth));
         $this->assertFalse(WebPushSubscription::hasValidKeys($p256dh . '=', $auth));
         $this->assertFalse(WebPushSubscription::hasValidKeys($p256dh, substr($auth, 1)));
+        // Длина и алфавит верны, но это не несжатая точка – библиотека не зашифровала бы на неё никогда.
+        $this->assertFalse(WebPushSubscription::hasValidKeys(str_repeat('A', 87), $auth));
+        // Префикс 0x04 есть, но точка не на кривой.
+        $this->assertFalse(WebPushSubscription::hasValidKeys('BA' . str_repeat('A', 85), $auth));
+    }
+
+    public function testBadVapidKeysAreConfigurationError(): void
+    {
+        $this->expectExceptionObject(new TransportError('Web push VAPID keys invalid'));
+        new WebPush('short', 'short', 'mailto:test@example.test', self::client(201));
+    }
+
+    public function testOversizedPayloadIsRefusedBeforeRequest(): void
+    {
+        [$p256dh, $auth] = self::browserKeys();
+        $push = self::webPush(self::client(201, $requests));
+        try {
+            $push->send(self::ENDPOINT, $p256dh, $auth, new Message('T', str_repeat('x', 5000)));
+            $this->fail('expected failure');
+        } catch (TransportError $e) {
+            $this->assertSame('Web push payload too large', $e->getMessage());
+        }
+        $this->assertSame([], $requests);
     }
 }

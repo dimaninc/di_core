@@ -2,6 +2,7 @@
 
 namespace diCore\Push;
 
+use Minishlink\WebPush\Encryption;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\VAPID;
 use Minishlink\WebPush\WebPush as Library;
@@ -11,7 +12,7 @@ use Symfony\Component\HttpClient\Psr18Client;
 
 /**
  * Web Push (RFC 8030/8291) с ключами VAPID (RFC 8292) – браузер на компьютере.
- * Шифрование и подпись – minishlink/web-push (в suggest; проект ставит его сам вместе
+ * Шифрование и подпись – minishlink/web-push ^11 (в suggest; проект ставит его сам вместе
  * с symfony/http-client и nyholm/psr7). Смена пары ключей обнуляет все подписки.
  */
 final class WebPush
@@ -32,13 +33,18 @@ final class WebPush
         ?ClientInterface $client = null,
     ) {
         $client ??= self::defaultClient();
-        $this->push = new Library(
-            ['VAPID' => ['subject' => $subject, 'publicKey' => $publicKey, 'privateKey' => $privateKey]],
-            ['urgency' => 'high'],
-            $client,
-            $client instanceof Psr18Client ? $client : null,
-            $client instanceof Psr18Client ? $client : null,
-        );
+        try {
+            $this->push = new Library(
+                ['VAPID' => ['subject' => $subject, 'publicKey' => $publicKey, 'privateKey' => $privateKey]],
+                ['urgency' => 'high'],
+                $client,
+                $client instanceof Psr18Client ? $client : null,
+                $client instanceof Psr18Client ? $client : null,
+            );
+        } catch (\ErrorException | \InvalidArgumentException) {
+            // Как «FCM not configured»: ошибка настройки проекта, а не устройства.
+            throw new TransportError('Web push VAPID keys invalid');
+        }
     }
 
     /** @return array{publicKey: string, privateKey: string} */
@@ -58,15 +64,23 @@ final class WebPush
         if (!WebPushSubscription::isValid($endpoint, $p256dh, $auth)) {
             return Delivery::Gone;
         }
+        $payload = $message->toWebPush();
+        if (strlen($payload) > Encryption::MAX_PAYLOAD_LENGTH) {
+            throw new TransportError('Web push payload too large');
+        }
         $options = $message->ttl === null ? [] : ['TTL' => $message->ttl];
         try {
             $report = $this->push->sendOneNotification(
                 new Subscription($endpoint, $p256dh, $auth, 'aes128gcm'),
-                $message->toWebPush(),
+                $payload,
                 $options,
             );
-        } catch (\ErrorException) {
-            throw new TransportError('Web push payload rejected');
+        } catch (\InvalidArgumentException | \ErrorException) {
+            // Размер проверен выше: библиотека отвергла ключи подписки, а их браузер уже не исправит.
+            return Delivery::Gone;
+        } catch (\RuntimeException | \ValueError) {
+            // Сбой своей стороны (OpenSSL не создал ключ) – устройство не виновато.
+            throw new TransportError('Web push encryption failed');
         }
         $status = $report->getResponse()?->getStatusCode();
         if ($status === null) {

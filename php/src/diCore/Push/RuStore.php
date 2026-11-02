@@ -32,9 +32,14 @@ final class RuStore
                 'click_action' => $message->link,
             ];
         }
+        $json = json_encode(['message' => $payload]);
+        if ($json === false) {
+            // Токен не в UTF-8 не отправится никогда.
+            return Delivery::Gone;
+        }
         [$status, $body] = $this->http->post(
             'https://vkpns.rustore.ru/v1/projects/' . rawurlencode($this->projectId) . '/messages:send',
-            json_encode(['message' => $payload], JSON_THROW_ON_ERROR),
+            $json,
             ['Content-Type: application/json', "Authorization: Bearer {$this->serviceToken}"],
         );
         if ($status >= 200 && $status < 300) {
@@ -58,8 +63,8 @@ final class RuStore
         // Токен в неверном формате RuStore отклоняет 400 с этой фразой (опыт 1romantic).
         $message = is_string($body['error']['message'] ?? null) ? $body['error']['message'] : '';
 
-        return $status === 404 ||
-            in_array($code, ['NOT_FOUND', 'UNREGISTERED'], true) ||
+        // Только признак в теле ответа vkpns: голый 404 (прокси, сменённый путь) удалил бы все токены разом.
+        return in_array($code, ['NOT_FOUND', 'UNREGISTERED'], true) ||
             ($status === 400 && stripos($message, 'registration token') !== false);
     }
 }
