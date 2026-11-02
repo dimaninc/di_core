@@ -186,6 +186,7 @@ class FcmRuStoreTest extends TestCase
                 fn() => new Message('T', 'B', [], null, Message::MAX_TTL + 1),
                 fn() => new Message('T', 'B', ['1' => 'x']),
                 fn() => new Message('T', 'B', ['from' => 'x']),
+                fn() => new Message('T', str_repeat('я', 3000)),
                 fn() => new Message('T', 'B', ['google.c' => 'x']),
                 fn() => new Message('T', 'B', ['gcm.n' => 'x']),
                 fn() => new Message("\xff", 'B'),
@@ -241,10 +242,23 @@ class FcmRuStoreTest extends TestCase
         $fcmError = 'type.googleapis.com/google.firebase.fcm.v1.FcmError';
         $invalid = ['@type' => $fcmError, 'errorCode' => 'INVALID_ARGUMENT'];
         $bad = ['@type' => 'type.googleapis.com/google.rpc.BadRequest', 'fieldViolations' => [['field' => 'message.data']]];
-        $reply = fn(array|string $details) => [400, ['error' => ['status' => 'INVALID_ARGUMENT', 'details' => $details]]];
+        $token = 'The registration token is not a valid FCM registration token';
+        $reply = fn(array|string $details, string $message = 'Android message is too big') => [
+            400,
+            ['error' => ['status' => 'INVALID_ARGUMENT', 'message' => $message, 'details' => $details]],
+        ];
 
-        foreach ([[$invalid], [['@type' => $fcmError, 'errorCode' => 'UNREGISTERED']]] as $details) {
-            $this->assertSame(Delivery::Gone, $this->fcm(self::oauthOr($reply($details)))->send('device', self::message()));
+        $this->assertSame(Delivery::Gone, $this->fcm(self::oauthOr($reply([$invalid], $token)))->send('device', self::message()));
+        $this->assertSame(
+            Delivery::Gone,
+            $this->fcm(self::oauthOr($reply([['@type' => $fcmError, 'errorCode' => 'UNREGISTERED']])))->send('device', self::message()),
+        );
+        // Тот же FcmError/INVALID_ARGUMENT без слов о токене – ошибка в сообщении (размер), устройство остаётся.
+        try {
+            $this->fcm(self::oauthOr($reply([$invalid])))->send('device', self::message());
+            $this->fail('Payload error must keep the device');
+        } catch (TransportError $e) {
+            $this->assertSame('FCM HTTP 400', $e->getMessage());
         }
         foreach ([[], [$bad], [$bad, $invalid], 'x'] as $details) {
             try {

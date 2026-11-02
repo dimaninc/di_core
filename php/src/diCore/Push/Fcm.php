@@ -76,8 +76,11 @@ final class Fcm
                 ($type === 'type.googleapis.com/google.firebase.fcm.v1.FcmError' && $code === 'INVALID_ARGUMENT');
         }
 
-        // INVALID_ARGUMENT с BadRequest – ошибка в сообщении, а не в токене: устройство не удаляем.
-        return ($invalidToken && !$badRequest) || ($body['error']['status'] ?? '') === 'UNREGISTERED';
+        // INVALID_ARGUMENT бывает и про сообщение (размер, поля): Gone – только без BadRequest и с упоминанием токена.
+        $message = is_string($body['error']['message'] ?? null) ? $body['error']['message'] : '';
+        $namesToken = stripos($message, 'registration token') !== false;
+
+        return ($invalidToken && !$badRequest && $namesToken) || ($body['error']['status'] ?? '') === 'UNREGISTERED';
     }
 
     private function now(): int

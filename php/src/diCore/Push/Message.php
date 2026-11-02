@@ -11,6 +11,9 @@ final class Message
     // 28 дней – предел FCM: больший ttl он отвергает 400.
     public const MAX_TTL = 2419200;
 
+    // Предел FCM на notification и data вместе.
+    public const MAX_BYTES = 4096;
+
     private const RESERVED_KEYS = ['from', 'notification', 'message_type', 'collapse_key'];
 
     /** @var array<string, string> */
@@ -23,7 +26,7 @@ final class Message
      *   не передаёт – приложение строит переход из data
      * @param int|null $ttl секунды, сколько сервис хранит push для выключенного устройства (Android, iPhone
      *   через FCM, браузер), не больше MAX_TTL; null – срок сервиса
-     * @throws \InvalidArgumentException неверный data, ttl вне 0…MAX_TTL, текст не в UTF-8 – ошибка вызова,
+     * @throws \InvalidArgumentException неверный data, ttl вне 0…MAX_TTL, текст не в UTF-8, больше MAX_BYTES – ошибка вызова,
      *   а не сбой доставки: повтор не поможет
      */
     public function __construct(
@@ -49,6 +52,10 @@ final class Message
         // Проверка здесь: иначе битый UTF-8 всплыл бы JsonException посреди отправки.
         if (json_encode([$title, $body, $this->data, $link]) === false) {
             throw new \InvalidArgumentException('Push text must be valid UTF-8');
+        }
+        // Слишком большое FCM отвергает тем же INVALID_ARGUMENT, что и битый токен, – не доводить до отправки.
+        if (strlen(json_encode($this->toFcm(), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)) > self::MAX_BYTES) {
+            throw new \InvalidArgumentException('Push message must fit ' . self::MAX_BYTES . ' bytes');
         }
     }
 

@@ -60,11 +60,18 @@ final class WebPushSubscription
     /** p256dh – несжатая точка P-256 (65 байт) на кривой, auth – 16 байт; оба в base64url без «=». */
     public static function hasValidKeys(string $p256dh, string $auth): bool
     {
+        [$p256dh, $auth] = [self::normalizeKey($p256dh), self::normalizeKey($auth)];
         if (!preg_match('/^[A-Za-z0-9_-]{87}$/D', $p256dh) || !preg_match('/^[A-Za-z0-9_-]{22}$/D', $auth)) {
             return false;
         }
 
         return self::isP256Point($p256dh);
+    }
+
+    /** Обычный base64 с «=» (btoa на фронте) – в base64url без «=», как отдаёт PushSubscription.toJSON(). */
+    public static function normalizeKey(string $key): string
+    {
+        return rtrim(strtr($key, '+/', '-_'), '=');
     }
 
     /** Несжатая точка P-256 в base64url, лежащая на кривой: ключ подписки или публичный ключ VAPID. */

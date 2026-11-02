@@ -2,6 +2,7 @@
 
 namespace diCore\Tests\Push;
 
+use Composer\InstalledVersions;
 use diCore\Push\Delivery;
 use diCore\Push\Message;
 use diCore\Push\TransportError;
@@ -20,8 +21,14 @@ class WebPushTest extends TestCase
 
     protected function setUp(): void
     {
-        if (!class_exists(\Minishlink\WebPush\WebPush::class) || !class_exists(Response::class)) {
-            $this->markTestSkipped('minishlink/web-push and nyholm/psr7 are not installed');
+        // Версию выбирает проект: старая minishlink у него – не повод ронять его сьют.
+        if (
+            !class_exists(Response::class) ||
+            !InstalledVersions::isInstalled('minishlink/web-push') ||
+            !version_compare((string) InstalledVersions::getVersion('minishlink/web-push'), '11', '>=') ||
+            !version_compare((string) InstalledVersions::getVersion('minishlink/web-push'), '12', '<')
+        ) {
+            $this->markTestSkipped('minishlink/web-push ^11 and nyholm/psr7 are not installed');
         }
     }
 
@@ -184,7 +191,10 @@ class WebPushTest extends TestCase
         }
         [$p256dh, $auth] = self::browserKeys();
         $this->assertTrue(WebPushSubscription::hasValidKeys($p256dh, $auth));
-        $this->assertFalse(WebPushSubscription::hasValidKeys($p256dh . '=', $auth));
+        // Обычный base64 – тот же ключ: при сохранении и при отправке правило одно.
+        $plain = static fn(string $key) => base64_encode(base64_decode(strtr($key, '-_', '+/')));
+        $this->assertTrue(WebPushSubscription::isValid(self::ENDPOINT, $plain($p256dh), $plain($auth)));
+        $this->assertFalse(WebPushSubscription::hasValidKeys($p256dh . 'A', $auth));
         $this->assertFalse(WebPushSubscription::hasValidKeys($p256dh, substr($auth, 1)));
         // Длина и алфавит верны, но это не несжатая точка – библиотека не зашифровала бы на неё никогда.
         $this->assertFalse(WebPushSubscription::hasValidKeys(str_repeat('A', 87), $auth));
@@ -203,6 +213,8 @@ class WebPushTest extends TestCase
             [$b64("\x05" . substr($raw, 1)), $keys['privateKey'], 'mailto:a@example.test', 'Web push VAPID keys invalid'],
             [$b64("\x04" . str_repeat("\x01", 64)), $keys['privateKey'], 'mailto:a@example.test', 'Web push VAPID keys invalid'],
             [$keys['publicKey'], 'short', 'mailto:a@example.test', 'Web push VAPID keys invalid'],
+            // Обе половины годные, но от разных пар.
+            [$keys['publicKey'], WebPush::createKeys()['privateKey'], 'mailto:a@example.test', 'Web push VAPID keys invalid'],
             [$keys['publicKey'], $keys['privateKey'], 'mailto:', 'Web push VAPID subject invalid'],
             [$keys['publicKey'], $keys['privateKey'], '', 'Web push VAPID subject invalid'],
             [$keys['publicKey'], $keys['privateKey'], 'not-a-url', 'Web push VAPID subject invalid'],
@@ -223,7 +235,8 @@ class WebPushTest extends TestCase
         [$p256dh, $auth] = self::browserKeys();
         $push = self::webPush(self::client(201, $requests));
         try {
-            $push->send(self::ENDPOINT, $p256dh, $auth, new Message('T', str_repeat('x', 5000)));
+            // В предел FCM укладывается (ссылки там нет), в web push со ссылкой – уже нет.
+            $push->send(self::ENDPOINT, $p256dh, $auth, new Message('T', str_repeat('x', 4000), [], '/' . str_repeat('l', 300)));
             $this->fail('expected failure');
         } catch (TransportError $e) {
             $this->assertSame('Web push payload too large', $e->getMessage());

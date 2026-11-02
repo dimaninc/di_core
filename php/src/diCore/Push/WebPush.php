@@ -45,6 +45,14 @@ final class WebPush
                 throw new \InvalidArgumentException();
             }
             $decoded = VAPID::validate($vapid);
+            // Публичный ключ из приватного: пара из разных .env (prod и stage) дала бы 403 на каждой отправке.
+            $ec = openssl_pkey_get_details(
+                openssl_pkey_new(['ec' => ['curve_name' => 'prime256v1', 'd' => $decoded['privateKey']]]),
+            )['ec'];
+            $derived = "\x04" . str_pad($ec['x'], 32, "\0", STR_PAD_LEFT) . str_pad($ec['y'], 32, "\0", STR_PAD_LEFT);
+            if (!hash_equals($derived, $decoded['publicKey'])) {
+                throw new \InvalidArgumentException();
+            }
             VAPID::getVapidHeaders(
                 'https://fcm.googleapis.com',
                 $subject,
@@ -87,8 +95,7 @@ final class WebPush
         if (!WebPushSubscription::isAllowedEndpoint($endpoint)) {
             throw new TransportError('Web push endpoint not allowed');
         }
-        // Обычный base64 с «=» библиотека тоже понимает – подписку из старой базы не удалять из-за записи.
-        [$p256dh, $auth] = array_map(static fn(string $key) => rtrim(strtr($key, '+/', '-_'), '='), [$p256dh, $auth]);
+        [$p256dh, $auth] = [WebPushSubscription::normalizeKey($p256dh), WebPushSubscription::normalizeKey($auth)];
         if (!WebPushSubscription::hasValidKeys($p256dh, $auth)) {
             // На такие ключи не зашифровать никогда.
             return Delivery::Gone;
