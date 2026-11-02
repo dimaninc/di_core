@@ -63,11 +63,18 @@ final class WebPushSubscription
         if (!preg_match('/^[A-Za-z0-9_-]{87}$/D', $p256dh) || !preg_match('/^[A-Za-z0-9_-]{22}$/D', $auth)) {
             return false;
         }
-        $point = base64_decode(strtr($p256dh, '-_', '+/'), true);
+
+        return self::isP256Point($p256dh);
+    }
+
+    /** Несжатая точка P-256 в base64url, лежащая на кривой: ключ подписки или публичный ключ VAPID. */
+    public static function isP256Point(string $base64url): bool
+    {
+        $point = base64_decode(strtr($base64url, '-_', '+/'), true);
         if ($point === false || strlen($point) !== 65 || $point[0] !== "\x04") {
             return false;
         }
-        // Точку не на кривой OpenSSL не примет – шифрование на неё упало бы при каждой отправке.
+        // Точку не на кривой OpenSSL не примет – шифрование и подпись на ней упали бы при каждой отправке.
         $pem =
             "-----BEGIN PUBLIC KEY-----\n" .
             chunk_split(base64_encode(hex2bin(self::P256_SPKI_PREFIX) . $point), 64, "\n") .

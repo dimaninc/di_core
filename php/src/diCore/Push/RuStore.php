@@ -55,7 +55,8 @@ final class RuStore
     private static function isGone(int $status, array $body): bool
     {
         $code = $body['error']['status'] ?? '';
-        foreach ($body['error']['details'] ?? [] as $detail) {
+        $details = $body['error']['details'] ?? [];
+        foreach (is_array($details) ? $details : [] as $detail) {
             if (($detail['errorCode'] ?? '') === 'UNREGISTERED') {
                 return true;
             }

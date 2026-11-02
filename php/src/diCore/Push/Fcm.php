@@ -63,7 +63,8 @@ final class Fcm
     {
         $invalidToken = false;
         $badRequest = false;
-        foreach ($body['error']['details'] ?? [] as $detail) {
+        $details = $body['error']['details'] ?? [];
+        foreach (is_array($details) ? $details : [] as $detail) {
             $type = $detail['@type'] ?? '';
             $code = $detail['errorCode'] ?? '';
             if ($code === 'UNREGISTERED') {

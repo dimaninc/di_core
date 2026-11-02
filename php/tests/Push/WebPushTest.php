@@ -176,10 +176,30 @@ class WebPushTest extends TestCase
         $this->assertFalse(WebPushSubscription::hasValidKeys('BA' . str_repeat('A', 85), $auth));
     }
 
-    public function testBadVapidKeysAreConfigurationError(): void
+    public function testBadVapidSettingsFailInConstructor(): void
     {
-        $this->expectExceptionObject(new TransportError('Web push VAPID keys invalid'));
-        new WebPush('short', 'short', 'mailto:test@example.test', self::client(201));
+        $keys = WebPush::createKeys();
+        $b64 = static fn(string $s) => rtrim(strtr(base64_encode($s), '+/', '-_'), '=');
+        $raw = base64_decode(strtr($keys['publicKey'], '-_', '+/'));
+        $cases = [
+            ['short', $keys['privateKey'], 'mailto:a@example.test', 'Web push VAPID keys invalid'],
+            // 65 байт, но префикс не 0x04: библиотека проверяет только длину и возвращала бы Gone на каждой отправке.
+            [$b64("\x05" . substr($raw, 1)), $keys['privateKey'], 'mailto:a@example.test', 'Web push VAPID keys invalid'],
+            [$b64("\x04" . str_repeat("\x01", 64)), $keys['privateKey'], 'mailto:a@example.test', 'Web push VAPID keys invalid'],
+            [$keys['publicKey'], 'short', 'mailto:a@example.test', 'Web push VAPID keys invalid'],
+            [$keys['publicKey'], $keys['privateKey'], 'mailto:', 'Web push VAPID subject invalid'],
+            [$keys['publicKey'], $keys['privateKey'], '', 'Web push VAPID subject invalid'],
+            [$keys['publicKey'], $keys['privateKey'], 'not-a-url', 'Web push VAPID subject invalid'],
+        ];
+        foreach ($cases as $i => [$public, $private, $subject, $expected]) {
+            try {
+                new WebPush($public, $private, $subject, self::client(201));
+                $this->fail("case $i must be refused");
+            } catch (TransportError $e) {
+                $this->assertSame($expected, $e->getMessage(), "case $i");
+            }
+        }
+        $this->assertInstanceOf(WebPush::class, new WebPush($keys['publicKey'], $keys['privateKey'], 'https://example.test', self::client(201)));
     }
 
     public function testOversizedPayloadIsRefusedBeforeRequest(): void

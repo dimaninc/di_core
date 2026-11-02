@@ -2,6 +2,7 @@
 
 namespace diCore\Push;
 
+use Minishlink\WebPush\ContentEncoding;
 use Minishlink\WebPush\Encryption;
 use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\VAPID;
@@ -13,7 +14,8 @@ use Symfony\Component\HttpClient\Psr18Client;
 /**
  * Web Push (RFC 8030/8291) с ключами VAPID (RFC 8292) – браузер на компьютере.
  * Шифрование и подпись – minishlink/web-push ^11 (в suggest; проект ставит его сам вместе
- * с symfony/http-client и nyholm/psr7). Смена пары ключей обнуляет все подписки.
+ * с symfony/http-client и nyholm/psr7). Смена пары ключей обнуляет все подписки: сервисы отвечают на
+ * старые 403, а это TransportError, не Gone (иначе опечатка в ключе снесла бы всё) – их проект удаляет сам.
  */
 final class WebPush
 {
@@ -23,7 +25,7 @@ final class WebPush
 
     /**
      * @param string $publicKey ключи в base64url – в этом виде их выдаёт createKeys() и берёт браузер
-     * @param string $subject контакт для сервиса push: mailto: или https:
+     * @param string $subject контакт для сервиса push: mailto: с адресом или https: – без него Apple отвечает 403
      * @param ClientInterface|null $client PSR-18; по умолчанию symfony/http-client без редиректов
      */
     public function __construct(
@@ -33,9 +35,29 @@ final class WebPush
         ?ClientInterface $client = null,
     ) {
         $client ??= self::defaultClient();
+        $vapid = ['subject' => $subject, 'publicKey' => $publicKey, 'privateKey' => $privateKey];
+        if (!preg_match('~^(mailto:[^@\s]+@[^@\s]+|https://\S+)$~D', $subject)) {
+            throw new TransportError('Web push VAPID subject invalid');
+        }
+        // Библиотека проверяет только длину ключей: битая пара всплыла бы лишь при отправке, на каждой подписке.
+        try {
+            if (!WebPushSubscription::isP256Point($publicKey)) {
+                throw new \InvalidArgumentException();
+            }
+            $decoded = VAPID::validate($vapid);
+            VAPID::getVapidHeaders(
+                'https://fcm.googleapis.com',
+                $subject,
+                $decoded['publicKey'],
+                $decoded['privateKey'],
+                ContentEncoding::aes128gcm,
+            );
+        } catch (\Throwable) {
+            throw new TransportError('Web push VAPID keys invalid');
+        }
         try {
             $this->push = new Library(
-                ['VAPID' => ['subject' => $subject, 'publicKey' => $publicKey, 'privateKey' => $privateKey]],
+                ['VAPID' => $vapid],
                 ['urgency' => 'high'],
                 $client,
                 $client instanceof Psr18Client ? $client : null,
@@ -75,11 +97,9 @@ final class WebPush
                 $payload,
                 $options,
             );
-        } catch (\InvalidArgumentException | \ErrorException) {
-            // Размер проверен выше: библиотека отвергла ключи подписки, а их браузер уже не исправит.
-            return Delivery::Gone;
-        } catch (\RuntimeException | \ValueError) {
-            // Сбой своей стороны (OpenSSL не создал ключ) – устройство не виновато.
+        } catch (\Throwable) {
+            // Не Gone: подписка уже проверена выше, а те же исключения бросает и своя сторона (подпись VAPID,
+            // OpenSSL, предупреждение, поднятое обработчиком ошибок) – Gone снёс бы все подписки разом.
             throw new TransportError('Web push encryption failed');
         }
         $status = $report->getResponse()?->getStatusCode();

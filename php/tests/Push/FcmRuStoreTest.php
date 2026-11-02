@@ -183,6 +183,8 @@ class FcmRuStoreTest extends TestCase
                 fn() => new Message('T', 'B', ['a', 'b']),
                 fn() => new Message('T', 'B', ['n' => null]),
                 fn() => new Message('T', 'B', [], null, -5),
+                fn() => new Message('T', 'B', [], null, Message::MAX_TTL + 1),
+                fn() => new Message('T', 'B', ['1' => 'x']),
                 fn() => new Message("\xff", 'B'),
                 fn() => new Message('T', 'B', [], "\xff"),
             ]
@@ -231,12 +233,12 @@ class FcmRuStoreTest extends TestCase
         $fcmError = 'type.googleapis.com/google.firebase.fcm.v1.FcmError';
         $invalid = ['@type' => $fcmError, 'errorCode' => 'INVALID_ARGUMENT'];
         $bad = ['@type' => 'type.googleapis.com/google.rpc.BadRequest', 'fieldViolations' => [['field' => 'message.data']]];
-        $reply = fn(array $details) => [400, ['error' => ['status' => 'INVALID_ARGUMENT', 'details' => $details]]];
+        $reply = fn(array|string $details) => [400, ['error' => ['status' => 'INVALID_ARGUMENT', 'details' => $details]]];
 
         foreach ([[$invalid], [['@type' => $fcmError, 'errorCode' => 'UNREGISTERED']]] as $details) {
             $this->assertSame(Delivery::Gone, $this->fcm(self::oauthOr($reply($details)))->send('device', self::message()));
         }
-        foreach ([[], [$bad], [$bad, $invalid]] as $details) {
+        foreach ([[], [$bad], [$bad, $invalid], 'x'] as $details) {
             try {
                 $this->fcm(self::oauthOr($reply($details)))->send('device', self::message());
                 $this->fail('Payload error must keep the device');
@@ -280,7 +282,7 @@ class FcmRuStoreTest extends TestCase
             $this->assertSame(Delivery::Gone, (new RuStore('p', 't', fn() => $reply))->send('device', self::message()));
         }
         // Голый 404 – прокси или сменённый путь, а не токен: удалять устройства нельзя.
-        foreach ([[400, ['error' => ['message' => 'bad payload']]], [404, []], [404, ['error' => ['status' => 'PERMISSION_DENIED']]], [500, []], [401, []]] as [$status, $body]) {
+        foreach ([[400, ['error' => ['message' => 'bad payload']]], [400, ['error' => ['details' => 'x']]], [404, []], [404, ['error' => ['status' => 'PERMISSION_DENIED']]], [500, []], [401, []]] as [$status, $body]) {
             try {
                 (new RuStore('p', 't', fn() => [$status, $body]))->send('device', self::message());
                 $this->fail('expected failure');
