@@ -61,7 +61,8 @@ final class RuStore
                 return true;
             }
         }
-        // Токен в неверном формате RuStore отклоняет 400 с этой фразой (опыт 1romantic).
+        // NOT_FOUND – неверный или истёкший токен (документация RuStore); UNREGISTERED в ней нет – как у FCM,
+        // на случай совместимого ответа. Токен в неверном формате – 400 с этой фразой (опыт 1romantic).
         $message = is_string($body['error']['message'] ?? null) ? $body['error']['message'] : '';
 
         // Только признак в теле ответа vkpns: голый 404 (прокси, сменённый путь) удалил бы все токены разом.

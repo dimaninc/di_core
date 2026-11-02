@@ -11,12 +11,14 @@ final class Message
     // 28 дней – предел FCM: больший ttl он отвергает 400.
     public const MAX_TTL = 2419200;
 
+    private const RESERVED_KEYS = ['from', 'notification', 'message_type', 'collapse_key'];
+
     /** @var array<string, string> */
     public readonly array $data;
 
     /**
-     * @param array<string, scalar> $data значения уходят строками – так требует FCM; ключ не из одних цифр
-     *   (PHP делает из '1' число)
+     * @param array<string, scalar> $data значения уходят строками – так требует FCM, bool – "true"/"false";
+     *   ключ не из одних цифр (PHP делает из '1' число) и не зарезервирован FCM (from, google.*, gcm.*…)
      * @param string|null $link куда ведёт нажатие: deep link RuStore, поле link в payload web push; FCM его
      *   не передаёт – приложение строит переход из data
      * @param int|null $ttl секунды, сколько сервис хранит push для выключенного устройства (Android, iPhone
@@ -35,8 +37,12 @@ final class Message
             if (!is_string($key) || !is_scalar($value)) {
                 throw new \InvalidArgumentException('Push data must map non-numeric string keys to scalars');
             }
+            // FCM отвергает их 400, и правило Gone тогда зависело бы от формата ответа.
+            if (in_array($key, self::RESERVED_KEYS, true) || preg_match('/^(google|gcm)\./', $key)) {
+                throw new \InvalidArgumentException("Push data key '$key' is reserved by FCM");
+            }
         }
-        $this->data = array_map(static fn($value) => (string) $value, $data);
+        $this->data = array_map(static fn($value) => is_bool($value) ? ($value ? 'true' : 'false') : (string) $value, $data);
         if ($ttl !== null && ($ttl < 0 || $ttl > self::MAX_TTL)) {
             throw new \InvalidArgumentException('Push ttl must be within 0…' . self::MAX_TTL);
         }

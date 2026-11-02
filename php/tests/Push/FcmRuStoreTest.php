@@ -185,6 +185,9 @@ class FcmRuStoreTest extends TestCase
                 fn() => new Message('T', 'B', [], null, -5),
                 fn() => new Message('T', 'B', [], null, Message::MAX_TTL + 1),
                 fn() => new Message('T', 'B', ['1' => 'x']),
+                fn() => new Message('T', 'B', ['from' => 'x']),
+                fn() => new Message('T', 'B', ['google.c' => 'x']),
+                fn() => new Message('T', 'B', ['gcm.n' => 'x']),
                 fn() => new Message("\xff", 'B'),
                 fn() => new Message('T', 'B', [], "\xff"),
             ]
@@ -197,6 +200,11 @@ class FcmRuStoreTest extends TestCase
                 $this->addToAssertionCount(1);
             }
         }
+    }
+
+    public function testBoolDataIsSentAsWords(): void
+    {
+        $this->assertSame(['on' => 'true', 'off' => 'false', 'n' => '5'], (new Message('T', 'B', ['on' => true, 'off' => false, 'n' => 5]))->data);
     }
 
     public function testTokenThatCannotBeEncodedIsGone(): void

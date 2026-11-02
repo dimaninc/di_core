@@ -13,7 +13,7 @@ use Symfony\Component\HttpClient\Psr18Client;
 
 /**
  * Web Push (RFC 8030/8291) с ключами VAPID (RFC 8292) – браузер на компьютере.
- * Шифрование и подпись – minishlink/web-push ^11 (в suggest; проект ставит его сам вместе
+ * Шифрование и подпись – minishlink/web-push ^11, PHP 8.2+ (в suggest; проект ставит его сам вместе
  * с symfony/http-client и nyholm/psr7). Смена пары ключей обнуляет все подписки: сервисы отвечают на
  * старые 403, а это TransportError, не Gone (иначе опечатка в ключе снесла бы всё) – их проект удаляет сам.
  */
@@ -82,8 +82,15 @@ final class WebPush
 
     public function send(string $endpoint, string $p256dh, string $auth, Message $message): Delivery
     {
-        // Подписка не из списка сервисов push отправлена не будет никогда – её только удалить.
-        if (!WebPushSubscription::isValid($endpoint, $p256dh, $auth)) {
+        // Хост не из списка – без запроса (SSRF), но не Gone: ошибка в самом списке иначе молча удалила бы
+        // все подписки этого браузера; при сохранении такую подписку уже отвергли.
+        if (!WebPushSubscription::isAllowedEndpoint($endpoint)) {
+            throw new TransportError('Web push endpoint not allowed');
+        }
+        // Обычный base64 с «=» библиотека тоже понимает – подписку из старой базы не удалять из-за записи.
+        [$p256dh, $auth] = array_map(static fn(string $key) => rtrim(strtr($key, '+/', '-_'), '='), [$p256dh, $auth]);
+        if (!WebPushSubscription::hasValidKeys($p256dh, $auth)) {
+            // На такие ключи не зашифровать никогда.
             return Delivery::Gone;
         }
         $payload = $message->toWebPush();
@@ -97,10 +104,11 @@ final class WebPush
                 $payload,
                 $options,
             );
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
             // Не Gone: подписка уже проверена выше, а те же исключения бросает и своя сторона (подпись VAPID,
             // OpenSSL, предупреждение, поднятое обработчиком ошибок) – Gone снёс бы все подписки разом.
-            throw new TransportError('Web push encryption failed');
+            // Класс исключения – чтобы в мониторинге отличить сбой подписи от несовместимой версии библиотеки.
+            throw new TransportError('Web push encryption failed (' . $e::class . ')');
         }
         $status = $report->getResponse()?->getStatusCode();
         if ($status === null) {

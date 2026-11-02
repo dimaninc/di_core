@@ -117,13 +117,29 @@ class WebPushTest extends TestCase
         self::webPush(self::client($error))->send(self::ENDPOINT, $p256dh, $auth, new Message('T', 'B'));
     }
 
-    public function testForeignEndpointIsGoneWithoutRequest(): void
+    public function testForeignEndpointFailsWithoutRequestAndIsKept(): void
     {
         [$p256dh, $auth] = self::browserKeys();
         $push = self::webPush(self::client(201, $requests));
 
-        $this->assertSame(Delivery::Gone, $push->send('https://10.0.0.1/hook', $p256dh, $auth, new Message('T', 'B')));
+        try {
+            $push->send('https://10.0.0.1/hook', $p256dh, $auth, new Message('T', 'B'));
+            $this->fail('expected failure');
+        } catch (TransportError $e) {
+            $this->assertSame('Web push endpoint not allowed', $e->getMessage());
+        }
         $this->assertSame([], $requests);
+    }
+
+    public function testKeysInPlainBase64AreSentNotDropped(): void
+    {
+        [$p256dh, $auth] = self::browserKeys();
+        $plain = static fn(string $key) => base64_encode(base64_decode(strtr($key, '-_', '+/')));
+        $push = self::webPush(self::client(201, $requests));
+
+        $this->assertSame(Delivery::Delivered, $push->send(self::ENDPOINT, $plain($p256dh), $plain($auth), new Message('T', 'B')));
+        $this->assertCount(1, $requests);
+        $this->assertSame(Delivery::Gone, $push->send(self::ENDPOINT, str_repeat('A', 87), $auth, new Message('T', 'B')));
     }
 
     public function testPayloadForServiceWorker(): void
