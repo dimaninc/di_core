@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.0
+
+- Push: FCM, RuStore and Web Push senders (#44)
+
 ## 0.12.1
 
 - Mail: custom headers from the queue settings (#42)
