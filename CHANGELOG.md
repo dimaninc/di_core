@@ -1,5 +1,101 @@
 # Changelog
 
+## 0.12.1
+
+- Mail: custom headers from the queue settings (#42)
+
+## 0.12.0
+
+- Cash desk contract v2: pending receipts, fiscalized report, heartbeat and journal (#43)
+
+- Cash desk contract v2: `pending_receipts`, `receipt_fiscalized`, `heartbeat` in
+  `Controller\Cash` (Bearer token, kopecks, idempotent reporting), cash desk journal
+  copy and watchdog queries
+
+To migrate (from 0.11.1):
+
+- run the core migrations **by idx** (or from a project migration, `up_new` does not
+  see them): `20261031150000` (`migrations/payments/`) adds `fiscal_mark_kkt`,
+  `fiscal_fn_number`, `fiscal_kkt_reg_number`, `fiscal_total` and the queue index to
+  `payment_receipts` (creates the table from the dump of the engine if it is missing);
+  `20261031150100` (`migrations/cashdesk/`) creates `cashdesk_heartbeat` and
+  `cashdesk_journal`. Both are idempotent;
+- set `CASHDESK_TOKEN` (env) before pointing a cash desk at v2: without it every v2
+  request is refused with 401; override `cashDeskPaymentsPlace()` (tag 1187) – the
+  default is `Config` main protocol + domain, which differs per environment;
+- v1 `get_new_receipts` no longer serves a receipt that already has a `fiscal_doc_id`
+  (the same condition as v2), otherwise a rollback to the old app prints again what
+  v2 fiscalized; `set_receipt_uploaded` is unchanged;
+- v1 is fail closed: an empty `secret()` (null or '') refuses every request, the
+  comparison is `hash_equals`, a non-scalar `secret` is refused. A project whose v1
+  worked without a secret must set one;
+- **Apache with mod_php does not pass `Authorization` to PHP** without a rewrite rule
+  (`RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]`) or
+  `CGIPassAuth On`: every v2 request is then 401. The controller falls back to
+  `getallheaders()` where it exists, but configure the server rather than rely on it;
+- a project that pads `getUserData()` with its own address should override
+  `cashDeskBuyerEmail()` / `cashDeskBuyerPhone()` / `isCashDeskEmailUsable()` on its
+  receipt model, otherwise the default reads the user's own email and phone;
+- a receipt model reading more related models than the user and the target (a
+  draft, say) lists them in `cashDeskRelatedIds()`: the queue preloads them per type
+  for the whole batch, anything else is one query per receipt.
+
+New API (`Controller\Cash`, all protected, override as needed):
+
+- hooks: `onDoubleFiscalization()`, `onFiscalTotalMismatch()`, `onBrokenReceipt()`,
+  `onJournalConflict()`, `onMissingCashDeskToken()`, all ending in
+  `reportCashDeskProblem()` (log + `E_USER_WARNING`) by default. The defaults of
+  `onBrokenReceipt()` (per receipt) and `onMissingCashDeskToken()` report at most
+  once an hour through marker files in `brokenReceiptMarkerFolder()` (under
+  `Config::getCacheFolder()`, or the system temp folder when that is empty or not
+  writable; a marker that can't be written means a report every time); markers not
+  renewed for the queue window (`dates`) are removed. An override decides on its own;
+- `pending_receipts` takes an optional `exclude: [ids]` (the cash desk's quarantine,
+  at most 500 positive integers, 400 otherwise): those receipts are not served and
+  do not take the batch. A broken receipt is skipped; the queue is read on by keyset
+  (`date_payed`, `id`) past a run of them, at most `PENDING_SCAN_MAX` rows a poll –
+  up to that many broken receipts in a row don't stall the good ones; more is the
+  project's bug, and `onBrokenReceipt()` reports it;
+- `receipt_fiscalized`: the same document = the same number and, when stored, the
+  same fiscal drive number; a repeat over a recorded but unreported document sets
+  `date_uploaded` and fills only the EMPTY fiscal columns from the cash desk's data,
+  with the same total check as a first write;
+- a heartbeat carries a UUID root `journalId`, 400 without it (nothing stored);
+  the status (without the journal) is at most `STATUS_MAX_BYTES` (64 KB, 413) and is
+  stored even when journal entries are bad. Entries are taken one by one: one
+  without a positive seq is skipped, one of another journal is skipped and acked
+  (the ack moves on); skipped entries are reported once an hour. Journal rows are
+  unique by (`journal_id`, `seq`);
+- validation, 400 otherwise: requests at most 1 MB (413), the body a JSON object;
+  `documentNumber` and `sign` (FPD) fit uint32, `total`/`shiftNumber`/
+  `receiptNumber` a signed INT column; `sign`, `fnNumber`, `registrationNumber` are
+  digit STRINGS (a JSON number loses leading zeros); `dateTime` is ISO 8601 with a
+  zone and an existing date and time (`2026-02-30` is refused, not rolled over);
+- more hooks: `onUnexpectedReceiptReport()` – `receipt_fiscalized` for an unpaid
+  receipt is 404 `{"error":"not_found"}` and nothing is written; one paid before the
+  queue window is written (a late report is legitimate) and reported too;
+  `onJournalStoreFailure()` – a heartbeat stores the status first, and a journal
+  that fails to store is reported and answered 500 without an ack, so the cash desk
+  resends it; `onMissingCashDeskToken(string $reason)` also covers a token with
+  whitespace inside (`cashDeskTokenProblem()`);
+- `exclude` over 500 ids is still 400 and is reported through
+  `reportCashDeskProblem()` once an hour (the client stops a source itself before
+  that); a failed preload is logged (`logCashDesk()`);
+  NUL bytes are stripped from heartbeat strings and keys (Postgres refuses them in
+  jsonb and text); a failed queue query logs its SQL and throws a message without it;
+  a stored document number with leading zeros is the same document;
+  `overdueReceiptIds()` takes `$exclude` (cut in SQL, not from the limit);
+  `preloadCashDeskRelations()` returns the receipts whose `cashDeskRelatedIds()`
+  failed (they go to `onBrokenReceipt()`, the rest are served);
+- `PaymentReceipt\Model::asArrayForCashDeskV2()` and its `cashDesk*()` methods;
+  `normalizeCashDeskPhone()` returns E.164 or nothing: with an explicit `+`/`00` the
+  digits are taken as written (8–15, no leading 0), except `+8 9XX…` (no country
+  code starts with 89), which is a Russian number; an email longer than tag 1008
+  (64 characters, `CASH_DESK_CONTACT_MAX_LENGTH`) falls back to the phone, and
+  `+7800…` (toll-free, the shop's) is never a buyer's phone; Russian rules (`8…`, ten digits
+  on 9) apply to numbers without a prefix – `+81 3…` and `+961 1…` are not Russian;
+- new: `sql/postgres/payment_receipts.sql` (for new tables; there was no Postgres dump).
+
 ## 0.11.1
 
 - Queue: forPdo() without the CMS takes the project's Setup
