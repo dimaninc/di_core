@@ -8,6 +8,8 @@ use Minishlink\WebPush\Subscription;
 use Minishlink\WebPush\VAPID;
 use Minishlink\WebPush\WebPush as Library;
 use Psr\Http\Client\ClientInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpClient\Psr18Client;
 
@@ -27,12 +29,15 @@ final class WebPush
      * @param string $publicKey ключи в base64url – в этом виде их выдаёт createKeys() и берёт браузер
      * @param string $subject контакт для сервиса push: mailto: с адресом или https: – без него Apple отвечает 403
      * @param ClientInterface|null $client PSR-18; по умолчанию symfony/http-client без редиректов
+     * @param LoggerInterface|null $logger замечания библиотеки (нет GMP/BCMath); по умолчанию NullLogger – иначе
+     *   trigger_error, и обработчик ошибок проекта превратил бы совет «поставьте GMP» в отказ конструктора
      */
     public function __construct(
         private readonly string $publicKey,
         string $privateKey,
         string $subject,
         ?ClientInterface $client = null,
+        ?LoggerInterface $logger = null,
     ) {
         $client ??= self::defaultClient();
         $vapid = ['subject' => $subject, 'publicKey' => $publicKey, 'privateKey' => $privateKey];
@@ -70,10 +75,12 @@ final class WebPush
                 $client,
                 $client instanceof Psr18Client ? $client : null,
                 $client instanceof Psr18Client ? $client : null,
+                null,
+                $logger ?? new NullLogger(),
             );
-        } catch (\ErrorException | \InvalidArgumentException) {
-            // Как «FCM not configured»: ошибка настройки проекта, а не устройства.
-            throw new TransportError('Web push VAPID keys invalid');
+        } catch (\Throwable $e) {
+            // Ключи уже проверены выше: здесь – окружение (расширения PHP, OpenSSL), не повод перевыпускать ключи.
+            throw new TransportError('Web push library setup failed (' . $e::class . ')');
         }
     }
 

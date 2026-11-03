@@ -230,6 +230,33 @@ class WebPushTest extends TestCase
         $this->assertInstanceOf(WebPush::class, new WebPush($keys['publicKey'], $keys['privateKey'], 'https://example.test', self::client(201)));
     }
 
+    public function testLibraryNoticesDoNotBreakConstructorUnderStrictErrorHandler(): void
+    {
+        // Без GMP/BCMath библиотека шлёт notice; обработчик проекта, поднимающий его в исключение, не должен
+        // выдать это за неверные ключи. Логгер получает замечание вместо trigger_error.
+        $logger = new class extends \Psr\Log\AbstractLogger {
+            public array $records = [];
+
+            public function log($level, \Stringable|string $message, array $context = []): void
+            {
+                $this->records[] = (string) $message;
+            }
+        };
+        set_error_handler(static fn(int $no, string $text) => throw new \ErrorException($text, 0, $no));
+        try {
+            $keys = WebPush::createKeys();
+            $this->assertInstanceOf(
+                WebPush::class,
+                new WebPush($keys['publicKey'], $keys['privateKey'], 'mailto:a@example.test', self::client(201), $logger),
+            );
+            $this->assertInstanceOf(WebPush::class, self::webPush(self::client(201)));
+        } finally {
+            restore_error_handler();
+        }
+        $hasFastMath = extension_loaded('gmp') || extension_loaded('bcmath');
+        $this->assertSame($hasFastMath ? 0 : 1, count(array_filter($logger->records, fn($m) => str_contains($m, 'GMP'))));
+    }
+
     public function testOversizedPayloadIsRefusedBeforeRequest(): void
     {
         [$p256dh, $auth] = self::browserKeys();
