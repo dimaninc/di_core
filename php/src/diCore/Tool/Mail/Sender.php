@@ -31,6 +31,24 @@ class Sender
     const secureSending = true;
     const debugSending = false;
 
+    /**
+     * Headers PHPMailer writes itself: a custom one would duplicate it (two From fail DMARC,
+     * two Content-Type break the MIME structure). Lower case; every Content-* is refused too.
+     */
+    const RESERVED_HEADERS = [
+        'from',
+        'sender',
+        'to',
+        'cc',
+        'bcc',
+        'reply-to',
+        'return-path',
+        'subject',
+        'date',
+        'message-id',
+        'mime-version',
+    ];
+
     protected static $localHost = '127.0.0.1';
     protected static $localPort = 25;
 
@@ -156,6 +174,14 @@ class Sender
         $attachments = [],
         $options = []
     ) {
+        // fastSend() builds its own header set: custom headers would vanish without a trace
+        if (!empty($options['headers'])) {
+            static::logError(
+                'custom headers are sent via SMTP only, dropped: ' .
+                    static::exportForLog(array_keys((array) $options['headers']))
+            );
+        }
+
         return \diEmail::fastSend(
             $from,
             $to,
@@ -193,6 +219,8 @@ class Sender
         $mail->isHTML(!$bodyPlain);
         $mail->Subject = $subject;
         $mail->Body = $bodyPlain ?: $bodyHtml;
+
+        static::addCustomHeaders($mail, $options['headers'] ?? []);
 
         if (!empty($options['replyTo'])) {
             $options['replyTo'] = \diEmail::parseNameAndEmail($options['replyTo']);
@@ -253,6 +281,71 @@ class Sender
         }
 
         return $res;
+    }
+
+    /**
+     * Extra headers (name => value), SMTP only. An empty value (null, false, '') means no header.
+     * A refused header (bad name, reserved name, non-scalar value, line break = header injection)
+     * is dropped and logged, the letter still goes.
+     */
+    public static function addCustomHeaders(PHPMailer $mail, array $headers): void
+    {
+        foreach ($headers as $name => $value) {
+            if ($value === null || (is_scalar($value) && trim((string) $value) === '')) {
+                continue;
+            }
+
+            if (!static::isAllowedCustomHeader($name, $value)) {
+                static::logError('custom header refused: ' . static::exportForLog($name));
+
+                continue;
+            }
+
+            try {
+                // An old PHPMailer returns nothing here – only an explicit false is a refusal
+                $added = $mail->addCustomHeader($name, (string) $value) !== false;
+            } catch (\Exception) {
+                // exceptions mode (a project's createPhpMailerInstance()) must not cost the letter
+                $added = false;
+            }
+
+            if (!$added) {
+                static::logError('custom header refused: ' . static::exportForLog($name));
+            }
+        }
+    }
+
+    /**
+     * Checked here rather than left to PHPMailer: its own line-break check depends on the version.
+     */
+    protected static function isAllowedCustomHeader($name, $value): bool
+    {
+        if (
+            !is_string($name) ||
+            !is_scalar($value) ||
+            !preg_match('/^[A-Za-z0-9-]+$/D', $name)
+        ) {
+            return false;
+        }
+
+        $lower = strtolower($name);
+
+        if (in_array($lower, static::RESERVED_HEADERS, true) || str_starts_with($lower, 'content-')) {
+            return false;
+        }
+
+        return strpbrk((string) $value, "\r\n\0") === false;
+    }
+
+    /**
+     * One log line whatever the value holds: var_export() keeps line breaks as they are.
+     */
+    protected static function exportForLog($value): string
+    {
+        return (string) json_encode(
+            $value,
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE
+        );
     }
 
     protected static function logError($message)
