@@ -17,10 +17,14 @@
     },
 	"suggest": {
 		"ext-pcntl": "diCore\\Queue: worker timeouts and graceful stop",
-		"ext-pdo_pgsql": "diCore\\Queue: the PostgreSQL task queue"
+		"ext-pdo_pgsql": "diCore\\Queue: the PostgreSQL task queue",
+		"minishlink/web-push": "^11, PHP 8.2+ – diCore\\Push\\WebPush: browser Web Push (with symfony/http-client and nyholm/psr7)"
 	},
 	"require-dev": {
 		"phpunit/phpunit": "^11",
+		"minishlink/web-push": "^11",
+		"symfony/http-client": "^7.3",
+		"nyholm/psr7": "^1.8",
 		"phpmailer/phpmailer": "^7.1"
     },
 	"autoload": {
