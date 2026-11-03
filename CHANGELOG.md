@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.12.1
+
+- Mail: custom headers from the queue settings (#42)
+
 ## 0.12.0
 
 - Cash desk contract v2: pending receipts, fiscalized report, heartbeat and journal (#43)
