@@ -84,10 +84,10 @@ class Vendor extends VendorContainer
     ];
 
     /**
-     * IncCurrLabel. По документации это Alias из GetCurrencies (SBP, SberPay,
-     * YandexPay); старые коды с суффиксом (BankCardPSR и т.п.) – Label, остались
-     * исторически: Робокасса пока принимает и их, переводить на Alias – с
-     * проверкой на живом магазине.
+     * IncCurrLabel. По документации это Alias из GetCurrencies (BankCard, SBP,
+     * SberPay, YandexPay). Старые коды с суффиксом (ApplePayPSR и т.п.) – Label,
+     * остались исторически; Label форма не выбирает (так было с BankCardPSR и
+     * YandexPayPSR), переводить на Alias – с проверкой на живом магазине.
      */
     public static $codes = [
         self::YANDEX_MONEY => 'YandexMerchantPS5R',
