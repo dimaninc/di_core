@@ -2,7 +2,6 @@
 
 namespace diCore\Payment\AlfaBank;
 
-use diCore\Helper\ArrayHelper;
 use diCore\Payment\BaseHelper;
 use diCore\Payment\System;
 
@@ -15,12 +14,15 @@ use diCore\Payment\System;
  *
  * One-stage scheme only (no hold/two-step): register → pay → funds captured.
  *
- * Credentials: constructor options (see $options), or – legacy – a project
- * subclass `…\Payment\AlfaBank\Settings` resolved via BaseHelper::create()
- * that overrides getLogin()/getPassword()/isTestMode(). Options win.
+ * Credentials and endpoint – either all from constructor options (see $options),
+ * or – legacy – from a project subclass `…\Payment\AlfaBank\Settings` resolved
+ * via BaseHelper::create(): getLogin()/getPassword() give the pair,
+ * isTestMode() picks only the endpoint (the base getLogin() looks at the
+ * `testMode` constant, not at isTestMode() – keep them in step in Settings).
+ * The `testMode` option needs login and password options: alone it would send
+ * the Settings pair to the other endpoint.
  *
- * Every failed call throws RequestError: `transport` – no usable answer (worth
- * a retry), `bankCode` – the bank refused the request.
+ * Every failed call throws RequestError (its three kinds are described there).
  */
 class Helper extends BaseHelper
 {
@@ -49,7 +51,17 @@ class Helper extends BaseHelper
         'caBundle' => null,
     ];
 
-    /** Override in the Settings subclass to drive test mode from config. */
+    public function __construct($options = [])
+    {
+        parent::__construct($options);
+
+        if ($this->options['testMode'] !== null
+            && ($this->options['login'] === null || $this->options['password'] === null)) {
+            throw new \InvalidArgumentException('Alfa-Bank: the testMode option needs the login and password options');
+        }
+    }
+
+    /** Override in the Settings subclass to drive the endpoint from config. */
     protected static function isTestMode()
     {
         return static::testMode;
@@ -76,7 +88,7 @@ class Helper extends BaseHelper
             [
                 'amount' => $draft->getAmount(),
                 'orderNumber' => $draft->getId(),
-                'returnUrl' => $this->defaultReturnUrl($draft),
+                'returnUrl' => '',
                 'failUrl' => '',
                 'description' => '',
                 'customerEmail' => '',
@@ -89,7 +101,8 @@ class Helper extends BaseHelper
             'orderNumber' => $opts['orderNumber'],
             'amount' => static::toMinorUnits($opts['amount']),
             'currency' => $opts['currency'],
-            'returnUrl' => $opts['returnUrl'],
+            // The default only when none is given: it reads the draft's target
+            'returnUrl' => $opts['returnUrl'] ?: $this->defaultReturnUrl($draft),
         ];
 
         if ($opts['failUrl']) {
@@ -126,7 +139,10 @@ class Helper extends BaseHelper
         $formUrl = $response['formUrl'] ?? null;
 
         if (!is_string($orderId) || $orderId === '' || !is_string($formUrl) || $formUrl === '') {
-            throw new RequestError('Alfa-Bank register.do: no orderId or formUrl in the answer');
+            // request() has already logged «ok» – without this line the log would contradict the exception
+            static::log('register.do' . static::logLabel($params) . ': no orderId or formUrl in the answer');
+
+            throw new RequestError('Alfa-Bank register.do: no orderId or formUrl in the answer', null, false, 'register.do');
         }
 
         return $response;
@@ -174,7 +190,11 @@ class Helper extends BaseHelper
         return strtoupper(hash_hmac('sha256', $data, $key));
     }
 
-    /** The callback's checksum matches. No key, no checksum or a non-string value (a[]=…) – false. */
+    /**
+     * The callback's checksum matches. No key, no checksum or a non-string value (a[]=…) – false.
+     * Pass exactly what the bank sent: a parameter of your own in the callback address (?system=…) or one
+     * added by a router changes the string and fails the check.
+     */
     public static function isCallbackGenuine(array $params, string $key): bool
     {
         $checksum = $params['checksum'] ?? null;
@@ -219,7 +239,7 @@ class Helper extends BaseHelper
     protected function apiUri()
     {
         if (!empty($this->options['apiUri'])) {
-            return $this->options['apiUri'];
+            return rtrim($this->options['apiUri'], '/') . '/';
         }
 
         if ($this->options['testMode'] !== null) {
@@ -235,7 +255,7 @@ class Helper extends BaseHelper
      */
     protected function request($method, array $params)
     {
-        $order = isset($params['orderNumber']) ? ' order ' . $params['orderNumber'] : '';
+        $order = static::logLabel($params);
         $params = ['userName' => $this->login(), 'password' => $this->password()] + $params;
 
         $raw = $this->send($this->apiUri() . $method, http_build_query($params));
@@ -243,7 +263,7 @@ class Helper extends BaseHelper
         if (is_array($raw)) {
             static::log("$method$order: transport error: " . $raw['error']);
 
-            throw new RequestError("Alfa-Bank $method: no answer: " . $raw['error'], null, true);
+            throw new RequestError("Alfa-Bank $method: no answer: " . $raw['error'], null, true, $method);
         }
 
         $response = json_decode($raw, true);
@@ -251,22 +271,61 @@ class Helper extends BaseHelper
         if (!is_array($response)) {
             static::log("$method$order: not JSON");
 
-            throw new RequestError("Alfa-Bank $method: the answer is not JSON", null, true);
+            throw new RequestError("Alfa-Bank $method: the answer is not JSON", null, true, $method);
         }
 
         // RBS reports business errors via errorCode (0/absent = ok).
         $errorCode = $response['errorCode'] ?? null;
-        if ($errorCode !== null && (string) $errorCode !== '0') {
-            $code = mb_substr((string) $errorCode, 0, 8);
-            $message = mb_substr((string) ArrayHelper::get($response, 'errorMessage', 'Unknown error'), 0, 200);
+        if ($errorCode !== null && (string) (is_scalar($errorCode) ? $errorCode : '?') !== '0') {
+            $code = is_scalar($errorCode) ? mb_substr((string) $errorCode, 0, 8) : '?';
+            $message = $response['errorMessage'] ?? 'Unknown error';
+            $message = is_scalar($message) ? mb_substr((string) $message, 0, 200) : 'Unknown error';
             static::log("$method$order: error $code");
 
-            throw new RequestError("Alfa-Bank error #$code: $message", $code);
+            throw new RequestError("Alfa-Bank $method error #$code: $message", $code, false, $method);
         }
 
         static::log("$method$order: ok");
 
         return $response;
+    }
+
+    /**
+     * Which order a log line is about: our orderNumber or the bank's orderId (neither is personal data).
+     * Anything but [0-9A-Za-z_-] becomes «?» – a line break in a number would forge a log line.
+     */
+    protected static function logLabel(array $params)
+    {
+        foreach (['orderNumber' => 'order', 'orderId' => 'bank order'] as $key => $label) {
+            if (isset($params[$key]) && is_scalar($params[$key])) {
+                return " $label " . preg_replace('/[^0-9A-Za-z_-]/', '?', mb_substr((string) $params[$key], 0, 64));
+            }
+        }
+
+        return '';
+    }
+
+    /** cURL options of one call; separate from send() so a test can check them without the network. */
+    protected function curlOptions(string $body)
+    {
+        $options = [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $body,
+            CURLOPT_CONNECTTIMEOUT => static::CONNECT_TIMEOUT_SEC,
+            CURLOPT_TIMEOUT => static::TIMEOUT_SEC,
+            CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
+            // No redirects: a redirected POST would carry the credentials wherever it points
+            CURLOPT_FOLLOWLOCATION => false,
+            // https only: an http apiUri in a config would send the password in clear text
+            CURLOPT_PROTOCOLS => CURLPROTO_HTTPS,
+        ];
+
+        if (!empty($this->options['caBundle'])) {
+            $options[CURLOPT_CAINFO] = $this->options['caBundle'];
+        }
+
+        return $options;
     }
 
     /**
@@ -277,22 +336,13 @@ class Helper extends BaseHelper
     protected function send(string $url, string $body)
     {
         $ch = curl_init($url);
-        $options = [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $body,
-            CURLOPT_CONNECTTIMEOUT => static::CONNECT_TIMEOUT_SEC,
-            CURLOPT_TIMEOUT => static::TIMEOUT_SEC,
-            CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
-            // No redirects: a redirected POST would carry the credentials wherever it points
-            CURLOPT_FOLLOWLOCATION => false,
-        ];
 
-        if (!empty($this->options['caBundle'])) {
-            $options[CURLOPT_CAINFO] = $this->options['caBundle'];
+        // As in Tinkoff\MerchantApi: a failed curl_init() is a transport failure, not a TypeError in curl_setopt_array()
+        if ($ch === false) {
+            return ['error' => 'curl_init failed'];
         }
 
-        curl_setopt_array($ch, $options);
+        curl_setopt_array($ch, $this->curlOptions($body));
 
         $raw = curl_exec($ch);
         $error = curl_error($ch) ?: 'unknown transport error';
