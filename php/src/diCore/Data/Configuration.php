@@ -622,8 +622,22 @@ class Configuration
 
         $cache_file .= $this->phpFooter();
 
-        file_put_contents($this->getFullCacheFilename(), $cache_file);
-        chmod($this->getFullCacheFilename(), $this->fileChmod);
+        // Через rename(): файл подключается каждым запросом, а пишут его не только из
+        // админки, но и кроны – недописанный файл был бы фаталом на чужом запросе.
+        $target = $this->getFullCacheFilename();
+        $tmp = $target . '.' . getmypid() . '.tmp';
+
+        if (file_put_contents($tmp, $cache_file) === false) {
+            throw new \Exception("Unable to write configuration cache: $tmp");
+        }
+
+        chmod($tmp, $this->fileChmod);
+
+        if (!rename($tmp, $target)) {
+            @unlink($tmp);
+
+            throw new \Exception("Unable to replace configuration cache: $target");
+        }
 
         return $this;
     }
