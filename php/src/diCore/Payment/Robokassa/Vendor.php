@@ -25,6 +25,8 @@ class Vendor extends VendorContainer
     const SBP = 14;
     const SBERPAY = 15;
     const TPAY = 16;
+    /** ЕРИП – расчётная система Беларуси, для покупателей оттуда. */
+    const ERIP = 17;
 
     //const SBERBANK_ONLINE = 20;
     const ALPHA_CLICK = 21;
@@ -48,6 +50,7 @@ class Vendor extends VendorContainer
         self::SBP => 'СБП',
         self::SBERPAY => 'SberPay',
         self::TPAY => 'T-Pay',
+        self::ERIP => 'ЕРИП',
 
         //self::SBERBANK_ONLINE => 'Сбербанк-онлайн',
         self::ALPHA_CLICK => 'Альфа-клик',
@@ -73,6 +76,7 @@ class Vendor extends VendorContainer
         self::SBP => 'sbp',
         self::SBERPAY => 'sberpay',
         self::TPAY => 't-pay',
+        self::ERIP => 'erip',
 
         //self::SBERBANK_ONLINE => 'sberbank-online',
         self::ALPHA_CLICK => 'alpha-click',
@@ -104,6 +108,7 @@ class Vendor extends VendorContainer
         self::SBP => 'SBP',
         self::SBERPAY => 'SberPay',
         self::TPAY => 'TinkoffPay',
+        self::ERIP => 'ERIP',
 
         //self::SBERBANK_ONLINE => 'BankSberBank',
         self::ALPHA_CLICK => 'AlfaBank',
