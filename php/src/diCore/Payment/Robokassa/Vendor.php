@@ -94,10 +94,12 @@ class Vendor extends VendorContainer
         self::APPLE_PAY => 'ApplePayPSR',
         self::SAMSUNG_PAY => 'SamsungPayPSR',
         self::YANDEX_PAY => 'YandexPayPSR',
-        // Метки – из ответа GetCurrencies магазина в конце файла.
-        self::SBP => 'SBPPSR',
-        self::SBERPAY => 'SberPayPSR',
-        self::TPAY => 'TinkoffPayPSR',
+        // Alias из GetCurrencies, не Label: IncCurrLabel по документации берёт Alias
+        // (docs.robokassa.ru/ru/pay-interface, «Приоритет способов оплаты»). У СБП
+        // магазина две метки (SBPPSR, SBPPSBR) на один Alias – выбирает Робокасса.
+        self::SBP => 'SBP',
+        self::SBERPAY => 'SberPay',
+        self::TPAY => 'TinkoffPay',
 
         //self::SBERBANK_ONLINE => 'BankSberBank',
         self::ALPHA_CLICK => 'AlfaBank',

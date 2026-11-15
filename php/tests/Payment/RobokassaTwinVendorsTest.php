@@ -17,9 +17,9 @@ class RobokassaTwinVendorsTest extends TestCase
     public static function twins(): array
     {
         return [
-            'sbp' => [Tinkoff::SBP, Robokassa::SBP, 'SBPPSR'],
-            'sberpay' => [Tinkoff::SBERPAY, Robokassa::SBERPAY, 'SberPayPSR'],
-            't-pay' => [Tinkoff::TPAY, Robokassa::TPAY, 'TinkoffPayPSR'],
+            'sbp' => [Tinkoff::SBP, Robokassa::SBP, 'SBP'],
+            'sberpay' => [Tinkoff::SBERPAY, Robokassa::SBERPAY, 'SberPay'],
+            't-pay' => [Tinkoff::TPAY, Robokassa::TPAY, 'TinkoffPay'],
         ];
     }
 
