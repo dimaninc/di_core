@@ -96,7 +96,7 @@ class Vendor extends VendorContainer
         self::ELECSNET => 'ElecsnetWallet',
         self::W1 => 'W1RIBR',
 
-        self::CARD => 'BankCardPSR',
+        self::CARD => 'BankCard',
         self::APPLE_PAY => 'ApplePayPSR',
         self::SAMSUNG_PAY => 'SamsungPayPSR',
         self::YANDEX_PAY => 'YandexPay',
