@@ -83,6 +83,12 @@ class Vendor extends VendorContainer
         self::MOBILE_TELE2 => 'mobile-tele2',
     ];
 
+    /**
+     * IncCurrLabel. По документации это Alias из GetCurrencies (SBP, SberPay,
+     * YandexPay); старые коды с суффиксом (BankCardPSR и т.п.) – Label, остались
+     * исторически: Робокасса пока принимает и их, переводить на Alias – с
+     * проверкой на живом магазине.
+     */
     public static $codes = [
         self::YANDEX_MONEY => 'YandexMerchantPS5R',
         self::WEBMONEY => 'WMR20PM',
@@ -93,10 +99,8 @@ class Vendor extends VendorContainer
         self::CARD => 'BankCardPSR',
         self::APPLE_PAY => 'ApplePayPSR',
         self::SAMSUNG_PAY => 'SamsungPayPSR',
-        self::YANDEX_PAY => 'YandexPayPSR',
-        // Alias из GetCurrencies, не Label: IncCurrLabel по документации берёт Alias
-        // (docs.robokassa.ru/ru/pay-interface, «Приоритет способов оплаты»). У СБП
-        // магазина две метки (SBPPSR, SBPPSBR) на один Alias – выбирает Робокасса.
+        self::YANDEX_PAY => 'YandexPay',
+        // У СБП магазина две метки (SBPPSR, SBPPSBR) на один Alias – выбирает Робокасса.
         self::SBP => 'SBP',
         self::SBERPAY => 'SberPay',
         self::TPAY => 'TinkoffPay',

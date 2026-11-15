@@ -109,13 +109,14 @@ class Payment
 
     /**
      * Список через МЕТОД класса проекта: проект может переопределить его на лету, а
-     * зовут нас и через базовый класс (`Payment::isVendorUsed()`).
+     * зовут нас и через базовый класс (`Payment::isVendorUsed()`). `(array)`: у
+     * переопределения в проекте типа нет, и null не должен стать TypeError.
      */
     protected static function getVendorsUsedByProject(): array
     {
         $class = static::getClass();
 
-        return $class::getPaymentVendorsUsed();
+        return (array) $class::getPaymentVendorsUsed();
     }
 
     /**

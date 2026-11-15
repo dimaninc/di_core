@@ -65,6 +65,11 @@ class ConfigurationCacheWriteTest extends TestCase
         // Файл писать можно, каталог – нет: rename() этого не переживёт.
         chmod($this->dir, 0555);
 
+        if (is_writable($this->dir)) {
+            // root (docker) права каталога не останавливают – отказа не будет.
+            $this->markTestSkipped('directory is still writable (running as root?)');
+        }
+
         try {
             $w->write('new', true);
             $this->fail('expected an exception');
