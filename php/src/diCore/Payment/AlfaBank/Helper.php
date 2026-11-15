@@ -55,11 +55,24 @@ class Helper extends BaseHelper
     {
         parent::__construct($options);
 
-        $endpointGiven = $this->options['testMode'] !== null || !empty($this->options['apiUri']);
-        $credentialsGiven = (string) $this->options['login'] !== '' && (string) $this->options['password'] !== '';
+        // `?? null`: a legacy Settings may redeclare $options without the new keys
+        $login = (string) ($this->options['login'] ?? '');
+        $password = (string) ($this->options['password'] ?? '');
+        $apiUri = (string) ($this->options['apiUri'] ?? '');
+        $endpointGiven = ($this->options['testMode'] ?? null) !== null || $apiUri !== '';
 
-        if ($endpointGiven && !$credentialsGiven) {
+        // Half a pair would be completed from Settings: the bank gets a login and a password of two accounts
+        if (($login === '') !== ($password === '')) {
+            throw new \InvalidArgumentException('Alfa-Bank: give both the login and the password options, or neither');
+        }
+
+        if ($endpointGiven && $login === '') {
             throw new \InvalidArgumentException('Alfa-Bank: the testMode and apiUri options need non-empty login and password options');
+        }
+
+        // A configuration error, not a transport one: RequestError::$transport would say «the bank may have done it»
+        if ($apiUri !== '' && stripos($apiUri, 'https://') !== 0) {
+            throw new \InvalidArgumentException('Alfa-Bank: the apiUri option must be https');
         }
     }
 
@@ -138,7 +151,7 @@ class Helper extends BaseHelper
      *
      * @param array $params orderNumber, amount (kopecks), returnUrl plus any optional register.do
      *        parameter (failUrl, description, language, dynamicCallbackUrl, email…)
-     * @return array{orderId: string, formUrl: string}
+     * @return array<string, mixed> the whole answer; orderId and formUrl are guaranteed non-empty strings
      */
     public function register(array $params)
     {
@@ -256,7 +269,7 @@ class Helper extends BaseHelper
             return rtrim($this->options['apiUri'], '/') . '/';
         }
 
-        if ($this->options['testMode'] !== null) {
+        if (($this->options['testMode'] ?? null) !== null) {
             return $this->options['testMode'] ? static::apiUriDemo : static::apiUri;
         }
 
@@ -288,9 +301,10 @@ class Helper extends BaseHelper
             throw new RequestError("Alfa-Bank $method: the answer is not JSON", null, true, $method);
         }
 
-        // RBS reports business errors via errorCode (0/absent = ok).
+        // RBS reports business errors via errorCode (0/absent = ok; an empty one counts as absent)
         $errorCode = $response['errorCode'] ?? null;
-        if ($errorCode !== null && (string) (is_scalar($errorCode) ? $errorCode : '?') !== '0') {
+        if ($errorCode !== null && $errorCode !== '' && $errorCode !== false
+            && (string) (is_scalar($errorCode) ? $errorCode : '?') !== '0') {
             $code = is_scalar($errorCode) ? static::logSafe((string) $errorCode, 8) : '?';
             $message = $response['errorMessage'] ?? 'Unknown error';
             $message = is_scalar($message) ? mb_substr((string) $message, 0, 200) : 'Unknown error';
@@ -321,7 +335,10 @@ class Helper extends BaseHelper
     /** Anything but [0-9A-Za-z_-] becomes «?»: a line break in a number or a bank code would forge a log line. */
     protected static function logSafe(string $value, int $length)
     {
-        return preg_replace('/[^0-9A-Za-z_-]/', '?', mb_substr($value, 0, $length));
+        $value = mb_substr($value, 0, $length);
+
+        // By character, so «я» is one «?»; not valid UTF-8 – /u fails (null), then byte by byte
+        return preg_replace('/[^0-9A-Za-z_-]/u', '?', $value) ?? preg_replace('/[^0-9A-Za-z_-]/', '?', $value);
     }
 
     /** cURL options of one call; separate from send() so a test can check them without the network. */

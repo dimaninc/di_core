@@ -108,6 +108,11 @@ class AlfaBankHelperTest extends TestCase
             ['apiUri' => 'https://alfa.rbsuat.com/payment/rest'],
             ['login' => '', 'password' => '', 'testMode' => true],
             ['login' => 'l', 'apiUri' => 'https://alfa.rbsuat.com/payment/rest'],
+            // Half a pair alone: the other half would come from Settings
+            ['login' => 'mine'],
+            ['password' => 'mine'],
+            // A typo in the scheme is a configuration error, not a transport one
+            ['login' => 'l', 'password' => 'p', 'apiUri' => 'http://alfa.rbsuat.com/payment/rest'],
         ];
 
         foreach ($cases as $options) {
@@ -118,6 +123,19 @@ class AlfaBankHelperTest extends TestCase
                 $this->addToAssertionCount(1);
             }
         }
+    }
+
+    /** A Settings written before the options existed redeclares $options without them: no warnings, Settings pair */
+    public function testLegacySettingsWithOwnOptionsArray(): void
+    {
+        AlfaBankHelperStub::$replies = ['{"orderStatus":2}'];
+        $helper = new AlfaBankLegacyOptionsStub();
+
+        $helper->getOrderStatus('x');
+
+        parse_str(AlfaBankHelperStub::$sent[0][1], $sent);
+        $this->assertSame(Helper::apiUri . 'getOrderStatusExtended.do', AlfaBankHelperStub::$sent[0][0]);
+        $this->assertSame(['prod-api', 'prod-pw'], [$sent['userName'], $sent['password']]);
     }
 
     /** A legacy Settings driving test mode from config gets the demo pair with the demo endpoint */
@@ -154,6 +172,12 @@ class AlfaBankHelperTest extends TestCase
             // The «ok» of request() is followed by the real outcome
             'register.do order 5?2026-11-15?forged?line: no orderId or formUrl in the answer',
         ], AlfaBankHelperStub::$logged);
+
+        // A multibyte character is one «?», not one per byte
+        AlfaBankHelperStub::$logged = [];
+        AlfaBankHelperStub::$replies = ['{"orderStatus":2}'];
+        $helper->getOrderStatus('я12');
+        $this->assertSame(['getOrderStatusExtended.do bank order ?12: ok'], AlfaBankHelperStub::$logged);
 
         // The bank's code too
         AlfaBankHelperStub::$logged = [];
@@ -289,11 +313,13 @@ class AlfaBankHelperTest extends TestCase
         }
     }
 
-    public function testErrorCodeZeroIsSuccess(): void
+    public function testErrorCodeZeroOrEmptyIsSuccess(): void
     {
-        AlfaBankHelperStub::$replies = ['{"errorCode":"0","orderStatus":2,"amount":49000}'];
+        foreach (['"0"', '0', '""', 'false', 'null'] as $code) {
+            AlfaBankHelperStub::$replies = ['{"errorCode":' . $code . ',"orderStatus":2,"amount":49000}'];
 
-        $this->assertSame(2, (new AlfaBankHelperStub())->getOrderStatus('x')['orderStatus']);
+            $this->assertSame(2, (new AlfaBankHelperStub())->getOrderStatus('x')['orderStatus'], $code);
+        }
     }
 }
 
@@ -336,6 +362,15 @@ class AlfaBankLegacyDemoStub extends AlfaBankHelperStub
     {
         return true;
     }
+}
+
+/** A Settings from before the options: its own $options array, pair as constants */
+class AlfaBankLegacyOptionsStub extends AlfaBankHelperStub
+{
+    const login = 'prod-api';
+    const password = 'prod-pw';
+
+    protected $options = ['onSuccessPayment' => null];
 }
 
 /** The real send() over a handle given by the test */
