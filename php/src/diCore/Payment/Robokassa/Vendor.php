@@ -25,7 +25,7 @@ class Vendor extends VendorContainer
     const SBP = 14;
     const SBERPAY = 15;
     const TPAY = 16;
-    /** ЕРИП – расчётная система Беларуси, для покупателей оттуда. */
+    /** ЕРИП – расчётная система Белоруссии, для покупателей оттуда. */
     const ERIP = 17;
 
     //const SBERBANK_ONLINE = 20;
