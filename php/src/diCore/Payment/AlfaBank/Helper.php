@@ -16,13 +16,13 @@ use diCore\Payment\System;
  *
  * Credentials and endpoint – either all from constructor options (see $options),
  * or – legacy – from a project subclass `…\Payment\AlfaBank\Settings` resolved
- * via BaseHelper::create(): getLogin()/getPassword() give the pair,
- * isTestMode() picks only the endpoint (the base getLogin() looks at the
- * `testMode` constant, not at isTestMode() – keep them in step in Settings).
- * The `testMode` option needs login and password options: alone it would send
- * the Settings pair to the other endpoint.
+ * via BaseHelper::create(): isTestMode() picks both the endpoint and the
+ * login/loginDemo pair, or getLogin()/getPassword() are overridden outright.
+ * The `testMode` and `apiUri` options need non-empty login and password
+ * options: alone they would send the Settings pair to another endpoint.
  *
- * Every failed call throws RequestError (its three kinds are described there).
+ * Every failed call throws RequestError (its three kinds and when a repeat is
+ * safe are described there).
  */
 class Helper extends BaseHelper
 {
@@ -55,16 +55,30 @@ class Helper extends BaseHelper
     {
         parent::__construct($options);
 
-        if ($this->options['testMode'] !== null
-            && ($this->options['login'] === null || $this->options['password'] === null)) {
-            throw new \InvalidArgumentException('Alfa-Bank: the testMode option needs the login and password options');
+        $endpointGiven = $this->options['testMode'] !== null || !empty($this->options['apiUri']);
+        $credentialsGiven = (string) $this->options['login'] !== '' && (string) $this->options['password'] !== '';
+
+        if ($endpointGiven && !$credentialsGiven) {
+            throw new \InvalidArgumentException('Alfa-Bank: the testMode and apiUri options need non-empty login and password options');
         }
     }
 
-    /** Override in the Settings subclass to drive the endpoint from config. */
+    /** Override in the Settings subclass to drive test mode from config: it picks the endpoint and the pair. */
     protected static function isTestMode()
     {
         return static::testMode;
+    }
+
+    // Пара – по тому же признаку, что адрес: базовые getLogin()/getPassword() смотрят на константу testMode,
+    // и Settings с isTestMode() из конфига отправил бы боевые ключи на стенд или наоборот
+    public static function getLogin()
+    {
+        return static::isTestMode() ? static::loginDemo : static::login;
+    }
+
+    public static function getPassword()
+    {
+        return static::isTestMode() ? static::passwordDemo : static::password;
     }
 
     protected static function getApiUri()
@@ -277,7 +291,7 @@ class Helper extends BaseHelper
         // RBS reports business errors via errorCode (0/absent = ok).
         $errorCode = $response['errorCode'] ?? null;
         if ($errorCode !== null && (string) (is_scalar($errorCode) ? $errorCode : '?') !== '0') {
-            $code = is_scalar($errorCode) ? mb_substr((string) $errorCode, 0, 8) : '?';
+            $code = is_scalar($errorCode) ? static::logSafe((string) $errorCode, 8) : '?';
             $message = $response['errorMessage'] ?? 'Unknown error';
             $message = is_scalar($message) ? mb_substr((string) $message, 0, 200) : 'Unknown error';
             static::log("$method$order: error $code");
@@ -292,17 +306,22 @@ class Helper extends BaseHelper
 
     /**
      * Which order a log line is about: our orderNumber or the bank's orderId (neither is personal data).
-     * Anything but [0-9A-Za-z_-] becomes «?» – a line break in a number would forge a log line.
      */
     protected static function logLabel(array $params)
     {
         foreach (['orderNumber' => 'order', 'orderId' => 'bank order'] as $key => $label) {
             if (isset($params[$key]) && is_scalar($params[$key])) {
-                return " $label " . preg_replace('/[^0-9A-Za-z_-]/', '?', mb_substr((string) $params[$key], 0, 64));
+                return " $label " . static::logSafe((string) $params[$key], 64);
             }
         }
 
         return '';
+    }
+
+    /** Anything but [0-9A-Za-z_-] becomes «?»: a line break in a number or a bank code would forge a log line. */
+    protected static function logSafe(string $value, int $length)
+    {
+        return preg_replace('/[^0-9A-Za-z_-]/', '?', mb_substr($value, 0, $length));
     }
 
     /** cURL options of one call; separate from send() so a test can check them without the network. */
@@ -335,7 +354,7 @@ class Helper extends BaseHelper
      */
     protected function send(string $url, string $body)
     {
-        $ch = curl_init($url);
+        $ch = $this->openCurl($url);
 
         // As in Tinkoff\MerchantApi: a failed curl_init() is a transport failure, not a TypeError in curl_setopt_array()
         if ($ch === false) {
@@ -347,7 +366,7 @@ class Helper extends BaseHelper
         $raw = curl_exec($ch);
         $error = curl_error($ch) ?: 'unknown transport error';
         $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
-        curl_close($ch);
+        // No curl_close(): a no-op since PHP 8.0, deprecated in 8.5 – the handle is freed with $ch
 
         if ($raw === false) {
             return ['error' => mb_substr($error, 0, 200)];
@@ -358,5 +377,16 @@ class Helper extends BaseHelper
         }
 
         return $raw;
+    }
+
+    /**
+     * Opens the cURL handle; a seam so a test can reach send()'s branches without the network. A test that
+     * overrides it must assert the override was used, or it would call the real bank.
+     *
+     * @return \CurlHandle|false
+     */
+    protected function openCurl(string $url)
+    {
+        return curl_init($url);
     }
 }

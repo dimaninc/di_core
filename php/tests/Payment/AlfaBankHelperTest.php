@@ -91,7 +91,7 @@ class AlfaBankHelperTest extends TestCase
 
         (new AlfaBankHelperStub(['login' => 'l', 'password' => 'p', 'testMode' => false]))->getOrderStatus('x');
         // Without the trailing slash too
-        (new AlfaBankHelperStub(['apiUri' => 'https://web.rbsuat.com/ab/rest']))->getOrderStatus('x');
+        (new AlfaBankHelperStub(['login' => 'l', 'password' => 'p', 'apiUri' => 'https://web.rbsuat.com/ab/rest']))->getOrderStatus('x');
         // No option – the class constant, as the legacy Settings subclasses expect
         (new AlfaBankHelperStub())->getOrderStatus('x');
 
@@ -100,11 +100,37 @@ class AlfaBankHelperTest extends TestCase
         $this->assertSame(Helper::apiUri . 'getOrderStatusExtended.do', AlfaBankHelperStub::$sent[2][0]);
     }
 
-    /** testMode alone would pick the endpoint by the option and the pair by the Settings constant */
-    public function testTestModeOptionNeedsItsOwnCredentials(): void
+    /** An endpoint option alone would send the Settings pair to another stand */
+    public function testEndpointOptionsNeedTheirOwnCredentials(): void
     {
-        $this->expectException(\InvalidArgumentException::class);
-        new AlfaBankHelperStub(['testMode' => true]);
+        $cases = [
+            ['testMode' => true],
+            ['apiUri' => 'https://alfa.rbsuat.com/payment/rest'],
+            ['login' => '', 'password' => '', 'testMode' => true],
+            ['login' => 'l', 'apiUri' => 'https://alfa.rbsuat.com/payment/rest'],
+        ];
+
+        foreach ($cases as $options) {
+            try {
+                new AlfaBankHelperStub($options);
+                $this->fail('no InvalidArgumentException for ' . json_encode($options));
+            } catch (\InvalidArgumentException) {
+                $this->addToAssertionCount(1);
+            }
+        }
+    }
+
+    /** A legacy Settings driving test mode from config gets the demo pair with the demo endpoint */
+    public function testLegacyTestModePicksThePairWithTheEndpoint(): void
+    {
+        AlfaBankHelperStub::$replies = ['{"orderStatus":2}'];
+
+        (new AlfaBankLegacyDemoStub())->getOrderStatus('x');
+
+        [$url, $body] = AlfaBankHelperStub::$sent[0];
+        parse_str($body, $sent);
+        $this->assertSame(Helper::apiUriDemo . 'getOrderStatusExtended.do', $url);
+        $this->assertSame(['demo-api', 'demo-pw'], [$sent['userName'], $sent['password']]);
     }
 
     public function testLogNamesTheOrderSafely(): void
@@ -116,6 +142,7 @@ class AlfaBankHelperTest extends TestCase
 
         try {
             $helper->register(['orderNumber' => "5\n2026-11-15 forged line", 'amount' => 1, 'returnUrl' => 'https://x/']);
+            $this->fail('no RequestError');
         } catch (RequestError $e) {
             $this->assertNull($e->bankCode);
             $this->assertFalse($e->transport);
@@ -127,6 +154,17 @@ class AlfaBankHelperTest extends TestCase
             // The «ok» of request() is followed by the real outcome
             'register.do order 5?2026-11-15?forged?line: no orderId or formUrl in the answer',
         ], AlfaBankHelperStub::$logged);
+
+        // The bank's code too
+        AlfaBankHelperStub::$logged = [];
+        AlfaBankHelperStub::$replies = ['{"errorCode":"7\nFAKE"}'];
+
+        try {
+            $helper->getOrderStatus('x');
+            $this->fail('no RequestError');
+        } catch (RequestError $e) {
+            $this->assertSame(['getOrderStatusExtended.do bank order x: error 7?FAKE'], AlfaBankHelperStub::$logged);
+        }
     }
 
     public function testDuplicateOrderOnlyFromRegister(): void
@@ -166,7 +204,7 @@ class AlfaBankHelperTest extends TestCase
         $this->assertFalse($options[CURLOPT_FOLLOWLOCATION]);
         $this->assertSame(CURLPROTO_HTTPS, $options[CURLOPT_PROTOCOLS]);
         $this->assertSame('/etc/ca.pem', $options[CURLOPT_CAINFO]);
-        $this->assertSame(Helper::CONNECT_TIMEOUT_SEC + Helper::TIMEOUT_SEC, $options[CURLOPT_CONNECTTIMEOUT] + $options[CURLOPT_TIMEOUT]);
+        $this->assertSame([5, 15], [$options[CURLOPT_CONNECTTIMEOUT], $options[CURLOPT_TIMEOUT]]);
         $this->assertArrayNotHasKey(CURLOPT_CAINFO, (new AlfaBankHelperStub())->options('body'), 'no bundle – the host store');
     }
 
@@ -226,6 +264,31 @@ class AlfaBankHelperTest extends TestCase
         }
     }
 
+    /** send() itself, without the bank: a failed curl_init() and a refused connection are transport failures */
+    public function testSendTurnsCurlFailuresIntoTransportErrors(): void
+    {
+        $cases = [
+            // curl_init() failed
+            [false, 'curl_init failed'],
+            // Port 1 on the loopback refuses at once – the real cURL path, no outside network
+            [curl_init('https://127.0.0.1:1/'), 'Failed to connect'],
+        ];
+
+        foreach ($cases as [$handle, $error]) {
+            $helper = new AlfaBankCurlStub($handle);
+
+            try {
+                $helper->getOrderStatus('x');
+                $this->fail('no RequestError');
+            } catch (RequestError $e) {
+                // The override was used: otherwise the call went to the real bank
+                $this->assertSame([Helper::apiUri . 'getOrderStatusExtended.do'], $helper->opened);
+                $this->assertTrue($e->transport);
+                $this->assertStringContainsString($error, $e->getMessage());
+            }
+        }
+    }
+
     public function testErrorCodeZeroIsSuccess(): void
     {
         AlfaBankHelperStub::$replies = ['{"errorCode":"0","orderStatus":2,"amount":49000}'];
@@ -258,5 +321,42 @@ class AlfaBankHelperStub extends Helper
         static::$sent[] = [$url, $body];
 
         return array_shift(static::$replies) ?? ['error' => 'no reply'];
+    }
+}
+
+/** A legacy Settings: test mode from config, both pairs as constants */
+class AlfaBankLegacyDemoStub extends AlfaBankHelperStub
+{
+    const login = 'prod-api';
+    const password = 'prod-pw';
+    const loginDemo = 'demo-api';
+    const passwordDemo = 'demo-pw';
+
+    protected static function isTestMode()
+    {
+        return true;
+    }
+}
+
+/** The real send() over a handle given by the test */
+class AlfaBankCurlStub extends Helper
+{
+    /** @var list<string> */
+    public array $opened = [];
+
+    public function __construct(private \CurlHandle|false $handle)
+    {
+        parent::__construct();
+    }
+
+    public static function log($message)
+    {
+    }
+
+    protected function openCurl(string $url)
+    {
+        $this->opened[] = $url;
+
+        return $this->handle;
     }
 }
