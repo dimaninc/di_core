@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.1
+
+- Robokassa SBP/SberPay/T-Pay vendors, atomic configuration cache (#45)
+
 - Robokassa: SBP, SberPay and T-Pay vendors; `getTemplateData()` and `isVendorUsed()`
   read the vendor list through the project class's `getPaymentVendorsUsed()` (#45)
 - Robokassa: Yandex Pay `IncCurrLabel` is now the Alias `YandexPay` – `YandexPayPSR`
