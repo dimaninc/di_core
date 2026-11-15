@@ -22,6 +22,9 @@ class Vendor extends VendorContainer
     const APPLE_PAY = 11;
     const SAMSUNG_PAY = 12;
     const YANDEX_PAY = 13;
+    const SBP = 14;
+    const SBERPAY = 15;
+    const TPAY = 16;
 
     //const SBERBANK_ONLINE = 20;
     const ALPHA_CLICK = 21;
@@ -42,6 +45,9 @@ class Vendor extends VendorContainer
         self::APPLE_PAY => 'Apple Pay',
         self::SAMSUNG_PAY => 'Samsung Pay',
         self::YANDEX_PAY => 'Яндекс Pay',
+        self::SBP => 'СБП',
+        self::SBERPAY => 'SberPay',
+        self::TPAY => 'T-Pay',
 
         //self::SBERBANK_ONLINE => 'Сбербанк-онлайн',
         self::ALPHA_CLICK => 'Альфа-клик',
@@ -63,6 +69,10 @@ class Vendor extends VendorContainer
         self::APPLE_PAY => 'apple-pay',
         self::SAMSUNG_PAY => 'samsung-pay',
         self::YANDEX_PAY => 'yandex-pay',
+        // Те же имена, что у Tinkoff\Vendor: по имени выбирается иконка кнопки.
+        self::SBP => 'sbp',
+        self::SBERPAY => 'sberpay',
+        self::TPAY => 't-pay',
 
         //self::SBERBANK_ONLINE => 'sberbank-online',
         self::ALPHA_CLICK => 'alpha-click',
@@ -73,6 +83,12 @@ class Vendor extends VendorContainer
         self::MOBILE_TELE2 => 'mobile-tele2',
     ];
 
+    /**
+     * IncCurrLabel. По документации это Alias из GetCurrencies (BankCard, SBP,
+     * SberPay, YandexPay). Старые коды с суффиксом (ApplePayPSR и т.п.) – Label,
+     * остались исторически; Label форма не выбирает (так было с BankCardPSR и
+     * YandexPayPSR), переводить на Alias – с проверкой на живом магазине.
+     */
     public static $codes = [
         self::YANDEX_MONEY => 'YandexMerchantPS5R',
         self::WEBMONEY => 'WMR20PM',
@@ -80,10 +96,14 @@ class Vendor extends VendorContainer
         self::ELECSNET => 'ElecsnetWallet',
         self::W1 => 'W1RIBR',
 
-        self::CARD => 'BankCardPSR',
+        self::CARD => 'BankCard',
         self::APPLE_PAY => 'ApplePayPSR',
         self::SAMSUNG_PAY => 'SamsungPayPSR',
-        self::YANDEX_PAY => 'YandexPayPSR',
+        self::YANDEX_PAY => 'YandexPay',
+        // У СБП магазина две метки (SBPPSR, SBPPSBR) на один Alias – выбирает Робокасса.
+        self::SBP => 'SBP',
+        self::SBERPAY => 'SberPay',
+        self::TPAY => 'TinkoffPay',
 
         //self::SBERBANK_ONLINE => 'BankSberBank',
         self::ALPHA_CLICK => 'AlfaBank',
@@ -98,39 +118,31 @@ class Vendor extends VendorContainer
 }
 
 /**
- * https://auth.robokassa.ru/Merchant/WebService/Service.asmx/GetCurrencies?MerchantLogin=romantic2
+ * https://auth.robokassa.ru/Merchant/WebService/Service.asmx/GetCurrencies?MerchantLogin=<MerchantLogin>
+ * Ответ для одного из магазинов, 15.11.2026:
 <CurrenciesList xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://merchant.roboxchange.com/WebService/">
 <Result>
 <Code>0</Code>
 </Result>
 <Groups>
-<Group Code="EMoney" Description="Электронным кошельком">
-<Items>
-<Currency Label="Qiwi40PS" Alias="QiwiWallet" Name="QIWI Кошелек"/>
-<Currency Label="YandexMerchantPS5R" Alias="YandexMoney" Name="Яндекс.Деньги"/>
-<Currency Label="WMR20PM" Alias="WMR" Name="WMR"/>
-</Items>
-</Group>
 <Group Code="BankCard" Description="Банковской картой">
 <Items>
-<Currency Label="BankCardPSR" Alias="BankCard" Name="Банковская карта"/>
-<Currency Label="YandexPayPSR" Alias="YandexPay" Name="Яндекс Pay" MaxValue="40000"/>
-<Currency Label="GooglePayPSR" Alias="GooglePay" Name="Google Pay" MaxValue="40000"/>
-<Currency Label="CardHalvaPSR" Alias="BankCardHalva" Name="Карта Халва"/>
-<Currency Label="CardHomeCreditPSR" Alias="BankCardHomeCredit" Name="Карта Свобода"/>
-<Currency Label="CardSovestPSR" Alias="BankCardSovest" Name="Карта Совесть"/>
-<Currency Label="ApplePayPSR" Alias="ApplePay" Name="Apple Pay" MaxValue="40000"/>
-<Currency Label="SamsungPayPSR" Alias="SamsungPay" Name="Samsung Pay" MaxValue="40000"/>
-</Items>
-</Group>
-<Group Code="Terminals" Description="В терминале">
-<Items>
-<Currency Label="Qiwi40PS" Alias="QiwiWallet" Name="QIWI Кошелек"/>
-</Items>
-</Group>
-<Group Code="Mobile" Description="Сотовые операторы">
-<Items>
-<Currency Label="RuRuBeelinePSR" Alias="PhoneBeeline" Name="Билайн" MaxValue="14354"/>
+<Currency Label="AlfaPayPSR" Alias="AlfaPay" Name="AlfaPay" MaxValue="1000000" />
+<Currency Label="BankCardPSBR" Alias="BankCard" Name="Банковская карта" />
+<Currency Label="BankCardPSR" Alias="BankCard" Name="Банковская карта" />
+<Currency Label="Podeli30R" Alias="Podeli" Name="Подели" MinValue="300" MaxValue="35000" />
+<Currency Label="SberPayPSR" Alias="SberPay" Name="SberPay" MinValue="1" MaxValue="20000000" />
+<Currency Label="SBPPSBR" Alias="SBP" Name="Банковская карта" MaxValue="1000000" />
+<Currency Label="TinkoffPayPSR" Alias="TinkoffPay" Name="TinkoffPay" MinValue="1" MaxValue="600000" />
+<Currency Label="YandexPayPNR" Alias="YandexPay" Name="Яндекс.Пэй до 1 000 000 RUB" MinValue="10" MaxValue="1000000" />
+<Currency Label="Card120DaysPSBR" Alias="Card120Days" Name="Карта 120 дней без %" />
+<Currency Label="Card120DaysPSR" Alias="Card120Days" Name="Карта 120 дней без %" />
+<Currency Label="CardHalvaPSBR" Alias="BankCardHalva" Name="Карта Халва" />
+<Currency Label="CardHalvaPSR" Alias="BankCardHalva" Name="Карта Халва" />
+<Currency Label="ERIPPSR" Alias="ERIP" Name="ЕРИП" MinValue="25" MaxValue="457000" />
+<Currency Label="MtsPayPSBR" Alias="MTSPay" Name="МТС Pay" MaxValue="100000" />
+<Currency Label="MtsPayPSR" Alias="MTSPay" Name="МТС Pay" MaxValue="100000" />
+<Currency Label="SBPPSR" Alias="SBP" Name="Банковская карта" MaxValue="1000000" />
 </Items>
 </Group>
 </Groups>

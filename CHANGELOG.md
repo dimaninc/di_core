@@ -1,5 +1,15 @@
 # Changelog
 
+- Robokassa: SBP, SberPay and T-Pay vendors; `getTemplateData()` and `isVendorUsed()`
+  read the vendor list through the project class's `getPaymentVendorsUsed()` (#45)
+- Robokassa: Yandex Pay `IncCurrLabel` is now the Alias `YandexPay` – `YandexPayPSR`
+  is not offered to the shop, and the form opened the full method list (#45)
+- Robokassa: card `IncCurrLabel` is the Alias `BankCard` – with the Label `BankCardPSR`
+  the form showed the full method list too (#45)
+- Configuration cache is replaced atomically (temp file + `rename()`): `updateCache()`
+  now needs write access to the cache DIRECTORY, not just the file. A failed write is
+  still a warning by default; pass `['throw' => true]` to get an exception (#45)
+
 ## 0.13.0
 
 - Push: FCM, RuStore and Web Push senders (#44)

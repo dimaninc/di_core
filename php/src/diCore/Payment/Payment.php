@@ -108,6 +108,18 @@ class Payment
     }
 
     /**
+     * Список через МЕТОД класса проекта: проект может переопределить его на лету, а
+     * зовут нас и через базовый класс (`Payment::isVendorUsed()`). `(array)`: у
+     * переопределения в проекте типа нет, и null не должен стать TypeError.
+     */
+    protected static function getVendorsUsedByProject(): array
+    {
+        $class = static::getClass();
+
+        return (array) $class::getPaymentVendorsUsed();
+    }
+
+    /**
      * @return int
      */
     public function getTargetType()
@@ -519,12 +531,20 @@ EOF;
         callable|null $hrefCallback = null,
         $selectedVendorId = null
     ) {
+        // Вызов через базовый класс – целиком в класс проекта: иначе список был бы
+        // проектный, а isPaymentMethodAvailable() и флаги – базовые.
+        $class = static::getClass();
+
+        if ($class !== static::class && is_subclass_of($class, static::class)) {
+            return $class::getTemplateData($hrefCallback, $selectedVendorId);
+        }
+
         $ar = [
             'payment_vendor_rows' => [],
         ];
         static::$counter = 0;
 
-        foreach (static::$paymentVendorsUsed as $systemId) {
+        foreach (static::getVendorsUsedByProject() as $systemId) {
             if (is_array($systemId)) {
                 $vendors = $systemId['vendors'];
                 $systemId = $systemId['system'];
@@ -560,7 +580,7 @@ EOF;
 
     public static function isVendorUsed($systemId, $vendorId = null)
     {
-        foreach (static::getPaymentVendorsUsed() as $sysId) {
+        foreach (static::getVendorsUsedByProject() as $sysId) {
             if (is_array($sysId)) {
                 $vendors = $sysId['vendors'];
                 $sysId = $sysId['system'];
