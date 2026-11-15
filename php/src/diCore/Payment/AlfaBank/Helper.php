@@ -15,9 +15,12 @@ use diCore\Payment\System;
  *
  * One-stage scheme only (no hold/two-step): register → pay → funds captured.
  *
- * Credentials live in a project subclass `…\Payment\AlfaBank\Settings`
- * (resolved via BaseHelper::create()), which should pull login/password from
- * Configuration rather than hardcoding secrets.
+ * Credentials: constructor options (see $options), or – legacy – a project
+ * subclass `…\Payment\AlfaBank\Settings` resolved via BaseHelper::create()
+ * that overrides getLogin()/getPassword()/isTestMode(). Options win.
+ *
+ * Every failed call throws RequestError: `transport` – no usable answer (worth
+ * a retry), `bankCode` – the bank refused the request.
  */
 class Helper extends BaseHelper
 {
@@ -25,9 +28,26 @@ class Helper extends BaseHelper
 
     // RBS REST endpoints (one-stage).
     const apiUri = 'https://payment.alfabank.ru/payment/rest/';
-    const apiUriDemo = 'https://web.rbsuat.com/ab/rest/';
+    const apiUriDemo = 'https://alfa.rbsuat.com/payment/rest/';
 
     const currencyRub = 643; // ISO 4217 numeric
+
+    // Two bank calls in a row (another bank first, then this one) must fit a 60 s queue job
+    const CONNECT_TIMEOUT_SEC = 5;
+    const TIMEOUT_SEC = 15;
+
+    /**
+     * login, password; testMode (bool) – test or prod endpoint; apiUri – overrides both (another
+     * test stand); caBundle – CURLOPT_CAINFO path, empty – the host store.
+     */
+    protected $options = [
+        'onSuccessPayment' => null,
+        'login' => null,
+        'password' => null,
+        'testMode' => null,
+        'apiUri' => null,
+        'caBundle' => null,
+    ];
 
     /** Override in the Settings subclass to drive test mode from config. */
     protected static function isTestMode()
@@ -76,15 +96,40 @@ class Helper extends BaseHelper
             $params['failUrl'] = $opts['failUrl'];
         }
         if ($opts['description']) {
-            $params['description'] = mb_substr($opts['description'], 0, 512);
+            $params['description'] = $opts['description'];
         }
         if ($opts['customerEmail']) {
             $params['email'] = $opts['customerEmail'];
         }
 
-        $response = $this->request('register.do', $params);
+        return $this->register($params)['formUrl'];
+    }
 
-        return ArrayHelper::get($response, 'formUrl');
+    /**
+     * register.do with the amount already in kopecks. orderId and formUrl of the answer are non-empty
+     * strings – otherwise RequestError, never a silent null.
+     *
+     * @param array $params orderNumber, amount (kopecks), returnUrl plus any optional register.do
+     *        parameter (failUrl, description, language, dynamicCallbackUrl, email…)
+     * @return array{orderId: string, formUrl: string}
+     */
+    public function register(array $params)
+    {
+        $params += ['currency' => static::currencyRub];
+
+        if (isset($params['description'])) {
+            $params['description'] = mb_substr((string) $params['description'], 0, 512);
+        }
+
+        $response = $this->request('register.do', $params);
+        $orderId = $response['orderId'] ?? null;
+        $formUrl = $response['formUrl'] ?? null;
+
+        if (!is_string($orderId) || $orderId === '' || !is_string($formUrl) || $formUrl === '') {
+            throw new RequestError('Alfa-Bank register.do: no orderId or formUrl in the answer');
+        }
+
+        return $response;
     }
 
     /**
@@ -110,6 +155,43 @@ class Helper extends BaseHelper
         ]);
     }
 
+    /**
+     * Checksum of a callback signed with a symmetric key: every parameter except checksum and
+     * sign_alias, sorted by name, as "name;value;" pairs, HMAC-SHA256, upper-case hex.
+     *
+     * @param array<string, string> $params callback parameters as received (query or form body, decoded)
+     */
+    public static function callbackChecksum(array $params, string $key): string
+    {
+        unset($params['checksum'], $params['sign_alias']);
+        ksort($params, SORT_STRING);
+
+        $data = '';
+        foreach ($params as $name => $value) {
+            $data .= $name . ';' . $value . ';';
+        }
+
+        return strtoupper(hash_hmac('sha256', $data, $key));
+    }
+
+    /** The callback's checksum matches. No key, no checksum or a non-string value (a[]=…) – false. */
+    public static function isCallbackGenuine(array $params, string $key): bool
+    {
+        $checksum = $params['checksum'] ?? null;
+
+        if ($key === '' || !is_string($checksum)) {
+            return false;
+        }
+
+        foreach ($params as $value) {
+            if (!is_string($value)) {
+                return false;
+            }
+        }
+
+        return hash_equals(static::callbackChecksum($params, $key), strtoupper($checksum));
+    }
+
     protected function defaultReturnUrl(\diCore\Entity\PaymentDraft\Model $draft)
     {
         $target = $draft->getTargetModel();
@@ -124,57 +206,107 @@ class Helper extends BaseHelper
         return (int) round(((float) $amount) * 100);
     }
 
+    protected function login()
+    {
+        return (string) ($this->options['login'] ?? static::getLogin());
+    }
+
+    protected function password()
+    {
+        return (string) ($this->options['password'] ?? static::getPassword());
+    }
+
+    protected function apiUri()
+    {
+        if (!empty($this->options['apiUri'])) {
+            return $this->options['apiUri'];
+        }
+
+        if ($this->options['testMode'] !== null) {
+            return $this->options['testMode'] ? static::apiUriDemo : static::apiUri;
+        }
+
+        return static::getApiUri();
+    }
+
     /**
-     * Sends a form-encoded POST to the RBS gateway and returns the decoded JSON
-     * response as an array. Credentials are injected from the Settings subclass.
+     * Form-encoded POST to the RBS gateway, the answer decoded. The log gets the method, orderNumber
+     * and the bank's code – never parameters or answers: they carry the customer's email and the form address.
      */
     protected function request($method, array $params)
     {
-        $params = extend(
-            [
-                'userName' => static::getLogin(),
-                'password' => static::getPassword(),
-            ],
-            $params
-        );
+        $order = isset($params['orderNumber']) ? ' order ' . $params['orderNumber'] : '';
+        $params = ['userName' => $this->login(), 'password' => $this->password()] + $params;
 
-        $url = static::getApiUri() . $method;
+        $raw = $this->send($this->apiUri() . $method, http_build_query($params));
 
-        static::log("$method request:\n" . print_r(
-            array_merge($params, ['password' => '***']),
-            true
-        ));
+        if (is_array($raw)) {
+            static::log("$method$order: transport error: " . $raw['error']);
 
+            throw new RequestError("Alfa-Bank $method: no answer: " . $raw['error'], null, true);
+        }
+
+        $response = json_decode($raw, true);
+
+        if (!is_array($response)) {
+            static::log("$method$order: not JSON");
+
+            throw new RequestError("Alfa-Bank $method: the answer is not JSON", null, true);
+        }
+
+        // RBS reports business errors via errorCode (0/absent = ok).
+        $errorCode = $response['errorCode'] ?? null;
+        if ($errorCode !== null && (string) $errorCode !== '0') {
+            $code = mb_substr((string) $errorCode, 0, 8);
+            $message = mb_substr((string) ArrayHelper::get($response, 'errorMessage', 'Unknown error'), 0, 200);
+            static::log("$method$order: error $code");
+
+            throw new RequestError("Alfa-Bank error #$code: $message", $code);
+        }
+
+        static::log("$method$order: ok");
+
+        return $response;
+    }
+
+    /**
+     * One HTTP POST; seam for tests.
+     *
+     * @return string|array{error: string} the body of a 200 answer, or the transport error
+     */
+    protected function send(string $url, string $body)
+    {
         $ch = curl_init($url);
-        curl_setopt_array($ch, [
+        $options = [
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => http_build_query($params),
-            CURLOPT_TIMEOUT => 30,
-        ]);
+            CURLOPT_POSTFIELDS => $body,
+            CURLOPT_CONNECTTIMEOUT => static::CONNECT_TIMEOUT_SEC,
+            CURLOPT_TIMEOUT => static::TIMEOUT_SEC,
+            CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
+            // No redirects: a redirected POST would carry the credentials wherever it points
+            CURLOPT_FOLLOWLOCATION => false,
+        ];
+
+        if (!empty($this->options['caBundle'])) {
+            $options[CURLOPT_CAINFO] = $this->options['caBundle'];
+        }
+
+        curl_setopt_array($ch, $options);
 
         $raw = curl_exec($ch);
-        $error = curl_error($ch);
+        $error = curl_error($ch) ?: 'unknown transport error';
+        $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         curl_close($ch);
 
         if ($raw === false) {
-            static::log("$method curl error: $error");
-
-            throw new \Exception("Alfa-Bank request failed: $error");
+            return ['error' => mb_substr($error, 0, 200)];
         }
 
-        static::log("$method response:\n$raw");
-
-        $response = json_decode($raw, true) ?: [];
-
-        // RBS reports business errors via errorCode (0/absent = ok).
-        $errorCode = ArrayHelper::get($response, 'errorCode');
-        if ($errorCode !== null && (int) $errorCode !== 0) {
-            $message = ArrayHelper::get($response, 'errorMessage', 'Unknown error');
-
-            throw new \Exception("Alfa-Bank error #$errorCode: $message");
+        if ($status !== 200) {
+            return ['error' => "HTTP $status"];
         }
 
-        return $response;
+        return $raw;
     }
 }
