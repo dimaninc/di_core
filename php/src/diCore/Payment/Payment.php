@@ -531,6 +531,14 @@ EOF;
         callable|null $hrefCallback = null,
         $selectedVendorId = null
     ) {
+        // Вызов через базовый класс – целиком в класс проекта: иначе список был бы
+        // проектный, а isPaymentMethodAvailable() и флаги – базовые.
+        $class = static::getClass();
+
+        if ($class !== static::class && is_subclass_of($class, static::class)) {
+            return $class::getTemplateData($hrefCallback, $selectedVendorId);
+        }
+
         $ar = [
             'payment_vendor_rows' => [],
         ];

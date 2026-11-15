@@ -62,7 +62,8 @@ class ConfigurationCacheWriteTest extends TestCase
         $w = $this->writer($this->dir);
         file_put_contents($w->file, 'old');
         chmod($w->file, 0666);
-        // Файл писать можно, каталог – нет: rename() этого не переживёт.
+        // Файл писать можно, каталог – нет: временный файл рядом не создать, а
+        // tempnam() в системном tmp отвергается (оттуда rename() не атомарен).
         chmod($this->dir, 0555);
 
         if (is_writable($this->dir)) {
@@ -80,6 +81,25 @@ class ConfigurationCacheWriteTest extends TestCase
         chmod($this->dir, 0777);
         $this->assertSame('old', file_get_contents($w->file));
         $this->assertSame(['configuration.php'], $this->filesIn($this->dir));
+    }
+
+    /** Отказ самого rename(): цель – каталог, файл поверх него не встанет. */
+    public function testFailedRenameThrowsAndLeavesNoTempFile(): void
+    {
+        $w = $this->writer($this->dir);
+        $w->file = $this->dir . '/configuration.php';
+        mkdir($w->file);
+
+        try {
+            $w->write('new', true);
+            $this->fail('expected an exception');
+        } catch (\Exception $e) {
+            $this->assertStringContainsString('Unable to replace', $e->getMessage());
+        }
+
+        $this->assertDirectoryExists($w->file);
+        $this->assertSame(['configuration.php'], $this->filesIn($this->dir));
+        rmdir($w->file);
     }
 
     public function testFailureIsAWarningByDefault(): void

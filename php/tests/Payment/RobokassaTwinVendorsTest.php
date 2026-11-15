@@ -37,7 +37,10 @@ class RobokassaTwinVendorsTest extends TestCase
         );
     }
 
-    /** Вызов через базовый класс тоже видит переопределённый метод проекта. */
+    /**
+     * Вызов через базовый класс видит и список, и доступность проекта: T-Pay в
+     * списке есть, но проект его прячет.
+     */
     public function testBaseCallReadsProjectOverride(): void
     {
         $this->assertTrue(
@@ -49,7 +52,11 @@ class RobokassaTwinVendorsTest extends TestCase
 
         $names = array_map(
             fn($row) => $row['vendor']['name'],
-            array_values(BaseStubPayment::getTemplateData()['payment_vendor_rows'])
+            array_values(
+                array_filter(
+                    BaseStubPayment::getTemplateData()['payment_vendor_rows']
+                )
+            )
         );
         $this->assertSame(['sbp'], $names);
     }
@@ -76,6 +83,17 @@ class ProjectStubPayment extends BaseStubPayment
 {
     public static function getPaymentVendorsUsed()
     {
-        return [['system' => System::robokassa, 'vendors' => [Robokassa::SBP]]];
+        return [
+            [
+                'system' => System::robokassa,
+                'vendors' => [Robokassa::SBP, Robokassa::TPAY],
+            ],
+        ];
+    }
+
+    /** Проект прячет способ: вызов через базовый класс обязан это увидеть. */
+    public static function isPaymentMethodAvailable($systemId, $vendorId)
+    {
+        return $vendorId != Robokassa::TPAY;
     }
 }

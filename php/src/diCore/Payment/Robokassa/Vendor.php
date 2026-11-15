@@ -118,8 +118,8 @@ class Vendor extends VendorContainer
 }
 
 /**
- * https://auth.robokassa.ru/Merchant/WebService/Service.asmx/GetCurrencies?MerchantLogin=romantic2
- * Ответ на 15.11.2026:
+ * https://auth.robokassa.ru/Merchant/WebService/Service.asmx/GetCurrencies?MerchantLogin=<MerchantLogin>
+ * Ответ для одного из магазинов, 15.11.2026:
 <CurrenciesList xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://merchant.roboxchange.com/WebService/">
 <Result>
 <Code>0</Code>
