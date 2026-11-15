@@ -571,6 +571,8 @@ class Configuration
             [
                 'prefixCode' => '',
                 'suffixCode' => '',
+                // true – исключение при сбое записи вместо предупреждения
+                'throw' => false,
             ],
             $options
         );
@@ -622,24 +624,54 @@ class Configuration
 
         $cache_file .= $this->phpFooter();
 
-        // Через rename(): файл подключается каждым запросом, а пишут его не только из
-        // админки, но и кроны – недописанный файл был бы фаталом на чужом запросе.
-        $target = $this->getFullCacheFilename();
-        $tmp = $target . '.' . getmypid() . '.tmp';
-
-        if (file_put_contents($tmp, $cache_file) === false) {
-            throw new \Exception("Unable to write configuration cache: $tmp");
-        }
-
-        chmod($tmp, $this->fileChmod);
-
-        if (!rename($tmp, $target)) {
-            @unlink($tmp);
-
-            throw new \Exception("Unable to replace configuration cache: $target");
-        }
+        $this->writeCacheFile($cache_file, !empty($options['throw']));
 
         return $this;
+    }
+
+    /**
+     * Через rename(): файл подключается каждым запросом, а пишут его не только из
+     * админки, но и кроны – недописанный файл был бы фаталом на чужом запросе.
+     * rename() требует права на запись в КАТАЛОГ кэша, не только в файл.
+     *
+     * Сбой по умолчанию – предупреждение, как и до атомарной записи: `loadCache()`
+     * и `store()` работают дальше на данных из БД. Исключение – только по `$throw`,
+     * для вызывающего, которому устаревший кэш равен невыполненной работе.
+     */
+    protected function writeCacheFile(string $content, bool $throw = false): bool
+    {
+        $target = $this->getFullCacheFilename();
+        // tempnam(), а не PID: у крона и FPM в разных контейнерах PID совпадают.
+        $tmp = @tempnam(dirname($target), basename($target) . '.');
+        $error = null;
+
+        if (
+            $tmp === false ||
+            realpath(dirname($tmp)) !== realpath(dirname($target))
+        ) {
+            // tempnam() молча уходит в системный tmp, откуда rename() не атомарен.
+            $error = 'Unable to create a temp file next to ' . $target;
+        } elseif (@file_put_contents($tmp, $content) !== strlen($content)) {
+            $error = "Unable to write configuration cache: $tmp";
+        } elseif (!@chmod($tmp, $this->fileChmod) || !@rename($tmp, $target)) {
+            $error = "Unable to replace configuration cache: $target";
+        }
+
+        if ($error === null) {
+            return true;
+        }
+
+        if ($tmp !== false) {
+            @unlink($tmp);
+        }
+
+        if ($throw) {
+            throw new \Exception($error);
+        }
+
+        trigger_error($error, E_USER_WARNING);
+
+        return false;
     }
 
     private function adjustBeforeDB($value, $type, $forCache = false)

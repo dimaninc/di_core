@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.13.1
+
+- Robokassa: SBP, SberPay and T-Pay vendors; `getTemplateData()` and `isVendorUsed()`
+  read the vendor list through the project class's `getPaymentVendorsUsed()` (#45)
+- Configuration cache is replaced atomically (temp file + `rename()`): `updateCache()`
+  now needs write access to the cache DIRECTORY, not just the file. A failed write is
+  still a warning by default; pass `['throw' => true]` to get an exception (#45)
+
 ## 0.13.0
 
 - Push: FCM, RuStore and Web Push senders (#44)

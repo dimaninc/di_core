@@ -108,6 +108,17 @@ class Payment
     }
 
     /**
+     * Список через МЕТОД класса проекта: проект может переопределить его на лету, а
+     * зовут нас и через базовый класс (`Payment::isVendorUsed()`).
+     */
+    protected static function getVendorsUsedByProject(): array
+    {
+        $class = static::getClass();
+
+        return $class::getPaymentVendorsUsed();
+    }
+
+    /**
      * @return int
      */
     public function getTargetType()
@@ -524,8 +535,7 @@ EOF;
         ];
         static::$counter = 0;
 
-        // Через метод, а не свойство: проект может переопределить список на лету.
-        foreach (static::getPaymentVendorsUsed() as $systemId) {
+        foreach (static::getVendorsUsedByProject() as $systemId) {
             if (is_array($systemId)) {
                 $vendors = $systemId['vendors'];
                 $systemId = $systemId['system'];
@@ -561,7 +571,7 @@ EOF;
 
     public static function isVendorUsed($systemId, $vendorId = null)
     {
-        foreach (static::getPaymentVendorsUsed() as $sysId) {
+        foreach (static::getVendorsUsedByProject() as $sysId) {
             if (is_array($sysId)) {
                 $vendors = $sysId['vendors'];
                 $sysId = $sysId['system'];
