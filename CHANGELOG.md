@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.13.3
+
+- Alfa-Bank: fix the acquiring helper; test stand is now alfa.rbsuat.com (#46)
+
+To migrate (projects with an `AlfaBank\Settings`):
+
+- the test stand moved: `apiUriDemo` is now `https://alfa.rbsuat.com/payment/rest/`
+  (was `https://web.rbsuat.com/ab/rest/`). A project on the old stand keeps it by
+  redeclaring `const apiUriDemo` in its Settings; the `apiUri` option is not a way
+  back without its own login and password – the constructor refuses it;
+- `getLogin()`/`getPassword()` pick the demo pair by `isTestMode()`, as the endpoint
+  does (they read the `testMode` constant before). A Settings that drives
+  `isTestMode()` from config now sends the demo pair to the demo stand – it used to
+  send the production pair there;
+- every failed call throws `AlfaBank\RequestError` (extends `\Exception`, so an
+  existing `catch (\Exception)` still works; a bank code or a cURL failure threw
+  before too). New: a non-JSON or non-200 answer used to come back as `[]` (and
+  `getFormUri()` as `null`), an «ok» without `orderId`/`formUrl` as `null` – now they
+  throw. A
+  `refund.do` after a transport failure may have gone through – check the status
+  (`paymentAmountInfo.refundedAmount`) before repeating it;
+- the log has the method, the order number and the bank code only, no request or
+  answer.
+
 ## 0.13.2
 
 - Robokassa: ERIP vendor (#47)
