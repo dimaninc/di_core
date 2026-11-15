@@ -22,6 +22,9 @@ class Vendor extends VendorContainer
     const APPLE_PAY = 11;
     const SAMSUNG_PAY = 12;
     const YANDEX_PAY = 13;
+    const SBP = 14;
+    const SBERPAY = 15;
+    const TPAY = 16;
 
     //const SBERBANK_ONLINE = 20;
     const ALPHA_CLICK = 21;
@@ -42,6 +45,9 @@ class Vendor extends VendorContainer
         self::APPLE_PAY => 'Apple Pay',
         self::SAMSUNG_PAY => 'Samsung Pay',
         self::YANDEX_PAY => 'Яндекс Pay',
+        self::SBP => 'СБП',
+        self::SBERPAY => 'SberPay',
+        self::TPAY => 'T-Pay',
 
         //self::SBERBANK_ONLINE => 'Сбербанк-онлайн',
         self::ALPHA_CLICK => 'Альфа-клик',
@@ -63,6 +69,10 @@ class Vendor extends VendorContainer
         self::APPLE_PAY => 'apple-pay',
         self::SAMSUNG_PAY => 'samsung-pay',
         self::YANDEX_PAY => 'yandex-pay',
+        // Те же имена, что у Tinkoff\Vendor: по имени выбирается иконка кнопки.
+        self::SBP => 'sbp',
+        self::SBERPAY => 'sberpay',
+        self::TPAY => 't-pay',
 
         //self::SBERBANK_ONLINE => 'sberbank-online',
         self::ALPHA_CLICK => 'alpha-click',
@@ -84,6 +94,10 @@ class Vendor extends VendorContainer
         self::APPLE_PAY => 'ApplePayPSR',
         self::SAMSUNG_PAY => 'SamsungPayPSR',
         self::YANDEX_PAY => 'YandexPayPSR',
+        // Метки из GetCurrencies магазина (15.11.2026).
+        self::SBP => 'SBPPSR',
+        self::SBERPAY => 'SberPayPSR',
+        self::TPAY => 'TinkoffPayPSR',
 
         //self::SBERBANK_ONLINE => 'BankSberBank',
         self::ALPHA_CLICK => 'AlfaBank',

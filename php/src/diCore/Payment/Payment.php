@@ -524,7 +524,8 @@ EOF;
         ];
         static::$counter = 0;
 
-        foreach (static::$paymentVendorsUsed as $systemId) {
+        // Через метод, а не свойство: проект может переопределить список на лету.
+        foreach (static::getPaymentVendorsUsed() as $systemId) {
             if (is_array($systemId)) {
                 $vendors = $systemId['vendors'];
                 $systemId = $systemId['system'];
