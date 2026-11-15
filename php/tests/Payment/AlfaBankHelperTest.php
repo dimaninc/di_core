@@ -82,7 +82,8 @@ class AlfaBankHelperTest extends TestCase
         $log = implode("\n", AlfaBankHelperStub::$logged);
         $this->assertStringContainsString('register.do order abc: ok', $log);
         $this->assertStringNotContainsString('Pw-7f3a91c2', $log);
-        $this->assertStringNotContainsString('formUrl', $log);
+        $this->assertStringNotContainsString('payment_ru.html', $log);
+        $this->assertStringNotContainsString('70906e55', $log);
     }
 
     public function testEndpointByOptions(): void
@@ -136,6 +137,31 @@ class AlfaBankHelperTest extends TestCase
         parse_str(AlfaBankHelperStub::$sent[0][1], $sent);
         $this->assertSame(Helper::apiUri . 'getOrderStatusExtended.do', AlfaBankHelperStub::$sent[0][0]);
         $this->assertSame(['prod-api', 'prod-pw'], [$sent['userName'], $sent['password']]);
+    }
+
+    /** Options and Settings never mix: an empty pair is not given, a pair from options ignores Settings::isTestMode() */
+    public function testOptionsAndSettingsNeverMix(): void
+    {
+        AlfaBankHelperStub::$replies = ['{"orderStatus":2}', '{"orderStatus":2}', '{"orderStatus":2}'];
+
+        // An unfilled config gives '': the Settings pair, as if no options were given
+        (new AlfaBankLegacyDemoStub(['login' => '', 'password' => '']))->getOrderStatus('x');
+        // A production pair in the options over a Settings switched to the stand: production endpoint
+        (new AlfaBankLegacyDemoStub(['login' => 'opt-prod', 'password' => 'opt-pw']))->getOrderStatus('x');
+        // The stand only when the options say so
+        (new AlfaBankLegacyDemoStub(['login' => 'opt-test', 'password' => 'opt-pw', 'testMode' => true]))->getOrderStatus('x');
+
+        $sent = array_map(function (array $call) {
+            parse_str($call[1], $body);
+
+            return [$call[0], $body['userName'], $body['password']];
+        }, AlfaBankHelperStub::$sent);
+
+        $this->assertSame([
+            [Helper::apiUriDemo . 'getOrderStatusExtended.do', 'demo-api', 'demo-pw'],
+            [Helper::apiUri . 'getOrderStatusExtended.do', 'opt-prod', 'opt-pw'],
+            [Helper::apiUriDemo . 'getOrderStatusExtended.do', 'opt-test', 'opt-pw'],
+        ], $sent);
     }
 
     /** A legacy Settings driving test mode from config gets the demo pair with the demo endpoint */

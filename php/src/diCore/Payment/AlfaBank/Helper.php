@@ -18,8 +18,9 @@ use diCore\Payment\System;
  * or – legacy – from a project subclass `…\Payment\AlfaBank\Settings` resolved
  * via BaseHelper::create(): isTestMode() picks both the endpoint and the
  * login/loginDemo pair, or getLogin()/getPassword() are overridden outright.
- * The `testMode` and `apiUri` options need non-empty login and password
- * options: alone they would send the Settings pair to another endpoint.
+ * Never mixed: an empty option counts as not given; a pair in the options goes
+ * to the endpoint of the options (`apiUri`, else `testMode`, else production),
+ * never to the one Settings picks; `testMode`/`apiUri` without a pair is refused.
  *
  * Every failed call throws RequestError (its three kinds and when a repeat is
  * safe are described there).
@@ -82,8 +83,8 @@ class Helper extends BaseHelper
         return static::testMode;
     }
 
-    // Пара – по тому же признаку, что адрес: базовые getLogin()/getPassword() смотрят на константу testMode,
-    // и Settings с isTestMode() из конфига отправил бы боевые ключи на стенд или наоборот
+    // The pair follows the same switch as the endpoint: the base getLogin()/getPassword() read the testMode
+    // constant, so a Settings with isTestMode() from config would send production keys to the stand or back
     public static function getLogin()
     {
         return static::isTestMode() ? static::loginDemo : static::login;
@@ -167,7 +168,8 @@ class Helper extends BaseHelper
 
         if (!is_string($orderId) || $orderId === '' || !is_string($formUrl) || $formUrl === '') {
             // request() has already logged «ok» – without this line the log would contradict the exception
-            static::log('register.do' . static::logLabel($params) . ': no orderId or formUrl in the answer');
+            $order = static::logLabel($params);
+            static::log("register.do$order: no orderId or formUrl in the answer");
 
             throw new RequestError('Alfa-Bank register.do: no orderId or formUrl in the answer', null, false, 'register.do');
         }
@@ -211,7 +213,7 @@ class Helper extends BaseHelper
 
         $data = '';
         foreach ($params as $name => $value) {
-            $data .= $name . ';' . $value . ';';
+            $data .= "$name;$value;";
         }
 
         return strtoupper(hash_hmac('sha256', $data, $key));
@@ -253,27 +255,36 @@ class Helper extends BaseHelper
         return (int) round(((float) $amount) * 100);
     }
 
+    /** The pair comes from the options (both non-empty – the constructor refuses half of one); empty is not given. */
+    protected function hasOptionsPair()
+    {
+        return (string) ($this->options['login'] ?? '') !== '';
+    }
+
     protected function login()
     {
-        return (string) ($this->options['login'] ?? static::getLogin());
+        return $this->hasOptionsPair() ? (string) $this->options['login'] : (string) static::getLogin();
     }
 
     protected function password()
     {
-        return (string) ($this->options['password'] ?? static::getPassword());
+        return $this->hasOptionsPair() ? (string) $this->options['password'] : (string) static::getPassword();
     }
 
     protected function apiUri()
     {
         if (!empty($this->options['apiUri'])) {
-            return rtrim($this->options['apiUri'], '/') . '/';
+            $apiUri = rtrim($this->options['apiUri'], '/');
+
+            return "$apiUri/";
         }
 
         if (($this->options['testMode'] ?? null) !== null) {
             return $this->options['testMode'] ? static::apiUriDemo : static::apiUri;
         }
 
-        return static::getApiUri();
+        // A pair from the options never follows Settings::isTestMode(): production keys would go to the stand
+        return $this->hasOptionsPair() ? static::apiUri : static::getApiUri();
     }
 
     /**
@@ -285,12 +296,13 @@ class Helper extends BaseHelper
         $order = static::logLabel($params);
         $params = ['userName' => $this->login(), 'password' => $this->password()] + $params;
 
-        $raw = $this->send($this->apiUri() . $method, http_build_query($params));
+        $apiUri = $this->apiUri();
+        $raw = $this->send("$apiUri$method", http_build_query($params));
 
         if (is_array($raw)) {
-            static::log("$method$order: transport error: " . $raw['error']);
+            static::log("$method$order: transport error: {$raw['error']}");
 
-            throw new RequestError("Alfa-Bank $method: no answer: " . $raw['error'], null, true, $method);
+            throw new RequestError("Alfa-Bank $method: no answer: {$raw['error']}", null, true, $method);
         }
 
         $response = json_decode($raw, true);
@@ -325,7 +337,9 @@ class Helper extends BaseHelper
     {
         foreach (['orderNumber' => 'order', 'orderId' => 'bank order'] as $key => $label) {
             if (isset($params[$key]) && is_scalar($params[$key])) {
-                return " $label " . static::logSafe((string) $params[$key], 64);
+                $value = static::logSafe((string) $params[$key], 64);
+
+                return " $label $value";
             }
         }
 
