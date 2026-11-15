@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.2
+
+- Robokassa: ERIP vendor (#47)
+
 ## 0.13.1
 
 - Robokassa SBP/SberPay/T-Pay vendors, atomic configuration cache (#45)
