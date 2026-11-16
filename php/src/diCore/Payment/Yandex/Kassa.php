@@ -14,6 +14,10 @@ use diCore\Helper\ArrayHelper;
 use diCore\Payment\Payment;
 use diCore\Tool\Logger;
 
+/**
+ * @deprecated старый HTTP-протокол (checkOrder/paymentAviso). Новые подключения –
+ *   API v3, diCore\Payment\YooKassa\Helper
+ */
 class Kassa
 {
     const shopId = null;

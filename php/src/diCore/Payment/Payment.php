@@ -21,6 +21,7 @@ use diCore\Payment\Robokassa\Helper as Robokassa;
 use diCore\Payment\Sberbank\Helper as Sberbank;
 use diCore\Payment\Tinkoff\Helper as Tinkoff;
 use diCore\Payment\Yandex\Kassa;
+use diCore\Payment\YooKassa\Helper as YooKassa;
 use diCore\Tool\Auth as AuthTool;
 use diCore\Tool\Logger;
 use diCore\Traits\BasicCreate;
@@ -267,7 +268,9 @@ class Payment
                 return $this->initCryptoCloud($draft);
 
             case System::yandex_kassa:
-                return $this->initYandex($draft);
+                return static::usesYooKassaApi()
+                    ? $this->initYooKassa($draft)
+                    : $this->initYandex($draft);
 
             case System::robokassa:
                 return $this->initRobokassa($draft);
@@ -618,6 +621,39 @@ EOF;
             ->getPhone();
     }
 
+    /**
+     * ЮKassa по API v3 вместо старого HTTP-протокола. false по умолчанию:
+     * проект переключается сам, когда у магазина есть секретный ключ и
+     * настроен адрес уведомлений.
+     */
+    public static function usesYooKassaApi(): bool
+    {
+        return false;
+    }
+
+    public function initYooKassa(Draft $draft)
+    {
+        $yk = YooKassa::create();
+
+        return static::redirectTo(
+            $yk->getFormUri($draft, [
+                'customerEmail' => $this->getCustomerEmail(),
+                'customerPhone' => $this->getCustomerPhone(),
+                'description' => static::ORDER_DESCRIPTION,
+                // Возврат через наш колбэк: адрес один на успех и отказ, исход
+                // он узнаёт у API
+                'returnUrl' => static::gatewayCallbackUri(
+                    'yookassa',
+                    'return',
+                    $draft,
+                    'draft',
+                    (string) $yk::getPassword()
+                ),
+            ])
+        );
+    }
+
+    /** @deprecated старый HTTP-протокол ЮKassa, см. initYooKassa() */
     public function initYandex(Draft $draft)
     {
         $paymentVendor = \diCore\Payment\Yandex\Vendor::code($draft->getVendor());
@@ -683,13 +719,15 @@ EOF;
                     'cloud_payments',
                     'success',
                     $draft,
-                    'InvoiceId'
+                    'InvoiceId',
+                    (string) $cp::getPassword()
                 ),
                 'failUrl' => static::gatewayCallbackUri(
                     'cloud_payments',
                     'fail',
                     $draft,
-                    'InvoiceId'
+                    'InvoiceId',
+                    (string) $cp::getPassword()
                 ),
             ])
         );
@@ -714,25 +752,30 @@ EOF;
      * method.
      *
      * @param string $system system name as the payment controller routes it
-     * @param string $subAction 'success' or 'fail'
+     * @param string $subAction 'success', 'fail' or 'return'
      * @param string $draftParam query parameter carrying the draft id
+     * @param string $secret gateway secret signing the address (ReturnSignature)
      */
     protected static function gatewayCallbackUri(
         $system,
         $subAction,
         Draft $draft,
-        $draftParam
+        $draftParam,
+        string $secret
     ) {
-        return \diPaths::defaultHttp() .
-            \diCore\Data\Config::getApiQueryPrefix() .
-            'payment/' .
-            $system .
-            '/' .
-            $subAction .
-            '/?' .
-            urlencode($draftParam) .
-            '=' .
-            urlencode((string) $draft->getId());
+        $draftId = (int) $draft->getId();
+        $query = http_build_query([
+            $draftParam => $draftId,
+            ReturnSignature::PARAM => ReturnSignature::sign(
+                $secret,
+                $system,
+                $subAction,
+                $draftId
+            ),
+        ]);
+        $base = \diPaths::defaultHttp() . \diCore\Data\Config::getApiQueryPrefix();
+
+        return "{$base}payment/$system/$subAction/?$query";
     }
 
     public function initSberbank(Draft $draft)
