@@ -18,9 +18,10 @@ use diCore\Payment\System;
  * or – legacy – from a project subclass `…\Payment\AlfaBank\Settings` resolved
  * via BaseHelper::create(): isTestMode() picks both the endpoint and the
  * login/loginDemo pair, or getLogin()/getPassword() are overridden outright.
- * Never mixed: an empty option counts as not given; a pair in the options goes
- * to the endpoint of the options (`apiUri`, else `testMode`, else production),
- * never to the one Settings picks; `testMode`/`apiUri` without a pair is refused.
+ * Never mixed: an empty option counts as not given; a pair or a token in the options
+ * goes to the endpoint of the options (`apiUri`, else `testMode`, else production),
+ * never to the one Settings picks; `testMode`/`apiUri` without a pair or a token is
+ * refused, and so is a token together with a login.
  *
  * Every failed call throws RequestError (its three kinds and when a repeat is
  * safe are described there).
@@ -40,13 +41,15 @@ class Helper extends BaseHelper
     const TIMEOUT_SEC = 15;
 
     /**
-     * login, password; testMode (bool) – test or prod endpoint; apiUri – overrides both (another
-     * test stand); caBundle – CURLOPT_CAINFO path, empty – the host store.
+     * login, password – the API user; or token – the merchant's payment token instead of both (sent as
+     * `token`, never as a password); testMode (bool) – test or prod endpoint; apiUri – overrides both
+     * (another test stand); caBundle – CURLOPT_CAINFO path, empty – the host store.
      */
     protected $options = [
         'onSuccessPayment' => null,
         'login' => null,
         'password' => null,
+        'token' => null,
         'testMode' => null,
         'apiUri' => null,
         'caBundle' => null,
@@ -59,16 +62,22 @@ class Helper extends BaseHelper
         // `?? null`: a legacy Settings may redeclare $options without the new keys
         $login = (string) ($this->options['login'] ?? '');
         $password = (string) ($this->options['password'] ?? '');
+        $token = (string) ($this->options['token'] ?? '');
         $apiUri = (string) ($this->options['apiUri'] ?? '');
         $endpointGiven = ($this->options['testMode'] ?? null) !== null || $apiUri !== '';
+
+        // Before the half-pair check: a token left with a password must hear «drop it», not «add a login»
+        if ($token !== '' && ($login !== '' || $password !== '')) {
+            throw new \InvalidArgumentException('Alfa-Bank: give either the token option or the login and password options');
+        }
 
         // Half a pair would be completed from Settings: the bank gets a login and a password of two accounts
         if (($login === '') !== ($password === '')) {
             throw new \InvalidArgumentException('Alfa-Bank: give both the login and the password options, or neither');
         }
 
-        if ($endpointGiven && $login === '') {
-            throw new \InvalidArgumentException('Alfa-Bank: the testMode and apiUri options need non-empty login and password options');
+        if ($endpointGiven && $login === '' && $token === '') {
+            throw new \InvalidArgumentException('Alfa-Bank: the testMode and apiUri options need a token or non-empty login and password options');
         }
 
         // A configuration error, not a transport one: RequestError::$transport would say «the bank may have done it»
@@ -261,6 +270,11 @@ class Helper extends BaseHelper
         return (string) ($this->options['login'] ?? '') !== '';
     }
 
+    protected function token()
+    {
+        return (string) ($this->options['token'] ?? '');
+    }
+
     protected function login()
     {
         return $this->hasOptionsPair() ? (string) $this->options['login'] : (string) static::getLogin();
@@ -283,8 +297,8 @@ class Helper extends BaseHelper
             return $this->options['testMode'] ? static::apiUriDemo : static::apiUri;
         }
 
-        // A pair from the options never follows Settings::isTestMode(): production keys would go to the stand
-        return $this->hasOptionsPair() ? static::apiUri : static::getApiUri();
+        // Credentials from the options never follow Settings::isTestMode(): production keys would go to the stand
+        return $this->hasOptionsPair() || $this->token() !== '' ? static::apiUri : static::getApiUri();
     }
 
     /**
@@ -294,7 +308,12 @@ class Helper extends BaseHelper
     protected function request($method, array $params)
     {
         $order = static::logLabel($params);
-        $params = ['userName' => $this->login(), 'password' => $this->password()] + $params;
+        $credentials = $this->token() !== ''
+            ? ['token' => $this->token()]
+            : ['userName' => $this->login(), 'password' => $this->password()];
+        // Credentials come only from here: a caller's userName/password/token never reach the bank
+        unset($params['userName'], $params['password'], $params['token']);
+        $params = $credentials + $params;
 
         $apiUri = $this->apiUri();
         $raw = $this->send("$apiUri$method", http_build_query($params));

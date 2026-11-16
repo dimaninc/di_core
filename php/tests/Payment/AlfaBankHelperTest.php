@@ -114,6 +114,10 @@ class AlfaBankHelperTest extends TestCase
             ['password' => 'mine'],
             // A typo in the scheme is a configuration error, not a transport one
             ['login' => 'l', 'password' => 'p', 'apiUri' => 'http://alfa.rbsuat.com/payment/rest'],
+            // A token never comes with a pair, nor with half of one
+            ['token' => 't', 'login' => 'l', 'password' => 'p'],
+            ['token' => 't', 'password' => 'p'],
+            ['token' => 't', 'login' => 'l'],
         ];
 
         foreach ($cases as $options) {
@@ -137,6 +141,48 @@ class AlfaBankHelperTest extends TestCase
         parse_str(AlfaBankHelperStub::$sent[0][1], $sent);
         $this->assertSame(Helper::apiUri . 'getOrderStatusExtended.do', AlfaBankHelperStub::$sent[0][0]);
         $this->assertSame(['prod-api', 'prod-pw'], [$sent['userName'], $sent['password']]);
+    }
+
+    /** A payment token replaces the pair: sent as `token` only, to the options' endpoint; never together with a login */
+    public function testTokenReplacesLoginAndPassword(): void
+    {
+        AlfaBankHelperStub::$replies = ['{"orderStatus":2}', '{"orderStatus":2}', '{"orderStatus":2}'];
+
+        // Settings switched to the stand: a token from the options still goes to production
+        (new AlfaBankLegacyDemoStub(['token' => 'tok-1']))->getOrderStatus('x');
+        (new AlfaBankHelperStub(['token' => 'tok-2', 'testMode' => true]))->getOrderStatus('y');
+        (new AlfaBankHelperStub(['token' => 'tok-3', 'apiUri' => Helper::apiUriDemo]))->getOrderStatus('z');
+
+        $sent = array_map(function (array $call) {
+            parse_str($call[1], $body);
+
+            return [$call[0], $body];
+        }, AlfaBankHelperStub::$sent);
+
+        $this->assertSame([
+            [Helper::apiUri . 'getOrderStatusExtended.do', ['token' => 'tok-1', 'orderId' => 'x']],
+            [Helper::apiUriDemo . 'getOrderStatusExtended.do', ['token' => 'tok-2', 'orderId' => 'y']],
+            [Helper::apiUriDemo . 'getOrderStatusExtended.do', ['token' => 'tok-3', 'orderId' => 'z']],
+        ], $sent);
+    }
+
+    /** A token left with a password is told to drop it, not to add a login */
+    public function testTokenWithAPasswordNamesTheConflict(): void
+    {
+        $this->expectExceptionMessage('give either the token option or the login and password options');
+        new AlfaBankHelperStub(['token' => 't', 'password' => 'p']);
+    }
+
+    /** Credentials come only from the helper: a caller's userName/password never reach the bank next to a token */
+    public function testCallerCannotAddCredentials(): void
+    {
+        AlfaBankHelperStub::$replies = ['{"orderId":"o","formUrl":"https://alfa.rbsuat.com/f"}'];
+        (new AlfaBankHelperStub(['token' => 't']))->register(['orderNumber' => '1', 'amount' => 100, 'returnUrl' => 'https://x.test/', 'userName' => 'x', 'password' => 'p', 'token' => 'other']);
+
+        parse_str(AlfaBankHelperStub::$sent[0][1], $body);
+        $this->assertSame('t', $body['token']);
+        $this->assertArrayNotHasKey('userName', $body);
+        $this->assertArrayNotHasKey('password', $body);
     }
 
     /** Options and Settings never mix: an empty pair is not given, a pair from options ignores Settings::isTestMode() */
