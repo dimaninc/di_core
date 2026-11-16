@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.14.1
+
+- Alfa-Bank: payment token instead of login and password (#51)
+
 ## 0.14.0
 
 - YooKassa: API v3 gateway (#50)
