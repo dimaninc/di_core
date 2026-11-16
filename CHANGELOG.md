@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.4
+
+- Robokassa: pass customer email to the payment form (#48)
+
 ## 0.13.3
 
 - Alfa-Bank: fix the acquiring helper; test stand is now alfa.rbsuat.com (#46)
