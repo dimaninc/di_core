@@ -83,10 +83,7 @@ class YooKassaHelperTest extends TestCase
             'customerPhone' => '8 (900) 111-22-33',
         ]);
 
-        $this->assertSame(
-            ['phone' => '79001112233'],
-            $body['receipt']['customer']
-        );
+        $this->assertSame(['phone' => '79001112233'], $body['receipt']['customer']);
     }
 
     /** В чек идёт то же обрезанное описание, что в платёж */

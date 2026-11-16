@@ -232,7 +232,10 @@ class Helper extends BaseHelper
         $customer = array_filter([
             'email' => (string) ($opts['customerEmail'] ?? ''),
             // E.164 без плюса; «8 (900)…» цифрами вышел бы 8900… – чек отклонят
-            'phone' => ltrim(Phone::e164((string) ($opts['customerPhone'] ?? '')), '+'),
+            'phone' => ltrim(
+                Phone::e164((string) ($opts['customerPhone'] ?? '')),
+                '+'
+            ),
         ]);
 
         // Без контакта ЮKassa отклонит чек, а с ним и платёж
@@ -336,7 +339,9 @@ class Helper extends BaseHelper
         if ($payment === null) {
             // id из неподписанного тела: перевод строки в нём подделал бы запись
             $safeId = static::sanitizeForLog($paymentId, 100);
-            static::log("GET payments/$safeId failed: {$this->getApi()->getError()}");
+            static::log(
+                "GET payments/$safeId failed: {$this->getApi()->getError()}"
+            );
         }
 
         return $payment;
