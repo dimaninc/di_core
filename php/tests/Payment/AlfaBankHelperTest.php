@@ -139,6 +139,30 @@ class AlfaBankHelperTest extends TestCase
         $this->assertSame(['prod-api', 'prod-pw'], [$sent['userName'], $sent['password']]);
     }
 
+    /** A payment token replaces the pair: sent as `token` only, to the options' endpoint; never together with a login */
+    public function testTokenReplacesLoginAndPassword(): void
+    {
+        AlfaBankHelperStub::$replies = ['{"orderStatus":2}', '{"orderStatus":2}'];
+
+        // Settings switched to the stand: a token from the options still goes to production
+        (new AlfaBankLegacyDemoStub(['token' => 'tok-1']))->getOrderStatus('x');
+        (new AlfaBankHelperStub(['token' => 'tok-2', 'testMode' => true]))->getOrderStatus('y');
+
+        $sent = array_map(function (array $call) {
+            parse_str($call[1], $body);
+
+            return [$call[0], $body];
+        }, AlfaBankHelperStub::$sent);
+
+        $this->assertSame([
+            [Helper::apiUri . 'getOrderStatusExtended.do', ['token' => 'tok-1', 'orderId' => 'x']],
+            [Helper::apiUriDemo . 'getOrderStatusExtended.do', ['token' => 'tok-2', 'orderId' => 'y']],
+        ], $sent);
+
+        $this->expectException(\InvalidArgumentException::class);
+        new AlfaBankHelperStub(['token' => 't', 'login' => 'l', 'password' => 'p']);
+    }
+
     /** Options and Settings never mix: an empty pair is not given, a pair from options ignores Settings::isTestMode() */
     public function testOptionsAndSettingsNeverMix(): void
     {
