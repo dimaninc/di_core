@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.14.0
+
+- YooKassa: API v3 gateway (#50)
+- Payment: payer return addresses of YooKassa and CloudPayments are signed (HMAC)
+
+To migrate:
+
+- `Payment::gatewayCallbackUri()` takes a fifth argument, the gateway secret, and signs
+  the address (`sig`, `ReturnSignature`). A subclass calling it with four arguments or
+  overriding it with the old signature must be updated;
+- the YooKassa `return` and CloudPayments `success`/`fail` actions accept only a signed
+  address; an unsigned one redirects to `getUnsignedReturnHref()` (the site root) with
+  no side effects. Returns issued before the deploy, or before a gateway secret is
+  re-issued, land on the root; the notification still credits the payment;
+- `Yandex\Vendor`: `SBERBANK_ONLINE` → `SBERPAY` (the old constant and the name
+  `sberbank-online` still resolve); `TINKOFF` (КупиВКредит, `KV`) is gone, id 12 is now
+  `T_PAY` (`t-pay`); titles changed («SberPay», «СБП»);
+- `YooKassa\Helper::getApiHttpCode()` and `MerchantApi::getData()` are removed;
+  `fetchPayment()` takes an optional timeout; without credentials no request is sent;
+- YooKassa refuses a non-RUB draft in `getFormUri()`.
+
 ## 0.13.4
 
 - Robokassa: pass customer email to the payment form (#48)
