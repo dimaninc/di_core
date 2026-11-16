@@ -9,7 +9,7 @@ namespace diCore\Payment;
  */
 class ReturnSignature
 {
-    const string PARAM = 'sig';
+    const PARAM = 'sig';
 
     /** Пустой секрет – пустая подпись: такой адрес не пройдёт verify() */
     public static function sign(

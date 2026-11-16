@@ -98,6 +98,31 @@ class YooKassaHelperTest extends TestCase
         $this->assertSame('Payment', $item('   '));
     }
 
+    /** Контакты покупателя из чека в лог не попадают */
+    public function testLoggedBodyHidesTheCustomer(): void
+    {
+        $body = ReceiptHelper::paymentBody($this->draft(), [
+            'customerEmail' => 'a@b.c',
+            'customerPhone' => '+7 900 111-22-33',
+        ]);
+        $logged = print_r(Helper::bodyForLog($body), true);
+
+        $this->assertStringNotContainsString('a@b.c', $logged);
+        $this->assertStringNotContainsString('79001112233', $logged);
+        $this->assertSame($body['amount'], Helper::bodyForLog($body)['amount']);
+    }
+
+    /** Сумма уходит в рублях: долларовый черновик не стартует, до сети */
+    public function testNonRubleDraftIsRefused(): void
+    {
+        $draft = $this->draft();
+        $draft->setCurrency(\diCore\Payment\Payment::usd);
+
+        $this->expectExceptionMessage('RUB only');
+
+        (new Helper())->getFormUri($draft);
+    }
+
     /** Без контакта ЮKassa отвергла бы и чек, и платёж */
     public function testReceiptWithoutContactIsDropped(): void
     {

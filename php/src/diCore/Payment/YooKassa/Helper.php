@@ -10,6 +10,7 @@ namespace diCore\Payment\YooKassa;
 use diCore\Entity\PaymentDraft\Model as Draft;
 use diCore\Helper\Phone;
 use diCore\Payment\BaseHelper;
+use diCore\Payment\Payment;
 use diCore\Payment\System;
 use diCore\Payment\Yandex\Vendor;
 
@@ -99,12 +100,6 @@ class Helper extends BaseHelper
         return $this->getApi()->isUnknownPayment();
     }
 
-    /** HTTP-код последнего ответа; 0 – запроса не было или он не дошёл */
-    public function getApiHttpCode(): int
-    {
-        return (int) $this->getApi()->getHttpCode();
-    }
-
     /**
      * Создаёт платёж и возвращает адрес, куда отправить плательщика.
      *
@@ -112,6 +107,15 @@ class Helper extends BaseHelper
      */
     public function getFormUri(Draft $draft, array $opts = []): string
     {
+        // Сумма уходит в рублях: черновик на 10 USD списал бы 10 рублей
+        $currency = (int) $draft->getCurrency();
+
+        if ($currency && $currency !== Payment::rub) {
+            throw new \Exception(
+                "YooKassa takes RUB only, draft currency #$currency"
+            );
+        }
+
         $body = static::paymentBody($draft, $opts);
 
         // Черновик заводится на каждую попытку: повтор запроса с тем же ключом
@@ -121,7 +125,10 @@ class Helper extends BaseHelper
             static::idempotenceKey($draft)
         );
 
-        static::log("payments:\n" . static::sanitizeForLog(print_r($body, true)));
+        static::log(
+            "payments:\n" .
+                static::sanitizeForLog(print_r(static::bodyForLog($body), true))
+        );
         static::log(
             'Response: ' . static::sanitizeForLog($this->getApi()->getResponse())
         );
@@ -148,6 +155,19 @@ class Helper extends BaseHelper
         }
 
         return $url;
+    }
+
+    /** Тело запроса без контактов покупателя из чека: им не место в логе */
+    public static function bodyForLog(array $body): array
+    {
+        if (isset($body['receipt']['customer'])) {
+            $body['receipt']['customer'] = array_map(
+                fn() => '***',
+                (array) $body['receipt']['customer']
+            );
+        }
+
+        return $body;
     }
 
     public static function idempotenceKey(Draft $draft): string
@@ -332,9 +352,21 @@ class Helper extends BaseHelper
     }
 
     /** Текущее состояние платежа; null – не удалось узнать (см. getApiError()) */
-    public function fetchPayment(string $paymentId): ?array
+    /** @param int|null $timeoutSec короче обычного, когда ответ не обязателен */
+    public function fetchPayment(string $paymentId, ?int $timeoutSec = null): ?array
     {
-        $payment = $this->getApi()->getPayment($paymentId);
+        $api = $this->getApi();
+        $defaultTimeout = $api->getTimeout();
+
+        if ($timeoutSec !== null) {
+            $api->setTimeout($timeoutSec);
+        }
+
+        try {
+            $payment = $api->getPayment($paymentId);
+        } finally {
+            $api->setTimeout($defaultTimeout);
+        }
 
         if ($payment === null) {
             // id из неподписанного тела: перевод строки в нём подделал бы запись

@@ -9,16 +9,16 @@ namespace diCore\Payment\YooKassa;
 
 class MerchantApi
 {
-    const string ERROR_INVALID_PAYMENT_ID = 'Invalid payment id';
-    const string API_URL = 'https://api.yookassa.ru/v3/';
+    const ERROR_INVALID_PAYMENT_ID = 'Invalid payment id';
+    const API_URL = 'https://api.yookassa.ru/v3/';
 
     /** Зависший шлюз не должен держать воркер FPM */
-    const int CONNECT_TIMEOUT_SEC = 5;
+    const CONNECT_TIMEOUT_SEC = 5;
     // ЮKassa сама отвечает 500, если не уложилась в 30 секунд
-    const int TIMEOUT_SEC = 35;
+    const TIMEOUT_SEC = 35;
 
     /** Предел ЮKassa для `Idempotence-Key` */
-    const int IDEMPOTENCE_KEY_MAX_LEN = 64;
+    const IDEMPOTENCE_KEY_MAX_LEN = 64;
 
     /** @var string|null доп. CA-бандл; null – системное хранилище */
     private $caBundlePath = null;
@@ -26,10 +26,12 @@ class MerchantApi
     private $shopId;
     private $secretKey;
 
+    /** @var int TIMEOUT_SEC или короче – для запроса, без которого можно обойтись */
+    private $timeoutSec = self::TIMEOUT_SEC;
+
     private $error;
     private $httpCode;
     private $response;
-    private $data;
 
     public function __construct($shopId, $secretKey)
     {
@@ -75,10 +77,16 @@ class MerchantApi
         return $this->response;
     }
 
-    /** Разобранный объект последнего ответа или null */
-    public function getData(): ?array
+    public function setTimeout(int $sec)
     {
-        return $this->data;
+        $this->timeoutSec = max(1, $sec);
+
+        return $this;
+    }
+
+    public function getTimeout(): int
+    {
+        return $this->timeoutSec;
     }
 
     /**
@@ -174,7 +182,7 @@ class MerchantApi
         curl_setopt($curl, CURLOPT_USERPWD, "$this->shopId:$this->secretKey");
         curl_setopt($curl, CURLOPT_CUSTOMREQUEST, $method);
         curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, static::CONNECT_TIMEOUT_SEC);
-        curl_setopt($curl, CURLOPT_TIMEOUT, static::TIMEOUT_SEC);
+        curl_setopt($curl, CURLOPT_TIMEOUT, $this->timeoutSec);
         curl_setopt($curl, CURLOPT_HTTPHEADER, $headers);
 
         if ($body !== null) {
@@ -237,8 +245,6 @@ class MerchantApi
             return null;
         }
 
-        $this->data = $json;
-
         return $json;
     }
 
@@ -251,6 +257,5 @@ class MerchantApi
         $this->error = '';
         $this->httpCode = null;
         $this->response = null;
-        $this->data = null;
     }
 }

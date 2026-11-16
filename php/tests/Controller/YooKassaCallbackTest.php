@@ -232,6 +232,11 @@ class YooKassaCallbackTest extends TestCase
 
         $this->assertCount(1, $c->receipts);
         $this->assertSame('target-' . Payment::STATUS_SUCCESS, $c->redirectedTo);
+        // зависший API не держит воркер FPM обычные 35 секунд
+        $this->assertSame(
+            [Payment::YOOKASSA_RETURN_TIMEOUT_SEC],
+            $c->helper->timeouts
+        );
     }
 
     public function testReturnAfterCancelGoesToFailure(): void
@@ -472,22 +477,19 @@ class YooKassaHelperStub extends Helper
     public int $httpCode = 200;
     public string $body = '';
     public int $fetches = 0;
+    public array $timeouts = [];
 
     public function readNotification(?string $rawBody = null)
     {
         return parent::readNotification($rawBody ?? $this->body);
     }
 
-    public function fetchPayment(string $paymentId): ?array
+    public function fetchPayment(string $paymentId, ?int $timeoutSec = null): ?array
     {
         $this->fetches++;
+        $this->timeouts[] = $timeoutSec;
 
         return $this->payment;
-    }
-
-    public function getApiHttpCode(): int
-    {
-        return $this->payment === null ? $this->httpCode : 200;
     }
 
     public function isUnknownPayment(): bool

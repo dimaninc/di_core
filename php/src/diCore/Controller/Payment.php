@@ -178,6 +178,9 @@ class Payment extends \diBaseController
     const YOOKASSA_IGNORED = 'ignored';
     const YOOKASSA_RETRY = 'retry';
 
+    /** Запрос статуса на возврате плательщика – по нему никто не ждёт денег */
+    const YOOKASSA_RETURN_TIMEOUT_SEC = 5;
+
     /**
      * ЮKassa по API v3:
      *   POST /api/payment/yookassa/notification       HTTP-уведомление
@@ -331,7 +334,12 @@ class Payment extends \diBaseController
         $paymentId = $this->getYooKassaPaymentId($this->getDraft());
 
         if ($paymentId !== null && !$this->getDraft()->hasPaid()) {
-            $payment = $yk->fetchPayment($paymentId);
+            // Ответ здесь не обязателен (не дождались – проведёт уведомление),
+            // поэтому зависший API не держит воркер FPM дольше нескольких секунд
+            $payment = $yk->fetchPayment(
+                $paymentId,
+                self::YOOKASSA_RETURN_TIMEOUT_SEC
+            );
 
             if ($payment !== null && YooKassa::draftIdOf($payment) === $draftId) {
                 $outcome = $this->processYooKassaPayment($payment);
@@ -766,9 +774,9 @@ class Payment extends \diBaseController
                 $this->initDraftForRedirect($cp);
 
                 return $cp->fail(function (CloudPayments $cp) {
-                    // Empty payload on purpose: this redirect is unsigned, so
-                    // passing $_GET on would let anyone overwrite the real
-                    // reason that arrived by notification.
+                    // Empty payload on purpose: the signature vouches for the
+                    // draft id only, the rest of $_GET is whatever the opener
+                    // typed, and it must not overwrite the notification's reason.
                     $this->onGatewayFailure(System::cloud_payments, []);
                     $this->redirectTo($this->getTargetHref(self::STATUS_FAIL));
                 });
@@ -1037,9 +1045,10 @@ class Payment extends \diBaseController
     }
 
     /**
-     * The browser redirects carry only the draft id: they are addresses we
-     * built ourselves, they are not signed, and they must not be trusted to
-     * report an amount. Resolution only — no amount check, no save.
+     * The browser redirects carry the draft id and its signature, checked
+     * before this (isSignedReturn()); nothing else in them is ours, so they
+     * are not trusted to report an amount. Resolution only — no amount check,
+     * no save.
      */
     private function initDraftForRedirect(CloudPayments $cp)
     {

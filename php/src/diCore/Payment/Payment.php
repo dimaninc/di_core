@@ -752,7 +752,7 @@ EOF;
      * method.
      *
      * @param string $system system name as the payment controller routes it
-     * @param string $subAction 'success' or 'fail'
+     * @param string $subAction 'success', 'fail' or 'return'
      * @param string $draftParam query parameter carrying the draft id
      * @param string $secret gateway secret signing the address (ReturnSignature)
      */

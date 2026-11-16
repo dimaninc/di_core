@@ -86,11 +86,25 @@ class YooKassaMerchantApiTest extends TestCase
         $api->answers[] = [0, false, 'timeout'];
 
         $api->getPayment('aaaa-1111');
-        $this->assertNotNull($api->getData());
+        $this->assertSame(200, $api->getHttpCode());
 
         $api->getPayment('bbbb-2222');
-        $this->assertNull($api->getData());
         $this->assertSame(0, $api->getHttpCode());
+        $this->assertFalse($api->getResponse());
+        $this->assertStringContainsString('timeout', $api->getError());
+    }
+
+    /** Короткий таймаут возврата действует на один запрос и не прилипает */
+    public function testFetchTimeoutIsRestored(): void
+    {
+        $api = new StubYooKassaApi('1', 'k');
+        $api->answers[] = [200, '{"id":"aaaa-1111","status":"succeeded"}', ''];
+        $h = new TimeoutHelper($api);
+
+        $h->fetchPayment('aaaa-1111', 5);
+
+        $this->assertSame([5], $api->timeouts);
+        $this->assertSame(MerchantApi::TIMEOUT_SEC, $api->getTimeout());
     }
 
     /** id уходит в путь: «../» и прочее до сети не доходит */
@@ -125,6 +139,7 @@ class StubYooKassaApi extends MerchantApi
 {
     public array $answers = [];
     public array $sent = [];
+    public array $timeouts = [];
 
     protected function send(
         string $method,
@@ -133,7 +148,20 @@ class StubYooKassaApi extends MerchantApi
         array $headers
     ): array {
         $this->sent[] = compact('method', 'url', 'body', 'headers');
+        $this->timeouts[] = $this->getTimeout();
 
         return array_shift($this->answers) ?? [0, false, 'no stubbed answer'];
+    }
+}
+
+class TimeoutHelper extends \diCore\Payment\YooKassa\Helper
+{
+    public function __construct(MerchantApi $api)
+    {
+        $this->api = $api;
+    }
+
+    public static function log($message)
+    {
     }
 }
