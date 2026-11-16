@@ -126,4 +126,12 @@ class Phone
 
         return strlen($digits) === 11 && $digits[0] === '7' ? "+$digits" : '';
     }
+
+    /** e164() для чека: 8-800 – горячая линия магазина, а не номер покупателя */
+    public static function buyerE164(string $phone): string
+    {
+        $e164 = static::e164($phone);
+
+        return str_starts_with($e164, '+7800') ? '' : $e164;
+    }
 }

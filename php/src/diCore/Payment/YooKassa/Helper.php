@@ -253,7 +253,7 @@ class Helper extends BaseHelper
             'email' => (string) ($opts['customerEmail'] ?? ''),
             // E.164 без плюса; «8 (900)…» цифрами вышел бы 8900… – чек отклонят
             'phone' => ltrim(
-                Phone::e164((string) ($opts['customerPhone'] ?? '')),
+                Phone::buyerE164((string) ($opts['customerPhone'] ?? '')),
                 '+'
             ),
         ]);
@@ -351,8 +351,11 @@ class Helper extends BaseHelper
         return ['yoomoney.ru', 'yookassa.ru'];
     }
 
-    /** Текущее состояние платежа; null – не удалось узнать (см. getApiError()) */
-    /** @param int|null $timeoutSec короче обычного, когда ответ не обязателен */
+    /**
+     * Текущее состояние платежа; null – не удалось узнать (см. getApiError()).
+     *
+     * @param int|null $timeoutSec короче обычного, когда ответ не обязателен
+     */
     public function fetchPayment(string $paymentId, ?int $timeoutSec = null): ?array
     {
         $api = $this->getApi();
@@ -453,7 +456,15 @@ class Helper extends BaseHelper
             return false;
         }
 
-        $bits = $bits === null ? strlen($ipBin) * 8 : (int) $bits;
+        $maxBits = strlen($ipBin) * 8;
+        $bits = $bits === null ? $maxBits : $bits;
+
+        // Отрицательный префикс дал бы нулевую маску – «совпадает всё»
+        if (!ctype_digit((string) $bits) || (int) $bits > $maxBits) {
+            return false;
+        }
+
+        $bits = (int) $bits;
         $bytes = intdiv($bits, 8);
         $rest = $bits % 8;
 

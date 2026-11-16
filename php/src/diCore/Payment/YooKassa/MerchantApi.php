@@ -10,6 +10,7 @@ namespace diCore\Payment\YooKassa;
 class MerchantApi
 {
     const ERROR_INVALID_PAYMENT_ID = 'Invalid payment id';
+    const ERROR_NO_CREDENTIALS = 'No shop id or secret key';
     const API_URL = 'https://api.yookassa.ru/v3/';
 
     /** Зависший шлюз не должен держать воркер FPM */
@@ -128,6 +129,14 @@ class MerchantApi
         ?string $idempotenceKey = null
     ): ?array {
         $this->resetState();
+
+        // Без ключей ответ заранее известен (401), а адрес уведомлений открыт
+        // всем: каждый чужой POST стоил бы исходящего запроса
+        if ($this->shopId === '' || $this->secretKey === '') {
+            $this->error = self::ERROR_NO_CREDENTIALS;
+
+            return null;
+        }
 
         $headers = ['Content-Type: application/json'];
 

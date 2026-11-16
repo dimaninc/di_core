@@ -282,10 +282,7 @@ class Model extends \diCore\Entity\PaymentDraft\Model
      */
     protected function normalizeCashDeskPhone(string $phone): string
     {
-        $e164 = Phone::e164($phone);
-
-        // 8-800 is the shop's toll-free line, never the buyer's own
-        return str_starts_with($e164, '+7800') ? '' : $e164;
+        return Phone::buyerE164($phone);
     }
 
     protected function cashDeskItems(int $total): array

@@ -38,6 +38,21 @@ class Vendor extends VendorContainer
     /** @deprecated старое имя, тот же способ: SberPay */
     const SBERBANK_ONLINE = self::SBERPAY;
 
+    /**
+     * Старые имена того же способа: проект со старой формой иначе молча
+     * создаст черновик без способа. Имени `tinkoff` (КупиВКредит) здесь нет:
+     * это другой, закрытый продукт, а не T-Pay.
+     */
+    private const LEGACY_NAMES = [
+        'sberbank-online' => self::SBERPAY,
+    ];
+
+    public static function id($name)
+    {
+        return parent::id($name) ??
+            (is_string($name) ? self::LEGACY_NAMES[$name] ?? null : null);
+    }
+
     public static $titles = [
         self::YANDEX_MONEY => 'ЮMoney', // Яндекс.Деньги
         self::WEBMONEY => 'WebMoney',

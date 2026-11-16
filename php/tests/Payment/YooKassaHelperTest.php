@@ -86,6 +86,17 @@ class YooKassaHelperTest extends TestCase
         $this->assertSame(['phone' => '79001112233'], $body['receipt']['customer']);
     }
 
+    /** 8-800 – горячая линия магазина: чек по SMS ушёл бы туда, а не покупателю */
+    public function testTollFreePhoneIsNotTheBuyers(): void
+    {
+        $body = ReceiptHelper::paymentBody($this->draft(), [
+            'customerEmail' => 'a@b.c',
+            'customerPhone' => '8 800 555-35-35',
+        ]);
+
+        $this->assertSame(['email' => 'a@b.c'], $body['receipt']['customer']);
+    }
+
     /** В чек идёт то же обрезанное описание, что в платёж */
     public function testReceiptGetsTheTrimmedDescription(): void
     {
@@ -204,6 +215,15 @@ class YooKassaHelperTest extends TestCase
         $this->assertSame(Vendor::SBERPAY, Vendor::SBERBANK_ONLINE);
     }
 
+    /** Форма со старым именем не должна молча создать черновик без способа */
+    public function testLegacyNameFindsTheSameVendor(): void
+    {
+        $this->assertSame(Vendor::SBERPAY, Vendor::id('sberbank-online'));
+        $this->assertSame(Vendor::SBERPAY, Vendor::id('sberpay'));
+        // КупиВКредит – не T-Pay: старое имя не превращается в другой способ
+        $this->assertNull(Vendor::id('tinkoff'));
+    }
+
     /** Платёж без paymentType – способ неизвестен, а не T-Pay */
     public function testEmptyCodeIsNoVendor(): void
     {
@@ -279,6 +299,17 @@ class YooKassaHelperTest extends TestCase
             'чужой' => ['8.8.8.8', false],
             'мусор' => ['not-an-ip', false],
         ];
+    }
+
+    /** Опечатка в префиксе списка не должна пускать всех */
+    public function testBadPrefixMatchesNothing(): void
+    {
+        foreach (['8.8.8.0/-1', '8.8.8.0/33', '8.8.8.0/x', '8.8.8.0/'] as $cidr) {
+            $this->assertFalse(Helper::ipInCidr('1.2.3.4', $cidr), $cidr);
+        }
+
+        $this->assertTrue(Helper::ipInCidr('1.2.3.4', '0.0.0.0/0'));
+        $this->assertTrue(Helper::ipInCidr('8.8.8.8', '8.8.8.8/32'));
     }
 
     public function testNotificationGivesOnlyAPaymentId(): void

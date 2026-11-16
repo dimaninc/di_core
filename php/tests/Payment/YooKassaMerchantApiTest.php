@@ -118,6 +118,19 @@ class YooKassaMerchantApiTest extends TestCase
         $this->assertTrue($api->isUnknownPayment());
     }
 
+    /** Повтор уведомления после того, как ключи вписаны, проведёт оплату */
+    public function testMissingCredentialsNeverReachTheNetwork(): void
+    {
+        foreach ([['', 'k'], ['1', '']] as [$shopId, $key]) {
+            $api = new StubYooKassaApi($shopId, $key);
+
+            $this->assertNull($api->getPayment('aaaa-1111'));
+            $this->assertSame([], $api->sent);
+            $this->assertSame(MerchantApi::ERROR_NO_CREDENTIALS, $api->getError());
+            $this->assertFalse($api->isUnknownPayment());
+        }
+    }
+
     public function testOverlongIdempotenceKeyIsRefused(): void
     {
         $api = new StubYooKassaApi('1', 'k');
