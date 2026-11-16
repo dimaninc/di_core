@@ -282,36 +282,10 @@ class Model extends \diCore\Entity\PaymentDraft\Model
      */
     protected function normalizeCashDeskPhone(string $phone): string
     {
-        $e164 = $this->e164CashDeskPhone($phone);
+        $e164 = Phone::e164($phone);
 
         // 8-800 is the shop's toll-free line, never the buyer's own
         return str_starts_with($e164, '+7800') ? '' : $e164;
-    }
-
-    private function e164CashDeskPhone(string $phone): string
-    {
-        // An explicit country code is taken as written: Phone::clean() would read
-        // +81 3… (11 digits on 8) or +961 1… (10 on 9) as Russian numbers
-        if (preg_match('/^\s*(\+|00)([\d\s().-]+)\z/', $phone, $m)) {
-            $digits = preg_replace('/\D+/', '', $m[2]);
-
-            // no country code starts with 89: +8 9XX… is a Russian 8 with a stray plus
-            if (preg_match('/^8(9\d{9})\z/', $digits, $ru)) {
-                return '+7' . $ru[1];
-            }
-
-            return preg_match('/^[1-9]\d{7,14}\z/', $digits) ? "+$digits" : '';
-        }
-
-        if (preg_match('/^\s*(\+|00)/', $phone)) {
-            // a prefix plus letters (an extension, a note): not a number we can dial
-            return '';
-        }
-
-        // 8XXXXXXXXXX and 9XXXXXXXXX become 7XXXXXXXXXX
-        $digits = Phone::clean($phone);
-
-        return strlen($digits) === 11 && $digits[0] === '7' ? "+$digits" : '';
     }
 
     protected function cashDeskItems(int $total): array

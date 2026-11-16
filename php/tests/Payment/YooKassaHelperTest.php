@@ -6,6 +6,7 @@ use diCore\Entity\PaymentDraft\Model as Draft;
 use diCore\Payment\System;
 use diCore\Payment\Yandex\Vendor;
 use diCore\Payment\YooKassa\Helper;
+use diCore\Payment\YooKassa\MerchantApi;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 
@@ -75,6 +76,31 @@ class YooKassaHelperTest extends TestCase
         $this->assertSame(2, $body['receipt']['tax_system_code']);
     }
 
+    /** ЮKassa ждёт E.164: «8 (900)…» одними цифрами дало бы 8900… и отказ */
+    public function testReceiptPhoneIsE164(): void
+    {
+        $body = ReceiptHelper::paymentBody($this->draft(), [
+            'customerPhone' => '8 (900) 111-22-33',
+        ]);
+
+        $this->assertSame(
+            ['phone' => '79001112233'],
+            $body['receipt']['customer']
+        );
+    }
+
+    /** В чек идёт то же обрезанное описание, что в платёж */
+    public function testReceiptGetsTheTrimmedDescription(): void
+    {
+        $item = fn(string $d) => ReceiptHelper::paymentBody($this->draft(), [
+            'customerEmail' => 'a@b.c',
+            'description' => $d,
+        ])['receipt']['items'][0]['description'];
+
+        $this->assertSame('Открытка', $item('  Открытка  '));
+        $this->assertSame('Payment', $item('   '));
+    }
+
     /** Без контакта ЮKassa отвергла бы и чек, и платёж */
     public function testReceiptWithoutContactIsDropped(): void
     {
@@ -138,6 +164,10 @@ class YooKassaHelperTest extends TestCase
             'СБП' => [['type' => 'sbp'], Vendor::SBP],
             'SberPay' => [['type' => 'sberbank'], Vendor::SBERPAY],
             'T-Pay' => [['type' => 'tinkoff_bank'], Vendor::T_PAY],
+            'source не строка' => [
+                ['type' => 'bank_card', 'card' => ['source' => ['x']]],
+                Vendor::CARD,
+            ],
             'неизвестный' => [['type' => 'cash'], null],
             'пусто' => [[], null],
         ];
@@ -150,6 +180,14 @@ class YooKassaHelperTest extends TestCase
         $this->assertSame('sberpay', Vendor::name(Vendor::SBERPAY));
         $this->assertSame('t-pay', Vendor::name(Vendor::T_PAY));
         $this->assertSame(Vendor::SBERPAY, Vendor::SBERBANK_ONLINE);
+    }
+
+    /** Платёж без paymentType – способ неизвестен, а не T-Pay */
+    public function testEmptyCodeIsNoVendor(): void
+    {
+        $this->assertNull(Vendor::id(null));
+        $this->assertNull(Vendor::id(''));
+        $this->assertNull(Vendor::code(Vendor::T_PAY));
     }
 
     public function testAmountHasTwoDecimals(): void
@@ -189,6 +227,8 @@ class YooKassaHelperTest extends TestCase
             'похожий домен' => ['https://notyoomoney.ru/checkout'],
             'userinfo' => ['https://yoomoney.ru@evil.test/checkout'],
             'перевод строки' => ["https://yoomoney.ru/checkout\n"],
+            // браузер читает `\` как `/` и уходит на evil.com
+            'обратный слеш в хосте' => ['https://evil.com\.yoomoney.ru/pay'],
             'слишком длинный' => ['https://yoomoney.ru/' . str_repeat('a', 1100)],
         ];
     }
@@ -212,6 +252,8 @@ class YooKassaHelperTest extends TestCase
             '154.127' => ['77.75.154.127', false],
             'IPv6' => ['2a02:5180:0:1::1', true],
             'чужой IPv6' => ['2a02:5181::1', false],
+            'IPv4 через dual-stack' => ['::ffff:185.71.76.1', true],
+            'чужой IPv4 через dual-stack' => ['::ffff:8.8.8.8', false],
             'чужой' => ['8.8.8.8', false],
             'мусор' => ['not-an-ip', false],
         ];
@@ -233,6 +275,17 @@ class YooKassaHelperTest extends TestCase
 
         $h->readNotification('garbage');
         $this->assertNull($h->getNotificationPaymentId());
+    }
+
+    /** id из неподписанного тела не подделывает строки лога */
+    public function testFailedFetchLogsTheIdOnOneLine(): void
+    {
+        $h = new LogCapturingHelper();
+        LogCapturingHelper::$lines = [];
+
+        $this->assertNull($h->fetchPayment("a\nFAKE LINE"));
+        $this->assertCount(1, LogCapturingHelper::$lines);
+        $this->assertStringNotContainsString("\n", LogCapturingHelper::$lines[0]);
     }
 
     public function testPaymentStates(): void
@@ -260,4 +313,24 @@ class ReceiptHelper extends Helper
 {
     const SEND_RECEIPT = true;
     const RECEIPT_TAX_SYSTEM_CODE = 2;
+}
+
+class LogCapturingHelper extends Helper
+{
+    public static array $lines = [];
+
+    public function __construct()
+    {
+    }
+
+    public static function log($message)
+    {
+        static::$lines[] = (string) $message;
+    }
+
+    /** Без сети: невалидный id отказывается до запроса */
+    protected function createApi(): MerchantApi
+    {
+        return new MerchantApi('1', 'k');
+    }
 }

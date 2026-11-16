@@ -331,7 +331,8 @@ class Payment extends \diBaseController
             return self::YOOKASSA_IGNORED;
         }
 
-        // Тот же магазин может обслуживать другой сайт со своими черновиками
+        // Номер из metadata мог достаться черновику другого шлюза. Сайт от сайта
+        // эта проверка не отличает: один магазин ЮKassa – один сайт
         if ((int) $this->getDraft()->getPaySystem() !== System::yandex_kassa) {
             YooKassa::log(
                 "Payment $paymentId: draft #$draftId belongs to another system"
@@ -386,8 +387,8 @@ class Payment extends \diBaseController
     }
 
     /**
-     * Только лог: не защита от подделки (решил ответ API), а ловушка нашей
-     * ошибки – платежа не на ту сумму. Деньги уже списаны, отказ потерял бы покупку.
+     * Не защита от подделки (решил ответ API), а ловушка нашей ошибки – платежа
+     * не на ту сумму. Деньги уже списаны, отказ потерял бы покупку.
      */
     protected function checkYooKassaAmount(array $payment)
     {
@@ -402,8 +403,15 @@ class Payment extends \diBaseController
             YooKassa::log(
                 "Amount mismatch on draft #{$this->getDraft()->getId()}: asked $expected, paid $reported"
             );
+            $this->onYooKassaAmountMismatch($expected, $reported);
         }
 
+        return $this;
+    }
+
+    /** Сигнал о расхождении суммы; проект шлёт его в мониторинг */
+    protected function onYooKassaAmountMismatch(float $expected, float $paid)
+    {
         return $this;
     }
 

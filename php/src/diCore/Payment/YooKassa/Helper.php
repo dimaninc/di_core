@@ -8,6 +8,7 @@
 namespace diCore\Payment\YooKassa;
 
 use diCore\Entity\PaymentDraft\Model as Draft;
+use diCore\Helper\Phone;
 use diCore\Payment\BaseHelper;
 use diCore\Payment\System;
 use diCore\Payment\Yandex\Vendor;
@@ -93,12 +94,12 @@ class Helper extends BaseHelper
         return (string) $this->getApi()->getError();
     }
 
-    /** HTTP-код последнего ответа; 0 – запроса не было или он не дошёл */
     public function isUnknownPayment(): bool
     {
         return $this->getApi()->isUnknownPayment();
     }
 
+    /** HTTP-код последнего ответа; 0 – запроса не было или он не дошёл */
     public function getApiHttpCode(): int
     {
         return (int) $this->getApi()->getHttpCode();
@@ -203,7 +204,7 @@ class Helper extends BaseHelper
         }
 
         $receipt = static::SEND_RECEIPT
-            ? static::receiptFor($draft, $opts + ['description' => $description])
+            ? static::receiptFor($draft, ['description' => $description] + $opts)
             : null;
 
         if ($receipt) {
@@ -230,11 +231,8 @@ class Helper extends BaseHelper
     {
         $customer = array_filter([
             'email' => (string) ($opts['customerEmail'] ?? ''),
-            'phone' => preg_replace(
-                '/\D+/',
-                '',
-                (string) ($opts['customerPhone'] ?? '')
-            ),
+            // E.164 без плюса; «8 (900)…» цифрами вышел бы 8900… – чек отклонят
+            'phone' => ltrim(Phone::e164((string) ($opts['customerPhone'] ?? '')), '+'),
         ]);
 
         // Без контакта ЮKassa отклонит чек, а с ним и платёж
@@ -304,6 +302,12 @@ class Helper extends BaseHelper
 
         $host = strtolower(rtrim($parts['host'] ?? '', '.'));
 
+        // parse_url оставляет в хосте `\`, а браузер читает его как `/`:
+        // `evil.com\.yoomoney.ru` прошёл бы суффикс и увёл на evil.com
+        if (!preg_match('/^[a-z0-9.-]+\z/', $host)) {
+            return false;
+        }
+
         foreach (static::getPaymentUrlDomains() as $domain) {
             $domain = strtolower($domain);
 
@@ -330,9 +334,9 @@ class Helper extends BaseHelper
         $payment = $this->getApi()->getPayment($paymentId);
 
         if ($payment === null) {
-            static::log(
-                "GET payments/$paymentId failed: " . $this->getApi()->getError()
-            );
+            // id из неподписанного тела: перевод строки в нём подделал бы запись
+            $safeId = static::sanitizeForLog($paymentId, 100);
+            static::log("GET payments/$safeId failed: {$this->getApi()->getError()}");
         }
 
         return $payment;
@@ -394,6 +398,15 @@ class Helper extends BaseHelper
 
         $ipBin = @inet_pton($ip);
         $netBin = @inet_pton((string) $net);
+
+        // ::ffff:a.b.c.d от dual-stack сокета – тот же IPv4, иначе ложная тревога
+        if (
+            $ipBin !== false &&
+            strlen($ipBin) === 16 &&
+            strncmp($ipBin, str_repeat("\0", 10) . "\xff\xff", 12) === 0
+        ) {
+            $ipBin = substr($ipBin, 12);
+        }
 
         if (
             $ipBin === false ||

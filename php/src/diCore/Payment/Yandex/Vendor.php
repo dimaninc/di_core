@@ -93,7 +93,8 @@ class Vendor extends VendorContainer
         self::MPOS => 'MP',
         self::MASTER_PASS => 'MA',
         self::PROM_SVYAZ_BANK => 'PB',
-        self::T_PAY => null, // в старом протоколе его нет
+        // T_PAY нет в старом протоколе. Не ключ с null: VendorContainer::id(null)
+        // строгим array_search нашёл бы его, и платёж без paymentType стал бы T-Pay
         self::QPPI => 'QP',
         self::GOOGLE_PAY => 'AC',
         self::APPLE_PAY => 'AC',
@@ -170,7 +171,9 @@ class Vendor extends VendorContainer
         if ($type === 'bank_card') {
             $source = $paymentMethod['card']['source'] ?? null;
 
-            return static::$cardSources[$source] ?? self::CARD;
+            return is_string($source)
+                ? static::$cardSources[$source] ?? self::CARD
+                : self::CARD;
         }
 
         // bank_card стоит у нескольких способов, остальные типы однозначны
