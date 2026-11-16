@@ -66,13 +66,14 @@ class Helper extends BaseHelper
         $apiUri = (string) ($this->options['apiUri'] ?? '');
         $endpointGiven = ($this->options['testMode'] ?? null) !== null || $apiUri !== '';
 
+        // Before the half-pair check: a token left with a password must hear «drop it», not «add a login»
+        if ($token !== '' && ($login !== '' || $password !== '')) {
+            throw new \InvalidArgumentException('Alfa-Bank: give either the token option or the login and password options');
+        }
+
         // Half a pair would be completed from Settings: the bank gets a login and a password of two accounts
         if (($login === '') !== ($password === '')) {
             throw new \InvalidArgumentException('Alfa-Bank: give both the login and the password options, or neither');
-        }
-
-        if ($token !== '' && $login !== '') {
-            throw new \InvalidArgumentException('Alfa-Bank: give either the token option or the login and password options');
         }
 
         if ($endpointGiven && $login === '' && $token === '') {
@@ -310,6 +311,8 @@ class Helper extends BaseHelper
         $credentials = $this->token() !== ''
             ? ['token' => $this->token()]
             : ['userName' => $this->login(), 'password' => $this->password()];
+        // Credentials come only from here: a caller's userName/password/token never reach the bank
+        unset($params['userName'], $params['password'], $params['token']);
         $params = $credentials + $params;
 
         $apiUri = $this->apiUri();
