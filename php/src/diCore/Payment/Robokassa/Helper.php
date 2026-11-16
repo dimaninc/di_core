@@ -177,13 +177,15 @@ class Helper
 
     /**
      * Без `Email` форма Робокассы требует адрес сама (на СБП – обязательным
-     * полем). В подпись он не входит, так что пустой просто не передаётся.
+     * полем). В подпись он не входит, так что пустой или некорректный просто не
+     * передаётся: форма тогда спросит адрес, как раньше, но платёж не сломается.
      */
     public static function customerParams(array $opts): array
     {
-        $email = trim((string) ($opts['customerEmail'] ?? ''));
+        $email = $opts['customerEmail'] ?? '';
+        $email = is_scalar($email) ? trim((string) $email) : '';
 
-        return $email !== '' ? ['Email' => $email] : [];
+        return filter_var($email, FILTER_VALIDATE_EMAIL) ? ['Email' => $email] : [];
     }
 
     protected static function getReceipt(Draft $draft)
