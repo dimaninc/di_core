@@ -23,6 +23,8 @@ use diCore\Payment\Tinkoff\Helper as Tinkoff;
 use diCore\Payment\Yandex\Kassa;
 use diCore\Payment\System;
 use diCore\Payment\Yandex\Vendor as YandexVendor;
+use diCore\Payment\YooKassa\Helper as YooKassa;
+use diCore\Data\Http\HttpCode;
 use diCore\Tool\Auth as AuthTool;
 
 class Payment extends \diBaseController
@@ -166,6 +168,271 @@ class Payment extends \diBaseController
         ]);
 
         return $this->kassa->process();
+    }
+
+    const YOOKASSA_PAID = 'paid';
+    const YOOKASSA_HOLD = 'hold';
+    const YOOKASSA_CANCELED = 'canceled';
+    const YOOKASSA_PENDING = 'pending';
+    const YOOKASSA_IGNORED = 'ignored';
+    const YOOKASSA_RETRY = 'retry';
+
+    /**
+     * ЮKassa по API v3:
+     *   POST /api/payment/yookassa/notification       HTTP-уведомление
+     *   GET  /api/payment/yookassa/return/?draft=…    возврат плательщика
+     *
+     * Уведомление не подписано, поэтому из него берётся только id платежа, а
+     * всё остальное – из ответа API на `GET /v3/payments/{id}` нашими ключами.
+     * Возврат решает так же: один `return_url` на успех и отказ.
+     */
+    public function yookassaAction()
+    {
+        $this->system = System::yandex_kassa;
+        $this->subAction = $this->param(0);
+
+        $yk = $this->createYooKassa();
+
+        switch ($this->subAction) {
+            case 'notification':
+                return $this->yooKassaNotification($yk);
+
+            case 'return':
+                return $this->yooKassaReturn($yk);
+
+            default:
+                return [
+                    'ok' => false,
+                    'message' => 'Unknown action: ' . $this->subAction,
+                ];
+        }
+    }
+
+    /** Шов для теста: подмена хелпера без сети */
+    protected function createYooKassa(): YooKassa
+    {
+        return YooKassa::create();
+    }
+
+    protected function yooKassaNotification(YooKassa $yk)
+    {
+        if (!\diRequest::isPost()) {
+            throw HttpException::notFound('Notifications are POSTed');
+        }
+
+        $yk->readNotification();
+
+        // REMOTE_ADDR, а не getRemoteIp(): X-Forwarded-For пишет кто угодно
+        $ip = (string) \diRequest::server('REMOTE_ADDR');
+
+        YooKassa::log(
+            "Notification from $ip\n" .
+                YooKassa::sanitizeForLog((string) \diRequest::rawPost())
+        );
+
+        // Только сигнал: решает ответ API, а жёсткий отказ по списку адресов
+        // при смене сетей у ЮKassa молча терял бы настоящие оплаты
+        if (!YooKassa::isNotificationIp($ip)) {
+            YooKassa::log("Notification from an unlisted address: $ip");
+            $this->onYooKassaForeignIp($ip, $yk->getNotificationEvent());
+        }
+
+        $paymentId = $yk->getNotificationPaymentId();
+
+        if ($paymentId === null) {
+            YooKassa::log("Ignored event: {$yk->getNotificationEvent()}");
+
+            return 'OK';
+        }
+
+        $payment = $yk->fetchPayment($paymentId);
+
+        if ($payment === null) {
+            // Чужой или выдуманный id: повтор ничего не изменит. Обрыв связи
+            // (код 0) – не он: 200 на него потерял бы настоящую оплату
+            if ($yk->isUnknownPayment()) {
+                return 'OK';
+            }
+
+            $this->onYooKassaApiFailure($paymentId, $yk->getApiError());
+
+            // Не-200 – ЮKassa повторит уведомление (до суток)
+            throw HttpException::fastCreate(
+                HttpCode::SERVICE_UNAVAILABLE,
+                'Payment status unavailable'
+            );
+        }
+
+        if ($this->processYooKassaPayment($payment) === self::YOOKASSA_RETRY) {
+            throw HttpException::fastCreate(
+                HttpCode::SERVICE_UNAVAILABLE,
+                'Receipt not saved'
+            );
+        }
+
+        return 'OK';
+    }
+
+    /**
+     * Адрес собран нами и несёт только id черновика; исход берётся из API по
+     * сохранённому id платежа. Ответ API авторитетен, поэтому успех
+     * проводится сразу, не дожидаясь уведомления, – тем же путём.
+     */
+    protected function yooKassaReturn(YooKassa $yk)
+    {
+        YooKassa::log('Return: ' . YooKassa::sanitizeForLog(print_r($_GET, true)));
+
+        $draftId = (int) \diRequest::get('draft', 0);
+        $this->initDraftOnly($draftId);
+
+        if (
+            !$this->getDraft()->exists() ||
+            (int) $this->getDraft()->getPaySystem() !== System::yandex_kassa
+        ) {
+            $this->returnErrorResponse('No such payment draft');
+        }
+
+        $status = self::STATUS_SUCCESS;
+        $paymentId = $this->getYooKassaPaymentId($this->getDraft());
+
+        if ($paymentId !== null && !$this->getDraft()->hasPaid()) {
+            $payment = $yk->fetchPayment($paymentId);
+
+            if ($payment !== null && YooKassa::draftIdOf($payment) === $draftId) {
+                $outcome = $this->processYooKassaPayment($payment);
+
+                if ($outcome === self::YOOKASSA_CANCELED) {
+                    $status = self::STATUS_FAIL;
+                }
+            }
+        }
+
+        // Ещё pending или статус не узнали – на цель, проведёт уведомление
+        $this->redirectTo($this->getTargetHref($status));
+
+        return null;
+    }
+
+    /**
+     * Один исход по объекту платежа из API – общий для уведомления и возврата.
+     *
+     * @return string self::YOOKASSA_*
+     */
+    protected function processYooKassaPayment(array $payment): string
+    {
+        $draftId = YooKassa::draftIdOf($payment);
+        $paymentId = (string) ($payment['id'] ?? '');
+
+        $this->initDraftOnly($draftId);
+
+        if (!$this->getDraft()->exists()) {
+            YooKassa::log("Payment $paymentId: no draft #$draftId");
+
+            return self::YOOKASSA_IGNORED;
+        }
+
+        // Тот же магазин может обслуживать другой сайт со своими черновиками
+        if ((int) $this->getDraft()->getPaySystem() !== System::yandex_kassa) {
+            YooKassa::log(
+                "Payment $paymentId: draft #$draftId belongs to another system"
+            );
+
+            return self::YOOKASSA_IGNORED;
+        }
+
+        // Тестовый магазин проходит весь живой путь, вплоть до кассы
+        if (YooKassa::isTest($payment) && !$this->acceptsTestPayments()) {
+            YooKassa::log("Test payment $paymentId refused (draft #$draftId)");
+
+            return self::YOOKASSA_IGNORED;
+        }
+
+        if (YooKassa::isPaid($payment)) {
+            $this->checkYooKassaAmount($payment);
+
+            $vendor = YooKassa::vendorOf($payment);
+
+            $result = $this->createReceipt($paymentId, function (Receipt $r) use (
+                $vendor
+            ) {
+                // Реальный способ: под bank_card бывают и карта, и Mir Pay
+                if ($vendor) {
+                    $r->setVendor($vendor);
+                }
+            });
+
+            return empty($result['ok']) ? self::YOOKASSA_RETRY : self::YOOKASSA_PAID;
+        }
+
+        // Холд: оплатой посчитать – отдать товар за деньги, которые вернутся;
+        // отказом – похоронить живую попытку
+        if (YooKassa::isHold($payment)) {
+            YooKassa::log("Payment $paymentId is held, not captured");
+            $this->onYooKassaHold($payment);
+
+            return self::YOOKASSA_HOLD;
+        }
+
+        if (YooKassa::isCanceled($payment)) {
+            $this->onGatewayFailure(
+                System::yandex_kassa,
+                YooKassa::failurePayload($payment)
+            );
+
+            return self::YOOKASSA_CANCELED;
+        }
+
+        return self::YOOKASSA_PENDING;
+    }
+
+    /**
+     * Только лог: не защита от подделки (решил ответ API), а ловушка нашей
+     * ошибки – платежа не на ту сумму. Деньги уже списаны, отказ потерял бы покупку.
+     */
+    protected function checkYooKassaAmount(array $payment)
+    {
+        if (YooKassa::currencyOf($payment) !== 'RUB') {
+            return $this;
+        }
+
+        $reported = YooKassa::amountOf($payment);
+        $expected = (float) $this->getDraft()->getAmount();
+
+        if (abs($reported - $expected) >= 0.01) {
+            YooKassa::log(
+                "Amount mismatch on draft #{$this->getDraft()->getId()}: asked $expected, paid $reported"
+            );
+        }
+
+        return $this;
+    }
+
+    /**
+     * id платежа ЮKassa, созданного для черновика; null – неизвестен. У
+     * черновика ядра нет поля под него: проект хранит id сам
+     * (`YooKassa\Helper::afterPaymentCreated()`) и отдаёт здесь.
+     */
+    protected function getYooKassaPaymentId(Draft $draft): ?string
+    {
+        return null;
+    }
+
+    /** Уведомление не из сетей ЮKassa. Уже в логе; переопределить для мониторинга */
+    protected function onYooKassaForeignIp(string $ip, string $event)
+    {
+        return $this;
+    }
+
+    /** Холд, который никто не подтвердит. Уже в логе; не должен бросать */
+    protected function onYooKassaHold(array $payment)
+    {
+        return $this;
+    }
+
+    /** Статус платежа не получен, ЮKassa повторит уведомление. Не должен бросать */
+    protected function onYooKassaApiFailure(string $paymentId, string $error)
+    {
+        return $this;
     }
 
     public function mixplatAction()
