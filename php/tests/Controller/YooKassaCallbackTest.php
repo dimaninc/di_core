@@ -6,7 +6,9 @@ use diCore\Base\Exception\HttpException;
 use diCore\Controller\Payment;
 use diCore\Entity\PaymentDraft\Model as Draft;
 use diCore\Entity\PaymentReceipt\Model as Receipt;
+use diCore\Payment\ReturnSignature;
 use diCore\Payment\System;
+use PHPUnit\Framework\Attributes\DataProvider;
 use diCore\Payment\Yandex\Vendor;
 use diCore\Payment\YooKassa\Helper;
 use PHPUnit\Framework\TestCase;
@@ -62,6 +64,17 @@ class YooKassaCallbackTest extends TestCase
             '{"type":"notification","event":"payment.succeeded","object":{"id":"2d5c0001-000f-5000-8000-18db351245c7","status":"canceled"}}';
 
         return $c;
+    }
+
+    private function signedReturn(int $draftId): void
+    {
+        $_GET['draft'] = (string) $draftId;
+        $_GET['sig'] = ReturnSignature::sign(
+            YooKassaHelperStub::password,
+            'yookassa',
+            'return',
+            $draftId
+        );
     }
 
     private function notify(YooKassaProbe $c)
@@ -210,7 +223,7 @@ class YooKassaCallbackTest extends TestCase
     public function testReturnRecordsAPaymentTheApiConfirms(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        $_GET['draft'] = '7';
+        $this->signedReturn(7);
         $c = $this->controller($this->payment());
         $c->storedPaymentId = '2d5c0001-000f-5000-8000-18db351245c7';
         $c->setParamsAr(['return']);
@@ -224,7 +237,7 @@ class YooKassaCallbackTest extends TestCase
     public function testReturnAfterCancelGoesToFailure(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        $_GET['draft'] = '7';
+        $this->signedReturn(7);
         $c = $this->controller(
             $this->payment(['status' => 'canceled', 'paid' => false])
         );
@@ -240,7 +253,7 @@ class YooKassaCallbackTest extends TestCase
     public function testReturnIgnoresAPaymentOfAnotherDraft(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        $_GET['draft'] = '7';
+        $this->signedReturn(7);
         $c = $this->controller($this->payment(['metadata' => ['draft_id' => '8']]));
         $c->storedPaymentId = '2d5c0001-000f-5000-8000-18db351245c7';
         $c->setParamsAr(['return']);
@@ -255,7 +268,7 @@ class YooKassaCallbackTest extends TestCase
     public function testReturnWithoutStoredIdJustRedirects(): void
     {
         $_SERVER['REQUEST_METHOD'] = 'GET';
-        $_GET['draft'] = '7';
+        $this->signedReturn(7);
         $c = $this->controller($this->payment());
         $c->setParamsAr(['return']);
 
@@ -263,6 +276,76 @@ class YooKassaCallbackTest extends TestCase
 
         $this->assertSame(0, $c->helper->fetches);
         $this->assertSame('target-' . Payment::STATUS_SUCCESS, $c->redirectedTo);
+    }
+
+    public static function unsignedReturns(): array
+    {
+        $secret = YooKassaHelperStub::password;
+
+        return [
+            'без подписи' => [null],
+            'мусор' => ['abc'],
+            'подпись другого черновика' => [
+                ReturnSignature::sign($secret, 'yookassa', 'return', 8),
+            ],
+            'подпись другим секретом' => [
+                ReturnSignature::sign('other', 'yookassa', 'return', 7),
+            ],
+            'подпись другого шлюза' => [
+                ReturnSignature::sign($secret, 'cloud_payments', 'success', 7),
+            ],
+        ];
+    }
+
+    /** Перебор номеров не выдаёт адрес цели и ничего не проводит */
+    #[DataProvider('unsignedReturns')]
+    public function testUnsignedReturnGoesHomeAndTouchesNothing(?string $sig): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_GET = ['draft' => '7'] + ($sig === null ? [] : ['sig' => $sig]);
+        $c = $this->controller($this->payment());
+        $c->storedPaymentId = '2d5c0001-000f-5000-8000-18db351245c7';
+        $c->setParamsAr(['return']);
+
+        $c->yookassaAction();
+
+        $this->assertSame('home', $c->redirectedTo);
+        $this->assertSame(0, $c->helper->fetches);
+        $this->assertSame([], $c->receipts);
+    }
+
+    /** Адрес, который строит initYooKassa(), проходит проверку возврата */
+    public function testBuiltReturnUrlIsAccepted(): void
+    {
+        $draft = Draft::create();
+        $draft->setId(7);
+        $uri = ReturnUriProbe::uri(
+            'yookassa',
+            'return',
+            $draft,
+            'draft',
+            YooKassaHelperStub::password
+        );
+        parse_str((string) parse_url($uri, PHP_URL_QUERY), $_GET);
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $c = $this->controller($this->payment());
+        $c->setParamsAr(['return']);
+
+        $c->yookassaAction();
+
+        $this->assertStringContainsString(
+            '/payment/yookassa/return/?draft=7&sig=',
+            $uri
+        );
+        $this->assertSame('target-' . Payment::STATUS_SUCCESS, $c->redirectedTo);
+    }
+}
+
+class ReturnUriProbe extends \diCore\Payment\Payment
+{
+    public static function uri(...$args): string
+    {
+        return static::gatewayCallbackUri(...$args);
     }
 }
 
@@ -374,10 +457,17 @@ class YooKassaProbe extends Payment
 
         return $this;
     }
+
+    protected function getUnsignedReturnHref(): string
+    {
+        return 'home';
+    }
 }
 
 class YooKassaHelperStub extends Helper
 {
+    const password = 'test-secret';
+
     public ?array $payment = null;
     public int $httpCode = 200;
     public string $body = '';

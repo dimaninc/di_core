@@ -646,7 +646,8 @@ EOF;
                     'yookassa',
                     'return',
                     $draft,
-                    'draft'
+                    'draft',
+                    (string) $yk::getPassword()
                 ),
             ])
         );
@@ -718,13 +719,15 @@ EOF;
                     'cloud_payments',
                     'success',
                     $draft,
-                    'InvoiceId'
+                    'InvoiceId',
+                    (string) $cp::getPassword()
                 ),
                 'failUrl' => static::gatewayCallbackUri(
                     'cloud_payments',
                     'fail',
                     $draft,
-                    'InvoiceId'
+                    'InvoiceId',
+                    (string) $cp::getPassword()
                 ),
             ])
         );
@@ -751,23 +754,28 @@ EOF;
      * @param string $system system name as the payment controller routes it
      * @param string $subAction 'success' or 'fail'
      * @param string $draftParam query parameter carrying the draft id
+     * @param string $secret gateway secret signing the address (ReturnSignature)
      */
     protected static function gatewayCallbackUri(
         $system,
         $subAction,
         Draft $draft,
-        $draftParam
+        $draftParam,
+        string $secret
     ) {
-        return \diPaths::defaultHttp() .
-            \diCore\Data\Config::getApiQueryPrefix() .
-            'payment/' .
-            $system .
-            '/' .
-            $subAction .
-            '/?' .
-            urlencode($draftParam) .
-            '=' .
-            urlencode((string) $draft->getId());
+        $draftId = (int) $draft->getId();
+        $query = http_build_query([
+            $draftParam => $draftId,
+            ReturnSignature::PARAM => ReturnSignature::sign(
+                $secret,
+                $system,
+                $subAction,
+                $draftId
+            ),
+        ]);
+        $base = \diPaths::defaultHttp() . \diCore\Data\Config::getApiQueryPrefix();
+
+        return "{$base}payment/$system/$subAction/?$query";
     }
 
     public function initSberbank(Draft $draft)

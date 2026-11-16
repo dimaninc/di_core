@@ -21,6 +21,7 @@ use diCore\Payment\Paypal\Helper as Paypal;
 use diCore\Payment\Robokassa\Helper as Robokassa;
 use diCore\Payment\Tinkoff\Helper as Tinkoff;
 use diCore\Payment\Yandex\Kassa;
+use diCore\Payment\ReturnSignature;
 use diCore\Payment\System;
 use diCore\Payment\Yandex\Vendor as YandexVendor;
 use diCore\Payment\YooKassa\Helper as YooKassa;
@@ -180,7 +181,7 @@ class Payment extends \diBaseController
     /**
      * ЮKassa по API v3:
      *   POST /api/payment/yookassa/notification       HTTP-уведомление
-     *   GET  /api/payment/yookassa/return/?draft=…    возврат плательщика
+     *   GET  /api/payment/yookassa/return/?draft=…&sig=…    возврат плательщика
      *
      * Уведомление не подписано, поэтому из него берётся только id платежа, а
      * всё остальное – из ответа API на `GET /v3/payments/{id}` нашими ключами.
@@ -212,6 +213,33 @@ class Payment extends \diBaseController
     protected function createYooKassa(): YooKassa
     {
         return YooKassa::create();
+    }
+
+    /**
+     * Возврат, собранный gatewayCallbackUri(), подписан. Неподписанный уходит на
+     * getUnsignedReturnHref() без побочных эффектов: оплату проведёт уведомление.
+     */
+    protected function isSignedReturn(
+        string $secret,
+        string $system,
+        string $subAction,
+        int $draftId
+    ): bool {
+        $sig = \diRequest::request(ReturnSignature::PARAM);
+
+        if (ReturnSignature::verify($secret, $system, $subAction, $draftId, $sig)) {
+            return true;
+        }
+
+        $this->log("Unsigned $system/$subAction return for draft #$draftId");
+        $this->redirectTo($this->getUnsignedReturnHref());
+
+        return false;
+    }
+
+    protected function getUnsignedReturnHref(): string
+    {
+        return \diPaths::defaultHttp() . '/';
     }
 
     protected function yooKassaNotification(YooKassa $yk)
@@ -283,6 +311,13 @@ class Payment extends \diBaseController
         YooKassa::log('Return: ' . YooKassa::sanitizeForLog(print_r($_GET, true)));
 
         $draftId = (int) \diRequest::get('draft', 0);
+
+        $secret = (string) $yk::getPassword();
+
+        if (!$this->isSignedReturn($secret, 'yookassa', 'return', $draftId)) {
+            return null;
+        }
+
         $this->initDraftOnly($draftId);
 
         if (
@@ -702,7 +737,19 @@ class Payment extends \diBaseController
         $this->system = System::cloud_payments;
         $this->subAction = $this->param(0);
 
-        $cp = CloudPayments::create();
+        $cp = $this->createCloudPayments();
+
+        if (
+            in_array($this->subAction, ['success', 'fail'], true) &&
+            !$this->isSignedReturn(
+                (string) $cp::getPassword(),
+                'cloud_payments',
+                $this->subAction,
+                (int) \diRequest::request('InvoiceId', 0)
+            )
+        ) {
+            return null;
+        }
 
         switch ($this->subAction) {
             case 'notification':
@@ -732,6 +779,12 @@ class Payment extends \diBaseController
                     'message' => 'Unknown action: ' . $this->subAction,
                 ];
         }
+    }
+
+    /** Шов для теста: подмена хелпера без сети */
+    protected function createCloudPayments(): CloudPayments
+    {
+        return CloudPayments::create();
     }
 
     private function cloudPaymentsNotification(CloudPayments $cp)
