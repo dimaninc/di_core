@@ -12,6 +12,9 @@ class diOAuth2Twitter extends diOAuth2
 
     const signatureMethod = 'HMAC-SHA1';
 
+    // OAuth 1: the request token in the session plays the role of state
+    const USES_STATE = false;
+
     protected $vendorId = diOAuth2Vendors::twitter;
 
     protected $nonce;
@@ -103,9 +106,7 @@ class diOAuth2Twitter extends diOAuth2
                 );
             }
 
-            throw new \Exception(
-                'Twitter OAuth2 returned an unexpected response'
-            );
+            throw new \Exception('Twitter OAuth2 returned an unexpected response');
         }
 
         return [

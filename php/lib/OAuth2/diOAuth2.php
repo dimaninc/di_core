@@ -19,6 +19,10 @@ abstract class diOAuth2
     const callbackParam = 'callback';
     const unlinkParam = 'unlink';
 
+    // OAuth 1 vendors (Twitter) carry their own request token instead
+    const USES_STATE = true;
+    const STATE_SESSION_KEY = 'oauth2_state_';
+
     protected $vendorId;
 
     /** @var diOAuth2ProfileModel */
@@ -253,6 +257,8 @@ abstract class diOAuth2
     public function processReturn()
     {
         if ($this->isReturn()) {
+            $this->assertState();
+
             $user = $this->retrieveProfile()->syncWithUser();
 
             if (!Auth::i()->authorized()) {
@@ -410,7 +416,46 @@ abstract class diOAuth2
             'client_id' => static::appId,
             'response_type' => 'code',
             'redirect_uri' => $this->getBackUrl(),
+            'state' => $this->issueState(),
         ];
+    }
+
+    protected function stateSessionKey(): string
+    {
+        return static::STATE_SESSION_KEY . diOAuth2Vendors::name($this->vendorId);
+    }
+
+    protected function issueState(): string
+    {
+        $state = bin2hex(random_bytes(16));
+
+        \diSession::set($this->stateSessionKey(), $state);
+
+        return $state;
+    }
+
+    /**
+     * Without `state` a callback with someone else's `code` was accepted: it signed
+     * the visitor into the attacker's account or, for a signed-in visitor, linked
+     * the attacker's social profile to the visitor's account (a takeover).
+     *
+     * @throws \diCore\Base\Exception\HttpException 400 when state is missing or foreign
+     */
+    protected function assertState(): void
+    {
+        if (!static::USES_STATE) {
+            return;
+        }
+
+        // single use: a replayed callback finds no state
+        $expected = (string) \diSession::getAndKill($this->stateSessionKey());
+        $given = (string) \diRequest::get('state');
+
+        if ($expected === '' || !hash_equals($expected, $given)) {
+            throw \diCore\Base\Exception\HttpException::badRequest(
+                'OAuth state mismatch'
+            );
+        }
     }
 
     protected function getAuthUrlParams()
