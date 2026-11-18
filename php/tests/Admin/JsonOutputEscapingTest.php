@@ -50,6 +50,27 @@ class JsonOutputEscapingTest extends TestCase
         $this->assertStringContainsString('&lt;img', $printed);
     }
 
+    /** Explicit ENT_QUOTES alone drops ENT_SUBSTITUTE: invalid UTF-8 blanked the field. */
+    public function testFormKeepsFieldWithInvalidUtf8(): void
+    {
+        $this->assertStringContainsString(
+            'ok',
+            Form::valuePrinterJson(['ua' => "ok\xff"], 'properties')
+        );
+    }
+
+    /** Visitor text from a callback: its «%column%» must not pull in the raw value. */
+    public function testEscapedCallbackTextIsNotSubstituted(): void
+    {
+        $text = self::PAYLOAD . ' %content%';
+        $list = $this->listWith(['content' => $text]);
+
+        $cell = $this->render($list, \diAdminList::escapeText($text));
+
+        $this->assertStringNotContainsString('<img', $cell);
+        $this->assertStringContainsString('&#37;content&#37;', $cell);
+    }
+
     private function listWith(array $row): \diAdminList
     {
         // The row directly, no model: diModel asks the DB connection for field types.

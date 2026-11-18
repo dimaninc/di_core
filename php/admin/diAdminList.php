@@ -274,6 +274,24 @@ class diAdminList
         return $this;
     }
 
+    /**
+     * Visitor text for a `value` callback: tags, quotes and `%` – the callback's
+     * output goes through replaceValues(), and a «%column%» in it would pull in
+     * that column's raw value.
+     */
+    public static function escapeText($value): string
+    {
+        return str_replace(
+            '%',
+            '&#37;',
+            htmlspecialchars(
+                (string) $value,
+                ENT_QUOTES | ENT_SUBSTITUTE,
+                'UTF-8'
+            )
+        );
+    }
+
     private function prepareReplaceAr()
     {
         $this->replaceAr = [];
@@ -288,7 +306,7 @@ class diAdminList
                 // A JSON column is data, not markup, and often holds visitor text.
                 $this->replaceAr['%' . $k . '%'] = htmlspecialchars(
                     (string) json_encode($v),
-                    ENT_QUOTES,
+                    ENT_QUOTES | ENT_SUBSTITUTE,
                     'UTF-8'
                 );
             }

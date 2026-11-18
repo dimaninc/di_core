@@ -126,7 +126,7 @@ class Comments extends \diCore\Admin\BasePage
                         )
                         : $m->getContent();
 
-                    return StringHelper::out($text);
+                    return \diAdminList::escapeText($text);
                 },
             ],
             'created_at' => [
