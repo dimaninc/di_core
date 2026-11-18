@@ -1429,7 +1429,12 @@ EOF;
             $value = json_decode($value);
         }
 
-        return print_r($value, true);
+        // Goes into `<pre>` as is: JSON fields often hold visitor-supplied text.
+        return htmlspecialchars(
+            print_r($value, true),
+            ENT_QUOTES | ENT_SUBSTITUTE,
+            'UTF-8'
+        );
     }
 
     public static function valueFormatterJson($value, $field)
@@ -2115,7 +2120,7 @@ EOF;
             static::class,
             'valueFormatterJson',
         ]);
-        $formatted = self::valuePrinterJson($this->getData($field), $field);
+        $formatted = static::valuePrinterJson($this->getData($field), $field);
 
         $this->inputs[$field] = "<pre class=\"code\">$formatted</pre>";
 

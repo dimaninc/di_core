@@ -75,12 +75,12 @@ class MailQueue extends \diCore\Admin\BasePage
                     'width' => '20%',
                 ],
                 'value' => function (Model $m) {
-                    $s = StringHelper::out($m->getSender());
+                    $s = \diAdminList::escapeText($m->getSender());
 
                     if ($m->hasReplyTo()) {
                         $s .=
                             '<div class="lite">' .
-                            StringHelper::out('Reply-To: ' . $m->getReplyTo()) .
+                            \diAdminList::escapeText('Reply-To: ' . $m->getReplyTo()) .
                             '</div>';
                     }
 
@@ -92,13 +92,14 @@ class MailQueue extends \diCore\Admin\BasePage
                     'width' => '30%',
                 ],
                 'value' => function (Model $m) {
-                    return StringHelper::out($m->getRecipient());
+                    return \diAdminList::escapeText($m->getRecipient());
                 },
             ],
             'subject' => [
                 'attrs' => [
                     'width' => '40%',
                 ],
+                'value' => fn(Model $m) => \diAdminList::escapeText($m->getSubject()),
             ],
             'attachment' => [
                 'title' => '&#128206;',

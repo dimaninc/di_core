@@ -27,7 +27,7 @@ class ListZeroValueTest extends TestCase
         $this->assertSame('', $this->render($list, '%none%'));
         $this->assertSame('', $this->render($list, '%off%'));
         $this->assertSame('1', $this->render($list, '%on%'));
-        $this->assertSame('["a"]', $this->render($list, '%tags%'));
+        $this->assertSame('[&quot;a&quot;]', $this->render($list, '%tags%'));
     }
 
     public function testCallbackZeroSurvivesReplace(): void
@@ -50,6 +50,17 @@ class ListZeroValueTest extends TestCase
             public function getCurRec()
             {
                 return (object) $this->row;
+            }
+
+            // prepareReplaceAr() asks the model for field types; a bare \diModel
+            // would look up the `default` connection.
+            public function getCurModel()
+            {
+                return new class extends \diModel {
+                    public function __construct()
+                    {
+                    }
+                };
             }
         };
 

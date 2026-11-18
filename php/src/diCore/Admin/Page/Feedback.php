@@ -34,20 +34,24 @@ class Feedback extends \diCore\Admin\BasePage
         $this->getList()->addColumns([
             '_checkbox' => '',
             'id' => 'ID',
+            // Visitor text: a column without `value` would print it raw.
             'email' => [
                 'headAttrs' => [
                     'width' => '15%',
                 ],
+                'value' => fn(Model $m) => \diAdminList::escapeText($m->getEmail()),
             ],
             'phone' => [
                 'headAttrs' => [
                     'width' => '15%',
                 ],
+                'value' => fn(Model $m) => \diAdminList::escapeText($m->getPhone()),
             ],
             'name' => [
                 'headAttrs' => [
                     'width' => '20%',
                 ],
+                'value' => fn(Model $m) => \diAdminList::escapeText($m->getName()),
             ],
             'content' => [
                 'headAttrs' => [
@@ -57,7 +61,7 @@ class Feedback extends \diCore\Admin\BasePage
                     'class' => 'lite',
                 ],
                 'value' => function (Model $model) {
-                    return StringHelper::out(
+                    return \diAdminList::escapeText(
                         StringHelper::cutEnd($model->getContent(), 200)
                     );
                 },
