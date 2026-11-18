@@ -27,7 +27,7 @@ class ListZeroValueTest extends TestCase
         $this->assertSame('', $this->render($list, '%none%'));
         $this->assertSame('', $this->render($list, '%off%'));
         $this->assertSame('1', $this->render($list, '%on%'));
-        $this->assertSame('["a"]', $this->render($list, '%tags%'));
+        $this->assertSame('[&quot;a&quot;]', $this->render($list, '%tags%'));
     }
 
     public function testCallbackZeroSurvivesReplace(): void

@@ -1429,7 +1429,8 @@ EOF;
             $value = json_decode($value);
         }
 
-        return print_r($value, true);
+        // Goes into `<pre>` as is: JSON fields often hold visitor-supplied text.
+        return htmlspecialchars(print_r($value, true), ENT_QUOTES, 'UTF-8');
     }
 
     public static function valueFormatterJson($value, $field)

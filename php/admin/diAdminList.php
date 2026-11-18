@@ -285,7 +285,12 @@ class diAdminList
             } elseif (is_scalar($v)) {
                 $this->replaceAr['%' . $k . '%'] = (string) $v;
             } else {
-                $this->replaceAr['%' . $k . '%'] = json_encode($v);
+                // A JSON column is data, not markup, and often holds visitor text.
+                $this->replaceAr['%' . $k . '%'] = htmlspecialchars(
+                    (string) json_encode($v),
+                    ENT_QUOTES,
+                    'UTF-8'
+                );
             }
         }
 
@@ -294,13 +299,9 @@ class diAdminList
 
     private function replaceValues($s)
     {
-        return $s !== null && $s !== ''
-            ? str_replace(
-                array_keys($this->replaceAr),
-                array_values($this->replaceAr),
-                $s
-            )
-            : '';
+        // strtr, not str_replace: one pass, so a substituted value containing
+        // `%other%` is not substituted again with that column's raw value.
+        return $s !== null && $s !== '' ? strtr($s, $this->replaceAr) : '';
     }
 
     private function buildHref($href)
