@@ -64,13 +64,16 @@ class UserSession extends \diCore\Admin\BasePage
                     'width' => '30%',
                 ],
                 'value' => function (Model $m) {
-                    return $m->getUser()->getStringAppearanceForAdmin();
+                    return \diAdminList::escapeText(
+                        $m->getUser()->getStringAppearanceForAdmin()
+                    );
                 },
             ],
             'user_agent' => [
                 'headAttrs' => [
                     'width' => '30%',
                 ],
+                'value' => fn(Model $m) => \diAdminList::escapeText($m->getUserAgent()),
             ],
             'ip' => [
                 'headAttrs' => [

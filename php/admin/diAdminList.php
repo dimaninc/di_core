@@ -295,17 +295,19 @@ class diAdminList
     private function prepareReplaceAr()
     {
         $this->replaceAr = [];
+        $model = $this->getCurModel();
 
         foreach ($this->getCurRec() as $k => $v) {
             // Only null and false render empty: 0 and "0" are values, and `?:` dropped them.
             if ($v === null || $v === false) {
                 $this->replaceAr['%' . $k . '%'] = '';
-            } elseif (is_scalar($v)) {
+            } elseif (is_scalar($v) && !$model::isJsonField($k)) {
                 $this->replaceAr['%' . $k . '%'] = (string) $v;
             } else {
-                // A JSON column is data, not markup, and often holds visitor text.
+                // A JSON column is data, not markup, and often holds visitor text. Decided
+                // by the model's field type: from SQL it arrives as a string, not an array.
                 $this->replaceAr['%' . $k . '%'] = htmlspecialchars(
-                    (string) json_encode($v),
+                    is_scalar($v) ? (string) $v : (string) json_encode($v),
                     ENT_QUOTES | ENT_SUBSTITUTE,
                     'UTF-8'
                 );

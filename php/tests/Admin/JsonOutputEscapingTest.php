@@ -3,6 +3,7 @@
 namespace diCore\Tests\Admin;
 
 use diCore\Admin\Form;
+use diCore\Database\FieldType;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -13,10 +14,13 @@ class JsonOutputEscapingTest extends TestCase
 {
     private const PAYLOAD = '<img src=x onerror=alert(1)>';
 
-    public function testListEscapesJsonColumn(): void
+    /** From SQL a JSON column arrives as a string: the field type decides, not the shape. */
+    public function testListEscapesJsonColumnFromSql(): void
     {
         $cell = $this->render(
-            $this->listWith(['properties' => ['user_agent' => self::PAYLOAD]]),
+            $this->listWith([
+                'properties' => json_encode(['user_agent' => self::PAYLOAD]),
+            ]),
             '%properties%'
         );
 
@@ -24,12 +28,32 @@ class JsonOutputEscapingTest extends TestCase
         $this->assertStringContainsString('&lt;img', $cell);
     }
 
+    /** Mongo hands over the decoded document. */
+    public function testListEscapesDecodedJsonColumn(): void
+    {
+        $cell = $this->render(
+            $this->listWith(['properties' => ['user_agent' => self::PAYLOAD]]),
+            '%properties%'
+        );
+
+        $this->assertStringNotContainsString('<img', $cell);
+    }
+
+    /** A scalar column the model does not declare JSON keeps going in raw. */
+    public function testUndeclaredScalarColumnStaysRaw(): void
+    {
+        $this->assertSame(
+            '<b>x</b>',
+            $this->render($this->listWith(['note' => '<b>x</b>']), '%note%')
+        );
+    }
+
     /** One pass: a value carrying `%other%` must not pull in that column's raw value. */
     public function testSubstitutedValueIsNotSubstitutedAgain(): void
     {
         // `properties` first: str_replace substituted keys in this order.
         $list = $this->listWith([
-            'properties' => ['user_agent' => '%note%'],
+            'properties' => json_encode(['user_agent' => '%note%']),
             'note' => self::PAYLOAD,
         ]);
 
@@ -73,7 +97,7 @@ class JsonOutputEscapingTest extends TestCase
 
     private function listWith(array $row): \diAdminList
     {
-        // The row directly, no model: diModel asks the DB connection for field types.
+        // The row as SQL returns it, and a model declaring `properties` JSON; no DB.
         $list = new class ($row) extends \diAdminList {
             public function __construct(private array $row)
             {
@@ -82,6 +106,19 @@ class JsonOutputEscapingTest extends TestCase
             public function getCurRec()
             {
                 return (object) $this->row;
+            }
+
+            public function getCurModel()
+            {
+                return new class extends \diModel {
+                    protected static $fieldTypes = [
+                        'properties' => FieldType::json,
+                    ];
+
+                    public function __construct()
+                    {
+                    }
+                };
             }
         };
 

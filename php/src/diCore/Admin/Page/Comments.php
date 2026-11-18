@@ -100,7 +100,7 @@ class Comments extends \diCore\Admin\BasePage
                     'width' => '30%',
                 ],
                 'value' => function (Model $m) {
-                    return $m->getDescriptionForAdmin();
+                    return \diAdminList::escapeText($m->getDescriptionForAdmin());
                 },
             ],
             'user_id' => [
@@ -108,7 +108,7 @@ class Comments extends \diCore\Admin\BasePage
                     'width' => '20%',
                 ],
                 'value' => function (Model $m) {
-                    return $m->getUserAppearance();
+                    return \diAdminList::escapeText($m->getUserAppearance());
                 },
             ],
             'content' => [
