@@ -39,6 +39,24 @@ class JsonOutputEscapingTest extends TestCase
         $this->assertStringNotContainsString('<img', $cell);
     }
 
+    /** Any non-scalar value is data, declared JSON or not (an undeclared Mongo array). */
+    public function testListEscapesUndeclaredArray(): void
+    {
+        $this->assertSame(
+            '[&quot;&lt;b&gt;&quot;]',
+            $this->render($this->listWith(['tags' => ['<b>']]), '%tags%')
+        );
+    }
+
+    /** Ready entities are text already: kept as they are, the rest escaped. */
+    public function testEscapeTextKeepsReadyEntities(): void
+    {
+        $this->assertSame(
+            'Акция &laquo;Весна&raquo; &amp; &lt;b&gt; &#37;id&#37;',
+            \diAdminList::escapeText('Акция &laquo;Весна&raquo; & <b> %id%')
+        );
+    }
+
     /** A scalar column the model does not declare JSON keeps going in raw. */
     public function testUndeclaredScalarColumnStaysRaw(): void
     {

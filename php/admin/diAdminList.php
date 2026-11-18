@@ -277,9 +277,10 @@ class diAdminList
     /**
      * Visitor text for a `value` callback: tags, quotes and `%` – the callback's
      * output goes through replaceValues(), and a «%column%» in it would pull in
-     * that column's raw value.
+     * that column's raw value. Ready entities (`&laquo;`, `&mdash;`) are kept: they
+     * render as text, so leaving them is safe, and titles typed with them stay intact.
      */
-    public static function escapeText($value): string
+    public static function escapeText(string|int|float|null $value): string
     {
         return str_replace(
             '%',
@@ -287,7 +288,8 @@ class diAdminList
             htmlspecialchars(
                 (string) $value,
                 ENT_QUOTES | ENT_SUBSTITUTE,
-                'UTF-8'
+                'UTF-8',
+                false
             )
         );
     }
@@ -295,17 +297,22 @@ class diAdminList
     private function prepareReplaceAr()
     {
         $this->replaceAr = [];
-        $model = $this->getCurModel();
+        // Once per row: getFieldTypes() rebuilds the map on every call.
+        $fieldTypes = $this->getCurModel()::getFieldTypes();
 
         foreach ($this->getCurRec() as $k => $v) {
             // Only null and false render empty: 0 and "0" are values, and `?:` dropped them.
             if ($v === null || $v === false) {
                 $this->replaceAr['%' . $k . '%'] = '';
-            } elseif (is_scalar($v) && !$model::isJsonField($k)) {
+            } elseif (
+                is_scalar($v) &&
+                ($fieldTypes[$k] ?? null) !== \diCore\Database\FieldType::json
+            ) {
                 $this->replaceAr['%' . $k . '%'] = (string) $v;
             } else {
                 // A JSON column is data, not markup, and often holds visitor text. Decided
                 // by the model's field type: from SQL it arrives as a string, not an array.
+                // Any non-scalar value (a Mongo array, declared or not) goes here too.
                 $this->replaceAr['%' . $k . '%'] = htmlspecialchars(
                     is_scalar($v) ? (string) $v : (string) json_encode($v),
                     ENT_QUOTES | ENT_SUBSTITUTE,
