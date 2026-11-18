@@ -509,9 +509,18 @@ class diBaseController
             }
 
             $actionPart = static::TINY_ACTIONS ? '' : '_' . $action;
-            $requestMethod = self::isCli()
+            $requestMethod = static::isCli()
                 ? 'cli'
-                : strtolower(\diRequest::getMethodStr());
+                : strtolower((string) \diRequest::getMethodStr());
+
+            // Метод HTTP пишет клиент: `CLI /api/…` открывал из веба кроны и
+            // воркеры (`_cli*Action`), а префикс – правило маршрута, не доступа.
+            if ($requestMethod === 'cli' && !static::isCli()) {
+                throw HttpException::notFound(
+                    'CLI actions are not reachable over HTTP'
+                );
+            }
+
             $source = $requestMethod . $actionPart . '_action';
             $methodName = '_' . camelize($source);
 
