@@ -198,7 +198,7 @@ class AdminTasks extends \diCore\Admin\BasePage
             'title' => [
                 'title' => 'Задача',
                 'value' => function (Model $model) {
-                    return $model->getTitle() .
+                    return \diAdminList::escapeText($model->getTitle()) .
                         '<div class="lite">' .
                         \diAdminList::escapeText(
                             StringHelper::cutEnd($model->getContent(), 150)

@@ -51,6 +51,17 @@ class ListZeroValueTest extends TestCase
             {
                 return (object) $this->row;
             }
+
+            // prepareReplaceAr() asks the model for field types; a bare \diModel
+            // would look up the `default` connection.
+            public function getCurModel()
+            {
+                return new class extends \diModel {
+                    public function __construct()
+                    {
+                    }
+                };
+            }
         };
 
         $prepare = new \ReflectionMethod(\diAdminList::class, 'prepareReplaceAr');
