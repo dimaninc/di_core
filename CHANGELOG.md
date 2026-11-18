@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.14.2
+
+- Admin: escape JSON columns in lists and forms (#52)
+
+To migrate:
+
+- `%json_field%`, the cell of a `FieldType::json` column and of any non-scalar value
+  now carry HTML entities (`&quot;`): the browser shows the same text, but a consumer
+  that parsed a cell's HTML as JSON has to decode it;
+- list cells are substituted in one pass (`strtr`): a `%x%` inside a substituted value
+  is no longer substituted again;
+- a list `value` callback printing visitor text escapes it with
+  `diAdminList::escapeText()`, not `StringHelper::out()` (that one leaves `%`);
+- the Comments and UserSession lists escape `Comment\Model::getDescriptionForAdmin()`,
+  `getUserAppearance()` and the user's `getStringAppearanceForAdmin()` /
+  `getAppearanceFeedForAdmin()`: a project override returning tags (a link) shows them
+  as literal text – return text there (entities are fine).
+
 ## 0.14.1
 
 - Alfa-Bank: payment token instead of login and password (#51)
