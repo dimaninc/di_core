@@ -292,6 +292,10 @@ Per model, not per site: `const use_insecure_password_hash` (default `true` – 
 
 Covered by `php/tests/Entity/PasswordHashTest.php` (no DB writes: `save()` and the width check are stubbed; a model still needs the `default` connection to be constructed) and `php/tests/Tool/AuthStoreCookiesTest.php`.
 
+### Session id at sign-in
+
+`Tool\Auth` calls `\diSession::regenerate()` on every sign-in (POST password, `forceAuthorize()`): the id may be client-chosen (`X-Session`) or planted, and must not stay signed in. **`shortIntId()` survives the rotation** (kept in the session under `INT_ID_SESSION_KEY`) – projects key anonymous rows on it and read it after sign-in; never compute it from `session_id()` directly. The new id reaches the client by `Set-Cookie` and the `X-Session` response header. `php/tests/Tool/SessionRegenerateTest.php`.
+
 ### Authorization pins (`Entity\AuthorizationPin`)
 
 One-time codes (typed by a person) and tokens (links, bot deep links) for sign-in, confirmations, account actions – out of the box: tables `authorization_pin` + `authorization_pin_failure` (`sql/`, `sql/postgres/`, core migration `migrations/auth/20261001120000`, run by idx), the model (store, issue, verify, limits), `FailureLog` (failed checks), the service `Tool\Auth\PinCode` (normalize → issue → deliver through a per-channel `PinDeliverer`, email by default; check against the failure budget), `Tool\Auth\LoginMethod` (`auth.primary_method`) and the sign-in endpoints `Controller\Auth::_postPinSendAction()` / `_postPinLoginAction()`. A project extends `Purpose` (1 = `authentication` is the core's, its own values > 1) and overrides hooks instead of copying code.

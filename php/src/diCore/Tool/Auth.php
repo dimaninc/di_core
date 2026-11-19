@@ -243,9 +243,7 @@ class Auth
 
     public function logout()
     {
-        return $this->clearCookies()
-            ->clearSession()
-            ->clearUserSession();
+        return $this->clearCookies()->clearSession()->clearUserSession();
     }
 
     private function storeSession()
@@ -435,6 +433,7 @@ class Auth
     public function forceAuthorize(\diBaseUserModel $user, $storeCookies = false)
     {
         $this->user = $user;
+        \diSession::regenerate();
 
         $this->storeSession()->storeCookies($storeCookies);
 
@@ -529,6 +528,7 @@ class Auth
 
         if ($login && $password && $this->authorize($login, $password)) {
             $this->authSource = self::SOURCE_POST;
+            \diSession::regenerate();
 
             $this->updateAuthorizedUserData();
         }
