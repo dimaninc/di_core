@@ -243,9 +243,7 @@ class Auth
 
     public function logout()
     {
-        return $this->clearCookies()
-            ->clearSession()
-            ->clearUserSession();
+        return $this->clearCookies()->clearSession()->clearUserSession();
     }
 
     private function storeSession()
@@ -527,13 +525,37 @@ class Auth
         $login = \diRequest::postExt(static::POST_LOGIN_FIELD);
         $password = \diRequest::postExt(static::POST_PASSWORD_FIELD);
 
-        if ($login && $password && $this->authorize($login, $password)) {
+        if (!$login || !$password) {
+            return $this;
+        }
+
+        // any POST carrying these fields signs in, not only the login action
+        if (!$this->isPasswordAttemptAllowed((string) $login)) {
+            return $this;
+        }
+
+        if ($this->authorize($login, $password)) {
             $this->authSource = self::SOURCE_POST;
 
             $this->updateAuthorizedUserData();
+        } else {
+            $this->onPasswordAttemptFailed((string) $login);
         }
 
         return $this;
+    }
+
+    /**
+     * A project's limit on password guessing; a refused attempt is answered
+     * exactly like a wrong password, so the limit is no account oracle.
+     */
+    protected function isPasswordAttemptAllowed(string $login): bool
+    {
+        return true;
+    }
+
+    protected function onPasswordAttemptFailed(string $login): void
+    {
     }
 
     private function redirectIfNeeded()
