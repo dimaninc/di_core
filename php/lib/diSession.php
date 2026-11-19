@@ -17,6 +17,8 @@ class diSession
     const VALUES_SESSION_KEY = 'diSession';
     const COOKIE_LIFE_TIME = SECS_PER_DAY * 30;
     const HEADER_NAME = 'X-Session';
+    // shortIntId() kept across regenerate(): anonymous rows are keyed on it
+    const INT_ID_SESSION_KEY = 'diSessionIntId';
 
     protected static function beforeCreate()
     {
@@ -71,7 +73,16 @@ class diSession
 
     public static function shortIntId()
     {
-        $stringId = substr(static::id(), 0, 8);
+        if (isset($_SESSION[static::INT_ID_SESSION_KEY])) {
+            return $_SESSION[static::INT_ID_SESSION_KEY];
+        }
+
+        return static::shortIntIdOf(static::id());
+    }
+
+    protected static function shortIntIdOf(string $id): string
+    {
+        $stringId = substr($id, 0, 8);
 
         $arr = str_split($stringId, 2);
         $dec = [];
@@ -81,6 +92,26 @@ class diSession
         }
 
         return implode('', $dec);
+    }
+
+    /**
+     * A new id for the same session data, the old one dead: sign-in under an id
+     * the client chose or someone planted must not leave that id signed in.
+     * shortIntId() survives, so rows created before sign-in stay reachable.
+     */
+    public static function regenerate(): bool
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE || headers_sent()) {
+            return false;
+        }
+
+        if (!isset($_SESSION[static::INT_ID_SESSION_KEY])) {
+            $_SESSION[static::INT_ID_SESSION_KEY] = static::shortIntIdOf(
+                static::id()
+            );
+        }
+
+        return session_regenerate_id(true);
     }
 
     public static function set($name, $value)
