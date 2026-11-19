@@ -25,6 +25,19 @@ class diCookie
     }
 
     /**
+     * `true` was cast to bool and went out as `SameSite=1`, an invalid value
+     * browsers ignore; `true` now means Lax, a string passes as is.
+     */
+    public static function sameSiteValue($sameSite): string
+    {
+        if ($sameSite === true) {
+            return 'Lax';
+        }
+
+        return in_array($sameSite, ['Lax', 'Strict', 'None'], true) ? $sameSite : '';
+    }
+
+    /**
      * Sets the cookie
      *
      * @param string $name
@@ -74,7 +87,7 @@ class diCookie
                 'domain' => $options['domain'] ?: '',
                 'secure' => (bool) $options['secure'],
                 'httponly' => (bool) $options['httpOnly'],
-                'samesite' => (bool) $options['sameSite'],
+                'samesite' => static::sameSiteValue($options['sameSite']),
             ]);
         } else {
             setcookie(
