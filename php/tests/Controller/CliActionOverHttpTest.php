@@ -61,9 +61,26 @@ class CliActionOverHttpTest extends TestCase
         TestableCliRouting::$cli = false;
     }
 
-    public function testCliMethodOverHttpIsNotFound(): void
+    /**
+     * camelize() drops empty parts around `_` and method names are
+     * case-insensitive, so each of these resolved to `_cliRunAction`.
+     */
+    public static function cliMethods(): array
     {
-        $_SERVER['REQUEST_METHOD'] = 'CLI';
+        return [
+            'CLI' => ['CLI'],
+            'leading underscore' => ['_CLI'],
+            'trailing underscore' => ['CLI_'],
+            'underscore inside' => ['C_LI'],
+            'underscores around' => ['__CLI__'],
+            'lower case' => ['cli'],
+        ];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('cliMethods')]
+    public function testCliMethodOverHttpIsNotFound(string $method): void
+    {
+        $_SERVER['REQUEST_METHOD'] = $method;
         $c = new TestableCliRouting();
 
         try {

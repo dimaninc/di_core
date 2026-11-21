@@ -513,16 +513,19 @@ class diBaseController
                 ? 'cli'
                 : strtolower((string) \diRequest::getMethodStr());
 
+            $source = $requestMethod . $actionPart . '_action';
+            $methodName = '_' . camelize($source);
+
             // Метод HTTP пишет клиент: `CLI /api/…` открывал из веба кроны и
             // воркеры (`_cli*Action`), а префикс – правило маршрута, не доступа.
-            if ($requestMethod === 'cli' && !static::isCli()) {
+            // Проверяется итоговое имя, а не сырой метод: camelize() выкидывает
+            // `_` (`_CLI`, `CLI_`, `C_LI` дают то же имя), а имена методов PHP
+            // к регистру не чувствительны.
+            if (!static::isCli() && strncasecmp($methodName, '_cli', 4) === 0) {
                 throw HttpException::notFound(
                     'CLI actions are not reachable over HTTP'
                 );
             }
-
-            $source = $requestMethod . $actionPart . '_action';
-            $methodName = '_' . camelize($source);
 
             // first looking for REST API methods like _putSomeAction
             if (!method_exists($this, $methodName)) {
