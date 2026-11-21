@@ -243,7 +243,9 @@ class Auth
 
     public function logout()
     {
-        return $this->clearCookies()->clearSession()->clearUserSession();
+        return $this->clearCookies()
+            ->clearSession()
+            ->clearUserSession();
     }
 
     private function storeSession()
@@ -420,6 +422,9 @@ class Auth
                 $this->getUserModel()->upgradePasswordHash($passwordHash);
             }
 
+            // every source that is not the PHP session itself (POST, cookie,
+            // token); BEFORE storeSession(), or the old id gets the user too
+            $this->rotateSessionId();
             $this->storeSession();
 
             return true;
@@ -433,11 +438,53 @@ class Auth
     public function forceAuthorize(\diBaseUserModel $user, $storeCookies = false)
     {
         $this->user = $user;
-        \diSession::regenerate();
+        $this->rotateSessionId();
 
         $this->storeSession()->storeCookies($storeCookies);
 
         return $this;
+    }
+
+    /**
+     * Sign-in under an id the client chose or someone planted must not leave
+     * that id signed in. Rows keyed on the old id are handed over by
+     * onSessionIdChanged(); a failure there costs the rows, never the sign-in.
+     */
+    protected function rotateSessionId(): void
+    {
+        // the PHP session signs nobody in: a planted id gains nothing, and a
+        // cookie/token sign-in on every request would rotate on every request
+        if (!static::USE_PHP_SESSION) {
+            return;
+        }
+
+        $oldId = (string) \diSession::id();
+
+        if (!\diSession::regenerate()) {
+            return;
+        }
+
+        try {
+            $this->onSessionIdChanged($oldId, (string) \diSession::id());
+        } catch (\Throwable $e) {
+            Logger::getInstance()->log(
+                'Rows not moved to the new session id: ' . $e->getMessage(),
+                'Auth'
+            );
+        }
+    }
+
+    /**
+     * Moves what is keyed on the raw session id to the new one. The core moves
+     * its cart; a project overrides this (calling parent) for its own rows.
+     */
+    protected function onSessionIdChanged(string $oldId, string $newId): void
+    {
+        if ($oldId === '' || $oldId === $newId) {
+            return;
+        }
+
+        \diCore\Entity\Cart\Model::moveSession($oldId, $newId);
     }
 
     protected function updateAuthorizedUserData()
@@ -528,7 +575,6 @@ class Auth
 
         if ($login && $password && $this->authorize($login, $password)) {
             $this->authSource = self::SOURCE_POST;
-            \diSession::regenerate();
 
             $this->updateAuthorizedUserData();
         }

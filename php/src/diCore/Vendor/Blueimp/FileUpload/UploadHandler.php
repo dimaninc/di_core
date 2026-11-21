@@ -238,10 +238,20 @@ class UploadHandler
             );
     }
 
+    // user_dirs: a random name kept in the session, not the session id. The id
+    // is rotated at sign-in (files uploaded before it were lost), and a name
+    // derived from it is reproduced by anyone who reuses the old id.
+    const USER_DIR_SESSION_KEY = 'blueimpUploadUserDir';
+
     protected function get_user_id()
     {
         @session_start();
-        return session_id();
+
+        if (empty($_SESSION[static::USER_DIR_SESSION_KEY])) {
+            $_SESSION[static::USER_DIR_SESSION_KEY] = bin2hex(random_bytes(16));
+        }
+
+        return $_SESSION[static::USER_DIR_SESSION_KEY];
     }
 
     protected function get_user_path()

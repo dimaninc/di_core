@@ -101,7 +101,18 @@ class diSession
      */
     public static function regenerate(): bool
     {
-        if (session_status() !== PHP_SESSION_ACTIVE || headers_sent()) {
+        // no PHP session in use: nothing to rotate, and nothing to report
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            return false;
+        }
+
+        // the new id can't reach the client: the old one stays signed in
+        if (headers_sent($file, $line)) {
+            \diCore\Tool\Logger::getInstance()->log(
+                "Session id NOT rotated: headers already sent at $file:$line",
+                'diSession'
+            );
+
             return false;
         }
 

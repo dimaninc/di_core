@@ -135,6 +135,29 @@ class Model extends \diModel implements \diCore\Interfaces\CartOrder
         return 1;
     }
 
+    /**
+     * Hands the guest cart over to a rotated session id (sign-in), or it is
+     * lost: autoCreate() and migrateToUser() look it up by the CURRENT id.
+     * Moved, not looked up by the old id too: whoever still holds the old id
+     * must not find the cart once it belongs to a signed-in user.
+     */
+    public static function moveSession(string $oldId, string $newId): void
+    {
+        /** @var static $model */
+        $model = \diModel::create(self::type);
+        $tables = $model::getConnection()->getTableNames();
+
+        // a project without the cart: no query against a missing table
+        if (!in_array($model->getTable(), $tables, true)) {
+            return;
+        }
+
+        /** @var static $cart */
+        foreach (\diCollection::create(self::type)->filterBySessionId($oldId) as $cart) {
+            $cart->setSessionId($newId)->save();
+        }
+    }
+
     public static function migrateToUser($sessionId = null, $userId = null)
     {
         if ($sessionId === null) {
