@@ -26,7 +26,9 @@ class diCookie
 
     /**
      * `true` was cast to bool and went out as `SameSite=1`, an invalid value
-     * browsers ignore; `true` now means Lax, a string passes as is.
+     * browsers ignore; `true` now means Lax. A string is matched ignoring case
+     * (the attribute is case-insensitive) and sent in its canonical form; an
+     * unknown value omits the attribute and is reported, never sent as is.
      */
     public static function sameSiteValue($sameSite): string
     {
@@ -34,7 +36,43 @@ class diCookie
             return 'Lax';
         }
 
-        return in_array($sameSite, ['Lax', 'Strict', 'None'], true) ? $sameSite : '';
+        if ($sameSite === false || $sameSite === null || $sameSite === '') {
+            return '';
+        }
+
+        foreach (['Lax', 'Strict', 'None'] as $canonical) {
+            if (is_string($sameSite) && strcasecmp($sameSite, $canonical) === 0) {
+                return $canonical;
+            }
+        }
+
+        static::onInvalidSameSite($sameSite);
+
+        return '';
+    }
+
+    /**
+     * Options for setcookie(). `SameSite=None` without `Secure` makes Chrome
+     * drop the whole cookie, so None forces Secure: a cookie that is not sent
+     * over plain http beats one that is never stored at all.
+     */
+    public static function setcookieOptions(array $options): array
+    {
+        $sameSite = static::sameSiteValue($options['sameSite'] ?? false);
+
+        return [
+            'expires' => (int) ($options['expire'] ?? 0),
+            'path' => ($options['path'] ?? '') ?: '',
+            'domain' => ($options['domain'] ?? '') ?: '',
+            'secure' => $sameSite === 'None' || !empty($options['secure']),
+            'httponly' => !empty($options['httpOnly']),
+            'samesite' => $sameSite,
+        ];
+    }
+
+    protected static function onInvalidSameSite($sameSite): void
+    {
+        static::log('Unknown SameSite value omitted: ' . var_export($sameSite, true));
     }
 
     /**
@@ -80,15 +118,10 @@ class diCookie
             $options['domain'] = static::getDomainForAll();
         }
 
-        if ($options['asOptions']) {
-            setcookie($name, $value, [
-                'expires' => (int) $options['expire'],
-                'path' => $options['path'] ?: '',
-                'domain' => $options['domain'] ?: '',
-                'secure' => (bool) $options['secure'],
-                'httponly' => (bool) $options['httpOnly'],
-                'samesite' => static::sameSiteValue($options['sameSite']),
-            ]);
+        // a sameSite given without asOptions used to be dropped silently: the
+        // positional setcookie() has no place for it
+        if ($options['asOptions'] || !empty($options['sameSite'])) {
+            setcookie($name, $value, static::setcookieOptions($options));
         } else {
             setcookie(
                 $name,
