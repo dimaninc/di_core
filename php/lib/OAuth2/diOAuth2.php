@@ -449,9 +449,15 @@ abstract class diOAuth2
 
         // single use: a replayed callback finds no state
         $expected = (string) \diSession::getAndKill($this->stateSessionKey());
-        $given = (string) \diRequest::get('state');
+        // `state[]=x` arrives as an array: (string) would warn, and a project
+        // turning warnings into exceptions would answer 500 instead of 400
+        $given = \diRequest::get('state');
 
-        if ($expected === '' || !hash_equals($expected, $given)) {
+        if (
+            $expected === '' ||
+            !is_string($given) ||
+            !hash_equals($expected, $given)
+        ) {
             throw \diCore\Base\Exception\HttpException::badRequest(
                 'OAuth state mismatch'
             );

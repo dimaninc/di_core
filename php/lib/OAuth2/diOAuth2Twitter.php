@@ -106,7 +106,9 @@ class diOAuth2Twitter extends diOAuth2
                 );
             }
 
-            throw new \Exception('Twitter OAuth2 returned an unexpected response');
+            throw new \Exception(
+                'Twitter OAuth2 returned an unexpected response'
+            );
         }
 
         return [

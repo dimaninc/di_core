@@ -70,6 +70,29 @@ class OAuth2StateTest extends TestCase
         $this->assertFalse($oauth->profileRequested);
     }
 
+    public function testArrayStateIsBadRequestNotWarning(): void
+    {
+        $oauth = new TestableOAuth2();
+        $this->issuedState($oauth);
+        $_GET = ['code' => 'attacker-code', 'state' => ['x']];
+
+        // as a project that turns warnings into exceptions (→ 500)
+        set_error_handler(static function (int $no, string $message) {
+            throw new \ErrorException($message, 0, $no);
+        });
+
+        try {
+            $oauth->processReturn();
+            $this->fail('an array state was accepted');
+        } catch (HttpException $e) {
+            $this->assertSame(400, $e->getCode());
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertFalse($oauth->profileRequested);
+    }
+
     public function testCallbackWithNoLoginStartedIsRejected(): void
     {
         $oauth = new TestableOAuth2();
