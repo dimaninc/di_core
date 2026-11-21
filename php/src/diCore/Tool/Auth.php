@@ -243,7 +243,9 @@ class Auth
 
     public function logout()
     {
-        return $this->clearCookies()->clearSession()->clearUserSession();
+        return $this->clearCookies()
+            ->clearSession()
+            ->clearUserSession();
     }
 
     private function storeSession()
@@ -525,12 +527,15 @@ class Auth
         $login = \diRequest::postExt(static::POST_LOGIN_FIELD);
         $password = \diRequest::postExt(static::POST_PASSWORD_FIELD);
 
-        if (!$login || !$password) {
+        // `login[]=x` is no login: refused before the hooks, which take a string
+        if (!$login || !$password || !is_scalar($login)) {
             return $this;
         }
 
+        $login = (string) $login;
+
         // any POST carrying these fields signs in, not only the login action
-        if (!$this->isPasswordAttemptAllowed((string) $login)) {
+        if (!$this->isPasswordAttemptAllowed($login)) {
             return $this;
         }
 
@@ -538,8 +543,9 @@ class Auth
             $this->authSource = self::SOURCE_POST;
 
             $this->updateAuthorizedUserData();
+            $this->onPasswordAttemptSucceeded($login);
         } else {
-            $this->onPasswordAttemptFailed((string) $login);
+            $this->onPasswordAttemptFailed($login);
         }
 
         return $this;
@@ -548,13 +554,30 @@ class Auth
     /**
      * A project's limit on password guessing; a refused attempt is answered
      * exactly like a wrong password, so the limit is no account oracle.
+     *
+     * $login is exactly what was typed: normalising it (case, spaces) is the
+     * project's job, or `User@x` and `user@x` count as two separate budgets.
      */
     protected function isPasswordAttemptAllowed(string $login): bool
     {
         return true;
     }
 
+    /**
+     * @see isPasswordAttemptAllowed() for $login
+     */
     protected function onPasswordAttemptFailed(string $login): void
+    {
+    }
+
+    /**
+     * Resets a "N failures in a row" counter. Only a POST password sign-in gets
+     * here, unlike updateAuthorizedUserData(), which also runs for session and
+     * cookie sign-ins.
+     *
+     * @see isPasswordAttemptAllowed() for $login
+     */
+    protected function onPasswordAttemptSucceeded(string $login): void
     {
     }
 
