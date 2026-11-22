@@ -38,6 +38,9 @@ class OAuth2StateTest extends TestCase
     protected function setUp(): void
     {
         $this->get = $_GET;
+        // a state left by an earlier test would turn "no login started" into
+        // a plain mismatch, and hide a missing `$expected === ''` check
+        unset($_SESSION[\diSession::VALUES_SESSION_KEY]);
     }
 
     protected function tearDown(): void
