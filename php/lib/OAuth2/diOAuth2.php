@@ -191,9 +191,25 @@ abstract class diOAuth2
         return http_build_url($this->getBackUrlParts());
     }
 
+    /**
+     * Issues a new state on every call, replacing the previous one: call it when
+     * the login starts (oauth2Action()), not for every link rendered on a page,
+     * or a login begun in another tab gets a 400 at its callback.
+     */
     public function getLoginUrl()
     {
-        return static::makeUrl(static::loginUrlBase, $this->getLoginUrlParams());
+        $params = $this->getLoginUrlParams();
+
+        // an override without parent:: sends no state, and every callback is a 400
+        if (static::USES_STATE && empty($params['state'])) {
+            Logger::getInstance()->log(
+                static::class .
+                    '::getLoginUrlParams() sends no state: call parent or set USES_STATE = false',
+                'diOAuth2'
+            );
+        }
+
+        return static::makeUrl(static::loginUrlBase, $params);
     }
 
     public function getAuthUrl()
@@ -447,8 +463,7 @@ abstract class diOAuth2
             return;
         }
 
-        // single use: a replayed callback finds no state
-        $expected = (string) \diSession::getAndKill($this->stateSessionKey());
+        $expected = (string) \diSession::get($this->stateSessionKey());
         // `state[]=x` arrives as an array: (string) would warn, and a project
         // turning warnings into exceptions would answer 500 instead of 400
         $given = \diRequest::get('state');
@@ -458,10 +473,15 @@ abstract class diOAuth2
             !is_string($given) ||
             !hash_equals($expected, $given)
         ) {
+            // the state is kept: a forged callback must not cancel the login
+            // the visitor has started
             throw \diCore\Base\Exception\HttpException::badRequest(
                 'OAuth state mismatch'
             );
         }
+
+        // single use: a replayed callback finds no state
+        \diSession::kill($this->stateSessionKey());
     }
 
     protected function getAuthUrlParams()

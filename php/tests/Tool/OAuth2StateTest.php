@@ -70,6 +70,27 @@ class OAuth2StateTest extends TestCase
         $this->assertFalse($oauth->profileRequested);
     }
 
+    public function testForgedCallbackDoesNotCancelTheStartedLogin(): void
+    {
+        $oauth = new TestableOAuth2();
+        $state = $this->issuedState($oauth);
+        $_GET = ['code' => 'attacker-code', 'state' => 'forged'];
+
+        try {
+            $oauth->processReturn();
+        } catch (HttpException) {
+        }
+
+        $_GET = ['code' => 'own-code', 'state' => $state];
+
+        try {
+            $oauth->processReturn();
+        } catch (\LogicException) {
+        }
+
+        $this->assertTrue($oauth->profileRequested);
+    }
+
     public function testArrayStateIsBadRequestNotWarning(): void
     {
         $oauth = new TestableOAuth2();
