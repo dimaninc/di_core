@@ -36,6 +36,22 @@ class TestableCliRouting extends \diBaseController
     }
 }
 
+/** TINY_ACTIONS: no action part, the cli method is plain `_cliAction`. */
+class TestableTinyCliRouting extends TestableCliRouting
+{
+    const TINY_ACTIONS = true;
+
+    public function _cliAction()
+    {
+        $this->calls[] = 'cli';
+    }
+
+    public function _getAction()
+    {
+        $this->calls[] = 'get';
+    }
+}
+
 /**
  * The HTTP method is written by the client: `CLI /api/…` used to route a web
  * request into `_cli*Action` – crons and long-running workers.
@@ -91,6 +107,34 @@ class CliActionOverHttpTest extends TestCase
         }
 
         $this->assertSame([], $c->calls, 'neither the cli nor the plain action');
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('cliMethods')]
+    public function testTinyCliMethodOverHttpIsNotFound(string $method): void
+    {
+        $_SERVER['REQUEST_METHOD'] = $method;
+        $c = new TestableTinyCliRouting();
+
+        try {
+            $c->act();
+            $this->fail('a tiny cli action was reached over HTTP');
+        } catch (HttpException $e) {
+            $this->assertSame(404, $e->getCode());
+        }
+
+        $this->assertSame([], $c->calls);
+    }
+
+    public function testTinyActionsStillRoute(): void
+    {
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $c = new TestableTinyCliRouting();
+        $c->act();
+
+        TestableCliRouting::$cli = true;
+        $c->act();
+
+        $this->assertSame(['get', 'cli'], $c->calls);
     }
 
     public function testCliActionRunsFromCli(): void
