@@ -100,7 +100,7 @@ class CookieSameSiteTest extends TestCase
             $this->assertFalse($options['secure']);
             $this->assertCount(1, TestableCookie::$logged);
 
-            // reported once per request, not per cookie
+            // reported once per process, not per cookie
             TestableCookie::setcookieOptions(['sameSite' => 'None']);
             $this->assertCount(1, TestableCookie::$logged);
 

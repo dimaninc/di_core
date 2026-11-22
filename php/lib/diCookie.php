@@ -71,7 +71,8 @@ class diCookie
             if (static::isHttpsRequest()) {
                 $secure = true;
             } else {
-                // once per request: a dev domain on http sets such cookies often
+                // once per process (an FPM request, or a whole long-lived worker): a dev
+                // domain on http sets such cookies often
                 if (!static::$noneOverHttpLogged) {
                     static::$noneOverHttpLogged = true;
                     static::log('SameSite=None omitted: it needs Secure, and the request is not https');
