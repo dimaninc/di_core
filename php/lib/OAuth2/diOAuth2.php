@@ -19,7 +19,9 @@ abstract class diOAuth2
     const callbackParam = 'callback';
     const unlinkParam = 'unlink';
 
-    // OAuth 1 vendors (Twitter) carry their own request token instead
+    // false only for a protocol without `state` (OAuth 1) that checks the
+    // callback itself (diOAuth2Twitter::assertState()); turning it off for an
+    // OAuth 2 vendor switches the CSRF check off
     const USES_STATE = true;
     const STATE_SESSION_KEY = 'oauth2_state_';
 
@@ -204,7 +206,7 @@ abstract class diOAuth2
         if (static::USES_STATE && empty($params['state'])) {
             Logger::getInstance()->log(
                 static::class .
-                    '::getLoginUrlParams() sends no state: call parent or set USES_STATE = false',
+                    '::getLoginUrlParams() sends no state: call parent::getLoginUrlParams()',
                 'diOAuth2'
             );
         }
