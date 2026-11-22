@@ -527,8 +527,9 @@ class Auth
         $login = \diRequest::postExt(static::POST_LOGIN_FIELD);
         $password = \diRequest::postExt(static::POST_PASSWORD_FIELD);
 
-        // `login[]=x` is no login: refused before the hooks, which take a string
-        if (!$login || !$password || !is_scalar($login)) {
+        // `login[]=x` / `password[]=x` is malformed input: refused before the
+        // hooks (which take a string), so it spends no attempt
+        if (!$login || !$password || !is_scalar($login) || !is_scalar($password)) {
             return $this;
         }
 

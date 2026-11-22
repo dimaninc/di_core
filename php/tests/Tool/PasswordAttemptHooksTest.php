@@ -146,6 +146,17 @@ class PasswordAttemptHooksTest extends TestCase
         $this->assertSame([], TestablePasswordAuth::$failed);
     }
 
+    public function testNonScalarPasswordSpendsNoAttempt(): void
+    {
+        $_POST[Auth::POST_PASSWORD_FIELD] = ['guess'];
+
+        $auth = new TestablePasswordAuth(false);
+
+        $this->assertFalse($auth->authorized());
+        $this->assertSame([], TestablePasswordAuth::$asked);
+        $this->assertSame([], TestablePasswordAuth::$failed);
+    }
+
     public function testFailedAttemptIsReported(): void
     {
         $auth = new TestablePasswordAuth(false);
