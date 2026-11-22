@@ -26,13 +26,14 @@ class diCookie
 
     /**
      * `true` was cast to bool and went out as `SameSite=1`, an invalid value
-     * browsers ignore; `true` now means Lax. A string is matched ignoring case
+     * browsers ignore; `true` (and 1) now means Lax. A string is matched ignoring case
      * (the attribute is case-insensitive) and sent in its canonical form; an
      * unknown value omits the attribute and is reported, never sent as is.
      */
     public static function sameSiteValue($sameSite): string
     {
-        if ($sameSite === true) {
+        // 1 / '1' went out exactly like true before (`SameSite=1`)
+        if (in_array($sameSite, [true, 1, '1'], true)) {
             return 'Lax';
         }
 
@@ -54,9 +55,10 @@ class diCookie
 
     /**
      * Options for setcookie(). `SameSite=None` without `Secure` makes Chrome
-     * drop the whole cookie, so on https None forces Secure. Over plain http a
-     * Secure cookie is not stored at all (localhost aside), so there None is
-     * omitted instead (logged): the cookie is kept, with the browser's default.
+     * drop the whole cookie, so on https (X-Forwarded-Proto counts) None forces
+     * Secure. Over plain http a Secure cookie is not stored at all (localhost
+     * aside), so there None is omitted instead (logged): the cookie is kept,
+     * with the browser's default.
      */
     public static function setcookieOptions(array $options): array
     {
@@ -64,7 +66,7 @@ class diCookie
         $secure = !empty($options['secure']);
 
         if ($sameSite === 'None' && !$secure) {
-            if (\diRequest::isHttps()) {
+            if (static::isHttpsRequest()) {
                 $secure = true;
             } else {
                 static::log('SameSite=None omitted: it needs Secure, and the request is not https');
@@ -80,6 +82,24 @@ class diCookie
             'httponly' => !empty($options['httpOnly']),
             'samesite' => $sameSite,
         ];
+    }
+
+    /**
+     * isHttps() plus X-Forwarded-Proto: behind a TLS-terminating proxy the
+     * request reaches PHP over http, and None would be dropped for good. A
+     * forged header costs nothing here: the browser then just doesn't store
+     * the Secure cookie for whoever forged it.
+     */
+    protected static function isHttpsRequest(): bool
+    {
+        return \diRequest::isHttps() ||
+            strtolower(trim((string) \diRequest::header('X-Forwarded-Proto'))) === 'https';
+    }
+
+    /** The one place a cookie leaves; setcookie() can't be read back in CLI. */
+    protected static function sendCookie($name, $value, array $options): void
+    {
+        setcookie($name, $value, $options);
     }
 
     protected static function onInvalidSameSite($sameSite): void
@@ -130,21 +150,9 @@ class diCookie
             $options['domain'] = static::getDomainForAll();
         }
 
-        // a sameSite given without asOptions used to be dropped silently: the
-        // positional setcookie() has no place for it
-        if ($options['asOptions'] || !empty($options['sameSite'])) {
-            setcookie($name, $value, static::setcookieOptions($options));
-        } else {
-            setcookie(
-                $name,
-                $value,
-                (int) $options['expire'],
-                $options['path'] ?: '',
-                $options['domain'] ?: '',
-                (bool) $options['secure'],
-                (bool) $options['httpOnly']
-            );
-        }
+        // always the options form: the positional setcookie() has no place for
+        // sameSite and dropped it silently. asOptions is kept for old callers
+        static::sendCookie($name, $value, static::setcookieOptions($options));
 
         if (static::DEBUG) {
             if ($options['expire']) {

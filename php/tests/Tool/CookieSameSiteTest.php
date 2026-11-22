@@ -7,10 +7,23 @@ use PHPUnit\Framework\TestCase;
 class TestableCookie extends \diCookie
 {
     public static array $invalid = [];
+    public static array $logged = [];
+    public static array $sent = [];
 
     protected static function onInvalidSameSite($sameSite): void
     {
         static::$invalid[] = $sameSite;
+    }
+
+    // not into the real log file
+    protected static function log($message)
+    {
+        static::$logged[] = $message;
+    }
+
+    protected static function sendCookie($name, $value, array $options): void
+    {
+        static::$sent[] = [$name, $value, $options];
     }
 }
 
@@ -20,11 +33,16 @@ class CookieSameSiteTest extends TestCase
     protected function setUp(): void
     {
         TestableCookie::$invalid = [];
+        TestableCookie::$logged = [];
+        TestableCookie::$sent = [];
     }
 
     public function testTrueMeansLax(): void
     {
-        $this->assertSame('Lax', TestableCookie::sameSiteValue(true));
+        // 1 and '1' went out exactly like true before the fix
+        foreach ([true, 1, '1'] as $value) {
+            $this->assertSame('Lax', TestableCookie::sameSiteValue($value));
+        }
     }
 
     public function testValidStringsPass(): void
@@ -53,11 +71,11 @@ class CookieSameSiteTest extends TestCase
 
     public function testUnknownValueIsOmittedAndReported(): void
     {
-        foreach ([1, '1', 'lax-ish', ['Lax']] as $value) {
+        foreach ([2, 'lax-ish', ['Lax']] as $value) {
             $this->assertSame('', TestableCookie::sameSiteValue($value));
         }
 
-        $this->assertSame([1, '1', 'lax-ish', ['Lax']], TestableCookie::$invalid);
+        $this->assertSame([2, 'lax-ish', ['Lax']], TestableCookie::$invalid);
     }
 
     /** Chrome drops a `SameSite=None` cookie without `Secure` entirely. */
@@ -79,6 +97,7 @@ class CookieSameSiteTest extends TestCase
 
             $this->assertSame('', $options['samesite']);
             $this->assertFalse($options['secure']);
+            $this->assertCount(1, TestableCookie::$logged);
 
             // an explicit secure is the caller's choice
             $options = TestableCookie::setcookieOptions(['sameSite' => 'None', 'secure' => true]);
@@ -88,9 +107,32 @@ class CookieSameSiteTest extends TestCase
         });
     }
 
+    /** Behind a TLS-terminating proxy PHP itself sees http. */
+    public function testForwardedHttpsCounts(): void
+    {
+        $this->withHttps(null, function () {
+            $_SERVER['HTTP_X_FORWARDED_PROTO'] = 'https';
+
+            $options = TestableCookie::setcookieOptions(['sameSite' => 'None']);
+
+            $this->assertSame('None', $options['samesite']);
+            $this->assertTrue($options['secure']);
+        });
+    }
+
+    /** The positional setcookie() had no place for sameSite: it was dropped. */
+    public function testSetSendsSameSiteWithoutAsOptions(): void
+    {
+        TestableCookie::set('c', 'v', ['sameSite' => 'Strict', 'path' => '/']);
+
+        $this->assertSame('c', TestableCookie::$sent[0][0]);
+        $this->assertSame('Strict', TestableCookie::$sent[0][2]['samesite']);
+        $this->assertSame('/', TestableCookie::$sent[0][2]['path']);
+    }
+
     private function withHttps(?string $https, callable $test): void
     {
-        $keys = ['HTTPS', 'SERVER_PORT', 'REQUEST_SCHEME', 'SSL_PROTOCOL'];
+        $keys = ['HTTPS', 'SERVER_PORT', 'REQUEST_SCHEME', 'SSL_PROTOCOL', 'HTTP_X_FORWARDED_PROTO'];
         $saved = array_intersect_key($_SERVER, array_flip($keys));
 
         foreach ($keys as $key) {
