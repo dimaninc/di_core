@@ -13,6 +13,8 @@ class diCookie
 {
     const DEBUG = false;
 
+    protected static bool $noneOverHttpLogged = false;
+
     protected static function defaultSetOptions()
     {
         return [
@@ -69,7 +71,12 @@ class diCookie
             if (static::isHttpsRequest()) {
                 $secure = true;
             } else {
-                static::log('SameSite=None omitted: it needs Secure, and the request is not https');
+                // once per request: a dev domain on http sets such cookies often
+                if (!static::$noneOverHttpLogged) {
+                    static::$noneOverHttpLogged = true;
+                    static::log('SameSite=None omitted: it needs Secure, and the request is not https');
+                }
+
                 $sameSite = '';
             }
         }
@@ -92,8 +99,10 @@ class diCookie
      */
     protected static function isHttpsRequest(): bool
     {
-        return \diRequest::isHttps() ||
-            strtolower(trim((string) \diRequest::header('X-Forwarded-Proto'))) === 'https';
+        // a proxy chain sends a list ("https, http"): the first is the client's
+        $proto = explode(',', (string) \diRequest::header('X-Forwarded-Proto'))[0];
+
+        return \diRequest::isHttps() || strtolower(trim($proto)) === 'https';
     }
 
     /** The one place a cookie leaves; setcookie() can't be read back in CLI. */

@@ -35,6 +35,7 @@ class CookieSameSiteTest extends TestCase
         TestableCookie::$invalid = [];
         TestableCookie::$logged = [];
         TestableCookie::$sent = [];
+        (fn() => static::$noneOverHttpLogged = false)->bindTo(null, TestableCookie::class)();
     }
 
     public function testTrueMeansLax(): void
@@ -99,6 +100,10 @@ class CookieSameSiteTest extends TestCase
             $this->assertFalse($options['secure']);
             $this->assertCount(1, TestableCookie::$logged);
 
+            // reported once per request, not per cookie
+            TestableCookie::setcookieOptions(['sameSite' => 'None']);
+            $this->assertCount(1, TestableCookie::$logged);
+
             // an explicit secure is the caller's choice
             $options = TestableCookie::setcookieOptions(['sameSite' => 'None', 'secure' => true]);
 
@@ -111,7 +116,8 @@ class CookieSameSiteTest extends TestCase
     public function testForwardedHttpsCounts(): void
     {
         $this->withHttps(null, function () {
-            $_SERVER['HTTP_X_FORWARDED_PROTO'] = 'https';
+            // a proxy chain: the first value is the client's
+            $_SERVER['HTTP_X_FORWARDED_PROTO'] = 'HTTPS, http';
 
             $options = TestableCookie::setcookieOptions(['sameSite' => 'None']);
 
