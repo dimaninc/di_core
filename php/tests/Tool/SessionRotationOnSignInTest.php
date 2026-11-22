@@ -134,6 +134,7 @@ class SessionRotationOnSignInTest extends TestCase
 {
     private array $post;
     private array $cookie;
+    private ?string $remoteAddr;
 
     protected function setUp(): void
     {
@@ -142,7 +143,8 @@ class SessionRotationOnSignInTest extends TestCase
         $_POST = [];
         $_COOKIE = [];
         $_SESSION = [];
-        // ip2bin() of the user session code is fed REMOTE_ADDR
+        // ip2bin() of the sign-in code is fed REMOTE_ADDR: null is a deprecation
+        $this->remoteAddr = $_SERVER['REMOTE_ADDR'] ?? null;
         $_SERVER['REMOTE_ADDR'] ??= '127.0.0.1';
         RotationSpyAuth::$rotations = [];
         RotationBodyAuth::$changed = [];
@@ -158,6 +160,10 @@ class SessionRotationOnSignInTest extends TestCase
         $_POST = $this->post;
         $_COOKIE = $this->cookie;
         $_SESSION = [];
+
+        if ($this->remoteAddr === null) {
+            unset($_SERVER['REMOTE_ADDR']);
+        }
     }
 
     public function testPostSignInRotatesBeforeTheSessionGetsTheUser(): void
