@@ -64,6 +64,7 @@ class diSession
         return session_id();
     }
 
+    /** Derived from the id: changes with regenerate(), like shortIntId(). */
     public static function shortId()
     {
         return substr(static::id(), 0, static::SHORT_ID_LENGTH);

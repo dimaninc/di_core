@@ -55,6 +55,77 @@ class RotationSpyAuth extends Auth
     }
 }
 
+/** Stands in for diSession: PHPUnit has sent output, no real id can rotate. */
+class FakeRotatingSession extends \diSession
+{
+    public static bool $fromClient = true;
+    public static bool $regenerates = true;
+    public static string $id = 'planted';
+    public static int $regenerated = 0;
+
+    public static function idFromClient(): bool
+    {
+        return static::$fromClient;
+    }
+
+    public static function id()
+    {
+        return static::$id;
+    }
+
+    public static function regenerate(): bool
+    {
+        static::$regenerated++;
+
+        if (static::$regenerates) {
+            static::$id = 'fresh';
+        }
+
+        return static::$regenerates;
+    }
+}
+
+/** The real rotateSessionId() over the fake session. */
+class RotationBodyAuth extends Auth
+{
+    public static array $changed = [];
+    public static bool $hookThrows = false;
+
+    protected function sessionClass(): string
+    {
+        return FakeRotatingSession::class;
+    }
+
+    protected function onSessionIdChanged(string $oldId, string $newId): void
+    {
+        static::$changed[] = [$oldId, $newId];
+
+        if (static::$hookThrows) {
+            throw new \RuntimeException('no table');
+        }
+    }
+
+    protected function storeCookies($remember = false)
+    {
+        return $this;
+    }
+
+    protected function userSessionCreationNeeded()
+    {
+        return false;
+    }
+
+    public function rotate(): void
+    {
+        $this->rotateSessionId();
+    }
+}
+
+class NoPhpSessionAuth extends RotationBodyAuth
+{
+    const USE_PHP_SESSION = false;
+}
+
 /**
  * Only the POST password sign-in rotated the id: a planted id S became the
  * victim's session as soon as a "remember me" cookie signed them in under it.
@@ -71,7 +142,15 @@ class SessionRotationOnSignInTest extends TestCase
         $_POST = [];
         $_COOKIE = [];
         $_SESSION = [];
+        // ip2bin() of the user session code is fed REMOTE_ADDR
+        $_SERVER['REMOTE_ADDR'] ??= '127.0.0.1';
         RotationSpyAuth::$rotations = [];
+        RotationBodyAuth::$changed = [];
+        RotationBodyAuth::$hookThrows = false;
+        FakeRotatingSession::$fromClient = true;
+        FakeRotatingSession::$regenerates = true;
+        FakeRotatingSession::$id = 'planted';
+        FakeRotatingSession::$regenerated = 0;
     }
 
     protected function tearDown(): void
@@ -128,5 +207,70 @@ class SessionRotationOnSignInTest extends TestCase
         new RotationSpyAuth(false);
 
         $this->assertSame([], RotationSpyAuth::$rotations);
+    }
+
+    public function testRotationHandsTheOldIdOver(): void
+    {
+        (new RotationBodyAuth(false))->rotate();
+
+        $this->assertSame(1, FakeRotatingSession::$regenerated);
+        $this->assertSame([['planted', 'fresh']], RotationBodyAuth::$changed);
+    }
+
+    public function testIdPhpGeneratedIsNotRotated(): void
+    {
+        FakeRotatingSession::$fromClient = false;
+
+        (new RotationBodyAuth(false))->rotate();
+
+        $this->assertSame(0, FakeRotatingSession::$regenerated);
+        $this->assertSame([], RotationBodyAuth::$changed);
+    }
+
+    public function testWithoutPhpSessionNothingRotates(): void
+    {
+        (new NoPhpSessionAuth(false))->rotate();
+
+        $this->assertSame(0, FakeRotatingSession::$regenerated);
+    }
+
+    public function testFailedRegenerateMovesNothing(): void
+    {
+        FakeRotatingSession::$regenerates = false;
+
+        (new RotationBodyAuth(false))->rotate();
+
+        $this->assertSame([], RotationBodyAuth::$changed);
+    }
+
+    public function testFailingHookNeverCostsTheSignIn(): void
+    {
+        RotationBodyAuth::$hookThrows = true;
+
+        (new RotationBodyAuth(false))->rotate();
+
+        $this->assertCount(1, RotationBodyAuth::$changed);
+    }
+
+    /** An app ignoring the new X-Session rotated (and lost its cart) per request. */
+    public function testTokenSignInStaysOutOfThePhpSession(): void
+    {
+        $auth = new RotationBodyAuth(false);
+        $user = (new RotationUser())->setId(7)->set('active', 1);
+
+        // authorize() needs a user_session row; its storing step is what matters
+        // Auth's private state: bound to Auth's scope, not the subclass's
+        \Closure::bind(function () use ($user) {
+            $this->user = $user;
+            $this->authSource = Auth::SOURCE_USER_SESSION;
+            $this->storeSession();
+        }, $auth, Auth::class)();
+
+        $this->assertArrayNotHasKey(Auth::SESSION_USER_ID_FIELD, $_SESSION);
+
+        // a sign-in forced during a token request is still kept
+        $auth->forceAuthorize($user);
+
+        $this->assertSame(7, $_SESSION[Auth::SESSION_USER_ID_FIELD]);
     }
 }

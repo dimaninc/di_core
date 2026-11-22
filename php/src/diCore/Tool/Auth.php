@@ -248,7 +248,11 @@ class Auth
             ->clearUserSession();
     }
 
-    private function storeSession()
+    /**
+     * @param bool $forced forceAuthorize(): its user is written whatever signed
+     *                     the request in, a token included
+     */
+    private function storeSession(bool $forced = false)
     {
         if ($this->reallyAuthorized()) {
             if ($this->userSessionCreationNeeded()) {
@@ -257,7 +261,10 @@ class Auth
                 )->save();
             }
 
-            $_SESSION[static::SESSION_USER_ID_FIELD] = $this->getUserId();
+            // a token sign-in stays out of the PHP session: see authorize()
+            if ($forced || $this->authSource !== self::SOURCE_USER_SESSION) {
+                $_SESSION[static::SESSION_USER_ID_FIELD] = $this->getUserId();
+            }
         } else {
             $this->clearSession()->clearUserSession();
         }
@@ -422,11 +429,15 @@ class Auth
                 $this->getUserModel()->upgradePasswordHash($passwordHash);
             }
 
-            // every source that is not the PHP session itself (POST, cookie,
-            // token); before storeSession(), so the user lands only in the new
-            // session (regenerate() destroys the old record)
-            $this->rotateSessionId();
-            $this->storeSession();
+            // a token is checked on every request and never written into the
+            // PHP session: a planted id has nothing to capture, and an app that
+            // ignores the new X-Session would rotate on every request
+            if ($source !== self::SOURCE_USER_SESSION) {
+                // before storeSession(), so the user lands only in the new
+                // session (regenerate() destroys the old record)
+                $this->rotateSessionId();
+                $this->storeSession();
+            }
 
             return true;
         }
@@ -441,7 +452,7 @@ class Auth
         $this->user = $user;
         $this->rotateSessionId();
 
-        $this->storeSession()->storeCookies($storeCookies);
+        $this->storeSession(true)->storeCookies($storeCookies);
 
         return $this;
     }
@@ -459,9 +470,7 @@ class Auth
             return;
         }
 
-        // through getClass(), like diSession's own methods: a project subclass
-        // may override how the id is read or brought by the client
-        $session = \diSession::getClass();
+        $session = $this->sessionClass();
 
         // an id PHP generated in this request was planted by nobody
         if (!$session::idFromClient()) {
@@ -485,10 +494,21 @@ class Auth
     }
 
     /**
+     * Through getClass(), like diSession's own methods: a project subclass may
+     * override how the id is read or brought by the client.
+     *
+     * @return class-string<\diSession>
+     */
+    protected function sessionClass(): string
+    {
+        return \diSession::getClass();
+    }
+
+    /**
      * Moves what is keyed on the session id to the new one. The core moves its
      * cart; a project overrides this (calling parent) for its own rows, those
-     * keyed on diSession::shortIntId() included (shortIntIdOf($oldId) →
-     * shortIntIdOf($newId)): it changes with the id.
+     * keyed on diSession::shortIntId() (shortIntIdOf($oldId) → shortIntIdOf
+     * ($newId)) or shortId() included: both change with the id.
      */
     protected function onSessionIdChanged(string $oldId, string $newId): void
     {

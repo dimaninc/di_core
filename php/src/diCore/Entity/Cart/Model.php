@@ -145,17 +145,22 @@ class Model extends \diModel implements \diCore\Interfaces\CartOrder
     {
         /** @var static $model */
         $model = \diModel::create(self::type);
-        $tables = $model::getConnection()->getTableNames();
+        $db = $model::getConnection()->getDb();
+        $table = $model->getTable();
 
-        // a project without the cart: no query against a missing table
-        if (!in_array($model->getTable(), $tables, true)) {
+        // a project without the cart: no query against a missing table. Once
+        // per sign-in where the client brought an id, so the list is affordable
+        if (!in_array($table, $model::getConnection()->getTableNames(), true)) {
             return;
         }
 
-        /** @var static $cart */
-        foreach (\diCollection::create(self::type)->filterBySessionId($oldId) as $cart) {
-            $cart->setSessionId($newId)->save();
-        }
+        // one UPDATE, not a save() per cart; not diCollection::update(): its
+        // aliased `UPDATE cart main_table` is invalid on SQLite
+        $db->update(
+            $table,
+            ['session_id' => $newId],
+            'WHERE ' . $db->escapeFieldValue('session_id', $oldId)
+        );
     }
 
     public static function migrateToUser($sessionId = null, $userId = null)
