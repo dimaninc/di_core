@@ -509,11 +509,23 @@ class diBaseController
             }
 
             $actionPart = static::TINY_ACTIONS ? '' : '_' . $action;
-            $requestMethod = self::isCli()
+            $requestMethod = static::isCli()
                 ? 'cli'
-                : strtolower(\diRequest::getMethodStr());
+                : strtolower((string) \diRequest::getMethodStr());
+
             $source = $requestMethod . $actionPart . '_action';
             $methodName = '_' . camelize($source);
+
+            // Метод HTTP пишет клиент: `CLI /api/…` открывал из веба кроны и
+            // воркеры (`_cli*Action`), а префикс – правило маршрута, не доступа.
+            // Проверяется итоговое имя, а не сырой метод: camelize() выкидывает
+            // `_` (`_CLI`, `CLI_`, `C_LI` дают то же имя), а имена методов PHP
+            // к регистру не чувствительны.
+            if (!static::isCli() && strncasecmp($methodName, '_cli', 4) === 0) {
+                throw HttpException::notFound(
+                    'CLI actions are not reachable over HTTP'
+                );
+            }
 
             // first looking for REST API methods like _putSomeAction
             if (!method_exists($this, $methodName)) {
