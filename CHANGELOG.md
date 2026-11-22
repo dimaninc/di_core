@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.14.3
+
+- Refuse CLI actions reached over HTTP (#53)
+- Bind OAuth callbacks to the login that started them (state) (#54)
+- Add hooks to limit password sign-in attempts (#55)
+- Send a valid SameSite value instead of 1 (#56)
+- Rotate the session id on sign-in, keeping shortIntId (#57)
+- Refuse malformed OAuth answers instead of a TypeError (#58)
+
 ## 0.14.2
 
 - Admin: escape JSON columns in lists and forms (#52)
