@@ -16,7 +16,9 @@ class diOAuth2Vk extends diOAuth2
             true
         );
 
-        if (count($tokenInfo)) {
+        // Пустой или не-JSON ответ VK даёт null, и `count(null)` – TypeError мимо
+        // `catch (\Exception)` вызывающих: 500 вместо отказа входа.
+        if (is_array($tokenInfo) && $tokenInfo) {
             if (isset($tokenInfo['access_token'])) {
                 $params = [
                     'v' => 5.131,
@@ -48,7 +50,9 @@ class diOAuth2Vk extends diOAuth2
                 }
             } else {
                 $this->setProfileError(
-                    $tokenInfo['error'] . ': ' . $tokenInfo['error_description']
+                    ($tokenInfo['error'] ?? 'unknown') .
+                        ': ' .
+                        ($tokenInfo['error_description'] ?? '')
                 );
             }
         } else {
