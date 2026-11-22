@@ -369,12 +369,11 @@ abstract class diOAuth2
     /** Текст отказа вендора на обмен кода; поля необязательны, warning здесь – дефект. */
     protected static function vendorErrorText(array $answer): string
     {
-        $error = $answer['error'] ?? 'unknown';
-        $description = $answer['error_description'] ?? '';
+        $text = static fn($v) => is_scalar($v) ? (string) $v : json_encode($v);
+        $error = $text($answer['error'] ?? 'unknown');
+        $description = $text($answer['error_description'] ?? '');
 
-        return (is_scalar($error) ? (string) $error : json_encode($error)) .
-            ': ' .
-            (is_scalar($description) ? (string) $description : json_encode($description));
+        return $description === '' ? $error : "$error: $description";
     }
 
     protected function setProfileError($m = null)

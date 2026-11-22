@@ -48,7 +48,8 @@ class VkTokenResponseTest extends TestCase
 
     public function testVendorErrorWithoutDescriptionDoesNotWarn(): void
     {
-        $this->assertRefused('invalid_client: ', '{"error":"invalid_client"}');
+        // Пробел после кода – разделитель retrieveProfile(): двоеточия без описания нет
+        $this->assertRefused('invalid_client ', '{"error":"invalid_client"}');
     }
 
     public function testTokenWithoutUserIdDoesNotWarn(): void

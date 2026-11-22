@@ -29,9 +29,18 @@ class VendorAnswerShapesTest extends TestCase
     public static function vendors(): array
     {
         return [
-            'google' => [FakeGoogle::class, '{"id":"1","email":"ivan@gmail.example","given_name":"Ivan","family_name":"Petrov"}'],
-            'mailru' => [FakeMailru::class, '[{"uid":"1","nick":"ivan","email":"ivan@mail.example","first_name":"Ivan","last_name":"Petrov"}]'],
-            'yandex' => [FakeYandex::class, '{"id":"1","login":"ivan","default_email":"ivan@ya.example","first_name":"Ivan","last_name":"Petrov"}'],
+            'google' => [
+                FakeGoogle::class,
+                '{"id":"1","email":"ivan@gmail.example","given_name":"Ivan","family_name":"Petrov"}',
+            ],
+            'mailru' => [
+                FakeMailru::class,
+                '[{"uid":"1","nick":"ivan","email":"ivan@mail.example","first_name":"Ivan","last_name":"Petrov"}]',
+            ],
+            'yandex' => [
+                FakeYandex::class,
+                '{"id":"1","login":"ivan","default_email":"ivan@ya.example","first_name":"Ivan","last_name":"Petrov"}',
+            ],
             'ok' => [FakeOk::class, '{"uid":"1","name":"Ivan"}'],
         ];
     }
@@ -47,30 +56,41 @@ class VendorAnswerShapesTest extends TestCase
     #[DataProvider('vendors')]
     public function testVendorErrorWithoutDescriptionDoesNotWarn(string $class): void
     {
-        $this->assertRefused('invalid_grant: ', $class, '{"error":"invalid_grant"}');
+        // Пробел после кода – разделитель retrieveProfile(): двоеточия без описания нет
+        $this->assertRefused('invalid_grant ', $class, '{"error":"invalid_grant"}');
     }
 
     #[DataProvider('vendors')]
     public function testBrokenProfileAnswersAreRefusals(string $class): void
     {
         foreach (['', '<html></html>', '"x"'] as $body) {
-            $this->assertRefused('Error retrieving data', $class, self::TOKEN, $body);
+            $this->assertRefused(
+                'Error retrieving data',
+                $class,
+                self::TOKEN,
+                $body
+            );
         }
     }
 
     #[DataProvider('vendors')]
-    public function testValidAnswersGiveTheProfile(string $class, string $profile): void
-    {
+    public function testValidAnswersGiveTheProfile(
+        string $class,
+        string $profile
+    ): void {
         $vendor = $class::answering(self::TOKEN, $profile);
 
         $vendor->retrieve();
 
         $data = $vendor->rawData();
-        $this->assertSame('1', (string) ($data['uid'] ?? $data['id'] ?? ''));
+        $this->assertSame('1', (string) ($data['uid'] ?? ($data['id'] ?? '')));
     }
 
-    private function assertRefused(string $message, string $class, string ...$bodies): void
-    {
+    private function assertRefused(
+        string $message,
+        string $class,
+        string ...$bodies
+    ): void {
         try {
             $class::answering(...$bodies)->retrieve();
         } catch (\ErrorException $e) {
