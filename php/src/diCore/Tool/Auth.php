@@ -104,6 +104,13 @@ class Auth
     private $authSource;
     /** @var integer|null */
     private $errorCode = null;
+    /**
+     * A token from the header: checked on every request, kept out of the PHP
+     * session. A GET token (a link into a webview, a mail) is a one-off and
+     * goes into the session like a password sign-in.
+     * @var bool
+     */
+    private $headerTokenSignIn = false;
     /** @var \FastTemplate */
     private $tpl;
     /** @var bool */
@@ -248,7 +255,11 @@ class Auth
             ->clearUserSession();
     }
 
-    private function storeSession()
+    /**
+     * @param bool $forced forceAuthorize(): its user is written whatever signed
+     *                     the request in, a token included
+     */
+    private function storeSession(bool $forced = false)
     {
         if ($this->reallyAuthorized()) {
             if ($this->userSessionCreationNeeded()) {
@@ -257,7 +268,10 @@ class Auth
                 )->save();
             }
 
-            $_SESSION[static::SESSION_USER_ID_FIELD] = $this->getUserId();
+            // a token sign-in stays out of the PHP session: see authorize()
+            if ($forced || !$this->headerTokenSignIn) {
+                $_SESSION[static::SESSION_USER_ID_FIELD] = $this->getUserId();
+            }
         } else {
             $this->clearSession()->clearUserSession();
         }
@@ -422,7 +436,15 @@ class Auth
                 $this->getUserModel()->upgradePasswordHash($passwordHash);
             }
 
-            $this->storeSession();
+            // a header token is checked on every request and never written
+            // into the PHP session: a planted id has nothing to capture, and an
+            // app that ignores the new X-Session would rotate on every request
+            if (!$this->headerTokenSignIn) {
+                // before storeSession(), so the user lands only in the new
+                // session (regenerate() destroys the old record)
+                $this->rotateSessionId();
+                $this->storeSession();
+            }
 
             return true;
         }
@@ -435,10 +457,85 @@ class Auth
     public function forceAuthorize(\diBaseUserModel $user, $storeCookies = false)
     {
         $this->user = $user;
+        $this->rotateSessionId();
 
-        $this->storeSession()->storeCookies($storeCookies);
+        $this->storeSession(true)->storeCookies($storeCookies);
 
         return $this;
+    }
+
+    /**
+     * Sign-in under an id the client chose or someone planted must not leave
+     * that id signed in. Rows keyed on the old id are handed over by
+     * onSessionIdChanged(); a failure there costs the rows, never the sign-in.
+     */
+    protected function rotateSessionId(): void
+    {
+        // the PHP session signs nobody in: a planted id gains nothing, and a
+        // cookie/token sign-in on every request would rotate on every request
+        if (!static::USE_PHP_SESSION) {
+            return;
+        }
+
+        $session = $this->sessionClass();
+
+        // an id PHP generated in this request was planted by nobody
+        if (!$session::idFromClient()) {
+            return;
+        }
+
+        $oldId = (string) $session::id();
+
+        if (!$session::regenerate()) {
+            return;
+        }
+
+        try {
+            $this->onSessionIdChanged($oldId, (string) $session::id());
+        } catch (\Throwable $e) {
+            Logger::getInstance()->log(
+                sprintf(
+                    'Rows not moved to the new session id: %s: %s at %s:%d',
+                    get_class($e),
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine()
+                ),
+                'Auth'
+            );
+        }
+    }
+
+    /**
+     * Through getClass(), like diSession's own methods: a project subclass may
+     * override how the id is read or brought by the client.
+     *
+     * @return class-string<\diSession>
+     */
+    protected function sessionClass(): string
+    {
+        return \diSession::getClass();
+    }
+
+    /**
+     * Moves what is keyed on the session id to the new one. The core moves its
+     * cart; a project overrides this (calling parent) for its own rows, those
+     * keyed on diSession::shortIntId() (shortIntIdOf($oldId) → shortIntIdOf
+     * ($newId)) or shortId() included: both change with the id.
+     *
+     * Usually called from the constructor (a POST or cookie sign-in): take the
+     * user from $this (getUserId()), never Auth::i() – the instance is
+     * registered only after the constructor, so i() builds a new one, which
+     * signs in again and recurses until the stack overflows; the catch in
+     * rotateSessionId() does not stop that.
+     */
+    protected function onSessionIdChanged(string $oldId, string $newId): void
+    {
+        if ($oldId === '' || $oldId === $newId) {
+            return;
+        }
+
+        \diCore\Entity\Cart\Model::moveSession($oldId, $newId);
     }
 
     protected function updateAuthorizedUserData()
@@ -504,6 +601,8 @@ class Auth
         }
 
         $token = \diRequest::header(static::HEADER_TOKEN);
+        // read by authorize() and storeSession(); a GET token is not one
+        $this->headerTokenSignIn = (bool) $token;
 
         if (!$token && static::LOOK_FOR_HEADERS_IN_GET_PARAMS) {
             $token = \diRequest::get(static::HEADER_TOKEN);
@@ -513,6 +612,9 @@ class Auth
             $this->authSource = self::SOURCE_USER_SESSION;
 
             $this->updateAuthorizedUserData();
+        } else {
+            // a refused token must not keep a later POST sign-in out of the session
+            $this->headerTokenSignIn = false;
         }
 
         return $this;

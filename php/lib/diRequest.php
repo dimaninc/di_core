@@ -382,7 +382,9 @@ class diRequest
             'X-Requested-With',
             'X-Session',
         ];
-        $exposeHeaders = ['Content-Length', 'Date', 'X-Request-Id'];
+        // X-Session: the id changes at sign-in, and cross-origin JS can read
+        // only the headers listed here
+        $exposeHeaders = ['Content-Length', 'Date', 'X-Request-Id', 'X-Session'];
         $options = extend(
             [
                 'allowHeaders' => [],

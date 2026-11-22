@@ -64,6 +64,7 @@ class diSession
         return session_id();
     }
 
+    /** Derived from the id: changes with regenerate(), like shortIntId(). */
     public static function shortId()
     {
         return substr(static::id(), 0, static::SHORT_ID_LENGTH);
@@ -71,7 +72,17 @@ class diSession
 
     public static function shortIntId()
     {
-        $stringId = substr(static::id(), 0, 8);
+        return static::shortIntIdOf(static::id());
+    }
+
+    /**
+     * Derived from the id, so it changes with regenerate(): rows keyed on it
+     * are moved in Tool\Auth::onSessionIdChanged() from shortIntIdOf($oldId).
+     * Never kept across the rotation – whoever planted the old id computes it.
+     */
+    public static function shortIntIdOf(string $id): string
+    {
+        $stringId = substr($id, 0, 8);
 
         $arr = str_split($stringId, 2);
         $dec = [];
@@ -81,6 +92,54 @@ class diSession
         }
 
         return implode('', $dec);
+    }
+
+    /**
+     * Whether the client brought an id (session cookie or X-Session header):
+     * only such an id can be planted. An id PHP generated for this request
+     * needs no rotation – a token client without cookies would otherwise
+     * rotate on every request. A project passing the id some other way
+     * overrides this, or its sign-ins are never rotated.
+     */
+    public static function idFromClient(): bool
+    {
+        return isset($_COOKIE[session_name()]) ||
+            trim((string) \diRequest::header(static::HEADER_NAME)) !== '';
+    }
+
+    /**
+     * A new id for the same session data, the old one destroyed: sign-in under
+     * an id the client chose or someone planted must not leave that id signed in.
+     */
+    public static function regenerate(): bool
+    {
+        // no PHP session in use: nothing to rotate, and nothing to report
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            return false;
+        }
+
+        // the new id can't reach the client: the old one stays signed in
+        if (headers_sent($file, $line)) {
+            \diCore\Tool\Logger::getInstance()->log(
+                "Session id NOT rotated: headers already sent at $file:$line",
+                'diSession'
+            );
+
+            return false;
+        }
+
+        if (!session_regenerate_id(true)) {
+            // e.g. the save handler failed to destroy the old record: PHP has
+            // then closed the session, so the sign-in stored next is not saved
+            \diCore\Tool\Logger::getInstance()->log(
+                'Session id NOT rotated: session_regenerate_id() failed, session closed',
+                'diSession'
+            );
+
+            return false;
+        }
+
+        return true;
     }
 
     public static function set($name, $value)
