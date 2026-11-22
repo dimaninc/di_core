@@ -5,53 +5,122 @@ namespace diCore\Tests\OAuth2;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Ответ VK на обмен кода, из которого не вышло массива, обязан стать `\Exception`
- * (его ловят контроллеры входа), а не `TypeError` от `count(null)` – тот уходил 500.
+ * Любой ответ VK, из которого не вышел ожидаемый массив, обязан стать `\Exception`
+ * (его ловят контроллеры входа), а не `TypeError` – тот уходил 500. Warning тут
+ * тоже дефект: PHPUnit без `failOnWarning` его не роняет, поэтому тест делает это сам.
  */
 class VkTokenResponseTest extends TestCase
 {
-    public function testEmptyBodyIsARefusalNotATypeError(): void
-    {
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Error during first request');
+    private const TOKEN = '{"access_token":"t","user_id":1}';
 
-        FakeVkOAuth2::answering('')->retrieve();
+    protected function setUp(): void
+    {
+        set_error_handler(static function (int $no, string $message): bool {
+            throw new \ErrorException($message, 0, $no);
+        });
     }
 
-    public function testNonJsonBodyIsARefusalNotATypeError(): void
+    protected function tearDown(): void
     {
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Error during first request');
+        restore_error_handler();
+    }
 
-        FakeVkOAuth2::answering('<html>502 Bad Gateway</html>')->retrieve();
+    public function testEmptyTokenAnswerIsARefusal(): void
+    {
+        $this->assertRefused('Error during first request', '');
+    }
+
+    public function testNonJsonTokenAnswerIsARefusal(): void
+    {
+        $this->assertRefused(
+            'Error during first request',
+            '<html>502 Bad Gateway</html>'
+        );
     }
 
     public function testVendorErrorIsPassedThrough(): void
     {
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('invalid_grant: Code is invalid or expired.');
-
-        FakeVkOAuth2::answering(
+        $this->assertRefused(
+            'invalid_grant: Code is invalid or expired.',
             '{"error":"invalid_grant","error_description":"Code is invalid or expired."}'
-        )->retrieve();
+        );
     }
 
     public function testVendorErrorWithoutDescriptionDoesNotWarn(): void
     {
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('invalid_client: ');
+        $this->assertRefused('invalid_client: ', '{"error":"invalid_client"}');
+    }
 
-        FakeVkOAuth2::answering('{"error":"invalid_client"}')->retrieve();
+    public function testTokenWithoutUserIdDoesNotWarn(): void
+    {
+        $this->assertRefused(
+            'Error retrieving data',
+            '{"access_token":"t"}',
+            '{"response":[]}'
+        );
+    }
+
+    public function testNonJsonProfileAnswerIsARefusal(): void
+    {
+        $this->assertRefused('Error retrieving data', self::TOKEN, '<html></html>');
+    }
+
+    public function testProfileWithoutResponseIsARefusal(): void
+    {
+        $this->assertRefused('Error retrieving data', self::TOKEN, '{"ok":1}');
+    }
+
+    public function testScalarProfileResponseIsARefusal(): void
+    {
+        $this->assertRefused(
+            'Error retrieving data',
+            self::TOKEN,
+            '{"response":"x"}'
+        );
+    }
+
+    public function testProfileErrorIsPassedThrough(): void
+    {
+        $this->assertRefused(
+            'Error retrieving data: User authorization failed (code#5)',
+            self::TOKEN,
+            '{"error":{"error_code":5,"error_msg":"User authorization failed"}}'
+        );
+    }
+
+    public function testScalarProfileErrorIsPassedThrough(): void
+    {
+        $this->assertRefused(
+            'Error retrieving data: broken',
+            self::TOKEN,
+            '{"error":"broken"}'
+        );
+    }
+
+    private function assertRefused(string $message, string ...$bodies): void
+    {
+        try {
+            FakeVkOAuth2::answering(...$bodies)->retrieve();
+        } catch (\ErrorException $e) {
+            $this->fail("PHP warning instead of a refusal: {$e->getMessage()}");
+        } catch (\Exception $e) {
+            $this->assertStringContainsString($message, $e->getMessage());
+
+            return;
+        }
+
+        $this->fail('Expected a refusal, the profile was retrieved');
     }
 }
 
 class FakeVkOAuth2 extends \diOAuth2Vk
 {
-    private static string $body = '';
+    /** @var string[] ответы по порядку запросов: обмен кода, профиль */
+    private static array $bodies = [];
 
-    public static function answering(string $body): self
+    public static function answering(string ...$bodies): self
     {
-        self::$body = $body;
+        self::$bodies = $bodies;
 
         return new self();
     }
@@ -61,7 +130,7 @@ class FakeVkOAuth2 extends \diOAuth2Vk
         $params = [],
         $method = self::REQUEST_GET
     ) {
-        return self::$body;
+        return array_shift(self::$bodies) ?? '';
     }
 
     public function retrieve(): void

@@ -23,7 +23,7 @@ class diOAuth2Vk extends diOAuth2
                 $params = [
                     'v' => 5.131,
                     'access_token' => $tokenInfo['access_token'],
-                    'uids' => $tokenInfo['user_id'],
+                    'uids' => $tokenInfo['user_id'] ?? '',
                     'fields' =>
                         'uid,email,first_name,last_name,nickname,screen_name,sex,bdate,city,country,timezone,photo,photo_medium,photo_big,has_mobile,rate,contacts,education,online,counters',
                 ];
@@ -33,18 +33,24 @@ class diOAuth2Vk extends diOAuth2
                     true
                 );
 
-                if ($data) {
-                    if (!empty($data['error'])) {
-                        $this->setProfileError(
-                            'Error retrieving data: ' .
-                                $data['error']['error_msg'] .
-                                ' (code#' .
-                                $data['error']['error_code'] .
-                                ')'
-                        );
-                    } else {
-                        $this->setProfileRawData(current($data['response']));
-                    }
+                // Та же ловушка, что выше: `current()` и чтение по ключу от не-массива – TypeError.
+                $error = is_array($data) ? $data['error'] ?? null : null;
+                $profile = is_array($data['response'] ?? null)
+                    ? current($data['response'])
+                    : null;
+
+                if ($error) {
+                    $this->setProfileError(
+                        'Error retrieving data: ' .
+                            (is_array($error)
+                                ? ($error['error_msg'] ?? '') .
+                                    ' (code#' .
+                                    ($error['error_code'] ?? '') .
+                                    ')'
+                                : (string) $error)
+                    );
+                } elseif (is_array($profile) && $profile) {
+                    $this->setProfileRawData($profile);
                 } else {
                     $this->setProfileError('Error retrieving data');
                 }
