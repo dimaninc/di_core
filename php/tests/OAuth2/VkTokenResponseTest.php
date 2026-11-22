@@ -97,6 +97,19 @@ class VkTokenResponseTest extends TestCase
         );
     }
 
+    public function testValidAnswersGiveTheProfile(): void
+    {
+        $vk = FakeVkOAuth2::answering(
+            self::TOKEN,
+            '{"response":[{"id":42,"screen_name":"ivan","first_name":"Ivan","last_name":"Petrov","bdate":"1.2.1990","photo_big":"https://vk.example/a.jpg"}]}'
+        );
+
+        $vk->retrieve();
+
+        $this->assertSame(42, (int) $vk->getProfile()->getUid());
+        $this->assertSame('Ivan Petrov', $vk->getProfile()->getName());
+    }
+
     private function assertRefused(string $message, string ...$bodies): void
     {
         try {
