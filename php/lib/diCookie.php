@@ -36,7 +36,8 @@ class diCookie
             return 'Lax';
         }
 
-        if ($sameSite === false || $sameSite === null || $sameSite === '') {
+        // 0 / '0' meant "no attribute" before (cast to false), so they still do
+        if (in_array($sameSite, [false, null, '', 0, '0'], true)) {
             return '';
         }
 
@@ -53,18 +54,29 @@ class diCookie
 
     /**
      * Options for setcookie(). `SameSite=None` without `Secure` makes Chrome
-     * drop the whole cookie, so None forces Secure: a cookie that is not sent
-     * over plain http beats one that is never stored at all.
+     * drop the whole cookie, so on https None forces Secure. Over plain http a
+     * Secure cookie is not stored at all (localhost aside), so there None is
+     * omitted instead (logged): the cookie is kept, with the browser's default.
      */
     public static function setcookieOptions(array $options): array
     {
         $sameSite = static::sameSiteValue($options['sameSite'] ?? false);
+        $secure = !empty($options['secure']);
+
+        if ($sameSite === 'None' && !$secure) {
+            if (\diRequest::isHttps()) {
+                $secure = true;
+            } else {
+                static::log('SameSite=None omitted: it needs Secure, and the request is not https');
+                $sameSite = '';
+            }
+        }
 
         return [
             'expires' => (int) ($options['expire'] ?? 0),
             'path' => ($options['path'] ?? '') ?: '',
             'domain' => ($options['domain'] ?? '') ?: '',
-            'secure' => $sameSite === 'None' || !empty($options['secure']),
+            'secure' => $secure,
             'httponly' => !empty($options['httpOnly']),
             'samesite' => $sameSite,
         ];

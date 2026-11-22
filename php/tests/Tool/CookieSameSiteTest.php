@@ -44,7 +44,7 @@ class CookieSameSiteTest extends TestCase
 
     public function testNotSetOmitsTheAttributeSilently(): void
     {
-        foreach ([false, null, ''] as $value) {
+        foreach ([false, null, '', 0, '0'] as $value) {
             $this->assertSame('', TestableCookie::sameSiteValue($value));
         }
 
@@ -61,12 +61,55 @@ class CookieSameSiteTest extends TestCase
     }
 
     /** Chrome drops a `SameSite=None` cookie without `Secure` entirely. */
-    public function testNoneForcesSecure(): void
+    public function testNoneForcesSecureOnHttps(): void
     {
-        $options = TestableCookie::setcookieOptions(['sameSite' => 'none']);
+        $this->withHttps('on', function () {
+            $options = TestableCookie::setcookieOptions(['sameSite' => 'none']);
 
-        $this->assertSame('None', $options['samesite']);
-        $this->assertTrue($options['secure']);
+            $this->assertSame('None', $options['samesite']);
+            $this->assertTrue($options['secure']);
+        });
+    }
+
+    /** A Secure cookie set over http is not stored at all. */
+    public function testNoneIsOmittedOverHttp(): void
+    {
+        $this->withHttps(null, function () {
+            $options = TestableCookie::setcookieOptions(['sameSite' => 'None']);
+
+            $this->assertSame('', $options['samesite']);
+            $this->assertFalse($options['secure']);
+
+            // an explicit secure is the caller's choice
+            $options = TestableCookie::setcookieOptions(['sameSite' => 'None', 'secure' => true]);
+
+            $this->assertSame('None', $options['samesite']);
+            $this->assertTrue($options['secure']);
+        });
+    }
+
+    private function withHttps(?string $https, callable $test): void
+    {
+        $keys = ['HTTPS', 'SERVER_PORT', 'REQUEST_SCHEME', 'SSL_PROTOCOL'];
+        $saved = array_intersect_key($_SERVER, array_flip($keys));
+
+        foreach ($keys as $key) {
+            unset($_SERVER[$key]);
+        }
+
+        if ($https !== null) {
+            $_SERVER['HTTPS'] = $https;
+        }
+
+        try {
+            $test();
+        } finally {
+            foreach ($keys as $key) {
+                unset($_SERVER[$key]);
+            }
+
+            $_SERVER = array_merge($_SERVER, $saved);
+        }
     }
 
     public function testOtherValuesKeepSecureAsGiven(): void
