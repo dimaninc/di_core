@@ -70,9 +70,49 @@ class CartMoveSessionTest extends TestCase
     {
         $this->db->insert($this->table, ['session_id' => 'old-id']);
         $this->db->insert($this->table, ['session_id' => 'someone-else']);
+        $this->db->insert($this->table, ['session_id' => 'old-id', 'user_id' => 0]);
 
         Cart::moveSession('old-id', 'new-id');
 
-        $this->assertSame(['new-id', 'someone-else'], $this->sessionIds());
+        $this->assertSame(['new-id', 'someone-else', 'new-id'], $this->sessionIds());
+    }
+
+    /** A previous user's cart under the same id must not follow the next one. */
+    public function testUserCartStays(): void
+    {
+        $this->db->insert($this->table, ['session_id' => 'old-id', 'user_id' => 5]);
+
+        Cart::moveSession('old-id', 'new-id');
+
+        $this->assertSame(['old-id'], $this->sessionIds());
+    }
+
+    /**
+     * Called from Auth's hooks with explicit arguments, the cart must not ask
+     * Auth::i(): inside the constructor it builds another Auth, which signs in
+     * and calls the hook again, until the stack overflows.
+     */
+    public function testExplicitArgumentsNeverAskAuth(): void
+    {
+        $instances = new \ReflectionProperty(\diCore\Tool\Auth::class, 'instances');
+        $saved = $instances->getValue();
+        $instances->setValue(null, []);
+
+        // only_one_instance: a cached cart would skip the lookup under test
+        $cart = new \ReflectionProperty(Cart::class, 'instance');
+        $savedCart = $cart->getValue();
+
+        try {
+            Cart::migrateToUser('old-id', 7);
+            $cart->setValue(null, null);
+            Cart::autoCreate(null, 'old-id', 7);
+            $cart->setValue(null, null);
+            Cart::autoCreate(1, null, 7);
+
+            $this->assertSame([], $instances->getValue(), 'Auth::i() was called');
+        } finally {
+            $instances->setValue(null, $saved);
+            $cart->setValue(null, $savedCart);
+        }
     }
 }

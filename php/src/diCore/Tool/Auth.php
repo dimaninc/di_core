@@ -104,6 +104,13 @@ class Auth
     private $authSource;
     /** @var integer|null */
     private $errorCode = null;
+    /**
+     * A token from the header: checked on every request, kept out of the PHP
+     * session. A GET token (a link into a webview, a mail) is a one-off and
+     * goes into the session like a password sign-in.
+     * @var bool
+     */
+    private $headerTokenSignIn = false;
     /** @var \FastTemplate */
     private $tpl;
     /** @var bool */
@@ -262,7 +269,7 @@ class Auth
             }
 
             // a token sign-in stays out of the PHP session: see authorize()
-            if ($forced || $this->authSource !== self::SOURCE_USER_SESSION) {
+            if ($forced || !$this->headerTokenSignIn) {
                 $_SESSION[static::SESSION_USER_ID_FIELD] = $this->getUserId();
             }
         } else {
@@ -429,10 +436,10 @@ class Auth
                 $this->getUserModel()->upgradePasswordHash($passwordHash);
             }
 
-            // a token is checked on every request and never written into the
-            // PHP session: a planted id has nothing to capture, and an app that
-            // ignores the new X-Session would rotate on every request
-            if ($source !== self::SOURCE_USER_SESSION) {
+            // a header token is checked on every request and never written
+            // into the PHP session: a planted id has nothing to capture, and an
+            // app that ignores the new X-Session would rotate on every request
+            if (!$this->headerTokenSignIn) {
                 // before storeSession(), so the user lands only in the new
                 // session (regenerate() destroys the old record)
                 $this->rotateSessionId();
@@ -594,6 +601,8 @@ class Auth
         }
 
         $token = \diRequest::header(static::HEADER_TOKEN);
+        // read by authorize() and storeSession(); a GET token is not one
+        $this->headerTokenSignIn = (bool) $token;
 
         if (!$token && static::LOOK_FOR_HEADERS_IN_GET_PARAMS) {
             $token = \diRequest::get(static::HEADER_TOKEN);
@@ -603,6 +612,9 @@ class Auth
             $this->authSource = self::SOURCE_USER_SESSION;
 
             $this->updateAuthorizedUserData();
+        } else {
+            // a refused token must not keep a later POST sign-in out of the session
+            $this->headerTokenSignIn = false;
         }
 
         return $this;

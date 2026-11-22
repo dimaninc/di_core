@@ -44,6 +44,9 @@ class Model extends \diModel implements \diCore\Interfaces\CartOrder
     const pre_cache_needed = false;
 
     /**
+     * With $sessionId (or $id) and $userId given it never reaches Auth::i(), so
+     * it may be called from Auth's own hooks; without them it signs in first.
+     *
      * @param null $id
      * @param null $sessionId
      * @param null $userId
@@ -61,8 +64,12 @@ class Model extends \diModel implements \diCore\Interfaces\CartOrder
 
         // sign in BEFORE reading the session id: a cookie sign-in in Auth's
         // constructor rotates it and moves the guest cart to the new id, so a
-        // lookup by the old one would miss it and create a second cart
-        Auth::i();
+        // lookup by the old one would miss it and create a second cart. Only
+        // when the id is read: with explicit arguments this is callable from
+        // Auth's own hooks, where Auth::i() would recurse
+        if (!$id && !$sessionId) {
+            Auth::i();
+        }
 
         if ($id) {
             /** @var $this $model */
@@ -70,9 +77,11 @@ class Model extends \diModel implements \diCore\Interfaces\CartOrder
         } else {
             $q = ["session_id = '" . ($sessionId ?: \diSession::id()) . "'"];
 
-            if (Auth::i()->getUserId()) {
-                $q[] =
-                    "user_id = '" . ($userId ?: Auth::i()->getUserId()) . "'";
+            // an explicit $userId never asks Auth (callable from its hooks)
+            $lookupUserId = $userId ?: Auth::i()->getUserId();
+
+            if ($lookupUserId) {
+                $q[] = "user_id = '" . $lookupUserId . "'";
             }
 
             $model = \diCollection::create(self::type)
@@ -164,16 +173,20 @@ class Model extends \diModel implements \diCore\Interfaces\CartOrder
         $db->update(
             $table,
             ['session_id' => $newId],
-            'WHERE ' . $db->escapeFieldValue('session_id', $oldId)
+            // guest carts only: one with a user is found by user_id anyway, and
+            // a previous user's cart under the same id must not follow the new one
+            'WHERE ' .
+                $db->escapeFieldValue('session_id', $oldId) .
+                " AND ({$db->escapeField('user_id')} IS NULL OR {$db->escapeField('user_id')} = 0)"
         );
     }
 
+    /** With both arguments given it never reaches Auth::i(): see autoCreate(). */
     public static function migrateToUser($sessionId = null, $userId = null)
     {
-        // before the session id is read: see autoCreate()
-        Auth::i();
-
         if ($sessionId === null) {
+            // before the session id is read, and only then: see autoCreate()
+            Auth::i();
             $sessionId = \diSession::id();
         }
 

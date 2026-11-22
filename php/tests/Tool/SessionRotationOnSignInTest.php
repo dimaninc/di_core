@@ -266,13 +266,22 @@ class SessionRotationOnSignInTest extends TestCase
 
         // authorize() needs a user_session row; its storing step is what matters
         // Auth's private state: bound to Auth's scope, not the subclass's
-        \Closure::bind(function () use ($user) {
+        $store = \Closure::bind(function (bool $fromHeader) use ($user) {
             $this->user = $user;
             $this->authSource = Auth::SOURCE_USER_SESSION;
+            $this->headerTokenSignIn = $fromHeader;
             $this->storeSession();
-        }, $auth, Auth::class)();
+        }, $auth, Auth::class);
 
+        $store(true);
         $this->assertArrayNotHasKey(Auth::SESSION_USER_ID_FIELD, $_SESSION);
+
+        // ?auth_token= (a link into a webview, a mail): a one-off, kept like a
+        // password sign-in, or the next click is anonymous
+        $store(false);
+        $this->assertSame(7, $_SESSION[Auth::SESSION_USER_ID_FIELD]);
+        unset($_SESSION[Auth::SESSION_USER_ID_FIELD]);
+        $store(true);
 
         // a sign-in forced during a token request is still kept
         $auth->forceAuthorize($user);
