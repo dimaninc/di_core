@@ -1279,9 +1279,9 @@ abstract class diDB
 
             return false;
         }
-        $this->time_log('update', utime() - $time1, $q);
-
+        // До time_log(): под debug он запускает EXPLAIN, и счётчик был бы от него
         $this->affected_rows = $this->__affected_rows();
+        $this->time_log('update', utime() - $time1, $q);
         $this->unlockTable($t);
 
         return true;

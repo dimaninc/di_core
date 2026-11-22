@@ -16,6 +16,10 @@ abstract class diOAuth2
     const loginUrlBase = '';
     const authUrlBase = '';
 
+    // Весь запрос к вендору, не только соединение: принявший соединение и
+    // замолчавший вендор иначе держит FPM-воркер без предела
+    const HTTP_TIMEOUT = 10;
+
     const callbackParam = 'callback';
     const unlinkParam = 'unlink';
 
@@ -139,9 +143,11 @@ abstract class diOAuth2
 
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+        curl_setopt($ch, CURLOPT_TIMEOUT, static::HTTP_TIMEOUT);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        // В запросе client_secret, в ответе токен: без проверки их снимет MITM
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         //curl_setopt($ch, CURLOPT_PORT, $_SERVER['SERVER_PORT']);
         //curl_setopt($ch, CURLOPT_SSLVERSION, 2);
         //curl_setopt($ch, CURLOPT_DNS_USE_GLOBAL_CACHE, false);
