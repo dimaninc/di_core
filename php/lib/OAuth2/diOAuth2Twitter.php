@@ -12,6 +12,9 @@ class diOAuth2Twitter extends diOAuth2
 
     const signatureMethod = 'HMAC-SHA1';
 
+    // OAuth 1 sends no state: assertState() checks the request token instead
+    const USES_STATE = false;
+
     protected $vendorId = diOAuth2Vendors::twitter;
 
     protected $nonce;
@@ -111,6 +114,28 @@ class diOAuth2Twitter extends diOAuth2
         return [
             'oauth_token' => $result['oauth_token'],
         ];
+    }
+
+    /**
+     * The callback must carry the request token this session obtained. Not
+     * left to Twitter: a foreign token signed with this session's secret
+     * would fail the exchange there, but that is Twitter's check, not ours.
+     *
+     * @throws \diCore\Base\Exception\HttpException 400 for a foreign token
+     */
+    protected function assertState(): void
+    {
+        $expected = (string) diSession::get('twitterToken');
+        $given = diRequest::get('oauth_token');
+
+        if ($expected === '' || !is_string($given) || !hash_equals($expected, $given)) {
+            throw \diCore\Base\Exception\HttpException::badRequest(
+                'OAuth request token mismatch'
+            );
+        }
+
+        // single use: a replayed callback finds no token
+        diSession::kill('twitterToken');
     }
 
     protected function isReturn()

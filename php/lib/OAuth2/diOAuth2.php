@@ -19,6 +19,12 @@ abstract class diOAuth2
     const callbackParam = 'callback';
     const unlinkParam = 'unlink';
 
+    // false only for a protocol without `state` (OAuth 1) that checks the
+    // callback itself (diOAuth2Twitter::assertState()); turning it off for an
+    // OAuth 2 vendor switches the CSRF check off
+    const USES_STATE = true;
+    const STATE_SESSION_KEY = 'oauth2_state_';
+
     protected $vendorId;
 
     /** @var diOAuth2ProfileModel */
@@ -187,9 +193,25 @@ abstract class diOAuth2
         return http_build_url($this->getBackUrlParts());
     }
 
+    /**
+     * Issues a new state on every call, replacing the previous one: call it when
+     * the login starts (oauth2Action()), not for every link rendered on a page,
+     * or a login begun in another tab gets a 400 at its callback.
+     */
     public function getLoginUrl()
     {
-        return static::makeUrl(static::loginUrlBase, $this->getLoginUrlParams());
+        $params = $this->getLoginUrlParams();
+
+        // an override without parent:: sends no state, and every callback is a 400
+        if (static::USES_STATE && empty($params['state'])) {
+            Logger::getInstance()->log(
+                static::class .
+                    '::getLoginUrlParams() sends no state: call parent::getLoginUrlParams()',
+                'diOAuth2'
+            );
+        }
+
+        return static::makeUrl(static::loginUrlBase, $params);
     }
 
     public function getAuthUrl()
@@ -253,6 +275,8 @@ abstract class diOAuth2
     public function processReturn()
     {
         if ($this->isReturn()) {
+            $this->assertState();
+
             $user = $this->retrieveProfile()->syncWithUser();
 
             if (!Auth::i()->authorized()) {
@@ -410,7 +434,56 @@ abstract class diOAuth2
             'client_id' => static::appId,
             'response_type' => 'code',
             'redirect_uri' => $this->getBackUrl(),
+            'state' => $this->issueState(),
         ];
+    }
+
+    protected function stateSessionKey(): string
+    {
+        return static::STATE_SESSION_KEY . diOAuth2Vendors::name($this->vendorId);
+    }
+
+    protected function issueState(): string
+    {
+        $state = bin2hex(random_bytes(16));
+
+        \diSession::set($this->stateSessionKey(), $state);
+
+        return $state;
+    }
+
+    /**
+     * Without `state` a callback with someone else's `code` was accepted: it signed
+     * the visitor into the attacker's account or, for a signed-in visitor, linked
+     * the attacker's social profile to the visitor's account (a takeover).
+     *
+     * @throws \diCore\Base\Exception\HttpException 400 when state is missing or foreign
+     */
+    protected function assertState(): void
+    {
+        if (!static::USES_STATE) {
+            return;
+        }
+
+        $expected = (string) \diSession::get($this->stateSessionKey());
+        // `state[]=x` arrives as an array: (string) would warn, and a project
+        // turning warnings into exceptions would answer 500 instead of 400
+        $given = \diRequest::get('state');
+
+        if (
+            $expected === '' ||
+            !is_string($given) ||
+            !hash_equals($expected, $given)
+        ) {
+            // the state is kept: a forged callback must not cancel the login
+            // the visitor has started
+            throw \diCore\Base\Exception\HttpException::badRequest(
+                'OAuth state mismatch'
+            );
+        }
+
+        // single use: a replayed callback finds no state
+        \diSession::kill($this->stateSessionKey());
     }
 
     protected function getAuthUrlParams()
