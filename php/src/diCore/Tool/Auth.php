@@ -557,6 +557,11 @@ class Auth
      *
      * $login is exactly what was typed: normalising it (case, spaces) is the
      * project's job, or `User@x` and `user@x` count as two separate budgets.
+     *
+     * The admin panel signs in through diAdminUser, which extends this class,
+     * not the project's Auth: a limit overridden only there leaves
+     * admin_login/admin_password unlimited. Override the hooks in the project's
+     * diAdminUser subclass too.
      */
     protected function isPasswordAttemptAllowed(string $login): bool
     {

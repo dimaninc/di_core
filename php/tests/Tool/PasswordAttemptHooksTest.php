@@ -31,9 +31,12 @@ class TestablePasswordAuth extends Auth
     public static array $failed = [];
     public static array $succeeded = [];
     public static array $lookups = [];
+    public static array $asked = [];
 
     protected function isPasswordAttemptAllowed(string $login): bool
     {
+        static::$asked[] = $login;
+
         return static::$allowed;
     }
 
@@ -92,6 +95,7 @@ class PasswordAttemptHooksTest extends TestCase
         TestablePasswordAuth::$failed = [];
         TestablePasswordAuth::$succeeded = [];
         TestablePasswordAuth::$lookups = [];
+        TestablePasswordAuth::$asked = [];
     }
 
     protected function tearDown(): void
@@ -160,6 +164,19 @@ class PasswordAttemptHooksTest extends TestCase
 
         new TestablePasswordAuth(false);
 
+        $this->assertSame([], TestablePasswordAuth::$asked);
         $this->assertSame([], TestablePasswordAuth::$failed);
+        $this->assertSame([], TestablePasswordAuth::$succeeded);
+    }
+
+    public function testHooksGetTheLoginAsTyped(): void
+    {
+        // normalising is the project's job: the core must not do half of it
+        $_POST[Auth::POST_LOGIN_FIELD] = ' Someone@Example.com ';
+
+        new TestablePasswordAuth(false);
+
+        $this->assertSame([' Someone@Example.com '], TestablePasswordAuth::$asked);
+        $this->assertSame([' Someone@Example.com '], TestablePasswordAuth::$failed);
     }
 }
