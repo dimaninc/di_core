@@ -423,7 +423,8 @@ class Auth
             }
 
             // every source that is not the PHP session itself (POST, cookie,
-            // token); BEFORE storeSession(), or the old id gets the user too
+            // token); before storeSession(), so the user lands only in the new
+            // session (regenerate() destroys the old record)
             $this->rotateSessionId();
             $this->storeSession();
 
@@ -458,14 +459,23 @@ class Auth
             return;
         }
 
-        $oldId = (string) \diSession::id();
+        // through getClass(), like diSession's own methods: a project subclass
+        // may override how the id is read or brought by the client
+        $session = \diSession::getClass();
 
-        if (!\diSession::regenerate()) {
+        // an id PHP generated in this request was planted by nobody
+        if (!$session::idFromClient()) {
+            return;
+        }
+
+        $oldId = (string) $session::id();
+
+        if (!$session::regenerate()) {
             return;
         }
 
         try {
-            $this->onSessionIdChanged($oldId, (string) \diSession::id());
+            $this->onSessionIdChanged($oldId, (string) $session::id());
         } catch (\Throwable $e) {
             Logger::getInstance()->log(
                 'Rows not moved to the new session id: ' . $e->getMessage(),
@@ -475,8 +485,10 @@ class Auth
     }
 
     /**
-     * Moves what is keyed on the raw session id to the new one. The core moves
-     * its cart; a project overrides this (calling parent) for its own rows.
+     * Moves what is keyed on the session id to the new one. The core moves its
+     * cart; a project overrides this (calling parent) for its own rows, those
+     * keyed on diSession::shortIntId() included (shortIntIdOf($oldId) →
+     * shortIntIdOf($newId)): it changes with the id.
      */
     protected function onSessionIdChanged(string $oldId, string $newId): void
     {

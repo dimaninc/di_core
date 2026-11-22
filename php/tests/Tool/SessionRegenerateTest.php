@@ -77,7 +77,7 @@ class SessionRegenerateTest extends TestCase
         return json_decode(strstr($out, "\nSENTINEL", true), true);
     }
 
-    public function testIdChangesDataAndIntIdSurvive(): void
+    public function testIdAndIntIdChangeDataSurvives(): void
     {
         $r = $this->runChild();
 
@@ -85,7 +85,39 @@ class SessionRegenerateTest extends TestCase
         $this->assertNotSame($r['before']['id'], $r['after']['id']);
         $this->assertFalse($r['oldFile'], 'the planted id must not stay usable');
         $this->assertSame('kept', $r['payload']);
-        // cards and drafts made before sign-in are keyed on it
-        $this->assertSame($r['before']['int'], $r['after']['int']);
+        // whoever planted the id computes its shortIntId: it must not follow
+        // the signed-in session
+        $this->assertNotSame($r['before']['int'], $r['after']['int']);
+        $this->assertSame(
+            \diSession::shortIntIdOf($r['after']['id']),
+            $r['after']['int']
+        );
+    }
+
+    public function testIdFromClient(): void
+    {
+        $cookie = $_COOKIE;
+        $header = $_SERVER['HTTP_X_SESSION'] ?? null;
+        unset($_SERVER['HTTP_X_SESSION']);
+
+        try {
+            $_COOKIE = [];
+            // a token client without cookies: PHP made the id, nobody planted it
+            $this->assertFalse(\diSession::idFromClient());
+
+            $_COOKIE = [session_name() => 'plantedid0001abc'];
+            $this->assertTrue(\diSession::idFromClient());
+
+            $_COOKIE = [];
+            $_SERVER['HTTP_X_SESSION'] = 'plantedid0001abc';
+            $this->assertTrue(\diSession::idFromClient());
+        } finally {
+            $_COOKIE = $cookie;
+            unset($_SERVER['HTTP_X_SESSION']);
+
+            if ($header !== null) {
+                $_SERVER['HTTP_X_SESSION'] = $header;
+            }
+        }
     }
 }

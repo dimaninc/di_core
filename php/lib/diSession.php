@@ -17,8 +17,6 @@ class diSession
     const VALUES_SESSION_KEY = 'diSession';
     const COOKIE_LIFE_TIME = SECS_PER_DAY * 30;
     const HEADER_NAME = 'X-Session';
-    // shortIntId() kept across regenerate(): anonymous rows are keyed on it
-    const INT_ID_SESSION_KEY = 'diSessionIntId';
 
     protected static function beforeCreate()
     {
@@ -73,14 +71,15 @@ class diSession
 
     public static function shortIntId()
     {
-        if (isset($_SESSION[static::INT_ID_SESSION_KEY])) {
-            return $_SESSION[static::INT_ID_SESSION_KEY];
-        }
-
         return static::shortIntIdOf(static::id());
     }
 
-    protected static function shortIntIdOf(string $id): string
+    /**
+     * Derived from the id, so it changes with regenerate(): rows keyed on it
+     * are moved in Tool\Auth::onSessionIdChanged() from shortIntIdOf($oldId).
+     * Never kept across the rotation – whoever planted the old id computes it.
+     */
+    public static function shortIntIdOf(string $id): string
     {
         $stringId = substr($id, 0, 8);
 
@@ -95,9 +94,21 @@ class diSession
     }
 
     /**
-     * A new id for the same session data, the old one dead: sign-in under an id
-     * the client chose or someone planted must not leave that id signed in.
-     * shortIntId() survives, so rows created before sign-in stay reachable.
+     * Whether the client brought an id (session cookie or X-Session header):
+     * only such an id can be planted. An id PHP generated for this request
+     * needs no rotation – a token client without cookies would otherwise
+     * rotate on every request. A project passing the id some other way
+     * overrides this, or its sign-ins are never rotated.
+     */
+    public static function idFromClient(): bool
+    {
+        return isset($_COOKIE[session_name()]) ||
+            trim((string) \diRequest::header(static::HEADER_NAME)) !== '';
+    }
+
+    /**
+     * A new id for the same session data, the old one destroyed: sign-in under
+     * an id the client chose or someone planted must not leave that id signed in.
      */
     public static function regenerate(): bool
     {
@@ -116,13 +127,18 @@ class diSession
             return false;
         }
 
-        if (!isset($_SESSION[static::INT_ID_SESSION_KEY])) {
-            $_SESSION[static::INT_ID_SESSION_KEY] = static::shortIntIdOf(
-                static::id()
+        if (!session_regenerate_id(true)) {
+            // e.g. the save handler failed to destroy the old record: PHP has
+            // then closed the session, so the sign-in stored next is not saved
+            \diCore\Tool\Logger::getInstance()->log(
+                'Session id NOT rotated: session_regenerate_id() failed, session closed',
+                'diSession'
             );
+
+            return false;
         }
 
-        return session_regenerate_id(true);
+        return true;
     }
 
     public static function set($name, $value)
