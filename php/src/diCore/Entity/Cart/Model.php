@@ -59,6 +59,11 @@ class Model extends \diModel implements \diCore\Interfaces\CartOrder
             return static::$instance;
         }
 
+        // sign in BEFORE reading the session id: a cookie sign-in in Auth's
+        // constructor rotates it and moves the guest cart to the new id, so a
+        // lookup by the old one would miss it and create a second cart
+        Auth::i();
+
         if ($id) {
             /** @var $this $model */
             $model = self::create(self::type, $id);
@@ -165,6 +170,9 @@ class Model extends \diModel implements \diCore\Interfaces\CartOrder
 
     public static function migrateToUser($sessionId = null, $userId = null)
     {
+        // before the session id is read: see autoCreate()
+        Auth::i();
+
         if ($sessionId === null) {
             $sessionId = \diSession::id();
         }

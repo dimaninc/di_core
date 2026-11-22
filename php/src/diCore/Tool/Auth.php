@@ -487,7 +487,13 @@ class Auth
             $this->onSessionIdChanged($oldId, (string) $session::id());
         } catch (\Throwable $e) {
             Logger::getInstance()->log(
-                'Rows not moved to the new session id: ' . $e->getMessage(),
+                sprintf(
+                    'Rows not moved to the new session id: %s: %s at %s:%d',
+                    get_class($e),
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine()
+                ),
                 'Auth'
             );
         }
