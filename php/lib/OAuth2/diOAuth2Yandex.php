@@ -31,35 +31,32 @@ class diOAuth2Yandex extends diOAuth2
     {
         parent::downloadData();
 
-        $tokenInfo = json_decode(
+        $tokenInfo = static::decodeAnswer(
             static::makeHttpRequest(
                 static::authUrlBase,
                 $this->getAuthUrlParams(),
                 static::REQUEST_POST
-            ),
-            true
+            )
         );
 
-        if (count($tokenInfo)) {
+        if ($tokenInfo) {
             if (isset($tokenInfo['access_token'])) {
                 $params = [
                     'format' => 'json',
                     'oauth_token' => $tokenInfo['access_token'],
                 ];
 
-                $this->setProfileRawData(
-                    json_decode(
-                        static::makeHttpRequest(
-                            static::profileUrlBase,
-                            $params
-                        ),
-                        true
-                    )
+                $profile = static::decodeAnswer(
+                    static::makeHttpRequest(static::profileUrlBase, $params)
                 );
+
+                if ($profile) {
+                    $this->setProfileRawData($profile);
+                } else {
+                    $this->setProfileError('Error retrieving data');
+                }
             } else {
-                $this->setProfileError(
-                    $tokenInfo['error'] . ': ' . $tokenInfo['error_description']
-                );
+                $this->setProfileError(static::vendorErrorText($tokenInfo));
             }
         } else {
             $this->setProfileError('Error during first request');

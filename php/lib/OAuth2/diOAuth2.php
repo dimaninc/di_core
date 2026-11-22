@@ -16,6 +16,10 @@ abstract class diOAuth2
     const loginUrlBase = '';
     const authUrlBase = '';
 
+    // Весь запрос к вендору, не только соединение: принявший соединение и
+    // замолчавший вендор иначе держит FPM-воркер без предела
+    const HTTP_TIMEOUT = 10;
+
     const callbackParam = 'callback';
     const unlinkParam = 'unlink';
 
@@ -145,9 +149,11 @@ abstract class diOAuth2
 
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+        curl_setopt($ch, CURLOPT_TIMEOUT, static::HTTP_TIMEOUT);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        // В запросе client_secret, в ответе токен: без проверки их снимет MITM
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         //curl_setopt($ch, CURLOPT_PORT, $_SERVER['SERVER_PORT']);
         //curl_setopt($ch, CURLOPT_SSLVERSION, 2);
         //curl_setopt($ch, CURLOPT_DNS_USE_GLOBAL_CACHE, false);
@@ -376,6 +382,28 @@ abstract class diOAuth2
         }
 
         return $this;
+    }
+
+    /**
+     * Ответ вендора как непустой массив, иначе null. Пустое тело, HTML прокси или
+     * JSON-скаляр дают не-массив, а `count()` и чтение по ключу от него – TypeError
+     * мимо `catch (\Exception)` контроллеров входа: 500 вместо отказа.
+     */
+    protected static function decodeAnswer($raw): ?array
+    {
+        $data = is_string($raw) ? json_decode($raw, true) : null;
+
+        return is_array($data) && $data ? $data : null;
+    }
+
+    /** Текст отказа вендора на обмен кода; поля необязательны, warning здесь – дефект. */
+    protected static function vendorErrorText(array $answer): string
+    {
+        $text = static fn($v) => is_scalar($v) ? (string) $v : json_encode($v);
+        $error = $text($answer['error'] ?? 'unknown');
+        $description = $text($answer['error_description'] ?? '');
+
+        return $description === '' ? $error : "$error: $description";
     }
 
     protected function setProfileError($m = null)

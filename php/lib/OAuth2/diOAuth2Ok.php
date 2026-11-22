@@ -18,24 +18,17 @@ abstract class diOAuth2Ok extends diOAuth2
     {
         parent::downloadData();
 
-        $tokenInfo = json_decode(
+        $tokenInfo = static::decodeAnswer(
             static::makeHttpRequest(
                 static::authUrlBase,
                 $this->getAuthUrlParams(),
                 self::REQUEST_POST
-            ),
-            true
+            )
         );
 
         if (isset($tokenInfo['error'])) {
-            $this->setProfileError(
-                $tokenInfo['error'] . ': ' . $tokenInfo['error_description']
-            );
-        } elseif (
-            is_array($tokenInfo) &&
-            count($tokenInfo) &&
-            isset($tokenInfo['access_token'])
-        ) {
+            $this->setProfileError(static::vendorErrorText($tokenInfo));
+        } elseif (isset($tokenInfo['access_token'])) {
             $sign = md5(
                 'application_key=' .
                     static::publicKey .
@@ -51,14 +44,17 @@ abstract class diOAuth2Ok extends diOAuth2
                 'sig' => $sign,
             ];
 
-            $this->setProfileRawData(
-                json_decode(
-                    static::makeHttpRequest(
-                        static::makeUrl(static::profileUrlBase, $params)
-                    ),
-                    true
+            $profile = static::decodeAnswer(
+                static::makeHttpRequest(
+                    static::makeUrl(static::profileUrlBase, $params)
                 )
             );
+
+            if ($profile) {
+                $this->setProfileRawData($profile);
+            } else {
+                $this->setProfileError('Error retrieving data');
+            }
         } else {
             $this->setProfileError('Error during first request');
         }
