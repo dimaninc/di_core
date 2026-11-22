@@ -82,10 +82,14 @@ class TestablePasswordAuth extends Auth
 class PasswordAttemptHooksTest extends TestCase
 {
     private array $post;
+    private ?string $remoteAddr;
 
     protected function setUp(): void
     {
         $this->post = $_POST;
+        $this->remoteAddr = $_SERVER['REMOTE_ADDR'] ?? null;
+        // ip2bin() of the sign-in code is fed REMOTE_ADDR: null is a deprecation
+        $_SERVER['REMOTE_ADDR'] ??= '127.0.0.1';
         $_POST = [
             Auth::POST_LOGIN_FIELD => 'someone@example.com',
             Auth::POST_PASSWORD_FIELD => 'guess',
@@ -102,6 +106,10 @@ class PasswordAttemptHooksTest extends TestCase
     {
         $_POST = $this->post;
         unset($_SESSION[Auth::SESSION_USER_ID_FIELD]);
+
+        if ($this->remoteAddr === null) {
+            unset($_SERVER['REMOTE_ADDR']);
+        }
     }
 
     public function testSucceededAttemptIsReported(): void
