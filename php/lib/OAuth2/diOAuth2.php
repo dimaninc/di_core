@@ -354,6 +354,29 @@ abstract class diOAuth2
         return $this;
     }
 
+    /**
+     * Ответ вендора как непустой массив, иначе null. Пустое тело, HTML прокси или
+     * JSON-скаляр дают не-массив, а `count()` и чтение по ключу от него – TypeError
+     * мимо `catch (\Exception)` контроллеров входа: 500 вместо отказа.
+     */
+    protected static function decodeAnswer($raw): ?array
+    {
+        $data = is_string($raw) ? json_decode($raw, true) : null;
+
+        return is_array($data) && $data ? $data : null;
+    }
+
+    /** Текст отказа вендора на обмен кода; поля необязательны, warning здесь – дефект. */
+    protected static function vendorErrorText(array $answer): string
+    {
+        $error = $answer['error'] ?? 'unknown';
+        $description = $answer['error_description'] ?? '';
+
+        return (is_scalar($error) ? (string) $error : json_encode($error)) .
+            ': ' .
+            (is_scalar($description) ? (string) $description : json_encode($description));
+    }
+
     protected function setProfileError($m = null)
     {
         $this->profileRetrieveErrorInfo = $m;

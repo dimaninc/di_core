@@ -24,16 +24,15 @@ class diOAuth2Mailru extends diOAuth2
     {
         parent::downloadData();
 
-        $tokenInfo = json_decode(
+        $tokenInfo = static::decodeAnswer(
             static::makeHttpRequest(
                 static::authUrlBase,
                 $this->getAuthUrlParams(),
                 static::REQUEST_POST
-            ),
-            true
+            )
         );
 
-        if (count($tokenInfo)) {
+        if ($tokenInfo) {
             if (isset($tokenInfo['access_token'])) {
                 $sign = md5(
                     'app_id=' .
@@ -50,18 +49,17 @@ class diOAuth2Mailru extends diOAuth2
                     'sig' => $sign,
                 ];
 
-                $data = json_decode(
-                    static::makeHttpRequest(static::profileUrlBase, $params),
-                    true
+                $data = static::decodeAnswer(
+                    static::makeHttpRequest(static::profileUrlBase, $params)
                 );
 
-                if (isset($data[0]['uid'])) {
+                if (is_array($data[0] ?? null) && isset($data[0]['uid'])) {
                     $this->setProfileRawData($data[0]);
+                } else {
+                    $this->setProfileError('Error retrieving data');
                 }
             } else {
-                $this->setProfileError(
-                    $tokenInfo['error'] . ': ' . $tokenInfo['error_description']
-                );
+                $this->setProfileError(static::vendorErrorText($tokenInfo));
             }
         } else {
             $this->setProfileError('Error during first request');
