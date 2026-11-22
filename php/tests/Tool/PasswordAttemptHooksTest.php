@@ -141,6 +141,8 @@ class PasswordAttemptHooksTest extends TestCase
         $this->assertFalse($auth->authorized());
         // the cookie step looks up id 0; the POSTed array must not be looked up
         $this->assertNotContains(['someone@example.com'], TestablePasswordAuth::$lookups);
+        // refused before the limit is even asked
+        $this->assertSame([], TestablePasswordAuth::$asked);
         $this->assertSame([], TestablePasswordAuth::$failed);
     }
 

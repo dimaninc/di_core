@@ -553,7 +553,14 @@ class Auth
 
     /**
      * A project's limit on password guessing; a refused attempt is answered
-     * exactly like a wrong password, so the limit is no account oracle.
+     * exactly like a wrong password, so the limit is no account oracle. A
+     * refused attempt does not reach onPasswordAttemptFailed(): a sliding
+     * window that counts refusals too counts them here.
+     *
+     * Called from the constructor, like the other two hooks: use $this, never
+     * Auth::i() – the instance is registered only after the constructor, so
+     * i() builds a new one, which signs in again and recurses until the stack
+     * overflows.
      *
      * $login is exactly what was typed: normalising it (case, spaces) is the
      * project's job, or `User@x` and `user@x` count as two separate budgets.
@@ -561,7 +568,9 @@ class Auth
      * The admin panel signs in through diAdminUser, which extends this class,
      * not the project's Auth: a limit overridden only there leaves
      * admin_login/admin_password unlimited. Override the hooks in the project's
-     * diAdminUser subclass too.
+     * diAdminUser subclass too: diAdminUser::create() finds it as
+     * <Namespace>\admin_user or a global diCustomAdminUser
+     * (diLib::getChildClass()).
      */
     protected function isPasswordAttemptAllowed(string $login): bool
     {
