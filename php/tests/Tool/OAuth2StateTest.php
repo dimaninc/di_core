@@ -47,23 +47,26 @@ class OAuth2StateTest extends TestCase
 {
     private array $get;
     private ?array $session;
+    // diSession writes under its subclass's key (getClass()), not the base one
+    private string $key;
 
     protected function setUp(): void
     {
         $this->get = $_GET;
-        $this->session = $_SESSION[\diSession::VALUES_SESSION_KEY] ?? null;
+        $this->key = \diSession::getClass()::VALUES_SESSION_KEY;
+        $this->session = $_SESSION[$this->key] ?? null;
         // a state left by an earlier test would turn "no login started" into
         // a plain mismatch, and hide a missing `$expected === ''` check
-        unset($_SESSION[\diSession::VALUES_SESSION_KEY]);
+        unset($_SESSION[$this->key]);
     }
 
     protected function tearDown(): void
     {
         $_GET = $this->get;
-        unset($_SESSION[\diSession::VALUES_SESSION_KEY]);
+        unset($_SESSION[$this->key]);
 
         if ($this->session !== null) {
-            $_SESSION[\diSession::VALUES_SESSION_KEY] = $this->session;
+            $_SESSION[$this->key] = $this->session;
         }
     }
 
