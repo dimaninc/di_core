@@ -509,6 +509,12 @@ class Auth
      * cart; a project overrides this (calling parent) for its own rows, those
      * keyed on diSession::shortIntId() (shortIntIdOf($oldId) → shortIntIdOf
      * ($newId)) or shortId() included: both change with the id.
+     *
+     * Usually called from the constructor (a POST or cookie sign-in): take the
+     * user from $this (getUserId()), never Auth::i() – the instance is
+     * registered only after the constructor, so i() builds a new one, which
+     * signs in again and recurses until the stack overflows; the catch in
+     * rotateSessionId() does not stop that.
      */
     protected function onSessionIdChanged(string $oldId, string $newId): void
     {

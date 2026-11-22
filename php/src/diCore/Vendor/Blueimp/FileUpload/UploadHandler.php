@@ -240,7 +240,10 @@ class UploadHandler
 
     // user_dirs: a random name kept in the session, not the session id. The id
     // is rotated at sign-in (files uploaded before it were lost), and a name
-    // derived from it is reproduced by anyone who reuses the old id.
+    // derived from it is reproduced by anyone who reuses the old id. With no
+    // session (headers already sent) every request gets a new folder, and
+    // earlier uploads drop out of the list – still better than the shared ''
+    // folder the old code fell back to.
     const USER_DIR_SESSION_KEY = 'blueimpUploadUserDir';
 
     protected function get_user_id()
